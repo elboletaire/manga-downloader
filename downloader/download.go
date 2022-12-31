@@ -1,15 +1,14 @@
 package downloader
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"os"
-	"path"
 
-	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/elboletaire/manga-downloader/models"
+	"github.com/fatih/color"
 )
 
 type File struct {
@@ -19,9 +18,11 @@ type File struct {
 
 type Files []*File
 
-func FetchChapter(chapter grabber.Chapter) (files Files, err error) {
+func FetchChapter(chapter models.Chapter) (files Files, err error) {
 	for _, page := range chapter.Pages {
-		file, err := FetchFile(page.URL, fmt.Sprintf("%03d.jpg", page.Number))
+		filename := fmt.Sprintf("%03d.jpg", page.Number)
+		color.Blue("- downloading %s\n", filename)
+		file, err := FetchFile(page.URL, filename)
 		if err != nil {
 			return nil, err
 		}
@@ -31,19 +32,21 @@ func FetchChapter(chapter grabber.Chapter) (files Files, err error) {
 	return
 }
 
+// FetchFiles gets an online file returning a new *File
 func FetchFile(URL, filename string) (file *File, err error) {
 	body, err := Get(URL)
 	if err != nil {
 		return
 	}
 
-	data, err := ioutil.ReadAll(body)
+	data := new(bytes.Buffer)
+	io.Copy(data, body)
 	if err != nil {
 		return
 	}
 
 	file = &File{
-		Data: data,
+		Data: data.Bytes(),
 		Name: filename,
 	}
 
@@ -69,35 +72,4 @@ func Get(URL string) (body io.ReadCloser, err error) {
 
 	body = resp.Body
 	return
-}
-
-func DownloadChapter(chapter grabber.Chapter) error {
-	for _, page := range chapter.Pages {
-		err := DownloadFile(page.URL, fmt.Sprint(int64(chapter.Number)), fmt.Sprintf("%03d.jpg", page.Number))
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func DownloadFile(URL, folder, filename string) error {
-	body, err := Get(URL)
-	if err != nil {
-		return err
-	}
-
-	file, err := os.Create(path.Join("/tmp", folder, filename))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = io.Copy(file, body)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
