@@ -23,7 +23,7 @@ func (i InManga) Test() bool {
 	return re.MatchString(i.URL)
 }
 
-func (i InManga) FetchChapters() models.Filterables {
+func (i InManga) FetchChapters(language string) models.Filterables {
 	id := GetUUID(i.URL)
 
 	// retrieve chapters json from server
@@ -88,6 +88,7 @@ func (i InManga) FetchChapter(chap models.Filterable) models.Chapter {
 		Title:      chap.GetTitle(),
 		Number:     chap.GetNumber(),
 		PagesCount: int64(ichap.PagesCount),
+		Language:   "es",
 	}
 
 	s := html.Query(doc, "select.PageListClass")

@@ -38,7 +38,8 @@ to CBZ files.`,
 		// Fetch series title
 		title := s.Title()
 		// Fetch chapters
-		chapters := s.FetchChapters()
+		chapters := s.FetchChapters(cmd.Flag("language").Value.String())
+
 		// Filter and sort ranges
 		chapters = chapters.FilterRanges(rngs)
 
@@ -81,4 +82,5 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().StringP("language", "l", "", "Only download the specified language")
 }

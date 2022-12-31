@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"path"
 	"regexp"
 	"strconv"
@@ -25,6 +26,10 @@ func (m MangaDex) Test() bool {
 }
 
 func (m MangaDex) Title() string {
+	if m.title != "" {
+		return m.title
+	}
+
 	id := GetUUID(m.URL)
 
 	rbody, err := downloader.Get("https://api.mangadex.org/manga/" + id)
@@ -38,35 +43,59 @@ func (m MangaDex) Title() string {
 	if err != nil {
 		panic(err)
 	}
-	title, _ := parser.QueryToString("data.attributes.title.en")
+	m.title, _ = parser.QueryToString("data.attributes.title.en")
 
-	return title
+	return m.title
 }
 
-func (m MangaDex) FetchChapters() models.Filterables {
+func (m MangaDex) FetchChapters(language string) models.Filterables {
 	id := GetUUID(m.URL)
 
-	// TODO needs to be recursive in order to search for all coincidences
-	// (although forced to spanish as rn probably never gets to the limit)
-	rbody, err := downloader.Get("https://api.mangadex.org/manga/" + id + "/feed?limit=500&order[volume]=asc&order[chapter]=asc&translatedLanguage[]=es")
-	if err != nil {
-		panic(err)
-	}
-	body := MangaDexFeed{}
-	err = json.NewDecoder(rbody).Decode(&body)
-	if err != nil {
-		panic(err)
-	}
-
 	var chapters models.Filterables
-	for _, c := range body.Data {
-		num, _ := strconv.ParseInt(c.Attributes.Chapter, 10, 64)
-		chapters = append(chapters, &MangaDexChapter{
-			ID:     c.ID,
-			Number: num,
-			Title:  c.Attributes.Title,
-		})
+	var fetchChaps func(int)
+
+	baseOffset := 500
+
+	fetchChaps = func(offset int) {
+		uri, err := url.JoinPath("https://api.mangadex.org", "manga", id, "feed")
+		if err != nil {
+			panic(err)
+		}
+		params := url.Values{}
+		params.Add("limit", fmt.Sprint(baseOffset))
+		params.Add("order[volume]", "asc")
+		params.Add("order[chapter]", "asc")
+		params.Add("offset", fmt.Sprint(offset))
+		if language != "" {
+			params.Add("translatedLanguage[]", language)
+		}
+		uri = fmt.Sprintf("%s?%s", uri, params.Encode())
+
+		rbody, err := downloader.Get(uri)
+		if err != nil {
+			panic(err)
+		}
+		body := MangaDexFeed{}
+		err = json.NewDecoder(rbody).Decode(&body)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, c := range body.Data {
+			num, _ := strconv.ParseInt(c.Attributes.Chapter, 10, 64)
+			chapters = append(chapters, &MangaDexChapter{
+				ID:       c.ID,
+				Number:   num,
+				Title:    c.Attributes.Title,
+				Language: c.Attributes.TranslatedLanguage,
+			})
+		}
+
+		if len(body.Data) > 0 {
+			fetchChaps(offset + baseOffset)
+		}
 	}
+	fetchChaps(0)
 
 	return chapters
 }
@@ -86,6 +115,7 @@ func (m MangaDex) FetchChapter(f models.Filterable) models.Chapter {
 		Title:      fmt.Sprintf("Chapter %04d %s", int64(f.GetNumber()), mchap.Title),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(body.Chapter.Data)),
+		Language:   mchap.Language,
 	}
 	for i, p := range body.Chapter.Data {
 		chapter.Pages = append(chapter.Pages, models.Page{
@@ -98,9 +128,10 @@ func (m MangaDex) FetchChapter(f models.Filterable) models.Chapter {
 }
 
 type MangaDexChapter struct {
-	ID     string
-	Number int64
-	Title  string
+	ID       string
+	Number   int64
+	Title    string
+	Language string
 }
 
 type MangaDexFeedChapter struct {
@@ -109,9 +140,10 @@ type MangaDexFeedChapter struct {
 }
 
 type MangaDexFeedChapterAttributes struct {
-	Volume  string
-	Chapter string
-	Title   string
+	Volume             string
+	Chapter            string
+	Title              string
+	TranslatedLanguage string
 }
 
 type MangaDexFeed struct {

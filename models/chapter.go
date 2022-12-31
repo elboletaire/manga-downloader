@@ -5,6 +5,7 @@ type Chapter struct {
 	Number     float64
 	PagesCount int64
 	Pages      Pages
+	Language   string
 }
 type Chapters []Chapter
 
