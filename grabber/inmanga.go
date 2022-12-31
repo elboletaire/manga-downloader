@@ -85,6 +85,7 @@ func (i InManga) FetchChapter(chap models.Filterable) models.Chapter {
 	// fmt.Println(string(strhtml))
 	doc := html.Reader(strhtml.String())
 	chapter := models.Chapter{
+		Title:      chap.GetTitle(),
 		Number:     chap.GetNumber(),
 		PagesCount: int64(ichap.PagesCount),
 	}
