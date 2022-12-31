@@ -58,8 +58,6 @@ Places where you can put the binary and have it accessible system-wide:
 Todos
 -----
 
-- Allow specifying language as flag, for sites like mangadex.
-- Handle cases where multiple chapters of the same number are found.
 - Parallel download of pages
 - Add more sites
   - [ ] https://manganelo.com
@@ -67,7 +65,7 @@ Todos
   - [ ] https://manganelo.tv (same format than chapmanganato.com)
   - [ ] https://mangakakalot.com (same as manganelo)
   - [ ] https://www.tcbscans.net/
-  - [ ] Mangadex (partly done, needs recursivity and parsing external sites)
+  - [ ] Mangadex (needs parsing external sites and properly recognising those links)
   - [ ] https://mangaplus.shueisha.co.jp (one of those external sites required by Mangadex)
 - Better error handling
 - Bundling chapters into a single CBZ file rather than in separated files (via bool flag like `--bundle`)
