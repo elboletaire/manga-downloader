@@ -28,4 +28,7 @@ jobs:
         goversion: "1.19"
         project_path: "."
         binary_name: "manga-downloader"
-        extra_files: LICENSE readme.md
+        extra_files: LICENSE README.md
+        ldflags: >-
+          -X 'github.com/elboletaire/manga-downloader/cmd.Version=${{github.sha}}'
+          -X 'github.com/elboletaire/manga-downloader/cmd.Tag=${{github.ref}}'
