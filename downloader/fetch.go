@@ -22,7 +22,7 @@ type Files []*File
 func FetchChapter(site grabber.Site, chapter grabber.Chapter) (files Files, err error) {
 	var wg sync.WaitGroup
 
-	color.Blue("- downloading")
+	color.Blue("- downloading...")
 
 	for _, page := range chapter.Pages {
 		wg.Add(1)
