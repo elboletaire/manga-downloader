@@ -26,8 +26,11 @@ to CBZ files.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
-		url := args[0]
-		s := grabber.NewSite(url)
+		s := grabber.NewSite(args[0])
+		if s == nil {
+			fmt.Println("Site not recognised")
+			os.Exit(1)
+		}
 
 		// ranges parsing
 		rngs, err := ranges.Parse(args[1])
@@ -37,6 +40,7 @@ to CBZ files.`,
 
 		// Fetch series title
 		title := s.Title()
+
 		// Fetch chapters
 		chapters := s.FetchChapters(cmd.Flag("language").Value.String())
 
@@ -48,7 +52,7 @@ to CBZ files.`,
 			chapter := s.FetchChapter(chap)
 			fmt.Printf("Working on %s %s\n", color.New(color.FgGreen).Sprint(title), chapter.Title)
 
-			files, err := downloader.FetchChapter(chapter)
+			files, err := downloader.FetchChapter(s, chapter)
 			if err != nil {
 				panic(err)
 			}
@@ -57,7 +61,7 @@ to CBZ files.`,
 			color.Green("- saving file %s", filename)
 			err = packer.ArchiveCBZ(filename, files)
 			if err != nil {
-				panic(err)
+				color.Red("- error saving file %s: %s", filename, err.Error())
 			}
 		}
 	},

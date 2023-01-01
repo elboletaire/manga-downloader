@@ -16,11 +16,11 @@ import (
 )
 
 type MangaDex struct {
-	URL   string
+	Grabber
 	title string
 }
 
-func (m MangaDex) Test() bool {
+func (m *MangaDex) Test() bool {
 	re := regexp.MustCompile(`mangadex\.org`)
 	return re.MatchString(m.URL)
 }
@@ -32,7 +32,9 @@ func (m MangaDex) Title() string {
 
 	id := GetUUID(m.URL)
 
-	rbody, err := downloader.Get("https://api.mangadex.org/manga/" + id)
+	rbody, err := downloader.Get(downloader.GetParams{
+		URL: "https://api.mangadex.org/manga/" + id,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -71,7 +73,7 @@ func (m MangaDex) FetchChapters(language string) models.Filterables {
 		}
 		uri = fmt.Sprintf("%s?%s", uri, params.Encode())
 
-		rbody, err := downloader.Get(uri)
+		rbody, err := downloader.Get(downloader.GetParams{URL: uri})
 		if err != nil {
 			panic(err)
 		}
@@ -102,7 +104,9 @@ func (m MangaDex) FetchChapters(language string) models.Filterables {
 
 func (m MangaDex) FetchChapter(f models.Filterable) models.Chapter {
 	mchap := f.(*MangaDexChapter)
-	rbody, err := downloader.Get("https://api.mangadex.org/at-home/server/" + mchap.ID)
+	rbody, err := downloader.Get(downloader.GetParams{
+		URL: "https://api.mangadex.org/at-home/server/" + mchap.ID,
+	})
 	if err != nil {
 		panic(err)
 	}

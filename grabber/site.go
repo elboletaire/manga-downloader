@@ -1,31 +1,43 @@
 package grabber
 
 import (
-	"fmt"
-	"os"
+	"net/url"
 	"regexp"
 
 	"github.com/elboletaire/manga-downloader/models"
 )
 
-func NewSite(url string) models.Site {
-	i := InManga{
-		URL: url,
-	}
-	if i.Test() {
-		return i
-	}
-	m := MangaDex{
-		URL: url,
-	}
-	if m.Test() {
-		return m
+type Grabber struct {
+	URL string
+}
+
+func (g *Grabber) IdentifySite() models.Site {
+	sites := []models.Site{
+		&InManga{Grabber: *g},
+		&MangaDex{Grabber: *g},
+		&Manganelo{Grabber: *g},
 	}
 
-	fmt.Println("Site not recognised")
-	os.Exit(1)
+	for _, s := range sites {
+		if s.Test() {
+			return s
+		}
+	}
 
 	return nil
+}
+
+func (g Grabber) GetBaseUrl() string {
+	u, _ := url.Parse(g.URL)
+	return u.Scheme + "://" + u.Host
+}
+
+func NewSite(url string) models.Site {
+	g := &Grabber{
+		URL: url,
+	}
+
+	return g.IdentifySite()
 }
 
 func GetUUID(s string) string {

@@ -47,29 +47,32 @@ For Windows users would be:
 ~~~
 
 If you want the binary to be accessible from your terminal in whatever path you might be, you should ensure to place the
-binary on a `PATH` defined folder (or add that path to your `PATH` env var).
+binary on a `PATH` defined folder (or add the folder where you downloaded manga-downloader to your `PATH` env var).
 
 Places where you can put the binary and have it accessible system-wide:
 
 - Linux and Mac: `/usr/local/bin`
 - Windows: `C:\Windows\System32`
 
+So if you're a windows user and place the .exe file inside `C:\Windows\System32` you'll be able to call the program
+wherever you want from:
 
-Todos
------
+~~~bash
+C:\Users\elboletaire\Desktop>manga-downloader https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover 1-346
+~~~
 
-- Parallel download of pages
-- Add more sites
-  - [ ] https://manganelo.com
-  - [ ] https://chapmanganato.com (related to manganelo, similar format)
-  - [ ] https://manganelo.tv (same format than chapmanganato.com)
-  - [ ] https://mangakakalot.com (same as manganelo)
-  - [ ] https://www.tcbscans.net/
-  - [ ] Mangadex (needs parsing external sites and properly recognising those links)
-  - [ ] https://mangaplus.shueisha.co.jp (one of those external sites required by Mangadex)
-- Better error handling
-- Bundling chapters into a single CBZ file rather than in separated files (via bool flag like `--bundle`)
+The above command would download Black Clover chapters 1 to 346 to the Desktop folder (since that's the current directory).
 
+
+Supported sites
+---------------
+
+- Inmanga
+- Mangadex
+- Mangakakalot (+ any compatible sites)
+- Manganato/Manganelo (+ any compatible sites)
+
+If you want a specific new site to be supported, [create a new issue][issues] or even a PR with the changes.
 
 License
 -------
@@ -94,3 +97,4 @@ All the code contained in this repo is licensed under the [GNU Affero General Pu
 
 [license]: ./LICENSE
 [releases]: https://github.com/elboletaire/manga-downloader/releases
+[issues]: https://github.com/elboletaire/manga-downloader/issues

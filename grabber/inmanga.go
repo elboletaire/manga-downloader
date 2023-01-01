@@ -14,11 +14,11 @@ import (
 )
 
 type InManga struct {
-	URL   string
+	Grabber
 	title string
 }
 
-func (i InManga) Test() bool {
+func (i *InManga) Test() bool {
 	re := regexp.MustCompile(`inmanga\.com`)
 	return re.MatchString(i.URL)
 }
@@ -27,7 +27,9 @@ func (i InManga) FetchChapters(language string) models.Filterables {
 	id := GetUUID(i.URL)
 
 	// retrieve chapters json from server
-	rbody, err := downloader.Get("https://inmanga.com/chapter/getall?mangaIdentification=" + id)
+	rbody, err := downloader.Get(downloader.GetParams{
+		URL: "https://inmanga.com/chapter/getall?mangaIdentification=" + id,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -58,7 +60,9 @@ func (i InManga) Title() string {
 		return i.title
 	}
 
-	rbody, err := downloader.Get(i.URL)
+	rbody, err := downloader.Get(downloader.GetParams{
+		URL: i.URL,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -74,7 +78,9 @@ func (i InManga) Title() string {
 
 func (i InManga) FetchChapter(chap models.Filterable) models.Chapter {
 	ichap := chap.(*InMangaChapter)
-	h, err := downloader.Get("https://inmanga.com/chapter/chapterIndexControls?identification=" + ichap.Identification)
+	h, err := downloader.Get(downloader.GetParams{
+		URL: "https://inmanga.com/chapter/chapterIndexControls?identification=" + ichap.Identification,
+	})
 	if err != nil {
 		panic(err)
 	}
