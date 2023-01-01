@@ -1,16 +1,13 @@
 package grabber
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
 	"regexp"
 	"strconv"
-	"strings"
 
-	"github.com/elboletaire/manga-downloader/downloader"
-	"github.com/elboletaire/manga-downloader/html"
-	"github.com/elboletaire/manga-downloader/models"
-	"github.com/elgs/gojq"
+	"github.com/PuerkitoBio/goquery"
+	"github.com/elboletaire/manga-downloader/http"
 )
 
 type InManga struct {
@@ -18,133 +15,136 @@ type InManga struct {
 	title string
 }
 
+// Test checks if the site is InManga
 func (i *InManga) Test() bool {
 	re := regexp.MustCompile(`inmanga\.com`)
 	return re.MatchString(i.URL)
 }
 
-func (i InManga) FetchChapters(language string) models.Filterables {
+// FetchChapters returns the chapters of the manga
+func (i InManga) FetchChapters(language string) Filterables {
 	id := GetUUID(i.URL)
 
-	// retrieve chapters json from server
-	rbody, err := downloader.Get(downloader.GetParams{
+	// retrieve chapters json list
+	body, err := http.GetText(http.GetParams{
 		URL: "https://inmanga.com/chapter/getall?mangaIdentification=" + id,
 	})
 	if err != nil {
 		panic(err)
 	}
-	defer rbody.Close()
-	body := new(strings.Builder)
-	io.Copy(body, rbody)
 
-	parser, err := gojq.NewStringQuery(body.String())
-	if err != nil {
-		panic(err)
-	}
-	data, _ := parser.QueryToString("data")
-	ps, err := gojq.NewStringQuery(data)
-	if err != nil {
-		panic(err)
-	}
-	cps, err := ps.Query("result")
+	raw := struct {
+		Data string
+	}{}
+
+	err = json.Unmarshal([]byte(body), &raw)
 	if err != nil {
 		panic(err)
 	}
 
-	chapters := NewInMangaSlice(cps.([]interface{}))
-	return chapters
+	feed := InMangaChapterFeed{}
+	err = json.Unmarshal([]byte(raw.Data), &feed)
+	if err != nil {
+		panic(err)
+	}
+
+	return NewInMangaChaptersSlice(feed.Result)
 }
 
-func (i InManga) Title() string {
+// GetTitle fetches the manga title
+func (i InManga) GetTitle(language string) string {
 	if i.title != "" {
 		return i.title
 	}
 
-	rbody, err := downloader.Get(downloader.GetParams{
+	body, err := http.Get(http.GetParams{
 		URL: i.URL,
 	})
 	if err != nil {
 		panic(err)
 	}
-	defer rbody.Close()
-	body := new(strings.Builder)
-	io.Copy(body, rbody)
+	defer body.Close()
 
-	doc := html.Reader(body.String())
-	i.title = html.Query(doc, "h1").FirstChild.Data
+	doc, err := goquery.NewDocumentFromReader(body)
+	if err != nil {
+		panic(err)
+	}
 
+	i.title = doc.Find("h1").Text()
 	return i.title
 }
 
-func (i InManga) FetchChapter(chap models.Filterable) models.Chapter {
+// FetchChapter fetches the chapter with its pages
+func (i InManga) FetchChapter(chap Filterable) Chapter {
 	ichap := chap.(*InMangaChapter)
-	h, err := downloader.Get(downloader.GetParams{
-		URL: "https://inmanga.com/chapter/chapterIndexControls?identification=" + ichap.Identification,
+	body, err := http.Get(http.GetParams{
+		URL: "https://inmanga.com/chapter/chapterIndexControls?identification=" + ichap.Id,
 	})
 	if err != nil {
 		panic(err)
 	}
-	defer h.Close()
-	strhtml := new(strings.Builder)
-	io.Copy(strhtml, h)
+	defer body.Close()
+	doc, err := goquery.NewDocumentFromReader(body)
+	if err != nil {
+		panic(err)
+	}
 
-	// fmt.Println(string(strhtml))
-	doc := html.Reader(strhtml.String())
-	chapter := models.Chapter{
+	chapter := Chapter{
 		Title:      chap.GetTitle(),
 		Number:     chap.GetNumber(),
 		PagesCount: int64(ichap.PagesCount),
-		Language:   "es",
+		// Inmanga only hosts spanish mangas
+		Language: "es",
 	}
 
-	s := html.Query(doc, "select.PageListClass")
-	for _, opt := range html.QueryAll(s, "option") {
-		page, _ := strconv.ParseInt(opt.FirstChild.Data, 10, 64)
-		chapter.Pages = append(chapter.Pages, models.Page{
-			Number: page,
-			URL:    "https://pack-yak.intomanga.com/images/manga/MANGA-SERIES/chapter/CHAPTER/page/PAGE/" + opt.Attr[0].Val,
+	// get pages from select, but discard one, since it's duplicated
+	doc.Find("select.PageListClass").First().Children().Each(func(i int, s *goquery.Selection) {
+		num, _ := strconv.ParseInt(s.Text(), 10, 64)
+		chapter.Pages = append(chapter.Pages, Page{
+			Number: num,
+			URL:    "https://pack-yak.intomanga.com/images/manga/ms/chapter/ch/page/p/" + s.AttrOr("value", ""),
 		})
-	}
+	})
 
 	return chapter
 }
 
-type InMangaChapters []*InMangaChapter
-
+// InMangaChapter is a chapter representation from InManga
 type InMangaChapter struct {
-	Number         float64
-	Identification string
-	PagesCount     float64
-	Title          string
+	Chapter
+	Id string
 }
 
-func (i *InMangaChapter) GetNumber() float64 {
-	return i.Number
-}
-
-func (i *InMangaChapter) GetTitle() string {
-	return i.Title
-}
-
-func NewInMangaChapter(c map[string]interface{}) *InMangaChapter {
-	n := c["Number"].(float64)
-	i := c["Identification"].(string)
-	p := c["PagesCount"].(float64)
-	t := fmt.Sprintf("Capítulo %04d", int64(n))
-
+// NewInMangaChapter creates an InMangaChapter from an InMangaChapterFeedResult
+func NewInMangaChapter(c InMangaChapterFeedResult) *InMangaChapter {
 	return &InMangaChapter{
-		Number:         n,
-		Identification: i,
-		PagesCount:     p,
-		Title:          t,
+		Chapter: Chapter{
+			Number:     c.Number,
+			PagesCount: int64(c.PagesCount),
+			Title:      fmt.Sprintf("Capítulo %04d", int64(c.Number)),
+		},
+		Id: c.Id,
 	}
 }
 
-func NewInMangaSlice(s []interface{}) models.Filterables {
-	chapters := make(models.Filterables, 0, len(s))
+// NewInMangaChaptersSlice creates a slice of Filterables from a slice of InMangaChapterFeedResult
+func NewInMangaChaptersSlice(s []InMangaChapterFeedResult) Filterables {
+	chapters := make(Filterables, 0, len(s))
 	for _, c := range s {
-		chapters = append(chapters, NewInMangaChapter(c.(map[string]interface{})))
+		chapters = append(chapters, NewInMangaChapter(c))
 	}
 
 	return chapters
+}
+
+// InMangaChapterFeed is the JSON feed for the chapters list
+type InMangaChapterFeed struct {
+	Result []InMangaChapterFeedResult
+}
+
+// InMangaChapterFeedResult is the JSON feed for a single chapter result
+type InMangaChapterFeedResult struct {
+	Id         string `json:"identification"`
+	Number     float64
+	PagesCount float64
 }

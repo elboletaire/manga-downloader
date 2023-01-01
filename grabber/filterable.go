@@ -1,4 +1,4 @@
-package models
+package grabber
 
 import (
 	"sort"
@@ -6,9 +6,17 @@ import (
 	"github.com/elboletaire/manga-downloader/ranges"
 )
 
-type Filterable interface {
+type Enumerable interface {
 	GetNumber() float64
+}
+
+type Titleable interface {
 	GetTitle() string
+}
+
+type Filterable interface {
+	Enumerable
+	Titleable
 }
 
 type Filterables []Filterable

@@ -38,19 +38,22 @@ to CBZ files.`,
 			panic(err)
 		}
 
-		// Fetch series title
-		title := s.Title()
+		// language flag (if any)
+		language := cmd.Flag("language").Value.String()
 
-		// Fetch chapters
-		chapters := s.FetchChapters(cmd.Flag("language").Value.String())
+		// fetch series title
+		title := s.GetTitle(language)
 
-		// Filter and sort ranges
+		// fetch all chapters
+		chapters := s.FetchChapters(language)
+
+		// sort and filter specified ranges
 		chapters = chapters.FilterRanges(rngs)
 
 		// loop chapters to retrieve pages
 		for _, chap := range chapters {
 			chapter := s.FetchChapter(chap)
-			fmt.Printf("Working on %s %s\n", color.New(color.FgGreen).Sprint(title), chapter.Title)
+			fmt.Printf("%s %s:\n", color.New(color.FgGreen).Sprint(title), chapter.Title)
 
 			files, err := downloader.FetchChapter(s, chapter)
 			if err != nil {
@@ -76,15 +79,7 @@ func Execute() {
 	}
 }
 
+// init sets the flags for the root command
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.manga-downloader.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.Flags().StringP("language", "l", "", "Only download the specified language")
 }

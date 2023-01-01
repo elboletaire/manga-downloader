@@ -3,16 +3,12 @@ package grabber
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/url"
 	"path"
 	"regexp"
 	"strconv"
-	"strings"
 
-	"github.com/elboletaire/manga-downloader/downloader"
-	"github.com/elboletaire/manga-downloader/models"
-	"github.com/elgs/gojq"
+	"github.com/elboletaire/manga-downloader/http"
 )
 
 type MangaDex struct {
@@ -20,40 +16,53 @@ type MangaDex struct {
 	title string
 }
 
+// Test checks if the site is MangaDex
 func (m *MangaDex) Test() bool {
 	re := regexp.MustCompile(`mangadex\.org`)
 	return re.MatchString(m.URL)
 }
 
-func (m MangaDex) Title() string {
+// GetTitle returns the title of the manga
+func (m MangaDex) GetTitle(language string) string {
 	if m.title != "" {
 		return m.title
 	}
 
 	id := GetUUID(m.URL)
 
-	rbody, err := downloader.Get(downloader.GetParams{
+	rbody, err := http.Get(http.GetParams{
 		URL: "https://api.mangadex.org/manga/" + id,
 	})
 	if err != nil {
 		panic(err)
 	}
-	body := new(strings.Builder)
-	io.Copy(body, rbody)
-
-	parser, err := gojq.NewStringQuery(body.String())
+	defer rbody.Close()
+	body := MangaDexManga{}
+	err = json.NewDecoder(rbody).Decode(&body)
 	if err != nil {
 		panic(err)
 	}
-	m.title, _ = parser.QueryToString("data.attributes.title.en")
 
+	// fetch the title in the requested language
+	if language != "" {
+		trans := body.Data.Attributes.AltTitles.GetTitleByLang(language)
+
+		if trans != "" {
+			m.title = trans
+			return m.title
+		}
+	}
+
+	// fallback to english
+	m.title = body.Data.Attributes.Title["en"]
 	return m.title
 }
 
-func (m MangaDex) FetchChapters(language string) models.Filterables {
+// FetchChapters returns the chapters of the manga
+func (m MangaDex) FetchChapters(language string) Filterables {
 	id := GetUUID(m.URL)
 
-	var chapters models.Filterables
+	var chapters Filterables
 	var fetchChaps func(int)
 
 	baseOffset := 500
@@ -73,10 +82,11 @@ func (m MangaDex) FetchChapters(language string) models.Filterables {
 		}
 		uri = fmt.Sprintf("%s?%s", uri, params.Encode())
 
-		rbody, err := downloader.Get(downloader.GetParams{URL: uri})
+		rbody, err := http.Get(http.GetParams{URL: uri})
 		if err != nil {
 			panic(err)
 		}
+		defer rbody.Close()
 		body := MangaDexFeed{}
 		err = json.NewDecoder(rbody).Decode(&body)
 		if err != nil {
@@ -102,27 +112,33 @@ func (m MangaDex) FetchChapters(language string) models.Filterables {
 	return chapters
 }
 
-func (m MangaDex) FetchChapter(f models.Filterable) models.Chapter {
-	mchap := f.(*MangaDexChapter)
-	rbody, err := downloader.Get(downloader.GetParams{
-		URL: "https://api.mangadex.org/at-home/server/" + mchap.ID,
+// FetchChapter fetches a chapter and its pages
+func (m MangaDex) FetchChapter(f Filterable) Chapter {
+	chap := f.(*MangaDexChapter)
+	// download json
+	rbody, err := http.Get(http.GetParams{
+		URL: "https://api.mangadex.org/at-home/server/" + chap.ID,
 	})
 	if err != nil {
 		panic(err)
 	}
+	// parse json body
 	body := MangaDexPagesFeed{}
 	err = json.NewDecoder(rbody).Decode(&body)
 	if err != nil {
 		panic(err)
 	}
-	chapter := models.Chapter{
-		Title:      fmt.Sprintf("Chapter %04d %s", int64(f.GetNumber()), mchap.Title),
+
+	chapter := Chapter{
+		Title:      fmt.Sprintf("Chapter %04d %s", int64(f.GetNumber()), chap.Title),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(body.Chapter.Data)),
-		Language:   mchap.Language,
+		Language:   chap.Language,
 	}
+
+	// create pages
 	for i, p := range body.Chapter.Data {
-		chapter.Pages = append(chapter.Pages, models.Page{
+		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),
 			URL:    body.BaseUrl + path.Join("/data", body.Chapter.Hash, p),
 		})
@@ -138,33 +154,49 @@ type MangaDexChapter struct {
 	Language string
 }
 
-type MangaDexFeedChapter struct {
-	ID         string
-	Attributes MangaDexFeedChapterAttributes
+type MangaDexManga struct {
+	ID   string
+	Data struct {
+		Attributes struct {
+			Title     map[string]string
+			AltTitles AltTitles
+		}
+	}
 }
 
-type MangaDexFeedChapterAttributes struct {
-	Volume             string
-	Chapter            string
-	Title              string
-	TranslatedLanguage string
+// AltTitles is a slice of maps with the language as key and the title as value
+type AltTitles []map[string]string
+
+// GetTitleByLang returns the title in the given language (or empty if string is not found)
+func (a AltTitles) GetTitleByLang(lang string) string {
+	for _, t := range a {
+		val, ok := t[lang]
+		if ok {
+			return val
+		}
+	}
+	return ""
 }
 
 type MangaDexFeed struct {
-	Data []MangaDexFeedChapter
-}
-
-type MangaDexPagesFeedChapterData []string
-
-type MangaDexPagesFeedChapter struct {
-	Hash      string
-	Data      MangaDexPagesFeedChapterData
-	DataSaver MangaDexPagesFeedChapterData
+	Data []struct {
+		ID         string
+		Attributes struct {
+			Volume             string
+			Chapter            string
+			Title              string
+			TranslatedLanguage string
+		}
+	}
 }
 
 type MangaDexPagesFeed struct {
 	BaseUrl string
-	Chapter MangaDexPagesFeedChapter
+	Chapter struct {
+		Hash      string
+		Data      []string
+		DataSaver []string
+	}
 }
 
 func (m *MangaDexChapter) GetTitle() string {

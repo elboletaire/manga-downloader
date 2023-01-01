@@ -72,7 +72,7 @@ Supported sites
 - Mangakakalot (+ any compatible sites)
 - Manganato/Manganelo (+ any compatible sites)
 
-If you want a specific new site to be supported, [create a new issue][issues] or even a PR with the changes.
+If you'd like support for a specific site, [create a new issue][issues] or even a PR with the changes.
 
 License
 -------
