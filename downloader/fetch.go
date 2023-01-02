@@ -36,7 +36,7 @@ func FetchChapter(site grabber.Site, chapter grabber.Chapter) (files Files, err 
 			}, filename)
 
 			if err != nil {
-				fmt.Println(color.RedString("- error downloading page %s", filename))
+				color.Red("- error downloading page %s", filename)
 				return
 			}
 			files = append(files, file)
