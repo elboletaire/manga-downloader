@@ -77,7 +77,7 @@ Would download chapters 10 to 20 of Black Clover from mangadex.org in Spanish`, 
 		for _, chap := range chapters {
 			chapter := s.FetchChapter(chap)
 			chapter.Title = strings.TrimSpace(chapter.Title)
-			fmt.Printf("%s %s:\n", color.CyanString(title), color.BlackString(chapter.Title))
+			fmt.Printf("%s %s:\n", color.CyanString(title), color.HiBlackString(chapter.Title))
 
 			files, err := downloader.FetchChapter(s, chapter)
 			if err != nil {
@@ -85,7 +85,7 @@ Would download chapters 10 to 20 of Black Clover from mangadex.org in Spanish`, 
 			}
 
 			filename := fmt.Sprintf("%s %s.cbz", title, chapter.Title)
-			fmt.Printf("- %s %s\n", color.GreenString("saving file"), color.BlackString(filename))
+			fmt.Printf("- %s %s\n", color.GreenString("saving file"), color.HiBlackString(filename))
 			err = packer.ArchiveCBZ(filename, files)
 			if err != nil {
 				color.Red("- error saving file %s: %s", filename, err.Error())
