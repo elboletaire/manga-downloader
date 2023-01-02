@@ -1,13 +1,27 @@
 Manga Downloader
 ================
 
-This tool downloads mangas from websites like mangadex and stores them into cbz files, so you can read them with your
+[![Go Report Card][go report card]][go report]
+[![GitHub release][release badge]][releases]
+
+This app downloads mangas from websites like mangadex and stores them into cbz files, so you can read them with your
 favorite ereader or reading app.
+
+Supported sites
+---------------
+
+- Inmanga
+- Mangadex
+- Mangakakalot (+ any compatible sites)
+- Manganato/Manganelo (+ any compatible sites)
+- TCBScans
+
+If you'd like support for a specific site, [create a new issue][issues] or even a PR with the changes.
 
 Usage
 -----
 
-The program only accepts two params for now:
+Only two params are required:
 
 ~~~bash
 manga-downloader [URL] [range]
@@ -21,12 +35,18 @@ manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b
 ~~~
 
 In some sites, like mangadex, it may find multiple results for the same chapter, given the different languages it's
-translated to. In these cases it will download by default all the different files, but you can force a single language
-to be downloaded by using `--language`:
+translated to. In these cases, every coincidence will be downloaded into different files, but you can force a single
+language to be downloaded by using `--language`:
 
 ~~~bash
 manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece 1-10
 # would download One Piece chapters 1 to 10 in spanish
+~~~
+
+Use the `help` command to see all the available options:
+
+~~~bash
+manga-downloader help
 ~~~
 
 Installation
@@ -63,17 +83,6 @@ C:\Users\elboletaire\Desktop>manga-downloader https://mangadex.org/title/e7eabe9
 
 The above command would download Black Clover chapters 1 to 346 to the Desktop folder (since that's the current directory).
 
-
-Supported sites
----------------
-
-- Inmanga
-- Mangadex
-- Mangakakalot (+ any compatible sites)
-- Manganato/Manganelo (+ any compatible sites)
-
-If you'd like support for a specific site, [create a new issue][issues] or even a PR with the changes.
-
 License
 -------
 
@@ -95,6 +104,9 @@ All the code contained in this repo is licensed under the [GNU Affero General Pu
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+[go report]: https://goreportcard.com/report/github.com/elboletaire/manga-downloader
+[go report card]: https://goreportcard.com/badge/github.com/elboletaire/manga-downloader
+[release badge]: https://img.shields.io/github/release/elboletaire/manga-downloader.svg
 [license]: ./LICENSE
 [releases]: https://github.com/elboletaire/manga-downloader/releases
 [issues]: https://github.com/elboletaire/manga-downloader/issues
