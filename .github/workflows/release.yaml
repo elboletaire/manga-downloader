@@ -20,6 +20,10 @@ jobs:
             goos: windows
     steps:
     - uses: actions/checkout@v3
+    - name: Get short version and tag
+      run: |
+        echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        echo "tag=$(git describe --tags)" >> $GITHUB_ENV
     - uses: wangyoucao577/go-release-action@v1.34
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -30,5 +34,5 @@ jobs:
         binary_name: "manga-downloader"
         extra_files: LICENSE README.md
         ldflags: >-
-          -X 'github.com/elboletaire/manga-downloader/cmd.Version=${{github.sha}}'
-          -X 'github.com/elboletaire/manga-downloader/cmd.Tag=${{github.ref}}'
+          -X 'github.com/elboletaire/manga-downloader/cmd.Version=${{ env.sha_short }}'
+          -X 'github.com/elboletaire/manga-downloader/cmd.Tag=${{ env.tag }}'
