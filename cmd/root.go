@@ -68,6 +68,11 @@ Would download chapters 10 to 20 of Black Clover from mangadex.org in Spanish`, 
 		// sort and filter specified ranges
 		chapters = chapters.FilterRanges(rngs)
 
+		if len(chapters) == 0 {
+			color.Yellow("No chapters found for the specified ranges")
+			os.Exit(0)
+		}
+
 		// loop chapters to retrieve pages
 		for _, chap := range chapters {
 			chapter := s.FetchChapter(chap)
