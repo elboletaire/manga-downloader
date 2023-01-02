@@ -16,6 +16,11 @@ type MangaDex struct {
 	title string
 }
 
+type MangaDexChapter struct {
+	Chapter
+	Id string
+}
+
 // Test checks if the site is MangaDex
 func (m *MangaDex) Test() bool {
 	re := regexp.MustCompile(`mangadex\.org`)
@@ -23,14 +28,14 @@ func (m *MangaDex) Test() bool {
 }
 
 // GetTitle returns the title of the manga
-func (m MangaDex) GetTitle(language string) string {
+func (m *MangaDex) GetTitle(language string) string {
 	if m.title != "" {
 		return m.title
 	}
 
 	id := GetUUID(m.URL)
 
-	rbody, err := http.Get(http.GetParams{
+	rbody, err := http.Get(http.RequestParams{
 		URL: "https://api.mangadex.org/manga/" + id,
 	})
 	if err != nil {
@@ -82,7 +87,7 @@ func (m MangaDex) FetchChapters(language string) Filterables {
 		}
 		uri = fmt.Sprintf("%s?%s", uri, params.Encode())
 
-		rbody, err := http.Get(http.GetParams{URL: uri})
+		rbody, err := http.Get(http.RequestParams{URL: uri})
 		if err != nil {
 			panic(err)
 		}
@@ -94,12 +99,14 @@ func (m MangaDex) FetchChapters(language string) Filterables {
 		}
 
 		for _, c := range body.Data {
-			num, _ := strconv.ParseInt(c.Attributes.Chapter, 10, 64)
+			num, _ := strconv.ParseFloat(c.Attributes.Chapter, 64)
 			chapters = append(chapters, &MangaDexChapter{
-				ID:       c.ID,
-				Number:   num,
-				Title:    c.Attributes.Title,
-				Language: c.Attributes.TranslatedLanguage,
+				Chapter{
+					Number:   num,
+					Title:    c.Attributes.Title,
+					Language: c.Attributes.TranslatedLanguage,
+				},
+				c.Id,
 			})
 		}
 
@@ -116,8 +123,8 @@ func (m MangaDex) FetchChapters(language string) Filterables {
 func (m MangaDex) FetchChapter(f Filterable) Chapter {
 	chap := f.(*MangaDexChapter)
 	// download json
-	rbody, err := http.Get(http.GetParams{
-		URL: "https://api.mangadex.org/at-home/server/" + chap.ID,
+	rbody, err := http.Get(http.RequestParams{
+		URL: "https://api.mangadex.org/at-home/server/" + chap.Id,
 	})
 	if err != nil {
 		panic(err)
@@ -147,15 +154,8 @@ func (m MangaDex) FetchChapter(f Filterable) Chapter {
 	return chapter
 }
 
-type MangaDexChapter struct {
-	ID       string
-	Number   int64
-	Title    string
-	Language string
-}
-
 type MangaDexManga struct {
-	ID   string
+	Id   string
 	Data struct {
 		Attributes struct {
 			Title     map[string]string
@@ -180,7 +180,7 @@ func (a AltTitles) GetTitleByLang(lang string) string {
 
 type MangaDexFeed struct {
 	Data []struct {
-		ID         string
+		Id         string
 		Attributes struct {
 			Volume             string
 			Chapter            string
@@ -197,12 +197,4 @@ type MangaDexPagesFeed struct {
 		Data      []string
 		DataSaver []string
 	}
-}
-
-func (m *MangaDexChapter) GetTitle() string {
-	return m.Title
-}
-
-func (m *MangaDexChapter) GetNumber() float64 {
-	return float64(m.Number)
 }

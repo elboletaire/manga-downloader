@@ -15,6 +15,12 @@ type InManga struct {
 	title string
 }
 
+// InMangaChapter is a chapter representation from InManga
+type InMangaChapter struct {
+	Chapter
+	Id string
+}
+
 // Test checks if the site is InManga
 func (i *InManga) Test() bool {
 	re := regexp.MustCompile(`inmanga\.com`)
@@ -26,7 +32,7 @@ func (i InManga) FetchChapters(language string) Filterables {
 	id := GetUUID(i.URL)
 
 	// retrieve chapters json list
-	body, err := http.GetText(http.GetParams{
+	body, err := http.GetText(http.RequestParams{
 		URL: "https://inmanga.com/chapter/getall?mangaIdentification=" + id,
 	})
 	if err != nil {
@@ -52,12 +58,12 @@ func (i InManga) FetchChapters(language string) Filterables {
 }
 
 // GetTitle fetches the manga title
-func (i InManga) GetTitle(language string) string {
+func (i *InManga) GetTitle(language string) string {
 	if i.title != "" {
 		return i.title
 	}
 
-	body, err := http.Get(http.GetParams{
+	body, err := http.Get(http.RequestParams{
 		URL: i.URL,
 	})
 	if err != nil {
@@ -77,7 +83,7 @@ func (i InManga) GetTitle(language string) string {
 // FetchChapter fetches the chapter with its pages
 func (i InManga) FetchChapter(chap Filterable) Chapter {
 	ichap := chap.(*InMangaChapter)
-	body, err := http.Get(http.GetParams{
+	body, err := http.Get(http.RequestParams{
 		URL: "https://inmanga.com/chapter/chapterIndexControls?identification=" + ichap.Id,
 	})
 	if err != nil {
@@ -109,21 +115,15 @@ func (i InManga) FetchChapter(chap Filterable) Chapter {
 	return chapter
 }
 
-// InMangaChapter is a chapter representation from InManga
-type InMangaChapter struct {
-	Chapter
-	Id string
-}
-
 // NewInMangaChapter creates an InMangaChapter from an InMangaChapterFeedResult
 func NewInMangaChapter(c InMangaChapterFeedResult) *InMangaChapter {
 	return &InMangaChapter{
-		Chapter: Chapter{
+		Chapter{
 			Number:     c.Number,
 			PagesCount: int64(c.PagesCount),
 			Title:      fmt.Sprintf("Capítulo %04d", int64(c.Number)),
 		},
-		Id: c.Id,
+		c.Id,
 	}
 }
 

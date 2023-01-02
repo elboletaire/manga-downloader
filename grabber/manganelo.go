@@ -16,9 +16,14 @@ type Manganelo struct {
 	rows *goquery.Selection
 }
 
+type ManganeloChapter struct {
+	Chapter
+	URL string
+}
+
 // Test returns true if the URL is a valid Manganelo URL
 func (m *Manganelo) Test() bool {
-	body, err := http.Get(http.GetParams{
+	body, err := http.Get(http.RequestParams{
 		URL: m.URL,
 	})
 	if err != nil {
@@ -62,9 +67,11 @@ func (m Manganelo) FetchChapters(language string) Filterables {
 			u = m.GetBaseUrl() + u
 		}
 		chapter := &ManganeloChapter{
-			Number: number,
-			URL:    u,
-			Title:  s.Find("a").Text(),
+			Chapter{
+				Number: number,
+				Title:  s.Find("a").Text(),
+			},
+			u,
 		}
 		if chapter.URL == "" {
 			color.Red("chapter %f has no URL to fetch from 😕", chapter.Number)
@@ -80,12 +87,13 @@ func (m Manganelo) FetchChapters(language string) Filterables {
 // FetchChapter fetches a chapter and its pages
 func (m Manganelo) FetchChapter(f Filterable) Chapter {
 	mchap := f.(*ManganeloChapter)
-	body, err := http.Get(http.GetParams{
+	body, err := http.Get(http.RequestParams{
 		URL: mchap.URL,
 	})
 	if err != nil {
 		panic(err)
 	}
+	defer body.Close()
 	doc, err := goquery.NewDocumentFromReader(body)
 	if err != nil {
 		panic(err)
@@ -102,34 +110,21 @@ func (m Manganelo) FetchChapter(f Filterable) Chapter {
 	// get the chapter pages
 	doc.Find("div.container-chapter-reader img").Each(func(i int, s *goquery.Selection) {
 		u := s.AttrOr("src", "")
+		n := int64(i)
+		if u == "" {
+			color.Red("page %d has no URL to fetch from 😕 (will be ignored)", n)
+			return
+		}
 		if !strings.HasPrefix(u, "http") {
 			u = m.GetBaseUrl() + u
 		}
 		page := Page{
-			Number: int64(i),
+			Number: n,
 			URL:    u,
-		}
-		if page.URL == "" {
-			color.Red("page %d has no URL to fetch from 😕 (will be ignored)", page.Number)
-			return
 		}
 		pages = append(pages, page)
 	})
 
 	chapter.Pages = pages
 	return chapter
-}
-
-type ManganeloChapter struct {
-	Number float64
-	Title  string
-	URL    string
-}
-
-func (m *ManganeloChapter) GetNumber() float64 {
-	return m.Number
-}
-
-func (m *ManganeloChapter) GetTitle() string {
-	return m.Title
 }

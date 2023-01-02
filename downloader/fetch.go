@@ -30,7 +30,7 @@ func FetchChapter(site grabber.Site, chapter grabber.Chapter) (files Files, err 
 			defer wg.Done()
 
 			filename := fmt.Sprintf("%03d.jpg", page.Number)
-			file, err := FetchFile(http.GetParams{
+			file, err := FetchFile(http.RequestParams{
 				URL:     page.URL,
 				Referer: site.GetBaseUrl(),
 			}, filename)
@@ -49,7 +49,7 @@ func FetchChapter(site grabber.Site, chapter grabber.Chapter) (files Files, err 
 }
 
 // FetchFiles gets an online file returning a new *File
-func FetchFile(params http.GetParams, filename string) (file *File, err error) {
+func FetchFile(params http.RequestParams, filename string) (file *File, err error) {
 	body, err := http.Get(params)
 	if err != nil {
 		return
