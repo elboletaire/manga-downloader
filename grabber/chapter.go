@@ -1,5 +1,7 @@
 package grabber
 
+import "strings"
+
 type Chapter struct {
 	Title      string
 	Number     float64
@@ -21,5 +23,5 @@ func (c Chapter) GetNumber() float64 {
 }
 
 func (c Chapter) GetTitle() string {
-	return c.Title
+	return strings.TrimSpace(c.Title)
 }

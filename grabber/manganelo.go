@@ -51,12 +51,12 @@ func (m *Manganelo) Test() bool {
 }
 
 // Ttitle returns the manga title
-func (m Manganelo) GetTitle(language string) string {
+func (m Manganelo) GetTitle() string {
 	return m.doc.Find("h1").Text()
 }
 
 // FetchChapters returns a slice of chapters
-func (m Manganelo) FetchChapters(language string) Filterables {
+func (m Manganelo) FetchChapters() Filterables {
 	chapters := Filterables{}
 	m.rows.Each(func(i int, s *goquery.Selection) {
 		re := regexp.MustCompile(`(\d+\.?\d*)`)

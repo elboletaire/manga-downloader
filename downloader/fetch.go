@@ -22,9 +22,11 @@ type Files []*File
 func FetchChapter(site grabber.Site, chapter grabber.Chapter) (files Files, err error) {
 	var wg sync.WaitGroup
 
-	color.Blue("- downloading...")
+	color.Blue("- downloading %s pages...", color.HiBlackString(chapter.GetTitle()))
+	guard := make(chan struct{}, site.GetMaxConcurrency().Pages)
 
 	for _, page := range chapter.Pages {
+		guard <- struct{}{}
 		wg.Add(1)
 		go func(page grabber.Page) {
 			defer wg.Done()
@@ -39,7 +41,11 @@ func FetchChapter(site grabber.Site, chapter grabber.Chapter) (files Files, err 
 				color.Red("- error downloading page %s", filename)
 				return
 			}
+
 			files = append(files, file)
+
+			// release guard
+			<-guard
 		}(page)
 	}
 

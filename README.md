@@ -8,6 +8,8 @@ Manga Downloader
 This app downloads mangas from websites like mangadex and stores them into cbz files, so you can read them with your
 favorite ereader or reading app.
 
+![demo img]
+
 Supported sites
 ---------------
 
@@ -113,3 +115,4 @@ All the code contained in this repo is licensed under the [GNU Affero General Pu
 [license]: ./LICENSE
 [releases]: https://github.com/elboletaire/manga-downloader/releases
 [issues]: https://github.com/elboletaire/manga-downloader/issues
+[demo img]: ./demo.gif

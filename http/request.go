@@ -29,6 +29,7 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 		DisableCompression: true,
 	}
 	client := &http.Client{Transport: tr}
+
 	req, _ := http.NewRequest(t, params.GetURL(), nil)
 	if params.GetReferer() != "" {
 		req.Header.Add("Referer", params.GetReferer())

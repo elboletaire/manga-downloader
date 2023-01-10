@@ -28,7 +28,7 @@ func (i *InManga) Test() bool {
 }
 
 // FetchChapters returns the chapters of the manga
-func (i InManga) FetchChapters(language string) Filterables {
+func (i InManga) FetchChapters() Filterables {
 	id := GetUUID(i.URL)
 
 	// retrieve chapters json list
@@ -58,7 +58,7 @@ func (i InManga) FetchChapters(language string) Filterables {
 }
 
 // GetTitle fetches the manga title
-func (i *InManga) GetTitle(language string) string {
+func (i *InManga) GetTitle() string {
 	if i.title != "" {
 		return i.title
 	}

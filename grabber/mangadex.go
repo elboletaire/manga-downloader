@@ -28,7 +28,7 @@ func (m *MangaDex) Test() bool {
 }
 
 // GetTitle returns the title of the manga
-func (m *MangaDex) GetTitle(language string) string {
+func (m *MangaDex) GetTitle() string {
 	if m.title != "" {
 		return m.title
 	}
@@ -36,7 +36,8 @@ func (m *MangaDex) GetTitle(language string) string {
 	id := GetUUID(m.URL)
 
 	rbody, err := http.Get(http.RequestParams{
-		URL: "https://api.mangadex.org/manga/" + id,
+		URL:     "https://api.mangadex.org/manga/" + id,
+		Referer: m.GetBaseUrl(),
 	})
 	if err != nil {
 		panic(err)
@@ -49,8 +50,8 @@ func (m *MangaDex) GetTitle(language string) string {
 	}
 
 	// fetch the title in the requested language
-	if language != "" {
-		trans := body.Data.Attributes.AltTitles.GetTitleByLang(language)
+	if m.PreferredLanguage != "" {
+		trans := body.Data.Attributes.AltTitles.GetTitleByLang(m.PreferredLanguage)
 
 		if trans != "" {
 			m.title = trans
@@ -64,7 +65,7 @@ func (m *MangaDex) GetTitle(language string) string {
 }
 
 // FetchChapters returns the chapters of the manga
-func (m MangaDex) FetchChapters(language string) Filterables {
+func (m MangaDex) FetchChapters() Filterables {
 	id := GetUUID(m.URL)
 
 	var chapters Filterables
@@ -82,8 +83,8 @@ func (m MangaDex) FetchChapters(language string) Filterables {
 		params.Add("order[volume]", "asc")
 		params.Add("order[chapter]", "asc")
 		params.Add("offset", fmt.Sprint(offset))
-		if language != "" {
-			params.Add("translatedLanguage[]", language)
+		if m.PreferredLanguage != "" {
+			params.Add("translatedLanguage[]", m.PreferredLanguage)
 		}
 		uri = fmt.Sprintf("%s?%s", uri, params.Encode())
 

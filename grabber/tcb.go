@@ -45,7 +45,7 @@ func (t *Tcb) Test() bool {
 	return t.chaps.Length() > 0
 }
 
-func (t *Tcb) GetTitle(language string) string {
+func (t *Tcb) GetTitle() string {
 	if t.title != "" {
 		return t.title
 	}
@@ -68,7 +68,7 @@ func (t *Tcb) GetTitle(language string) string {
 	return t.title
 }
 
-func (t Tcb) FetchChapters(language string) Filterables {
+func (t Tcb) FetchChapters() Filterables {
 	chapters := Filterables{}
 	t.chaps.Each(func(i int, s *goquery.Selection) {
 		title := strings.TrimSpace(s.Find("a").Text())
