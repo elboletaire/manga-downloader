@@ -115,4 +115,4 @@ All the code contained in this repo is licensed under the [GNU Affero General Pu
 [license]: ./LICENSE
 [releases]: https://github.com/elboletaire/manga-downloader/releases
 [issues]: https://github.com/elboletaire/manga-downloader/issues
-[demo img]: ./demo.gif
+[demo img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demo.gif
