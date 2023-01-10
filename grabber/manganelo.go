@@ -35,19 +35,14 @@ func (m *Manganelo) Test() bool {
 	}
 
 	// manganelo style
-	rows := m.doc.Find("div.panel-story-chapter-list .row-content-chapter li")
-	if rows.Length() > 0 {
-		m.rows = rows
+	m.rows = m.doc.Find("div.panel-story-chapter-list .row-content-chapter li")
+	if m.rows.Length() > 0 {
 		return true
 	}
 	// mangakakalot style
-	rows = m.doc.Find("div.chapter-list div.row")
-	if rows.Length() > 0 {
-		m.rows = rows
-		return true
-	}
+	m.rows = m.doc.Find("div.chapter-list div.row")
 
-	return false
+	return m.rows.Length() > 0
 }
 
 // Ttitle returns the manga title
