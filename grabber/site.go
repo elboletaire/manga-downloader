@@ -14,6 +14,7 @@ type Grabber struct {
 	URL               string
 	MaxConcurrency    MaxConcurrency
 	PreferredLanguage string
+	FilenameTemplate  string
 }
 
 type MaxConcurrency struct {
@@ -28,6 +29,7 @@ type Site interface {
 	FetchChapters() Filterables
 	FetchChapter(Filterable) Chapter
 	GetBaseUrl() string
+	GetFilenameTemplate() string
 	GetMaxConcurrency() MaxConcurrency
 	GetTitle() string
 	GetPreferredLanguage() string
@@ -72,6 +74,11 @@ func (g *Grabber) SetMaxConcurrency(m MaxConcurrency) {
 	g.MaxConcurrency = m
 }
 
+// GetFilenameTemplate returns the defined filename template
+func (g Grabber) GetFilenameTemplate() string {
+	return g.FilenameTemplate
+}
+
 // InitFlags initializes the command flags
 func (g *Grabber) InitFlags(cmd *cobra.Command) {
 	g.SetMaxConcurrency(MaxConcurrency{
@@ -79,6 +86,7 @@ func (g *Grabber) InitFlags(cmd *cobra.Command) {
 		Pages:    maxUint8Flag(cmd.Flag("concurrency-pages"), 10),
 	})
 	g.PreferredLanguage = cmd.Flag("language").Value.String()
+	g.FilenameTemplate = cmd.Flag("filename-template").Value.String()
 }
 
 // NewSite returns a new site based on the passed url
@@ -86,6 +94,7 @@ func NewSite(url string) Site {
 	g := &Grabber{
 		url,
 		MaxConcurrency{},
+		"",
 		"",
 	}
 

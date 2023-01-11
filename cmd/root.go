@@ -92,7 +92,13 @@ mangadex.org in Spanish`, "manga-downloader", color.YellowString("manga-download
 					panic(err)
 				}
 
-				filename := fmt.Sprintf("%s %s.cbz", title, chapter.GetTitle())
+				filename, err := packer.NewFilenameFromTemplate(title, chapter, s.GetFilenameTemplate())
+				if err != nil {
+					panic(err)
+				}
+
+				filename += ".cbz"
+
 				fmt.Printf("- %s %s\n", color.GreenString("saving file"), color.HiBlackString(filename))
 				err = packer.ArchiveCBZ(filename, files)
 				if err != nil {
@@ -133,4 +139,5 @@ func init() {
 	rootCmd.Flags().Uint8P("concurrency", "c", 5, "number of concurrent chapter downloads, hard-limited to 5")
 	rootCmd.Flags().Uint8P("concurrency-pages", "C", 10, "number of concurrent page downloads, hard-limited to 10")
 	rootCmd.Flags().StringP("language", "l", "", "only download the specified language")
+	rootCmd.Flags().StringP("filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
 }
