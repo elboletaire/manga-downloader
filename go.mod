@@ -8,6 +8,7 @@ require (
 	github.com/ivanpirog/coloredcobra v1.0.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
+	google.golang.org/protobuf v1.28.1
 )
 
 require (

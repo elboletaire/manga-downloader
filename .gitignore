@@ -1,2 +1,3 @@
 manga-downloader
 *.cbz
+proto/*.go

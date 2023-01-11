@@ -1,0 +1,195 @@
+syntax = "proto3";
+
+option go_package = "github.com/elboletaire/manga-downloader/proto;proto";
+
+package mangadownloader.mangaplus.v1;
+
+message Banner {
+  string image_url = 1;
+  TransitionAction action = 2;
+  uint32 id = 3;
+}
+
+message BannerList {
+  string banner_title = 1;
+  repeated Banner banners = 2;
+}
+
+message TransitionAction {
+  int32 method = 1;
+  string url = 2;
+}
+
+message Chapter {
+  uint32 title_id = 1;
+  uint32 chapter_id = 2;
+  string name = 3;
+  string sub_title = 4;
+  string thumbnail_url = 5;
+  uint32 start_timestamp = 6;
+  uint32 end_timestamp = 7;
+  bool already_viewed = 8;
+  bool is_vertical_only = 9;
+}
+
+
+message Comment {
+  uint32 id = 1;
+  uint32 index = 2;
+  string user_name = 3;
+  string icon_url = 4;
+  bool is_my_comment = 6;
+  bool already_liked = 7;
+  uint32 number_of_likes = 9;
+  string body = 10;
+  uint32 created = 11;
+}
+
+message AdNetworkList {
+  message AdNetwork {
+      message Facebook {
+          string placement_id = 1;
+      }
+
+      message Admob {
+          string unit_id = 1;
+      }
+      message Mopub {
+          string unit_id = 1;
+      }
+      message Adsense {
+          string unit_id = 1;
+      }
+      message Applovin {
+          string unit_id = 1;
+      }
+
+      Facebook facebook = 1;
+      Admob admob = 2;
+      Mopub mopub = 3;
+      Adsense adsense = 4;
+      Applovin applovin = 5;
+  }
+
+  AdNetwork ad_networks = 1;
+}
+
+
+message Popup {
+  message Button {
+      string text = 1;
+      TransitionAction action = 2;
+  }
+
+  message OSDefault {
+      string subject = 1;
+      string body = 2;
+      Button ok_button = 3;
+      Button neutral_button = 4;
+      Button cancel_button = 5;
+
+  }
+
+  message AppDefault {
+      string subject = 1;
+      string body = 2;
+      TransitionAction action = 3;
+      string image_url = 4;
+  }
+
+  message MovieReward {
+      string image_url = 1;
+      AdNetworkList advertisement = 2;
+  }
+
+  OSDefault os_default = 1;
+  AppDefault app_default = 2;
+  MovieReward movie_reward = 3;
+}
+
+
+message LastPage {
+  Chapter current_chapter = 1;
+  Chapter next_chapter = 2;
+  repeated Comment top_comments = 3;
+  bool is_subscribed = 4;
+  uint32 next_timestamp = 5;
+  int32 chapter_type = 6;
+  AdNetworkList advertisement = 7;
+  Popup movie_reward = 8;
+}
+
+message MangaPage {
+  string image_url = 1;
+  uint32 width = 2;
+  uint32 height = 3;
+  int32 type = 4;
+  string encryption_key = 5;
+}
+
+message Page {
+  MangaPage manga_page = 1;
+  BannerList banner_list = 2;
+  LastPage last_page = 3;
+  AdNetworkList advertisement = 4;
+}
+
+message SnsShare {
+    string body = 1;
+    string url = 2;
+}
+
+message MangaViewer {
+    repeated Page pages = 1;
+    uint32 chapter_id = 2;
+    repeated Chapter chapters = 3;
+    SnsShare sns = 4;
+    string title_name = 5;
+    string chapter_name = 6;
+    uint32 number_of_comments = 7;
+    bool is_vertical_only = 8;
+    uint32 title_id = 9;
+    bool start_from_right = 10;
+}
+
+message Title {
+    uint32 title_id = 1;
+    string name = 2;
+    string author = 3;
+    string portrait_image_url = 4;
+    string landscape_image_url = 5;
+    uint32 view_count = 6;
+    int32 language = 7;
+}
+
+message TitleDetailView {
+    Title title = 1;
+    string image_url = 2;
+    string overview = 3;
+    string background_image_url = 4;
+    uint32 next_timestamp = 5;
+    int32 update_timing = 6;
+    string viewing_description = 7;
+    // string non_appearance_info = 8;
+    // repeated Chapter first_chapter_list = 9;
+    // repeated Chapter last_chapter_list = 10;
+    repeated Banner banners = 11;
+    repeated Title recommended_title_list = 12;
+    SnsShare sns = 13;
+    bool is_simul_released = 14;
+    bool is_subscribed = 15;
+    int32 rating = 16;
+    bool chapters_descending = 17;
+    uint32 number_of_views = 18;
+    repeated Banner publisher_banners = 19;
+    repeated Banner featured_banners = 20;
+}
+
+message SuccessResult {
+    TitleDetailView title_detail_view = 8;
+    MangaViewer manga_viewer = 10;
+}
+
+message Response {
+    SuccessResult success = 1;
+}

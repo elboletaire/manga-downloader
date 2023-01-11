@@ -11,13 +11,21 @@ GOFLAGS = -ldflags="$(GOLDFLAGS)"
 RICHGO := $(shell command -v richgo 2> /dev/null)
 
 clean:
+	rm -fv ./proto/*.go
 	rm -fv ./manga-downloader ./manga-downloader.exe
 
-install:
+download:
 	go mod download
 
-build:
+install: download build/models
+
+build: build/models build/linux
+
+build/linux:
 	go build -o manga-downloader ${GOFLAGS} .
+
+build/models:
+	protoc --go_opt=paths=source_relative -I=./proto --go_out=./proto ./proto/*.proto
 
 build-win:
 	go build -o manga-downloader.exe ${GOFLAGS} .
