@@ -10,26 +10,26 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// InManga is a grabber for inmanga.com
-type InManga struct {
+// Inmanga is a grabber for inmanga.com
+type Inmanga struct {
 	Grabber
 	title string
 }
 
-// InMangaChapter is a chapter representation from InManga
-type InMangaChapter struct {
+// InmangaChapter is a chapter representation from InManga
+type InmangaChapter struct {
 	Chapter
 	Id string
 }
 
 // Test checks if the site is InManga
-func (i *InManga) Test() bool {
+func (i *Inmanga) Test() bool {
 	re := regexp.MustCompile(`inmanga\.com`)
 	return re.MatchString(i.URL)
 }
 
 // FetchChapters returns the chapters of the manga
-func (i InManga) FetchChapters() Filterables {
+func (i Inmanga) FetchChapters() Filterables {
 	id := GetUUID(i.URL)
 
 	// retrieve chapters json list
@@ -48,17 +48,17 @@ func (i InManga) FetchChapters() Filterables {
 		panic(err)
 	}
 
-	feed := InMangaChapterFeed{}
+	feed := inmangaChapterFeed{}
 	err = json.Unmarshal([]byte(raw.Data), &feed)
 	if err != nil {
 		panic(err)
 	}
 
-	return NewInMangaChaptersSlice(feed.Result)
+	return newInmangaChaptersSlice(feed.Result)
 }
 
 // GetTitle fetches the manga title
-func (i *InManga) GetTitle() string {
+func (i *Inmanga) GetTitle() string {
 	if i.title != "" {
 		return i.title
 	}
@@ -81,8 +81,8 @@ func (i *InManga) GetTitle() string {
 }
 
 // FetchChapter fetches the chapter with its pages
-func (i InManga) FetchChapter(chap Filterable) Chapter {
-	ichap := chap.(*InMangaChapter)
+func (i Inmanga) FetchChapter(chap Filterable) Chapter {
+	ichap := chap.(*InmangaChapter)
 	body, err := http.Get(http.RequestParams{
 		URL: "https://inmanga.com/chapter/chapterIndexControls?identification=" + ichap.Id,
 	})
@@ -115,9 +115,9 @@ func (i InManga) FetchChapter(chap Filterable) Chapter {
 	return chapter
 }
 
-// NewInMangaChapter creates an InMangaChapter from an InMangaChapterFeedResult
-func NewInMangaChapter(c InMangaChapterFeedResult) *InMangaChapter {
-	return &InMangaChapter{
+// newInmangaChapter creates an InMangaChapter from an InMangaChapterFeedResult
+func newInmangaChapter(c inmangaChapterFeedResult) *InmangaChapter {
+	return &InmangaChapter{
 		Chapter{
 			Number:     c.Number,
 			PagesCount: int64(c.PagesCount),
@@ -127,23 +127,23 @@ func NewInMangaChapter(c InMangaChapterFeedResult) *InMangaChapter {
 	}
 }
 
-// NewInMangaChaptersSlice creates a slice of Filterables from a slice of InMangaChapterFeedResult
-func NewInMangaChaptersSlice(s []InMangaChapterFeedResult) Filterables {
+// newInmangaChaptersSlice creates a slice of Filterables from a slice of InMangaChapterFeedResult
+func newInmangaChaptersSlice(s []inmangaChapterFeedResult) Filterables {
 	chapters := make(Filterables, 0, len(s))
 	for _, c := range s {
-		chapters = append(chapters, NewInMangaChapter(c))
+		chapters = append(chapters, newInmangaChapter(c))
 	}
 
 	return chapters
 }
 
-// InMangaChapterFeed is the JSON feed for the chapters list
-type InMangaChapterFeed struct {
-	Result []InMangaChapterFeedResult
+// inmangaChapterFeed is the JSON feed for the chapters list
+type inmangaChapterFeed struct {
+	Result []inmangaChapterFeedResult
 }
 
-// InMangaChapterFeedResult is the JSON feed for a single chapter result
-type InMangaChapterFeedResult struct {
+// inmangaChapterFeedResult is the JSON feed for a single chapter result
+type inmangaChapterFeedResult struct {
 	Id         string `json:"identification"`
 	Number     float64
 	PagesCount float64

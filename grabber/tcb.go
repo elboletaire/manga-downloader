@@ -18,6 +18,12 @@ type Tcb struct {
 	title string
 }
 
+// TcbChapter is a chapter for TCBScans
+type TcbChapter struct {
+	Chapter
+	URL string
+}
+
 // Test returns true if the URL is a compatible TCBScans URL
 func (t *Tcb) Test() bool {
 	re := regexp.MustCompile(`manga\/(.*)\/$`)
@@ -139,10 +145,4 @@ func (t Tcb) FetchChapter(f Filterable) Chapter {
 	chapter.Pages = pages
 
 	return chapter
-}
-
-// TcbChapter is a chapter for TCBScans
-type TcbChapter struct {
-	Chapter
-	URL string
 }

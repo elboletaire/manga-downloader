@@ -17,6 +17,7 @@ type Grabber struct {
 	FilenameTemplate  string
 }
 
+// MaxConcurrency is the max concurrency for a site
 type MaxConcurrency struct {
 	Chapters uint8
 	Pages    uint8
@@ -38,7 +39,7 @@ type Site interface {
 // IdentifySite returns the site passing the Test() for the specified url
 func (g *Grabber) IdentifySite() Site {
 	sites := []Site{
-		&InManga{Grabber: *g},
+		&Inmanga{Grabber: *g},
 		&Mangadex{Grabber: *g},
 		&Tcb{Grabber: *g},
 		&Manganelo{Grabber: *g},

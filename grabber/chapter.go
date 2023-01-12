@@ -4,17 +4,24 @@ import "strings"
 
 // Chapter represents a manga chapter
 type Chapter struct {
-	Title      string
-	Number     float64
+	// Title is the chapter title
+	Title string
+	// Number is the chapter number
+	Number float64
+	// PagesCount is the number of pages in the chapter
 	PagesCount int64
-	Pages      []Page
-	Language   string
+	// Pages is the list of pages in the chapter
+	Pages []Page
+	// Language is the chapter language
+	Language string
 }
 
 // Page represents a chapter page
 type Page struct {
+	// Number is the page number
 	Number int64
-	URL    string
+	// URL is the page URL
+	URL string
 }
 
 // GetNumber returns the chapter number

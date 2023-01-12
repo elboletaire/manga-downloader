@@ -45,7 +45,7 @@ func (m *Mangadex) GetTitle() string {
 		panic(err)
 	}
 	defer rbody.Close()
-	body := MangadexManga{}
+	body := mangadexManga{}
 	if err = json.NewDecoder(rbody).Decode(&body); err != nil {
 		panic(err)
 	}
@@ -93,7 +93,7 @@ func (m Mangadex) FetchChapters() Filterables {
 			panic(err)
 		}
 		defer rbody.Close()
-		body := MangadexFeed{}
+		body := mangadexFeed{}
 		err = json.NewDecoder(rbody).Decode(&body)
 		if err != nil {
 			panic(err)
@@ -131,7 +131,7 @@ func (m Mangadex) FetchChapter(f Filterable) Chapter {
 		panic(err)
 	}
 	// parse json body
-	body := MangadexPagesFeed{}
+	body := mangadexPagesFeed{}
 	if err = json.NewDecoder(rbody).Decode(&body); err != nil {
 		panic(err)
 	}
@@ -154,22 +154,22 @@ func (m Mangadex) FetchChapter(f Filterable) Chapter {
 	return chapter
 }
 
-// MangadexManga represents the Manga json object
-type MangadexManga struct {
+// mangadexManga represents the Manga json object
+type mangadexManga struct {
 	Id   string
 	Data struct {
 		Attributes struct {
 			Title     map[string]string
-			AltTitles AltTitles
+			AltTitles altTitles
 		}
 	}
 }
 
-// AltTitles is a slice of maps with the language as key and the title as value
-type AltTitles []map[string]string
+// altTitles is a slice of maps with the language as key and the title as value
+type altTitles []map[string]string
 
 // GetTitleByLang returns the title in the given language (or empty if string is not found)
-func (a AltTitles) GetTitleByLang(lang string) string {
+func (a altTitles) GetTitleByLang(lang string) string {
 	for _, t := range a {
 		val, ok := t[lang]
 		if ok {
@@ -179,8 +179,8 @@ func (a AltTitles) GetTitleByLang(lang string) string {
 	return ""
 }
 
-// MangadexFeed represents the json object returned by the feed endpoint
-type MangadexFeed struct {
+// mangadexFeed represents the json object returned by the feed endpoint
+type mangadexFeed struct {
 	Data []struct {
 		Id         string
 		Attributes struct {
@@ -192,8 +192,8 @@ type MangadexFeed struct {
 	}
 }
 
-// MangadexPagesFeed represents the json object returned by the pages endpoint
-type MangadexPagesFeed struct {
+// mangadexPagesFeed represents the json object returned by the pages endpoint
+type mangadexPagesFeed struct {
 	BaseUrl string
 	Chapter struct {
 		Hash      string
