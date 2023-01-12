@@ -103,7 +103,7 @@ func (m Manganelo) FetchChapter(f Filterable) Chapter {
 		PagesCount: int64(pimages.Length()),
 		Language:   "en",
 	}
-	var pages []Page
+	pages := []Page{}
 	// get the chapter pages
 	doc.Find("div.container-chapter-reader img").Each(func(i int, s *goquery.Selection) {
 		u := s.AttrOr("src", "")

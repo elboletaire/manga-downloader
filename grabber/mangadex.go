@@ -69,10 +69,9 @@ func (m *Mangadex) GetTitle() string {
 func (m Mangadex) FetchChapters() Filterables {
 	id := GetUUID(m.URL)
 
-	var chapters Filterables
-	var fetchChaps func(int)
-
 	baseOffset := 500
+	chapters := Filterables{}
+	var fetchChaps func(int)
 
 	fetchChaps = func(offset int) {
 		uri, err := url.JoinPath("https://api.mangadex.org", "manga", id, "feed")

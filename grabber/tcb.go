@@ -119,7 +119,7 @@ func (t Tcb) FetchChapter(f Filterable) Chapter {
 		PagesCount: int64(pimages.Length()),
 		Language:   "en",
 	}
-	var pages []Page
+	pages := []Page{}
 	pimages.Each(func(i int, s *goquery.Selection) {
 		u := strings.TrimSpace(s.AttrOr("data-src", ""))
 		n := int64(i + 1)
