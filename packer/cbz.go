@@ -8,7 +8,8 @@ import (
 	"github.com/elboletaire/manga-downloader/downloader"
 )
 
-func ArchiveCBZ(filename string, files downloader.Files) error {
+// ArchiveCBZ archives the given files into a CBZ file
+func ArchiveCBZ(filename string, files []*downloader.File) error {
 	if len(files) == 0 {
 		return errors.New("no files to pack")
 	}
@@ -24,8 +25,7 @@ func ArchiveCBZ(filename string, files downloader.Files) error {
 		if err != nil {
 			return err
 		}
-		_, err = f.Write(file.Data)
-		if err != nil {
+		if _, err = f.Write(file.Data); err != nil {
 			return err
 		}
 	}

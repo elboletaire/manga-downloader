@@ -10,6 +10,7 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
+// InManga is a grabber for inmanga.com
 type InManga struct {
 	Grabber
 	title string
@@ -43,8 +44,7 @@ func (i InManga) FetchChapters() Filterables {
 		Data string
 	}{}
 
-	err = json.Unmarshal([]byte(body), &raw)
-	if err != nil {
+	if err = json.Unmarshal([]byte(body), &raw); err != nil {
 		panic(err)
 	}
 

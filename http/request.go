@@ -6,24 +6,29 @@ import (
 	"net/http"
 )
 
+// Params is an interface for request parameters
 type Params interface {
 	GetURL() string
 	GetReferer() string
 }
 
+// RequestParams is a struct for base request parameters
 type RequestParams struct {
 	URL     string
 	Referer string
 }
 
+// GetURL returns the request URL
 func (r RequestParams) GetURL() string {
 	return r.URL
 }
 
+// GetReferer returns the request referer
 func (r RequestParams) GetReferer() string {
 	return r.Referer
 }
 
+// request sends a request to the given URL
 func request(t string, params Params) (body io.ReadCloser, err error) {
 	tr := &http.Transport{
 		DisableCompression: true,

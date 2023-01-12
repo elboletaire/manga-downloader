@@ -10,12 +10,14 @@ import (
 	"github.com/fatih/color"
 )
 
+// Manganelo is a grabber for manganelo and similar pages
 type Manganelo struct {
 	Grabber
 	doc  *goquery.Document
 	rows *goquery.Selection
 }
 
+// ManganeloChapter represents a Manganelo Chapter
 type ManganeloChapter struct {
 	Chapter
 	URL string
@@ -101,7 +103,7 @@ func (m Manganelo) FetchChapter(f Filterable) Chapter {
 		PagesCount: int64(pimages.Length()),
 		Language:   "en",
 	}
-	var pages Pages
+	var pages []Page
 	// get the chapter pages
 	doc.Find("div.container-chapter-reader img").Each(func(i int, s *goquery.Selection) {
 		u := s.AttrOr("src", "")

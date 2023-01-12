@@ -11,13 +11,24 @@ GOFLAGS = -ldflags="$(GOLDFLAGS)"
 RICHGO := $(shell command -v richgo 2> /dev/null)
 
 clean:
-	rm -fv ./manga-downloader ./manga-downloader.exe
+	rm -fv ./manga-downloader*
 
 install:
 	go mod download
 
-build:
+build: clean test build/unix
+
+build/all: clean test build/unix build/win
+
+build/unix:
 	go build -o manga-downloader ${GOFLAGS} .
 
-build-win:
+build/win:
 	go build -o manga-downloader.exe ${GOFLAGS} .
+
+test:
+ifdef RICHGO
+	richgo test -v ./...
+else
+	go test -v ./...
+endif

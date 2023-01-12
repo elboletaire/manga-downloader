@@ -11,24 +11,26 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-type MangaDex struct {
+// Mangadex is a grabber for mangadex.org
+type Mangadex struct {
 	Grabber
 	title string
 }
 
-type MangaDexChapter struct {
+// MangadexChapter represents a MangaDex Chapter
+type MangadexChapter struct {
 	Chapter
 	Id string
 }
 
 // Test checks if the site is MangaDex
-func (m *MangaDex) Test() bool {
+func (m *Mangadex) Test() bool {
 	re := regexp.MustCompile(`mangadex\.org`)
 	return re.MatchString(m.URL)
 }
 
 // GetTitle returns the title of the manga
-func (m *MangaDex) GetTitle() string {
+func (m *Mangadex) GetTitle() string {
 	if m.title != "" {
 		return m.title
 	}
@@ -43,9 +45,8 @@ func (m *MangaDex) GetTitle() string {
 		panic(err)
 	}
 	defer rbody.Close()
-	body := MangaDexManga{}
-	err = json.NewDecoder(rbody).Decode(&body)
-	if err != nil {
+	body := MangadexManga{}
+	if err = json.NewDecoder(rbody).Decode(&body); err != nil {
 		panic(err)
 	}
 
@@ -65,7 +66,7 @@ func (m *MangaDex) GetTitle() string {
 }
 
 // FetchChapters returns the chapters of the manga
-func (m MangaDex) FetchChapters() Filterables {
+func (m Mangadex) FetchChapters() Filterables {
 	id := GetUUID(m.URL)
 
 	var chapters Filterables
@@ -93,7 +94,7 @@ func (m MangaDex) FetchChapters() Filterables {
 			panic(err)
 		}
 		defer rbody.Close()
-		body := MangaDexFeed{}
+		body := MangadexFeed{}
 		err = json.NewDecoder(rbody).Decode(&body)
 		if err != nil {
 			panic(err)
@@ -101,7 +102,7 @@ func (m MangaDex) FetchChapters() Filterables {
 
 		for _, c := range body.Data {
 			num, _ := strconv.ParseFloat(c.Attributes.Chapter, 64)
-			chapters = append(chapters, &MangaDexChapter{
+			chapters = append(chapters, &MangadexChapter{
 				Chapter{
 					Number:   num,
 					Title:    c.Attributes.Title,
@@ -121,8 +122,8 @@ func (m MangaDex) FetchChapters() Filterables {
 }
 
 // FetchChapter fetches a chapter and its pages
-func (m MangaDex) FetchChapter(f Filterable) Chapter {
-	chap := f.(*MangaDexChapter)
+func (m Mangadex) FetchChapter(f Filterable) Chapter {
+	chap := f.(*MangadexChapter)
 	// download json
 	rbody, err := http.Get(http.RequestParams{
 		URL: "https://api.mangadex.org/at-home/server/" + chap.Id,
@@ -131,9 +132,8 @@ func (m MangaDex) FetchChapter(f Filterable) Chapter {
 		panic(err)
 	}
 	// parse json body
-	body := MangaDexPagesFeed{}
-	err = json.NewDecoder(rbody).Decode(&body)
-	if err != nil {
+	body := MangadexPagesFeed{}
+	if err = json.NewDecoder(rbody).Decode(&body); err != nil {
 		panic(err)
 	}
 
@@ -155,7 +155,8 @@ func (m MangaDex) FetchChapter(f Filterable) Chapter {
 	return chapter
 }
 
-type MangaDexManga struct {
+// MangadexManga represents the Manga json object
+type MangadexManga struct {
 	Id   string
 	Data struct {
 		Attributes struct {
@@ -179,7 +180,8 @@ func (a AltTitles) GetTitleByLang(lang string) string {
 	return ""
 }
 
-type MangaDexFeed struct {
+// MangadexFeed represents the json object returned by the feed endpoint
+type MangadexFeed struct {
 	Data []struct {
 		Id         string
 		Attributes struct {
@@ -191,7 +193,8 @@ type MangaDexFeed struct {
 	}
 }
 
-type MangaDexPagesFeed struct {
+// MangadexPagesFeed represents the json object returned by the pages endpoint
+type MangadexPagesFeed struct {
 	BaseUrl string
 	Chapter struct {
 		Hash      string

@@ -11,13 +11,14 @@ import (
 	"github.com/fatih/color"
 )
 
+// Tcb is a grabber for tcbscans.com (and possibly other wordpress sites)
 type Tcb struct {
 	Grabber
 	chaps *goquery.Selection
 	title string
 }
 
-// Test returns true if the URL is a valid TCBScans URL
+// Test returns true if the URL is a compatible TCBScans URL
 func (t *Tcb) Test() bool {
 	re := regexp.MustCompile(`manga\/(.*)\/$`)
 	if !re.MatchString(t.URL) {
@@ -45,6 +46,7 @@ func (t *Tcb) Test() bool {
 	return t.chaps.Length() > 0
 }
 
+// GetTitle fetches and returns the manga title
 func (t *Tcb) GetTitle() string {
 	if t.title != "" {
 		return t.title
@@ -68,6 +70,7 @@ func (t *Tcb) GetTitle() string {
 	return t.title
 }
 
+// FetchChapters returns a slice of chapters
 func (t Tcb) FetchChapters() Filterables {
 	chapters := Filterables{}
 	t.chaps.Each(func(i int, s *goquery.Selection) {
@@ -92,6 +95,7 @@ func (t Tcb) FetchChapters() Filterables {
 	return chapters
 }
 
+// FetchChapter fetches a chapter and its pages
 func (t Tcb) FetchChapter(f Filterable) Chapter {
 	tchap := f.(*TcbChapter)
 
@@ -137,6 +141,7 @@ func (t Tcb) FetchChapter(f Filterable) Chapter {
 	return chapter
 }
 
+// TcbChapter is a chapter for TCBScans
 type TcbChapter struct {
 	Chapter
 	URL string

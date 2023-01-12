@@ -6,19 +6,23 @@ import (
 	"github.com/elboletaire/manga-downloader/ranges"
 )
 
+// Enumerable represents an object that can be enumerated
 type Enumerable interface {
 	GetNumber() float64
 }
 
+// Titleable represents an object that can be titled
 type Titleable interface {
 	GetTitle() string
 }
 
+// Filterable represents an filterable objects
 type Filterable interface {
 	Enumerable
 	Titleable
 }
 
+// Filterables represents a slice of Filterable
 type Filterables []Filterable
 
 // Filter allows to filter Filterables by the given condition
@@ -34,7 +38,7 @@ func (f Filterables) Filter(cond func(Filterable) bool) Filterables {
 }
 
 // FilterRanges returns the specified ranges of Filterables sorted by their Number
-func (f Filterables) FilterRanges(rngs ranges.Ranges) Filterables {
+func (f Filterables) FilterRanges(rngs []ranges.Range) Filterables {
 	var chaps Filterables
 	for _, r := range rngs {
 		chaps = append(chaps, f.Filter(func(c Filterable) bool {

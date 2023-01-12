@@ -16,10 +16,8 @@ type File struct {
 	Name string
 }
 
-type Files []*File
-
 // FetchChapter downloads all the pages of a chapter
-func FetchChapter(site grabber.Site, chapter grabber.Chapter) (files Files, err error) {
+func FetchChapter(site grabber.Site, chapter grabber.Chapter) (files []*File, err error) {
 	var wg sync.WaitGroup
 
 	color.Blue("- downloading %s pages...", color.HiBlackString(chapter.GetTitle()))
@@ -54,7 +52,7 @@ func FetchChapter(site grabber.Site, chapter grabber.Chapter) (files Files, err 
 	return
 }
 
-// FetchFiles gets an online file returning a new *File
+// FetchFile gets an online file returning a new *File with its contents
 func FetchFile(params http.RequestParams, filename string) (file *File, err error) {
 	body, err := http.Get(params)
 	if err != nil {

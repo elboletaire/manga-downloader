@@ -39,7 +39,7 @@ type Site interface {
 func (g *Grabber) IdentifySite() Site {
 	sites := []Site{
 		&InManga{Grabber: *g},
-		&MangaDex{Grabber: *g},
+		&Mangadex{Grabber: *g},
 		&Tcb{Grabber: *g},
 		&Manganelo{Grabber: *g},
 	}

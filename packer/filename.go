@@ -17,7 +17,7 @@ type FilenameTemplateParts struct {
 }
 
 // FilenameTemplateDefault is the default filename template
-var FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}"
+const FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}"
 
 // NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template
 func NewFilenameFromTemplate(title string, chapter grabber.Chapter, templ string) (string, error) {

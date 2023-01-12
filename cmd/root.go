@@ -100,8 +100,7 @@ mangadex.org in Spanish`, "manga-downloader", color.YellowString("manga-download
 				filename += ".cbz"
 
 				fmt.Printf("- %s %s\n", color.GreenString("saving file"), color.HiBlackString(filename))
-				err = packer.ArchiveCBZ(filename, files)
-				if err != nil {
+				if err = packer.ArchiveCBZ(filename, files); err != nil {
 					color.Red("- error saving file %s: %s", filename, err.Error())
 				}
 

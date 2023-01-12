@@ -5,14 +5,14 @@ import (
 	"strings"
 )
 
+// Range represents a range of numbers
 type Range struct {
 	Begin int64
 	End   int64
 }
 
-type Ranges []Range
-
-func Parse(rnge string) (rngs Ranges, err error) {
+// Parse parses a string and returns a slice of ranges
+func Parse(rnge string) (rngs []Range, err error) {
 	co := strings.Split(rnge, ",")
 	var cur int64
 	var begin int64
@@ -20,14 +20,12 @@ func Parse(rnge string) (rngs Ranges, err error) {
 
 	for _, part := range co {
 		in := strings.Split(part, "-")
-		cur, err = strconv.ParseInt(in[0], 10, 64)
-		if err != nil {
+		if cur, err = strconv.ParseInt(in[0], 10, 64); err != nil {
 			return
 		}
 		if len(in) == 2 {
 			begin = cur
-			end, err = strconv.ParseInt(in[1], 10, 64)
-			if err != nil {
+			if end, err = strconv.ParseInt(in[1], 10, 64); err != nil {
 				return
 			}
 		}
