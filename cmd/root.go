@@ -48,7 +48,13 @@ Would download chapters 10 to 20 of Black Clover from
 mangadex.org in Spanish`, "manga-downloader", color.YellowString("manga-downloader")),
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		s := grabber.NewSite(args[0])
+		s, errs := grabber.NewSite(args[0])
+		if len(errs) > 0 {
+			color.Red("Errors testing site (a site may be down):")
+			for _, err := range errs {
+				color.Red(err.Error())
+			}
+		}
 		if s == nil {
 			color.Yellow("Site not recognised")
 			os.Exit(1)
@@ -57,55 +63,70 @@ mangadex.org in Spanish`, "manga-downloader", color.YellowString("manga-download
 
 		// ranges parsing
 		rngs, err := ranges.Parse(args[1])
-		if err != nil {
-			panic(err)
-		}
+		cerr(err, "Error parsing ranges: %s")
 
 		// fetch series title
-		title := s.GetTitle()
+		title, err := s.FetchTitle()
+		cerr(err, "Error fetching title: %s")
 
 		// fetch all chapters
-		chapters := s.FetchChapters()
+		chapters, errs := s.FetchChapters()
+		if len(errs) > 0 {
+			color.Red("Errors fetching chapters:")
+			for _, err := range errs {
+				color.Red(err.Error())
+			}
+			os.Exit(1)
+		}
 
 		// sort and filter specified ranges
 		chapters = chapters.FilterRanges(rngs)
 
 		if len(chapters) == 0 {
-			color.Yellow("No chapters found for the specified ranges")
-			os.Exit(0)
+			warn("No chapters found for the specified ranges")
 		}
 
 		wg := sync.WaitGroup{}
-		guard := make(chan struct{}, s.GetMaxConcurrency().Chapters)
+		g := make(chan struct{}, s.GetMaxConcurrency().Chapters)
 
 		// loop chapters to retrieve pages
 		for _, chap := range chapters {
-			guard <- struct{}{}
+			g <- struct{}{}
 			wg.Add(1)
 			go func(chap grabber.Filterable) {
 				defer wg.Done()
-				chapter := s.FetchChapter(chap)
+				chapter, err := s.FetchChapter(chap)
+				if err != nil {
+					color.Red("- error fetching chapter %s: %s", chap.GetTitle(), err.Error())
+					<-g
+					return
+				}
 				fmt.Printf("fetched %s %s\n", color.CyanString(title), color.HiBlackString(chapter.GetTitle()))
 
 				files, err := downloader.FetchChapter(s, chapter)
 				if err != nil {
-					panic(err)
+					color.Red("- error downloading chapter %s: %s", chapter.GetTitle(), err.Error())
+					<-g
+					return
 				}
 
 				filename, err := packer.NewFilenameFromTemplate(title, chapter, s.GetFilenameTemplate())
 				if err != nil {
-					panic(err)
+					color.Red("- error creating filename for chapter %s: %s", chapter.GetTitle(), err.Error())
+					<-g
+					return
 				}
 
 				filename += ".cbz"
 
-				fmt.Printf("- %s %s\n", color.GreenString("saving file"), color.HiBlackString(filename))
 				if err = packer.ArchiveCBZ(filename, files); err != nil {
 					color.Red("- error saving file %s: %s", filename, err.Error())
+				} else {
+					fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
 				}
 
 				// release guard
-				<-guard
+				<-g
 			}(chap)
 		}
 		wg.Wait()
@@ -139,4 +160,16 @@ func init() {
 	rootCmd.Flags().Uint8P("concurrency-pages", "C", 10, "number of concurrent page downloads, hard-limited to 10")
 	rootCmd.Flags().StringP("language", "l", "", "only download the specified language")
 	rootCmd.Flags().StringP("filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
+}
+
+func cerr(err error, prefix string) {
+	if err != nil {
+		fmt.Println(color.RedString(prefix + err.Error()))
+		os.Exit(1)
+	}
+}
+
+func warn(err string) {
+	fmt.Println(color.YellowString(err))
+	os.Exit(1)
 }

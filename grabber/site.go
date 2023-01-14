@@ -26,32 +26,38 @@ type MaxConcurrency struct {
 // Site is the handler interface, base of all manga sites grabbers
 type Site interface {
 	InitFlags(cmd *cobra.Command)
-	Test() bool
-	FetchChapters() Filterables
-	FetchChapter(Filterable) Chapter
+	Test() (bool, error)
+	FetchChapters() (Filterables, []error)
+	FetchChapter(Filterable) (*Chapter, error)
+	FetchTitle() (string, error)
 	GetBaseUrl() string
 	GetFilenameTemplate() string
 	GetMaxConcurrency() MaxConcurrency
-	GetTitle() string
 	GetPreferredLanguage() string
 }
 
 // IdentifySite returns the site passing the Test() for the specified url
-func (g *Grabber) IdentifySite() Site {
+func (g *Grabber) IdentifySite() (Site, []error) {
 	sites := []Site{
 		&Inmanga{Grabber: *g},
 		&Mangadex{Grabber: *g},
 		&Tcb{Grabber: *g},
 		&Manganelo{Grabber: *g},
 	}
+	var errs []error
 
 	for _, s := range sites {
-		if s.Test() {
-			return s
+		ok, err := s.Test()
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		if ok {
+			return s, errs
 		}
 	}
 
-	return nil
+	return nil, errs
 }
 
 // GetBaseUrl returns the base url of the site
@@ -91,7 +97,7 @@ func (g *Grabber) InitFlags(cmd *cobra.Command) {
 }
 
 // NewSite returns a new site based on the passed url
-func NewSite(url string) Site {
+func NewSite(url string) (Site, []error) {
 	g := &Grabber{
 		url,
 		MaxConcurrency{},

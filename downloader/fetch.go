@@ -17,7 +17,7 @@ type File struct {
 }
 
 // FetchChapter downloads all the pages of a chapter
-func FetchChapter(site grabber.Site, chapter grabber.Chapter) (files []*File, err error) {
+func FetchChapter(site grabber.Site, chapter *grabber.Chapter) (files []*File, err error) {
 	wg := sync.WaitGroup{}
 
 	color.Blue("- downloading %s pages...", color.HiBlackString(chapter.GetTitle()))

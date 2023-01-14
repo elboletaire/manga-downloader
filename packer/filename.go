@@ -20,7 +20,7 @@ type FilenameTemplateParts struct {
 const FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}"
 
 // NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template
-func NewFilenameFromTemplate(title string, chapter grabber.Chapter, templ string) (string, error) {
+func NewFilenameFromTemplate(title string, chapter *grabber.Chapter, templ string) (string, error) {
 	tmpl, err := template.New("filename").Parse(templ)
 	if err != nil {
 		return "", err
@@ -33,7 +33,7 @@ func NewFilenameFromTemplate(title string, chapter grabber.Chapter, templ string
 }
 
 // NewFilenameTemplateParts returns a new FilenameTemplateParts from a title and a chapter
-func NewFilenameTemplateParts(title string, chapter grabber.Chapter) FilenameTemplateParts {
+func NewFilenameTemplateParts(title string, chapter *grabber.Chapter) FilenameTemplateParts {
 	return FilenameTemplateParts{
 		Series: SanitizeFilename(title),
 		Number: strings.Replace(fmt.Sprintf("%.1f", chapter.GetNumber()), ".0", "", 1),

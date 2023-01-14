@@ -25,10 +25,10 @@ type TcbChapter struct {
 }
 
 // Test returns true if the URL is a compatible TCBScans URL
-func (t *Tcb) Test() bool {
+func (t *Tcb) Test() (bool, error) {
 	re := regexp.MustCompile(`manga\/(.*)\/$`)
 	if !re.MatchString(t.URL) {
-		return false
+		return false, nil
 	}
 
 	mid := re.FindStringSubmatch(t.URL)[1]
@@ -39,53 +39,52 @@ func (t *Tcb) Test() bool {
 		Referer: t.GetBaseUrl(),
 	})
 	if err != nil {
-		return false
+		return false, err
 	}
 
 	body, err := goquery.NewDocumentFromReader(rbody)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
 	t.chaps = body.Find("li")
 
-	return t.chaps.Length() > 0
+	return t.chaps.Length() > 0, nil
 }
 
 // GetTitle fetches and returns the manga title
-func (t *Tcb) GetTitle() string {
+func (t *Tcb) FetchTitle() (string, error) {
 	if t.title != "" {
-		return t.title
+		return t.title, nil
 	}
 
 	rbody, err := http.Get(http.RequestParams{
 		URL: t.URL,
 	})
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	defer rbody.Close()
 	body, err := goquery.NewDocumentFromReader(rbody)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	title := body.Find("h1").Text()
 
-	t.title = strings.TrimSpace(title)
+	t.title = strings.TrimSpace(body.Find("h1").Text())
 
-	return t.title
+	return t.title, nil
 }
 
 // FetchChapters returns a slice of chapters
-func (t Tcb) FetchChapters() Filterables {
-	chapters := Filterables{}
+func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 	t.chaps.Each(func(i int, s *goquery.Selection) {
+		// fetch title (usually "Chapter N")
 		title := strings.TrimSpace(s.Find("a").Text())
 		re := regexp.MustCompile(`(\d+\.?\d*)`)
 		ns := re.FindString(title)
 		num, err := strconv.ParseFloat(ns, 64)
 		if err != nil {
-			panic(err)
+			errs = append(errs, err)
 		}
 		chapter := &TcbChapter{
 			Chapter{
@@ -98,28 +97,28 @@ func (t Tcb) FetchChapters() Filterables {
 		chapters = append(chapters, chapter)
 	})
 
-	return chapters
+	return
 }
 
 // FetchChapter fetches a chapter and its pages
-func (t Tcb) FetchChapter(f Filterable) Chapter {
+func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 	tchap := f.(*TcbChapter)
 
 	rbody, err := http.Get(http.RequestParams{
 		URL: tchap.URL,
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer rbody.Close()
 	body, err := goquery.NewDocumentFromReader(rbody)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	pimages := body.Find("div.reading-content img")
 
-	chapter := Chapter{
+	chapter := &Chapter{
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		PagesCount: int64(pimages.Length()),
@@ -130,7 +129,8 @@ func (t Tcb) FetchChapter(f Filterable) Chapter {
 		u := strings.TrimSpace(s.AttrOr("data-src", ""))
 		n := int64(i + 1)
 		if u == "" {
-			color.Red("page %d has no URL to fetch from 😕 (will be ignored)", n)
+			// this error is not critical and is not from our side, so just log it out
+			color.Yellow("page %d of %s has no URL to fetch from 😕 (will be ignored)", n, chapter.GetTitle())
 			return
 		}
 		if !strings.HasPrefix(u, "http") {
@@ -144,5 +144,5 @@ func (t Tcb) FetchChapter(f Filterable) Chapter {
 
 	chapter.Pages = pages
 
-	return chapter
+	return chapter, nil
 }

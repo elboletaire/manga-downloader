@@ -23,13 +23,37 @@ type InmangaChapter struct {
 }
 
 // Test checks if the site is InManga
-func (i *Inmanga) Test() bool {
+func (i *Inmanga) Test() (bool, error) {
 	re := regexp.MustCompile(`inmanga\.com`)
-	return re.MatchString(i.URL)
+	return re.MatchString(i.URL), nil
+}
+
+// GetTitle fetches the manga title
+func (i *Inmanga) FetchTitle() (string, error) {
+	if i.title != "" {
+		return i.title, nil
+	}
+
+	body, err := http.Get(http.RequestParams{
+		URL: i.URL,
+	})
+	if err != nil {
+		return "", err
+	}
+	defer body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(body)
+	if err != nil {
+		return "", err
+	}
+
+	i.title = doc.Find("h1").Text()
+
+	return i.title, nil
 }
 
 // FetchChapters returns the chapters of the manga
-func (i Inmanga) FetchChapters() Filterables {
+func (i Inmanga) FetchChapters() (Filterables, []error) {
 	id := GetUUID(i.URL)
 
 	// retrieve chapters json list
@@ -37,7 +61,7 @@ func (i Inmanga) FetchChapters() Filterables {
 		URL: "https://inmanga.com/chapter/getall?mangaIdentification=" + id,
 	})
 	if err != nil {
-		panic(err)
+		return nil, []error{err}
 	}
 
 	raw := struct {
@@ -45,57 +69,38 @@ func (i Inmanga) FetchChapters() Filterables {
 	}{}
 
 	if err = json.Unmarshal([]byte(body), &raw); err != nil {
-		panic(err)
+		return nil, []error{err}
 	}
 
 	feed := inmangaChapterFeed{}
-	err = json.Unmarshal([]byte(raw.Data), &feed)
-	if err != nil {
-		panic(err)
+	if err = json.Unmarshal([]byte(raw.Data), &feed); err != nil {
+		return nil, []error{err}
 	}
 
-	return newInmangaChaptersSlice(feed.Result)
-}
-
-// GetTitle fetches the manga title
-func (i *Inmanga) GetTitle() string {
-	if i.title != "" {
-		return i.title
+	chapters := make(Filterables, 0, len(feed.Result))
+	for _, c := range feed.Result {
+		chapters = append(chapters, newInmangaChapter(c))
 	}
 
-	body, err := http.Get(http.RequestParams{
-		URL: i.URL,
-	})
-	if err != nil {
-		panic(err)
-	}
-	defer body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(body)
-	if err != nil {
-		panic(err)
-	}
-
-	i.title = doc.Find("h1").Text()
-	return i.title
+	return chapters, nil
 }
 
 // FetchChapter fetches the chapter with its pages
-func (i Inmanga) FetchChapter(chap Filterable) Chapter {
+func (i Inmanga) FetchChapter(chap Filterable) (*Chapter, error) {
 	ichap := chap.(*InmangaChapter)
 	body, err := http.Get(http.RequestParams{
 		URL: "https://inmanga.com/chapter/chapterIndexControls?identification=" + ichap.Id,
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer body.Close()
 	doc, err := goquery.NewDocumentFromReader(body)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	chapter := Chapter{
+	chapter := &Chapter{
 		Title:      chap.GetTitle(),
 		Number:     chap.GetNumber(),
 		PagesCount: int64(ichap.PagesCount),
@@ -112,7 +117,7 @@ func (i Inmanga) FetchChapter(chap Filterable) Chapter {
 		})
 	})
 
-	return chapter
+	return chapter, nil
 }
 
 // newInmangaChapter creates an InMangaChapter from an InMangaChapterFeedResult
@@ -125,16 +130,6 @@ func newInmangaChapter(c inmangaChapterFeedResult) *InmangaChapter {
 		},
 		c.Id,
 	}
-}
-
-// newInmangaChaptersSlice creates a slice of Filterables from a slice of InMangaChapterFeedResult
-func newInmangaChaptersSlice(s []inmangaChapterFeedResult) Filterables {
-	chapters := make(Filterables, 0, len(s))
-	for _, c := range s {
-		chapters = append(chapters, newInmangaChapter(c))
-	}
-
-	return chapters
 }
 
 // inmangaChapterFeed is the JSON feed for the chapters list

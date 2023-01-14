@@ -24,41 +24,44 @@ type ManganeloChapter struct {
 }
 
 // Test returns true if the URL is a valid Manganelo URL
-func (m *Manganelo) Test() bool {
+func (m *Manganelo) Test() (bool, error) {
 	body, err := http.Get(http.RequestParams{
 		URL: m.URL,
 	})
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 	m.doc, err = goquery.NewDocumentFromReader(body)
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 
 	// manganelo style
 	m.rows = m.doc.Find("div.panel-story-chapter-list .row-content-chapter li")
 	if m.rows.Length() > 0 {
-		return true
+		return true, nil
 	}
 	// mangakakalot style
 	m.rows = m.doc.Find("div.chapter-list div.row")
 
-	return m.rows.Length() > 0
+	return m.rows.Length() > 0, nil
 }
 
 // Ttitle returns the manga title
-func (m Manganelo) GetTitle() string {
-	return m.doc.Find("h1").Text()
+func (m Manganelo) FetchTitle() (string, error) {
+	return m.doc.Find("h1").Text(), nil
 }
 
 // FetchChapters returns a slice of chapters
-func (m Manganelo) FetchChapters() Filterables {
-	chapters := Filterables{}
+func (m Manganelo) FetchChapters() (chapters Filterables, errs []error) {
 	m.rows.Each(func(i int, s *goquery.Selection) {
 		re := regexp.MustCompile(`(\d+\.?\d*)`)
 		num := re.FindString(s.Find("a").Text())
-		number, _ := strconv.ParseFloat(num, 64)
+		number, err := strconv.ParseFloat(num, 64)
+		if err != nil {
+			errs = append(errs, err)
+			return
+		}
 		u := s.Find("a").AttrOr("href", "")
 		if !strings.HasPrefix(u, "http") {
 			u = m.GetBaseUrl() + u
@@ -70,46 +73,43 @@ func (m Manganelo) FetchChapters() Filterables {
 			},
 			u,
 		}
-		if chapter.URL == "" {
-			color.Red("chapter %f has no URL to fetch from 😕", chapter.Number)
-			return
-		}
 
 		chapters = append(chapters, chapter)
 	})
 
-	return chapters
+	return
 }
 
 // FetchChapter fetches a chapter and its pages
-func (m Manganelo) FetchChapter(f Filterable) Chapter {
+func (m Manganelo) FetchChapter(f Filterable) (*Chapter, error) {
 	mchap := f.(*ManganeloChapter)
 	body, err := http.Get(http.RequestParams{
 		URL: mchap.URL,
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer body.Close()
 	doc, err := goquery.NewDocumentFromReader(body)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	pimages := doc.Find("div.container-chapter-reader img")
-	chapter := Chapter{
+	chapter := &Chapter{
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		PagesCount: int64(pimages.Length()),
 		Language:   "en",
 	}
-	pages := []Page{}
+
 	// get the chapter pages
 	doc.Find("div.container-chapter-reader img").Each(func(i int, s *goquery.Selection) {
 		u := s.AttrOr("src", "")
 		n := int64(i)
 		if u == "" {
-			color.Red("page %d has no URL to fetch from 😕 (will be ignored)", n)
+			// this error is not critical and is not from our side, so just log it out
+			color.Yellow("page %d of %s has no URL to fetch from 😕 (will be ignored)", n, chapter.GetTitle())
 			return
 		}
 		if !strings.HasPrefix(u, "http") {
@@ -119,9 +119,8 @@ func (m Manganelo) FetchChapter(f Filterable) Chapter {
 			Number: n,
 			URL:    u,
 		}
-		pages = append(pages, page)
+		chapter.Pages = append(chapter.Pages, page)
 	})
 
-	chapter.Pages = pages
-	return chapter
+	return chapter, nil
 }
