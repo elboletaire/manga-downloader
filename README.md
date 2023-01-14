@@ -4,6 +4,7 @@ Manga Downloader
 [![Go Report Card][go report card]][go report]
 [![Go Reference][go reference badge]][go reference]
 [![GitHub release][release badge]][releases]
+[![License][license badge]][license]
 
 This app downloads mangas from websites like mangadex and stores them into cbz files, so you can read them with your
 favorite ereader or reading app.
@@ -113,6 +114,7 @@ All the code contained in this repo is licensed under the [GNU Affero General Pu
 [go reference badge]: https://pkg.go.dev/badge/github.com/elboletaire/manga-downloader.svg
 [release badge]: https://img.shields.io/github/release/elboletaire/manga-downloader.svg
 [license]: ./LICENSE
+[license badge]: https://img.shields.io/github/license/elboletaire/manga-downloader?color=green
 [releases]: https://github.com/elboletaire/manga-downloader/releases
 [issues]: https://github.com/elboletaire/manga-downloader/issues
 [demo img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demo.gif
