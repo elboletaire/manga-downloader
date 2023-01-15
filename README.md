@@ -9,7 +9,7 @@ Manga Downloader
 This app downloads mangas from websites like mangadex and stores them into cbz files, so you can read them with your
 favorite ereader or reading app.
 
-![demo img]
+![download img]
 
 Supported sites
 ---------------
@@ -47,11 +47,26 @@ manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-936
 # would download One Piece chapters 1 to 10 in spanish
 ~~~
 
+### Bundling
+
+You can bundle all the downloaded chapters into a single file by using the `--bundle` arg:
+
+~~~bash
+manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1-8 --bundle
+# would download one piece chapters 1 to 8 and bundle them into a single file
+~~~
+
+![bundle img]
+
+### Help
+
 Use the `help` command to see all the available options:
 
 ~~~bash
 manga-downloader help
 ~~~
+
+![help img]
 
 Installation
 ------------
@@ -117,4 +132,6 @@ All the code contained in this repo is licensed under the [GNU Affero General Pu
 [license badge]: https://img.shields.io/github/license/elboletaire/manga-downloader?color=green
 [releases]: https://github.com/elboletaire/manga-downloader/releases
 [issues]: https://github.com/elboletaire/manga-downloader/issues
-[demo img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demo.gif
+[download img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/download.gif
+[bundle img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/bundle.gif
+[help img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/help.gif

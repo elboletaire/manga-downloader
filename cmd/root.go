@@ -19,6 +19,8 @@ import (
 	cc "github.com/ivanpirog/coloredcobra"
 )
 
+var settings grabber.Settings
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "manga-downloader [flags] [url] [ranges]",
@@ -48,7 +50,7 @@ Would download chapters 10 to 20 of Black Clover from
 mangadex.org in Spanish`, "manga-downloader", color.YellowString("manga-downloader")),
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		s, errs := grabber.NewSite(args[0])
+		s, errs := grabber.NewSite(args[0], &settings)
 		if len(errs) > 0 {
 			color.Red("Errors testing site (a site may be down):")
 			for _, err := range errs {
@@ -62,7 +64,8 @@ mangadex.org in Spanish`, "manga-downloader", color.YellowString("manga-download
 		s.InitFlags(cmd)
 
 		// ranges parsing
-		rngs, err := ranges.Parse(args[1])
+		settings.Range = args[1]
+		rngs, err := ranges.Parse(settings.Range)
 		cerr(err, "Error parsing ranges: %s")
 
 		// fetch series title
@@ -83,13 +86,15 @@ mangadex.org in Spanish`, "manga-downloader", color.YellowString("manga-download
 		chapters = chapters.FilterRanges(rngs)
 
 		if len(chapters) == 0 {
-			warn("No chapters found for the specified ranges")
+			fmt.Println(color.YellowString("No chapters found for the specified ranges"))
+			os.Exit(1)
 		}
 
+		// download chapters
 		wg := sync.WaitGroup{}
 		g := make(chan struct{}, s.GetMaxConcurrency().Chapters)
+		downloaded := grabber.Filterables{}
 
-		// loop chapters to retrieve pages
 		for _, chap := range chapters {
 			g <- struct{}{}
 			wg.Add(1)
@@ -110,19 +115,21 @@ mangadex.org in Spanish`, "manga-downloader", color.YellowString("manga-download
 					return
 				}
 
-				filename, err := packer.NewFilenameFromTemplate(title, chapter, s.GetFilenameTemplate())
-				if err != nil {
-					color.Red("- error creating filename for chapter %s: %s", chapter.GetTitle(), err.Error())
-					<-g
-					return
+				d := &packer.DownloadedChapter{
+					Chapter: chapter,
+					Files:   files,
 				}
 
-				filename += ".cbz"
-
-				if err = packer.ArchiveCBZ(filename, files); err != nil {
-					color.Red("- error saving file %s: %s", filename, err.Error())
+				if !settings.Bundle {
+					filename, err := packer.PackSingle(s, d)
+					if err == nil {
+						fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
+					} else {
+						color.Red(err.Error())
+					}
 				} else {
-					fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
+					// avoid adding it to memory if we're not gonna use it
+					downloaded = append(downloaded, d)
 				}
 
 				// release guard
@@ -130,6 +137,29 @@ mangadex.org in Spanish`, "manga-downloader", color.YellowString("manga-download
 			}(chap)
 		}
 		wg.Wait()
+		close(g)
+
+		if !settings.Bundle {
+			// if we're not bundling, just finish it
+			os.Exit(0)
+		}
+
+		// resort downloaded
+		downloaded = downloaded.SortByNumber()
+
+		dc := []*packer.DownloadedChapter{}
+		// convert slice back to DownloadedChapter
+		for _, d := range downloaded {
+			dc = append(dc, d.(*packer.DownloadedChapter))
+		}
+
+		filename, err := packer.PackBundle(s, dc, settings.Range)
+		if err != nil {
+			color.Red(err.Error())
+			os.Exit(1)
+		}
+
+		fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
 	},
 }
 
@@ -156,10 +186,11 @@ func Execute() {
 
 // init sets the flags for the root command
 func init() {
-	rootCmd.Flags().Uint8P("concurrency", "c", 5, "number of concurrent chapter downloads, hard-limited to 5")
-	rootCmd.Flags().Uint8P("concurrency-pages", "C", 10, "number of concurrent page downloads, hard-limited to 10")
-	rootCmd.Flags().StringP("language", "l", "", "only download the specified language")
-	rootCmd.Flags().StringP("filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
+	rootCmd.Flags().BoolVarP(&settings.Bundle, "bundle", "b", false, "bundle all specified chapters into a single file")
+	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Chapters, "concurrency", "c", 5, "number of concurrent chapter downloads, hard-limited to 5")
+	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Pages, "concurrency-pages", "C", 10, "number of concurrent page downloads, hard-limited to 10")
+	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", "only download the specified language")
+	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
 }
 
 func cerr(err error, prefix string) {
@@ -167,9 +198,4 @@ func cerr(err error, prefix string) {
 		fmt.Println(color.RedString(prefix + err.Error()))
 		os.Exit(1)
 	}
-}
-
-func warn(err string) {
-	fmt.Println(color.YellowString(err))
-	os.Exit(1)
 }

@@ -13,7 +13,7 @@ import (
 
 // Mangadex is a grabber for mangadex.org
 type Mangadex struct {
-	Grabber
+	*Grabber
 	title string
 }
 
@@ -35,11 +35,11 @@ func (m *Mangadex) FetchTitle() (string, error) {
 		return m.title, nil
 	}
 
-	id := GetUUID(m.URL)
+	id := getUuid(m.URL)
 
 	rbody, err := http.Get(http.RequestParams{
 		URL:     "https://api.mangadex.org/manga/" + id,
-		Referer: m.GetBaseUrl(),
+		Referer: m.BaseUrl(),
 	})
 	if err != nil {
 		return "", err
@@ -53,8 +53,8 @@ func (m *Mangadex) FetchTitle() (string, error) {
 	}
 
 	// fetch the title in the requested language
-	if m.PreferredLanguage != "" {
-		trans := body.Data.Attributes.AltTitles.GetTitleByLang(m.PreferredLanguage)
+	if m.Settings.Language != "" {
+		trans := body.Data.Attributes.AltTitles.GetTitleByLang(m.Settings.Language)
 
 		if trans != "" {
 			m.title = trans
@@ -70,7 +70,7 @@ func (m *Mangadex) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
-	id := GetUUID(m.URL)
+	id := getUuid(m.URL)
 
 	baseOffset := 500
 	var fetchChaps func(int)
@@ -86,8 +86,8 @@ func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 		params.Add("order[volume]", "asc")
 		params.Add("order[chapter]", "asc")
 		params.Add("offset", fmt.Sprint(offset))
-		if m.PreferredLanguage != "" {
-			params.Add("translatedLanguage[]", m.PreferredLanguage)
+		if m.Settings.Language != "" {
+			params.Add("translatedLanguage[]", m.Settings.Language)
 		}
 		uri = fmt.Sprintf("%s?%s", uri, params.Encode())
 
@@ -108,9 +108,10 @@ func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 			num, _ := strconv.ParseFloat(c.Attributes.Chapter, 64)
 			chapters = append(chapters, &MangadexChapter{
 				Chapter{
-					Number:   num,
-					Title:    c.Attributes.Title,
-					Language: c.Attributes.TranslatedLanguage,
+					Number:     num,
+					Title:      c.Attributes.Title,
+					Language:   c.Attributes.TranslatedLanguage,
+					PagesCount: c.Attributes.Pages,
 				},
 				c.Id,
 			})
@@ -194,6 +195,7 @@ type mangadexFeed struct {
 			Chapter            string
 			Title              string
 			TranslatedLanguage string
+			Pages              int64
 		}
 	}
 }

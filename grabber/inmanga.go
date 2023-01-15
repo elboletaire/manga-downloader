@@ -12,7 +12,7 @@ import (
 
 // Inmanga is a grabber for inmanga.com
 type Inmanga struct {
-	Grabber
+	*Grabber
 	title string
 }
 
@@ -54,7 +54,7 @@ func (i *Inmanga) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (i Inmanga) FetchChapters() (Filterables, []error) {
-	id := GetUUID(i.URL)
+	id := getUuid(i.URL)
 
 	// retrieve chapters json list
 	body, err := http.GetText(http.RequestParams{

@@ -2,8 +2,8 @@ package downloader
 
 import (
 	"bytes"
-	"fmt"
 	"io"
+	"sort"
 	"sync"
 
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -11,9 +11,10 @@ import (
 	"github.com/fatih/color"
 )
 
+// File represents a downloaded file
 type File struct {
 	Data []byte
-	Name string
+	Page uint
 }
 
 // FetchChapter downloads all the pages of a chapter
@@ -29,14 +30,13 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter) (files []*File, e
 		go func(page grabber.Page) {
 			defer wg.Done()
 
-			filename := fmt.Sprintf("%03d.jpg", page.Number)
 			file, err := FetchFile(http.RequestParams{
 				URL:     page.URL,
-				Referer: site.GetBaseUrl(),
-			}, filename)
+				Referer: site.BaseUrl(),
+			}, uint(page.Number))
 
 			if err != nil {
-				color.Red("- error downloading page %s", filename)
+				color.Red("- error downloading page %d of %s", page.Number, chapter.GetTitle())
 				return
 			}
 
@@ -46,14 +46,19 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter) (files []*File, e
 			<-guard
 		}(page)
 	}
-
 	wg.Wait()
+	close(guard)
+
+	// sort files by page number
+	sort.SliceStable(files, func(i, j int) bool {
+		return files[i].Page < files[j].Page
+	})
 
 	return
 }
 
 // FetchFile gets an online file returning a new *File with its contents
-func FetchFile(params http.RequestParams, filename string) (file *File, err error) {
+func FetchFile(params http.RequestParams, page uint) (file *File, err error) {
 	body, err := http.Get(params)
 	if err != nil {
 		return
@@ -67,7 +72,7 @@ func FetchFile(params http.RequestParams, filename string) (file *File, err erro
 
 	file = &File{
 		Data: data.Bytes(),
-		Name: filename,
+		Page: page,
 	}
 
 	return

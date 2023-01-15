@@ -13,7 +13,7 @@ import (
 
 // Tcb is a grabber for tcbscans.com (and possibly other wordpress sites)
 type Tcb struct {
-	Grabber
+	*Grabber
 	chaps *goquery.Selection
 	title string
 }
@@ -32,11 +32,11 @@ func (t *Tcb) Test() (bool, error) {
 	}
 
 	mid := re.FindStringSubmatch(t.URL)[1]
-	uri, _ := url.JoinPath(t.GetBaseUrl(), "manga", mid, "ajax", "chapters")
+	uri, _ := url.JoinPath(t.BaseUrl(), "manga", mid, "ajax", "chapters")
 
 	rbody, err := http.Post(http.RequestParams{
 		URL:     uri,
-		Referer: t.GetBaseUrl(),
+		Referer: t.BaseUrl(),
 	})
 	if err != nil {
 		return false, err
@@ -134,7 +134,7 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 			return
 		}
 		if !strings.HasPrefix(u, "http") {
-			u = t.GetBaseUrl() + u
+			u = t.BaseUrl() + u
 		}
 		pages = append(pages, Page{
 			Number: n,

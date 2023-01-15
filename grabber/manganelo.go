@@ -12,7 +12,7 @@ import (
 
 // Manganelo is a grabber for manganelo and similar pages
 type Manganelo struct {
-	Grabber
+	*Grabber
 	doc  *goquery.Document
 	rows *goquery.Selection
 }
@@ -64,7 +64,7 @@ func (m Manganelo) FetchChapters() (chapters Filterables, errs []error) {
 		}
 		u := s.Find("a").AttrOr("href", "")
 		if !strings.HasPrefix(u, "http") {
-			u = m.GetBaseUrl() + u
+			u = m.BaseUrl() + u
 		}
 		chapter := &ManganeloChapter{
 			Chapter{
@@ -113,7 +113,7 @@ func (m Manganelo) FetchChapter(f Filterable) (*Chapter, error) {
 			return
 		}
 		if !strings.HasPrefix(u, "http") {
-			u = m.GetBaseUrl() + u
+			u = m.BaseUrl() + u
 		}
 		page := Page{
 			Number: n,

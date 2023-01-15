@@ -3,6 +3,7 @@ package packer
 import (
 	"archive/zip"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/elboletaire/manga-downloader/downloader"
@@ -20,8 +21,8 @@ func ArchiveCBZ(filename string, files []*downloader.File) error {
 	defer buff.Close()
 	w := zip.NewWriter(buff)
 
-	for _, file := range files {
-		f, err := w.Create(file.Name)
+	for i, file := range files {
+		f, err := w.Create(fmt.Sprintf("%03d.jpg", i))
 		if err != nil {
 			return err
 		}
