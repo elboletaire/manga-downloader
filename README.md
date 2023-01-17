@@ -93,6 +93,8 @@ Places where you can put the binary and have it accessible system-wide:
 - Linux and Mac: `/usr/local/bin`
 - Windows: `C:\Windows\System32`
 
+### Windows
+
 So if you're a windows user and place the .exe file inside `C:\Windows\System32` you'll be able to call the program
 wherever you want from:
 
@@ -101,6 +103,16 @@ C:\Users\elboletaire\Desktop>manga-downloader https://mangadex.org/title/e7eabe9
 ~~~
 
 The above command would download Black Clover chapters 1 to 346 to the Desktop folder (since that's the current directory).
+
+### Mac
+
+Mac users will need to either add the binary to the unsigned apps whitelist, or entirely disable Gatekeeper:
+
+~~~bash
+sudo spctl --master-disable
+~~~
+
+Othwerise you'll see an error because the binary is unsigned.
 
 License
 -------

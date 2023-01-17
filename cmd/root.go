@@ -6,7 +6,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strings"
+	"regexp"
 	"sync"
 
 	"github.com/elboletaire/manga-downloader/downloader"
@@ -26,28 +26,26 @@ var rootCmd = &cobra.Command{
 	Use:   "manga-downloader [flags] [url] [ranges]",
 	Short: "Helps you download mangas from websites to CBZ files",
 
-	Long: `With manga-downloader you can easily convert/download
-web based mangas to CBZ files.
+	Long: `With manga-downloader you can easily convert/download web based mangas to CBZ files.
 
-You only need to specify the URL of the manga and the
-chapters you want to download as a range.
+You only need to specify the URL of the manga and the chapters you want to download as a range.
 
-Note the URL must be of the index of the manga, not a
-single chapter.`,
-	Example: strings.ReplaceAll(`  manga-downloader https://inmanga.com/ver/manga/Dr-Stone/d9e47ba6-7dfc-401d-a21c-19326c2ea45f 1-10
+Note the URL must be of the index of the manga, not a single chapter.`,
+	Example: colorizeHelp(`  manga-downloader https://inmanga.com/ver/manga/Dr-Stone/d9e47ba6-7dfc-401d-a21c-19326c2ea45f 1-10
 
-Would download chapters 1 to 10 of Dr. Stone from
-inmanga.com
+Would download chapters 1 to 10 of Dr. Stone from inmanga.com.
 
   manga-downloader https://inmanga.com/ver/manga/Dr-Stone/d9e47ba6-7dfc-401d-a21c-19326c2ea45f 1-10,12,15-20
 
-Would download chapters 1 to 10, 12 and 15 to 20 of
-Dr. Stone from inmanga.com
+Would download chapters 1 to 10, 12 and 15 to 20 of Dr. Stone from inmanga.com.
 
   manga-downloader --language es https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover 10-20
 
-Would download chapters 10 to 20 of Black Clover from
-mangadex.org in Spanish`, "manga-downloader", color.YellowString("manga-downloader")),
+Would download chapters 10 to 20 of Black Clover from mangadex.org in Spanish.
+
+  manga-downloader --language es --bundle https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover 10-20
+
+It would also download chapters 10 to 20 of Black Clover from mangadex.org in Spanish, but in this case would bundle them into a single file.`),
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		s, errs := grabber.NewSite(args[0], &settings)
@@ -86,7 +84,7 @@ mangadex.org in Spanish`, "manga-downloader", color.YellowString("manga-download
 		chapters = chapters.FilterRanges(rngs)
 
 		if len(chapters) == 0 {
-			fmt.Println(color.YellowString("No chapters found for the specified ranges"))
+			color.Yellow("No chapters found for the specified ranges")
 			os.Exit(1)
 		}
 
@@ -198,4 +196,26 @@ func cerr(err error, prefix string) {
 		fmt.Println(color.RedString(prefix + err.Error()))
 		os.Exit(1)
 	}
+}
+
+func colorizeHelp(help string) string {
+	// command in yellow
+	yre := regexp.MustCompile(`manga-downloader|nada`)
+	help = yre.ReplaceAllStringFunc(help, func(s string) string {
+		return color.YellowString(s)
+	})
+
+	// arguments in gray
+	gre := regexp.MustCompile(`http[^ ]*|[\d]+-[\d,-]+`)
+	help = gre.ReplaceAllStringFunc(help, func(s string) string {
+		return color.HiBlackString(s)
+	})
+
+	// --arguments in blue
+	bre := regexp.MustCompile(`((--language|--bundle)( es)?)`)
+	help = bre.ReplaceAllStringFunc(help, func(s string) string {
+		return color.HiBlueString(s)
+	})
+
+	return help
 }
