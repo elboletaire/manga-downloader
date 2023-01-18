@@ -46,7 +46,7 @@ func (f Filterables) FilterRanges(rngs []ranges.Range) Filterables {
 		})...)
 	}
 
-	return chaps.SortByNumber()
+	return chaps
 }
 
 // SortByNumber sorts Filterables by Number
