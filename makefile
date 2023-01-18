@@ -11,7 +11,7 @@ GOFLAGS = -ldflags="$(GOLDFLAGS)"
 RICHGO := $(shell command -v richgo 2> /dev/null)
 
 clean:
-	rm -fv ./manga-downloader*
+	@rm -fv ./manga-downloader* *.cbz
 
 install:
 	go mod download
@@ -32,3 +32,17 @@ ifdef RICHGO
 else
 	go test -v ./...
 endif
+
+grabber: grabber/manganelo grabber/inmanga grabber/mangadex
+
+grabber/manganelo:
+	go run . https://mangakakalot.com/manga/vd921334 7
+	go run . https://ww5.manganelo.tv/manga/manga-aa951409 3
+	go run . http://manganelos.com/manga/dont-pick-up-what-youve-thrown-away 10-12 --bundle
+	go run . https://chapmanganato.com/manga-aa951409 50
+
+grabber/inmanga:
+	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1
+
+grabber/mangadex:
+	go run . https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece --language es 1-4 --bundle
