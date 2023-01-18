@@ -25,13 +25,17 @@ If you'd like support for a specific site, [create a new issue][issues] or even 
 Usage
 -----
 
-Only two params are required:
+Only one param is required:
 
 ~~~bash
-manga-downloader [URL] [range]
+manga-downloader [URL] [range?]
 ~~~
 
-The URL must be a series index file, and the range allows you setting pages by ranges (i.e. 1,3,5-10):
+The URL must be a series index file.
+
+If you don't specify a range, it would ask you if you want to download all chapters, the default option is `No`. If you want to download all of them just type `y` when prompted.
+
+You can also specify the range beforehand, the range allows you setting pages by ranges (i.e. 1,3,5-10):
 
 ~~~bash
 manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1-50

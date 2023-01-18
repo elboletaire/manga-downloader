@@ -14,6 +14,7 @@ import (
 	"github.com/elboletaire/manga-downloader/packer"
 	"github.com/elboletaire/manga-downloader/ranges"
 	"github.com/fatih/color"
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
 	cc "github.com/ivanpirog/coloredcobra"
@@ -45,8 +46,12 @@ Would download chapters 10 to 20 of Black Clover from mangadex.org in Spanish.
 
   manga-downloader --language es --bundle https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover 10-20
 
-It would also download chapters 10 to 20 of Black Clover from mangadex.org in Spanish, but in this case would bundle them into a single file.`),
-	Args: cobra.ExactArgs(2),
+It would also download chapters 10 to 20 of Black Clover from mangadex.org in Spanish, but in this case would bundle them into a single file.
+
+  manga-downloader https://inmanga.com/ver/manga/Fire-Punch/17748683-8986-4628-934a-e94a47fe5d59
+
+If there's no range specified it would ask you if you want to download all chapters of Fire Punch (1-83), default option is 'No', you need to type 'y' to download all of them.`),
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		s, errs := grabber.NewSite(args[0], &settings)
 		if len(errs) > 0 {
@@ -61,11 +66,6 @@ It would also download chapters 10 to 20 of Black Clover from mangadex.org in Sp
 		}
 		s.InitFlags(cmd)
 
-		// ranges parsing
-		settings.Range = args[1]
-		rngs, err := ranges.Parse(settings.Range)
-		cerr(err, "Error parsing ranges: %s")
-
 		// fetch series title
 		title, err := s.FetchTitle()
 		cerr(err, "Error fetching title: %s")
@@ -78,6 +78,33 @@ It would also download chapters 10 to 20 of Black Clover from mangadex.org in Sp
 				color.Red(err.Error())
 			}
 			os.Exit(1)
+		}
+
+		chapters = chapters.SortByNumber()
+
+		rangesIndex := 1
+		rngs := []ranges.Range{}
+		// ranges argument is not provided
+		if rangesIndex >= len(args) {
+			lastChapter := chapters[len(chapters)-1].GetNumber()
+			prompt := promptui.Prompt{
+				Label:     fmt.Sprintf("Do you want to download all %g chapters", lastChapter),
+				IsConfirm: true,
+			}
+
+			_, err := prompt.Run()
+
+			if err != nil {
+				color.Yellow("No ranges specified")
+				os.Exit(0)
+			}
+
+			rngs = []ranges.Range{{Begin: 1, End: int64(lastChapter)}}
+		} else {
+			// ranges parsing
+			settings.Range = args[rangesIndex]
+			rngs, err = ranges.Parse(settings.Range)
+			cerr(err, "Error parsing ranges: %s")
 		}
 
 		// sort and filter specified ranges
