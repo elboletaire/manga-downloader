@@ -47,7 +47,7 @@ func (m *Manganelo) Test() (bool, error) {
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
-	// using a simple `,` joining all selectors would resturn missmatches
+	// using a simple `,` joining all selectors would return missmatches
 	for _, selector := range selectors {
 		rows := m.doc.Find(selector)
 		if rows.Length() > 0 {

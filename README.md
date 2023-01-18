@@ -14,11 +14,14 @@ files, so you can read them with your favorite ereader or reading app.
 Supported sites
 ---------------
 
-- Inmanga
-- Mangadex
-- Mangakakalot (+ any compatible sites)
-- Manganato/Manganelo (+ any compatible sites)
-- TCBScans
+- [Inmanga](https://inmanga.com)
+- [LeviatanScans](https://leviatanscans.com)
+- [Mangadex](https://mangadex.org)
+- [Manganato](https://manganato.com) (aka manganelo.com)
+- [Mangakakalot](https://mangakakalot.com)
+- [Manganelo.tv](https://ww5.manganelo.tv)
+- [Manganelos](http://manganelos.com)
+- [TCBScans](https://www.tcbscans.net)
 
 If you'd like support for a specific site, [create a new issue][issues] or even
 a PR with the changes.

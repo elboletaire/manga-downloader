@@ -79,7 +79,11 @@ func (t *Tcb) FetchTitle() (string, error) {
 func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 	t.chaps.Each(func(i int, s *goquery.Selection) {
 		// fetch title (usually "Chapter N")
-		title := strings.TrimSpace(s.Find("a").Text())
+		link := s.Find("a")
+		if len(link.Children().Nodes) > 0 {
+			link.Children().Remove()
+		}
+		title := strings.TrimSpace(link.Text())
 		re := regexp.MustCompile(`(\d+\.?\d*)`)
 		ns := re.FindString(title)
 		num, err := strconv.ParseFloat(ns, 64)
@@ -126,7 +130,7 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 	pages := []Page{}
 	pimages.Each(func(i int, s *goquery.Selection) {
-		u := strings.TrimSpace(s.AttrOr("data-src", ""))
+		u := strings.TrimSpace(s.AttrOr("data-src", s.AttrOr("src", "")))
 		n := int64(i + 1)
 		if u == "" {
 			// this error is not critical and is not from our side, so just log it out

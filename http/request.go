@@ -1,7 +1,7 @@
 package http
 
 import (
-	"errors"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -46,7 +46,7 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 	}
 
 	if resp.StatusCode != 200 {
-		err = errors.New("received non 200 response code")
+		err = fmt.Errorf("received %d response code", resp.StatusCode)
 		return
 	}
 
