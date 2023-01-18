@@ -6,8 +6,8 @@ Manga Downloader
 [![GitHub release][release badge]][releases]
 [![License][license badge]][license]
 
-This app downloads mangas from websites like mangadex and stores them into cbz files, so you can read them with your
-favorite ereader or reading app.
+This app downloads mangas from websites like mangadex and stores them into cbz
+files, so you can read them with your favorite ereader or reading app.
 
 ![download img]
 
@@ -20,7 +20,8 @@ Supported sites
 - Manganato/Manganelo (+ any compatible sites)
 - TCBScans
 
-If you'd like support for a specific site, [create a new issue][issues] or even a PR with the changes.
+If you'd like support for a specific site, [create a new issue][issues] or even
+a PR with the changes.
 
 Usage
 -----
@@ -28,22 +29,28 @@ Usage
 Only one param is required:
 
 ~~~bash
-manga-downloader [URL] [range?]
+manga-downloader [URL]
 ~~~
 
-The URL must be a series index file.
+The URL must be a series index file (not an individual chapter).
 
-If you don't specify a range, it would ask you if you want to download all chapters, the default option is `No`. If you want to download all of them just type `y` when prompted.
+When only specifying the URL, it would ask you if you want to download all
+chapters.
 
-You can also specify the range beforehand, the range allows you setting pages by ranges (i.e. 1,3,5-10):
+> Note: you must specify <kbd>y</kbd> in order to download them, its default
+> behavior is set to "no".
+
+You can also specify the range beforehand, the range allows you setting pages by
+ranges (i.e. 1,3,5-10):
 
 ~~~bash
 manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1-50
 # This would download One Piece chapters 1 to 50 into our current folder
 ~~~
 
-In some sites, like mangadex, it may find multiple results for the same chapter, given the different languages it's
-translated to. In these cases, every coincidence will be downloaded into different files, but you can force a single
+In some sites, like mangadex, it may find multiple results for the same chapter,
+given the different languages it's translated to. In these cases, every
+coincidence will be downloaded into different files, but you can force a single
 language to be downloaded by using `--language`:
 
 ~~~bash
@@ -51,9 +58,17 @@ manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-936
 # would download One Piece chapters 1 to 10 in spanish
 ~~~
 
+Arguments and params are not positional, you can use them in any order:
+
+~~~bash
+manga-downloader 1-10 https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece --language es
+# exactly the same as the previous example, only changing params order
+~~~
+
 ### Bundling
 
-You can bundle all the downloaded chapters into a single file by using the `--bundle` arg:
+You can bundle all the downloaded chapters into a single file by using the
+`--bundle` arg:
 
 ~~~bash
 manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1-8 --bundle
@@ -89,8 +104,9 @@ For Windows users would be:
 .\manga-downloader URL range
 ~~~
 
-If you want the binary to be accessible from your terminal in whatever path you might be, you should ensure to place the
-binary on a `PATH` defined folder (or add the folder where you downloaded manga-downloader to your `PATH` env var).
+If you want the binary to be accessible from your terminal in whatever path you
+might be, you should ensure to place the binary on a `PATH` defined folder (or
+add the folder where you downloaded manga-downloader to your `PATH` env var).
 
 Places where you can put the binary and have it accessible system-wide:
 
@@ -99,18 +115,20 @@ Places where you can put the binary and have it accessible system-wide:
 
 ### Windows
 
-So if you're a windows user and place the .exe file inside `C:\Windows\System32` you'll be able to call the program
-wherever you want from:
+So if you're a windows user and place the .exe file inside `C:\Windows\System32`
+you'll be able to call the program wherever you want from:
 
 ~~~bash
 C:\Users\elboletaire\Desktop>manga-downloader https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover 1-346
 ~~~
 
-The above command would download Black Clover chapters 1 to 346 to the Desktop folder (since that's the current directory).
+The above command would download Black Clover chapters 1 to 346 to the Desktop
+folder (since that's the current directory).
 
 ### Mac
 
-Mac users will need to either add the binary to the unsigned apps whitelist, or entirely disable Gatekeeper:
+Mac users will need to either add the binary to the unsigned apps whitelist, or
+entirely disable Gatekeeper:
 
 ~~~bash
 sudo spctl --master-disable
@@ -121,7 +139,8 @@ Othwerise you'll see an error because the binary is unsigned.
 License
 -------
 
-All the code contained in this repo is licensed under the [GNU Affero General Public License v3.0][license]
+All the code contained in this repo is licensed under the
+[GNU Affero General Public License v3.0][license]
 
     Manga Downloader GO cli
     Copyright (C) 2023 Òscar Casajuana Alonso

@@ -1,9 +1,11 @@
 package grabber
 
 import (
+	"errors"
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -123,6 +125,10 @@ func (g *Grabber) InitFlags(cmd *cobra.Command) {
 
 // NewSite returns a new site based on the passed url
 func NewSite(url string, settings *Settings) (Site, []error) {
+	if !strings.HasPrefix(url, "http") {
+		return nil, []error{errors.New("invalid url")}
+	}
+
 	g := &Grabber{
 		url,
 		settings,

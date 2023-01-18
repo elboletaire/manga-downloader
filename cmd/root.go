@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/elboletaire/manga-downloader/downloader"
@@ -32,7 +33,11 @@ var rootCmd = &cobra.Command{
 You only need to specify the URL of the manga and the chapters you want to download as a range.
 
 Note the URL must be of the index of the manga, not a single chapter.`,
-	Example: colorizeHelp(`  manga-downloader https://inmanga.com/ver/manga/Dr-Stone/d9e47ba6-7dfc-401d-a21c-19326c2ea45f 1-10
+	Example: colorizeHelp(`  manga-downloader https://inmanga.com/ver/manga/Fire-Punch/17748683-8986-4628-934a-e94a47fe5d59
+
+Would ask you if you want to download all chapters of Fire Punch (1-83).
+
+  manga-downloader https://inmanga.com/ver/manga/Dr-Stone/d9e47ba6-7dfc-401d-a21c-19326c2ea45f 1-10
 
 Would download chapters 1 to 10 of Dr. Stone from inmanga.com.
 
@@ -48,12 +53,12 @@ Would download chapters 10 to 20 of Black Clover from mangadex.org in Spanish.
 
 It would also download chapters 10 to 20 of Black Clover from mangadex.org in Spanish, but in this case would bundle them into a single file.
 
-  manga-downloader https://inmanga.com/ver/manga/Fire-Punch/17748683-8986-4628-934a-e94a47fe5d59
+Note arguments aren't really positional, you can specify them in any order:
 
-If there's no range specified it would ask you if you want to download all chapters of Fire Punch (1-83), default option is 'No', you need to type 'y' to download all of them.`),
+  manga-downloader --language es 10-20 https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover --bundle`),
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		s, errs := grabber.NewSite(args[0], &settings)
+		s, errs := grabber.NewSite(getUrlArg(args), &settings)
 		if len(errs) > 0 {
 			color.Red("Errors testing site (a site may be down):")
 			for _, err := range errs {
@@ -82,10 +87,9 @@ If there's no range specified it would ask you if you want to download all chapt
 
 		chapters = chapters.SortByNumber()
 
-		rangesIndex := 1
-		rngs := []ranges.Range{}
+		var rngs []ranges.Range
 		// ranges argument is not provided
-		if rangesIndex >= len(args) {
+		if len(args) == 1 {
 			lastChapter := chapters[len(chapters)-1].GetNumber()
 			prompt := promptui.Prompt{
 				Label:     fmt.Sprintf("Do you want to download all %g chapters", lastChapter),
@@ -95,14 +99,14 @@ If there's no range specified it would ask you if you want to download all chapt
 			_, err := prompt.Run()
 
 			if err != nil {
-				color.Yellow("No ranges specified")
+				color.Yellow("Canceled by user")
 				os.Exit(0)
 			}
 
 			rngs = []ranges.Range{{Begin: 1, End: int64(lastChapter)}}
 		} else {
 			// ranges parsing
-			settings.Range = args[rangesIndex]
+			settings.Range = getRangesArg(args)
 			rngs, err = ranges.Parse(settings.Range)
 			cerr(err, "Error parsing ranges: %s")
 		}
@@ -245,4 +249,28 @@ func colorizeHelp(help string) string {
 	})
 
 	return help
+}
+
+func getRangesArg(args []string) string {
+	if len(args) == 1 {
+		return ""
+	}
+
+	if strings.HasPrefix(args[0], "http") {
+		return args[1]
+	}
+
+	return args[0]
+}
+
+func getUrlArg(args []string) string {
+	if len(args) == 1 {
+		return args[0]
+	}
+
+	if strings.HasPrefix(args[0], "http") {
+		return args[0]
+	}
+
+	return args[1]
 }
