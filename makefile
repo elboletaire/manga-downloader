@@ -33,7 +33,7 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/manganelo grabber/inmanga grabber/mangadex
+grabber: grabber/manganelo grabber/inmanga grabber/mangadex grabber/tcb
 
 grabber/manganelo:
 	go run . https://mangakakalot.com/manga/vd921334 7
@@ -46,3 +46,7 @@ grabber/inmanga:
 
 grabber/mangadex:
 	go run . https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece --language es 1-4 --bundle
+
+grabber/tcb:
+	go run . https://www.tcbscans.net/manga/one-piece/ 5
+	go run . https://en.leviatanscans.com/home/manga/i-became-the-male-leads-adopted-daughter/ 5
