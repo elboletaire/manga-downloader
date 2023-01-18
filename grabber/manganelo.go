@@ -1,6 +1,7 @@
 package grabber
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
 	"github.com/fatih/color"
+	"golang.org/x/net/html"
 )
 
 // Manganelo is a grabber for manganelo and similar pages
@@ -44,6 +46,47 @@ func (m *Manganelo) Test() (bool, error) {
 		"#examples div.chapter-list .row",
 		// mangakakalot style
 		"div.chapter-list .row",
+		// mangajar style (required when there are no more pages)
+		"article.chaptersList li.chapter-item",
+	}
+
+	// mangajar has ajax pagination
+	if m.doc.Find(".chapters-infinite-pagination .pagination .page-item").Length() > 0 {
+		var err error
+		var fetchChaps func(page int)
+		rows := &goquery.Selection{
+			Nodes: []*html.Node{},
+		}
+
+		fetchChaps = func(page int) {
+			rbody, err := http.Get(http.RequestParams{
+				URL: fmt.Sprintf("%s/chaptersList?page=%d", m.URL, page),
+			})
+			if err != nil {
+				return
+			}
+			defer rbody.Close()
+
+			doc, err := goquery.NewDocumentFromReader(rbody)
+			if err != nil {
+				return
+			}
+
+			rows = rows.AddNodes(doc.Find(".chapter-list-container .chapter-item").Nodes...)
+
+			if doc.Find("ul.pagination .page-item:not(.disabled):last-child").Length() > 0 {
+				fetchChaps(page + 1)
+			}
+		}
+
+		fetchChaps(1)
+		if err != nil {
+			return false, err
+		}
+
+		m.rows = rows
+
+		return m.rows.Length() > 0, nil
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -65,7 +108,14 @@ func (m *Manganelo) Test() (bool, error) {
 
 // Ttitle returns the manga title
 func (m Manganelo) FetchTitle() (string, error) {
-	return m.doc.Find("h1").Text(), nil
+	title := m.doc.Find("h1")
+
+	// mangajar has the name inside span.post-name
+	if title.Children().HasClass("post-name") {
+		title = title.Find(".post-name")
+	}
+
+	return title.Text(), nil
 }
 
 // FetchChapters returns a slice of chapters
@@ -147,10 +197,14 @@ func getImageUrls(doc *goquery.Document) []string {
 	}
 
 	// others just have the images
-	pimages = doc.Find("div.container-chapter-reader img")
+	pimages = doc.Find("div.container-chapter-reader img, .chapter-images img")
 	imgs := []string{}
 	pimages.Each(func(i int, s *goquery.Selection) {
-		imgs = append(imgs, s.AttrOr("src", s.AttrOr("data-src", "")))
+		src := s.AttrOr("src", "")
+		if src == "" || strings.HasPrefix(src, "data:image") {
+			src = s.AttrOr("data-src", "")
+		}
+		imgs = append(imgs, src)
 	})
 
 	return imgs

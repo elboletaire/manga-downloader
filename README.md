@@ -16,7 +16,9 @@ Supported sites
 
 - [Inmanga](https://inmanga.com)
 - [LeviatanScans](https://leviatanscans.com)
+- [MangaBat](https://readmangabat.com)
 - [Mangadex](https://mangadex.org)
+- [MangaJar](https://mangajar.com)
 - [Manganato](https://manganato.com) (aka manganelo.com)
 - [Mangakakalot](https://mangakakalot.com)
 - [Manganelo.tv](https://ww5.manganelo.tv)
