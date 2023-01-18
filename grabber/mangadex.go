@@ -76,11 +76,7 @@ func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 	var fetchChaps func(int)
 
 	fetchChaps = func(offset int) {
-		uri, err := url.JoinPath("https://api.mangadex.org", "manga", id, "feed")
-		if err != nil {
-			errs = append(errs, err)
-			return
-		}
+		uri := fmt.Sprintf("https://api.mangadex.org/manga/%s/feed", id)
 		params := url.Values{}
 		params.Add("limit", fmt.Sprint(baseOffset))
 		params.Add("order[volume]", "asc")
