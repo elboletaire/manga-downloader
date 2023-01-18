@@ -56,6 +56,10 @@ func (m *Manganelo) Test() (bool, error) {
 		}
 	}
 
+	if m.rows == nil {
+		return false, nil
+	}
+
 	return m.rows.Length() > 0, nil
 }
 
