@@ -9,7 +9,7 @@ Manga Downloader
 This app downloads mangas from websites like mangadex and stores them into cbz
 files, so you can read them with your favorite ereader or reading app.
 
-![download img]
+![prompt img]
 
 Supported sites
 ---------------
@@ -52,6 +52,8 @@ ranges (i.e. 1,3,5-10):
 manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1-50
 # This would download One Piece chapters 1 to 50 into our current folder
 ~~~
+
+![download img]
 
 In some sites, like mangadex, it may find multiple results for the same chapter,
 given the different languages it's translated to. In these cases, every
@@ -175,3 +177,4 @@ All the code contained in this repo is licensed under the
 [download img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/download.gif
 [bundle img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/bundle.gif
 [help img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/help.gif
+[prompt img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/prompt.gif
