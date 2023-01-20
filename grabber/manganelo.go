@@ -121,12 +121,14 @@ func (m Manganelo) FetchTitle() (string, error) {
 // FetchChapters returns a slice of chapters
 func (m Manganelo) FetchChapters() (chapters Filterables, errs []error) {
 	m.rows.Each(func(i int, s *goquery.Selection) {
-		re := regexp.MustCompile(`(\d+\.?\d*)`)
-		num := re.FindString(s.Find("a").Text())
+		re := regexp.MustCompile(`Chapter\s*(\d+\.?\d*)`)
+		chap := re.FindStringSubmatch(s.Find("a").Text())
 		// if the chapter has no number, we skip it (usually it's an announcement from the site)
-		if num == "" {
+		if len(chap) == 0 {
 			return
 		}
+
+		num := chap[1]
 		number, err := strconv.ParseFloat(num, 64)
 		if err != nil {
 			errs = append(errs, err)
