@@ -123,6 +123,10 @@ func (m Manganelo) FetchChapters() (chapters Filterables, errs []error) {
 	m.rows.Each(func(i int, s *goquery.Selection) {
 		re := regexp.MustCompile(`(\d+\.?\d*)`)
 		num := re.FindString(s.Find("a").Text())
+		// if the chapter has no number, we skip it (usually it's an announcement from the site)
+		if num == "" {
+			return
+		}
 		number, err := strconv.ParseFloat(num, 64)
 		if err != nil {
 			errs = append(errs, err)
