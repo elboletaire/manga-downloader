@@ -1,7 +1,6 @@
 package downloader
 
 import (
-	"bytes"
 	"io"
 	"sort"
 	"sync"
@@ -64,14 +63,15 @@ func FetchFile(params http.RequestParams, page uint) (file *File, err error) {
 		return
 	}
 
-	data := new(bytes.Buffer)
-	io.Copy(data, body)
+	defer body.Close()
+
+	data, err := io.ReadAll(body)
 	if err != nil {
 		return
 	}
 
 	file = &File{
-		Data: data.Bytes(),
+		Data: data,
 		Page: page,
 	}
 
