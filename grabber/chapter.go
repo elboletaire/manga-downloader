@@ -29,7 +29,9 @@ func (c Chapter) GetNumber() float64 {
 	return c.Number
 }
 
-// GetTitle returns the chapter title
+// GetTitle returns the chapter title removing whitespace and newlines
 func (c Chapter) GetTitle() string {
-	return strings.TrimSpace(c.Title)
+	title := strings.TrimSpace(c.Title)
+	title = strings.ReplaceAll(title, "\n", " ")
+	return title
 }
