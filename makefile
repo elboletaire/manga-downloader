@@ -39,6 +39,7 @@ grabber/manganelo:
 	go run . https://mangakakalot.com/manga/vd921334 7
 	go run . https://ww5.manganelo.tv/manga/manga-aa951409 3
 	go run . http://manganelos.com/manga/dont-pick-up-what-youve-thrown-away 10-12 --bundle
+	go run . https://readmangabat.com/read-ov357862 23
 	go run . https://chapmanganato.com/manga-aa951409 50
 	go run . https://h.mangabat.com/read-tc397521 5
 	go run . https://mangajar.com/manga/chainsaw-man-absTop-abs3bof 23
