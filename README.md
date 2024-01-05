@@ -15,15 +15,15 @@ Supported sites
 ---------------
 
 - [Inmanga](https://inmanga.com)
-- [LeviatanScans](https://leviatanscans.com)
+- [lscomic.com](https://lscomic.com/)
 - [MangaBat](https://readmangabat.com)
 - [Mangadex](https://mangadex.org)
-- [MangaJar](https://mangajar.com)
+- [MangaJar](https://mangajar.pro)
 - [Mangakakalot](https://mangakakalot.com)
 - [Manganato](https://manganato.com) (aka manganelo.com)
 - [Manganelo.tv](https://ww5.manganelo.tv)
 - [Manganelos](http://manganelos.com)
-- [TCBScans](https://www.tcbscans.net)
+- TCBScans ([net](https://www.tcbscans.net), [org](https://www.tcbscans.org), [com](https://tcbscans.com))
 
 If you'd like support for a specific site, [create a new issue][issues] or even
 a PR with the changes.
