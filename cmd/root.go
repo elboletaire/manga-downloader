@@ -220,7 +220,8 @@ func init() {
 	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Pages, "concurrency-pages", "C", 10, "number of concurrent page downloads, hard-limited to 10")
 	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", "only download the specified language")
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
-	rootCmd.Flags().StringVarP(&settings.OutputDir, "output-dir", "o", "./", "output directory for the downloaded files")
+	// set as persistent, so version command does not complain about the -o flag set via docker
+	rootCmd.PersistentFlags().StringVarP(&settings.OutputDir, "output-dir", "o", "./", "output directory for the downloaded files")
 }
 
 func cerr(err error, prefix string) {
