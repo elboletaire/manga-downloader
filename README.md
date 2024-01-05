@@ -14,19 +14,22 @@ files, so you can read them with your favorite ereader or reading app.
 Supported sites
 ---------------
 
+- [Asura Scans](https://asuratoon.com)
 - [Inmanga](https://inmanga.com)
+- [LHTranslation](https://lhtranslation.net)
 - [lscomic.com](https://lscomic.com/)
-- [MangaBat](https://readmangabat.com)
+- [Manga Monks](https://mangamonks.com)
+- MangaBat ([1](https://mangabat.com) & [2](https://readmangabat.com))
 - [Mangadex](https://mangadex.org)
 - [MangaJar](https://mangajar.pro)
-- [Mangakakalot](https://mangakakalot.com)
-- [Manganato](https://manganato.com) (aka manganelo.com)
+- Mangakakalot ([com](https://mangakakalot.com), [tv](https://mangakakalot.tv))
+- [Manganato](https://manganato.com) (aka manganelo.com and chapmanganato.to)
 - [Manganelo.tv](https://ww5.manganelo.tv)
 - [Manganelos](http://manganelos.com)
+- [MangaPanda](https://mangapanda.in)
 - TCBScans ([net](https://www.tcbscans.net), [org](https://www.tcbscans.org), [com](https://tcbscans.com))
 
-If you'd like support for a specific site, [create a new issue][issues] or even
-a PR with the changes.
+It may support even more sites of which I'm not aware. If you find a site that is not supported, feel free to open a new issue or a PR with the implementation.
 
 Usage
 -----
