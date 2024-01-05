@@ -66,11 +66,11 @@ type Site interface {
 // IdentifySite returns the site passing the Test() for the specified url
 func (g *Grabber) IdentifySite() (Site, []error) {
 	sites := []Site{
+		&PlainHTML{Grabber: g},
 		&Inmanga{Grabber: g},
 		&Mangadex{Grabber: g},
 		&Tcb{Grabber: g},
 		&Manganelo{Grabber: g},
-		&PlainHTML{Grabber: g},
 	}
 	var errs []error
 
