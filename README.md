@@ -160,7 +160,7 @@ All the code contained in this repo is licensed under the
 [GNU Affero General Public License v3.0][license]
 
     Manga Downloader GO cli
-    Copyright (C) 2023 Òscar Casajuana Alonso
+    Copyright (C) 2023-2024 Òscar Casajuana Alonso
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published by
