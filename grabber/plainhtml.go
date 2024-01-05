@@ -65,6 +65,15 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         "a",
 			Image:        "#readerarea img.ts-main-image",
 		},
+		// mangajar.pro
+		{
+			Title:        "h1 .post-name",
+			Rows:         "article.chaptersList li.chapter-item",
+			Chapter:      ".chapter-title",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        "#chapter-slider .carousel-item img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -87,7 +96,7 @@ func (m *PlainHTML) Test() (bool, error) {
 
 // Ttitle returns the manga title
 func (m PlainHTML) FetchTitle() (string, error) {
-	title := m.doc.Find("h1")
+	title := m.doc.Find(m.site.Title)
 
 	return title.Text(), nil
 }
