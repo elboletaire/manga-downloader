@@ -150,7 +150,7 @@ Note arguments aren't really positional, you can specify them in any order:
 				}
 
 				if !settings.Bundle {
-					filename, err := packer.PackSingle(s, d)
+					filename, err := packer.PackSingle(settings.OutputDir, s, d)
 					if err == nil {
 						fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
 					} else {
@@ -182,7 +182,7 @@ Note arguments aren't really positional, you can specify them in any order:
 			dc = append(dc, d.(*packer.DownloadedChapter))
 		}
 
-		filename, err := packer.PackBundle(s, dc, settings.Range)
+		filename, err := packer.PackBundle(settings.OutputDir, s, dc, settings.Range)
 		if err != nil {
 			color.Red(err.Error())
 			os.Exit(1)
@@ -220,6 +220,7 @@ func init() {
 	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Pages, "concurrency-pages", "C", 10, "number of concurrent page downloads, hard-limited to 10")
 	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", "only download the specified language")
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
+	rootCmd.Flags().StringVarP(&settings.OutputDir, "output-dir", "o", "./", "output directory for the downloaded files")
 }
 
 func cerr(err error, prefix string) {

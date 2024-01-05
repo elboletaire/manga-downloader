@@ -31,6 +31,8 @@ type Settings struct {
 	FilenameTemplate string
 	// Range is the range to be downloaded (in string, i.e. "1-10,23,45-50")
 	Range string
+	// OutputDir is the output directory for the downloaded files
+	OutputDir string
 }
 
 // MaxConcurrency is the max concurrency for a site
