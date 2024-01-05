@@ -70,7 +70,6 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		&Inmanga{Grabber: g},
 		&Mangadex{Grabber: g},
 		&Tcb{Grabber: g},
-		&Manganelo{Grabber: g},
 	}
 	var errs []error
 

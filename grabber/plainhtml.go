@@ -1,6 +1,7 @@
 package grabber
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
 	"github.com/fatih/color"
+	"golang.org/x/net/html"
 )
 
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)
@@ -25,6 +27,9 @@ type SiteSelector struct {
 	Chapter      string
 	ChapterTitle string
 	Image        string
+	Ajax         string
+	AjaxRows     string
+	AjaxNext     string
 }
 
 // PlainHTMLChapter represents a PlainHTML Chapter
@@ -56,6 +61,33 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: ".text-gray-500",
 			Image:        "picture img",
 		},
+		// manganelo/manganato
+		{
+			Title:        "h1",
+			Rows:         "div.panel-story-chapter-list .row-content-chapter li",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        "div.container-chapter-reader img",
+		},
+		// manganelos/mangapanda
+		{
+			Title:        "h1",
+			Rows:         "#examples div.chapter-list .row",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        "div.container-chapter-reader img",
+		},
+		// mangakakalot
+		{
+			Title:        "h1",
+			Rows:         "div.chapter-list .row",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        "div.container-chapter-reader img,#vungdoc img",
+		},
 		// asuratoon.com
 		{
 			Title:        "h1",
@@ -73,6 +105,18 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: "a",
 			Link:         "a",
 			Image:        "#chapter-slider .carousel-item img",
+			Ajax:         ".chapters-infinite-pagination .pagination .page-item",
+			AjaxRows:     ".chapter-list-container .chapter-item",
+			AjaxNext:     "ul.pagination .page-item:not(.disabled):last-child",
+		},
+		// mangamonks
+		{
+			Title:        "h3.info-title",
+			Rows:         "#chapter .chapter-list li",
+			Chapter:      ".chapter-number",
+			ChapterTitle: ".chapter-number",
+			Link:         "a",
+			Image:        "#imageContainer img",
 		},
 	}
 
@@ -87,6 +131,45 @@ func (m *PlainHTML) Test() (bool, error) {
 		}
 	}
 
+	// some sites have ajax pagination
+	if m.site.Ajax != "" && m.doc.Find(m.site.Ajax).Length() > 0 {
+		var err error
+		var fetchChaps func(page int)
+		rows := &goquery.Selection{
+			Nodes: []*html.Node{},
+		}
+
+		fetchChaps = func(page int) {
+			rbody, err := http.Get(http.RequestParams{
+				URL: fmt.Sprintf("%s/chaptersList?page=%d", m.URL, page),
+			})
+			if err != nil {
+				return
+			}
+			defer rbody.Close()
+
+			doc, err := goquery.NewDocumentFromReader(rbody)
+			if err != nil {
+				return
+			}
+
+			rows = rows.AddNodes(doc.Find(m.site.AjaxRows).Nodes...)
+
+			if doc.Find(m.site.AjaxNext).Length() > 0 {
+				fetchChaps(page + 1)
+			}
+		}
+
+		fetchChaps(1)
+		if err != nil {
+			return false, err
+		}
+
+		m.rows = rows
+
+		return m.rows.Length() > 0, nil
+	}
+
 	if m.rows == nil {
 		return false, nil
 	}
@@ -98,7 +181,7 @@ func (m *PlainHTML) Test() (bool, error) {
 func (m PlainHTML) FetchTitle() (string, error) {
 	title := m.doc.Find(m.site.Title)
 
-	return title.Text(), nil
+	return sanitizeTitle(title.Text()), nil
 }
 
 // FetchChapters returns a slice of chapters
@@ -183,8 +266,14 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 }
 
 func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
+	// some sites store a plain text array with the urls into a hidden layer
+	pimages := doc.Find("#arraydata")
+	if pimages.Length() == 1 {
+		return strings.Split(pimages.Text(), ",")
+	}
+
 	// images are inside picture objects
-	pimages := doc.Find(selector)
+	pimages = doc.Find(selector)
 	imgs := []string{}
 	pimages.Each(func(i int, s *goquery.Selection) {
 		src := s.AttrOr("src", "")
@@ -195,4 +284,13 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 	})
 
 	return imgs
+}
+
+// sanitizeTitle sanitizes titles, trimming and removing extra spaces from titles
+func sanitizeTitle(title string) string {
+	spaces := regexp.MustCompile(`\s+`)
+	title = spaces.ReplaceAllString(title, " ")
+	title = strings.TrimSpace(title)
+
+	return title
 }
