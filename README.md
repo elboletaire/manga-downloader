@@ -14,20 +14,26 @@ files, so you can read them with your favorite ereader or reading app.
 Supported sites
 ---------------
 
-- [Asura Scans](https://asuratoon.com)
-- [Inmanga](https://inmanga.com)
+- [asuratoon.com (Asura Scans)](https://asuratoon.com)
+- [chapmanganato.to](https://chapmanganato.to)
+- [inmanga.com](https://inmanga.com)
 - [LHTranslation](https://lhtranslation.net)
 - [lscomic.com](https://lscomic.com/)
 - [Manga Monks](https://mangamonks.com)
-- MangaBat ([1](https://mangabat.com) & [2](https://readmangabat.com))
+- [mangabat.com](https://mangabat.com)
 - [Mangadex](https://mangadex.org)
 - [MangaJar](https://mangajar.pro)
-- Mangakakalot ([com](https://mangakakalot.com), [tv](https://mangakakalot.tv))
-- [Manganato](https://manganato.com) (aka manganelo.com and chapmanganato.to)
-- [Manganelo.tv](https://ww5.manganelo.tv)
-- [Manganelos](http://manganelos.com)
-- [MangaPanda](https://mangapanda.in)
-- TCBScans ([net](https://www.tcbscans.net), [org](https://www.tcbscans.org), [com](https://tcbscans.com))
+- [mangakakalot.com](https://mangakakalot.com)
+- [mangakakalot.tv](https://mangakakalot.tv)
+- [manganato.com](https://manganato.com)
+- [manganelo.com](https://manganelo.com)
+- [manganelo.tv](https://manganelo.tv)
+- [manganelos.com](http://manganelos.com)
+- [mangapanda.in](https://mangapanda.in)
+- [readmangabat.com](https://readmangabat.com)
+- [tcbscans.com](https://tcbscans.com)
+- [tcbscans.net](https://www.tcbscans.net)
+- [tcbscans.org](https://www.tcbscans.org)
 
 It may support even more sites of which I'm not aware. If you find a site that is not supported, feel free to open a new issue or a PR with the implementation.
 
