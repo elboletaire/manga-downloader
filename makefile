@@ -33,14 +33,7 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/manganelo grabber/inmanga grabber/mangadex grabber/tcb grabber/html
-
-grabber/manganelo:
-	go run . https://mangakakalot.com/manga/vd921334 7
-	go run . https://ww5.manganelo.tv/manga/manga-aa951409 3
-	go run . https://readmangabat.com/read-ov357862 23
-	go run . https://chapmanganato.com/manga-aa951409 50
-	go run . https://h.mangabat.com/read-tc397521 5
+grabber: grabber/inmanga grabber/mangadex grabber/tcb grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1
@@ -50,9 +43,18 @@ grabber/mangadex:
 
 grabber/tcb:
 	go run . https://www.tcbscans.net/manga/one-piece/ 5
+	go run . https://ww1.tcbscans.org/manga/ao-ashi/ 203
 	go run . https://lscomic.com/manga/peerless-dad/ 285
 
 grabber/html:
 	go run . https://tcbscans.com/mangas/5/one-piece 1100
+	go run . https://mangakakalot.com/manga/vd921334 7
+	go run . https://ww7.mangakakalot.tv/chapter/manga-hj984766/chapter-86 86
+	go run . https://ww5.manganelo.tv/manga/manga-aa951409 3
 	go run . https://asuratoon.com/manga/0435219386-return-of-the-sss-class-ranker/ 85
 	go run . https://mangajar.pro/manga/haite-kudasai-takamine-san 43
+	go run . https://chapmanganato.com/manga-aa951409 50
+	go run . https://readmangabat.com/read-ov357862 23
+	go run . https://h.mangabat.com/read-tc397521 5
+	go run . https://mangapanda.in/manga/dragon-ball-super-color-%E2%AD%90%E2%AD%90%E2%AD%90%E2%AD%90%E2%AD%90 90
+	go run . https://mangamonks.com/manga/mashle 155
