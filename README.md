@@ -153,6 +153,16 @@ sudo spctl --master-disable
 
 Othwerise you'll see an error because the binary is unsigned.
 
+### Using Docker
+
+You can also use manga-downloader directly via docker like so:
+
+~~~bash
+docker run --rm -it -v $PWD:/downloads elboletaire/manga-downloader --help
+~~~
+
+Note the `-v $PWD:/downloads` param, that's required in order to get the downloads in your current path.
+
 License
 -------
 
