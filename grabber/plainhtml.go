@@ -15,6 +15,16 @@ type PlainHTML struct {
 	*Grabber
 	doc  *goquery.Document
 	rows *goquery.Selection
+	site SiteSelector
+}
+
+type SiteSelector struct {
+	Title        string
+	Rows         string
+	Link         string
+	Chapter      string
+	ChapterTitle string
+	Image        string
 }
 
 // PlainHTMLChapter represents a PlainHTML Chapter
@@ -37,17 +47,33 @@ func (m *PlainHTML) Test() (bool, error) {
 	}
 
 	// order is important, since some sites have very similar selectors
-	selectors := []string{
+	selectors := []SiteSelector{
 		// tcbscans.com
-		"main .mx-auto .grid .col-span-2 a",
+		{
+			Title:        "h1",
+			Rows:         "main .mx-auto .grid .col-span-2 a",
+			Chapter:      ".font-bold",
+			ChapterTitle: ".text-gray-500",
+			Image:        "picture img",
+		},
+		// asuratoon.com
+		{
+			Title:        "h1",
+			Rows:         "#chapterlist ul li",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a",
+			Image:        "#readerarea img.ts-main-image",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
 	// using a simple `,` joining all selectors would return missmatches
 	for _, selector := range selectors {
-		rows := m.doc.Find(selector)
+		rows := m.doc.Find(selector.Rows)
 		if rows.Length() > 0 {
 			m.rows = rows
+			m.site = selector
 			break
 		}
 	}
@@ -71,7 +97,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	m.rows.Each(func(i int, s *goquery.Selection) {
 		// we need to get the chapter number from the title
 		re := regexp.MustCompile(`Chapter\s*(\d+\.?\d*)`)
-		chap := re.FindStringSubmatch(s.Find(".font-bold").Text())
+		chap := re.FindStringSubmatch(s.Find(m.site.Chapter).Text())
 		// if the chapter has no number, we skip it (these are usually site announcements)
 		if len(chap) == 0 {
 			return
@@ -84,13 +110,16 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 			return
 		}
 		u := s.AttrOr("href", "")
+		if m.site.Link != "" {
+			u = s.Find(m.site.Link).AttrOr("href", "")
+		}
 		if !strings.HasPrefix(u, "http") {
 			u = m.BaseUrl() + u
 		}
-		chapter := &ManganeloChapter{
+		chapter := &PlainHTMLChapter{
 			Chapter{
 				Number: number,
-				Title:  s.Find(".text-gray-500").Text(),
+				Title:  s.Find(m.site.ChapterTitle).Text(),
 			},
 			u,
 		}
@@ -103,7 +132,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 
 // FetchChapter fetches a chapter and its pages
 func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
-	mchap := f.(*ManganeloChapter)
+	mchap := f.(*PlainHTMLChapter)
 	body, err := http.Get(http.RequestParams{
 		URL: mchap.URL,
 	})
@@ -116,7 +145,7 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
-	pimages := getPlainHTMLImageURL(doc)
+	pimages := getPlainHTMLImageURL(m.site.Image, doc)
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
@@ -144,9 +173,9 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 	return chapter, nil
 }
 
-func getPlainHTMLImageURL(doc *goquery.Document) []string {
+func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 	// images are inside picture objects
-	pimages := doc.Find("picture img")
+	pimages := doc.Find(selector)
 	imgs := []string{}
 	pimages.Each(func(i int, s *goquery.Selection) {
 		src := s.AttrOr("src", "")
