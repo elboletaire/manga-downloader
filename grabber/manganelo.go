@@ -46,8 +46,6 @@ func (m *Manganelo) Test() (bool, error) {
 		"#examples div.chapter-list .row",
 		// mangakakalot style
 		"div.chapter-list .row",
-		// mangajar style (required when there are no more pages)
-		"article.chaptersList li.chapter-item",
 	}
 
 	// mangajar has ajax pagination
