@@ -55,7 +55,7 @@ chapters.
 > Note: you must specify <kbd>y</kbd> in order to download them, its default
 > behavior is set to "no".
 
-You can also specify the range beforehand, the range allows you setting pages by
+You can also specify the range beforehand, the range allows you setting chapters by
 ranges (i.e. 1,3,5-10):
 
 ~~~bash
