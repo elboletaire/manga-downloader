@@ -7,7 +7,7 @@ Manga Downloader
 [![gitHub downloads]][releases]
 [![License][license badge]][license]
 
-This app downloads mangas from websites like mangadex and stores them into cbz
+This app downloads manga from websites like mangadex and stores them into cbz
 files, so you can read them with your favorite ereader or reading app.
 
 ![prompt img]
