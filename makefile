@@ -24,7 +24,7 @@ build/unix:
 	CGO_ENABLED=0 go build -o manga-downloader ${GOFLAGS} .
 
 build/win:
-	go build -o manga-downloader.exe ${GOFLAGS} .
+	GOOS=windows go build -o manga-downloader.exe ${GOFLAGS} .
 
 test:
 ifdef RICHGO
