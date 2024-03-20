@@ -118,6 +118,14 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         "a",
 			Image:        "#imageContainer img",
 		},
+		// colamanga.com
+		{
+			Title:   "h1",
+			Rows:    ".all_data_list .fed-part-rows > li",
+			Chapter: "a",
+			Link:    "a",
+			Image:   ".mh_comicpic img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -188,7 +196,7 @@ func (m PlainHTML) FetchTitle() (string, error) {
 func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	m.rows.Each(func(i int, s *goquery.Selection) {
 		// we need to get the chapter number from the title
-		re := regexp.MustCompile(`Chapter\s*(\d+\.?\d*)`)
+		re := regexp.MustCompile(`(\d+\.?\d*)`)
 		chap := re.FindStringSubmatch(s.Find(m.site.Chapter).Text())
 		// if the chapter has no number, we skip it (these are usually site announcements)
 		if len(chap) == 0 {

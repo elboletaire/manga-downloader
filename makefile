@@ -58,3 +58,4 @@ grabber/html:
 	go run . https://h.mangabat.com/read-tc397521 5
 	go run . https://mangapanda.in/manga/dragon-ball-super-color-%E2%AD%90%E2%AD%90%E2%AD%90%E2%AD%90%E2%AD%90 90
 	go run . https://mangamonks.com/manga/mashle 155
+	go run . https://www.colamanga.com/manga-ak475639/ 69
