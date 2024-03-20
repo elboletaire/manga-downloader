@@ -22,7 +22,10 @@ WORKDIR /app
 RUN mkdir /downloads
 
 # Copy the pre-built binary file from the previous stage
-COPY --from=builder /app/manga-downloader .
+COPY --from=builder /app/manga-downloader /usr/bin/manga-downloader
+
+COPY /docker/entrypoint.sh /usr/bin/entrypoint.sh
+RUN chmod +x /usr/bin/entrypoint.sh
 
 # Set manga-downloader as the entrypoint
-ENTRYPOINT ["./manga-downloader", "-o", "/downloads"]
+ENTRYPOINT ["/usr/bin/entrypoint.sh", "-o", "/downloads"]
