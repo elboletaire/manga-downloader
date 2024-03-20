@@ -50,6 +50,7 @@ func SanitizeFilename(filename string) string {
 	sanitized = strings.Replace(sanitized, "\\", "_", -1)
 	sanitized = strings.Replace(sanitized, ":", ";", -1)
 	sanitized = strings.Replace(sanitized, "?", "¿", -1)
+	sanitized = strings.Replace(sanitized, `"`, "'", -1)
 
 	return sanitized
 }
