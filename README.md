@@ -4,7 +4,8 @@ Manga Downloader
 [![Go Report Card][go report card]][go report]
 [![Go Reference][go reference badge]][go reference]
 [![GitHub release][release badge]][releases]
-[![gitHub downloads]][releases]
+[![gitHub downloads]][downloads]
+[![Docker Pulls][pulls badge]][docker hub]
 [![License][license badge]][license]
 
 This app downloads manga from websites like mangadex and stores them into cbz
@@ -186,16 +187,20 @@ All the code contained in this repo is licensed under the
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 [github downloads]: https://img.shields.io/github/downloads/elboletaire/manga-downloader/total
+[go reference badge]: https://pkg.go.dev/badge/github.com/elboletaire/manga-downloader.svg
+[release badge]: https://img.shields.io/github/release/elboletaire/manga-downloader.svg
+[pulls badge]: https://img.shields.io/docker/pulls/elboletaire/manga-downloader
+[license badge]: https://img.shields.io/github/license/elboletaire/manga-downloader?color=green
 [go report]: https://goreportcard.com/report/github.com/elboletaire/manga-downloader
 [go report card]: https://goreportcard.com/badge/github.com/elboletaire/manga-downloader
 [go reference]: https://pkg.go.dev/github.com/elboletaire/manga-downloader
-[go reference badge]: https://pkg.go.dev/badge/github.com/elboletaire/manga-downloader.svg
-[release badge]: https://img.shields.io/github/release/elboletaire/manga-downloader.svg
+
 [license]: ./LICENSE
-[license badge]: https://img.shields.io/github/license/elboletaire/manga-downloader?color=green
 [releases]: https://github.com/elboletaire/manga-downloader/releases
 [issues]: https://github.com/elboletaire/manga-downloader/issues
 [download img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/download.gif
 [bundle img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/bundle.gif
 [help img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/help.gif
 [prompt img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/prompt.gif
+[docker hub]: https://hub.docker.com/r/elboletaire/manga-downloader
+[downloads]: https://qii404.me/github-release-statistics/?repo=https://github.com/elboletaire/manga-downloader
