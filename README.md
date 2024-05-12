@@ -164,6 +164,17 @@ docker run --rm -it -v $PWD:/downloads elboletaire/manga-downloader --help
 
 Note the `-v $PWD:/downloads` param, that's required in order to get the downloads in your current path.
 
+Star history
+------------
+
+<a href="https://star-history.com/#elboletaire/manga-downloader">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=elboletaire/manga-downloader&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=elboletaire/manga-downloader&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=elboletaire/manga-downloader&type=Date" />
+  </picture>
+</a>
+
 License
 -------
 
