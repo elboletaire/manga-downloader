@@ -10,7 +10,7 @@ import (
 )
 
 // ArchiveCBZ archives the given files into a CBZ file
-func ArchiveCBZ(filename string, files []*downloader.File) error {
+func ArchiveCBZ(filename string, files []*downloader.File, progress func(page, progress int)) error {
 	if len(files) == 0 {
 		return errors.New("no files to pack")
 	}
@@ -29,6 +29,7 @@ func ArchiveCBZ(filename string, files []*downloader.File) error {
 		if _, err = f.Write(file.Data); err != nil {
 			return err
 		}
+		progress(i, i*100/len(files))
 	}
 
 	err = w.Close()

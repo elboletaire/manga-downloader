@@ -121,17 +121,19 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	pimages := body.Find("div.reading-content img")
+	pcount := pimages.Length()
+	// progress := make(chan int, pcount)
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
-		PagesCount: int64(pimages.Length()),
+		PagesCount: int64(pcount),
 		Language:   "en",
 	}
 	pages := []Page{}
 	pimages.Each(func(i int, s *goquery.Selection) {
 		u := strings.TrimSpace(s.AttrOr("data-src", s.AttrOr("src", "")))
-		n := int64(i + 1)
+		n := i + 1
 		if u == "" {
 			// this error is not critical and is not from our side, so just log it out
 			color.Yellow("page %d of %s has no URL to fetch from 😕 (will be ignored)", n, chapter.GetTitle())
@@ -140,13 +142,16 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 		if !strings.HasPrefix(u, "http") {
 			u = t.BaseUrl() + u
 		}
+		// progress <- n
 		pages = append(pages, Page{
-			Number: n,
+			Number: int64(n),
 			URL:    u,
 		})
 	})
 
 	chapter.Pages = pages
+
+	// close(progress)
 
 	return chapter, nil
 }
