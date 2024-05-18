@@ -1,7 +1,6 @@
 package grabber
 
 import (
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -9,7 +8,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
 	"github.com/fatih/color"
-	"golang.org/x/net/html"
 )
 
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)
@@ -27,9 +25,6 @@ type SiteSelector struct {
 	Chapter      string
 	ChapterTitle string
 	Image        string
-	Ajax         string
-	AjaxRows     string
-	AjaxNext     string
 }
 
 // PlainHTMLChapter represents a PlainHTML Chapter
@@ -97,18 +92,6 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         "a",
 			Image:        "#readerarea img.ts-main-image",
 		},
-		// mangajar.pro
-		{
-			Title:        "h1 .post-name",
-			Rows:         "article.chaptersList li.chapter-item",
-			Chapter:      ".chapter-title",
-			ChapterTitle: "a",
-			Link:         "a",
-			Image:        "#chapter-slider .carousel-item img",
-			Ajax:         ".chapters-infinite-pagination .pagination .page-item",
-			AjaxRows:     ".chapter-list-container .chapter-item",
-			AjaxNext:     "ul.pagination .page-item:not(.disabled):last-child",
-		},
 		// mangamonks
 		{
 			Title:        "h3.info-title",
@@ -129,45 +112,6 @@ func (m *PlainHTML) Test() (bool, error) {
 			m.site = selector
 			break
 		}
-	}
-
-	// some sites have ajax pagination
-	if m.site.Ajax != "" && m.doc.Find(m.site.Ajax).Length() > 0 {
-		var err error
-		var fetchChaps func(page int)
-		rows := &goquery.Selection{
-			Nodes: []*html.Node{},
-		}
-
-		fetchChaps = func(page int) {
-			rbody, err := http.Get(http.RequestParams{
-				URL: fmt.Sprintf("%s/chaptersList?page=%d", m.URL, page),
-			})
-			if err != nil {
-				return
-			}
-			defer rbody.Close()
-
-			doc, err := goquery.NewDocumentFromReader(rbody)
-			if err != nil {
-				return
-			}
-
-			rows = rows.AddNodes(doc.Find(m.site.AjaxRows).Nodes...)
-
-			if doc.Find(m.site.AjaxNext).Length() > 0 {
-				fetchChaps(page + 1)
-			}
-		}
-
-		fetchChaps(1)
-		if err != nil {
-			return false, err
-		}
-
-		m.rows = rows
-
-		return m.rows.Length() > 0, nil
 	}
 
 	if m.rows == nil {
