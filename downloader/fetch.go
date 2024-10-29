@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"fmt"
 	"io"
 	"sort"
 	"sync"
@@ -15,12 +16,16 @@ type File struct {
 	Page uint
 }
 
+// ProgressCallback is a function type for progress updates with optional error
+type ProgressCallback func(page, progress int, err error)
+
 // FetchChapter downloads all the pages of a chapter
-func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress func(page, progress int)) (files []*File, err error) {
+func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress ProgressCallback) (files []*File, err error) {
 	wg := sync.WaitGroup{}
 	guard := make(chan struct{}, site.GetMaxConcurrency().Pages)
-	errChan := make(chan error, 1)
+	errChan := make(chan error, len(chapter.Pages)) // Buffer for all possible page errors
 	done := make(chan bool)
+	var mu sync.Mutex
 
 	for _, page := range chapter.Pages {
 		guard <- struct{}{}
@@ -35,35 +40,40 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress func(p
 				Referer: site.BaseUrl(),
 			}, uint(page.Number))
 
-			if err != nil {
-				select {
-				case errChan <- err:
-				default:
-				}
-				return
-			}
-
-			files = append(files, file)
 			pn := int(page.Number)
 			cp := pn * 100 / len(chapter.Pages)
 
-			onprogress(pn, cp)
+			if err != nil {
+				errChan <- fmt.Errorf("page %d: %w", page.Number, err)
+				onprogress(pn, cp, err)
+				return
+			}
+
+			mu.Lock()
+			files = append(files, file)
+			mu.Unlock()
+
+			onprogress(pn, cp, nil)
 		}(page)
 	}
 
 	go func() {
 		wg.Wait()
-		// signal that all goroutines have completed
 		close(done)
+		close(errChan)
 	}()
 
-	select {
-	// in case of error, return the very first one
-	case err := <-errChan:
-		close(guard)
-		return nil, err
-	case <-done:
-		// all goroutines finished successfully, continue
+	// Collect all errors
+	var errors []error
+	for err := range errChan {
+		errors = append(errors, err)
+	}
+
+	<-done
+	close(guard)
+
+	if len(errors) > 0 {
+		return files, fmt.Errorf("failed to download %d pages", len(errors))
 	}
 
 	// sort files by page number
