@@ -165,13 +165,7 @@ Note the `-v $PWD:/downloads` param, that's required in order to get the downloa
 Star history
 ------------
 
-<a href="https://star-history.com/#elboletaire/manga-downloader">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=elboletaire/manga-downloader&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=elboletaire/manga-downloader&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=elboletaire/manga-downloader&type=Date" />
-  </picture>
-</a>
+[![Stargazers over time](https://starchart.cc/elboletaire/manga-downloader.svg?variant=adaptive)](https://starchart.cc/elboletaire/manga-downloader)
 
 License
 -------
