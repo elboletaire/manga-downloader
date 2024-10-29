@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"syscall"
 
 	"github.com/elboletaire/manga-downloader/downloader"
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -19,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/vbauerster/mpb/v8"
 	"github.com/vbauerster/mpb/v8/decor"
+	"golang.org/x/term"
 
 	cc "github.com/ivanpirog/coloredcobra"
 )
@@ -78,7 +80,7 @@ func Run(cmd *cobra.Command, args []string) {
 	s.InitFlags(cmd)
 
 	// fetch series title
-	_, err := s.FetchTitle()
+	title, err := s.FetchTitle()
 	cerr(err, "Error fetching title: ")
 
 	// fetch all chapters
@@ -138,6 +140,10 @@ func Run(cmd *cobra.Command, args []string) {
 
 	green, blue := color.New(color.FgGreen), color.New(color.FgBlue)
 
+	// Get terminal width for title truncation
+	termWidth := getTerminalWidth()
+	mangaLen, chapterLen := calculateTitleLengths(termWidth)
+
 	for _, chap := range chapters {
 		g <- struct{}{}
 		wg.Add(1)
@@ -152,12 +158,27 @@ func Run(cmd *cobra.Command, args []string) {
 				return
 			}
 
+			// generate the filename for the chapter
+			filename, err := packer.NewFilenameFromTemplate(s.GetFilenameTemplate(), packer.NewChapterFileTemplateParts(title, chapter))
+			if err != nil {
+				color.Red("- error creating filename for chapter %s: %s", chapter.GetTitle(), err.Error())
+				<-g
+				return
+			}
+			filename += ".cbz"
+
 			// chapter download progress bar
-			title := fmt.Sprintf("%s:", truncateString(chap.GetTitle(), 30))
+			barTitle := fmt.Sprintf("%s - %s:", truncateString(title, mangaLen), truncateString(chap.GetTitle(), chapterLen))
+			status := "downloading"
 			cdbar := p.AddBar(chapter.PagesCount,
 				mpb.PrependDecorators(
-					decor.Name(title, decor.WCSyncWidthR),
-					decor.Meta(decor.Name("downloading", decor.WC{C: decor.DextraSpace}), toMetaFunc(blue)),
+					decor.Name(barTitle, decor.WCSyncWidthR),
+					decor.Any(func(s decor.Statistics) string {
+						if strings.HasPrefix(status, "error:") {
+							return color.New(color.FgRed).Sprint(status)
+						}
+						return blue.Sprint(status)
+					}, decor.WC{C: decor.DextraSpace}),
 					decor.CountersNoUnit("%d / %d", decor.WC{C: decor.DextraSpace}),
 				),
 				mpb.AppendDecorators(
@@ -172,11 +193,11 @@ func Run(cmd *cobra.Command, args []string) {
 				mpb.BarQueueAfter(cdbar),
 				mpb.BarFillerClearOnComplete(),
 				mpb.PrependDecorators(
-					decor.Name(title, decor.WCSyncWidthR),
+					decor.OnComplete(decor.Name(barTitle, decor.WC{}), ""),
 					decor.OnCompleteMeta(
 						decor.OnComplete(
 							decor.Meta(decor.Name("archiving", decor.WC{C: decor.DextraSpace}), toMetaFunc(blue)),
-							"done!",
+							filename+" saved",
 						),
 						toMetaFunc(green),
 					),
@@ -187,8 +208,13 @@ func Run(cmd *cobra.Command, args []string) {
 				),
 			)
 
-			files, err := downloader.FetchChapter(s, chapter, func(page, _ int) {
-				cdbar.IncrBy(page)
+			files, err := downloader.FetchChapter(s, chapter, func(page int, progress int, err error) {
+				if err != nil {
+					status = "error: " + err.Error()
+					cdbar.SetCurrent(int64(progress))
+				} else {
+					cdbar.IncrBy(page)
+				}
 			})
 			if err != nil {
 				color.Red("- error downloading chapter %s: %s", chapter.GetTitle(), err.Error())
@@ -205,10 +231,7 @@ func Run(cmd *cobra.Command, args []string) {
 				_, err := packer.PackSingle(settings.OutputDir, s, d, func(page, _ int) {
 					scbar.IncrBy(page)
 				})
-				// filename, err := packer.PackSingle(settings.OutputDir, s, d)
-				if err == nil {
-					// fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
-				} else {
+				if err != nil {
 					color.Red(err.Error())
 				}
 			} else {
@@ -359,9 +382,45 @@ func getUrlArg(args []string) string {
 	return args[1]
 }
 
+// getTerminalWidth returns the current terminal width or a default value if it can't be determined
+func getTerminalWidth() int {
+	width, _, err := term.GetSize(int(syscall.Stdin))
+	if err != nil {
+		return 80 // default terminal width
+	}
+	return width
+}
+
+// calculateTitleLengths calculates how much space to allocate for manga and chapter titles
+func calculateTitleLengths(termWidth int) (mangaLen, chapterLen int) {
+	// Reserve space for other elements in the progress bar:
+	// - status (e.g. "downloading", "archiving", etc.): ~15 chars
+	// - progress counter (e.g. "123/456"): ~10 chars
+	// - percentage: ~5 chars
+	// - decorators (spaces, colons, etc.): ~5 chars
+	reservedSpace := 35
+	availableSpace := termWidth - reservedSpace
+
+	// Allocate 60% to manga title and 40% to chapter title if there's enough space
+	if availableSpace > 20 {
+		mangaLen = (availableSpace * 60) / 100
+		chapterLen = (availableSpace * 40) / 100
+	} else {
+		// If space is very limited, use minimal lengths
+		mangaLen = 10
+		chapterLen = 10
+	}
+
+	return
+}
+
 // truncateString truncates the input string at a specified maximum length
 // without cutting words. It finds the last space within the limit and truncates there.
 func truncateString(input string, maxLength int) string {
+	if maxLength <= 0 {
+		return ""
+	}
+
 	if len(input) <= maxLength {
 		return input
 	}
