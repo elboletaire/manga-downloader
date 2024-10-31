@@ -139,17 +139,20 @@ func (m Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
+	pcount := len(body.Chapter.Data)
+
 	chapter := &Chapter{
 		Title:      fmt.Sprintf("Chapter %04d %s", int64(f.GetNumber()), chap.Title),
 		Number:     f.GetNumber(),
-		PagesCount: int64(len(body.Chapter.Data)),
+		PagesCount: int64(pcount),
 		Language:   chap.Language,
 	}
 
 	// create pages
 	for i, p := range body.Chapter.Data {
+		num := i + 1
 		chapter.Pages = append(chapter.Pages, Page{
-			Number: int64(i + 1),
+			Number: int64(num),
 			URL:    body.BaseUrl + path.Join("/data", body.Chapter.Hash, p),
 		})
 	}
