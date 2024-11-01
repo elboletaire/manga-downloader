@@ -254,11 +254,18 @@ func (m Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 		Language:   chap.Language,
 	}
 
+	baseURL, err := url.Parse(body.BaseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	baseURL = baseURL.JoinPath(baseURL.Path, "data", body.Chapter.Hash)
+
 	// create pages
-	for i, p := range body.Chapter.Data {
+	for i, pageURL := range body.Chapter.Data {
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),
-			URL:    body.BaseURL + path.Join("/data", body.Chapter.Hash, p),
+			URL:    baseURL.JoinPath(pageURL).String(),
 		})
 	}
 
