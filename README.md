@@ -110,12 +110,6 @@ After you downloaded and unarchived it, you can start using it in that folder:
 ./manga-downloader URL range
 ```
 
-For Windows users would be:
-
-```cmd
-.\manga-downloader URL range
-```
-
 If you want the binary to be accessible from your terminal in whatever path you
 might be, you should ensure to place the binary on a `PATH` defined folder (or
 add the folder where you downloaded manga-downloader to your `PATH` env var).
@@ -123,19 +117,6 @@ add the folder where you downloaded manga-downloader to your `PATH` env var).
 Places where you can put the binary and have it accessible system-wide:
 
 - Linux and Mac: `/usr/local/bin`
-- Windows: `C:\Windows\System32`
-
-### Windows
-
-So if you're a windows user and place the .exe file inside `C:\Windows\System32`
-you'll be able to call the program wherever you want from:
-
-```bash
-C:\Users\voxelost\Desktop>manga-downloader https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover 1-346
-```
-
-The above command would download Black Clover chapters 1 to 346 to the Desktop
-folder (since that's the current directory).
 
 ### Mac
 
