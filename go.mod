@@ -1,6 +1,6 @@
 module github.com/voxelost/manga-downloader
 
-go 1.23.2
+go 1.23
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.0
