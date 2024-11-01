@@ -30,7 +30,7 @@ func Parse(rawRanges string) []Range {
 	for _, part := range co {
 		r, err := parseSingleRange(part)
 		if err != nil {
-			slog.Warn("error parsing range %q: %s", part, err.Error())
+			slog.Warn(fmt.Sprintf("error parsing range %q: %s", part, err.Error()))
 			continue
 		}
 

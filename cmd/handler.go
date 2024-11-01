@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
+	"strings"
 	"sync"
 
-	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 	"github.com/voxelost/manga-downloader/downloader"
@@ -17,13 +18,16 @@ import (
 func Hander(cmd *cobra.Command, args []string) {
 	s, errs := grabber.NewSite(getURLArg(args), &settings)
 	if len(errs) > 0 {
-		color.Red("Errors testing site (a site may be down):")
+		var errorStrings []string
 		for _, err := range errs {
-			color.Red(err.Error())
+			errorStrings = append(errorStrings, err.Error())
 		}
+
+		slog.Error(fmt.Sprintf("errors testing site (a site may be down): %s", strings.Join(errorStrings, ", ")))
+		os.Exit(1)
 	}
 	if s == nil {
-		color.Yellow("Site not recognised")
+		slog.Error("site not recognised")
 		os.Exit(1)
 	}
 	s.InitFlags(cmd)
@@ -31,17 +35,19 @@ func Hander(cmd *cobra.Command, args []string) {
 	// fetch series title
 	title, err := s.FetchTitle()
 	if err != nil {
-		fmt.Println(color.RedString(fmt.Sprintf("Error fetching title %q: %v", title, err)))
+		slog.Error(fmt.Sprintf("error fetching title %q: %v", title, err))
 		os.Exit(1)
 	}
 
 	// fetch all chapters
 	chapters, errs := s.FetchChapters()
 	if len(errs) > 0 {
-		color.Red("Errors fetching chapters:")
+		var errorStrings []string
 		for _, err := range errs {
-			color.Red(err.Error())
+			errorStrings = append(errorStrings, err.Error())
 		}
+
+		slog.Error(fmt.Sprintf("errors fetching chapters: %s", strings.Join(errorStrings, ", ")))
 		os.Exit(1)
 	}
 
@@ -59,7 +65,7 @@ func Hander(cmd *cobra.Command, args []string) {
 		_, err := prompt.Run()
 
 		if err != nil {
-			color.Yellow("Canceled by user")
+			slog.Info("canceled by user")
 			os.Exit(0)
 		}
 
@@ -74,7 +80,7 @@ func Hander(cmd *cobra.Command, args []string) {
 	chapters = chapters.FilterRanges(rngs)
 
 	if len(chapters) == 0 {
-		color.Yellow("No chapters found for the specified ranges")
+		slog.Error("no chapters found for the specified ranges")
 		os.Exit(1)
 	}
 
@@ -90,15 +96,15 @@ func Hander(cmd *cobra.Command, args []string) {
 			defer wg.Done()
 			chapter, err := s.FetchChapter(chap)
 			if err != nil {
-				color.Red("- error fetching chapter %s: %s", chap.GetTitle(), err.Error())
+				slog.Error(fmt.Sprintf("error fetching chapter %q: %v", chap.GetTitle(), err))
 				<-g
 				return
 			}
-			fmt.Printf("fetched %s %s\n", color.CyanString(title), color.HiBlackString(chapter.GetTitle()))
+			slog.Info(fmt.Sprintf("fetched %q - %q", title, chapter.GetTitle()))
 
 			files, err := downloader.FetchChapter(s, chapter)
 			if err != nil {
-				color.Red("- error downloading chapter %s: %s", chapter.GetTitle(), err.Error())
+				slog.Error(fmt.Sprintf("error downloading chapter %q: %v", chapter.GetTitle(), err))
 				<-g
 				return
 			}
@@ -111,9 +117,9 @@ func Hander(cmd *cobra.Command, args []string) {
 			if !settings.Bundle {
 				filename, err := packer.PackSingle(settings.OutputDir, s, d)
 				if err == nil {
-					fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
+					slog.Info(fmt.Sprintf("saved file %q", filename))
 				} else {
-					color.Red(err.Error())
+					slog.Error(err.Error())
 				}
 			} else {
 				// avoid adding it to memory if we're not gonna use it
@@ -143,9 +149,9 @@ func Hander(cmd *cobra.Command, args []string) {
 
 	filename, err := packer.PackBundle(settings.OutputDir, s, dc, settings.Range)
 	if err != nil {
-		color.Red(err.Error())
+		slog.Error(err.Error())
 		os.Exit(1)
 	}
 
-	fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
+	slog.Info(fmt.Sprintf("saved file %q", filename))
 }

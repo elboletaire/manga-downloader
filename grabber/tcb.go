@@ -1,14 +1,15 @@
 package grabber
 
 import (
+	"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/fatih/color"
 	"github.com/voxelost/manga-downloader/http"
+	"golang.org/x/exp/slog"
 )
 
 // Tcb is a grabber for tcbscans.com (and possibly other wordpress sites)
@@ -134,7 +135,7 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 		n := int64(i + 1)
 		if u == "" {
 			// this error is not critical and is not from our side, so just log it out
-			color.Yellow("page %d of %s has no URL to fetch from 😕 (will be ignored)", n, chapter.GetTitle())
+			slog.Warn(fmt.Sprintf("page %d of %q has no URL to fetch from (will be ignored)", n, chapter.GetTitle()))
 			return
 		}
 		if !strings.HasPrefix(u, "http") {
