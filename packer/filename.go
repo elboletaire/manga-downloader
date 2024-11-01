@@ -45,11 +45,5 @@ func NewChapterFileTemplateParts(title string, chapter *grabber.Chapter) Filenam
 
 // SanitizeFilename sanitizes a filename
 func SanitizeFilename(filename string) string {
-	sanitized := strings.ReplaceAll(filename, "/", "_")
-	sanitized = strings.ReplaceAll(sanitized, `\`, "_")
-	sanitized = strings.ReplaceAll(sanitized, ":", ";")
-	sanitized = strings.ReplaceAll(sanitized, "?", "¿")
-	sanitized = strings.ReplaceAll(sanitized, `"`, "'")
-
-	return sanitized
+	return strings.ReplaceAll(filename, "/", "-")
 }
