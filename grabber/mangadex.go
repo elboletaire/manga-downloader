@@ -12,7 +12,6 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
-	internalhttp "github.com/voxelost/manga-downloader/http"
 )
 
 // Mangadex is a grabber for mangadex.org
@@ -233,17 +232,26 @@ type mangadexPagesFeedAPIResponse struct {
 
 // FetchChapter fetches a chapter and its pages
 func (m Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
-	chap := f.(*MangadexChapter)
-	// download json
-	rbody, err := internalhttp.Get(internalhttp.RequestParams{
-		URL: "https://api.mangadex.org/at-home/server/" + chap.ID,
-	})
+	chap, _ := f.(*MangadexChapter)
+
+	uri, err := url.Parse("https://api.mangadex.org/at-home/server/")
 	if err != nil {
 		return nil, err
 	}
+
+	uri = uri.JoinPath(chap.ID)
+
+	resp, err := http.NewRequestWithContext(context.Background(), http.MethodGet, uri.String(), http.NoBody)
+	if err != nil {
+		return nil, err
+	}
+
 	// parse json body
 	body := mangadexPagesFeedAPIResponse{}
-	if err := json.NewDecoder(rbody).Decode(&body); err != nil {
+	err = json.NewDecoder(resp.Body).Decode(&body)
+	resp.Body.Close()
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -259,7 +267,7 @@ func (m Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
-	baseURL = baseURL.JoinPath(baseURL.Path, "data", body.Chapter.Hash)
+	baseURL = baseURL.JoinPath("data", body.Chapter.Hash)
 
 	// create pages
 	for i, pageURL := range body.Chapter.Data {
