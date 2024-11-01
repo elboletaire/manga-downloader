@@ -130,7 +130,9 @@ func (m PlainHTML) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns a slice of chapters
-func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
+func (m PlainHTML) FetchChapters() (Filterables, error) {
+	var chapters Filterables
+	var err error
 	m.rows.Each(func(i int, s *goquery.Selection) {
 		// we need to get the chapter number from the title
 		re := regexp.MustCompile(`Chapter\s*(\d+\.?\d*)`)
@@ -141,9 +143,9 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		}
 
 		num := chap[1]
-		number, err := strconv.ParseFloat(num, 64)
+		var number float64
+		number, err = strconv.ParseFloat(num, 64)
 		if err != nil {
-			errs = append(errs, err)
 			return
 		}
 		u := s.AttrOr("href", "")
@@ -164,7 +166,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		chapters = append(chapters, chapter)
 	})
 
-	return
+	return chapters, err
 }
 
 // FetchChapter fetches a chapter and its pages

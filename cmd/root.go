@@ -21,7 +21,7 @@ func Execute() {
 		Long:    CobraLong,
 		Example: CobraExample,
 		Args:    cobra.MinimumNArgs(1),
-		Run:     Hander,
+		Run:     Handler,
 	}
 
 	RootCmd.Flags().BoolVarP(&settings.Bundle, "bundle", "b", false, "bundle all specified chapters into a single file")

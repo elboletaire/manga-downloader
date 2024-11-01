@@ -53,15 +53,18 @@ func (i *Inmanga) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (i Inmanga) FetchChapters() (Filterables, []error) {
-	id := getUUID(i.URL)
+func (i Inmanga) FetchChapters() (Filterables, error) {
+	id, err := getUUID(i.URL)
+	if err != nil {
+		return nil, err
+	}
 
 	// retrieve chapters json list
 	body, err := http.GetText(http.RequestParams{
-		URL: "https://inmanga.com/chapter/getall?mangaIdentification=" + id,
+		URL: "https://inmanga.com/chapter/getall?mangaIdentification=" + id.String(),
 	})
 	if err != nil {
-		return nil, []error{err}
+		return nil, err
 	}
 
 	raw := struct {
@@ -69,12 +72,12 @@ func (i Inmanga) FetchChapters() (Filterables, []error) {
 	}{}
 
 	if err = json.Unmarshal([]byte(body), &raw); err != nil {
-		return nil, []error{err}
+		return nil, err
 	}
 
 	feed := inmangaChapterFeed{}
 	if err = json.Unmarshal([]byte(raw.Data), &feed); err != nil {
-		return nil, []error{err}
+		return nil, err
 	}
 
 	chapters := make(Filterables, 0, len(feed.Result))

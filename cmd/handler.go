@@ -7,7 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 	"github.com/voxelost/manga-downloader/downloader"
 	"github.com/voxelost/manga-downloader/grabber"
@@ -15,7 +14,7 @@ import (
 	"github.com/voxelost/manga-downloader/ranges"
 )
 
-func Hander(cmd *cobra.Command, args []string) {
+func Handler(cmd *cobra.Command, args []string) {
 	s, errs := grabber.NewSite(getURLArg(args), &settings)
 	if len(errs) > 0 {
 		var errorStrings []string
@@ -30,6 +29,7 @@ func Hander(cmd *cobra.Command, args []string) {
 		slog.Error("site not recognised")
 		os.Exit(1)
 	}
+
 	s.InitFlags(cmd)
 
 	// fetch series title
@@ -40,14 +40,10 @@ func Hander(cmd *cobra.Command, args []string) {
 	}
 
 	// fetch all chapters
-	chapters, errs := s.FetchChapters()
-	if len(errs) > 0 {
-		var errorStrings []string
-		for _, err := range errs {
-			errorStrings = append(errorStrings, err.Error())
-		}
+	chapters, err := s.FetchChapters()
 
-		slog.Error(fmt.Sprintf("errors fetching chapters: %s", strings.Join(errorStrings, ", ")))
+	if err != nil {
+		slog.Error(fmt.Sprintf("error fetching chapters: %v", err))
 		os.Exit(1)
 	}
 
@@ -57,17 +53,19 @@ func Hander(cmd *cobra.Command, args []string) {
 	// ranges argument is not provided
 	if len(args) == 1 {
 		lastChapter := chapters[len(chapters)-1].GetNumber()
-		prompt := promptui.Prompt{
-			Label:     fmt.Sprintf("Do you want to download all %g chapters", lastChapter),
-			IsConfirm: true,
-		}
 
-		_, err := prompt.Run()
+		// TODO: uncomment this
+		// prompt := promptui.Prompt{
+		// 	Label:     fmt.Sprintf("Do you want to download all %g chapters", lastChapter),
+		// 	IsConfirm: true,
+		// }
 
-		if err != nil {
-			slog.Info("canceled by user")
-			os.Exit(0)
-		}
+		// _, err := prompt.Run()
+
+		// if err != nil {
+		// 	slog.Info("canceled by user")
+		// 	os.Exit(0)
+		// }
 
 		rngs = []ranges.Range{{Start: 1, End: int64(lastChapter)}}
 	} else {

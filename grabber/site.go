@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -41,7 +42,7 @@ type Site interface {
 	// Test tests if the site is the one for the specified url
 	ValidateURL() (bool, error)
 	// FetchChapters fetches the chapters for the manga
-	FetchChapters() (Filterables, []error)
+	FetchChapters() (Filterables, error)
 	// FetchChapter fetches the specified chapter
 	FetchChapter(Filterable) (*Chapter, error)
 	// FetchTitle fetches the manga title
@@ -71,9 +72,9 @@ func NewSite(siteURL string, settings *Settings) (Site, []error) {
 }
 
 // getUUID returns the first uuid found in the passed string
-func getUUID(s string) string {
+func getUUID(s string) (uuid.UUID, error) {
 	re := regexp.MustCompile(`([\w\d]{8}(:?-[\w\d]{4}){3}-[\w\d]{12})`)
-	return re.FindString(s)
+	return uuid.Parse(re.FindString(s))
 }
 
 // maxUint8Flag returns the max value between the flag uint8 value and the passed max
