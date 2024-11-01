@@ -24,9 +24,6 @@ build/all: clean test build/unix build/win
 build/unix:
 	CGO_ENABLED=0 go build -o manga-downloader ${GOFLAGS} .
 
-build/win:
-	GOOS=windows go build -o manga-downloader.exe ${GOFLAGS} .
-
 test:
 	go test -v ./... -race -shuffle=on
 
