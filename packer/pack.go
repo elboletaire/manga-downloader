@@ -38,13 +38,13 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 func pack(outputdir, template, title string, parts FilenameTemplateParts, files []*downloader.File) (string, error) {
 	filename, err := NewFilenameFromTemplate(template, parts)
 	if err != nil {
-		return "", fmt.Errorf("- error creating filename for chapter %s: %s", title, err.Error())
+		return "", fmt.Errorf("error creating filename for chapter %s: %s", title, err.Error())
 	}
 
 	filename += ".cbz"
 
 	if err = ArchiveCBZ(filepath.Join(outputdir, filename), files); err != nil {
-		return "", fmt.Errorf("- error saving file %s: %s", filename, err.Error())
+		return "", fmt.Errorf("error saving file %s: %s", filename, err.Error())
 	}
 
 	return filename, nil

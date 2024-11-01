@@ -1,13 +1,14 @@
 package grabber
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/fatih/color"
 	"github.com/voxelost/manga-downloader/http"
+	"golang.org/x/exp/slog"
 )
 
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)
@@ -193,7 +194,7 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 	for i, img := range pimages {
 		if img == "" {
 			// this error is not critical and is not from our side, so just log it out
-			color.Yellow("page %d of %s has no URL to fetch from 😕 (will be ignored)", i, chapter.GetTitle())
+			slog.Warn(fmt.Sprintf("page %d of %q has no URL to fetch from (will be ignored)", i, chapter.GetTitle()))
 			continue
 		}
 		if !strings.HasPrefix(img, "http") {

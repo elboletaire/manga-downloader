@@ -1,11 +1,12 @@
 package downloader
 
 import (
+	"fmt"
 	"io"
+	"log/slog"
 	"sort"
 	"sync"
 
-	"github.com/fatih/color"
 	"github.com/voxelost/manga-downloader/grabber"
 	"github.com/voxelost/manga-downloader/http"
 )
@@ -20,7 +21,7 @@ type File struct {
 func FetchChapter(site grabber.Site, chapter *grabber.Chapter) (files []*File, err error) {
 	wg := sync.WaitGroup{}
 
-	color.Blue("- downloading %s pages...", color.HiBlackString(chapter.GetTitle()))
+	slog.Debug(fmt.Sprintf("downloading pages for %q", chapter.GetTitle()))
 	// guard := make(chan struct{}, site.GetMaxConcurrency().Pages)
 
 	for _, page := range chapter.Pages {
@@ -35,7 +36,7 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter) (files []*File, e
 			}, uint(page.Number))
 
 			if err != nil {
-				color.Red("- error downloading page %d of %s", page.Number, chapter.GetTitle())
+				slog.Error(fmt.Sprintf("error downloading page %d of %q", page.Number, chapter.GetTitle()))
 				return
 			}
 
