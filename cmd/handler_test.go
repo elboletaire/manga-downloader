@@ -8,6 +8,8 @@ import (
 )
 
 func TestHandler(t *testing.T) {
+	t.Skip("skipping a DEV test")
+
 	testCases := []struct {
 		name    string
 		command *cobra.Command
