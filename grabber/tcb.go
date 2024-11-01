@@ -77,7 +77,7 @@ func (t *Tcb) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns a slice of chapters
-func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
+func (t Tcb) FetchChapters() (chapters Filterables, err error) {
 	t.chapters.Each(func(i int, s *goquery.Selection) {
 		// fetch title (usually "Chapter N")
 		link := s.Find("a")
@@ -89,7 +89,8 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 		ns := re.FindString(title)
 		num, err := strconv.ParseFloat(ns, 64)
 		if err != nil {
-			errs = append(errs, err)
+			slog.Error(err.Error())
+			return
 		}
 		chapter := &TcbChapter{
 			Chapter{

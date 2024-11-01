@@ -1,14 +1,18 @@
 package grabber
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"net/http"
 	"net/url"
 	"path"
 	"regexp"
 	"strconv"
 
-	"github.com/voxelost/manga-downloader/http"
+	"github.com/google/uuid"
+	internalhttp "github.com/voxelost/manga-downloader/http"
 )
 
 // Mangadex is a grabber for mangadex.org
@@ -20,7 +24,7 @@ type Mangadex struct {
 // MangadexChapter represents a MangaDex Chapter
 type MangadexChapter struct {
 	Chapter
-	Id string
+	ID string
 }
 
 // ValidateURL checks if the site is MangaDex
@@ -29,113 +33,217 @@ func (m *Mangadex) ValidateURL() (bool, error) {
 	return re.MatchString(m.URL), nil
 }
 
-// GetTitle returns the title of the manga
+type mangadexMangaSearchAPIResponse struct {
+	Result   string `json:"result"`
+	Response string `json:"response"`
+	Data     struct {
+		ID         uuid.UUID `json:"id"`
+		Type       string    `json:"type"`
+		Attributes struct {
+			Title                  map[string]string   `json:"title"`
+			AltTitles              []map[string]string `json:"altTitles"`
+			Description            map[string]string   `json:"description"`
+			IsLocked               bool                `json:"isLocked"`
+			Links                  map[string]string   `json:"links"`
+			OriginalLanguage       string              `json:"originalLanguage"`
+			LastVolume             string              `json:"lastVolume"`
+			LastChapter            string              `json:"lastChapter"`
+			PublicationDemographic string              `json:"publicationDemographic"`
+			Status                 string              `json:"status"`
+			Year                   int                 `json:"year"`
+			ContentRating          string              `json:"contentRating"`
+			Tags                   []struct {
+				ID         string `json:"id"`
+				Type       string `json:"type"`
+				Attributes struct {
+					Name        map[string]string `json:"name"`
+					Description map[string]string `json:"description"`
+					Group       string            `json:"group"`
+					Version     int               `json:"version"`
+				}
+				Relationships []string `json:"relationships"` // TODO: unsure about type
+			} `json:"tags"`
+			State                          string    `json:"state"`
+			ChapterNumbersResetOnNewVolume bool      `json:"chapterNumbersResetOnNewVolume"`
+			CreatedAt                      string    `json:"createdAt"`
+			UpdatedAt                      string    `json:"updatedAt"`
+			Version                        int       `json:"version"`
+			AvailableTranslatedLanguages   []string  `json:"availableTranslatedLanguages"`
+			LatestUploadedChapter          uuid.UUID `json:"latestUploadedChapter"`
+		} `json:"attributes"`
+		Relationships []struct {
+			ID      uuid.UUID `json:"id"`
+			Type    string    `json:"type"`
+			Related string    `json:"related"`
+		} `json:"relationships"`
+	} `json:"data"`
+}
+
+// FetchTitle returns the title of the manga
 func (m *Mangadex) FetchTitle() (string, error) {
 	if m.title != "" {
 		return m.title, nil
 	}
 
-	id := getUUID(m.URL)
-
-	rbody, err := http.Get(http.RequestParams{
-		URL:     "https://api.mangadex.org/manga/" + id,
-		Referer: m.BaseURL(),
-	})
+	requestURL, err := url.Parse("https://api.mangadex.org/")
 	if err != nil {
 		return "", err
 	}
-	defer rbody.Close()
 
-	// decode json response
-	body := mangadexManga{}
-	if err = json.NewDecoder(rbody).Decode(&body); err != nil {
+	id, err := getUUID(m.URL)
+	if err != nil {
+		return "", err
+	}
+	requestURL = requestURL.JoinPath("manga", id.String())
+	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, requestURL.String(), http.NoBody)
+	if err != nil {
 		return "", err
 	}
 
-	// fetch the title in the requested language
-	if m.Settings.Language != "" {
-		trans := body.Data.Attributes.AltTitles.GetTitleByLang(m.Settings.Language)
+	request.Header.Add("Referer", m.BaseURL())
 
-		if trans != "" {
-			m.title = trans
-			return m.title, nil
-		}
+	resp, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return "", err
 	}
 
-	// fallback to english
-	m.title = body.Data.Attributes.Title["en"]
+	defer resp.Body.Close()
+
+	var apiResponse mangadexMangaSearchAPIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		return "", err
+	}
+	m.title = apiResponse.Data.Attributes.Title["en"] // TODO: make this configurable
 
 	return m.title, nil
 }
 
+type mangadexFeedAPIResponse struct {
+	Result   string `json:"result"`
+	Response string `json:"response"`
+	Data     []struct {
+		ID         uuid.UUID `json:"id"`
+		Type       string    `json:"type"`
+		Attributes struct {
+			Volume             string `json:"volume"`
+			Chapter            string `json:"chapter"`
+			Title              string `json:"title"`
+			TranslatedLanguage string `json:"translatedLanguage"`
+			ExternalURL        string `json:"externalUrl"`
+			PublishAt          string `json:"publishAt"`
+			CreatedAt          string `json:"createdAt"`
+			UpdatedAt          string `json:"updatedAt"`
+			Pages              int64  `json:"pages"`
+			Version            int    `json:"version"`
+		} `json:"attributes"`
+		Relationships []struct {
+			ID   uuid.UUID `json:"id"`
+			Type string    `json:"type"`
+		} `json:"relationships"`
+	} `json:"data"`
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
+	Total  int `json:"total"`
+}
+
 // FetchChapters returns the chapters of the manga
-func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
-	id := getUUID(m.URL)
+func (m Mangadex) FetchChapters() (Filterables, error) {
+	id, err := getUUID(m.URL)
+	if err != nil {
+		return nil, err
+	}
 
-	baseOffset := 500
-	var fetchChaps func(int)
+	offset := 0
+	var chapters Filterables
 
-	fetchChaps = func(offset int) {
-		uri := fmt.Sprintf("https://api.mangadex.org/manga/%s/feed", id)
+	for {
+		uri, err := url.Parse("https://api.mangadex.org/")
+		if err != nil {
+			slog.Error(err.Error())
+			break
+		}
+		uri.Path = path.Join(uri.Path, "manga", id.String(), "feed")
+
 		params := url.Values{}
-		params.Add("limit", fmt.Sprint(baseOffset))
+		params.Add("limit", strconv.FormatInt(500, 10))
 		params.Add("order[volume]", "asc")
 		params.Add("order[chapter]", "asc")
 		params.Add("offset", fmt.Sprint(offset))
 		if m.Settings.Language != "" {
 			params.Add("translatedLanguage[]", m.Settings.Language)
 		}
-		uri = fmt.Sprintf("%s?%s", uri, params.Encode())
+		uri.RawQuery = params.Encode()
 
-		rbody, err := http.Get(http.RequestParams{URL: uri})
+		request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, uri.String(), http.NoBody)
 		if err != nil {
-			errs = append(errs, err)
-			return
+			slog.Error(err.Error())
+			break
 		}
-		defer rbody.Close()
-		// parse json body
-		body := mangadexFeed{}
-		if err = json.NewDecoder(rbody).Decode(&body); err != nil {
-			errs = append(errs, err)
-			return
+		resp, err := http.DefaultClient.Do(request)
+		if err != nil {
+			slog.Error(err.Error())
+			break
+		}
+		body := mangadexFeedAPIResponse{}
+		err = json.NewDecoder(resp.Body).Decode(&body)
+		resp.Body.Close()
+
+		if err != nil {
+			slog.Error(err.Error())
+			break
+		}
+
+		if body.Result != "ok" {
+			slog.Error(fmt.Sprintf("error fetching chapters: %s", body.Response))
 		}
 
 		for _, c := range body.Data {
 			num, _ := strconv.ParseFloat(c.Attributes.Chapter, 64)
 			chapters = append(chapters, &MangadexChapter{
-				Chapter{
+				Chapter: Chapter{
 					Number:     num,
 					Title:      c.Attributes.Title,
 					Language:   c.Attributes.TranslatedLanguage,
 					PagesCount: c.Attributes.Pages,
 				},
-				c.Id,
+				ID: c.ID.String(),
 			})
 		}
 
-		if len(body.Data) > 0 {
-			fetchChaps(offset + baseOffset)
+		if len(body.Data) == 0 {
+			break
 		}
-	}
-	// initial call
-	fetchChaps(0)
 
-	return
+		offset += len(body.Data)
+	}
+
+	return chapters, nil
+}
+
+type mangadexPagesFeedAPIResponse struct {
+	Result  string `json:"result"`
+	BaseURL string `json:"baseUrl"`
+
+	Chapter struct {
+		Hash      string   `json:"hash"`
+		Data      []string `json:"data"`
+		DataSaver []string `json:"dataSaver"`
+	} `json:"chapter"`
 }
 
 // FetchChapter fetches a chapter and its pages
 func (m Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 	chap := f.(*MangadexChapter)
 	// download json
-	rbody, err := http.Get(http.RequestParams{
-		URL: "https://api.mangadex.org/at-home/server/" + chap.Id,
+	rbody, err := internalhttp.Get(internalhttp.RequestParams{
+		URL: "https://api.mangadex.org/at-home/server/" + chap.ID,
 	})
 	if err != nil {
 		return nil, err
 	}
 	// parse json body
-	body := mangadexPagesFeed{}
-	if err = json.NewDecoder(rbody).Decode(&body); err != nil {
+	body := mangadexPagesFeedAPIResponse{}
+	if err := json.NewDecoder(rbody).Decode(&body); err != nil {
 		return nil, err
 	}
 
@@ -155,53 +263,4 @@ func (m Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	return chapter, nil
-}
-
-// mangadexManga represents the Manga json object
-type mangadexManga struct {
-	Id   string
-	Data struct {
-		Attributes struct {
-			Title     map[string]string
-			AltTitles altTitles
-		}
-	}
-}
-
-// altTitles is a slice of maps with the language as key and the title as value
-type altTitles []map[string]string
-
-// GetTitleByLang returns the title in the given language (or empty if string is not found)
-func (a altTitles) GetTitleByLang(lang string) string {
-	for _, t := range a {
-		val, ok := t[lang]
-		if ok {
-			return val
-		}
-	}
-	return ""
-}
-
-// mangadexFeed represents the json object returned by the feed endpoint
-type mangadexFeed struct {
-	Data []struct {
-		Id         string
-		Attributes struct {
-			Volume             string
-			Chapter            string
-			Title              string
-			TranslatedLanguage string
-			Pages              int64
-		}
-	}
-}
-
-// mangadexPagesFeed represents the json object returned by the pages endpoint
-type mangadexPagesFeed struct {
-	BaseURL string
-	Chapter struct {
-		Hash      string
-		Data      []string
-		DataSaver []string
-	}
 }
