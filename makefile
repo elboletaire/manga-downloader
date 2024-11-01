@@ -10,7 +10,6 @@ VERSION := $(shell git rev-parse --short HEAD)
 GOLDFLAGS += -X 'github.com/voxelost/manga-downloader/cmd.Version=$(VERSION)'
 GOLDFLAGS += -X 'github.com/voxelost/manga-downloader/cmd.Tag=$(BRANCH_OR_TAG)'
 GOFLAGS = -ldflags="$(GOLDFLAGS)"
-RICHGO := $(shell command -v richgo 2> /dev/null)
 
 clean:
 	@rm -fv ./manga-downloader* *.cbz
@@ -29,8 +28,5 @@ build/win:
 	GOOS=windows go build -o manga-downloader.exe ${GOFLAGS} .
 
 test:
-ifdef RICHGO
-	richgo test -v ./...
-else
-	go test -v ./...
-endif
+	go test -v ./... -race -shuffle=on
+
