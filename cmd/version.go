@@ -21,11 +21,10 @@ var versionCmd = &cobra.Command{
 	Short: "Shows the version of the application",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("%s - Manga volumes downloading tool\n", color.YellowString("Manga Downloader"))
-		fmt.Printf("All Rights Reserved © 2023-2024 %s\n", color.HiBlackString("Òscar Casajuana Alonso"))
 		fmt.Printf("Version: %s - ", color.MagentaString("%s (%s)", Version, Tag))
 
 		vcheck := &latest.GithubTag{
-			Owner:             "elboletaire",
+			Owner:             "voxelost",
 			Repository:        "manga-downloader",
 			FixVersionStrFunc: latest.DeleteFrontV(),
 		}
@@ -40,14 +39,10 @@ var versionCmd = &cobra.Command{
 				"%s Download latest (%s) from:\n%s\n",
 				color.HiRedString("App is outdated."),
 				color.RedString(res.Current),
-				"https://github.com/elboletaire/manga-downloader/releases/tag/v"+res.Current,
+				"https://github.com/voxelost/manga-downloader/releases/tag/v"+res.Current,
 			)
 		} else {
 			fmt.Printf("%s\n", color.GreenString("App is up to date."))
 		}
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(versionCmd)
 }

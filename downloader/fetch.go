@@ -5,9 +5,9 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/elboletaire/manga-downloader/grabber"
-	"github.com/elboletaire/manga-downloader/http"
 	"github.com/fatih/color"
+	"github.com/voxelost/manga-downloader/grabber"
+	"github.com/voxelost/manga-downloader/http"
 )
 
 // File represents a downloaded file
@@ -21,17 +21,17 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter) (files []*File, e
 	wg := sync.WaitGroup{}
 
 	color.Blue("- downloading %s pages...", color.HiBlackString(chapter.GetTitle()))
-	guard := make(chan struct{}, site.GetMaxConcurrency().Pages)
+	// guard := make(chan struct{}, site.GetMaxConcurrency().Pages)
 
 	for _, page := range chapter.Pages {
-		guard <- struct{}{}
+		// guard <- struct{}{}
 		wg.Add(1)
 		go func(page grabber.Page) {
 			defer wg.Done()
 
 			file, err := FetchFile(http.RequestParams{
 				URL:     page.URL,
-				Referer: site.BaseUrl(),
+				Referer: site.BaseURL(),
 			}, uint(page.Number))
 
 			if err != nil {
@@ -41,33 +41,33 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter) (files []*File, e
 
 			files = append(files, file)
 
-			// release guard
-			<-guard
+			// // release guard
+			// <-guard
 		}(page)
 	}
 	wg.Wait()
-	close(guard)
+	// close(guard)
 
 	// sort files by page number
 	sort.SliceStable(files, func(i, j int) bool {
 		return files[i].Page < files[j].Page
 	})
 
-	return
+	return files, nil
 }
 
 // FetchFile gets an online file returning a new *File with its contents
 func FetchFile(params http.RequestParams, page uint) (file *File, err error) {
 	body, err := http.Get(params)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	defer body.Close()
 
 	data, err := io.ReadAll(body)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	file = &File{
@@ -75,5 +75,5 @@ func FetchFile(params http.RequestParams, page uint) (file *File, err error) {
 		Page: page,
 	}
 
-	return
+	return file, nil
 }

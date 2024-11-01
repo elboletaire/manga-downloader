@@ -14,14 +14,12 @@ func Get(params Params) (body io.ReadCloser, err error) {
 func GetText(params Params) (text string, err error) {
 	body, err := Get(params)
 	if err != nil {
-		return
+		return "", err
 	}
 	defer body.Close()
 
 	buff := new(bytes.Buffer)
 	io.Copy(buff, body)
 
-	text = buff.String()
-
-	return
+	return buff.String(), nil
 }

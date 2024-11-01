@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/voxelost/manga-downloader/grabber"
 )
 
 // FilenameTemplateParts represents the parts of a filename
@@ -31,7 +31,6 @@ func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string,
 
 	buffer := new(bytes.Buffer)
 	err = tmpl.Execute(buffer, parts)
-
 	return buffer.String(), err
 }
 
@@ -46,11 +45,11 @@ func NewChapterFileTemplateParts(title string, chapter *grabber.Chapter) Filenam
 
 // SanitizeFilename sanitizes a filename
 func SanitizeFilename(filename string) string {
-	sanitized := strings.Replace(filename, "/", "_", -1)
-	sanitized = strings.Replace(sanitized, "\\", "_", -1)
-	sanitized = strings.Replace(sanitized, ":", ";", -1)
-	sanitized = strings.Replace(sanitized, "?", "¿", -1)
-	sanitized = strings.Replace(sanitized, `"`, "'", -1)
+	sanitized := strings.ReplaceAll(filename, "/", "_")
+	sanitized = strings.ReplaceAll(sanitized, `\`, "_")
+	sanitized = strings.ReplaceAll(sanitized, ":", ";")
+	sanitized = strings.ReplaceAll(sanitized, "?", "¿")
+	sanitized = strings.ReplaceAll(sanitized, `"`, "'")
 
 	return sanitized
 }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/elboletaire/manga-downloader/downloader"
+	"github.com/voxelost/manga-downloader/downloader"
 )
 
 // ArchiveCBZ archives the given files into a CBZ file

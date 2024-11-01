@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/elboletaire/manga-downloader/http"
+	"github.com/voxelost/manga-downloader/http"
 )
 
 // Inmanga is a grabber for inmanga.com
@@ -22,8 +22,8 @@ type InmangaChapter struct {
 	Id string
 }
 
-// Test checks if the site is InManga
-func (i *Inmanga) Test() (bool, error) {
+// ValidateURL checks if the site is InManga
+func (i *Inmanga) ValidateURL() (bool, error) {
 	re := regexp.MustCompile(`inmanga\.com`)
 	return re.MatchString(i.URL), nil
 }
@@ -54,7 +54,7 @@ func (i *Inmanga) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (i Inmanga) FetchChapters() (Filterables, []error) {
-	id := getUuid(i.URL)
+	id := getUUID(i.URL)
 
 	// retrieve chapters json list
 	body, err := http.GetText(http.RequestParams{

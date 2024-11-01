@@ -7,15 +7,15 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/elboletaire/manga-downloader/http"
 	"github.com/fatih/color"
+	"github.com/voxelost/manga-downloader/http"
 )
 
 // Tcb is a grabber for tcbscans.com (and possibly other wordpress sites)
 type Tcb struct {
 	*Grabber
-	chaps *goquery.Selection
-	title string
+	chapters *goquery.Selection
+	title    string
 }
 
 // TcbChapter is a chapter for TCBScans
@@ -24,19 +24,19 @@ type TcbChapter struct {
 	URL string
 }
 
-// Test returns true if the URL is a compatible TCBScans URL
-func (t *Tcb) Test() (bool, error) {
+// ValidateURL returns true if the URL is a compatible TCBScans URL
+func (t *Tcb) ValidateURL() (bool, error) {
 	re := regexp.MustCompile(`manga\/(.*)\/$`)
 	if !re.MatchString(t.URL) {
 		return false, nil
 	}
 
 	mid := re.FindStringSubmatch(t.URL)[1]
-	uri, _ := url.JoinPath(t.BaseUrl(), "manga", mid, "ajax", "chapters")
+	uri, _ := url.JoinPath(t.BaseURL(), "manga", mid, "ajax", "chapters")
 
 	rbody, err := http.Post(http.RequestParams{
 		URL:     uri,
-		Referer: t.BaseUrl(),
+		Referer: t.BaseURL(),
 	})
 	if err != nil {
 		return false, err
@@ -47,12 +47,12 @@ func (t *Tcb) Test() (bool, error) {
 		return false, err
 	}
 
-	t.chaps = body.Find("li")
+	t.chapters = body.Find("li")
 
-	return t.chaps.Length() > 0, nil
+	return t.chapters.Length() > 0, nil
 }
 
-// GetTitle fetches and returns the manga title
+// FetchTitle fetches and returns the manga title
 func (t *Tcb) FetchTitle() (string, error) {
 	if t.title != "" {
 		return t.title, nil
@@ -77,7 +77,7 @@ func (t *Tcb) FetchTitle() (string, error) {
 
 // FetchChapters returns a slice of chapters
 func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
-	t.chaps.Each(func(i int, s *goquery.Selection) {
+	t.chapters.Each(func(i int, s *goquery.Selection) {
 		// fetch title (usually "Chapter N")
 		link := s.Find("a")
 		if len(link.Children().Nodes) > 0 {
@@ -101,7 +101,7 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 		chapters = append(chapters, chapter)
 	})
 
-	return
+	return chapters, nil
 }
 
 // FetchChapter fetches a chapter and its pages
@@ -138,7 +138,7 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 			return
 		}
 		if !strings.HasPrefix(u, "http") {
-			u = t.BaseUrl() + u
+			u = t.BaseURL() + u
 		}
 		pages = append(pages, Page{
 			Number: n,

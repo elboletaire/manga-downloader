@@ -1,6 +1,8 @@
 package main
 
-import "github.com/elboletaire/manga-downloader/cmd"
+import (
+	"github.com/voxelost/manga-downloader/cmd"
+)
 
 func main() {
 	cmd.Execute()

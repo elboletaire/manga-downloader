@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/elboletaire/manga-downloader/http"
 	"github.com/fatih/color"
+	"github.com/voxelost/manga-downloader/http"
 )
 
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)
@@ -33,8 +33,8 @@ type PlainHTMLChapter struct {
 	URL string
 }
 
-// Test returns true if the URL is a valid grabber URL
-func (m *PlainHTML) Test() (bool, error) {
+// ValidateURL returns true if the URL is a valid grabber URL
+func (m *PlainHTML) ValidateURL() (bool, error) {
 	body, err := http.Get(http.RequestParams{
 		URL: m.URL,
 	})
@@ -150,7 +150,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 			u = s.Find(m.site.Link).AttrOr("href", "")
 		}
 		if !strings.HasPrefix(u, "http") {
-			u = m.BaseUrl() + u
+			u = m.BaseURL() + u
 		}
 		chapter := &PlainHTMLChapter{
 			Chapter{
@@ -197,7 +197,7 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 			continue
 		}
 		if !strings.HasPrefix(img, "http") {
-			img = m.BaseUrl() + img
+			img = m.BaseURL() + img
 		}
 		page := Page{
 			Number: int64(i),

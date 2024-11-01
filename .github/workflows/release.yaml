@@ -34,5 +34,5 @@ jobs:
         binary_name: "manga-downloader"
         extra_files: LICENSE README.md
         ldflags: >-
-          -X 'github.com/elboletaire/manga-downloader/cmd.Version=${{ env.sha_short }}'
-          -X 'github.com/elboletaire/manga-downloader/cmd.Tag=${{ env.tag }}'
+          -X 'github.com/voxelost/manga-downloader/cmd.Version=${{ env.sha_short }}'
+          -X 'github.com/voxelost/manga-downloader/cmd.Tag=${{ env.tag }}'

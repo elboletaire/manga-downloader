@@ -3,7 +3,7 @@ package grabber
 import (
 	"sort"
 
-	"github.com/elboletaire/manga-downloader/ranges"
+	"github.com/voxelost/manga-downloader/ranges"
 )
 
 // Enumerable represents an object that can be enumerated
@@ -42,7 +42,7 @@ func (f Filterables) FilterRanges(rngs []ranges.Range) Filterables {
 	chaps := Filterables{}
 	for _, r := range rngs {
 		chaps = append(chaps, f.Filter(func(c Filterable) bool {
-			return c.GetNumber() >= float64(r.Begin) && c.GetNumber() <= float64(r.End)
+			return c.GetNumber() >= float64(r.Start) && c.GetNumber() <= float64(r.End)
 		})...)
 	}
 

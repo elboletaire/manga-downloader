@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,27 +30,26 @@ func (r RequestParams) GetReferer() string {
 }
 
 // request sends a request to the given URL
-func request(t string, params Params) (body io.ReadCloser, err error) {
+func request(requestMethod string, params Params) (body io.ReadCloser, err error) {
 	tr := &http.Transport{
 		DisableCompression: true,
 	}
 	client := &http.Client{Transport: tr}
 
-	req, _ := http.NewRequest(t, params.GetURL(), nil)
+	req, _ := http.NewRequestWithContext(context.Background(), requestMethod, params.GetURL(), http.NoBody)
 	if params.GetReferer() != "" {
 		req.Header.Add("Referer", params.GetReferer())
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	if resp.StatusCode != 200 {
-		err = fmt.Errorf("received %d response code", resp.StatusCode)
-		return
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received %d response code", resp.StatusCode)
 	}
 
 	body = resp.Body
-	return
+	return body, nil
 }

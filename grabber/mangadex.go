@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/elboletaire/manga-downloader/http"
+	"github.com/voxelost/manga-downloader/http"
 )
 
 // Mangadex is a grabber for mangadex.org
@@ -23,8 +23,8 @@ type MangadexChapter struct {
 	Id string
 }
 
-// Test checks if the site is MangaDex
-func (m *Mangadex) Test() (bool, error) {
+// ValidateURL checks if the site is MangaDex
+func (m *Mangadex) ValidateURL() (bool, error) {
 	re := regexp.MustCompile(`mangadex\.org`)
 	return re.MatchString(m.URL), nil
 }
@@ -35,11 +35,11 @@ func (m *Mangadex) FetchTitle() (string, error) {
 		return m.title, nil
 	}
 
-	id := getUuid(m.URL)
+	id := getUUID(m.URL)
 
 	rbody, err := http.Get(http.RequestParams{
 		URL:     "https://api.mangadex.org/manga/" + id,
-		Referer: m.BaseUrl(),
+		Referer: m.BaseURL(),
 	})
 	if err != nil {
 		return "", err
@@ -70,7 +70,7 @@ func (m *Mangadex) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
-	id := getUuid(m.URL)
+	id := getUUID(m.URL)
 
 	baseOffset := 500
 	var fetchChaps func(int)
@@ -150,7 +150,7 @@ func (m Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 	for i, p := range body.Chapter.Data {
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),
-			URL:    body.BaseUrl + path.Join("/data", body.Chapter.Hash, p),
+			URL:    body.BaseURL + path.Join("/data", body.Chapter.Hash, p),
 		})
 	}
 
@@ -198,7 +198,7 @@ type mangadexFeed struct {
 
 // mangadexPagesFeed represents the json object returned by the pages endpoint
 type mangadexPagesFeed struct {
-	BaseUrl string
+	BaseURL string
 	Chapter struct {
 		Hash      string
 		Data      []string

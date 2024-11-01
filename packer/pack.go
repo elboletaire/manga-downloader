@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/elboletaire/manga-downloader/downloader"
-	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/voxelost/manga-downloader/downloader"
+	"github.com/voxelost/manga-downloader/grabber"
 )
 
 // DownloadedChapter represents a downloaded chapter (a Chapter + Files)
