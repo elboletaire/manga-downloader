@@ -1,14 +1,15 @@
 package downloader
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"sort"
 	"sync"
 
 	"github.com/voxelost/manga-downloader/grabber"
-	"github.com/voxelost/manga-downloader/http"
 )
 
 // File represents a downloaded file
@@ -30,17 +31,32 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter) (files []*File, e
 		go func(page grabber.Page) {
 			defer wg.Done()
 
-			file, err := FetchFile(http.RequestParams{
-				URL:     page.URL,
-				Referer: site.BaseURL(),
-			}, uint(page.Number))
-
+			request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, page.URL, http.NoBody)
 			if err != nil {
 				slog.Error(fmt.Sprintf("error downloading page %d of %q", page.Number, chapter.GetTitle()))
 				return
 			}
 
-			files = append(files, file)
+			request.Header.Add("Referer", site.BaseURL())
+
+			resp, err := http.DefaultClient.Do(request)
+			if err != nil {
+				slog.Error(fmt.Sprintf("error downloading page %d of %q", page.Number, chapter.GetTitle()))
+				return
+			}
+
+			data, err := io.ReadAll(resp.Body)
+			if err != nil {
+				slog.Error(fmt.Sprintf("error downloading page %d of %q", page.Number, chapter.GetTitle()))
+				return
+			}
+
+			resp.Body.Close()
+
+			files = append(files, &File{
+				Data: data,
+				Page: uint(page.Number),
+			})
 
 			// // release guard
 			// <-guard
@@ -55,26 +71,4 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter) (files []*File, e
 	})
 
 	return files, nil
-}
-
-// FetchFile gets an online file returning a new *File with its contents
-func FetchFile(params http.RequestParams, page uint) (file *File, err error) {
-	body, err := http.Get(params)
-	if err != nil {
-		return nil, err
-	}
-
-	defer body.Close()
-
-	data, err := io.ReadAll(body)
-	if err != nil {
-		return nil, err
-	}
-
-	file = &File{
-		Data: data,
-		Page: page,
-	}
-
-	return file, nil
 }

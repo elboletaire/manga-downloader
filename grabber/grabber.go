@@ -66,7 +66,6 @@ func (g Grabber) GetFilenameTemplate() string {
 
 // InitFlags initializes the command flags
 func (g *Grabber) InitFlags(cmd *cobra.Command) {
-	// TODO
 	g.SetMaxConcurrency(MaxConcurrency{
 		Chapters: 5,  //maxUint8Flag(cmd.Flag("concurrency"), 5),
 		Pages:    10, // maxUint8Flag(cmd.Flag("concurrency-pages"), 10),

@@ -1,13 +1,16 @@
 package grabber
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"regexp"
 	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/voxelost/manga-downloader/http"
 )
 
 // Inmanga is a grabber for inmanga.com
@@ -28,21 +31,25 @@ func (i *Inmanga) ValidateURL() (bool, error) {
 	return re.MatchString(i.URL), nil
 }
 
-// GetTitle fetches the manga title
+// FetchTitle fetches the manga title
 func (i *Inmanga) FetchTitle() (string, error) {
 	if i.title != "" {
 		return i.title, nil
 	}
 
-	body, err := http.Get(http.RequestParams{
-		URL: i.URL,
-	})
+	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, i.URL, http.NoBody)
 	if err != nil {
 		return "", err
 	}
-	defer body.Close()
 
-	doc, err := goquery.NewDocumentFromReader(body)
+	resp, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -59,24 +66,33 @@ func (i Inmanga) FetchChapters() (Filterables, error) {
 		return nil, err
 	}
 
-	// retrieve chapters json list
-	body, err := http.GetText(http.RequestParams{
-		URL: "https://inmanga.com/chapter/getall?mangaIdentification=" + id.String(),
-	})
+	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://inmanga.com/chapter/getall?mangaIdentification="+id.String(), http.NoBody)
 	if err != nil {
 		return nil, err
 	}
+
+	resp, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	buff := new(bytes.Buffer)
+	io.Copy(buff, resp.Body)
 
 	raw := struct {
 		Data string
 	}{}
 
-	if err = json.Unmarshal([]byte(body), &raw); err != nil {
+	err = json.Unmarshal(buff.Bytes(), &raw)
+	if err != nil {
 		return nil, err
 	}
 
 	feed := inmangaChapterFeed{}
-	if err = json.Unmarshal([]byte(raw.Data), &feed); err != nil {
+	err = json.Unmarshal([]byte(raw.Data), &feed)
+	if err != nil {
 		return nil, err
 	}
 
@@ -90,15 +106,21 @@ func (i Inmanga) FetchChapters() (Filterables, error) {
 
 // FetchChapter fetches the chapter with its pages
 func (i Inmanga) FetchChapter(chap Filterable) (*Chapter, error) {
-	ichap := chap.(*InmangaChapter)
-	body, err := http.Get(http.RequestParams{
-		URL: "https://inmanga.com/chapter/chapterIndexControls?identification=" + ichap.Id,
-	})
+	ichap, _ := chap.(*InmangaChapter)
+
+	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://inmanga.com/chapter/chapterIndexControls?identification="+ichap.Id, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
-	doc, err := goquery.NewDocumentFromReader(body)
+
+	resp, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +128,7 @@ func (i Inmanga) FetchChapter(chap Filterable) (*Chapter, error) {
 	chapter := &Chapter{
 		Title:      chap.GetTitle(),
 		Number:     chap.GetNumber(),
-		PagesCount: int64(ichap.PagesCount),
+		PagesCount: ichap.PagesCount,
 		// Inmanga only hosts spanish mangas
 		Language: "es",
 	}
@@ -131,7 +153,7 @@ func newInmangaChapter(c inmangaChapterFeedResult) *InmangaChapter {
 			PagesCount: int64(c.PagesCount),
 			Title:      fmt.Sprintf("Capítulo %04d", int64(c.Number)),
 		},
-		c.Id,
+		c.ID,
 	}
 }
 
@@ -142,7 +164,7 @@ type inmangaChapterFeed struct {
 
 // inmangaChapterFeedResult is the JSON feed for a single chapter result
 type inmangaChapterFeedResult struct {
-	Id         string `json:"identification"`
+	ID         string `json:"identification"`
 	Number     float64
 	PagesCount float64
 }

@@ -1,13 +1,14 @@
 package grabber
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/voxelost/manga-downloader/http"
 	"golang.org/x/exp/slog"
 )
 
@@ -19,6 +20,7 @@ type PlainHTML struct {
 	site SiteSelector
 }
 
+// SiteSelector represents a site selector
 type SiteSelector struct {
 	Title        string
 	Rows         string
@@ -36,13 +38,18 @@ type PlainHTMLChapter struct {
 
 // ValidateURL returns true if the URL is a valid grabber URL
 func (m *PlainHTML) ValidateURL() (bool, error) {
-	body, err := http.Get(http.RequestParams{
-		URL: m.URL,
-	})
+	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, m.URL, http.NoBody)
 	if err != nil {
 		return false, err
 	}
-	m.doc, err = goquery.NewDocumentFromReader(body)
+
+	resp, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	m.doc, err = goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		return false, err
 	}
@@ -122,7 +129,7 @@ func (m *PlainHTML) ValidateURL() (bool, error) {
 	return m.rows.Length() > 0, nil
 }
 
-// Ttitle returns the manga title
+// FetchTitle returns the manga title
 func (m PlainHTML) FetchTitle() (string, error) {
 	title := m.doc.Find(m.site.Title)
 
@@ -171,29 +178,34 @@ func (m PlainHTML) FetchChapters() (Filterables, error) {
 
 // FetchChapter fetches a chapter and its pages
 func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
-	mchap := f.(*PlainHTMLChapter)
-	body, err := http.Get(http.RequestParams{
-		URL: mchap.URL,
-	})
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
-	doc, err := goquery.NewDocumentFromReader(body)
+	mchap, _ := f.(*PlainHTMLChapter)
+	request, err := http.NewRequestWithContext(context.Background(), http.MethodGet, mchap.URL, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
 
-	pimages := getPlainHTMLImageURL(m.site.Image, doc)
+	resp, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	pageImages := getPlainHTMLImageURL(m.site.Image, doc)
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
-		PagesCount: int64(len(pimages)),
+		PagesCount: int64(len(pageImages)),
 		Language:   "en",
 	}
 
-	for i, img := range pimages {
+	for i, img := range pageImages {
 		if img == "" {
 			// this error is not critical and is not from our side, so just log it out
 			slog.Warn(fmt.Sprintf("page %d of %q has no URL to fetch from (will be ignored)", i, chapter.GetTitle()))
