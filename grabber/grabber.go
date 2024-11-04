@@ -20,7 +20,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		&PlainHTML{Grabber: g},
 		&Inmanga{Grabber: g},
 		&Mangadex{Grabber: g},
-		&Tcb{Grabber: g},
+		&TCB{Grabber: g},
 	}
 	var errs []error
 
