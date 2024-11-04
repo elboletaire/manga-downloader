@@ -4,13 +4,10 @@
 [![Go Reference][go reference badge]][go reference]
 [![GitHub release][release badge]][releases]
 [![gitHub downloads]][downloads]
-[![Docker Pulls][pulls badge]][docker hub]
 [![License][license badge]][license]
 
 This app downloads manga from websites like mangadex and stores them into cbz
 files, so you can read them with your favorite ereader or reading app.
-
-![prompt img]
 
 ## Supported sites
 
@@ -59,8 +56,6 @@ manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b
 # This would download One Piece chapters 1 to 50 into our current folder
 ```
 
-![download img]
-
 In some sites, like mangadex, it may find multiple results for the same chapter,
 given the different languages it's translated to. In these cases, every
 coincidence will be downloaded into different files, but you can force a single
@@ -88,8 +83,6 @@ manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b
 # would download one piece chapters 1 to 8 and bundle them into a single file
 ```
 
-![bundle img]
-
 ### Help
 
 Use the `help` command to see all the available options:
@@ -97,8 +90,6 @@ Use the `help` command to see all the available options:
 ```bash
 manga-downloader help
 ```
-
-![help img]
 
 ## Installation
 
@@ -175,9 +166,4 @@ All the code contained in this repo is licensed under the
 [license]: ./LICENSE
 [releases]: https://github.com/voxelost/manga-downloader/releases
 [issues]: https://github.com/voxelost/manga-downloader/issues
-[download img]: demos/download.gif
-[bundle img]: demos/bundle.gif
-[help img]: demos/help.gif
-[prompt img]: demos/prompt.gif
-[docker hub]: https://hub.docker.com/r/voxelost/manga-downloader
 [downloads]: https://qii404.me/github-release-statistics/?repo=https://github.com/voxelost/manga-downloader

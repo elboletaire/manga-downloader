@@ -19,8 +19,6 @@ install:
 
 build: clean test build/unix
 
-build/all: clean test build/unix build/win
-
 build/unix:
 	CGO_ENABLED=0 go build -o manga-downloader ${GOFLAGS} .
 
