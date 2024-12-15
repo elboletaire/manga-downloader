@@ -37,10 +37,15 @@ func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string,
 
 // NewChapterFileTemplateParts returns a new FilenameTemplateParts from a title and a chapter
 func NewChapterFileTemplateParts(title string, chapter *grabber.Chapter) FilenameTemplateParts {
+	return NewChapterFileTemplatePartsFromParts(title, chapter.GetNumber(), chapter.GetTitle())
+}
+
+// NewChapterFileTemplateParts returns a new FilenameTemplateParts from a series title, a number and a chapter title
+func NewChapterFileTemplatePartsFromParts(series string, number float64, title string) FilenameTemplateParts {
 	return FilenameTemplateParts{
-		Series: SanitizeFilename(title),
-		Number: strings.Replace(fmt.Sprintf("%.1f", chapter.GetNumber()), ".0", "", 1),
-		Title:  SanitizeFilename(chapter.GetTitle()),
+		Series: SanitizeFilename(series),
+		Number: strings.Replace(fmt.Sprintf("%.1f", number), ".0", "", 1),
+		Title:  SanitizeFilename(title),
 	}
 }
 

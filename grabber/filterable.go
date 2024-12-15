@@ -1,6 +1,7 @@
 package grabber
 
 import (
+	"slices"
 	"sort"
 
 	"github.com/elboletaire/manga-downloader/ranges"
@@ -45,6 +46,15 @@ func (f Filterables) FilterRanges(rngs []ranges.Range) Filterables {
 			return c.GetNumber() >= float64(r.Begin) && c.GetNumber() <= float64(r.End)
 		})...)
 	}
+
+	return chaps
+}
+
+// FilterList returns the Filterables, without the ones with a Number matched in specified blacklist
+func (f Filterables) FilterOutList(blacklist []float64) Filterables {
+	chaps := f.Filter(func(c Filterable) bool {
+		return ! slices.Contains(blacklist, c.GetNumber())
+	})
 
 	return chaps
 }

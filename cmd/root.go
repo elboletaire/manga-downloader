@@ -119,6 +119,23 @@ Note arguments aren't really positional, you can specify them in any order:
 			os.Exit(1)
 		}
 
+		if ! settings.Bundle && ! settings.ForceDownload {
+			// check out any chapter already downloaded
+			alreadyDownloadedNumbers := []float64{}
+			for _, chapter := range chapters {
+				if packer.CheckAlreadyDownloaded(settings.OutputDir, s.GetFilenameTemplate(), title, chapter.GetNumber(), chapter.GetTitle()) {
+					alreadyDownloadedNumbers = append(alreadyDownloadedNumbers, chapter.GetNumber())
+				}
+			}
+			color.HiBlack("Skipping %d chapters already downloaded", len(alreadyDownloadedNumbers))
+			// filter out already downloaded chapters
+			chapters = chapters.FilterOutList(alreadyDownloadedNumbers)
+			if len(chapters) == 0 {
+				color.Yellow("No new chapter to download")
+				os.Exit(0)
+			}
+		}
+
 		// download chapters
 		wg := sync.WaitGroup{}
 		g := make(chan struct{}, s.GetMaxConcurrency().Chapters)
@@ -216,6 +233,7 @@ func Execute() {
 // init sets the flags for the root command
 func init() {
 	rootCmd.Flags().BoolVarP(&settings.Bundle, "bundle", "b", false, "bundle all specified chapters into a single file")
+	rootCmd.Flags().BoolVarP(&settings.ForceDownload, "force-download", "f", false, "force chapter download even when found in output directory")
 	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Chapters, "concurrency", "c", 5, "number of concurrent chapter downloads, hard-limited to 5")
 	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Pages, "concurrency-pages", "C", 10, "number of concurrent page downloads, hard-limited to 10")
 	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", "only download the specified language")
