@@ -229,7 +229,7 @@ func Run(cmd *cobra.Command, args []string) {
 
 			if !settings.Bundle {
 				_, err := packer.PackSingle(settings.OutputDir, s, d, func(page, _ int) {
-					scbar.IncrBy(page)
+					scbar.IncrBy(1) // Increment by 1 since we're processing one page at a time
 				})
 				if err != nil {
 					color.Red(err.Error())

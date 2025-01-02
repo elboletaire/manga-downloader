@@ -29,7 +29,7 @@ func ArchiveCBZ(filename string, files []*downloader.File, progress func(page, p
 		if _, err = f.Write(file.Data); err != nil {
 			return err
 		}
-		progress(i, i*100/len(files))
+		progress(1, 0) // Report progress by single page increments
 	}
 
 	err = w.Close()
