@@ -23,17 +23,15 @@ type ProgressCallback func(page, progress int, err error)
 func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress ProgressCallback) (files []*File, err error) {
 	wg := sync.WaitGroup{}
 	guard := make(chan struct{}, site.GetMaxConcurrency().Pages)
-	errChan := make(chan error, len(chapter.Pages)) // Buffer for all possible page errors
+	errChan := make(chan error, 1)
 	done := make(chan bool)
-	var mu sync.Mutex
+	files = make([]*File, len(chapter.Pages)) // Pre-allocate slice with correct size
 
-	for _, page := range chapter.Pages {
+	for i, page := range chapter.Pages {
 		guard <- struct{}{}
 		wg.Add(1)
-		go func(page grabber.Page) {
-			// release waitgroup and guard when done
+		go func(page grabber.Page, idx int) {
 			defer wg.Done()
-			defer func() { <-guard }()
 
 			file, err := FetchFile(http.RequestParams{
 				URL:     page.URL,
@@ -44,36 +42,32 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress Progre
 			cp := pn * 100 / len(chapter.Pages)
 
 			if err != nil {
-				errChan <- fmt.Errorf("page %d: %w", page.Number, err)
-				onprogress(pn, cp, err)
+				select {
+				case errChan <- fmt.Errorf("page %d: %w", page.Number, err):
+					onprogress(pn, cp, err)
+				default:
+				}
+				<-guard
 				return
 			}
 
-			mu.Lock()
-			files = append(files, file)
-			mu.Unlock()
-
+			files[idx] = file // Store file directly in pre-allocated slice
 			onprogress(pn, cp, nil)
-		}(page)
+			<-guard
+		}(page, i)
 	}
 
 	go func() {
 		wg.Wait()
 		close(done)
-		close(errChan)
 	}()
 
-	// Collect all errors
-	var errors []error
-	for err := range errChan {
-		errors = append(errors, err)
-	}
-
-	<-done
-	close(guard)
-
-	if len(errors) > 0 {
-		return files, fmt.Errorf("failed to download %d pages", len(errors))
+	select {
+	case err := <-errChan:
+		close(guard)
+		return nil, err
+	case <-done:
+		close(guard)
 	}
 
 	// sort files by page number
