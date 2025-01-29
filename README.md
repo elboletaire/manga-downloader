@@ -1,5 +1,5 @@
-Manga Downloader
-================
+Manga Downloader [![starline]](#star-history)
+=============================================
 
 [![Go Report Card][go report card]][go report]
 [![Go Reference][go reference badge]][go reference]
@@ -162,8 +162,8 @@ docker run --rm -it -v $PWD:/downloads elboletaire/manga-downloader --help
 
 Note the `-v $PWD:/downloads` param, that's required in order to get the downloads in your current path.
 
-Star history
-------------
+Star history ![starline]
+------------------------
 
 [![Stargazers over time](https://starchart.cc/elboletaire/manga-downloader.svg?variant=adaptive)](https://starchart.cc/elboletaire/manga-downloader)
 
@@ -197,6 +197,7 @@ All the code contained in this repo is licensed under the
 [go report]: https://goreportcard.com/report/github.com/elboletaire/manga-downloader
 [go report card]: https://goreportcard.com/badge/github.com/elboletaire/manga-downloader
 [go reference]: https://pkg.go.dev/github.com/elboletaire/manga-downloader
+[starline]: https://starlines.qoo.monster/assets/elboletaire/manga-downloader
 
 [license]: ./LICENSE
 [releases]: https://github.com/elboletaire/manga-downloader/releases
