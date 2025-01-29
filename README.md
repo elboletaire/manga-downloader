@@ -1,4 +1,4 @@
-Manga Downloader [![starline]](#star-history)
+Manga Downloader [![starline]](#star-history-)
 =============================================
 
 [![Go Report Card][go report card]][go report]
