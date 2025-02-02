@@ -33,6 +33,8 @@ type Settings struct {
 	Range string
 	// OutputDir is the output directory for the downloaded files
 	OutputDir string
+	// ForceDownload forces chapter download even if it is found in local folder
+	ForceDownload bool
 }
 
 // MaxConcurrency is the max concurrency for a site

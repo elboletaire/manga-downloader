@@ -3,6 +3,7 @@ package packer
 import (
 	"fmt"
 	"path/filepath"
+	"os"
 
 	"github.com/elboletaire/manga-downloader/downloader"
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -33,6 +34,15 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 		Number: rng,
 		Title:  "bundle",
 	}, files)
+}
+
+func CheckAlreadyDownloaded(outputdir string, template string, title string, number float64, chapterTitle string) (bool) {
+	filename, _ := NewFilenameFromTemplate(template, NewChapterFileTemplatePartsFromParts(title, number, chapterTitle))
+	filename += ".cbz"
+	if _, err := os.Stat(filepath.Join(outputdir, filename)); err == nil {
+		return true
+	}
+	return false
 }
 
 func pack(outputdir, template, title string, parts FilenameTemplateParts, files []*downloader.File) (string, error) {
