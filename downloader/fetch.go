@@ -1,13 +1,13 @@
 package downloader
 
 import (
+	"fmt"
 	"io"
 	"sort"
 	"sync"
 
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/http"
-	"github.com/fatih/color"
 )
 
 // File represents a downloaded file
@@ -16,17 +16,21 @@ type File struct {
 	Page uint
 }
 
+// ProgressCallback is a function type for progress updates with optional error
+type ProgressCallback func(page, progress int, err error)
+
 // FetchChapter downloads all the pages of a chapter
-func FetchChapter(site grabber.Site, chapter *grabber.Chapter) (files []*File, err error) {
+func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress ProgressCallback) (files []*File, err error) {
 	wg := sync.WaitGroup{}
-
-	color.Blue("- downloading %s pages...", color.HiBlackString(chapter.GetTitle()))
 	guard := make(chan struct{}, site.GetMaxConcurrency().Pages)
+	errChan := make(chan error, 1)
+	done := make(chan bool)
+	files = make([]*File, len(chapter.Pages)) // Pre-allocate slice with correct size
 
-	for _, page := range chapter.Pages {
+	for i, page := range chapter.Pages {
 		guard <- struct{}{}
 		wg.Add(1)
-		go func(page grabber.Page) {
+		go func(page grabber.Page, idx int) {
 			defer wg.Done()
 
 			file, err := FetchFile(http.RequestParams{
@@ -34,19 +38,37 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter) (files []*File, e
 				Referer: site.BaseUrl(),
 			}, uint(page.Number))
 
+			pn := int(page.Number)
+			cp := pn * 100 / len(chapter.Pages)
+
 			if err != nil {
-				color.Red("- error downloading page %d of %s", page.Number, chapter.GetTitle())
+				select {
+				case errChan <- fmt.Errorf("page %d: %w", page.Number, err):
+					onprogress(pn, cp, err)
+				default:
+				}
+				<-guard
 				return
 			}
 
-			files = append(files, file)
-
-			// release guard
+			files[idx] = file // Store file directly in pre-allocated slice
+			onprogress(pn, cp, nil)
 			<-guard
-		}(page)
+		}(page, i)
 	}
-	wg.Wait()
-	close(guard)
+
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case err := <-errChan:
+		close(guard)
+		return nil, err
+	case <-done:
+		close(guard)
+	}
 
 	// sort files by page number
 	sort.SliceStable(files, func(i, j int) bool {
@@ -60,6 +82,7 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter) (files []*File, e
 func FetchFile(params http.RequestParams, page uint) (file *File, err error) {
 	body, err := http.Get(params)
 	if err != nil {
+		// TODO: should retry at least once (configurable)
 		return
 	}
 

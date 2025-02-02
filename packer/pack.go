@@ -15,13 +15,13 @@ type DownloadedChapter struct {
 }
 
 // PackSingle packs a single downloaded chapter
-func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter) (string, error) {
+func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
-	return pack(outputdir, s.GetFilenameTemplate(), title, NewChapterFileTemplateParts(title, chapter.Chapter), chapter.Files)
+	return pack(outputdir, s.GetFilenameTemplate(), title, NewChapterFileTemplateParts(title, chapter.Chapter), chapter.Files, progress)
 }
 
 // PackBundle packs a bundle of downloaded chapters
-func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter, rng string) (string, error) {
+func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter, rng string, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
 	files := []*downloader.File{}
 	for _, chapter := range chapters {
@@ -32,10 +32,10 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 		Series: title,
 		Number: rng,
 		Title:  "bundle",
-	}, files)
+	}, files, progress)
 }
 
-func pack(outputdir, template, title string, parts FilenameTemplateParts, files []*downloader.File) (string, error) {
+func pack(outputdir, template, title string, parts FilenameTemplateParts, files []*downloader.File, progress func(page, progress int)) (string, error) {
 	filename, err := NewFilenameFromTemplate(template, parts)
 	if err != nil {
 		return "", fmt.Errorf("- error creating filename for chapter %s: %s", title, err.Error())
@@ -43,7 +43,7 @@ func pack(outputdir, template, title string, parts FilenameTemplateParts, files 
 
 	filename += ".cbz"
 
-	if err = ArchiveCBZ(filepath.Join(outputdir, filename), files); err != nil {
+	if err = ArchiveCBZ(filepath.Join(outputdir, filename), files, progress); err != nil {
 		return "", fmt.Errorf("- error saving file %s: %s", filename, err.Error())
 	}
 
