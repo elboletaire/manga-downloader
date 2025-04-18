@@ -17,6 +17,8 @@ type FilenameTemplateParts struct {
 	Number string
 	// Title represents the chapter title (e.g. "The Beginning")
 	Title string
+	// Version placeholder appended to the title in case of duplicate filenames (e.g. "3")
+	Version int
 }
 
 // FilenameTemplateDefault is the default filename template
@@ -24,6 +26,9 @@ const FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}"
 
 // NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template
 func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string, error) {
+	if parts.Version > 1 {
+		parts.Title = fmt.Sprintf("%s v%d", parts.Title, parts.Version)
+	}
 	tmpl, err := template.New("filename").Parse(templ)
 	if err != nil {
 		return "", err
