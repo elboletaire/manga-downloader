@@ -1,13 +1,12 @@
 package grabber
 
 import (
-	"regexp"
-	"strconv"
-	"strings"
-
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
 	"github.com/fatih/color"
+	"regexp"
+	"strconv"
+	"strings"
 )
 
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)
@@ -16,6 +15,10 @@ type PlainHTML struct {
 	doc  *goquery.Document
 	rows *goquery.Selection
 	site SiteSelector
+}
+
+func NewPlainHTML(g *Grabber) *PlainHTML {
+	return &PlainHTML{Grabber: g}
 }
 
 type SiteSelector struct {

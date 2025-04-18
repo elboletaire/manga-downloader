@@ -7,6 +7,7 @@ import (
 	"path"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/elboletaire/manga-downloader/http"
 )
@@ -15,6 +16,16 @@ import (
 type Mangadex struct {
 	*Grabber
 	title string
+	// rateLimiter rate limiter for the FetchChapter method. This call uses the '/at-home' endpoint which has a rate limit
+	// of 40 calls per minute, if we exceed this limit we get a 429, and the consequent chapters fail. This may eventually
+	// lead to an IP ban.
+	rateLimiter <-chan time.Time
+}
+
+func NewMangadex(g *Grabber) *Mangadex {
+	// we set the rate limit at 39 calls per minute instead of 40 to make sure the rate limit is under the threshold,
+	// otherwise we occasionally get hit by the rate limiter.
+	return &Mangadex{Grabber: g, rateLimiter: time.Tick(time.Minute / 39)}
 }
 
 // MangadexChapter represents a MangaDex Chapter
@@ -125,6 +136,7 @@ func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 
 // FetchChapter fetches a chapter and its pages
 func (m Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
+	<-m.rateLimiter
 	chap := f.(*MangadexChapter)
 	// download json
 	rbody, err := http.Get(http.RequestParams{

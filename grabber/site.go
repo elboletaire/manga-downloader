@@ -2,13 +2,12 @@ package grabber
 
 import (
 	"errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 // Grabber is the base struct for all grabbers/sites
@@ -68,10 +67,10 @@ type Site interface {
 // IdentifySite returns the site passing the Test() for the specified url
 func (g *Grabber) IdentifySite() (Site, []error) {
 	sites := []Site{
-		&PlainHTML{Grabber: g},
-		&Inmanga{Grabber: g},
-		&Mangadex{Grabber: g},
-		&Tcb{Grabber: g},
+		NewPlainHTML(g),
+		NewInmanga(g),
+		NewMangadex(g),
+		NewTcb(g),
 	}
 	var errs []error
 

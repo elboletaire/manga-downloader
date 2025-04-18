@@ -3,17 +3,20 @@ package grabber
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
-	"strconv"
-
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
+	"regexp"
+	"strconv"
 )
 
 // Inmanga is a grabber for inmanga.com
 type Inmanga struct {
 	*Grabber
 	title string
+}
+
+func NewInmanga(g *Grabber) *Inmanga {
+	return &Inmanga{Grabber: g}
 }
 
 // InmangaChapter is a chapter representation from InManga
