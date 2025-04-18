@@ -5,11 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"regexp"
-	"strings"
-	"sync"
-
 	"github.com/elboletaire/manga-downloader/downloader"
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/packer"
@@ -17,6 +12,10 @@ import (
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
+	"os"
+	"regexp"
+	"strings"
+	"sync"
 
 	cc "github.com/ivanpirog/coloredcobra"
 )
@@ -103,7 +102,7 @@ Note arguments aren't really positional, you can specify them in any order:
 				os.Exit(0)
 			}
 
-			rngs = []ranges.Range{{Begin: 1, End: int64(lastChapter)}}
+			rngs = []ranges.Range{{Begin: 1, End: lastChapter}}
 		} else {
 			// ranges parsing
 			settings.Range = getRangesArg(args)

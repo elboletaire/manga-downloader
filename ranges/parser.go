@@ -7,25 +7,25 @@ import (
 
 // Range represents a range of numbers
 type Range struct {
-	Begin int64
-	End   int64
+	Begin float64
+	End   float64
 }
 
 // Parse parses a string and returns a slice of ranges
 func Parse(rnge string) (rngs []Range, err error) {
 	co := strings.Split(rnge, ",")
-	var cur int64
-	var begin int64
-	var end int64
+	var cur float64
+	var begin float64
+	var end float64
 
 	for _, part := range co {
 		in := strings.Split(part, "-")
-		if cur, err = strconv.ParseInt(in[0], 10, 64); err != nil {
+		if cur, err = strconv.ParseFloat(in[0], 64); err != nil {
 			return
 		}
 		if len(in) == 2 {
 			begin = cur
-			if end, err = strconv.ParseInt(in[1], 10, 64); err != nil {
+			if end, err = strconv.ParseFloat(in[1], 64); err != nil {
 				return
 			}
 		}
