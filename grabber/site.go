@@ -2,12 +2,13 @@ package grabber
 
 import (
 	"errors"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 // Grabber is the base struct for all grabbers/sites

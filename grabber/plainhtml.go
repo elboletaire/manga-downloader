@@ -1,12 +1,13 @@
 package grabber
 
 import (
-	"github.com/PuerkitoBio/goquery"
-	"github.com/elboletaire/manga-downloader/http"
-	"github.com/fatih/color"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/elboletaire/manga-downloader/http"
+	"github.com/fatih/color"
 )
 
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)

@@ -1,13 +1,14 @@
 package grabber
 
 import (
-	"github.com/PuerkitoBio/goquery"
-	"github.com/elboletaire/manga-downloader/http"
-	"github.com/fatih/color"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/elboletaire/manga-downloader/http"
+	"github.com/fatih/color"
 )
 
 // Tcb is a grabber for tcbscans.com (and possibly other wordpress sites)

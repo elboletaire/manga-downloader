@@ -3,10 +3,11 @@ package grabber
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/elboletaire/manga-downloader/http"
 	"regexp"
 	"strconv"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/elboletaire/manga-downloader/http"
 )
 
 // Inmanga is a grabber for inmanga.com
