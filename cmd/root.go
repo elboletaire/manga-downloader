@@ -5,6 +5,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
+	"sync"
+
 	"github.com/elboletaire/manga-downloader/downloader"
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/packer"
@@ -12,10 +17,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
-	"os"
-	"regexp"
-	"strings"
-	"sync"
 
 	cc "github.com/ivanpirog/coloredcobra"
 )
