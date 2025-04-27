@@ -103,7 +103,7 @@ Note arguments aren't really positional, you can specify them in any order:
 				os.Exit(0)
 			}
 
-			rngs = []ranges.Range{{Begin: 1, End: int64(lastChapter)}}
+			rngs = []ranges.Range{{Begin: 1, End: lastChapter}}
 		} else {
 			// ranges parsing
 			settings.Range = getRangesArg(args)
