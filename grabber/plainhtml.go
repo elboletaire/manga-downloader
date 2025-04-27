@@ -18,6 +18,10 @@ type PlainHTML struct {
 	site SiteSelector
 }
 
+func NewPlainHTML(g *Grabber) *PlainHTML {
+	return &PlainHTML{Grabber: g}
+}
+
 type SiteSelector struct {
 	Title        string
 	Rows         string

@@ -16,6 +16,10 @@ type Inmanga struct {
 	title string
 }
 
+func NewInmanga(g *Grabber) *Inmanga {
+	return &Inmanga{Grabber: g}
+}
+
 // InmangaChapter is a chapter representation from InManga
 type InmangaChapter struct {
 	Chapter

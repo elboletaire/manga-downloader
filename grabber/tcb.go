@@ -18,6 +18,10 @@ type Tcb struct {
 	title string
 }
 
+func NewTcb(g *Grabber) *Tcb {
+	return &Tcb{Grabber: g}
+}
+
 // TcbChapter is a chapter for TCBScans
 type TcbChapter struct {
 	Chapter
