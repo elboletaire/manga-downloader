@@ -112,6 +112,7 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 	tchap := f.(*TcbChapter)
 
+	// Get first page to find all page URLs
 	rbody, err := http.Get(http.RequestParams{
 		URL: tchap.URL,
 	})
@@ -124,33 +125,68 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
-	pimages := body.Find("div.reading-content img")
+	// Get all page URLs from the single-pager select
+	pageURLs := []string{}
+	body.Find("#single-pager option").Each(func(i int, s *goquery.Selection) {
+		if url := s.AttrOr("data-redirect", ""); url != "" {
+			pageURLs = append(pageURLs, url)
+		}
+	})
+
+	// If no pages found in select, this might be a single-page chapter
+	if len(pageURLs) == 0 {
+		pageURLs = append(pageURLs, tchap.URL)
+	}
+
+	pages := []Page{}
+	// Visit each page URL to get its image
+	for pageNum, pageURL := range pageURLs {
+		// Fetch page content
+		rbody, err := http.Get(http.RequestParams{
+			URL:     pageURL,
+			Referer: t.BaseUrl(),
+		})
+		if err != nil {
+			color.Yellow("error fetching page %d: %s", pageNum+1, err.Error())
+			continue
+		}
+
+		pageDoc, err := goquery.NewDocumentFromReader(rbody)
+		rbody.Close()
+		if err != nil {
+			color.Yellow("error parsing page %d: %s", pageNum+1, err.Error())
+			continue
+		}
+
+		// Find image in this page
+		found := false
+		pageDoc.Find("div.reading-content img").Each(func(i int, s *goquery.Selection) {
+			if found {
+				return // Only take first image per page
+			}
+			u := strings.TrimSpace(s.AttrOr("data-src", s.AttrOr("src", "")))
+			if u == "" {
+				color.Yellow("page %d of %s has no URL to fetch from", pageNum+1, f.GetTitle())
+				return
+			}
+			if !strings.HasPrefix(u, "http") {
+				u = t.BaseUrl() + u
+			}
+			pages = append(pages, Page{
+				Number: int64(pageNum + 1),
+				URL:    u,
+			})
+			found = true
+		})
+	}
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
-		PagesCount: int64(pimages.Length()),
+		PagesCount: int64(len(pages)), // Use actual number of found pages
 		Language:   "en",
+		Pages:      pages,
 	}
-	pages := []Page{}
-	pimages.Each(func(i int, s *goquery.Selection) {
-		u := strings.TrimSpace(s.AttrOr("data-src", s.AttrOr("src", "")))
-		n := int64(i + 1)
-		if u == "" {
-			// this error is not critical and is not from our side, so just log it out
-			color.Yellow("page %d of %s has no URL to fetch from 😕 (will be ignored)", n, chapter.GetTitle())
-			return
-		}
-		if !strings.HasPrefix(u, "http") {
-			u = t.BaseUrl() + u
-		}
-		pages = append(pages, Page{
-			Number: n,
-			URL:    u,
-		})
-	})
-
-	chapter.Pages = pages
 
 	return chapter, nil
 }

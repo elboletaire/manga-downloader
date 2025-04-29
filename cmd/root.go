@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"syscall"
 
 	"github.com/elboletaire/manga-downloader/downloader"
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -17,6 +18,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
+	"github.com/vbauerster/mpb/v8"
+	"github.com/vbauerster/mpb/v8/decor"
+	"golang.org/x/term"
 
 	cc "github.com/ivanpirog/coloredcobra"
 )
@@ -57,139 +61,255 @@ Note arguments aren't really positional, you can specify them in any order:
 
   manga-downloader --language es 10-20 https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover --bundle`),
 	Args: cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		s, errs := grabber.NewSite(getUrlArg(args), &settings)
-		if len(errs) > 0 {
-			color.Red("Errors testing site (a site may be down):")
-			for _, err := range errs {
-				color.Red(err.Error())
-			}
+	Run:  Run,
+}
+
+// Run is the main function of the root command, the main downloading cmd
+func Run(cmd *cobra.Command, args []string) {
+	s, errs := grabber.NewSite(getUrlArg(args), &settings)
+	if len(errs) > 0 {
+		color.Red("Errors testing site (a site may be down):")
+		for _, err := range errs {
+			color.Red(err.Error())
 		}
-		if s == nil {
-			color.Yellow("Site not recognised")
-			os.Exit(1)
+	}
+	if s == nil {
+		color.Yellow("Site not recognised")
+		os.Exit(1)
+	}
+	s.InitFlags(cmd)
+
+	// fetch series title
+	title, err := s.FetchTitle()
+	cerr(err, "Error fetching title: ")
+
+	// fetch all chapters
+	chapters, errs := s.FetchChapters()
+	if len(errs) > 0 {
+		color.Red("Errors fetching chapters:")
+		for _, err := range errs {
+			color.Red(err.Error())
 		}
-		s.InitFlags(cmd)
+		os.Exit(1)
+	}
 
-		// fetch series title
-		title, err := s.FetchTitle()
-		cerr(err, "Error fetching title: %s")
+	chapters = chapters.SortByNumber()
 
-		// fetch all chapters
-		chapters, errs := s.FetchChapters()
-		if len(errs) > 0 {
-			color.Red("Errors fetching chapters:")
-			for _, err := range errs {
-				color.Red(err.Error())
-			}
-			os.Exit(1)
-		}
-
-		chapters = chapters.SortByNumber()
-
-		var rngs []ranges.Range
-		// ranges argument is not provided
-		if len(args) == 1 {
-			lastChapter := chapters[len(chapters)-1].GetNumber()
-			prompt := promptui.Prompt{
-				Label:     fmt.Sprintf("Do you want to download all %g chapters", lastChapter),
-				IsConfirm: true,
-			}
-
-			_, err := prompt.Run()
-
-			if err != nil {
-				color.Yellow("Canceled by user")
-				os.Exit(0)
-			}
-
-			rngs = []ranges.Range{{Begin: 1, End: lastChapter}}
-		} else {
-			// ranges parsing
-			settings.Range = getRangesArg(args)
-			rngs, err = ranges.Parse(settings.Range)
-			cerr(err, "Error parsing ranges: %s")
+	var rngs []ranges.Range
+	// ranges argument is not provided
+	if len(args) == 1 {
+		lastChapter := chapters[len(chapters)-1].GetNumber()
+		prompt := promptui.Prompt{
+			Label:     fmt.Sprintf("Do you want to download all %g chapters", lastChapter),
+			IsConfirm: true,
 		}
 
-		// sort and filter specified ranges
-		chapters = chapters.FilterRanges(rngs)
+		_, err := prompt.Run()
 
-		if len(chapters) == 0 {
-			color.Yellow("No chapters found for the specified ranges")
-			os.Exit(1)
-		}
-
-		// download chapters
-		wg := sync.WaitGroup{}
-		g := make(chan struct{}, s.GetMaxConcurrency().Chapters)
-		downloaded := grabber.Filterables{}
-
-		for _, chap := range chapters {
-			g <- struct{}{}
-			wg.Add(1)
-			go func(chap grabber.Filterable) {
-				defer wg.Done()
-				chapter, err := s.FetchChapter(chap)
-				if err != nil {
-					color.Red("- error fetching chapter %s: %s", chap.GetTitle(), err.Error())
-					<-g
-					return
-				}
-				fmt.Printf("fetched %s %s\n", color.CyanString(title), color.HiBlackString(chapter.GetTitle()))
-
-				files, err := downloader.FetchChapter(s, chapter)
-				if err != nil {
-					color.Red("- error downloading chapter %s: %s", chapter.GetTitle(), err.Error())
-					<-g
-					return
-				}
-
-				d := &packer.DownloadedChapter{
-					Chapter: chapter,
-					Files:   files,
-				}
-
-				if !settings.Bundle {
-					filename, err := packer.PackSingle(settings.OutputDir, s, d)
-					if err == nil {
-						fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
-					} else {
-						color.Red(err.Error())
-					}
-				} else {
-					// avoid adding it to memory if we're not gonna use it
-					downloaded = append(downloaded, d)
-				}
-
-				// release guard
-				<-g
-			}(chap)
-		}
-		wg.Wait()
-		close(g)
-
-		if !settings.Bundle {
-			// if we're not bundling, just finish it
+		if err != nil {
+			color.Yellow("Canceled by user")
 			os.Exit(0)
 		}
 
-		// resort downloaded
-		downloaded = downloaded.SortByNumber()
+		rngs = []ranges.Range{{Begin: 1, End: float64(lastChapter)}}
+	} else {
+		// ranges parsing
+		settings.Range = getRangesArg(args)
+		rngs, err = ranges.Parse(settings.Range)
+		cerr(err, "Error parsing ranges: ")
+	}
 
-		dc := []*packer.DownloadedChapter{}
-		// convert slice back to DownloadedChapter
-		for _, d := range downloaded {
-			dc = append(dc, d.(*packer.DownloadedChapter))
+	// sort and filter specified ranges
+	chapters = chapters.FilterRanges(rngs)
+
+	if len(chapters) == 0 {
+		color.Yellow("No chapters found for the specified ranges")
+		os.Exit(1)
+	}
+
+	// download chapters
+	wg := sync.WaitGroup{}
+	g := make(chan struct{}, s.GetMaxConcurrency().Chapters)
+	downloaded := grabber.Filterables{}
+
+	// Current phase for bundle mode progress
+	var currentPhase string
+
+	// progress bar
+	p := mpb.New(
+		mpb.WithWidth(40),
+		mpb.WithOutput(color.Output),
+		mpb.WithAutoRefresh(),
+	)
+
+	blue := color.New(color.FgBlue)
+
+	// Get terminal width for title truncation
+	termWidth := getTerminalWidth()
+	mangaLen, chapterLen := calculateTitleLengths(termWidth)
+
+	// For bundle mode, create a single progress bar
+	var bundleBar *mpb.Bar
+	if settings.Bundle {
+		// Calculate total pages for bundle mode
+		totalPages := int64(0)
+		for _, chap := range chapters {
+			chapter, err := s.FetchChapter(chap)
+			if err == nil && chapter != nil {
+				totalPages += chapter.PagesCount
+			}
 		}
 
-		filename, err := packer.PackBundle(settings.OutputDir, s, dc, settings.Range)
-		if err != nil {
-			color.Red(err.Error())
-			os.Exit(1)
-		}
+		// Total steps = download + archive for all pages
+		bundleBar = p.AddBar(totalPages*2,
+			mpb.PrependDecorators(
+				// Dynamic status showing current chapter
+				decor.Any(func(s decor.Statistics) string {
+					return blue.Sprintf("%-30s", currentPhase)
+				}, decor.WCSyncWidthR),
+				decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DextraSpace}),
+			),
+			mpb.AppendDecorators(
+				decor.Percentage(decor.WC{W: 4}), // W: 4 to remove space before %
+				// Status at the end to prevent shifting
+				decor.Any(func(s decor.Statistics) string {
+					if s.Current >= s.Total {
+						return blue.Sprintf(" bundling ")
+					}
+					return blue.Sprintf(" downloading")
+				}, decor.WC{W: 10}),
+			),
+		)
+		currentPhase = "Gathering info..."
+	}
 
-		fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
-	},
+	for _, chap := range chapters {
+		g <- struct{}{}
+		wg.Add(1)
+
+		go func(chap grabber.Filterable) {
+			defer wg.Done()
+
+			chapter, err := s.FetchChapter(chap)
+			if err != nil {
+				color.Red("- error fetching chapter %s: %s", chap.GetTitle(), err.Error())
+				<-g
+				return
+			}
+
+			// generate the filename for the chapter
+			filename, err := packer.NewFilenameFromTemplate(s.GetFilenameTemplate(), packer.NewChapterFileTemplateParts(title, chapter))
+			if err != nil {
+				color.Red("- error creating filename for chapter %s: %s", chapter.GetTitle(), err.Error())
+				<-g
+				return
+			}
+			filename += ".cbz"
+
+			var bar *mpb.Bar
+			if !settings.Bundle {
+				// For non-bundle mode, create a single bar per chapter that combines download + archive
+				barTitle := fmt.Sprintf("%s - %s:", truncateString(title, mangaLen), truncateString(chap.GetTitle(), chapterLen))
+				// Total steps = pages (download) + pages (archive)
+				total := chapter.PagesCount * 2
+				bar = p.AddBar(total,
+					mpb.PrependDecorators(
+						decor.Name(barTitle, decor.WCSyncWidthR),
+						decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DextraSpace}),
+					),
+					mpb.AppendDecorators(
+						decor.Percentage(decor.WC{W: 4}), // W: 4 to remove space before %
+						// Status at the end to prevent shifting
+						decor.Any(func(s decor.Statistics) string {
+							if s.Current >= total/2 {
+								return blue.Sprintf(" archiving ")
+							}
+							return blue.Sprintf(" downloading") // Add space before status
+						}, decor.WC{W: 10}),
+					),
+				)
+			} else {
+				bar = bundleBar
+				currentPhase = fmt.Sprintf("Downloading %s", chap.GetTitle())
+			}
+
+			files, err := downloader.FetchChapter(s, chapter, func(page int, idx int, err error) {
+				if err != nil {
+					if !settings.Bundle {
+						bar.SetCurrent(int64(idx))
+					}
+					color.Red("- error downloading page %d: %s", idx+1, err.Error())
+				} else {
+					// Increment by 1 since we're processing one page at a time
+					bar.IncrBy(1)
+				}
+			})
+			if err != nil {
+				color.Red("- error downloading chapter %s: %s", chapter.GetTitle(), err.Error())
+				<-g
+				return
+			}
+
+			d := &packer.DownloadedChapter{
+				Chapter: chapter,
+				Files:   files,
+			}
+
+			if !settings.Bundle {
+				_, err := packer.PackSingle(settings.OutputDir, s, d, func(page, _ int) {
+					bar.IncrBy(1) // Increment archive progress
+				})
+				if err != nil {
+					color.Red(err.Error())
+				}
+			} else {
+				// For bundle mode, increment archive progress
+				bar.IncrBy(int(chapter.PagesCount))
+				// avoid adding it to memory if we're not gonna use it
+				downloaded = append(downloaded, d)
+			}
+
+			// release guard
+			<-g
+		}(chap)
+	}
+	// wait for all routines to finish
+	wg.Wait()
+	close(g)
+
+	if !settings.Bundle {
+		// if we're not bundling, we're done
+		os.Exit(0)
+	}
+
+	// resort downloaded
+	downloaded = downloaded.SortByNumber()
+
+	dc := []*packer.DownloadedChapter{}
+	tp := 0
+	// convert slice back to DownloadedChapter
+	for _, d := range downloaded {
+		chapter := d.(*packer.DownloadedChapter)
+		dc = append(dc, chapter)
+		tp += int(chapter.PagesCount)
+	}
+
+	if settings.Bundle {
+		currentPhase = fmt.Sprintf("Creating bundle for chapters %s", settings.Range)
+	}
+
+	filename, err := packer.PackBundle(settings.OutputDir, s, dc, settings.Range, func(page, _ int) {
+		if bundleBar != nil {
+			bundleBar.IncrBy(page)
+		}
+	})
+
+	if err != nil {
+		color.Red(err.Error())
+		os.Exit(1)
+	}
+
+	fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -275,4 +395,64 @@ func getUrlArg(args []string) string {
 	}
 
 	return args[1]
+}
+
+// getTerminalWidth returns the current terminal width or a default value if it can't be determined
+func getTerminalWidth() int {
+	width, _, err := term.GetSize(int(syscall.Stdin))
+	if err != nil {
+		return 80 // default terminal width
+	}
+	return width
+}
+
+// calculateTitleLengths calculates how much space to allocate for manga and chapter titles
+func calculateTitleLengths(termWidth int) (mangaLen, chapterLen int) {
+	// Reserve space for other elements in the progress bar:
+	// - status (e.g. "downloading", "archiving", etc.): ~15 chars
+	// - progress counter (e.g. "123/456"): ~10 chars
+	// - percentage: ~5 chars
+	// - decorators (spaces, colons, etc.): ~5 chars
+	reservedSpace := 35
+	availableSpace := termWidth - reservedSpace
+
+	// Allocate 60% to manga title and 40% to chapter title if there's enough space
+	if availableSpace > 20 {
+		mangaLen = (availableSpace * 60) / 100
+		chapterLen = (availableSpace * 40) / 100
+	} else {
+		// If space is very limited, use minimal lengths
+		mangaLen = 10
+		chapterLen = 10
+	}
+
+	return
+}
+
+// truncateString truncates the input string at a specified maximum length
+// without cutting words. It finds the last space within the limit and truncates there.
+func truncateString(input string, maxLength int) string {
+	if maxLength <= 0 {
+		return ""
+	}
+
+	if len(input) <= maxLength {
+		return input
+	}
+
+	// Find the last index of a space before maxLength
+	truncationPoint := strings.LastIndex(input[:maxLength], " ")
+	if truncationPoint == -1 {
+		// No spaces found, force to maxLength (cuts the word)
+		return input[:maxLength] + "..."
+	}
+
+	// Return substring up to the last found space
+	return input[:truncationPoint] + "..."
+}
+
+func toMetaFunc(c *color.Color) func(string) string {
+	return func(s string) string {
+		return c.Sprint(s)
+	}
 }

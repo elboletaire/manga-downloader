@@ -186,11 +186,12 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	pimages := getPlainHTMLImageURL(m.site.Image, doc)
+	pcount := len(pimages)
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
-		PagesCount: int64(len(pimages)),
+		PagesCount: int64(pcount),
 		Language:   "en",
 	}
 
@@ -203,6 +204,7 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 		if !strings.HasPrefix(img, "http") {
 			img = m.BaseUrl() + img
 		}
+
 		page := Page{
 			Number: int64(i),
 			URL:    img,
