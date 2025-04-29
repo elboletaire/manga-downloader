@@ -131,6 +131,10 @@ func Run(cmd *cobra.Command, args []string) {
 	wg := sync.WaitGroup{}
 	g := make(chan struct{}, s.GetMaxConcurrency().Chapters)
 	downloaded := grabber.Filterables{}
+
+	// Current phase for bundle mode progress
+	var currentPhase string
+
 	// progress bar
 	p := mpb.New(
 		mpb.WithWidth(40),
@@ -138,11 +142,46 @@ func Run(cmd *cobra.Command, args []string) {
 		mpb.WithAutoRefresh(),
 	)
 
-	green, blue := color.New(color.FgGreen), color.New(color.FgBlue)
+	blue := color.New(color.FgBlue)
 
 	// Get terminal width for title truncation
 	termWidth := getTerminalWidth()
 	mangaLen, chapterLen := calculateTitleLengths(termWidth)
+
+	// For bundle mode, create a single progress bar
+	var bundleBar *mpb.Bar
+	if settings.Bundle {
+		// Calculate total pages for bundle mode
+		totalPages := int64(0)
+		for _, chap := range chapters {
+			chapter, err := s.FetchChapter(chap)
+			if err == nil && chapter != nil {
+				totalPages += chapter.PagesCount
+			}
+		}
+
+		// Total steps = download + archive for all pages
+		bundleBar = p.AddBar(totalPages*2,
+			mpb.PrependDecorators(
+				// Dynamic status showing current chapter
+				decor.Any(func(s decor.Statistics) string {
+					return blue.Sprintf("%-30s", currentPhase)
+				}, decor.WCSyncWidthR),
+				decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DextraSpace}),
+			),
+			mpb.AppendDecorators(
+				decor.Percentage(decor.WC{W: 4}), // W: 4 to remove space before %
+				// Status at the end to prevent shifting
+				decor.Any(func(s decor.Statistics) string {
+					if s.Current >= s.Total {
+						return blue.Sprintf(" bundling ")
+					}
+					return blue.Sprintf(" downloading")
+				}, decor.WC{W: 10}),
+			),
+		)
+		currentPhase = "Gathering info..."
+	}
 
 	for _, chap := range chapters {
 		g <- struct{}{}
@@ -167,53 +206,42 @@ func Run(cmd *cobra.Command, args []string) {
 			}
 			filename += ".cbz"
 
-			// chapter download progress bar
-			barTitle := fmt.Sprintf("%s - %s:", truncateString(title, mangaLen), truncateString(chap.GetTitle(), chapterLen))
-			status := "downloading"
-			cdbar := p.AddBar(chapter.PagesCount,
-				mpb.PrependDecorators(
-					decor.Name(barTitle, decor.WCSyncWidthR),
-					decor.Any(func(s decor.Statistics) string {
-						if strings.HasPrefix(status, "error:") {
-							return color.New(color.FgRed).Sprint(status)
-						}
-						return blue.Sprint(status)
-					}, decor.WC{C: decor.DextraSpace}),
-					decor.CountersNoUnit("%d / %d", decor.WC{C: decor.DextraSpace}),
-				),
-				mpb.AppendDecorators(
-					decor.OnCompleteMeta(
-						decor.OnComplete(decor.Percentage(decor.WC{W: 4}), "dld."),
-						toMetaFunc(green),
+			var bar *mpb.Bar
+			if !settings.Bundle {
+				// For non-bundle mode, create a single bar per chapter that combines download + archive
+				barTitle := fmt.Sprintf("%s - %s:", truncateString(title, mangaLen), truncateString(chap.GetTitle(), chapterLen))
+				// Total steps = pages (download) + pages (archive)
+				total := chapter.PagesCount * 2
+				bar = p.AddBar(total,
+					mpb.PrependDecorators(
+						decor.Name(barTitle, decor.WCSyncWidthR),
+						decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DextraSpace}),
 					),
-				),
-			)
-			// save chapter progress bar
-			scbar := p.AddBar(chapter.PagesCount,
-				mpb.BarQueueAfter(cdbar),
-				mpb.BarFillerClearOnComplete(),
-				mpb.PrependDecorators(
-					decor.OnComplete(decor.Name(barTitle, decor.WC{}), ""),
-					decor.OnCompleteMeta(
-						decor.OnComplete(
-							decor.Meta(decor.Name("archiving", decor.WC{C: decor.DextraSpace}), toMetaFunc(blue)),
-							filename+" saved",
-						),
-						toMetaFunc(green),
+					mpb.AppendDecorators(
+						decor.Percentage(decor.WC{W: 4}), // W: 4 to remove space before %
+						// Status at the end to prevent shifting
+						decor.Any(func(s decor.Statistics) string {
+							if s.Current >= total/2 {
+								return blue.Sprintf(" archiving ")
+							}
+							return blue.Sprintf(" downloading") // Add space before status
+						}, decor.WC{W: 10}),
 					),
-					decor.OnComplete(decor.CountersNoUnit("%d / %d", decor.WC{C: decor.DextraSpace}), ""),
-				),
-				mpb.AppendDecorators(
-					decor.OnComplete(decor.Percentage(decor.WC{W: 5}), ""),
-				),
-			)
+				)
+			} else {
+				bar = bundleBar
+				currentPhase = fmt.Sprintf("Downloading %s", chap.GetTitle())
+			}
 
-			files, err := downloader.FetchChapter(s, chapter, func(page int, progress int, err error) {
+			files, err := downloader.FetchChapter(s, chapter, func(page int, idx int, err error) {
 				if err != nil {
-					status = "error: " + err.Error()
-					cdbar.SetCurrent(int64(progress))
+					if !settings.Bundle {
+						bar.SetCurrent(int64(idx))
+					}
+					color.Red("- error downloading page %d: %s", idx+1, err.Error())
 				} else {
-					cdbar.IncrBy(page)
+					// Increment by 1 since we're processing one page at a time
+					bar.IncrBy(1)
 				}
 			})
 			if err != nil {
@@ -229,12 +257,14 @@ func Run(cmd *cobra.Command, args []string) {
 
 			if !settings.Bundle {
 				_, err := packer.PackSingle(settings.OutputDir, s, d, func(page, _ int) {
-					scbar.IncrBy(1) // Increment by 1 since we're processing one page at a time
+					bar.IncrBy(1) // Increment archive progress
 				})
 				if err != nil {
 					color.Red(err.Error())
 				}
 			} else {
+				// For bundle mode, increment archive progress
+				bar.IncrBy(int(chapter.PagesCount))
 				// avoid adding it to memory if we're not gonna use it
 				downloaded = append(downloaded, d)
 			}
@@ -264,29 +294,14 @@ func Run(cmd *cobra.Command, args []string) {
 		tp += int(chapter.PagesCount)
 	}
 
-	// bundle progress bar
-	bbar := p.AddBar(int64(tp),
-		mpb.PrependDecorators(
-			decor.Name("Bundle", decor.WCSyncWidthR),
-			decor.OnCompleteMeta(
-				decor.OnComplete(
-					decor.Meta(decor.Name("bundling", decor.WC{C: decor.DextraSpace}), toMetaFunc(blue)),
-					"done!",
-				),
-				toMetaFunc(green),
-			),
-			decor.OnComplete(decor.CountersNoUnit("%d / %d", decor.WC{C: decor.DextraSpace}), ""),
-		),
-		mpb.AppendDecorators(
-			decor.OnCompleteMeta(
-				decor.OnComplete(decor.Percentage(decor.WC{W: 4}), "done"),
-				toMetaFunc(green),
-			),
-		),
-	)
+	if settings.Bundle {
+		currentPhase = fmt.Sprintf("Creating bundle for chapters %s", settings.Range)
+	}
 
 	filename, err := packer.PackBundle(settings.OutputDir, s, dc, settings.Range, func(page, _ int) {
-		bbar.IncrBy(page)
+		if bundleBar != nil {
+			bundleBar.IncrBy(page)
+		}
 	})
 
 	if err != nil {

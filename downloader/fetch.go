@@ -38,21 +38,18 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress Progre
 				Referer: site.BaseUrl(),
 			}, uint(page.Number))
 
-			pn := int(page.Number)
-			cp := pn * 100 / len(chapter.Pages)
-
 			if err != nil {
 				select {
 				case errChan <- fmt.Errorf("page %d: %w", page.Number, err):
-					onprogress(pn, cp, err)
+					onprogress(idx, idx, err)
 				default:
 				}
 				<-guard
 				return
 			}
 
-			files[idx] = file // Store file directly in pre-allocated slice
-			onprogress(pn, cp, nil)
+			files[idx] = file       // Store file directly in pre-allocated slice
+			onprogress(1, idx, nil) // Progress by 1 page at a time
 			<-guard
 		}(page, i)
 	}
