@@ -22,13 +22,10 @@ type FilenameTemplateParts struct {
 }
 
 // FilenameTemplateDefault is the default filename template
-const FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}"
+const FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}"
 
 // NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template
 func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string, error) {
-	if parts.Version > 1 {
-		parts.Title = fmt.Sprintf("%s v%d", parts.Title, parts.Version)
-	}
 	tmpl, err := template.New("filename").Parse(templ)
 	if err != nil {
 		return "", err
