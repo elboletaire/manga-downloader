@@ -2,6 +2,7 @@ package packer
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/elboletaire/manga-downloader/downloader"
@@ -36,16 +37,25 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 }
 
 func pack(outputdir, template, title string, parts FilenameTemplateParts, files []*downloader.File, progress func(page, progress int)) (string, error) {
-	filename, err := NewFilenameFromTemplate(template, parts)
-	if err != nil {
-		return "", fmt.Errorf("- error creating filename for chapter %s: %s", title, err.Error())
+	parts.Version = 1
+
+	for {
+		filename, err := NewFilenameFromTemplate(template, parts)
+		if err != nil {
+			return "", fmt.Errorf("- error creating filename for chapter %s: %s", title, err.Error())
+		}
+
+		filename += ".cbz"
+
+		err = ArchiveCBZ(filepath.Join(outputdir, filename), files, progress)
+		if os.IsExist(err) {
+			parts.Version++
+			continue
+		}
+		if err != nil {
+			return "", fmt.Errorf("- error saving file %s: %s", filename, err.Error())
+		}
+
+		return filename, nil
 	}
-
-	filename += ".cbz"
-
-	if err = ArchiveCBZ(filepath.Join(outputdir, filename), files, progress); err != nil {
-		return "", fmt.Errorf("- error saving file %s: %s", filename, err.Error())
-	}
-
-	return filename, nil
 }

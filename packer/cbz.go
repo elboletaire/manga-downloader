@@ -14,7 +14,7 @@ func ArchiveCBZ(filename string, files []*downloader.File, progress func(page, p
 	if len(files) == 0 {
 		return errors.New("no files to pack")
 	}
-	buff, err := os.Create(filename)
+	buff, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
 		return err
 	}

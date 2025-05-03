@@ -17,10 +17,12 @@ type FilenameTemplateParts struct {
 	Number string
 	// Title represents the chapter title (e.g. "The Beginning")
 	Title string
+	// Version placeholder appended to the title in case of duplicate filenames (e.g. "3")
+	Version int
 }
 
 // FilenameTemplateDefault is the default filename template
-const FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}"
+const FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}"
 
 // NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template
 func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string, error) {
