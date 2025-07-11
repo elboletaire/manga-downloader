@@ -113,6 +113,15 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         "a",
 			Image:        "#imageContainer img",
 		},
+		// toonclash
+		{
+			Title:        "h1",
+			Rows:         "ul.main.version-chap > li",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        ".reading-content > .page-break > img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -241,13 +250,14 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 
 	// images are inside picture objects
 	pimages = doc.Find(selector)
+
 	imgs := []string{}
 	pimages.Each(func(i int, s *goquery.Selection) {
 		src := s.AttrOr("src", "")
 		if src == "" || strings.HasPrefix(src, "data:image") {
 			src = s.AttrOr("data-src", "")
 		}
-		imgs = append(imgs, src)
+		imgs = append(imgs, strings.Trim(src, " \n\r\t")) // trim whitespaces
 	})
 
 	return imgs
