@@ -52,6 +52,14 @@ func (m *PlainHTML) Test() (bool, error) {
 
 	// order is important, since some sites have very similar selectors
 	selectors := []SiteSelector{
+		{
+			Title:        "h1",
+			Rows:         "#chapter-list > li",
+			Chapter:      ".chapter-title",
+			ChapterTitle: ".chapter-title",
+			Link:         "a",
+			Image:        ".chapter-image img",
+		},
 		// tcbscans.com
 		{
 			Title:        "h1",
@@ -136,7 +144,7 @@ func (m PlainHTML) FetchTitle() (string, error) {
 func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	m.rows.Each(func(i int, s *goquery.Selection) {
 		// we need to get the chapter number from the title
-		re := regexp.MustCompile(`Chapter\s*(\d+\.?\d*)`)
+		re := regexp.MustCompile(`C(?:hapter|\.)?\s*(\d+\.?\d*)`)
 		chap := re.FindStringSubmatch(s.Find(m.site.Chapter).Text())
 		// if the chapter has no number, we skip it (these are usually site announcements)
 		if len(chap) == 0 {
@@ -216,6 +224,15 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 }
 
 func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
+	// Check for chapImages JavaScript variable first
+
+	html, _ := doc.Html()
+	re := regexp.MustCompile(`var chapImages = '([^']+)'`)
+	matches := re.FindStringSubmatch(html)
+	if len(matches) > 1 {
+		// Found chapImages variable, split by comma
+		return strings.Split(matches[1], ",")
+	}
 	// some sites store a plain text array with the urls into a hidden layer
 	pimages := doc.Find("#arraydata")
 	if pimages.Length() == 1 {
