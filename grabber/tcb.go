@@ -158,15 +158,11 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 			continue
 		}
 
-		// Find image in this page
-		found := false
+		// Collect all images in this page
 		pageDoc.Find("div.reading-content img").Each(func(i int, s *goquery.Selection) {
-			if found {
-				return // Only take first image per page
-			}
 			u := strings.TrimSpace(s.AttrOr("data-src", s.AttrOr("src", "")))
 			if u == "" {
-				color.Yellow("page %d of %s has no URL to fetch from", pageNum+1, f.GetTitle())
+				color.Yellow("page %d of %s has an image with no URL to fetch from", pageNum+1, f.GetTitle())
 				return
 			}
 			if !strings.HasPrefix(u, "http") {
@@ -176,7 +172,6 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 				Number: int64(pageNum + 1),
 				URL:    u,
 			})
-			found = true
 		})
 	}
 
