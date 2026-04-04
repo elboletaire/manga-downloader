@@ -51,3 +51,23 @@ func Parse(rnge string) (rngs []Range, err error) {
 
 	return
 }
+
+// ParseVolumes parses a semicolon-delimited string of chapter ranges into
+// a slice of range-slices, where each inner slice represents one volume.
+// Commas within a segment work the same as in Parse (e.g. "1-8,10" is valid).
+func ParseVolumes(s string) ([][]Range, error) {
+	segments := strings.Split(s, ";")
+	volumes := make([][]Range, 0, len(segments))
+	for _, seg := range segments {
+		seg = strings.TrimSpace(seg)
+		if seg == "" {
+			continue
+		}
+		rngs, err := Parse(seg)
+		if err != nil {
+			return nil, err
+		}
+		volumes = append(volumes, rngs)
+	}
+	return volumes, nil
+}
