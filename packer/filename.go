@@ -17,12 +17,17 @@ type FilenameTemplateParts struct {
 	Number string
 	// Title represents the chapter title (e.g. "The Beginning")
 	Title string
+	// Volume represents the volume number (e.g. 1)
+	Volume int
 	// Version placeholder appended to the title in case of duplicate filenames (e.g. "3")
 	Version int
 }
 
-// FilenameTemplateDefault is the default filename template
+// FilenameTemplateDefault is the default filename template for individual chapters
 const FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}"
+
+// FilenameVolumeTemplateDefault is the default filename template for volume CBZ files
+const FilenameVolumeTemplateDefault = `{{.Series}} Vol.{{printf "%02d" .Volume}}{{if gt .Version 1}} v{{.Version}}{{end}}`
 
 // NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template
 func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string, error) {

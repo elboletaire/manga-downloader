@@ -36,6 +36,20 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 	}, files, progress)
 }
 
+// PackVolume packs a set of downloaded chapters into a single volume CBZ file.
+// volNum is the 1-based volume index used in the output filename.
+func PackVolume(outputdir, tmpl string, s grabber.Site, chapters []*DownloadedChapter, volNum int, progress func(page, progress int)) (string, error) {
+	title, _ := s.FetchTitle()
+	files := []*downloader.File{}
+	for _, chapter := range chapters {
+		files = append(files, chapter.Files...)
+	}
+	return pack(outputdir, tmpl, title, FilenameTemplateParts{
+		Series: SanitizeFilename(title),
+		Volume: volNum,
+	}, files, progress)
+}
+
 func pack(outputdir, template, title string, parts FilenameTemplateParts, files []*downloader.File, progress func(page, progress int)) (string, error) {
 	parts.Version = 1
 
