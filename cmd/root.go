@@ -108,6 +108,118 @@ func Run(cmd *cobra.Command, args []string) {
 
 	chapters = chapters.SortByNumber()
 
+	// volume mode: download and pack chapters into per-volume CBZ files
+	if volumesStr != "" || volumeFile != "" {
+		var volumeRanges [][]ranges.Range
+		if volumesStr != "" {
+			volumeRanges, err = ranges.ParseVolumes(volumesStr)
+		} else {
+			volumeRanges, err = ranges.ParseVolumesFile(volumeFile)
+		}
+		cerr(err, "Error parsing volumes: ")
+
+		blue := color.New(color.FgBlue)
+
+		for i, volRanges := range volumeRanges {
+			volNum := i + 1
+
+			volChapters := chapters.FilterRanges(volRanges)
+			if len(volChapters) == 0 {
+				color.Yellow("Vol.%02d: no chapters found in specified range, skipping", volNum)
+				continue
+			}
+
+			// pre-fetch page counts for progress bar total
+			totalPages := int64(0)
+			for _, chap := range volChapters {
+				chapter, err := s.FetchChapter(chap)
+				if err == nil && chapter != nil {
+					totalPages += chapter.PagesCount
+				}
+			}
+
+			// progress bar for this volume
+			p := mpb.New(
+				mpb.WithWidth(40),
+				mpb.WithOutput(color.Output),
+				mpb.WithAutoRefresh(),
+			)
+			volLabel := fmt.Sprintf("Vol.%02d", volNum)
+			bar := p.AddBar(totalPages*2,
+				mpb.PrependDecorators(
+					decor.Any(func(s decor.Statistics) string {
+						return blue.Sprintf("%-30s", volLabel)
+					}, decor.WCSyncWidthR),
+					decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DextraSpace}),
+				),
+				mpb.AppendDecorators(
+					decor.Percentage(decor.WC{W: 4}),
+					decor.Any(func(s decor.Statistics) string {
+						if s.Current >= s.Total {
+							return blue.Sprintf(" bundling ")
+						}
+						return blue.Sprintf(" downloading")
+					}, decor.WC{W: 10}),
+				),
+			)
+
+			// download chapters concurrently
+			wg := sync.WaitGroup{}
+			g := make(chan struct{}, s.GetMaxConcurrency().Chapters)
+			downloaded := grabber.Filterables{}
+
+			for _, chap := range volChapters {
+				g <- struct{}{}
+				wg.Add(1)
+				go func(chap grabber.Filterable) {
+					defer wg.Done()
+					chapter, err := s.FetchChapter(chap)
+					if err != nil {
+						color.Red("- error fetching chapter %s: %s", chap.GetTitle(), err.Error())
+						<-g
+						return
+					}
+					files, err := downloader.FetchChapter(s, chapter, func(_ int, idx int, err error) {
+						if err != nil {
+							color.Red("- error downloading page %d: %s", idx+1, err.Error())
+						} else {
+							bar.IncrBy(1)
+						}
+					})
+					if err != nil {
+						color.Red("- error downloading chapter %s: %s", chapter.GetTitle(), err.Error())
+						<-g
+						return
+					}
+					bar.IncrBy(int(chapter.PagesCount))
+					downloaded = append(downloaded, &packer.DownloadedChapter{
+						Chapter: chapter,
+						Files:   files,
+					})
+					<-g
+				}(chap)
+			}
+			wg.Wait()
+			close(g)
+			p.Wait()
+
+			// sort and convert for packing
+			downloaded = downloaded.SortByNumber()
+			dc := make([]*packer.DownloadedChapter, 0, len(downloaded))
+			for _, d := range downloaded {
+				dc = append(dc, d.(*packer.DownloadedChapter))
+			}
+
+			filename, err := packer.PackVolume(settings.OutputDir, volumeFilenameTemplate, s, dc, volNum, func(_, _ int) {})
+			if err != nil {
+				color.Red(err.Error())
+				continue
+			}
+			fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
+		}
+		os.Exit(0)
+	}
+
 	var rngs []ranges.Range
 	// ranges argument is not provided
 	if len(args) == 1 {
