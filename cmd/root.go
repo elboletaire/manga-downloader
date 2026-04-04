@@ -167,6 +167,7 @@ func Run(cmd *cobra.Command, args []string) {
 			wg := sync.WaitGroup{}
 			g := make(chan struct{}, s.GetMaxConcurrency().Chapters)
 			downloaded := grabber.Filterables{}
+			var mu sync.Mutex
 
 			for _, chap := range volChapters {
 				g <- struct{}{}
@@ -192,10 +193,12 @@ func Run(cmd *cobra.Command, args []string) {
 						return
 					}
 					bar.IncrBy(int(chapter.PagesCount))
+					mu.Lock()
 					downloaded = append(downloaded, &packer.DownloadedChapter{
 						Chapter: chapter,
 						Files:   files,
 					})
+					mu.Unlock()
 					<-g
 				}(chap)
 			}
