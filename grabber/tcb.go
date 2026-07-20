@@ -11,7 +11,7 @@ import (
 	"github.com/fatih/color"
 )
 
-// Tcb is a grabber for tcbscans.com (and possibly other wordpress sites)
+// Tcb is a grabber for Madara-based wordpress sites (i.e. lhtranslation.net)
 type Tcb struct {
 	*Grabber
 	chaps *goquery.Selection

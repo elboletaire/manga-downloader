@@ -16,24 +16,13 @@ files, so you can read them with your favorite ereader or reading app.
 Supported sites
 ---------------
 
-- [asuratoon.com (Asura Scans)](https://asuratoon.com)
-- [chapmanganato.to](https://chapmanganato.to)
+- [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
 - [inmanga.com](https://inmanga.com)
 - [LHTranslation](https://lhtranslation.net)
-- [lscomic.com](https://lscomic.com/)
-- [Manga Monks](https://mangamonks.com)
-- [mangabat.com](https://mangabat.com)
+- [mangabats.com (former mangabat.com)](https://www.mangabats.com)
+- [mangabuddy.com](https://mangabuddy.com) (currently down, kept in case it comes back)
 - [Mangadex](https://mangadex.org)
-- [mangakakalot.com](https://mangakakalot.com)
-- [mangakakalot.tv](https://mangakakalot.tv)
-- [manganato.com](https://manganato.com)
-- [manganelo.com](https://manganelo.com)
-- [manganelo.tv](https://manganelo.tv)
-- [mangapanda.in](https://mangapanda.in)
-- [readmangabat.com](https://readmangabat.com)
-- [tcbscans.com](https://tcbscans.com)
-- [tcbscans.net](https://www.tcbscans.net)
-- [tcbscans.org](https://www.tcbscans.org)
+- [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 
 It may support even more sites of which I'm not aware. If you find a site that is not supported, feel free to open a new issue or a PR with the implementation.
 

@@ -52,6 +52,7 @@ func (m *PlainHTML) Test() (bool, error) {
 
 	// order is important, since some sites have very similar selectors
 	selectors := []SiteSelector{
+		// mangabuddy
 		{
 			Title:        "h1",
 			Rows:         "#chapter-list > li",
@@ -60,7 +61,7 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         "a",
 			Image:        ".chapter-image img",
 		},
-		// tcbscans.com
+		// tcbonepiecechapters.com (former tcbscans.com)
 		{
 			Title:        "h1",
 			Rows:         "main .mx-auto .grid .col-span-2 a",
@@ -68,59 +69,13 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: ".text-gray-500",
 			Image:        "picture img",
 		},
-		// manganelo/manganato
+		// asurascans.com (former asuratoon.com)
 		{
 			Title:        "h1",
-			Rows:         "div.panel-story-chapter-list .row-content-chapter li",
-			Chapter:      "a",
-			ChapterTitle: "a",
-			Link:         "a",
-			Image:        "div.container-chapter-reader img",
-		},
-		// manganelos/mangapanda
-		{
-			Title:        "h1",
-			Rows:         "#examples div.chapter-list .row",
-			Chapter:      "a",
-			ChapterTitle: "a",
-			Link:         "a",
-			Image:        "div.container-chapter-reader img",
-		},
-		// mangakakalot
-		{
-			Title:        "h1",
-			Rows:         "div.chapter-list .row",
-			Chapter:      "a",
-			ChapterTitle: "a",
-			Link:         "a",
-			Image:        "div.container-chapter-reader img,#vungdoc img",
-		},
-		// asuratoon.com
-		{
-			Title:        "h1",
-			Rows:         "#chapterlist ul li",
-			Chapter:      ".chapternum",
-			ChapterTitle: ".chapternum",
-			Link:         "a",
-			Image:        "#readerarea img.ts-main-image",
-		},
-		// mangamonks
-		{
-			Title:        "h3.info-title",
-			Rows:         "#chapter .chapter-list li",
-			Chapter:      ".chapter-number",
-			ChapterTitle: ".chapter-number",
-			Link:         "a",
-			Image:        "#imageContainer img",
-		},
-		// toonclash
-		{
-			Title:        "h1",
-			Rows:         "ul.main.version-chap > li",
-			Chapter:      "a",
-			ChapterTitle: "a",
-			Link:         "a",
-			Image:        ".reading-content > .page-break > img",
+			Rows:         `a[data-astro-prefetch][href*="/chapter/"]`,
+			Chapter:      "span.font-medium",
+			ChapterTitle: "span.font-medium",
+			Image:        "img[data-page-index]",
 		},
 	}
 

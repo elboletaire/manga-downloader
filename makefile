@@ -33,28 +33,20 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/inmanga grabber/mangadex grabber/tcb grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/tcb grabber/html
 
 grabber/inmanga:
-	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1
+	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
 
 grabber/mangadex:
-	go run . https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece --language es 1-4 --bundle
+	go run . https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece --language es 373 --bundle
+
+grabber/mangabats:
+	go run . https://www.mangabats.com/manga/after-the-possessor-left 1
 
 grabber/tcb:
-	go run . https://www.tcbscans.net/manga/one-piece/ 5
-	go run . https://ww1.tcbscans.org/manga/ao-ashi/ 203
-	go run . https://lscomic.com/manga/peerless-dad/ 285
+	go run . https://lhtranslation.net/manga/gaikotsu-kishi-sama-tadaima-isekai-e-o-dekake-chuu/ 71
 
 grabber/html:
-	go run . https://tcbscans.com/mangas/5/one-piece 1100
-	go run . https://mangakakalot.com/manga/vd921334 7
-	go run . https://ww7.mangakakalot.tv/chapter/manga-hj984766/chapter-86 86
-	go run . https://ww5.manganelo.tv/manga/manga-aa951409 3
-	go run . https://asuratoon.com/manga/0435219386-return-of-the-sss-class-ranker/ 85
-	go run . https://mangajar.pro/manga/haite-kudasai-takamine-san 43
-	go run . https://chapmanganato.com/manga-aa951409 50
-	go run . https://readmangabat.com/read-ov357862 23
-	go run . https://h.mangabat.com/read-tc397521 5
-	go run . https://mangapanda.in/manga/dragon-ball-super-color-%E2%AD%90%E2%AD%90%E2%AD%90%E2%AD%90%E2%AD%90 90
-	go run . https://mangamonks.com/manga/mashle 155
+	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
+	go run . https://asurascans.com/comics/absolute-regression-f886a8af 1

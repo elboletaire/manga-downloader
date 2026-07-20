@@ -112,14 +112,22 @@ func (i Inmanga) FetchChapter(chap Filterable) (*Chapter, error) {
 		Language: "es",
 	}
 
-	// get pages from select, but discard one, since it's duplicated
+	// get pages from select, deduplicating by page id (the select is
+	// duplicated in the page: top and bottom navigation)
+	seen := map[string]bool{}
 	doc.Find("select.PageListClass").First().Children().Each(func(i int, s *goquery.Selection) {
+		id := s.AttrOr("value", "")
+		if id == "" || seen[id] {
+			return
+		}
+		seen[id] = true
 		num, _ := strconv.ParseInt(s.Text(), 10, 64)
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: num,
-			URL:    "https://pack-yak.intomanga.com/images/manga/ms/chapter/ch/page/p/" + s.AttrOr("value", ""),
+			URL:    "https://pack-yak.intomanga.com/images/manga/ms/chapter/ch/page/p/" + id,
 		})
 	})
+	chapter.PagesCount = int64(len(chapter.Pages))
 
 	return chapter, nil
 }

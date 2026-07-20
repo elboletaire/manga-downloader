@@ -73,8 +73,15 @@ func (m *Mangadex) FetchTitle() (string, error) {
 		}
 	}
 
-	// fallback to english
-	m.title = body.Data.Attributes.Title["en"]
+	// fallback to english or, if not present, any other title
+	if title, ok := body.Data.Attributes.Title["en"]; ok {
+		m.title = title
+	} else {
+		for _, title := range body.Data.Attributes.Title {
+			m.title = title
+			break
+		}
+	}
 
 	return m.title, nil
 }
@@ -112,6 +119,11 @@ func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 		}
 
 		for _, c := range body.Data {
+			// skip pageless chapters (i.e. those hosted outside mangadex, on
+			// official publisher sites): there's nothing to download from them
+			if c.Attributes.Pages == 0 {
+				continue
+			}
 			num, _ := strconv.ParseFloat(c.Attributes.Chapter, 64)
 			chapters = append(chapters, &MangadexChapter{
 				Chapter{

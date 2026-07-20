@@ -71,6 +71,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewPlainHTML(g),
 		NewInmanga(g),
 		NewMangadex(g),
+		NewMangabats(g),
 		NewTcb(g),
 	}
 	var errs []error
