@@ -8,8 +8,8 @@ Manga Downloader [![starline]](#star-history-)
 [![Docker Pulls][pulls badge]][docker hub]
 [![License][license badge]][license]
 
-This app downloads manga from websites like mangadex and stores them into cbz
-files, so you can read them with your favorite ereader or reading app.
+Download manga chapters from websites like MangaDex and pack them into CBZ
+files, ready to read on your favorite ereader or reading app.
 
 ![prompt img]
 
@@ -17,140 +17,181 @@ Supported sites
 ---------------
 
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
+- [dragontea.ink](https://dragontea.ink) \*
 - [inmanga.com](https://inmanga.com)
+- [kappabeast.com](https://kappabeast.com) \*
 - [LHTranslation](https://lhtranslation.net)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
 - [mangabuddy.com](https://mangabuddy.com) (currently down, kept in case it comes back)
+- [mangafire.to](https://mangafire.to)
 - [Mangadex](https://mangadex.org)
 - [qimanga.com](https://qimanga.com)
+- [sushiscan.net](https://sushiscan.net) \*
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
+- [toongod.org](https://www.toongod.org) \*
+- [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
 
-It may support even more sites of which I'm not aware. If you find a site that is not supported, feel free to open a new issue or a PR with the implementation.
+> \* These sites can't be scraped with plain HTTP requests (they render with
+> javascript or sit behind a Cloudflare challenge), so they need a Chromium-based
+> browser installed (Google Chrome, Chromium, Brave or Edge), which
+> manga-downloader launches automatically to render the pages. Most are behind a
+> Cloudflare challenge that only passes in a visible browser, so run them with
+> `--browser-visible` (a browser window will open, and you may need to solve a
+> challenge once):
+>
+> ~~~bash
+> manga-downloader --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 1-10
+> ~~~
+
+It may support even more sites of which I'm not aware. If you find a site that
+is not supported, feel free to open a new issue or a PR with the implementation.
+
+Installation
+------------
+
+Download the archive for your system from the [releases section][releases] and
+extract it. You can then run the binary from that folder:
+
+~~~bash
+./manga-downloader
+~~~
+
+Or on Windows:
+
+~~~cmd
+.\manga-downloader.exe
+~~~
+
+To be able to run it from anywhere, place the binary in a folder that is in
+your `PATH` (or add the folder where you extracted it to your `PATH`
+environment variable). Common choices:
+
+- Linux and macOS: `/usr/local/bin`
+- Windows: `C:\Windows\System32`
+
+### macOS
+
+Since the binary is not signed, macOS's Gatekeeper will block it the first time
+you try to run it. On recent macOS versions the old terminal workarounds (like
+`spctl --master-disable`) no longer work, so you have to allow it manually:
+
+1. Run `./manga-downloader` once. macOS will show a warning saying the binary
+   could not be verified and block it.
+2. Open **System Settings** → **Privacy & Security**, scroll down to the
+   **Security** section, and you'll see a message about *manga-downloader*
+   being blocked. Click **Open Anyway** (or **Allow Anyway**).
+3. Run `./manga-downloader` again and confirm in the dialog that pops up.
+
+You only need to do this once; subsequent runs will work normally.
+
+### Windows
+
+If you place the `.exe` file inside `C:\Windows\System32` you'll be able to
+call the program from anywhere:
+
+~~~cmd
+C:\Users\elboletaire\Desktop>manga-downloader https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover 1-346
+~~~
+
+The above command downloads Black Clover chapters 1 to 346 to the Desktop
+folder (since that's the current directory).
+
+### Docker
+
+You can also run manga-downloader directly via Docker, without installing
+anything:
+
+~~~bash
+docker run --rm -it -v $PWD:/downloads elboletaire/manga-downloader --help
+~~~
+
+Note the `-v $PWD:/downloads` param: it's required in order to get the
+downloaded files in your current folder.
 
 Usage
 -----
 
-Only one param is required:
+Only one argument is required: the URL of the manga's index page (the page
+listing all its chapters, not an individual chapter).
 
 ~~~bash
 manga-downloader [URL]
 ~~~
 
-The URL must be a series index file (not an individual chapter).
-
-When only specifying the URL, it would ask you if you want to download all
+When you only specify the URL, it will ask you whether you want to download all
 chapters.
 
-> Note: you must specify <kbd>y</kbd> in order to download them, its default
-> behavior is set to "no".
+> Note: you must answer <kbd>y</kbd> to download them; it defaults to "no".
 
-You can also specify the range beforehand, the range allows you setting chapters by
-ranges (i.e. 1,3,5-10):
+You can also specify which chapters to download as a second argument, using
+single numbers and/or ranges separated by commas (e.g. `1,3,5-10`):
 
 ~~~bash
 manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1-50
-# This would download One Piece chapters 1 to 50 into our current folder
+# downloads One Piece chapters 1 to 50 into the current folder
 ~~~
 
 ![download img]
 
-In some sites, like mangadex, it may find multiple results for the same chapter,
-given the different languages it's translated to. In these cases, every
-coincidence will be downloaded into different files, but you can force a single
-language to be downloaded by using `--language`:
+Arguments are not positional, so you can pass them in any order:
+
+~~~bash
+manga-downloader 1-50 https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935
+# exactly the same as the previous example
+~~~
+
+### Choosing a language
+
+Some sites, like MangaDex, can return the same chapter multiple times, once per
+translated language. By default every match is downloaded to its own file, but
+you can restrict the download to a single language with `--language`:
 
 ~~~bash
 manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece 1-10
-# would download One Piece chapters 1 to 10 in spanish
-~~~
-
-Arguments and params are not positional, you can use them in any order:
-
-~~~bash
-manga-downloader 1-10 https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece --language es
-# exactly the same as the previous example, only changing params order
+# downloads One Piece chapters 1 to 10 in Spanish
 ~~~
 
 ### Bundling
 
-You can bundle all the downloaded chapters into a single file by using the
-`--bundle` arg:
+Use `--bundle` to bundle all the downloaded chapters into a single CBZ file:
 
 ~~~bash
 manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1-8 --bundle
-# would download one piece chapters 1 to 8 and bundle them into a single file
+# downloads One Piece chapters 1 to 8 into a single file
 ~~~
 
 ![bundle img]
 
-### Help
+### Custom file names
 
-Use the `help` command to see all the available options:
+Resulting file names can be customized with `--filename-template`, which takes
+a [Go text/template](https://pkg.go.dev/text/template) string. The available
+variables are `{{.Series}}`, `{{.Number}}`, `{{.Title}}` and `{{.Version}}`
+(a counter appended when a file name would be duplicated). The default is:
+
+~~~
+{{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}
+~~~
+
+### All options
+
+| Flag                  | Short | Description                                              | Default            |
+| --------------------- | ----- | -------------------------------------------------------- | ------------------ |
+| `--bundle`            | `-b`  | Bundle all specified chapters into a single file         | off                |
+| `--language`          | `-l`  | Only download the specified language                     | all languages      |
+| `--output-dir`        | `-o`  | Output directory for the downloaded files                | current folder     |
+| `--filename-template` | `-t`  | Template for the resulting file names                    | see above          |
+| `--concurrency`       | `-c`  | Concurrent chapter downloads (max 5)                     | 5                  |
+| `--concurrency-pages` | `-C`  | Concurrent page downloads per chapter (max 10)           | 10                 |
+| `--browser-visible`   |       | Show the browser window on sites that need one           | off                |
+
+Run the `help` command to see them all from your terminal:
 
 ~~~bash
 manga-downloader help
 ~~~
 
 ![help img]
-
-Installation
-------------
-
-First download your desired version from the [releases section][releases].
-
-After you downloaded and unarchived it, you can start using it in that folder:
-
-~~~bash
-./manga-downloader URL range
-~~~
-
-For Windows users would be:
-
-~~~cmd
-.\manga-downloader URL range
-~~~
-
-If you want the binary to be accessible from your terminal in whatever path you
-might be, you should ensure to place the binary on a `PATH` defined folder (or
-add the folder where you downloaded manga-downloader to your `PATH` env var).
-
-Places where you can put the binary and have it accessible system-wide:
-
-- Linux and Mac: `/usr/local/bin`
-- Windows: `C:\Windows\System32`
-
-### Windows
-
-So if you're a windows user and place the .exe file inside `C:\Windows\System32`
-you'll be able to call the program wherever you want from:
-
-~~~bash
-C:\Users\elboletaire\Desktop>manga-downloader https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover 1-346
-~~~
-
-The above command would download Black Clover chapters 1 to 346 to the Desktop
-folder (since that's the current directory).
-
-### Mac
-
-Mac users will need to either add the binary to the unsigned apps whitelist, or
-entirely disable Gatekeeper:
-
-~~~bash
-sudo spctl --master-disable
-~~~
-
-Othwerise you'll see an error because the binary is unsigned.
-
-### Using Docker
-
-You can also use manga-downloader directly via docker like so:
-
-~~~bash
-docker run --rm -it -v $PWD:/downloads elboletaire/manga-downloader --help
-~~~
-
-Note the `-v $PWD:/downloads` param, that's required in order to get the downloads in your current path.
 
 Star history ![starline]
 ------------------------
