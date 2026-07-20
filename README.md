@@ -22,6 +22,7 @@ Supported sites
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
 - [mangabuddy.com](https://mangabuddy.com) (currently down, kept in case it comes back)
 - [Mangadex](https://mangadex.org)
+- [qimanga.com](https://qimanga.com)
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 
 It may support even more sites of which I'm not aware. If you find a site that is not supported, feel free to open a new issue or a PR with the implementation.

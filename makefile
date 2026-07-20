@@ -33,7 +33,7 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/tcb grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/qimanga grabber/tcb grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -43,6 +43,9 @@ grabber/mangadex:
 
 grabber/mangabats:
 	go run . https://www.mangabats.com/manga/after-the-possessor-left 1
+
+grabber/qimanga:
+	go run . https://qimanga.com/series/4190634673-eleceed 2
 
 grabber/tcb:
 	go run . https://lhtranslation.net/manga/gaikotsu-kishi-sama-tadaima-isekai-e-o-dekake-chuu/ 71
