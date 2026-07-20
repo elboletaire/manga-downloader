@@ -56,6 +56,22 @@ var browserSelectors = []BrowserSiteSelector{
 		ChaptersWait: `a[href*="/reader/"]`,
 		ImageWait:    `img[alt^="Page"]`,
 	},
+	// sushiscan.net (french): mangastream/themesia theme behind a cloudflare
+	// challenge, usually needs --browser-visible. All the reader pages come
+	// from the embedded ts_reader javascript call.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1.entry-title",
+			Rows:         "#chapterlist li",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a",
+			Image:        "#readerarea img",
+		},
+		Domains:      []string{"sushiscan.net"},
+		ChaptersWait: "#chapterlist li",
+		ImageWait:    "#readerarea img",
+	},
 }
 
 // PlainHTMLBrowser is the browser-rendered variant of PlainHTML: pages are

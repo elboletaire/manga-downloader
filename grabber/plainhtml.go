@@ -116,10 +116,16 @@ func (m PlainHTML) FetchTitle() (string, error) {
 // FetchChapters returns a slice of chapters
 func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	m.rows.Each(func(i int, s *goquery.Selection) {
-		// we need to get the chapter number from the title
-		// (accepts "Chapter 10", "Ch. 10", "C 10" and the Spanish "Capítulo 10")
-		re := regexp.MustCompile(`(?i)C(?:hapter|ap[ií]tulo|\.)?\s*(\d+\.?\d*)`)
+		// we need to get the chapter number from the title (accepts "Chapter 10",
+		// "C. 10", the Spanish "Capítulo 10" and the French "Chapitre 10")
+		re := regexp.MustCompile(`(?i)\bC(?:hapter|hapitre|ap[ií]tulo)?\.?\s*(\d+\.?\d*)`)
 		chap := re.FindStringSubmatch(s.Find(m.site.Chapter).Text())
+		if len(chap) == 0 {
+			// some sites (e.g. sushiscan) list volumes instead of chapters; only
+			// checked as fallback so "Vol.2 Chapter 15" still prefers the chapter
+			re = regexp.MustCompile(`(?i)\bVol(?:ume|umen)?\.?\s*(\d+\.?\d*)`)
+			chap = re.FindStringSubmatch(s.Find(m.site.Chapter).Text())
+		}
 		// if the chapter has no number, we skip it (these are usually site announcements)
 		if len(chap) == 0 {
 			return
@@ -216,6 +222,19 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 	pimages := doc.Find("#arraydata")
 	if pimages.Length() == 1 {
 		return strings.Split(pimages.Text(), ",")
+	}
+
+	// mangastream/themesia based readers (e.g. sushiscan) embed all the pages
+	// of the chapter in a ts_reader javascript call
+	re = regexp.MustCompile(`(?s)ts_reader\.run\(.*?"images":\s*\[(.*?)\]`)
+	matches = re.FindStringSubmatch(html)
+	if len(matches) > 1 {
+		urls := regexp.MustCompile(`"([^"]+)"`).FindAllStringSubmatch(matches[1], -1)
+		imgs := []string{}
+		for _, u := range urls {
+			imgs = append(imgs, strings.ReplaceAll(u[1], `\/`, `/`))
+		}
+		return imgs
 	}
 
 	// images are inside picture objects
