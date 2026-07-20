@@ -35,14 +35,17 @@ Supported sites
 > \* These sites can't be scraped with plain HTTP requests (they render with
 > javascript or sit behind a Cloudflare challenge), so they need a Chromium-based
 > browser installed (Google Chrome, Chromium, Brave or Edge), which
-> manga-downloader launches automatically to render the pages. Most are behind a
-> Cloudflare challenge that only passes in a visible browser, so run them with
-> `--browser-visible` (a browser window will open, and you may need to solve a
-> challenge once):
+> manga-downloader launches automatically to render the pages. Most sit behind a
+> Cloudflare challenge that only passes in a visible browser — this happens on
+> its own: if a headless attempt hits a challenge, a browser window opens
+> automatically so it can resolve (you may occasionally need to solve one click):
 >
 > ~~~bash
-> manga-downloader --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 1-10
+> manga-downloader https://www.toongod.org/webtoon/solo-leveling/ 1-10
 > ~~~
+>
+> You can pass `--browser-visible` to open the window from the start and skip the
+> (pointless, for these sites) headless attempt.
 
 It may support even more sites of which I'm not aware. If you find a site that
 is not supported, feel free to open a new issue or a PR with the implementation.

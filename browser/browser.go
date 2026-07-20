@@ -13,6 +13,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/http"
+	"github.com/fatih/color"
 )
 
 // visible determines if the browser window is shown (headed mode). Some
@@ -68,10 +70,9 @@ func start() error {
 
 	opts := chromedp.DefaultExecAllocatorOptions[:]
 	if visible {
-		opts = append(opts,
-			chromedp.Flag("headless", false),
-			chromedp.Flag("start-minimized", true),
-		)
+		// not minimized: when visible it's because a challenge needs to be seen
+		// (and possibly solved) by the user
+		opts = append(opts, chromedp.Flag("headless", false))
 	}
 	// reduce automation fingerprint: this flag adds navigator.webdriver etc.
 	opts = append(opts, chromedp.Flag("disable-blink-features", "AutomationControlled"))
@@ -99,6 +100,11 @@ func start() error {
 func Close() {
 	mu.Lock()
 	defer mu.Unlock()
+	teardown()
+}
+
+// teardown stops the browser instance if running. Callers must hold mu.
+func teardown() {
 	if browserCtx == nil {
 		return
 	}
@@ -109,32 +115,79 @@ func Close() {
 	browserCtx, allocCtx = nil, nil
 }
 
-// GetHTML navigates to the given URL in a new tab, waits until waitSelector
-// is visible (skipped if empty) and returns the rendered HTML. Cookies and
-// the browser user agent are copied to the http package so subsequent plain
-// HTTP requests (e.g. image downloads) reuse the browser session.
+// timeouts for the first render attempt. The headless probe is kept short:
+// a page behind a challenge will never pass headless, so instead of making the
+// user wait we escalate to a visible browser as soon as it times out.
+const (
+	headlessProbeTimeout = 30 * time.Second
+	visibleTimeout       = 5 * time.Minute
+)
+
+// challengeError is returned when the wait selector never shows up, which
+// almost always means the page sits behind a challenge (e.g. cloudflare) that
+// a headless browser can't pass.
+type challengeError struct {
+	url      string
+	selector string
+}
+
+func (e *challengeError) Error() string {
+	return fmt.Sprintf("timed out waiting for %q at %s", e.selector, e.url)
+}
+
+// GetHTML renders the given URL and returns its HTML once waitSelector is
+// visible (skipped if empty). Cookies and the browser user agent are copied to
+// the http package so subsequent plain HTTP requests (e.g. image downloads)
+// reuse the browser session.
 //
-// A timeout of 0 uses a sensible default: 1 minute headless, 5 minutes in
-// visible mode (leaving time for the user to solve interactive challenges).
+// It first tries a headless browser. If that times out on the wait selector
+// (typically a cloudflare/JS challenge) and the user didn't already ask for a
+// visible browser, it transparently reopens a visible window and retries — so
+// users don't need to know about --browser-visible.
 func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if timeout <= 0 {
-		timeout = time.Minute
+	t := timeout
+	if t <= 0 {
+		t = headlessProbeTimeout
 		if visible {
-			timeout = 5 * time.Minute
+			t = visibleTimeout
 		}
 	}
 
+	html, err := render(url, waitSelector, t)
+	if err == nil {
+		return html, nil
+	}
+
+	var ce *challengeError
+	if errors.As(err, &ce) && !visible {
+		color.Yellow("%s didn't load in a headless browser (likely a challenge).", hostOf(url))
+		color.Yellow("opening a visible browser window — solve the challenge there if one appears...")
+		if rerr := goVisible(); rerr != nil {
+			return "", rerr
+		}
+		if html, err = render(url, waitSelector, visibleTimeout); err == nil {
+			return html, nil
+		}
+	}
+
+	if errors.As(err, &ce) {
+		// visible (or just escalated to it) and still no luck
+		return "", fmt.Errorf("%w: the challenge may not have been solved in time", err)
+	}
+	return "", err
+}
+
+// render performs a single navigation in the shared browser, reusing its
+// initial tab (a new tab would spawn in the background, leaving the blank
+// first tab in front and hiding the page). Callers must hold mu.
+func render(url, waitSelector string, timeout time.Duration) (string, error) {
 	if err := start(); err != nil {
 		return "", err
 	}
 
-	// reuse the browser's initial tab instead of opening a new one: a new tab
-	// spawns in the background and leaves the blank first tab in front, hiding
-	// the page the user may need to interact with (e.g. a cloudflare challenge).
-	// All browser access is serialized by mu, so a single shared tab is safe.
 	ctx, cancel := context.WithTimeout(browserCtx, timeout)
 	defer cancel()
 
@@ -170,16 +223,28 @@ func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
 
 	if err := chromedp.Run(ctx, actions...); err != nil {
 		if ctx.Err() != nil && waitSelector != "" {
-			hint := ""
-			if !visible {
-				hint = ": some protections (e.g. cloudflare) only pass in a visible browser, try again with --browser-visible"
-			}
-			return "", fmt.Errorf("timed out waiting for %q at %s%s", waitSelector, url, hint)
+			return "", &challengeError{url: url, selector: waitSelector}
 		}
 		return "", err
 	}
 
 	return html, nil
+}
+
+// goVisible tears down the current headless browser and forces the next start
+// into visible mode. Callers must hold mu.
+func goVisible() error {
+	teardown()
+	visible = true
+	return start()
+}
+
+// hostOf returns the host of a URL without the www. prefix, for user messages.
+func hostOf(raw string) string {
+	if u, err := url.Parse(raw); err == nil && u.Hostname() != "" {
+		return strings.TrimPrefix(u.Hostname(), "www.")
+	}
+	return raw
 }
 
 // harvestSession copies the browser cookies and user agent into the http
