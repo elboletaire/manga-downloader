@@ -50,6 +50,11 @@ grabber/qimanga:
 grabber/tcb:
 	go run . https://lhtranslation.net/manga/gaikotsu-kishi-sama-tadaima-isekai-e-o-dekake-chuu/ 71
 
+# sites needing a real browser: not part of the `grabber` target since they
+# open a Chrome window and may require solving an interactive challenge
+grabber/browser:
+	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
+
 grabber/html:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
 	go run . https://asurascans.com/comics/absolute-regression-f886a8af 1

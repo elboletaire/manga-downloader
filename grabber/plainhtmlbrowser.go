@@ -26,7 +26,22 @@ type BrowserSiteSelector struct {
 // browserSelectors is the list of sites that need browser rendering. Their
 // series & reader pages are rendered in Chrome, but images are downloaded
 // via plain HTTP reusing the browser cookies & user agent.
-var browserSelectors = []BrowserSiteSelector{}
+var browserSelectors = []BrowserSiteSelector{
+	// toongod.org: cloudflare challenge, usually needs --browser-visible
+	{
+		SiteSelector: SiteSelector{
+			Title:        "div.post-title h1",
+			Rows:         "li.wp-manga-chapter",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        "div.reading-content img",
+		},
+		Domains:      []string{"toongod.org"},
+		ChaptersWait: "li.wp-manga-chapter",
+		ImageWait:    "div.reading-content",
+	},
+}
 
 // PlainHTMLBrowser is the browser-rendered variant of PlainHTML: pages are
 // fetched with a local Chrome instead of plain HTTP requests, then parsed

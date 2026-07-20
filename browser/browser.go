@@ -145,7 +145,11 @@ func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
 
 	if err := chromedp.Run(ctx, actions...); err != nil {
 		if ctx.Err() != nil && waitSelector != "" {
-			return "", fmt.Errorf("timed out waiting for %q at %s (the site may be blocking the browser)", waitSelector, url)
+			hint := ""
+			if !visible {
+				hint = ": some protections (e.g. cloudflare) only pass in a visible browser, try again with --browser-visible"
+			}
+			return "", fmt.Errorf("timed out waiting for %q at %s%s", waitSelector, url, hint)
 		}
 		return "", err
 	}

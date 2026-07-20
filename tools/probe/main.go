@@ -4,12 +4,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/browser"
+	"github.com/elboletaire/manga-downloader/http"
 )
 
 func main() {
@@ -55,6 +57,29 @@ func main() {
 	if f := os.Getenv("PROBE_DUMP"); f != "" {
 		os.WriteFile(f, []byte(html), 0644)
 		fmt.Println("dumped to", f)
+	}
+
+	// PROBE_FETCH_SEL: grab the first image matching the selector and try to
+	// download it via plain HTTP with the harvested browser session
+	if sel := os.Getenv("PROBE_FETCH_SEL"); sel != "" {
+		img := doc.Find(sel).First()
+		src := img.AttrOr("src", img.AttrOr("data-src", ""))
+		src = strings.TrimSpace(src)
+		fmt.Printf("fetching %q via plain HTTP...\n", src)
+		if src != "" {
+			body, err := http.Get(http.RequestParams{URL: src, Referer: url})
+			if err != nil {
+				fmt.Println("  FETCH ERROR:", err)
+			} else {
+				data, _ := io.ReadAll(body)
+				body.Close()
+				head := data
+				if len(head) > 16 {
+					head = head[:16]
+				}
+				fmt.Printf("  got %d bytes, magic: %q\n", len(data), head)
+			}
+		}
 	}
 
 	browser.Close()
