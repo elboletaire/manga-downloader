@@ -113,30 +113,43 @@ func (m PlainHTML) FetchTitle() (string, error) {
 	return sanitizeTitle(title.Text()), nil
 }
 
+// chapterNumberRe matches a chapter number in a chapter title, accepting
+// "Chapter 10", "Ch. 10", "C. 10", the Spanish "Capítulo 10" and the French
+// "Chapitre 10" (case insensitive).
+var chapterNumberRe = regexp.MustCompile(`(?i)\b(?:chapter|chapitre|cap[ií]tulo|ch|c)\.?\s*(\d+\.?\d*)`)
+
+// volumeNumberRe matches a volume number ("Volume 18", "Vol. 2", the Spanish
+// "Volumen 3"), used as a fallback for sites that list volumes instead of
+// chapters (e.g. sushiscan).
+var volumeNumberRe = regexp.MustCompile(`(?i)\bvol(?:ume|umen)?\.?\s*(\d+\.?\d*)`)
+
+// parseChapterNumber extracts the chapter number from a chapter title, falling
+// back to a volume number. Returns false if no number could be found (these
+// are usually site announcements rather than actual chapters).
+func parseChapterNumber(text string) (float64, bool) {
+	match := chapterNumberRe.FindStringSubmatch(text)
+	if len(match) == 0 {
+		// only checked as fallback so "Vol.2 Chapter 15" still prefers the chapter
+		match = volumeNumberRe.FindStringSubmatch(text)
+	}
+	if len(match) == 0 {
+		return 0, false
+	}
+	number, err := strconv.ParseFloat(match[1], 64)
+	if err != nil {
+		return 0, false
+	}
+	return number, true
+}
+
 // FetchChapters returns a slice of chapters
 func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	m.rows.Each(func(i int, s *goquery.Selection) {
-		// we need to get the chapter number from the title (accepts "Chapter 10",
-		// "C. 10", the Spanish "Capítulo 10" and the French "Chapitre 10")
-		re := regexp.MustCompile(`(?i)\bC(?:hapter|hapitre|ap[ií]tulo)?\.?\s*(\d+\.?\d*)`)
-		chap := re.FindStringSubmatch(s.Find(m.site.Chapter).Text())
-		if len(chap) == 0 {
-			// some sites (e.g. sushiscan) list volumes instead of chapters; only
-			// checked as fallback so "Vol.2 Chapter 15" still prefers the chapter
-			re = regexp.MustCompile(`(?i)\bVol(?:ume|umen)?\.?\s*(\d+\.?\d*)`)
-			chap = re.FindStringSubmatch(s.Find(m.site.Chapter).Text())
-		}
-		// if the chapter has no number, we skip it (these are usually site announcements)
-		if len(chap) == 0 {
+		number, ok := parseChapterNumber(s.Find(m.site.Chapter).Text())
+		if !ok {
 			return
 		}
 
-		num := chap[1]
-		number, err := strconv.ParseFloat(num, 64)
-		if err != nil {
-			errs = append(errs, err)
-			return
-		}
 		u := s.AttrOr("href", "")
 		if m.site.Link != "" {
 			u = s.Find(m.site.Link).AttrOr("href", "")

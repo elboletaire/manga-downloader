@@ -87,6 +87,20 @@ func NewPlainHTMLBrowser(g *Grabber) *PlainHTMLBrowser {
 	return &PlainHTMLBrowser{PlainHTML: NewPlainHTML(g)}
 }
 
+// matchBrowserSelector returns the registered browser selector for the given
+// host (matched without the www. prefix), if any
+func matchBrowserSelector(host string) (BrowserSiteSelector, bool) {
+	host = strings.TrimPrefix(host, "www.")
+	for _, selector := range browserSelectors {
+		for _, domain := range selector.Domains {
+			if host == domain {
+				return selector, true
+			}
+		}
+	}
+	return BrowserSiteSelector{}, false
+}
+
 // Test matches the URL against the registered browser-based site domains and,
 // on match, renders the series page in the browser
 func (m *PlainHTMLBrowser) Test() (bool, error) {
@@ -96,23 +110,12 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 	}
 	host := strings.TrimPrefix(u.Hostname(), "www.")
 
-	matched := false
-	for _, selector := range browserSelectors {
-		for _, domain := range selector.Domains {
-			if host == domain {
-				m.selector = selector
-				m.site = selector.SiteSelector
-				matched = true
-				break
-			}
-		}
-		if matched {
-			break
-		}
-	}
+	selector, matched := matchBrowserSelector(host)
 	if !matched {
 		return false, nil
 	}
+	m.selector = selector
+	m.site = selector.SiteSelector
 
 	color.Blue("this site needs a real browser, launching Chrome (may take a few seconds)...")
 	html, err := browser.GetHTML(m.URL, m.selector.ChaptersWait, 0)
