@@ -24,6 +24,7 @@ Supported sites
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
 - [mangabuddy.com](https://mangabuddy.com) (currently down, kept in case it comes back)
 - [mangafire.to](https://mangafire.to)
+- [mangakakalot.gg (MangaKakalot)](https://www.mangakakalot.gg) \*
 - [Mangadex](https://mangadex.org)
 - [qimanga.com](https://qimanga.com)
 - [sushiscan.net](https://sushiscan.net) \*

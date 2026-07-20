@@ -56,7 +56,7 @@ grabber/tcb:
 # sites needing a real browser: not part of the `grabber` target since they
 # open a Chrome window and may require solving an interactive challenge
 # (cloudflare). Run them one by one and solve the challenge if prompted.
-grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan
+grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot
 
 grabber/toongod:
 	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
@@ -69,6 +69,9 @@ grabber/kappabeast:
 
 grabber/sushiscan:
 	go run . --browser-visible https://sushiscan.net/catalogue/mushoku-tensei/ 17
+
+grabber/mangakakalot:
+	go run . --browser-visible https://www.mangakakalot.gg/manga/akuyaku-reijou-kara-no-kareinaru-tenshin-aisare-heroine-anthology-comic 1
 
 grabber/html:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100

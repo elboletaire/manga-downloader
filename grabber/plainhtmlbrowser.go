@@ -72,6 +72,22 @@ var browserSelectors = []BrowserSiteSelector{
 		ChaptersWait: "#chapterlist li",
 		ImageWait:    "#readerarea img",
 	},
+	// mangakakalot.gg (manganelo family) behind a cloudflare challenge, needs
+	// --browser-visible. Images sit on a CDN that only checks the Referer, so
+	// they still download via plain HTTP (BaseUrl referer is enough).
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1",
+			Rows:         ".chapter-list .row",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        ".container-chapter-reader img",
+		},
+		Domains:      []string{"mangakakalot.gg"},
+		ChaptersWait: ".chapter-list .row",
+		ImageWait:    ".container-chapter-reader img",
+	},
 }
 
 // PlainHTMLBrowser is the browser-rendered variant of PlainHTML: pages are
