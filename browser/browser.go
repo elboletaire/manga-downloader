@@ -33,6 +33,19 @@ func SetVisible(v bool) {
 	visible = v
 }
 
+// settle is an extra wait applied after the wait selector matches, for pages
+// that keep populating content after the first elements appear
+var settle time.Duration
+
+// SetSettle sets an extra wait after the wait selector matches
+func SetSettle(d time.Duration) {
+	settle = d
+}
+
+// NetLog, when set, is called for every network response received while
+// rendering pages. Only meant for debugging/site investigation.
+var NetLog func(url string, status int, mime string)
+
 var (
 	mu          sync.Mutex
 	allocCtx    context.Context
@@ -124,12 +137,23 @@ func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
 	ctx, cancel := context.WithTimeout(tab, timeout)
 	defer cancel()
 
+	if NetLog != nil {
+		chromedp.ListenTarget(ctx, func(ev interface{}) {
+			if resp, ok := ev.(*network.EventResponseReceived); ok {
+				NetLog(resp.Response.URL, int(resp.Response.Status), resp.Response.MimeType)
+			}
+		})
+	}
+
 	var html string
 	actions := []chromedp.Action{
 		chromedp.Navigate(url),
 	}
 	if waitSelector != "" {
 		actions = append(actions, chromedp.WaitVisible(waitSelector, chromedp.ByQuery))
+	}
+	if settle > 0 {
+		actions = append(actions, chromedp.Sleep(settle))
 	}
 	actions = append(actions,
 		chromedp.ActionFunc(func(ctx context.Context) error {

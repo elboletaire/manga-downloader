@@ -28,6 +28,19 @@ func main() {
 	if os.Getenv("PROBE_VISIBLE") == "1" {
 		browser.SetVisible(true)
 	}
+	if s := os.Getenv("PROBE_SLEEP"); s != "" {
+		if d, err := time.ParseDuration(s); err == nil {
+			browser.SetSettle(d)
+		}
+	}
+	if os.Getenv("PROBE_NETLOG") == "1" {
+		browser.NetLog = func(u string, status int, mime string) {
+			if strings.Contains(mime, "image") || strings.Contains(mime, "css") || strings.Contains(mime, "font") || strings.Contains(mime, "javascript") {
+				return
+			}
+			fmt.Printf("NET %d %s %s\n", status, mime, u)
+		}
+	}
 
 	start := time.Now()
 	html, err := browser.GetHTML(url, wait, 45*time.Second)
