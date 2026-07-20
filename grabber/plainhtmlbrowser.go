@@ -27,7 +27,8 @@ type BrowserSiteSelector struct {
 // series & reader pages are rendered in Chrome, but images are downloaded
 // via plain HTTP reusing the browser cookies & user agent.
 var browserSelectors = []BrowserSiteSelector{
-	// toongod.org: cloudflare challenge, usually needs --browser-visible
+	// Madara-based wordpress sites behind a cloudflare challenge, they
+	// usually need --browser-visible
 	{
 		SiteSelector: SiteSelector{
 			Title:        "div.post-title h1",
@@ -37,7 +38,7 @@ var browserSelectors = []BrowserSiteSelector{
 			Link:         "a",
 			Image:        "div.reading-content img",
 		},
-		Domains:      []string{"toongod.org"},
+		Domains:      []string{"toongod.org", "dragontea.ink"},
 		ChaptersWait: "li.wp-manga-chapter",
 		ImageWait:    "div.reading-content",
 	},

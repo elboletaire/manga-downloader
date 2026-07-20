@@ -118,7 +118,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	m.rows.Each(func(i int, s *goquery.Selection) {
 		// we need to get the chapter number from the title
 		// (accepts "Chapter 10", "Ch. 10", "C 10" and the Spanish "Capítulo 10")
-		re := regexp.MustCompile(`C(?:hapter|ap[ií]tulo|\.)?\s*(\d+\.?\d*)`)
+		re := regexp.MustCompile(`(?i)C(?:hapter|ap[ií]tulo|\.)?\s*(\d+\.?\d*)`)
 		chap := re.FindStringSubmatch(s.Find(m.site.Chapter).Text())
 		// if the chapter has no number, we skip it (these are usually site announcements)
 		if len(chap) == 0 {
