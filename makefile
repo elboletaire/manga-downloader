@@ -33,7 +33,7 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/qimanga grabber/tcb grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/qimanga grabber/tcb grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -44,6 +44,9 @@ grabber/mangadex:
 grabber/mangabats:
 	go run . https://www.mangabats.com/manga/after-the-possessor-left 1
 
+grabber/mangafire:
+	go run . https://mangafire.to/title/dkw-one-piece 1187
+
 grabber/qimanga:
 	go run . https://qimanga.com/series/4190634673-eleceed 2
 
@@ -52,8 +55,20 @@ grabber/tcb:
 
 # sites needing a real browser: not part of the `grabber` target since they
 # open a Chrome window and may require solving an interactive challenge
-grabber/browser:
+# (cloudflare). Run them one by one and solve the challenge if prompted.
+grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan
+
+grabber/toongod:
 	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
+
+grabber/dragontea:
+	go run . --browser-visible https://dragontea.ink/novel/it-all-starts-with-trillions-of-nether-currency/ 290
+
+grabber/kappabeast:
+	go run . --browser-visible https://kappabeast.com/series/tekkarian 2
+
+grabber/sushiscan:
+	go run . --browser-visible https://sushiscan.net/catalogue/mushoku-tensei/ 17
 
 grabber/html:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
