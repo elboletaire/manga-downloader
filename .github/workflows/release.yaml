@@ -19,17 +19,17 @@ jobs:
           - goarch: arm64
             goos: windows
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Get short version and tag
       run: |
         echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
         echo "tag=$(git describe --tags)" >> $GITHUB_ENV
-    - uses: wangyoucao577/go-release-action@v1.34
+    - uses: wangyoucao577/go-release-action@v1.55
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
-        goversion: "1.19"
+        goversion: "1.26"
         project_path: "."
         binary_name: "manga-downloader"
         extra_files: LICENSE README.md

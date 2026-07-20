@@ -1,3 +1,4 @@
 manga-downloader
 *.cbz
 demos/*.yml
+.worktrees
