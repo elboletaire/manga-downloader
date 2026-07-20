@@ -44,7 +44,18 @@ The download flow, all orchestrated from `cmd/root.go` (`Run`):
 - `Site` interface (`grabber/site.go`) is the contract for all grabbers: `Test`, `FetchTitle`, `FetchChapters`, `FetchChapter`, etc. The base `Grabber` struct provides shared settings/helpers.
 - `Filterable`/`Filterables` (`grabber/filterable.go`) abstracts chapters so they can be sorted/filtered by number; each grabber has its own chapter struct embedding `grabber.Chapter`.
 - `PlainHTML` (`grabber/plainhtml.go`) is a generic goquery scraper driven by a list of `SiteSelector` entries (CSS selectors for title/rows/chapter/image). It covers mangabuddy, tcbonepiecechapters.com (TCB Scans) and asurascans.com. Selector order in the list matters because some sites have very similar markup.
-- Site-specific grabbers with their own logic: `inmanga.go`, `mangadex.go` (both API-based, language-aware), `mangabats.go` (JSON chapters API + js image variables), `qimanga.go` (paginated JSON chapters API + SSR reader), `tcb.go` (Madara-based wordpress sites, i.e. lhtranslation.net).
+- Site-specific grabbers with their own logic: `inmanga.go`, `mangadex.go` (both API-based, language-aware), `mangabats.go` (JSON chapters API + js image variables), `mangafire.go` (open JSON API: `/api/titles/{hid}` + paginated `/chapters` + `/api/chapters/{id}` for pages, language-aware), `qimanga.go` (paginated JSON chapters API + SSR reader), `tcb.go` (Madara-based wordpress sites, i.e. lhtranslation.net).
+
+### The browser package
+
+`browser/browser.go` drives a locally-installed Chromium browser (Chrome/Chromium/Brave/Edge, auto-discovered by chromedp's `ExecAllocator`) for sites plain HTTP can't scrape: JS-rendered pages, TLS-fingerprint blocks, or Cloudflare challenges. One shared browser process is started lazily and reused. `GetHTML(url, waitSelector, timeout)` returns rendered HTML and harvests the session cookies + real UA into the `http` package (`http/session.go`), so images still download via the fast plain-HTTP path reusing the browser's Cloudflare clearance.
+
+`grabber/plainhtmlbrowser.go` (`PlainHTMLBrowser`) is the browser-rendered twin of `PlainHTML`: it reuses all the selector-driven parsing (`chapterFromDoc`), but matches sites **by domain** (a `browserSelectors` list of `BrowserSiteSelector`, no fetch — starting a browser is expensive) and fetches series/reader pages through Chrome. Registered first in `IdentifySite()`. Covers toongod, dragontea, kappabeast, sushiscan.
+
+- **Headless loses to Cloudflare; headed usually wins.** CDP automation is detectable, so CF challenges time out in headless mode. The `--browser-visible` flag (`browser.SetVisible`) runs headed, where managed challenges resolve in a couple of seconds and the user can solve an interactive one manually. The wait-selector timeout error hints at `--browser-visible` when headless.
+- **Always try the site's own API/HTTP first.** mangafire looks like it needs a browser (SPA behind CF), but its JSON API is wide open to plain HTTP — no browser needed. zonatmo's successor domain dropped the TLS block, so it's plain `PlainHTML` now. Only reach for `PlainHTMLBrowser` when HTTP genuinely can't get the data.
+- **`tools/probe`** is the investigation tool: renders a URL in Chrome and tests selectors. Env knobs: `PROBE_VISIBLE=1` (headed), `PROBE_SLEEP=8s` (settle time for lazy SPAs), `PROBE_DUMP=/tmp/x.html` (dump HTML), `PROBE_NETLOG=1` (log non-asset network responses — how the mangafire `/api/chapters/{id}` endpoint was found), `PROBE_FETCH_SEL="sel"` (grab first matching image and test a plain-HTTP download with the harvested session).
+- **Sites keep moving/locking down.** zonatmo.com → taken down (Spanish police, Apr 2026) → successor zonatmo.org. colamanga → redirects to yoyomanga.com and now gates the reader behind their app (`APP观看该内容`) on top of client-side image encryption — not feasible, left unsupported (#30).
 
 ### Adding support for a new site
 
