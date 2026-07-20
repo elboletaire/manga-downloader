@@ -11,6 +11,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/elboletaire/manga-downloader/browser"
 	"github.com/elboletaire/manga-downloader/downloader"
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/packer"
@@ -66,6 +67,10 @@ Note arguments aren't really positional, you can specify them in any order:
 
 // Run is the main function of the root command, the main downloading cmd
 func Run(cmd *cobra.Command, args []string) {
+	// ensure the shared Chrome process (if any) is killed on exit
+	defer browser.Close()
+	browser.SetVisible(settings.BrowserVisible)
+
 	s, errs := grabber.NewSite(getUrlArg(args), &settings)
 	if len(errs) > 0 {
 		color.Red("Errors testing site (a site may be down):")
@@ -75,7 +80,7 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 	if s == nil {
 		color.Yellow("Site not recognised")
-		os.Exit(1)
+		exit(1)
 	}
 	s.InitFlags(cmd)
 
@@ -90,7 +95,7 @@ func Run(cmd *cobra.Command, args []string) {
 		for _, err := range errs {
 			color.Red(err.Error())
 		}
-		os.Exit(1)
+		exit(1)
 	}
 
 	chapters = chapters.SortByNumber()
@@ -108,7 +113,7 @@ func Run(cmd *cobra.Command, args []string) {
 
 		if err != nil {
 			color.Yellow("Canceled by user")
-			os.Exit(0)
+			exit(0)
 		}
 
 		rngs = []ranges.Range{{Begin: 1, End: float64(lastChapter)}}
@@ -124,7 +129,7 @@ func Run(cmd *cobra.Command, args []string) {
 
 	if len(chapters) == 0 {
 		color.Yellow("No chapters found for the specified ranges")
-		os.Exit(1)
+		exit(1)
 	}
 
 	// download chapters
@@ -279,7 +284,7 @@ func Run(cmd *cobra.Command, args []string) {
 
 	if !settings.Bundle {
 		// if we're not bundling, we're done
-		os.Exit(0)
+		exit(0)
 	}
 
 	// resort downloaded
@@ -306,7 +311,7 @@ func Run(cmd *cobra.Command, args []string) {
 
 	if err != nil {
 		color.Red(err.Error())
-		os.Exit(1)
+		exit(1)
 	}
 
 	fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
@@ -329,7 +334,7 @@ func Execute() {
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		exit(1)
 	}
 }
 
@@ -340,14 +345,22 @@ func init() {
 	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Pages, "concurrency-pages", "C", 10, "number of concurrent page downloads, hard-limited to 10")
 	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", "only download the specified language")
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
+	rootCmd.Flags().BoolVar(&settings.BrowserVisible, "browser-visible", false, "show the browser window on sites that need one (lets you solve interactive challenges manually)")
 	// set as persistent, so version command does not complain about the -o flag set via docker
 	rootCmd.PersistentFlags().StringVarP(&settings.OutputDir, "output-dir", "o", "./", "output directory for the downloaded files")
+}
+
+// exit closes the shared browser (if any was started) before exiting,
+// otherwise the Chrome process would be left running in the background
+func exit(code int) {
+	browser.Close()
+	os.Exit(code)
 }
 
 func cerr(err error, prefix string) {
 	if err != nil {
 		fmt.Println(color.RedString(prefix + err.Error()))
-		os.Exit(1)
+		exit(1)
 	}
 }
 

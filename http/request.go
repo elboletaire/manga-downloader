@@ -41,7 +41,10 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 	client := &http.Client{Transport: tr}
 
 	req, _ := http.NewRequest(t, params.GetURL(), nil)
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", sessionUserAgent(userAgent))
+	if cookies := sessionCookies(req.URL.Hostname()); cookies != "" {
+		req.Header.Set("Cookie", cookies)
+	}
 	// some WAFs (e.g. ddos-guard) reject requests missing these browser headers
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
 	req.Header.Set("Accept-Language", "en-US,en;q=0.9")

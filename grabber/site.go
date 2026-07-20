@@ -33,6 +33,9 @@ type Settings struct {
 	Range string
 	// OutputDir is the output directory for the downloaded files
 	OutputDir string
+	// BrowserVisible shows the browser window for sites that need one, so
+	// interactive challenges (e.g. cloudflare) can be solved manually
+	BrowserVisible bool
 }
 
 // MaxConcurrency is the max concurrency for a site
@@ -68,6 +71,8 @@ type Site interface {
 // IdentifySite returns the site passing the Test() for the specified url
 func (g *Grabber) IdentifySite() (Site, []error) {
 	sites := []Site{
+		// PlainHTMLBrowser matches by domain (no fetch), so it goes first
+		NewPlainHTMLBrowser(g),
 		NewPlainHTML(g),
 		NewInmanga(g),
 		NewMangadex(g),

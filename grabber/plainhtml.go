@@ -157,6 +157,11 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
+	return m.chapterFromDoc(f, doc), nil
+}
+
+// chapterFromDoc builds a Chapter from an already parsed reader page
+func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter {
 	pimages := getPlainHTMLImageURL(m.site.Image, doc)
 	pcount := len(pimages)
 
@@ -184,7 +189,7 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 		chapter.Pages = append(chapter.Pages, page)
 	}
 
-	return chapter, nil
+	return chapter
 }
 
 func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
