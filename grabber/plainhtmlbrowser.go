@@ -117,6 +117,12 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 	color.Blue("this site needs a real browser, launching Chrome (may take a few seconds)...")
 	html, err := browser.GetHTML(m.URL, m.selector.ChaptersWait, 0)
 	if err != nil {
+		// the domain matched, so this IS the right grabber: make the failure
+		// actionable instead of letting it fall through to "site not recognised"
+		if !m.Settings.BrowserVisible {
+			color.Yellow("could not load %s in a headless browser (it's likely behind a challenge).", host)
+			color.Yellow("re-run the same command adding --browser-visible to solve it in a visible window.")
+		}
 		return false, err
 	}
 
