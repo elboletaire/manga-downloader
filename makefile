@@ -53,3 +53,4 @@ grabber/tcb:
 grabber/html:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
 	go run . https://asurascans.com/comics/absolute-regression-f886a8af 1
+	go run . https://zonatmo.org/library/manga/31322/one-piece 1188

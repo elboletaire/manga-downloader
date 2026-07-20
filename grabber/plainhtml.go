@@ -77,6 +77,15 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: "span.font-medium",
 			Image:        "img[data-page-index]",
 		},
+		// zonatmo.org (TuMangaOnline, former zonatmo.com)
+		{
+			Title:        "h1.element-title",
+			Rows:         "li.upload-link",
+			Chapter:      ".chapter-number",
+			ChapterTitle: ".chapter-number",
+			Link:         ".chapter-detail a.btn-primary",
+			Image:        "img.reader-image",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -108,7 +117,8 @@ func (m PlainHTML) FetchTitle() (string, error) {
 func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	m.rows.Each(func(i int, s *goquery.Selection) {
 		// we need to get the chapter number from the title
-		re := regexp.MustCompile(`C(?:hapter|\.)?\s*(\d+\.?\d*)`)
+		// (accepts "Chapter 10", "Ch. 10", "C 10" and the Spanish "Capítulo 10")
+		re := regexp.MustCompile(`C(?:hapter|ap[ií]tulo|\.)?\s*(\d+\.?\d*)`)
 		chap := re.FindStringSubmatch(s.Find(m.site.Chapter).Text())
 		// if the chapter has no number, we skip it (these are usually site announcements)
 		if len(chap) == 0 {
