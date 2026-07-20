@@ -187,7 +187,7 @@ variables are `{{.Series}}`, `{{.Number}}`, `{{.Title}}` and `{{.Version}}`
 | `--filename-template` | `-t`  | Template for the resulting file names                    | see above          |
 | `--concurrency`       | `-c`  | Concurrent chapter downloads (max 5)                     | 5                  |
 | `--concurrency-pages` | `-C`  | Concurrent page downloads per chapter (max 10)           | 10                 |
-| `--browser-visible`   |       | Show the browser window on sites that need one           | off                |
+| `--browser-visible`   |       | Open the browser from the start (opens automatically on a challenge anyway) | off        |
 
 Run the `help` command to see them all from your terminal:
 
