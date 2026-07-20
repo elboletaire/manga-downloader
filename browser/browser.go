@@ -131,10 +131,11 @@ func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
 		return "", err
 	}
 
-	// new tab sharing the browser (and thus cookies/clearance tokens)
-	tab, closeTab := chromedp.NewContext(browserCtx)
-	defer closeTab()
-	ctx, cancel := context.WithTimeout(tab, timeout)
+	// reuse the browser's initial tab instead of opening a new one: a new tab
+	// spawns in the background and leaves the blank first tab in front, hiding
+	// the page the user may need to interact with (e.g. a cloudflare challenge).
+	// All browser access is serialized by mu, so a single shared tab is safe.
+	ctx, cancel := context.WithTimeout(browserCtx, timeout)
 	defer cancel()
 
 	if NetLog != nil {
