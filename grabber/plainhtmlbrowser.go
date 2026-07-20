@@ -42,6 +42,20 @@ var browserSelectors = []BrowserSiteSelector{
 		ChaptersWait: "li.wp-manga-chapter",
 		ImageWait:    "div.reading-content",
 	},
+	// kappabeast.com: react SPA behind a cloudflare challenge, usually
+	// needs --browser-visible. Images are hosted on blogger/strapi CDNs.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1",
+			Rows:         `a[href*="/reader/"]`,
+			Chapter:      "h4",
+			ChapterTitle: "p",
+			Image:        `img[alt^="Page"]`,
+		},
+		Domains:      []string{"kappabeast.com"},
+		ChaptersWait: `a[href*="/reader/"]`,
+		ImageWait:    `img[alt^="Page"]`,
+	},
 }
 
 // PlainHTMLBrowser is the browser-rendered variant of PlainHTML: pages are
