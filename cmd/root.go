@@ -105,6 +105,14 @@ func Run(cmd *cobra.Command, args []string) {
 
 	chapters = chapters.SortByNumber()
 
+	// an empty result at this point usually means the language filter matched
+	// nothing (e.g. an invalid language code); without this guard the prompt
+	// path below would panic indexing an empty slice
+	if len(chapters) == 0 {
+		color.Yellow(noChaptersMessage(settings.Language))
+		exit(1)
+	}
+
 	var rngs []ranges.Range
 	// ranges argument is not provided
 	if len(args) == 1 {
@@ -157,6 +165,10 @@ func Run(cmd *cobra.Command, args []string) {
 	// Get terminal width for title truncation
 	termWidth := getTerminalWidth()
 	mangaLen, chapterLen := calculateTitleLengths(termWidth)
+
+	// sites like mangadex can return the same chapter multiple times, once per
+	// translated language; tag each bar with its language in that case
+	showLanguage := hasDuplicateChapterNumbers(chapters)
 
 	// For bundle mode, create a single progress bar
 	var bundleBar *mpb.Bar
@@ -222,7 +234,8 @@ func Run(cmd *cobra.Command, args []string) {
 			var bar *mpb.Bar
 			if !settings.Bundle {
 				// For non-bundle mode, create a single bar per chapter that combines download + archive
-				barTitle := fmt.Sprintf("%s - %s:", truncateString(title, mangaLen), truncateString(chap.GetTitle(), chapterLen))
+				// (using the fetched chapter, whose title includes the chapter number)
+				barTitle := chapterBarTitle(title, chapter, mangaLen, chapterLen, showLanguage)
 				// Total steps = pages (download) + pages (archive)
 				total := chapter.PagesCount * 2
 				bar = p.AddBar(total,
@@ -243,7 +256,7 @@ func Run(cmd *cobra.Command, args []string) {
 				)
 			} else {
 				bar = bundleBar
-				currentPhase = fmt.Sprintf("Downloading %s", chap.GetTitle())
+				currentPhase = fmt.Sprintf("Downloading %s", chapter.GetTitle())
 			}
 
 			files, err := downloader.FetchChapter(s, chapter, func(page int, idx int, err error) {
@@ -474,24 +487,69 @@ func calculateTitleLengths(termWidth int) (mangaLen, chapterLen int) {
 
 // truncateString truncates the input string at a specified maximum length
 // without cutting words. It finds the last space within the limit and truncates there.
+// Length is counted in runes, so multi-byte titles are never split mid-character.
 func truncateString(input string, maxLength int) string {
 	if maxLength <= 0 {
 		return ""
 	}
 
-	if len(input) <= maxLength {
+	runes := []rune(input)
+	if len(runes) <= maxLength {
 		return input
 	}
 
-	// Find the last index of a space before maxLength
-	truncationPoint := strings.LastIndex(input[:maxLength], " ")
+	// Find the last space before maxLength
+	truncated := string(runes[:maxLength])
+	truncationPoint := strings.LastIndex(truncated, " ")
 	if truncationPoint == -1 {
 		// No spaces found, force to maxLength (cuts the word)
-		return input[:maxLength] + "..."
+		return truncated + "..."
 	}
 
 	// Return substring up to the last found space
-	return input[:truncationPoint] + "..."
+	return truncated[:truncationPoint] + "..."
+}
+
+// chapterBarTitle builds the label of a chapter's progress bar from the fetched
+// chapter data. When showLanguage is set (multiple versions of the same chapter
+// are being downloaded, e.g. one per translated language), the chapter language
+// is appended after the title so same-numbered bars can be told apart. The tag
+// is added after truncation so it never gets cut off.
+func chapterBarTitle(seriesTitle string, chapter *grabber.Chapter, mangaLen, chapterLen int, showLanguage bool) string {
+	chapTitle := truncateString(chapter.GetTitle(), chapterLen)
+	if showLanguage && chapter.Language != "" {
+		chapTitle += " [" + chapter.Language + "]"
+	}
+
+	return fmt.Sprintf("%s - %s:", truncateString(seriesTitle, mangaLen), chapTitle)
+}
+
+// noChaptersMessage builds the error message shown when a fetch returns no
+// chapters, pointing at the language filter when one was set
+func noChaptersMessage(language string) string {
+	if language == "" {
+		return "No chapters found"
+	}
+
+	return fmt.Sprintf(
+		"No chapters found for language %q (perhaps the site uses a different language code, e.g. %q for Latin American Spanish)",
+		language, "es-la",
+	)
+}
+
+// hasDuplicateChapterNumbers reports whether the same chapter number appears
+// more than once, which happens when a site returns one entry per translated
+// language for the same chapter
+func hasDuplicateChapterNumbers(chapters grabber.Filterables) bool {
+	seen := map[float64]bool{}
+	for _, c := range chapters {
+		if seen[c.GetNumber()] {
+			return true
+		}
+		seen[c.GetNumber()] = true
+	}
+
+	return false
 }
 
 func toMetaFunc(c *color.Color) func(string) string {
