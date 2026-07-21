@@ -75,7 +75,7 @@ grabber/sushiscan:
 grabber/mangakakalot:
 	go run . --browser-visible https://www.mangakakalot.gg/manga/akuyaku-reijou-kara-no-kareinaru-tenshin-aisare-heroine-anthology-comic 1
 
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -85,3 +85,6 @@ grabber/asura:
 
 grabber/zonatmo:
 	go run . https://zonatmo.org/library/manga/31322/one-piece 1188
+
+grabber/mangapill:
+	go run . https://mangapill.com/manga/2/one-piece 1188
