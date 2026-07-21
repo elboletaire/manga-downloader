@@ -200,7 +200,11 @@ manga-downloader help
 Star history ![starline]
 ------------------------
 
-[![Stargazers over time](https://starchart.cc/elboletaire/manga-downloader.svg?variant=adaptive)](https://starchart.cc/elboletaire/manga-downloader)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=elboletaire/manga-downloader&type=date&theme=dark&legend=top-left&sealed_token=GfQgqGBmkGzpKUy8jK1yIy09naBjNE6V3-CyvUqBPhqXKzB7UJU5obN0nHeR3POMpBCyi53z30dH_CyEu2bK1rlzc81eJBJwUJXMYK-Mn0CjkcOjwGs9ThDonsRCaSlhQCXsWGWtuYEeFKFUYX5O43yTbhNYclOsolN8OuQ5pl_d9zsKjNzkcnSnO6D8" />
+  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=elboletaire/manga-downloader&type=date&legend=top-left&sealed_token=GfQgqGBmkGzpKUy8jK1yIy09naBjNE6V3-CyvUqBPhqXKzB7UJU5obN0nHeR3POMpBCyi53z30dH_CyEu2bK1rlzc81eJBJwUJXMYK-Mn0CjkcOjwGs9ThDonsRCaSlhQCXsWGWtuYEeFKFUYX5O43yTbhNYclOsolN8OuQ5pl_d9zsKjNzkcnSnO6D8" />
+  <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=elboletaire/manga-downloader&type=date&legend=top-left&sealed_token=GfQgqGBmkGzpKUy8jK1yIy09naBjNE6V3-CyvUqBPhqXKzB7UJU5obN0nHeR3POMpBCyi53z30dH_CyEu2bK1rlzc81eJBJwUJXMYK-Mn0CjkcOjwGs9ThDonsRCaSlhQCXsWGWtuYEeFKFUYX5O43yTbhNYclOsolN8OuQ5pl_d9zsKjNzkcnSnO6D8" />
+</picture>
 
 License
 -------
