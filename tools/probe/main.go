@@ -95,5 +95,31 @@ func main() {
 		}
 	}
 
+	// PROBE_API_URL: after the browser session is harvested, try fetching an
+	// arbitrary URL (e.g. a JSON API endpoint) via plain HTTP with the
+	// harvested cookies/UA, to check whether the session carries over to
+	// another host (e.g. an api. subdomain)
+	if apiURLs := os.Getenv("PROBE_API_URL"); apiURLs != "" {
+		for _, apiURL := range strings.Split(apiURLs, ",") {
+			fmt.Printf("fetching %q via plain HTTP with harvested session...\n", apiURL)
+			body, err := http.Get(http.RequestParams{URL: apiURL, Referer: url})
+			if err != nil {
+				fmt.Println("  API FETCH ERROR:", err)
+				continue
+			}
+			data, _ := io.ReadAll(body)
+			body.Close()
+			if dir := os.Getenv("PROBE_API_DUMP_DIR"); dir != "" {
+				fname := strings.NewReplacer("/", "_", ":", "_", "?", "_", "&", "_").Replace(apiURL)
+				os.WriteFile(dir+"/"+fname+".json", data, 0644)
+			}
+			out := data
+			if len(out) > 800 {
+				out = out[:800]
+			}
+			fmt.Printf("  got %d bytes: %s\n", len(data), out)
+		}
+	}
+
 	browser.Close()
 }

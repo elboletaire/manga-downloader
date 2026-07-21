@@ -17,6 +17,7 @@ type Params interface {
 type RequestParams struct {
 	URL     string
 	Referer string
+	Origin  string
 }
 
 // GetURL returns the request URL
@@ -55,6 +56,9 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 			ref += "/"
 		}
 		req.Header.Add("Referer", ref)
+	}
+	if origin := params.(RequestParams).Origin; origin != "" {
+		req.Header.Set("Origin", origin)
 	}
 
 	resp, err := client.Do(req)
