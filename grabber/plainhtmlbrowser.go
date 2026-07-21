@@ -72,7 +72,7 @@ var browserSelectors = []BrowserSiteSelector{
 		ChaptersWait: "#chapterlist li",
 		ImageWait:    "#readerarea img",
 	},
-	// mangakakalot.gg (manganelo family) behind a cloudflare challenge, needs
+	// mangakakalot.gg (manganelo/manganato family) behind a cloudflare challenge, needs
 	// --browser-visible. Images sit on a CDN that only checks the Referer, so
 	// they still download via plain HTTP (BaseUrl referer is enough).
 	{
@@ -84,7 +84,7 @@ var browserSelectors = []BrowserSiteSelector{
 			Link:         "a",
 			Image:        ".container-chapter-reader img",
 		},
-		Domains:      []string{"mangakakalot.gg"},
+		Domains:      []string{"mangakakalot.gg", "natomanga.com"},
 		ChaptersWait: ".chapter-list .row",
 		ImageWait:    ".container-chapter-reader img",
 	},
