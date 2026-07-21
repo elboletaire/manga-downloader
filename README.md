@@ -26,6 +26,7 @@ Supported sites
 - [mangafire.to](https://mangafire.to)
 - [mangakakalot.gg (MangaKakalot)](https://www.mangakakalot.gg) \*
 - [Mangadex](https://mangadex.org)
+- [mangapill.com](https://mangapill.com)
 - [qimanga.com](https://qimanga.com)
 - [sushiscan.net](https://sushiscan.net) \*
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)

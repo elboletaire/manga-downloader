@@ -86,6 +86,14 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         ".chapter-detail a.btn-primary",
 			Image:        "img.reader-image",
 		},
+		// mangapill.com: each chapter row is a plain <a> with the chapter
+		// number as its own text (no dedicated child selector), hence the
+		// empty Chapter/ChapterTitle (see FetchChapters)
+		{
+			Title: "h1",
+			Rows:  "#chapters [data-filter-list] a",
+			Image: "img.js-page",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -145,7 +153,14 @@ func parseChapterNumber(text string) (float64, bool) {
 // FetchChapters returns a slice of chapters
 func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	m.rows.Each(func(i int, s *goquery.Selection) {
-		number, ok := parseChapterNumber(s.Find(m.site.Chapter).Text())
+		// an empty Chapter/ChapterTitle selector means the row itself carries
+		// the text (i.e. mangapill, where each chapter row is a plain <a>
+		// with no dedicated child element for the chapter number)
+		chapterText := s.Text()
+		if m.site.Chapter != "" {
+			chapterText = s.Find(m.site.Chapter).Text()
+		}
+		number, ok := parseChapterNumber(chapterText)
 		if !ok {
 			return
 		}
@@ -157,10 +172,14 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		if !strings.HasPrefix(u, "http") {
 			u = m.BaseUrl() + u
 		}
+		title := chapterText
+		if m.site.ChapterTitle != "" {
+			title = s.Find(m.site.ChapterTitle).Text()
+		}
 		chapter := &PlainHTMLChapter{
 			Chapter{
 				Number: number,
-				Title:  s.Find(m.site.ChapterTitle).Text(),
+				Title:  title,
 			},
 			u,
 		}
