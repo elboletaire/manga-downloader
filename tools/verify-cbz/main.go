@@ -1,3 +1,5 @@
+// Copyright (C) 2023-2026 Òscar Casajuana Alonso
+
 // verify-cbz checks that the given .cbz files are real chapter archives:
 // they must exist, contain at least MinPages entries, and every entry must
 // be a non-empty image (JPG/PNG/GIF/WebP, checked by magic bytes).

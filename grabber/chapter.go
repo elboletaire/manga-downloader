@@ -1,3 +1,5 @@
+// Copyright (C) 2023-2026 Òscar Casajuana Alonso
+
 package grabber
 
 import "strings"

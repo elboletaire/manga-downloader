@@ -1,3 +1,5 @@
+// Copyright (C) 2023-2026 Òscar Casajuana Alonso
+
 // Package browser renders pages with a locally installed Chrome (or
 // Chromium/Brave/Edge) via chromedp, for sites that cannot be scraped with
 // plain HTTP requests: javascript-rendered chapter lists, TLS-fingerprint

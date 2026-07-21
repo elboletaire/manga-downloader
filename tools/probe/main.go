@@ -1,3 +1,5 @@
+// Copyright (C) 2023-2026 Òscar Casajuana Alonso
+
 // Probe is a throwaway dev tool to inspect what the browser package sees on a
 // given URL. Not part of the app.
 package main
