@@ -119,9 +119,11 @@ func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 		}
 
 		for _, c := range body.Data {
-			// skip pageless chapters (i.e. those hosted outside mangadex, on
-			// official publisher sites): there's nothing to download from them
-			if c.Attributes.Pages == 0 {
+			// skip chapters hosted outside mangadex (official publisher
+			// sites): there's nothing to download from them. They usually
+			// report 0 pages, but some stubs still claim a page count, so
+			// check the external url too.
+			if c.Attributes.Pages == 0 || c.Attributes.ExternalUrl != "" {
 				continue
 			}
 			num, _ := strconv.ParseFloat(c.Attributes.Chapter, 64)
@@ -219,6 +221,7 @@ type mangadexFeed struct {
 			Title              string
 			TranslatedLanguage string
 			Pages              int64
+			ExternalUrl        string
 		}
 	}
 }

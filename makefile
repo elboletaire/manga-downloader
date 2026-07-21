@@ -38,8 +38,10 @@ grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire gr
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
 
+# note: use a language without an official publisher (i.e. not es/en/fr...):
+# licensed translations get replaced by pageless mangaplus stubs on mangadex
 grabber/mangadex:
-	go run . https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece --language es 373 --bundle
+	go run . https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece --language ca 1187 --bundle
 
 grabber/mangabats:
 	go run . https://www.mangabats.com/manga/after-the-possessor-left 1
