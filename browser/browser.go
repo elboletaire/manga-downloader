@@ -145,6 +145,28 @@ func (e *challengeError) Error() string {
 // visible browser, it transparently reopens a visible window and retries — so
 // users don't need to know about --browser-visible.
 func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
+	return getHTML(url, waitSelector, timeout, nil)
+}
+
+// GetHTMLWithLocalStorage is like GetHTML, but first sets a single localStorage
+// key/value pair on the page's origin and reloads it before waiting on
+// waitSelector. Some sites gate content behind a client-side preference that's
+// only checked on load (e.g. a "load every page at once" reader mode stored in
+// localStorage instead of a URL or cookie), so a plain navigation isn't enough.
+func GetHTMLWithLocalStorage(url, key, value, waitSelector string, timeout time.Duration) (string, error) {
+	pre := []chromedp.Action{
+		chromedp.WaitReady("body", chromedp.ByQuery),
+		chromedp.Evaluate(fmt.Sprintf("localStorage.setItem(%q, %q)", key, value), nil),
+		chromedp.Reload(),
+	}
+	return getHTML(url, waitSelector, timeout, pre)
+}
+
+// getHTML is the shared implementation behind GetHTML and
+// GetHTMLWithLocalStorage: it renders url in a headless browser and, if the
+// wait selector times out (typically a cloudflare/JS challenge), transparently
+// reopens a visible window and retries.
+func getHTML(url, waitSelector string, timeout time.Duration, preActions []chromedp.Action) (string, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -156,7 +178,7 @@ func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
 		}
 	}
 
-	html, err := render(url, waitSelector, t)
+	html, err := render(url, waitSelector, t, preActions)
 	if err == nil {
 		return html, nil
 	}
@@ -168,7 +190,7 @@ func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
 		if rerr := goVisible(); rerr != nil {
 			return "", rerr
 		}
-		if html, err = render(url, waitSelector, visibleTimeout); err == nil {
+		if html, err = render(url, waitSelector, visibleTimeout, preActions); err == nil {
 			return html, nil
 		}
 	}
@@ -182,8 +204,10 @@ func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
 
 // render performs a single navigation in the shared browser, reusing its
 // initial tab (a new tab would spawn in the background, leaving the blank
-// first tab in front and hiding the page). Callers must hold mu.
-func render(url, waitSelector string, timeout time.Duration) (string, error) {
+// first tab in front and hiding the page). preActions, if any, run right
+// after the initial navigation and before waitSelector is awaited (e.g. to
+// set a localStorage flag and reload). Callers must hold mu.
+func render(url, waitSelector string, timeout time.Duration, preActions []chromedp.Action) (string, error) {
 	if err := start(); err != nil {
 		return "", err
 	}
@@ -203,6 +227,7 @@ func render(url, waitSelector string, timeout time.Duration) (string, error) {
 	actions := []chromedp.Action{
 		chromedp.Navigate(url),
 	}
+	actions = append(actions, preActions...)
 	if waitSelector != "" {
 		actions = append(actions, chromedp.WaitVisible(waitSelector, chromedp.ByQuery))
 	}
