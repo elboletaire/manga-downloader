@@ -169,6 +169,17 @@ Inside the bundle, each chapter gets its own folder (e.g. `Chapter 0001/`,
 
 ![bundle img]
 
+### Output format
+
+By default chapters are packed into CBZ files. Pass `--format raw` to write
+the images into a plain folder instead (named the same as the CBZ file would
+have been, minus the extension):
+
+~~~bash
+manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1-8 --format raw
+# downloads One Piece chapters 1 to 8, each into its own folder of images
+~~~
+
 ### Custom file names
 
 Resulting file names can be customized with `--filename-template`, which takes
@@ -188,6 +199,7 @@ variables are `{{.Series}}`, `{{.Number}}`, `{{.Title}}` and `{{.Version}}`
 | `--language`          | `-l`  | Only download the specified language                     | all languages      |
 | `--output-dir`        | `-o`  | Output directory for the downloaded files                | current folder     |
 | `--filename-template` | `-t`  | Template for the resulting file names                    | see above          |
+| `--format`            | `-f`  | Output format: `cbz` or `raw` (a folder with the images) | `cbz`              |
 | `--concurrency`       | `-c`  | Concurrent chapter downloads (max 5)                     | 5                  |
 | `--concurrency-pages` | `-C`  | Concurrent page downloads per chapter (max 10)           | 10                 |
 | `--browser-visible`   |       | Open the browser from the start (opens automatically on a challenge anyway) | off        |

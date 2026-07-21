@@ -108,6 +108,7 @@ func (f *fakeSite) FetchChapter(grabber.Filterable) (*grabber.Chapter, error) {
 func (f *fakeSite) FetchTitle() (string, error) { return f.title, nil }
 func (f *fakeSite) BaseUrl() string             { return "https://example.com" }
 func (f *fakeSite) GetFilenameTemplate() string { return f.template }
+func (f *fakeSite) GetFormat() string           { return FormatCBZ }
 func (f *fakeSite) GetMaxConcurrency() grabber.MaxConcurrency {
 	return grabber.MaxConcurrency{Chapters: 1, Pages: 1}
 }
