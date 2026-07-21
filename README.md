@@ -34,6 +34,7 @@ Supported sites
 - [sushiscan.net](https://sushiscan.net) \*
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [toongod.org](https://www.toongod.org) \*
+- [weebcentral.com](https://weebcentral.com)
 - [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
 
 > \* These sites can't be scraped with plain HTTP requests (they render with
