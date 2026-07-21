@@ -1,0 +1,74 @@
+name: Site support request
+description: Request support for a new manga site
+title: "[Site request]: "
+labels: ["site-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to request a new site! Please fill in the
+        fields below — especially the **series link**, which is required to
+        investigate and test the site.
+  - type: input
+    id: site-name
+    attributes:
+      label: Site name
+      description: The name of the site you want supported.
+      placeholder: e.g. MangaDex
+    validations:
+      required: true
+  - type: input
+    id: series-url
+    attributes:
+      label: Series link
+      description: >-
+        A **direct link to a series page** (the page listing the chapters of a
+        single manga), not the site's homepage. This is what gets passed to
+        `manga-downloader` and what development is tested against.
+      placeholder: e.g. https://mangadex.org/title/a96676e5-8ae2-425e-b549-7f15dd34a6d8/komi-san-wa-komyushou-desu
+    validations:
+      required: true
+  - type: input
+    id: chapter-url
+    attributes:
+      label: Chapter link (optional)
+      description: >-
+        A link to a chapter's reader page from that same series, ideally a
+        recent chapter (old chapters are sometimes dropped from CDNs, making
+        them bad test targets).
+      placeholder: e.g. https://mangadex.org/chapter/f2b7e9cd-0d17-4d5e-9f4b-1c6e51a2e9c8
+    validations:
+      required: false
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: The language of the content you download from this site.
+      placeholder: e.g. English, Spanish, multilang (like MangaDex)
+    validations:
+      required: false
+  - type: dropdown
+    id: cloudflare
+    attributes:
+      label: Cloudflare check
+      description: >-
+        When opening the site in a private/incognito window, do you ever see a
+        Cloudflare "Just a moment..." / "Verify you are human" page before the
+        content loads?
+      options:
+        - "I don't know"
+        - "Yes"
+        - "No"
+      default: 0
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context (optional)
+      description: >-
+        Anything else worth knowing: does the site require an account or
+        registration? Is it the successor of a previously supported site that
+        moved domains?
+    validations:
+      required: false

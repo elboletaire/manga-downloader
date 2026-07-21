@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a problem with manga-downloader
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: input
+    id: command
+    attributes:
+      label: Command
+      description: >-
+        The exact command you ran, including the URL and all flags.
+      placeholder: e.g. manga-downloader --language es https://mangadex.org/title/... 1-10
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: >-
+        The output of `manga-downloader --version`. Please check first whether
+        the problem still happens with the [latest
+        release](https://github.com/elboletaire/manga-downloader/releases/latest) —
+        sites change constantly and fixes ship often.
+      placeholder: e.g. v1.5.0
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: What happened
+      description: >-
+        What did you expect, and what happened instead? Paste the program's
+        output or error here. Note a run can "succeed" but produce empty or
+        broken CBZ files — if that's your case, say so.
+      render: shell
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other (specify below)
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context (optional)
+      description: >-
+        Anything else worth knowing — e.g. whether it worked before, whether
+        other series on the same site work, or your browser setup if the site
+        needs one (Chrome/Chromium/Brave/Edge).
+    validations:
+      required: false
