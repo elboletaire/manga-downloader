@@ -2,3 +2,4 @@ manga-downloader
 *.cbz
 demos/*.yml
 .worktrees
+.DS_Store
