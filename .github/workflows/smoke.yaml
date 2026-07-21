@@ -1,0 +1,45 @@
+name: Site smoke tests
+
+# Weekly run of the live-site smoke targets to detect layout/API changes on
+# supported sites. Browser-based sites (make grabber/browser) are excluded:
+# they need a visible Chrome and often an interactive Cloudflare challenge,
+# which cannot work on a headless datacenter runner.
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  grabber:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - inmanga
+          - mangadex
+          - mangabats
+          - mangafire
+          - qimanga
+          - tcb
+          - tcbscans
+          - asura
+          - zonatmo
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+
+      - name: Download chapters
+        run: make grabber/${{ matrix.target }}
+
+      # The downloader exits 0 even when chapters or pages fail to download,
+      # so check the archives actually contain images.
+      - name: Verify CBZ contents
+        run: |
+          ls -la *.cbz
+          go run ./tools/verify-cbz *.cbz
