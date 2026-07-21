@@ -1,10 +1,13 @@
 # Build from a golang based image
-FROM golang:latest as builder
+FROM --platform=$BUILDPLATFORM golang:latest AS builder
 
 LABEL maintainer="Òscar Casajuana <elboletaire@underave.net>"
 
 ARG CI_COMMIT_REF_NAME
 ENV CI_COMMIT_REF_NAME ${CI_COMMIT_REF_NAME:-latest}
+
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /app
 
@@ -12,7 +15,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 
-RUN make build/unix
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH make build/unix
 
 # Start a new stage from scratch
 FROM alpine:latest
