@@ -164,6 +164,9 @@ manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b
 # downloads One Piece chapters 1 to 8 into a single file
 ~~~
 
+Inside the bundle, each chapter gets its own folder (e.g. `Chapter 0001/`,
+`Chapter 0002/`) so chapter boundaries and page numbering are preserved.
+
 ![bundle img]
 
 ### Custom file names

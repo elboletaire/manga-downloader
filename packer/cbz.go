@@ -3,14 +3,19 @@ package packer
 import (
 	"archive/zip"
 	"errors"
-	"fmt"
 	"os"
-
-	"github.com/elboletaire/manga-downloader/downloader"
 )
 
-// ArchiveCBZ archives the given files into a CBZ file
-func ArchiveCBZ(filename string, files []*downloader.File, progress func(page, progress int)) error {
+// File represents a named entry to be written into a CBZ archive
+type File struct {
+	// Name is the zip entry name (may include a directory prefix, e.g. "Chapter 0001/000.jpg")
+	Name string
+	// Data is the raw file contents
+	Data []byte
+}
+
+// ArchiveCBZ archives the given named files into a CBZ file
+func ArchiveCBZ(filename string, files []File, progress func(page, progress int)) error {
 	if len(files) == 0 {
 		return errors.New("no files to pack")
 	}
@@ -21,8 +26,8 @@ func ArchiveCBZ(filename string, files []*downloader.File, progress func(page, p
 	defer buff.Close()
 	w := zip.NewWriter(buff)
 
-	for i, file := range files {
-		f, err := w.Create(fmt.Sprintf("%03d.jpg", i))
+	for _, file := range files {
+		f, err := w.Create(file.Name)
 		if err != nil {
 			return err
 		}
