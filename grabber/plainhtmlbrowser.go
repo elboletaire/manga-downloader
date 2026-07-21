@@ -38,7 +38,7 @@ var browserSelectors = []BrowserSiteSelector{
 			Link:         "a",
 			Image:        "div.reading-content img",
 		},
-		Domains:      []string{"toongod.org", "dragontea.ink"},
+		Domains:      []string{"toongod.org", "dragontea.ink", "manhuaus.com"},
 		ChaptersWait: "li.wp-manga-chapter",
 		ImageWait:    "div.reading-content",
 	},
