@@ -33,7 +33,7 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/qimanga grabber/tcb grabber/flamecomics grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -57,6 +57,9 @@ grabber/tcb:
 
 grabber/flamecomics:
 	go run . https://flamecomics.xyz/series/154 104
+
+grabber/weebcentral:
+	go run . https://weebcentral.com/series/01J76XYDXH7KT6AABVG3JAT3ZP/Shangri-La-Frontier 274
 
 # sites needing a real browser: not part of the `grabber` target since they
 # open a Chrome window and may require solving an interactive challenge
