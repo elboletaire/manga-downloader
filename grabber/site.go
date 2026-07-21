@@ -36,6 +36,8 @@ type Settings struct {
 	// BrowserVisible shows the browser window for sites that need one, so
 	// interactive challenges (e.g. cloudflare) can be solved manually
 	BrowserVisible bool
+	// Retry is the number of retries for failed page downloads
+	Retry uint8
 }
 
 // MaxConcurrency is the max concurrency for a site
@@ -66,6 +68,8 @@ type Site interface {
 	GetMaxConcurrency() MaxConcurrency
 	// GetPreferredLanguage returns the preferred language for the site
 	GetPreferredLanguage() string
+	// GetRetries returns the number of retries for failed page downloads
+	GetRetries() uint8
 }
 
 // IdentifySite returns the site passing the Test() for the specified url
@@ -123,6 +127,11 @@ func (g Grabber) GetFilenameTemplate() string {
 	return g.Settings.FilenameTemplate
 }
 
+// GetRetries returns the number of retries for failed page downloads
+func (g Grabber) GetRetries() uint8 {
+	return g.Settings.Retry
+}
+
 // InitFlags initializes the command flags
 func (g *Grabber) InitFlags(cmd *cobra.Command) {
 	g.SetMaxConcurrency(MaxConcurrency{
@@ -131,6 +140,7 @@ func (g *Grabber) InitFlags(cmd *cobra.Command) {
 	})
 	g.Settings.Language = cmd.Flag("language").Value.String()
 	g.Settings.FilenameTemplate = cmd.Flag("filename-template").Value.String()
+	g.Settings.Retry = maxUint8Flag(cmd.Flag("retry"), 3)
 }
 
 // NewSite returns a new site based on the passed url

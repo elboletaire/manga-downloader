@@ -188,6 +188,7 @@ variables are `{{.Series}}`, `{{.Number}}`, `{{.Title}}` and `{{.Version}}`
 | `--concurrency`       | `-c`  | Concurrent chapter downloads (max 5)                     | 5                  |
 | `--concurrency-pages` | `-C`  | Concurrent page downloads per chapter (max 10)           | 10                 |
 | `--browser-visible`   |       | Open the browser from the start (opens automatically on a challenge anyway) | off        |
+| `--retry`             | `-r`  | Retries for failed page downloads (max 3, 0 disables retrying)  | 1                  |
 
 Run the `help` command to see them all from your terminal:
 

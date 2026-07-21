@@ -5,10 +5,15 @@ import (
 	"io"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/http"
 )
+
+// retryDelay is the base delay between retry attempts (multiplied by the
+// attempt number). It's a package-level var so tests can shrink it.
+var retryDelay = time.Second
 
 // File represents a downloaded file
 type File struct {
@@ -36,7 +41,7 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress Progre
 			file, err := FetchFile(http.RequestParams{
 				URL:     page.URL,
 				Referer: site.BaseUrl(),
-			}, uint(page.Number))
+			}, uint(page.Number), site.GetRetries())
 
 			if err != nil {
 				select {
@@ -75,25 +80,37 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress Progre
 	return
 }
 
-// FetchFile gets an online file returning a new *File with its contents
-func FetchFile(params http.RequestParams, page uint) (file *File, err error) {
+// FetchFile gets an online file returning a new *File with its contents.
+// On failure (either the GET itself or a mid-body read) it retries up to
+// `retries` additional times, with a short growing delay between attempts.
+func FetchFile(params http.RequestParams, page uint, retries uint8) (file *File, err error) {
+	for attempt := uint8(0); ; attempt++ {
+		var data []byte
+		data, err = fetchFileOnce(params)
+		if err == nil {
+			file = &File{
+				Data: data,
+				Page: page,
+			}
+			return
+		}
+
+		if attempt >= retries {
+			return
+		}
+
+		time.Sleep(retryDelay * time.Duration(attempt+1))
+	}
+}
+
+// fetchFileOnce performs a single GET + body read attempt
+func fetchFileOnce(params http.RequestParams) (data []byte, err error) {
 	body, err := http.Get(params)
 	if err != nil {
-		// TODO: should retry at least once (configurable)
 		return
 	}
-
 	defer body.Close()
 
-	data, err := io.ReadAll(body)
-	if err != nil {
-		return
-	}
-
-	file = &File{
-		Data: data,
-		Page: page,
-	}
-
+	data, err = io.ReadAll(body)
 	return
 }
