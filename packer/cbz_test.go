@@ -112,6 +112,7 @@ func (f *fakeSite) GetMaxConcurrency() grabber.MaxConcurrency {
 	return grabber.MaxConcurrency{Chapters: 1, Pages: 1}
 }
 func (f *fakeSite) GetPreferredLanguage() string { return "" }
+func (f *fakeSite) GetRetries() uint8            { return 0 }
 
 func TestPackBundleEntryNames(t *testing.T) {
 	site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault}
