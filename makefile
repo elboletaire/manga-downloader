@@ -61,7 +61,7 @@ grabber/flamecomics:
 # sites needing a real browser: not part of the `grabber` target since they
 # open a Chrome window and may require solving an interactive challenge
 # (cloudflare). Run them one by one and solve the challenge if prompted.
-grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga
+grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus
 
 grabber/toongod:
 	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
@@ -80,6 +80,9 @@ grabber/mangakakalot:
 
 grabber/natomanga:
 	go run . --browser-visible https://www.natomanga.com/manga/rebirth-from-0-to-1 205.9
+
+grabber/manhuaus:
+	go run . --browser-visible https://manhuaus.com/manga/solo-leveling-ragnarok/ 68
 
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill
 
