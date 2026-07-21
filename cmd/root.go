@@ -71,6 +71,11 @@ func Run(cmd *cobra.Command, args []string) {
 	defer browser.Close()
 	browser.SetVisible(settings.BrowserVisible)
 
+	if settings.Format != packer.FormatCBZ && settings.Format != packer.FormatRaw {
+		color.Red("Error: invalid format %q, must be %q or %q", settings.Format, packer.FormatCBZ, packer.FormatRaw)
+		exit(1)
+	}
+
 	s, errs := grabber.NewSite(getUrlArg(args), &settings)
 	if len(errs) > 0 {
 		color.Red("Errors testing site (a site may be down):")
@@ -209,7 +214,10 @@ func Run(cmd *cobra.Command, args []string) {
 				<-g
 				return
 			}
-			filename += ".cbz"
+			if settings.Format != packer.FormatRaw {
+				// raw format writes a folder, not a single file
+				filename += ".cbz"
+			}
 
 			var bar *mpb.Bar
 			if !settings.Bundle {
@@ -345,6 +353,7 @@ func init() {
 	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Pages, "concurrency-pages", "C", 10, "number of concurrent page downloads, hard-limited to 10")
 	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", "only download the specified language")
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
+	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz or raw (a folder with the images)")
 	rootCmd.Flags().BoolVar(&settings.BrowserVisible, "browser-visible", false, "open the browser window from the start (it opens automatically anyway when a headless attempt hits a challenge)")
 	rootCmd.Flags().Uint8VarP(&settings.Retry, "retry", "r", 1, "number of retries for failed page downloads, hard-limited to 3 (0 disables retrying)")
 	// set as persistent, so version command does not complain about the -o flag set via docker

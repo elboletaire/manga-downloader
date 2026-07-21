@@ -29,6 +29,8 @@ type Settings struct {
 	Language string
 	// FilenameTemplate is the template for the filename
 	FilenameTemplate string
+	// Format is the desired output format ("cbz" or "raw")
+	Format string
 	// Range is the range to be downloaded (in string, i.e. "1-10,23,45-50")
 	Range string
 	// OutputDir is the output directory for the downloaded files
@@ -64,6 +66,8 @@ type Site interface {
 	BaseUrl() string
 	// GetFilenameTemplate returns the filename template
 	GetFilenameTemplate() string
+	// GetFormat returns the desired output format ("cbz" or "raw")
+	GetFormat() string
 	// GetMaxConcurrency returns the max concurrency for the site
 	GetMaxConcurrency() MaxConcurrency
 	// GetPreferredLanguage returns the preferred language for the site
@@ -132,6 +136,11 @@ func (g Grabber) GetRetries() uint8 {
 	return g.Settings.Retry
 }
 
+// GetFormat returns the desired output format ("cbz" or "raw")
+func (g Grabber) GetFormat() string {
+	return g.Settings.Format
+}
+
 // InitFlags initializes the command flags
 func (g *Grabber) InitFlags(cmd *cobra.Command) {
 	g.SetMaxConcurrency(MaxConcurrency{
@@ -141,6 +150,7 @@ func (g *Grabber) InitFlags(cmd *cobra.Command) {
 	g.Settings.Language = cmd.Flag("language").Value.String()
 	g.Settings.FilenameTemplate = cmd.Flag("filename-template").Value.String()
 	g.Settings.Retry = maxUint8Flag(cmd.Flag("retry"), 3)
+	g.Settings.Format = cmd.Flag("format").Value.String()
 }
 
 // NewSite returns a new site based on the passed url
