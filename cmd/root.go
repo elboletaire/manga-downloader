@@ -259,6 +259,9 @@ func Run(cmd *cobra.Command, args []string) {
 			})
 			if err != nil {
 				color.Red("- error downloading chapter %s: %s", chapter.GetTitle(), err.Error())
+				if !settings.Bundle {
+					bar.Abort(false)
+				}
 				<-g
 				return
 			}
@@ -274,6 +277,11 @@ func Run(cmd *cobra.Command, args []string) {
 				})
 				if err != nil {
 					color.Red(err.Error())
+				}
+				if !bar.Completed() {
+					// the bar can no longer reach its total (packing failed or
+					// pages were skipped); mark it done so p.Wait() won't hang
+					bar.Abort(false)
 				}
 			} else {
 				// For bundle mode, increment archive progress
@@ -291,6 +299,10 @@ func Run(cmd *cobra.Command, args []string) {
 	close(g)
 
 	if !settings.Bundle {
+		// let the render loop paint the final state of the bars before
+		// exiting; without this, fast packing (e.g. raw folders) ends with
+		// the last painted frame stuck at whatever the previous refresh saw
+		p.Wait()
 		// if we're not bundling, we're done
 		exit(0)
 	}
@@ -316,6 +328,14 @@ func Run(cmd *cobra.Command, args []string) {
 			bundleBar.IncrBy(page)
 		}
 	})
+
+	if bundleBar != nil && !bundleBar.Completed() {
+		// failed chapters leave the bundle bar short of its total; mark it
+		// done so p.Wait() won't hang
+		bundleBar.Abort(false)
+	}
+	// flush the final render before printing the outcome
+	p.Wait()
 
 	if err != nil {
 		color.Red(err.Error())
