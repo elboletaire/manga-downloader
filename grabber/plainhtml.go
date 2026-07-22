@@ -87,6 +87,20 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// violetscans.org: mangastream/themesia theme (same markup as
+		// sushiscan.net, see plainhtmlbrowser.go) but reachable over plain
+		// HTTP, no cloudflare challenge. Reader pages come from the embedded
+		// ts_reader javascript call. Some recent chapters are locked behind
+		// an in-site coin paywall (no href, just a modal trigger); those
+		// list with an unusable URL since there is nothing to fetch for them.
+		{
+			Title:        "h1.entry-title",
+			Rows:         "#chapterlist li",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a",
+			Image:        "#readerarea img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -169,6 +183,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		if m.site.ChapterTitle != "" {
 			title = s.Find(m.site.ChapterTitle).Text()
 		}
+		title = sanitizeTitle(title)
 		chapter := &PlainHTMLChapter{
 			Chapter{
 				Number: number,

@@ -98,6 +98,43 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 	}
 }
 
+// TestFetchChaptersSanitizesTitle guards against a regression like
+// violetscans.org's markup, where the mangastream/themesia theme's
+// .chapternum text contains raw tabs/newlines between "Chapter" and the
+// number (still parseable by chapterNumberRe, but ugly if left in the
+// title/filename unsanitized).
+func TestFetchChaptersSanitizesTitle(t *testing.T) {
+	html := `<html><body><ul id="chapterlist">
+		<li><a href="https://example.com/chapter-21/"><span class="chapternum">Chapter							21</span></a></li>
+	</ul></body></html>`
+	doc := docFromHTML(t, html)
+
+	m := PlainHTML{
+		doc: doc,
+		site: SiteSelector{
+			Rows:         "#chapterlist li",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a",
+		},
+	}
+	m.rows = doc.Find(m.site.Rows)
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) != 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	if len(chapters) != 1 {
+		t.Fatalf("expected 1 chapter, got %d", len(chapters))
+	}
+	if got, want := chapters[0].GetNumber(), float64(21); got != want {
+		t.Errorf("GetNumber() = %v, want %v", got, want)
+	}
+	if got, want := chapters[0].GetTitle(), "Chapter 21"; got != want {
+		t.Errorf("GetTitle() = %q, want %q", got, want)
+	}
+}
+
 func TestSanitizeTitle(t *testing.T) {
 	cases := []struct {
 		in   string
