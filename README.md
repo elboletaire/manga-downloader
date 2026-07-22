@@ -27,6 +27,7 @@ Supported sites
 - [mangafire.to](https://mangafire.to)
 - [mangak.io (MangaK, former mangabuddy.com)](https://mangak.io)
 - [mangakakalot.gg (MangaKakalot)](https://www.mangakakalot.gg) \*
+- [mangapark.page (MangaPark, mangapark.to's mirror at the time of writing)](https://mangapark.page)
 - [Mangadex](https://mangadex.org)
 - [mangapill.com](https://mangapill.com)
 - [manhuaus.com](https://manhuaus.com) \*
