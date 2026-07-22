@@ -34,6 +34,7 @@ Supported sites
 - [qimanga.com](https://qimanga.com)
 - [sushiscan.net](https://sushiscan.net) \*
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
+- [team-shadowi.com](https://www.team-shadowi.com)
 - [toongod.org](https://www.toongod.org) \*
 - [weebcentral.com](https://weebcentral.com)
 - [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
