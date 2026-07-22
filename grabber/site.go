@@ -81,31 +81,10 @@ type Site interface {
 // IdentifySite returns the site passing the Test() for the specified url
 func (g *Grabber) IdentifySite() (Site, []error) {
 	sites := []Site{
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Guya match
-		// by domain (no fetch), so they go first
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Atsumaru
-		// match by domain (no fetch), so they go first
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and
-		// Vortexscans match by domain (no fetch), so they go first
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Bigsolo
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Fmteam
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and GenzToon
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Kaynscan
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Hijala
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Mangaball
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Mangitto
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Mangalib
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Mangadenizi
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Teamshadowi
-		// match by domain (no fetch), so they go first
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Taiyo match
-		// by domain (no fetch), so they go first
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Stonescape
-		// match by domain (no fetch), so they go first
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Utoon match
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Comix match
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Mkissa match
-		// by domain (no fetch), so they go first
+		// Sites matching by domain/URL (no fetch) go before PlainHTML: their
+		// Test() is precise and free, and it keeps PlainHTML's generic
+		// selectors from shadowing a page that happens to share markup
+		// (e.g. mangahere's #chapterlist wrapper vs the themesia theme's).
 		NewPlainHTMLBrowser(g),
 		NewWeebCentral(g),
 		NewLeerCapitulo(g),
@@ -132,6 +111,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewUtoon(g),
 		NewComix(g),
 		NewMkissa(g),
+		NewMangahere(g),
 		NewPlainHTML(g),
 		NewInmanga(g),
 		NewMangadex(g),
@@ -144,7 +124,6 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewLuascans(g),
 		NewProjectsuki(g),
 		NewTcb(g),
-		NewMangahere(g),
 		NewJestful(g),
 	}
 	var errs []error

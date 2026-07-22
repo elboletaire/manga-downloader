@@ -164,37 +164,21 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         "a",
 			Image:        "div.reading-content img",
 		},
-		// silentquill.net (Armageddon Scanlation): mangastream/themesia
-		// theme, same markup as sushiscan (PlainHTMLBrowser) but reachable
-		// with plain HTTP, no cloudflare challenge. Reader pages embed all
-		// pages in the ts_reader javascript call, already handled generically.
-		// lagoonscans.com (Themesia's "MangaReader" WP theme, same publisher
-		// as sushiscan's ts_reader-based theme): reader images come from a
-		// ts_reader.run(...) blob, already handled by getPlainHTMLImageURL.
+		// mangastream/themesia WordPress themes reachable over plain HTTP
+		// (same markup as the cloudflare-gated sushiscan.net in
+		// plainhtmlbrowser.go): silentquill.net, lagoonscans.com,
+		// rokaricomics.com, violetscans.org and witchscans.com. Reader pages
+		// embed all pages in a ts_reader.run(...) blob, already handled by
+		// getPlainHTMLImageURL, so Image is just a fallback here. Some of
+		// these coin-paywall their most recent chapters (no href / no images
+		// in the HTML); test with an older, unlocked chapter. Rows requires
+		// .chapternum so a bare #chapterlist wrapper on an unrelated site
+		// (e.g. mangahere.cc) can't match this entry, and Title is scoped
+		// by itemprop because some of these (violetscans) also render
+		// decorative <h1> stat labels (Type/Status/Views).
 		{
-			Title: "h1",
-		},
-		// rokaricomics.com: mangastream/themesia theme (same markup as the
-		// cloudflare-gated sushiscan.net in plainhtmlbrowser.go), but this
-		// domain answers plain HTTP with no challenge. Reader images come
-		// from the embedded ts_reader javascript call. Note: the most recent
-		// chapter(s) of a series may be locked behind a coin paywall (no
-		// images in the HTML); test with an older, unlocked chapter.
-		// violetscans.org: mangastream/themesia theme (same markup as
-		// sushiscan.net, see plainhtmlbrowser.go) but reachable over plain
-		// HTTP, no cloudflare challenge. Reader pages come from the embedded
-		// ts_reader javascript call. Some recent chapters are locked behind
-		// an in-site coin paywall (no href, just a modal trigger); those
-		// list with an unusable URL since there is nothing to fetch for them.
-		{
-			Title: "h1.entry-title",
-		},
-		// witchscans.com: mangastream/themesia WordPress theme, reader
-		// images come from the ts_reader.run blob already handled by
-		// getPlainHTMLImageURL, so Image is just a fallback here
-		{
-			Title:        "h1",
-			Rows:         "#chapterlist li",
+			Title:        `h1[itemprop="name"]`,
+			Rows:         "#chapterlist li:has(.chapternum)",
 			Chapter:      ".chapternum",
 			ChapterTitle: ".chapternum",
 			Link:         "a",

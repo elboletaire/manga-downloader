@@ -2,7 +2,7 @@
 
 // verify-cbz checks that the given .cbz files are real chapter archives:
 // they must exist, contain at least MinPages entries, and every entry must
-// be a non-empty image (JPG/PNG/GIF/WebP, checked by magic bytes).
+// be a non-empty image (JPG/PNG/GIF/WebP/AVIF, checked by magic bytes).
 //
 // The downloader exits 0 even when individual chapters or pages fail, so
 // smoke tests must inspect the produced archives to detect broken sites.
@@ -97,6 +97,11 @@ func isImage(f *zip.File) (bool, error) {
 	case bytes.HasPrefix(head, []byte("GIF8")): // GIF
 		return true, nil
 	case bytes.HasPrefix(head, []byte("RIFF")) && len(head) >= 12 && bytes.Equal(head[8:12], []byte("WEBP")): // WebP
+		return true, nil
+	// AVIF: ISOBMFF "ftyp" box with an avif/avis brand (same sniff as
+	// packer's extFromContent; e.g. atsu.moe and mistscans serve AVIF pages)
+	case len(head) >= 12 && bytes.Equal(head[4:8], []byte("ftyp")) &&
+		(bytes.Equal(head[8:12], []byte("avif")) || bytes.Equal(head[8:12], []byte("avis"))):
 		return true, nil
 	}
 
