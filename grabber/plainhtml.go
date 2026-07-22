@@ -87,6 +87,16 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// writerscans.com: each chapter row is a plain <a> inside #chapters;
+		// reader page images are lazy-loaded (a placeholder `src` and a `uid`
+		// attribute), see the getPlainHTMLImageURL template-literal fallback
+		{
+			Title:        "h1",
+			Rows:         "#chapters a",
+			Chapter:      ".text-sm.truncate",
+			ChapterTitle: ".text-sm.truncate",
+			Image:        "img.myImage",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -259,6 +269,24 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		for _, u := range urls {
 			imgs = append(imgs, strings.ReplaceAll(u[1], `\/`, `/`))
 		}
+		return imgs
+	}
+
+	// some sites (e.g. writerscans.com) lazy-load reader images: the <img>
+	// only carries a placeholder `src` plus a `uid` attribute, and an inline
+	// script builds the real URL from a template literal like
+	// `https://cdn.example.com/uploads/${uid}`. If we find that pattern,
+	// build each image's URL from its `uid` instead of reading src/data-src.
+	re = regexp.MustCompile("`(https?://[^`]+?)\\$\\{uid\\}`")
+	matches = re.FindStringSubmatch(html)
+	if len(matches) > 1 {
+		prefix := matches[1]
+		pimages := doc.Find(selector)
+		imgs := []string{}
+		pimages.Each(func(i int, s *goquery.Selection) {
+			uid := s.AttrOr("uid", "")
+			imgs = append(imgs, prefix+uid)
+		})
 		return imgs
 	}
 
