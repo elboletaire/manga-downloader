@@ -187,7 +187,13 @@ func (m *PlainHTML) Test() (bool, error) {
 		// an in-site coin paywall (no href, just a modal trigger); those
 		// list with an unusable URL since there is nothing to fetch for them.
 		{
-			Title:        "h1.entry-title",
+			Title: "h1.entry-title",
+		},
+		// witchscans.com: mangastream/themesia WordPress theme, reader
+		// images come from the ts_reader.run blob already handled by
+		// getPlainHTMLImageURL, so Image is just a fallback here
+		{
+			Title:        "h1",
 			Rows:         "#chapterlist li",
 			Chapter:      ".chapternum",
 			ChapterTitle: ".chapternum",
