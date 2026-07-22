@@ -170,6 +170,7 @@ grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill g
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/deathtollscans
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/furyosociety
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/elftoon
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/asmotoon
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -208,3 +209,5 @@ grabber/furyosociety:
 	go run . https://furyosociety.com/series/a-bout/ 3
 grabber/elftoon:
 	go run . https://elftoon.com/manga/god-level-assassin-im-the-shadow/ 123
+grabber/asmotoon:
+	go run . https://asmotoon.com/series/official-adultery/ 1

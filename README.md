@@ -16,6 +16,7 @@ files, ready to read on your favorite ereader or reading app.
 Supported sites
 ---------------
 
+- [asmotoon.com (Asmodeus Scans)](https://asmotoon.com)
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
 - [demonicscans.org (MangaDemon / Demonic Scans)](https://demonicscans.org)
 - [atsu.moe (Atsumaru)](https://atsu.moe)

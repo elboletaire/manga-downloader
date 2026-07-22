@@ -225,6 +225,18 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         "a.chapter-link-overlay",
 			Image:        "#readerarea img",
 		},
+		// asmotoon.com (Asmodeus Scans): chapter rows are plain <a> children
+		// of #chapters. The reader lazy-loads pages, so most <img> keep a
+		// shared placeholder src until scrolled into view; the real per-page
+		// id always lives in the img's uid attribute (see
+		// getPlainHTMLImageURL), so src/data-src are only used as a fallback.
+		{
+			Title:        "h1",
+			Rows:         "#chapters > a",
+			Chapter:      ".text-sm.truncate",
+			ChapterTitle: ".text-sm.truncate",
+			Image:        "img.myImage",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -500,6 +512,14 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 
 	imgs := []string{}
 	pimages.Each(func(i int, s *goquery.Selection) {
+		// asmotoon.com: pages lazy-load via vanilla-lazyload, so src stays a
+		// shared placeholder until the browser scrolls the image into view.
+		// The real per-page identifier is always present in the uid
+		// attribute, so prefer reconstructing the CDN URL from it.
+		if uid := s.AttrOr("uid", ""); uid != "" {
+			imgs = append(imgs, "https://cdn.meowing.org/uploads/"+uid)
+			return
+		}
 		src := s.AttrOr("src", "")
 		if src == "" || strings.HasPrefix(src, "data:image") {
 			src = s.AttrOr("data-src", "")

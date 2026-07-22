@@ -113,6 +113,12 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			html:     `<html><body><div id="reader"><img src="/system/releases/000/1/00.webp"/></div><script>var pages = [{"image":"/system/releases/000/1/00.webp","name":"00","width":1,"height":1},{"image":"/system/releases/000/1/01.webp","name":"01","width":1,"height":1}];</script></body></html>`,
 			want:     []string{"/system/releases/000/1/00.webp", "/system/releases/000/1/01.webp"},
 		},
+		{
+			name:     "uid attribute takes priority over an unswapped lazy-load placeholder (asmotoon)",
+			selector: "img.myImage",
+			html:     `<html><body><img src="/assets/images/placeholder.svg" uid="abc123" class="myImage"/></body></html>`,
+			want:     []string{"https://cdn.meowing.org/uploads/abc123"},
+		},
 	}
 
 	for _, c := range cases {
