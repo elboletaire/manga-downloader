@@ -90,6 +90,28 @@ var browserSelectors = []BrowserSiteSelector{
 		ChaptersWait: ".chapter-list .row",
 		ImageWait:    ".container-chapter-reader img",
 	},
+	// manhuatop.org: Madara wordpress theme behind a cloudflare challenge,
+	// usually needs --browser-visible. Its reader wraps real pages in
+	// div.reading-content img#image-N, but also throws in a decorative
+	// "about_manhuatop" banner and a "To_be_continued" footer image sharing
+	// the same wp-manga-chapter-img class as real pages, so the plain
+	// "div.reading-content img" selector (used by the toongod/manhuaus entry
+	// above) would pull them in as junk pages — the id^="image-" filter
+	// keeps only the real, ordered page images. Images download via plain
+	// HTTP with no cookies needed once harvested.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "div.post-title h1",
+			Rows:         "li.wp-manga-chapter",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        `div.reading-content img[id^="image-"]`,
+		},
+		Domains:      []string{"manhuatop.org"},
+		ChaptersWait: "li.wp-manga-chapter",
+		ImageWait:    `div.reading-content img[id^="image-"]`,
+	},
 }
 
 // PlainHTMLBrowser is the browser-rendered variant of PlainHTML: pages are
