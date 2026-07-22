@@ -73,6 +73,7 @@ Supported sites
 - [silentquill.net (Armageddon Scanlation)](https://www.silentquill.net)
 - [rokaricomics.com](https://rokaricomics.com)
 - [ritharscans.com](https://ritharscans.com)
+- [roliascan.com](https://roliascan.com)
 - [sushiscan.net](https://sushiscan.net) \*
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [templetoons.com (Temple Scan)](https://templetoons.com)
