@@ -43,6 +43,7 @@ grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire gr
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/aurorascans grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/vortexscans grabber/html
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/guya grabber/danke grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/bigsolo grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -116,6 +117,9 @@ grabber/vortexscans:
 # same guyamoe platform as guya.moe, different instance/domain
 grabber/danke:
 	go run . https://danke.moe/read/manga/100-girlfriends/ 251
+# chapter pages are hosted on imgchest.com, not bigsolo.org itself
+grabber/bigsolo:
+	go run . https://bigsolo.org/wind-breaker 222
 
 # sites needing a real browser: not part of the `grabber` target since they
 # open a Chrome window and may require solving an interactive challenge
