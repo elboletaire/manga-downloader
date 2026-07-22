@@ -72,6 +72,22 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: "span.font-medium",
 			Image:        "img[data-page-index]",
 		},
+		// sanascans.com: same Astro-based reader template family as
+		// asurascans.com, but chapter URLs use "/chapter-N" (hyphen) instead
+		// of "/chapter/N" (slash), so the two selectors don't collide. The
+		// series page has several decorative <h1> stat labels (Status, Type,
+		// Chapters, Last update) alongside the real title, so a plain "h1"
+		// selector would concatenate all of them - scope it to the one with
+		// itemprop="name". Recent chapters are often coin-locked (paid early
+		// access) and render with zero page images (no error, just an empty
+		// chapter) - pick an older/free chapter when testing.
+		{
+			Title:        `h1[itemprop="name"]`,
+			Rows:         `a[data-astro-prefetch][href*="/chapter-"]`,
+			Chapter:      "span.font-medium",
+			ChapterTitle: "span.font-medium",
+			Image:        "img[data-reader-page-image]",
+		},
 		// zonatmo.org (TuMangaOnline, former zonatmo.com)
 		{
 			Title:        "h1.element-title",
