@@ -33,7 +33,7 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/comix grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -68,6 +68,12 @@ grabber/weebcentral:
 # client-side preference, no --browser-visible needed (no cloudflare here)
 grabber/leercapitulo:
 	go run . https://www.leercapitulo.co/manga/0cj9hhn6di/kingdom/ 883
+
+# uses a real (headless) browser: the chapter list/reader JSON API responses
+# are AES-encrypted client-side and the reader lazily mounts pages on scroll;
+# no cloudflare here, no --browser-visible needed
+grabber/comix:
+	go run . https://comix.to/title/e1wlg-the-scandal-maker-has-returned 24
 
 # sites needing a real browser: not part of the `grabber` target since they
 # open a Chrome window and may require solving an interactive challenge

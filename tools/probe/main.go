@@ -51,7 +51,21 @@ func main() {
 	}
 
 	start := time.Now()
-	html, err := browser.GetHTML(url, wait, timeout)
+	var html string
+	var err error
+	if s := os.Getenv("PROBE_SCROLL"); s != "" {
+		iterations := 20
+		fmt.Sscanf(s, "%d", &iterations)
+		pause := 400 * time.Millisecond
+		if p := os.Getenv("PROBE_SCROLL_PAUSE"); p != "" {
+			if d, perr := time.ParseDuration(p); perr == nil {
+				pause = d
+			}
+		}
+		html, err = browser.GetHTMLWithScroll(url, wait, iterations, pause, timeout)
+	} else {
+		html, err = browser.GetHTML(url, wait, timeout)
+	}
 	fmt.Printf("elapsed: %s\n", time.Since(start))
 	if err != nil {
 		fmt.Println("ERROR:", err)
