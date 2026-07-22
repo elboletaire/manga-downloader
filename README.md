@@ -17,6 +17,7 @@ Supported sites
 ---------------
 
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
+- [danke.moe (Danke fürs Lesen)](https://danke.moe)
 - [dragontea.ink](https://dragontea.ink) \*
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
 - [guya.moe (Guya, Kaguya-sama)](https://guya.moe)
