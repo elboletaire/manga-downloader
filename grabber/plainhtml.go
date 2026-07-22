@@ -152,6 +152,9 @@ func (m *PlainHTML) Test() (bool, error) {
 		// theme, same markup as sushiscan (PlainHTMLBrowser) but reachable
 		// with plain HTTP, no cloudflare challenge. Reader pages embed all
 		// pages in the ts_reader javascript call, already handled generically.
+		// lagoonscans.com (Themesia's "MangaReader" WP theme, same publisher
+		// as sushiscan's ts_reader-based theme): reader images come from a
+		// ts_reader.run(...) blob, already handled by getPlainHTMLImageURL.
 		{
 			Title:        "h1",
 			Rows:         "#chapterlist li",

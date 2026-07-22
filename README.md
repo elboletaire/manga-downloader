@@ -39,6 +39,7 @@ Supported sites
 - [inmanga.com](https://inmanga.com)
 - [jestful.net](https://jestful.net)
 - [kappabeast.com](https://kappabeast.com) \*
+- [lagoonscans.com](https://lagoonscans.com)
 - [leercapitulo.co](https://www.leercapitulo.co) \*
 - [LHTranslation](https://lhtranslation.net)
 - [madarascans.org (former madarascans.com)](https://madarascans.org)
