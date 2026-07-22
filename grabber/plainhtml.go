@@ -135,16 +135,17 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "dl.chapter-list dd a.name",
 			Image: "#reader img",
 		},
-		// mangaread.org: classic Madara wordpress theme, but unlike tcb.go's
-		// sites the full chapter list ships in the series page HTML (no ajax
-		// pagination) and reader pages are single-page (no #single-pager)
+		// mangaread.org & manhuaplus.com: plain-HTTP Madara wordpress themes
+		// (not cloudflare-walled, unlike the toongod/dragontea/manhuaus group
+		// in plainhtmlbrowser.go). The full chapter list ships in the series
+		// page HTML (no ajax pagination) and reader pages are single-page.
 		{
 			Title:        "h1",
 			Rows:         "li.wp-manga-chapter",
 			Chapter:      "a",
 			ChapterTitle: "a",
 			Link:         "a",
-			Image:        "img.wp-manga-chapter-img",
+			Image:        "div.reading-content img",
 		},
 	}
 

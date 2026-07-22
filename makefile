@@ -120,6 +120,7 @@ grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill g
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/rawkuma
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/dynastyscans
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/mangaread
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/manhuaplus
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -144,3 +145,5 @@ grabber/dynastyscans:
 	go run . https://dynasty-scans.com/series/please_bully_me_miss_villainess 162
 grabber/mangaread:
 	go run . https://www.mangaread.org/manga/one-piece/ 1188
+grabber/manhuaplus:
+	go run . https://manhuaplus.com/manga/tales-of-demons-and-gods01/ 522.6

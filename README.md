@@ -38,6 +38,7 @@ Supported sites
 - [Mangadex](https://mangadex.org)
 - [mangapill.com](https://mangapill.com)
 - [mangaread.org](https://www.mangaread.org)
+- [manhuaplus.com](https://manhuaplus.com)
 - [manhuaus.com](https://manhuaus.com) \*
 - [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
 - [qimanga.com](https://qimanga.com)
