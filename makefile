@@ -33,7 +33,7 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/luascans grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -54,6 +54,10 @@ grabber/mangak:
 
 grabber/qimanga:
 	go run . https://qimanga.com/series/4190634673-eleceed 2
+
+# use a chapter with price 0 (recent chapters are often premium/paywalled)
+grabber/luascans:
+	go run . https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement 56
 
 grabber/tcb:
 	go run . https://lhtranslation.net/manga/gaikotsu-kishi-sama-tadaima-isekai-e-o-dekake-chuu/ 71
