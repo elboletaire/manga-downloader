@@ -87,6 +87,20 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// elftoon.com: mangastream/themesia theme (same family as
+		// sushiscan.net, see plainhtmlbrowser.go), reachable over plain HTTP
+		// with no cloudflare. Some recent chapters are gem/coin-locked behind
+		// a modal (href="#"), so Rows only matches rows whose overlay link is
+		// a real URL; the reader page's images come from the embedded
+		// ts_reader javascript call, already handled generically.
+		{
+			Title:        "h1",
+			Rows:         `#chapterlist li:has(a.chapter-link-overlay[href^="http"])`,
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a.chapter-link-overlay",
+			Image:        "#readerarea img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -172,7 +186,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		chapter := &PlainHTMLChapter{
 			Chapter{
 				Number: number,
-				Title:  title,
+				Title:  sanitizeTitle(title),
 			},
 			u,
 		}
