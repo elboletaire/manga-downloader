@@ -95,6 +95,18 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:  "a",
 			Image: "img.imgholder",
 		},
+		// mangakatana.com: reader page images never land in the HTML as real
+		// <img src>/data-src (they stay as data-src="#" placeholders), they
+		// are only assigned client-side from an obfuscated JS array (see
+		// getPlainHTMLImageURL), so this Image selector is mostly unused
+		{
+			Title:        "h1.heading",
+			Rows:         ".chapters tr",
+			Chapter:      ".chapter a",
+			ChapterTitle: ".chapter a",
+			Link:         ".chapter a",
+			Image:        "#imgs img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -269,6 +281,26 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 			imgs = append(imgs, strings.ReplaceAll(u[1], `\/`, `/`))
 		}
 		return imgs
+	}
+
+	// mangakatana.com assigns each page's real URL from an obfuscated JS
+	// array (variable name changes, e.g. `thzq`) into data-src once the page
+	// loads: `obj.attr('data-src', thzq[i])`; the <img> tags themselves only
+	// ever contain a data-src="#" placeholder in the raw HTML. Find the
+	// array's name from that assignment, then pull its literal contents.
+	re = regexp.MustCompile(`\.attr\('data-src',\s*(\w+)\[i\]\)`)
+	matches = re.FindStringSubmatch(html)
+	if len(matches) > 1 {
+		arrayRe := regexp.MustCompile(`var\s+` + regexp.QuoteMeta(matches[1]) + `\s*=\s*\[(.*?)\];`)
+		arrayMatches := arrayRe.FindStringSubmatch(html)
+		if len(arrayMatches) > 1 {
+			urls := regexp.MustCompile(`'([^']+)'`).FindAllStringSubmatch(arrayMatches[1], -1)
+			imgs := []string{}
+			for _, u := range urls {
+				imgs = append(imgs, u[1])
+			}
+			return imgs
+		}
 	}
 
 	// images are inside picture objects

@@ -86,6 +86,15 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			html:     `<html><body><div class="reading-content"><img src="data:image/gif;base64,abc" data-src="https://a.co/1.jpg"/></div></body></html>`,
 			want:     []string{"https://a.co/1.jpg"},
 		},
+		{
+			name:     "obfuscated data-src array assignment (mangakatana)",
+			selector: "#imgs img",
+			html: `<html><body><div id="imgs"><img data-src="#"/><img data-src="#"/></div>` +
+				`<script>var ytaw=['https://a.co/1.jpg',];var thzq=['https://a.co/1.jpg','https://a.co/2.jpg',];` +
+				`function kxatz(){for(i=thzq.length-1;i>=0;i--){var obj=$('#imgs img:eq('+i+')');obj.attr('data-src', thzq[i]);}}</script>` +
+				`</body></html>`,
+			want: []string{"https://a.co/1.jpg", "https://a.co/2.jpg"},
+		},
 	}
 
 	for _, c := range cases {
