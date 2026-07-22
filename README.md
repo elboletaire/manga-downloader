@@ -55,6 +55,7 @@ Supported sites
 - [mangakatana.com](https://mangakatana.com)
 - [mgeko.cc](https://www.mgeko.cc)
 - [mangapark.page (MangaPark, mangapark.to's mirror at the time of writing)](https://mangapark.page)
+- [mangalivre.to (Manga Livre, former mangalivre.tv/mangalivre.net)](https://mangalivre.to)
 - [Mangadex](https://mangadex.org)
 - [mangapill.com](https://mangapill.com)
 - [mangaread.org](https://www.mangaread.org)
