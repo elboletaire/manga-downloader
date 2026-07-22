@@ -58,6 +58,7 @@ grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire gr
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/mangitto grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/mangalib grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/mangadenizi grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/projectsuki grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -104,6 +105,8 @@ grabber/luascans:
 	go run . https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement 56
 grabber/mangitto:
 	go run . https://mangtto.com/manga/chainsaw-man 232
+grabber/projectsuki:
+	go run . https://projectsuki.com/book/159270 233
 
 grabber/tcb:
 	go run . https://lhtranslation.net/manga/gaikotsu-kishi-sama-tadaima-isekai-e-o-dekake-chuu/ 71

@@ -67,6 +67,7 @@ Supported sites
 - [Mangitto (mangtto.com)](https://mangtto.com)
 - [manhuaus.com](https://manhuaus.com) \*
 - [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
+- [projectsuki.com](https://projectsuki.com)
 - [qimanga.com](https://qimanga.com)
 - [rawkuma.net](https://rawkuma.net)
 - [silentquill.net (Armageddon Scanlation)](https://www.silentquill.net)
