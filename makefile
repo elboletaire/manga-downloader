@@ -237,6 +237,7 @@ grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill g
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/ritharscans
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/sanascans
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/thunderscans
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/violetscans
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -290,3 +291,5 @@ grabber/sanascans:
 	go run . https://sanascans.com/series/my-beloved-daughter-is-a-villainess 11
 grabber/thunderscans:
 	go run . https://en-thunderscans.com/comics/full-time-awakening/ 108
+grabber/violetscans:
+	go run . https://violetscans.org/comics/after-all-ill-marry-you/ 21

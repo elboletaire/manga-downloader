@@ -85,6 +85,7 @@ Supported sites
 - [toongod.org](https://www.toongod.org) \*
 - [vortexscans.org](https://vortexscans.org)
 - [tritinia.org (Tritinia Scans)](https://tritinia.org)
+- [violetscans.org](https://violetscans.org)
 - [weebcentral.com](https://weebcentral.com)
 - [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
 

@@ -180,6 +180,12 @@ func (m *PlainHTML) Test() (bool, error) {
 		// from the embedded ts_reader javascript call. Note: the most recent
 		// chapter(s) of a series may be locked behind a coin paywall (no
 		// images in the HTML); test with an older, unlocked chapter.
+		// violetscans.org: mangastream/themesia theme (same markup as
+		// sushiscan.net, see plainhtmlbrowser.go) but reachable over plain
+		// HTTP, no cloudflare challenge. Reader pages come from the embedded
+		// ts_reader javascript call. Some recent chapters are locked behind
+		// an in-site coin paywall (no href, just a modal trigger); those
+		// list with an unusable URL since there is nothing to fetch for them.
 		{
 			Title:        "h1.entry-title",
 			Rows:         "#chapterlist li",
@@ -388,7 +394,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		chapter := &PlainHTMLChapter{
 			Chapter{
 				Number: number,
-				Title:  sanitizeTitle(title),
+				Title:  title,
 			},
 			u,
 		}
