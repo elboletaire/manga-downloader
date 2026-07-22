@@ -218,6 +218,7 @@ grabber/toonily:
 grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus grabber/mangahub
 grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus grabber/manhuatop
 grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus grabber/drakecomic
+grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus grabber/setsuscans
 
 grabber/toongod:
 	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
@@ -268,6 +269,8 @@ grabber/manhuatop:
 	go run . --browser-visible https://manhuatop.org/manhua/chronicles-of-the-martial-gods-return/ 168
 grabber/drakecomic:
 	go run . --browser-visible https://drakecomic.org/manga/beast-evolution/ 70
+grabber/setsuscans:
+	go run . --browser-visible https://setsuscans.com/manga/a-story-about-accidentally-finding-out-a-girls-secret-at-school/ 13
 
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill
 

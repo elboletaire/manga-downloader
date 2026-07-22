@@ -82,6 +82,7 @@ Supported sites
 - [roliascan.com](https://roliascan.com)
 - [sanascans.com (Sana Scans)](https://sanascans.com)
 - [stonescape.xyz](https://stonescape.xyz)
+- [setsuscans.com](https://setsuscans.com) \*
 - [sushiscan.net](https://sushiscan.net) \*
 - [taiyo.moe](https://taiyo.moe)
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
