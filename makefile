@@ -45,6 +45,7 @@ grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire gr
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/guya grabber/danke grabber/html
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/bigsolo grabber/html
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/bluesolo grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/gdscans grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -88,6 +89,11 @@ grabber/tcb:
 # changes needed: same ajax/chapters endpoint and reading-content markup)
 grabber/mangasushi:
 	go run . https://mangasushi.org/manga/lonely-attack-on-the-different-world/ 324
+# another Madara/wp-manga site, handled by the same Tcb grabber; this one
+# groups chapters under "Volume N" wrappers (exercises the wp-manga-chapter
+# scoping fix)
+grabber/gdscans:
+	go run . https://gdscans.com/manga/a-rank-boukensha-no-slow-life/ 50
 
 grabber/flamecomics:
 	go run . https://flamecomics.xyz/series/154 104

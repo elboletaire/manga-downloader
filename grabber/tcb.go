@@ -53,7 +53,11 @@ func (t *Tcb) Test() (bool, error) {
 		return false, err
 	}
 
-	t.chaps = body.Find("li")
+	// Scope to actual chapter rows: some Madara themes (e.g. gdscans.com)
+	// group chapters under "Volume N" <li> wrappers, and a bare "li" match
+	// would pick up those volume headers (and their empty list-wrapper <li>)
+	// as bogus duplicate chapters alongside the real ones.
+	t.chaps = body.Find("li.wp-manga-chapter")
 
 	return t.chaps.Length() > 0, nil
 }
