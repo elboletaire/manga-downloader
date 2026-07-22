@@ -239,6 +239,7 @@ grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill g
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/thunderscans
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/violetscans
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/witchscans
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/writerscans
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -296,3 +297,5 @@ grabber/violetscans:
 	go run . https://violetscans.org/comics/after-all-ill-marry-you/ 21
 grabber/witchscans:
 	go run . https://witchscans.com/manga/i-am-a-cultivation-big-shot/ 600
+grabber/writerscans:
+	go run . https://writerscans.com/series/640ecb8f2bb/ 45

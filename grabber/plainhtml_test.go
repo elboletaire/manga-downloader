@@ -125,6 +125,15 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			html:     `<html><body><img src="/assets/images/placeholder.svg" uid="abc123" class="myImage"/></body></html>`,
 			want:     []string{"https://cdn.meowing.org/uploads/abc123"},
 		},
+		{
+			name:     "uid attribute built from a template-literal script (writerscans)",
+			selector: "img.myImage",
+			html: `<html><body><div id="pages">` +
+				`<img src="/placeholder.svg" uid="abc123" class="myImage"/>` +
+				`<img src="/placeholder.svg" uid="def456" class="myImage"/>` +
+				`</div><script>let realUrl = ` + "`https://cdn.example.com/uploads/${uid}`" + `;</script></body></html>`,
+			want: []string{"https://cdn.example.com/uploads/abc123", "https://cdn.example.com/uploads/def456"},
+		},
 	}
 
 	for _, c := range cases {

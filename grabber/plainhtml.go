@@ -294,6 +294,9 @@ func (m *PlainHTML) Test() (bool, error) {
 		// ritharscans.com: chapter pages aren't in <img> tags at all, they're
 		// parsed out of an Alpine.js `immersiveReader(...)` blob (see
 		// getPlainHTMLImageURL), so Image is unused but set for consistency
+		// writerscans.com: each chapter row is a plain <a> inside #chapters;
+		// reader page images are lazy-loaded (a placeholder `src` and a `uid`
+		// attribute), see the getPlainHTMLImageURL template-literal fallback
 		{
 			Title:        "h1",
 			Rows:         "#chapters a",
@@ -315,6 +318,16 @@ func (m *PlainHTML) Test() (bool, error) {
 			Chapter:      ".chapternum",
 			ChapterTitle: ".chapternum",
 			Image:        ".readercontent img",
+		},
+		// writerscans.com: each chapter row is a plain <a> inside #chapters;
+		// reader page images are lazy-loaded (a placeholder `src` and a `uid`
+		// attribute), see the getPlainHTMLImageURL template-literal fallback
+		{
+			Title:        "h1",
+			Rows:         "#chapters a",
+			Chapter:      ".text-sm.truncate",
+			ChapterTitle: ".text-sm.truncate",
+			Image:        "img.myImage",
 		},
 	}
 
@@ -604,6 +617,24 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		if len(imgs) > 0 {
 			return imgs
 		}
+	}
+
+	// some sites (e.g. writerscans.com) lazy-load reader images: the <img>
+	// only carries a placeholder `src` plus a `uid` attribute, and an inline
+	// script builds the real URL from a template literal like
+	// `https://cdn.example.com/uploads/${uid}`. If we find that pattern,
+	// build each image's URL from its `uid` instead of reading src/data-src.
+	re = regexp.MustCompile("`(https?://[^`]+?)\\$\\{uid\\}`")
+	matches = re.FindStringSubmatch(html)
+	if len(matches) > 1 {
+		prefix := matches[1]
+		pimages := doc.Find(selector)
+		imgs := []string{}
+		pimages.Each(func(i int, s *goquery.Selection) {
+			uid := s.AttrOr("uid", "")
+			imgs = append(imgs, prefix+uid)
+		})
+		return imgs
 	}
 
 	// images are inside picture objects

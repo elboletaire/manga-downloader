@@ -88,6 +88,7 @@ Supported sites
 - [violetscans.org](https://violetscans.org)
 - [weebcentral.com](https://weebcentral.com)
 - [witchscans.com](https://witchscans.com)
+- [writerscans.com](https://writerscans.com)
 - [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
 
 > \* These sites can't be scraped with plain HTTP requests (they render with
