@@ -12,10 +12,13 @@ import (
 )
 
 // Guya is a grabber for guya.moe (and its guya.cubari.moe host, the
-// underlying domain guya.moe redirects to): a guyamoe/cubari instance with a
-// wide-open JSON API (`/api/series/{slug}/`) that returns the full
-// chapter/page tree in a single call - no browser, no per-chapter fetch
-// needed, since the page filenames for every group are already in that JSON
+// underlying domain guya.moe redirects to) and danke.moe (Danke fürs Lesen,
+// the same open-source "guyamoe" software - see their /about/ page and
+// footer "Source Code" link to github.com/kafkaien42/guyamoe): a guyamoe/
+// cubari instance with a wide-open JSON API (`/api/series/{slug}/`) that
+// returns the full chapter/page tree in a single call - no browser, no
+// per-chapter fetch needed, since the page filenames for every group are
+// already in that JSON
 type Guya struct {
 	*Grabber
 	title string
@@ -34,9 +37,9 @@ type GuyaChapter struct {
 	Files   []string
 }
 
-// Test returns true if the URL is a guya.moe (or guya.cubari.moe) URL
+// Test returns true if the URL is a guya.moe/guya.cubari.moe or danke.moe URL
 func (g *Guya) Test() (bool, error) {
-	re := regexp.MustCompile(`guya\.(moe|cubari\.moe)`)
+	re := regexp.MustCompile(`(guya\.(moe|cubari\.moe)|danke\.moe)`)
 	return re.MatchString(g.URL), nil
 }
 

@@ -13,6 +13,7 @@ func TestGuyaSlug(t *testing.T) {
 		{"https://guya.moe/read/manga/Kaguya-Wants-To-Be-Confessed-To/", "Kaguya-Wants-To-Be-Confessed-To", false},
 		{"https://guya.moe/read/manga/Kaguya-Wants-To-Be-Confessed-To/281/7/", "Kaguya-Wants-To-Be-Confessed-To", false},
 		{"https://guya.cubari.moe/read/manga/Oshi-No-Ko/", "Oshi-No-Ko", false},
+		{"https://danke.moe/read/manga/100-girlfriends/", "100-girlfriends", false},
 		{"https://guya.moe/", "", true},
 	}
 
@@ -36,6 +37,7 @@ func TestGuyaTest(t *testing.T) {
 	}{
 		{"https://guya.moe/read/manga/Kaguya-Wants-To-Be-Confessed-To/", true},
 		{"https://guya.cubari.moe/read/manga/Kaguya-Wants-To-Be-Confessed-To/", true},
+		{"https://danke.moe/read/manga/100-girlfriends/", true},
 		{"https://cubari.moe/read/gist/...", false},
 		{"https://mangak.io/some-series", false},
 	}

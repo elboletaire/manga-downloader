@@ -20,6 +20,7 @@ Supported sites
 - [demonicscans.org (MangaDemon / Demonic Scans)](https://demonicscans.org)
 - [atsu.moe (Atsumaru)](https://atsu.moe)
 - [aurorascans.com (redirects to qimanga.com)](https://aurorascans.com)
+- [danke.moe (Danke fürs Lesen)](https://danke.moe)
 - [dragontea.ink](https://dragontea.ink) \*
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
 - [fanfox.net (Manga Fox)](https://fanfox.net)
