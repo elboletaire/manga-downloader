@@ -87,6 +87,14 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// demonicscans.org: reader page embeds the real (non-lazy) image
+		// src directly, no JS variable needed
+		{
+			Title: "h1",
+			Rows:  "#chapters-list li",
+			Link:  "a",
+			Image: "img.imgholder",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -169,6 +177,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		if m.site.ChapterTitle != "" {
 			title = s.Find(m.site.ChapterTitle).Text()
 		}
+		title = sanitizeTitle(title)
 		chapter := &PlainHTMLChapter{
 			Chapter{
 				Number: number,
