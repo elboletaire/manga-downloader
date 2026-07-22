@@ -20,6 +20,7 @@ Supported sites
 - [demonicscans.org (MangaDemon / Demonic Scans)](https://demonicscans.org)
 - [dragontea.ink](https://dragontea.ink) \*
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
+- [fanfox.net (Manga Fox)](https://fanfox.net)
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
 - [guya.moe (Guya, Kaguya-sama)](https://guya.moe)
 - [inmanga.com](https://inmanga.com)
