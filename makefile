@@ -156,6 +156,7 @@ grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill g
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/hivetoons
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/templetoons
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/deathtollscans
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/furyosociety
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -190,3 +191,5 @@ grabber/templetoons:
 	go run . https://templetoons.com/comic/bl-antidote 88
 grabber/deathtollscans:
 	go run . https://reader.deathtollscans.net/series/kakushigoto/ 30
+grabber/furyosociety:
+	go run . https://furyosociety.com/series/a-bout/ 3
