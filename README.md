@@ -21,6 +21,7 @@ Supported sites
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
 - [inmanga.com](https://inmanga.com)
 - [kappabeast.com](https://kappabeast.com) \*
+- [kaynscan.org (Kayn Scan)](https://kaynscan.org)
 - [leercapitulo.co](https://www.leercapitulo.co) \*
 - [LHTranslation](https://lhtranslation.net)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
