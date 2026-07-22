@@ -19,6 +19,7 @@ Supported sites
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
 - [dragontea.ink](https://dragontea.ink) \*
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
+- [furyosociety.com](https://furyosociety.com)
 - [inmanga.com](https://inmanga.com)
 - [kappabeast.com](https://kappabeast.com) \*
 - [leercapitulo.co](https://www.leercapitulo.co) \*

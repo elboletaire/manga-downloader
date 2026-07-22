@@ -87,6 +87,18 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// furyosociety.com: French scanlation site on the FoOlSlide engine.
+		// Each chapter is listed twice (a desktop <div> and a mobile <a>);
+		// only the mobile <a> is itself the reader link, so scoping Rows to
+		// it avoids duplicate chapters. The reader page renders every page
+		// image server-side (no ajax pagination), so a plain selector works.
+		{
+			Title:        "h1.fs-comic-title",
+			Rows:         ".fs-chapter-list a.element.mobile",
+			Chapter:      ".title-grp .title",
+			ChapterTitle: ".name",
+			Image:        ".fs-reader-page-container img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
