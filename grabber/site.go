@@ -81,12 +81,13 @@ type Site interface {
 // IdentifySite returns the site passing the Test() for the specified url
 func (g *Grabber) IdentifySite() (Site, []error) {
 	sites := []Site{
-		// PlainHTMLBrowser, WeebCentral, LeerCapitulo and Mangak match by
-		// domain (no fetch), so they go first
+		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Fmteam
+		// match by domain (no fetch), so they go first
 		NewPlainHTMLBrowser(g),
 		NewWeebCentral(g),
 		NewLeerCapitulo(g),
 		NewMangak(g),
+		NewFmteam(g),
 		NewPlainHTML(g),
 		NewInmanga(g),
 		NewMangadex(g),
