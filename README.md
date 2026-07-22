@@ -40,6 +40,7 @@ Supported sites
 - [kappabeast.com](https://kappabeast.com) \*
 - [leercapitulo.co](https://www.leercapitulo.co) \*
 - [LHTranslation](https://lhtranslation.net)
+- [madarascans.org (former madarascans.com)](https://madarascans.org)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
 - [mangafire.to](https://mangafire.to)
 - [mangahere.cc (MangaHere)](https://www.mangahere.cc)

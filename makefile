@@ -176,6 +176,7 @@ grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill g
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/furyosociety
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/elftoon
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/asmotoon
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/madarascans
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -216,3 +217,5 @@ grabber/elftoon:
 	go run . https://elftoon.com/manga/god-level-assassin-im-the-shadow/ 123
 grabber/asmotoon:
 	go run . https://asmotoon.com/series/official-adultery/ 1
+grabber/madarascans:
+	go run . https://madarascans.org/series/my-disciples-are-all-big-villains/ 481
