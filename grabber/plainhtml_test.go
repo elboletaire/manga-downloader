@@ -86,6 +86,12 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			html:     `<html><body><div class="reading-content"><img src="data:image/gif;base64,abc" data-src="https://a.co/1.jpg"/></div></body></html>`,
 			want:     []string{"https://a.co/1.jpg"},
 		},
+		{
+			name:     "var pages JSON blob (dynasty-scans)",
+			selector: "#reader img",
+			html:     `<html><body><div id="reader"><img src="/system/releases/000/1/00.webp"/></div><script>var pages = [{"image":"/system/releases/000/1/00.webp","name":"00","width":1,"height":1},{"image":"/system/releases/000/1/01.webp","name":"01","width":1,"height":1}];</script></body></html>`,
+			want:     []string{"/system/releases/000/1/00.webp", "/system/releases/000/1/01.webp"},
+		},
 	}
 
 	for _, c := range cases {
