@@ -65,9 +65,13 @@ var browserSelectors = []BrowserSiteSelector{
 		ChaptersWait: `a[href*="/reader/"]`,
 		ImageWait:    `img[alt^="Page"]`,
 	},
-	// sushiscan.net (french): mangastream/themesia theme behind a cloudflare
-	// challenge, usually needs --browser-visible. All the reader pages come
-	// from the embedded ts_reader javascript call.
+	// sushiscan.net (french) and drakecomic.org (Drake Scans): mangastream/
+	// themesia theme behind a cloudflare challenge, usually needs
+	// --browser-visible. All the reader pages come from the embedded
+	// ts_reader javascript call. drakecomic.org's initial render is an
+	// (almost) empty body — #chapterlist is filled a few seconds later by
+	// an admin-ajax.php call — but WaitVisible already polls for the wait
+	// selector, so no extra settle is needed.
 	{
 		SiteSelector: SiteSelector{
 			Title:        "h1.entry-title",
@@ -77,7 +81,7 @@ var browserSelectors = []BrowserSiteSelector{
 			Link:         "a",
 			Image:        "#readerarea img",
 		},
-		Domains:      []string{"sushiscan.net"},
+		Domains:      []string{"sushiscan.net", "drakecomic.org"},
 		ChaptersWait: "#chapterlist li",
 		ImageWait:    "#readerarea img",
 	},

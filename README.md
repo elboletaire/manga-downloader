@@ -31,6 +31,7 @@ Supported sites
 - [fanfox.net (Manga Fox)](https://fanfox.net)
 - [elftoon.com](https://elftoon.com)
 - [en-hijala.com (Hijala Translations)](https://en-hijala.com)
+- [drakecomic.org (Drake Scans)](https://drakecomic.org) \*
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
 - [guya.moe (Guya, Kaguya-sama)](https://guya.moe)
 - [hivetoons.org (HiveToons, VoidScans)](https://hivetoons.org)
