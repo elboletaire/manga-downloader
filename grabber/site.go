@@ -88,6 +88,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewLeerCapitulo(g),
 		NewMangak(g),
 		NewMgeko(g),
+		NewMangapark(g),
 		NewPlainHTML(g),
 		NewInmanga(g),
 		NewMangadex(g),

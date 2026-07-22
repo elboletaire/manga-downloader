@@ -30,6 +30,7 @@ Supported sites
 - [mangakakalot.gg (MangaKakalot)](https://www.mangakakalot.gg) \*
 - [mangakatana.com](https://mangakatana.com)
 - [mgeko.cc](https://www.mgeko.cc)
+- [mangapark.page (MangaPark, mangapark.to's mirror at the time of writing)](https://mangapark.page)
 - [Mangadex](https://mangadex.org)
 - [mangapill.com](https://mangapill.com)
 - [manhuaus.com](https://manhuaus.com) \*
