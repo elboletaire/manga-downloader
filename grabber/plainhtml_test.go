@@ -75,6 +75,12 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want:     []string{"https://a.co/1.jpg", "https://a.co/2.jpg"},
 		},
 		{
+			name:     "ritharscans.com Alpine.js x-data immersiveReader blob",
+			selector: "img",
+			html:     `<html><body><div x-data="immersiveReader({ pages: [{&quot;path&quot;:&quot;series\/webtoon\/abc\/chapters\/def\/001.jpg&quot;,&quot;width&quot;:1080}], baseLink: 'https://a.co/storage/' })"></div></body></html>`,
+			want:     []string{"https://a.co/storage/series/webtoon/abc/chapters/def/001.jpg"},
+		},
+		{
 			name:     "plain img src",
 			selector: "div.reading-content img",
 			html:     `<html><body><div class="reading-content"><img src="https://a.co/1.jpg"/><img src="https://a.co/2.jpg"/></div></body></html>`,

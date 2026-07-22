@@ -32,6 +32,7 @@ Supported sites
 - [manhuaus.com](https://manhuaus.com) \*
 - [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
 - [qimanga.com](https://qimanga.com)
+- [ritharscans.com](https://ritharscans.com)
 - [sushiscan.net](https://sushiscan.net) \*
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [toongod.org](https://www.toongod.org) \*

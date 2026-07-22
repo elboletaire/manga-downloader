@@ -95,7 +95,7 @@ grabber/natomanga:
 grabber/manhuaus:
 	go run . --browser-visible https://manhuaus.com/manga/solo-leveling-ragnarok/ 68
 
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/ritharscans
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -108,3 +108,7 @@ grabber/zonatmo:
 
 grabber/mangapill:
 	go run . https://mangapill.com/manga/2/one-piece 1188
+
+# note: use a free chapter (older ones); recent chapters are often coin-gated
+grabber/ritharscans:
+	go run . https://ritharscans.com/series/0f32cefc-20a7-4337-aed0-fa78f832012f 19

@@ -87,6 +87,16 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// ritharscans.com: chapter pages aren't in <img> tags at all, they're
+		// parsed out of an Alpine.js `immersiveReader(...)` blob (see
+		// getPlainHTMLImageURL), so Image is unused but set for consistency
+		{
+			Title:        "h1",
+			Rows:         "#chapters a",
+			Chapter:      ".text-sm.truncate",
+			ChapterTitle: ".text-sm.truncate",
+			Image:        "img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -260,6 +270,26 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 			imgs = append(imgs, strings.ReplaceAll(u[1], `\/`, `/`))
 		}
 		return imgs
+	}
+
+	// ritharscans.com's Alpine.js reader stores every page's relative path
+	// (plus a `baseLink` to prefix them with) inline in an `x-data` attribute:
+	// x-data="immersiveReader({ pages: [{"path":"...","width":...},...], baseLink: 'https://.../storage/', ... })"
+	reader := doc.Find(`[x-data*="immersiveReader("]`)
+	if reader.Length() > 0 {
+		xdata := reader.First().AttrOr("x-data", "")
+		base := ""
+		if m := regexp.MustCompile(`baseLink:\s*'([^']*)'`).FindStringSubmatch(xdata); len(m) > 1 {
+			base = m[1]
+		}
+		paths := regexp.MustCompile(`"path":"([^"]+)"`).FindAllStringSubmatch(xdata, -1)
+		imgs := []string{}
+		for _, p := range paths {
+			imgs = append(imgs, base+strings.ReplaceAll(p[1], `\/`, "/"))
+		}
+		if len(imgs) > 0 {
+			return imgs
+		}
 	}
 
 	// images are inside picture objects
