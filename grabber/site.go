@@ -109,6 +109,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewKaynscan(g),
 		NewHijala(g),
 		NewMangaball(g),
+		NewMangataro(g),
 		NewPlainHTML(g),
 		NewInmanga(g),
 		NewMangadex(g),

@@ -61,6 +61,7 @@ Supported sites
 - [mangaread.org](https://www.mangaread.org)
 - [manhuaplus.com](https://manhuaplus.com)
 - [mangasushi.org](https://mangasushi.org)
+- [mangataro.org](https://mangataro.org)
 - [manhuaus.com](https://manhuaus.com) \*
 - [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
 - [qimanga.com](https://qimanga.com)
