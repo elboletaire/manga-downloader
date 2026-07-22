@@ -189,6 +189,138 @@ func GetHTMLWithScroll(url, waitSelector string, scrollIterations int, scrollPau
 	return getHTML(url, "", timeout, pre)
 }
 
+// GetReaderHTML renders a chapter reader page for SPA sites whose reader
+// route is blocked by Cloudflare on direct navigation (confirmed via a 403
+// even after warming up cookies from the series page in the same browser
+// context) but reachable through the app's own client-side routing
+// (mkissa.to). It navigates to seriesURL, clicks tabSelector to reveal the
+// chapter list, clicks through paginationSelector buttons (if present) until
+// an element matching linkSelector appears, clicks it, then scrolls the page
+// repeatedly to force lazy-loaded reader images to resolve.
+//
+// Some of these readers auto-continue into the next chapter once the current
+// one is scrolled past (its pages get appended to the same DOM), so instead
+// of a fixed total, scrolling stops once the count of imgSelector elements
+// whose src contains urlSubstr (e.g. "/{mangaId}/{chapterNumber}/", unique to
+// the requested chapter) stays stable for two checks in a row, or after a
+// generous number of scrolls as a safety cap.
+func GetReaderHTML(seriesURL, tabSelector, paginationSelector, linkSelector, imgSelector, urlSubstr string, timeout time.Duration) (string, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if err := start(); err != nil {
+		return "", err
+	}
+
+	t := timeout
+	if t <= 0 {
+		t = visibleTimeout
+	}
+	ctx, cancel := context.WithTimeout(browserCtx, t)
+	defer cancel()
+
+	if NetLog != nil {
+		chromedp.ListenTarget(ctx, func(ev interface{}) {
+			if resp, ok := ev.(*network.EventResponseReceived); ok {
+				NetLog(resp.Response.URL, int(resp.Response.Status), resp.Response.MimeType)
+			}
+		})
+	}
+
+	if err := chromedp.Run(ctx,
+		chromedp.Navigate(seriesURL),
+		chromedp.WaitVisible("body", chromedp.ByQuery),
+		chromedp.Sleep(2*time.Second),
+		chromedp.Click(tabSelector, chromedp.ByQuery),
+		chromedp.Sleep(time.Second),
+	); err != nil {
+		return "", fmt.Errorf("opening chapter list: %w", err)
+	}
+
+	// click through pagination pages until the target chapter link shows up
+	linkExistsJS := fmt.Sprintf(`!!document.querySelector(%q)`, linkSelector)
+	for i := 0; i < 10; i++ {
+		var exists bool
+		if err := chromedp.Run(ctx, chromedp.Evaluate(linkExistsJS, &exists)); err != nil {
+			return "", err
+		}
+		if exists {
+			break
+		}
+		clickPageJS := fmt.Sprintf(
+			`(function(){var b=document.querySelectorAll(%q);if(b[%d]){b[%d].click();return true;}return false;})()`,
+			paginationSelector, i, i,
+		)
+		var clicked bool
+		if err := chromedp.Run(ctx, chromedp.Evaluate(clickPageJS, &clicked)); err != nil {
+			return "", err
+		}
+		if !clicked {
+			return "", fmt.Errorf("chapter link not found on the page (and no more pagination pages to try)")
+		}
+		if err := chromedp.Run(ctx, chromedp.Sleep(800*time.Millisecond)); err != nil {
+			return "", err
+		}
+	}
+
+	if err := chromedp.Run(ctx,
+		chromedp.Click(linkSelector, chromedp.ByQuery),
+		chromedp.Sleep(1500*time.Millisecond),
+	); err != nil {
+		return "", fmt.Errorf("opening chapter reader: %w", err)
+	}
+
+	matchedCountJS := fmt.Sprintf(
+		`Array.from(document.querySelectorAll(%q)).filter(function(el){return (el.getAttribute("src")||"").indexOf(%q) !== -1;}).length`,
+		imgSelector, urlSubstr,
+	)
+	prev, stable := -1, 0
+	// full-viewport scroll steps with a generous per-step settle (each page
+	// image needs to both scroll into view and finish its network fetch) and
+	// a 6-in-a-row stability requirement before declaring a plateau: shorter
+	// requirements false-positive on the natural lull while scrolling through
+	// the middle of an already-resolved (tall) page image
+	const maxScrolls = 200 // safety cap for very long chapters
+	for i := 0; i < maxScrolls; i++ {
+		var count int
+		if err := chromedp.Run(ctx, chromedp.Evaluate(matchedCountJS, &count)); err != nil {
+			return "", err
+		}
+		if count == prev && count > 0 {
+			stable++
+			if stable >= 6 {
+				break
+			}
+		} else {
+			stable = 0
+		}
+		prev = count
+		if err := chromedp.Run(ctx,
+			chromedp.Evaluate(`window.scrollBy(0, window.innerHeight)`, nil),
+			chromedp.Sleep(700*time.Millisecond),
+		); err != nil {
+			return "", err
+		}
+	}
+
+	var html string
+	if err := chromedp.Run(ctx,
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			node, err := dom.GetDocument().Do(ctx)
+			if err != nil {
+				return err
+			}
+			html, err = dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
+			return err
+		}),
+		chromedp.ActionFunc(harvestSession),
+	); err != nil {
+		return "", err
+	}
+
+	return html, nil
+}
+
 // getHTML is the shared implementation behind GetHTML and
 // GetHTMLWithLocalStorage: it renders url in a headless browser and, if the
 // wait selector times out (typically a cloudflare/JS challenge), transparently
