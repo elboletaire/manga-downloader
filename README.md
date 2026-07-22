@@ -81,6 +81,7 @@ Supported sites
 - [team-shadowi.com](https://www.team-shadowi.com)
 - [toongod.org](https://www.toongod.org) \*
 - [vortexscans.org](https://vortexscans.org)
+- [tritinia.org (Tritinia Scans)](https://tritinia.org)
 - [weebcentral.com](https://weebcentral.com)
 - [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
 
