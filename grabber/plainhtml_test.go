@@ -43,12 +43,14 @@ func TestParseChapterNumber(t *testing.T) {
 // TestFetchChaptersURLFallback covers mangahub.io-style rows where the
 // visible text has no "Chapter"/"Volume" keyword (just the manga name and
 // number, e.g. "One Piece 1187") but the reader link still contains
-// "chapter-<number>", which FetchChapters should parse as a fallback.
+// "chapter-<number>", which FetchChapters should parse as a fallback. It also
+// covers the <small> "2 weeks ago" relative-date noise mangahub nests inside
+// every chapter row, which must not leak into the parsed chapter title.
 func TestFetchChaptersURLFallback(t *testing.T) {
 	html := `<html><body><ul>
-		<li class="list-group-item"><a href="https://mangahub.io/chapter/one-piece_142/chapter-1188">#1188 - Chapter 1188: Wailing Void</a></li>
-		<li class="list-group-item"><a href="https://mangahub.io/chapter/one-piece_142/chapter-1187">#1187 - One Piece 1187</a></li>
-		<li class="list-group-item"><a href="https://mangahub.io/chapter/one-piece_142/chapter-1181">#1181 - Ch. 1181</a></li>
+		<li class="list-group-item"><a href="https://mangahub.io/chapter/one-piece_142/chapter-1188">#1188 - Chapter 1188: Wailing Void<small>2 weeks ago</small></a></li>
+		<li class="list-group-item"><a href="https://mangahub.io/chapter/one-piece_142/chapter-1187">#1187 - One Piece 1187<small>3 weeks ago</small></a></li>
+		<li class="list-group-item"><a href="https://mangahub.io/chapter/one-piece_142/chapter-1181">#1181 - Ch. 1181<small>04-23-2026</small></a></li>
 		<li class="list-group-item"><a href="https://mangahub.io/announcement">Site news</a></li>
 	</ul></body></html>`
 
@@ -74,6 +76,9 @@ func TestFetchChaptersURLFallback(t *testing.T) {
 		if got := c.GetNumber(); got != want[i] {
 			t.Errorf("chapter %d: got number %v, want %v", i, got, want[i])
 		}
+	}
+	if got := chapters[0].GetTitle(); strings.Contains(got, "ago") {
+		t.Errorf("chapter title %q leaked the <small> relative-date noise", got)
 	}
 }
 

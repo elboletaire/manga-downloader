@@ -109,15 +109,19 @@ func (m *PlainHTML) Test() (bool, error) {
 
 // Ttitle returns the manga title
 func (m PlainHTML) FetchTitle() (string, error) {
-	title := m.doc.Find(m.site.Title).Clone()
-	// strip noise commonly nested inside a site's title heading: <small>
-	// blocks of alternate-script/alternate-language titles (mangahub.io
-	// lists dozens of translations here, long enough to blow past the
-	// filesystem's filename length limit) and badge-like labels (e.g.
-	// mangahub's "Hot" tag).
-	title.Find("small, .manga-label").Remove()
+	return sanitizeTitle(textWithoutNoise(m.doc.Find(m.site.Title))), nil
+}
 
-	return sanitizeTitle(title.Text()), nil
+// textWithoutNoise returns a selection's text with common non-title noise
+// stripped out first: <small> blocks (mangahub.io nests both a huge list of
+// alternate-script/language titles in its <h1> — long enough to blow past
+// filesystem filename limits — and a relative/absolute chapter date, e.g.
+// "2 weeks ago", in every chapter row) and badge-like labels (e.g.
+// mangahub's "Hot" tag, class "manga-label").
+func textWithoutNoise(s *goquery.Selection) string {
+	clone := s.Clone()
+	clone.Find("small, .manga-label").Remove()
+	return clone.Text()
 }
 
 // chapterNumberRe matches a chapter number in a chapter title, accepting
@@ -162,9 +166,9 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		// an empty Chapter/ChapterTitle selector means the row itself carries
 		// the text (i.e. mangapill, where each chapter row is a plain <a>
 		// with no dedicated child element for the chapter number)
-		chapterText := s.Text()
+		chapterText := textWithoutNoise(s)
 		if m.site.Chapter != "" {
-			chapterText = s.Find(m.site.Chapter).Text()
+			chapterText = textWithoutNoise(s.Find(m.site.Chapter))
 		}
 
 		u := s.AttrOr("href", "")
@@ -192,7 +196,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		}
 		title := chapterText
 		if m.site.ChapterTitle != "" {
-			title = s.Find(m.site.ChapterTitle).Text()
+			title = textWithoutNoise(s.Find(m.site.ChapterTitle))
 		}
 		chapter := &PlainHTMLChapter{
 			Chapter{

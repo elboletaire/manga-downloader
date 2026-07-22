@@ -5,6 +5,7 @@ package grabber
 import (
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/browser"
@@ -23,6 +24,12 @@ type BrowserSiteSelector struct {
 	ChaptersWait string
 	// ImageWait is the CSS selector to wait for on the reader page
 	ImageWait string
+	// Settle is an extra wait applied after ChaptersWait/ImageWait first
+	// match, for pages that keep appending content afterwards (e.g.
+	// mangahub.io's reader, which progressively appends more page <img>
+	// elements to the DOM after the first one shows up). Zero means no
+	// extra wait, matching every other site's immediate-render behavior.
+	Settle time.Duration
 }
 
 // browserSelectors is the list of sites that need browser rendering. Their
@@ -107,6 +114,10 @@ var browserSelectors = []BrowserSiteSelector{
 		Domains:      []string{"mangahub.io"},
 		ChaptersWait: "li.list-group-item",
 		ImageWait:    "img.PB0mN",
+		// the reader appends page <img> tags progressively; without this,
+		// GetHTML returns as soon as the first one shows up and later
+		// pages are missing (a 16-page chapter yielded only 6 without it)
+		Settle: 5 * time.Second,
 	},
 }
 
@@ -152,6 +163,7 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 	}
 	m.selector = selector
 	m.site = selector.SiteSelector
+	browser.SetSettle(m.selector.Settle)
 
 	color.Blue("this site needs a real browser, launching Chrome (may take a few seconds)...")
 	// GetHTML tries headless first and, if the page is behind a challenge,
