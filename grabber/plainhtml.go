@@ -87,6 +87,20 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// madarascans.com/.org: mangareader/themesia theme; the reader page
+		// already carries all its images in a ts_reader.run(...) blob (see
+		// getPlainHTMLImageURL) so the Image selector is only a fallback.
+		// Recent chapters are paywalled ("locked" class, no ts_reader blob in
+		// the plain HTML) and simply won't parse any pages; only free
+		// chapters are downloadable.
+		{
+			Title:        "h1",
+			Rows:         ".ch-item",
+			Chapter:      ".ch-num",
+			ChapterTitle: ".ch-num",
+			Link:         "a.ch-main-anchor",
+			Image:        "#readerarea img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
