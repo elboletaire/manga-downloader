@@ -87,6 +87,18 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// manhuaplus.com: Madara wordpress theme, but (unlike the
+		// toongod/dragontea/manhuaus group in plainhtmlbrowser.go) it isn't
+		// cloudflare-walled and the full chapter list is already in the
+		// static HTML (no ajax pagination), so it works over plain HTTP.
+		{
+			Title:        "h1",
+			Rows:         "li.wp-manga-chapter",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        "div.reading-content img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
