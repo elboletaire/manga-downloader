@@ -3,6 +3,7 @@
 package grabber
 
 import (
+	"encoding/json"
 	"regexp"
 	"strconv"
 	"strings"
@@ -121,6 +122,18 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: "span",
 			Link:         "a",
 			Image:        "[data-image-data] img",
+		},
+		// dynasty-scans.com: chapters are <a class="name"> rows inside a
+		// <dl class="chapter-list">; volume headers are sibling <dt>s so a
+		// plain descendant selector already skips them. The row is the link
+		// itself (empty Chapter/ChapterTitle/Link, like mangapill above).
+		// Reader pages only place the first page's <img> in the DOM; the
+		// rest come from a `var pages = [...]` JSON blob handled in
+		// getPlainHTMLImageURL, so Image here is just a fallback.
+		{
+			Title: ".tag-title b",
+			Rows:  "dl.chapter-list dd a.name",
+			Image: "#reader img",
 		},
 	}
 
@@ -313,6 +326,25 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 			imgs := []string{}
 			for _, u := range urls {
 				imgs = append(imgs, u[1])
+			}
+			return imgs
+		}
+	}
+
+	// dynasty-scans.com (Dynasty Reader) embeds the full, ordered page list
+	// as a JSON array in a `var pages = [...]` blob; only the first page's
+	// <img> actually exists in the DOM, the rest are swapped in by JS on
+	// navigation, so the Image selector alone would only find one page.
+	re = regexp.MustCompile(`(?s)var pages\s*=\s*(\[.*?\]);`)
+	matches = re.FindStringSubmatch(html)
+	if len(matches) > 1 {
+		var pages []struct {
+			Image string `json:"image"`
+		}
+		if err := json.Unmarshal([]byte(matches[1]), &pages); err == nil {
+			imgs := []string{}
+			for _, p := range pages {
+				imgs = append(imgs, p.Image)
 			}
 			return imgs
 		}

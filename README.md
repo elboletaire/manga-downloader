@@ -19,6 +19,7 @@ Supported sites
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
 - [demonicscans.org (MangaDemon / Demonic Scans)](https://demonicscans.org)
 - [dragontea.ink](https://dragontea.ink) \*
+- [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
 - [inmanga.com](https://inmanga.com)
 - [kappabeast.com](https://kappabeast.com) \*
