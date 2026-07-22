@@ -83,6 +83,8 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 	sites := []Site{
 		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Guya match
 		// by domain (no fetch), so they go first
+		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Atsumaru
+		// match by domain (no fetch), so they go first
 		NewPlainHTMLBrowser(g),
 		NewWeebCentral(g),
 		NewLeerCapitulo(g),
@@ -90,6 +92,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewMgeko(g),
 		NewMangapark(g),
 		NewGuya(g),
+		NewAtsumaru(g),
 		NewPlainHTML(g),
 		NewInmanga(g),
 		NewMangadex(g),

@@ -93,6 +93,7 @@ func TestExtFromContent(t *testing.T) {
 		{append([]byte{0xff, 0xd8, 0xff}, []byte("jpeg-data")...), "jpg"},
 		{append([]byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n'}, []byte("png-data")...), "png"},
 		{[]byte("GIF89a-gif-data"), "gif"},
+		{append([]byte{0x00, 0x00, 0x00, 0x1c, 'f', 't', 'y', 'p', 'a', 'v', 'i', 'f'}, []byte("avif-data")...), "avif"},
 		{[]byte("not a recognisable image"), "jpg"}, // unrecognised content falls back to jpg
 	}
 

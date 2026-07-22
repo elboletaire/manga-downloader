@@ -44,6 +44,13 @@ func SaveRaw(dirname string, files []File, progress func(page, progress int)) er
 // so page files can be browsed directly with real extensions. Falls back
 // to "jpg" for anything not recognised.
 func extFromContent(data []byte) string {
+	if isAvif(data) {
+		// net/http.DetectContentType doesn't recognise AVIF (as of Go
+		// 1.19), so it's sniffed manually from the ISOBMFF "ftyp" box
+		// (atsu.moe serves its page images as AVIF)
+		return "avif"
+	}
+
 	switch http.DetectContentType(data) {
 	case "image/png":
 		return "png"
@@ -54,4 +61,15 @@ func extFromContent(data []byte) string {
 	default:
 		return "jpg"
 	}
+}
+
+// isAvif reports whether data looks like an ISOBMFF file with an "avif" or
+// "avis" (image sequence) brand, i.e. bytes 4-7 are "ftyp" and bytes 8-11
+// are the brand.
+func isAvif(data []byte) bool {
+	if len(data) < 12 || string(data[4:8]) != "ftyp" {
+		return false
+	}
+	brand := string(data[8:12])
+	return brand == "avif" || brand == "avis"
 }
