@@ -87,6 +87,17 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// mistscans.com (former Arven Scans members): each chapter row is the
+		// <a> itself (no dedicated Link), the number lives in a child span
+		// (see FetchChapters/Chapter), and reader images are lazy-loaded
+		// client-side from a `uid` attribute (see getPlainHTMLImageURL)
+		{
+			Title:        "h1",
+			Rows:         "#chapters a",
+			Chapter:      ".text-sm.truncate",
+			ChapterTitle: ".text-sm.truncate",
+			Image:        "#pages img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -123,6 +134,12 @@ var chapterNumberRe = regexp.MustCompile(`(?i)\b(?:chapter|chapitre|cap[ií]tulo
 // "Volumen 3"), used as a fallback for sites that list volumes instead of
 // chapters (e.g. sushiscan).
 var volumeNumberRe = regexp.MustCompile(`(?i)\bvol(?:ume|umen)?\.?\s*(\d+\.?\d*)`)
+
+// uidTemplateRe extracts the URL prefix out of a JS template literal that
+// builds an image URL from a `uid` attribute, e.g.
+// `` `https://cdn.example.org/uploads/${uid}` `` captures
+// "https://cdn.example.org/uploads/" (see mistscans.com).
+var uidTemplateRe = regexp.MustCompile("`([^`]*)\\$\\{uid\\}")
 
 // parseChapterNumber extracts the chapter number from a chapter title, falling
 // back to a volume number. Returns false if no number could be found (these
@@ -260,6 +277,27 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 			imgs = append(imgs, strings.ReplaceAll(u[1], `\/`, `/`))
 		}
 		return imgs
+	}
+
+	// some sites (e.g. mistscans.com) lazy-load reader images client-side:
+	// the <img> only carries a placeholder `src` plus a `uid` attribute, and
+	// a page script builds the real URL from a JS template literal like
+	// `https://cdn.example.org/uploads/${uid}`. Extract that literal's
+	// prefix (everything before "${uid}") straight from the page's own
+	// script and use it to build absolute URLs, so this isn't hardcoded to
+	// one CDN domain.
+	if match := uidTemplateRe.FindStringSubmatch(html); len(match) > 1 {
+		prefix := match[1]
+		uidImgs := doc.Find(selector)
+		imgs := []string{}
+		uidImgs.Each(func(i int, s *goquery.Selection) {
+			if uid := s.AttrOr("uid", ""); uid != "" {
+				imgs = append(imgs, prefix+uid)
+			}
+		})
+		if len(imgs) > 0 {
+			return imgs
+		}
 	}
 
 	// images are inside picture objects

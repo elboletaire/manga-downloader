@@ -95,7 +95,7 @@ grabber/natomanga:
 grabber/manhuaus:
 	go run . --browser-visible https://manhuaus.com/manga/solo-leveling-ragnarok/ 68
 
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/mistscans
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -108,3 +108,8 @@ grabber/zonatmo:
 
 grabber/mangapill:
 	go run . https://mangapill.com/manga/2/one-piece 1188
+
+# note: chapters get locked behind a coin/early-access paywall right after
+# release; pick a chapter a few behind the latest one to keep it free
+grabber/mistscans:
+	go run . https://mistscans.com/series/i-was-thrown-into-an-unfamiliar-manga/ 33

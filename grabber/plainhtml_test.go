@@ -86,6 +86,15 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			html:     `<html><body><div class="reading-content"><img src="data:image/gif;base64,abc" data-src="https://a.co/1.jpg"/></div></body></html>`,
 			want:     []string{"https://a.co/1.jpg"},
 		},
+		{
+			name:     "uid attribute built from a JS template literal (mistscans)",
+			selector: "#pages img",
+			html: `<html><body><div id="pages">` +
+				`<img src="/placeholder.svg" uid="1.avif" class="lazy"/>` +
+				`<img src="/placeholder.svg" uid="2.avif" class="lazy"/>` +
+				`</div><script>let realUrl = ` + "`https://cdn.example.org/uploads/${uid}`" + `;</script></body></html>`,
+			want: []string{"https://cdn.example.org/uploads/1.avif", "https://cdn.example.org/uploads/2.avif"},
+		},
 	}
 
 	for _, c := range cases {
