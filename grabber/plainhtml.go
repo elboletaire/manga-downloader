@@ -109,7 +109,13 @@ func (m *PlainHTML) Test() (bool, error) {
 
 // Ttitle returns the manga title
 func (m PlainHTML) FetchTitle() (string, error) {
-	title := m.doc.Find(m.site.Title)
+	title := m.doc.Find(m.site.Title).Clone()
+	// strip noise commonly nested inside a site's title heading: <small>
+	// blocks of alternate-script/alternate-language titles (mangahub.io
+	// lists dozens of translations here, long enough to blow past the
+	// filesystem's filename length limit) and badge-like labels (e.g.
+	// mangahub's "Hot" tag).
+	title.Find("small, .manga-label").Remove()
 
 	return sanitizeTitle(title.Text()), nil
 }
@@ -123,6 +129,13 @@ var chapterNumberRe = regexp.MustCompile(`(?i)\b(?:chapter|chapitre|cap[ií]tulo
 // "Volumen 3"), used as a fallback for sites that list volumes instead of
 // chapters (e.g. sushiscan).
 var volumeNumberRe = regexp.MustCompile(`(?i)\bvol(?:ume|umen)?\.?\s*(\d+\.?\d*)`)
+
+// urlChapterNumberRe is a last-resort fallback for rows whose visible text
+// carries no recognizable chapter/volume keyword (e.g. mangahub.io, whose
+// latest-chapter row often just repeats the manga name and number, like
+// "One Piece 1187" with no "Chapter" word) but whose reader URL always
+// contains "chapter-<number>".
+var urlChapterNumberRe = regexp.MustCompile(`(?i)chapter[-_](\d+\.?\d*)`)
 
 // parseChapterNumber extracts the chapter number from a chapter title, falling
 // back to a volume number. Returns false if no number could be found (these
@@ -153,15 +166,27 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		if m.site.Chapter != "" {
 			chapterText = s.Find(m.site.Chapter).Text()
 		}
-		number, ok := parseChapterNumber(chapterText)
-		if !ok {
-			return
-		}
 
 		u := s.AttrOr("href", "")
 		if m.site.Link != "" {
 			u = s.Find(m.site.Link).AttrOr("href", "")
 		}
+
+		number, ok := parseChapterNumber(chapterText)
+		if !ok {
+			// fall back to extracting the number from the reader URL itself
+			match := urlChapterNumberRe.FindStringSubmatch(u)
+			if len(match) > 0 {
+				if n, err := strconv.ParseFloat(match[1], 64); err == nil {
+					number = n
+					ok = true
+				}
+			}
+		}
+		if !ok {
+			return
+		}
+
 		if !strings.HasPrefix(u, "http") {
 			u = m.BaseUrl() + u
 		}

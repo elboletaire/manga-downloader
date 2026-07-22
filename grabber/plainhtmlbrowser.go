@@ -90,6 +90,24 @@ var browserSelectors = []BrowserSiteSelector{
 		ChaptersWait: ".chapter-list .row",
 		ImageWait:    ".container-chapter-reader img",
 	},
+	// mangahub.io: behind a cloudflare managed challenge that a visible
+	// browser clears in a few seconds; images are served from a plain CDN
+	// (imgx.mghcdn.com) and download fine via plain HTTP with just a
+	// referer, no cookies needed. Chapter rows use CSS-module-hashed class
+	// names (subject to change on redeploys), so we key off the stable
+	// Bootstrap "list-group-item" class instead and pull the chapter number
+	// straight out of the whole row's text (it contains "#1188").
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1",
+			Rows:         "li.list-group-item",
+			Link:         `a[href*="/chapter/"]`,
+			Image:        "img.PB0mN",
+		},
+		Domains:      []string{"mangahub.io"},
+		ChaptersWait: "li.list-group-item",
+		ImageWait:    "img.PB0mN",
+	},
 }
 
 // PlainHTMLBrowser is the browser-rendered variant of PlainHTML: pages are

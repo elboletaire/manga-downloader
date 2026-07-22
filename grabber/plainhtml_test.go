@@ -40,6 +40,43 @@ func TestParseChapterNumber(t *testing.T) {
 	}
 }
 
+// TestFetchChaptersURLFallback covers mangahub.io-style rows where the
+// visible text has no "Chapter"/"Volume" keyword (just the manga name and
+// number, e.g. "One Piece 1187") but the reader link still contains
+// "chapter-<number>", which FetchChapters should parse as a fallback.
+func TestFetchChaptersURLFallback(t *testing.T) {
+	html := `<html><body><ul>
+		<li class="list-group-item"><a href="https://mangahub.io/chapter/one-piece_142/chapter-1188">#1188 - Chapter 1188: Wailing Void</a></li>
+		<li class="list-group-item"><a href="https://mangahub.io/chapter/one-piece_142/chapter-1187">#1187 - One Piece 1187</a></li>
+		<li class="list-group-item"><a href="https://mangahub.io/chapter/one-piece_142/chapter-1181">#1181 - Ch. 1181</a></li>
+		<li class="list-group-item"><a href="https://mangahub.io/announcement">Site news</a></li>
+	</ul></body></html>`
+
+	doc := docFromHTML(t, html)
+	m := PlainHTML{
+		Grabber: &Grabber{URL: "https://mangahub.io/manga/one-piece_142"},
+		doc:     doc,
+		rows:    doc.Find("li.list-group-item"),
+		site: SiteSelector{
+			Link: "a",
+		},
+	}
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	if len(chapters) != 3 {
+		t.Fatalf("got %d chapters, want 3 (announcement row should be skipped)", len(chapters))
+	}
+	want := []float64{1188, 1187, 1181}
+	for i, c := range chapters {
+		if got := c.GetNumber(); got != want[i] {
+			t.Errorf("chapter %d: got number %v, want %v", i, got, want[i])
+		}
+	}
+}
+
 func docFromHTML(t *testing.T, html string) *goquery.Document {
 	t.Helper()
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
@@ -95,6 +132,26 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 				t.Errorf("getPlainHTMLImageURL() = %v, want %v", got, c.want)
 			}
 		})
+	}
+}
+
+// TestFetchTitleStripsNoise covers mangahub.io-style h1 headings that nest a
+// "Hot" badge and a huge <small> block of alternate-script/language titles,
+// which must not end up in the fetched title (it would blow past filesystem
+// filename length limits).
+func TestFetchTitleStripsNoise(t *testing.T) {
+	html := `<html><body><h1 class="_3xnDj">One Piece<a href="/popular" class="label label-hot manga-label">Hot</a><small>ワンピース; Ван Піс</small></h1></body></html>`
+	m := PlainHTML{
+		doc:  docFromHTML(t, html),
+		site: SiteSelector{Title: "h1"},
+	}
+
+	got, err := m.FetchTitle()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "One Piece" {
+		t.Errorf("FetchTitle() = %q, want %q", got, "One Piece")
 	}
 }
 
