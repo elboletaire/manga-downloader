@@ -79,6 +79,7 @@ Supported sites
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [templetoons.com (Temple Scan)](https://templetoons.com)
 - [team-shadowi.com](https://www.team-shadowi.com)
+- [en-thunderscans.com (Thunderscans)](https://en-thunderscans.com)
 - [toongod.org](https://www.toongod.org) \*
 - [vortexscans.org](https://vortexscans.org)
 - [tritinia.org (Tritinia Scans)](https://tritinia.org)
