@@ -21,6 +21,7 @@ Supported sites
 - [dragontea.ink](https://dragontea.ink) \*
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
+- [guya.moe (Guya, Kaguya-sama)](https://guya.moe)
 - [inmanga.com](https://inmanga.com)
 - [kappabeast.com](https://kappabeast.com) \*
 - [leercapitulo.co](https://www.leercapitulo.co) \*
