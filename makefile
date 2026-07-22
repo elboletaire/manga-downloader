@@ -33,7 +33,7 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/mangalivre grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -57,6 +57,13 @@ grabber/qimanga:
 
 grabber/tcb:
 	go run . https://lhtranslation.net/manga/gaikotsu-kishi-sama-tadaima-isekai-e-o-dekake-chuu/ 71
+
+# mangalivre.tv/mangalivre.net shut down (redirects to a "support official
+# sources" closure page); mangalivre.to is the actively-updated successor.
+# Its markup is a customized Madara theme, matched by the existing Tcb
+# grabber with zero new code.
+grabber/mangalivre:
+	go run . https://mangalivre.to/manga/chainsaw-man-pt-br/ 232
 
 grabber/flamecomics:
 	go run . https://flamecomics.xyz/series/154 104
