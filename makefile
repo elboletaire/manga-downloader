@@ -33,40 +33,54 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/mgeko grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/mangapark grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/guya grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/mangahere grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/fanfox grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/atsumaru grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/mangasushi grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/aurorascans grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/vortexscans grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/guya grabber/danke grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/bigsolo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/bluesolo grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/gdscans grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/fmteam grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/genztoon grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/jestful grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/kaynscan grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/hijala grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/luascans grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/mangaball grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/mangalivre grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/mangataro grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/mangitto grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/mangalib grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/mangadenizi grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/projectsuki grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/roliascan grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/teamshadowi grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/tritinia grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/taiyo grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/stonescape grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/utoon grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/comix grabber/html
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/mkissa grabber/html
+# one dependency per line, alphabetically sorted, so parallel site-support
+# branches never edit the same line
+grabber: \
+	grabber/atsumaru \
+	grabber/aurorascans \
+	grabber/bigsolo \
+	grabber/bluesolo \
+	grabber/comix \
+	grabber/danke \
+	grabber/fanfox \
+	grabber/flamecomics \
+	grabber/fmteam \
+	grabber/gdscans \
+	grabber/genztoon \
+	grabber/guya \
+	grabber/hijala \
+	grabber/inmanga \
+	grabber/jestful \
+	grabber/kaynscan \
+	grabber/leercapitulo \
+	grabber/luascans \
+	grabber/mangaball \
+	grabber/mangabats \
+	grabber/mangadenizi \
+	grabber/mangadex \
+	grabber/mangafire \
+	grabber/mangahere \
+	grabber/mangak \
+	grabber/mangalib \
+	grabber/mangalivre \
+	grabber/mangapark \
+	grabber/mangasushi \
+	grabber/mangataro \
+	grabber/mangitto \
+	grabber/mgeko \
+	grabber/mkissa \
+	grabber/projectsuki \
+	grabber/qimanga \
+	grabber/roliascan \
+	grabber/stonescape \
+	grabber/taiyo \
+	grabber/tcb \
+	grabber/teamshadowi \
+	grabber/tritinia \
+	grabber/utoon \
+	grabber/vortexscans \
+	grabber/weebcentral \
+	grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -211,14 +225,22 @@ grabber/mkissa:
 # sites needing a real browser: not part of the `grabber` target since they
 # open a Chrome window and may require solving an interactive challenge
 # (cloudflare). Run them one by one and solve the challenge if prompted.
-grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus grabber/toonily
+grabber/browser: \
+	grabber/dragontea \
+	grabber/drakecomic \
+	grabber/kappabeast \
+	grabber/mangahub \
+	grabber/mangakakalot \
+	grabber/manhuatop \
+	grabber/manhuaus \
+	grabber/natomanga \
+	grabber/setsuscans \
+	grabber/sushiscan \
+	grabber/toongod \
+	grabber/toonily
 
 grabber/toonily:
 	go run . --browser-visible https://toonily.com/serie/the-beginning-after-the-end-ea2130e6/ 244
-grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus grabber/mangahub
-grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus grabber/manhuatop
-grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus grabber/drakecomic
-grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus grabber/setsuscans
 
 grabber/toongod:
 	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
@@ -241,28 +263,6 @@ grabber/natomanga:
 grabber/manhuaus:
 	go run . --browser-visible https://manhuaus.com/manga/solo-leveling-ragnarok/ 68
 
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/demonicscans grabber/mangakatana
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/rawkuma
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/dynastyscans
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/mangaread
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/manhuaplus
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/silentquill
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/hivetoons
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/templetoons
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/deathtollscans
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/furyosociety
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/elftoon
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/asmotoon
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/madarascans
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/lagoonscans
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/rokaricomics
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/ritharscans
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/sanascans
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/thunderscans
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/violetscans
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/witchscans
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/writerscans
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/mistscans
 grabber/mangahub:
 	go run . --browser-visible https://mangahub.io/manga/one-piece_142 1188
 grabber/manhuatop:
@@ -272,7 +272,34 @@ grabber/drakecomic:
 grabber/setsuscans:
 	go run . --browser-visible https://setsuscans.com/manga/a-story-about-accidentally-finding-out-a-girls-secret-at-school/ 13
 
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill
+grabber/html: \
+	grabber/asmotoon \
+	grabber/asura \
+	grabber/deathtollscans \
+	grabber/demonicscans \
+	grabber/dynastyscans \
+	grabber/elftoon \
+	grabber/furyosociety \
+	grabber/hivetoons \
+	grabber/lagoonscans \
+	grabber/madarascans \
+	grabber/mangakatana \
+	grabber/mangapill \
+	grabber/mangaread \
+	grabber/manhuaplus \
+	grabber/mistscans \
+	grabber/rawkuma \
+	grabber/ritharscans \
+	grabber/rokaricomics \
+	grabber/sanascans \
+	grabber/silentquill \
+	grabber/tcbscans \
+	grabber/templetoons \
+	grabber/thunderscans \
+	grabber/violetscans \
+	grabber/witchscans \
+	grabber/writerscans \
+	grabber/zonatmo
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
