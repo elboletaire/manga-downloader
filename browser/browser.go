@@ -168,6 +168,27 @@ func GetHTMLWithLocalStorage(url, key, value, waitSelector string, timeout time.
 	return getHTML(url, waitSelector, timeout, pre)
 }
 
+// GetHTMLWithScroll is like GetHTML, but after waitSelector matches it scrolls
+// the page down in increments (scrollIterations times, pausing scrollPause
+// between each), then takes the final HTML snapshot. Some readers virtualize
+// or lazy-mount their page images via an IntersectionObserver, so a plain
+// GetHTML only captures the handful of pages near the top; scrolling lets the
+// site's own JS progressively mount the rest before the snapshot is taken.
+func GetHTMLWithScroll(url, waitSelector string, scrollIterations int, scrollPause time.Duration, timeout time.Duration) (string, error) {
+	pre := []chromedp.Action{}
+	if waitSelector != "" {
+		pre = append(pre, chromedp.WaitVisible(waitSelector, chromedp.ByQuery))
+	}
+	for i := 1; i <= scrollIterations; i++ {
+		frac := float64(i) / float64(scrollIterations)
+		pre = append(pre,
+			chromedp.Evaluate(fmt.Sprintf(`window.scrollTo(0, document.body.scrollHeight * %f)`, frac), nil),
+			chromedp.Sleep(scrollPause),
+		)
+	}
+	return getHTML(url, "", timeout, pre)
+}
+
 // getHTML is the shared implementation behind GetHTML and
 // GetHTMLWithLocalStorage: it renders url in a headless browser and, if the
 // wait selector times out (typically a cloudflare/JS challenge), transparently

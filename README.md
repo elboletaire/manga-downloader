@@ -25,6 +25,7 @@ Supported sites
 - [bigsolo.org](https://bigsolo.org)
 - [deathtollscans.net](https://reader.deathtollscans.net)
 - [bluesolo.org (Blue Solo, French scantrad)](https://bluesolo.org)
+- [comix.to](https://comix.to) \*
 - [dragontea.ink](https://dragontea.ink) \*
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
 - [fanfox.net (Manga Fox)](https://fanfox.net)

@@ -65,6 +65,7 @@ grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire gr
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/taiyo grabber/html
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/stonescape grabber/html
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/utoon grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/comix grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -195,6 +196,11 @@ grabber/stonescape:
 	go run . https://stonescape.xyz/series/only-see-you 21
 grabber/utoon:
 	go run . https://www.utoon.us/en/manga/gachiakuta.html 171
+# uses a real (headless) browser: the chapter list/reader JSON API responses
+# are AES-encrypted client-side and the reader lazily mounts pages on scroll;
+# no cloudflare here, no --browser-visible needed
+grabber/comix:
+	go run . https://comix.to/title/e1wlg-the-scandal-maker-has-returned 24
 
 # sites needing a real browser: not part of the `grabber` target since they
 # open a Chrome window and may require solving an interactive challenge
