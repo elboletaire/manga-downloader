@@ -47,6 +47,7 @@ grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire gr
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/bluesolo grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/gdscans grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/fmteam grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/genztoon grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -132,6 +133,10 @@ grabber/bigsolo:
 	go run . https://bigsolo.org/wind-breaker 222
 grabber/fmteam:
 	go run . https://fmteam.fr/comics/batuque 157
+# note: the newest 1-2 chapters can be "early access" (locked behind coins),
+# pick a chapter a bit behind the tip if this starts 404ing on pages
+grabber/genztoon:
+	go run . https://genzupdates.com/series/the-return-of-the-legendary-genius-ranker/ 33
 
 # sites needing a real browser: not part of the `grabber` target since they
 # open a Chrome window and may require solving an interactive challenge

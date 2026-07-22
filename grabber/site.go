@@ -89,6 +89,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		// Vortexscans match by domain (no fetch), so they go first
 		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Bigsolo
 		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Fmteam
+		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and GenzToon
 		// match by domain (no fetch), so they go first
 		NewPlainHTMLBrowser(g),
 		NewWeebCentral(g),
@@ -101,6 +102,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewVortexscans(g),
 		NewBigsolo(g),
 		NewFmteam(g),
+		NewGenzToon(g),
 		NewPlainHTML(g),
 		NewInmanga(g),
 		NewMangadex(g),

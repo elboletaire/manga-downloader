@@ -35,6 +35,7 @@ Supported sites
 - [furyosociety.com](https://furyosociety.com)
 - [gdscans.com (GalaxyDegenScans)](https://gdscans.com)
 - [fmteam.fr](https://fmteam.fr)
+- [genzupdates.com (Genz Toon)](https://genzupdates.com)
 - [inmanga.com](https://inmanga.com)
 - [kappabeast.com](https://kappabeast.com) \*
 - [leercapitulo.co](https://www.leercapitulo.co) \*
