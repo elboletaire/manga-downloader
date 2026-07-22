@@ -156,7 +156,16 @@ func (m *PlainHTML) Test() (bool, error) {
 		// as sushiscan's ts_reader-based theme): reader images come from a
 		// ts_reader.run(...) blob, already handled by getPlainHTMLImageURL.
 		{
-			Title:        "h1",
+			Title: "h1",
+		},
+		// rokaricomics.com: mangastream/themesia theme (same markup as the
+		// cloudflare-gated sushiscan.net in plainhtmlbrowser.go), but this
+		// domain answers plain HTTP with no challenge. Reader images come
+		// from the embedded ts_reader javascript call. Note: the most recent
+		// chapter(s) of a series may be locked behind a coin paywall (no
+		// images in the HTML); test with an older, unlocked chapter.
+		{
+			Title:        "h1.entry-title",
 			Rows:         "#chapterlist li",
 			Chapter:      ".chapternum",
 			ChapterTitle: ".chapternum",

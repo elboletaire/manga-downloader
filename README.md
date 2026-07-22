@@ -71,6 +71,7 @@ Supported sites
 - [qimanga.com](https://qimanga.com)
 - [rawkuma.net](https://rawkuma.net)
 - [silentquill.net (Armageddon Scanlation)](https://www.silentquill.net)
+- [rokaricomics.com](https://rokaricomics.com)
 - [sushiscan.net](https://sushiscan.net) \*
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [templetoons.com (Temple Scan)](https://templetoons.com)
