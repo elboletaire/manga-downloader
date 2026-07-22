@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 // Params is an interface for request parameters
@@ -20,6 +21,10 @@ type RequestParams struct {
 	URL     string
 	Referer string
 	Origin  string
+	// Body is an optional url-encoded form body; when set, it's sent as
+	// application/x-www-form-urlencoded (used by wp-admin/admin-ajax.php
+	// style endpoints, i.e. utoon.us)
+	Body string
 }
 
 // GetURL returns the request URL
@@ -43,7 +48,15 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 	}
 	client := &http.Client{Transport: tr}
 
-	req, _ := http.NewRequest(t, params.GetURL(), nil)
+	var reqBody io.Reader
+	if b := params.(RequestParams).Body; b != "" {
+		reqBody = strings.NewReader(b)
+	}
+
+	req, _ := http.NewRequest(t, params.GetURL(), reqBody)
+	if params.(RequestParams).Body != "" {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
 	req.Header.Set("User-Agent", sessionUserAgent(userAgent))
 	if cookies := sessionCookies(req.URL.Hostname()); cookies != "" {
 		req.Header.Set("Cookie", cookies)

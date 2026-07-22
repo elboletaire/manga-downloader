@@ -35,6 +35,7 @@ Supported sites
 - [sushiscan.net](https://sushiscan.net) \*
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [toongod.org](https://www.toongod.org) \*
+- [utoon.us (UToon, home of reset-scans' content)](https://www.utoon.us)
 - [weebcentral.com](https://weebcentral.com)
 - [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
 
