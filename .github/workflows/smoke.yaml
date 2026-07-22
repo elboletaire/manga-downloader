@@ -30,7 +30,6 @@ jobs:
           - mgeko
           - mangapark
           - mangaball
-          - mangalib
           - mangadenizi
           - qimanga
           - aurorascans
@@ -41,11 +40,9 @@ jobs:
           - guya
           - danke
           - atsumaru
-          - bigsolo
           - bluesolo
           - fmteam
           - jestful
-          - luascans
           - mangitto
           - projectsuki
           - roliascan
@@ -74,8 +71,6 @@ jobs:
           - dynastyscans
           - mangaread
           - manhuaplus
-          - silentquill
-          - hivetoons
           - templetoons
           - deathtollscans
           - furyosociety
@@ -91,6 +86,15 @@ jobs:
           - witchscans
           - writerscans
           - mistscans
+          # These sites block GitHub's datacenter IPs (403) but work fine
+          # from residential connections — verified locally 2026-07-23.
+          # Kept out of the matrix rather than hammering sites that don't
+          # want automated traffic; smoke-test them locally instead.
+          # - mangalib     # 403 on series page
+          # - silentquill  # 403 on series page
+          # - bigsolo      # 403 on series page
+          # - luascans     # 403 on series page
+          # - hivetoons    # chapter list loads, image CDN 403s every page
     steps:
       - uses: actions/checkout@v4
 
