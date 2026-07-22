@@ -29,6 +29,7 @@ Supported sites
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
 - [fanfox.net (Manga Fox)](https://fanfox.net)
 - [elftoon.com](https://elftoon.com)
+- [en-hijala.com (Hijala Translations)](https://en-hijala.com)
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
 - [guya.moe (Guya, Kaguya-sama)](https://guya.moe)
 - [hivetoons.org (HiveToons, VoidScans)](https://hivetoons.org)
