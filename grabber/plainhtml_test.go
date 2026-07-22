@@ -86,6 +86,12 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			html:     `<html><body><div class="reading-content"><img src="data:image/gif;base64,abc" data-src="https://a.co/1.jpg"/></div></body></html>`,
 			want:     []string{"https://a.co/1.jpg"},
 		},
+		{
+			name:     "uid attribute takes priority over an unswapped lazy-load placeholder (asmotoon)",
+			selector: "img.myImage",
+			html:     `<html><body><img src="/assets/images/placeholder.svg" uid="abc123" class="myImage"/></body></html>`,
+			want:     []string{"https://cdn.meowing.org/uploads/abc123"},
+		},
 	}
 
 	for _, c := range cases {
