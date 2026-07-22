@@ -87,6 +87,17 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// lagoonscans.com (Themesia's "MangaReader" WP theme, same publisher
+		// as sushiscan's ts_reader-based theme): reader images come from a
+		// ts_reader.run(...) blob, already handled by getPlainHTMLImageURL.
+		{
+			Title:        "h1",
+			Rows:         "#chapterlist li",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a",
+			Image:        "#readerarea img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
