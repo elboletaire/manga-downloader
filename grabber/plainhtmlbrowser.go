@@ -44,6 +44,24 @@ var browserSelectors = []BrowserSiteSelector{
 		ChaptersWait: "li.wp-manga-chapter",
 		ImageWait:    "div.reading-content",
 	},
+	// setsuscans.com: Madara wordpress theme behind a cloudflare challenge
+	// (chapter list loads via an admin-ajax call the browser must run, so a
+	// plain-HTTP Tcb/PlainHTML Test() never even sees it). Reader images are
+	// lazy-loaded (data-src) but sit on the same domain and download fine via
+	// plain HTTP once the browser has cleared the challenge once.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1",
+			Rows:         "li.wp-manga-chapter",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        "div.reading-content img",
+		},
+		Domains:      []string{"setsuscans.com"},
+		ChaptersWait: "li.wp-manga-chapter",
+		ImageWait:    "div.reading-content img",
+	},
 	// kappabeast.com: react SPA behind a cloudflare challenge, usually
 	// needs --browser-visible. Images are hosted on blogger/strapi CDNs.
 	{

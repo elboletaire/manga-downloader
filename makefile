@@ -72,7 +72,7 @@ grabber/leercapitulo:
 # sites needing a real browser: not part of the `grabber` target since they
 # open a Chrome window and may require solving an interactive challenge
 # (cloudflare). Run them one by one and solve the challenge if prompted.
-grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus
+grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus grabber/setsuscans
 
 grabber/toongod:
 	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
@@ -94,6 +94,9 @@ grabber/natomanga:
 
 grabber/manhuaus:
 	go run . --browser-visible https://manhuaus.com/manga/solo-leveling-ragnarok/ 68
+
+grabber/setsuscans:
+	go run . --browser-visible https://setsuscans.com/manga/a-story-about-accidentally-finding-out-a-girls-secret-at-school/ 13
 
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill
 
