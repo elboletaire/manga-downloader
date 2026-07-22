@@ -87,6 +87,20 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// rokaricomics.com: mangastream/themesia theme (same markup as the
+		// cloudflare-gated sushiscan.net in plainhtmlbrowser.go), but this
+		// domain answers plain HTTP with no challenge. Reader images come
+		// from the embedded ts_reader javascript call. Note: the most recent
+		// chapter(s) of a series may be locked behind a coin paywall (no
+		// images in the HTML); test with an older, unlocked chapter.
+		{
+			Title:        "h1.entry-title",
+			Rows:         "#chapterlist li",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a",
+			Image:        "#readerarea img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -169,6 +183,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		if m.site.ChapterTitle != "" {
 			title = s.Find(m.site.ChapterTitle).Text()
 		}
+		title = sanitizeTitle(title)
 		chapter := &PlainHTMLChapter{
 			Chapter{
 				Number: number,
