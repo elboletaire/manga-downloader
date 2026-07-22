@@ -87,6 +87,17 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// witchscans.com: mangastream/themesia WordPress theme, reader
+		// images come from the ts_reader.run blob already handled by
+		// getPlainHTMLImageURL, so Image is just a fallback here
+		{
+			Title:        "h1",
+			Rows:         "#chapterlist li",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a",
+			Image:        "#readerarea img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -172,7 +183,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		chapter := &PlainHTMLChapter{
 			Chapter{
 				Number: number,
-				Title:  title,
+				Title:  sanitizeTitle(title),
 			},
 			u,
 		}

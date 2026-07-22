@@ -98,6 +98,38 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 	}
 }
 
+func TestFetchChaptersTrimsWhitespaceHeavyTitles(t *testing.T) {
+	// witchscans.com (mangastream/themesia theme) pads the chapter number
+	// span with a lot of internal whitespace/newlines
+	html := `<html><body><div id="chapterlist"><ul>
+		<li><a href="/chapter-1/"><span class="chapternum">Chapter
+			                            1     </span></a></li>
+	</ul></div></body></html>`
+
+	m := PlainHTML{
+		Grabber: &Grabber{URL: "https://witchscans.com/manga/example/"},
+		doc:     docFromHTML(t, html),
+		site: SiteSelector{
+			Rows:         "#chapterlist li",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a",
+		},
+	}
+	m.rows = m.doc.Find(m.site.Rows)
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	if len(chapters) != 1 {
+		t.Fatalf("got %d chapters, want 1", len(chapters))
+	}
+	if got, want := chapters[0].GetTitle(), "Chapter 1"; got != want {
+		t.Errorf("chapter title = %q, want %q", got, want)
+	}
+}
+
 func TestSanitizeTitle(t *testing.T) {
 	cases := []struct {
 		in   string

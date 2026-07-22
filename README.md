@@ -36,6 +36,7 @@ Supported sites
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [toongod.org](https://www.toongod.org) \*
 - [weebcentral.com](https://weebcentral.com)
+- [witchscans.com](https://witchscans.com)
 - [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
 
 > \* These sites can't be scraped with plain HTTP requests (they render with
