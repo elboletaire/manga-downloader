@@ -17,6 +17,7 @@ Supported sites
 ---------------
 
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
+- [bluesolo.org (Blue Solo, French scantrad)](https://bluesolo.org)
 - [dragontea.ink](https://dragontea.ink) \*
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
 - [inmanga.com](https://inmanga.com)
