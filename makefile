@@ -155,6 +155,7 @@ grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill g
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/silentquill
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/hivetoons
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/templetoons
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/deathtollscans
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -187,3 +188,5 @@ grabber/hivetoons:
 	go run . https://hivetoons.org/series/eleceed 410
 grabber/templetoons:
 	go run . https://templetoons.com/comic/bl-antidote 88
+grabber/deathtollscans:
+	go run . https://reader.deathtollscans.net/series/kakushigoto/ 30

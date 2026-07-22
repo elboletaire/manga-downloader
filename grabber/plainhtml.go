@@ -186,6 +186,19 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: "h1",
 			Image:        "img",
 		},
+		// reader.deathtollscans.net: FoOlSlide reader. The reader page only
+		// renders the current page's <img class="open">, but embeds every
+		// page's URL in a `var pages = [...]` JSON blob (see
+		// getPlainHTMLImageURL), so the Image selector below is just a
+		// fallback/documentation of what a single rendered page looks like.
+		{
+			Title:        "h1.title",
+			Rows:         ".list .element",
+			Chapter:      ".title a",
+			ChapterTitle: ".title a",
+			Link:         ".title a",
+			Image:        "img.open",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -396,6 +409,27 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 			imgs := []string{}
 			for _, u := range urls {
 				imgs = append(imgs, u[1])
+			}
+			return imgs
+		}
+	}
+
+	// FoOlSlide readers (e.g. deathtollscans.net) embed the full ordered page
+	// list as a proper JSON array in a `var pages = [...]` variable, one
+	// object per page with a "url" field; only the current page is actually
+	// rendered as an <img> in the HTML. Anchoring on the following
+	// `var next_chapter` avoids truncating at a stray "]" inside a string.
+	re = regexp.MustCompile(`(?s)var pages\s*=\s*(\[.+?\]);\s*var next_chapter`)
+	matches = re.FindStringSubmatch(html)
+	if len(matches) > 1 {
+		type foolslidePage struct {
+			URL string `json:"url"`
+		}
+		var fpages []foolslidePage
+		if err := json.Unmarshal([]byte(matches[1]), &fpages); err == nil {
+			imgs := []string{}
+			for _, p := range fpages {
+				imgs = append(imgs, p.URL)
 			}
 			return imgs
 		}

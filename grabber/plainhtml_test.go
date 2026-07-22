@@ -81,6 +81,12 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want:     []string{"https://media.templetoons.com/1.jpg", "https://media.templetoons.com/2.jpg"},
 		},
 		{
+			name:     "FoOlSlide var pages JSON array (deathtollscans)",
+			selector: "img.open",
+			html:     `<html><body><script>var pages = [{"id":1,"url":"https:\/\/a.co\/1.png","thumb_url":"https:\/\/a.co\/t1.png"},{"id":2,"url":"https:\/\/a.co\/2.png","thumb_url":"https:\/\/a.co\/t2.png"}]; var next_chapter = "https://a.co/next/";</script></body></html>`,
+			want:     []string{"https://a.co/1.png", "https://a.co/2.png"},
+		},
+		{
 			name:     "plain img src",
 			selector: "div.reading-content img",
 			html:     `<html><body><div class="reading-content"><img src="https://a.co/1.jpg"/><img src="https://a.co/2.jpg"/></div></body></html>`,

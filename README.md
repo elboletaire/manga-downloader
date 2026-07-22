@@ -22,6 +22,7 @@ Supported sites
 - [aurorascans.com (redirects to qimanga.com)](https://aurorascans.com)
 - [danke.moe (Danke fürs Lesen)](https://danke.moe)
 - [bigsolo.org](https://bigsolo.org)
+- [deathtollscans.net](https://reader.deathtollscans.net)
 - [dragontea.ink](https://dragontea.ink) \*
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
 - [fanfox.net (Manga Fox)](https://fanfox.net)
