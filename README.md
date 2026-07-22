@@ -51,6 +51,7 @@ Supported sites
 - [sushiscan.net](https://sushiscan.net) \*
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [toongod.org](https://www.toongod.org) \*
+- [vortexscans.org](https://vortexscans.org)
 - [weebcentral.com](https://weebcentral.com)
 - [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
 
