@@ -37,6 +37,7 @@ Supported sites
 - [mangapark.page (MangaPark, mangapark.to's mirror at the time of writing)](https://mangapark.page)
 - [Mangadex](https://mangadex.org)
 - [mangapill.com](https://mangapill.com)
+- [mangaread.org](https://www.mangaread.org)
 - [manhuaus.com](https://manhuaus.com) \*
 - [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
 - [qimanga.com](https://qimanga.com)

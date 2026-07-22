@@ -119,6 +119,7 @@ grabber/manhuaus:
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/demonicscans grabber/mangakatana
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/rawkuma
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/dynastyscans
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/mangaread
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -141,3 +142,5 @@ grabber/rawkuma:
 	go run . https://rawkuma.net/manga/jujutsu-kaisen/ 271
 grabber/dynastyscans:
 	go run . https://dynasty-scans.com/series/please_bully_me_miss_villainess 162
+grabber/mangaread:
+	go run . https://www.mangaread.org/manga/one-piece/ 1188

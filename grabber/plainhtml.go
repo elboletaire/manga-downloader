@@ -135,6 +135,17 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "dl.chapter-list dd a.name",
 			Image: "#reader img",
 		},
+		// mangaread.org: classic Madara wordpress theme, but unlike tcb.go's
+		// sites the full chapter list ships in the series page HTML (no ajax
+		// pagination) and reader pages are single-page (no #single-pager)
+		{
+			Title:        "h1",
+			Rows:         "li.wp-manga-chapter",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        "img.wp-manga-chapter-img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
