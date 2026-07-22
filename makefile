@@ -240,6 +240,7 @@ grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill g
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/violetscans
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/witchscans
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/writerscans
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/mistscans
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -299,3 +300,7 @@ grabber/witchscans:
 	go run . https://witchscans.com/manga/i-am-a-cultivation-big-shot/ 600
 grabber/writerscans:
 	go run . https://writerscans.com/series/640ecb8f2bb/ 45
+# note: chapters get locked behind a coin/early-access paywall right after
+# release; pick a chapter a few behind the latest one to keep it free
+grabber/mistscans:
+	go run . https://mistscans.com/series/i-was-thrown-into-an-unfamiliar-manga/ 33

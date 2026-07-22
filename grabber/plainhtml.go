@@ -297,6 +297,10 @@ func (m *PlainHTML) Test() (bool, error) {
 		// writerscans.com: each chapter row is a plain <a> inside #chapters;
 		// reader page images are lazy-loaded (a placeholder `src` and a `uid`
 		// attribute), see the getPlainHTMLImageURL template-literal fallback
+		// mistscans.com (former Arven Scans members): each chapter row is the
+		// <a> itself (no dedicated Link), the number lives in a child span
+		// (see FetchChapters/Chapter), and reader images are lazy-loaded
+		// client-side from a `uid` attribute (see getPlainHTMLImageURL)
 		{
 			Title:        "h1",
 			Rows:         "#chapters a",
@@ -319,15 +323,17 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: ".chapternum",
 			Image:        ".readercontent img",
 		},
-		// writerscans.com: each chapter row is a plain <a> inside #chapters;
-		// reader page images are lazy-loaded (a placeholder `src` and a `uid`
-		// attribute), see the getPlainHTMLImageURL template-literal fallback
+		// writerscans.com & mistscans.com (meowing.org platform): each chapter
+		// row is a plain <a> inside #chapters; reader page images are lazy-loaded
+		// (a placeholder `src` and a `uid` attribute), see the
+		// getPlainHTMLImageURL template-literal fallback. Image is a union so it
+		// matches both sites' reader markup.
 		{
 			Title:        "h1",
 			Rows:         "#chapters a",
 			Chapter:      ".text-sm.truncate",
 			ChapterTitle: ".text-sm.truncate",
-			Image:        "img.myImage",
+			Image:        "img.myImage, #pages img",
 		},
 	}
 
