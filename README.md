@@ -46,6 +46,7 @@ Supported sites
 - [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
 - [qimanga.com](https://qimanga.com)
 - [rawkuma.net](https://rawkuma.net)
+- [silentquill.net (Armageddon Scanlation)](https://www.silentquill.net)
 - [sushiscan.net](https://sushiscan.net) \*
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [toongod.org](https://www.toongod.org) \*

@@ -147,6 +147,18 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         "a",
 			Image:        "div.reading-content img",
 		},
+		// silentquill.net (Armageddon Scanlation): mangastream/themesia
+		// theme, same markup as sushiscan (PlainHTMLBrowser) but reachable
+		// with plain HTTP, no cloudflare challenge. Reader pages embed all
+		// pages in the ts_reader javascript call, already handled generically.
+		{
+			Title:        "h1",
+			Rows:         "#chapterlist li",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a",
+			Image:        "#readerarea img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
