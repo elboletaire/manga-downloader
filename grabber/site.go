@@ -107,6 +107,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewFanfox(g),
 		NewFlamecomics(g),
 		NewQimanga(g),
+		NewBluesolo(g),
 		NewTcb(g),
 		NewMangahere(g),
 	}

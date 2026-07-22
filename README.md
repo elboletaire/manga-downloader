@@ -23,6 +23,7 @@ Supported sites
 - [danke.moe (Danke fürs Lesen)](https://danke.moe)
 - [bigsolo.org](https://bigsolo.org)
 - [deathtollscans.net](https://reader.deathtollscans.net)
+- [bluesolo.org (Blue Solo, French scantrad)](https://bluesolo.org)
 - [dragontea.ink](https://dragontea.ink) \*
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
 - [fanfox.net (Manga Fox)](https://fanfox.net)
