@@ -29,6 +29,7 @@ Supported sites
 - [mangakakalot.gg (MangaKakalot)](https://www.mangakakalot.gg) \*
 - [Mangadex](https://mangadex.org)
 - [mangapill.com](https://mangapill.com)
+- [mangasushi.org](https://mangasushi.org)
 - [manhuaus.com](https://manhuaus.com) \*
 - [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
 - [qimanga.com](https://qimanga.com)
