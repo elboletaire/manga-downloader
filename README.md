@@ -50,6 +50,7 @@ Supported sites
 - [silentquill.net (Armageddon Scanlation)](https://www.silentquill.net)
 - [sushiscan.net](https://sushiscan.net) \*
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
+- [templetoons.com (Temple Scan)](https://templetoons.com)
 - [toongod.org](https://www.toongod.org) \*
 - [vortexscans.org](https://vortexscans.org)
 - [weebcentral.com](https://weebcentral.com)

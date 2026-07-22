@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"encoding/json"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -171,6 +172,20 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: "h3",
 			Image:        "img[data-reader-page-image]",
 		},
+		// templetoons.com (Temple Scan): Next.js RSC-streamed page, but
+		// server-rendered, so plain HTTP already gets the full chapter list
+		// (unlike mangak.io, no need to reach for the __NEXT_DATA__ blob).
+		// Each row is itself the <a> (Link empty), the chapter number lives
+		// in a nested h1. Reader pages embed the page list as a flat JSON
+		// "pages" array handled by getPlainHTMLImageURL, so Image is unused
+		// but kept as a fallback.
+		{
+			Title:        "h1.text-3xl",
+			Rows:         "div.grid.grid-cols-6 > a",
+			Chapter:      "h1",
+			ChapterTitle: "h1",
+			Image:        "img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -246,9 +261,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		if m.site.Link != "" {
 			u = s.Find(m.site.Link).AttrOr("href", "")
 		}
-		if !strings.HasPrefix(u, "http") {
-			u = m.BaseUrl() + u
-		}
+		u = m.resolveURL(u)
 		title := chapterText
 		if m.site.ChapterTitle != "" {
 			title = s.Find(m.site.ChapterTitle).Text()
@@ -266,6 +279,27 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	})
 
 	return
+}
+
+// resolveURL turns a possibly-relative href into an absolute URL, resolved
+// against the series page URL (m.URL). This correctly handles both
+// root-relative hrefs ("/manga/x/chapter-1", the common case, equivalent to
+// the old BaseUrl()-prefixing behaviour) and directory-relative hrefs with no
+// leading slash (e.g. templetoons.com, whose rows link to "slug/chapter-1"
+// relative to the series page's own directory).
+func (m PlainHTML) resolveURL(href string) string {
+	if strings.HasPrefix(href, "http") {
+		return href
+	}
+	base, err := url.Parse(m.URL)
+	if err != nil {
+		return m.BaseUrl() + href
+	}
+	ref, err := url.Parse(href)
+	if err != nil {
+		return m.BaseUrl() + href
+	}
+	return base.ResolveReference(ref).String()
 }
 
 // FetchChapter fetches a chapter and its pages
@@ -384,6 +418,21 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 			}
 			return imgs
 		}
+	}
+
+	// templetoons.com's reader (Next.js RSC streaming) embeds the page list
+	// as a flat JSON array inside a double-escaped JS string, i.e. the raw
+	// HTML literally contains `\"pages\":[\"https://...\",...]`. Extract it
+	// and unescape the `\"` delimiters.
+	re = regexp.MustCompile(`\\"pages\\":\[([^\]]+)\]`)
+	matches = re.FindStringSubmatch(html)
+	if len(matches) > 1 {
+		urls := regexp.MustCompile(`"([^"\\]+)\\?"`).FindAllStringSubmatch(matches[1], -1)
+		imgs := []string{}
+		for _, u := range urls {
+			imgs = append(imgs, u[1])
+		}
+		return imgs
 	}
 
 	// images are inside picture objects

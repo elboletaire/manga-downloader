@@ -145,6 +145,7 @@ grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill g
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/manhuaplus
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/silentquill
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/hivetoons
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/templetoons
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -175,3 +176,5 @@ grabber/silentquill:
 	go run . https://www.silentquill.net/i-was-invited-to-join-the-country-as-an-otherworldly-warrior-but-i-refused-and-decided-to-start-as-a-soldier/ 59
 grabber/hivetoons:
 	go run . https://hivetoons.org/series/eleceed 410
+grabber/templetoons:
+	go run . https://templetoons.com/comic/bl-antidote 88
