@@ -30,6 +30,7 @@ Supported sites
 - [Mangadex](https://mangadex.org)
 - [mangapill.com](https://mangapill.com)
 - [manhuaus.com](https://manhuaus.com) \*
+- [mkissa.to](https://mkissa.to) \*
 - [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
 - [qimanga.com](https://qimanga.com)
 - [sushiscan.net](https://sushiscan.net) \*
