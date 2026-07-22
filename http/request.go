@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 // Params is an interface for request parameters
@@ -20,6 +21,12 @@ type RequestParams struct {
 	URL     string
 	Referer string
 	Origin  string
+	// Headers are extra headers sent with the request (e.g. a CSRF token
+	// read off a previously fetched page)
+	Headers map[string]string
+	// Form, if set, is sent as an application/x-www-form-urlencoded POST
+	// body instead of an empty one
+	Form url.Values
 }
 
 // GetURL returns the request URL
@@ -43,7 +50,14 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 	}
 	client := &http.Client{Transport: tr}
 
-	req, _ := http.NewRequest(t, params.GetURL(), nil)
+	rp, _ := params.(RequestParams)
+
+	var reqBody io.Reader
+	if rp.Form != nil {
+		reqBody = strings.NewReader(rp.Form.Encode())
+	}
+
+	req, _ := http.NewRequest(t, params.GetURL(), reqBody)
 	req.Header.Set("User-Agent", sessionUserAgent(userAgent))
 	if cookies := sessionCookies(req.URL.Hostname()); cookies != "" {
 		req.Header.Set("Cookie", cookies)
@@ -59,13 +73,30 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 		}
 		req.Header.Add("Referer", ref)
 	}
-	if origin := params.(RequestParams).Origin; origin != "" {
-		req.Header.Set("Origin", origin)
+	if rp.Origin != "" {
+		req.Header.Set("Origin", rp.Origin)
+	}
+	if rp.Form != nil {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
+	for k, v := range rp.Headers {
+		req.Header.Set(k, v)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
 		return
+	}
+
+	// harvest any session cookies the server sets (e.g. a PHPSESSID tied to
+	// a CSRF token read off the page), so subsequent requests to the same
+	// site stay authenticated without a manual cookie jar
+	for _, c := range resp.Cookies() {
+		domain := strings.TrimPrefix(c.Domain, ".")
+		if domain == "" {
+			domain = req.URL.Hostname()
+		}
+		SetCookie(domain, c.Name, c.Value)
 	}
 
 	if resp.StatusCode != 200 {

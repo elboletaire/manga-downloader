@@ -33,7 +33,7 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/mangaball grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -51,6 +51,9 @@ grabber/mangafire:
 
 grabber/mangak:
 	go run . https://mangak.io/a-baby-cat-who-commands-the-dog-clan 30
+
+grabber/mangaball:
+	go run . https://mangaball.net/title-detail/baki-gaiden-shin-chiharu-6a5ffe5d90273b5b995225d2/ 1
 
 grabber/qimanga:
 	go run . https://qimanga.com/series/4190634673-eleceed 2

@@ -23,6 +23,7 @@ Supported sites
 - [kappabeast.com](https://kappabeast.com) \*
 - [leercapitulo.co](https://www.leercapitulo.co) \*
 - [LHTranslation](https://lhtranslation.net)
+- [mangaball.net](https://mangaball.net)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
 - [mangafire.to](https://mangafire.to)
 - [mangak.io (MangaK, former mangabuddy.com)](https://mangak.io)
