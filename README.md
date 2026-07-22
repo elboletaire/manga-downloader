@@ -83,6 +83,7 @@ Supported sites
 - [templetoons.com (Temple Scan)](https://templetoons.com)
 - [team-shadowi.com](https://www.team-shadowi.com)
 - [en-thunderscans.com (Thunderscans)](https://en-thunderscans.com)
+- [toonily.com](https://toonily.com) \*
 - [toongod.org](https://www.toongod.org) \*
 - [vortexscans.org](https://vortexscans.org)
 - [tritinia.org (Tritinia Scans)](https://tritinia.org)
