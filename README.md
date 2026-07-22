@@ -78,6 +78,7 @@ Supported sites
 - [sushiscan.net](https://sushiscan.net) \*
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [templetoons.com (Temple Scan)](https://templetoons.com)
+- [team-shadowi.com](https://www.team-shadowi.com)
 - [toongod.org](https://www.toongod.org) \*
 - [vortexscans.org](https://vortexscans.org)
 - [weebcentral.com](https://weebcentral.com)
