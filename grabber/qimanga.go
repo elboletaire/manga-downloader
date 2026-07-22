@@ -32,9 +32,11 @@ type QimangaChapter struct {
 	Slug string
 }
 
-// Test returns true if the URL is a qimanga.com URL
+// Test returns true if the URL is a qimanga.com URL (or one of its rebrand
+// aliases, which 301-redirect path-for-path to qimanga.com: aurorascans.com
+// -> qimanhwa.com -> qimanga.com)
 func (q *Qimanga) Test() (bool, error) {
-	re := regexp.MustCompile(`qimanga\.com`)
+	re := regexp.MustCompile(`qimanga\.com|qimanhwa\.com|aurorascans\.com`)
 	return re.MatchString(q.URL), nil
 }
 

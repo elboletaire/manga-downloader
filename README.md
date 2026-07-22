@@ -19,6 +19,7 @@ Supported sites
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
 - [demonicscans.org (MangaDemon / Demonic Scans)](https://demonicscans.org)
 - [atsu.moe (Atsumaru)](https://atsu.moe)
+- [aurorascans.com (redirects to qimanga.com)](https://aurorascans.com)
 - [dragontea.ink](https://dragontea.ink) \*
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
 - [fanfox.net (Manga Fox)](https://fanfox.net)
