@@ -24,6 +24,10 @@ type Page struct {
 	Number int64
 	// URL is the page URL
 	URL string
+	// Transform, if non-nil, post-processes the raw downloaded page bytes
+	// before they're packed (e.g. undoing a site's client-side image
+	// scrambling). Errors are retried the same as a failed download.
+	Transform func([]byte) ([]byte, error)
 }
 
 // GetNumber returns the chapter number

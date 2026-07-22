@@ -95,6 +95,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Mangaball
 		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Mangitto
 		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Mangalib
+		// PlainHTMLBrowser, WeebCentral, LeerCapitulo, Mangak and Mangadenizi
 		// match by domain (no fetch), so they go first
 		NewPlainHTMLBrowser(g),
 		NewWeebCentral(g),
@@ -114,6 +115,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewMangataro(g),
 		NewMangitto(g),
 		NewMangalib(g),
+		NewMangadenizi(g),
 		NewPlainHTML(g),
 		NewInmanga(g),
 		NewMangadex(g),
