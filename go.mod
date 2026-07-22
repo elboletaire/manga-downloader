@@ -13,6 +13,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e
 	github.com/vbauerster/mpb/v8 v8.7.3
+	golang.org/x/image v0.44.0
 	golang.org/x/term v0.43.0
 )
 

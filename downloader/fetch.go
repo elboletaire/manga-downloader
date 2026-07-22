@@ -43,7 +43,7 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress Progre
 			file, err := FetchFile(http.RequestParams{
 				URL:     page.URL,
 				Referer: site.BaseUrl(),
-			}, uint(page.Number), site.GetRetries())
+			}, uint(page.Number), site.GetRetries(), page.Transform)
 
 			if err != nil {
 				select {
@@ -83,12 +83,17 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress Progre
 }
 
 // FetchFile gets an online file returning a new *File with its contents.
-// On failure (either the GET itself or a mid-body read) it retries up to
-// `retries` additional times, with a short growing delay between attempts.
-func FetchFile(params http.RequestParams, page uint, retries uint8) (file *File, err error) {
+// On failure (either the GET itself, a mid-body read, or the optional
+// transform) it retries up to `retries` additional times, with a short
+// growing delay between attempts. transform, if non-nil, post-processes the
+// downloaded bytes (e.g. a site's own page.Transform) before they're stored.
+func FetchFile(params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error)) (file *File, err error) {
 	for attempt := uint8(0); ; attempt++ {
 		var data []byte
 		data, err = fetchFileOnce(params)
+		if err == nil && transform != nil {
+			data, err = transform(data)
+		}
 		if err == nil {
 			file = &File{
 				Data: data,
