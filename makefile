@@ -95,7 +95,7 @@ grabber/natomanga:
 grabber/manhuaus:
 	go run . --browser-visible https://manhuaus.com/manga/solo-leveling-ragnarok/ 68
 
-grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/dynastyscans
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -108,3 +108,6 @@ grabber/zonatmo:
 
 grabber/mangapill:
 	go run . https://mangapill.com/manga/2/one-piece 1188
+
+grabber/dynastyscans:
+	go run . https://dynasty-scans.com/series/please_bully_me_miss_villainess 162
