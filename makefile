@@ -204,6 +204,7 @@ grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/su
 grabber/toonily:
 	go run . --browser-visible https://toonily.com/serie/the-beginning-after-the-end-ea2130e6/ 244
 grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus grabber/mangahub
+grabber/browser: grabber/toongod grabber/dragontea grabber/kappabeast grabber/sushiscan grabber/mangakakalot grabber/natomanga grabber/manhuaus grabber/manhuatop
 
 grabber/toongod:
 	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
@@ -250,6 +251,8 @@ grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill g
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/mistscans
 grabber/mangahub:
 	go run . --browser-visible https://mangahub.io/manga/one-piece_142 1188
+grabber/manhuatop:
+	go run . --browser-visible https://manhuatop.org/manhua/chronicles-of-the-martial-gods-return/ 168
 
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill
 

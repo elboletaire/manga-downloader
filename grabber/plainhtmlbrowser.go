@@ -106,10 +106,10 @@ var browserSelectors = []BrowserSiteSelector{
 	// straight out of the whole row's text (it contains "#1188").
 	{
 		SiteSelector: SiteSelector{
-			Title:        "h1",
-			Rows:         "li.list-group-item",
-			Link:         `a[href*="/chapter/"]`,
-			Image:        "img.PB0mN",
+			Title: "h1",
+			Rows:  "li.list-group-item",
+			Link:  `a[href*="/chapter/"]`,
+			Image: "img.PB0mN",
 		},
 		Domains:      []string{"mangahub.io"},
 		ChaptersWait: "li.list-group-item",
@@ -118,6 +118,28 @@ var browserSelectors = []BrowserSiteSelector{
 		// GetHTML returns as soon as the first one shows up and later
 		// pages are missing (a 16-page chapter yielded only 6 without it)
 		Settle: 5 * time.Second,
+	},
+	// manhuatop.org: Madara wordpress theme behind a cloudflare challenge,
+	// usually needs --browser-visible. Its reader wraps real pages in
+	// div.reading-content img#image-N, but also throws in a decorative
+	// "about_manhuatop" banner and a "To_be_continued" footer image sharing
+	// the same wp-manga-chapter-img class as real pages, so the plain
+	// "div.reading-content img" selector (used by the toongod/manhuaus entry
+	// above) would pull them in as junk pages — the id^="image-" filter
+	// keeps only the real, ordered page images. Images download via plain
+	// HTTP with no cookies needed once harvested.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "div.post-title h1",
+			Rows:         "li.wp-manga-chapter",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        `div.reading-content img[id^="image-"]`,
+		},
+		Domains:      []string{"manhuatop.org"},
+		ChaptersWait: "li.wp-manga-chapter",
+		ImageWait:    `div.reading-content img[id^="image-"]`,
 	},
 }
 

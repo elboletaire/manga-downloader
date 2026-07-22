@@ -68,6 +68,7 @@ Supported sites
 - [Mangitto (mangtto.com)](https://mangtto.com)
 - [manhuaus.com](https://manhuaus.com) \*
 - [mistscans.com](https://mistscans.com)
+- [manhuatop.org](https://manhuatop.org) \*
 - [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
 - [projectsuki.com](https://projectsuki.com)
 - [qimanga.com](https://qimanga.com)
