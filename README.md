@@ -25,6 +25,7 @@ Supported sites
 - [LHTranslation](https://lhtranslation.net)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
 - [mangafire.to](https://mangafire.to)
+- [mangahere.cc (MangaHere)](https://www.mangahere.cc)
 - [mangak.io (MangaK, former mangabuddy.com)](https://mangak.io)
 - [mangakakalot.gg (MangaKakalot)](https://www.mangakakalot.gg) \*
 - [Mangadex](https://mangadex.org)
