@@ -54,15 +54,6 @@ func (m *PlainHTML) Test() (bool, error) {
 
 	// order is important, since some sites have very similar selectors
 	selectors := []SiteSelector{
-		// mangabuddy
-		{
-			Title:        "h1",
-			Rows:         "#chapter-list > li",
-			Chapter:      ".chapter-title",
-			ChapterTitle: ".chapter-title",
-			Link:         "a",
-			Image:        ".chapter-image img",
-		},
 		// tcbonepiecechapters.com (former tcbscans.com)
 		{
 			Title:        "h1",

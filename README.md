@@ -24,8 +24,8 @@ Supported sites
 - [leercapitulo.co](https://www.leercapitulo.co) \*
 - [LHTranslation](https://lhtranslation.net)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
-- [mangabuddy.com](https://mangabuddy.com) (currently down, kept in case it comes back)
 - [mangafire.to](https://mangafire.to)
+- [mangak.io (MangaK, former mangabuddy.com)](https://mangak.io)
 - [mangakakalot.gg (MangaKakalot)](https://www.mangakakalot.gg) \*
 - [Mangadex](https://mangadex.org)
 - [mangapill.com](https://mangapill.com)

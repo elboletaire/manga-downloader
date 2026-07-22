@@ -78,6 +78,10 @@ func start() error {
 	}
 	// reduce automation fingerprint: this flag adds navigator.webdriver etc.
 	opts = append(opts, chromedp.Flag("disable-blink-features", "AutomationControlled"))
+	// chromedp's defaults pass --enable-automation (another loud automation
+	// signal, plus the "Chrome is being controlled" infobar); strict cloudflare
+	// configs (e.g. sakuramangas) loop the challenge forever when they see it
+	opts = append(opts, chromedp.Flag("enable-automation", false))
 
 	allocCtx, allocCancel = chromedp.NewExecAllocator(context.Background(), opts...)
 	browserCtx, browserStop = chromedp.NewContext(allocCtx)

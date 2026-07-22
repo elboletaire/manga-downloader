@@ -30,6 +30,12 @@ func main() {
 	if os.Getenv("PROBE_VISIBLE") == "1" {
 		browser.SetVisible(true)
 	}
+	timeout := 45 * time.Second
+	if s := os.Getenv("PROBE_TIMEOUT"); s != "" {
+		if d, err := time.ParseDuration(s); err == nil {
+			timeout = d
+		}
+	}
 	if s := os.Getenv("PROBE_SLEEP"); s != "" {
 		if d, err := time.ParseDuration(s); err == nil {
 			browser.SetSettle(d)
@@ -45,7 +51,7 @@ func main() {
 	}
 
 	start := time.Now()
-	html, err := browser.GetHTML(url, wait, 45*time.Second)
+	html, err := browser.GetHTML(url, wait, timeout)
 	fmt.Printf("elapsed: %s\n", time.Since(start))
 	if err != nil {
 		fmt.Println("ERROR:", err)
