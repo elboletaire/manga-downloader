@@ -16,6 +16,7 @@ files, ready to read on your favorite ereader or reading app.
 Supported sites
 ---------------
 
+- [asmotoon.com (Asmodeus Scans)](https://asmotoon.com)
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
 - [dragontea.ink](https://dragontea.ink) \*
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
