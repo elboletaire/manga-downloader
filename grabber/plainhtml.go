@@ -107,6 +107,21 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         ".chapter a",
 			Image:        "#imgs img",
 		},
+		// rawkuma.net: raw (Japanese) manga, Kiru WordPress theme. The reader
+		// page looks JS-rendered (images load via a "chapter" JS module) but
+		// the page URLs are already plain <img src='...'> tags (single-quoted
+		// attrs, still fine for goquery) inside a `[data-image-data]` section
+		// in the initial HTML - no browser needed. Plain "h1" is ambiguous: an
+		// info-sidebar "Last Updates" label is also an <h1> earlier in the
+		// DOM, so the title selector must be scoped to the real series title.
+		{
+			Title:        `h1[itemprop="name"]`,
+			Rows:         "#chapter-list [data-chapter-number]",
+			Chapter:      "span",
+			ChapterTitle: "span",
+			Link:         "a",
+			Image:        "[data-image-data] img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors

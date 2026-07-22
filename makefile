@@ -96,6 +96,7 @@ grabber/manhuaus:
 	go run . --browser-visible https://manhuaus.com/manga/solo-leveling-ragnarok/ 68
 
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/demonicscans grabber/mangakatana
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/rawkuma
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -114,3 +115,5 @@ grabber/demonicscans:
 
 grabber/mangakatana:
 	go run . https://mangakatana.com/manga/dandadan.25818 241
+grabber/rawkuma:
+	go run . https://rawkuma.net/manga/jujutsu-kaisen/ 271
