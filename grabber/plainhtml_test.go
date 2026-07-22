@@ -75,6 +75,12 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want:     []string{"https://a.co/1.jpg", "https://a.co/2.jpg"},
 		},
 		{
+			name:     "templetoons.com double-escaped RSC pages array",
+			selector: "img",
+			html:     `<html><body><script>self.__next_f.push([1,"...{\"pages\":[\"https://media.templetoons.com/1.jpg\",\"https://media.templetoons.com/2.jpg\"]}..."])</script></body></html>`,
+			want:     []string{"https://media.templetoons.com/1.jpg", "https://media.templetoons.com/2.jpg"},
+		},
+		{
 			name:     "plain img src",
 			selector: "div.reading-content img",
 			html:     `<html><body><div class="reading-content"><img src="https://a.co/1.jpg"/><img src="https://a.co/2.jpg"/></div></body></html>`,
@@ -93,6 +99,43 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			got := getPlainHTMLImageURL(c.selector, docFromHTML(t, c.html))
 			if !reflect.DeepEqual(got, c.want) {
 				t.Errorf("getPlainHTMLImageURL() = %v, want %v", got, c.want)
+			}
+		})
+	}
+}
+
+func TestResolveURL(t *testing.T) {
+	cases := []struct {
+		name string
+		mURL string
+		href string
+		want string
+	}{
+		{
+			name: "already absolute",
+			mURL: "https://tcbonepiecechapters.com/mangas/5/one-piece",
+			href: "https://tcbonepiecechapters.com/chapters/1100",
+			want: "https://tcbonepiecechapters.com/chapters/1100",
+		},
+		{
+			name: "root-relative (leading slash), matches old BaseUrl()-prefixing behaviour",
+			mURL: "https://asurascans.com/comics/foo",
+			href: "/comics/foo/chapter/1",
+			want: "https://asurascans.com/comics/foo/chapter/1",
+		},
+		{
+			name: "directory-relative, no leading slash (templetoons.com)",
+			mURL: "https://templetoons.com/comic/bl-antidote",
+			href: "bl-antidote/chapter-88",
+			want: "https://templetoons.com/comic/bl-antidote/chapter-88",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			m := PlainHTML{Grabber: &Grabber{URL: c.mURL}}
+			if got := m.resolveURL(c.href); got != c.want {
+				t.Errorf("resolveURL(%q) with mURL=%q = %q, want %q", c.href, c.mURL, got, c.want)
 			}
 		})
 	}
