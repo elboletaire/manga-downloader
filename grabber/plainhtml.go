@@ -87,6 +87,21 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// en-thunderscans.com: mangastream/themesia theme (reader page uses
+		// ts_reader.run, already handled generically). Some recent chapters
+		// are coin-locked premium content whose row has no href (just a
+		// data-bs-toggle modal trigger); the `a[href]` filter on Rows keeps
+		// those out of the chapter list entirely instead of yielding bogus
+		// URLs. Title uses a specific class because the page has several
+		// unrelated bare <h1> tags (Type, Status, Released...) whose text
+		// would otherwise get concatenated in.
+		{
+			Title:        "h1.entry-title",
+			Rows:         "#chapterlist li[data-num] a[href]",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Image:        ".readercontent img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -172,7 +187,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		chapter := &PlainHTMLChapter{
 			Chapter{
 				Number: number,
-				Title:  title,
+				Title:  sanitizeTitle(title),
 			},
 			u,
 		}
