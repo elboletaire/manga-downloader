@@ -87,6 +87,18 @@ func (m *PlainHTML) Test() (bool, error) {
 			Rows:  "#chapters [data-filter-list] a",
 			Image: "img.js-page",
 		},
+		// hivetoons.org (VoidScans/HiveToons): the series page also embeds a
+		// "recently added" widget and a "continue reading" link that reuse
+		// the same /series/{slug}/chapter-{n} href shape, so the row
+		// selector pins the `.p-3` class that's unique to the real,
+		// full (non-paginated) chapter-list anchors to avoid duplicates.
+		{
+			Title:        `h1[itemprop="name"]`,
+			Rows:         `a.p-3[href*="/chapter-"]`,
+			Chapter:      "h3",
+			ChapterTitle: "h3",
+			Image:        "img[data-reader-page-image]",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
