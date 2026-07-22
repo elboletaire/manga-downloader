@@ -95,6 +95,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewFlamecomics(g),
 		NewQimanga(g),
 		NewTcb(g),
+		NewJestful(g),
 	}
 	var errs []error
 

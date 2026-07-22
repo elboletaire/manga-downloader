@@ -20,6 +20,7 @@ Supported sites
 - [dragontea.ink](https://dragontea.ink) \*
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
 - [inmanga.com](https://inmanga.com)
+- [jestful.net](https://jestful.net)
 - [kappabeast.com](https://kappabeast.com) \*
 - [leercapitulo.co](https://www.leercapitulo.co) \*
 - [LHTranslation](https://lhtranslation.net)
