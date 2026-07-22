@@ -33,7 +33,7 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/gdscans grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -57,6 +57,12 @@ grabber/qimanga:
 
 grabber/tcb:
 	go run . https://lhtranslation.net/manga/gaikotsu-kishi-sama-tadaima-isekai-e-o-dekake-chuu/ 71
+
+# another Madara/wp-manga site, handled by the same Tcb grabber; this one
+# groups chapters under "Volume N" wrappers (exercises the wp-manga-chapter
+# scoping fix)
+grabber/gdscans:
+	go run . https://gdscans.com/manga/a-rank-boukensha-no-slow-life/ 50
 
 grabber/flamecomics:
 	go run . https://flamecomics.xyz/series/154 104
