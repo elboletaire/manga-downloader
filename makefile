@@ -217,6 +217,7 @@ grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill g
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/madarascans
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/lagoonscans
 grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/rokaricomics
+grabber/html: grabber/tcbscans grabber/asura grabber/zonatmo grabber/mangapill grabber/ritharscans
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -263,3 +264,6 @@ grabber/lagoonscans:
 	go run . https://lagoonscans.com/manga/crimson-reset/ 52
 grabber/rokaricomics:
 	go run . https://rokaricomics.com/manga/caregivers-alliance/ 5
+# note: use a free chapter (older ones); recent chapters are often coin-gated
+grabber/ritharscans:
+	go run . https://ritharscans.com/series/0f32cefc-20a7-4337-aed0-fa78f832012f 19
