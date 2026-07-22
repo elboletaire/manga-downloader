@@ -1,9 +1,13 @@
 name: Site smoke tests
 
 # Weekly run of the live-site smoke targets to detect layout/API changes on
-# supported sites. Browser-based sites (make grabber/browser) are excluded:
-# they need a visible Chrome and often an interactive Cloudflare challenge,
-# which cannot work on a headless datacenter runner.
+# supported sites. Each matrix entry downloads a real chapter and verifies the
+# resulting CBZ actually contains images.
+#
+# Only plain-HTTP grabbers are listed: browser-based sites (make grabber/browser
+# plus the headless-Chrome comix/leercapitulo/mkissa) need a real Chrome and
+# often an interactive Cloudflare challenge, which cannot work on a headless
+# datacenter runner, so they are intentionally excluded.
 on:
   schedule:
     - cron: "17 6 * * 1"
@@ -17,15 +21,76 @@ jobs:
       fail-fast: false
       matrix:
         target:
+          # API / JSON / SSR / Madara grabbers (plain HTTP, no browser)
           - inmanga
           - mangadex
           - mangabats
           - mangafire
+          - mangak
+          - mgeko
+          - mangapark
+          - mangaball
+          - mangalib
+          - mangadenizi
           - qimanga
+          - aurorascans
+          - fanfox
+          - mangahere
+          - flamecomics
+          - weebcentral
+          - guya
+          - danke
+          - atsumaru
+          - bigsolo
+          - bluesolo
+          - fmteam
+          - jestful
+          - luascans
+          - mangitto
+          - projectsuki
+          - roliascan
+          - teamshadowi
+          - taiyo
+          - stonescape
+          - utoon
+          - vortexscans
+          - genztoon
+          - kaynscan
+          - hijala
+          - mangataro
           - tcb
+          - mangasushi
+          - gdscans
+          - mangalivre
+          - tritinia
+          # Plain-HTML (goquery) scrapers
           - tcbscans
           - asura
           - zonatmo
+          - mangapill
+          - demonicscans
+          - mangakatana
+          - rawkuma
+          - dynastyscans
+          - mangaread
+          - manhuaplus
+          - silentquill
+          - hivetoons
+          - templetoons
+          - deathtollscans
+          - furyosociety
+          - elftoon
+          - asmotoon
+          - madarascans
+          - lagoonscans
+          - rokaricomics
+          - ritharscans
+          - sanascans
+          - thunderscans
+          - violetscans
+          - witchscans
+          - writerscans
+          - mistscans
     steps:
       - uses: actions/checkout@v4
 
