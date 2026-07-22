@@ -52,6 +52,7 @@ grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire gr
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/kaynscan grabber/html
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/hijala grabber/html
 grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/luascans grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/mangaball grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -77,6 +78,8 @@ grabber/mgeko:
 	go run . https://www.mgeko.cc/manga/solo-leveling-mg1/ 198
 grabber/mangapark:
 	go run . https://mangapark.page/series/rowdy-reunion 41
+grabber/mangaball:
+	go run . https://mangaball.net/title-detail/baki-gaiden-shin-chiharu-6a5ffe5d90273b5b995225d2/ 1
 
 grabber/qimanga:
 	go run . https://qimanga.com/series/4190634673-eleceed 2
