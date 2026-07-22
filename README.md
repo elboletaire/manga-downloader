@@ -29,6 +29,7 @@ Supported sites
 - [mangak.io (MangaK, former mangabuddy.com)](https://mangak.io)
 - [mangakakalot.gg (MangaKakalot)](https://www.mangakakalot.gg) \*
 - [mangakatana.com](https://mangakatana.com)
+- [mgeko.cc](https://www.mgeko.cc)
 - [Mangadex](https://mangadex.org)
 - [mangapill.com](https://mangapill.com)
 - [manhuaus.com](https://manhuaus.com) \*
