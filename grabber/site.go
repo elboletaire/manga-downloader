@@ -114,6 +114,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewBluesolo(g),
 		NewTcb(g),
 		NewMangahere(g),
+		NewJestful(g),
 	}
 	var errs []error
 
