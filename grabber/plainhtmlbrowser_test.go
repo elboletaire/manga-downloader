@@ -21,6 +21,8 @@ func TestMatchBrowserSelector(t *testing.T) {
 		{"manhuaus.com", true},
 		{"toonily.com", true},
 		{"www.toonily.com", true}, // www. prefix is stripped
+		{"mangahub.io", true},
+		{"www.mangahub.io", true}, // www. prefix is stripped
 		{"example.com", false},
 		{"notatoongod.org", false}, // must be an exact host match
 	}

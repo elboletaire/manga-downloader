@@ -51,6 +51,7 @@ Supported sites
 - [mangadenizi.net](https://www.mangadenizi.net)
 - [mangafire.to](https://mangafire.to)
 - [mangahere.cc (MangaHere)](https://www.mangahere.cc)
+- [mangahub.io](https://mangahub.io) \*
 - [mangak.io (MangaK, former mangabuddy.com)](https://mangak.io)
 - [mangakakalot.gg (MangaKakalot)](https://www.mangakakalot.gg) \*
 - [mangakatana.com](https://mangakatana.com)

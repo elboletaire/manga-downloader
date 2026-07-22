@@ -357,9 +357,19 @@ func (m *PlainHTML) Test() (bool, error) {
 
 // Ttitle returns the manga title
 func (m PlainHTML) FetchTitle() (string, error) {
-	title := m.doc.Find(m.site.Title)
+	return sanitizeTitle(textWithoutNoise(m.doc.Find(m.site.Title))), nil
+}
 
-	return sanitizeTitle(title.Text()), nil
+// textWithoutNoise returns a selection's text with common non-title noise
+// stripped out first: <small> blocks (mangahub.io nests both a huge list of
+// alternate-script/language titles in its <h1> — long enough to blow past
+// filesystem filename limits — and a relative/absolute chapter date, e.g.
+// "2 weeks ago", in every chapter row) and badge-like labels (e.g.
+// mangahub's "Hot" tag, class "manga-label").
+func textWithoutNoise(s *goquery.Selection) string {
+	clone := s.Clone()
+	clone.Find("small, .manga-label").Remove()
+	return clone.Text()
 }
 
 // chapterNumberRe matches a chapter number in a chapter title, accepting
@@ -371,6 +381,13 @@ var chapterNumberRe = regexp.MustCompile(`(?i)\b(?:chapter|chapitre|cap[ií]tulo
 // "Volumen 3"), used as a fallback for sites that list volumes instead of
 // chapters (e.g. sushiscan).
 var volumeNumberRe = regexp.MustCompile(`(?i)\bvol(?:ume|umen)?\.?\s*(\d+\.?\d*)`)
+
+// urlChapterNumberRe is a last-resort fallback for rows whose visible text
+// carries no recognizable chapter/volume keyword (e.g. mangahub.io, whose
+// latest-chapter row often just repeats the manga name and number, like
+// "One Piece 1187" with no "Chapter" word) but whose reader URL always
+// contains "chapter-<number>".
+var urlChapterNumberRe = regexp.MustCompile(`(?i)chapter[-_](\d+\.?\d*)`)
 
 // parseChapterNumber extracts the chapter number from a chapter title, falling
 // back to a volume number. Returns false if no number could be found (these
@@ -397,13 +414,9 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		// an empty Chapter/ChapterTitle selector means the row itself carries
 		// the text (i.e. mangapill, where each chapter row is a plain <a>
 		// with no dedicated child element for the chapter number)
-		chapterText := s.Text()
+		chapterText := textWithoutNoise(s)
 		if m.site.Chapter != "" {
-			chapterText = s.Find(m.site.Chapter).Text()
-		}
-		number, ok := parseChapterNumber(chapterText)
-		if !ok {
-			return
+			chapterText = textWithoutNoise(s.Find(m.site.Chapter))
 		}
 
 		u := s.AttrOr("href", "")
@@ -411,9 +424,28 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 			u = s.Find(m.site.Link).AttrOr("href", "")
 		}
 		u = m.resolveURL(u)
+
+		number, ok := parseChapterNumber(chapterText)
+		if !ok {
+			// fall back to extracting the number from the reader URL itself
+			match := urlChapterNumberRe.FindStringSubmatch(u)
+			if len(match) > 0 {
+				if n, err := strconv.ParseFloat(match[1], 64); err == nil {
+					number = n
+					ok = true
+				}
+			}
+		}
+		if !ok {
+			return
+		}
+
+		if !strings.HasPrefix(u, "http") {
+			u = m.BaseUrl() + u
+		}
 		title := chapterText
 		if m.site.ChapterTitle != "" {
-			title = s.Find(m.site.ChapterTitle).Text()
+			title = textWithoutNoise(s.Find(m.site.ChapterTitle))
 		}
 		title = sanitizeTitle(title)
 		chapter := &PlainHTMLChapter{
