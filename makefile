@@ -33,7 +33,7 @@ else
 	go test -v ./...
 endif
 
-grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
+grabber: grabber/inmanga grabber/mangadex grabber/mangabats grabber/mangafire grabber/mangak grabber/qimanga grabber/aurorascans grabber/tcb grabber/flamecomics grabber/weebcentral grabber/leercapitulo grabber/html
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -54,6 +54,11 @@ grabber/mangak:
 
 grabber/qimanga:
 	go run . https://qimanga.com/series/4190634673-eleceed 2
+
+# aurorascans.com is a rebrand alias that 301-redirects path-for-path to
+# qimanga.com (via qimanhwa.com), handled by the same Qimanga grabber
+grabber/aurorascans:
+	go run . https://aurorascans.com/series/4190634673-nano-machine 322
 
 grabber/tcb:
 	go run . https://lhtranslation.net/manga/gaikotsu-kishi-sama-tadaima-isekai-e-o-dekake-chuu/ 71
