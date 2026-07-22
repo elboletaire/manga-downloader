@@ -76,6 +76,7 @@ Supported sites
 - [roliascan.com](https://roliascan.com)
 - [sanascans.com (Sana Scans)](https://sanascans.com)
 - [sushiscan.net](https://sushiscan.net) \*
+- [taiyo.moe](https://taiyo.moe)
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [templetoons.com (Temple Scan)](https://templetoons.com)
 - [team-shadowi.com](https://www.team-shadowi.com)
