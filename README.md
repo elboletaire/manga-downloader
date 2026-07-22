@@ -62,6 +62,7 @@ Supported sites
 - [manhuaplus.com](https://manhuaplus.com)
 - [mangasushi.org](https://mangasushi.org)
 - [mangataro.org](https://mangataro.org)
+- [Mangitto (mangtto.com)](https://mangtto.com)
 - [manhuaus.com](https://manhuaus.com) \*
 - [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
 - [qimanga.com](https://qimanga.com)
