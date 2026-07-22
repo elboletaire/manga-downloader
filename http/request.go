@@ -27,6 +27,10 @@ type RequestParams struct {
 	// Form, if set, is sent as an application/x-www-form-urlencoded POST
 	// body instead of an empty one
 	Form url.Values
+	// Body is an optional url-encoded form body; when set, it's sent as
+	// application/x-www-form-urlencoded (used by wp-admin/admin-ajax.php
+	// style endpoints, i.e. utoon.us)
+	Body string
 }
 
 // GetURL returns the request URL
@@ -55,6 +59,8 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 	var reqBody io.Reader
 	if rp.Form != nil {
 		reqBody = strings.NewReader(rp.Form.Encode())
+	} else if rp.Body != "" {
+		reqBody = strings.NewReader(rp.Body)
 	}
 
 	req, _ := http.NewRequest(t, params.GetURL(), reqBody)
@@ -76,7 +82,7 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 	if rp.Origin != "" {
 		req.Header.Set("Origin", rp.Origin)
 	}
-	if rp.Form != nil {
+	if rp.Form != nil || rp.Body != "" {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
 	for k, v := range rp.Headers {

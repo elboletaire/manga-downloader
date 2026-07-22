@@ -87,6 +87,7 @@ Supported sites
 - [vortexscans.org](https://vortexscans.org)
 - [tritinia.org (Tritinia Scans)](https://tritinia.org)
 - [violetscans.org](https://violetscans.org)
+- [utoon.us (UToon, home of reset-scans' content)](https://www.utoon.us)
 - [weebcentral.com](https://weebcentral.com)
 - [witchscans.com](https://witchscans.com)
 - [writerscans.com](https://writerscans.com)
