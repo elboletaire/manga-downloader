@@ -75,6 +75,13 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(1)
 	}
 
+	// validated here (and only here) so Grabber.GetConvertImages can ignore the
+	// parse error later, the same way maxUint8Flag ignores its own
+	if _, err := grabber.ParseConvertFormats(settings.ConvertImages); err != nil {
+		color.Red("Error: invalid --convert-images value: %s", err)
+		exit(1)
+	}
+
 	s, errs := grabber.NewSite(getUrlArg(args), &settings)
 	if len(errs) > 0 {
 		color.Red("Errors testing site (a site may be down):")
@@ -386,6 +393,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", "only download the specified language")
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
 	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz or raw (a folder with the images)")
+	rootCmd.Flags().StringVar(&settings.ConvertImages, "convert-images", grabber.ConvertImagesDefault, `comma-separated source image formats to convert to jpeg for e-reader compatibility: "avif", "webp" or "none"`)
 	rootCmd.Flags().BoolVar(&settings.BrowserVisible, "browser-visible", false, "open the browser window from the start (it opens automatically anyway when a headless attempt hits a challenge)")
 	rootCmd.Flags().Uint8VarP(&settings.Retry, "retry", "r", 1, "number of retries for failed page downloads, hard-limited to 3 (0 disables retrying)")
 	// set as persistent, so version command does not complain about the -o flag set via docker

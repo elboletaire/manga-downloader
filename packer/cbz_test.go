@@ -99,6 +99,7 @@ func TestPaddedChapterNumber(t *testing.T) {
 type fakeSite struct {
 	title    string
 	template string
+	convert  grabber.ConvertFormats
 }
 
 func (f *fakeSite) InitFlags(cmd *cobra.Command)                  {}
@@ -111,11 +112,43 @@ func (f *fakeSite) FetchTitle() (string, error) { return f.title, nil }
 func (f *fakeSite) BaseUrl() string             { return "https://example.com" }
 func (f *fakeSite) GetFilenameTemplate() string { return f.template }
 func (f *fakeSite) GetFormat() string           { return FormatCBZ }
+func (f *fakeSite) GetConvertImages() grabber.ConvertFormats {
+	return f.convert
+}
 func (f *fakeSite) GetMaxConcurrency() grabber.MaxConcurrency {
 	return grabber.MaxConcurrency{Chapters: 1, Pages: 1}
 }
 func (f *fakeSite) GetPreferredLanguage() string { return "" }
 func (f *fakeSite) GetRetries() uint8            { return 0 }
+
+// TestPackBundleConvertsPages is the only test covering the whole path the
+// --convert-images setting travels: from the Site interface, through the
+// packer, into the archive entry names.
+func TestPackBundleConvertsPages(t *testing.T) {
+	site := &fakeSite{
+		title:    "Test Series",
+		template: FilenameTemplateDefault,
+		convert:  grabber.ConvertFormats{grabber.ConvertAVIF: true},
+	}
+
+	chapters := []*DownloadedChapter{
+		{
+			Chapter: &grabber.Chapter{Number: 1},
+			Files:   []*downloader.File{{Data: avifBytes(t, gradientImage(16, 16))}},
+		},
+	}
+
+	dir := t.TempDir()
+	filename, err := PackBundle(dir, site, chapters, "1", func(page, progress int) {})
+	if err != nil {
+		t.Fatalf("PackBundle: %v", err)
+	}
+
+	names := entryNames(t, filepath.Join(dir, filename))
+	if len(names) != 1 || names[0] != "Chapter 0001/000.jpg" {
+		t.Errorf("got %v, want [Chapter 0001/000.jpg]", names)
+	}
+}
 
 func TestPackBundleEntryNames(t *testing.T) {
 	site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault}

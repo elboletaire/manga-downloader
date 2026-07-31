@@ -33,6 +33,10 @@ type Settings struct {
 	FilenameTemplate string
 	// Format is the desired output format ("cbz" or "raw")
 	Format string
+	// ConvertImages is the comma separated list of source image formats to
+	// transcode to JPEG when packing ("avif", "avif,webp" or "none"), so pages
+	// served in formats e-readers can't display end up readable
+	ConvertImages string
 	// Range is the range to be downloaded (in string, i.e. "1-10,23,45-50")
 	Range string
 	// OutputDir is the output directory for the downloaded files
@@ -70,6 +74,9 @@ type Site interface {
 	GetFilenameTemplate() string
 	// GetFormat returns the desired output format ("cbz" or "raw")
 	GetFormat() string
+	// GetConvertImages returns the set of source image formats to transcode to
+	// JPEG when packing
+	GetConvertImages() ConvertFormats
 	// GetMaxConcurrency returns the max concurrency for the site
 	GetMaxConcurrency() MaxConcurrency
 	// GetPreferredLanguage returns the preferred language for the site
@@ -178,6 +185,15 @@ func (g Grabber) GetFormat() string {
 	return g.Settings.Format
 }
 
+// GetConvertImages returns the set of source image formats to transcode to
+// JPEG when packing. The value is validated at startup, so a parse error here
+// can only mean it never went through the command flags; an empty set simply
+// converts nothing.
+func (g Grabber) GetConvertImages() ConvertFormats {
+	formats, _ := ParseConvertFormats(g.Settings.ConvertImages)
+	return formats
+}
+
 // InitFlags initializes the command flags
 func (g *Grabber) InitFlags(cmd *cobra.Command) {
 	g.SetMaxConcurrency(MaxConcurrency{
@@ -188,6 +204,7 @@ func (g *Grabber) InitFlags(cmd *cobra.Command) {
 	g.Settings.FilenameTemplate = cmd.Flag("filename-template").Value.String()
 	g.Settings.Retry = maxUint8Flag(cmd.Flag("retry"), 3)
 	g.Settings.Format = cmd.Flag("format").Value.String()
+	g.Settings.ConvertImages = cmd.Flag("convert-images").Value.String()
 }
 
 // NewSite returns a new site based on the passed url

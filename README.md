@@ -248,6 +248,34 @@ manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b
 # downloads One Piece chapters 1 to 8, each into its own folder of images
 ~~~
 
+### E-reader compatible images
+
+Some sites serve their pages as AVIF, a format no dedicated e-reader can
+display: Calibre/KCC, the Kobo CBZ reader and KOReader all fail on it, so the
+resulting file looks empty on the device even though the download went fine.
+Those pages are therefore converted to JPEG while packing, by default.
+
+WebP (served by a few other sites) renders fine in phone apps but is unreliable
+on e-ink, so it's left alone unless you ask for it:
+
+~~~bash
+# also convert webp pages, for a strictly e-ink reading setup
+manga-downloader --convert-images avif,webp <url> 1-10
+
+# keep every page exactly as the site served it
+manga-downloader --convert-images none <url> 1-10
+~~~
+
+JPEG, PNG and GIF pages are never touched: they're readable everywhere already,
+and re-encoding them would only lose quality. A page that fails to convert is
+kept as-is with a warning, rather than failing the chapter.
+
+> [!NOTE]
+> The AVIF decoder is embedded as WebAssembly, so no system library is needed on
+> any platform. On the 32-bit `linux/386` and `windows/386` builds it runs
+> interpreted and is noticeably slower — `--convert-images none` skips it
+> entirely if that bothers you.
+
 ### Custom file names
 
 Resulting file names can be customized with `--filename-template`, which takes
@@ -268,6 +296,7 @@ variables are `{{.Series}}`, `{{.Number}}`, `{{.Title}}` and `{{.Version}}`
 | `--output-dir`        | `-o`  | Output directory for the downloaded files                | current folder     |
 | `--filename-template` | `-t`  | Template for the resulting file names                    | see above          |
 | `--format`            | `-f`  | Output format: `cbz` or `raw` (a folder with the images) | `cbz`              |
+| `--convert-images`    |       | Source image formats to convert to JPEG: `avif`, `webp` or `none` | `avif`    |
 | `--concurrency`       | `-c`  | Concurrent chapter downloads (max 5)                     | 5                  |
 | `--concurrency-pages` | `-C`  | Concurrent page downloads per chapter (max 10)           | 10                 |
 | `--browser-visible`   |       | Open the browser from the start (opens automatically on a challenge anyway) | off        |
