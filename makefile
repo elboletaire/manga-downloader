@@ -40,8 +40,8 @@ else
 	go test ${GOTAGS} -v ./...
 endif
 
-# one dependency per line, alphabetically sorted, so parallel site-support
-# branches never edit the same line
+# one dependency per line, alphabetically sorted (grabber/html deliberately
+# last), so parallel site-support branches never edit the same line
 grabber: \
 	grabber/atsumaru \
 	grabber/aurorascans \

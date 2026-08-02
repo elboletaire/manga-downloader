@@ -7,6 +7,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20260714215040-dc233986426f
 	github.com/chromedp/chromedp v0.16.0
 	github.com/fatih/color v1.13.0
+	github.com/gen2brain/avif v0.6.0
 	github.com/ivanpirog/coloredcobra v1.0.1
 	github.com/manifoldco/promptui v0.9.0
 	github.com/spf13/cobra v1.6.1
@@ -24,7 +25,6 @@ require (
 	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/ebitengine/purego v0.10.1 // indirect
-	github.com/gen2brain/avif v0.6.0 // indirect
 	github.com/go-json-experiment/json v0.0.0-20260623181947-01eb4420fa68 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
