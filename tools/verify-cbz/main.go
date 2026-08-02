@@ -20,13 +20,14 @@ package main
 
 import (
 	"archive/zip"
-	"bytes"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/elboletaire/manga-downloader/packer/imgfmt"
 )
 
 // MinPages is the minimum number of image entries a chapter archive must
@@ -100,9 +101,9 @@ func verify(path string) error {
 	return nil
 }
 
-// imageFormat sniffs an entry's image format from its magic bytes, returning
-// the same names packer's extFromContent assigns as extensions (so the two can
-// be compared directly), or "" when nothing is recognised.
+// imageFormat sniffs an entry's image format from its leading bytes via the
+// shared packer/imgfmt sniff (the same one packer's extFromContent uses to
+// name pages), returning "" when nothing is recognised.
 func imageFormat(f *zip.File) (string, error) {
 	rc, err := f.Open()
 	if err != nil {
@@ -117,21 +118,5 @@ func imageFormat(f *zip.File) (string, error) {
 	}
 	head = head[:n]
 
-	switch {
-	case bytes.HasPrefix(head, []byte{0xff, 0xd8, 0xff}):
-		return "jpg", nil
-	case bytes.HasPrefix(head, []byte{0x89, 'P', 'N', 'G'}):
-		return "png", nil
-	case bytes.HasPrefix(head, []byte("GIF8")):
-		return "gif", nil
-	case bytes.HasPrefix(head, []byte("RIFF")) && len(head) >= 12 && bytes.Equal(head[8:12], []byte("WEBP")):
-		return "webp", nil
-	// AVIF: ISOBMFF "ftyp" box with an avif/avis brand (same sniff as packer's
-	// extFromContent; e.g. atsu.moe and mistscans serve AVIF pages)
-	case len(head) >= 12 && bytes.Equal(head[4:8], []byte("ftyp")) &&
-		(bytes.Equal(head[8:12], []byte("avif")) || bytes.Equal(head[8:12], []byte("avis"))):
-		return "avif", nil
-	}
-
-	return "", nil
+	return imgfmt.Sniff(head), nil
 }
