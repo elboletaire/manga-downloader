@@ -4,9 +4,10 @@ package packer
 
 import (
 	"errors"
-	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/elboletaire/manga-downloader/packer/imgfmt"
 )
 
 // SaveRaw saves the given named files as plain image files inside dirname,
@@ -40,36 +41,13 @@ func SaveRaw(dirname string, files []File, progress func(page, progress int)) er
 	return nil
 }
 
-// extFromContent detects the file extension to use from the image bytes,
-// so page files can be browsed directly with real extensions. Falls back
-// to "jpg" for anything not recognised.
+// extFromContent detects the file extension to use from the image bytes, so
+// page files can be browsed directly with real extensions. It shares the
+// format sniff with tools/verify-cbz via packer/imgfmt, and falls back to
+// "jpg" for anything unrecognised so a page always gets a browsable extension.
 func extFromContent(data []byte) string {
-	if isAvif(data) {
-		// net/http.DetectContentType doesn't recognise AVIF (as of Go
-		// 1.19), so it's sniffed manually from the ISOBMFF "ftyp" box
-		// (atsu.moe serves its page images as AVIF)
-		return "avif"
+	if ext := imgfmt.Sniff(data); ext != "" {
+		return ext
 	}
-
-	switch http.DetectContentType(data) {
-	case "image/png":
-		return "png"
-	case "image/webp":
-		return "webp"
-	case "image/gif":
-		return "gif"
-	default:
-		return "jpg"
-	}
-}
-
-// isAvif reports whether data looks like an ISOBMFF file with an "avif" or
-// "avis" (image sequence) brand, i.e. bytes 4-7 are "ftyp" and bytes 8-11
-// are the brand.
-func isAvif(data []byte) bool {
-	if len(data) < 12 || string(data[4:8]) != "ftyp" {
-		return false
-	}
-	brand := string(data[8:12])
-	return brand == "avif" || brand == "avis"
+	return "jpg"
 }

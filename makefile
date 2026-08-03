@@ -8,6 +8,13 @@ VERSION := $(shell git rev-parse --short HEAD)
 GOLDFLAGS += -X 'github.com/elboletaire/manga-downloader/cmd.Version=$(VERSION)'
 GOLDFLAGS += -X 'github.com/elboletaire/manga-downloader/cmd.Tag=$(BRANCH_OR_TAG)'
 GOFLAGS = -ldflags="$(GOLDFLAGS)"
+# nodynamic forces gen2brain/avif to use its embedded libavif/dav1d WASM build
+# (run under wazero, no cgo) instead of dlopen'ing whatever libavif happens to
+# be installed on the machine, so page conversion decodes identically here, in
+# CI and in the released binaries. Keep it in sync with the build_flags in
+# .github/workflows/release.yaml, which is the only build path that doesn't go
+# through this makefile.
+GOTAGS = -tags nodynamic
 RICHGO := $(shell command -v richgo 2> /dev/null)
 
 clean:
@@ -21,20 +28,20 @@ build: clean test build/unix
 build/all: clean test build/unix build/win
 
 build/unix:
-	CGO_ENABLED=0 go build -o manga-downloader ${GOFLAGS} .
+	CGO_ENABLED=0 go build -o manga-downloader ${GOTAGS} ${GOFLAGS} .
 
 build/win:
-	GOOS=windows go build -o manga-downloader.exe ${GOFLAGS} .
+	GOOS=windows go build -o manga-downloader.exe ${GOTAGS} ${GOFLAGS} .
 
 test:
 ifdef RICHGO
-	richgo test -v ./...
+	richgo test ${GOTAGS} -v ./...
 else
-	go test -v ./...
+	go test ${GOTAGS} -v ./...
 endif
 
-# one dependency per line, alphabetically sorted, so parallel site-support
-# branches never edit the same line
+# one dependency per line, alphabetically sorted (grabber/html deliberately
+# last), so parallel site-support branches never edit the same line
 grabber: \
 	grabber/atsumaru \
 	grabber/aurorascans \

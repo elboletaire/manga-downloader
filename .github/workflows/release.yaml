@@ -33,6 +33,10 @@ jobs:
         project_path: "."
         binary_name: "manga-downloader"
         extra_files: LICENSE README.md
+        # keep in sync with GOTAGS in the makefile: this is the only build path
+        # that doesn't go through it. Without it, released binaries would try to
+        # dlopen a system libavif instead of using the embedded WASM decoder.
+        build_flags: "-tags nodynamic"
         ldflags: >-
           -X 'github.com/elboletaire/manga-downloader/cmd.Version=${{ env.sha_short }}'
           -X 'github.com/elboletaire/manga-downloader/cmd.Tag=${{ env.tag }}'

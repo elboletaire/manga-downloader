@@ -2,34 +2,50 @@
 
 // verify-cbz checks that the given .cbz files are real chapter archives:
 // they must exist, contain at least MinPages entries, and every entry must
-// be a non-empty image (JPG/PNG/GIF/WebP/AVIF, checked by magic bytes).
+// be a non-empty image (JPG/PNG/GIF/WebP, checked by magic bytes) whose
+// extension matches its actual content.
+//
+// AVIF entries are a failure by default: the downloader converts AVIF pages
+// to JPEG (--convert-images, on by default) precisely because no dedicated
+// e-reader can render them, so an AVIF entry means that conversion silently
+// didn't happen - the most likely cause being a build that lost its
+// "-tags nodynamic". Pass -allow-avif to check an archive downloaded with
+// --convert-images=none.
 //
 // The downloader exits 0 even when individual chapters or pages fail, so
 // smoke tests must inspect the produced archives to detect broken sites.
 //
-// Usage: go run ./tools/verify-cbz file1.cbz [file2.cbz ...]
+// Usage: go run ./tools/verify-cbz [-allow-avif] file1.cbz [file2.cbz ...]
 package main
 
 import (
 	"archive/zip"
-	"bytes"
+	"flag"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/elboletaire/manga-downloader/packer/imgfmt"
 )
 
 // MinPages is the minimum number of image entries a chapter archive must
 // contain to be considered valid.
 const MinPages = 3
 
+var allowAvif = flag.Bool("allow-avif", false, "accept AVIF entries (for archives downloaded with --convert-images=none)")
+
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: verify-cbz file1.cbz [file2.cbz ...]")
+	flag.Parse()
+
+	if flag.NArg() < 1 {
+		fmt.Fprintln(os.Stderr, "usage: verify-cbz [-allow-avif] file1.cbz [file2.cbz ...]")
 		os.Exit(2)
 	}
 
 	failed := false
-	for _, path := range os.Args[1:] {
+	for _, path := range flag.Args() {
 		if err := verify(path); err != nil {
 			fmt.Fprintf(os.Stderr, "FAIL %s: %v\n", path, err)
 			failed = true
@@ -58,13 +74,23 @@ func verify(path string) error {
 		if f.UncompressedSize64 == 0 {
 			return fmt.Errorf("entry %q is empty", f.Name)
 		}
-		ok, err := isImage(f)
+
+		format, err := imageFormat(f)
 		if err != nil {
 			return fmt.Errorf("entry %q: %w", f.Name, err)
 		}
-		if !ok {
+		if format == "" {
 			return fmt.Errorf("entry %q is not a recognised image", f.Name)
 		}
+		if format == "avif" && !*allowAvif {
+			return fmt.Errorf("entry %q is AVIF; it should have been converted to JPEG (pass -allow-avif if it was downloaded with --convert-images=none)", f.Name)
+		}
+		// a page whose name disagrees with its bytes breaks reader software in
+		// confusing ways, and is exactly what a half-done conversion produces
+		if ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(f.Name), ".")); ext != format {
+			return fmt.Errorf("entry %q is named %q but its content is %s", f.Name, ext, format)
+		}
+
 		images++
 	}
 
@@ -75,35 +101,22 @@ func verify(path string) error {
 	return nil
 }
 
-func isImage(f *zip.File) (bool, error) {
+// imageFormat sniffs an entry's image format from its leading bytes via the
+// shared packer/imgfmt sniff (the same one packer's extFromContent uses to
+// name pages), returning "" when nothing is recognised.
+func imageFormat(f *zip.File) (string, error) {
 	rc, err := f.Open()
 	if err != nil {
-		return false, err
+		return "", err
 	}
 	defer rc.Close()
 
 	head := make([]byte, 12)
 	n, err := io.ReadFull(rc, head)
 	if err != nil && err != io.ErrUnexpectedEOF {
-		return false, err
+		return "", err
 	}
 	head = head[:n]
 
-	switch {
-	case bytes.HasPrefix(head, []byte{0xff, 0xd8, 0xff}): // JPEG
-		return true, nil
-	case bytes.HasPrefix(head, []byte{0x89, 'P', 'N', 'G'}): // PNG
-		return true, nil
-	case bytes.HasPrefix(head, []byte("GIF8")): // GIF
-		return true, nil
-	case bytes.HasPrefix(head, []byte("RIFF")) && len(head) >= 12 && bytes.Equal(head[8:12], []byte("WEBP")): // WebP
-		return true, nil
-	// AVIF: ISOBMFF "ftyp" box with an avif/avis brand (same sniff as
-	// packer's extFromContent; e.g. atsu.moe and mistscans serve AVIF pages)
-	case len(head) >= 12 && bytes.Equal(head[4:8], []byte("ftyp")) &&
-		(bytes.Equal(head[8:12], []byte("avif")) || bytes.Equal(head[8:12], []byte("avis"))):
-		return true, nil
-	}
-
-	return false, nil
+	return imgfmt.Sniff(head), nil
 }
