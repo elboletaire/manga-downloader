@@ -107,6 +107,10 @@ func (w WeebCentral) FetchChapters() (chapters Filterables, errs []error) {
 		if href == "" {
 			return
 		}
+		// the fragment switched from absolute to relative chapter hrefs
+		if strings.HasPrefix(href, "/") {
+			href, _ = url.JoinPath(w.BaseUrl(), href)
+		}
 
 		number, ok := parseChapterNumber(s.Text())
 		if !ok {
