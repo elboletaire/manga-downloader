@@ -100,8 +100,14 @@ grabber/mangadex:
 grabber/mangabats:
 	go run . https://www.mangabats.com/manga/after-the-possessor-left 1
 
+# uses a real (headless) browser: the SPA signs every JSON API call with a
+# per-session, cloudflare-challenge-gated vrf token, so we render the pages,
+# let them make the signed calls and intercept the responses; images then
+# download over plain HTTP. No --browser-visible needed, so not in the
+# grabber/browser group, but kept out of the CI smoke matrix like every other
+# browser grabber. Uses an old chapter (stable, not premium-gated like newest).
 grabber/mangafire:
-	go run . https://mangafire.to/title/dkw-one-piece 1187
+	go run . https://mangafire.to/title/dkw-one-piece 1050
 
 grabber/fanfox:
 	go run . https://fanfox.net/manga/chainsaw_man/ 232

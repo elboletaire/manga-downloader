@@ -51,7 +51,7 @@ Supported sites
 - [mangaball.net](https://mangaball.net)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
 - [mangadenizi.net](https://www.mangadenizi.net)
-- [mangafire.to](https://mangafire.to)
+- [mangafire.to](https://mangafire.to) \*
 - [mangahere.cc (MangaHere)](https://www.mangahere.cc)
 - [mangahub.io](https://mangahub.io) \*
 - [mangak.io (MangaK, former mangabuddy.com)](https://mangak.io)

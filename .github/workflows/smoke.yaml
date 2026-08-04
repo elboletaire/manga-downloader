@@ -25,7 +25,6 @@ jobs:
           - inmanga
           - mangadex
           - mangabats
-          - mangafire
           - mangak
           - mgeko
           - mangapark
@@ -43,7 +42,6 @@ jobs:
           - bluesolo
           - fmteam
           - jestful
-          - mangitto
           - projectsuki
           - roliascan
           - teamshadowi
@@ -95,6 +93,17 @@ jobs:
           # - bigsolo      # 403 on series page
           # - luascans     # 403 on series page
           # - hivetoons    # chapter list loads, image CDN 403s every page
+          # - mangitto     # whole domain Cloudflare-hard-blocked (403 "you
+          #                # have been blocked"), including residential IPs and
+          #                # real browsers — verified 2026-08-04. Grabber kept
+          #                # in case the block lifts; smoke-test locally.
+          # - mangafire    # now browser-based: the SPA signs every JSON API
+          #                # call with a per-session cloudflare-gated `vrf`
+          #                # token (plain HTTP → 403 "Missing token"), so the
+          #                # grabber renders the pages and intercepts the
+          #                # signed responses — excluded from the matrix like
+          #                # every other browser grabber. Run `make
+          #                # grabber/mangafire` locally.
     steps:
       - uses: actions/checkout@v4
 

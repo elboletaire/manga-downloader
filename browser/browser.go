@@ -321,6 +321,180 @@ func GetReaderHTML(seriesURL, tabSelector, paginationSelector, linkSelector, img
 	return html, nil
 }
 
+// APIResponse is a network response captured while rendering a page (its URL
+// and raw body), returned by GetAPIResponses.
+type APIResponse struct {
+	URL  string
+	Body string
+}
+
+// GetAPIResponses renders pageURL and returns the raw bodies of every network
+// response whose URL contains urlSubstr. It's for SPA sites that sign their own
+// JSON API calls client-side (e.g. a per-session token the endpoints can't be
+// replayed without), so plain HTTP gets rejected: the rendered page makes the
+// signed calls itself and we harvest the responses.
+//
+// If nextSelector is non-empty, after the initial load it repeatedly clicks
+// that selector (a pagination "next" button) and waits for each click's
+// response, until the button reports itself gone/disabled, a click produces no
+// new matching response, or maxClicks is reached — letting a paginated list be
+// collected page by page. The browser session (cookies + user agent) is
+// harvested afterwards so images still download over plain HTTP.
+//
+// Like GetHTML it tries headless first and transparently escalates to a visible
+// window if the wait selector times out (typically a challenge).
+func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration) ([]APIResponse, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	t := timeout
+	if t <= 0 {
+		t = headlessProbeTimeout
+		if visible {
+			t = visibleTimeout
+		}
+	}
+
+	res, err := captureAPI(pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, t)
+	if err == nil {
+		return res, nil
+	}
+
+	var ce *challengeError
+	if errors.As(err, &ce) && !visible {
+		color.Yellow("%s didn't load in a headless browser (likely a challenge).", hostOf(pageURL))
+		color.Yellow("opening a visible browser window — solve the challenge there if one appears...")
+		if rerr := goVisible(); rerr != nil {
+			return nil, rerr
+		}
+		if res, err = captureAPI(pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, visibleTimeout); err == nil {
+			return res, nil
+		}
+	}
+
+	if errors.As(err, &ce) {
+		return nil, fmt.Errorf("%w: the challenge may not have been solved in time", err)
+	}
+	return nil, err
+}
+
+// captureAPI performs a single render capturing the response bodies whose URL
+// contains urlSubstr, optionally clicking through nextSelector pagination.
+// Callers must hold mu.
+func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration) ([]APIResponse, error) {
+	if err := start(); err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(browserCtx, timeout)
+	defer cancel()
+
+	type entry struct {
+		id  network.RequestID
+		url string
+	}
+	var (
+		cmu     sync.Mutex
+		entries []entry
+	)
+	chromedp.ListenTarget(ctx, func(ev interface{}) {
+		resp, ok := ev.(*network.EventResponseReceived)
+		if !ok {
+			return
+		}
+		if NetLog != nil {
+			NetLog(resp.Response.URL, int(resp.Response.Status), resp.Response.MimeType)
+		}
+		if urlSubstr != "" && strings.Contains(resp.Response.URL, urlSubstr) {
+			cmu.Lock()
+			entries = append(entries, entry{resp.RequestID, resp.Response.URL})
+			cmu.Unlock()
+		}
+	})
+
+	nav := []chromedp.Action{network.Enable(), chromedp.Navigate(pageURL)}
+	if waitSelector != "" {
+		nav = append(nav, chromedp.WaitVisible(waitSelector, chromedp.ByQuery))
+	}
+	if err := chromedp.Run(ctx, nav...); err != nil {
+		if ctx.Err() != nil && waitSelector != "" {
+			return nil, &challengeError{url: pageURL, selector: waitSelector}
+		}
+		return nil, err
+	}
+
+	count := func() int {
+		cmu.Lock()
+		defer cmu.Unlock()
+		return len(entries)
+	}
+
+	// wait for the initial matching response(s) the SPA fires on load, so we
+	// don't fetch bodies before they exist
+	waitForGrowth(ctx, count, 0)
+
+	if nextSelector != "" {
+		clickJS := fmt.Sprintf(
+			`(function(){var b=document.querySelector(%q);if(!b)return "gone";if(b.disabled||b.getAttribute("aria-disabled")==="true")return "disabled";b.click();return "clicked";})()`,
+			nextSelector,
+		)
+		for i := 0; i < maxClicks; i++ {
+			before := count()
+			var status string
+			if err := chromedp.Run(ctx, chromedp.Evaluate(clickJS, &status)); err != nil {
+				return nil, err
+			}
+			if status != "clicked" {
+				break
+			}
+			// stop once a click yields no new matching response (last page)
+			if !waitForGrowth(ctx, count, before) {
+				break
+			}
+		}
+	}
+
+	// harvest cookies + UA so image downloads reuse the browser session
+	_ = chromedp.Run(ctx, chromedp.ActionFunc(harvestSession))
+
+	cmu.Lock()
+	defer cmu.Unlock()
+	out := make([]APIResponse, 0, len(entries))
+	for _, e := range entries {
+		id := e.id
+		var body []byte
+		_ = chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
+			b, berr := network.GetResponseBody(id).Do(ctx)
+			if berr == nil {
+				body = b
+			}
+			return nil
+		}))
+		if len(body) > 0 {
+			out = append(out, APIResponse{URL: e.url, Body: string(body)})
+		}
+	}
+	return out, nil
+}
+
+// waitForGrowth polls until count() exceeds baseline or a short grace period
+// elapses, returning whether it grew. Used to wait for an SPA fetch triggered
+// by a click/navigation to actually land before moving on.
+func waitForGrowth(ctx context.Context, count func() int, baseline int) bool {
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		if count() > baseline {
+			return true
+		}
+		if time.Now().After(deadline) {
+			return false
+		}
+		if err := chromedp.Run(ctx, chromedp.Sleep(200*time.Millisecond)); err != nil {
+			return count() > baseline
+		}
+	}
+}
+
 // getHTML is the shared implementation behind GetHTML and
 // GetHTMLWithLocalStorage: it renders url in a headless browser and, if the
 // wait selector times out (typically a cloudflare/JS challenge), transparently

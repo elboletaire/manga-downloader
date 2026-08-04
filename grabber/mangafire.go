@@ -7,24 +7,48 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 
-	"github.com/elboletaire/manga-downloader/http"
+	"github.com/elboletaire/manga-downloader/browser"
 )
 
-// Mangafire is a grabber for mangafire.to: the site is a react SPA, but both
-// the chapters list and the chapter pages are served by their open JSON api
+const mangafireBase = "https://mangafire.to"
+
+// mangafireMaxChapterPages caps how many chapter-list pages the pager is
+// clicked through. The list loads 20 chapters per page, so this covers series
+// with a few thousand chapters (e.g. One Piece needs ~90) while still bounding
+// a runaway loop if the end-of-list detection ever fails.
+const mangafireMaxChapterPages = 400
+
+// Mangafire is a grabber for mangafire.to. The site is a react SPA whose JSON
+// API signs every request with a per-session, Cloudflare-challenge-gated `vrf`
+// token generated client-side, so the endpoints can no longer be called with
+// plain HTTP (they answer 403 "Missing token"). Instead we drive a real
+// (headless) browser: it renders the series/reader pages, makes the signed API
+// calls itself, and we intercept the JSON responses. Page images then download
+// over plain HTTP (a Referer header is enough, no cookies) reusing the harvested
+// browser session.
 type Mangafire struct {
 	*Grabber
-	title string
+	// cached by load() after the first series render
+	loaded     bool
+	loadErr    error
+	title      string
+	readerBase string // canonical reader-URL base, e.g. https://mangafire.to/title/dkw-one-piece
+	chapters   Filterables
 }
 
 func NewMangafire(g *Grabber) *Mangafire {
 	return &Mangafire{Grabber: g}
 }
 
-// MangafireChapter represents a Mangafire Chapter
+// MangafireChapter represents a Mangafire chapter
 type MangafireChapter struct {
 	Chapter
+	// URL is the chapter reader page URL, rendered in a browser to capture the
+	// signed pages-API response
+	URL string
+	// Id is the numeric chapter id
 	Id int64
 }
 
@@ -34,124 +58,67 @@ func (m *Mangafire) Test() (bool, error) {
 	return re.MatchString(m.URL), nil
 }
 
-// FetchTitle fetches and returns the manga title
+// FetchTitle returns the manga title
 func (m *Mangafire) FetchTitle() (string, error) {
-	if m.title != "" {
-		return m.title, nil
-	}
-
-	hid, err := m.hid()
-	if err != nil {
+	if err := m.load(); err != nil {
 		return "", err
 	}
-
-	body, err := http.GetText(http.RequestParams{
-		URL:     "https://mangafire.to/api/titles/" + hid,
-		Referer: m.URL,
-	})
-	if err != nil {
-		return "", err
-	}
-
-	feed := struct {
-		Data struct {
-			Title string `json:"title"`
-		} `json:"data"`
-	}{}
-	if err = json.Unmarshal([]byte(body), &feed); err != nil {
-		return "", err
-	}
-
-	m.title = feed.Data.Title
-
 	return m.title, nil
 }
 
 // FetchChapters returns the chapters of the manga
-func (m Mangafire) FetchChapters() (chapters Filterables, errs []error) {
-	hid, err := m.hid()
-	if err != nil {
+func (m *Mangafire) FetchChapters() (Filterables, []error) {
+	if err := m.load(); err != nil {
 		return nil, []error{err}
 	}
-
-	language := m.Settings.Language
-	if language == "" {
-		language = "en"
-	}
-
-	page := 1
-	for {
-		uri := fmt.Sprintf(
-			"https://mangafire.to/api/titles/%s/chapters?language=%s&sort=number&order=asc&page=%d&limit=100",
-			hid, language, page,
-		)
-		body, err := http.GetText(http.RequestParams{
-			URL:     uri,
-			Referer: m.URL,
-		})
-		if err != nil {
-			errs = append(errs, err)
-			return
-		}
-
-		feed := mangafireChaptersFeed{}
-		if err = json.Unmarshal([]byte(body), &feed); err != nil {
-			errs = append(errs, err)
-			return
-		}
-
-		for _, c := range feed.Items {
-			title := c.Name
-			if title == "" {
-				title = "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64)
-			}
-			chapters = append(chapters, &MangafireChapter{
-				Chapter{
-					Number:   c.Number,
-					Title:    title,
-					Language: c.Language,
-				},
-				c.Id,
-			})
-		}
-
-		if !feed.Meta.HasNext {
-			return
-		}
-		page++
-	}
+	return m.chapters, nil
 }
 
 // FetchChapter fetches a chapter and its pages
-func (m Mangafire) FetchChapter(f Filterable) (*Chapter, error) {
+func (m *Mangafire) FetchChapter(f Filterable) (*Chapter, error) {
 	mchap := f.(*MangafireChapter)
 
-	body, err := http.GetText(http.RequestParams{
-		URL:     fmt.Sprintf("https://mangafire.to/api/chapters/%d", mchap.Id),
-		Referer: m.URL,
-	})
+	// rendering the reader page makes the SPA call /api/chapters/{id} with a
+	// valid vrf; we intercept that single response (which carries the full
+	// pages list) instead of trying to sign the call ourselves
+	responses, err := browser.GetAPIResponses(
+		mchap.URL,
+		".reader-img",
+		fmt.Sprintf("/api/chapters/%d", mchap.Id),
+		"",
+		0,
+		0,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	feed := struct {
-		Data struct {
-			Pages []struct {
-				Url string `json:"url"`
-			} `json:"pages"`
-		} `json:"data"`
-	}{}
-	if err = json.Unmarshal([]byte(body), &feed); err != nil {
-		return nil, err
+	var pages []mangafirePage
+	for _, r := range responses {
+		feed := struct {
+			Data struct {
+				Pages []mangafirePage `json:"pages"`
+			} `json:"data"`
+		}{}
+		if err := json.Unmarshal([]byte(r.Body), &feed); err != nil {
+			continue
+		}
+		if len(feed.Data.Pages) > 0 {
+			pages = feed.Data.Pages
+			break
+		}
+	}
+	if len(pages) == 0 {
+		return nil, fmt.Errorf("no pages found for chapter %s (it may be premium/locked)", f.GetTitle())
 	}
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		Language:   mchap.Language,
-		PagesCount: int64(len(feed.Data.Pages)),
+		PagesCount: int64(len(pages)),
 	}
-	for i, p := range feed.Data.Pages {
+	for i, p := range pages {
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),
 			URL:    p.Url,
@@ -161,10 +128,122 @@ func (m Mangafire) FetchChapter(f Filterable) (*Chapter, error) {
 	return chapter, nil
 }
 
+// load renders the series page once, paginating through the whole chapter list,
+// and caches the title, the canonical reader-URL base and the chapters. Both
+// FetchTitle and FetchChapters go through it, so the (slow) browser render only
+// happens once per run.
+func (m *Mangafire) load() error {
+	if m.loaded {
+		return m.loadErr
+	}
+	m.loaded = true
+
+	hid, err := m.hid()
+	if err != nil {
+		m.loadErr = err
+		return err
+	}
+
+	// urlSubstr matches the title (/api/titles/{hid}?...), the volumes list and
+	// every chapters page (/api/titles/{hid}/chapters?...); they're told apart
+	// below by their exact URL
+	responses, err := browser.GetAPIResponses(
+		m.URL,
+		".title-detail__row-link",
+		"/api/titles/"+hid,
+		`.npager__nav[aria-label="Next page"]`,
+		mangafireMaxChapterPages,
+		0,
+	)
+	if err != nil {
+		m.loadErr = fmt.Errorf("error fetching chapters: %w", err)
+		return m.loadErr
+	}
+
+	m.readerBase = mangafireBase + "/title/" + hid // fallback if the title call is missed
+	titlePrefix := "/api/titles/" + hid + "?"
+	chaptersPrefix := "/api/titles/" + hid + "/chapters"
+
+	// first pass: the title-info response gives the clean title and the
+	// canonical reader-URL base
+	for _, r := range responses {
+		if !strings.Contains(r.URL, titlePrefix) {
+			continue
+		}
+		info := struct {
+			Data struct {
+				Title string `json:"title"`
+				URL   string `json:"url"`
+			} `json:"data"`
+		}{}
+		if err := json.Unmarshal([]byte(r.Body), &info); err != nil {
+			continue
+		}
+		if info.Data.Title != "" {
+			m.title = info.Data.Title
+		}
+		if info.Data.URL != "" {
+			m.readerBase = mangafireBase + info.Data.URL
+		}
+		break
+	}
+
+	// second pass: collect chapters, deduping by number and preferring the
+	// official scanlation (the api returns both official and unofficial
+	// uploads for the same number)
+	best := map[float64]mangafireChapterItem{}
+	var order []float64
+	for _, r := range responses {
+		if !strings.Contains(r.URL, chaptersPrefix) {
+			continue
+		}
+		feed := struct {
+			Items []mangafireChapterItem `json:"items"`
+		}{}
+		if err := json.Unmarshal([]byte(r.Body), &feed); err != nil {
+			continue
+		}
+		for _, c := range feed.Items {
+			cur, ok := best[c.Number]
+			if !ok {
+				best[c.Number] = c
+				order = append(order, c.Number)
+				continue
+			}
+			if cur.Type != "official" && c.Type == "official" {
+				best[c.Number] = c
+			}
+		}
+	}
+
+	for _, num := range order {
+		c := best[num]
+		title := c.Name
+		if title == "" {
+			title = "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64)
+		}
+		m.chapters = append(m.chapters, &MangafireChapter{
+			Chapter: Chapter{
+				Number:   c.Number,
+				Title:    title,
+				Language: c.Language,
+			},
+			URL: fmt.Sprintf("%s/chapter/%d", m.readerBase, c.Id),
+			Id:  c.Id,
+		})
+	}
+
+	if len(m.chapters) == 0 {
+		m.loadErr = fmt.Errorf("no chapters found for %s", m.URL)
+	}
+
+	return m.loadErr
+}
+
 // hid returns the title id from the URL, e.g. "dkw" for both the current
 // https://mangafire.to/title/dkw-one-piece format and the legacy
 // https://mangafire.to/manga/one-piecee.dkw one
-func (m Mangafire) hid() (string, error) {
+func (m *Mangafire) hid() (string, error) {
 	re := regexp.MustCompile(`/title/([^/-]+)-`)
 	if matches := re.FindStringSubmatch(m.URL); len(matches) == 2 {
 		return matches[1], nil
@@ -176,15 +255,16 @@ func (m Mangafire) hid() (string, error) {
 	return "", fmt.Errorf("could not find title id in url %s", m.URL)
 }
 
-// mangafireChaptersFeed is the JSON feed for the chapters list
-type mangafireChaptersFeed struct {
-	Items []struct {
-		Id       int64   `json:"id"`
-		Number   float64 `json:"number"`
-		Name     string  `json:"name"`
-		Language string  `json:"language"`
-	} `json:"items"`
-	Meta struct {
-		HasNext bool `json:"hasNext"`
-	} `json:"meta"`
+// mangafireChapterItem is one entry of the chapters-list JSON feed
+type mangafireChapterItem struct {
+	Id       int64   `json:"id"`
+	Number   float64 `json:"number"`
+	Name     string  `json:"name"`
+	Language string  `json:"language"`
+	Type     string  `json:"type"` // "official" or "unofficial"
+}
+
+// mangafirePage is one entry of the reader's pages list
+type mangafirePage struct {
+	Url string `json:"url"`
 }
