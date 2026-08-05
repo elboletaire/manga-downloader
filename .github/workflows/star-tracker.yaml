@@ -35,3 +35,7 @@ jobs:
           # not a total across everything the account owns.
           only-repos: manga-downloader
           visibility: public
+          # Just the star curve, nothing else drawn on top: no milestone
+          # reference lines (on by default) and no moving-average trend line.
+          chart-milestones: false
+          chart-trend-line: false
