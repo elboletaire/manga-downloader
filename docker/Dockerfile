@@ -22,6 +22,11 @@ FROM alpine:latest
 
 WORKDIR /app
 
+# su-exec lets the root entrypoint drop privileges to a non-root user before
+# exec'ing manga-downloader, so files are written with the right ownership
+# from the start — no destructive recursive chown of a mounted volume.
+RUN apk add --no-cache su-exec
+
 RUN mkdir /downloads
 
 # Copy the pre-built binary file from the previous stage

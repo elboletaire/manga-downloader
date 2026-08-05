@@ -227,6 +227,16 @@ docker run --rm -it -v $PWD:/downloads elboletaire/manga-downloader --help
 Note the `-v $PWD:/downloads` param: it's required in order to get the
 downloaded files in your current folder.
 
+The container writes files as the UID/GID given by the `USER_ID` and
+`GROUP_ID` environment variables (both default to `1000`). The mounted
+directory must be writable by that user, which is already the case for
+`-v $PWD:/downloads` when your host UID is `1000`. If your host UID differs,
+pass it explicitly:
+
+~~~bash
+docker run --rm -it -e USER_ID=$(id -u) -e GROUP_ID=$(id -g) -v "$PWD:/downloads" elboletaire/manga-downloader --help
+~~~
+
 </details>
 
 ## Usage
