@@ -1,0 +1,41 @@
+name: Star tracker
+
+# Regenerates the star history SVG embedded in the README every two days.
+#
+# The action writes its output (charts, badge, snapshots) to the orphan
+# `star-tracker-data` branch, never to master: the chart is a generated
+# artifact, and committing it here every two days would bury real changes
+# under bot commits. The README embeds it straight from that branch via
+# raw.githubusercontent.com, so nothing needs to be copied back.
+#
+# Requires a classic PAT with `public_repo` scope stored as the
+# STAR_TRACKER_TOKEN secret — the action cannot use the default GITHUB_TOKEN,
+# since it reads the stargazers API to reconstruct the historical curve.
+on:
+  schedule:
+    # Every other day at 04:23 UTC. Day-of-month stepping means the 31st and
+    # the 1st land on consecutive days in 31-day months; harmless for a chart.
+    - cron: "23 4 */2 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: fbuireu/github-star-tracker@v1
+        with:
+          github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+          # Only this repo: the README chart is manga-downloader's history,
+          # not a total across everything the account owns.
+          only-repos: manga-downloader
+          visibility: public
+          # Just the star curve, nothing else drawn on top: no milestone
+          # reference lines (on by default) and no moving-average trend line.
+          chart-milestones: false
+          chart-trend-line: false

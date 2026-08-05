@@ -1,125 +1,158 @@
-Manga Downloader [![starline]](#star-history-)
-=============================================
+<div align="center">
+
+# Manga Downloader
+
+**Download manga chapters from MangaDex and 80+ other sites, packed into CBZ
+files ready to read on your favorite e-reader or reading app.**
 
 [![Go Report Card][go report card]][go report]
 [![Go Reference][go reference badge]][go reference]
 [![GitHub release][release badge]][releases]
-[![gitHub downloads]][downloads]
+[![gitHub downloads]][releases]
 [![Docker Pulls][pulls badge]][docker hub]
 [![License][license badge]][license]
 
-Download manga chapters from websites like MangaDex and pack them into CBZ
-files, ready to read on your favorite ereader or reading app.
-
 ![prompt img]
 
-Supported sites
----------------
+</div>
+
+## Quick start
+
+Grab the binary for your system from the [releases section][releases], then
+point it at a manga's index page and tell it which chapters you want:
+
+~~~bash
+manga-downloader https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece 1-10
+~~~
+
+That's it — you get `One Piece 0001 - Romance Dawn.cbz` and nine more files in
+the current folder. Everything below is optional refinement.
+
+## What you get
+
+- **One self-contained binary.** No runtime, no dependencies, no config file.
+- **[83 supported sites](#supported-sites)**, from big aggregators to small
+  scanlation groups.
+- **Chapter ranges** like `1,3,5-10` — download exactly what you're missing.
+- **CBZ or plain folders** of images (`--format raw`).
+- **E-reader friendly**: AVIF pages are converted to JPEG automatically, so
+  chapters don't show up blank on a Kobo or in Calibre.
+- **Bundling**: collapse a whole range into a single CBZ (`--bundle`).
+- **Concurrent downloads**, tunable per chapter and per page.
+- **Javascript and Cloudflare sites** handled through a local Chromium browser.
+
+## Supported sites
+
+Manga Downloader currently supports **83 sites**, from big aggregators like
+MangaDex, MangaFire or MangaPark to individual scanlation groups:
+
+<details>
+<summary><b>Show the full list of supported sites</b></summary>
+<br>
 
 - [asmotoon.com (Asmodeus Scans)](https://asmotoon.com)
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
-- [demonicscans.org (MangaDemon / Demonic Scans)](https://demonicscans.org)
 - [atsu.moe (Atsumaru)](https://atsu.moe)
 - [aurorascans.com (redirects to qimanga.com)](https://aurorascans.com)
-- [danke.moe (Danke fürs Lesen)](https://danke.moe)
 - [bigsolo.org](https://bigsolo.org)
-- [deathtollscans.net](https://reader.deathtollscans.net)
 - [bluesolo.org (Blue Solo, French scantrad)](https://bluesolo.org)
 - [comix.to](https://comix.to) \*
+- [danke.moe (Danke fürs Lesen)](https://danke.moe)
+- [deathtollscans.net](https://reader.deathtollscans.net)
+- [demonicscans.org (MangaDemon / Demonic Scans)](https://demonicscans.org)
 - [dragontea.ink](https://dragontea.ink) \*
+- [drakecomic.org (Drake Scans)](https://drakecomic.org) \*
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
-- [fanfox.net (Manga Fox)](https://fanfox.net)
 - [elftoon.com](https://elftoon.com)
 - [en-hijala.com (Hijala Translations)](https://en-hijala.com)
-- [drakecomic.org (Drake Scans)](https://drakecomic.org) \*
+- [en-thunderscans.com (Thunderscans)](https://en-thunderscans.com)
+- [fanfox.net (Manga Fox)](https://fanfox.net)
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
-- [guya.moe (Guya, Kaguya-sama)](https://guya.moe)
-- [hivetoons.org (HiveToons, VoidScans)](https://hivetoons.org)
+- [fmteam.fr](https://fmteam.fr)
 - [furyosociety.com](https://furyosociety.com)
 - [gdscans.com (GalaxyDegenScans)](https://gdscans.com)
-- [fmteam.fr](https://fmteam.fr)
 - [genzupdates.com (Genz Toon)](https://genzupdates.com)
+- [guya.moe (Guya, Kaguya-sama)](https://guya.moe)
+- [hivetoons.org (HiveToons, VoidScans)](https://hivetoons.org)
 - [inmanga.com](https://inmanga.com)
 - [jestful.net](https://jestful.net)
 - [kappabeast.com](https://kappabeast.com) \*
-- [lagoonscans.com](https://lagoonscans.com)
 - [kaynscan.org (Kayn Scan)](https://kaynscan.org)
+- [lagoonscans.com](https://lagoonscans.com)
 - [leercapitulo.co](https://www.leercapitulo.co) \*
-- [LHTranslation](https://lhtranslation.net)
-- [madarascans.org (former madarascans.com)](https://madarascans.org)
+- [lhtranslation.net (LHTranslation)](https://lhtranslation.net)
 - [luacomic.org (LuaScans)](https://luacomic.org)
+- [madarascans.org (former madarascans.com)](https://madarascans.org)
 - [mangaball.net](https://mangaball.net)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
 - [mangadenizi.net](https://www.mangadenizi.net)
+- [mangadex.org (MangaDex)](https://mangadex.org)
 - [mangafire.to](https://mangafire.to) \*
 - [mangahere.cc (MangaHere)](https://www.mangahere.cc)
 - [mangahub.io](https://mangahub.io) \*
 - [mangak.io (MangaK, former mangabuddy.com)](https://mangak.io)
 - [mangakakalot.gg (MangaKakalot)](https://www.mangakakalot.gg) \*
 - [mangakatana.com](https://mangakatana.com)
-- [mgeko.cc](https://www.mgeko.cc)
-- [mangapark.page (MangaPark, mangapark.to's mirror at the time of writing)](https://mangapark.page)
-- [mangalivre.to (Manga Livre, former mangalivre.tv/mangalivre.net)](https://mangalivre.to)
 - [mangalib.me (MangaLib)](https://mangalib.me)
-- [Mangadex](https://mangadex.org)
+- [mangalivre.to (Manga Livre, former mangalivre.tv/mangalivre.net)](https://mangalivre.to)
+- [mangapark.page (MangaPark, mangapark.to's mirror at the time of writing)](https://mangapark.page)
 - [mangapill.com](https://mangapill.com)
 - [mangaread.org](https://www.mangaread.org)
-- [manhuaplus.com](https://manhuaplus.com)
 - [mangasushi.org](https://mangasushi.org)
 - [mangataro.org](https://mangataro.org)
-- [Mangitto (mangtto.com)](https://mangtto.com)
-- [manhuaus.com](https://manhuaus.com) \*
-- [mistscans.com](https://mistscans.com)
+- [mangtto.com (Mangitto)](https://mangtto.com)
+- [manhuaplus.com](https://manhuaplus.com)
 - [manhuatop.org](https://manhuatop.org) \*
+- [manhuaus.com](https://manhuaus.com) \*
+- [mgeko.cc](https://www.mgeko.cc)
+- [mistscans.com](https://mistscans.com)
 - [mkissa.to](https://mkissa.to) \*
 - [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
 - [projectsuki.com](https://projectsuki.com)
 - [qimanga.com](https://qimanga.com)
 - [rawkuma.net](https://rawkuma.net)
-- [silentquill.net (Armageddon Scanlation)](https://www.silentquill.net)
-- [rokaricomics.com](https://rokaricomics.com)
 - [ritharscans.com](https://ritharscans.com)
+- [rokaricomics.com](https://rokaricomics.com)
 - [roliascan.com](https://roliascan.com)
 - [sanascans.com (Sana Scans)](https://sanascans.com)
-- [stonescape.xyz](https://stonescape.xyz)
 - [setsuscans.com](https://setsuscans.com) \*
+- [silentquill.net (Armageddon Scanlation)](https://www.silentquill.net)
+- [stonescape.xyz](https://stonescape.xyz)
 - [sushiscan.net](https://sushiscan.net) \*
 - [taiyo.moe](https://taiyo.moe)
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
-- [templetoons.com (Temple Scan)](https://templetoons.com)
 - [team-shadowi.com](https://www.team-shadowi.com)
-- [en-thunderscans.com (Thunderscans)](https://en-thunderscans.com)
-- [toonily.com](https://toonily.com) \*
+- [templetoons.com (Temple Scan)](https://templetoons.com)
 - [toongod.org](https://www.toongod.org) \*
-- [vortexscans.org](https://vortexscans.org)
+- [toonily.com](https://toonily.com) \*
 - [tritinia.org (Tritinia Scans)](https://tritinia.org)
-- [violetscans.org](https://violetscans.org)
 - [utoon.us (UToon, home of reset-scans' content)](https://www.utoon.us)
+- [violetscans.org](https://violetscans.org)
+- [vortexscans.org](https://vortexscans.org)
 - [weebcentral.com](https://weebcentral.com)
 - [witchscans.com](https://witchscans.com)
 - [writerscans.com](https://writerscans.com)
 - [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
 
-> \* These sites can't be scraped with plain HTTP requests (they render with
-> javascript or sit behind a Cloudflare challenge), so they need a Chromium-based
-> browser installed (Google Chrome, Chromium, Brave or Edge), which
-> manga-downloader launches automatically to render the pages. Most sit behind a
-> Cloudflare challenge that only passes in a visible browser — this happens on
-> its own: if a headless attempt hits a challenge, a browser window opens
-> automatically so it can resolve (you may occasionally need to solve one click):
->
-> ~~~bash
-> manga-downloader https://www.toongod.org/webtoon/solo-leveling/ 1-10
-> ~~~
->
-> You can pass `--browser-visible` to open the window from the start and skip the
+</details>
+
+> [!NOTE]
+> **Sites marked with a `*` need a Chromium-based browser installed** (Google
+> Chrome, Chromium, Brave or Edge): they render with javascript or sit behind a
+> Cloudflare challenge, so plain HTTP requests can't scrape them.
+> manga-downloader launches the browser itself, and a window pops up on its own
+> when a challenge needs to resolve — you may occasionally have to solve one
+> click. Add `--browser-visible` to open it from the start and skip the
 > (pointless, for these sites) headless attempt.
 
-It may support even more sites of which I'm not aware. If you find a site that
-is not supported, feel free to open a new issue or a PR with the implementation.
+Other sites may work too, even if they're not listed. If you find one that
+doesn't, feel free to [open an issue][issues] or a PR with the implementation.
 
-Installation
-------------
+## Installation
+
+<details open>
+<summary><b>Manual download</b> (any platform)</summary>
+<br>
 
 Download the archive for your system from the [releases section][releases] and
 extract it. You can then run the binary from that folder:
@@ -134,14 +167,23 @@ Or on Windows:
 .\manga-downloader.exe
 ~~~
 
-To be able to run it from anywhere, place the binary in a folder that is in
-your `PATH` (or add the folder where you extracted it to your `PATH`
-environment variable). Common choices:
+To run it from anywhere, place the binary in a folder that is in your `PATH`
+(or add the folder where you extracted it to your `PATH` environment
+variable). Common choices are `/usr/local/bin` on Linux and macOS, and
+`C:\Windows\System32` on Windows:
 
-- Linux and macOS: `/usr/local/bin`
-- Windows: `C:\Windows\System32`
+~~~cmd
+C:\Users\elboletaire\Desktop>manga-downloader https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover 1-346
+~~~
 
-### macOS
+The above command downloads Black Clover chapters 1 to 346 to the Desktop
+folder (since that's the current directory).
+
+</details>
+
+<details>
+<summary><b>macOS</b>: allowing an unsigned binary</summary>
+<br>
 
 Since the binary is not signed, macOS's Gatekeeper will block it the first time
 you try to run it. On recent macOS versions the old terminal workarounds (like
@@ -156,22 +198,27 @@ you try to run it. On recent macOS versions the old terminal workarounds (like
 
 You only need to do this once; subsequent runs will work normally.
 
-### Windows
+</details>
 
-If you place the `.exe` file inside `C:\Windows\System32` you'll be able to
-call the program from anywhere:
+<details>
+<summary><b>Go</b>: install from source</summary>
+<br>
 
-~~~cmd
-C:\Users\elboletaire\Desktop>manga-downloader https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover 1-346
+If you have Go installed, you can build and install the latest version in one
+step:
+
+~~~bash
+go install github.com/elboletaire/manga-downloader@latest
 ~~~
 
-The above command downloads Black Clover chapters 1 to 346 to the Desktop
-folder (since that's the current directory).
+Note the resulting binary won't report its version, since that's injected at
+build time in the release builds.
 
-### Docker
+</details>
 
-You can also run manga-downloader directly via Docker, without installing
-anything:
+<details>
+<summary><b>Docker</b>: run without installing anything</summary>
+<br>
 
 ~~~bash
 docker run --rm -it -v $PWD:/downloads elboletaire/manga-downloader --help
@@ -180,23 +227,18 @@ docker run --rm -it -v $PWD:/downloads elboletaire/manga-downloader --help
 Note the `-v $PWD:/downloads` param: it's required in order to get the
 downloaded files in your current folder.
 
-Usage
------
+</details>
 
-Only one argument is required: the URL of the manga's index page (the page
+## Usage
+
+Only one argument is required: the URL of the manga's **index page** (the page
 listing all its chapters, not an individual chapter).
 
 ~~~bash
-manga-downloader [URL]
+manga-downloader [URL] [chapters]
 ~~~
 
-When you only specify the URL, it will ask you whether you want to download all
-chapters.
-
-> Note: you must answer <kbd>y</kbd> to download them; it defaults to "no".
-
-You can also specify which chapters to download as a second argument, using
-single numbers and/or ranges separated by commas (e.g. `1,3,5-10`):
+Chapters are single numbers and/or ranges separated by commas — `1,3,5-10`:
 
 ~~~bash
 manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1-50
@@ -205,18 +247,18 @@ manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b
 
 ![download img]
 
-Arguments are not positional, so you can pass them in any order:
+Two things worth knowing up front:
 
-~~~bash
-manga-downloader 1-50 https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935
-# exactly the same as the previous example
-~~~
+- **Arguments are not positional**, so `manga-downloader 1-50 [URL]` does
+  exactly the same as the example above.
+- **Omit the chapters** and it asks whether to download all of them. You must
+  answer <kbd>y</kbd>; it defaults to "no".
 
 ### Choosing a language
 
-Some sites, like MangaDex, can return the same chapter multiple times, once per
-translated language. By default every match is downloaded to its own file, but
-you can restrict the download to a single language with `--language`:
+Some sites, like MangaDex, return the same chapter once per translated
+language. By default every match is downloaded to its own file; `--language`
+restricts it to one:
 
 ~~~bash
 manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece 1-10
@@ -225,7 +267,7 @@ manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-936
 
 ### Bundling
 
-Use `--bundle` to bundle all the downloaded chapters into a single CBZ file:
+`--bundle` merges all the downloaded chapters into a single CBZ file:
 
 ~~~bash
 manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1-8 --bundle
@@ -239,9 +281,8 @@ Inside the bundle, each chapter gets its own folder (e.g. `Chapter 0001/`,
 
 ### Output format
 
-By default chapters are packed into CBZ files. Pass `--format raw` to write
-the images into a plain folder instead (named the same as the CBZ file would
-have been, minus the extension):
+Chapters are packed into CBZ files by default. `--format raw` writes the images
+into a plain folder instead, named the same as the CBZ would have been:
 
 ~~~bash
 manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1-8 --format raw
@@ -253,7 +294,7 @@ manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b
 Some sites serve their pages as AVIF, a format no dedicated e-reader can
 display: Calibre/KCC, the Kobo CBZ reader and KOReader all fail on it, so the
 resulting file looks empty on the device even though the download went fine.
-Those pages are therefore converted to JPEG while packing, by default.
+**Those pages are converted to JPEG while packing, by default.**
 
 WebP (served by a few other sites) renders fine in phone apps but is unreliable
 on e-ink, so it's left alone unless you ask for it:
@@ -268,7 +309,7 @@ manga-downloader --convert-images none <url> 1-10
 
 JPEG, PNG and GIF pages are never touched: they're readable everywhere already,
 and re-encoding them would only lose quality. A page that fails to convert is
-kept as-is with a warning, rather than failing the chapter.
+kept as-is with a warning, rather than failing the whole chapter.
 
 > [!NOTE]
 > The AVIF decoder is embedded as WebAssembly, so no system library is needed on
@@ -278,29 +319,30 @@ kept as-is with a warning, rather than failing the chapter.
 
 ### Custom file names
 
-Resulting file names can be customized with `--filename-template`, which takes
-a [Go text/template](https://pkg.go.dev/text/template) string. The available
-variables are `{{.Series}}`, `{{.Number}}`, `{{.Title}}` and `{{.Version}}`
-(a counter appended when a file name would be duplicated). The default is:
+File names are built from a [Go text/template][go template] string passed to
+`--filename-template`. The default is:
 
 ~~~
 {{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}
 ~~~
 
+The available variables are `{{.Series}}`, `{{.Number}}`, `{{.Title}}` and
+`{{.Version}}` (a counter appended when a file name would be duplicated).
+
 ### All options
 
-| Flag                  | Short | Description                                              | Default            |
-| --------------------- | ----- | -------------------------------------------------------- | ------------------ |
-| `--bundle`            | `-b`  | Bundle all specified chapters into a single file         | off                |
-| `--language`          | `-l`  | Only download the specified language                     | all languages      |
-| `--output-dir`        | `-o`  | Output directory for the downloaded files                | current folder     |
-| `--filename-template` | `-t`  | Template for the resulting file names                    | see above          |
-| `--format`            | `-f`  | Output format: `cbz` or `raw` (a folder with the images) | `cbz`              |
-| `--convert-images`    |       | Source image formats to convert to JPEG: `avif`, `webp` or `none` | `avif`    |
-| `--concurrency`       | `-c`  | Concurrent chapter downloads (max 5)                     | 5                  |
-| `--concurrency-pages` | `-C`  | Concurrent page downloads per chapter (max 10)           | 10                 |
-| `--browser-visible`   |       | Open the browser from the start (opens automatically on a challenge anyway) | off        |
-| `--retry`             | `-r`  | Retries for failed page downloads (max 3, 0 disables retrying)  | 1                  |
+| Flag                  | Short | Description                                        | Default        |
+| --------------------- | ----- | -------------------------------------------------- | -------------- |
+| `--bundle`            | `-b`  | Bundle all specified chapters into a single file   | off            |
+| `--language`          | `-l`  | Only download the specified language               | all languages  |
+| `--output-dir`        | `-o`  | Where to write the downloaded files                | current folder |
+| `--filename-template` | `-t`  | Template for the resulting file names              | see above      |
+| `--format`            | `-f`  | Output format: `cbz` or `raw` (a plain folder)     | `cbz`          |
+| `--convert-images`    |       | Formats to convert to JPEG: `avif`, `webp`, `none` | `avif`         |
+| `--concurrency`       | `-c`  | Concurrent chapter downloads (max 5)               | 5              |
+| `--concurrency-pages` | `-C`  | Concurrent page downloads per chapter (max 10)     | 10             |
+| `--browser-visible`   |       | Open the browser window from the start             | off            |
+| `--retry`             | `-r`  | Retries per failed page (max 3, 0 disables)        | 1              |
 
 Run the `help` command to see them all from your terminal:
 
@@ -310,36 +352,46 @@ manga-downloader help
 
 ![help img]
 
-Star history ![starline]
-------------------------
+## Star history
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=elboletaire/manga-downloader&type=date&theme=dark&legend=top-left&sealed_token=GfQgqGBmkGzpKUy8jK1yIy09naBjNE6V3-CyvUqBPhqXKzB7UJU5obN0nHeR3POMpBCyi53z30dH_CyEu2bK1rlzc81eJBJwUJXMYK-Mn0CjkcOjwGs9ThDonsRCaSlhQCXsWGWtuYEeFKFUYX5O43yTbhNYclOsolN8OuQ5pl_d9zsKjNzkcnSnO6D8" />
-  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=elboletaire/manga-downloader&type=date&legend=top-left&sealed_token=GfQgqGBmkGzpKUy8jK1yIy09naBjNE6V3-CyvUqBPhqXKzB7UJU5obN0nHeR3POMpBCyi53z30dH_CyEu2bK1rlzc81eJBJwUJXMYK-Mn0CjkcOjwGs9ThDonsRCaSlhQCXsWGWtuYEeFKFUYX5O43yTbhNYclOsolN8OuQ5pl_d9zsKjNzkcnSnO6D8" />
-  <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=elboletaire/manga-downloader&type=date&legend=top-left&sealed_token=GfQgqGBmkGzpKUy8jK1yIy09naBjNE6V3-CyvUqBPhqXKzB7UJU5obN0nHeR3POMpBCyi53z30dH_CyEu2bK1rlzc81eJBJwUJXMYK-Mn0CjkcOjwGs9ThDonsRCaSlhQCXsWGWtuYEeFKFUYX5O43yTbhNYclOsolN8OuQ5pl_d9zsKjNzkcnSnO6D8" />
-</picture>
+<div align="center">
 
-License
--------
+[![Star history chart][star history]][stargazers]
+
+</div>
+
+Regenerated every two days by [github-star-tracker][star tracker], which runs
+in this repo's own workflow and stores its output on the `star-tracker-data`
+branch.
+
+## License
 
 All the code contained in this repo is licensed under the
-[GNU Affero General Public License v3.0][license]
+[GNU Affero General Public License v3.0][license].
 
-    Manga Downloader GO cli
-    Copyright (C) 2023-2026 Òscar Casajuana Alonso
+<details>
+<summary>License notice</summary>
+<br>
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+~~~text
+Manga Downloader GO cli
+Copyright (C) 2023-2026 Òscar Casajuana Alonso
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+~~~
+
+</details>
 
 [github downloads]: https://img.shields.io/github/downloads/elboletaire/manga-downloader/total
 [go reference badge]: https://pkg.go.dev/badge/github.com/elboletaire/manga-downloader.svg
@@ -349,14 +401,16 @@ All the code contained in this repo is licensed under the
 [go report]: https://goreportcard.com/report/github.com/elboletaire/manga-downloader
 [go report card]: https://goreportcard.com/badge/github.com/elboletaire/manga-downloader
 [go reference]: https://pkg.go.dev/github.com/elboletaire/manga-downloader
-[starline]: https://starlines.qoo.monster/assets/elboletaire/manga-downloader
 
 [license]: ./LICENSE
 [releases]: https://github.com/elboletaire/manga-downloader/releases
 [issues]: https://github.com/elboletaire/manga-downloader/issues
+[stargazers]: https://github.com/elboletaire/manga-downloader/stargazers
+[star tracker]: https://github.com/fbuireu/github-star-tracker
+[star history]: https://raw.githubusercontent.com/elboletaire/manga-downloader/star-tracker-data/charts/star-history.svg
+[go template]: https://pkg.go.dev/text/template
 [download img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/download.gif
 [bundle img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/bundle.gif
 [help img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/help.gif
 [prompt img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/prompt.gif
 [docker hub]: https://hub.docker.com/r/elboletaire/manga-downloader
-[downloads]: https://qii404.me/github-release-statistics/?repo=https://github.com/elboletaire/manga-downloader
