@@ -360,10 +360,6 @@ manga-downloader help
 
 </div>
 
-Regenerated every two days by [github-star-tracker][star tracker], which runs
-in this repo's own workflow and stores its output on the `star-tracker-data`
-branch.
-
 ## License
 
 All the code contained in this repo is licensed under the
@@ -406,7 +402,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 [releases]: https://github.com/elboletaire/manga-downloader/releases
 [issues]: https://github.com/elboletaire/manga-downloader/issues
 [stargazers]: https://github.com/elboletaire/manga-downloader/stargazers
-[star tracker]: https://github.com/fbuireu/github-star-tracker
 [star history]: https://raw.githubusercontent.com/elboletaire/manga-downloader/star-tracker-data/charts/star-history.svg
 [go template]: https://pkg.go.dev/text/template
 [download img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/download.gif
