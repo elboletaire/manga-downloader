@@ -23,7 +23,7 @@ var versionCmd = &cobra.Command{
 	Short: "Shows the version of the application",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("%s - Manga volumes downloading tool\n", color.YellowString("Manga Downloader"))
-		fmt.Printf("All Rights Reserved © 2023-2024 %s\n", color.HiBlackString("Òscar Casajuana Alonso"))
+		fmt.Printf("All Rights Reserved © 2023-2026 %s\n", color.HiBlackString("Òscar Casajuana Alonso"))
 		fmt.Printf("Version: %s - ", color.MagentaString("%s (%s)", Version, Tag))
 
 		vcheck := &latest.GithubTag{
