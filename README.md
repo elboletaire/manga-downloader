@@ -1,125 +1,132 @@
-Manga Downloader [![starline]](#star-history-)
-=============================================
+<div align="center">
+
+# Manga Downloader
 
 [![Go Report Card][go report card]][go report]
 [![Go Reference][go reference badge]][go reference]
 [![GitHub release][release badge]][releases]
-[![gitHub downloads]][downloads]
+[![gitHub downloads]][releases]
 [![Docker Pulls][pulls badge]][docker hub]
 [![License][license badge]][license]
 
-Download manga chapters from websites like MangaDex and pack them into CBZ
-files, ready to read on your favorite ereader or reading app.
+**Download manga chapters from MangaDex and 80+ other websites, packed into
+CBZ files ready to read on your favorite e-reader or reading app.**
 
 ![prompt img]
 
-Supported sites
----------------
+</div>
+
+## Supported sites
+
+Manga Downloader currently supports **83 sites**, from big aggregators like
+MangaDex, MangaFire or MangaPark to individual scanlation groups:
+
+<details>
+<summary><b>Show the full list of supported sites</b></summary>
+<br>
 
 - [asmotoon.com (Asmodeus Scans)](https://asmotoon.com)
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
-- [demonicscans.org (MangaDemon / Demonic Scans)](https://demonicscans.org)
 - [atsu.moe (Atsumaru)](https://atsu.moe)
 - [aurorascans.com (redirects to qimanga.com)](https://aurorascans.com)
-- [danke.moe (Danke fürs Lesen)](https://danke.moe)
 - [bigsolo.org](https://bigsolo.org)
-- [deathtollscans.net](https://reader.deathtollscans.net)
 - [bluesolo.org (Blue Solo, French scantrad)](https://bluesolo.org)
 - [comix.to](https://comix.to) \*
+- [danke.moe (Danke fürs Lesen)](https://danke.moe)
+- [deathtollscans.net](https://reader.deathtollscans.net)
+- [demonicscans.org (MangaDemon / Demonic Scans)](https://demonicscans.org)
 - [dragontea.ink](https://dragontea.ink) \*
+- [drakecomic.org (Drake Scans)](https://drakecomic.org) \*
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
-- [fanfox.net (Manga Fox)](https://fanfox.net)
 - [elftoon.com](https://elftoon.com)
 - [en-hijala.com (Hijala Translations)](https://en-hijala.com)
-- [drakecomic.org (Drake Scans)](https://drakecomic.org) \*
+- [en-thunderscans.com (Thunderscans)](https://en-thunderscans.com)
+- [fanfox.net (Manga Fox)](https://fanfox.net)
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
-- [guya.moe (Guya, Kaguya-sama)](https://guya.moe)
-- [hivetoons.org (HiveToons, VoidScans)](https://hivetoons.org)
+- [fmteam.fr](https://fmteam.fr)
 - [furyosociety.com](https://furyosociety.com)
 - [gdscans.com (GalaxyDegenScans)](https://gdscans.com)
-- [fmteam.fr](https://fmteam.fr)
 - [genzupdates.com (Genz Toon)](https://genzupdates.com)
+- [guya.moe (Guya, Kaguya-sama)](https://guya.moe)
+- [hivetoons.org (HiveToons, VoidScans)](https://hivetoons.org)
 - [inmanga.com](https://inmanga.com)
 - [jestful.net](https://jestful.net)
 - [kappabeast.com](https://kappabeast.com) \*
-- [lagoonscans.com](https://lagoonscans.com)
 - [kaynscan.org (Kayn Scan)](https://kaynscan.org)
+- [lagoonscans.com](https://lagoonscans.com)
 - [leercapitulo.co](https://www.leercapitulo.co) \*
-- [LHTranslation](https://lhtranslation.net)
-- [madarascans.org (former madarascans.com)](https://madarascans.org)
+- [lhtranslation.net (LHTranslation)](https://lhtranslation.net)
 - [luacomic.org (LuaScans)](https://luacomic.org)
+- [madarascans.org (former madarascans.com)](https://madarascans.org)
 - [mangaball.net](https://mangaball.net)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
 - [mangadenizi.net](https://www.mangadenizi.net)
+- [mangadex.org (MangaDex)](https://mangadex.org)
 - [mangafire.to](https://mangafire.to) \*
 - [mangahere.cc (MangaHere)](https://www.mangahere.cc)
 - [mangahub.io](https://mangahub.io) \*
 - [mangak.io (MangaK, former mangabuddy.com)](https://mangak.io)
 - [mangakakalot.gg (MangaKakalot)](https://www.mangakakalot.gg) \*
 - [mangakatana.com](https://mangakatana.com)
-- [mgeko.cc](https://www.mgeko.cc)
-- [mangapark.page (MangaPark, mangapark.to's mirror at the time of writing)](https://mangapark.page)
-- [mangalivre.to (Manga Livre, former mangalivre.tv/mangalivre.net)](https://mangalivre.to)
 - [mangalib.me (MangaLib)](https://mangalib.me)
-- [Mangadex](https://mangadex.org)
+- [mangalivre.to (Manga Livre, former mangalivre.tv/mangalivre.net)](https://mangalivre.to)
+- [mangapark.page (MangaPark, mangapark.to's mirror at the time of writing)](https://mangapark.page)
 - [mangapill.com](https://mangapill.com)
 - [mangaread.org](https://www.mangaread.org)
-- [manhuaplus.com](https://manhuaplus.com)
 - [mangasushi.org](https://mangasushi.org)
 - [mangataro.org](https://mangataro.org)
-- [Mangitto (mangtto.com)](https://mangtto.com)
-- [manhuaus.com](https://manhuaus.com) \*
-- [mistscans.com](https://mistscans.com)
+- [mangtto.com (Mangitto)](https://mangtto.com)
+- [manhuaplus.com](https://manhuaplus.com)
 - [manhuatop.org](https://manhuatop.org) \*
+- [manhuaus.com](https://manhuaus.com) \*
+- [mgeko.cc](https://www.mgeko.cc)
+- [mistscans.com](https://mistscans.com)
 - [mkissa.to](https://mkissa.to) \*
 - [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
 - [projectsuki.com](https://projectsuki.com)
 - [qimanga.com](https://qimanga.com)
 - [rawkuma.net](https://rawkuma.net)
-- [silentquill.net (Armageddon Scanlation)](https://www.silentquill.net)
-- [rokaricomics.com](https://rokaricomics.com)
 - [ritharscans.com](https://ritharscans.com)
+- [rokaricomics.com](https://rokaricomics.com)
 - [roliascan.com](https://roliascan.com)
 - [sanascans.com (Sana Scans)](https://sanascans.com)
-- [stonescape.xyz](https://stonescape.xyz)
 - [setsuscans.com](https://setsuscans.com) \*
+- [silentquill.net (Armageddon Scanlation)](https://www.silentquill.net)
+- [stonescape.xyz](https://stonescape.xyz)
 - [sushiscan.net](https://sushiscan.net) \*
 - [taiyo.moe](https://taiyo.moe)
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
-- [templetoons.com (Temple Scan)](https://templetoons.com)
 - [team-shadowi.com](https://www.team-shadowi.com)
-- [en-thunderscans.com (Thunderscans)](https://en-thunderscans.com)
-- [toonily.com](https://toonily.com) \*
+- [templetoons.com (Temple Scan)](https://templetoons.com)
 - [toongod.org](https://www.toongod.org) \*
-- [vortexscans.org](https://vortexscans.org)
+- [toonily.com](https://toonily.com) \*
 - [tritinia.org (Tritinia Scans)](https://tritinia.org)
-- [violetscans.org](https://violetscans.org)
 - [utoon.us (UToon, home of reset-scans' content)](https://www.utoon.us)
+- [violetscans.org](https://violetscans.org)
+- [vortexscans.org](https://vortexscans.org)
 - [weebcentral.com](https://weebcentral.com)
 - [witchscans.com](https://witchscans.com)
 - [writerscans.com](https://writerscans.com)
 - [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
 
-> \* These sites can't be scraped with plain HTTP requests (they render with
-> javascript or sit behind a Cloudflare challenge), so they need a Chromium-based
-> browser installed (Google Chrome, Chromium, Brave or Edge), which
-> manga-downloader launches automatically to render the pages. Most sit behind a
-> Cloudflare challenge that only passes in a visible browser — this happens on
-> its own: if a headless attempt hits a challenge, a browser window opens
-> automatically so it can resolve (you may occasionally need to solve one click):
->
-> ~~~bash
-> manga-downloader https://www.toongod.org/webtoon/solo-leveling/ 1-10
-> ~~~
->
-> You can pass `--browser-visible` to open the window from the start and skip the
-> (pointless, for these sites) headless attempt.
+</details>
+
+> [!NOTE]
+> Sites marked with a \* can't be scraped with plain HTTP requests (they render
+> with javascript or sit behind a Cloudflare challenge), so they need a
+> Chromium-based browser installed (Google Chrome, Chromium, Brave or Edge),
+> which manga-downloader launches automatically to render the pages. Most sit
+> behind a Cloudflare challenge that only passes in a visible browser — this
+> happens on its own: if a headless attempt hits a challenge, a browser window
+> opens automatically so it can resolve (you may occasionally need to solve one
+> click). You can pass `--browser-visible` to open the window from the start
+> and skip the (pointless, for these sites) headless attempt.
 
 It may support even more sites of which I'm not aware. If you find a site that
-is not supported, feel free to open a new issue or a PR with the implementation.
+is not supported, feel free to [open a new issue][issues] or a PR with the
+implementation.
 
-Installation
-------------
+## Installation
 
 Download the archive for your system from the [releases section][releases] and
 extract it. You can then run the binary from that folder:
@@ -168,6 +175,16 @@ C:\Users\elboletaire\Desktop>manga-downloader https://mangadex.org/title/e7eabe9
 The above command downloads Black Clover chapters 1 to 346 to the Desktop
 folder (since that's the current directory).
 
+### Go
+
+If you have Go installed, you can build and install the latest version in one
+step (note the binary won't report its version, since it's injected at build
+time in the release builds):
+
+~~~bash
+go install github.com/elboletaire/manga-downloader@latest
+~~~
+
 ### Docker
 
 You can also run manga-downloader directly via Docker, without installing
@@ -180,8 +197,7 @@ docker run --rm -it -v $PWD:/downloads elboletaire/manga-downloader --help
 Note the `-v $PWD:/downloads` param: it's required in order to get the
 downloaded files in your current folder.
 
-Usage
------
+## Usage
 
 Only one argument is required: the URL of the manga's index page (the page
 listing all its chapters, not an individual chapter).
@@ -193,7 +209,8 @@ manga-downloader [URL]
 When you only specify the URL, it will ask you whether you want to download all
 chapters.
 
-> Note: you must answer <kbd>y</kbd> to download them; it defaults to "no".
+> [!IMPORTANT]
+> You must answer <kbd>y</kbd> to download them; it defaults to "no".
 
 You can also specify which chapters to download as a second argument, using
 single numbers and/or ranges separated by commas (e.g. `1,3,5-10`):
@@ -310,36 +327,33 @@ manga-downloader help
 
 ![help img]
 
-Star history ![starline]
-------------------------
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=elboletaire/manga-downloader&type=date&theme=dark&legend=top-left&sealed_token=GfQgqGBmkGzpKUy8jK1yIy09naBjNE6V3-CyvUqBPhqXKzB7UJU5obN0nHeR3POMpBCyi53z30dH_CyEu2bK1rlzc81eJBJwUJXMYK-Mn0CjkcOjwGs9ThDonsRCaSlhQCXsWGWtuYEeFKFUYX5O43yTbhNYclOsolN8OuQ5pl_d9zsKjNzkcnSnO6D8" />
-  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=elboletaire/manga-downloader&type=date&legend=top-left&sealed_token=GfQgqGBmkGzpKUy8jK1yIy09naBjNE6V3-CyvUqBPhqXKzB7UJU5obN0nHeR3POMpBCyi53z30dH_CyEu2bK1rlzc81eJBJwUJXMYK-Mn0CjkcOjwGs9ThDonsRCaSlhQCXsWGWtuYEeFKFUYX5O43yTbhNYclOsolN8OuQ5pl_d9zsKjNzkcnSnO6D8" />
-  <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=elboletaire/manga-downloader&type=date&legend=top-left&sealed_token=GfQgqGBmkGzpKUy8jK1yIy09naBjNE6V3-CyvUqBPhqXKzB7UJU5obN0nHeR3POMpBCyi53z30dH_CyEu2bK1rlzc81eJBJwUJXMYK-Mn0CjkcOjwGs9ThDonsRCaSlhQCXsWGWtuYEeFKFUYX5O43yTbhNYclOsolN8OuQ5pl_d9zsKjNzkcnSnO6D8" />
-</picture>
-
-License
--------
+## License
 
 All the code contained in this repo is licensed under the
-[GNU Affero General Public License v3.0][license]
+[GNU Affero General Public License v3.0][license].
 
-    Manga Downloader GO cli
-    Copyright (C) 2023-2026 Òscar Casajuana Alonso
+<details>
+<summary>License notice</summary>
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+~~~text
+Manga Downloader GO cli
+Copyright (C) 2023-2026 Òscar Casajuana Alonso
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+~~~
+
+</details>
 
 [github downloads]: https://img.shields.io/github/downloads/elboletaire/manga-downloader/total
 [go reference badge]: https://pkg.go.dev/badge/github.com/elboletaire/manga-downloader.svg
@@ -349,7 +363,6 @@ All the code contained in this repo is licensed under the
 [go report]: https://goreportcard.com/report/github.com/elboletaire/manga-downloader
 [go report card]: https://goreportcard.com/badge/github.com/elboletaire/manga-downloader
 [go reference]: https://pkg.go.dev/github.com/elboletaire/manga-downloader
-[starline]: https://starlines.qoo.monster/assets/elboletaire/manga-downloader
 
 [license]: ./LICENSE
 [releases]: https://github.com/elboletaire/manga-downloader/releases
@@ -359,4 +372,3 @@ All the code contained in this repo is licensed under the
 [help img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/help.gif
 [prompt img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/prompt.gif
 [docker hub]: https://hub.docker.com/r/elboletaire/manga-downloader
-[downloads]: https://qii404.me/github-release-statistics/?repo=https://github.com/elboletaire/manga-downloader
