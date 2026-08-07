@@ -45,6 +45,7 @@ endif
 grabber: \
 	grabber/atsumaru \
 	grabber/aurorascans \
+	grabber/baozimh \
 	grabber/bigsolo \
 	grabber/bluesolo \
 	grabber/comix \
@@ -133,6 +134,11 @@ grabber/qimanga:
 # qimanga.com (via qimanhwa.com), handled by the same Qimanga grabber
 grabber/aurorascans:
 	go run . https://aurorascans.com/series/4190634673-nano-machine 322
+# baozimh.com (包子漫画) needs its own grabber: the Chinese "第N话" chapter
+# numbers aren't parsed by the PlainHTML regexes. Use an older chapter - the
+# newest ones can be premium/early-access gated.
+grabber/baozimh:
+	go run . https://www.baozimh.com/comic/zhihuojintiandelunhuiqishi-leehyunminiankanara 100
 grabber/bluesolo:
 	go run . https://bluesolo.org/comics/frieren 147
 # use a chapter with price 0 (recent chapters are often premium/paywalled)

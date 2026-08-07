@@ -31,7 +31,7 @@ the current folder. Everything below is optional refinement.
 ## What you get
 
 - **One self-contained binary.** No runtime, no dependencies, no config file.
-- **[83 supported sites](#supported-sites)**, from big aggregators to small
+- **[84 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** like `1,3,5-10` — download exactly what you're missing.
 - **CBZ or plain folders** of images (`--format raw`).
@@ -43,7 +43,7 @@ the current folder. Everything below is optional refinement.
 
 ## Supported sites
 
-Manga Downloader currently supports **83 sites**, from big aggregators like
+Manga Downloader currently supports **84 sites**, from big aggregators like
 MangaDex, MangaFire or MangaPark to individual scanlation groups:
 
 <details>
@@ -54,6 +54,7 @@ MangaDex, MangaFire or MangaPark to individual scanlation groups:
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
 - [atsu.moe (Atsumaru)](https://atsu.moe)
 - [aurorascans.com (redirects to qimanga.com)](https://aurorascans.com)
+- [baozimh.com (包子漫画)](https://www.baozimh.com)
 - [bigsolo.org](https://bigsolo.org)
 - [bluesolo.org (Blue Solo, French scantrad)](https://bluesolo.org)
 - [comix.to](https://comix.to) \*
