@@ -136,7 +136,9 @@ grabber/aurorascans:
 	go run . https://aurorascans.com/series/4190634673-nano-machine 322
 # baozimh.com (包子漫画) needs its own grabber: the Chinese "第N话" chapter
 # numbers aren't parsed by the PlainHTML regexes. Use an older chapter - the
-# newest ones can be premium/early-access gated.
+# newest ones can be premium/early-access gated. Chapter 100 is a multi-part
+# chapter (split across 0_99.html + 0_99_2.html, 77 pages after the overlap is
+# deduped), so this target also exercises the 下一頁 part-following logic.
 grabber/baozimh:
 	go run . https://www.baozimh.com/comic/zhihuojintiandelunhuiqishi-leehyunminiankanara 100
 grabber/bluesolo:

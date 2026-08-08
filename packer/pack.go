@@ -36,8 +36,21 @@ func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, pr
 func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter, rng string, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
 	files := []File{}
+	// Several chapters can share a number (a site re-releasing the same chapter,
+	// or two genuinely distinct chapters both numbered, e.g. a pair of
+	// season-finale entries). Each chapter gets its own "Chapter 0001/" folder
+	// so chapter boundaries survive bundling, so repeated numbers are
+	// disambiguated with a " (2)", " (3)" suffix instead of silently merging
+	// both chapters' pages into one folder (which would lose the first one's).
+	usedFolders := map[string]int{}
 	for _, chapter := range chapters {
-		folder := SanitizeFilename(fmt.Sprintf("Chapter %s", paddedChapterNumber(chapter.GetNumber())))
+		base := SanitizeFilename(fmt.Sprintf("Chapter %s", paddedChapterNumber(chapter.GetNumber())))
+		folder := base
+		if n := usedFolders[base]; n > 0 {
+			folder = fmt.Sprintf("%s (%d)", base, n+1)
+		}
+		usedFolders[base]++
+
 		for _, page := range namePages(chapter.Files, s.GetConvertImages()) {
 			files = append(files, File{
 				Name: fmt.Sprintf("%s/%s", folder, page.Name),
