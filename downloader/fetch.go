@@ -27,12 +27,18 @@ type File struct {
 type ProgressCallback func(page, progress int, err error)
 
 // FetchChapter downloads all the pages of a chapter
-func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress ProgressCallback) (files []*File, err error) {
+func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress ProgressCallback) ([]*File, error) {
 	wg := sync.WaitGroup{}
 	guard := make(chan struct{}, site.GetMaxConcurrency().Pages)
 	errChan := make(chan error, 1)
 	done := make(chan bool)
-	files = make([]*File, len(chapter.Pages)) // Pre-allocate slice with correct size
+	// A local (not the named return) so page goroutines write into a slice that
+	// can never be nilled out from under them. If a page fails and the function
+	// returns early below, `return nil, err` sets the named return to nil - any
+	// page goroutine still downloading would then write to a nil slice and panic
+	// ("index out of range"). res is only handed to the caller on the success
+	// path, so such late writes are just garbage the GC reclaims.
+	res := make([]*File, len(chapter.Pages)) // Pre-allocate slice with correct size
 
 	for i, page := range chapter.Pages {
 		guard <- struct{}{}
@@ -55,7 +61,7 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress Progre
 				return
 			}
 
-			files[idx] = file       // Store file directly in pre-allocated slice
+			res[idx] = file         // Store file directly in pre-allocated slice
 			onprogress(1, idx, nil) // Progress by 1 page at a time
 			<-guard
 		}(page, i)
@@ -75,11 +81,11 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress Progre
 	}
 
 	// sort files by page number
-	sort.SliceStable(files, func(i, j int) bool {
-		return files[i].Page < files[j].Page
+	sort.SliceStable(res, func(i, j int) bool {
+		return res[i].Page < res[j].Page
 	})
 
-	return
+	return res, nil
 }
 
 // FetchFile gets an online file returning a new *File with its contents.
