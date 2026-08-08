@@ -235,7 +235,9 @@ func (m *Baozimh) FetchChapter(f Filterable) (*Chapter, error) {
 		doc.Find(`amp-img[id^="chapter-img-"]`).Each(func(i int, s *goquery.Selection) {
 			img := s.AttrOr("src", "")
 			if img == "" {
-				color.Yellow("page %d of %s has no URL to fetch from 😕 (will be ignored)", i, f.GetTitle())
+				// len(pages)+1 matches the 1-based Number the next page would get,
+				// rather than the 0-based DOM index (which drifts after a skip)
+				color.Yellow("page %d of %s has no URL to fetch from 😕 (will be ignored)", len(pages)+1, f.GetTitle())
 				return
 			}
 			if seen[img] {
