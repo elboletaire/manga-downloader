@@ -38,6 +38,12 @@ type Baozimh struct {
 	title     string
 	titleOnce sync.Once
 	titleErr  error
+	// the parsed series page is fetched once and shared between FetchTitle and
+	// FetchChapters, which would otherwise each re-fetch (and re-download) the
+	// same page. All receivers are pointers so these writes are never discarded.
+	docOnce sync.Once
+	doc     *goquery.Document
+	docErr  error
 }
 
 func NewBaozimh(g *Grabber) *Baozimh {
@@ -106,16 +112,7 @@ func (m *Baozimh) Test() (bool, error) {
 // FetchTitle fetches and returns the manga title
 func (m *Baozimh) FetchTitle() (string, error) {
 	m.titleOnce.Do(func() {
-		body, err := http.Get(http.RequestParams{
-			URL: m.URL,
-		})
-		if err != nil {
-			m.titleErr = err
-			return
-		}
-		defer body.Close()
-
-		doc, err := goquery.NewDocumentFromReader(body)
+		doc, err := m.seriesDoc()
 		if err != nil {
 			m.titleErr = err
 			return
@@ -125,26 +122,36 @@ func (m *Baozimh) FetchTitle() (string, error) {
 		// real one lives in the .comics-detail__title element
 		m.title = sanitizeTitle(doc.Find(".comics-detail__title").Text())
 		if m.title == "" {
-			// don't cache an empty title: root.go re-fetches it per goroutine
-			// (each chapter's PackSingle calls FetchTitle), and a cached empty
-			// string would silently produce " 123 - ..." filenames
+			// don't cache an empty title: root.go calls FetchTitle again per
+			// goroutine (each chapter's PackSingle), and a cached empty string
+			// would silently produce " 123 - ..." filenames
 			m.titleErr = errors.New("no series title found (selector drift?)")
 		}
 	})
 	return m.title, m.titleErr
 }
 
+// seriesDoc fetches and parses the series page once, then hands the same
+// document to FetchTitle and FetchChapters instead of each fetching the page.
+func (m *Baozimh) seriesDoc() (*goquery.Document, error) {
+	m.docOnce.Do(func() {
+		body, err := http.Get(http.RequestParams{
+			URL: m.URL,
+		})
+		if err != nil {
+			m.docErr = err
+			return
+		}
+		defer body.Close()
+
+		m.doc, m.docErr = goquery.NewDocumentFromReader(body)
+	})
+	return m.doc, m.docErr
+}
+
 // FetchChapters returns the chapters of the manga
 func (m *Baozimh) FetchChapters() (chapters Filterables, errs []error) {
-	body, err := http.Get(http.RequestParams{
-		URL: m.URL,
-	})
-	if err != nil {
-		return nil, []error{err}
-	}
-	defer body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(body)
+	doc, err := m.seriesDoc()
 	if err != nil {
 		return nil, []error{err}
 	}
