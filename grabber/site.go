@@ -93,6 +93,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		// selectors from shadowing a page that happens to share markup
 		// (e.g. mangahere's #chapterlist wrapper vs the themesia theme's).
 		NewPlainHTMLBrowser(g),
+		NewBaozimh(g),
 		NewWeebCentral(g),
 		NewLeerCapitulo(g),
 		NewMangak(g),
