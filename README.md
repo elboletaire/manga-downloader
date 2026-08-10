@@ -5,7 +5,7 @@
 **Download manga chapters from MangaDex and 80+ other sites, packed into CBZ
 files ready to read on your favorite e-reader or reading app.**
 
-[![Go Report Card][go report card]][go report]
+[![Tests][tests badge]][tests]
 [![Go Reference][go reference badge]][go reference]
 [![GitHub release][release badge]][releases]
 [![gitHub downloads]][releases]
@@ -404,8 +404,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 [release badge]: https://img.shields.io/github/release/elboletaire/manga-downloader.svg
 [pulls badge]: https://img.shields.io/docker/pulls/elboletaire/manga-downloader
 [license badge]: https://img.shields.io/github/license/elboletaire/manga-downloader?color=green
-[go report]: https://goreportcard.com/report/github.com/elboletaire/manga-downloader
-[go report card]: https://goreportcard.com/badge/github.com/elboletaire/manga-downloader
+[tests badge]: https://github.com/elboletaire/manga-downloader/actions/workflows/test.yaml/badge.svg?branch=master
+[tests]: https://github.com/elboletaire/manga-downloader/actions/workflows/test.yaml
 [go reference]: https://pkg.go.dev/github.com/elboletaire/manga-downloader
 
 [license]: ./LICENSE
