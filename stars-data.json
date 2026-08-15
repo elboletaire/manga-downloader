@@ -1,4 +1,5 @@
 {
+  "version": 1,
   "snapshots": [
     {
       "timestamp": "2026-08-05T16:51:26.245Z",
@@ -59,7 +60,19 @@
           "stars": 225
         }
       ]
+    },
+    {
+      "timestamp": "2026-08-15T04:51:13.572Z",
+      "totalStars": 228,
+      "repos": [
+        {
+          "fullName": "elboletaire/manga-downloader",
+          "name": "manga-downloader",
+          "owner": "elboletaire",
+          "stars": 228
+        }
+      ]
     }
   ],
-  "starsAtLastNotification": 225
+  "starsAtLastNotification": 228
 }
