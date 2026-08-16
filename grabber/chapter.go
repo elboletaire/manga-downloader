@@ -10,6 +10,14 @@ type Chapter struct {
 	Title string
 	// Number is the chapter number
 	Number float64
+	// SortOrder is a secondary sort key for chapters that share a Number. Some
+	// sites split a single chapter into several same-numbered entries (e.g.
+	// baozimh's "065 资格" / "065 资格（下）", or "062 校园（上/中/下）"); the
+	// downloader sorts by Number with an unstable sort.Slice, so without a
+	// deterministic tiebreak those parts' relative order is arbitrary - and can
+	// even differ between the fetch-time sort and the post-download re-sort in
+	// bundle mode. Grabbers set it to the parts' reading order (base, 上, 中, 下).
+	SortOrder float64
 	// PagesCount is the number of pages in the chapter
 	PagesCount int64
 	// Pages is the list of pages in the chapter
@@ -33,6 +41,11 @@ type Page struct {
 // GetNumber returns the chapter number
 func (c Chapter) GetNumber() float64 {
 	return c.Number
+}
+
+// GetSortOrder returns the secondary sort key (0 for most chapters)
+func (c Chapter) GetSortOrder() float64 {
+	return c.SortOrder
 }
 
 // GetTitle returns the chapter title removing whitespace and newlines

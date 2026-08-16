@@ -91,6 +91,34 @@ func baozimhChapterNumber(text string) (float64, bool) {
 	return number, true
 }
 
+// baozimhPartRe matches the trailing part marker of a multi-part chapter title
+// ("（上）/（中）/（下）" in either paren style - the site mixes fullwidth and
+// halfwidth parens, e.g. "37 准备行动(上）"). The base part of a split chapter
+// (e.g. "065 资格") carries no such marker.
+var baozimhPartRe = regexp.MustCompile(`[（(]([上中下])[）)]$`)
+
+// baozimhPartOrder returns the reading order of a multi-part chapter entry, so
+// that same-numbered parts sort base → 上 → 中 → 下: "065 资格" before
+// "065 资格（下）", "062 校园（上）" before "062 校园（中）" before "062 校园（下）".
+// It feeds Chapter.SortOrder, which Filterables.SortByNumber uses to break
+// ties between chapters sharing a Number (sort.Slice is unstable, so without
+// it the parts would come out in an arbitrary - and run-varying - order).
+func baozimhPartOrder(title string) float64 {
+	m := baozimhPartRe.FindStringSubmatch(title)
+	if len(m) == 0 {
+		return 0
+	}
+	switch m[1] {
+	case "上":
+		return 1
+	case "中":
+		return 2
+	case "下":
+		return 3
+	}
+	return 0
+}
+
 // Test returns true if the URL points at any of the baozimh domains. The site
 // geo-routes visitors across baozimh.com (both scripts), the cn.bzmgcn.com
 // simplified mirror it redirects mainland-China visitors to, and the
@@ -188,8 +216,9 @@ func (m *Baozimh) FetchChapters() (chapters Filterables, errs []error) {
 
 		chapters = append(chapters, &BaozimhChapter{
 			Chapter{
-				Number: number,
-				Title:  title,
+				Number:    number,
+				Title:     title,
+				SortOrder: baozimhPartOrder(title),
 			},
 			u,
 		})
@@ -280,6 +309,10 @@ func (m *Baozimh) FetchChapter(f Filterable) (*Chapter, error) {
 	return &Chapter{
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
+		// the bundle re-sorts the downloaded chapters by number, so the part
+		// order must survive the FetchChapter round-trip or the 上/中/下 parts
+		// of a split chapter get scrambled again
+		SortOrder:  mchap.GetSortOrder(),
 		PagesCount: int64(len(pages)),
 		Language:   "zh",
 		Pages:      pages,

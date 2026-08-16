@@ -51,10 +51,32 @@ func (f Filterables) FilterRanges(rngs []ranges.Range) Filterables {
 	return chaps
 }
 
+// ordered is implemented by Filterables that carry a secondary sort key
+// (Chapter.SortOrder) for breaking ties between chapters sharing a Number
+type ordered interface {
+	GetSortOrder() float64
+}
+
 // SortByNumber sorts Filterables by Number
 func (f Filterables) SortByNumber() Filterables {
 	sort.Slice(f, func(i, j int) bool {
-		return f[i].GetNumber() < f[j].GetNumber()
+		if f[i].GetNumber() != f[j].GetNumber() {
+			return f[i].GetNumber() < f[j].GetNumber()
+		}
+
+		// sort.Slice is unstable, so same-numbered chapters (e.g. a baozimh
+		// chapter split into 上/中/下 parts shares a number) would otherwise
+		// come out in an arbitrary order - one that can even differ between
+		// the fetch-time sort and the post-download re-sort in bundle mode.
+		// Tie-break on the part order when the Filterable carries one.
+		var oi, oj float64
+		if x, ok := f[i].(ordered); ok {
+			oi = x.GetSortOrder()
+		}
+		if x, ok := f[j].(ordered); ok {
+			oj = x.GetSortOrder()
+		}
+		return oi < oj
 	})
 
 	return f

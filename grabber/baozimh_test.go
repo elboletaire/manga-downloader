@@ -67,6 +67,67 @@ func TestBaozimhChapterNumber(t *testing.T) {
 	}
 }
 
+func TestBaozimhPartOrder(t *testing.T) {
+	tests := []struct {
+		in   string
+		want float64
+	}{
+		// the base part of a split chapter has no marker and sorts first
+		{"065 资格", 0},
+		{"034 功劳", 0},
+		{"054 选择", 0},
+		// marked parts sort 上 → 中 → 下
+		{"062 校园（上）", 1},
+		{"062 校园（中）", 2},
+		{"062 校园（下）", 3},
+		// the site mixes fullwidth and halfwidth parens
+		{"37 准备行动(上）", 1},
+		{"45 被捕(上）", 1},
+		{"051 宅(上）", 1},
+		{"059 万一（下）", 3},
+		// a (k/M) reader-part suffix is not a 上/中/下 marker
+		{"第100話(2/2)", 0},
+		// a numbered chapter title with no part marker
+		{"001 传染", 0},
+	}
+	for _, tt := range tests {
+		if got := baozimhPartOrder(tt.in); got != tt.want {
+			t.Errorf("baozimhPartOrder(%q) = %v, want %v", tt.in, got, tt.want)
+		}
+	}
+}
+
+func TestSortByNumberTiebreak(t *testing.T) {
+	// the downloader sorts by number with an unstable sort.Slice; without a
+	// tiebreak the 上/中/下 parts of a split chapter (which share a number) can
+	// come out in any order, and in a different order between the fetch-time
+	// sort and the bundle's post-download re-sort
+	chapters := Filterables{
+		&BazCh{Chapter{Number: 62, Title: "062 校园（下）", SortOrder: 3}},
+		&BazCh{Chapter{Number: 1, Title: "001 传染", SortOrder: 0}},
+		&BazCh{Chapter{Number: 62, Title: "062 校园（中）", SortOrder: 2}},
+		&BazCh{Chapter{Number: 62, Title: "062 校园（上）", SortOrder: 1}},
+	}
+
+	sorted := chapters.SortByNumber()
+	want := []string{"001 传染", "062 校园（上）", "062 校园（中）", "062 校园（下）"}
+	for i, w := range want {
+		if sorted[i].GetTitle() != w {
+			t.Errorf("sorted[%d].GetTitle() = %q, want %q (full order: %q)", i, sorted[i].GetTitle(), w, titlesOf(sorted))
+		}
+	}
+}
+
+type BazCh struct{ Chapter }
+
+func titlesOf(f Filterables) []string {
+	out := make([]string, len(f))
+	for i, c := range f {
+		out[i] = c.GetTitle()
+	}
+	return out
+}
+
 func TestBaozimhNextPartURL(t *testing.T) {
 	tests := []struct {
 		name string
