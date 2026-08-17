@@ -131,7 +131,7 @@ MangaDex, MangaFire or MangaPark to individual scanlation groups:
 - [violetscans.org](https://violetscans.org)
 - [vortexscans.org](https://vortexscans.org)
 - [weebcentral.com](https://weebcentral.com)
-- [witchscans.com](https://witchscans.com)
+- [witchtoons.net (WitchToons, former witchscans.com)](https://witchtoons.net)
 - [writerscans.com](https://writerscans.com)
 - [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
 

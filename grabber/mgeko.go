@@ -84,9 +84,11 @@ func parseMgekoChapterNumber(text string) (float64, bool) {
 	return number, true
 }
 
-// formatChapterNumber formats a chapter number dropping a trailing ".0"
+// formatChapterNumber formats a chapter number dropping a trailing ".0", so
+// 61 renders as "61" and 61.5 as "61.5" (witchtoons.go builds reader URLs
+// with it, so it keeps every decimal instead of rounding to one)
 func formatChapterNumber(number float64) string {
-	return strings.Replace(fmt.Sprintf("%.1f", number), ".0", "", 1)
+	return strconv.FormatFloat(number, 'f', -1, 64)
 }
 
 // FetchChapters returns the chapters of the manga. The series page only

@@ -88,6 +88,7 @@ grabber: \
 	grabber/utoon \
 	grabber/vortexscans \
 	grabber/weebcentral \
+	grabber/witchtoons \
 	grabber/html
 
 grabber/inmanga:
@@ -318,7 +319,6 @@ grabber/html: \
 	grabber/templetoons \
 	grabber/thunderscans \
 	grabber/violetscans \
-	grabber/witchscans \
 	grabber/writerscans \
 	grabber/zonatmo
 
@@ -376,8 +376,11 @@ grabber/thunderscans:
 	go run . https://en-thunderscans.com/comics/full-time-awakening/ 108
 grabber/violetscans:
 	go run . https://violetscans.org/comics/after-all-ill-marry-you/ 21
-grabber/witchscans:
-	go run . https://witchscans.com/manga/i-am-a-cultivation-big-shot/ 600
+# witchscans.com rebranded to witchtoons.net: new platform (Next.js, chapters
+# and pages in the RSC payload), so it has its own grabber instead of a
+# plainhtml selector entry
+grabber/witchtoons:
+	go run . https://witchtoons.net/series/comic/i-am-a-cultivation-big-shot 600
 grabber/writerscans:
 	go run . https://writerscans.com/series/640ecb8f2bb/ 45
 # note: chapters get locked behind a coin/early-access paywall right after

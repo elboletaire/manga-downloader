@@ -141,12 +141,14 @@ func (t *Teamshadowi) fetchData() (*teamshadowiPublicData, error) {
 // real end of the string literal.
 var nextFPushRe = regexp.MustCompile(`(?s)self\.__next_f\.push\(\[1,"(.*?)"\]\)`)
 
-// parseTeamshadowiPublicData extracts the `"publicData":{...}` JSON object
-// embedded in the page's Next.js RSC stream and unmarshals it
-func parseTeamshadowiPublicData(html string) (*teamshadowiPublicData, error) {
+// nextFlightStream concatenates every `self.__next_f.push([1,"..."])` chunk
+// of a Next.js App Router page back into the single RSC stream they encode.
+// The payload of interest is regularly split across chunks, so it can only be
+// searched once they're joined.
+func nextFlightStream(html string) (string, error) {
 	matches := nextFPushRe.FindAllStringSubmatch(html, -1)
 	if len(matches) == 0 {
-		return nil, errors.New("no __next_f payload found in the page (is the URL a series page?)")
+		return "", errors.New("no __next_f payload found in the page (is the URL a series page?)")
 	}
 
 	var stream strings.Builder
@@ -161,7 +163,18 @@ func parseTeamshadowiPublicData(html string) (*teamshadowiPublicData, error) {
 		stream.WriteString(chunk)
 	}
 
-	raw, err := extractBalancedJSON(stream.String(), `"publicData":`)
+	return stream.String(), nil
+}
+
+// parseTeamshadowiPublicData extracts the `"publicData":{...}` JSON object
+// embedded in the page's Next.js RSC stream and unmarshals it
+func parseTeamshadowiPublicData(html string) (*teamshadowiPublicData, error) {
+	stream, err := nextFlightStream(html)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, err := extractBalancedJSON(stream, `"publicData":`)
 	if err != nil {
 		return nil, err
 	}
@@ -175,9 +188,9 @@ func parseTeamshadowiPublicData(html string) (*teamshadowiPublicData, error) {
 }
 
 // extractBalancedJSON finds the given key marker in s and returns the JSON
-// object that follows it, matching braces while respecting quoted strings
-// (the marker sits inside a much larger, non-JSON RSC stream, so a naive
-// "find the last }" wouldn't work)
+// object or array that follows it, matching delimiters while respecting
+// quoted strings (the marker sits inside a much larger, non-JSON RSC stream,
+// so a naive "find the last }" wouldn't work)
 func extractBalancedJSON(s, marker string) (string, error) {
 	idx := strings.Index(s, marker)
 	if idx == -1 {
@@ -185,11 +198,16 @@ func extractBalancedJSON(s, marker string) (string, error) {
 	}
 
 	start := idx + len(marker)
-	for start < len(s) && s[start] != '{' {
+	for start < len(s) && s[start] != '{' && s[start] != '[' {
 		start++
 	}
 	if start >= len(s) {
 		return "", fmt.Errorf("no JSON object found after marker %q", marker)
+	}
+
+	open, close := byte('{'), byte('}')
+	if s[start] == '[' {
+		open, close = '[', ']'
 	}
 
 	depth := 0
@@ -211,9 +229,9 @@ func extractBalancedJSON(s, marker string) (string, error) {
 		switch c {
 		case '"':
 			inString = true
-		case '{':
+		case open:
 			depth++
-		case '}':
+		case close:
 			depth--
 			if depth == 0 {
 				return s[start : i+1], nil

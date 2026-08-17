@@ -81,7 +81,7 @@ jobs:
           - sanascans
           - thunderscans
           - violetscans
-          - witchscans
+          - witchtoons
           - writerscans
           - mistscans
           # These sites block GitHub's datacenter IPs (403) but work fine
