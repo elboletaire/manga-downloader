@@ -276,6 +276,22 @@ manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-936
 # downloads One Piece chapters 1 to 10 in Spanish
 ~~~
 
+### Choosing a scanlation group
+
+Some sites, like Atsumaru, host several scanlation groups' versions of the same
+chapters. Since only one version can be downloaded per chapter number, the group
+with the most chapters is picked by default, and the ones available are listed
+so you know a choice was made. `--scanlator` overrides it:
+
+~~~bash
+manga-downloader --scanlator alpha https://atsu.moe/manga/exqmE 1-10
+# downloads chapters 1 to 10 as translated by Alpha, rather than the default pick
+~~~
+
+The name is matched case-insensitively. Use `--scanlator all` to download every
+group's version instead of choosing one; the group name is then appended to each
+chapter title, so the files don't overwrite each other.
+
 ### Bundling
 
 `--bundle` merges all the downloaded chapters into a single CBZ file:
@@ -346,6 +362,7 @@ The available variables are `{{.Series}}`, `{{.Number}}`, `{{.Title}}` and
 | --------------------- | ----- | -------------------------------------------------- | -------------- |
 | `--bundle`            | `-b`  | Bundle all specified chapters into a single file   | off            |
 | `--language`          | `-l`  | Only download the specified language               | all languages  |
+| `--scanlator`         | `-s`  | Only download the specified scanlation group       | most chapters  |
 | `--output-dir`        | `-o`  | Where to write the downloaded files                | current folder |
 | `--filename-template` | `-t`  | Template for the resulting file names              | see above      |
 | `--format`            | `-f`  | Output format: `cbz` or `raw` (a plain folder)     | `cbz`          |

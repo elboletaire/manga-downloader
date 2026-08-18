@@ -35,6 +35,11 @@ func (c Chapter) GetNumber() float64 {
 	return c.Number
 }
 
+// GetLanguage returns the chapter language
+func (c Chapter) GetLanguage() string {
+	return c.Language
+}
+
 // GetTitle returns the chapter title removing whitespace and newlines
 func (c Chapter) GetTitle() string {
 	title := strings.TrimSpace(c.Title)

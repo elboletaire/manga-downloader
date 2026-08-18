@@ -118,8 +118,9 @@ func (f *fakeSite) GetConvertImages() grabber.ConvertFormats {
 func (f *fakeSite) GetMaxConcurrency() grabber.MaxConcurrency {
 	return grabber.MaxConcurrency{Chapters: 1, Pages: 1}
 }
-func (f *fakeSite) GetPreferredLanguage() string { return "" }
-func (f *fakeSite) GetRetries() uint8            { return 0 }
+func (f *fakeSite) GetPreferredLanguage() string  { return "" }
+func (f *fakeSite) GetPreferredScanlator() string { return "" }
+func (f *fakeSite) GetRetries() uint8             { return 0 }
 
 // TestPackBundleConvertsPages is the only test covering the whole path the
 // --convert-images setting travels: from the Site interface, through the

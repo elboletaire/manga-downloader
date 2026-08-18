@@ -80,20 +80,24 @@ func TestChapterBarTitleLanguageTagSurvivesTruncation(t *testing.T) {
 }
 
 func TestNoChaptersMessage(t *testing.T) {
-	if got := noChaptersMessage(""); got != "No chapters found" {
-		t.Errorf("unexpected message without language: %q", got)
+	if got := noChaptersMessage("", ""); got != "No chapters found" {
+		t.Errorf("unexpected message without filters: %q", got)
 	}
 	want := `No chapters found for language "mx" (perhaps the site uses a different language code, e.g. "es-la" for Latin American Spanish)`
-	if got := noChaptersMessage("mx"); got != want {
+	if got := noChaptersMessage("mx", ""); got != want {
+		t.Errorf("expected %q, got %q", want, got)
+	}
+	want = `No chapters found for scanlation group "Omega"`
+	if got := noChaptersMessage("", "Omega"); got != want {
 		t.Errorf("expected %q, got %q", want, got)
 	}
 }
 
 func TestHasDuplicateChapterNumbers(t *testing.T) {
 	dup := grabber.Filterables{
-		&grabber.Chapter{Number: 1},
-		&grabber.Chapter{Number: 1},
-		&grabber.Chapter{Number: 2},
+		&grabber.Chapter{Number: 1, Language: "en"},
+		&grabber.Chapter{Number: 1, Language: "es"},
+		&grabber.Chapter{Number: 2, Language: "en"},
 	}
 	if !hasDuplicateChapterNumbers(dup) {
 		t.Error("expected duplicates to be detected")
@@ -106,5 +110,15 @@ func TestHasDuplicateChapterNumbers(t *testing.T) {
 	}
 	if hasDuplicateChapterNumbers(uniq) {
 		t.Error("expected no duplicates")
+	}
+
+	// same number twice in the same language: one entry per scanlation group,
+	// which the titles already disambiguate (see #164)
+	sameLang := grabber.Filterables{
+		&grabber.Chapter{Number: 1, Title: "Chapter 1 [Alpha]"},
+		&grabber.Chapter{Number: 1, Title: "Chapter 1 [Delta]"},
+	}
+	if hasDuplicateChapterNumbers(sameLang) {
+		t.Error("duplicates sharing a language must not trigger the language tag")
 	}
 }

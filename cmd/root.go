@@ -115,7 +115,7 @@ func Run(cmd *cobra.Command, args []string) {
 	// nothing (e.g. an invalid language code); without this guard the prompt
 	// path below would panic indexing an empty slice
 	if len(chapters) == 0 {
-		color.Yellow(noChaptersMessage(settings.Language))
+		color.Yellow(noChaptersMessage(settings.Language, settings.Scanlator))
 		exit(1)
 	}
 
@@ -391,6 +391,7 @@ func init() {
 	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Chapters, "concurrency", "c", 5, "number of concurrent chapter downloads, hard-limited to 5")
 	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Pages, "concurrency-pages", "C", 10, "number of concurrent page downloads, hard-limited to 10")
 	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", "only download the specified language")
+	rootCmd.Flags().StringVarP(&settings.Scanlator, "scanlator", "s", "", `only download the specified scanlation group, for sites hosting several versions of the same chapters ("all" downloads every group's)`)
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
 	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz or raw (a folder with the images)")
 	rootCmd.Flags().StringVar(&settings.ConvertImages, "convert-images", grabber.ConvertImagesDefault, `comma-separated source image formats to convert to jpeg for e-reader compatibility: "avif", "webp" or "none"`)
@@ -532,28 +533,40 @@ func chapterBarTitle(seriesTitle string, chapter *grabber.Chapter, mangaLen, cha
 }
 
 // noChaptersMessage builds the error message shown when a fetch returns no
-// chapters, pointing at the language filter when one was set
-func noChaptersMessage(language string) string {
-	if language == "" {
-		return "No chapters found"
+// chapters, pointing at whichever filter was set
+func noChaptersMessage(language, scanlator string) string {
+	switch {
+	case language != "":
+		return fmt.Sprintf(
+			"No chapters found for language %q (perhaps the site uses a different language code, e.g. %q for Latin American Spanish)",
+			language, "es-la",
+		)
+	case scanlator != "":
+		return fmt.Sprintf("No chapters found for scanlation group %q", scanlator)
 	}
 
-	return fmt.Sprintf(
-		"No chapters found for language %q (perhaps the site uses a different language code, e.g. %q for Latin American Spanish)",
-		language, "es-la",
-	)
+	return "No chapters found"
 }
 
 // hasDuplicateChapterNumbers reports whether the same chapter number appears
-// more than once, which happens when a site returns one entry per translated
-// language for the same chapter
+// more than once in *different* languages, which happens when a site returns
+// one entry per translated language for the same chapter. Duplicates sharing a
+// language (e.g. one entry per scanlation group, under --scanlator all) are
+// already told apart by their titles, so tagging them all with the same
+// language code would only eat into the width the title has to do it.
 func hasDuplicateChapterNumbers(chapters grabber.Filterables) bool {
-	seen := map[float64]bool{}
+	seen := map[float64]string{}
 	for _, c := range chapters {
-		if seen[c.GetNumber()] {
+		lang := ""
+		// not part of Filterable: only the sites that list one entry per
+		// language have a language to report before the chapter is fetched
+		if l, ok := c.(interface{ GetLanguage() string }); ok {
+			lang = l.GetLanguage()
+		}
+		if prev, dup := seen[c.GetNumber()]; dup && prev != lang {
 			return true
 		}
-		seen[c.GetNumber()] = true
+		seen[c.GetNumber()] = lang
 	}
 
 	return false

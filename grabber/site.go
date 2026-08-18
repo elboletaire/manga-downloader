@@ -29,6 +29,9 @@ type Settings struct {
 	MaxConcurrency MaxConcurrency
 	// Language is the preferred language for downloading chapters
 	Language string
+	// Scanlator is the preferred scanlation group for sites that host several
+	// groups' versions of the same chapters ("all" keeps every group's)
+	Scanlator string
 	// FilenameTemplate is the template for the filename
 	FilenameTemplate string
 	// Format is the desired output format ("cbz" or "raw")
@@ -81,6 +84,8 @@ type Site interface {
 	GetMaxConcurrency() MaxConcurrency
 	// GetPreferredLanguage returns the preferred language for the site
 	GetPreferredLanguage() string
+	// GetPreferredScanlator returns the preferred scanlation group for the site
+	GetPreferredScanlator() string
 	// GetRetries returns the number of retries for failed page downloads
 	GetRetries() uint8
 }
@@ -162,6 +167,11 @@ func (g Grabber) GetPreferredLanguage() string {
 	return g.Settings.Language
 }
 
+// GetPreferredScanlator returns the preferred scanlation group for the site
+func (g Grabber) GetPreferredScanlator() string {
+	return g.Settings.Scanlator
+}
+
 // GetMaxConcurrency returns the max concurrency for the site
 func (g Grabber) GetMaxConcurrency() MaxConcurrency {
 	return g.Settings.MaxConcurrency
@@ -203,6 +213,7 @@ func (g *Grabber) InitFlags(cmd *cobra.Command) {
 		Pages:    maxUint8Flag(cmd.Flag("concurrency-pages"), 10),
 	})
 	g.Settings.Language = cmd.Flag("language").Value.String()
+	g.Settings.Scanlator = cmd.Flag("scanlator").Value.String()
 	g.Settings.FilenameTemplate = cmd.Flag("filename-template").Value.String()
 	g.Settings.Retry = maxUint8Flag(cmd.Flag("retry"), 3)
 	g.Settings.Format = cmd.Flag("format").Value.String()

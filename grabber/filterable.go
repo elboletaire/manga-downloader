@@ -51,9 +51,12 @@ func (f Filterables) FilterRanges(rngs []ranges.Range) Filterables {
 	return chaps
 }
 
-// SortByNumber sorts Filterables by Number
+// SortByNumber sorts Filterables by Number. The sort is stable so that
+// chapters sharing a number (e.g. one entry per scanlation group, or per
+// language) keep the order the grabber returned them in, which is what
+// decides their bundle folder suffix and their filename version suffix.
 func (f Filterables) SortByNumber() Filterables {
-	sort.Slice(f, func(i, j int) bool {
+	sort.SliceStable(f, func(i, j int) bool {
 		return f[i].GetNumber() < f[j].GetNumber()
 	})
 

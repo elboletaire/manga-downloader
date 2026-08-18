@@ -199,6 +199,15 @@ grabber/guya:
 # atsu.moe is a react SPA, but its json api is wide open to plain HTTP
 grabber/atsumaru:
 	go run . https://atsu.moe/manga/2VgNt 97
+# 2VgNt is translated by three groups (Alpha, Gamma and Thunder), all of which
+# have a chapter 97, so these two exercise --scanlator against a real ambiguity.
+# They're deliberately out of the `grabber` aggregate to keep it to one download
+# per site; run them by hand when touching the scanlator selection.
+grabber/atsumaru/scanlator:
+	go run . --scanlator alpha https://atsu.moe/manga/2VgNt 97
+# expect one file per group, each tagged with the group name in its filename
+grabber/atsumaru/all:
+	go run . --scanlator all https://atsu.moe/manga/2VgNt 97
 # use a chapter that's not one of the newest few (those can be paywalled
 # behind coins/early access) so the smoke test doesn't flake as new chapters
 # release
