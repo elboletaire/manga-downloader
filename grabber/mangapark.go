@@ -10,16 +10,28 @@ import (
 	"regexp"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/elboletaire/manga-downloader/browser"
 	"github.com/elboletaire/manga-downloader/http"
 )
 
 // Mangapark is a grabber for mangapark.page (mangapark.to's content, served
-// from a mirror domain: mangapark.to itself returned Cloudflare 522s at
-// implementation time). The series page only server-renders the newest ~20
-// chapters (parsed out of a `window.seriesData` JS blob), but its "Load All
-// Chapters" button hits a plain JSON API (`/get-chapter-list?slug=...`) that
-// returns the complete list with no browser needed. Reader pages are static
-// HTML with every page image already in an `<img data-src>`.
+// from a mirror domain: mangapark.to now redirects to comicpark.org, which is
+// a parked domain, and every other .to/.io/.net/.com/.org/.me mirror is dead —
+// mangapark.page is the only live host). The series page only server-renders
+// the newest ~20 chapters (parsed out of a `window.seriesData` JS blob), but
+// its "Load All Chapters" button hits a plain JSON API
+// (`/get-chapter-list?slug=...`) that returns the complete list. Reader pages
+// are static HTML with every page image already in an `<img data-src>`.
+//
+// Since Aug 2026 the whole domain sits behind a Cloudflare JS challenge, so
+// the *first* request has to go through a browser. Only that one does: the
+// browser harvests the clearance cookies into the shared http session, after
+// which the chapters API, the reader pages and the page images all keep
+// downloading over plain HTTP (a chapter is ~200 images, so it matters). The
+// challenge is a Cloudflare setting rather than anything structural about the
+// site, so fetchSeriesData still tries plain HTTP first and only falls back to
+// the browser — if the challenge is ever turned off, the grabber silently goes
+// back to being browser-free (and CI-testable) with no code change.
 type Mangapark struct {
 	*Grabber
 	title string
@@ -37,8 +49,18 @@ type MangaparkChapter struct {
 }
 
 // mangaparkSeriesDataRe extracts the title and slug fields out of the
-// `window.seriesData = {...}` JS object embedded in the series page
+// `window.seriesData = {...}` JS object embedded in the series page.
+// The blob also carries a `slug_hash` ("rowdy-reunion.NTFztg") that the site's
+// own chapter links now use, but `slug:` is matched before it and the bare
+// slug still works for both the API and the reader URLs, so it's ignored.
 var mangaparkSeriesDataRe = regexp.MustCompile(`(?s)window\.seriesData\s*=\s*\{.*?title:\s*"([^"]*)".*?slug:\s*"([^"]*)"`)
+
+// mangaparkSeriesWait is a selector that exists only on a rendered series page
+// (its chapter and related-series links), never on a Cloudflare interstitial.
+// Waiting on something the challenge page also has — `body`, say — would make
+// the challenge look like a successful render, and the browser package keys
+// its escalation to a visible window off exactly this selector timing out.
+const mangaparkSeriesWait = `a[href*="/series/"]`
 
 // Test returns true if the URL is a mangapark URL
 func (m *Mangapark) Test() (bool, error) {
@@ -155,18 +177,35 @@ func (m *Mangapark) FetchChapter(f Filterable) (*Chapter, error) {
 // parsed out of the `window.seriesData` JS blob. The slug is needed to hit
 // the paginated chapters API, since the series page itself only renders the
 // newest ~20 chapters.
+//
+// This is the only request in the grabber that may need a browser, so it is
+// also what warms up the Cloudflare clearance for everything that follows.
 func (m *Mangapark) fetchSeriesData() error {
 	if m.slug != "" {
 		return nil
 	}
 
-	body, err := http.GetText(http.RequestParams{
-		URL: m.URL,
-	})
+	// plain HTTP first: it's a single fast request, and it's all that's needed
+	// whenever the challenge happens to be off
+	if body, err := http.GetText(http.RequestParams{URL: m.URL}); err == nil {
+		if err = m.parseSeriesData(body); err == nil {
+			return nil
+		}
+	}
+
+	// blocked (403 "Just a moment..."): render it, which also harvests the
+	// clearance cookies into http/session.go for the plain-HTTP requests that
+	// FetchChapters and FetchChapter make afterwards
+	html, err := browser.GetHTML(m.URL, mangaparkSeriesWait, 0)
 	if err != nil {
 		return err
 	}
 
+	return m.parseSeriesData(html)
+}
+
+// parseSeriesData pulls the title and slug out of a fetched series page.
+func (m *Mangapark) parseSeriesData(body string) error {
 	matches := mangaparkSeriesDataRe.FindStringSubmatch(body)
 	if len(matches) != 3 {
 		return errors.New("could not find series data in the series page")

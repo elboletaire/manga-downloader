@@ -27,7 +27,6 @@ jobs:
           - mangabats
           - mangak
           - mgeko
-          - mangapark
           - mangaball
           - mangadenizi
           - qimanga
@@ -97,6 +96,15 @@ jobs:
           #                # have been blocked"), including residential IPs and
           #                # real browsers — verified 2026-08-04. Grabber kept
           #                # in case the block lifts; smoke-test locally.
+          # - mangapark    # now browser-based: the whole domain went behind a
+          #                # cloudflare JS challenge (Aug 2026) that headless
+          #                # never passes, so the series page has to be
+          #                # rendered in a visible window. The grabber still
+          #                # tries plain HTTP first, so if the challenge is
+          #                # ever turned off it can come straight back into
+          #                # this matrix with no code change — re-check before
+          #                # assuming it's permanent. Run `make
+          #                # grabber/mangapark` locally.
           # - mangafire    # now browser-based: the SPA signs every JSON API
           #                # call with a per-session cloudflare-gated `vrf`
           #                # token (plain HTTP → 403 "Missing token"), so the

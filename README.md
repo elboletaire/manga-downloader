@@ -96,7 +96,7 @@ MangaDex, MangaFire or MangaPark to individual scanlation groups:
 - [mangakatana.com](https://mangakatana.com)
 - [mangalib.me (MangaLib)](https://mangalib.me)
 - [mangalivre.to (Manga Livre, former mangalivre.tv/mangalivre.net)](https://mangalivre.to)
-- [mangapark.page (MangaPark, mangapark.to's mirror at the time of writing)](https://mangapark.page)
+- [mangapark.page (MangaPark, the only live host: mangapark.to and the other mirrors are dead)](https://mangapark.page) \*
 - [mangapill.com](https://mangapill.com)
 - [mangaread.org](https://www.mangaread.org)
 - [mangasushi.org](https://mangasushi.org)

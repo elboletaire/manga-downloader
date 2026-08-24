@@ -71,7 +71,6 @@ grabber: \
 	grabber/mangak \
 	grabber/mangalib \
 	grabber/mangalivre \
-	grabber/mangapark \
 	grabber/mangasushi \
 	grabber/mangataro \
 	grabber/mangitto \
@@ -119,8 +118,6 @@ grabber/mangak:
 
 grabber/mgeko:
 	go run . https://www.mgeko.cc/manga/solo-leveling-mg1/ 198
-grabber/mangapark:
-	go run . https://mangapark.page/series/rowdy-reunion 41
 grabber/mangaball:
 	go run . https://mangaball.net/title-detail/baki-gaiden-shin-chiharu-6a5ffe5d90273b5b995225d2/ 1
 grabber/mangalib:
@@ -262,6 +259,7 @@ grabber/browser: \
 	grabber/kappabeast \
 	grabber/mangahub \
 	grabber/mangakakalot \
+	grabber/mangapark \
 	grabber/manhuatop \
 	grabber/manhuaus \
 	grabber/natomanga \
@@ -302,6 +300,13 @@ grabber/drakecomic:
 	go run . --browser-visible https://drakecomic.org/manga/beast-evolution/ 70
 grabber/setsuscans:
 	go run . --browser-visible https://setsuscans.com/manga/a-story-about-accidentally-finding-out-a-girls-secret-at-school/ 13
+
+# the whole domain went behind a cloudflare JS challenge (Aug 2026), which
+# headless never passes: only the series page is rendered, and the clearance it
+# harvests carries the chapters API and the ~200 page images per chapter over
+# plain HTTP. --browser-visible just skips the pointless 30s headless probe.
+grabber/mangapark:
+	go run . --browser-visible https://mangapark.page/series/rowdy-reunion 41
 
 grabber/html: \
 	grabber/asmotoon \
