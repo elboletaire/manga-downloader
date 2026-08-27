@@ -16,11 +16,13 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/chromedp/cdproto/dom"
+	"github.com/chromedp/cdproto/input"
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/http"
@@ -82,6 +84,12 @@ func start() error {
 	// signal, plus the "Chrome is being controlled" infobar); strict cloudflare
 	// configs (e.g. sakuramangas) loop the challenge forever when they see it
 	opts = append(opts, chromedp.Flag("enable-automation", false))
+	if inContainer() {
+		// chrome's sandbox can't initialize in unprivileged containers
+		// (no setuid helper, user namespaces blocked by the default seccomp
+		// profile), so without this flag it crashes on startup
+		opts = append(opts, chromedp.NoSandbox)
+	}
 
 	allocCtx, allocCancel = chromedp.NewExecAllocator(context.Background(), opts...)
 	browserCtx, browserStop = chromedp.NewContext(allocCtx)
@@ -98,6 +106,21 @@ func start() error {
 	}
 
 	return nil
+}
+
+// inContainer reports whether we're running inside a container (docker sets
+// /.dockerenv, podman /run/.containerenv). BROWSER_NO_SANDBOX=1 forces it for
+// container runtimes that leave no marker.
+func inContainer() bool {
+	if os.Getenv("BROWSER_NO_SANDBOX") == "1" {
+		return true
+	}
+	for _, marker := range []string{"/.dockerenv", "/run/.containerenv"} {
+		if _, err := os.Stat(marker); err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 // Close shuts down the shared browser instance, if it was started. Safe to
@@ -218,6 +241,10 @@ func GetReaderHTML(seriesURL, tabSelector, paginationSelector, linkSelector, img
 	}
 	ctx, cancel := context.WithTimeout(browserCtx, t)
 	defer cancel()
+
+	if visible {
+		startChallengeClicker(ctx)
+	}
 
 	if NetLog != nil {
 		chromedp.ListenTarget(ctx, func(ev interface{}) {
@@ -389,6 +416,10 @@ func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks
 	ctx, cancel := context.WithTimeout(browserCtx, timeout)
 	defer cancel()
 
+	if visible {
+		startChallengeClicker(ctx)
+	}
+
 	type entry struct {
 		id  network.RequestID
 		url string
@@ -548,6 +579,10 @@ func render(url, waitSelector string, timeout time.Duration, preActions []chrome
 	ctx, cancel := context.WithTimeout(browserCtx, timeout)
 	defer cancel()
 
+	if visible {
+		startChallengeClicker(ctx)
+	}
+
 	if NetLog != nil {
 		chromedp.ListenTarget(ctx, func(ev interface{}) {
 			if resp, ok := ev.(*network.EventResponseReceived); ok {
@@ -587,6 +622,60 @@ func render(url, waitSelector string, timeout time.Duration, preActions []chrome
 	}
 
 	return html, nil
+}
+
+// startChallengeClicker polls the page in the background and, whenever a
+// Cloudflare interstitial with a "Verify you are human" checkbox is showing,
+// clicks the checkbox with CDP-dispatched mouse events. Those produce
+// isTrusted:true events, which Turnstile accepts — so interactive challenges
+// resolve without a human, which is what makes headless-less environments
+// (the docker :browser image, where the "visible" window is an Xvfb
+// framebuffer nobody can see) able to pass them. Stops when ctx is done.
+func startChallengeClicker(ctx context.Context) {
+	go func() {
+		ticker := time.NewTicker(4 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				clickChallenge(ctx)
+			}
+		}
+	}()
+}
+
+// clickChallenge performs a single detect-and-click attempt. The Turnstile
+// widget lives in a closed shadow root, so the iframe itself can't be queried;
+// instead the click targets its host row inside the interstitial's
+// .main-content (a full-width, ~68px-tall div), where the checkbox sits at
+// the left edge. Clicking a stale or wrong spot is harmless — the poller just
+// tries again on the next tick, and stops matching once the real page loads.
+func clickChallenge(ctx context.Context) {
+	var box []float64
+	js := `(() => {
+		if (!/just a moment|verify|attention required/i.test(document.title) &&
+			!document.querySelector('#challenge-stage, #challenge-form')) return null;
+		for (const d of document.querySelectorAll('div.main-content div')) {
+			const r = d.getBoundingClientRect();
+			if (r.width > 200 && r.height > 55 && r.height < 90) {
+				return [r.x, r.y, r.width, r.height];
+			}
+		}
+		return null;
+	})()`
+	if err := chromedp.Run(ctx, chromedp.Evaluate(js, &box)); err != nil || len(box) < 4 {
+		return
+	}
+	x, y := box[0]+30, box[1]+box[3]/2
+	_ = chromedp.Run(ctx,
+		input.DispatchMouseEvent(input.MouseMoved, x, y),
+		input.DispatchMouseEvent(input.MousePressed, x, y).
+			WithButton(input.Left).WithClickCount(1),
+		input.DispatchMouseEvent(input.MouseReleased, x, y).
+			WithButton(input.Left).WithClickCount(1),
+	)
 }
 
 // goVisible tears down the current headless browser and forces the next start

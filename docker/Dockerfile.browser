@@ -1,0 +1,47 @@
+# Build from a golang based image
+FROM --platform=$BUILDPLATFORM golang:latest AS builder
+
+LABEL maintainer="Òscar Casajuana <elboletaire@underave.net>"
+
+ARG CI_COMMIT_REF_NAME
+ENV CI_COMMIT_REF_NAME ${CI_COMMIT_REF_NAME:-latest}
+
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH make build/unix
+
+# Browser variant: like the default image but bundling Chromium and a virtual
+# display, so the *-marked sites (JS-rendered pages, Cloudflare challenges)
+# work under Docker.
+FROM alpine:latest
+
+WORKDIR /app
+
+# su-exec: lets the root entrypoint drop privileges to a non-root user before
+#   exec'ing manga-downloader, so files are written with the right ownership
+#   from the start — no destructive recursive chown of a mounted volume.
+# chromium: the browser chromedp auto-discovers (/usr/bin/chromium).
+# xvfb: virtual framebuffer for the headed-browser escalation — Cloudflare
+#   detects --headless, but a headed Chrome on Xvfb passes managed challenges
+#   automatically.
+# font-noto + font-noto-cjk: manga sites render CJK titles.
+RUN apk add --no-cache su-exec chromium xvfb font-noto font-noto-cjk
+
+RUN mkdir /downloads
+
+# Copy the pre-built binary file from the previous stage
+COPY --from=builder /app/manga-downloader /usr/bin/manga-downloader
+
+COPY /docker/entrypoint.sh /usr/bin/entrypoint.sh
+COPY /docker/entrypoint-browser.sh /usr/bin/entrypoint-browser.sh
+RUN chmod +x /usr/bin/entrypoint.sh /usr/bin/entrypoint-browser.sh
+
+# Set manga-downloader (behind the Xvfb wrapper) as the entrypoint
+ENTRYPOINT ["/usr/bin/entrypoint-browser.sh", "-o", "/downloads"]

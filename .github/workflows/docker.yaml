@@ -33,6 +33,22 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
 
+      - name: Docker meta (browser)
+        id: meta-browser
+        uses: docker/metadata-action@v5
+        with:
+          images: elboletaire/manga-downloader
+          # every tag gets a -browser suffix; master additionally gets the
+          # plain :browser tag (the browser counterpart of :latest)
+          flavor: |
+            latest=false
+            suffix=-browser
+          tags: |
+            type=raw,value=browser,suffix=,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -54,5 +70,17 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            CI_COMMIT_REF_NAME=${{ env.tag }}
+
+      - name: Build and push (browser)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.browser
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta-browser.outputs.tags }}
+          labels: ${{ steps.meta-browser.outputs.labels }}
           build-args: |
             CI_COMMIT_REF_NAME=${{ env.tag }}
