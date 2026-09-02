@@ -1,7 +1,7 @@
 name: Site support request
 description: Request support for a new manga site
 title: "[Site request]: "
-labels: ["site-request", "site-support", "enhancement"]
+labels: ["site-support", "enhancement"]
 body:
   - type: markdown
     attributes:
