@@ -239,6 +239,27 @@ pass it explicitly:
 docker run --rm -it -e USER_ID=$(id -u) -e GROUP_ID=$(id -g) -v "$PWD:/downloads" elboletaire/manga-downloader --help
 ~~~
 
+The default image ships no browser, so the sites marked with `*` in the
+supported sites list (those needing a Chromium-based browser) won't work with
+it. For those, use the `:browser` variant, which bundles Chromium and a
+virtual display:
+
+~~~bash
+docker run --rm -it -v $PWD:/downloads elboletaire/manga-downloader:browser [URL] [chapters]
+~~~
+
+Cloudflare-protected sites work out of the box: the virtual display lets the
+app escalate to a headed browser, and "Verify you are human" checkboxes are
+clicked automatically. If a site still doesn't pass (e.g. a challenge needing
+real human interaction), you can put the browser window on your own display,
+which on a Linux desktop can be forwarded with (you may need
+`xhost +local:` first):
+
+~~~bash
+docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -v $PWD:/downloads elboletaire/manga-downloader:browser --browser-visible [URL] [chapters]
+~~~
+
 </details>
 
 ## Usage
