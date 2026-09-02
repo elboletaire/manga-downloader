@@ -79,6 +79,7 @@ grabber: \
 	grabber/projectsuki \
 	grabber/qimanga \
 	grabber/roliascan \
+	grabber/sacachispa \
 	grabber/stonescape \
 	grabber/taiyo \
 	grabber/tcb \
@@ -231,6 +232,8 @@ grabber/mangataro:
 	go run . https://mangataro.org/manga/one-piece 1188
 grabber/roliascan:
 	go run . https://roliascan.com/manga/no-marriage/ 77
+grabber/sacachispa:
+	go run . https://sacachispa.site/series/boku-no-seito-wa-otona-gal 14
 grabber/teamshadowi:
 	go run . https://www.team-shadowi.com/series/the-regressed-mercenary-has-a-plan 98
 grabber/taiyo:

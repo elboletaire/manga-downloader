@@ -115,6 +115,7 @@ MangaDex, MangaFire or MangaPark to individual scanlation groups:
 - [ritharscans.com](https://ritharscans.com)
 - [rokaricomics.com](https://rokaricomics.com)
 - [roliascan.com](https://roliascan.com)
+- [sacachispa.site](https://sacachispa.site)
 - [sanascans.com (Sana Scans)](https://sanascans.com)
 - [setsuscans.com](https://setsuscans.com) \*
 - [silentquill.net (Armageddon Scanlation)](https://www.silentquill.net)
