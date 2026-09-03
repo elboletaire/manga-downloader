@@ -78,7 +78,7 @@ MangaDex, MangaFire or MangaPark to individual scanlation groups:
 - [inmanga.com](https://inmanga.com)
 - [jestful.net](https://jestful.net)
 - [kappabeast.com](https://kappabeast.com) \*
-- [kaynscan.org (Kayn Scan)](https://kaynscan.org)
+- [kaynscans.com (Kayn Scans, former kaynscan.org)](https://kaynscans.com)
 - [lagoonscans.com](https://lagoonscans.com)
 - [leercapitulo.co](https://www.leercapitulo.co) \*
 - [lhtranslation.net (LHTranslation)](https://lhtranslation.net)

@@ -231,8 +231,10 @@ grabber/fmteam:
 # pick a chapter a bit behind the tip if this starts 404ing on pages
 grabber/genztoon:
 	go run . https://genzupdates.com/series/the-return-of-the-legendary-genius-ranker/ 33
+# kaynscan.org moved to kaynscans.com (same RSC platform as witchtoons.net);
+# the old domain still 301s here and the grabber remaps old URLs in code
 grabber/kaynscan:
-	go run . https://kaynscan.org/series/heavenly-demon-cultivation-simulation 191
+	go run . https://kaynscans.com/series/comic/heavenly-demon-cultivation-simulation 191
 grabber/hijala:
 	go run . https://en-hijala.com/series/double-click 252
 grabber/mangataro:
