@@ -137,9 +137,8 @@ func Run(cmd *cobra.Command, args []string) {
 	rangeRequested := len(args) > 1
 	// ranges argument is not provided
 	if len(args) == 1 {
-		lastChapter := chapters[len(chapters)-1].GetNumber()
 		prompt := promptui.Prompt{
-			Label:     fmt.Sprintf("Do you want to download all %g chapters", lastChapter),
+			Label:     fmt.Sprintf("Do you want to download all %d chapters", len(chapters)),
 			IsConfirm: true,
 		}
 
@@ -150,7 +149,10 @@ func Run(cmd *cobra.Command, args []string) {
 			exit(0)
 		}
 
-		rngs = []ranges.Range{{Begin: 1, End: float64(lastChapter)}}
+		// chapters is SortByNumber()-sorted, so its ends are the true
+		// range: a hardcoded Begin: 1 silently dropped chapter 0 and any
+		// 0.x prologue, and mislabeled series not starting at 1 (#176)
+		rngs = []ranges.Range{allChaptersRange(chapters)}
 	} else {
 		// ranges parsing
 		settings.Range = getRangesArg(args)
@@ -574,6 +576,18 @@ func requestsBelowListedFloor(rngs []ranges.Range, floor float64) bool {
 	}
 
 	return false
+}
+
+// allChaptersRange builds the range that covers every listed chapter when
+// the user answers "yes" to the "download all" prompt. chapters must already
+// be SortByNumber()-sorted, so its ends are the true floor and ceiling —
+// assuming Begin: 1 instead silently dropped chapter 0 and any 0.x prologue,
+// and misidentified the floor for any series not starting at chapter 1 (#176)
+func allChaptersRange(chapters grabber.Filterables) ranges.Range {
+	return ranges.Range{
+		Begin: chapters[0].GetNumber(),
+		End:   chapters[len(chapters)-1].GetNumber(),
+	}
 }
 
 // noChaptersMessage builds the error message shown when a fetch returns no
