@@ -5,7 +5,9 @@ package grabber
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -89,14 +91,10 @@ func (a *astroPlatform) FetchChapters() (chapters Filterables, errs []error) {
 	}
 
 	for _, c := range props.InitialChap {
-		title := strings.TrimSpace(c.Title)
-		if title == "" {
-			title = "Chapter " + formatChapterNumber(c.Number)
-		}
 		chapters = append(chapters, &AstroChapter{
 			Chapter{
 				Number: c.Number,
-				Title:  title,
+				Title:  chapterTitleOrDefault(c.Title, c.Number),
 			},
 			c.Slug,
 		})
@@ -109,11 +107,14 @@ func (a *astroPlatform) FetchChapters() (chapters Filterables, errs []error) {
 func (a *astroPlatform) FetchChapter(f Filterable) (*Chapter, error) {
 	achap := f.(*AstroChapter)
 
-	slug := a.seriesSlug()
-	if slug == "" {
-		return nil, errors.New("could not find series slug in url " + a.URL)
+	slug, err := a.seriesSlug()
+	if err != nil {
+		return nil, err
 	}
-	uri := a.BaseUrl() + "/series/" + slug + "/" + achap.Slug
+	uri, err := url.JoinPath(a.BaseUrl(), "series", slug, achap.Slug)
+	if err != nil {
+		return nil, err
+	}
 
 	body, err := http.Get(http.RequestParams{
 		URL:     uri,
@@ -156,13 +157,13 @@ func (a *astroPlatform) FetchChapter(f Filterable) (*Chapter, error) {
 
 // seriesSlug returns the series slug from the URL (i.e. "some-manga" for
 // https://vortexscans.org/series/some-manga)
-func (a astroPlatform) seriesSlug() string {
+func (a astroPlatform) seriesSlug() (string, error) {
 	re := regexp.MustCompile(`/series/([^/?#]+)`)
 	matches := re.FindStringSubmatch(a.URL)
 	if len(matches) != 2 {
-		return ""
+		return "", fmt.Errorf("could not find series slug in url %s", a.URL)
 	}
-	return matches[1]
+	return matches[1], nil
 }
 
 // fetchSeriesProps fetches and caches the series info embedded in the series
@@ -180,23 +181,8 @@ func (a *astroPlatform) fetchSeriesProps() (*astroSeriesProps, error) {
 		return nil, err
 	}
 
-	raw, err := extractAstroIslandProps(body, "totalChapterCount")
+	props, err := findAstroSeriesProps(body)
 	if err != nil {
-		return nil, err
-	}
-
-	var generic interface{}
-	if err = json.Unmarshal([]byte(raw), &generic); err != nil {
-		return nil, err
-	}
-
-	unwrapped, err := json.Marshal(unwrapDevalue(generic))
-	if err != nil {
-		return nil, err
-	}
-
-	props := &astroSeriesProps{}
-	if err = json.Unmarshal(unwrapped, props); err != nil {
 		return nil, err
 	}
 
@@ -205,32 +191,68 @@ func (a *astroPlatform) fetchSeriesProps() (*astroSeriesProps, error) {
 	return props, nil
 }
 
-// extractAstroIslandProps finds the <astro-island props="..."> hydration blob
-// whose JSON contains the given marker key and returns its unescaped, still
-// devalue-tagged JSON string
-func extractAstroIslandProps(body, marker string) (string, error) {
-	markerIdx := strings.Index(body, marker)
-	if markerIdx == -1 {
-		return "", errors.New("astro-island: could not find " + marker + " in the series page")
+// findAstroSeriesProps scans astro-island blobs in order for one with both a
+// title and a chapter list, since a marker match alone could be a decoy (e.g.
+// a "trending" widget) instead of the real series island.
+func findAstroSeriesProps(body string) (*astroSeriesProps, error) {
+	from := 0
+	for {
+		raw, next, err := extractAstroIslandProps(body, "totalChapterCount", from)
+		if err != nil {
+			return nil, err
+		}
+		from = next
+
+		var generic interface{}
+		if err := json.Unmarshal([]byte(raw), &generic); err != nil {
+			continue
+		}
+
+		unwrapped, err := json.Marshal(unwrapDevalue(generic))
+		if err != nil {
+			continue
+		}
+
+		props := &astroSeriesProps{}
+		if err := json.Unmarshal(unwrapped, props); err != nil {
+			continue
+		}
+
+		if props.Post.PostTitle == "" || len(props.InitialChap) == 0 {
+			continue
+		}
+
+		return props, nil
 	}
+}
+
+// extractAstroIslandProps finds the <astro-island props="..."> blob whose
+// JSON contains marker, searching from byte offset from, and returns its
+// unescaped JSON string plus the offset to resume searching from.
+func extractAstroIslandProps(body, marker string, from int) (raw string, next int, err error) {
+	idx := strings.Index(body[from:], marker)
+	if idx == -1 {
+		return "", 0, errors.New("astro-island: could not find " + marker + " in the series page")
+	}
+	markerIdx := from + idx
 
 	tagStart := strings.LastIndex(body[:markerIdx], "<astro-island")
 	if tagStart == -1 {
-		return "", errors.New("astro-island: could not find the astro-island tag holding " + marker)
+		return "", 0, errors.New("astro-island: could not find the astro-island tag holding " + marker)
 	}
 
 	attrIdx := strings.Index(body[tagStart:], `props="`)
 	if attrIdx == -1 {
-		return "", errors.New("astro-island: tag has no props attribute")
+		return "", 0, errors.New("astro-island: tag has no props attribute")
 	}
 	valStart := tagStart + attrIdx + len(`props="`)
 
 	valEnd := strings.IndexByte(body[valStart:], '"')
 	if valEnd == -1 {
-		return "", errors.New("astro-island: unterminated props attribute")
+		return "", 0, errors.New("astro-island: unterminated props attribute")
 	}
 
-	return html.UnescapeString(body[valStart : valStart+valEnd]), nil
+	return html.UnescapeString(body[valStart : valStart+valEnd]), valStart + valEnd, nil
 }
 
 // unwrapDevalue recursively decodes the devalue-style encoding Astro islands

@@ -60,15 +60,24 @@ func (r *rscComic) FetchChapters() (chapters Filterables, errs []error) {
 		pages = append(pages, page)
 	}
 
+	// cross-check against the site's own chapterCount, in case totalPages
+	// undercounts or a page silently fails
+	total := 0
+	for _, page := range pages {
+		total += len(page.Chapters)
+	}
+	if first.Series.ChapterCount > 0 && total < first.Series.ChapterCount {
+		errs = append(errs, fmt.Errorf(
+			"the chapter list is incomplete (%d of %d chapters): a page may have failed to load or the site started paginating differently",
+			total, first.Series.ChapterCount,
+		))
+		return nil, errs
+	}
+
 	for _, page := range pages {
 		for _, c := range page.Chapters {
-			number := formatChapterNumber(c.Number)
-			title := strings.TrimSpace(c.Title)
-			if title == "" {
-				title = "Chapter " + number
-			}
 			// reader URLs are keyed by chapter number, not by the chapter id
-			uri, err := url.JoinPath(r.BaseUrl(), "series", "comic", first.Series.Slug, "chapter", number)
+			uri, err := url.JoinPath(r.BaseUrl(), "series", "comic", first.Series.Slug, "chapter", formatChapterNumber(c.Number))
 			if err != nil {
 				errs = append(errs, err)
 				continue
@@ -76,7 +85,7 @@ func (r *rscComic) FetchChapters() (chapters Filterables, errs []error) {
 			chapters = append(chapters, &RSCComicChapter{
 				Chapter{
 					Number: c.Number,
-					Title:  title,
+					Title:  chapterTitleOrDefault(c.Title, c.Number),
 				},
 				uri,
 			})
@@ -241,8 +250,9 @@ var rscComicTotalPagesRe = regexp.MustCompile(`"totalPages":(\d+)`)
 // rscComicSeriesPage is one page of a series' chapter list
 type rscComicSeriesPage struct {
 	Series struct {
-		Title string `json:"title"`
-		Slug  string `json:"slug"`
+		Title        string `json:"title"`
+		Slug         string `json:"slug"`
+		ChapterCount int    `json:"chapterCount"`
 	}
 	Chapters []struct {
 		Number float64 `json:"number"`

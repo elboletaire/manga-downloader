@@ -91,7 +91,7 @@ func TestExtractAstroIslandProps(t *testing.T) {
 		`<astro-island uid="b" props="{&quot;totalChapterCount&quot;:[0,42]}"></astro-island>` +
 		`</body></html>`
 
-	raw, err := extractAstroIslandProps(body, "totalChapterCount")
+	raw, _, err := extractAstroIslandProps(body, "totalChapterCount", 0)
 	if err != nil {
 		t.Fatalf("extractAstroIslandProps: %v", err)
 	}
@@ -105,8 +105,29 @@ func TestExtractAstroIslandProps(t *testing.T) {
 func TestExtractAstroIslandPropsMissingMarker(t *testing.T) {
 	body := `<astro-island props="{&quot;foo&quot;:[0,1]}"></astro-island>`
 
-	if _, err := extractAstroIslandProps(body, "totalChapterCount"); err == nil {
+	if _, _, err := extractAstroIslandProps(body, "totalChapterCount", 0); err == nil {
 		t.Error("expected an error when the marker is not found, got nil")
+	}
+}
+
+// a totalChapterCount occurring in an earlier, unrelated island (e.g. a
+// trending/related-series widget) must not shadow the real series island
+func TestFindAstroSeriesPropsSkipsIncompleteIsland(t *testing.T) {
+	body := `<html><body>` +
+		`<astro-island uid="trending" props="{&quot;totalChapterCount&quot;:[0,7]}"></astro-island>` +
+		`<astro-island uid="series" props="{&quot;post&quot;:[0,{&quot;postTitle&quot;:[0,&quot;Some Title&quot;]}],&quot;totalChapterCount&quot;:[0,1],&quot;initialChap&quot;:[1,[[0,{&quot;number&quot;:[0,1],&quot;slug&quot;:[0,&quot;chapter-1&quot;],&quot;title&quot;:[0,&quot;&quot;]}]]]}"></astro-island>` +
+		`</body></html>`
+
+	props, err := findAstroSeriesProps(body)
+	if err != nil {
+		t.Fatalf("findAstroSeriesProps: %v", err)
+	}
+
+	if props.Post.PostTitle != "Some Title" {
+		t.Errorf("Post.PostTitle = %q, want %q", props.Post.PostTitle, "Some Title")
+	}
+	if len(props.InitialChap) != 1 {
+		t.Fatalf("len(InitialChap) = %d, want 1", len(props.InitialChap))
 	}
 }
 
@@ -171,7 +192,18 @@ func TestAstroPlatformSeriesSlug(t *testing.T) {
 
 	for _, c := range cases {
 		a := astroPlatform{Grabber: &Grabber{URL: c.url}}
-		if got := a.seriesSlug(); got != c.want {
+		got, err := a.seriesSlug()
+		if c.want == "" {
+			if err == nil {
+				t.Errorf("seriesSlug(%q) = %q, want an error", c.url, got)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("seriesSlug(%q) unexpected error: %v", c.url, err)
+			continue
+		}
+		if got != c.want {
 			t.Errorf("seriesSlug(%q) = %q, want %q", c.url, got, c.want)
 		}
 	}

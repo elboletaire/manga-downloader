@@ -26,7 +26,9 @@ func NewKaynscan(g *Grabber) *Kaynscan {
 }
 
 // Test returns true if the URL is a kaynscans.com URL, rewriting old
-// kaynscan.org URLs to the new domain and path shape first
+// kaynscan.org URLs to the new domain and path shape first. This mutates the
+// shared *Grabber other candidates in IdentifySite() also hold a pointer to —
+// harmless only because IdentifySite() stops testing at the first match.
 func (k *Kaynscan) Test() (bool, error) {
 	if regexp.MustCompile(`kaynscans\.com`).MatchString(k.URL) {
 		return true, nil

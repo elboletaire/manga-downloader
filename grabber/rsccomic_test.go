@@ -2,7 +2,10 @@
 
 package grabber
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestParseRSCComicSeriesPage(t *testing.T) {
 	// a trimmed-down series page payload: Next.js streams the RSC data as
@@ -74,5 +77,30 @@ func TestRSCComicChapterPages(t *testing.T) {
 
 	if _, err := rscComicChapterPages(`<script>self.__next_f.push([1,"8:{\"number\":60}"])</script>`); err == nil {
 		t.Error("rscComicChapterPages() with no pages array should error")
+	}
+}
+
+// totalPages is what drives pagination, but the site also reports the
+// series' full chapterCount independently; if the two disagree (a page
+// failed to load, or totalPages undercounts) FetchChapters must error
+// instead of silently returning a truncated-but-successful list — the same
+// failure class astroPlatform guards against for hivetoons/vortexscans
+func TestRSCComicFetchChaptersGuardsIncompleteCount(t *testing.T) {
+	page := &rscComicSeriesPage{TotalPages: 1}
+	page.Series.Title = "T"
+	page.Series.Slug = "t"
+	page.Series.ChapterCount = 5
+	if err := json.Unmarshal([]byte(`[{"number":1},{"number":2}]`), &page.Chapters); err != nil {
+		t.Fatalf("unmarshal chapters: %v", err)
+	}
+
+	r := &rscComic{
+		Grabber: &Grabber{URL: "https://kaynscans.com/series/comic/t"},
+		pages:   map[int]*rscComicSeriesPage{1: page},
+	}
+
+	chapters, errs := r.FetchChapters()
+	if len(errs) == 0 {
+		t.Fatalf("FetchChapters() returned %d chapters and no error, want an error", len(chapters))
 	}
 }

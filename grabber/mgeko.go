@@ -91,6 +91,15 @@ func formatChapterNumber(number float64) string {
 	return strconv.FormatFloat(number, 'f', -1, 64)
 }
 
+// chapterTitleOrDefault trims title, falling back to "Chapter N" when empty
+func chapterTitleOrDefault(title string, number float64) string {
+	title = strings.TrimSpace(title)
+	if title == "" {
+		title = "Chapter " + formatChapterNumber(number)
+	}
+	return title
+}
+
 // FetchChapters returns the chapters of the manga. The series page only
 // lists the most recent ~50 chapters, so the full list is fetched from the
 // site's own "all-chapters" page instead.
