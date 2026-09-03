@@ -65,6 +65,13 @@ const manganeloSeriesWait = ".chapter-list a"
 // `limit=1000` (999, 2000 and 9999 all pass — verified on all three domains).
 const manganeloChaptersLimit = 9999
 
+// manganeloMaxChapterPages bounds the pagination walk. With a 9999 page size
+// even the longest series comes back in a single call, so an API that keeps
+// reporting has_more past this many requests is ignoring our offset (a cached
+// or misbehaving response) rather than genuinely paginating — without a bound
+// that appends the same page forever.
+const manganeloMaxChapterPages = 100
+
 // Test returns true if the URL hostname is one of the manganelo family
 // domains. It only checks the hostname (no fetch) so it can be tried early
 // without extra requests.
@@ -87,28 +94,49 @@ func (m *Manganelo) FetchTitle() (string, error) {
 
 	// plain HTTP first: it's a single fast request, and it's all that's
 	// needed whenever the challenge happens to be off (always, on mangabats)
+	title := ""
 	body, err := http.GetText(http.RequestParams{URL: m.URL})
-	if err != nil {
-		// blocked (403 "Just a moment..."): render it, which also harvests
-		// the clearance cookies into http/session.go for the reader pages
-		// FetchChapter fetches over plain HTTP afterwards
-		body, err = browser.GetHTML(m.URL, manganeloSeriesWait, 0)
-		if err != nil {
-			return "", err
+	if err == nil {
+		title = manganeloTitleFrom(body)
+	}
+
+	// A 403 "Just a moment..." is the obvious challenge, but a challenge can
+	// also be served as a 200 interstitial: that parses as perfectly valid
+	// HTML and simply carries no title, so keying the fallback off the http
+	// error alone would report "could not find the title" and never render.
+	// Escalate on both — rendering also harvests the clearance cookies into
+	// http/session.go for the API, reader pages and images that follow.
+	if title == "" {
+		rendered, berr := browser.GetHTML(m.URL, manganeloSeriesWait, 0)
+		if berr != nil {
+			// surface the plain HTTP failure when there was one: it's the
+			// root cause, the render is only the recovery attempt
+			if err != nil {
+				return "", err
+			}
+			return "", berr
 		}
+		title = manganeloTitleFrom(rendered)
 	}
 
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
-	if err != nil {
-		return "", err
-	}
-
-	m.title = sanitizeTitle(doc.Find("h1").First().Text())
-	if m.title == "" {
+	if title == "" {
 		return "", errors.New("could not find the title in the series page")
 	}
+	m.title = title
 
 	return m.title, nil
+}
+
+// manganeloTitleFrom extracts the series title out of a series page body,
+// returning "" when the body isn't a rendered series page (a Cloudflare
+// interstitial parses fine as HTML but has no title to find)
+func manganeloTitleFrom(body string) string {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
+	if err != nil {
+		return ""
+	}
+
+	return sanitizeTitle(doc.Find("h1").First().Text())
 }
 
 // FetchChapters returns the chapters of the manga, fetched from the
@@ -122,7 +150,15 @@ func (m *Manganelo) FetchChapters() (Filterables, []error) {
 	uri, _ := url.JoinPath(m.BaseUrl(), "api", "manga", slug, "chapters")
 
 	chapters := Filterables{}
-	for offset := 0; ; {
+	offset := 0
+	for i := 0; ; i++ {
+		if i >= manganeloMaxChapterPages {
+			return nil, []error{fmt.Errorf(
+				"chapters API still reported more pages after %d requests (offset %d): it is likely ignoring the offset",
+				manganeloMaxChapterPages, offset,
+			)}
+		}
+
 		body, err := http.GetText(http.RequestParams{
 			URL:     fmt.Sprintf("%s?limit=%d&offset=%d", uri, manganeloChaptersLimit, offset),
 			Referer: m.URL,
@@ -238,7 +274,10 @@ func parseManganeloChaptersPage(body string) (chapters Filterables, hasMore bool
 
 	chapters = make(Filterables, 0, len(feed.Data.Chapters))
 	for _, c := range feed.Data.Chapters {
-		title := c.Name
+		// chapter titles need sanitizing too, not just series titles: the
+		// API happily returns names padded with stray whitespace, which
+		// would otherwise leak straight into the cbz filename
+		title := sanitizeTitle(c.Name)
 		if title == "" {
 			title = "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64)
 		}
