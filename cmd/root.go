@@ -120,6 +120,9 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	var rngs []ranges.Range
+	// whether the user actually named the chapters they want; the implicit
+	// "download everything" range below is synthesised, not requested
+	rangeRequested := len(args) > 1
 	// ranges argument is not provided
 	if len(args) == 1 {
 		lastChapter := chapters[len(chapters)-1].GetNumber()
@@ -146,10 +149,12 @@ func Run(cmd *cobra.Command, args []string) {
 	// some sites prune old chapters outright (manhuaplus removes them from
 	// both the list and the readers, which soft-404 to the series page), so a
 	// range reaching below the first listed chapter would silently download
-	// nothing for that part; make the gap visible before filtering
-	if floor := chapters[0].GetNumber(); requestsBelowListedFloor(rngs, floor) {
+	// nothing for that part; make the gap visible before filtering. Only for
+	// ranges the user actually typed: the implicit range means "whatever the
+	// site has", so nothing is missing relative to what was asked for
+	if floor := chapters[0].GetNumber(); rangeRequested && requestsBelowListedFloor(rngs, floor) {
 		color.Yellow(
-			"The site only lists chapters %g and up for this series; earlier chapters are not hosted there and will be skipped",
+			"Only chapters %g and up are listed for this series; the requested chapters below that will be skipped",
 			floor,
 		)
 	}
@@ -544,18 +549,17 @@ func chapterBarTitle(seriesTitle string, chapter *grabber.Chapter, mangaLen, cha
 }
 
 // requestsBelowListedFloor reports whether any requested range starts below
-// the first chapter the site lists, for series whose list doesn't start at
-// the beginning. Born from the chapter-list audit following #169: manhuaplus
-// looked capped at the newest 500 rows (one series listing exactly 500, with
-// older chapter URLs answering 200), but those 200s are soft-404s serving the
-// series page — the site prunes old chapters, and a sibling series listing
-// 3364 rows disproved any newest-N cap. Detecting "exactly 500 rows" was
-// rejected on purpose: the motivating series legitimately HAS exactly 500
-// chapters left, so that heuristic only produces false alarms. Comparing the
-// request against the listed floor instead warns exactly when chapters the
-// user asked for can't be served, on any site. Floors of 0 or 1 mean the list
-// starts at the beginning (0 covers prologue/oneshot numbering), so nothing
-// is missing below them.
+// the first chapter the site lists. Born from the chapter-list audit following
+// #169: manhuaplus looked capped at the newest 500 rows, but the site simply
+// prunes old chapters (a sibling series lists 3364), and "exactly 500" was a
+// coincidence — so detecting a round row count was rejected as a pure false
+// alarm generator, and the request is compared against the listed floor
+// instead. Deliberately says nothing about *why* the floor is where it is:
+// besides pruning it can be a continuation series, a --language/--scanlator
+// filter, or an under-listing grabber, so the caller's message must not claim
+// the earlier chapters don't exist. Floors of 0 or 1 mean the list starts at
+// the beginning (0 covers prologue/oneshot numbering), so nothing is missing
+// below them.
 func requestsBelowListedFloor(rngs []ranges.Range, floor float64) bool {
 	if floor <= 1 {
 		return false

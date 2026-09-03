@@ -121,6 +121,25 @@ func TestRequestsBelowListedFloor(t *testing.T) {
 	if !requestsBelowListedFloor([]ranges.Range{{Begin: 1, End: 10}}, 1.5) {
 		t.Error("a fractional floor above 1 must be flagged")
 	}
+	// decimal chapter numbers within the listed window must not be flagged,
+	// floor included (>= floor is served, only < floor is missing)
+	if requestsBelowListedFloor([]ranges.Range{{Begin: 529.1, End: 529.1}}, 280) {
+		t.Error("a single decimal chapter inside the window must not be flagged")
+	}
+	if requestsBelowListedFloor([]ranges.Range{{Begin: 280, End: 280}}, 280) {
+		t.Error("a range starting exactly at the floor must not be flagged")
+	}
+	// a continuation series (season 2 numbered 111+) is the reason Run only
+	// consults this for user-supplied ranges: the implicit "download all"
+	// range is synthesised as {Begin: 1, End: last}, which the predicate
+	// flags even though the user asked for nothing that is missing
+	if !requestsBelowListedFloor([]ranges.Range{{Begin: 1, End: 179}}, 111) {
+		t.Error("the synthesised all-chapters range is flagged, hence Run's rangeRequested guard")
+	}
+	// no ranges at all must not panic nor flag
+	if requestsBelowListedFloor(nil, 280) {
+		t.Error("an empty range set must not be flagged")
+	}
 }
 
 func TestHasDuplicateChapterNumbers(t *testing.T) {
