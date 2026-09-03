@@ -50,6 +50,7 @@ grabber: \
 	grabber/bluesolo \
 	grabber/comix \
 	grabber/danke \
+	grabber/drakecomic \
 	grabber/fanfox \
 	grabber/flamecomics \
 	grabber/fmteam \
@@ -232,6 +233,11 @@ grabber/fmteam:
 # pick a chapter a bit behind the tip if this starts 404ing on pages
 grabber/genztoon:
 	go run . https://genzupdates.com/series/the-return-of-the-legendary-genius-ranker/ 33
+# drakecomic.org moved wholesale to drakecomic.net (same RSC platform as
+# witchtoons.net/kaynscans.com); the old domain still 301s /manga/{slug}/
+# here and the grabber remaps old URLs in code. No browser needed anymore.
+grabber/drakecomic:
+	go run . https://drakecomic.net/series/comic/beast-evolution 70
 # kaynscan.org moved to kaynscans.com (same RSC platform as witchtoons.net);
 # the old domain still 301s here and the grabber remaps old URLs in code
 grabber/kaynscan:
@@ -274,7 +280,6 @@ grabber/mkissa:
 # (cloudflare). Run them one by one and solve the challenge if prompted.
 grabber/browser: \
 	grabber/dragontea \
-	grabber/drakecomic \
 	grabber/kappabeast \
 	grabber/mangahub \
 	grabber/mangakakalot \
@@ -321,8 +326,6 @@ grabber/mangahub:
 	go run . --browser-visible https://mangahub.io/manga/one-piece_142 1188
 grabber/manhuatop:
 	go run . --browser-visible https://manhuatop.org/manhua/chronicles-of-the-martial-gods-return/ 168
-grabber/drakecomic:
-	go run . --browser-visible https://drakecomic.org/manga/beast-evolution/ 70
 grabber/setsuscans:
 	go run . --browser-visible https://setsuscans.com/manga/a-story-about-accidentally-finding-out-a-girls-secret-at-school/ 13
 

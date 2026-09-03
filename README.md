@@ -62,7 +62,7 @@ MangaDex, MangaFire or MangaPark to individual scanlation groups:
 - [deathtollscans.net](https://reader.deathtollscans.net)
 - [demonicscans.org (MangaDemon / Demonic Scans)](https://demonicscans.org)
 - [dragontea.ink](https://dragontea.ink) \*
-- [drakecomic.org (Drake Scans)](https://drakecomic.org) \*
+- [drakecomic.net (Drake Scans, former drakecomic.org)](https://drakecomic.net)
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
 - [elftoon.com](https://elftoon.com)
 - [en-hijala.com (Hijala Translations)](https://en-hijala.com)

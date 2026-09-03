@@ -14,10 +14,9 @@ func TestMatchBrowserSelector(t *testing.T) {
 		{"dragontea.ink", true},
 		{"kappabeast.com", true},
 		{"sushiscan.net", true},
-		{"drakecomic.org", true},
-		{"www.drakecomic.org", true}, // www. prefix is stripped
-		{"mangakakalot.gg", false},   // handled by the Manganelo grabber
-		{"natomanga.com", false},     // handled by the Manganelo grabber
+		{"drakecomic.org", false},  // handled by the Drakecomic grabber
+		{"mangakakalot.gg", false}, // handled by the Manganelo grabber
+		{"natomanga.com", false},   // handled by the Manganelo grabber
 		{"manhuaus.com", true},
 		{"toonily.com", true},
 		{"www.toonily.com", true}, // www. prefix is stripped
