@@ -51,5 +51,8 @@ var versionCmd = &cobra.Command{
 }
 
 func init() {
+	// also honor `manga-downloader --version` (what the bug-report template
+	// asks for); cobra handles the flag before requiring the URL argument
+	rootCmd.Version = fmt.Sprintf("%s (%s)", Version, Tag)
 	rootCmd.AddCommand(versionCmd)
 }
