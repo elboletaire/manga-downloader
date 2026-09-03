@@ -67,6 +67,74 @@ func TestBaozimhChapterNumber(t *testing.T) {
 	}
 }
 
+func TestBaozimhResolveBzcdnHost(t *testing.T) {
+	origProbe := bzcdnProbe
+	defer func() { bzcdnProbe = origProbe }()
+
+	t.Run("non-bzcdn host is left untouched", func(t *testing.T) {
+		bzcdnProbe = func(string) bool {
+			t.Fatal("should not probe a non-bzcdn URL")
+			return false
+		}
+		m := &Baozimh{Grabber: &Grabber{}}
+		raw := "https://www.twmanga.com/comic/foo.html"
+		if got := m.resolveBzcdnHost(raw); got != raw {
+			t.Errorf("resolveBzcdnHost(%q) = %q, want unchanged", raw, got)
+		}
+	})
+
+	t.Run("already-regional host is left untouched", func(t *testing.T) {
+		bzcdnProbe = func(string) bool {
+			t.Fatal("should not probe an already-regional URL")
+			return false
+		}
+		m := &Baozimh{Grabber: &Grabber{}}
+		raw := "https://s2-rsa1-usla.bzcdn.net/scomic/foo/1.jpg"
+		if got := m.resolveBzcdnHost(raw); got != raw {
+			t.Errorf("resolveBzcdnHost(%q) = %q, want unchanged", raw, got)
+		}
+	})
+
+	t.Run("picks the first candidate that answers, and caches it", func(t *testing.T) {
+		var probed []string
+		bzcdnProbe = func(u string) bool {
+			probed = append(probed, u)
+			// the first candidate (-rsa1-usla) fails, the second (-ogsm1-uspho)
+			// answers
+			return strings.Contains(u, "-ogsm1-uspho.bzcdn.net")
+		}
+		m := &Baozimh{Grabber: &Grabber{}}
+
+		raw := "https://s2.bzcdn.net/scomic/foo/1.jpg"
+		want := "https://s2-ogsm1-uspho.bzcdn.net/scomic/foo/1.jpg"
+		if got := m.resolveBzcdnHost(raw); got != want {
+			t.Errorf("resolveBzcdnHost(%q) = %q, want %q", raw, got, want)
+		}
+		if len(probed) != 2 {
+			t.Fatalf("probed %d candidates, want 2 (rsa1 fails, ogsm1 succeeds): %v", len(probed), probed)
+		}
+
+		// a second bare-host URL reuses the cached suffix instead of re-probing
+		raw2 := "https://s2.bzcdn.net/scomic/foo/2.jpg"
+		want2 := "https://s2-ogsm1-uspho.bzcdn.net/scomic/foo/2.jpg"
+		if got := m.resolveBzcdnHost(raw2); got != want2 {
+			t.Errorf("resolveBzcdnHost(%q) = %q, want %q", raw2, got, want2)
+		}
+		if len(probed) != 2 {
+			t.Errorf("second call re-probed instead of reusing the cached suffix: %v", probed)
+		}
+	})
+
+	t.Run("falls back to the original URL when every candidate fails", func(t *testing.T) {
+		bzcdnProbe = func(string) bool { return false }
+		m := &Baozimh{Grabber: &Grabber{}}
+		raw := "https://s1.bzcdn.net/scomic/foo/1.jpg"
+		if got := m.resolveBzcdnHost(raw); got != raw {
+			t.Errorf("resolveBzcdnHost(%q) = %q, want unchanged (all candidates failed)", raw, got)
+		}
+	})
+}
+
 func TestBaozimhNextPartURL(t *testing.T) {
 	tests := []struct {
 		name string
