@@ -167,15 +167,17 @@ func (m *PlainHTML) Test() (bool, error) {
 		// mangastream/themesia WordPress themes reachable over plain HTTP
 		// (same markup as the cloudflare-gated sushiscan.net in
 		// plainhtmlbrowser.go): silentquill.net, lagoonscans.com,
-		// rokaricomics.com, violetscans.org and witchscans.com. Reader pages
-		// embed all pages in a ts_reader.run(...) blob, already handled by
-		// getPlainHTMLImageURL, so Image is just a fallback here. Some of
-		// these coin-paywall their most recent chapters (no href / no images
-		// in the HTML); test with an older, unlocked chapter. Rows requires
-		// .chapternum so a bare #chapterlist wrapper on an unrelated site
-		// (e.g. mangahere.cc) can't match this entry, and Title is scoped
-		// by itemprop because some of these (violetscans) also render
-		// decorative <h1> stat labels (Type/Status/Views).
+		// rokaricomics.com and violetscans.org (witchscans.com moved to
+		// witchtoons.net on a different platform; see the witchtoons
+		// grabber). Reader pages embed all pages in a ts_reader.run(...)
+		// blob, already handled by getPlainHTMLImageURL, so Image is just a
+		// fallback here. Some of these coin-paywall their most recent
+		// chapters (no href / no images in the HTML); test with an older,
+		// unlocked chapter. Rows requires .chapternum so a bare #chapterlist
+		// wrapper on an unrelated site (e.g. mangahere.cc) can't match this
+		// entry, and Title is scoped by itemprop because some of these
+		// (violetscans) also render decorative <h1> stat labels
+		// (Type/Status/Views).
 		{
 			Title:        `h1[itemprop="name"]`,
 			Rows:         "#chapterlist li:has(.chapternum)",

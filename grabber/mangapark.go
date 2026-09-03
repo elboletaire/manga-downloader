@@ -77,7 +77,10 @@ func (m *Mangapark) FetchTitle() (string, error) {
 	return m.title, nil
 }
 
-// FetchChapters returns the chapters of the manga
+// FetchChapters returns the chapters of the manga. get-chapter-list takes no
+// paging params and returned complete lists in every audited case, but no
+// 500+-chapter series could be verified (Cloudflare blocks access) — re-check
+// this endpoint if truncation is ever reported.
 func (m *Mangapark) FetchChapters() (Filterables, []error) {
 	if err := m.fetchSeriesData(); err != nil {
 		return nil, []error{err}
