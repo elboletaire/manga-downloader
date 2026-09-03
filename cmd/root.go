@@ -60,12 +60,24 @@ It would also download chapters 10 to 20 of Black Clover from mangadex.org in Sp
 Note arguments aren't really positional, you can specify them in any order:
 
   manga-downloader --language es 10-20 https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover --bundle`),
-	Args: cobra.MinimumNArgs(1),
-	Run:  Run,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if v, _ := cmd.Flags().GetBool("version"); v {
+			return nil
+		}
+		return cobra.MinimumNArgs(1)(cmd, args)
+	},
+	Run: Run,
 }
 
 // Run is the main function of the root command, the main downloading cmd
 func Run(cmd *cobra.Command, args []string) {
+	// `--version` is what the bug-report template asks for; honor it as an
+	// alias of the `version` command so both produce identical output
+	if v, _ := cmd.Flags().GetBool("version"); v {
+		showVersion()
+		return
+	}
+
 	// ensure the shared Chrome process (if any) is killed on exit
 	defer browser.Close()
 	browser.SetVisible(settings.BrowserVisible)
@@ -397,6 +409,7 @@ func init() {
 	rootCmd.Flags().StringVar(&settings.ConvertImages, "convert-images", grabber.ConvertImagesDefault, `comma-separated source image formats to convert to jpeg for e-reader compatibility: "avif", "webp" or "none"`)
 	rootCmd.Flags().BoolVar(&settings.BrowserVisible, "browser-visible", false, "open the browser window from the start (it opens automatically anyway when a headless attempt hits a challenge)")
 	rootCmd.Flags().Uint8VarP(&settings.Retry, "retry", "r", 1, "number of retries for failed page downloads, hard-limited to 3 (0 disables retrying)")
+	rootCmd.Flags().BoolP("version", "v", false, "show version information (alias of the version command)")
 	// set as persistent, so version command does not complain about the -o flag set via docker
 	rootCmd.PersistentFlags().StringVarP(&settings.OutputDir, "output-dir", "o", "./", "output directory for the downloaded files")
 }
