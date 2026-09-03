@@ -3,8 +3,11 @@
 package grabber
 
 import (
+	"strconv"
+	"strings"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/browser"
 )
 
@@ -34,11 +37,113 @@ func TestMangafireHid(t *testing.T) {
 	}
 }
 
+// mangafireNextTarget mirrors what the click JS in browser.captureAPI does with
+// mangafireNextPageSelector: document.querySelector takes the first match in
+// document order, and the click is skipped when that element reports itself
+// disabled. It returns "gone" (pagination ends), "disabled" (ditto), or the
+// label of the button that would be clicked.
+func mangafireNextTarget(t *testing.T, pager string) string {
+	t.Helper()
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(pager))
+	if err != nil {
+		t.Fatalf("parsing pager fixture: %v", err)
+	}
+	b := doc.Find(mangafireNextPageSelector).First()
+	if b.Length() == 0 {
+		return "gone"
+	}
+	if _, ok := b.Attr("disabled"); ok {
+		return "disabled"
+	}
+	if v, _ := b.Attr("aria-disabled"); v == "true" {
+		return "disabled"
+	}
+	return strings.TrimSpace(b.Text())
+}
+
+// TestMangafireNextPageSelector is the actual #169 regression guard: the bug was
+// that short chapter lists render a numbered-only pager (no "Next page" arrow),
+// so a selector matching only the arrow never advanced and the list was silently
+// truncated to the first page. Reverting mangafireNextPageSelector to the
+// arrow-only selector must fail the "numbered-only" cases below.
+func TestMangafireNextPageSelector(t *testing.T) {
+	// short list: numbered buttons only, no arrows at all
+	numbered := func(active int) string {
+		var sb strings.Builder
+		sb.WriteString(`<div class="npager">`)
+		for n := 1; n <= 3; n++ {
+			cls := "npager__num"
+			if n == active {
+				cls += " is-active"
+			}
+			sb.WriteString(`<a class="` + cls + `">` + strconv.Itoa(n) + `</a>`)
+		}
+		sb.WriteString(`</div>`)
+		return sb.String()
+	}
+
+	cases := []struct {
+		name  string
+		pager string
+		want  string
+	}{
+		{"numbered-only pager, first page", numbered(1), "2"},
+		{"numbered-only pager, middle page", numbered(2), "3"},
+		// no numbered sibling and no arrow: the walk stops here
+		{"numbered-only pager, last page", numbered(3), "gone"},
+		{
+			// windowed pager: the numbered sibling comes first in document
+			// order, and advances exactly one page just like the arrow would
+			name: "windowed pager, active mid-window",
+			pager: `<div class="npager">` +
+				`<a class="npager__nav" aria-label="Previous page">&lsaquo;</a>` +
+				`<a class="npager__num">1</a>` +
+				`<a class="npager__num is-active">2</a>` +
+				`<a class="npager__num">3</a>` +
+				`<a class="npager__nav" aria-label="Next page">&rsaquo;</a>` +
+				`</div>`,
+			want: "3",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := mangafireNextTarget(t, c.pager); got != c.want {
+				t.Errorf("next target = %q, want %q", got, c.want)
+			}
+		})
+	}
+
+	// the arrow is what covers the case the numbered selector cannot: the active
+	// number is the last of its window but more pages follow
+	t.Run("windowed pager, active last of window", func(t *testing.T) {
+		pager := `<div class="npager">` +
+			`<a class="npager__num">4</a>` +
+			`<a class="npager__num is-active">5</a>` +
+			`<a class="npager__nav" aria-label="Next page">next</a>` +
+			`</div>`
+		if got := mangafireNextTarget(t, pager); got != "next" {
+			t.Errorf("next target = %q, want %q", got, "next")
+		}
+	})
+
+	t.Run("windowed pager, last page with disabled arrow", func(t *testing.T) {
+		pager := `<div class="npager">` +
+			`<a class="npager__num">9</a>` +
+			`<a class="npager__num is-active">10</a>` +
+			`<a class="npager__nav" aria-label="Next page" aria-disabled="true">next</a>` +
+			`</div>`
+		if got := mangafireNextTarget(t, pager); got != "disabled" {
+			t.Errorf("next target = %q, want %q", got, "disabled")
+		}
+	})
+}
+
 func TestParseMangafireChapters(t *testing.T) {
 	const prefix = "/api/titles/9062q/chapters"
 	page := func(page int, body string) browser.APIResponse {
 		return browser.APIResponse{
-			URL:  "https://mangafire.to" + prefix + "?language=en&sort=number&order=desc&page=" + string(rune('0'+page)) + "&limit=20&vrf=x",
+			URL:  "https://mangafire.to" + prefix + "?language=en&sort=number&order=desc&page=" + strconv.Itoa(page) + "&limit=20&vrf=x",
 			Body: body,
 		}
 	}
