@@ -291,11 +291,17 @@ grabber/kappabeast:
 grabber/sushiscan:
 	go run . --browser-visible https://sushiscan.net/catalogue/mushoku-tensei/ 17
 
+# manganelo family (Manganelo grabber): the chapters list comes from the
+# /api/manga/{slug}/chapters JSON API — the series page DOM only renders the
+# newest 50 rows, so the old selector-driven scrape silently truncated long
+# series. The browser only clears the cloudflare challenge on the series
+# page once; the API, reader pages and images all go over plain HTTP. The
+# smoke chapters are old ones the truncated DOM never listed.
 grabber/mangakakalot:
-	go run . --browser-visible https://www.mangakakalot.gg/manga/akuyaku-reijou-kara-no-kareinaru-tenshin-aisare-heroine-anthology-comic 1
+	go run . --browser-visible https://www.mangakakalot.gg/manga/apotheosis 2
 
 grabber/natomanga:
-	go run . --browser-visible https://www.natomanga.com/manga/rebirth-from-0-to-1 205.9
+	go run . --browser-visible https://www.natomanga.com/manga/rebirth-from-0-to-1 2
 
 grabber/manhuaus:
 	go run . --browser-visible https://manhuaus.com/manga/solo-leveling-ragnarok/ 68
