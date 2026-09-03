@@ -132,6 +132,9 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	var rngs []ranges.Range
+	// true only if the user typed a range; distinguishes it from the
+	// synthesised "everything" range below
+	rangeRequested := len(args) > 1
 	// ranges argument is not provided
 	if len(args) == 1 {
 		lastChapter := chapters[len(chapters)-1].GetNumber()
@@ -153,6 +156,16 @@ func Run(cmd *cobra.Command, args []string) {
 		settings.Range = getRangesArg(args)
 		rngs, err = ranges.Parse(settings.Range)
 		cerr(err, "Error parsing ranges: ")
+	}
+
+	// some sites prune old chapters (they soft-404 to the series page), so a
+	// user-typed range below the first listed chapter would silently skip
+	// that part; warn only when the range was explicit, not synthesised
+	if floor := chapters[0].GetNumber(); rangeRequested && requestsBelowListedFloor(rngs, floor) {
+		color.Yellow(
+			"Only chapters %g and up are listed for this series; the requested chapters below that will be skipped",
+			floor,
+		)
 	}
 
 	// sort and filter specified ranges
@@ -543,6 +556,24 @@ func chapterBarTitle(seriesTitle string, chapter *grabber.Chapter, mangaLen, cha
 	}
 
 	return fmt.Sprintf("%s - %s:", truncateString(seriesTitle, mangaLen), chapTitle)
+}
+
+// requestsBelowListedFloor reports whether any requested range starts below
+// the first chapter the site lists. It only flags the gap, not the cause —
+// pruning, a continuation series, and a --language/--scanlator filter can
+// all produce a nonzero floor. Floors of 0 or 1 mean the list already starts
+// at the beginning, so nothing is missing below them.
+func requestsBelowListedFloor(rngs []ranges.Range, floor float64) bool {
+	if floor <= 1 {
+		return false
+	}
+	for _, r := range rngs {
+		if r.Begin < floor {
+			return true
+		}
+	}
+
+	return false
 }
 
 // noChaptersMessage builds the error message shown when a fetch returns no

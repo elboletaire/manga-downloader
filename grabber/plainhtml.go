@@ -156,6 +156,9 @@ func (m *PlainHTML) Test() (bool, error) {
 		// (not cloudflare-walled, unlike the toongod/dragontea/manhuaus group
 		// in plainhtmlbrowser.go). The full chapter list ships in the series
 		// page HTML (no ajax pagination) and reader pages are single-page.
+		// manhuaplus prunes old chapters (pruned URLs soft-404 to the series
+		// page with HTTP 200); the list is still complete for what's
+		// downloadable, so nothing to work around here.
 		{
 			Title:        "h1",
 			Rows:         "li.wp-manga-chapter",

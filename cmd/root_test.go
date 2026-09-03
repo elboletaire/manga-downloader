@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/elboletaire/manga-downloader/ranges"
 )
 
 func TestTruncateStringCountsRunesNotBytes(t *testing.T) {
@@ -90,6 +91,54 @@ func TestNoChaptersMessage(t *testing.T) {
 	want = `No chapters found for scanlation group "Omega"`
 	if got := noChaptersMessage("", "Omega"); got != want {
 		t.Errorf("expected %q, got %q", want, got)
+	}
+}
+
+func TestRequestsBelowListedFloor(t *testing.T) {
+	// manhuaplus tales-of-demons-and-gods01: the site pruned everything below
+	// chapter 280, so asking from 1 must warn...
+	if !requestsBelowListedFloor([]ranges.Range{{Begin: 1, End: 529}}, 280) {
+		t.Error("a range starting below the listed floor must be flagged")
+	}
+	// ...but a request within the listed window must not
+	if requestsBelowListedFloor([]ranges.Range{{Begin: 280, End: 300}}, 280) {
+		t.Error("a range within the listed window must not be flagged")
+	}
+	// any of several ranges dipping below the floor is enough
+	if !requestsBelowListedFloor([]ranges.Range{{Begin: 300, End: 310}, {Begin: 100, End: 120}}, 280) {
+		t.Error("a later range below the floor must be flagged")
+	}
+	// lists starting at the beginning have nothing missing below them, even
+	// when the user asks for chapter 0 (prologue/oneshot numbering)
+	if requestsBelowListedFloor([]ranges.Range{{Begin: 0, End: 10}}, 1) {
+		t.Error("a floor of 1 must never be flagged")
+	}
+	if requestsBelowListedFloor([]ranges.Range{{Begin: 0, End: 10}}, 0) {
+		t.Error("a floor of 0 must never be flagged")
+	}
+	// fractional floors above 1 still count (a list starting at e.g. 1.5
+	// means chapter 1 was pruned)
+	if !requestsBelowListedFloor([]ranges.Range{{Begin: 1, End: 10}}, 1.5) {
+		t.Error("a fractional floor above 1 must be flagged")
+	}
+	// decimal chapter numbers within the listed window must not be flagged,
+	// floor included (>= floor is served, only < floor is missing)
+	if requestsBelowListedFloor([]ranges.Range{{Begin: 529.1, End: 529.1}}, 280) {
+		t.Error("a single decimal chapter inside the window must not be flagged")
+	}
+	if requestsBelowListedFloor([]ranges.Range{{Begin: 280, End: 280}}, 280) {
+		t.Error("a range starting exactly at the floor must not be flagged")
+	}
+	// a continuation series (season 2 numbered 111+) is the reason Run only
+	// consults this for user-supplied ranges: the implicit "download all"
+	// range is synthesised as {Begin: 1, End: last}, which the predicate
+	// flags even though the user asked for nothing that is missing
+	if !requestsBelowListedFloor([]ranges.Range{{Begin: 1, End: 179}}, 111) {
+		t.Error("the synthesised all-chapters range is flagged, hence Run's rangeRequested guard")
+	}
+	// no ranges at all must not panic nor flag
+	if requestsBelowListedFloor(nil, 280) {
+		t.Error("an empty range set must not be flagged")
 	}
 }
 
