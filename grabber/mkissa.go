@@ -72,8 +72,11 @@ func (m *Mkissa) mangaId() (string, error) {
 const mkissaAPI = "https://api.mkissa.net/api"
 
 // mkissaInfoQueryHash is the persisted query hash for the manga info query
-// (series title + full per-translation chapter number list)
-const mkissaInfoQueryHash = "f2678aedf3d265af9ba482e9a20285aa2cfecfd55233fd2643971c2f658784bd"
+// (series title + full per-translation chapter number list). This rotates
+// occasionally along with the required variable set (see fetchInfo) — if
+// FetchChapters starts failing again, re-probe the series page with
+// PROBE_NETLOG=1 and grep for api.mkissa.net to pick up the new hash/shape.
+const mkissaInfoQueryHash = "ce7c62eed9417724f6568c38bba87a0a500f35f3cbf72b444f202df52a6d0820"
 
 // mkissaMangaInfo is the relevant subset of the manga info API response
 type mkissaMangaInfo struct {
@@ -95,7 +98,7 @@ func (m *Mkissa) fetchInfo() (*mkissaMangaInfo, error) {
 		return nil, err
 	}
 
-	variables := fmt.Sprintf(`{"_id":%q,"search":{"allowAdult":false,"allowUnknown":false}}`, id)
+	variables := fmt.Sprintf(`{"_id":%q,"search":{"allowAdult":false,"allowUnknown":false,"denyEcchi":false,"lite":false,"forMe":false}}`, id)
 	extensions := fmt.Sprintf(`{"persistedQuery":{"version":1,"sha256Hash":%q}}`, mkissaInfoQueryHash)
 
 	q := url.Values{}

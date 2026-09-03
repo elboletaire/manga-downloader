@@ -212,14 +212,23 @@ func GetHTMLWithScroll(url, waitSelector string, scrollIterations int, scrollPau
 	return getHTML(url, "", timeout, pre)
 }
 
+// dismissModalJS closes an open modal dialog (e.g. mkissa's "Sign in to
+// recommend this to the community rail" nag) before it eats a click. The
+// dialog's fixed, full-viewport `.modal-backdrop` sits above everything else
+// (z-index 300), so a click aimed at whatever's underneath silently lands on
+// the backdrop instead — the target element never reports being interacted
+// with, and no error is raised. A no-op when no modal is open.
+const dismissModalJS = `(function(){var c=document.querySelector('.modal-backdrop .modal__close');if(c)c.click();})()`
+
 // GetReaderHTML renders a chapter reader page for SPA sites whose reader
 // route is blocked by Cloudflare on direct navigation (confirmed via a 403
 // even after warming up cookies from the series page in the same browser
 // context) but reachable through the app's own client-side routing
-// (mkissa.to). It navigates to seriesURL, clicks tabSelector to reveal the
-// chapter list, clicks through paginationSelector buttons (if present) until
-// an element matching linkSelector appears, clicks it, then scrolls the page
-// repeatedly to force lazy-loaded reader images to resolve.
+// (mkissa.to). It navigates to seriesURL, dismisses any open sign-in modal
+// (see dismissModalJS), clicks tabSelector to reveal the chapter list,
+// clicks through paginationSelector buttons (if present) until an element
+// matching linkSelector appears, clicks it, then scrolls the page repeatedly
+// to force lazy-loaded reader images to resolve.
 //
 // Some of these readers auto-continue into the next chapter once the current
 // one is scrolled past (its pages get appended to the same DOM), so instead
@@ -258,10 +267,32 @@ func GetReaderHTML(seriesURL, tabSelector, paginationSelector, linkSelector, img
 		chromedp.Navigate(seriesURL),
 		chromedp.WaitVisible("body", chromedp.ByQuery),
 		chromedp.Sleep(2*time.Second),
-		chromedp.Click(tabSelector, chromedp.ByQuery),
-		chromedp.Sleep(time.Second),
 	); err != nil {
 		return "", fmt.Errorf("opening chapter list: %w", err)
+	}
+
+	// the sign-in nag (see dismissModalJS) pops up on a timer independent of
+	// our clicks, so it can appear between the dismiss check and the actual
+	// click landing; retry a couple of times rather than dismissing once
+	tabSelectedJS := fmt.Sprintf(`(function(){var e=document.querySelector(%q);return !!e&&e.getAttribute('aria-selected')==='true';})()`, tabSelector)
+	for attempt := 0; attempt < 3; attempt++ {
+		if err := chromedp.Run(ctx,
+			chromedp.Evaluate(dismissModalJS, nil),
+			chromedp.Click(tabSelector, chromedp.ByQuery),
+			chromedp.Sleep(time.Second),
+		); err != nil {
+			return "", fmt.Errorf("opening chapter list: %w", err)
+		}
+		var selected bool
+		if err := chromedp.Run(ctx, chromedp.Evaluate(tabSelectedJS, &selected)); err != nil {
+			return "", fmt.Errorf("opening chapter list: %w", err)
+		}
+		if selected {
+			break
+		}
+		if attempt == 2 {
+			return "", fmt.Errorf("opening chapter list: chapters tab never became selected")
+		}
 	}
 
 	// click through pagination pages until the target chapter link shows up
@@ -291,6 +322,7 @@ func GetReaderHTML(seriesURL, tabSelector, paginationSelector, linkSelector, img
 	}
 
 	if err := chromedp.Run(ctx,
+		chromedp.Evaluate(dismissModalJS, nil),
 		chromedp.Click(linkSelector, chromedp.ByQuery),
 		chromedp.Sleep(1500*time.Millisecond),
 	); err != nil {
