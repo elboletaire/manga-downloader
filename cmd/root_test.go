@@ -171,3 +171,43 @@ func TestHasDuplicateChapterNumbers(t *testing.T) {
 		t.Error("duplicates sharing a language must not trigger the language tag")
 	}
 }
+
+func TestAllChaptersRangeIncludesChapterZero(t *testing.T) {
+	// a hardcoded Begin: 1 silently dropped chapter 0 and any 0.x prologue
+	// from the "download all" prompt path (#176); the range must instead
+	// span the sorted list's own ends
+	chapters := grabber.Filterables{
+		&grabber.Chapter{Number: 0},
+		&grabber.Chapter{Number: 0.5},
+		&grabber.Chapter{Number: 1},
+		&grabber.Chapter{Number: 2},
+	}
+
+	got := allChaptersRange(chapters)
+	want := ranges.Range{Begin: 0, End: 2}
+	if got != want {
+		t.Errorf("expected %+v, got %+v", want, got)
+	}
+
+	filtered := chapters.FilterRanges([]ranges.Range{got})
+	if len(filtered) != len(chapters) {
+		t.Errorf("expected all %d chapters to survive filtering, got %d", len(chapters), len(filtered))
+	}
+}
+
+func TestAllChaptersRangeNotStartingAtOne(t *testing.T) {
+	// a continuation series, or one thinned by --language/--scanlator, can
+	// legitimately list nothing below its own floor; the synthesized range
+	// must reflect that floor rather than assuming 1
+	chapters := grabber.Filterables{
+		&grabber.Chapter{Number: 280},
+		&grabber.Chapter{Number: 281},
+		&grabber.Chapter{Number: 282.5},
+	}
+
+	got := allChaptersRange(chapters)
+	want := ranges.Range{Begin: 280, End: 282.5}
+	if got != want {
+		t.Errorf("expected %+v, got %+v", want, got)
+	}
+}
