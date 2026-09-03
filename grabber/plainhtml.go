@@ -167,7 +167,10 @@ func (m *PlainHTML) Test() (bool, error) {
 		// mangastream/themesia WordPress themes reachable over plain HTTP
 		// (same markup as the cloudflare-gated sushiscan.net in
 		// plainhtmlbrowser.go): silentquill.net, lagoonscans.com,
-		// rokaricomics.com, violetscans.org and witchscans.com. Reader pages
+		// rokaricomics.com and violetscans.org (witchscans.com used to be
+		// here too, but it rebranded to witchtoons.net on an entirely
+		// different platform, handled by the dedicated witchtoons grabber).
+		// Reader pages
 		// embed all pages in a ts_reader.run(...) blob, already handled by
 		// getPlainHTMLImageURL, so Image is just a fallback here. Some of
 		// these coin-paywall their most recent chapters (no href / no images
