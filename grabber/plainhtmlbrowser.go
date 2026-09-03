@@ -103,22 +103,6 @@ var browserSelectors = []BrowserSiteSelector{
 		ChaptersWait: "#chapterlist li",
 		ImageWait:    "#readerarea img",
 	},
-	// mangakakalot.gg (manganelo/manganato family) behind a cloudflare challenge, needs
-	// --browser-visible. Images sit on a CDN that only checks the Referer, so
-	// they still download via plain HTTP (BaseUrl referer is enough).
-	{
-		SiteSelector: SiteSelector{
-			Title:        "h1",
-			Rows:         ".chapter-list .row",
-			Chapter:      "a",
-			ChapterTitle: "a",
-			Link:         "a",
-			Image:        ".container-chapter-reader img",
-		},
-		Domains:      []string{"mangakakalot.gg", "natomanga.com"},
-		ChaptersWait: ".chapter-list .row",
-		ImageWait:    ".container-chapter-reader img",
-	},
 	// mangahub.io: behind a cloudflare managed challenge that a visible
 	// browser clears in a few seconds; images are served from a plain CDN
 	// (imgx.mghcdn.com) and download fine via plain HTTP with just a
