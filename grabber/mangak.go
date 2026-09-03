@@ -77,13 +77,12 @@ func (m *Mangak) FetchChapters() (chapters Filterables, errs []error) {
 		})
 	}
 
-	// the series page embeds only the newest chapters, so fetching fewer raw
-	// entries than the declared total means the API fetch fell back to that
-	// partial blob (or the site truncated the list some new way); compared
-	// against the raw list because number-less entries (site announcements
-	// like "Notice.110") are skipped above on purpose
-	if count := manga.Stats.ChaptersCount; count > 0 && len(manga.Chapters) < count {
-		color.Yellow("found %d chapters but the site declares %d: the list may be incomplete", len(manga.Chapters), count)
+	// the API answered, but with fewer chapters than the site declares (a
+	// stale cached list, or a new kind of truncation); compared against the
+	// raw list because number-less entries (site announcements like
+	// "Notice.110" or "Hitaus.156") are skipped above on purpose
+	if missing := mangakMissingChapters(manga); missing > 0 {
+		color.Yellow("found %d chapters but the site declares %d: the list may be incomplete", len(manga.Chapters), manga.Stats.ChaptersCount)
 	}
 
 	return
@@ -124,7 +123,8 @@ func (m Mangak) FetchChapter(f Filterable) (*Chapter, error) {
 }
 
 // fetchManga fetches and caches the series info from the manga index page,
-// completing the (truncated) embedded chapter list through the site's API
+// completing the (truncated) embedded chapter list through the site's API; it
+// errors out rather than silently returning the truncated list
 func (m *Mangak) fetchManga() (*mangakManga, error) {
 	if m.manga != nil {
 		return m.manga, nil
@@ -139,17 +139,40 @@ func (m *Mangak) fetchManga() (*mangakManga, error) {
 	}
 
 	manga := data.Props.PageProps.InitialManga
-	if chapters, err := m.fetchAllChapters(data.Props.PageProps.SiteConfig.APIURL, manga.ID, manga.CV); err != nil {
-		// keep the (newest-50) embedded list rather than failing outright;
-		// FetchChapters warns about the truncation via chaptersCount
-		color.Yellow("could not fetch the full chapter list from the api: %s", err.Error())
-	} else {
+	chapters, err := m.fetchAllChapters(data.Props.PageProps.SiteConfig.APIURL, manga.ID, manga.CV)
+	switch {
+	case err == nil:
 		manga.Chapters = chapters
+	case mangakMissingChapters(manga) > 0:
+		// the embedded list is provably short of what the site declares, so
+		// falling back to it would quietly download a fraction of the series
+		// and still exit 0 — fail instead, a warning is too easy to miss
+		return nil, fmt.Errorf(
+			"could not fetch the full chapter list from the api (the page only embeds %d of the %d chapters): %w",
+			len(manga.Chapters), manga.Stats.ChaptersCount, err,
+		)
+	default:
+		// short series: the page embeds every chapter the site declares (or
+		// the site declares no total), so the embedded list is usable as-is
+		color.Yellow("could not fetch the full chapter list from the api, using the list embedded in the page: %s", err)
 	}
 
 	m.manga = manga
 
 	return m.manga, nil
+}
+
+// mangakMissingChapters returns how many chapters the site declares beyond the
+// ones actually listed; 0 when the list is complete or the total is unknown
+func mangakMissingChapters(manga *mangakManga) int {
+	if manga.Stats.ChaptersCount <= 0 {
+		return 0
+	}
+	if missing := manga.Stats.ChaptersCount - len(manga.Chapters); missing > 0 {
+		return missing
+	}
+
+	return 0
 }
 
 // fetchAllChapters fetches the complete chapter list from the mangak API
@@ -188,7 +211,8 @@ func (m Mangak) fetchAllChapters(apiURL, mangaID string, cv int64) ([]mangakChap
 // parseMangakChaptersList decodes a chapters list API response
 func parseMangakChaptersList(raw []byte) ([]mangakChapterEntry, error) {
 	var resp struct {
-		Success bool `json:"success"`
+		Success bool   `json:"success"`
+		Message string `json:"message"`
 		Data    *struct {
 			Chapters []mangakChapterEntry `json:"chapters"`
 		} `json:"data"`
@@ -197,6 +221,9 @@ func parseMangakChaptersList(raw []byte) ([]mangakChapterEntry, error) {
 		return nil, err
 	}
 	if !resp.Success || resp.Data == nil {
+		if resp.Message != "" {
+			return nil, fmt.Errorf("unsuccessful api response: %s", resp.Message)
+		}
 		return nil, errors.New("unsuccessful api response")
 	}
 	if len(resp.Data.Chapters) == 0 {
