@@ -71,7 +71,7 @@ func (m *Mangak) FetchChapters() (chapters Filterables, errs []error) {
 		chapters = append(chapters, &MangakChapter{
 			Chapter{
 				Number: number,
-				Title:  c.Name,
+				Title:  sanitizeTitle(c.Name),
 			},
 			c.URL,
 		})
