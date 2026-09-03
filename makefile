@@ -57,6 +57,7 @@ grabber: \
 	grabber/genztoon \
 	grabber/guya \
 	grabber/hijala \
+	grabber/hivetoons \
 	grabber/inmanga \
 	grabber/jestful \
 	grabber/kaynscan \
@@ -235,6 +236,12 @@ grabber/genztoon:
 # the old domain still 301s here and the grabber remaps old URLs in code
 grabber/kaynscan:
 	go run . https://kaynscans.com/series/comic/heavenly-demon-cultivation-simulation 191
+# hivetoons only server-renders the ~20 newest chapter anchors ("Load more"
+# does the rest client-side), so the grabber reads the full list out of the
+# astro-island blob; use a chapter well behind that window so the smoke run
+# proves the embedded list is what's being read
+grabber/hivetoons:
+	go run . https://hivetoons.org/series/eleceed 200
 grabber/hijala:
 	go run . https://en-hijala.com/series/double-click 252
 grabber/mangataro:
@@ -334,7 +341,6 @@ grabber/html: \
 	grabber/dynastyscans \
 	grabber/elftoon \
 	grabber/furyosociety \
-	grabber/hivetoons \
 	grabber/lagoonscans \
 	grabber/madarascans \
 	grabber/mangakatana \
@@ -381,8 +387,6 @@ grabber/manhuaplus:
 	go run . https://manhuaplus.com/manga/tales-of-demons-and-gods01/ 522.6
 grabber/silentquill:
 	go run . https://www.silentquill.net/i-was-invited-to-join-the-country-as-an-otherworldly-warrior-but-i-refused-and-decided-to-start-as-a-soldier/ 59
-grabber/hivetoons:
-	go run . https://hivetoons.org/series/eleceed 410
 grabber/templetoons:
 	go run . https://templetoons.com/comic/bl-antidote 88
 grabber/deathtollscans:
