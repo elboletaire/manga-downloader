@@ -143,6 +143,17 @@ func Run(cmd *cobra.Command, args []string) {
 		cerr(err, "Error parsing ranges: ")
 	}
 
+	// some sites prune old chapters outright (manhuaplus removes them from
+	// both the list and the readers, which soft-404 to the series page), so a
+	// range reaching below the first listed chapter would silently download
+	// nothing for that part; make the gap visible before filtering
+	if floor := chapters[0].GetNumber(); requestsBelowListedFloor(rngs, floor) {
+		color.Yellow(
+			"The site only lists chapters %g and up for this series; earlier chapters are not hosted there and will be skipped",
+			floor,
+		)
+	}
+
 	// sort and filter specified ranges
 	chapters = chapters.FilterRanges(rngs)
 
@@ -530,6 +541,32 @@ func chapterBarTitle(seriesTitle string, chapter *grabber.Chapter, mangaLen, cha
 	}
 
 	return fmt.Sprintf("%s - %s:", truncateString(seriesTitle, mangaLen), chapTitle)
+}
+
+// requestsBelowListedFloor reports whether any requested range starts below
+// the first chapter the site lists, for series whose list doesn't start at
+// the beginning. Born from the chapter-list audit following #169: manhuaplus
+// looked capped at the newest 500 rows (one series listing exactly 500, with
+// older chapter URLs answering 200), but those 200s are soft-404s serving the
+// series page — the site prunes old chapters, and a sibling series listing
+// 3364 rows disproved any newest-N cap. Detecting "exactly 500 rows" was
+// rejected on purpose: the motivating series legitimately HAS exactly 500
+// chapters left, so that heuristic only produces false alarms. Comparing the
+// request against the listed floor instead warns exactly when chapters the
+// user asked for can't be served, on any site. Floors of 0 or 1 mean the list
+// starts at the beginning (0 covers prologue/oneshot numbering), so nothing
+// is missing below them.
+func requestsBelowListedFloor(rngs []ranges.Range, floor float64) bool {
+	if floor <= 1 {
+		return false
+	}
+	for _, r := range rngs {
+		if r.Begin < floor {
+			return true
+		}
+	}
+
+	return false
 }
 
 // noChaptersMessage builds the error message shown when a fetch returns no
