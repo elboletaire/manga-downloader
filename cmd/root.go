@@ -120,8 +120,8 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	var rngs []ranges.Range
-	// whether the user actually named the chapters they want; the implicit
-	// "download everything" range below is synthesised, not requested
+	// true only if the user typed a range; distinguishes it from the
+	// synthesised "everything" range below
 	rangeRequested := len(args) > 1
 	// ranges argument is not provided
 	if len(args) == 1 {
@@ -146,12 +146,9 @@ func Run(cmd *cobra.Command, args []string) {
 		cerr(err, "Error parsing ranges: ")
 	}
 
-	// some sites prune old chapters outright (manhuaplus removes them from
-	// both the list and the readers, which soft-404 to the series page), so a
-	// range reaching below the first listed chapter would silently download
-	// nothing for that part; make the gap visible before filtering. Only for
-	// ranges the user actually typed: the implicit range means "whatever the
-	// site has", so nothing is missing relative to what was asked for
+	// some sites prune old chapters (they soft-404 to the series page), so a
+	// user-typed range below the first listed chapter would silently skip
+	// that part; warn only when the range was explicit, not synthesised
 	if floor := chapters[0].GetNumber(); rangeRequested && requestsBelowListedFloor(rngs, floor) {
 		color.Yellow(
 			"Only chapters %g and up are listed for this series; the requested chapters below that will be skipped",
@@ -549,17 +546,10 @@ func chapterBarTitle(seriesTitle string, chapter *grabber.Chapter, mangaLen, cha
 }
 
 // requestsBelowListedFloor reports whether any requested range starts below
-// the first chapter the site lists. Born from the chapter-list audit following
-// #169: manhuaplus looked capped at the newest 500 rows, but the site simply
-// prunes old chapters (a sibling series lists 3364), and "exactly 500" was a
-// coincidence — so detecting a round row count was rejected as a pure false
-// alarm generator, and the request is compared against the listed floor
-// instead. Deliberately says nothing about *why* the floor is where it is:
-// besides pruning it can be a continuation series, a --language/--scanlator
-// filter, or an under-listing grabber, so the caller's message must not claim
-// the earlier chapters don't exist. Floors of 0 or 1 mean the list starts at
-// the beginning (0 covers prologue/oneshot numbering), so nothing is missing
-// below them.
+// the first chapter the site lists. It only flags the gap, not the cause —
+// pruning, a continuation series, and a --language/--scanlator filter can
+// all produce a nonzero floor. Floors of 0 or 1 mean the list already starts
+// at the beginning, so nothing is missing below them.
 func requestsBelowListedFloor(rngs []ranges.Range, floor float64) bool {
 	if floor <= 1 {
 		return false
