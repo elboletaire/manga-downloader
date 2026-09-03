@@ -58,28 +58,58 @@ func (l *Luascans) FetchTitle() (string, error) {
 	return l.title, nil
 }
 
-// FetchChapters returns the chapters of the manga
+// FetchChapters returns the chapters of the manga. The API paginates (its
+// `meta` carries `last_page`), so keep requesting pages until the last one:
+// a single perPage=200 call would silently truncate the first 200+-chapter
+// series (same pattern as the qimanga & hijala grabbers).
 func (l *Luascans) FetchChapters() (chapters Filterables, errs []error) {
 	seriesID, err := l.fetchSeriesID()
 	if err != nil {
 		return nil, []error{err}
 	}
 
-	uri := fmt.Sprintf(
-		"https://api.luacomic.org/chapter/query?page=1&perPage=200&query=&order=desc&series_id=%s",
-		seriesID,
-	)
-	body, err := http.GetText(http.RequestParams{
-		URL:     uri,
-		Referer: l.URL,
-	})
-	if err != nil {
-		return nil, []error{err}
-	}
+	page := 1
+	for {
+		uri := fmt.Sprintf(
+			"https://api.luacomic.org/chapter/query?page=%d&perPage=200&query=&order=desc&series_id=%s",
+			page,
+			seriesID,
+		)
+		body, err := http.GetText(http.RequestParams{
+			URL:     uri,
+			Referer: l.URL,
+		})
+		if err != nil {
+			errs = append(errs, err)
+			return
+		}
 
-	feed := luascansChaptersFeed{}
+		pageChapters, feed, err := parseLuascansChaptersPage(body)
+		if err != nil {
+			errs = append(errs, err)
+			return
+		}
+		// an empty page also stops the loop, in case the api ever reports a
+		// last_page beyond the actual data
+		if len(feed.Data) == 0 {
+			return
+		}
+		chapters = append(chapters, pageChapters...)
+
+		if page >= feed.Meta.LastPage {
+			return
+		}
+		page++
+	}
+}
+
+// parseLuascansChaptersPage parses a single page of the chapters API feed,
+// returning the chapters it contains plus the decoded feed itself (whose
+// `meta.last_page` and raw data length tell the caller when to stop
+// paginating)
+func parseLuascansChaptersPage(body string) (chapters Filterables, feed luascansChaptersFeed, err error) {
 	if err = json.Unmarshal([]byte(body), &feed); err != nil {
-		return nil, []error{err}
+		return nil, feed, err
 	}
 
 	for _, c := range feed.Data {
@@ -96,7 +126,7 @@ func (l *Luascans) FetchChapters() (chapters Filterables, errs []error) {
 		})
 	}
 
-	return
+	return chapters, feed, nil
 }
 
 // FetchChapter fetches a chapter and its pages
@@ -215,8 +245,12 @@ func (l *Luascans) fetchSeriesID() (string, error) {
 	return l.seriesID, nil
 }
 
-// luascansChaptersFeed is the JSON feed for the chapters list
+// luascansChaptersFeed is the JSON feed for the paginated chapters list
 type luascansChaptersFeed struct {
+	Meta struct {
+		Total    int `json:"total"`
+		LastPage int `json:"last_page"`
+	} `json:"meta"`
 	Data []struct {
 		Name string `json:"chapter_name"`
 		Slug string `json:"chapter_slug"`
