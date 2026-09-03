@@ -110,6 +110,53 @@ func TestExtractAstroIslandPropsMissingMarker(t *testing.T) {
 	}
 }
 
+// finding *an* astro-island holding the marker key doesn't prove it's the one
+// holding the chapter list, so an empty list must be an error rather than a
+// silently empty series
+func TestAstroPlatformFetchChaptersGuards(t *testing.T) {
+	cases := []struct {
+		name      string
+		props     string
+		wantChaps int // -1 means "expect an error"
+	}{
+		{"empty list", `{"totalChapterCount":0}`, -1},
+		{
+			"truncated list",
+			`{"totalChapterCount":5,"initialChap":[{"number":2,"slug":"chapter-2"},{"number":1,"slug":"chapter-1"}]}`,
+			-1,
+		},
+		{
+			"complete list",
+			`{"totalChapterCount":2,"initialChap":[{"number":2,"slug":"chapter-2"},{"number":1,"slug":"chapter-1"}]}`,
+			2,
+		},
+	}
+
+	for _, c := range cases {
+		props := &astroSeriesProps{}
+		if err := json.Unmarshal([]byte(c.props), props); err != nil {
+			t.Fatalf("%s: unmarshal: %v", c.name, err)
+		}
+		// pre-seeding the cache keeps fetchSeriesProps from hitting the network
+		a := &astroPlatform{Grabber: &Grabber{URL: "https://hivetoons.org/series/x"}, series: props}
+
+		chapters, errs := a.FetchChapters()
+		if c.wantChaps == -1 {
+			if len(errs) == 0 {
+				t.Errorf("%s: FetchChapters() returned %d chapters and no error, want an error", c.name, len(chapters))
+			}
+			continue
+		}
+		if len(errs) > 0 {
+			t.Errorf("%s: FetchChapters() errs = %v", c.name, errs)
+			continue
+		}
+		if len(chapters) != c.wantChaps {
+			t.Errorf("%s: FetchChapters() got %d chapters, want %d", c.name, len(chapters), c.wantChaps)
+		}
+	}
+}
+
 func TestAstroPlatformSeriesSlug(t *testing.T) {
 	cases := []struct {
 		url  string

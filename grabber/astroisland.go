@@ -69,6 +69,13 @@ func (a *astroPlatform) FetchChapters() (chapters Filterables, errs []error) {
 		return nil, []error{err}
 	}
 
+	// the marker key only proves *an* island was found, not that it's the one
+	// holding the chapter list; without this the grabber would report an empty
+	// series as a success the moment the props shape changes
+	if len(props.InitialChap) == 0 {
+		return nil, []error{errors.New("could not find the chapter list in the series page")}
+	}
+
 	// the whole point of parsing the island instead of the rendered anchors is
 	// getting the full list; if the site ever starts paginating it, fail loudly
 	// instead of silently truncating the series
