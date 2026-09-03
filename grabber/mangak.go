@@ -5,17 +5,24 @@ package grabber
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
+	"github.com/fatih/color"
 )
 
+// mangakDefaultAPIURL is the fallback API base when the page doesn't
+// declare one in its site config
+const mangakDefaultAPIURL = "https://api.mangak.io"
+
 // Mangak is a grabber for mangak.io (the mangabuddy rebrand), a Next.js site
-// that embeds both the full chapter list and the chapter page images in the
-// __NEXT_DATA__ JSON blob of its server-rendered pages (the visible HTML only
-// contains a handful of chapters, so selectors are not enough here)
+// whose series pages embed only the 50 newest chapters in the __NEXT_DATA__
+// JSON blob (the field is literally named *initial*Manga); the full list is
+// served by the site's own API at titles/{mangaId}/chapters
 type Mangak struct {
 	*Grabber
 	manga *mangakManga
@@ -70,6 +77,15 @@ func (m *Mangak) FetchChapters() (chapters Filterables, errs []error) {
 		})
 	}
 
+	// the series page embeds only the newest chapters, so fetching fewer raw
+	// entries than the declared total means the API fetch fell back to that
+	// partial blob (or the site truncated the list some new way); compared
+	// against the raw list because number-less entries (site announcements
+	// like "Notice.110") are skipped above on purpose
+	if count := manga.Stats.ChaptersCount; count > 0 && len(manga.Chapters) < count {
+		color.Yellow("found %d chapters but the site declares %d: the list may be incomplete", len(manga.Chapters), count)
+	}
+
 	return
 }
 
@@ -107,7 +123,8 @@ func (m Mangak) FetchChapter(f Filterable) (*Chapter, error) {
 	return chapter, nil
 }
 
-// fetchManga fetches and caches the series info from the manga index page
+// fetchManga fetches and caches the series info from the manga index page,
+// completing the (truncated) embedded chapter list through the site's API
 func (m *Mangak) fetchManga() (*mangakManga, error) {
 	if m.manga != nil {
 		return m.manga, nil
@@ -121,9 +138,72 @@ func (m *Mangak) fetchManga() (*mangakManga, error) {
 		return nil, errors.New("no manga data found in the page (is the URL a series page?)")
 	}
 
-	m.manga = data.Props.PageProps.InitialManga
+	manga := data.Props.PageProps.InitialManga
+	if chapters, err := m.fetchAllChapters(data.Props.PageProps.SiteConfig.APIURL, manga.ID, manga.CV); err != nil {
+		// keep the (newest-50) embedded list rather than failing outright;
+		// FetchChapters warns about the truncation via chaptersCount
+		color.Yellow("could not fetch the full chapter list from the api: %s", err.Error())
+	} else {
+		manga.Chapters = chapters
+	}
+
+	m.manga = manga
 
 	return m.manga, nil
+}
+
+// fetchAllChapters fetches the complete chapter list from the mangak API
+// (titles/{mangaId}/chapters); cv is the site's cache-version token — without
+// it the CDN happily serves a stale list missing the newest chapters
+func (m Mangak) fetchAllChapters(apiURL, mangaID string, cv int64) ([]mangakChapterEntry, error) {
+	if mangaID == "" {
+		return nil, errors.New("the series data has no manga id")
+	}
+	if apiURL == "" {
+		apiURL = mangakDefaultAPIURL
+	}
+
+	uri := fmt.Sprintf("%s/titles/%s/chapters", strings.TrimSuffix(apiURL, "/"), mangaID)
+	if cv > 0 {
+		uri = fmt.Sprintf("%s?cv=%d", uri, cv)
+	}
+
+	body, err := http.Get(http.RequestParams{
+		URL:     uri,
+		Referer: m.BaseUrl(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+
+	raw, err := io.ReadAll(body)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseMangakChaptersList(raw)
+}
+
+// parseMangakChaptersList decodes a chapters list API response
+func parseMangakChaptersList(raw []byte) ([]mangakChapterEntry, error) {
+	var resp struct {
+		Success bool `json:"success"`
+		Data    *struct {
+			Chapters []mangakChapterEntry `json:"chapters"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(raw, &resp); err != nil {
+		return nil, err
+	}
+	if !resp.Success || resp.Data == nil {
+		return nil, errors.New("unsuccessful api response")
+	}
+	if len(resp.Data.Chapters) == 0 {
+		return nil, errors.New("no chapters in the api response")
+	}
+
+	return resp.Data.Chapters, nil
 }
 
 // fetchNextData fetches the given URL and decodes its __NEXT_DATA__ JSON blob
@@ -155,19 +235,31 @@ func (m Mangak) fetchNextData(uri string) (*mangakNextData, error) {
 	return data, nil
 }
 
+// mangakChapterEntry is a chapter as listed both in the series page blob and
+// in the chapters list API
+type mangakChapterEntry struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
 // mangakManga is the series info embedded in the series page
 type mangakManga struct {
-	Name     string `json:"name"`
-	Chapters []struct {
-		Name string `json:"name"`
-		URL  string `json:"url"`
-	} `json:"chapters"`
+	ID       string               `json:"id"`
+	Name     string               `json:"name"`
+	CV       int64                `json:"cv"`
+	Chapters []mangakChapterEntry `json:"chapters"`
+	Stats    struct {
+		ChaptersCount int `json:"chaptersCount"`
+	} `json:"stats"`
 }
 
 // mangakNextData is the __NEXT_DATA__ JSON payload of mangak.io pages
 type mangakNextData struct {
 	Props struct {
 		PageProps struct {
+			SiteConfig struct {
+				APIURL string `json:"apiUrl"`
+			} `json:"siteConfig"`
 			InitialManga   *mangakManga `json:"initialManga"`
 			InitialChapter *struct {
 				Images []string `json:"images"`
