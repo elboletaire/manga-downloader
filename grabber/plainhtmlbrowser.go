@@ -109,13 +109,23 @@ var browserSelectors = []BrowserSiteSelector{
 	// referer, no cookies needed. Chapter rows use CSS-module-hashed class
 	// names (subject to change on redeploys), so we key off the stable
 	// Bootstrap "list-group-item" class instead and pull the chapter number
-	// straight out of the whole row's text (it contains "#1188").
+	// straight out of the row's text (it contains "#1188"). Each row
+	// actually holds TWO (sometimes three) anchors pointing at the same
+	// chapter: the real slug-based link, plus one-or-more duplicate
+	// "title=Chapter" links (an internal numeric-id URL, order relative to
+	// the real link isn't stable) that appear to be a hover/prefetch
+	// artifact. Both/all render identical text, so an untargeted Chapter
+	// selector (or none, falling back to the whole row) concatenates them
+	// into a doubled title. The duplicates are the only anchors carrying a
+	// title attribute, so ":not([title])" reliably isolates the real one.
 	{
 		SiteSelector: SiteSelector{
-			Title: "h1",
-			Rows:  "li.list-group-item",
-			Link:  `a[href*="/chapter/"]`,
-			Image: "img.PB0mN",
+			Title:        "h1",
+			Rows:         "li.list-group-item",
+			Chapter:      "a:not([title])",
+			ChapterTitle: "a:not([title])",
+			Link:         "a:not([title])",
+			Image:        "img.PB0mN",
 		},
 		Domains:      []string{"mangahub.io"},
 		ChaptersWait: "li.list-group-item",
