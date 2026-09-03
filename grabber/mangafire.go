@@ -20,6 +20,16 @@ const mangafireBase = "https://mangafire.to"
 // a runaway loop if the end-of-list detection ever fails.
 const mangafireMaxChapterPages = 400
 
+// mangafireNextPageSelector advances the chapter-list pager one page. The
+// "Next page" arrow only renders when there are more than ~5 pages, so short
+// pagers (numbered buttons only) need the numbered button right after the
+// active one instead; on long pagers the arrow covers the case where the
+// active number is the last of its window. querySelector picks whichever
+// matches first in document order — both advance exactly one page. On the
+// last page neither matches (no numbered sibling, arrow gone/disabled), which
+// ends the pagination loop.
+const mangafireNextPageSelector = `.npager__num.is-active + .npager__num, .npager__nav[aria-label="Next page"]`
+
 // Mangafire is a grabber for mangafire.to. The site is a react SPA whose JSON
 // API signs every request with a per-session, Cloudflare-challenge-gated `vrf`
 // token generated client-side, so the endpoints can no longer be called with
@@ -151,7 +161,7 @@ func (m *Mangafire) load() error {
 		m.URL,
 		".title-detail__row-link",
 		"/api/titles/"+hid,
-		`.npager__nav[aria-label="Next page"]`,
+		mangafireNextPageSelector,
 		mangafireMaxChapterPages,
 		0,
 	)
@@ -188,36 +198,8 @@ func (m *Mangafire) load() error {
 		break
 	}
 
-	// second pass: collect chapters, deduping by number and preferring the
-	// official scanlation (the api returns both official and unofficial
-	// uploads for the same number)
-	best := map[float64]mangafireChapterItem{}
-	var order []float64
-	for _, r := range responses {
-		if !strings.Contains(r.URL, chaptersPrefix) {
-			continue
-		}
-		feed := struct {
-			Items []mangafireChapterItem `json:"items"`
-		}{}
-		if err := json.Unmarshal([]byte(r.Body), &feed); err != nil {
-			continue
-		}
-		for _, c := range feed.Items {
-			cur, ok := best[c.Number]
-			if !ok {
-				best[c.Number] = c
-				order = append(order, c.Number)
-				continue
-			}
-			if cur.Type != "official" && c.Type == "official" {
-				best[c.Number] = c
-			}
-		}
-	}
-
-	for _, num := range order {
-		c := best[num]
+	// second pass: collect chapters from every captured feed page
+	for _, c := range parseMangafireChapters(responses, chaptersPrefix) {
 		title := c.Name
 		if title == "" {
 			title = "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64)
@@ -253,6 +235,44 @@ func (m *Mangafire) hid() (string, error) {
 		return matches[1], nil
 	}
 	return "", fmt.Errorf("could not find title id in url %s", m.URL)
+}
+
+// parseMangafireChapters collects the chapter items out of the captured API
+// responses whose URL matches chaptersPrefix (one response per chapter-list
+// page), deduping by chapter number and preferring the official scanlation
+// (the api returns both official and unofficial uploads for the same number).
+// Items keep their first-seen order, which is the site's own list order.
+func parseMangafireChapters(responses []browser.APIResponse, chaptersPrefix string) []mangafireChapterItem {
+	best := map[float64]mangafireChapterItem{}
+	var order []float64
+	for _, r := range responses {
+		if !strings.Contains(r.URL, chaptersPrefix) {
+			continue
+		}
+		feed := struct {
+			Items []mangafireChapterItem `json:"items"`
+		}{}
+		if err := json.Unmarshal([]byte(r.Body), &feed); err != nil {
+			continue
+		}
+		for _, c := range feed.Items {
+			cur, ok := best[c.Number]
+			if !ok {
+				best[c.Number] = c
+				order = append(order, c.Number)
+				continue
+			}
+			if cur.Type != "official" && c.Type == "official" {
+				best[c.Number] = c
+			}
+		}
+	}
+
+	out := make([]mangafireChapterItem, 0, len(order))
+	for _, num := range order {
+		out = append(out, best[num])
+	}
+	return out
 }
 
 // mangafireChapterItem is one entry of the chapters-list JSON feed

@@ -108,8 +108,13 @@ grabber/mangabats:
 # download over plain HTTP. No --browser-visible needed, so not in the
 # grabber/browser group, but kept out of the CI smoke matrix like every other
 # browser grabber. Uses an old chapter (stable, not premium-gated like newest).
+# The two runs cover both chapter-list pager shapes (#169): One Piece has the
+# windowed pager with "Next page" arrows; the second series is short enough
+# (3 pages) that the site renders numbered buttons only, and its chapter 1
+# lives on the last page — the run exits 1 unless every page was harvested.
 grabber/mangafire:
 	go run . https://mangafire.to/title/dkw-one-piece 1050
+	go run . https://mangafire.to/title/9062q-itoko-no-onee-chan-ni-amaechau 1
 
 grabber/fanfox:
 	go run . https://fanfox.net/manga/chainsaw_man/ 232
