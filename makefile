@@ -119,8 +119,10 @@ grabber/mangafire:
 grabber/fanfox:
 	go run . https://fanfox.net/manga/chainsaw_man/ 232
 
+# an old chapter of a long series on purpose: the series page only embeds the
+# 50 newest chapters, so this exercises the full-list API fetch
 grabber/mangak:
-	go run . https://mangak.io/a-baby-cat-who-commands-the-dog-clan 30
+	go run . https://mangak.io/nano-machine 150
 
 grabber/mgeko:
 	go run . https://www.mgeko.cc/manga/solo-leveling-mg1/ 198
