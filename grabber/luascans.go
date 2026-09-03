@@ -62,44 +62,76 @@ func (l *Luascans) FetchTitle() (string, error) {
 // `meta` carries `last_page`), so keep requesting pages until the last one:
 // a single perPage=200 call would silently truncate the first 200+-chapter
 // series (same pattern as the qimanga & hijala grabbers).
-func (l *Luascans) FetchChapters() (chapters Filterables, errs []error) {
+func (l *Luascans) FetchChapters() (Filterables, []error) {
 	seriesID, err := l.fetchSeriesID()
 	if err != nil {
 		return nil, []error{err}
 	}
 
-	page := 1
-	for {
-		uri := fmt.Sprintf(
-			"https://api.luacomic.org/chapter/query?page=%d&perPage=200&query=&order=desc&series_id=%s",
-			page,
-			seriesID,
-		)
-		body, err := http.GetText(http.RequestParams{
-			URL:     uri,
+	return walkLuascansChapters(func(page int) (string, error) {
+		return http.GetText(http.RequestParams{
+			URL: fmt.Sprintf(
+				"https://api.luacomic.org/chapter/query?page=%d&perPage=200&query=&order=desc&series_id=%s",
+				page,
+				seriesID,
+			),
 			Referer: l.URL,
 		})
+	})
+}
+
+// walkLuascansChapters requests the chapters feed page by page until the api
+// says there's nothing left. It takes the fetcher as an argument so the
+// pagination itself is testable without hitting the network.
+func walkLuascansChapters(fetchPage func(page int) (string, error)) (chapters Filterables, errs []error) {
+	// chapter slugs are unique per series, so they identify a row across
+	// pages. Two things make that necessary rather than paranoid: the feed is
+	// ordered desc, so a chapter published between two requests shifts the
+	// whole window down and re-serves rows we already have; and if the api
+	// ever stops honouring `page` while still reporting a multi-page
+	// last_page, appending blindly would repeat the same rows last_page
+	// times (which packer turns into duplicate `v2` cbz files, silently).
+	seen := map[string]bool{}
+
+	for page := 1; ; page++ {
+		body, err := fetchPage(page)
 		if err != nil {
-			errs = append(errs, err)
-			return
+			return chapters, append(errs, err)
 		}
 
 		pageChapters, feed, err := parseLuascansChaptersPage(body)
 		if err != nil {
-			errs = append(errs, err)
-			return
+			return chapters, append(errs, err)
 		}
 		// an empty page also stops the loop, in case the api ever reports a
 		// last_page beyond the actual data
 		if len(feed.Data) == 0 {
-			return
+			return chapters, errs
 		}
-		chapters = append(chapters, pageChapters...)
+
+		// fresh is computed from the raw feed rows, not from pageChapters, so
+		// that a page whose every chapter_name fails to parse still counts as
+		// progress instead of truncating the walk
+		fresh := make(map[string]bool, len(feed.Data))
+		for _, c := range feed.Data {
+			if !seen[c.Slug] {
+				seen[c.Slug] = true
+				fresh[c.Slug] = true
+			}
+		}
+		if len(fresh) == 0 {
+			return chapters, errs
+		}
+
+		for _, c := range pageChapters {
+			if fresh[c.Slug] {
+				chapters = append(chapters, c)
+			}
+		}
 
 		if page >= feed.Meta.LastPage {
-			return
+			return chapters, errs
 		}
-		page++
 	}
 }
 
@@ -107,7 +139,7 @@ func (l *Luascans) FetchChapters() (chapters Filterables, errs []error) {
 // returning the chapters it contains plus the decoded feed itself (whose
 // `meta.last_page` and raw data length tell the caller when to stop
 // paginating)
-func parseLuascansChaptersPage(body string) (chapters Filterables, feed luascansChaptersFeed, err error) {
+func parseLuascansChaptersPage(body string) (chapters []*LuascansChapter, feed luascansChaptersFeed, err error) {
 	if err = json.Unmarshal([]byte(body), &feed); err != nil {
 		return nil, feed, err
 	}
