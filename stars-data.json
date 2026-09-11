@@ -228,6 +228,18 @@
           "stars": 241
         }
       ]
+    },
+    {
+      "timestamp": "2026-09-11T08:58:06.282Z",
+      "totalStars": 241,
+      "repos": [
+        {
+          "fullName": "elboletaire/manga-downloader",
+          "name": "manga-downloader",
+          "owner": "elboletaire",
+          "stars": 241
+        }
+      ]
     }
   ],
   "starsAtLastNotification": 241
