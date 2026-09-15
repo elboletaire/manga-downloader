@@ -366,6 +366,47 @@ kept as-is with a warning, rather than failing the whole chapter.
 > interpreted and is noticeably slower — `--convert-images none` skips it
 > entirely if that bothers you.
 
+### Skipping pages
+
+Scanlation groups routinely reserve a page or two of every chapter for their
+own credits or ads. `--skip-pages` drops them, using the same range syntax as
+the chapter argument, applied to each chapter's pages:
+
+~~~bash
+# tcbscans always puts its credits page second
+manga-downloader --skip-pages 2 <url> 1100-1110
+
+# several positions at once
+manga-downloader --skip-pages 2,5-7 <url> 1100-1110
+~~~
+
+Pages count from 1. **Negative positions count backwards from the end of the
+chapter**, `-1` being its last page, `-2` the second to last, and `-3--1` the
+last three. They're resolved per chapter, against that chapter's own page
+count, so `-1` is each chapter's own last page no matter how long it is:
+
+~~~bash
+# drop the credits page at the front and the one at the back
+manga-downloader --skip-pages 2,-1 <url> 1100-1110
+
+# drop the last three pages of every chapter
+manga-downloader --skip-pages=-3--1 <url> 1100-1110
+~~~
+
+> [!TIP]
+> Both `--skip-pages -1` and `--skip-pages=-1` work — the value right after the
+> flag is taken verbatim, dash and all. If your shell or a wrapper script does
+> get confused by the leading dash, the `=` form always settles it.
+
+The pages are dropped **before** they're downloaded, so they cost no time or
+bandwidth — and a page that's broken on the site's end can't fail the chapter
+around it. That's the way out when a site serves a page that 404s: without it,
+the whole chapter is undownloadable.
+
+Skipping doesn't leave holes in the archive: the remaining pages are still
+numbered `000`, `001`, … in order. A position the chapter doesn't have (asking
+to skip page 99 of a 20 page chapter) is simply ignored.
+
 ### Custom file names
 
 File names are built from a [Go text/template][go template] string passed to
@@ -389,6 +430,7 @@ The available variables are `{{.Series}}`, `{{.Number}}`, `{{.Title}}` and
 | `--filename-template` | `-t`  | Template for the resulting file names              | see above      |
 | `--format`            | `-f`  | Output format: `cbz` or `raw` (a plain folder)     | `cbz`          |
 | `--convert-images`    |       | Formats to convert to JPEG: `avif`, `webp`, `none` | `avif`         |
+| `--skip-pages`        |       | Pages to exclude from every chapter (`-1` is last) | none           |
 | `--concurrency`       | `-c`  | Concurrent chapter downloads (max 5)               | 5              |
 | `--concurrency-pages` | `-C`  | Concurrent page downloads per chapter (max 10)     | 10             |
 | `--browser-visible`   |       | Open the browser window from the start             | off            |

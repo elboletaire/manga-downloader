@@ -94,6 +94,16 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(1)
 	}
 
+	// parsed up front so a typo fails before anything is fetched
+	var skipPages []ranges.Range
+	if settings.SkipPages != "" {
+		var err error
+		// Relative: unlike chapter ranges, page positions have a known end, so
+		// a negative one counts back from it
+		skipPages, err = ranges.ParseRelative(settings.SkipPages)
+		cerr(err, "Error parsing --skip-pages: ")
+	}
+
 	s, errs := grabber.NewSite(getUrlArg(args), &settings)
 	if len(errs) > 0 {
 		color.Red("Errors testing site (a site may be down):")
@@ -211,6 +221,9 @@ func Run(cmd *cobra.Command, args []string) {
 		for _, chap := range chapters {
 			chapter, err := s.FetchChapter(chap)
 			if err == nil && chapter != nil {
+				// same skipping the download goroutine will apply below, so
+				// the bar's total matches what actually gets downloaded
+				chapter.SkipPages(skipPages)
 				totalPages += chapter.PagesCount
 			}
 		}
@@ -248,6 +261,15 @@ func Run(cmd *cobra.Command, args []string) {
 			chapter, err := s.FetchChapter(chap)
 			if err != nil {
 				color.Red("- error fetching chapter %s: %s", chap.GetTitle(), err.Error())
+				<-g
+				return
+			}
+
+			// drop the excluded pages before anything is downloaded, so a page
+			// that's only ads (or one that 404s) costs nothing and can't fail
+			// the chapter
+			if skipped := chapter.SkipPages(skipPages); skipped > 0 && len(chapter.Pages) == 0 {
+				color.Yellow("- skipping chapter %s: --skip-pages excludes all of its pages", chapter.GetTitle())
 				<-g
 				return
 			}
@@ -424,6 +446,11 @@ func init() {
 	rootCmd.Flags().StringVar(&settings.ConvertImages, "convert-images", grabber.ConvertImagesDefault, `comma-separated source image formats to convert to jpeg for e-reader compatibility: "avif", "webp" or "none"`)
 	rootCmd.Flags().BoolVar(&settings.BrowserVisible, "browser-visible", false, "open the browser window from the start (it opens automatically anyway when a headless attempt hits a challenge)")
 	rootCmd.Flags().Uint8VarP(&settings.Retry, "retry", "r", 1, "number of retries for failed page downloads, hard-limited to 3 (0 disables retrying)")
+	// no shorthand on purpose: a long flag takes the next argument verbatim as
+	// its value (pflag never looks for a leading "-" there), so `--skip-pages
+	// -1` works just like `--skip-pages=-1`. A shorthand wouldn't: "-S-1"
+	// would have to be spelled that way, with no space
+	rootCmd.Flags().StringVar(&settings.SkipPages, "skip-pages", "", `pages to exclude from every chapter, as a range ("2", "2,5-7"); negative positions count from the end of each chapter, so "-1" is its last page`)
 	rootCmd.Flags().BoolP("version", "v", false, "show version information (alias of the version command)")
 	// set as persistent, so version command does not complain about the -o flag set via docker
 	rootCmd.PersistentFlags().StringVarP(&settings.OutputDir, "output-dir", "o", "./", "output directory for the downloaded files")

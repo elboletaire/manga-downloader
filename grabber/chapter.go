@@ -2,7 +2,11 @@
 
 package grabber
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/elboletaire/manga-downloader/ranges"
+)
 
 // Chapter represents a manga chapter
 type Chapter struct {
@@ -38,6 +42,50 @@ func (c Chapter) GetNumber() float64 {
 // GetLanguage returns the chapter language
 func (c Chapter) GetLanguage() string {
 	return c.Language
+}
+
+// SkipPages drops the pages selected by rngs and returns how many it dropped.
+// The bounds are 1-based positions in the chapter's own page list, negatives
+// counting from the end (-1 being the last page), and they're resolved against
+// this chapter alone, so -1 means each chapter's own last page.
+//
+// It's meant to run right after the chapter is fetched and *before* it's
+// downloaded, which is the whole point of --skip-pages: the pages scanlation
+// groups reserve for credits or ads are never worth fetching, and a page that
+// 404s (tcbscans' trailing one, on occasion) otherwise fails the entire
+// chapter with no way around it.
+//
+// Page.Number is deliberately left alone, so a download error still names the
+// page the site itself numbers. The archive's own numbering stays contiguous
+// regardless, as packer.namePages names pages by their slice index.
+func (c *Chapter) SkipPages(rngs []ranges.Range) int {
+	if len(rngs) == 0 || len(c.Pages) == 0 {
+		return 0
+	}
+
+	// resolved against the pages actually listed, not PagesCount: a few
+	// grabbers report a count the page list doesn't match, and it's the list
+	// that gets downloaded
+	skip := ranges.Resolve(rngs, len(c.Pages))
+	if len(skip) == 0 {
+		return 0
+	}
+
+	kept := make([]Page, 0, len(c.Pages)-len(skip))
+	for i, page := range c.Pages {
+		if skip[i+1] {
+			continue
+		}
+		kept = append(kept, page)
+	}
+
+	skipped := len(c.Pages) - len(kept)
+	c.Pages = kept
+	// PagesCount drives the progress bar totals and the bundle's page budget;
+	// left at the pre-skip count, every bar would end short of its total
+	c.PagesCount = int64(len(kept))
+
+	return skipped
 }
 
 // GetTitle returns the chapter title removing whitespace and newlines
