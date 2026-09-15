@@ -42,6 +42,11 @@ type Settings struct {
 	ConvertImages string
 	// Range is the range to be downloaded (in string, i.e. "1-10,23,45-50")
 	Range string
+	// SkipPages is the range of pages to exclude from every downloaded
+	// chapter (i.e. "2,-1"), in the same syntax as Range but additionally
+	// accepting negative positions, which count from the end of each
+	// chapter's own page list
+	SkipPages string
 	// OutputDir is the output directory for the downloaded files
 	OutputDir string
 	// BrowserVisible shows the browser window for sites that need one, so
