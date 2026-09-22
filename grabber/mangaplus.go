@@ -210,6 +210,25 @@ var mangaplusLanguageCodes = map[uint64]string{
 	9: "vie",
 }
 
+// mangaplusLanguageNames maps a language code, as the API names and reports
+// it, to the name the messages below show the user. It covers every code the
+// language enum declares; a code outside it has no name — an enum value this
+// grabber doesn't know ("lang11"), or one the user typed that the site doesn't
+// publish ("zz") — and is shown as the code it is rather than guessed at a
+// language it might have been.
+var mangaplusLanguageNames = map[string]string{
+	"eng": "English",
+	"esp": "Spanish",
+	"fra": "French",
+	"ind": "Indonesian",
+	"ptb": "Portuguese (BR)",
+	"rus": "Russian",
+	"tha": "Thai",
+	"deu": "German",
+	"ita": "Italian",
+	"vie": "Vietnamese",
+}
+
 // MangaPlus (mangaplus.shueisha.co.jp) is Shueisha's official reader, so every
 // chapter it publishes is the official release, in one edition per language.
 //
@@ -504,7 +523,7 @@ func (m *Mangaplus) detailLocked() (*mangaplusTitleDetail, error) {
 	// edition that ended up being downloaded.
 	if len(detail.languageCodes()) > 1 && len(detail.Chapters) <= mangaplusFreeWindowChapters {
 		color.Yellow(
-			"This MangaPlus edition lists only %d chapters (each language is a separate edition: %s): use --language to pick another",
+			"This MangaPlus version lists only %d chapters (each language is a separate version: %s): use --language to pick another",
 			len(detail.Chapters), strings.Join(detail.languageCodes(), ", "),
 		)
 	}
@@ -558,13 +577,13 @@ func (m *Mangaplus) resolveEditionLocked(detail *mangaplusTitleDetail, requested
 		// the title exists in.
 		if available := detail.languageCodes(); len(available) > 0 {
 			color.Yellow(
-				"MangaPlus doesn't publish %s in %s (available: %s); keeping the %s edition from the URL",
-				detail.Title.Name, requested, strings.Join(available, ", "), detail.Title.Language,
+				"MangaPlus has no %s version of %s (available: %s); downloading the %s version the link points at",
+				mangaplusLanguageName(requested), detail.Title.Name, strings.Join(available, ", "), mangaplusLanguageName(detail.Title.Language),
 			)
 		} else {
 			color.Yellow(
-				"MangaPlus listed no %s edition of %s (the API listed no other editions); keeping the %s edition from the URL",
-				requested, detail.Title.Name, detail.Title.Language,
+				"MangaPlus listed no other versions of %s, so %s isn't available; downloading the %s version the link points at",
+				detail.Title.Name, mangaplusLanguageName(requested), mangaplusLanguageName(detail.Title.Language),
 			)
 		}
 
@@ -584,13 +603,13 @@ func (m *Mangaplus) resolveEditionLocked(detail *mangaplusTitleDetail, requested
 	// downloaded when that happens.
 	if switched.Title.Language == requested {
 		color.Yellow(
-			"MangaPlus keeps one edition per language: downloading the %s edition of %s instead of the %s one",
-			requested, detail.Title.Name, detail.Title.Language,
+			"The provided MangaPlus link is for the %s version of %s; --language selected %s, so that's the version being downloaded",
+			mangaplusLanguageName(detail.Title.Language), detail.Title.Name, mangaplusLanguageName(requested),
 		)
 	} else {
 		color.Yellow(
-			"MangaPlus lists title_id %d as the %s edition of %s, but it reports the %s language: that edition is what's downloaded",
-			titleID, requested, detail.Title.Name, switched.Title.Language,
+			"MangaPlus's listing for the %s version of %s doesn't match the title it returns: downloading the %s version",
+			mangaplusLanguageName(requested), detail.Title.Name, mangaplusLanguageName(switched.Title.Language),
 		)
 	}
 
@@ -1031,6 +1050,18 @@ func mangaplusLanguageCode(code uint64) string {
 	}
 
 	return fmt.Sprintf("lang%d", code)
+}
+
+// mangaplusLanguageName returns the name of a language code, for the messages
+// that name a language to the user. A code without a name is returned as it is:
+// naming a language it might have been would misdescribe what the API sent or
+// what was asked for.
+func mangaplusLanguageName(code string) string {
+	if name, ok := mangaplusLanguageNames[code]; ok {
+		return name
+	}
+
+	return code
 }
 
 // mangaplusLanguage maps the --language flag to the code the app API names its

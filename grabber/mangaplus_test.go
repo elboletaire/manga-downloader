@@ -1228,7 +1228,7 @@ func TestMangaplusLanguageSwitchesEdition(t *testing.T) {
 		}
 	})
 
-	want := "MangaPlus keeps one edition per language: downloading the eng edition of Test Series instead of the esp one"
+	want := "The provided MangaPlus link is for the Spanish version of Test Series; --language selected English, so that's the version being downloaded"
 	if !strings.Contains(out, want) {
 		t.Errorf("printed %q, want it to contain %q", out, want)
 	}
@@ -1285,10 +1285,10 @@ func TestMangaplusSwitchLineMatchesWhatWasDownloaded(t *testing.T) {
 		}
 	})
 
-	if strings.Contains(out, "keeps one edition per language") {
-		t.Errorf("printed %q, which claims a switch to an edition that was never answered", out)
+	if strings.Contains(out, "The provided MangaPlus link is for the") {
+		t.Errorf("printed %q, which claims a switch to a version that was never answered", out)
 	}
-	want := fmt.Sprintf("MangaPlus lists title_id %d as the fra edition of Test Series, but it reports the esp language: that edition is what's downloaded", mangaplusTestTitleID)
+	want := "MangaPlus's listing for the French version of Test Series doesn't match the title it returns: downloading the Spanish version"
 	if !strings.Contains(out, want) {
 		t.Errorf("printed %q, want it to contain %q", out, want)
 	}
@@ -1329,16 +1329,17 @@ func TestMangaplusLanguageCodeForms(t *testing.T) {
 		flag string
 		enum uint64
 		code string
+		name string
 	}{
-		{"es", 1, "esp"},
-		{"fr", 2, "fra"},
-		{"id", 3, "ind"},
-		{"pt", 4, "ptb"},
-		{"ru", 5, "rus"},
-		{"th", 6, "tha"},
-		{"de", 7, "deu"},
-		{"it", 8, "ita"},
-		{"vi", 9, "vie"},
+		{"es", 1, "esp", "Spanish"},
+		{"fr", 2, "fra", "French"},
+		{"id", 3, "ind", "Indonesian"},
+		{"pt", 4, "ptb", "Portuguese (BR)"},
+		{"ru", 5, "rus", "Russian"},
+		{"th", 6, "tha", "Thai"},
+		{"de", 7, "deu", "German"},
+		{"it", 8, "ita", "Italian"},
+		{"vi", 9, "vie", "Vietnamese"},
 	}
 
 	for i, c := range cases {
@@ -1362,7 +1363,7 @@ func TestMangaplusLanguageCodeForms(t *testing.T) {
 					t.Fatalf("FetchChapters errors: %v", errs)
 				}
 			})
-			if want := fmt.Sprintf("downloading the %s edition of Test Series instead of the eng one", c.code); !strings.Contains(out, want) {
+			if want := fmt.Sprintf("The provided MangaPlus link is for the English version of Test Series; --language selected %s, so that's the version being downloaded", c.name); !strings.Contains(out, want) {
 				t.Errorf("-l %s printed %q, want it to contain %q", c.flag, out, want)
 			}
 			if got := list[0].(*MangaplusChapter).Language; got != c.code {
@@ -1393,7 +1394,7 @@ func TestMangaplusLanguageCodeForms(t *testing.T) {
 			t.Fatalf("FetchChapters errors: %v", errs)
 		}
 	})
-	if want := "downloading the ptb edition of Test Series instead of the eng one"; !strings.Contains(out, want) {
+	if want := "The provided MangaPlus link is for the English version of Test Series; --language selected Portuguese (BR), so that's the version being downloaded"; !strings.Contains(out, want) {
 		t.Errorf("-l ptb printed %q, want it to contain %q", out, want)
 	}
 	if got := list[0].(*MangaplusChapter).Language; got != "ptb" {
@@ -1404,7 +1405,8 @@ func TestMangaplusLanguageCodeForms(t *testing.T) {
 	}
 
 	// a code that isn't one of the site's languages can't name an edition: the
-	// URL's is kept, and the line says why
+	// URL's is kept, and the line names the code itself, that having no name to
+	// show
 	before := len(srv.calls("/title_detailV3"))
 	unknown := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "zz")
 	out = mangaplusTestCaptureOutput(t, func() {
@@ -1412,11 +1414,59 @@ func TestMangaplusLanguageCodeForms(t *testing.T) {
 			t.Fatalf("FetchChapters errors: %v", errs)
 		}
 	})
-	if want := "MangaPlus doesn't publish Test Series in zz (available: ptb, eng); keeping the eng edition from the URL"; !strings.Contains(out, want) {
+	if want := "MangaPlus has no zz version of Test Series (available: ptb, eng); downloading the English version the link points at"; !strings.Contains(out, want) {
 		t.Errorf("printed %q, want it to contain %q", out, want)
 	}
 	if after := len(srv.calls("/title_detailV3")); after != before+1 {
 		t.Errorf("got %d title requests, want 1 more (no edition to switch to)", after-before)
+	}
+}
+
+// Every code the language enum can report has a name to show the user: the
+// messages above name a language, and a code that reached them unnamed would
+// read as the API's own "eng" rather than the "English" it means. A code with
+// no name is returned as it is — an enum value this grabber doesn't know
+// ("lang11"), or one the user typed that the site doesn't publish ("zz") —
+// instead of being guessed at a language it might have been.
+//
+// The names are written out below rather than read off the grabber's own table,
+// the same way the code forms are: a mistyped or swapped entry there is what
+// this is here to catch.
+func TestMangaplusLanguageNames(t *testing.T) {
+	want := map[string]string{
+		"eng": "English",
+		"esp": "Spanish",
+		"fra": "French",
+		"ind": "Indonesian",
+		"ptb": "Portuguese (BR)",
+		"rus": "Russian",
+		"tha": "Thai",
+		"deu": "German",
+		"ita": "Italian",
+		"vie": "Vietnamese",
+	}
+
+	// the enum is where the codes shown to the user come from, so every one of
+	// them has to have a name
+	for code, language := range mangaplusLanguageCodes {
+		name, ok := want[language]
+		if !ok {
+			t.Fatalf("the enum's %d is the code %q, which this test has no name for: the enum and the name table have drifted", code, language)
+		}
+		if got := mangaplusLanguageName(language); got != name {
+			t.Errorf("mangaplusLanguageName(%q) = %q, want %q", language, got, name)
+		}
+	}
+
+	// and the table names nothing the enum doesn't declare
+	if len(mangaplusLanguageNames) != len(want) {
+		t.Errorf("the name table has %d entries, want the enum's %d", len(mangaplusLanguageNames), len(want))
+	}
+
+	for _, code := range []string{"lang11", "zz", ""} {
+		if got := mangaplusLanguageName(code); got != code {
+			t.Errorf("mangaplusLanguageName(%q) = %q, want the code itself", code, got)
+		}
 	}
 }
 
@@ -1454,8 +1504,8 @@ func TestMangaplusUnknownLanguageEnumIsNotEnglish(t *testing.T) {
 		}
 	})
 
-	if want := "downloading the eng edition of Test Series instead of the lang11 one"; !strings.Contains(out, want) {
-		t.Errorf("--language en on a lang11 edition printed %q, want it to contain %q", out, want)
+	if want := "The provided MangaPlus link is for the lang11 version of Test Series; --language selected English, so that's the version being downloaded"; !strings.Contains(out, want) {
+		t.Errorf("--language en on a lang11 version printed %q, want it to contain %q", out, want)
 	}
 	if len(list) != 1 {
 		t.Fatalf("got %d chapters, want the English edition's one", len(list))
@@ -1476,7 +1526,7 @@ func TestMangaplusUnknownLanguageEnumIsNotEnglish(t *testing.T) {
 			t.Fatalf("FetchChapters errors: %v", errs)
 		}
 	})
-	if want := "MangaPlus doesn't publish Test Series in fra (available: eng, lang11)"; !strings.Contains(out, want) {
+	if want := "MangaPlus has no French version of Test Series (available: eng, lang11); downloading the lang11 version the link points at"; !strings.Contains(out, want) {
 		t.Errorf("--language fr printed %q, want it to contain %q", out, want)
 	}
 }
@@ -1514,7 +1564,7 @@ func TestMangaplusLanguageSwitchesEditionFromAViewerURL(t *testing.T) {
 			t.Fatalf("FetchChapters errors: %v", errs)
 		}
 	})
-	if want := "downloading the eng edition of Test Series instead of the esp one"; !strings.Contains(out, want) {
+	if want := "The provided MangaPlus link is for the Spanish version of Test Series; --language selected English, so that's the version being downloaded"; !strings.Contains(out, want) {
 		t.Errorf("printed %q, want it to contain %q", out, want)
 	}
 
@@ -1569,14 +1619,14 @@ func TestMangaplusUnpublishedLanguageKeepsTheURLEdition(t *testing.T) {
 		{
 			"the API lists other editions, just not that one",
 			[]mangaplusTestLanguage{{titleID: 100020, language: 0}, {titleID: mangaplusTestTitleID, language: 1}},
-			[]string{"MangaPlus doesn't publish Test Series in fra", "available: eng, esp", "keeping the esp edition from the URL"},
-			[]string{"only"},
+			[]string{"MangaPlus has no French version of Test Series", "available: eng, esp", "downloading the Spanish version the link points at"},
+			[]string{"only", "listed no other versions"},
 		},
 		{
 			"the API listed no language list at all",
 			nil,
-			[]string{"MangaPlus listed no fra edition of Test Series (the API listed no other editions)", "keeping the esp edition from the URL"},
-			[]string{"doesn't publish", "available:", "only"},
+			[]string{"MangaPlus listed no other versions of Test Series, so French isn't available", "downloading the Spanish version the link points at"},
+			[]string{"has no", "available:", "only"},
 		},
 	}
 
@@ -1796,7 +1846,7 @@ func TestMangaplusLanguageListedWithoutAnEditionIsNotAvailable(t *testing.T) {
 		}
 	})
 
-	if want := "MangaPlus doesn't publish Test Series in eng (available: esp); keeping the esp edition from the URL"; !strings.Contains(out, want) {
+	if want := "MangaPlus has no English version of Test Series (available: esp); downloading the Spanish version the link points at"; !strings.Contains(out, want) {
 		t.Errorf("printed %q, want it to contain %q", out, want)
 	}
 	if strings.Contains(out, "available: eng") {
@@ -1920,7 +1970,7 @@ func TestMangaplusRestrictedEditionNotice(t *testing.T) {
 			lines := 1
 			if c.switchTo {
 				lines = 2
-				if want := "downloading the eng edition of Test Series instead of the esp one"; !strings.Contains(out, want) {
+				if want := "The provided MangaPlus link is for the Spanish version of Test Series; --language selected English, so that's the version being downloaded"; !strings.Contains(out, want) {
 					t.Errorf("printed %q, want it to contain %q", out, want)
 				}
 			}
@@ -1934,7 +1984,7 @@ func TestMangaplusRestrictedEditionNotice(t *testing.T) {
 
 			for _, want := range []string{
 				fmt.Sprintf("lists only %d chapters", len(window)),
-				"each language is a separate edition: eng, esp",
+				"each language is a separate version: eng, esp",
 				"use --language to pick another",
 			} {
 				if !strings.Contains(out, want) {
@@ -1946,7 +1996,7 @@ func TestMangaplusRestrictedEditionNotice(t *testing.T) {
 				t.Errorf("printed %d lines (%q), want %d", got+1, out, lines)
 			}
 			if c.switchTo {
-				switchAt, noticeAt := strings.Index(out, "keeps one edition per language"), strings.Index(out, "lists only ")
+				switchAt, noticeAt := strings.Index(out, "The provided MangaPlus link is for the"), strings.Index(out, "lists only ")
 				if switchAt < 0 || noticeAt < 0 || switchAt > noticeAt {
 					t.Errorf("printed %q, want the switch line before the notice", out)
 				}
