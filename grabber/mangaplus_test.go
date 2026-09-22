@@ -112,6 +112,22 @@ func mangaplusTestTitleView(name string, language uint64, languages []mangaplusT
 	return pbTestConcat(fields...)
 }
 
+// mangaplusTestWindowChapters returns more chapters than the free window
+// lists: it's what keeps the notice about landing on a restricted edition
+// (covered on its own below) out of the tests that aren't about it
+func mangaplusTestWindowChapters() []mangaplusTestChapter {
+	chapters := make([]mangaplusTestChapter, 0, mangaplusFreeWindowChapters+1)
+	for i := 1; i <= mangaplusFreeWindowChapters+1; i++ {
+		chapters = append(chapters, mangaplusTestChapter{
+			id:       uint32(200 + i),
+			name:     fmt.Sprintf("#%03d", i),
+			subTitle: fmt.Sprintf("Chapter %d: Misión", i),
+		})
+	}
+
+	return chapters
+}
+
 // mangaplusTestPopup encodes an ErrorPopup
 func mangaplusTestPopup(subject, body string) []byte {
 	return pbTestConcat(pbTestString(mangaplusErrorPopupSubjectField, subject), pbTestString(mangaplusErrorPopupBodyField, body))
@@ -163,6 +179,12 @@ type mangaplusTestServer struct {
 	// with that code, which is how the API reports its logical failures (over
 	// HTTP 200, like any other response)
 	errorCode string
+	// errorTitleIDs, when set, makes title_detailV3 answer the API's error
+	// envelope with that code for those title_ids only. It's how a test can
+	// make one edition's fetch fail while the URL's succeeds — the switch is
+	// only reached after that first fetch — which is what leaves a grabber
+	// with no cached detail to skip the switch by
+	errorTitleIDs map[uint32]string
 	// omitToken, when set, makes viewer responses omit the plus_vw_token
 	// cookie, which is the only place that token exists
 	omitToken bool
@@ -211,6 +233,10 @@ func (s *mangaplusTestServer) handle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		titleID, _ := strconv.ParseUint(r.URL.Query().Get("title_id"), 10, 32)
+		if code, ok := s.errorTitleIDs[uint32(titleID)]; ok {
+			_, _ = w.Write(mangaplusTestErrorResponse(code))
+			return
+		}
 		language, chapters := s.language, s.chapters
 		if edition, ok := s.editions[uint32(titleID)]; ok {
 			language, chapters = edition.language, edition.chapters
@@ -1089,14 +1115,7 @@ func TestMangaplusFetchChapters(t *testing.T) {
 func TestMangaplusNoLanguageDownloadsTheURLEdition(t *testing.T) {
 	// more chapters than the free window lists, so the notice about a
 	// restricted edition (covered below) has nothing to say here
-	var chapters []mangaplusTestChapter
-	for i := 1; i <= mangaplusFreeWindowChapters+1; i++ {
-		chapters = append(chapters, mangaplusTestChapter{
-			id:       uint32(200 + i),
-			name:     fmt.Sprintf("#%03d", i),
-			subTitle: fmt.Sprintf("Chapter %d: Misión", i),
-		})
-	}
+	chapters := mangaplusTestWindowChapters()
 	languages := []mangaplusTestLanguage{
 		{titleID: mangaplusTestTitleID, language: 1}, // the URL's edition: Spanish
 		{titleID: 100020, language: 0},               // English
@@ -1142,7 +1161,9 @@ func TestMangaplusNoLanguageDownloadsTheURLEdition(t *testing.T) {
 // --language matching the edition the URL already points at changes nothing:
 // no refetch, and no line claiming a switch happened
 func TestMangaplusLanguageOfTheURLEditionDoesNotSwitch(t *testing.T) {
-	chapters := []mangaplusTestChapter{{id: 201, name: "#001", subTitle: "Chapter 1: Misión"}}
+	// more chapters than the free window lists, so the notice about landing on a
+	// restricted edition (covered below) has nothing to say here
+	chapters := mangaplusTestWindowChapters()
 	languages := []mangaplusTestLanguage{
 		{titleID: mangaplusTestTitleID, language: 1}, // Spanish: the URL's edition
 		{titleID: 100020, language: 0},               // English
@@ -1238,25 +1259,23 @@ func TestMangaplusLanguageSwitchesEdition(t *testing.T) {
 	}
 }
 
-// The API names its editions with 3-letter codes, and the flag takes one as-is
-// (that's the API's own format). A code MangaPlus doesn't publish a title under
-// names no edition at all, so it's reported as such — the URL's edition is kept
-// rather than an edition nobody asked for being downloaded (a mistyped code
-// used to be resolved to English, which with the edition pinned by title_id only
-// ever changed what the warning said)
-func TestMangaplusLanguageCodeForms(t *testing.T) {
-	const portugueseTitleID = 100149
-
-	srv := newMangaplusTestServer(t, []mangaplusTestChapter{{id: 101, name: "#001", subTitle: "Chapter 1: Mission"}}, nil)
+// The line about a switch is claimed only once the refetched edition reports the
+// language that was asked for. The languages list it came out of isn't always
+// consistent — it can name an edition the API then answers with another
+// language, or the URL's own title_id under a language its edition doesn't
+// report — and a line reading "downloading the fra edition" over an edition that
+// reports esp is a lie about what was downloaded (the chapters carry the
+// language they actually came in).
+func TestMangaplusSwitchLineMatchesWhatWasDownloaded(t *testing.T) {
+	// the API lists the URL's own title_id as its French edition, and that
+	// edition answers reporting the Spanish language
+	srv := newMangaplusTestServer(t, mangaplusTestWindowChapters(), nil)
+	srv.language = 1
 	srv.languages = []mangaplusTestLanguage{
-		{titleID: portugueseTitleID, language: 4},
-		{titleID: mangaplusTestTitleID, language: 0}, // the URL's edition: English
+		{titleID: mangaplusTestTitleID, language: 2},
+		{titleID: 100020, language: 0},
 	}
-	srv.editions = map[uint32]mangaplusTestEdition{
-		portugueseTitleID: {language: 4, chapters: []mangaplusTestChapter{{id: 201, name: "#001", subTitle: "Capítulo 1: Missão"}}},
-	}
-
-	m := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "ptb")
+	m := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "fr")
 
 	var list Filterables
 	out := mangaplusTestCaptureOutput(t, func() {
@@ -1265,15 +1284,123 @@ func TestMangaplusLanguageCodeForms(t *testing.T) {
 			t.Fatalf("FetchChapters errors: %v", errs)
 		}
 	})
-	if want := "downloading the ptb edition of Test Series instead of the eng one"; !strings.Contains(out, want) {
+
+	if strings.Contains(out, "keeps one edition per language") {
+		t.Errorf("printed %q, which claims a switch to an edition that was never answered", out)
+	}
+	want := fmt.Sprintf("MangaPlus lists title_id %d as the fra edition of Test Series, but it reports the esp language: that edition is what's downloaded", mangaplusTestTitleID)
+	if !strings.Contains(out, want) {
 		t.Errorf("printed %q, want it to contain %q", out, want)
 	}
-	if got := list[0].(*MangaplusChapter).Language; got != "ptb" {
-		t.Errorf("chapter language = %q, want %q", got, "ptb")
-	}
+
+	// both title calls are for the same edition, and it's the Spanish one the
+	// chapters come from
 	calls := srv.calls("/title_detailV3")
-	if len(calls) != 2 || calls[1].query.Get("title_id") != strconv.Itoa(portugueseTitleID) {
-		t.Errorf("title requests = %v, want the URL's edition and then %d", calls, portugueseTitleID)
+	if len(calls) != 2 {
+		t.Fatalf("got %d title requests, want 2 (the URL's edition and the one switch)", len(calls))
+	}
+	for i, call := range calls {
+		if got := call.query.Get("title_id"); got != strconv.Itoa(mangaplusTestTitleID) {
+			t.Errorf("title request %d asked for title_id %q, want %d", i, got, mangaplusTestTitleID)
+		}
+	}
+	for i, chapter := range list {
+		if got := chapter.(*MangaplusChapter).Language; got != "esp" {
+			t.Errorf("chapter %d language = %q, want the %q the edition reports", i, got, "esp")
+		}
+	}
+}
+
+// Every code the --language flag takes is resolved to the edition MangaPlus
+// publishes the title as in that language, and the API names its editions with
+// 3-letter codes — which the flag takes as-is, that being the API's own format.
+// A code MangaPlus doesn't publish a title under names no edition at all, so
+// it's reported as such — the URL's edition is kept rather than an edition
+// nobody asked for being downloaded (a mistyped code used to be resolved to
+// English, which with the edition pinned by title_id only ever changed what the
+// warning said).
+//
+// The flag's codes, the language enum and the API's code are written out below
+// rather than read off the grabber's own tables: a swapped or mistyped entry
+// there is exactly what this is here to catch, and deriving the expectation
+// from the same table would make a swap agree with itself.
+func TestMangaplusLanguageCodeForms(t *testing.T) {
+	cases := []struct {
+		flag string
+		enum uint64
+		code string
+	}{
+		{"es", 1, "esp"},
+		{"fr", 2, "fra"},
+		{"id", 3, "ind"},
+		{"pt", 4, "ptb"},
+		{"ru", 5, "rus"},
+		{"th", 6, "tha"},
+		{"de", 7, "deu"},
+		{"it", 8, "ita"},
+		{"vi", 9, "vie"},
+	}
+
+	for i, c := range cases {
+		t.Run(c.flag, func(t *testing.T) {
+			titleID := uint32(700000 + i)
+			srv := newMangaplusTestServer(t, []mangaplusTestChapter{{id: 101, name: "#001", subTitle: "Chapter 1: Mission"}}, nil)
+			srv.languages = []mangaplusTestLanguage{
+				{titleID: titleID, language: c.enum},
+				{titleID: mangaplusTestTitleID, language: 0}, // the URL's edition: English
+			}
+			srv.editions = map[uint32]mangaplusTestEdition{
+				titleID: {language: c.enum, chapters: []mangaplusTestChapter{{id: 201, name: "#001", subTitle: "Capítulo 1: Missão"}}},
+			}
+
+			m := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, c.flag)
+
+			var list Filterables
+			out := mangaplusTestCaptureOutput(t, func() {
+				var errs []error
+				if list, errs = m.FetchChapters(); len(errs) > 0 {
+					t.Fatalf("FetchChapters errors: %v", errs)
+				}
+			})
+			if want := fmt.Sprintf("downloading the %s edition of Test Series instead of the eng one", c.code); !strings.Contains(out, want) {
+				t.Errorf("-l %s printed %q, want it to contain %q", c.flag, out, want)
+			}
+			if got := list[0].(*MangaplusChapter).Language; got != c.code {
+				t.Errorf("-l %s chapter language = %q, want %q", c.flag, got, c.code)
+			}
+			calls := srv.calls("/title_detailV3")
+			if len(calls) != 2 || calls[1].query.Get("title_id") != strconv.Itoa(int(titleID)) {
+				t.Errorf("title requests = %v, want the URL's edition and then %d", calls, titleID)
+			}
+		})
+	}
+
+	// the API's own 3-letter code is taken as-is (it's what the API names its
+	// editions with), which is the same edition as the flag's 2-letter one
+	srv := newMangaplusTestServer(t, []mangaplusTestChapter{{id: 101, name: "#001", subTitle: "Chapter 1: Mission"}}, nil)
+	srv.languages = []mangaplusTestLanguage{
+		{titleID: 100149, language: 4},
+		{titleID: mangaplusTestTitleID, language: 0}, // the URL's edition: English
+	}
+	srv.editions = map[uint32]mangaplusTestEdition{
+		100149: {language: 4, chapters: []mangaplusTestChapter{{id: 201, name: "#001", subTitle: "Capítulo 1: Missão"}}},
+	}
+	m := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "ptb")
+	var list Filterables
+	out := mangaplusTestCaptureOutput(t, func() {
+		var errs []error
+		if list, errs = m.FetchChapters(); len(errs) > 0 {
+			t.Fatalf("FetchChapters errors: %v", errs)
+		}
+	})
+	if want := "downloading the ptb edition of Test Series instead of the eng one"; !strings.Contains(out, want) {
+		t.Errorf("-l ptb printed %q, want it to contain %q", out, want)
+	}
+	if got := list[0].(*MangaplusChapter).Language; got != "ptb" {
+		t.Errorf("-l ptb chapter language = %q, want %q", got, "ptb")
+	}
+	if calls := srv.calls("/title_detailV3"); len(calls) != 2 || calls[1].query.Get("title_id") != "100149" {
+		t.Errorf("title requests = %v, want the URL's edition and then 100149", calls)
 	}
 
 	// a code that isn't one of the site's languages can't name an edition: the
@@ -1290,6 +1417,67 @@ func TestMangaplusLanguageCodeForms(t *testing.T) {
 	}
 	if after := len(srv.calls("/title_detailV3")); after != before+1 {
 		t.Errorf("got %d title requests, want 1 more (no edition to switch to)", after-before)
+	}
+}
+
+// The language enum is a closed list, and a value outside it is reported as the
+// number it is. An edition carrying one must not read as English: with the
+// edition pinned by title_id alone, a guessed code makes such an edition stand
+// in for the English one — --language en would accept it, print nothing and
+// label its chapters eng, while the English edition the API does list is
+// ignored. Reported honestly, the lookup finds the real English edition, and
+// the codes named to the user are the ones the API sent.
+func TestMangaplusUnknownLanguageEnumIsNotEnglish(t *testing.T) {
+	const (
+		englishTitleID = 100020
+		unknownEnum    = 11
+	)
+
+	// the URL's edition declares an enum this grabber doesn't know, and the
+	// title has an English edition of its own
+	srv := newMangaplusTestServer(t, []mangaplusTestChapter{{id: 201, name: "#001", subTitle: "Chapter 1: Misión"}}, nil)
+	srv.language = unknownEnum
+	srv.languages = []mangaplusTestLanguage{
+		{titleID: englishTitleID, language: 0},
+		{titleID: mangaplusTestTitleID, language: unknownEnum},
+	}
+	srv.editions = map[uint32]mangaplusTestEdition{
+		englishTitleID: {language: 0, chapters: []mangaplusTestChapter{{id: 101, name: "#001", subTitle: "Chapter 1: Mission"}}},
+	}
+	m := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "en")
+
+	var list Filterables
+	out := mangaplusTestCaptureOutput(t, func() {
+		var errs []error
+		if list, errs = m.FetchChapters(); len(errs) > 0 {
+			t.Fatalf("FetchChapters errors: %v", errs)
+		}
+	})
+
+	if want := "downloading the eng edition of Test Series instead of the lang11 one"; !strings.Contains(out, want) {
+		t.Errorf("--language en on a lang11 edition printed %q, want it to contain %q", out, want)
+	}
+	if len(list) != 1 {
+		t.Fatalf("got %d chapters, want the English edition's one", len(list))
+	}
+	if got := list[0].(*MangaplusChapter); got.Id != 101 || got.Language != "eng" {
+		t.Errorf("chapter = {id:%d language:%q}, want {id:101 language:%q}", got.Id, got.Language, "eng")
+	}
+	if calls := srv.calls("/title_detailV3"); len(calls) != 2 || calls[1].query.Get("title_id") != strconv.Itoa(englishTitleID) {
+		t.Errorf("title requests = %v, want the URL's edition and then %d", calls, englishTitleID)
+	}
+
+	// the code of an edition whose enum isn't known is the one the API sent:
+	// what's offered as available is that, never a language it might have been
+	// taken for
+	other := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "fr")
+	out = mangaplusTestCaptureOutput(t, func() {
+		if _, errs := other.FetchChapters(); len(errs) > 0 {
+			t.Fatalf("FetchChapters errors: %v", errs)
+		}
+	})
+	if want := "MangaPlus doesn't publish Test Series in fra (available: eng, lang11)"; !strings.Contains(out, want) {
+		t.Errorf("--language fr printed %q, want it to contain %q", out, want)
 	}
 }
 
@@ -1346,10 +1534,13 @@ func TestMangaplusLanguageSwitchesEditionFromAViewerURL(t *testing.T) {
 	}
 
 	// the viewer call that resolved the series had no language to send yet, and
-	// the chapter of the switched edition is fetched with the resolved one
+	// the chapter of the switched edition is fetched with the resolved one. The
+	// param's *presence* is what's asserted: an empty clang is also what a
+	// request carrying clang= reads as, and sending one before the edition is
+	// known is a guess at an edition the title_id already pins
 	viewerCalls := srv.calls("/manga_viewer_v3")
-	if got := viewerCalls[0].query.Get("clang"); got != "" {
-		t.Errorf("the resolving viewer call sent clang = %q, want none", got)
+	if values, ok := viewerCalls[0].query["clang"]; ok {
+		t.Errorf("the resolving viewer call carries clang=%v, want no such param", values)
 	}
 	if _, err := m.FetchChapter(list[0]); err != nil {
 		t.Fatalf("FetchChapter: %v", err)
@@ -1361,39 +1552,66 @@ func TestMangaplusLanguageSwitchesEditionFromAViewerURL(t *testing.T) {
 
 // A language the title isn't published in keeps the URL's edition. The line has
 // to stay factual: it names the languages the API lists, and never claims the
-// title is published in a single one (the URL's own edition is proof it isn't)
+// title is published in a single one (the URL's own edition is proof it isn't).
+// A response whose languages list never arrived says that instead of reading
+// non-publication out of a list that isn't there.
 func TestMangaplusUnpublishedLanguageKeepsTheURLEdition(t *testing.T) {
-	chapters := []mangaplusTestChapter{{id: 201, name: "#001", subTitle: "Chapter 1: Misión"}}
-	srv := newMangaplusTestServer(t, chapters, nil)
-	srv.language = 1
-	srv.languages = []mangaplusTestLanguage{
-		{titleID: 100020, language: 0},               // English
-		{titleID: mangaplusTestTitleID, language: 1}, // Spanish: the URL's edition
-	}
-	m := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "fr")
+	// more chapters than the free window lists, so the notice about landing on
+	// a restricted edition (covered below) has nothing to say here
+	chapters := mangaplusTestWindowChapters()
 
-	var list Filterables
-	out := mangaplusTestCaptureOutput(t, func() {
-		var errs []error
-		if list, errs = m.FetchChapters(); len(errs) > 0 {
-			t.Fatalf("FetchChapters errors: %v", errs)
-		}
-	})
-
-	for _, want := range []string{"fra", "available: eng, esp", "keeping the esp edition from the URL"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("printed %q, want it to contain %q", out, want)
-		}
-	}
-	if strings.Contains(out, "only") {
-		t.Errorf("printed %q, which claims the title is published in one language only", out)
+	cases := []struct {
+		name      string
+		languages []mangaplusTestLanguage
+		want      []string
+		notWant   []string
+	}{
+		{
+			"the API lists other editions, just not that one",
+			[]mangaplusTestLanguage{{titleID: 100020, language: 0}, {titleID: mangaplusTestTitleID, language: 1}},
+			[]string{"MangaPlus doesn't publish Test Series in fra", "available: eng, esp", "keeping the esp edition from the URL"},
+			[]string{"only"},
+		},
+		{
+			"the API listed no language list at all",
+			nil,
+			[]string{"MangaPlus listed no fra edition of Test Series (the API listed no other editions)", "keeping the esp edition from the URL"},
+			[]string{"doesn't publish", "available:", "only"},
+		},
 	}
 
-	if calls := srv.calls("/title_detailV3"); len(calls) != 1 {
-		t.Errorf("got %d title requests, want 1: an unpublished language must not refetch", len(calls))
-	}
-	if got := list[0].(*MangaplusChapter).Language; got != "esp" {
-		t.Errorf("chapter language = %q, want the URL's %q", got, "esp")
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			srv := newMangaplusTestServer(t, chapters, nil)
+			srv.language, srv.languages = 1, c.languages
+			m := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "fr")
+
+			var list Filterables
+			out := mangaplusTestCaptureOutput(t, func() {
+				var errs []error
+				if list, errs = m.FetchChapters(); len(errs) > 0 {
+					t.Fatalf("FetchChapters errors: %v", errs)
+				}
+			})
+
+			for _, want := range c.want {
+				if !strings.Contains(out, want) {
+					t.Errorf("printed %q, want it to contain %q", out, want)
+				}
+			}
+			for _, notWant := range c.notWant {
+				if strings.Contains(out, notWant) {
+					t.Errorf("printed %q, want none of %q", out, notWant)
+				}
+			}
+
+			if calls := srv.calls("/title_detailV3"); len(calls) != 1 {
+				t.Errorf("got %d title requests, want 1: an unpublished language must not refetch", len(calls))
+			}
+			if got := list[0].(*MangaplusChapter).Language; got != "esp" {
+				t.Errorf("chapter language = %q, want the URL's %q", got, "esp")
+			}
+		})
 	}
 }
 
@@ -1434,19 +1652,71 @@ func TestMangaplusEditionSwitchHappensOnce(t *testing.T) {
 	}
 }
 
+// The switch is attempted once and no more. Its result is what makes a second
+// attempt pointless in a normal run (the detail gets cached, and a failed fetch
+// ends the run), so the flag that bounds it is only observable through a
+// grabber whose refetch failed: the cached detail is then still nil, and the
+// next call has to find the edition without asking the API for it again (each
+// lookup spends a rate limited call, and the device is locked out after a
+// handful of them).
+func TestMangaplusEditionSwitchIsAttemptedOnce(t *testing.T) {
+	const englishTitleID = 100020
+
+	srv := newMangaplusTestServer(t, []mangaplusTestChapter{{id: 201, name: "#001", subTitle: "Chapter 1: Misión"}}, nil)
+	srv.language = 1
+	srv.languages = []mangaplusTestLanguage{
+		{titleID: englishTitleID, language: 0},
+		{titleID: mangaplusTestTitleID, language: 1},
+	}
+	// the wanted edition can't be fetched: the switch is reached (the URL's own
+	// detail is served), and its refetch fails
+	srv.errorTitleIDs = map[uint32]string{englishTitleID: mangaplusErrMissingSecret}
+	m := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "en")
+
+	mangaplusTestCaptureOutput(t, func() {
+		if _, err := m.FetchTitle(); err == nil {
+			t.Fatal("FetchTitle succeeded, want the failed refetch to surface")
+		}
+	})
+	if calls := srv.calls("/title_detailV3"); len(calls) != 2 {
+		t.Fatalf("got %d title requests, want 2 (the URL's edition and the failed switch)", len(calls))
+	}
+
+	// the failed refetch left no detail behind, so this call goes through the
+	// whole switch path again — except for the switch itself
+	mangaplusTestCaptureOutput(t, func() {
+		if _, errs := m.FetchChapters(); len(errs) > 0 {
+			t.Fatalf("FetchChapters errors: %v", errs)
+		}
+	})
+
+	calls := srv.calls("/title_detailV3")
+	if len(calls) != 3 {
+		t.Fatalf("got %d title requests, want 3: the URL's edition, one switch, and the edition fetched again", len(calls))
+	}
+	if got := calls[2].query.Get("title_id"); got != strconv.Itoa(mangaplusTestTitleID) {
+		t.Errorf("the last request asked for title_id %q, want the URL's %d", got, mangaplusTestTitleID)
+	}
+}
+
 // The title_languages list is what turns a language into the edition to ask
 // for: MangaPlus has one edition per language, each with its own title_id, so
-// nothing else can (the title_id of the URL pins the edition it belongs to)
+// nothing else can (the title_id of the URL pins the edition it belongs to).
+// Every enum the API declares is pinned here, plus the two ways an entry can
+// name no edition: a language the list doesn't carry, and an entry with no
+// title_id (which can't be asked for at all, so it's no edition either).
 func TestMangaplusDecodeTitleLanguages(t *testing.T) {
 	languages := []mangaplusTestLanguage{
-		{titleID: 100020, language: 0},
-		{titleID: 100079, language: 6},
-		{titleID: 100140, language: 3},
-		{titleID: 100149, language: 4},
-		{titleID: mangaplusTestTitleID, language: 1},
-		{titleID: 700005, language: 2},
-		{titleID: 800001, language: 7},
-		{titleID: 1000001, language: 9},
+		{titleID: 100020, language: 0},               // eng
+		{titleID: mangaplusTestTitleID, language: 1}, // esp
+		{titleID: 700005, language: 2},               // fra
+		{titleID: 100140, language: 3},               // ind
+		{titleID: 100149, language: 4},               // ptb
+		{titleID: 0, language: 5},                    // rus: listed, but with no title_id
+		{titleID: 100079, language: 6},               // tha
+		{titleID: 800001, language: 7},               // deu
+		{titleID: 800002, language: 8},               // ita
+		{titleID: 1000001, language: 9},              // vie
 	}
 	chapters := []mangaplusTestChapter{{id: 101, name: "#001", subTitle: "Chapter 1: Mission"}}
 
@@ -1460,32 +1730,83 @@ func TestMangaplusDecodeTitleLanguages(t *testing.T) {
 
 	// the enum mapping is the one Title.language uses, so the codes here are
 	// what --language resolves to
-	want := map[string]uint32{"eng": 100020, "tha": 100079, "ind": 100140, "ptb": 100149, "esp": mangaplusTestTitleID, "fra": 700005, "deu": 800001, "vie": 1000001}
+	want := map[string]uint32{
+		"eng": 100020, "esp": mangaplusTestTitleID, "fra": 700005, "ind": 100140,
+		"ptb": 100149, "tha": 100079, "deu": 800001, "ita": 800002, "vie": 1000001,
+	}
 	for language, titleID := range want {
 		got, ok := detail.editionTitleID(language)
 		if !ok || got != titleID {
 			t.Errorf("editionTitleID(%q) = %d, %v, want %d, true", language, got, ok, titleID)
 		}
 	}
-	// a language the list doesn't have, and an entry without an id (which
-	// couldn't be asked for anyway), have no edition
-	if id, ok := detail.editionTitleID("rus"); ok {
-		t.Errorf("editionTitleID(\"rus\") = %d, true, want no edition", id)
+
+	// a language the list doesn't carry has no edition, and neither has the
+	// one it does carry without a title_id: asking for it would ask the API for
+	// title_id 0, which is some other thing entirely
+	for _, language := range []string{"zzz", "rus"} {
+		if id, ok := detail.editionTitleID(language); ok {
+			t.Errorf("editionTitleID(%q) = %d, true, want no edition", language, id)
+		}
 	}
 
-	if got := detail.languageCodes(); len(got) != len(languages) {
-		t.Errorf("languageCodes() = %v, want the %d listed ones", got, len(languages))
-	} else if got[0] != "eng" || got[len(got)-1] != "vie" {
-		t.Errorf("languageCodes() = %v, want them in the API's order", got)
+	// the languages named to the user are the ones an edition can be asked
+	// for: the id-less entry isn't one, so "rus" is left out (naming it would
+	// offer a language that can't be downloaded)
+	codes := detail.languageCodes()
+	wantCodes := []string{"eng", "esp", "fra", "ind", "ptb", "tha", "deu", "ita", "vie"}
+	if strings.Join(codes, ",") != strings.Join(wantCodes, ",") {
+		t.Errorf("languageCodes() = %v, want the askable editions in the API's order: %v", codes, wantCodes)
 	}
 
-	// a response without title_languages still knows one language: its own
+	// a response without title_languages names no edition at all: all there is
+	// to download is its own edition, whose language is Title.Language (the
+	// caller says so itself, see TestMangaplusUnpublishedLanguageKeepsTheURLEdition)
 	single, err := decodeMangaplusTitleDetail(mangaplusTestTitleView("Kagurabachi", 2, nil, chapters...))
 	if err != nil {
 		t.Fatalf("decodeMangaplusTitleDetail: %v", err)
 	}
-	if got := single.languageCodes(); len(got) != 1 || got[0] != "fra" {
-		t.Errorf("languageCodes() = %v, want just the response's own edition", got)
+	if got := single.languageCodes(); len(got) != 0 {
+		t.Errorf("languageCodes() = %v, want none: the response listed no editions", got)
+	}
+	if got, ok := single.editionTitleID("fra"); ok {
+		t.Errorf("editionTitleID(\"fra\") = %d, true, want no edition", got)
+	}
+}
+
+// A titleLanguages entry with no title_id names an edition nobody can ask for
+// (the detail call is pinned by title_id, and 0 isn't one). It must not be
+// treated as an edition — the user would be told the title isn't published in
+// a language the very same line then offers as available, and a request for
+// title_id 0 would follow if it were believed.
+func TestMangaplusLanguageListedWithoutAnEditionIsNotAvailable(t *testing.T) {
+	srv := newMangaplusTestServer(t, mangaplusTestWindowChapters(), nil)
+	srv.language = 1
+	srv.languages = []mangaplusTestLanguage{
+		{titleID: 0, language: 0},                    // English, with no title_id to ask for
+		{titleID: mangaplusTestTitleID, language: 1}, // Spanish: the URL's edition
+	}
+	m := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "en")
+
+	var list Filterables
+	out := mangaplusTestCaptureOutput(t, func() {
+		var errs []error
+		if list, errs = m.FetchChapters(); len(errs) > 0 {
+			t.Fatalf("FetchChapters errors: %v", errs)
+		}
+	})
+
+	if want := "MangaPlus doesn't publish Test Series in eng (available: esp); keeping the esp edition from the URL"; !strings.Contains(out, want) {
+		t.Errorf("printed %q, want it to contain %q", out, want)
+	}
+	if strings.Contains(out, "available: eng") {
+		t.Errorf("printed %q, which offers a language no edition of the title can be asked for as available", out)
+	}
+	if calls := srv.calls("/title_detailV3"); len(calls) != 1 {
+		t.Errorf("got %d title requests, want 1 (an entry with no title_id is not an edition to switch to)", len(calls))
+	}
+	if got := list[0].(*MangaplusChapter).Language; got != "esp" {
+		t.Errorf("chapter language = %q, want the URL's %q", got, "esp")
 	}
 }
 
@@ -1512,12 +1833,14 @@ func TestMangaplusViewerClangFollowsTheResolvedEdition(t *testing.T) {
 	}
 
 	// resolving the series takes a viewer call, made before any title detail
-	// exists: it can't carry a language yet
+	// exists: it can't carry a language yet, and the param is absent rather than
+	// empty (a clang= of any value would be a guess at an edition the title_id
+	// already pins)
 	if _, err := m.FetchTitle(); err != nil {
 		t.Fatalf("FetchTitle: %v", err)
 	}
-	if got := srv.calls("/manga_viewer_v3")[0].query.Get("clang"); got != "" {
-		t.Errorf("the resolving viewer call sent clang = %q, want none", got)
+	if values, ok := srv.calls("/manga_viewer_v3")[0].query["clang"]; ok {
+		t.Errorf("the resolving viewer call carries clang=%v, want no such param", values)
 	}
 	if got := m.clangLocked(); got != "esp" {
 		t.Errorf("clangLocked() = %q, want the resolved edition's %q", got, "esp")
@@ -1540,9 +1863,13 @@ func TestMangaplusViewerClangFollowsTheResolvedEdition(t *testing.T) {
 }
 
 // An edition that lists no more than the free window's worth of chapters, on a
-// series with more than one edition, is what a URL pointing at a restricted
-// edition looks like with no --language: say so, without claiming what the
-// other editions list (finding that out would take one rate limited call each)
+// series with more than one edition, is what landing on a restricted edition
+// looks like: say so, without claiming what the other editions list (finding
+// that out would take one rate limited call each). It's said with --language
+// too — picking a language is exactly how one lands on such an edition (a
+// title's whole run can be free in one edition and the free window in another),
+// and the chapter count is the only hint a run gives before downloading — after
+// whatever the switch said, since it describes the edition that was downloaded.
 func TestMangaplusRestrictedEditionNotice(t *testing.T) {
 	window := make([]mangaplusTestChapter, 0, mangaplusFreeWindowChapters)
 	for i := 1; i <= mangaplusFreeWindowChapters; i++ {
@@ -1552,25 +1879,34 @@ func TestMangaplusRestrictedEditionNotice(t *testing.T) {
 		{titleID: 100020, language: 0},
 		{titleID: mangaplusTestTitleID, language: 1},
 	}
+	// the English edition, which --language en switches to, lists the window too
+	editions := map[uint32]mangaplusTestEdition{
+		100020: {language: 0, chapters: window},
+	}
 
 	cases := []struct {
 		name      string
 		language  string
 		languages []mangaplusTestLanguage
 		chapters  []mangaplusTestChapter
+		switchTo  bool
 		want      bool
 	}{
-		{"a restricted edition, no --language", "", languages, window, true},
-		{"with --language, the user picked an edition", "es", languages, window, false},
-		{"an edition with more than the window", "", languages, append(append([]mangaplusTestChapter{}, window...), mangaplusTestChapter{id: 300, name: "#007", subTitle: "Chapter 7"}), false},
-		{"a series published in one language", "", languages[:1], window, false},
-		{"no editions listed at all", "", nil, window, false},
+		{"a restricted edition, no --language", "", languages, window, false, true},
+		{"a restricted edition picked with --language", "es", languages, window, false, true},
+		{"a switch to a restricted edition", "en", languages, window, true, true},
+		{"an edition with more than the window", "", languages, append(append([]mangaplusTestChapter{}, window...), mangaplusTestChapter{id: 300, name: "#007", subTitle: "Chapter 7"}), false, false},
+		{"a series published in one language", "", languages[:1], window, false, false},
+		{"no editions listed at all", "", nil, window, false, false},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			srv := newMangaplusTestServer(t, c.chapters, nil)
 			srv.language, srv.languages = 1, c.languages
+			if c.switchTo {
+				srv.editions = editions
+			}
 			m := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, c.language)
 
 			out := mangaplusTestCaptureOutput(t, func() {
@@ -1578,6 +1914,16 @@ func TestMangaplusRestrictedEditionNotice(t *testing.T) {
 					t.Fatalf("FetchChapters errors: %v", errs)
 				}
 			})
+
+			// a switch line is what the notice has to follow, never replace: both
+			// say something true of the run, and neither contradicts the other
+			lines := 1
+			if c.switchTo {
+				lines = 2
+				if want := "downloading the eng edition of Test Series instead of the esp one"; !strings.Contains(out, want) {
+					t.Errorf("printed %q, want it to contain %q", out, want)
+				}
+			}
 
 			if !c.want {
 				if out != "" {
@@ -1595,9 +1941,15 @@ func TestMangaplusRestrictedEditionNotice(t *testing.T) {
 					t.Errorf("printed %q, want it to contain %q", out, want)
 				}
 			}
-			// one line, not a paragraph
-			if lines := strings.Count(strings.TrimSpace(out), "\n"); lines != 0 {
-				t.Errorf("printed %d lines (%q), want a single one", lines+1, out)
+			// one line (two after a switch), not a paragraph
+			if got := strings.Count(strings.TrimSpace(out), "\n"); got != lines-1 {
+				t.Errorf("printed %d lines (%q), want %d", got+1, out, lines)
+			}
+			if c.switchTo {
+				switchAt, noticeAt := strings.Index(out, "keeps one edition per language"), strings.Index(out, "lists only ")
+				if switchAt < 0 || noticeAt < 0 || switchAt > noticeAt {
+					t.Errorf("printed %q, want the switch line before the notice", out)
+				}
 			}
 		})
 	}

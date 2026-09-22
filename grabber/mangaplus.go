@@ -180,11 +180,6 @@ const (
 // truncated cached file) is treated as absent instead of being sent
 var mangaplusSecretRe = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
-// mangaplusDefaultLanguage is the edition a title's own language enum reads as
-// when it carries a value the API's list doesn't know (the enum's first value
-// is English)
-const mangaplusDefaultLanguage = "eng"
-
 // mangaplusLanguages maps the 2-letter codes the --language flag takes to the
 // ISO 639-2/T codes MangaPlus names its editions with
 var mangaplusLanguages = map[string]string{
@@ -496,19 +491,22 @@ func (m *Mangaplus) detailLocked() (*mangaplusTitleDetail, error) {
 	// call is made for, and its language is what the viewer calls ask for
 	m.language = detail.Title.Language
 
-	if requested == "" {
-		// More than one edition exists and the one being downloaded carries no
-		// more than the free window's worth of chapters: that's what a URL
-		// pointing at one of a series' restricted editions looks like. What the
-		// other editions list isn't claimed — finding that out would cost one
-		// rate limited call each — only that they're separate downloads and
-		// --language is the way to one.
-		if len(detail.Languages) > 1 && len(detail.Chapters) <= mangaplusFreeWindowChapters {
-			color.Yellow(
-				"This MangaPlus edition lists only %d chapters (each language is a separate edition: %s): use --language to pick another",
-				len(detail.Chapters), strings.Join(detail.languageCodes(), ", "),
-			)
-		}
+	// The edition being downloaded carries no more than the free window's worth
+	// of chapters, on a title the API lists more than one edition of: that's
+	// what landing on one of a series' restricted editions looks like. It's
+	// said whether or not --language was passed — picking a language is exactly
+	// how one lands on one of those (a title's whole run can be free in one
+	// edition and the free window in another), and the chapter count is the
+	// only hint a run gives before downloading. What the other editions list
+	// isn't claimed — finding that out would cost one rate limited call each —
+	// only that they're separate downloads and --language is the way to one.
+	// It's printed after whatever the switch said, since it describes the
+	// edition that ended up being downloaded.
+	if len(detail.languageCodes()) > 1 && len(detail.Chapters) <= mangaplusFreeWindowChapters {
+		color.Yellow(
+			"This MangaPlus edition lists only %d chapters (each language is a separate edition: %s): use --language to pick another",
+			len(detail.Chapters), strings.Join(detail.languageCodes(), ", "),
+		)
 	}
 
 	return m.detail, nil
@@ -551,29 +549,56 @@ func (m *Mangaplus) resolveEditionLocked(detail *mangaplusTitleDetail, requested
 
 	titleID, ok := detail.editionTitleID(requested)
 	if !ok {
-		// The title isn't published in the language that was asked for, so the
-		// URL's edition is kept. What's said stays factual: the languages the
-		// API does list, never that the title is published in one language
-		// only (the URL's own edition is proof of the opposite)
-		color.Yellow(
-			"MangaPlus doesn't publish %s in %s (available: %s); keeping the %s edition from the URL",
-			detail.Title.Name, requested, strings.Join(detail.languageCodes(), ", "), detail.Title.Language,
-		)
+		// Nothing to switch to, so the URL's edition is kept. What's said stays
+		// factual and names what the API returned: the languages it lists an
+		// edition for — never that the title is published in one language only,
+		// which the URL's own edition is proof against — or, when it listed no
+		// edition that can be asked for at all, that much and no more. An
+		// absent title_languages list says nothing about which other languages
+		// the title exists in.
+		if available := detail.languageCodes(); len(available) > 0 {
+			color.Yellow(
+				"MangaPlus doesn't publish %s in %s (available: %s); keeping the %s edition from the URL",
+				detail.Title.Name, requested, strings.Join(available, ", "), detail.Title.Language,
+			)
+		} else {
+			color.Yellow(
+				"MangaPlus listed no %s edition of %s (the API listed no other editions); keeping the %s edition from the URL",
+				requested, detail.Title.Name, detail.Title.Language,
+			)
+		}
 
 		return detail, nil
 	}
-
-	color.Yellow(
-		"MangaPlus keeps one edition per language: downloading the %s edition of %s instead of the %s one",
-		requested, detail.Title.Name, detail.Title.Language,
-	)
 
 	switched, err := m.fetchDetail(titleID)
 	if err != nil {
 		return nil, err
 	}
 
-	// every later call is made for the edition that's being downloaded
+	// The line is written out only now, out of what the refetched response
+	// itself reports: the languages list the edition came out of isn't always
+	// consistent (it can name a language that the detail answers with another
+	// one, or the URL's own title_id under a language its edition doesn't
+	// report), and a line claiming a switch describes an edition nobody
+	// downloaded when that happens.
+	if switched.Title.Language == requested {
+		color.Yellow(
+			"MangaPlus keeps one edition per language: downloading the %s edition of %s instead of the %s one",
+			requested, detail.Title.Name, detail.Title.Language,
+		)
+	} else {
+		color.Yellow(
+			"MangaPlus lists title_id %d as the %s edition of %s, but it reports the %s language: that edition is what's downloaded",
+			titleID, requested, detail.Title.Name, switched.Title.Language,
+		)
+	}
+
+	// Kept because it's what the grabber is now downloading rather than because
+	// anything reads it: titleIDLocked only ever runs before the first detail is
+	// fetched (a failed refetch ends the run, a successful one caches the
+	// detail), so the edition every later call is made for is this one, and no
+	// call asks again.
 	m.titleId = titleID
 
 	return switched, nil
@@ -995,13 +1020,17 @@ func mangaplusRoundChapterNumber(number float64) float64 {
 
 // mangaplusLanguageCode maps the language enum of a title's detail to its
 // 3-letter code. The enum is ordered as the API declares it, and a value the
-// list doesn't know falls back to English.
+// list doesn't know reads as the number it is ("lang11") instead of being
+// guessed at: the code is what --language is matched against and what the viewer
+// calls send, so a guess of English would let such an edition pass for the
+// English one — and shadow the English edition the API does list — while an
+// honest marker finds no edition and is reported as the language it isn't.
 func mangaplusLanguageCode(code uint64) string {
 	if lang, ok := mangaplusLanguageCodes[code]; ok {
 		return lang
 	}
 
-	return mangaplusDefaultLanguage
+	return fmt.Sprintf("lang%d", code)
 }
 
 // mangaplusLanguage maps the --language flag to the code the app API names its
@@ -1215,17 +1244,21 @@ func (d *mangaplusTitleDetail) editionTitleID(language string) (uint32, bool) {
 	return 0, false
 }
 
-// languageCodes returns the languages the title is published in, in the order
-// the API lists them. A response without title_languages (an older app API)
-// still proves one language: the one of its own edition.
+// languageCodes returns the languages of the editions the title can be asked
+// for, in the order the API lists them: an entry with no title_id names no
+// edition this grabber could ask for, so it's left out — including from the
+// messages that offer the user another language to pick (offering one that
+// can't be downloaded would be a lie of its own). A response with no
+// title_languages lists no other edition at all and so returns nothing: the
+// language of the URL edition is then the only one there is, and the caller is
+// what names it.
 func (d *mangaplusTitleDetail) languageCodes() []string {
 	var codes []string
 	for _, edition := range d.Languages {
+		if edition.titleID == 0 {
+			continue
+		}
 		codes = append(codes, edition.language)
-	}
-
-	if len(codes) == 0 {
-		codes = append(codes, d.Title.Language)
 	}
 
 	return codes
