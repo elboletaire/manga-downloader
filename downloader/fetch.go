@@ -49,6 +49,7 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress Progre
 			file, err := FetchFile(http.RequestParams{
 				URL:     page.URL,
 				Referer: site.BaseUrl(),
+				Headers: page.Headers,
 			}, uint(page.Number), site.GetRetries(), page.Transform)
 
 			if err != nil {
