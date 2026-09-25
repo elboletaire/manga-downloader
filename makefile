@@ -366,6 +366,14 @@ grabber/html: \
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
 
+# --skip-pages end to end. Chapter 1146's last page 404s on the site's end, so
+# it's undownloadable without the flag: a run that produces no cbz at all is
+# the failure to watch for, not a short one. Kept out of the `grabber:`
+# aggregate on purpose - it's a flag check, not site coverage.
+skip-pages:
+	go run . --skip-pages=-1 https://tcbonepiecechapters.com/mangas/5/one-piece 1146
+	go run ./tools/verify-cbz "One Piece 1146 - A Stirring in the Stillness.cbz"
+
 grabber/asura:
 	go run . https://asurascans.com/comics/absolute-regression-f886a8af 1
 

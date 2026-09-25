@@ -27,8 +27,9 @@ The download flow, orchestrated from `cmd/root.go` (`Run`):
 
 1. `grabber.NewSite(url, settings)` → `IdentifySite()` calls `Test()` on each registered grabber (`grabber/site.go`), matching by domain or by fetching the URL. **Order matters**: domain-matching grabbers first, then `PlainHTML`, then the remaining fetch-testing ones.
 2. The matched `Site` fetches title and chapters; the range argument (`ranges.Parse`, `1-10,12,15-20`) filters them.
-3. Chapters download concurrently (`downloader.FetchChapter`), bounded by `--concurrency` (max 5) and `--concurrency-pages` (max 10). Pages are plain GETs with a Referer.
-4. `packer` writes CBZ files (`PackSingle`, or `PackBundle` with `--bundle`), named via a text/template (`--filename-template`, `packer/filename.go`); duplicate names get a `v{{.Version}}` suffix. Both paths go through `namePages` (`packer/pack.go`), which sniffs each page's format to name it `000.jpg`, `001.png`, … and transcodes per `--convert-images`.
+3. Each fetched chapter is passed through `Chapter.SkipPages` (`--skip-pages`, see below) before anything is downloaded.
+4. Chapters download concurrently (`downloader.FetchChapter`), bounded by `--concurrency` (max 5) and `--concurrency-pages` (max 10). Pages are plain GETs with a Referer.
+5. `packer` writes CBZ files (`PackSingle`, or `PackBundle` with `--bundle`), named via a text/template (`--filename-template`, `packer/filename.go`); duplicate names get a `v{{.Version}}` suffix. Both paths go through `namePages` (`packer/pack.go`), which sniffs each page's format to name it `000.jpg`, `001.png`, … and transcodes per `--convert-images`.
 
 ### Page conversion (`--convert-images`, #155)
 
@@ -40,6 +41,17 @@ Some sites serve pages e-readers can't render — AVIF (atsu.moe, mistscans, man
 - **A page that fails to convert keeps its original bytes *and* extension**, with a warning: `pack()` has no partial-success path, so erroring would lose the whole chapter (or bundle) over one page. The extension must never claim `.jpg` for non-JPEG bytes.
 - **`tools/verify-cbz` is what actually proves conversion happened in CI**, precisely because that failure is non-fatal: it rejects `.avif` entries (`-allow-avif` for `--convert-images=none` archives) and checks entry names against sniffed content.
 - The WebP test fixture is a real file inlined as bytes (`x/image/webp` is decode-only, and Go has no test-only dependency scope), which also pins the load-bearing blank import in `convert.go`.
+
+### Page skipping (`--skip-pages`)
+
+Scanlation groups reserve pages for credits/ads (tcbscans: always page 2, often the last one too), and a page that 404s on the site's end fails the *whole* chapter with no way around it — `https://tcbonepiecechapters.com/chapters/7855/one-piece-chapter-1146` was flatly undownloadable until this flag existed. `Chapter.SkipPages` (`grabber/chapter.go`) drops the selected pages, called from `cmd/root.go` right after `FetchChapter`.
+
+- **Positions are 1-based indices into `chapter.Pages`, never `Page.Number`.** That field is not a position: most grabbers set `i+1`, a couple (`mgeko`, `projectsuki`) set a bare `i`, and `tcb` sets the *reader page* number, which several images share. `SkipPages` deliberately leaves `Page.Number` alone afterwards, so a download error still names the page the site numbers; the archive stays contiguous anyway because `namePages` numbers by slice index.
+- **Skipping happens before the download, not at packing time.** That's the entire point (a skipped page costs nothing and can't 404 the chapter), and `downloader.FetchChapter` aborts the chapter on the first page error, so a post-download filter could never rescue a broken page.
+- **`cmd/root.go` calls `FetchChapter` twice in `--bundle` mode** — once in the totals loop that sizes the progress bar, once in the download goroutine. Any per-chapter filtering has to be applied at *both*, or the bar never reaches its total and `p.Wait()` hangs until the `Abort` fallback. `SkipPages` also updates `PagesCount` for the same reason.
+- **`ranges.Parse` rejects negatives; `ranges.ParseRelative` accepts them.** Two entry points rather than one, because counting from the end is meaningless for chapter *numbers* (and chapter 0 exists), so the chapter-range caller should fail loudly on a negative instead of filtering nothing. `ranges.Resolve(rngs, total)` is what turns `-1` into a position, per chapter.
+- The parser is regex-based now: it used to `strings.Split(part, "-")`, which can't tell `-3--1` apart from anything. Reversed ranges still clamp to their first bound (`10-5` → just 10) as they always have, but only when both bounds share a sign — `2--1` ("page 2 to the last") is ordered, just not comparably so until `Resolve` knows the total.
+- **pflag takes the argument after a long flag verbatim, dash and all**, so `--skip-pages -1` works and the `=` form isn't actually required (`parseLongArg` never inspects the value for a leading `-`). A *shorthand* would be a different story, which is why this flag has none. The README documents both forms.
 
 ### The grabber package
 

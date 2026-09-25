@@ -343,6 +343,37 @@ kept as it was and a warning is shown, so the rest of the chapter isn't lost.
 > system library. It's slower on the 32-bit (`386`) builds, so use
 > `--convert-images none` there if speed matters.
 
+### Skipping pages
+
+Scanlation groups often reserve a page or two of every chapter for their own
+credits or ads. `--skip-pages` drops them, using the same range syntax as the
+chapter argument, applied to each chapter's pages:
+
+~~~bash
+manga-downloader --skip-pages 2 [url] 1100-1110       # just the credits page
+manga-downloader --skip-pages 2,5-7 [url] 1100-1110   # several at once
+~~~
+
+Pages count from 1, and **negative positions count backwards from the end of
+the chapter**: `-1` is its last page, `-3--1` the last three. They're resolved
+per chapter, so `-1` means each chapter's own last page however long it is:
+
+~~~bash
+manga-downloader --skip-pages 2,-1 [url] 1100-1110    # one at each end
+~~~
+
+The pages are dropped **before** they're downloaded, so they cost no time or
+bandwidth, and a page that's broken on the site's end can't fail the chapter
+around it — which is the only way to download a chapter whose page 404s.
+
+The archive is still numbered `000`, `001`, … in order, with no holes left by
+the skipped pages. A position the chapter doesn't have is ignored.
+
+> [!TIP]
+> Both `--skip-pages -1` and `--skip-pages=-1` work: the value right after the
+> flag is taken verbatim, dash and all. Use the `=` form if a shell or a
+> wrapper script trips on the leading dash.
+
 ### File names
 
 Use `--filename-template` to change file names. It takes a
@@ -366,6 +397,7 @@ name.
 | `--language`          | `-l`  | Only download the specified language                     | all            |
 | `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)  | most chapters  |
 | `--convert-images`    |       | Formats to convert to JPEG: `avif`, `webp` or `none`     | `avif`         |
+| `--skip-pages`        |       | Pages to exclude from every chapter (`-1` is the last)   | none           |
 | `--concurrency`       | `-c`  | Number of chapters downloaded at once (max 5)            | 5              |
 | `--concurrency-pages` | `-C`  | Number of pages downloaded at once per chapter (max 10)  | 10             |
 | `--retry`             | `-r`  | Retries per failed page (max 3, `0` disables retrying)   | 1              |
