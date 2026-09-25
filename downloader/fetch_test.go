@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/elboletaire/manga-downloader/grabber"
 	mangahttp "github.com/elboletaire/manga-downloader/http"
 )
 
@@ -22,6 +23,60 @@ func withFastRetryDelay(t *testing.T) {
 	t.Cleanup(func() {
 		retryDelay = original
 	})
+}
+
+// FetchChapter has to pass each page's own headers on, which is what lets a
+// site bind a token to the URLs of one response (MangaPlus mints one per
+// chapter, and a shared session would make chapters send each other's)
+func TestFetchChapter_AppliesPageHeaders(t *testing.T) {
+	var headers http.Header
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		headers = r.Header.Clone()
+		_, _ = w.Write([]byte("page"))
+	}))
+	defer server.Close()
+
+	site := &fetchChapterTestSite{Grabber: &grabber.Grabber{
+		URL: server.URL,
+		Settings: &grabber.Settings{
+			MaxConcurrency: grabber.MaxConcurrency{Chapters: 1, Pages: 1},
+		},
+	}}
+	chapter := &grabber.Chapter{
+		Number: 1,
+		Pages: []grabber.Page{{
+			Number:  1,
+			URL:     server.URL + "/page",
+			Headers: map[string]string{"Plus-Vw-Token": "0123456789abcdef0123456789abcdef"},
+		}},
+	}
+
+	files, err := FetchChapter(site, chapter, func(page, progress int, err error) {})
+	if err != nil {
+		t.Fatalf("FetchChapter: %v", err)
+	}
+	if len(files) != 1 || string(files[0].Data) != "page" {
+		t.Fatalf("got %d files, want one holding the page", len(files))
+	}
+	if got := headers.Get("Plus-Vw-Token"); got != "0123456789abcdef0123456789abcdef" {
+		t.Errorf("Plus-Vw-Token header = %q, want the page's own token", got)
+	}
+}
+
+// fetchChapterTestSite is a grabber.Site stub: everything FetchChapter doesn't
+// call is inherited from the base grabber
+type fetchChapterTestSite struct {
+	*grabber.Grabber
+}
+
+func (s fetchChapterTestSite) Test() (bool, error) { return true, nil }
+
+func (s fetchChapterTestSite) FetchTitle() (string, error) { return "test", nil }
+
+func (s fetchChapterTestSite) FetchChapters() (grabber.Filterables, []error) { return nil, nil }
+
+func (s fetchChapterTestSite) FetchChapter(grabber.Filterable) (*grabber.Chapter, error) {
+	return nil, errors.New("FetchChapter is not used by this test")
 }
 
 func TestFetchFile_RetriesOnGetFailure(t *testing.T) {
