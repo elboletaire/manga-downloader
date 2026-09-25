@@ -5,11 +5,13 @@ package grabber
 import (
 	"errors"
 	"fmt"
+	nethttp "net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
@@ -18,8 +20,11 @@ import (
 
 // Baozimh is a grabber for baozimh.com (包子漫画). The series page is plain
 // server-rendered HTML listing every chapter, and the reader page embeds every
-// page as an <amp-img id="chapter-img-N-M" src=...> with a real CDN URL - no
-// browser, no pagination, no javascript needed.
+// page as an <amp-img id="chapter-img-N-M" src=...> - no browser, no
+// pagination, no javascript needed to find the pages. The embedded URL's
+// host is a placeholder, though (see resolveBzcdnHost): the reader's own JS
+// normally swaps it for a live regional edge on page load, so FetchChapter
+// does that resolution itself before returning page URLs.
 //
 // The site geo-routes its visitors: mainland-China IPs get simplified-script
 // pages (from www.baozimh.com, via a 301, on cn.bzmgcn.com) while everyone
@@ -44,6 +49,11 @@ type Baozimh struct {
 	docOnce sync.Once
 	doc     *goquery.Document
 	docErr  error
+	// cdnSuffixOnce/cdnSuffix cache the outcome of resolveBzcdnHost's probe
+	// for the lifetime of this Baozimh instance (one download run), so only
+	// the first bare-CDN image URL triggers a round of probing.
+	cdnSuffixOnce sync.Once
+	cdnSuffix     string
 }
 
 func NewBaozimh(g *Grabber) *Baozimh {
@@ -247,6 +257,7 @@ func (m *Baozimh) FetchChapter(f Filterable) (*Chapter, error) {
 				color.Yellow("page %d of %s has no URL to fetch from 😕 (will be ignored)", len(pages)+1, f.GetTitle())
 				return
 			}
+			img = m.resolveBzcdnHost(img)
 			if seen[img] {
 				// already collected from a previous part's overlap
 				return
@@ -284,6 +295,95 @@ func (m *Baozimh) FetchChapter(f Filterable) (*Chapter, error) {
 		Language:   "zh",
 		Pages:      pages,
 	}, nil
+}
+
+// bzcdnBareHostRe matches an unresolved baozimh image CDN host such as
+// "s2.bzcdn.net" - the literal hostname the reader HTML embeds in every
+// <amp-img src>. See bzcdnRegionSuffixes for why that host alone is dead.
+var bzcdnBareHostRe = regexp.MustCompile(`^(s\d+)\.bzcdn\.net$`)
+
+// bzcdnRegionSuffixes are live regional CDN edges for baozimh images,
+// e.g. "s2" + "-rsa1-usla.bzcdn.net" = "s2-rsa1-usla.bzcdn.net". The
+// bare "sN.bzcdn.net" host embedded in reader HTML is never meant to be
+// fetched directly: the site's own reader JS (choose_cdn() in
+// page_runtime_v5.js) races several regional edges behind it on page load
+// and rewrites every <amp-img src> to whichever answers first, entirely
+// client-side. A scraper that never runs that JS is left with the bare
+// host, which (as of #182) resolves to a single origin that outright
+// refuses every connection - not a dead mirror to retry, a placeholder
+// that was never meant to be requested as-is.
+//
+// This list was extracted by running the site's own obfuscated JS
+// (REQ_DOMAINS in page_runtime_v5.js, one entry deobfuscated via a decode
+// function it exports) rather than guessed, and is ordered the same way:
+// the three edges the site itself weights highest (and independently
+// confirmed live - '-rsa1-usla' first, since that's the one seen actually
+// serving images in a live browser) before its lower-priority Hong Kong
+// edge. If baozimh rotates its edges again, re-probe with PROBE_NETLOG=1
+// or by fetching page_runtime_v5.js fresh and decoding REQ_DOMAINS the
+// same way.
+var bzcdnRegionSuffixes = []string{
+	"-rsa1-usla.bzcdn.net",
+	"-ogsm1-uspho.bzcdn.net",
+	"-mha1-nlams.bzcdn.net",
+	"-dpa1-cnhk.bzcdn.net",
+}
+
+// bzcdnProbeClient is dedicated to resolveBzcdnHost's candidate checks. It
+// carries its own short timeout so a candidate that hangs (rather than
+// failing fast like a refused connection) can't stall a chapter download;
+// the shared http package's client has no timeout, since normal page/image
+// downloads may legitimately be slow.
+var bzcdnProbeClient = &nethttp.Client{Timeout: 5 * time.Second}
+
+// bzcdnProbe reports whether url answers with 200 OK. A var (not a plain
+// function) so tests can substitute a fake without touching the network.
+var bzcdnProbe = func(url string) bool {
+	resp, err := bzcdnProbeClient.Head(url)
+	if err != nil {
+		return false
+	}
+	resp.Body.Close()
+	return resp.StatusCode == nethttp.StatusOK
+}
+
+// resolveBzcdnHost rewrites a bare "sN.bzcdn.net" image URL (see
+// bzcdnBareHostRe) to a live regional edge, HEAD-probing
+// bzcdnRegionSuffixes in order and caching the first one that answers for
+// the rest of this Baozimh instance's lifetime - mirroring the site's own
+// choose_cdn(), which resolves once per page load and reuses the result
+// for every image on it, not once per image. Returns raw unchanged if it
+// isn't a bare bzcdn host (already regional, or a different domain
+// entirely), or if every candidate fails - the caller's normal
+// fetch/retry path then surfaces whatever error the dead original host
+// produces, exactly like before this fix existed.
+func (m *Baozimh) resolveBzcdnHost(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return raw
+	}
+	match := bzcdnBareHostRe.FindStringSubmatch(u.Hostname())
+	if match == nil {
+		return raw
+	}
+	prefix := match[1]
+
+	m.cdnSuffixOnce.Do(func() {
+		for _, suffix := range bzcdnRegionSuffixes {
+			candidate := *u
+			candidate.Host = prefix + suffix
+			if bzcdnProbe(candidate.String()) {
+				m.cdnSuffix = suffix
+				return
+			}
+		}
+	})
+
+	if m.cdnSuffix == "" {
+		return raw
+	}
+	u.Host = prefix + m.cdnSuffix
+	return u.String()
 }
 
 // baozimhNextPartURL returns the href of a reader page's "next part" link
