@@ -52,9 +52,6 @@ current folder.
 
 ## Supported sites
 
-Manga Downloader currently supports **86 sites**, from big aggregators like
-MangaDex, MangaFire or MangaPark to individual scanlation groups:
-
 <details>
 <summary><b>Show all 86 supported sites</b></summary>
 <br>
@@ -421,15 +418,10 @@ docker run --rm -it -v "$PWD:/downloads" \
     elboletaire/manga-downloader [url] [chapters]
 ~~~
 
-Manga Plus also **keeps one edition per language**, each with a `title_id` of
-its own, and their chapter lists are not the same: at the time of writing, its
-English and Indonesian editions listed the whole of One Piece while the other
-seven listed only the six chapters of the free window. A URL points at one of
-those editions, and the language parameters the site's API takes can't switch
-between them, so `--language` resolves the edition's own `title_id` and
-downloads that edition instead — `--language en` on a Spanish URL downloads the
-English one. With no `--language`, the edition the URL points at is the one
-downloaded.
+Manga Plus also publishes **one edition per language**, and their chapter
+lists differ: some list the whole series, others only a handful of chapters.
+A URL points at one edition, and `--language` downloads another one instead
+(`--language en` on a Spanish URL downloads the English edition).
 
 ### Options
 

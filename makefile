@@ -136,15 +136,8 @@ grabber/mangalib:
 grabber/mangadenizi:
 	go run . https://www.mangadenizi.net/manga/one-piece 1188
 
-# mangaplus.shueisha.co.jp needs its own grabber: the website's own API only
-# serves a window of the chapter list and refuses the middle of a running
-# series, so the grabber talks to the app API, which returns the complete one
-# but rate limits hard (~10 requests and the device is locked out for 10+
-# minutes), hence the 500ms between calls. It registers an anonymous device
-# secret on first use and caches it under the user config dir;
-# MANGAPLUS_SECRET overrides it.
-# An old chapter on purpose: old targets change less often, so this one stays a
-# cheap, stable smoke test (and any chapter of this series is free to read).
+# Manga Plus talks to the app API, which rate limits hard (see AGENTS.md).
+# Any chapter of this series is free; an old one keeps the target stable.
 grabber/mangaplus:
 	go run . https://mangaplus.shueisha.co.jp/titles/100274 67
 
