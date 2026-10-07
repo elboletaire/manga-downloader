@@ -522,9 +522,13 @@ func (m *Mangaplus) detailLocked() (*mangaplusTitleDetail, error) {
 	// It's printed after whatever the switch said, since it describes the
 	// edition that ended up being downloaded.
 	if len(detail.languageCodes()) > 1 && len(detail.Chapters) <= mangaplusFreeWindowChapters {
+		hint := "use --language to pick another"
+		if requested != "" {
+			hint = "pick another one with --language"
+		}
 		color.Yellow(
-			"This MangaPlus version lists only %d chapters (each language is a separate version: %s): use --language to pick another",
-			len(detail.Chapters), strings.Join(detail.languageCodes(), ", "),
+			"This MangaPlus version lists only %d chapters (each language is a separate version: %s): %s",
+			len(detail.Chapters), mangaplusFlagLanguages(detail.languageCodes()), hint,
 		)
 	}
 
@@ -578,7 +582,7 @@ func (m *Mangaplus) resolveEditionLocked(detail *mangaplusTitleDetail, requested
 		if available := detail.languageCodes(); len(available) > 0 {
 			color.Yellow(
 				"MangaPlus has no %s version of %s (available: %s); downloading the %s version the link points at",
-				mangaplusLanguageName(requested), detail.Title.Name, strings.Join(available, ", "), mangaplusLanguageName(detail.Title.Language),
+				mangaplusLanguageName(requested), detail.Title.Name, mangaplusFlagLanguages(available), mangaplusLanguageName(detail.Title.Language),
 			)
 		} else {
 			color.Yellow(
@@ -1062,6 +1066,25 @@ func mangaplusLanguageName(code string) string {
 	}
 
 	return code
+}
+
+// mangaplusFlagLanguages lists language codes the way --language takes them
+// ("en" rather than the API's "eng"), for the messages that offer the user
+// another language. A code the flag has no short form for is kept as it is.
+func mangaplusFlagLanguages(codes []string) string {
+	flags := make([]string, 0, len(codes))
+	for _, code := range codes {
+		flag := code
+		for short, long := range mangaplusLanguages {
+			if long == code {
+				flag = short
+				break
+			}
+		}
+		flags = append(flags, flag)
+	}
+
+	return strings.Join(flags, ", ")
 }
 
 // mangaplusLanguage maps the --language flag to the code the app API names its
