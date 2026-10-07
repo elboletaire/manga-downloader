@@ -52,9 +52,6 @@ current folder.
 
 ## Supported sites
 
-Manga Downloader currently supports **86 sites**, from big aggregators like
-MangaDex, MangaFire or MangaPark to individual scanlation groups:
-
 <details>
 <summary><b>Show all 86 supported sites</b></summary>
 <br>
@@ -403,18 +400,28 @@ user config folder (`$XDG_CONFIG_HOME` or `~/.config` on Linux,
 `~/Library/Application Support` on macOS, `%AppData%` on Windows): no account is
 ever needed. Secrets are 32 lowercase hexadecimal characters, and anything that
 isn't one is treated as absent — so exporting a malformed `MANGAPLUS_SECRET`,
-or deleting the cached file, makes the next run register a fresh device. Export
-a valid `MANGAPLUS_SECRET` to reuse a secret registered elsewhere.
+or deleting the cached file, makes the next run register a fresh device, as
+does a cached secret the API stops accepting. Export a valid
+`MANGAPLUS_SECRET` to reuse a secret registered elsewhere, such as the one of a
+device with your Manga Plus subscription.
 
-Manga Plus also **keeps one edition per language**, each with a `title_id` of
-its own, and their chapter lists are not the same: at the time of writing, its
-English and Indonesian editions listed the whole of One Piece while the other
-seven listed only the six chapters of the free window. A URL points at one of
-those editions, and the language parameters the site's API takes can't switch
-between them, so `--language` resolves the edition's own `title_id` and
-downloads that edition instead — `--language en` on a Spanish URL downloads the
-English one. With no `--language`, the edition the URL points at is the one
-downloaded.
+In **Docker**, the cached secret lives inside the container and is lost with
+it, so every run registers a new device. To keep one, either pass it with
+`-e MANGAPLUS_SECRET=...`, or mount your own config folder so the container
+shares the secret of your local install (create the folder first, or Docker
+creates it owned by root):
+
+~~~bash
+mkdir -p ~/.config/manga-downloader
+docker run --rm -it -v "$PWD:/downloads" \
+    -v ~/.config/manga-downloader:/home/manga/.config/manga-downloader \
+    elboletaire/manga-downloader [url] [chapters]
+~~~
+
+Manga Plus also publishes **one edition per language**, and their chapter
+lists differ: some list the whole series, others only a handful of chapters.
+A URL points at one edition, and `--language` downloads another one instead
+(`--language en` on a Spanish URL downloads the English edition).
 
 ### Options
 

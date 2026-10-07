@@ -24,8 +24,8 @@ const mangaplusTestTitleURL = "https://mangaplus.shueisha.co.jp/titles/100274"
 // mangaplusTestTitleID is the title_id the fixtures below are for
 const mangaplusTestTitleID = 100274
 
-// mangaplusTestChapter is a chapter of a fixture series, encoded the way the
-// API sends one: fields at their default value are left out, as protobuf does
+// mangaplusTestChapter is a fixture chapter; default-valued fields are left
+// out, as protobuf does
 type mangaplusTestChapter struct {
 	id            uint32
 	name          string
@@ -73,18 +73,14 @@ func mangaplusTestPageVariant(variant int, payload []byte) []byte {
 	return pbTestBytes(mangaplusViewerPagesField, pbTestBytes(variant, payload))
 }
 
-// mangaplusTestLanguage is one title_languages entry of the fixtures: the
-// title_id an edition of the series is pinned to, and the language enum it's
-// published as
+// mangaplusTestLanguage is a title_languages entry
 type mangaplusTestLanguage struct {
 	titleID  uint32
 	language uint64
 }
 
-// mangaplusTestEdition is another edition of the same series, as the fake API
-// serves it: the language it reports and its own chapter list, which is what
-// differs per edition on the real API (one edition per language, each with its
-// own title_id)
+// mangaplusTestEdition is another edition of the series: its language and
+// chapter list
 type mangaplusTestEdition struct {
 	language uint64
 	chapters []mangaplusTestChapter
@@ -112,9 +108,8 @@ func mangaplusTestTitleView(name string, language uint64, languages []mangaplusT
 	return pbTestConcat(fields...)
 }
 
-// mangaplusTestWindowChapters returns more chapters than the free window
-// lists: it's what keeps the notice about landing on a restricted edition
-// (covered on its own below) out of the tests that aren't about it
+// mangaplusTestWindowChapters returns more chapters than the free window, to
+// keep the restricted-edition notice out of the tests not about it
 func mangaplusTestWindowChapters() []mangaplusTestChapter {
 	chapters := make([]mangaplusTestChapter, 0, mangaplusFreeWindowChapters+1)
 	for i := 1; i <= mangaplusFreeWindowChapters+1; i++ {
@@ -133,8 +128,7 @@ func mangaplusTestPopup(subject, body string) []byte {
 	return pbTestConcat(pbTestString(mangaplusErrorPopupSubjectField, subject), pbTestString(mangaplusErrorPopupBodyField, body))
 }
 
-// mangaplusTestErrorResponse encodes the error envelope of a logical failure,
-// which the API answers with HTTP 200 like any other response
+// mangaplusTestErrorResponse encodes an error envelope (served over HTTP 200)
 func mangaplusTestErrorResponse(code string) []byte {
 	popup := mangaplusTestPopup("Invalid Parameter", fmt.Sprintf("There are issues connecting to Manga+. Please try again later.(%s)", code))
 
@@ -149,48 +143,28 @@ type mangaplusTestRequest struct {
 	agent  string
 }
 
-// mangaplusTestServer fakes the app API: it registers devices, serves one
-// series' title detail and its chapters' viewer responses, and records what it
-// was asked for. Every viewer response mints a token of its own, the way the
-// real API does.
+// mangaplusTestServer fakes the app API and records what it was asked for.
+// Every viewer response mints a token of its own, as the real API does.
 type mangaplusTestServer struct {
 	*httptest.Server
-	// title is the name the fake series reports
 	title string
-	// language is the language enum the edition the server was built with
-	// reports (0 being English, the enum's first value, which the wire leaves
-	// out)
-	language uint64
-	// languages is the title_languages list (field 27) every title view carries:
-	// the editions the series is published as, one per language
+	// language is the URL edition's language enum (0, English, is left out)
+	language  uint64
 	languages []mangaplusTestLanguage
-	// editions maps the title_id of the series' other editions to what each of
-	// them reports, the server's own language and chapter list serving as the
-	// edition its URL points at. A title_id absent from it is served that same
-	// default, so a test can tell an unexpected refetch by its call count
+	// editions serves other title_ids; any other id gets the URL's edition
 	editions map[uint32]mangaplusTestEdition
-	// secret is the device secret /register hands out
-	secret string
-	// chapters is what title_detailV3 returns
+	secret   string
 	chapters []mangaplusTestChapter
-	// pages maps a chapter_id to the image URLs its viewer response returns
-	pages map[uint32][]string
-	// errorCode, when set, makes every call answer the API's error envelope
-	// with that code, which is how the API reports its logical failures (over
-	// HTTP 200, like any other response)
+	pages    map[uint32][]string
+	// errorCode makes every call answer the error envelope with that code
 	errorCode string
-	// errorTitleIDs, when set, makes title_detailV3 answer the API's error
-	// envelope with that code for those title_ids only. It's how a test can
-	// make one edition's fetch fail while the URL's succeeds — the switch is
-	// only reached after that first fetch — which is what leaves a grabber
-	// with no cached detail to skip the switch by
+	// errorTitleIDs makes title_detailV3 fail for those title_ids only
 	errorTitleIDs map[uint32]string
-	// omitToken, when set, makes viewer responses omit the plus_vw_token
-	// cookie, which is the only place that token exists
-	omitToken bool
-	// requests is every call served, in order
-	requests []mangaplusTestRequest
-	// viewerCalls counts manga_viewer_v3 requests, which mint a new token each
+	// rejectSecret makes every call but /register with that secret answer 11012
+	rejectSecret string
+	// omitToken leaves the plus_vw_token cookie out of viewer responses
+	omitToken   bool
+	requests    []mangaplusTestRequest
 	viewerCalls int
 }
 
@@ -216,6 +190,11 @@ func (s *mangaplusTestServer) handle(w http.ResponseWriter, r *http.Request) {
 		query:  r.URL.Query(),
 		agent:  r.UserAgent(),
 	})
+
+	if s.rejectSecret != "" && r.URL.Path != "/register" && r.URL.Query().Get("secret") == s.rejectSecret {
+		_, _ = w.Write(mangaplusTestErrorResponse(mangaplusErrUnknownSecret))
+		return
+	}
 
 	switch r.URL.Path {
 	case "/register":
@@ -270,8 +249,7 @@ func (s *mangaplusTestServer) handle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// viewer returns the MangaViewer body of a chapter: its image pages, plus the
-// banner and advertisement entries the API nests among them
+// viewer returns a chapter's MangaViewer body, ads and banners included
 func (s *mangaplusTestServer) viewer(chapterID uint32) []byte {
 	fields := [][]byte{pbTestVarint(2, uint64(chapterID))}
 	for _, imageURL := range s.pages[chapterID] {
@@ -299,9 +277,8 @@ func (s *mangaplusTestServer) calls(path string) []mangaplusTestRequest {
 	return calls
 }
 
-// mangaplusTestAPI points the grabber at a local API for the duration of a
-// test, and shrinks the interval between calls so tests don't spend real
-// seconds on the rate limit
+// mangaplusTestAPI points the grabber at a local API and shrinks the rate
+// limit interval for the duration of a test
 func mangaplusTestAPI(t *testing.T, apiURL string, interval time.Duration) {
 	t.Helper()
 
@@ -313,16 +290,14 @@ func mangaplusTestAPI(t *testing.T, apiURL string, interval time.Duration) {
 }
 
 // mangaplusTestGrabber returns a grabber pointed at the fake API, with a
-// language set and a device secret that needs no registration (unless the test
-// is about exactly that)
+// device secret that needs no registration
 func mangaplusTestGrabber(t *testing.T, srv *mangaplusTestServer, url, language string) *Mangaplus {
 	t.Helper()
 
 	return mangaplusTestGrabberAt(t, srv.URL, url, language)
 }
 
-// mangaplusTestGrabberAt points a grabber at any local API URL, for the tests
-// that need a server of their own (one answering status codes, say)
+// mangaplusTestGrabberAt is mangaplusTestGrabber for a server of the test's own
 func mangaplusTestGrabberAt(t *testing.T, apiURL, url, language string) *Mangaplus {
 	t.Helper()
 
@@ -332,10 +307,8 @@ func mangaplusTestGrabberAt(t *testing.T, apiURL, url, language string) *Mangapl
 	return NewMangaplus(&Grabber{URL: url, Settings: &Settings{Language: language}})
 }
 
-// mangaplusTestCaptureOutput captures what the grabber prints while fn runs.
-// The lines it shows are part of its contract — one claiming a series is
-// published in a single language is what sent a user looking for a language the
-// site doesn't have — so they're asserted like any other output.
+// mangaplusTestCaptureOutput returns what the grabber prints while fn runs;
+// its messages are asserted like any other output
 func mangaplusTestCaptureOutput(t *testing.T, fn func()) string {
 	t.Helper()
 
@@ -382,9 +355,7 @@ func TestMangaplusTest(t *testing.T) {
 	}
 }
 
-// The site has to be identified from its URL, without a request: it's
-// registered before the grabbers that fetch the page to tell, so a looser
-// earlier match would shadow it (and cost an API call)
+// The site is identified by its URL alone, without a request
 func TestMangaplusIdentifySite(t *testing.T) {
 	urls := []string{
 		mangaplusTestTitleURL,
@@ -441,8 +412,7 @@ func TestMangaplusChapterNumber(t *testing.T) {
 	}
 }
 
-// The list the API sends is ordered, so the numbers derived from it must be
-// strictly increasing even though some of its names carry no number
+// Derived numbers stay strictly increasing, even for names without a number
 func TestMangaplusChapterNumberKeepsOrder(t *testing.T) {
 	names := []string{"#001", "#001-1", "#001-2", "#002", "ex", "#003", "#003-1", "#004"}
 
@@ -456,10 +426,8 @@ func TestMangaplusChapterNumberKeepsOrder(t *testing.T) {
 	}
 }
 
-// A chapter read once for free switches from FREE_FOR_FIRST_TIME to STANDARD
-// while staying readable, so a non-free type alone can't tell a locked chapter
-// from an already read one (which is what makes the count shown to the user
-// useful; a locked chapter is only refused by the API itself)
+// A chapter read once for free turns STANDARD while staying readable, so the
+// type alone can't tell a locked chapter from a read one
 func TestMangaplusChapterLocked(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -492,6 +460,14 @@ func TestMangaplusChapterTitle(t *testing.T) {
 	}{
 		{"Chapter 1: Romance Dawn", "#001", 1, "Romance Dawn"},
 		{"Chapter 1 - Romance Dawn", "#001", 1, "Romance Dawn"},
+		// every edition's own word for it, as the API sends them
+		{"Chapter 132 – Misaka", "#132", 132, "Misaka"},
+		{"Capítulo 132: Misaka", "#132", 132, "Misaka"},
+		{"Chapitre 133: Misaka n°2", "#133", 133, "Misaka n°2"},
+		{"ตอนที่ 132 มิซากะ", "#132", 132, "มิซากะ"},
+		// the Spanish edition's trailing full stop goes, an ellipsis doesn't
+		{"Capítulo 133: Misaka II.", "#133", 133, "Misaka II"},
+		{"Chapter 5: And then...", "#005", 5, "And then..."},
 		// a split part is written "Chapter 1.1" in its subtitle, while its number
 		// keeps the part in the hundredths
 		{"Chapter 1.1: Extra", "#001-1", 1.01, "Extra"},
@@ -563,9 +539,7 @@ func TestMangaplusDecodeTitleDetail(t *testing.T) {
 	}
 }
 
-// chapter_list_v2 is the complete list, and chapter_list_group is the older
-// truncated one: it's only decoded when the complete list is missing, not in
-// addition to it
+// chapter_list_group is only decoded when chapter_list_v2 is missing
 func TestMangaplusDecodeTitleDetailChapterListGroup(t *testing.T) {
 	first := mangaplusTestChapter{id: 1, name: "#001", subTitle: "Chapter 1"}
 	mid := mangaplusTestChapter{id: 2, name: "#002", subTitle: "Chapter 2"}
@@ -607,9 +581,8 @@ func TestMangaplusDecodeTitleDetailChapterListGroup(t *testing.T) {
 	}
 }
 
-// The windows of the older list can overlap (a long series lists the same
-// chapter in two of them): a chapter listed twice would be packed twice, which
-// shows up as a spurious v2 file
+// The older list's windows can overlap; a chapter listed twice would be
+// packed twice
 func TestMangaplusDecodeTitleDetailChapterListGroupDedupes(t *testing.T) {
 	first := mangaplusTestChapter{id: 1, name: "#001", subTitle: "Chapter 1"}
 	second := mangaplusTestChapter{id: 2, name: "#002", subTitle: "Chapter 2"}
@@ -639,9 +612,7 @@ func TestMangaplusDecodeTitleDetailChapterListGroupDedupes(t *testing.T) {
 		}
 	}
 
-	// a chapter the API sent without an id can't be downloaded at all, but it
-	// must not be deduped either: collapsing every id-less one into the first
-	// would lose most of the older list
+	// id-less chapters can't be told apart, so they aren't deduped
 	idless := pbTestBytes(28, pbTestConcat(
 		pbTestBytes(2, mangaplusTestChapter{name: "#001", subTitle: "Chapter 1"}.encode()),
 		pbTestBytes(2, mangaplusTestChapter{name: "#002", subTitle: "Chapter 2"}.encode()),
@@ -658,10 +629,8 @@ func TestMangaplusDecodeTitleDetailChapterListGroupDedupes(t *testing.T) {
 	}
 }
 
-// The field numbers are the API's schema, not an implementation detail of this
-// grabber: the fixtures elsewhere here are encoded with the same constants the
-// decoder reads, so a renumbered schema would keep every one of them green.
-// This one writes the numbers as literals, which pins the wire contract.
+// The fixtures use the decoder's own constants, so this one writes the field
+// numbers as literals to pin the wire contract
 func TestMangaplusWireFieldNumbers(t *testing.T) {
 	// Chapter.chapter_id(2), name(3), sub_title(4), chapter_type(16)
 	chapter := pbTestConcat(
@@ -726,9 +695,8 @@ func TestMangaplusWireFieldNumbers(t *testing.T) {
 		t.Errorf("second chapter = %+v, want the last window's", got)
 	}
 
-	// Page.manga_page(1) -> MangaPage.image_url(1) inside MangaViewer.pages(1),
-	// whose title_id is 9, inside SuccessResult.manga_viewer(10) inside
-	// Response.success(1)
+	// Response.success(1) -> manga_viewer(10) -> pages(1) -> manga_page(1) ->
+	// image_url(1), plus MangaViewer.title_id(9)
 	viewerBody := pbTestConcat(
 		pbTestVarint(2, 1023486),
 		pbTestBytes(1, pbTestBytes(1, pbTestString(1, "https://assets.test/67/1.webp"))),
@@ -759,11 +727,7 @@ func TestMangaplusWireFieldNumbers(t *testing.T) {
 		t.Errorf("hasCode(10522) = false for %q", apiErr.Error())
 	}
 
-	// SuccessResult.registeration_data(2) -> RegistrationData.device_secret(1),
-	// written as literals here and read back with the numbers the grabber
-	// registers a device with: the registration fixture elsewhere encodes both
-	// sides with those same constants, so a renumbered schema would keep it —
-	// and with it the whole grabber — green while never yielding a secret
+	// SuccessResult.registeration_data(2) -> RegistrationData.device_secret(1)
 	registered := strings.Repeat("e", 32)
 	registration := mangaplusTestDecodeResponse(t, pbTestBytes(1, pbTestBytes(2, pbTestString(1, registered))))
 	registerations := pbRepeated(registration.success, mangaplusRegistrationDataField)
@@ -796,8 +760,7 @@ func TestMangaplusDecodeTitleDetailErrors(t *testing.T) {
 	}
 }
 
-// Only manga_page entries are images: the advertisement and banner variants of
-// the Page oneof must not end up as pages of the chapter
+// Only manga_page entries are pages, never ads or banners
 func TestMangaplusDecodeViewer(t *testing.T) {
 	images := []string{
 		"https://jumpg-assets3.tokyo-cdn.com/secure/title/100274/chapter/1023486/manga_page/super_high/1.webp?hash=a",
@@ -877,8 +840,7 @@ func TestMangaplusDecodeResponseErrors(t *testing.T) {
 	}
 }
 
-// The API reports every failure with the same generic popup and appends a
-// numeric code to it, so the code is what has to be classified
+// Failures share a generic popup, so the appended code is what's classified
 func TestMangaplusAPIErrorClassification(t *testing.T) {
 	m := NewMangaplus(&Grabber{URL: mangaplusTestTitleURL, Settings: &Settings{}})
 
@@ -887,9 +849,7 @@ func TestMangaplusAPIErrorClassification(t *testing.T) {
 		code string
 		want error
 	}{
-		// the codes are literals, not the constants they're classified by:
-		// an envelope built out of the same constant it's matched against
-		// would agree with itself whatever the value
+		// literals, not the constants they're matched against
 		{"a chapter behind a subscription", "11301", errMangaplusSubscription},
 		{"a subscription's alternate code", "11302", errMangaplusSubscription},
 		{"a device secret the API doesn't know", "11012", errMangaplusDeviceSecret},
@@ -926,11 +886,8 @@ func TestMangaplusAPIErrorClassification(t *testing.T) {
 	}
 }
 
-// The secret is rejected when the API doesn't know it (11012), which only
-// happens for a stale cached secret or a MANGAPLUS_SECRET from somewhere else;
-// a missing one (10521) is the same problem for the user. Either way the message
-// has to name both escape hatches: the environment variable wins over the
-// cached file, so deleting the file alone wouldn't help while one is set.
+// A rejected secret (11012, or a missing one, 10521) names both ways out, the
+// variable first since it wins over the cached file
 func TestMangaplusRejectedSecretIsActionable(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	path, pathErr := mangaplusSecretPath()
@@ -967,16 +924,8 @@ func TestMangaplusRejectedSecretIsActionable(t *testing.T) {
 	}
 }
 
-// A rate limited device (10522) is locked out for ten or more minutes, so every
-// call after it must be refused locally: on a 1193-chapter title that would
-// otherwise be one refused request per chapter, all of them feeding the limiter.
-//
-// Where the refusal sits matters as much as its stickiness: the short-circuit
-// has to come *before* the rate limiter, or each of those chapters would also
-// sleep out a whole interval (ten minutes of it on that same title). The
-// interval below is what makes that ordering observable, and nothing in the
-// passing case waits for it: the call that does reach the limiter is the first
-// one, and the refused ones never reach it.
+// After a 10522 every call is refused locally, and before the rate limiter:
+// the interval below would otherwise be waited out by each refused call
 func TestMangaplusRateLimitIsSticky(t *testing.T) {
 	const interval = 2 * time.Second
 
@@ -1036,9 +985,8 @@ func TestMangaplusAPIErrorUnknownCode(t *testing.T) {
 	}
 }
 
-// The full fetch flow against the fake API: the chapter numbers derived from
-// the API's names, the titles stripped of their redundant number, and no
-// chapter filtered out for looking paywalled
+// The full chapter list flow: derived numbers, stripped titles, and no
+// chapter filtered for looking paywalled
 func TestMangaplusFetchChapters(t *testing.T) {
 	chapters := []mangaplusTestChapter{
 		{id: 101, name: "#001", subTitle: "Chapter 1: Romance Dawn"},
@@ -1085,11 +1033,8 @@ func TestMangaplusFetchChapters(t *testing.T) {
 		}
 	}
 
-	// the list is cached: a second call spends no other API request *and*
-	// returns the very slice the first one built. The request count alone
-	// wouldn't tell whether it also rebuilt the chapters, since the decoded
-	// title detail is cached too, so the two calls have to share a backing
-	// array.
+	// a second call makes no request and returns the very same slice (the
+	// detail is cached too, so only a shared backing array proves it)
 	before := len(srv.calls("/title_detailV3"))
 	reused, errs := m.FetchChapters()
 	if len(errs) > 0 {
@@ -1106,12 +1051,8 @@ func TestMangaplusFetchChapters(t *testing.T) {
 	}
 }
 
-// MangaPlus keeps one edition per language, each with its own title_id, and
-// neither lang nor clang can change which one a request is answered with: the
-// title_id pins it. With no --language the edition the URL points at is the one
-// to download, as it is for every other grabber, so the request must not carry
-// those params (asking for English would be asking for an edition the URL isn't,
-// and would only be ignored) and nothing is printed about languages.
+// With no --language the URL's edition is downloaded: no lang/clang is sent
+// (only the title_id picks an edition) and nothing is printed
 func TestMangaplusNoLanguageDownloadsTheURLEdition(t *testing.T) {
 	// more chapters than the free window lists, so the notice about a
 	// restricted edition (covered below) has nothing to say here
@@ -1158,8 +1099,7 @@ func TestMangaplusNoLanguageDownloadsTheURLEdition(t *testing.T) {
 	}
 }
 
-// --language matching the edition the URL already points at changes nothing:
-// no refetch, and no line claiming a switch happened
+// --language matching the URL's edition neither refetches nor claims a switch
 func TestMangaplusLanguageOfTheURLEditionDoesNotSwitch(t *testing.T) {
 	// more chapters than the free window lists, so the notice about landing on a
 	// restricted edition (covered below) has nothing to say here
@@ -1198,9 +1138,7 @@ func TestMangaplusLanguageOfTheURLEditionDoesNotSwitch(t *testing.T) {
 	}
 }
 
-// --language naming another edition is what the edition switch is for: the
-// wanted edition's title_id comes out of titleLanguages, its own detail is
-// fetched in place of the URL's, and the line says exactly that
+// --language naming another edition fetches that edition's title_id instead
 func TestMangaplusLanguageSwitchesEdition(t *testing.T) {
 	const englishTitleID = 100020
 
@@ -1259,13 +1197,8 @@ func TestMangaplusLanguageSwitchesEdition(t *testing.T) {
 	}
 }
 
-// The line about a switch is claimed only once the refetched edition reports the
-// language that was asked for. The languages list it came out of isn't always
-// consistent — it can name an edition the API then answers with another
-// language, or the URL's own title_id under a language its edition doesn't
-// report — and a line reading "downloading the fra edition" over an edition that
-// reports esp is a lie about what was downloaded (the chapters carry the
-// language they actually came in).
+// The switch line follows what the refetched edition reports, since the
+// languages list isn't always consistent with it
 func TestMangaplusSwitchLineMatchesWhatWasDownloaded(t *testing.T) {
 	// the API lists the URL's own title_id as its French edition, and that
 	// edition answers reporting the Spanish language
@@ -1311,19 +1244,9 @@ func TestMangaplusSwitchLineMatchesWhatWasDownloaded(t *testing.T) {
 	}
 }
 
-// Every code the --language flag takes is resolved to the edition MangaPlus
-// publishes the title as in that language, and the API names its editions with
-// 3-letter codes — which the flag takes as-is, that being the API's own format.
-// A code MangaPlus doesn't publish a title under names no edition at all, so
-// it's reported as such — the URL's edition is kept rather than an edition
-// nobody asked for being downloaded (a mistyped code used to be resolved to
-// English, which with the edition pinned by title_id only ever changed what the
-// warning said).
-//
-// The flag's codes, the language enum and the API's code are written out below
-// rather than read off the grabber's own tables: a swapped or mistyped entry
-// there is exactly what this is here to catch, and deriving the expectation
-// from the same table would make a swap agree with itself.
+// Every --language code resolves to its edition, the API's 3-letter codes
+// too, while an unpublished one keeps the URL's edition. Expectations are
+// written out, not read off the grabber's tables, to catch a swapped entry.
 func TestMangaplusLanguageCodeForms(t *testing.T) {
 	cases := []struct {
 		flag string
@@ -1404,9 +1327,7 @@ func TestMangaplusLanguageCodeForms(t *testing.T) {
 		t.Errorf("title requests = %v, want the URL's edition and then 100149", calls)
 	}
 
-	// a code that isn't one of the site's languages can't name an edition: the
-	// URL's is kept, and the line names the code itself, that having no name to
-	// show
+	// an unknown code keeps the URL's edition and is shown as itself
 	before := len(srv.calls("/title_detailV3"))
 	unknown := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "zz")
 	out = mangaplusTestCaptureOutput(t, func() {
@@ -1414,7 +1335,7 @@ func TestMangaplusLanguageCodeForms(t *testing.T) {
 			t.Fatalf("FetchChapters errors: %v", errs)
 		}
 	})
-	if want := "MangaPlus has no zz version of Test Series (available: ptb, eng); downloading the English version the link points at"; !strings.Contains(out, want) {
+	if want := "MangaPlus has no zz version of Test Series (available: pt, en); downloading the English version the link points at"; !strings.Contains(out, want) {
 		t.Errorf("printed %q, want it to contain %q", out, want)
 	}
 	if after := len(srv.calls("/title_detailV3")); after != before+1 {
@@ -1422,16 +1343,8 @@ func TestMangaplusLanguageCodeForms(t *testing.T) {
 	}
 }
 
-// Every code the language enum can report has a name to show the user: the
-// messages above name a language, and a code that reached them unnamed would
-// read as the API's own "eng" rather than the "English" it means. A code with
-// no name is returned as it is — an enum value this grabber doesn't know
-// ("lang11"), or one the user typed that the site doesn't publish ("zz") —
-// instead of being guessed at a language it might have been.
-//
-// The names are written out below rather than read off the grabber's own table,
-// the same way the code forms are: a mistyped or swapped entry there is what
-// this is here to catch.
+// Every enum code has a name, and an unknown code is shown as itself.
+// Written out rather than read off the grabber's table, to catch a typo.
 func TestMangaplusLanguageNames(t *testing.T) {
 	want := map[string]string{
 		"eng": "English",
@@ -1470,13 +1383,8 @@ func TestMangaplusLanguageNames(t *testing.T) {
 	}
 }
 
-// The language enum is a closed list, and a value outside it is reported as the
-// number it is. An edition carrying one must not read as English: with the
-// edition pinned by title_id alone, a guessed code makes such an edition stand
-// in for the English one — --language en would accept it, print nothing and
-// label its chapters eng, while the English edition the API does list is
-// ignored. Reported honestly, the lookup finds the real English edition, and
-// the codes named to the user are the ones the API sent.
+// An unknown enum value must not read as English, or it would stand in for the
+// real English edition
 func TestMangaplusUnknownLanguageEnumIsNotEnglish(t *testing.T) {
 	const (
 		englishTitleID = 100020
@@ -1517,22 +1425,20 @@ func TestMangaplusUnknownLanguageEnumIsNotEnglish(t *testing.T) {
 		t.Errorf("title requests = %v, want the URL's edition and then %d", calls, englishTitleID)
 	}
 
-	// the code of an edition whose enum isn't known is the one the API sent:
-	// what's offered as available is that, never a language it might have been
-	// taken for
+	// an unknown enum is offered as the code the API sent
 	other := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "fr")
 	out = mangaplusTestCaptureOutput(t, func() {
 		if _, errs := other.FetchChapters(); len(errs) > 0 {
 			t.Fatalf("FetchChapters errors: %v", errs)
 		}
 	})
-	if want := "MangaPlus has no French version of Test Series (available: eng, lang11); downloading the lang11 version the link points at"; !strings.Contains(out, want) {
+	if want := "MangaPlus has no French version of Test Series (available: en, lang11); downloading the lang11 version the link points at"; !strings.Contains(out, want) {
 		t.Errorf("--language fr printed %q, want it to contain %q", out, want)
 	}
 }
 
-// A reader URL pins an edition the same way: the series comes from the viewer
-// response, and the switch then happens against that edition's title_id
+// A reader URL's edition comes from its viewer response, then switches the same
+// way
 func TestMangaplusLanguageSwitchesEditionFromAViewerURL(t *testing.T) {
 	const (
 		seriesTitleID  = mangaplusTestTitleID
@@ -1583,11 +1489,8 @@ func TestMangaplusLanguageSwitchesEditionFromAViewerURL(t *testing.T) {
 		t.Fatalf("got %v, want the English edition's single chapter 1", list)
 	}
 
-	// the viewer call that resolved the series had no language to send yet, and
-	// the chapter of the switched edition is fetched with the resolved one. The
-	// param's *presence* is what's asserted: an empty clang is also what a
-	// request carrying clang= reads as, and sending one before the edition is
-	// known is a guess at an edition the title_id already pins
+	// the resolving call has no clang at all (presence is asserted, since
+	// clang= reads as empty too); the switched edition's call has its own
 	viewerCalls := srv.calls("/manga_viewer_v3")
 	if values, ok := viewerCalls[0].query["clang"]; ok {
 		t.Errorf("the resolving viewer call carries clang=%v, want no such param", values)
@@ -1600,11 +1503,8 @@ func TestMangaplusLanguageSwitchesEditionFromAViewerURL(t *testing.T) {
 	}
 }
 
-// A language the title isn't published in keeps the URL's edition. The line has
-// to stay factual: it names the languages the API lists, and never claims the
-// title is published in a single one (the URL's own edition is proof it isn't).
-// A response whose languages list never arrived says that instead of reading
-// non-publication out of a list that isn't there.
+// An unpublished language keeps the URL's edition, and the message names the
+// languages the API lists, if any
 func TestMangaplusUnpublishedLanguageKeepsTheURLEdition(t *testing.T) {
 	// more chapters than the free window lists, so the notice about landing on
 	// a restricted edition (covered below) has nothing to say here
@@ -1619,7 +1519,7 @@ func TestMangaplusUnpublishedLanguageKeepsTheURLEdition(t *testing.T) {
 		{
 			"the API lists other editions, just not that one",
 			[]mangaplusTestLanguage{{titleID: 100020, language: 0}, {titleID: mangaplusTestTitleID, language: 1}},
-			[]string{"MangaPlus has no French version of Test Series", "available: eng, esp", "downloading the Spanish version the link points at"},
+			[]string{"MangaPlus has no French version of Test Series", "available: en, es", "downloading the Spanish version the link points at"},
 			[]string{"only", "listed no other versions"},
 		},
 		{
@@ -1665,10 +1565,8 @@ func TestMangaplusUnpublishedLanguageKeepsTheURLEdition(t *testing.T) {
 	}
 }
 
-// The switch resolves one edition and no more: an answer that doesn't even
-// report the language that was asked for must not send the grabber looking for
-// a third edition (each lookup is a rate limited call, and the API locks a
-// device out after a handful of them)
+// A switch that lands on yet another language doesn't go looking for a third
+// edition: each lookup is a rate limited call
 func TestMangaplusEditionSwitchHappensOnce(t *testing.T) {
 	const englishTitleID = 100020
 
@@ -1702,14 +1600,8 @@ func TestMangaplusEditionSwitchHappensOnce(t *testing.T) {
 	}
 }
 
-// The switch is attempted once and no more. Its result is what makes a second
-// attempt pointless in a normal run (the detail gets cached, and a failed fetch
-// ends the run), so the flag that bounds it is only observable through a
-// grabber whose refetch failed: the cached detail is then still nil, and the
-// next call has to find the edition without asking the API for it again (each
-// lookup spends a rate limited call, and the device is locked out after a
-// handful of them).
-func TestMangaplusEditionSwitchIsAttemptedOnce(t *testing.T) {
+// A failed switch never falls back to the URL's edition on a later call
+func TestMangaplusFailedEditionSwitchIsNotSkipped(t *testing.T) {
 	const englishTitleID = 100020
 
 	srv := newMangaplusTestServer(t, []mangaplusTestChapter{{id: 201, name: "#001", subTitle: "Chapter 1: Misión"}}, nil)
@@ -1718,43 +1610,29 @@ func TestMangaplusEditionSwitchIsAttemptedOnce(t *testing.T) {
 		{titleID: englishTitleID, language: 0},
 		{titleID: mangaplusTestTitleID, language: 1},
 	}
-	// the wanted edition can't be fetched: the switch is reached (the URL's own
-	// detail is served), and its refetch fails
-	srv.errorTitleIDs = map[uint32]string{englishTitleID: mangaplusErrMissingSecret}
+	srv.errorTitleIDs = map[uint32]string{englishTitleID: "99999"}
 	m := mangaplusTestGrabber(t, srv, mangaplusTestTitleURL, "en")
 
 	mangaplusTestCaptureOutput(t, func() {
 		if _, err := m.FetchTitle(); err == nil {
-			t.Fatal("FetchTitle succeeded, want the failed refetch to surface")
+			t.Fatal("FetchTitle succeeded, want the failed switch to surface")
 		}
-	})
-	if calls := srv.calls("/title_detailV3"); len(calls) != 2 {
-		t.Fatalf("got %d title requests, want 2 (the URL's edition and the failed switch)", len(calls))
-	}
-
-	// the failed refetch left no detail behind, so this call goes through the
-	// whole switch path again — except for the switch itself
-	mangaplusTestCaptureOutput(t, func() {
-		if _, errs := m.FetchChapters(); len(errs) > 0 {
-			t.Fatalf("FetchChapters errors: %v", errs)
+		if _, errs := m.FetchChapters(); len(errs) == 0 {
+			t.Fatal("FetchChapters succeeded, want it to fail rather than list the URL's edition")
 		}
 	})
 
 	calls := srv.calls("/title_detailV3")
-	if len(calls) != 3 {
-		t.Fatalf("got %d title requests, want 3: the URL's edition, one switch, and the edition fetched again", len(calls))
+	if len(calls) != 4 {
+		t.Fatalf("got %d title requests, want 4: the URL's edition and the switch, twice", len(calls))
 	}
-	if got := calls[2].query.Get("title_id"); got != strconv.Itoa(mangaplusTestTitleID) {
-		t.Errorf("the last request asked for title_id %q, want the URL's %d", got, mangaplusTestTitleID)
+	if got := calls[3].query.Get("title_id"); got != strconv.Itoa(englishTitleID) {
+		t.Errorf("the last request asked for title_id %q, want the switch to %d", got, englishTitleID)
 	}
 }
 
-// The title_languages list is what turns a language into the edition to ask
-// for: MangaPlus has one edition per language, each with its own title_id, so
-// nothing else can (the title_id of the URL pins the edition it belongs to).
-// Every enum the API declares is pinned here, plus the two ways an entry can
-// name no edition: a language the list doesn't carry, and an entry with no
-// title_id (which can't be asked for at all, so it's no edition either).
+// title_languages maps every language to its edition; an unlisted language or
+// an entry without a title_id is no edition
 func TestMangaplusDecodeTitleLanguages(t *testing.T) {
 	languages := []mangaplusTestLanguage{
 		{titleID: 100020, language: 0},               // eng
@@ -1791,27 +1669,21 @@ func TestMangaplusDecodeTitleLanguages(t *testing.T) {
 		}
 	}
 
-	// a language the list doesn't carry has no edition, and neither has the
-	// one it does carry without a title_id: asking for it would ask the API for
-	// title_id 0, which is some other thing entirely
+	// neither an unlisted language nor an entry without a title_id is an edition
 	for _, language := range []string{"zzz", "rus"} {
 		if id, ok := detail.editionTitleID(language); ok {
 			t.Errorf("editionTitleID(%q) = %d, true, want no edition", language, id)
 		}
 	}
 
-	// the languages named to the user are the ones an edition can be asked
-	// for: the id-less entry isn't one, so "rus" is left out (naming it would
-	// offer a language that can't be downloaded)
+	// the id-less "rus" entry isn't offered to the user
 	codes := detail.languageCodes()
 	wantCodes := []string{"eng", "esp", "fra", "ind", "ptb", "tha", "deu", "ita", "vie"}
 	if strings.Join(codes, ",") != strings.Join(wantCodes, ",") {
 		t.Errorf("languageCodes() = %v, want the askable editions in the API's order: %v", codes, wantCodes)
 	}
 
-	// a response without title_languages names no edition at all: all there is
-	// to download is its own edition, whose language is Title.Language (the
-	// caller says so itself, see TestMangaplusUnpublishedLanguageKeepsTheURLEdition)
+	// a response without title_languages names no edition at all
 	single, err := decodeMangaplusTitleDetail(mangaplusTestTitleView("Kagurabachi", 2, nil, chapters...))
 	if err != nil {
 		t.Fatalf("decodeMangaplusTitleDetail: %v", err)
@@ -1824,11 +1696,8 @@ func TestMangaplusDecodeTitleLanguages(t *testing.T) {
 	}
 }
 
-// A titleLanguages entry with no title_id names an edition nobody can ask for
-// (the detail call is pinned by title_id, and 0 isn't one). It must not be
-// treated as an edition — the user would be told the title isn't published in
-// a language the very same line then offers as available, and a request for
-// title_id 0 would follow if it were believed.
+// An entry without a title_id can't be asked for, so it's neither switched to
+// nor offered as available
 func TestMangaplusLanguageListedWithoutAnEditionIsNotAvailable(t *testing.T) {
 	srv := newMangaplusTestServer(t, mangaplusTestWindowChapters(), nil)
 	srv.language = 1
@@ -1846,10 +1715,10 @@ func TestMangaplusLanguageListedWithoutAnEditionIsNotAvailable(t *testing.T) {
 		}
 	})
 
-	if want := "MangaPlus has no English version of Test Series (available: esp); downloading the Spanish version the link points at"; !strings.Contains(out, want) {
+	if want := "MangaPlus has no English version of Test Series (available: es); downloading the Spanish version the link points at"; !strings.Contains(out, want) {
 		t.Errorf("printed %q, want it to contain %q", out, want)
 	}
-	if strings.Contains(out, "available: eng") {
+	if strings.Contains(out, "available: en") {
 		t.Errorf("printed %q, which offers a language no edition of the title can be asked for as available", out)
 	}
 	if calls := srv.calls("/title_detailV3"); len(calls) != 1 {
@@ -1860,10 +1729,8 @@ func TestMangaplusLanguageListedWithoutAnEditionIsNotAvailable(t *testing.T) {
 	}
 }
 
-// A viewer URL is what needs a viewer call before the edition is known: that
-// call carries no clang at all (the API answers without it, while a default
-// would guess at an edition the title_id already pins), and every later one
-// carries the language the resolved edition reports
+// A reader URL's first viewer call carries no clang; later ones carry the
+// resolved edition's
 func TestMangaplusViewerClangFollowsTheResolvedEdition(t *testing.T) {
 	chapters := []mangaplusTestChapter{
 		{id: 1023486, name: "#067", subTitle: "Chapter 67: Kyoto Bloodshed Hotel"},
@@ -1878,22 +1745,20 @@ func TestMangaplusViewerClangFollowsTheResolvedEdition(t *testing.T) {
 	m := mangaplusTestGrabber(t, srv, "https://mangaplus.shueisha.co.jp/viewer/1023486", "")
 
 	// nothing is known about the edition until its detail is fetched
-	if got := m.clangLocked(); got != "" {
-		t.Errorf("clangLocked() = %q before any title detail, want none", got)
+	if got := m.language; got != "" {
+		t.Errorf("language = %q before any title detail, want none", got)
 	}
 
-	// resolving the series takes a viewer call, made before any title detail
-	// exists: it can't carry a language yet, and the param is absent rather than
-	// empty (a clang= of any value would be a guess at an edition the title_id
-	// already pins)
+	// the viewer call resolving the series comes before any detail, so it
+	// carries no clang param at all
 	if _, err := m.FetchTitle(); err != nil {
 		t.Fatalf("FetchTitle: %v", err)
 	}
 	if values, ok := srv.calls("/manga_viewer_v3")[0].query["clang"]; ok {
 		t.Errorf("the resolving viewer call carries clang=%v, want no such param", values)
 	}
-	if got := m.clangLocked(); got != "esp" {
-		t.Errorf("clangLocked() = %q, want the resolved edition's %q", got, "esp")
+	if got := m.language; got != "esp" {
+		t.Errorf("language = %q, want the resolved edition's %q", got, "esp")
 	}
 
 	list, errs := m.FetchChapters()
@@ -1912,14 +1777,8 @@ func TestMangaplusViewerClangFollowsTheResolvedEdition(t *testing.T) {
 	}
 }
 
-// An edition that lists no more than the free window's worth of chapters, on a
-// series with more than one edition, is what landing on a restricted edition
-// looks like: say so, without claiming what the other editions list (finding
-// that out would take one rate limited call each). It's said with --language
-// too — picking a language is exactly how one lands on such an edition (a
-// title's whole run can be free in one edition and the free window in another),
-// and the chapter count is the only hint a run gives before downloading — after
-// whatever the switch said, since it describes the edition that was downloaded.
+// An edition listing only the free window, on a series with several, gets a
+// one-line notice, after any switch line
 func TestMangaplusRestrictedEditionNotice(t *testing.T) {
 	window := make([]mangaplusTestChapter, 0, mangaplusFreeWindowChapters)
 	for i := 1; i <= mangaplusFreeWindowChapters; i++ {
@@ -1984,12 +1843,20 @@ func TestMangaplusRestrictedEditionNotice(t *testing.T) {
 
 			for _, want := range []string{
 				fmt.Sprintf("lists only %d chapters", len(window)),
-				"each language is a separate version: eng, esp",
-				"use --language to pick another",
+				"each language is a separate version: en, es",
 			} {
 				if !strings.Contains(out, want) {
 					t.Errorf("printed %q, want it to contain %q", out, want)
 				}
+			}
+			// a user who already passed --language isn't told to use it, only
+			// to pick another language with it
+			hint := "use --language to pick another"
+			if c.language != "" {
+				hint = "pick another one with --language"
+			}
+			if !strings.HasSuffix(strings.TrimSpace(out), hint) {
+				t.Errorf("printed %q, want it to end with %q", out, hint)
 			}
 			// one line (two after a switch), not a paragraph
 			if got := strings.Count(strings.TrimSpace(out), "\n"); got != lines-1 {
@@ -2005,9 +1872,8 @@ func TestMangaplusRestrictedEditionNotice(t *testing.T) {
 	}
 }
 
-// Every page carries the token minted by the viewer response its URLs belong
-// to: they're neither shared between chapters nor refetched, and --bundle
-// (which fetches every chapter twice) can't make one chapter send another's
+// Every page carries its own viewer response's token, which is never shared
+// between chapters nor refetched (--bundle fetches every chapter twice)
 func TestMangaplusFetchChapter(t *testing.T) {
 	chapters := []mangaplusTestChapter{
 		{id: 101, name: "#001", subTitle: "Chapter 1: Romance Dawn"},
@@ -2048,11 +1914,8 @@ func TestMangaplusFetchChapter(t *testing.T) {
 			if page.Headers["Plus-Vw-Token"] == "" {
 				t.Fatalf("chapter %d page %d has no token", i, n+1)
 			}
-			// the cookie has to be the same token: the shared http session
-			// may hold another response's (rejected) one
-			// the cookie's name is the API's own contract: it's written out
-			// instead of being read off the constant that produced it, so a
-			// wrong one fails here rather than at every chapter download
+			// the same token as a cookie, overriding the shared session's; the
+			// name is written out since it's the API's contract
 			if want := "plus_vw_token=" + page.Headers["Plus-Vw-Token"]; page.Headers["Cookie"] != want {
 				t.Errorf("chapter %d page %d cookie = %q, want %q", i, n+1, page.Headers["Cookie"], want)
 			}
@@ -2080,9 +1943,7 @@ func TestMangaplusFetchChapter(t *testing.T) {
 	}
 }
 
-// A reader URL doesn't carry the series it belongs to: that comes out of a
-// viewer response, which is then reused for that chapter instead of being
-// fetched again
+// A reader URL's series comes from its viewer response, which is then reused
 func TestMangaplusViewerURLResolvesTitle(t *testing.T) {
 	chapters := []mangaplusTestChapter{
 		{id: 1023486, name: "#067", subTitle: "Chapter 67: Kyoto Bloodshed Hotel"},
@@ -2130,9 +1991,8 @@ func TestMangaplusViewerURLResolvesTitle(t *testing.T) {
 	}
 }
 
-// A viewer response without its plus_vw_token cookie can't be used: the token
-// exists nowhere else (the app path's MangaViewer has no field of its own for
-// it), and every page would fail as a bare 400 with nothing pointing here
+// A viewer response without its plus_vw_token cookie is an error: every page
+// would otherwise fail with a bare 400
 func TestMangaplusViewerWithoutToken(t *testing.T) {
 	chapters := []mangaplusTestChapter{{id: 101, name: "#001", subTitle: "Chapter 1: Mission"}}
 	srv := newMangaplusTestServer(t, chapters, map[uint32][]string{101: {"https://assets.test/1/1.webp"}})
@@ -2153,8 +2013,7 @@ func TestMangaplusViewerWithoutToken(t *testing.T) {
 	}
 }
 
-// Every call carries the base params and the device secret; the one call that
-// must not carry a secret is the registration itself
+// Every call carries the base params and the secret, except registration
 func TestMangaplusRequestParams(t *testing.T) {
 	chapters := []mangaplusTestChapter{{id: 101, name: "#001", subTitle: "Chapter 1: Mission"}}
 	pages := map[uint32][]string{101: {"https://assets.test/1/1.webp?hash=a"}}
@@ -2193,10 +2052,8 @@ func TestMangaplusRequestParams(t *testing.T) {
 	}
 }
 
-// The logical failure envelope is expected over HTTP 200, but a front end in
-// front of the API (or the API one day) may answer 4xx/429 with the same body:
-// the API's own actionable message is what the user needs, not a bare status
-// code, and anything that isn't an envelope still falls back to that code
+// A non-200 carrying the error envelope surfaces the API's message; anything
+// else falls back to the status code
 func TestMangaplusRequestNon200(t *testing.T) {
 	cases := []struct {
 		name         string
@@ -2260,18 +2117,14 @@ func TestMangaplusRequestNon200(t *testing.T) {
 	}
 }
 
-// A response past the cap is refused instead of silently truncated: half a
-// protobuf message can still decode into a shorter, plausible one
+// A response past the cap is refused, not truncated
 func TestMangaplusRequestBodyCap(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(bytes.Repeat([]byte{0x0a}, mangaplusMaxResponseSize+1))
 	}))
 	defer srv.Close()
 
-	// the payload above is built from the constant, so the value itself has to
-	// be pinned somewhere: a few MB is what a real response needs (a
-	// 1193-chapter title is a few hundred KB), not just whatever the constant
-	// happens to say
+	// pin the cap itself: the payload above is built from the constant
 	if mangaplusMaxResponseSize != 16<<20 {
 		t.Errorf("mangaplusMaxResponseSize = %d, want %d", mangaplusMaxResponseSize, 16<<20)
 	}
@@ -2318,12 +2171,8 @@ func TestMangaplusRequestTimeout(t *testing.T) {
 	}
 }
 
-// Without a user config dir the secret must not be cached somewhere shared
-// (os.TempDir): it would hand the device to whoever else can read that.
-//
-// Every variable os.UserConfigDir reads is cleared, on every platform: it's
-// $HOME or $XDG_CONFIG_HOME on Unix and %AppData% on Windows, and clearing
-// only the Unix ones would leave the test failing for a Windows contributor.
+// Without a user config dir the secret isn't cached anywhere shared. Every
+// platform's variables are cleared (HOME, XDG_CONFIG_HOME, AppData).
 func TestMangaplusSecretPathWithoutConfigDir(t *testing.T) {
 	t.Setenv("HOME", "")
 	t.Setenv("XDG_CONFIG_HOME", "")
@@ -2356,8 +2205,7 @@ func TestMangaplusSecretPathWithoutConfigDir(t *testing.T) {
 	}
 }
 
-// The anonymous device secret comes from MANGAPLUS_SECRET, then from the file a
-// previous run cached, and otherwise from registering a new device with the API
+// The secret comes from MANGAPLUS_SECRET, then the cache, then registration
 func TestMangaplusDeviceSecret(t *testing.T) {
 	const (
 		envSecret        = "11111111111111111111111111111111"
@@ -2428,9 +2276,7 @@ func TestMangaplusDeviceSecret(t *testing.T) {
 				if got := register.query.Get("device_token"); !mangaplusSecretRe.MatchString(got) {
 					t.Errorf("device_token = %q, want 32 hex characters", got)
 				}
-				// the salt is part of the app itself, so it's written out here:
-				// a wrong one would still be accepted by the fake API, and only
-				// the real one could tell
+				// the salt is written out: the fake API would accept any
 				wantKey := md5Hex(register.query.Get("device_token") + "4Kin9vGg")
 				if got := register.query.Get("security_key"); got != wantKey {
 					t.Errorf("security_key = %q, want md5(device_token + salt) = %q", got, wantKey)
@@ -2463,8 +2309,7 @@ func TestMangaplusDeviceSecret(t *testing.T) {
 	}
 }
 
-// The API locks a device out when it's called too often, so calls are spaced
-// out instead of fired in a burst
+// Calls are spaced out instead of fired in a burst
 func TestMangaplusRateLimiter(t *testing.T) {
 	const (
 		interval = 30 * time.Millisecond
@@ -2495,8 +2340,7 @@ func TestMangaplusRateLimiter(t *testing.T) {
 	}
 }
 
-// mangaplusTestDecodeResponse decodes a response body the way the grabber's
-// request does, so the tests go through the same envelope field numbers
+// mangaplusTestDecodeResponse decodes a body the way request does
 func mangaplusTestDecodeResponse(t *testing.T, body []byte) *mangaplusAPIResponse {
 	t.Helper()
 
@@ -2506,4 +2350,59 @@ func mangaplusTestDecodeResponse(t *testing.T, body []byte) *mangaplusAPIRespons
 	}
 
 	return response
+}
+
+// A rejected cached secret is renewed once; a MANGAPLUS_SECRET never is
+func TestMangaplusRenewsRejectedCachedSecret(t *testing.T) {
+	stale := strings.Repeat("b", 32)
+
+	for _, fromEnv := range []bool{false, true} {
+		t.Run(fmt.Sprintf("fromEnv=%v", fromEnv), func(t *testing.T) {
+			dir := t.TempDir()
+			t.Setenv("HOME", dir)
+			t.Setenv("XDG_CONFIG_HOME", dir)
+			t.Setenv("AppData", dir)
+			t.Setenv(mangaplusSecretEnv, "")
+
+			path, err := mangaplusSecretPath()
+			if err != nil {
+				t.Fatalf("mangaplusSecretPath: %v", err)
+			}
+			if fromEnv {
+				t.Setenv(mangaplusSecretEnv, stale)
+			} else if err := mangaplusStoreSecret(path, stale); err != nil {
+				t.Fatalf("mangaplusStoreSecret: %v", err)
+			}
+
+			srv := newMangaplusTestServer(t, mangaplusTestWindowChapters(), nil)
+			srv.rejectSecret = stale
+			mangaplusTestAPI(t, srv.URL, time.Millisecond)
+			m := NewMangaplus(&Grabber{URL: mangaplusTestTitleURL, Settings: &Settings{}})
+
+			var title string
+			mangaplusTestCaptureOutput(t, func() { title, err = m.FetchTitle() })
+
+			registrations := len(srv.calls("/register"))
+			if fromEnv {
+				if !errors.Is(err, errMangaplusDeviceSecret) {
+					t.Errorf("FetchTitle error = %v, want it to wrap %v", err, errMangaplusDeviceSecret)
+				}
+				if registrations != 0 {
+					t.Errorf("got %d registrations, want none for a MANGAPLUS_SECRET", registrations)
+				}
+				return
+			}
+
+			if err != nil || title != "Test Series" {
+				t.Fatalf("FetchTitle = %q, %v; want the title after renewing the secret", title, err)
+			}
+			if registrations != 1 {
+				t.Errorf("got %d registrations, want 1", registrations)
+			}
+			cached, _ := os.ReadFile(path)
+			if got := strings.TrimSpace(string(cached)); got != srv.secret {
+				t.Errorf("cached secret = %q, want the renewed %q", got, srv.secret)
+			}
+		})
+	}
 }
