@@ -4,3 +4,6 @@ manga-downloader.exe
 demos/*.yml
 .worktrees
 .DS_Store
+# agent scratch dirs (never commit)
+.pi-subagents/
+docs/.work/

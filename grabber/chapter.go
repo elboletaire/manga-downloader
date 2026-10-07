@@ -28,6 +28,11 @@ type Page struct {
 	Number int64
 	// URL is the page URL
 	URL string
+	// Headers are extra headers this page is downloaded with, on top of the
+	// default ones (e.g. a token a site mints per response and binds to its
+	// own image URLs, which can't live in the shared http session without
+	// chapters downloaded in parallel sending each other's token)
+	Headers map[string]string
 	// Transform, if non-nil, post-processes the raw downloaded page bytes
 	// before they're packed (e.g. undoing a site's client-side image
 	// scrambling). Errors are retried the same as a failed download.

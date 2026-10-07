@@ -37,7 +37,7 @@ current folder.
 
 - **A single binary**: no runtime, no dependencies and no config file. Builds
   are available for Linux, macOS and Windows, plus Docker images.
-- **[84 supported sites](#supported-sites)**, from big aggregators to small
+- **[86 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG automatically,
@@ -52,8 +52,11 @@ current folder.
 
 ## Supported sites
 
+Manga Downloader currently supports **86 sites**, from big aggregators like
+MangaDex, MangaFire or MangaPark to individual scanlation groups:
+
 <details>
-<summary><b>Show all 84 supported sites</b></summary>
+<summary><b>Show all 86 supported sites</b></summary>
 <br>
 
 - [asmotoon.com (Asmodeus Scans)](https://asmotoon.com)
@@ -104,6 +107,7 @@ current folder.
 - [mangalivre.to (Manga Livre, former mangalivre.tv/mangalivre.net)](https://mangalivre.to)
 - [mangapark.page (MangaPark, the only live host: mangapark.to and the other mirrors are dead)](https://mangapark.page) \*
 - [mangapill.com](https://mangapill.com)
+- [mangaplus.shueisha.co.jp (Manga Plus, Shueisha's official reader)](https://mangaplus.shueisha.co.jp)
 - [mangaread.org](https://www.mangaread.org)
 - [mangasushi.org](https://mangasushi.org)
 - [mangataro.org](https://mangataro.org)
@@ -385,6 +389,32 @@ Use `--filename-template` to change file names. It takes a
 
 `{{.Version}}` is a counter that's added when two files would have the same
 name.
+
+### Environment variables
+
+| Variable           | Description                                    |
+| ------------------ | ---------------------------------------------- |
+| `MANGAPLUS_SECRET` | Anonymous device secret to use for Manga Plus |
+
+**Manga Plus** answers the complete chapter list only to an app client, which
+authenticates with an anonymous device secret. manga-downloader registers one
+on first use and caches it in `manga-downloader/mangaplus-secret` inside your
+user config folder (`$XDG_CONFIG_HOME` or `~/.config` on Linux,
+`~/Library/Application Support` on macOS, `%AppData%` on Windows): no account is
+ever needed. Secrets are 32 lowercase hexadecimal characters, and anything that
+isn't one is treated as absent — so exporting a malformed `MANGAPLUS_SECRET`,
+or deleting the cached file, makes the next run register a fresh device. Export
+a valid `MANGAPLUS_SECRET` to reuse a secret registered elsewhere.
+
+Manga Plus also **keeps one edition per language**, each with a `title_id` of
+its own, and their chapter lists are not the same: at the time of writing, its
+English and Indonesian editions listed the whole of One Piece while the other
+seven listed only the six chapters of the free window. A URL points at one of
+those editions, and the language parameters the site's API takes can't switch
+between them, so `--language` resolves the edition's own `title_id` and
+downloads that edition instead — `--language en` on a Spanish URL downloads the
+English one. With no `--language`, the edition the URL points at is the one
+downloaded.
 
 ### Options
 
