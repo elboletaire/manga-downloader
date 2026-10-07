@@ -986,10 +986,11 @@ func mangaplusURL(rawURL string) (kind string, id uint32, ok bool) {
 }
 
 // mangaplusChapterPrefixRe matches the "Chapter 12:" / "Chapter 12." /
-// "Chapter 12 -" prefix every subtitle in the chapter list starts with,
+// "Chapter 12 -" prefix every subtitle in the chapter list starts with, in the
+// words the editions use for it ("Capítulo 12:", "Chapitre 12:", "ตอนที่ 12"),
 // capturing the number so it can be told apart from a title that just happens
 // to start with the word "chapter"
-var mangaplusChapterPrefixRe = regexp.MustCompile(`(?i)^\s*chapter\s*(\d+(?:\.\d+)?)\s*[:.\-–]?\s*`)
+var mangaplusChapterPrefixRe = regexp.MustCompile(`(?i)^\s*(?:chapter|cap[ií]tulo|chapitre|ตอนที่)\s*(\d+(?:\.\d+)?)\s*[:.\-–]?\s*`)
 
 // mangaplusChapterTitle builds a chapter's title out of the API's subtitle,
 // dropping the leading "Chapter <number>[:.-]" prefix (the number is already
@@ -1006,7 +1007,13 @@ func mangaplusChapterTitle(subTitle, name string, number float64) string {
 	if matches := mangaplusChapterPrefixRe.FindStringSubmatch(title); matches != nil {
 		if prefix, err := strconv.ParseFloat(matches[1], 64); err == nil &&
 			(prefix == number || prefix == mangaplusPartSubtitleNumber(name)) {
-			if stripped := strings.TrimSpace(title[len(matches[0]):]); stripped != "" {
+			stripped := strings.TrimSpace(title[len(matches[0]):])
+			// the Spanish edition ends every title with a full stop, which
+			// would sit right before the file extension (an ellipsis stays)
+			if strings.HasSuffix(stripped, ".") && !strings.HasSuffix(stripped, "..") {
+				stripped = strings.TrimSpace(strings.TrimSuffix(stripped, "."))
+			}
+			if stripped != "" {
 				title = stripped
 			}
 		}

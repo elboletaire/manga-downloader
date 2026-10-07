@@ -500,6 +500,14 @@ func TestMangaplusChapterTitle(t *testing.T) {
 	}{
 		{"Chapter 1: Romance Dawn", "#001", 1, "Romance Dawn"},
 		{"Chapter 1 - Romance Dawn", "#001", 1, "Romance Dawn"},
+		// every edition's own word for it, as the API sends them
+		{"Chapter 132 – Misaka", "#132", 132, "Misaka"},
+		{"Capítulo 132: Misaka", "#132", 132, "Misaka"},
+		{"Chapitre 133: Misaka n°2", "#133", 133, "Misaka n°2"},
+		{"ตอนที่ 132 มิซากะ", "#132", 132, "มิซากะ"},
+		// the Spanish edition's trailing full stop goes, an ellipsis doesn't
+		{"Capítulo 133: Misaka II.", "#133", 133, "Misaka II"},
+		{"Chapter 5: And then...", "#005", 5, "And then..."},
 		// a split part is written "Chapter 1.1" in its subtitle, while its number
 		// keeps the part in the hundredths
 		{"Chapter 1.1: Extra", "#001-1", 1.01, "Extra"},
