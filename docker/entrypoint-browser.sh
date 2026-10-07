@@ -19,11 +19,4 @@ if [ -z "${DISPLAY}" ]; then
     done
 fi
 
-# su-exec resets HOME to the passwd entry (/home/manga), which entrypoint.sh's
-# adduser -H never creates. Chromium dies without a writable home (profile and
-# crashpad dirs — the misleading "chrome_crashpad_handler: --database is
-# required" error), so create it owned by the runtime user up front.
-mkdir -p /home/manga
-chown "${USER_ID:-1000}:${GROUP_ID:-1000}" /home/manga
-
 exec /usr/bin/entrypoint.sh "$@"

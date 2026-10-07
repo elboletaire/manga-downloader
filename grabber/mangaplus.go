@@ -299,6 +299,9 @@ type Mangaplus struct {
 	secretMu sync.Mutex
 	// secret is the anonymous device secret the app API authenticates with
 	secret string
+	// secretFromEnv records that secret came from MANGAPLUS_SECRET, which is
+	// never replaced behind the user's back when the API rejects it
+	secretFromEnv bool
 }
 
 // NewMangaplus returns a new Mangaplus site grabber
@@ -694,7 +697,48 @@ func (m *Mangaplus) apiGet(path string, params url.Values) (*mangaplusAPIRespons
 		return nil, err
 	}
 
-	return m.request("GET", path, params, secret)
+	response, err := m.request("GET", path, params, secret)
+	if !errors.Is(err, errMangaplusDeviceSecret) {
+		return response, err
+	}
+
+	// A cached secret the API no longer knows is replaced by a new device,
+	// once: the user would otherwise have to delete the cached file by hand
+	renewed, renewErr := m.renewDeviceSecret(secret)
+	if renewErr != nil {
+		return nil, renewErr
+	}
+	if renewed == "" {
+		return nil, err
+	}
+
+	return m.request("GET", path, params, renewed)
+}
+
+// renewDeviceSecret registers a new device in place of a secret the API
+// rejected, returning an empty secret when the rejected one came from
+// MANGAPLUS_SECRET: that one was set on purpose, so the error is the user's to
+// act on.
+func (m *Mangaplus) renewDeviceSecret(rejected string) (string, error) {
+	m.secretMu.Lock()
+	defer m.secretMu.Unlock()
+
+	if m.secretFromEnv {
+		return "", nil
+	}
+	if m.secret != rejected {
+		// someone else already renewed it
+		return m.secret, nil
+	}
+
+	path, err := mangaplusSecretPath()
+	if err != nil {
+		return "", err
+	}
+
+	color.Yellow("the cached MangaPlus device secret was rejected, registering a new device")
+
+	return m.registerDeviceLocked(path)
 }
 
 // request performs one call against the app API. Every call carries the base
@@ -793,7 +837,7 @@ func (m *Mangaplus) deviceSecret() (string, error) {
 	}
 
 	if secret := strings.TrimSpace(os.Getenv(mangaplusSecretEnv)); mangaplusSecretRe.MatchString(secret) {
-		m.secret = secret
+		m.secret, m.secretFromEnv = secret, true
 		return m.secret, nil
 	}
 
@@ -809,6 +853,12 @@ func (m *Mangaplus) deviceSecret() (string, error) {
 		}
 	}
 
+	return m.registerDeviceLocked(path)
+}
+
+// registerDeviceLocked registers a new device and caches its secret in path.
+// It must be called with m.secretMu held.
+func (m *Mangaplus) registerDeviceLocked(path string) (string, error) {
 	secret, err := m.registerDevice()
 	if err != nil {
 		return "", err

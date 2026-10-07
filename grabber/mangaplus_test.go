@@ -185,6 +185,9 @@ type mangaplusTestServer struct {
 	// only reached after that first fetch — which is what leaves a grabber
 	// with no cached detail to skip the switch by
 	errorTitleIDs map[uint32]string
+	// rejectSecret, when set, makes every call but /register carrying that
+	// secret answer the API's unknown secret error, as for a stale one
+	rejectSecret string
 	// omitToken, when set, makes viewer responses omit the plus_vw_token
 	// cookie, which is the only place that token exists
 	omitToken bool
@@ -216,6 +219,11 @@ func (s *mangaplusTestServer) handle(w http.ResponseWriter, r *http.Request) {
 		query:  r.URL.Query(),
 		agent:  r.UserAgent(),
 	})
+
+	if s.rejectSecret != "" && r.URL.Path != "/register" && r.URL.Query().Get("secret") == s.rejectSecret {
+		_, _ = w.Write(mangaplusTestErrorResponse(mangaplusErrUnknownSecret))
+		return
+	}
 
 	switch r.URL.Path {
 	case "/register":
@@ -2514,4 +2522,62 @@ func mangaplusTestDecodeResponse(t *testing.T, body []byte) *mangaplusAPIRespons
 	}
 
 	return response
+}
+
+// A cached secret the API no longer knows is replaced by a newly registered
+// device, once, instead of failing the run until the user deletes the file;
+// a MANGAPLUS_SECRET the API rejects is the user's to fix, so it's never
+// replaced
+func TestMangaplusRenewsRejectedCachedSecret(t *testing.T) {
+	stale := strings.Repeat("b", 32)
+
+	for _, fromEnv := range []bool{false, true} {
+		t.Run(fmt.Sprintf("fromEnv=%v", fromEnv), func(t *testing.T) {
+			dir := t.TempDir()
+			t.Setenv("HOME", dir)
+			t.Setenv("XDG_CONFIG_HOME", dir)
+			t.Setenv("AppData", dir)
+			t.Setenv(mangaplusSecretEnv, "")
+
+			path, err := mangaplusSecretPath()
+			if err != nil {
+				t.Fatalf("mangaplusSecretPath: %v", err)
+			}
+			if fromEnv {
+				t.Setenv(mangaplusSecretEnv, stale)
+			} else if err := mangaplusStoreSecret(path, stale); err != nil {
+				t.Fatalf("mangaplusStoreSecret: %v", err)
+			}
+
+			srv := newMangaplusTestServer(t, mangaplusTestWindowChapters(), nil)
+			srv.rejectSecret = stale
+			mangaplusTestAPI(t, srv.URL, time.Millisecond)
+			m := NewMangaplus(&Grabber{URL: mangaplusTestTitleURL, Settings: &Settings{}})
+
+			var title string
+			mangaplusTestCaptureOutput(t, func() { title, err = m.FetchTitle() })
+
+			registrations := len(srv.calls("/register"))
+			if fromEnv {
+				if !errors.Is(err, errMangaplusDeviceSecret) {
+					t.Errorf("FetchTitle error = %v, want it to wrap %v", err, errMangaplusDeviceSecret)
+				}
+				if registrations != 0 {
+					t.Errorf("got %d registrations, want none for a MANGAPLUS_SECRET", registrations)
+				}
+				return
+			}
+
+			if err != nil || title != "Test Series" {
+				t.Fatalf("FetchTitle = %q, %v; want the title after renewing the secret", title, err)
+			}
+			if registrations != 1 {
+				t.Errorf("got %d registrations, want 1", registrations)
+			}
+			cached, _ := os.ReadFile(path)
+			if got := strings.TrimSpace(string(cached)); got != srv.secret {
+				t.Errorf("cached secret = %q, want the renewed %q", got, srv.secret)
+			}
+		})
+	}
 }
