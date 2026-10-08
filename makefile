@@ -261,7 +261,7 @@ grabber/mangataro:
 grabber/roliascan:
 	go run . https://roliascan.com/manga/no-marriage/ 77
 grabber/sacachispa:
-	go run . https://sacachispa.site/series/boku-no-seito-wa-otona-gal 14
+	go run . https://sacachispa.site/manga/3ba3f7c1-4655-488f-87c5-bf1d797007c1/tsutte-tabetai-gal-sawa-san 19
 grabber/teamshadowi:
 	go run . https://www.team-shadowi.com/series/the-regressed-mercenary-has-a-plan 98
 grabber/taiyo:
