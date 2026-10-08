@@ -98,6 +98,7 @@ func (m *Mangafire) FetchChapter(f Filterable) (*Chapter, error) {
 		"",
 		0,
 		0,
+		"",
 	)
 	if err != nil {
 		return nil, err
@@ -154,6 +155,16 @@ func (m *Mangafire) load() error {
 		return err
 	}
 
+	lang, err := mangafireLanguage(m.Settings.Language)
+	if err != nil {
+		m.loadErr = err
+		return err
+	}
+	setup := ""
+	if lang.code != "" {
+		setup = mangafireLanguageJS(lang)
+	}
+
 	// urlSubstr matches the title (/api/titles/{hid}?...), the volumes list and
 	// every chapters page (/api/titles/{hid}/chapters?...); they're told apart
 	// below by their exact URL
@@ -164,6 +175,7 @@ func (m *Mangafire) load() error {
 		mangafireNextPageSelector,
 		mangafireMaxChapterPages,
 		0,
+		setup,
 	)
 	if err != nil {
 		m.loadErr = fmt.Errorf("error fetching chapters: %w", err)
@@ -199,7 +211,13 @@ func (m *Mangafire) load() error {
 	}
 
 	// second pass: collect chapters from every captured feed page
-	for _, c := range parseMangafireChapters(responses, chaptersPrefix) {
+	// the site's default language list is also captured before switching, so
+	// only the requested one is kept
+	feedPrefix := chaptersPrefix
+	if lang.code != "" {
+		feedPrefix += "?language=" + lang.code + "&"
+	}
+	for _, c := range parseMangafireChapters(responses, feedPrefix) {
 		title := c.Name
 		if title == "" {
 			title = "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64)
@@ -216,7 +234,11 @@ func (m *Mangafire) load() error {
 	}
 
 	if len(m.chapters) == 0 {
-		m.loadErr = fmt.Errorf("no chapters found for %s", m.URL)
+		if lang.code != "" {
+			m.loadErr = fmt.Errorf("no chapters found for %s in language %q", m.URL, m.Settings.Language)
+		} else {
+			m.loadErr = fmt.Errorf("no chapters found for %s", m.URL)
+		}
 	}
 
 	return m.loadErr
@@ -287,4 +309,71 @@ type mangafireChapterItem struct {
 // mangafirePage is one entry of the reader's pages list
 type mangafirePage struct {
 	Url string `json:"url"`
+}
+
+// mangafireLang is a language of the chapter-list dropdown: the code the API
+// takes as `language=` and the label (minus its flag emoji) the UI shows
+type mangafireLang struct {
+	code, label string
+}
+
+var mangafireLangs = []mangafireLang{
+	{"en", "English"},
+	{"es-la", "Spanish (LATAM)"},
+	{"es", "Spanish"},
+	{"fr", "French"},
+	{"ja", "Japanese"},
+	{"pt-br", "Portuguese (Br)"},
+	{"pt", "Portuguese"},
+}
+
+// mangafireLangAliases maps what users type for --language to a site code:
+// ISO-ish codes and the country-style ones (br, mx, jp) the other grabbers'
+// help text hints at
+var mangafireLangAliases = map[string]string{
+	"br": "pt-br", "pt_br": "pt-br", "ptbr": "pt-br",
+	"mx": "es-la", "es-mx": "es-la", "es_la": "es-la", "latam": "es-la",
+	"jp": "ja",
+}
+
+// mangafireLanguage resolves the --language value to a site language. An empty
+// value yields the zero value (leave the site's default list alone).
+func mangafireLanguage(v string) (mangafireLang, error) {
+	v = strings.ToLower(strings.TrimSpace(v))
+	if v == "" {
+		return mangafireLang{}, nil
+	}
+	if a, ok := mangafireLangAliases[v]; ok {
+		v = a
+	}
+	codes := make([]string, 0, len(mangafireLangs))
+	for _, l := range mangafireLangs {
+		if l.code == v {
+			return l, nil
+		}
+		codes = append(codes, l.code)
+	}
+	return mangafireLang{}, fmt.Errorf("unsupported language %q for mangafire (use one of: %s)", v, strings.Join(codes, ", "))
+}
+
+// mangafireLanguageJS returns an async script that picks the language in the
+// chapter list's "Lang" dropdown, which makes the SPA refetch the list with a
+// freshly signed call. It resolves to "" on success or an error message listing
+// what the title actually offers.
+func mangafireLanguageJS(l mangafireLang) string {
+	label, _ := json.Marshal(l.label)
+	return `(async function(){
+var want=` + string(label) + `;
+var norm=function(s){return s.replace(/^[^A-Za-z]+/,"").trim()};
+var btn=document.querySelector(".title-detail__toolbar .select");
+if(!btn)return "language selector not found";
+if(norm(btn.querySelector(".select__value").textContent)===want)return "";
+btn.click();
+await new Promise(function(r){setTimeout(r,500)});
+var items=Array.from(document.querySelectorAll(".dropdown__item"));
+var it=items.find(function(e){return norm(e.textContent)===want});
+if(!it)return "language not available for this title (available: "+items.map(function(e){return norm(e.textContent)}).join(", ")+")";
+it.click();
+return "";
+})()`
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/cdproto/input"
 	"github.com/chromedp/cdproto/network"
+	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/http"
 	"github.com/fatih/color"
@@ -150,6 +151,9 @@ func teardown() {
 const (
 	headlessProbeTimeout = 30 * time.Second
 	visibleTimeout       = 5 * time.Minute
+	// paginationTimeout bounds clicking through a paginated list once the page
+	// has rendered
+	paginationTimeout = 5 * time.Minute
 )
 
 // challengeError is returned when the wait selector never shows up, which
@@ -402,7 +406,7 @@ type APIResponse struct {
 //
 // Like GetHTML it tries headless first and transparently escalates to a visible
 // window if the wait selector times out (typically a challenge).
-func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration) ([]APIResponse, error) {
+func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration, setupJS string) ([]APIResponse, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -414,7 +418,7 @@ func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxC
 		}
 	}
 
-	res, err := captureAPI(pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, t)
+	res, err := captureAPI(pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, t, setupJS)
 	if err == nil {
 		return res, nil
 	}
@@ -426,7 +430,7 @@ func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxC
 		if rerr := goVisible(); rerr != nil {
 			return nil, rerr
 		}
-		if res, err = captureAPI(pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, visibleTimeout); err == nil {
+		if res, err = captureAPI(pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, visibleTimeout, setupJS); err == nil {
 			return res, nil
 		}
 	}
@@ -440,13 +444,19 @@ func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxC
 // captureAPI performs a single render capturing the response bodies whose URL
 // contains urlSubstr, optionally clicking through nextSelector pagination.
 // Callers must hold mu.
-func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration) ([]APIResponse, error) {
+func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration, setupJS string) ([]APIResponse, error) {
 	if err := start(); err != nil {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(browserCtx, timeout)
+	// the timeout only has to bound the initial render (that's what tells a
+	// challenge apart), so it's re-armed with a full paginationTimeout once the
+	// page has loaded: clicking through hundreds of chapters takes far longer
+	// than the headless probe is allowed to
+	ctx, cancel := context.WithCancel(browserCtx)
 	defer cancel()
+	timer := time.AfterFunc(timeout, cancel)
+	defer timer.Stop()
 
 	if visible {
 		startChallengeClicker(ctx)
@@ -495,6 +505,23 @@ func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks
 	// wait for the initial matching response(s) the SPA fires on load, so we
 	// don't fetch bodies before they exist
 	waitForGrowth(ctx, count, 0)
+	timer.Reset(paginationTimeout)
+
+	// page-specific setup (e.g. switching the chapter list's language); the
+	// script is async and resolves to an error message, or "" on success
+	if setupJS != "" {
+		before := count()
+		var msg string
+		if err := chromedp.Run(ctx, chromedp.Evaluate(setupJS, &msg, func(p *runtime.EvaluateParams) *runtime.EvaluateParams {
+			return p.WithAwaitPromise(true)
+		})); err != nil {
+			return nil, err
+		}
+		if msg != "" {
+			return nil, errors.New(msg)
+		}
+		waitForGrowth(ctx, count, before)
+	}
 
 	if nextSelector != "" {
 		clickJS := fmt.Sprintf(

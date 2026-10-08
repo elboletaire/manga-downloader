@@ -205,3 +205,46 @@ func TestParseMangafireChapters(t *testing.T) {
 		})
 	}
 }
+
+func TestMangafireLanguage(t *testing.T) {
+	cases := []struct {
+		in      string
+		want    string
+		wantErr bool
+	}{
+		{"", "", false}, // no flag: site default untouched
+		{"en", "en", false},
+		{"br", "pt-br", false}, // the code from #185
+		{"PT-BR", "pt-br", false},
+		{" mx ", "es-la", false},
+		{"es-la", "es-la", false},
+		{"es", "es", false},
+		{"jp", "ja", false},
+		{"xx", "", true},
+	}
+	for _, c := range cases {
+		got, err := mangafireLanguage(c.in)
+		if (err != nil) != c.wantErr {
+			t.Errorf("mangafireLanguage(%q) error = %v, wantErr %v", c.in, err, c.wantErr)
+			continue
+		}
+		if got.code != c.want {
+			t.Errorf("mangafireLanguage(%q) = %q, want %q", c.in, got.code, c.want)
+		}
+	}
+}
+
+// the SPA's chapter calls for the default language fire before the switch, so
+// the captured set holds both languages; only the requested feed may be kept
+func TestMangafireChaptersFilteredByLanguage(t *testing.T) {
+	const base = "https://mangafire.to/api/titles/mvzz/chapters"
+	responses := []browser.APIResponse{
+		{URL: base + "?language=en&sort=number&order=desc&page=1&limit=20&vrf=a", Body: `{"items":[{"id":1,"number":10,"language":"en","type":"official"}]}`},
+		{URL: base + "?language=pt-br&sort=number&order=desc&page=1&limit=20&vrf=b", Body: `{"items":[{"id":2,"number":233,"language":"pt-br","type":"official"}]}`},
+		{URL: base + "?language=pt-br&sort=number&order=desc&page=2&limit=20&vrf=c", Body: `{"items":[{"id":3,"number":232,"language":"pt-br","type":"official"}]}`},
+	}
+	got := parseMangafireChapters(responses, base+"?language=pt-br&")
+	if len(got) != 2 || got[0].Id != 2 || got[1].Id != 3 {
+		t.Errorf("got %+v, want only the pt-br chapters 233 and 232", got)
+	}
+}
