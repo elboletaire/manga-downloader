@@ -7,37 +7,46 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Sacachispa is a grabber for sacachispa.site, an English scanlation site on
-// the Next.js App Router. Like team-shadowi, the series page streams its whole
-// dataset through the `self.__next_f.push` RSC flight payload, including every
-// chapter's already-resolved page-image URLs, so a single fetch covers the
-// title, the chapters and their pages. The DOM itself renders only a handful
-// of chapter links (the first plus the latest few), so a selector-driven
-// grabber would silently miss most chapters.
+// a var so the tests can point it at a local server
+var sacachispaAPI = "https://api.sacachispa.site/api"
+
+// Sacachispa is a grabber for sacachispa.site, an English scanlation site.
+// The site is a SvelteKit SPA over an open JSON API (api.sacachispa.site): the
+// series page ships no data of its own (and renders just a slice of the chapter
+// list), so everything is read from the API, which needs no authentication for
+// free chapters. A chapter ("chapter") has one or more releases (one per
+// group/language), and a release owns the page images.
 type Sacachispa struct {
 	*Grabber
-	data *sacachispaSeriesData
+	mangaID string
 }
 
 func NewSacachispa(g *Grabber) *Sacachispa {
 	return &Sacachispa{Grabber: g}
 }
 
-// SacachispaChapter represents a sacachispa.site chapter. Its pages are
-// already known from the series page fetch, so FetchChapter needs no further
-// network call.
+// SacachispaChapter represents a sacachispa.site chapter
 type SacachispaChapter struct {
 	Chapter
-	// SourceType is the chapter's hosting backend ("upload" ships the pages
-	// inline; the payload also has imagechest/cubari fields for chapters
-	// hosted elsewhere, which would arrive with no pages at all)
-	SourceType string
+	// ID is the API's chapter id, whose releases hold the pages
+	ID string
+	// PatreonOnly marks chapters the API refuses to serve (403) until they
+	// become free
+	PatreonOnly bool
 }
+
+// the site's URLs carry the manga's UUID: /manga/{uuid}/{slug} for a series
+// and /read/{release uuid} for the reader
+var (
+	sacachispaMangaRe = regexp.MustCompile(`/manga/([0-9a-fA-F-]{36})`)
+	sacachispaReadRe  = regexp.MustCompile(`/read/([0-9a-fA-F-]{36})`)
+)
 
 // Test returns true if the URL is a sacachispa.site URL
 func (s *Sacachispa) Test() (bool, error) {
@@ -47,159 +56,185 @@ func (s *Sacachispa) Test() (bool, error) {
 
 // FetchTitle fetches and returns the manga title
 func (s *Sacachispa) FetchTitle() (string, error) {
-	data, err := s.fetchData()
+	id, err := s.resolveMangaID()
 	if err != nil {
 		return "", err
 	}
 
-	return sanitizeTitle(data.Title), nil
+	var res struct {
+		Data struct {
+			Title string `json:"title"`
+		} `json:"data"`
+	}
+	if err := sacachispaGet("/manga/"+id, &res); err != nil {
+		return "", err
+	}
+	if res.Data.Title == "" {
+		return "", errors.New("no title found for the series")
+	}
+
+	return sanitizeTitle(res.Data.Title), nil
 }
 
-// FetchChapters returns the chapters of the manga, including their page
-// images (already embedded in the series page payload)
+// FetchChapters returns the chapters of the manga. Their pages are fetched
+// later, in FetchChapter, so only the requested chapters cost API calls.
 func (s *Sacachispa) FetchChapters() (Filterables, []error) {
-	data, err := s.fetchData()
+	id, err := s.resolveMangaID()
 	if err != nil {
 		return nil, []error{err}
 	}
 
-	chapters := make(Filterables, 0, len(data.Chapters))
-	for _, c := range data.Chapters {
-		title := "Chapter " + formatChapterNumber(c.Number)
-		if t := strings.TrimSpace(c.Title); t != "" {
-			title += " - " + t
+	chapters := Filterables{}
+	for page, pages := 1, 1; page <= pages; page++ {
+		var res struct {
+			Data []struct {
+				ID          string `json:"id"`
+				Chapter     string `json:"chapter"`
+				Title       string `json:"title"`
+				PatreonOnly bool   `json:"patreonOnly"`
+			} `json:"data"`
+			Pagination struct {
+				Pages int `json:"pages"`
+			} `json:"pagination"`
 		}
+		path := fmt.Sprintf("/chapters?mangaId=%s&limit=100&page=%d", id, page)
+		if err := sacachispaGet(path, &res); err != nil {
+			return nil, []error{err}
+		}
+		pages = res.Pagination.Pages
 
-		pages := make([]Page, 0, len(c.Pages))
-		for i, url := range c.Pages {
-			if strings.TrimSpace(url) == "" {
+		for _, c := range res.Data {
+			// decimals like 22.5 exist, so this must stay a float
+			number, err := strconv.ParseFloat(strings.TrimSpace(c.Chapter), 64)
+			if err != nil {
 				continue
 			}
-			pages = append(pages, Page{
-				Number: int64(i + 1),
-				URL:    url,
+
+			chapters = append(chapters, &SacachispaChapter{
+				Chapter: Chapter{
+					Number:   number,
+					Title:    chapterTitleOrDefault(c.Title, number),
+					Language: "en",
+				},
+				ID:          c.ID,
+				PatreonOnly: c.PatreonOnly,
 			})
 		}
-
-		chapters = append(chapters, &SacachispaChapter{
-			Chapter: Chapter{
-				Number:     c.Number,
-				Title:      title,
-				PagesCount: int64(len(pages)),
-				Pages:      pages,
-				Language:   "en",
-			},
-			SourceType: c.SourceType,
-		})
 	}
 
 	return chapters, nil
 }
 
-// FetchChapter returns the chapter and its pages. The series page fetch
-// (FetchChapters) already carried every chapter's full image list, so there's
-// nothing left to fetch here.
+// FetchChapter returns the chapter and its pages
 func (s Sacachispa) FetchChapter(f Filterable) (*Chapter, error) {
 	schap, ok := f.(*SacachispaChapter)
 	if !ok {
 		return nil, errors.New("invalid chapter type")
 	}
 
-	if len(schap.Pages) == 0 {
-		// only "upload" chapters ship their pages in the payload; anything
-		// hosted elsewhere would pack an empty archive, so fail loudly
-		return nil, fmt.Errorf(
-			"no pages found for chapter %s (source type %q isn't hosted on the site)",
-			formatChapterNumber(f.GetNumber()), schap.SourceType,
-		)
+	var rels struct {
+		Data []struct {
+			ID       string `json:"id"`
+			Language string `json:"language"`
+		} `json:"data"`
+	}
+	if err := sacachispaGet("/chapters/"+schap.ID+"/releases", &rels); err != nil {
+		return nil, err
+	}
+	if len(rels.Data) == 0 {
+		return nil, fmt.Errorf("no releases found for chapter %s", formatChapterNumber(f.GetNumber()))
+	}
+
+	// a chapter may have several releases; prefer the requested language
+	release := rels.Data[0]
+	if lang := s.GetPreferredLanguage(); lang != "" {
+		for _, r := range rels.Data {
+			if r.Language == lang {
+				release = r
+				break
+			}
+		}
+	}
+
+	var res struct {
+		Data struct {
+			Items []struct {
+				Page int    `json:"page"`
+				URL  string `json:"url"`
+			} `json:"items"`
+		} `json:"data"`
+	}
+	if err := sacachispaGet("/releases/"+release.ID+"/pages", &res); err != nil {
+		if schap.PatreonOnly {
+			return nil, fmt.Errorf(
+				"chapter %s is Patreon-exclusive and not available yet: %w",
+				formatChapterNumber(f.GetNumber()), err,
+			)
+		}
+		return nil, err
+	}
+
+	pages := make([]Page, 0, len(res.Data.Items))
+	for i, p := range res.Data.Items {
+		if strings.TrimSpace(p.URL) == "" {
+			continue
+		}
+		pages = append(pages, Page{Number: int64(i + 1), URL: p.URL})
+	}
+	if len(pages) == 0 {
+		return nil, fmt.Errorf("no pages found for chapter %s", formatChapterNumber(f.GetNumber()))
 	}
 
 	chapter := schap.Chapter
+	chapter.Pages = pages
+	chapter.PagesCount = int64(len(pages))
 
 	return &chapter, nil
 }
 
-// fetchData fetches and caches the series page's embedded RSC payload (title,
-// chapters and each chapter's page images)
-func (s *Sacachispa) fetchData() (*sacachispaSeriesData, error) {
-	if s.data != nil {
-		return s.data, nil
+// resolveMangaID returns the manga's UUID out of the series URL, or, for a
+// reader URL, looks it up through the release (so, as everywhere else, a
+// chapter URL downloads the whole series)
+func (s *Sacachispa) resolveMangaID() (string, error) {
+	if s.mangaID != "" {
+		return s.mangaID, nil
 	}
 
+	if m := sacachispaMangaRe.FindStringSubmatch(s.URL); m != nil {
+		s.mangaID = m[1]
+		return s.mangaID, nil
+	}
+
+	if m := sacachispaReadRe.FindStringSubmatch(s.URL); m != nil {
+		var res struct {
+			Data struct {
+				Manga struct {
+					ID string `json:"id"`
+				} `json:"manga"`
+			} `json:"data"`
+		}
+		if err := sacachispaGet("/releases/"+m[1], &res); err != nil {
+			return "", err
+		}
+		if res.Data.Manga.ID != "" {
+			s.mangaID = res.Data.Manga.ID
+			return s.mangaID, nil
+		}
+	}
+
+	return "", errors.New("unsupported URL: expected https://sacachispa.site/manga/{id}/{slug} (the older /series/{slug} URLs no longer exist)")
+}
+
+// sacachispaGet fetches an API path and decodes its JSON response into v
+func sacachispaGet(path string, v any) error {
 	body, err := http.GetText(http.RequestParams{
-		URL:     s.seriesURL(),
-		Referer: s.BaseUrl(),
+		URL:     sacachispaAPI + path,
+		Referer: "https://sacachispa.site",
+		Headers: map[string]string{"Accept": "application/json"},
 	})
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("%s: %w", strings.SplitN(path, "?", 2)[0], err)
 	}
 
-	data, err := parseSacachispaSeriesData(body)
-	if err != nil {
-		return nil, err
-	}
-
-	s.data = data
-
-	return s.data, nil
-}
-
-// seriesURL maps a chapter URL down to its series URL: chapter pages carry
-// only their own pages in the payload, while the series page carries
-// everything, so the grabber always fetches the latter
-func (s Sacachispa) seriesURL() string {
-	if i := strings.Index(s.URL, "/chapter/"); i != -1 {
-		return s.URL[:i]
-	}
-	return s.URL
-}
-
-// sacachispaTitleRe matches the series title inside the flight stream: the
-// chapters' own "title" keys are null (or live inside the chapters array,
-// after this marker), so anchoring on the sibling seriesId key is what keeps
-// this from ever grabbing a chapter title.
-var sacachispaTitleRe = regexp.MustCompile(`"seriesId":"[^"]*","title":"((?:[^"\\]|\\.)*)"`)
-
-// parseSacachispaSeriesData extracts the series title and the `"chapters":[...]`
-// array embedded in the page's Next.js RSC stream. They live in different
-// react element tuples, so each is extracted on its own.
-func parseSacachispaSeriesData(html string) (*sacachispaSeriesData, error) {
-	stream, err := nextFlightStream(html)
-	if err != nil {
-		return nil, err
-	}
-
-	data := &sacachispaSeriesData{}
-
-	m := sacachispaTitleRe.FindStringSubmatch(stream)
-	if m == nil {
-		return nil, errors.New("no series title found in the page data (is the URL a series page?)")
-	}
-	// the captured group is still JSON-escaped, so decode it as a JSON string
-	if err := json.Unmarshal([]byte(`"`+m[1]+`"`), &data.Title); err != nil {
-		return nil, err
-	}
-
-	raw, err := extractBalancedJSON(stream, `"chapters":`)
-	if err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal([]byte(raw), &data.Chapters); err != nil {
-		return nil, err
-	}
-
-	return data, nil
-}
-
-// sacachispaSeriesData is the payload embedded in sacachispa.site series pages
-type sacachispaSeriesData struct {
-	Title    string
-	Chapters []struct {
-		// decimals like 8.5 exist, so this must stay a float
-		Number float64 `json:"chapter_number"`
-		// null for most chapters, in which case the site renders "Chapter N"
-		Title      string   `json:"title"`
-		SourceType string   `json:"source_type"`
-		Pages      []string `json:"pages"`
-	}
+	return json.Unmarshal([]byte(body), v)
 }
