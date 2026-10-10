@@ -43,7 +43,12 @@ jobs:
         # keep in sync with GOTAGS in the makefile: this is the only build path
         # that doesn't go through it. Without it, released binaries would try to
         # dlopen a system libavif instead of using the embedded WASM decoder.
-        build_flags: "-tags nodynamic"
+        # -trimpath keeps the runner's paths out of the binary (and makes the
+        # build reproducible); -s -w drop the symbol table and DWARF, about a
+        # third of the size. Panic traces don't need either: they come from the
+        # runtime's own pclntab, which stays.
+        build_flags: "-tags nodynamic -trimpath"
         ldflags: >-
+          -s -w
           -X 'github.com/elboletaire/manga-downloader/cmd.Version=${{ env.sha_short }}'
           -X 'github.com/elboletaire/manga-downloader/cmd.Tag=${{ env.tag }}'
