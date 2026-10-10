@@ -13,6 +13,7 @@ import { DownloadDock } from './DownloadDock';
 import { errorMessage } from './format';
 import { ActivityIcon, Logo, SlidersIcon, Spinner } from './icons';
 import { LogDrawer, StatusBar } from './LogPanel';
+import { createOptionsWriter } from './optionsWriter';
 import { OptionsPanel } from './OptionsPanel';
 import { SourceBar } from './SourceBar';
 import { tally } from './run';
@@ -28,6 +29,14 @@ export function App({ api }: { api: Api }) {
   const [loadRefusal, setLoadRefusal] = useState('');
   const [actionError, setActionError] = useState('');
   const [optionError, setOptionError] = useState('');
+  // options are written one at a time, each patch over the last set sent
+  const [optionsWriter] = useState(() => createOptionsWriter((options) => api.setOptions(options)));
+
+  useEffect(() => {
+    if (state !== null) {
+      optionsWriter.pushed(state.options);
+    }
+  }, [state, optionsWriter]);
 
   // a run that starts brings its progress into view, as does opening the
   // window on a run (or its outcome); the tab stays the user's to change
@@ -70,7 +79,7 @@ export function App({ api }: { api: Api }) {
   };
   const setOptions = (patch: Partial<Options>) => {
     setOptionError('');
-    return api.setOptions({ ...state.options, ...patch }).catch((e: unknown) => {
+    return optionsWriter.patch(patch).catch((e: unknown) => {
       setOptionError(errorMessage(e));
       throw e;
     });
@@ -86,6 +95,7 @@ export function App({ api }: { api: Api }) {
         onOptions={setOptions}
         onError={setOptionError}
         loadRefusal={loadRefusal}
+        optionError={optionError}
       />
 
       <main className="workspace">
@@ -123,26 +133,39 @@ export function App({ api }: { api: Api }) {
             </TabButton>
           </div>
 
-          <div className="side-body" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-            {tab === 'options' ? (
-              <OptionsPanel
-                state={state}
-                onOptions={setOptions}
-                onChooseFolder={async () => {
-                  setOptionError('');
-                  await api.chooseFolder();
-                }}
-                onError={setOptionError}
-                error={optionError}
-              />
-            ) : (
-              <ActivityPanel
-                state={state}
-                onOpenFolder={() => {
-                  api.openFolder().catch((e) => setActionError(errorMessage(e)));
-                }}
-              />
-            )}
+          {/* both panels stay mounted, so each tab's aria-controls has a target */}
+          <div
+            className="side-body"
+            role="tabpanel"
+            id="panel-options"
+            aria-labelledby="tab-options"
+            tabIndex={0}
+            hidden={tab !== 'options'}
+          >
+            <OptionsPanel
+              state={state}
+              onOptions={setOptions}
+              onChooseFolder={async () => {
+                setOptionError('');
+                await api.chooseFolder();
+              }}
+              onError={setOptionError}
+            />
+          </div>
+          <div
+            className="side-body"
+            role="tabpanel"
+            id="panel-activity"
+            aria-labelledby="tab-activity"
+            tabIndex={0}
+            hidden={tab !== 'activity'}
+          >
+            <ActivityPanel
+              state={state}
+              onOpenFolder={() => {
+                api.openFolder().catch((e) => setActionError(errorMessage(e)));
+              }}
+            />
           </div>
 
           <DownloadDock

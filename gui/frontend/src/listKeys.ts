@@ -33,6 +33,11 @@ export function moveActive(key: string, active: number, count: number, page: num
   return null;
 }
 
+/** Shift with the vertical arrows extends the selection from the anchor */
+export function extendsSpan(key: string, shift: boolean): boolean {
+  return shift && (key === 'ArrowUp' || key === 'ArrowDown');
+}
+
 /** Every index from a to b inclusive, in either direction, in ascending order */
 export function spanIndices(a: number, b: number): number[] {
   const lo = Math.min(a, b);

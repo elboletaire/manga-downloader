@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { moveActive, spanIndices } from './listKeys';
+import { extendsSpan, moveActive, spanIndices } from './listKeys';
 
 describe('moveActive', () => {
   it('steps with the arrows, clamped to the list', () => {
@@ -33,5 +33,15 @@ describe('spanIndices', () => {
     expect(spanIndices(2, 5)).toEqual([2, 3, 4, 5]);
     expect(spanIndices(5, 2)).toEqual([2, 3, 4, 5]);
     expect(spanIndices(4, 4)).toEqual([4]);
+  });
+});
+
+describe('extendsSpan', () => {
+  it('is true for Shift with the vertical arrows only', () => {
+    expect(extendsSpan('ArrowDown', true)).toBe(true);
+    expect(extendsSpan('ArrowUp', true)).toBe(true);
+    expect(extendsSpan('ArrowDown', false)).toBe(false);
+    expect(extendsSpan('PageDown', true)).toBe(false);
+    expect(extendsSpan(' ', true)).toBe(false);
   });
 });

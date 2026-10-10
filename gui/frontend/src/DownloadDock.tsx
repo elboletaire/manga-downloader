@@ -2,6 +2,7 @@
 // when idle (with the reason it can't start, if any), the run's overall
 // progress and Cancel while it runs.
 
+import { useEffect, useRef } from 'react';
 import { DownloadIcon, Spinner, XIcon } from './icons';
 import { downloadBlocker, downloadLabel, overallProgress } from './run';
 import type { State } from './types';
@@ -15,6 +16,24 @@ interface Props {
 }
 
 export function DownloadDock({ state, error, onStart, onCancel }: Props) {
+  // Download and Cancel are different buttons, so the focus moves to the other
+  // one when the run starts or ends, rather than falling to the body
+  const focused = useRef<'start' | 'cancel' | null>(null);
+  const startButton = useRef<HTMLButtonElement>(null);
+  const cancelButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (state.running && focused.current === 'start') {
+      cancelButton.current?.focus();
+    } else if (!state.running && focused.current === 'cancel') {
+      if (startButton.current?.disabled) {
+        // the run ended with nothing to download: focus the chapter list instead of the body
+        document.querySelector<HTMLElement>('[role="listbox"]')?.focus();
+      } else {
+        startButton.current?.focus();
+      }
+    }
+  }, [state.running]);
+
   if (state.running) {
     const overall = overallProgress(state);
     const pct = Math.round(overall.fraction * 100);
@@ -44,7 +63,20 @@ export function DownloadDock({ state, error, onStart, onCancel }: Props) {
           </div>
           {state.cancelling && <p className="hint">Chapters already downloading will finish; no new ones start.</p>}
         </div>
-        <button type="button" className="btn danger-outline block" disabled={state.cancelling} onClick={onCancel}>
+        {/* aria-disabled, not disabled: a disabled button drops its focus, and Cancel's focus must survive to the run's end */}
+        <button
+          type="button"
+          ref={cancelButton}
+          className="btn danger-outline block"
+          aria-disabled={state.cancelling || undefined}
+          onFocus={() => (focused.current = 'cancel')}
+          onBlur={() => (focused.current = null)}
+          onClick={() => {
+            if (!state.cancelling) {
+              onCancel();
+            }
+          }}
+        >
           <XIcon /> {state.cancelling ? 'Cancelling…' : 'Cancel'}
         </button>
         {error !== '' && (
@@ -68,9 +100,12 @@ export function DownloadDock({ state, error, onStart, onCancel }: Props) {
       </p>
       <button
         type="button"
+        ref={startButton}
         className="btn primary block big"
         disabled={blocker !== ''}
         aria-describedby={blocker !== '' ? 'dock-blocker' : undefined}
+        onFocus={() => (focused.current = 'start')}
+        onBlur={() => (focused.current = null)}
         onClick={onStart}
       >
         <DownloadIcon /> {downloadLabel(state)}

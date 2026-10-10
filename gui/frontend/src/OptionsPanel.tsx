@@ -1,6 +1,6 @@
 // How the chapters are saved. Every control commits on its own (see fields.tsx)
-// as a patch over the committed options, so two controls never race each
-// other with stale copies of the whole set.
+// as a patch; App applies each patch over the last options sent, so two
+// controls can't overwrite each other's edits.
 
 import { convertFlagsOf, convertValueOf } from './convertImages';
 import { Check, Segmented, Switch, TextField } from './fields';
@@ -12,10 +12,9 @@ interface Props {
   onOptions: (patch: Partial<Options>) => Promise<void>;
   onChooseFolder: () => Promise<void>;
   onError: (message: string) => void;
-  error: string;
 }
 
-export function OptionsPanel({ state, onOptions, onChooseFolder, onError, error }: Props) {
+export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Props) {
   const o = state.options;
   const locked = state.loading || state.running;
   const flags = convertFlagsOf(o.convertImages);
@@ -30,12 +29,6 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError, error 
           {state.running ? 'Options are locked while a download runs.' : 'Options are locked while the series loads.'}
         </p>
       )}
-      {error !== '' && (
-        <p className="error-text small" role="alert">
-          {error}
-        </p>
-      )}
-
       <section className="opt-group" aria-labelledby="opt-save">
         <h3 id="opt-save">Save</h3>
         <div className="field">

@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { errorMessage, plural } from './format';
 import { AlertIcon, LinkIcon, RefreshIcon } from './icons';
-import { moveActive, spanIndices } from './listKeys';
+import { extendsSpan, moveActive, spanIndices } from './listKeys';
 import { formatNumber, hostOf } from './run';
 import type { Chapter, State } from './types';
 import { useVirtualList } from './virtual';
@@ -157,11 +157,33 @@ function ChapterList({
     setActive(pos);
   };
 
+  // Shift+arrow: selects the rows from the anchor to the new active row, in
+  // one bulk change. Select-only, by choice: Shift+click and Shift+Space set
+  // the span to the clicked row's state, which here would deselect the anchor
+  // when walking back over rows already selected.
+  const selectSpan = (pos: number) => {
+    if (anchor.current < 0) {
+      anchor.current = pos;
+    }
+    const changing = spanIndices(anchor.current, pos)
+      .map((p) => chapters[p].index)
+      .filter((i) => !chosen.has(i));
+    if (changing.length > 0) {
+      onToggleMany(changing, true).catch(fail);
+    }
+  };
+
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const page = Math.max(1, Math.floor(list.viewHeight / ROW_HEIGHT));
     const next = moveActive(e.key, active, chapters.length, page);
     if (next !== null) {
       e.preventDefault();
+      if (extendsSpan(e.key, e.shiftKey) && !disabled) {
+        if (anchor.current < 0 && active >= 0) {
+          anchor.current = active;
+        }
+        selectSpan(next);
+      }
       setActive(next);
       list.reveal(next);
       return;
@@ -293,7 +315,10 @@ function ChapterList({
         aria-label={`Chapters of ${state.title}`}
         aria-multiselectable="true"
         aria-disabled={disabled || undefined}
-        aria-activedescendant={active >= 0 && chapters[active] ? `chapter-${chapters[active].index}` : undefined}
+        aria-activedescendant={
+          // only a row that's rendered can be the descendant; scrolling may have moved the active one out
+          active >= first && active < last && chapters[active] ? `chapter-${chapters[active].index}` : undefined
+        }
         tabIndex={0}
         onKeyDown={onKeyDown}
         onFocus={() => {
@@ -311,6 +336,8 @@ function ChapterList({
                 key={ch.index}
                 id={`chapter-${ch.index}`}
                 role="option"
+                aria-setsize={chapters.length}
+                aria-posinset={pos + 1}
                 aria-selected={on}
                 className={`row${on ? ' on' : ''}${pos === active ? ' active' : ''}`}
                 style={{ transform: `translateY(${pos * ROW_HEIGHT}px)`, height: ROW_HEIGHT }}

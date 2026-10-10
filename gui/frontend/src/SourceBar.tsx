@@ -14,9 +14,11 @@ interface Props {
   onError: (message: string) => void;
   /** A refusal of the last Load, shown with the load error */
   loadRefusal: string;
+  /** A refused option (from here or the side panel), shown wherever the tab is */
+  optionError: string;
 }
 
-export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal }: Props) {
+export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, optionError }: Props) {
   // null until the user types: the field shows the backend's URL until then
   const [typed, setTyped] = useState<string | null>(null);
   const url = typed ?? state.url;
@@ -51,7 +53,9 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal }: Pr
               aria-label="Series URL"
               placeholder="Paste the link to a series or one of its chapters"
               value={url}
-              disabled={busy}
+              // readOnly, not disabled: a disabled input drops focus while a load runs
+              readOnly={busy}
+              aria-busy={busy}
               spellCheck={false}
               autoComplete="off"
               onChange={(e) => setTyped(e.target.value)}
@@ -128,6 +132,12 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal }: Pr
         <div className="banner danger" role="alert">
           <AlertIcon />
           <span>{problem}</span>
+        </div>
+      )}
+      {optionError !== '' && (
+        <div className="banner danger" role="alert">
+          <AlertIcon />
+          <span>{optionError}</span>
         </div>
       )}
     </header>

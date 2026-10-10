@@ -282,7 +282,7 @@ code {
   font-size: 13.5px;
 }
 
-.url-input:disabled {
+.url-input[readonly] {
   color: var(--text-3);
 }
 
@@ -895,10 +895,6 @@ code {
   background: var(--sunken);
   color: var(--text-2);
   font-size: 12px;
-}
-
-.options > .error-text {
-  margin: 8px 16px 0;
 }
 
 .opt-group {
@@ -1569,11 +1565,12 @@ fieldset:disabled .check {
   background: var(--hover);
 }
 
-.btn:active:not(:disabled) {
+.btn:active:not(:disabled):not([aria-disabled='true']) {
   transform: translateY(1px);
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn[aria-disabled='true'] {
   cursor: default;
   opacity: 0.5;
 }
@@ -1645,7 +1642,7 @@ fieldset:disabled .check {
   border-color: color-mix(in srgb, var(--danger) 45%, var(--border-strong));
 }
 
-.btn.danger-outline:hover:not(:disabled) {
+.btn.danger-outline:hover:not(:disabled):not([aria-disabled='true']) {
   background: var(--danger-soft);
 }
 

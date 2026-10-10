@@ -2,7 +2,7 @@
 // commits on its own: toggles at once, text when it loses focus or on Enter.
 // A refused commit (the backend says no) puts the committed value back.
 
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { errorMessage } from './format';
 
 interface TextFieldProps {
@@ -23,19 +23,25 @@ interface TextFieldProps {
 export function TextField(props: TextFieldProps) {
   const { label, value, onCommit, onError, placeholder, hint, disabled, mono, flagged, className } = props;
   const [draft, setDraft] = useState(value);
+  // the draft the last commit sent, until the backend pushes it back: Enter
+  // commits and the blur that follows must not send it again
+  const sent = useRef<string | null>(null);
   const id = useId();
 
   // a pushed value replaces the draft; while typing, pushes carry the old
   // value unchanged, so this doesn't fire and the draft survives
   useEffect(() => {
     setDraft(value);
+    sent.current = null;
   }, [value]);
 
   const commit = () => {
-    if (draft === value) {
+    if (draft === value || draft === sent.current) {
       return;
     }
+    sent.current = draft;
     onCommit(draft).catch((e: unknown) => {
+      sent.current = null;
       setDraft(value);
       onError(errorMessage(e));
     });
