@@ -4,3 +4,5 @@ frontend/dist/
 frontend/.vitest/
 # wails build output
 build/bin/
+# wails build caches a hash of the frontend manifest here
+frontend/package.json.md5
