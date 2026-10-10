@@ -7,6 +7,7 @@ set -euo pipefail
 
 SRC=$1
 OUT=$2
+mkdir -p "$OUT"
 PAD=56 # transparent margin around the window, for the shadow
 RADIUS=18 # window corner radius
 TMP=$(mktemp -d)

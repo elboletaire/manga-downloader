@@ -137,25 +137,26 @@ export function formatSize(bytes: number | undefined): string {
 }
 
 export interface DownloadChoice {
-  /** `gui`/`cli` link straight to a file; `page` to the releases page. */
-  kind: 'gui' | 'cli' | 'page'
+  /** `gui` links straight to the desktop app file; `page` to a releases page. */
+  kind: 'gui' | 'page'
   href: string
   label: string
   detail: string
 }
 
 /**
- * Picks what the hero's Download button offers. `release` is null when the
- * GitHub API couldn't be reached. When the desktop app isn't published yet,
- * the button offers the command line build instead and says so.
+ * Picks what the hero's Download button offers: always the desktop app for
+ * the visitor's OS. `release` is null when the GitHub API couldn't be reached.
+ * When the release has no matching file (yet), the button keeps its label and
+ * links to the releases page.
  */
 export function chooseDownload(release: Release | null, p: Platform): DownloadChoice {
   if (p.os === 'unknown') {
     return {
       kind: 'page',
-      href: RELEASES_URL,
-      label: 'Download',
-      detail: 'For Windows, macOS and Linux',
+      href: '#downloads',
+      label: 'Download the desktop app',
+      detail: 'Pick your system in the downloads below',
     }
   }
   const osName = OS_NAMES[p.os]
@@ -164,7 +165,7 @@ export function chooseDownload(release: Release | null, p: Platform): DownloadCh
       kind: 'page',
       href: RELEASES_URL,
       label: `Download for ${osName}`,
-      detail: 'Pick your file on the releases page',
+      detail: 'Latest release on GitHub',
     }
   }
 
@@ -179,22 +180,11 @@ export function chooseDownload(release: Release | null, p: Platform): DownloadCh
     }
   }
 
-  const cli = findAsset(release, cliAssetNames(tag, p))
-  if (cli) {
-    return {
-      kind: 'cli',
-      href: cli.browser_download_url,
-      label: `Get the CLI for ${osName}`,
-      // Said on the same line, so nothing below the button moves when it appears.
-      detail: joinDetail([tag, archLabel(cli.name), formatSize(cli.size), 'Desktop app coming in the next release']),
-    }
-  }
-
   return {
     kind: 'page',
-    href: release.html_url ?? RELEASES_URL,
+    href: RELEASES_URL,
     label: `Download for ${osName}`,
-    detail: `Pick your file from ${tag} on GitHub`,
+    detail: 'Latest release on GitHub',
   }
 }
 

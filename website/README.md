@@ -28,9 +28,9 @@ pnpm preview   # serve dist/
   Items marked `\*` get the "browser" tag. Its test checks the parsed count
   against the README's "Show all N supported sites" line.
 - **Download button**: `src/release.ts` (pure, tested) detects the OS and
-  matches it against the assets of the latest GitHub release. If the API fails,
-  it links to the releases page; if the release has no desktop app yet, it
-  offers the command line build and says the app is coming.
+  matches it against the assets of the latest GitHub release. If the API fails
+  or the release has no matching desktop app file, it links to the releases
+  page. Without a detectable OS it offers the desktop app downloads section.
 - **Brand assets**: copied from the approved brand kit into `src/assets/brand/`
   and `public/` (favicons, `opengraph.png`). Don't redraw them.
 - **Terminal GIFs**: referenced from `demos/` on `master` via raw GitHub URLs,
@@ -45,7 +45,9 @@ every browser the site cares about reads, so there are no PNG fallbacks.
 
 - `app-overview` is the full window, at 1000 and 1600 px wide: the hero.
 - `language-selector`, `chapter-list` and `finished-run` are crops of the
-  2000 px originals in `/tmp/md-fyne-ui/mac-shots/opt/`, at 600 and 1000 px wide.
+  2000 px originals in `/tmp/md-fyne-ui/mac-shots/opt/` (also committed in the
+  main repo under `assets/screenshots/` once the desktop app PR merges), at 600
+  and 1000 px wide.
   They are cut to the part that matters, so they stay readable at the
   ~500 px they are shown at. Each gets the window's rounded corners and a soft
   shadow on a transparent margin of 56 px.

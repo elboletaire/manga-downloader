@@ -90,9 +90,6 @@ function renderDownloads(release: Release | null): void {
     if (row.available) {
       link.dataset.state = 'ready'
       link.title = [row.name, row.size].filter(Boolean).join(' · ')
-    } else if (link.dataset.asset!.startsWith('gui-')) {
-      link.dataset.state = 'soon'
-      link.title = 'Not published yet: opens the releases page'
     }
   }
   const tag = document.querySelector<HTMLAnchorElement>('[data-release-tag]')

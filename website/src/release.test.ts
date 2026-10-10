@@ -108,40 +108,61 @@ const cliOnly: Release = {
 }
 
 describe('chooseDownload', () => {
-  it('offers the desktop app when the release has it', () => {
-    const c = chooseDownload(withGUI, { os: 'windows', arch: 'amd64' })
+  const withAllGUI: Release = {
+    ...withGUI,
+    assets: [
+      asset('manga-downloader-gui-v1.11.0-windows-amd64.zip'),
+      asset('manga-downloader-gui-v1.11.0-windows-arm64.zip'),
+      asset('manga-downloader-gui-v1.11.0-darwin-universal.zip'),
+      asset('manga-downloader-gui-v1.11.0-linux-amd64.tar.gz'),
+      asset('manga-downloader-gui-v1.11.0-linux-arm64.tar.gz'),
+    ],
+  }
+
+  it.each([
+    [{ os: 'windows', arch: 'amd64' }, 'windows-amd64.zip', 'Download for Windows'],
+    [{ os: 'windows', arch: 'arm64' }, 'windows-arm64.zip', 'Download for Windows'],
+    [{ os: 'macos', arch: 'unknown' }, 'darwin-universal.zip', 'Download for macOS'],
+    [{ os: 'linux', arch: 'amd64' }, 'linux-amd64.tar.gz', 'Download for Linux'],
+    [{ os: 'linux', arch: 'arm64' }, 'linux-arm64.tar.gz', 'Download for Linux'],
+  ] as const)('offers the desktop app for %j', (platform, file, label) => {
+    const c = chooseDownload(withAllGUI, platform)
     expect(c.kind).toBe('gui')
-    expect(c.href).toMatch(/gui-v1\.11\.0-windows-amd64\.zip$/)
-    expect(c.label).toBe('Download for Windows')
-    expect(c.detail).toBe('Desktop app v1.11.0 · x64 · 10.0 MB')
+    expect(c.href.endsWith(`/manga-downloader-gui-v1.11.0-${file}`)).toBe(true)
+    expect(c.label).toBe(label)
+    expect(c.detail).toMatch(/^Desktop app v1\.11\.0 · /)
   })
 
   it('falls back to the x64 desktop app on ARM Windows', () => {
     const c = chooseDownload(withGUI, { os: 'windows', arch: 'arm64' })
+    expect(c.kind).toBe('gui')
     expect(c.href).toMatch(/gui-v1\.11\.0-windows-amd64\.zip$/)
   })
 
-  it('offers the command line when the desktop app is not out yet', () => {
+  it('links to the releases page when the desktop app file is missing', () => {
     const c = chooseDownload(cliOnly, { os: 'macos', arch: 'unknown' })
-    expect(c.kind).toBe('cli')
-    expect(c.href).toMatch(/v1\.10\.0-darwin-arm64\.tar\.gz$/)
-    expect(c.label).toBe('Get the CLI for macOS')
-    expect(c.detail).toBe('v1.10.0 · Apple silicon · 10.0 MB · Desktop app coming in the next release')
+    expect(c).toEqual({
+      kind: 'page',
+      href: RELEASES_URL,
+      label: 'Download for macOS',
+      detail: 'Latest release on GitHub',
+    })
   })
 
-  it('sends people to the release page when nothing matches', () => {
-    const c = chooseDownload(cliOnly, { os: 'linux', arch: 'arm64' })
-    expect(c.kind).toBe('page')
-    expect(c.href).toBe(cliOnly.html_url)
-  })
-
-  it('falls back to the releases page without the API', () => {
+  it('links to the releases page when the API fails', () => {
     const c = chooseDownload(null, { os: 'linux', arch: 'amd64' })
-    expect(c).toMatchObject({ kind: 'page', href: RELEASES_URL, label: 'Download for Linux' })
+    expect(c).toEqual({
+      kind: 'page',
+      href: RELEASES_URL,
+      label: 'Download for Linux',
+      detail: 'Latest release on GitHub',
+    })
   })
 
-  it('keeps a generic button for unsupported systems', () => {
-    expect(chooseDownload(withGUI, { os: 'unknown', arch: 'unknown' })).toMatchObject({ kind: 'page', label: 'Download' })
+  it('keeps a generic desktop app button for unsupported systems', () => {
+    const generic = { kind: 'page', href: '#downloads', label: 'Download the desktop app' }
+    expect(chooseDownload(withGUI, { os: 'unknown', arch: 'unknown' })).toMatchObject(generic)
+    expect(chooseDownload(null, { os: 'unknown', arch: 'unknown' })).toMatchObject(generic)
   })
 })
 
