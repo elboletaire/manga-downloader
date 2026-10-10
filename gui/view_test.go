@@ -113,6 +113,7 @@ func TestViewScreens(t *testing.T) {
 		}
 		return n == 11
 	})
+	v.tabs.Select(v.progressTab)
 	v.refresh()
 	snapshot(t, v, "03-progress.png")
 	close(fs.pageGate)
@@ -122,10 +123,29 @@ func TestViewScreens(t *testing.T) {
 	if s.Saved != 11 || len(s.Failures) != 1 {
 		t.Fatalf("summary = %+v", s)
 	}
+	if v.status.Text != "11 saved, 1 failed" {
+		t.Errorf("status = %q", v.status.Text)
+	}
+	if v.openBtn.Disabled() {
+		t.Error("Open folder is disabled after a run")
+	}
 	snapshot(t, v, "04-finished.png")
 
-	v.options.Open(0)
+	v.tabs.Select(v.optionsTab)
+	if err := c.Configure(func(s *grabber.Settings) { s.Language = "fr" }); err != nil {
+		t.Fatal(err)
+	}
+	v.refresh()
+	if v.applyBtn.Disabled() || !v.notice.Visible() {
+		t.Error("a changed language doesn't offer a reload")
+	}
 	snapshot(t, v, "05-options.png")
+
+	v.tabs.Select(v.logTab)
+	if !strings.HasPrefix(v.logTab.Text, "Log (") {
+		t.Errorf("log tab = %q, want an error count", v.logTab.Text)
+	}
+	snapshot(t, v, "06-log.png")
 }
 
 func TestLoadMessage(t *testing.T) {
@@ -171,6 +191,26 @@ func TestSummaryText(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestSummaryHeadline(t *testing.T) {
+	tests := []struct {
+		s    Summary
+		want string
+	}{
+		{Summary{Saved: 11, Failures: []string{"x"}}, "11 saved, 1 failed"},
+		{Summary{Saved: 2, Skipped: 1}, "2 saved, 1 skipped"},
+		{Summary{}, "Nothing was saved"},
+		{Summary{Cancelled: true, Saved: 3}, "Cancelled, 3 saved"},
+		{Summary{Bundled: true, Cancelled: true}, "Cancelled, no bundle written"},
+		{Summary{Bundled: true, Bundle: "b.cbz", Saved: 3}, "Saved b.cbz"},
+		{Summary{Bundled: true, Err: errors.New("x")}, "The bundle could not be written"},
+	}
+	for _, tt := range tests {
+		if got := summaryHeadline(&tt.s); got != tt.want {
+			t.Errorf("summaryHeadline(%+v) = %q, want %q", tt.s, got, tt.want)
+		}
 	}
 }
 
