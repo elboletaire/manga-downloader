@@ -53,7 +53,7 @@ jobs:
       run: |
         set -euo pipefail
         # the Windows version resource and the bundle's Info.plist take the version from wails.json
-        sed -i "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json
+        sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
         wails build -platform linux/${{ matrix.goarch }} -tags nodynamic,webkit2_41 -skipbindings \
           -m -nosyncgomod -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
         name="manga-downloader-gui-$TAG-linux-${{ matrix.goarch }}"
@@ -107,7 +107,7 @@ jobs:
       run: |
         set -euo pipefail
         # the Windows version resource and the bundle's Info.plist take the version from wails.json
-        sed -i "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json
+        sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
         # wails embeds the icon and manifest from build/windows into the exe,
         # and links it as a GUI app (no console window)
         wails build -platform windows/${{ matrix.goarch }} -tags nodynamic -skipbindings \
@@ -147,7 +147,7 @@ jobs:
       run: |
         set -euo pipefail
         # the Windows version resource and the bundle's Info.plist take the version from wails.json
-        sed -i "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json
+        sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
         # a single universal target keeps the bundle's name as wails.json has
         # it ("Manga Downloader.app"), without an arch suffix
         wails build -platform darwin/universal -tags nodynamic -skipbindings \

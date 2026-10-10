@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/elboletaire/manga-downloader/notice"
 	"github.com/elboletaire/manga-downloader/packer"
 )
 
@@ -109,6 +110,12 @@ func loadOptions(path string, s *grabber.Settings) error {
 	if err := json.Unmarshal(data, &o); err != nil {
 		return fmt.Errorf("%s: %w", path, err)
 	}
+	// a value the parser rejects would only fail at Start, once a series is
+	// loaded, so fall back to the default now and say so
+	if _, err := grabber.ParseConvertFormats(o.ConvertImages); err != nil {
+		notice.Warn("ignoring the saved convert-images %q, using %q: %v", o.ConvertImages, grabber.ConvertImagesDefault, err)
+		o.ConvertImages = grabber.ConvertImagesDefault
+	}
 	applyOptions(s, o)
 
 	return nil
@@ -133,6 +140,12 @@ func saveOptions(path string, o OptionsDTO) error {
 	defer os.Remove(tmp.Name()) // a no-op once renamed
 
 	if _, err := tmp.Write(append(data, '\n')); err != nil {
+		tmp.Close()
+		return err
+	}
+	// sync before the rename, or a power cut can leave the new name pointing
+	// at data that never reached the disk
+	if err := tmp.Sync(); err != nil {
 		tmp.Close()
 		return err
 	}

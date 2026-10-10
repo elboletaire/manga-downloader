@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/elboletaire/manga-downloader/notice"
 )
 
 func TestOptionsSaveAndLoadRoundTrip(t *testing.T) {
@@ -112,5 +113,38 @@ func TestConvertImagesValuesSurviveSaving(t *testing.T) {
 		if _, err := grabber.ParseConvertFormats(s.ConvertImages); err != nil {
 			t.Errorf("%q is not accepted by the CLI's parser: %v", value, err)
 		}
+	}
+}
+
+// a convert-images value the parser rejects must not reach the settings: it
+// falls back to the default with a warning, instead of failing at Start
+func TestLoadOptionsRejectsConvertImagesFallsBackToDefault(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	if err := os.WriteFile(path, []byte(`{"convertImages":"jpeg","format":"raw"}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var warnings []string
+	notice.SetHandler(func(level notice.Level, msg string) {
+		if level == notice.LevelWarn {
+			warnings = append(warnings, msg)
+		}
+	})
+	defer notice.SetHandler(nil)
+
+	s := defaultSettings()
+	if err := loadOptions(path, s); err != nil {
+		t.Fatalf("an invalid convert-images is not a load error: %v", err)
+	}
+	if s.ConvertImages != grabber.ConvertImagesDefault {
+		t.Errorf("convert-images %q, want the default %q", s.ConvertImages, grabber.ConvertImagesDefault)
+	}
+	if s.Format != "raw" {
+		t.Errorf("the other keys were not loaded: format %q", s.Format)
+	}
+	if len(warnings) != 1 {
+		t.Errorf("got %d warnings, want 1: %q", len(warnings), warnings)
+	}
+	if _, err := grabber.ParseConvertFormats(s.ConvertImages); err != nil {
+		t.Errorf("the fallback is rejected by the parser: %v", err)
 	}
 }
