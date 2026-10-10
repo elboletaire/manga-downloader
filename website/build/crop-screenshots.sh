@@ -38,5 +38,5 @@ crop() {
 for theme in light dark; do
   crop language-selector "$theme" "03-language-selector-$theme.png" 900x1000+85+58
   crop chapter-list "$theme" "04-downloading-$theme.png" 1265x1000+100+278
-  crop finished-run "$theme" "05-done-$theme.png" 580x760+1335+248
+  crop finished-run "$theme" "05-done-$theme.png" 553x760+1362+248
 done

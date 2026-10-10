@@ -43,11 +43,11 @@ each in a light and a dark version. A `<picture>` swaps the dark ones in with
 `prefers-color-scheme`, and Vite fingerprints them into `dist`. WebP only, which
 every browser the site cares about reads, so there are no PNG fallbacks.
 
-- `app-overview` is the full window, at 1000 and 1600 px wide: the hero.
+- `app-overview` is the full window (`02-loaded-{light,dark}.png`), at 1000 and
+  1600 px wide: the hero.
 - `language-selector`, `chapter-list` and `finished-run` are crops of the
-  2000 px originals in `/tmp/md-fyne-ui/mac-shots/opt/` (also committed in the
-  main repo under `assets/screenshots/` once the desktop app PR merges), at 600
-  and 1000 px wide.
+  2000 px originals in the repo's [`assets/screenshots/`](../assets/screenshots/),
+  at 600 and 1000 px wide.
   They are cut to the part that matters, so they stay readable at the
   ~500 px they are shown at. Each gets the window's rounded corners and a soft
   shadow on a transparent margin of 56 px.
@@ -55,23 +55,28 @@ every browser the site cares about reads, so there are no PNG fallbacks.
 The files are converted offline and committed, so the build needs no image tools.
 The crop script is [`build/crop-screenshots.sh`](build/crop-screenshots.sh). The
 geometry is `WxH+X+Y` on the 2000x1390 original, with the window's top-left at
-(85,58), so `03-language-selector-*.png` crops to `900x1000+85+58`:
+(85,58), so `03-language-selector-*.png` crops to `900x1000+85+58`. The
+`finished-run` crop starts at x=1362, between the chapter list and the Activity
+panel, so no edge of the list shows in it:
 
 | Crop                | Original                                | Geometry            |
 | ------------------- | --------------------------------------- | ------------------- |
 | `language-selector` | `03-language-selector-{light,dark}.png` | `900x1000+85+58`    |
 | `chapter-list`      | `04-downloading-{light,dark}.png`       | `1265x1000+100+278` |
-| `finished-run`      | `05-done-{light,dark}.png`              | `580x760+1335+248`  |
+| `finished-run`      | `05-done-{light,dark}.png`              | `553x760+1362+248`  |
 
-To regenerate from the originals, run it with the originals' folder and an
-output folder:
+To regenerate from the originals, run it with the repo's originals folder and an
+output folder, from `website/`:
 
 ```bash
-build/crop-screenshots.sh /tmp/md-fyne-ui/mac-shots/opt src/assets/screenshots
+build/crop-screenshots.sh ../assets/screenshots src/assets/screenshots
 ```
 
-The hero (`app-overview`) is not cropped. Its WebP derivatives come from the
-full window with ImageMagick:
+The shadow widens each derivative beyond the crop plus its 56 px margin, so the
+`<img>` sizes in `index.html` come from the output, not from the geometry.
+
+The hero (`app-overview`) is not cropped. Its WebP derivatives come from
+`02-loaded-{light,dark}.png` with ImageMagick:
 
 ```bash
 magick IN.png -filter Lanczos -resize 1600x -strip -define webp:method=6 -quality 85 OUT-1600.webp
