@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { errorMessage, jobFraction, jobStatus, plural, summaryHeadline, summaryLines } from './format';
+import {
+  errorMessage,
+  jobFraction,
+  jobShortStatus,
+  jobStatus,
+  plural,
+  summaryHeadline,
+  summaryLines,
+  summarySentence,
+} from './format';
 import type { Job, Summary } from './types';
 
 const base: Summary = {
@@ -79,5 +88,41 @@ describe('errorMessage', () => {
     expect(errorMessage('select at least one chapter')).toBe('select at least one chapter');
     expect(errorMessage(new Error('boom'))).toBe('boom');
     expect(errorMessage(42)).toBe('42');
+  });
+});
+
+describe('summarySentence', () => {
+  it('is the first line of the summary', () => {
+    const s = { ...base, saved: 3, failures: ['x: y'] };
+    expect(summarySentence(s)).toBe(summaryLines(s)[0]);
+    expect(summarySentence({ ...base, cancelled: true })).toBe('Cancelled before anything was saved.');
+  });
+});
+
+describe('jobShortStatus', () => {
+  const job = (over: Partial<Job>): Job => ({
+    title: 'Ch 1',
+    number: 1,
+    total: 24,
+    done: 6,
+    state: 'downloading',
+    reason: '',
+    status: '',
+    ...over,
+  });
+
+  it('shows the phase and percentage while moving', () => {
+    expect(jobShortStatus(job({}))).toBe('Downloading · 25%');
+    expect(jobShortStatus(job({ state: 'archiving', done: 18 }))).toBe('Packing · 75%');
+  });
+
+  it("uses the bundle's own phase without its trailing dots", () => {
+    expect(jobShortStatus(job({ status: 'Creating the bundle...', done: 12 }))).toBe('Creating the bundle · 50%');
+  });
+
+  it('names the outcome once finished', () => {
+    expect(jobShortStatus(job({ state: 'done' }))).toBe('Saved');
+    expect(jobShortStatus(job({ state: 'failed', reason: '404' }))).toBe('Failed');
+    expect(jobShortStatus(job({ state: 'skipped' }))).toBe('Skipped');
   });
 });

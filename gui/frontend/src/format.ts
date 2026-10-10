@@ -35,25 +35,33 @@ export function summaryHeadline(s: Summary): string {
   return parts.length === 0 ? 'Nothing was saved' : parts.join(', ');
 }
 
-/** The full story of a finished run, one entry per line */
-export function summaryLines(s: Summary): string[] {
-  const lines: string[] = [];
+/** The one sentence that says where a finished run's chapters went */
+export function summarySentence(s: Summary): string {
   if (s.cancelled && s.bundled) {
-    lines.push('Cancelled. No bundle was written.');
-  } else if (s.cancelled && s.saved === 0) {
-    lines.push('Cancelled before anything was saved.');
-  } else if (s.cancelled) {
-    lines.push(`Cancelled. ${plural(s.saved, 'chapter', 'chapters')} saved before it stopped, in ${s.dir}.`);
-  } else if (s.error !== '') {
-    lines.push('The bundle could not be written.');
-  } else if (s.bundled && s.bundle !== '') {
-    lines.push(`Saved ${s.bundle} to ${s.dir} (${plural(s.saved, 'chapter', 'chapters')}).`);
-  } else if (s.saved > 0) {
-    lines.push(`Saved ${plural(s.saved, 'chapter', 'chapters')} to ${s.dir}.`);
-  } else {
-    lines.push('Nothing was saved.');
+    return 'Cancelled. No bundle was written.';
+  }
+  if (s.cancelled && s.saved === 0) {
+    return 'Cancelled before anything was saved.';
+  }
+  if (s.cancelled) {
+    return `Cancelled. ${plural(s.saved, 'chapter', 'chapters')} saved before it stopped, in ${s.dir}.`;
+  }
+  if (s.error !== '') {
+    return 'The bundle could not be written.';
+  }
+  if (s.bundled && s.bundle !== '') {
+    return `Saved ${s.bundle} to ${s.dir} (${plural(s.saved, 'chapter', 'chapters')}).`;
+  }
+  if (s.saved > 0) {
+    return `Saved ${plural(s.saved, 'chapter', 'chapters')} to ${s.dir}.`;
   }
 
+  return 'Nothing was saved.';
+}
+
+/** The full story of a finished run, one entry per line */
+export function summaryLines(s: Summary): string[] {
+  const lines = [summarySentence(s)];
   if (s.skipped > 0) {
     lines.push(`${plural(s.skipped, 'chapter', 'chapters')} skipped: --skip-pages excluded every page.`);
   }
@@ -80,6 +88,24 @@ export function jobStatus(j: Job): string {
       return `failed: ${j.reason}`;
     case 'skipped':
       return `skipped: ${j.reason}`;
+  }
+}
+
+/** The short status at the end of a progress row: phase and percentage while it moves, the outcome after */
+export function jobShortStatus(j: Job): string {
+  switch (j.state) {
+    case 'downloading':
+    case 'archiving': {
+      const phase =
+        j.status !== '' ? j.status.replace(/\.+$/, '') : j.state === 'archiving' ? 'Packing' : 'Downloading';
+      return `${phase} · ${Math.round(jobFraction(j) * 100)}%`;
+    }
+    case 'done':
+      return 'Saved';
+    case 'failed':
+      return 'Failed';
+    case 'skipped':
+      return 'Skipped';
   }
 }
 

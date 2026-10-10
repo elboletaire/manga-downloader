@@ -1,179 +1,145 @@
-import { useEffect, useState } from 'react';
+// How the chapters are saved. Every control commits on its own (see fields.tsx)
+// as a patch over the committed options, so two controls never race each
+// other with stale copies of the whole set.
+
 import { convertFlagsOf, convertValueOf } from './convertImages';
+import { Check, Segmented, Switch, TextField } from './fields';
+import { FolderIcon } from './icons';
 import type { Options, State } from './types';
 
 interface Props {
-  options: Options;
   state: State;
-  disabled: boolean;
-  onCommit: (o: Options) => Promise<void>;
+  onOptions: (patch: Partial<Options>) => Promise<void>;
   onChooseFolder: () => Promise<void>;
-  onReload: () => void;
   onError: (message: string) => void;
+  error: string;
 }
 
-/**
- * The options form. Edits stay local until they're committed: checkboxes and
- * selects commit at once, text fields on blur or Enter. The form takes the
- * committed options back whenever they change, so it never shows a value the
- * Go side refused.
- */
-export function OptionsPanel({ options, state, disabled, onCommit, onChooseFolder, onReload, onError }: Props) {
-  const [draft, setDraft] = useState<Options>(options);
-  const committed = JSON.stringify(options);
-
-  useEffect(() => {
-    setDraft(options);
-    // keyed on the JSON, so a state push with the same options keeps the draft
-    // the user is still typing in
-  }, [committed]);
-
-  const commit = (next: Options) => {
-    setDraft(next);
-    onCommit(next).catch((e: unknown) => {
-      setDraft(options);
-      onError(typeof e === 'string' ? e : e instanceof Error ? e.message : String(e));
-    });
+export function OptionsPanel({ state, onOptions, onChooseFolder, onError, error }: Props) {
+  const o = state.options;
+  const locked = state.loading || state.running;
+  const flags = convertFlagsOf(o.convertImages);
+  const set = (patch: Partial<Options>) => {
+    onOptions(patch).catch(() => undefined);
   };
-  const commitText = () => {
-    if (JSON.stringify(draft) !== committed) {
-      commit(draft);
-    }
-  };
-  const set = <K extends keyof Options>(key: K, value: Options[K]) => setDraft({ ...draft, [key]: value });
-
-  const flags = convertFlagsOf(draft.convertImages);
-  const locked = disabled || state.loading || state.running;
 
   return (
-    <section className="panel options">
-      <h2>Options</h2>
-
-      <label className="field">
-        <span>Output folder</span>
-        <div className="inline">
-          <input type="text" readOnly value={draft.outputDir} aria-label="Output folder" />
-          <button type="button" disabled={locked} onClick={() => onChooseFolder().catch((e) => onError(String(e)))}>
-            Browse…
-          </button>
-        </div>
-      </label>
-
-      <label className="field">
-        <span>Format</span>
-        <select
-          value={draft.format}
-          disabled={locked}
-          onChange={(e) => commit({ ...draft, format: e.target.value as Options['format'] })}
-        >
-          <option value="cbz">CBZ (one archive per chapter)</option>
-          <option value="raw">Raw (page images in a folder)</option>
-        </select>
-      </label>
-
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={draft.bundle}
-          disabled={locked}
-          onChange={(e) => commit({ ...draft, bundle: e.target.checked })}
-        />
-        <span>Bundle all chapters into one file</span>
-      </label>
-
-      <fieldset className="field" disabled={locked}>
-        <legend>Convert images</legend>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={flags.avif}
-            onChange={(e) => commit({ ...draft, convertImages: convertValueOf({ ...flags, avif: e.target.checked }) })}
-          />
-          <span>AVIF → JPEG</span>
-        </label>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={flags.webp}
-            onChange={(e) => commit({ ...draft, convertImages: convertValueOf({ ...flags, webp: e.target.checked }) })}
-          />
-          <span>WebP → JPEG</span>
-        </label>
-      </fieldset>
-
-      <label className="field">
-        <span>Language</span>
-        <input
-          type="text"
-          value={draft.language}
-          disabled={locked}
-          placeholder="e.g. en"
-          onChange={(e) => set('language', e.target.value)}
-          onBlur={commitText}
-          onKeyDown={(e) => e.key === 'Enter' && commitText()}
-        />
-      </label>
-
-      <label className="field">
-        <span>Scanlator</span>
-        <input
-          type="text"
-          value={draft.scanlator}
-          disabled={locked}
-          onChange={(e) => set('scanlator', e.target.value)}
-          onBlur={commitText}
-          onKeyDown={(e) => e.key === 'Enter' && commitText()}
-        />
-      </label>
-      {state.loaded && (
-        <div className="stale">
-          {state.stale ? (
-            <>
-              <p>The language or scanlator changed. Reload the series to apply it to the chapter list.</p>
-              <button type="button" disabled={locked} onClick={onReload}>
-                Apply and reload
-              </button>
-            </>
-          ) : (
-            <p className="hint">Language and scanlator filter the chapter list, so changing them needs a reload.</p>
-          )}
-        </div>
+    <div className="options">
+      {locked && (
+        <p className="locked-note" role="status">
+          {state.running ? 'Options are locked while a download runs.' : 'Options are locked while the series loads.'}
+        </p>
+      )}
+      {error !== '' && (
+        <p className="error-text small" role="alert">
+          {error}
+        </p>
       )}
 
-      <label className="field">
-        <span>Skip pages</span>
-        <input
-          type="text"
-          value={draft.skipPages}
+      <section className="opt-group" aria-labelledby="opt-save">
+        <h3 id="opt-save">Save</h3>
+        <div className="field">
+          <span className="label" id="folder-label">
+            Folder
+          </span>
+          <div className="folder">
+            <span className="folder-path mono" title={o.outputDir} aria-labelledby="folder-label">
+              <FolderIcon size={14} />
+              {/* bdi + rtl keeps the end of a long path, the part that tells folders apart */}
+              <span className="folder-text">
+                <bdi>{o.outputDir || 'Not set'}</bdi>
+              </span>
+            </span>
+            <button
+              type="button"
+              className="btn small"
+              disabled={locked}
+              onClick={() => onChooseFolder().catch((e) => onError(String(e)))}
+            >
+              Browse…
+            </button>
+          </div>
+        </div>
+
+        <Segmented<Options['format']>
+          label="Format"
+          value={o.format}
           disabled={locked}
+          options={[
+            { value: 'cbz', label: 'CBZ archive' },
+            { value: 'raw', label: 'Image folder' },
+          ]}
+          onChange={(format) => set({ format })}
+        />
+
+        <Switch
+          label="One file for everything"
+          description="Bundle the selected chapters into a single archive."
+          checked={o.bundle}
+          disabled={locked}
+          onChange={(bundle) => set({ bundle })}
+        />
+      </section>
+
+      <section className="opt-group" aria-labelledby="opt-pages">
+        <h3 id="opt-pages">Pages</h3>
+        <fieldset className="field" disabled={locked}>
+          <legend>Convert to JPEG</legend>
+          <div className="check-row">
+            <Check
+              label="AVIF"
+              checked={flags.avif}
+              onChange={(avif) => set({ convertImages: convertValueOf({ ...flags, avif }) })}
+            />
+            <Check
+              label="WebP"
+              checked={flags.webp}
+              onChange={(webp) => set({ convertImages: convertValueOf({ ...flags, webp }) })}
+            />
+          </div>
+          <p className="hint">Most e-readers can't open AVIF; WebP is unreliable on e-ink.</p>
+        </fieldset>
+
+        <TextField
+          label="Skip pages"
+          value={o.skipPages}
           placeholder="e.g. 2,-1"
-          onChange={(e) => set('skipPages', e.target.value)}
-          onBlur={commitText}
-          onKeyDown={(e) => e.key === 'Enter' && commitText()}
-        />
-      </label>
-
-      <label className="field">
-        <span>Filename template</span>
-        <input
-          type="text"
-          value={draft.filenameTemplate}
+          mono
           disabled={locked}
-          onChange={(e) => set('filenameTemplate', e.target.value)}
-          onBlur={commitText}
-          onKeyDown={(e) => e.key === 'Enter' && commitText()}
+          hint="Positions dropped from every chapter: 2 is the second page, -1 the last."
+          onCommit={(skipPages) => onOptions({ skipPages })}
+          onError={onError}
         />
-      </label>
+      </section>
 
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={draft.browserVisible}
-          disabled={locked}
-          onChange={(e) => commit({ ...draft, browserVisible: e.target.checked })}
-        />
-        <span>Show the browser window (for sites that need one)</span>
-      </label>
-    </section>
+      <details className="opt-group advanced">
+        <summary>
+          <h3>Advanced</h3>
+        </summary>
+        <div className="opt-group-body">
+          <TextField
+            label="Filename template"
+            value={o.filenameTemplate}
+            mono
+            disabled={locked}
+            hint={
+              <>
+                Uses <code>{'{{.Series}}'}</code>, <code>{'{{.Number}}'}</code>, <code>{'{{.Title}}'}</code> and{' '}
+                <code>{'{{.Version}}'}</code>.
+              </>
+            }
+            onCommit={(filenameTemplate) => onOptions({ filenameTemplate })}
+            onError={onError}
+          />
+          <Switch
+            label="Show the browser window"
+            description="For sites behind a Cloudflare check: a visible browser passes it more often."
+            checked={o.browserVisible}
+            disabled={locked}
+            onChange={(browserVisible) => set({ browserVisible })}
+          />
+        </div>
+      </details>
+    </div>
   );
 }
