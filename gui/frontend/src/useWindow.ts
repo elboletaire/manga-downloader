@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { errorMessage } from './format';
 import type { Api } from './api';
 import type { Chapter, LogLine, State } from './types';
 
@@ -15,8 +16,9 @@ export interface WindowData {
  * so nothing is missed, and a snapshot never overwrites a pushed value that
  * arrived first: whichever is newer wins.
  */
-export function useWindow(api: Api): WindowData {
+export function useWindow(api: Api): WindowData & { failure: string } {
   const [data, setData] = useState<WindowData>({ state: null, chapters: [], selected: [], log: [] });
+  const [failure, setFailure] = useState('');
   // which fields a push has already filled, so a late snapshot doesn't clobber them
   const pushed = useRef({ state: false, chapters: false, selected: false, log: false });
 
@@ -43,17 +45,24 @@ export function useWindow(api: Api): WindowData {
       }),
     ];
 
-    Promise.all([api.state(), api.chapters(), api.selection(), api.log()]).then(([state, chapters, selected, log]) => {
-      if (!alive) {
-        return;
-      }
-      setData((d) => ({
-        state: seen.state ? d.state : state,
-        chapters: seen.chapters ? d.chapters : chapters,
-        selected: seen.selected ? d.selected : selected,
-        log: seen.log ? d.log : log,
-      }));
-    });
+    Promise.all([api.state(), api.chapters(), api.selection(), api.log()])
+      .then(([state, chapters, selected, log]) => {
+        if (!alive) {
+          return;
+        }
+        setData((d) => ({
+          state: seen.state ? d.state : state,
+          chapters: seen.chapters ? d.chapters : chapters,
+          selected: seen.selected ? d.selected : selected,
+          log: seen.log ? d.log : log,
+        }));
+      })
+      .catch((e: unknown) => {
+        // without a snapshot the window has nothing to show: say so instead of "Loading…"
+        if (alive) {
+          setFailure(`Couldn't read the window's state: ${errorMessage(e)}`);
+        }
+      });
 
     return () => {
       alive = false;
@@ -63,5 +72,5 @@ export function useWindow(api: Api): WindowData {
     };
   }, [api]);
 
-  return data;
+  return { ...data, failure };
 }

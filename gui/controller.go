@@ -246,6 +246,19 @@ func (c *Controller) BeginLoad(url string) error {
 	return nil
 }
 
+// abortLoad ends a load that panicked, so the window isn't left locked
+// waiting for it. It's the same outcome as FinishLoad failing.
+func (c *Controller) abortLoad(err error) {
+	c.mu.Lock()
+	c.loading = false
+	c.loadErr = err
+	c.series = nil
+	c.selected = nil
+	c.selGen++
+	c.mu.Unlock()
+	c.emit()
+}
+
 // FinishLoad does the work BeginLoad started. Call it exactly once after a
 // successful BeginLoad.
 func (c *Controller) FinishLoad(url string) error {
@@ -261,6 +274,7 @@ func (c *Controller) FinishLoad(url string) error {
 	if err != nil {
 		c.series = nil
 		c.selected = nil
+		c.selGen++
 	}
 	c.mu.Unlock()
 	c.emit()
@@ -389,6 +403,20 @@ func (c *Controller) HasDuplicates() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.hasDuplicates
+}
+
+// SelectedIndices returns the indices of the selected chapters, in list order,
+// read under one lock so a concurrent load can't interleave with it
+func (c *Controller) SelectedIndices() []int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	out := []int{}
+	for i, on := range c.selected {
+		if on {
+			out = append(out, i)
+		}
+	}
+	return out
 }
 
 // IsSelected reports whether chapter i of Chapters is selected

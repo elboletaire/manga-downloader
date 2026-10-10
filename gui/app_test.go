@@ -33,6 +33,8 @@ func (f *fakeSink) Emit(event string, data any) {
 	f.events = append(f.events, fakeEvent{event, data})
 }
 
+func (f *fakeSink) Close() {}
+
 func (f *fakeSink) ChooseDirectory(defaultDir string) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -230,6 +232,8 @@ func TestShutdownStopsPushes(t *testing.T) {
 	a, sink, _ := newTestApp(t, 1)
 	a.launch()
 	a.shutdown(context.Background())
+	// a push that was already underway may still land; let it finish first
+	time.Sleep(20 * time.Millisecond)
 	before := len(sink.named("state"))
 	a.notify()
 	time.Sleep(20 * time.Millisecond)
@@ -335,4 +339,18 @@ func TestSummaryAndJobDTOs(t *testing.T) {
 	if logLevelName(LogWarn) != "warn" || logLevelName(LogError) != "error" || logLevelName(LogInfo) != "info" {
 		t.Error("log level names drifted from the frontend's")
 	}
+}
+
+func TestPanickingParserEndsTheLoad(t *testing.T) {
+	a, sink, _ := newTestApp(t, 1)
+	a.ctrl.identify = func(string, *grabber.Settings) (grabber.Site, []error) { panic("nil deref") }
+	if err := a.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	waitUntil(t, "the load to end", func() bool { return !a.State().Loading })
+	if got := a.State().LoadError; got == "" {
+		t.Error("a panicking load left no error behind")
+	}
+	// the chapter list is still announced, so the window isn't waiting on it
+	waitUntil(t, "the chapters event", func() bool { return len(sink.named("chapters")) == 1 })
 }

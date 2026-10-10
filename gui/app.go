@@ -34,6 +34,8 @@ type sink interface {
 	Emit(event string, data any)
 	// ChooseDirectory shows the native folder picker, "" when cancelled
 	ChooseDirectory(defaultDir string) (string, error)
+	// Close makes every later Emit a no-op; the window is going away
+	Close()
 }
 
 // App is the value bound to the frontend. It's a thin adapter over the
@@ -52,6 +54,8 @@ type App struct {
 	version   string
 	interval  time.Duration
 
+	// saveMu serialises writes to gui.json, so two saves can't race a rename
+	saveMu sync.Mutex
 	// dirty is a one-slot signal: a pending signal already covers any number
 	// of further changes, so notify never blocks
 	dirty    chan struct{}
@@ -131,6 +135,9 @@ func (a *App) startup(ctx context.Context, rt *wailsRuntime) {
 // and closes the browser, as the controller's Shutdown does
 func (a *App) shutdown(context.Context) {
 	a.stopOnce.Do(func() { close(a.stop) })
+	// events still in flight (a load finishing, a push) must not reach a
+	// window that's going away
+	a.sink.Close()
 	a.ctrl.Shutdown()
 }
 
@@ -261,14 +268,7 @@ func (a *App) Chapters() []ChapterDTO {
 
 // Selection returns the indices of the selected chapters, in list order
 func (a *App) Selection() []int {
-	out := []int{}
-	for i, n := 0, len(a.ctrl.Chapters()); i < n; i++ {
-		if a.ctrl.IsSelected(i) {
-			out = append(out, i)
-		}
-	}
-
-	return out
+	return a.ctrl.SelectedIndices()
 }
 
 // Log returns the most recent log lines
@@ -297,9 +297,16 @@ func (a *App) Load(url string) error {
 		return err
 	}
 	go func() {
+		// a panic in a site's parser must not take the window down with it,
+		// and must not leave the controls locked behind a load that never ends
+		defer func() {
+			if r := recover(); r != nil {
+				a.ctrl.abortLoad(fmt.Errorf("the site's parser failed: %v", r))
+			}
+			a.sink.Emit("chapters", a.Chapters())
+		}()
 		// the error is kept by the controller and reported through the state
 		_ = a.ctrl.FinishLoad(url)
-		a.sink.Emit("chapters", a.Chapters())
 	}()
 
 	return nil
@@ -343,6 +350,8 @@ func (a *App) save() {
 	if a.prefsPath == "" {
 		return
 	}
+	a.saveMu.Lock()
+	defer a.saveMu.Unlock()
 	if err := saveOptions(a.prefsPath, optionsOf(a.ctrl.Settings())); err != nil {
 		a.ctrl.addLog(LogWarn, "could not save the options: "+err.Error())
 	}
@@ -416,8 +425,10 @@ func openInFileManager(dir string) error {
 	if err := cmd.Start(); err != nil {
 		return err
 	}
+	// waiting in the background reaps the child, so it doesn't linger as a zombie
+	go func() { _ = cmd.Wait() }()
 
-	return cmd.Process.Release()
+	return nil
 }
 
 // Start downloads the selected chapters in the background. Refusals (nothing
@@ -448,6 +459,13 @@ func (r *wailsRuntime) set(ctx context.Context) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.ctx = ctx
+}
+
+// Close implements sink: the context is dropped, after which events are discarded
+func (r *wailsRuntime) Close() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.ctx = nil
 }
 
 func (r *wailsRuntime) context() context.Context {

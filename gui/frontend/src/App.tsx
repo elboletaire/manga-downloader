@@ -8,13 +8,13 @@ import type { Options } from './types';
 import { useWindow } from './useWindow';
 
 export function App({ api }: { api: Api }) {
-  const { state, chapters, selected, log } = useWindow(api);
+  const { state, chapters, selected, log, failure } = useWindow(api);
   const [url, setUrl] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
   const [optionError, setOptionError] = useState('');
 
   if (state === null) {
-    return <main className="app">Loading…</main>;
+    return <main className="app">{failure !== '' ? <p className="error">{failure}</p> : 'Loading…'}</main>;
   }
 
   const shownUrl = url ?? state.url;

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Chapter, State } from './types';
 import { errorMessage, plural } from './format';
 
@@ -23,6 +23,14 @@ export function ChapterPanel({ state, chapters, selected, disabled, onToggle, on
   const [rangeNote, setRangeNote] = useState('');
   const [scrollTop, setScrollTop] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
+
+  // a new list starts at the top, whatever the old list was scrolled to
+  useEffect(() => {
+    setScrollTop(0);
+    if (scroller.current) {
+      scroller.current.scrollTop = 0;
+    }
+  }, [chapters]);
 
   const chosen = useMemo(() => new Set(selected), [selected]);
   const first = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN);
