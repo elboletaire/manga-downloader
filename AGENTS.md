@@ -4,7 +4,7 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 
 ## Project
 
-Go CLI (cobra) that downloads manga chapters from supported websites and packs them into CBZ files. Module: `github.com/elboletaire/manga-downloader`, Go 1.19.
+Go CLI (cobra) that downloads manga chapters from supported websites and packs them into CBZ files, plus a Fyne desktop app in `gui/` (see "The GUI" below). Module: `github.com/elboletaire/manga-downloader`, Go 1.19.
 
 ## Commands
 
@@ -23,13 +23,21 @@ Releases: the version lives only in the git tag (the makefile injects the short 
 
 ## Architecture
 
-The download flow, orchestrated from `cmd/root.go` (`Run`):
+The download flow lives in `core` (`core/download.go`, `Series.Download`), UI-agnostic so the CLI and the GUI share it. `cmd/root.go` (`Run`) is the CLI shell around it: it parses flags and renders the `core.Events` through `cmd/progress.go`. The steps:
 
 1. `grabber.NewSite(url, settings)` → `IdentifySite()` calls `Test()` on each registered grabber (`grabber/site.go`), matching by domain or by fetching the URL. **Order matters**: domain-matching grabbers first, then `PlainHTML`, then the remaining fetch-testing ones.
 2. The matched `Site` fetches title and chapters; the range argument (`ranges.Parse`, `1-10,12,15-20`) filters them.
-3. Each fetched chapter is passed through `Chapter.SkipPages` (`--skip-pages`, see below) before anything is downloaded.
+3. Each fetched chapter is passed through `Chapter.SkipPages` (`--skip-pages`, see below) before anything is downloaded, inside `core.Download`.
 4. Chapters download concurrently (`downloader.FetchChapter`), bounded by `--concurrency` (max 5) and `--concurrency-pages` (max 10). Pages are plain GETs with a Referer.
 5. `packer` writes CBZ files (`PackSingle`, or `PackBundle` with `--bundle`), named via a text/template (`--filename-template`, `packer/filename.go`); duplicate names get a `v{{.Version}}` suffix. Both paths go through `namePages` (`packer/pack.go`), which sniffs each page's format to name it `000.jpg`, `001.png`, … and transcodes per `--convert-images`.
+
+### The GUI (`gui/`)
+
+The desktop app is a separate Go module (`gui/`, its own `go.mod` requiring Fyne), so the CLI's `go.mod` never pulls Fyne and `go install …@latest` stays light. It needs cgo and the platform's windowing libraries, so it is built by `release-gui.yaml` on native runners, amd64 and arm64 only (Linux, Windows amd64, macOS universal). Windows arm64 is skipped: it would need an arm64 cgo toolchain on a runner we can't verify, and ARM Windows runs the amd64 build emulated. Build locally with `cd gui && go build -tags nodynamic .`.
+
+- **The seam is `core` + `notice`**: the GUI calls `core.Validate`/`Identify`/`Open`/`Download` and implements `core.Events`. Library warnings reach it through `notice.SetHandler`. Keep logic out of widgets so it can be tested without a display.
+- **Fyne ≥2.6 requires UI updates from other goroutines to go through `fyne.Do`.** Download events come from worker goroutines.
+- **The CLI launches it**: `manga-downloader ui` starts `manga-downloader-gui` from next to the CLI (or `Manga Downloader.app` next to it on macOS, or PATH), detached. On Windows, a bare run that Explorer started (the only process on its console, `cmd/console_windows.go`) does the same; without the GUI it shows help and waits for Enter so the window doesn't vanish. Both paths are decided in `cmd/launcher.go`.
 
 ### Page conversion (`--convert-images`, #155)
 
@@ -44,11 +52,11 @@ Some sites serve pages e-readers can't render — AVIF (atsu.moe, mistscans, man
 
 ### Page skipping (`--skip-pages`)
 
-Scanlation groups reserve pages for credits/ads (tcbscans: always page 2, often the last one too), and a page that 404s on the site's end fails the *whole* chapter with no way around it — `https://tcbonepiecechapters.com/chapters/7855/one-piece-chapter-1146` was flatly undownloadable until this flag existed. `Chapter.SkipPages` (`grabber/chapter.go`) drops the selected pages, called from `cmd/root.go` right after `FetchChapter`.
+Scanlation groups reserve pages for credits/ads (tcbscans: always page 2, often the last one too), and a page that 404s on the site's end fails the *whole* chapter with no way around it — `https://tcbonepiecechapters.com/chapters/7855/one-piece-chapter-1146` was flatly undownloadable until this flag existed. `Chapter.SkipPages` (`grabber/chapter.go`) drops the selected pages, called from `core.Download` right after `FetchChapter`.
 
 - **Positions are 1-based indices into `chapter.Pages`, never `Page.Number`.** That field is not a position: most grabbers set `i+1`, a couple (`mgeko`, `projectsuki`) set a bare `i`, and `tcb` sets the *reader page* number, which several images share. `SkipPages` deliberately leaves `Page.Number` alone afterwards, so a download error still names the page the site numbers; the archive stays contiguous anyway because `namePages` numbers by slice index.
 - **Skipping happens before the download, not at packing time.** That's the entire point (a skipped page costs nothing and can't 404 the chapter), and `downloader.FetchChapter` aborts the chapter on the first page error, so a post-download filter could never rescue a broken page.
-- **`cmd/root.go` calls `FetchChapter` twice in `--bundle` mode** — once in the totals loop that sizes the progress bar, once in the download goroutine. Any per-chapter filtering has to be applied at *both*, or the bar never reaches its total and `p.Wait()` hangs until the `Abort` fallback. `SkipPages` also updates `PagesCount` for the same reason.
+- **`core.Download` calls `FetchChapter` twice in `--bundle` mode** — once in the totals loop that sizes the progress bar, once in the download goroutine. Any per-chapter filtering has to be applied at *both*, or the bar never reaches its total and `p.Wait()` hangs until the `Abort` fallback. `SkipPages` also updates `PagesCount` for the same reason.
 - **`ranges.Parse` rejects negatives; `ranges.ParseRelative` accepts them.** Two entry points rather than one, because counting from the end is meaningless for chapter *numbers* (and chapter 0 exists), so the chapter-range caller should fail loudly on a negative instead of filtering nothing. `ranges.Resolve(rngs, total)` is what turns `-1` into a position, per chapter.
 - The parser is regex-based now: it used to `strings.Split(part, "-")`, which can't tell `-3--1` apart from anything. Reversed ranges still clamp to their first bound (`10-5` → just 10) as they always have, but only when both bounds share a sign — `2--1` ("page 2 to the last") is ordered, just not comparably so until `Resolve` knows the total.
 - **pflag takes the argument after a long flag verbatim, dash and all**, so `--skip-pages -1` works and the `=` form isn't actually required (`parseLongArg` never inspects the value for a leading `-`). A *shorthand* would be a different story, which is why this flag has none. The README documents both forms.

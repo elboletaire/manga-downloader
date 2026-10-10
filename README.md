@@ -283,6 +283,23 @@ go install github.com/elboletaire/manga-downloader@latest
 > Binaries installed this way don't report a version number, because the
 > version is only added to release builds.
 
+### Desktop app
+
+There is also a desktop app with a window instead of a terminal. Download the
+`manga-downloader-gui` asset for your system from the [releases page][releases]:
+
+- **Windows** (`windows-amd64`): unzip and run `manga-downloader-gui.exe`. ARM
+  Windows devices run it emulated.
+- **macOS** (`darwin-universal`): unzip and move `Manga Downloader.app` where you
+  like. It isn't signed, so Gatekeeper blocks its first launch: allow it under
+  *System Settings → Privacy & Security* (*Open Anyway*), same as the CLI.
+- **Linux** (`linux-amd64` or `linux-arm64`): extract the archive and run
+  `manga-downloader-gui`. It needs OpenGL and X11/Wayland libraries, which are
+  almost always installed already.
+
+If the desktop app sits next to the CLI, `manga-downloader ui` launches it, and
+on Windows double-clicking `manga-downloader.exe` opens it too.
+
 ## Usage
 
 ~~~bash
