@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createMockApi, scenarioFrom } from './mock';
+import { createMockApi, mockSetupFrom, scenarioFrom } from './mock';
 
 describe('scenarioFrom', () => {
   it('reads the scenario from the query, defaulting to empty', () => {
@@ -17,7 +17,7 @@ describe('createMockApi', () => {
   });
 
   it('loads a series, selects a range and reports the match count', async () => {
-    const api = createMockApi('empty');
+    const api = createMockApi({ chapters: 30 });
     await api.load('https://example.com/series/a');
     const state = await api.state();
     expect(state.loaded).toBe(true);
@@ -47,6 +47,57 @@ describe('createMockApi', () => {
     const api = createMockApi('done');
     const state = await api.state();
     expect(state.summary?.failures).toHaveLength(1);
+    expect(state.summary?.skipped).toBe(1);
     expect(state.running).toBe(false);
+  });
+
+  it('starts mid-run with mixed job states, and freezes on request', async () => {
+    const api = createMockApi({ scenario: 'running', freeze: true });
+    const state = await api.state();
+    expect(state.running).toBe(true);
+    const states = new Set(state.jobs.map((j) => j.state));
+    expect(states.has('done')).toBe(true);
+    expect(states.has('failed')).toBe(true);
+    // jobs only exist for started chapters, as in the backend
+    expect(state.jobs.length).toBeLessThan(state.run.chapters);
+  });
+
+  it('runs a bundle as a single job', async () => {
+    const state = await createMockApi({ scenario: 'bundle', freeze: true }).state();
+    expect(state.run.bundle).toBe(true);
+    expect(state.jobs).toHaveLength(1);
+    expect(state.jobs[0].status).not.toBe('');
+  });
+
+  it('has a load error and nothing listed for the error scenario', async () => {
+    const state = await createMockApi('error').state();
+    expect(state.loaded).toBe(false);
+    expect(state.loadError).not.toBe('');
+  });
+
+  it('is stale for the stale scenario', async () => {
+    const state = await createMockApi('stale').state();
+    expect(state.stale).toBe(true);
+    expect(state.selectedCount).toBeGreaterThan(0);
+  });
+
+  it('lists some numbers once per language with dupes', async () => {
+    const api = createMockApi({ scenario: 'loaded', dupes: true, chapters: 10 });
+    const state = await api.state();
+    expect(state.hasDuplicates).toBe(true);
+    const tens = (await api.chapters()).filter((c) => c.number === 10);
+    expect(tens.map((c) => c.language)).toEqual(['en', 'es']);
+  });
+});
+
+describe('mockSetupFrom', () => {
+  it('reads the flags and the chapter count', () => {
+    expect(mockSetupFrom('?scenario=bundle&freeze&dupes&chapters=50')).toEqual({
+      scenario: 'bundle',
+      freeze: true,
+      dupes: true,
+      chapters: 50,
+    });
+    expect(mockSetupFrom('?chapters=nope').chapters).toBeGreaterThan(100);
   });
 });

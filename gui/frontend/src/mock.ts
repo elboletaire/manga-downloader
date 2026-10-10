@@ -2,21 +2,47 @@
 // (pnpm dev) and in tests. It keeps its own state, simulates a load and a
 // download, and pushes the same events the Go side does.
 //
-// Add ?mock to the URL to use it inside the app too. ?scenario=loaded,
-// running or done starts it in that state, so screenshots need no clicking.
+// Add ?mock to the URL to use it inside the app too. ?scenario= starts it in
+// a given state, so screenshots need no clicking: loading, error, loaded,
+// stale, running, bundle, cancelling or done. &freeze stops the simulated run
+// from moving (stable screenshots), &dupes lists some numbers twice, once per
+// language, and &chapters=N sets the list's length.
 
 import type { Api, Unsubscribe } from './api';
 import type { Chapter, Job, LogLine, Options, State, Summary } from './types';
 
-const CHAPTERS = 30;
+const CHAPTERS = 312;
 const PAGES = 12;
-const TICK_MS = 120;
+const TICK_MS = 160;
 
-type Scenario = 'empty' | 'loaded' | 'running' | 'done';
+const SCENARIOS = ['empty', 'loading', 'error', 'loaded', 'stale', 'running', 'bundle', 'cancelling', 'done'] as const;
+
+export type Scenario = (typeof SCENARIOS)[number];
+
+export interface MockSetup {
+  scenario: Scenario;
+  /** The simulated run doesn't advance */
+  freeze: boolean;
+  /** Some numbers are listed twice, in two languages */
+  dupes: boolean;
+  chapters: number;
+}
 
 function scenarioFrom(search: string): Scenario {
   const value = new URLSearchParams(search).get('scenario');
-  return value === 'loaded' || value === 'running' || value === 'done' ? value : 'empty';
+  return (SCENARIOS as readonly string[]).includes(value ?? '') ? (value as Scenario) : 'empty';
+}
+
+/** The mock's whole setup from the page's query string */
+export function mockSetupFrom(search: string): MockSetup {
+  const params = new URLSearchParams(search);
+  const n = Number(params.get('chapters'));
+  return {
+    scenario: scenarioFrom(search),
+    freeze: params.has('freeze'),
+    dupes: params.has('dupes'),
+    chapters: Number.isInteger(n) && n > 0 ? n : CHAPTERS,
+  };
 }
 
 function defaultOptions(): Options {
@@ -28,23 +54,42 @@ function defaultOptions(): Options {
     scanlator: '',
     convertImages: 'avif',
     skipPages: '',
-    filenameTemplate: '{{.Title}} - Chapter {{.Number}}',
+    filenameTemplate: '{{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}',
     browserVisible: false,
   };
 }
 
-function mockChapters(withLanguages: boolean): Chapter[] {
+// Chapter names, so the list looks like a real series rather than a counter
+const NAMES = [
+  'The Lighthouse Keeper',
+  'Salt and Ink',
+  'A Door in the Tide',
+  'Paper Lanterns',
+  'The Long Way Round',
+  'Inheritance',
+  'What the River Took',
+  'Night Market',
+  'Second Wind',
+  'Cartographers',
+  'The Quiet Hour',
+  'Ashfall',
+];
+
+function mockChapters(count: number, withLanguages: boolean): Chapter[] {
   const list: Chapter[] = [];
-  for (let i = 1; i <= CHAPTERS; i++) {
-    list.push({
-      index: i - 1,
-      number: i,
-      title: `Chapter ${i}`,
-      language: withLanguages ? 'eng' : '',
-    });
-  }
-  if (withLanguages) {
-    list.push({ index: CHAPTERS, number: 12, title: 'Chapter 12', language: 'esp' });
+  const add = (number: number, title: string, language: string) =>
+    list.push({ index: list.length, number, title, language });
+
+  for (let i = 1; i <= count; i++) {
+    // every seventh chapter has a name, as sites often only name some
+    const title = i % 7 === 1 ? `Chapter ${i}: ${NAMES[Math.floor(i / 7) % NAMES.length]}` : `Chapter ${i}`;
+    add(i, title, withLanguages ? 'en' : '');
+    if (withLanguages && i % 5 === 0) {
+      add(i, `Capítulo ${i}`, 'es');
+    }
+    if (i % 40 === 0) {
+      add(i + 0.5, `Chapter ${i}.5: Extra`, withLanguages ? 'en' : '');
+    }
   }
   return list;
 }
@@ -66,7 +111,19 @@ class Bus<T> {
   }
 }
 
-export function createMockApi(scenario: Scenario = 'empty'): Api {
+export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): Api {
+  const {
+    scenario,
+    freeze,
+    dupes,
+    chapters: chapterCount,
+  } = {
+    scenario: 'empty' as Scenario,
+    freeze: false,
+    dupes: false,
+    chapters: CHAPTERS,
+    ...(typeof setup === 'string' ? { scenario: setup } : setup),
+  };
   const options = defaultOptions();
   let url = '';
   let loading = false;
@@ -117,14 +174,26 @@ export function createMockApi(scenario: Scenario = 'empty'): Api {
   function finishLoad(): void {
     loading = false;
     loaded = true;
-    title = 'Mock Series';
-    chapters = mockChapters(url.includes('dupes') || options.language === 'all');
+    title = 'The Cartographer of Lost Harbours';
+    chapters = mockChapters(chapterCount, dupes || url.includes('dupes') || options.language === 'all');
     applied = { language: options.language, scanlator: options.scanlator };
     selected = new Set<number>();
     jobs = [];
     summary = null;
     pushLog('info', `Loaded ${title}: ${chapters.length} chapters`);
     chaptersBus.emit(chapters);
+    selectionBus.emit([]);
+    push();
+  }
+
+  function failLoad(): void {
+    loading = false;
+    loaded = false;
+    chapters = [];
+    selected = new Set<number>();
+    loadError = "Couldn't fetch the chapter list: unexpected status 403 Forbidden";
+    pushLog('error', loadError);
+    chaptersBus.emit([]);
     selectionBus.emit([]);
     push();
   }
@@ -136,96 +205,178 @@ export function createMockApi(scenario: Scenario = 'empty'): Api {
     const saved = jobs.filter((j) => j.state === 'done').length;
     const failures = jobs.filter((j) => j.state === 'failed').map((j) => `${j.title}: ${j.reason}`);
     const skipped = jobs.filter((j) => j.state === 'skipped').length;
+    const bundled = options.bundle;
     summary = {
       dir: options.outputDir,
       cancelled: cancelling,
-      saved,
-      bundled: false,
-      bundle: '',
+      saved: bundled && failures.length === 0 && !cancelling ? runChapters : saved,
+      bundled,
+      bundle: bundled && !cancelling ? `${title} 1-${runChapters}.cbz` : '',
       skipped,
       failures,
       error: '',
     };
-    pushLog('info', `Finished: ${saved} saved`);
+    pushLog('info', cancelling ? `Cancelled: ${saved} saved` : `Finished: ${saved} saved`);
+    if (failures.length > 0) {
+      pushLog('warn', `${failures.length} chapter(s) failed`);
+    }
     push();
   }
 
-  function simulateRun(list: Chapter[]): void {
+  // the chapters of the run that haven't started; the backend only creates a
+  // job when a chapter starts, so the mock does too
+  let pending: Chapter[] = [];
+
+  /** One step of the simulated run. Returns false once it's over. */
+  function step(): boolean {
+    if (options.bundle) {
+      const j = jobs[0];
+      const done = Math.min(j.total, j.done + 4);
+      const fetched = done < j.total / 2;
+      jobs = [
+        {
+          ...j,
+          done,
+          state: done >= j.total ? 'done' : fetched ? 'downloading' : 'archiving',
+          status:
+            done >= j.total
+              ? ''
+              : fetched
+                ? `Downloading chapter ${Math.floor((done / j.total) * 2 * runChapters) + 1}...`
+                : 'Creating the bundle...',
+        },
+      ];
+      return done < j.total;
+    }
+
+    jobs = jobs.map((j) => {
+      if (j.state !== 'downloading' && j.state !== 'archiving') {
+        return j;
+      }
+      if (j.number === 4 && j.done >= PAGES / 2) {
+        return { ...j, state: 'failed', reason: 'download: page 5 returned 404 Not Found' };
+      }
+      // uneven speeds, so the rows don't move in lockstep
+      const done = Math.min(j.total, j.done + 1 + ((j.number * 7) % 4));
+      const state = done >= j.total ? 'done' : done >= j.total / 2 ? 'archiving' : 'downloading';
+      return { ...j, done, state };
+    });
+
+    const active = jobs.filter((j) => j.state === 'downloading' || j.state === 'archiving').length;
+    if (!cancelling && active < 3 && pending.length > 0) {
+      const c = pending.shift()!;
+      if (c.number === 6) {
+        jobs = [
+          ...jobs,
+          {
+            title: c.title,
+            number: c.number,
+            total: 0,
+            done: 0,
+            state: 'skipped',
+            reason: 'every page was skipped',
+            status: '',
+          },
+        ];
+      } else {
+        jobs = [
+          ...jobs,
+          { title: c.title, number: c.number, total: PAGES * 2, done: 0, state: 'downloading', reason: '', status: '' },
+        ];
+      }
+    }
+
+    return (
+      jobs.some((j) => j.state === 'downloading' || j.state === 'archiving') || (!cancelling && pending.length > 0)
+    );
+  }
+
+  function beginRun(list: Chapter[]): void {
     running = true;
     cancelling = false;
     runChapters = list.length;
     summary = null;
-    // the mock fails the fourth chapter (see the tick below) so the failure
-    // path is visible
-    jobs = list.map((c) => ({
-      title: c.title,
-      number: c.number,
-      total: PAGES * 2,
-      done: 0,
-      state: 'downloading',
-      reason: '',
-      status: '',
-    }));
-    push();
-
-    timer = setInterval(() => {
-      let moving = false;
-      jobs = jobs.map((j, i) => {
-        if (j.state === 'done' || j.state === 'failed' || j.state === 'skipped') {
-          return j;
-        }
-        moving = true;
-        if (i === 3 && j.done >= PAGES / 2) {
-          return { ...j, state: 'failed', reason: 'download: page 5 returned 404' };
-        }
-        const done = Math.min(j.total, j.done + 3);
-        const state = done >= j.total ? 'done' : done >= j.total / 2 ? 'archiving' : 'downloading';
-        return { ...j, done, state };
-      });
-      if (!moving) {
-        finishRun();
-        return;
-      }
-      push();
-    }, TICK_MS);
+    pending = [...list];
+    jobs = options.bundle
+      ? [
+          {
+            title: `Bundle: chapters 1-${list.length}`,
+            number: 0,
+            total: list.length * PAGES * 2,
+            done: 0,
+            state: 'downloading',
+            reason: '',
+            status: 'Gathering info...',
+          },
+        ]
+      : [];
   }
 
-  if (scenario !== 'empty') {
-    url = 'https://example.com/series/mock-series';
+  function tick(): void {
+    if (!step()) {
+      finishRun();
+      return;
+    }
+    push();
+  }
+
+  function simulateRun(list: Chapter[]): void {
+    beginRun(list);
+    push();
+    if (!freeze) {
+      timer = setInterval(tick, TICK_MS);
+    }
+  }
+
+  if (scenario === 'loading') {
+    url = 'https://example.com/series/the-cartographer';
+    loading = true;
+    if (!freeze) {
+      setTimeout(finishLoad, 2500);
+    }
+  } else if (scenario === 'error') {
+    url = 'https://unknown.example.org/manga/some-series';
+    failLoad();
+    log = [];
+    pushLog('info', `Loading ${url}`);
+    pushLog('error', loadError);
+  } else if (scenario !== 'empty') {
+    url = 'https://example.com/series/the-cartographer';
     finishLoad();
-    for (const i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) {
-      selected.add(i);
+    pushLog('info', 'Using the saved options from gui.json');
+    for (const c of chapters.slice(0, 12)) {
+      selected.add(c.index);
+    }
+    for (const c of chapters.slice(40, 52)) {
+      selected.add(c.index);
     }
     selectionBus.emit(selectionOf());
-    push();
   }
-  if (scenario === 'running') {
-    simulateRun(chapters.filter((_, i) => selected.has(i)).slice(0, 8));
+  if (scenario === 'stale') {
+    options.language = 'es';
   }
-  if (scenario === 'done') {
-    // a finished run, built without the timer
-    const picked = chapters.filter((_, i) => selected.has(i)).slice(0, 8);
-    runChapters = picked.length;
-    jobs = picked.map((c, i) => ({
-      title: c.title,
-      number: c.number,
-      total: PAGES * 2,
-      done: PAGES * 2,
-      state: i === 3 ? 'failed' : 'done',
-      reason: i === 3 ? 'download: page 5 returned 404' : '',
-      status: '',
-    }));
-    summary = {
-      dir: options.outputDir,
-      cancelled: false,
-      saved: 7,
-      bundled: false,
-      bundle: '',
-      skipped: 0,
-      failures: ['Chapter 4: download: page 5 returned 404'],
-      error: '',
-    };
+  if (scenario === 'running' || scenario === 'cancelling' || scenario === 'bundle' || scenario === 'done') {
+    options.bundle = scenario === 'bundle';
+    const picked = chapters.filter((c) => selected.has(c.index)).slice(0, 12);
+    pushLog('info', `Downloading ${picked.length} chapter(s) of ${title}`);
+    beginRun(picked);
+    // run the simulation forward to an interesting point
+    const steps = scenario === 'done' ? Infinity : scenario === 'bundle' ? 8 : 14;
+    for (let i = 0; i < steps && step(); i++) {
+      // advancing
+    }
+    if (scenario === 'cancelling') {
+      cancelling = true;
+      pushLog('info', 'Cancelling: chapters already downloading will finish, no new ones start');
+    }
+    if (scenario === 'done') {
+      pushLog('warn', 'Chapter 2: page 7 is AVIF but could not be converted; kept as is');
+      finishRun();
+    } else if (!freeze) {
+      timer = setInterval(tick, TICK_MS);
+    }
   }
+  push();
 
   const api: Api = {
     async state() {
@@ -255,12 +406,7 @@ export function createMockApi(scenario: Scenario = 'empty'): Api {
       push();
       await new Promise((resolve) => setTimeout(resolve, 400));
       if (trimmed.includes('unknown')) {
-        loading = false;
-        loaded = false;
-        chapters = [];
-        loadError = 'site not recognised';
-        pushLog('error', 'site not recognised');
-        push();
+        failLoad();
         return;
       }
       finishLoad();
@@ -284,7 +430,10 @@ export function createMockApi(scenario: Scenario = 'empty'): Api {
     },
     async selectRange(text) {
       const matched: number[] = [];
-      for (const part of text.split(',').map((p) => p.trim()).filter(Boolean)) {
+      for (const part of text
+        .split(',')
+        .map((p) => p.trim())
+        .filter(Boolean)) {
         const [a, b] = part.split('-').map(Number);
         if (Number.isNaN(a)) {
           throw `invalid range: ${part}`;
