@@ -1,8 +1,11 @@
 // Copyright (C) 2023-2026 Òscar Casajuana Alonso
 
-// Command icongen draws gui/Icon.png, the app icon: a rounded blue tile with
-// a white page and a download arrow. It's a one-off generator run by hand
-// (go run ./internal/icongen from gui/), not part of the shipped binary.
+// Command icongen draws the app icon: a rounded blue tile with a white page and
+// a download arrow. The design is laid out on a 512 grid and scaled to the
+// requested size, so it can make build/appicon.png at 1024. It's a one-off
+// generator run by hand, not part of the shipped binary:
+//
+//	go run ./internal/icongen build/appicon.png 1024   (from gui/)
 package main
 
 import (
@@ -11,9 +14,13 @@ import (
 	"image/png"
 	"log"
 	"os"
+	"strconv"
 )
 
-const size = 512
+// base is the grid the design is drawn on; size is the output's width
+const base = 512
+
+var size = base
 
 var (
 	tile   = color.RGBA{R: 0x1f, G: 0x4e, B: 0x8c, A: 0xff}
@@ -48,26 +55,28 @@ func inRoundedRect(x, y, x0, y0, x1, y1, r int) bool {
 
 func draw() *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, size, size))
-	for y := 0; y < size; y++ {
-		for x := 0; x < size; x++ {
-			if !inRoundedRect(x, y, 0, 0, size, size, 110) {
+	for py := 0; py < size; py++ {
+		for px := 0; px < size; px++ {
+			// x and y are on the base grid, so the design doesn't change with size
+			x, y := px*base/size, py*base/size
+			if !inRoundedRect(x, y, 0, 0, base, base, 110) {
 				continue
 			}
-			img.Set(x, y, tile)
+			img.Set(px, py, tile)
 			// the page: a sheet with a folded corner in the upper right
 			if inRoundedRect(x, y, 150, 96, 362, 400, 18) && !(x > 300 && y < 158 && x-300 > 158-y) {
-				img.Set(x, y, paper)
+				img.Set(px, py, paper)
 			}
 			// text lines on the page
 			if x >= 190 && x < 322 && (y >= 190 && y < 204 || y >= 236 && y < 250 || y >= 282 && y < 296) {
-				img.Set(x, y, line)
+				img.Set(px, py, line)
 			}
 			// the arrow: a shaft under the page, then a head tapering to a point
 			if x >= 236 && x < 276 && y >= 330 && y < 430 {
-				img.Set(x, y, accent)
+				img.Set(px, py, accent)
 			}
 			if y >= 380 && y < 440 && abs(x-256) <= (440-y)*90/60 {
-				img.Set(x, y, accent)
+				img.Set(px, py, accent)
 			}
 		}
 	}
@@ -82,9 +91,16 @@ func abs(v int) int {
 }
 
 func main() {
-	out := "Icon.png"
+	out := "build/appicon.png"
 	if len(os.Args) > 1 {
 		out = os.Args[1]
+	}
+	if len(os.Args) > 2 {
+		n, err := strconv.Atoi(os.Args[2])
+		if err != nil || n < 16 {
+			log.Fatal("size must be at least 16")
+		}
+		size = n
 	}
 	f, err := os.Create(out)
 	if err != nil {

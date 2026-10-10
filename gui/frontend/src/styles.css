@@ -1,0 +1,268 @@
+/* Plain and functional on purpose. The design pass restyles this file. */
+
+:root {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  color: #1d2330;
+  background: #f4f5f7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 20px;
+  margin: 0;
+}
+
+h2 {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.url,
+.range,
+.inline,
+.buttons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.url input,
+.range input {
+  flex: 1;
+}
+
+input[type="text"],
+input[type="url"],
+select {
+  padding: 4px 6px;
+  border: 1px solid #b8c0cc;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+button {
+  padding: 4px 10px;
+  border: 1px solid #8a94a3;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+button.primary {
+  background: #1f4e8c;
+  border-color: #1f4e8c;
+  color: #fff;
+}
+
+button:disabled,
+input:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 1.2fr) minmax(300px, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid #dde2ea;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.chapters .count {
+  margin: 0 0 6px;
+  color: #4a5568;
+}
+
+.chapters .buttons,
+.chapters .range {
+  margin-bottom: 6px;
+}
+
+.list {
+  position: relative;
+  overflow-y: auto;
+  border: 1px solid #dde2ea;
+  border-radius: 4px;
+}
+
+.row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.row .number {
+  min-width: 48px;
+  font-variant-numeric: tabular-nums;
+}
+
+.row .title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.lang {
+  font-size: 12px;
+  padding: 0 6px;
+  border-radius: 3px;
+  background: #e6ecf5;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.field fieldset,
+fieldset.field {
+  border: 0;
+  padding: 0;
+  margin: 0 0 8px;
+}
+
+.check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.stale {
+  margin-bottom: 8px;
+}
+
+.hint {
+  color: #5b6577;
+  margin: 4px 0;
+}
+
+.note,
+.status {
+  margin: 4px 0;
+  color: #2b3a52;
+}
+
+.error {
+  color: #a4262c;
+  margin: 4px 0;
+}
+
+.notice {
+  color: #7a5200;
+  margin: 0;
+}
+
+.summary {
+  margin-top: 8px;
+}
+
+.headline {
+  font-weight: 600;
+  margin: 4px 0;
+}
+
+.summary-text p {
+  margin: 2px 0;
+}
+
+.jobs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.job {
+  padding: 4px 0;
+  border-bottom: 1px solid #eef1f5;
+}
+
+.job-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.job-failed .job-status {
+  color: #a4262c;
+}
+
+.job progress {
+  width: 100%;
+  height: 8px;
+}
+
+.log-lines {
+  max-height: 180px;
+  overflow-y: auto;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.log-lines .line {
+  margin: 1px 0;
+}
+
+.line-warn {
+  color: #7a5200;
+}
+
+.line-error {
+  color: #a4262c;
+}
+
+.foot {
+  color: #7b8494;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

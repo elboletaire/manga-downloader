@@ -104,9 +104,9 @@ type runStats struct {
 }
 
 // Controller holds the state of the app and runs the core flow. It knows
-// nothing about Fyne: the view reads its state through the getters and is
-// told about changes through notify, which is called from any goroutine and
-// must not call back into the controller.
+// nothing about the window toolkit: the window reads its state through the
+// getters and is told about changes through notify, which is called from any
+// goroutine and must not call back into the controller.
 //
 // Every mutation happens under mu; getters return copies, so the view never
 // shares memory with the event goroutines.
@@ -135,6 +135,13 @@ type Controller struct {
 	// with, which Configure can make stale
 	loadedLanguage  string
 	loadedScanlator string
+
+	// loadErr is the last load's error, which the view shows under the URL
+	loadErr error
+	// selGen and logGen count changes to the selection and the log, so a view
+	// that pushes state can skip re-sending either when it hasn't moved
+	selGen uint64
+	logGen uint64
 
 	cancel  context.CancelFunc
 	runinfo RunInfo
@@ -181,6 +188,7 @@ func (c *Controller) addLog(level LogLevel, text string) {
 }
 
 func (c *Controller) appendLogLocked(level LogLevel, text string) {
+	c.logGen++
 	c.log = append(c.log, LogLine{Level: level, Text: text})
 	if len(c.log) > maxLogLines {
 		c.log = c.log[len(c.log)-maxLogLines:]
@@ -226,6 +234,7 @@ func (c *Controller) BeginLoad(url string) error {
 		return errBusy
 	}
 	c.loading = true
+	c.loadErr = nil
 	// a fresh settings pointer: the previous series keeps its own, and no
 	// Configure can run while this load reads it
 	s := new(grabber.Settings)
@@ -248,6 +257,7 @@ func (c *Controller) FinishLoad(url string) error {
 
 	c.mu.Lock()
 	c.loading = false
+	c.loadErr = err
 	if err != nil {
 		c.series = nil
 		c.selected = nil
@@ -274,6 +284,7 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.series = series
+	c.selGen++
 	c.selected = make([]bool, len(series.Chapters))
 	c.hasDuplicates = core.HasDuplicateChapterNumbers(series.Chapters)
 	c.loadedLanguage = s.Language
@@ -307,6 +318,34 @@ func (c *Controller) Loaded() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.series != nil
+}
+
+// LoadError is the error of the last load, nil when it succeeded
+func (c *Controller) LoadError() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.loadErr
+}
+
+// Cancelling reports whether a run has been asked to stop
+func (c *Controller) Cancelling() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.cancelling
+}
+
+// SelectionGen changes whenever the selection does (see selGen)
+func (c *Controller) SelectionGen() uint64 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.selGen
+}
+
+// LogGen changes whenever a line is added to the log (see logGen)
+func (c *Controller) LogGen() uint64 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.logGen
 }
 
 // Loading reports whether a series is being loaded
@@ -380,6 +419,7 @@ func (c *Controller) SetSelected(i int, on bool) {
 		return
 	}
 	c.selected[i] = on
+	c.selGen++
 	c.mu.Unlock()
 	c.emit()
 }
@@ -390,6 +430,7 @@ func (c *Controller) SetAll(on bool) {
 	for i := range c.selected {
 		c.selected[i] = on
 	}
+	c.selGen++
 	c.mu.Unlock()
 	c.emit()
 }
@@ -412,6 +453,7 @@ func (c *Controller) SelectRange(text string) (int, error) {
 				n++
 			}
 		}
+		c.selGen++
 	}
 	c.mu.Unlock()
 	c.emit()

@@ -1,8 +1,0 @@
-[Details]
-Icon = "Icon.png"
-Name = "Manga Downloader"
-ID = "com.github.elboletaire.mangadownloader"
-Version = "0.0.0"
-Build = 1
-
-[Release]

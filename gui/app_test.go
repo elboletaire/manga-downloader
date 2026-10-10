@@ -1,0 +1,338 @@
+// Copyright (C) 2023-2026 Òscar Casajuana Alonso
+
+package main
+
+import (
+	"context"
+	"errors"
+	"path/filepath"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/elboletaire/manga-downloader/core"
+	"github.com/elboletaire/manga-downloader/grabber"
+)
+
+// fakeSink records what the App pushes and answers the folder picker with pick
+type fakeSink struct {
+	mu     sync.Mutex
+	events []fakeEvent
+	pick   string
+	picked []string
+}
+
+type fakeEvent struct {
+	name string
+	data any
+}
+
+func (f *fakeSink) Emit(event string, data any) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.events = append(f.events, fakeEvent{event, data})
+}
+
+func (f *fakeSink) ChooseDirectory(defaultDir string) (string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.picked = append(f.picked, defaultDir)
+	return f.pick, nil
+}
+
+// named returns the payloads of the events with the given name, in order
+func (f *fakeSink) named(name string) []any {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var out []any
+	for _, e := range f.events {
+		if e.name == name {
+			out = append(out, e.data)
+		}
+	}
+	return out
+}
+
+// newTestApp returns an App over a fake site with n chapters, its options
+// saved into a temp file. The App's pushes are not started; tests call pump
+// through launch when they need them.
+func newTestApp(t *testing.T, n int) (*App, *fakeSink, string) {
+	t.Helper()
+	c, _, _ := newTestController(t, false, nil, chapters(n, 2)...)
+	sink := &fakeSink{}
+	prefs := filepath.Join(t.TempDir(), "gui.json")
+	a := newApp(c, sink, prefs, "v1.2.3")
+	a.interval = time.Millisecond
+	c.notify = a.notify
+	return a, sink, prefs
+}
+
+// loadedApp returns newTestApp with its series loaded
+func loadedApp(t *testing.T, n int) (*App, *fakeSink) {
+	t.Helper()
+	a, sink, _ := newTestApp(t, n)
+	if err := a.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	waitUntil(t, "the load", func() bool { return !a.State().Loading })
+	return a, sink
+}
+
+// waitUntil polls cond for up to 5 seconds
+func waitUntil(t *testing.T, what string, cond func() bool) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		if cond() {
+			return
+		}
+		time.Sleep(2 * time.Millisecond)
+	}
+	t.Fatalf("timed out waiting for %s", what)
+}
+
+func TestStateReflectsTheController(t *testing.T) {
+	a, _, _ := newTestApp(t, 5)
+	if st := a.State(); st.Loaded || st.Running || st.Summary != nil || st.Version != "v1.2.3" {
+		t.Fatalf("fresh state %+v", st)
+	}
+
+	if err := a.Load("  https://example.com/manga/test  "); err != nil {
+		t.Fatal(err)
+	}
+	waitUntil(t, "the load", func() bool { return !a.State().Loading })
+
+	st := a.State()
+	if !st.Loaded || st.Title != "Test Series" || st.ChapterCount != 5 || st.URL != "https://example.com/manga/test" {
+		t.Errorf("loaded state %+v", st)
+	}
+	if st.LoadError != "" {
+		t.Errorf("unexpected load error %q", st.LoadError)
+	}
+}
+
+func TestLoadRefusesAnEmptyURL(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	if err := a.Load("   "); err == nil {
+		t.Fatal("an empty URL was accepted")
+	}
+}
+
+func TestLoadErrorReachesTheState(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	a.ctrl.identify = func(string, *grabber.Settings) (grabber.Site, []error) { return nil, nil }
+	if err := a.Load("https://example.com/unknown"); err != nil {
+		t.Fatal(err)
+	}
+	waitUntil(t, "the load", func() bool { return !a.State().Loading })
+	if got := a.State().LoadError; got != "site not recognised" {
+		t.Errorf("LoadError = %q", got)
+	}
+}
+
+func TestLoadMessageNamesTheFailingStep(t *testing.T) {
+	cases := []struct {
+		err  error
+		want string
+	}{
+		{&core.TitleError{Err: errors.New("boom")}, "Couldn't fetch the series title: boom"},
+		{&core.NoChaptersError{}, (&core.NoChaptersError{}).Error()},
+		{errors.New("plain"), "plain"},
+	}
+	for _, c := range cases {
+		if got := loadMessage(c.err); got != c.want {
+			t.Errorf("loadMessage(%T) = %q, want %q", c.err, got, c.want)
+		}
+	}
+}
+
+func TestChaptersAndSelectionAreIndexed(t *testing.T) {
+	a, _, _ := newTestApp(t, 4)
+	if err := a.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	waitUntil(t, "the load", func() bool { return !a.State().Loading })
+
+	chs := a.Chapters()
+	if len(chs) != 4 || chs[2].Index != 2 || chs[2].Number != 3 || chs[2].Language != "" {
+		t.Fatalf("chapters %+v", chs)
+	}
+
+	n, err := a.SelectRange("2-3")
+	if err != nil || n != 2 {
+		t.Fatalf("SelectRange = %d, %v", n, err)
+	}
+	if got := a.Selection(); len(got) != 2 || got[0] != 1 || got[1] != 2 {
+		t.Errorf("Selection = %v", got)
+	}
+	if got := a.State().SelectedCount; got != 2 {
+		t.Errorf("SelectedCount = %d", got)
+	}
+}
+
+func TestSelectionIsEmptyNotNull(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	if got := a.Selection(); got == nil {
+		t.Error("Selection returned nil, which the frontend reads as no array")
+	}
+	if got := a.Log(); got == nil {
+		t.Error("Log returned nil")
+	}
+}
+
+func TestSelectionIsPushedOnlyWhenItChanges(t *testing.T) {
+	a, sink := loadedApp(t, 3)
+	a.launch()
+	defer a.shutdown(context.Background())
+
+	a.ctrl.SetAll(true)
+	// wait for the push that carries the change, not an earlier one from the load
+	waitUntil(t, "a selection push", func() bool {
+		sel := sink.named("selection")
+		return len(sel) > 0 && len(sel[len(sel)-1].([]int)) == 3
+	})
+	pushes := len(sink.named("selection"))
+
+	// a notify without a change must not resend the selection
+	statesBefore := len(sink.named("state"))
+	a.notify()
+	waitUntil(t, "a state push", func() bool { return len(sink.named("state")) > statesBefore })
+	if got := len(sink.named("selection")); got != pushes {
+		t.Errorf("selection pushed %d more times for no change", got-pushes)
+	}
+}
+
+func TestStatePushesAreThrottled(t *testing.T) {
+	a, sink := loadedApp(t, 3)
+	a.interval = 40 * time.Millisecond
+	a.launch()
+	defer a.shutdown(context.Background())
+
+	// a burst of changes lands within one interval
+	for i := 0; i < 500; i++ {
+		a.ctrl.SetSelected(i%3, i%2 == 0)
+		a.notify()
+	}
+	a.ctrl.SetAll(true)
+	a.notify()
+
+	// the trailing change is always sent, and the burst collapsed
+	waitUntil(t, "the final state", func() bool {
+		states := sink.named("state")
+		return len(states) > 0 && states[len(states)-1].(State).SelectedCount == 3
+	})
+	if got := len(sink.named("state")); got > 20 {
+		t.Errorf("%d state pushes for a burst inside one throttle window", got)
+	}
+}
+
+func TestShutdownStopsPushes(t *testing.T) {
+	a, sink, _ := newTestApp(t, 1)
+	a.launch()
+	a.shutdown(context.Background())
+	before := len(sink.named("state"))
+	a.notify()
+	time.Sleep(20 * time.Millisecond)
+	if after := len(sink.named("state")); after != before {
+		t.Errorf("pushed %d state events after shutdown", after-before)
+	}
+}
+
+func TestSetOptionsAppliesAndSaves(t *testing.T) {
+	a, _, prefs := newTestApp(t, 1)
+	o := a.Options()
+	o.Format = "raw"
+	o.ConvertImages = "webp"
+	if err := a.SetOptions(o); err != nil {
+		t.Fatal(err)
+	}
+	if got := a.Options(); got.Format != "raw" || got.ConvertImages != "webp" {
+		t.Errorf("options %+v", got)
+	}
+
+	saved := defaultSettings()
+	if err := loadOptions(prefs, saved); err != nil {
+		t.Fatal(err)
+	}
+	if saved.Format != "raw" || saved.ConvertImages != "webp" {
+		t.Errorf("saved options %+v", optionsOf(*saved))
+	}
+}
+
+func TestSetOptionsRefusedWhileBusy(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	if err := a.ctrl.BeginLoad("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.SetOptions(a.Options()); !errors.Is(err, errBusy) {
+		t.Errorf("SetOptions while loading = %v, want errBusy", err)
+	}
+}
+
+func TestChooseFolderSetsTheOutputFolder(t *testing.T) {
+	a, sink, prefs := newTestApp(t, 1)
+	sink.pick = t.TempDir()
+	got, err := a.ChooseFolder()
+	if err != nil || got != sink.pick {
+		t.Fatalf("ChooseFolder = %q, %v", got, err)
+	}
+	if a.Options().OutputDir != sink.pick {
+		t.Errorf("output folder %q, want %q", a.Options().OutputDir, sink.pick)
+	}
+	if loaded := defaultSettings(); loadOptions(prefs, loaded) != nil || loaded.OutputDir != sink.pick {
+		t.Errorf("the picked folder wasn't saved")
+	}
+}
+
+func TestChooseFolderCancelledKeepsTheFolder(t *testing.T) {
+	a, sink, _ := newTestApp(t, 1)
+	before := a.Options().OutputDir
+	sink.pick = ""
+	got, err := a.ChooseFolder()
+	if err != nil || got != "" {
+		t.Fatalf("cancelled ChooseFolder = %q, %v", got, err)
+	}
+	if a.Options().OutputDir != before {
+		t.Error("a cancelled picker changed the output folder")
+	}
+}
+
+func TestChooseFolderStartsAtAFolderThatExists(t *testing.T) {
+	if got := existingDir(filepath.Join(t.TempDir(), "gone")); got == "" {
+		t.Error("existingDir gave no fallback for a missing folder")
+	}
+	dir := t.TempDir()
+	if got := existingDir(dir); got != dir {
+		t.Errorf("existingDir(%q) = %q", dir, got)
+	}
+}
+
+func TestStartRefusalsComeBackAsErrors(t *testing.T) {
+	a, _, _ := newTestApp(t, 2)
+	if err := a.Start(); err == nil {
+		t.Error("Start without a series succeeded")
+	}
+	if err := a.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	waitUntil(t, "the load", func() bool { return !a.State().Loading })
+	if err := a.Start(); err == nil {
+		t.Error("Start with nothing selected succeeded")
+	}
+}
+
+func TestSummaryAndJobDTOs(t *testing.T) {
+	if summaryDTO(nil) != nil {
+		t.Error("summaryDTO(nil) should be nil so the frontend sees null")
+	}
+	s := summaryDTO(&Summary{Dir: "/out", Saved: 1, Err: errors.New("disk full")})
+	if s.Error != "disk full" || s.Failures == nil {
+		t.Errorf("summary %+v", s)
+	}
+	if jobStateName(JobArchiving) != "archiving" || jobStateName(JobSkipped) != "skipped" {
+		t.Error("job state names drifted from the frontend's")
+	}
+	if logLevelName(LogWarn) != "warn" || logLevelName(LogError) != "error" || logLevelName(LogInfo) != "info" {
+		t.Error("log level names drifted from the frontend's")
+	}
+}

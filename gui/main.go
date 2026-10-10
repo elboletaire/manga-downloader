@@ -1,14 +1,20 @@
 // Copyright (C) 2023-2026 Òscar Casajuana Alonso
 
 // Command manga-downloader-gui is the desktop front end of the CLI. It lives
-// in its own module so Fyne's cgo dependencies never reach `go install` of
-// the CLI; see AGENTS.md.
+// in its own module so the webview's cgo and its platform libraries never
+// reach `go install` of the CLI; see AGENTS.md.
 package main
 
 import (
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/dialog"
+	"context"
+	"embed"
+	"log"
+
+	"github.com/elboletaire/manga-downloader/notice"
+	"github.com/wailsapp/wails/v2"
+	"github.com/wailsapp/wails/v2/pkg/options"
+	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/linux"
 )
 
 // Version and Tag are set at link time by the release workflow (-X), the same
@@ -19,49 +25,65 @@ var (
 	Tag     = ""
 )
 
-// appID is the reverse-DNS identifier Fyne derives preferences and the
-// desktop entry from; changing it orphans saved options
-const appID = "com.github.elboletaire.mangadownloader"
+// assets is the built frontend. It's produced by `pnpm build` in frontend/,
+// which make build/gui and the release workflow run before compiling.
+//
+//go:embed all:frontend/dist
+var assets embed.FS
+
+// appIcon is the window icon on Linux; Windows and macOS take theirs from
+// build/ at packaging time
+//
+//go:embed build/appicon.png
+var appIcon []byte
 
 func main() {
-	a := app.NewWithID(appID)
-	a.SetIcon(appIcon)
-	a.Settings().SetTheme(newAppTheme())
-
-	w := a.NewWindow("Manga Downloader")
 	settings := defaultSettings()
-	loadOptions(a.Preferences(), settings)
-
-	// the controller signals through a one-slot channel: a pending signal
-	// already covers any number of further changes
-	changed := make(chan struct{}, 1)
-	ctrl := NewController(settings, func() {
-		select {
-		case changed <- struct{}{}:
-		default:
+	prefsPath, err := guiConfigPath()
+	if err != nil {
+		// the window still works, the options just won't outlive this run
+		notice.Warn("%v", err)
+		prefsPath = ""
+	}
+	if prefsPath != "" {
+		if err := loadOptions(prefsPath, settings); err != nil {
+			notice.Warn("ignoring the saved options: %v", err)
 		}
+	}
+
+	rt := &wailsRuntime{}
+	var app *App
+	// notify is called from the download goroutines too, so it reads app
+	// through the pointer set before the window opens
+	ctrl := NewController(settings, func() { app.notify() })
+	app = newApp(ctrl, rt, prefsPath, versionString())
+
+	err = wails.Run(&options.App{
+		Title:            "Manga Downloader",
+		Width:            1100,
+		Height:           760,
+		MinWidth:         900,
+		MinHeight:        600,
+		BackgroundColour: &options.RGBA{R: 0xf4, G: 0xf5, B: 0xf7, A: 0xff},
+		AssetServer:      &assetserver.Options{Assets: assets},
+		OnStartup: func(ctx context.Context) {
+			app.startup(ctx, rt)
+		},
+		OnShutdown: app.shutdown,
+		Bind:       []interface{}{app},
+		Linux:      &linux.Options{Icon: appIcon},
 	})
-	v := newView(a, w, ctrl, changed)
-	w.SetContent(v.content)
-	w.SetMainMenu(fyne.NewMainMenu(fyne.NewMenu("Help",
-		fyne.NewMenuItem("About", func() {
-			dialog.ShowInformation("About Manga Downloader", aboutText(), w)
-		}),
-	)))
-	w.Resize(fyne.NewSize(960, 720))
-
-	// a download still running is cancelled and the browser closed on quit,
-	// so no Chrome process outlives the app
-	a.Lifecycle().SetOnStopped(ctrl.Shutdown)
-
-	w.ShowAndRun()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
-func aboutText() string {
-	v := Version
+// versionString is what the window's About text shows: the tag when there is
+// one, the build's version otherwise
+func versionString() string {
 	if Tag != "" {
-		v = Tag
+		return Tag
 	}
-	return "Version " + v + "\n\nDownloads manga chapters from supported sites into CBZ files.\n" +
-		"Source and issues: https://github.com/elboletaire/manga-downloader"
+
+	return Version
 }
