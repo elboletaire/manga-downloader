@@ -63,6 +63,25 @@ func (a *Atsumaru) FetchTitle() (string, error) {
 	return a.title, nil
 }
 
+// ScanlatorOptions lists the scanlation groups that uploaded chapters for the
+// series, by the names --scanlator takes
+func (a *Atsumaru) ScanlatorOptions() FilterOptions {
+	info, err := a.mangaInfo()
+	if err != nil {
+		return FilterOptions{}
+	}
+
+	var names []string
+	for _, g := range a.groups(info) {
+		names = append(names, g.displayName())
+	}
+
+	return FilterOptions{
+		Values: uniqueValues(names),
+		All:    true,
+	}
+}
+
 // FetchChapters returns the chapters of the manga
 func (a *Atsumaru) FetchChapters() (chapters Filterables, errs []error) {
 	info, err := a.mangaInfo()

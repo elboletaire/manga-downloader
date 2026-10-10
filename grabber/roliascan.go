@@ -27,10 +27,22 @@ type Roliascan struct {
 	*Grabber
 	title   string
 	mangaId string
+	// languages are the languages of every chapter the series lists, before
+	// the --language filter
+	languages []string
 }
 
 func NewRoliascan(g *Grabber) *Roliascan {
 	return &Roliascan{Grabber: g}
+}
+
+// LanguageOptions lists the languages the series has chapters in. The chapters
+// are only fetched once FetchChapters has read them, so this is valid after it.
+func (m *Roliascan) LanguageOptions() FilterOptions {
+	return FilterOptions{
+		Values: uniqueValues(m.languages),
+		All:    true,
+	}
 }
 
 // RoliascanChapter represents a Roliascan Chapter
@@ -96,7 +108,8 @@ func (m *Roliascan) FetchChapters() (Filterables, []error) {
 		}
 
 		for _, c := range feed.Chapters {
-			if c.Language != "" && c.Language != language {
+			m.languages = append(m.languages, c.Language)
+			if language != FilterAll && c.Language != "" && c.Language != language {
 				continue
 			}
 

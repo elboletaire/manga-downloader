@@ -106,8 +106,29 @@ type Series struct {
 	Title string
 	// Chapters are the listed chapters, SortByNumber()-sorted
 	Chapters grabber.Filterables
+	// Languages and Scanlators are the filter options of the site, nil when it
+	// doesn't list them (see FilterOptionsOf)
+	Languages  *grabber.FilterOptions
+	Scanlators *grabber.FilterOptions
 
 	settings *grabber.Settings
+}
+
+// FilterOptionsOf returns the language and scanlation group options of a site,
+// nil for each one it doesn't list. They're valid once the chapters have been
+// fetched, and stay valid when a filter matched nothing, so a front end can
+// offer the values that do exist after a NoChaptersError.
+func FilterOptionsOf(site grabber.Site) (languages, scanlators *grabber.FilterOptions) {
+	if l, ok := site.(grabber.LanguageLister); ok {
+		options := l.LanguageOptions()
+		languages = &options
+	}
+	if s, ok := site.(grabber.ScanlatorLister); ok {
+		options := s.ScanlatorOptions()
+		scanlators = &options
+	}
+
+	return languages, scanlators
 }
 
 // Open fetches the title and the chapter list of an identified site. s must
@@ -131,11 +152,15 @@ func Open(site grabber.Site, s *grabber.Settings) (*Series, error) {
 		return nil, &NoChaptersError{Language: s.Language, Scanlator: s.Scanlator}
 	}
 
+	languages, scanlators := FilterOptionsOf(site)
+
 	return &Series{
-		Site:     site,
-		Title:    title,
-		Chapters: chapters,
-		settings: s,
+		Site:       site,
+		Title:      title,
+		Chapters:   chapters,
+		Languages:  languages,
+		Scanlators: scanlators,
+		settings:   s,
 	}, nil
 }
 

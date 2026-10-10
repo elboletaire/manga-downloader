@@ -264,7 +264,7 @@ func init() {
 	rootCmd.Flags().BoolVarP(&settings.Bundle, "bundle", "b", false, "bundle all specified chapters into a single file")
 	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Chapters, "concurrency", "c", 5, "number of concurrent chapter downloads, hard-limited to 5")
 	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Pages, "concurrency-pages", "C", 10, "number of concurrent page downloads, hard-limited to 10")
-	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", "only download the specified language")
+	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", `only download the specified language ("all" downloads every language, on sites listing several)`)
 	rootCmd.Flags().StringVarP(&settings.Scanlator, "scanlator", "s", "", `only download the specified scanlation group, for sites hosting several versions of the same chapters ("all" downloads every group's)`)
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
 	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz or raw (a folder with the images)")

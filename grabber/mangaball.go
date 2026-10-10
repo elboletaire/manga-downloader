@@ -22,10 +22,27 @@ type Mangaball struct {
 	*Grabber
 	title string
 	csrf  string
+	// languages are the languages of every translation the series lists, before
+	// the --language filter
+	languages []string
 }
+
+// mangaballAPI is the site's base URL for its API (a var so tests can point it
+// at a local server)
+var mangaballAPI = "https://mangaball.net/api/v1"
 
 func NewMangaball(g *Grabber) *Mangaball {
 	return &Mangaball{Grabber: g}
+}
+
+// LanguageOptions lists the languages the series has translations in. The
+// chapters are only fetched once FetchChapters has read them, so this is valid
+// after it.
+func (m *Mangaball) LanguageOptions() FilterOptions {
+	return FilterOptions{
+		Values: uniqueValues(m.languages),
+		All:    true,
+	}
 }
 
 // MangaballChapter represents a Mangaball chapter (one per translation, as
@@ -78,7 +95,7 @@ func (m *Mangaball) FetchChapters() (chapters Filterables, errs []error) {
 	form.Set("userSettingsEnabled", "false")
 
 	rbody, err := http.Post(http.RequestParams{
-		URL:     "https://mangaball.net/api/v1/chapter/chapter-listing-by-title-id/",
+		URL:     mangaballAPI + "/chapter/chapter-listing-by-title-id/",
 		Referer: m.URL,
 		Headers: map[string]string{"X-CSRF-TOKEN": csrf},
 		Form:    form,
@@ -101,7 +118,8 @@ func (m *Mangaball) FetchChapters() (chapters Filterables, errs []error) {
 
 	for _, c := range feed.AllChapters {
 		for _, t := range c.Translations {
-			if t.Language != language {
+			m.languages = append(m.languages, t.Language)
+			if language != FilterAll && t.Language != language {
 				continue
 			}
 			title := t.Name

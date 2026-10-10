@@ -19,10 +19,21 @@ import (
 type Fmteam struct {
 	*Grabber
 	title string
+	// languages are the languages of every chapter the series lists
+	languages []string
 }
 
 func NewFmteam(g *Grabber) *Fmteam {
 	return &Fmteam{Grabber: g}
+}
+
+// LanguageOptions lists the languages the series has chapters in. The chapters
+// are only fetched once FetchChapters has read them, so this is valid after it.
+func (f *Fmteam) LanguageOptions() FilterOptions {
+	return FilterOptions{
+		Values: uniqueValues(f.languages),
+		All:    true,
+	}
 }
 
 // FmteamChapter represents a Fmteam chapter
@@ -56,13 +67,14 @@ func (f *Fmteam) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (f Fmteam) FetchChapters() (chapters Filterables, errs []error) {
+func (f *Fmteam) FetchChapters() (chapters Filterables, errs []error) {
 	data, err := f.seriesData()
 	if err != nil {
 		return nil, []error{err}
 	}
 
 	for _, c := range data.Comic.Chapters {
+		f.languages = append(f.languages, c.Language)
 		number, err := fmteamChapterNumber(c)
 		if err != nil {
 			errs = append(errs, err)
