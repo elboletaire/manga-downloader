@@ -31,10 +31,11 @@ var (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-// appIcon is the window icon on Linux; Windows and macOS take theirs from
-// build/ at packaging time
+// appIcon is the window icon on Linux. It's the free-shape mark rather than
+// the macOS tile, which would look like a box on a Linux taskbar. Windows and
+// macOS take theirs from build/ at packaging time.
 //
-//go:embed build/appicon.png
+//go:embed build/linux/icon.png
 var appIcon []byte
 
 func main() {

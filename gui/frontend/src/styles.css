@@ -1,7 +1,7 @@
 /*
- * Manga Downloader. A quiet desktop tool: warm paper neutrals, one indigo
- * accent (aizome, the dye of the old print shops) for what you act on, and
- * green / amber / red kept strictly for outcomes. Inter is bundled (no
+ * Manga Downloader. A quiet desktop tool: warm paper neutrals, one violet
+ * accent (the mascot's colour, see assets/brand/brand.md) for what you act on,
+ * and mint / amber / rose kept strictly for outcomes. Inter is bundled (no
  * network) so the type looks the same on every OS; system fonts would put
  * Nimbus or Arial on some Linux desktops, whose metrics misalign controls.
  */
@@ -28,20 +28,21 @@
   --text-2: #55514b;
   --text-3: #736e67;
 
-  --accent: #3550c2;
-  --accent-hover: #2b43ab;
-  --accent-soft: #eaeefb;
-  --accent-softer: #f4f6fd;
-  --accent-text: #2c45ad;
+  --accent: #7c5ce0;
+  --accent-hover: #6a4bd3;
+  --accent-soft: #eee9fd;
+  --accent-softer: #f7f4fe;
+  --accent-text: #5b3fc4;
   --on-accent: #ffffff;
 
-  --success: #237245;
-  --success-soft: #e5f2ea;
+  --success: #1b7a5e;
+  --success-solid: #1fa27d;
+  --success-soft: #e2f7ef;
   --warning: #8f5500;
   --warning-solid: #c47a0e;
   --warning-soft: #fcf0d9;
-  --danger: #b8322a;
-  --danger-soft: #fbe8e5;
+  --danger: #c0344b;
+  --danger-soft: #fce7eb;
 
   --shadow-sm: 0 1px 2px rgb(30 25 20 / 6%);
   --shadow-md: 0 1px 2px rgb(30 25 20 / 6%), 0 4px 12px rgb(30 25 20 / 6%);
@@ -77,20 +78,21 @@
     --text-2: #b4b4bc;
     --text-3: #8e8e98;
 
-    --accent: #7d93f2;
-    --accent-hover: #93a6f6;
-    --accent-soft: rgb(125 147 242 / 15%);
-    --accent-softer: rgb(125 147 242 / 7%);
-    --accent-text: #a9b8fa;
-    --on-accent: #0d1233;
+    --accent: #a993ff;
+    --accent-hover: #bba9ff;
+    --accent-soft: rgb(169 147 255 / 15%);
+    --accent-softer: rgb(169 147 255 / 7%);
+    --accent-text: #bcaaff;
+    --on-accent: #16132a;
 
-    --success: #66c58f;
-    --success-soft: rgb(102 197 143 / 13%);
+    --success: #5ee0b8;
+    --success-solid: #5ee0b8;
+    --success-soft: rgb(94 224 184 / 13%);
     --warning: #e9b25a;
     --warning-solid: #e0a548;
     --warning-soft: rgb(233 178 90 / 13%);
-    --danger: #f2786e;
-    --danger-soft: rgb(242 120 110 / 13%);
+    --danger: #ff8296;
+    --danger-soft: rgb(255 130 150 / 13%);
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
     --shadow-md: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 12px rgb(0 0 0 / 25%);
@@ -687,39 +689,9 @@ code {
   margin-top: 6px;
 }
 
-.empty-art {
-  position: relative;
-  width: 92px;
-  height: 92px;
-  margin-bottom: 10px;
-}
-
-.empty-art span {
-  position: absolute;
-  inset: 8px 18px;
-  border-radius: 6px;
-  border: 1.5px solid var(--border-strong);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-
-.empty-art span:nth-child(1) {
-  transform: rotate(-10deg) translateX(-14px);
-  background: var(--sunken);
-}
-
-.empty-art span:nth-child(2) {
-  transform: rotate(7deg) translateX(14px);
-  background: var(--sunken);
-}
-
-.empty-art span:nth-child(3) {
-  background:
-    linear-gradient(var(--accent-soft), var(--accent-soft)) 8px 10px / calc(100% - 16px) 22px no-repeat,
-    linear-gradient(var(--border), var(--border)) 8px 38px / calc(100% - 16px) 3px no-repeat,
-    linear-gradient(var(--border), var(--border)) 8px 46px / calc(70% - 16px) 3px no-repeat,
-    linear-gradient(var(--border), var(--border)) 8px 54px / calc(85% - 16px) 3px no-repeat,
-    var(--surface);
+.mascot-face {
+  display: block;
+  animation: mascot-in 0.4s var(--ease);
 }
 
 .empty-icon {
@@ -870,7 +842,7 @@ code {
   width: 8px;
   height: 8px;
   padding: 0;
-  background: var(--success);
+  background: var(--success-solid);
 }
 
 .side-body {
@@ -1437,11 +1409,11 @@ fieldset:disabled .check {
 }
 
 .job-archiving .bar > span {
-  background: color-mix(in srgb, var(--accent) 65%, var(--success));
+  background: color-mix(in srgb, var(--accent) 65%, var(--success-solid));
 }
 
 .job-done .bar > span {
-  background: var(--success);
+  background: var(--success-solid);
   opacity: 0.45;
 }
 
@@ -1823,6 +1795,13 @@ fieldset:disabled .check {
   from {
     opacity: 0;
     transform: translateY(-3px);
+  }
+}
+
+@keyframes mascot-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
   }
 }
 

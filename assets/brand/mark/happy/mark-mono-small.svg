@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs><mask id="nb3" maskUnits="userSpaceOnUse" x="0" y="0" width="256" height="256"><path fill="white" d="M20 104V194Q20 212 38 211C74 208 104 212 128 226C152 212 182 208 218 211Q236 212 236 194V104L232 46Q230 22 210 34L168 62Q146 68 128 82Q110 68 88 62L46 34Q26 22 24 46Z"/>
+  <path fill="black" d="M128 110C146 98 176 94 212 96V190C180 190 152 194 128 206C104 194 76 190 44 190V96C80 94 110 98 128 110Z"/>
+  <g fill="white"><ellipse cx="92" cy="146" rx="18" ry="22"/><ellipse cx="164" cy="146" rx="18" ry="22"/></g>
+  <g fill="black"><ellipse cx="60" cy="178" rx="13" ry="10"/><ellipse cx="196" cy="178" rx="13" ry="10"/></g></mask></defs>
+  <rect width="256" height="256" fill="currentColor" mask="url(#nb3)"/>
+</svg>

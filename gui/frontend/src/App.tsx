@@ -11,7 +11,8 @@ import type { Api } from './api';
 import { ChapterPanel } from './ChapterPanel';
 import { DownloadDock } from './DownloadDock';
 import { errorMessage } from './format';
-import { ActivityIcon, Logo, SlidersIcon, Spinner } from './icons';
+import { ActivityIcon, SlidersIcon, Spinner } from './icons';
+import { Mascot } from './Mascot';
 import { LogDrawer, StatusBar } from './LogPanel';
 import { createOptionsWriter } from './optionsWriter';
 import { OptionsPanel } from './OptionsPanel';
@@ -56,7 +57,7 @@ export function App({ api }: { api: Api }) {
   if (state === null) {
     return (
       <main className="boot">
-        <Logo size={40} />
+        <Mascot expression="soft" size={48} />
         {failure !== '' ? (
           <p className="error-text" role="alert">
             {failure}

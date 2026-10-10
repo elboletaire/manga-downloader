@@ -1,6 +1,9 @@
 <div align="center">
 
-# Manga Downloader
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/readme/readme-header-dark.svg">
+  <img alt="manga downloader" src="assets/brand/readme/readme-header-light.svg">
+</picture>
 
 [![Tests][tests badge]][tests]
 [![Go Reference][go reference badge]][go reference]

@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { errorMessage, plural } from './format';
 import { AlertIcon, LinkIcon, RefreshIcon } from './icons';
+import { Mascot } from './Mascot';
 import { extendsSpan, moveActive, spanIndices } from './listKeys';
 import { formatNumber, hostOf } from './run';
 import type { Chapter, State } from './types';
@@ -46,11 +47,7 @@ export function ChapterPanel(props: Props) {
 function EmptyState() {
   return (
     <section className="panel chapters empty-state" aria-label="Chapters">
-      <div className="empty-art" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
+      <Mascot expression="happy" size={112} />
       <h2>Start with a series</h2>
       <p>
         Paste the link to a series in the bar above and press <kbd>Enter</kbd>. A link to any of its chapters works too.

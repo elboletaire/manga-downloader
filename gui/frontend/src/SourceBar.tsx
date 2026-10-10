@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import { AUTO_LOAD_DELAY_MS, shouldAutoLoad } from './autoLoad';
 import { SelectField, TextField } from './fields';
 import { filterControl, filtersIdentified, filterOptions, type FilterControl, type FilterKind } from './filters';
-import { AlertIcon, LinkIcon, Logo, RefreshIcon, Spinner } from './icons';
+import { AlertIcon, LinkIcon, RefreshIcon, Spinner } from './icons';
+import { Mascot, useExpression } from './Mascot';
 import type { FilterChoice, Options, State } from './types';
 
 interface Props {
@@ -25,6 +26,7 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
   const [typed, setTyped] = useState<string | null>(null);
   const url = typed ?? state.url;
   const busy = state.loading || state.running;
+  const expression = useExpression(state);
   const same = state.loaded && url.trim() === state.url;
   // a pasted or typed series URL loads once the typing pauses; the timer reads
   // the latest state, since it fires after the render that started it
@@ -64,7 +66,7 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
     <header className="source">
       <div className="source-row">
         <div className="brand" title="Manga Downloader">
-          <Logo />
+          <Mascot expression={expression} size={48} />
           <span className="brand-name">Manga Downloader</span>
         </div>
         <form

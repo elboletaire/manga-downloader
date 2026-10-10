@@ -59,7 +59,7 @@ jobs:
         name="manga-downloader-gui-$TAG-linux-${{ matrix.goarch }}"
         rm -rf "stage/$name" && mkdir -p "stage/$name"
         cp build/bin/manga-downloader-gui ../LICENSE "stage/$name/"
-        cp build/appicon.png "stage/$name/manga-downloader-gui.png"
+        cp build/linux/icon.png "stage/$name/manga-downloader-gui.png"
         cat > "stage/$name/manga-downloader-gui.desktop" <<'DESKTOP'
         [Desktop Entry]
         Type=Application

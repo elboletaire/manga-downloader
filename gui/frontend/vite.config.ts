@@ -3,6 +3,10 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    // the brand's SVGs live at the repo root (assets/brand), outside this app
+    fs: { allow: ['../..'] },
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

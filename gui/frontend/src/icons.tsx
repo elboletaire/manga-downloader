@@ -122,17 +122,6 @@ export const SlidersIcon = icon(
 
 export const ActivityIcon = icon(<path d="M3 12h4l3 7 4-14 3 7h4" />);
 
-/** The app's mark: an open book with a page turning */
-export function Logo({ size = 22 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-      <rect width="32" height="32" rx="8" fill="var(--accent)" />
-      <path d="M8 10.5c2.6-.9 5.2-.6 8 1v11c-2.8-1.6-5.4-1.9-8-1z" fill="var(--on-accent)" opacity=".95" />
-      <path d="M24 10.5c-2.6-.9-5.2-.6-8 1v11c2.8-1.6 5.4-1.9 8-1z" fill="var(--on-accent)" opacity=".7" />
-    </svg>
-  );
-}
-
 /** A spinner that inherits the text colour; it stops under reduced motion */
 export function Spinner({ size = 14 }: { size?: number }) {
   return (
