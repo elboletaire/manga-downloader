@@ -3,15 +3,16 @@
 package cmd
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
 	"strings"
-	"sync"
 	"syscall"
 
 	"github.com/elboletaire/manga-downloader/browser"
-	"github.com/elboletaire/manga-downloader/downloader"
+	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/packer"
 	"github.com/elboletaire/manga-downloader/ranges"
@@ -19,7 +20,6 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 	"github.com/vbauerster/mpb/v8"
-	"github.com/vbauerster/mpb/v8/decor"
 	"golang.org/x/term"
 
 	cc "github.com/ivanpirog/coloredcobra"
@@ -82,32 +82,13 @@ func Run(cmd *cobra.Command, args []string) {
 	defer browser.Close()
 	browser.SetVisible(settings.BrowserVisible)
 
-	if settings.Format != packer.FormatCBZ && settings.Format != packer.FormatRaw {
-		color.Red("Error: invalid format %q, must be %q or %q", settings.Format, packer.FormatCBZ, packer.FormatRaw)
-		exit(1)
+	// validated before anything is fetched, so a typo fails fast
+	skipPages, err := core.Validate(&settings)
+	if err != nil {
+		exitSettingError(err)
 	}
 
-	// validated here (and only here) so Grabber.GetConvertImages can ignore the
-	// parse error later, the same way maxUint8Flag ignores its own
-	if _, err := grabber.ParseConvertFormats(settings.ConvertImages); err != nil {
-		color.Red("Error: invalid --convert-images value: %s", err)
-		exit(1)
-	}
-
-	// parsed up front so a typo fails before anything is fetched
-	var skipPages []ranges.Range
-	if settings.SkipPages != "" {
-		var err error
-		// Relative: unlike chapter ranges, page positions have a known end, so
-		// a negative one counts back from it
-		skipPages, err = ranges.ParseRelative(settings.SkipPages)
-		cerr(err, "Error parsing --skip-pages: ")
-	}
-
-	// the limits are only read by the download, never while identifying the
-	// site, so clamping before NewSite is the same as clamping after it
-	settings.Normalize()
-	s, errs := grabber.NewSite(getUrlArg(args), &settings)
+	s, errs := core.Identify(getUrlArg(args), &settings)
 	if len(errs) > 0 {
 		color.Red("Errors testing site (a site may be down):")
 		for _, err := range errs {
@@ -119,29 +100,11 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(1)
 	}
 
-	// fetch series title
-	title, err := s.FetchTitle()
-	cerr(err, "Error fetching title: ")
-
-	// fetch all chapters
-	chapters, errs := s.FetchChapters()
-	if len(errs) > 0 {
-		color.Red("Errors fetching chapters:")
-		for _, err := range errs {
-			color.Red(err.Error())
-		}
-		exit(1)
+	series, err := core.Open(s, &settings)
+	if err != nil {
+		exitOpenError(err)
 	}
-
-	chapters = chapters.SortByNumber()
-
-	// an empty result at this point usually means the language filter matched
-	// nothing (e.g. an invalid language code); without this guard the prompt
-	// path below would panic indexing an empty slice
-	if len(chapters) == 0 {
-		color.Yellow(noChaptersMessage(settings.Language, settings.Scanlator))
-		exit(1)
-	}
+	chapters := series.Chapters
 
 	var rngs []ranges.Range
 	// true only if the user typed a range; distinguishes it from the
@@ -161,10 +124,7 @@ func Run(cmd *cobra.Command, args []string) {
 			exit(0)
 		}
 
-		// chapters is SortByNumber()-sorted, so its ends are the true
-		// range: a hardcoded Begin: 1 silently dropped chapter 0 and any
-		// 0.x prologue, and mislabeled series not starting at 1 (#176)
-		rngs = []ranges.Range{allChaptersRange(chapters)}
+		rngs = []ranges.Range{core.AllChaptersRange(chapters)}
 	} else {
 		// ranges parsing
 		settings.Range = getRangesArg(args)
@@ -175,7 +135,7 @@ func Run(cmd *cobra.Command, args []string) {
 	// some sites prune old chapters (they soft-404 to the series page), so a
 	// user-typed range below the first listed chapter would silently skip
 	// that part; warn only when the range was explicit, not synthesised
-	if floor := chapters[0].GetNumber(); rangeRequested && requestsBelowListedFloor(rngs, floor) {
+	if floor := chapters[0].GetNumber(); rangeRequested && core.RequestsBelowListedFloor(rngs, floor) {
 		color.Yellow(
 			"Only chapters %g and up are listed for this series; the requested chapters below that will be skipped",
 			floor,
@@ -190,183 +150,29 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(1)
 	}
 
-	// download chapters
-	wg := sync.WaitGroup{}
-	g := make(chan struct{}, s.GetMaxConcurrency().Chapters)
-	downloaded := grabber.Filterables{}
-
-	// Current phase for bundle mode progress
-	var currentPhase string
-
-	// progress bar
 	p := mpb.New(
 		mpb.WithWidth(40),
 		mpb.WithOutput(color.Output),
 		mpb.WithAutoRefresh(),
 	)
 
-	blue := color.New(color.FgBlue)
-
 	// Get terminal width for title truncation
 	termWidth := getTerminalWidth()
 	mangaLen, chapterLen := calculateTitleLengths(termWidth)
 
-	// sites like mangadex can return the same chapter multiple times, once per
-	// translated language; tag each bar with its language in that case
-	showLanguage := hasDuplicateChapterNumbers(chapters)
+	ev := newProgress(p, progressConfig{
+		title:  series.Title,
+		bundle: settings.Bundle,
+		// the range the bundle is named after, shown while it's packed
+		bundleRange: settings.Range,
+		mangaLen:    mangaLen,
+		chapterLen:  chapterLen,
+		// sites like mangadex can return the same chapter multiple times, once per
+		// translated language; tag each bar with its language in that case
+		showLanguage: core.HasDuplicateChapterNumbers(chapters),
+	})
 
-	// For bundle mode, create a single progress bar
-	var bundleBar *mpb.Bar
-	if settings.Bundle {
-		// Calculate total pages for bundle mode
-		totalPages := int64(0)
-		for _, chap := range chapters {
-			chapter, err := s.FetchChapter(chap)
-			if err == nil && chapter != nil {
-				// same skipping the download goroutine will apply below, so
-				// the bar's total matches what actually gets downloaded
-				chapter.SkipPages(skipPages)
-				totalPages += chapter.PagesCount
-			}
-		}
-
-		// Total steps = download + archive for all pages
-		bundleBar = p.AddBar(totalPages*2,
-			mpb.PrependDecorators(
-				// Dynamic status showing current chapter
-				decor.Any(func(s decor.Statistics) string {
-					return blue.Sprintf("%-30s", currentPhase)
-				}, decor.WCSyncWidthR),
-				decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DextraSpace}),
-			),
-			mpb.AppendDecorators(
-				decor.Percentage(decor.WC{W: 4}), // W: 4 to remove space before %
-				// Status at the end to prevent shifting
-				decor.Any(func(s decor.Statistics) string {
-					if s.Current >= s.Total {
-						return blue.Sprintf(" bundling ")
-					}
-					return blue.Sprintf(" downloading")
-				}, decor.WC{W: 10}),
-			),
-		)
-		currentPhase = "Gathering info..."
-	}
-
-	for _, chap := range chapters {
-		g <- struct{}{}
-		wg.Add(1)
-
-		go func(chap grabber.Filterable) {
-			defer wg.Done()
-
-			chapter, err := s.FetchChapter(chap)
-			if err != nil {
-				color.Red("- error fetching chapter %s: %s", chap.GetTitle(), err.Error())
-				<-g
-				return
-			}
-
-			// drop the excluded pages before anything is downloaded, so a page
-			// that's only ads (or one that 404s) costs nothing and can't fail
-			// the chapter
-			if skipped := chapter.SkipPages(skipPages); skipped > 0 && len(chapter.Pages) == 0 {
-				color.Yellow("- skipping chapter %s: --skip-pages excludes all of its pages", chapter.GetTitle())
-				<-g
-				return
-			}
-
-			// generate the filename for the chapter
-			filename, err := packer.NewFilenameFromTemplate(s.GetFilenameTemplate(), packer.NewChapterFileTemplateParts(title, chapter))
-			if err != nil {
-				color.Red("- error creating filename for chapter %s: %s", chapter.GetTitle(), err.Error())
-				<-g
-				return
-			}
-			if settings.Format != packer.FormatRaw {
-				// raw format writes a folder, not a single file
-				filename += ".cbz"
-			}
-
-			var bar *mpb.Bar
-			if !settings.Bundle {
-				// For non-bundle mode, create a single bar per chapter that combines download + archive
-				// (using the fetched chapter, whose title includes the chapter number)
-				barTitle := chapterBarTitle(title, chapter, mangaLen, chapterLen, showLanguage)
-				// Total steps = pages (download) + pages (archive)
-				total := chapter.PagesCount * 2
-				bar = p.AddBar(total,
-					mpb.PrependDecorators(
-						decor.Name(barTitle, decor.WCSyncWidthR),
-						decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DextraSpace}),
-					),
-					mpb.AppendDecorators(
-						decor.Percentage(decor.WC{W: 4}), // W: 4 to remove space before %
-						// Status at the end to prevent shifting
-						decor.Any(func(s decor.Statistics) string {
-							if s.Current >= total/2 {
-								return blue.Sprintf(" archiving ")
-							}
-							return blue.Sprintf(" downloading") // Add space before status
-						}, decor.WC{W: 10}),
-					),
-				)
-			} else {
-				bar = bundleBar
-				currentPhase = fmt.Sprintf("Downloading %s", chapter.GetTitle())
-			}
-
-			files, err := downloader.FetchChapter(s, chapter, func(page int, idx int, err error) {
-				if err != nil {
-					if !settings.Bundle {
-						bar.SetCurrent(int64(idx))
-					}
-					color.Red("- error downloading page %d: %s", idx+1, err.Error())
-				} else {
-					// Increment by 1 since we're processing one page at a time
-					bar.IncrBy(1)
-				}
-			})
-			if err != nil {
-				color.Red("- error downloading chapter %s: %s", chapter.GetTitle(), err.Error())
-				if !settings.Bundle {
-					bar.Abort(false)
-				}
-				<-g
-				return
-			}
-
-			d := &packer.DownloadedChapter{
-				Chapter: chapter,
-				Files:   files,
-			}
-
-			if !settings.Bundle {
-				_, err := packer.PackSingle(settings.OutputDir, s, d, func(page, _ int) {
-					bar.IncrBy(1) // Increment archive progress
-				})
-				if err != nil {
-					color.Red(err.Error())
-				}
-				if !bar.Completed() {
-					// the bar can no longer reach its total (packing failed or
-					// pages were skipped); mark it done so p.Wait() won't hang
-					bar.Abort(false)
-				}
-			} else {
-				// For bundle mode, increment archive progress
-				bar.IncrBy(int(chapter.PagesCount))
-				// avoid adding it to memory if we're not gonna use it
-				downloaded = append(downloaded, d)
-			}
-
-			// release guard
-			<-g
-		}(chap)
-	}
-	// wait for all routines to finish
-	wg.Wait()
-	close(g)
+	bundleFile, err := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
 
 	if !settings.Bundle {
 		// let the render loop paint the final state of the bars before
@@ -377,33 +183,9 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(0)
 	}
 
-	// resort downloaded
-	downloaded = downloaded.SortByNumber()
-
-	dc := []*packer.DownloadedChapter{}
-	tp := 0
-	// convert slice back to DownloadedChapter
-	for _, d := range downloaded {
-		chapter := d.(*packer.DownloadedChapter)
-		dc = append(dc, chapter)
-		tp += int(chapter.PagesCount)
-	}
-
-	if settings.Bundle {
-		currentPhase = fmt.Sprintf("Creating bundle for chapters %s", settings.Range)
-	}
-
-	filename, err := packer.PackBundle(settings.OutputDir, s, dc, settings.Range, func(page, _ int) {
-		if bundleBar != nil {
-			bundleBar.IncrBy(page)
-		}
-	})
-
-	if bundleBar != nil && !bundleBar.Completed() {
-		// failed chapters leave the bundle bar short of its total; mark it
-		// done so p.Wait() won't hang
-		bundleBar.Abort(false)
-	}
+	// failed chapters leave the bundle bar short of its total; mark it
+	// done so p.Wait() won't hang
+	ev.finishBundle()
 	// flush the final render before printing the outcome
 	p.Wait()
 
@@ -412,7 +194,46 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(1)
 	}
 
-	fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(filename))
+	fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(bundleFile))
+}
+
+// exitSettingError prints a setting that failed validation in the words each
+// flag has always been reported with, then exits
+func exitSettingError(err error) {
+	var se *core.SettingError
+	errors.As(err, &se)
+
+	switch se.Setting {
+	case "format":
+		color.Red("Error: invalid format %q, must be %q or %q", se.Value, packer.FormatCBZ, packer.FormatRaw)
+	case "convert-images":
+		color.Red("Error: invalid --convert-images value: %s", se.Err)
+	default:
+		cerr(se.Err, "Error parsing --"+se.Setting+": ")
+	}
+	exit(1)
+}
+
+// exitOpenError prints why the series couldn't be opened, then exits
+func exitOpenError(err error) {
+	var terr *core.TitleError
+	var cerrs *core.ChaptersError
+	var nerr *core.NoChaptersError
+
+	switch {
+	case errors.As(err, &terr):
+		cerr(terr.Err, "Error fetching title: ")
+	case errors.As(err, &cerrs):
+		color.Red("Errors fetching chapters:")
+		for _, err := range cerrs.Errs {
+			color.Red(err.Error())
+		}
+		exit(1)
+	case errors.As(err, &nerr):
+		// an empty result usually means the language filter matched nothing
+		color.Yellow(nerr.Error())
+	}
+	exit(1)
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -587,76 +408,6 @@ func chapterBarTitle(seriesTitle string, chapter *grabber.Chapter, mangaLen, cha
 	}
 
 	return fmt.Sprintf("%s - %s:", truncateString(seriesTitle, mangaLen), chapTitle)
-}
-
-// requestsBelowListedFloor reports whether any requested range starts below
-// the first chapter the site lists. It only flags the gap, not the cause —
-// pruning, a continuation series, and a --language/--scanlator filter can
-// all produce a nonzero floor. Floors of 0 or 1 mean the list already starts
-// at the beginning, so nothing is missing below them.
-func requestsBelowListedFloor(rngs []ranges.Range, floor float64) bool {
-	if floor <= 1 {
-		return false
-	}
-	for _, r := range rngs {
-		if r.Begin < floor {
-			return true
-		}
-	}
-
-	return false
-}
-
-// allChaptersRange builds the range that covers every listed chapter when
-// the user answers "yes" to the "download all" prompt. chapters must already
-// be SortByNumber()-sorted, so its ends are the true floor and ceiling —
-// assuming Begin: 1 instead silently dropped chapter 0 and any 0.x prologue,
-// and misidentified the floor for any series not starting at chapter 1 (#176)
-func allChaptersRange(chapters grabber.Filterables) ranges.Range {
-	return ranges.Range{
-		Begin: chapters[0].GetNumber(),
-		End:   chapters[len(chapters)-1].GetNumber(),
-	}
-}
-
-// noChaptersMessage builds the error message shown when a fetch returns no
-// chapters, pointing at whichever filter was set
-func noChaptersMessage(language, scanlator string) string {
-	switch {
-	case language != "":
-		return fmt.Sprintf(
-			"No chapters found for language %q (perhaps the site uses a different language code, e.g. %q for Latin American Spanish)",
-			language, "es-la",
-		)
-	case scanlator != "":
-		return fmt.Sprintf("No chapters found for scanlation group %q", scanlator)
-	}
-
-	return "No chapters found"
-}
-
-// hasDuplicateChapterNumbers reports whether the same chapter number appears
-// more than once in *different* languages, which happens when a site returns
-// one entry per translated language for the same chapter. Duplicates sharing a
-// language (e.g. one entry per scanlation group, under --scanlator all) are
-// already told apart by their titles, so tagging them all with the same
-// language code would only eat into the width the title has to do it.
-func hasDuplicateChapterNumbers(chapters grabber.Filterables) bool {
-	seen := map[float64]string{}
-	for _, c := range chapters {
-		lang := ""
-		// not part of Filterable: only the sites that list one entry per
-		// language have a language to report before the chapter is fetched
-		if l, ok := c.(interface{ GetLanguage() string }); ok {
-			lang = l.GetLanguage()
-		}
-		if prev, dup := seen[c.GetNumber()]; dup && prev != lang {
-			return true
-		}
-		seen[c.GetNumber()] = lang
-	}
-
-	return false
 }
 
 func toMetaFunc(c *color.Color) func(string) string {
