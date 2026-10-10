@@ -206,8 +206,9 @@ delete that folder to uninstall.
 <summary>Prefer not to run a script?</summary>
 <br>
 
-Download the `windows-amd64` zip from the [releases page][releases], extract it,
-and copy `manga-downloader.exe` to `C:\Windows\System32`. Windows asks for
+Download the `windows-amd64` zip from the [releases page][releases] (or
+`windows-arm64` if you have an ARM device, such as a Snapdragon laptop), extract
+it, and copy `manga-downloader.exe` to `C:\Windows\System32`. Windows asks for
 administrator permission. After that, `manga-downloader` works in any terminal.
 
 > [!WARNING]
@@ -341,8 +342,9 @@ kept as it was and a warning is shown, so the rest of the chapter isn't lost.
 
 > [!NOTE]
 > The AVIF decoder is embedded as WebAssembly, so you don't need to install any
-> system library. It's slower on the 32-bit (`386`) builds, so use
-> `--convert-images none` there if speed matters.
+> system library. It's slower on the 32-bit builds (`linux-386` and
+> `windows-32bit-legacy`), so use `--convert-images none` there if speed
+> matters.
 
 ### Skipping pages
 
