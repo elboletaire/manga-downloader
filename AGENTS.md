@@ -21,6 +21,8 @@ Unit test coverage is thin; real verification is the makefile smoke targets, whi
 
 Releases: the version lives only in the git tag (the makefile injects the short sha, the release workflow also injects `git describe`). There's no CHANGELOG and no hardcoded version. **`release.yaml` triggers on a *published GitHub Release*, not on a tag push** — pushing a tag alone releases nothing.
 
+- **Website**: `website/` is the GitHub Pages site (Vite + TS, pnpm, deployed by `pages.yaml`). Its supported-sites list is parsed from this README's "Supported sites" section at build time, so keep that list's `- [domain (note)](url) \*` format and the "Show all N" count in sync. See `website/README.md`.
+
 ## Architecture
 
 The download flow lives in `core` (`core/download.go`, `Series.Download`), UI-agnostic so the CLI and the GUI share it. `cmd/root.go` (`Run`) is the CLI shell around it: it parses flags and renders the `core.Events` through `cmd/progress.go`. The steps:

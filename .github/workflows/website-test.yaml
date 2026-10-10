@@ -1,0 +1,39 @@
+name: Website testing
+
+on:
+  push:
+    paths:
+      - "website/**"
+      # the supported sites list is generated from it
+      - "README.md"
+      - ".github/workflows/website-test.yaml"
+  pull_request:
+    paths:
+      - "website/**"
+      - "README.md"
+      - ".github/workflows/website-test.yaml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: website/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: website/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm test
+
+      - run: pnpm build
