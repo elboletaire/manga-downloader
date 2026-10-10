@@ -1,0 +1,157 @@
+name: Release GUI
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+# The GUI is a Wails app: a Go program embedding a React frontend that the
+# platform's webview shows. Linux needs the WebKitGTK headers, so it's built on
+# native runners. Windows needs no cgo, so both its architectures are built
+# from one Linux runner, and macOS is built on a Mac for the universal binary.
+# The wailsjs/ bindings are committed, so the build doesn't need a webview to
+# generate them (-skipbindings). Windows arm64 is built too, so ARM Windows
+# doesn't run the amd64 build emulated.
+jobs:
+  linux:
+    name: Linux ${{ matrix.goarch }}
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            goarch: amd64
+          - runner: ubuntu-24.04-arm
+            goarch: arm64
+    runs-on: ${{ matrix.runner }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install WebKitGTK
+      run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: gui/go.mod
+        cache-dependency-path: |
+          go.sum
+          gui/go.sum
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: pnpm
+        cache-dependency-path: gui/frontend/pnpm-lock.yaml
+    - name: Install the Wails CLI
+      run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+    - name: Build and package
+      working-directory: gui
+      run: |
+        set -euo pipefail
+        # the Windows version resource and the bundle's Info.plist take the version from wails.json
+        sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
+        wails build -platform linux/${{ matrix.goarch }} -tags nodynamic,webkit2_41 -skipbindings \
+          -m -nosyncgomod -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
+        name="manga-downloader-gui-$TAG-linux-${{ matrix.goarch }}"
+        rm -rf "stage/$name" && mkdir -p "stage/$name"
+        cp build/bin/manga-downloader-gui ../LICENSE "stage/$name/"
+        cp build/linux/icon.png "stage/$name/manga-downloader-gui.png"
+        cat > "stage/$name/manga-downloader-gui.desktop" <<'DESKTOP'
+        [Desktop Entry]
+        Type=Application
+        Name=Manga Downloader
+        Comment=Download manga chapters to CBZ files
+        Exec=manga-downloader-gui
+        Icon=manga-downloader-gui
+        Categories=Network;
+        Terminal=false
+        DESKTOP
+        tar -C stage -czf "$name.tar.gz" "$name"
+        gh release upload "$TAG" "$name.tar.gz" --clobber
+
+  windows:
+    name: Windows ${{ matrix.goarch }}
+    strategy:
+      matrix:
+        goarch: [amd64, arm64]
+    # no cgo is needed to build the webview for Windows, so one Linux runner
+    # does both architectures
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: gui/go.mod
+        cache-dependency-path: |
+          go.sum
+          gui/go.sum
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: pnpm
+        cache-dependency-path: gui/frontend/pnpm-lock.yaml
+    - name: Install the Wails CLI
+      run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+    - name: Build and package
+      working-directory: gui
+      run: |
+        set -euo pipefail
+        # the Windows version resource and the bundle's Info.plist take the version from wails.json
+        sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
+        # wails embeds the icon and manifest from build/windows into the exe,
+        # and links it as a GUI app (no console window)
+        wails build -platform windows/${{ matrix.goarch }} -tags nodynamic -skipbindings \
+          -m -nosyncgomod -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
+        name="manga-downloader-gui-$TAG-windows-${{ matrix.goarch }}"
+        rm -rf "stage/$name" && mkdir -p "stage/$name"
+        cp build/bin/manga-downloader-gui.exe ../LICENSE "stage/$name/"
+        (cd stage && zip -qr "../$name.zip" "$name")
+        gh release upload "$TAG" "$name.zip" --clobber
+
+  macos:
+    name: macOS universal
+    runs-on: macos-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: gui/go.mod
+        cache-dependency-path: |
+          go.sum
+          gui/go.sum
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: pnpm
+        cache-dependency-path: gui/frontend/pnpm-lock.yaml
+    - name: Install the Wails CLI
+      run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+    - name: Build the app bundle
+      working-directory: gui
+      run: |
+        set -euo pipefail
+        # the Windows version resource and the bundle's Info.plist take the version from wails.json
+        sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
+        # a single universal target keeps the bundle's name as wails.json has
+        # it ("Manga Downloader.app"), without an arch suffix
+        wails build -platform darwin/universal -tags nodynamic -skipbindings \
+          -m -nosyncgomod -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
+        name="manga-downloader-gui-$TAG-darwin-universal"
+        ditto -c -k --keepParent "build/bin/Manga Downloader.app" "$name.zip"
+        gh release upload "$TAG" "$name.zip" --clobber

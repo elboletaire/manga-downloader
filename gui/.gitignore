@@ -1,0 +1,8 @@
+# frontend build output and dependencies, rebuilt by make build/gui
+frontend/node_modules/
+frontend/dist/
+frontend/.vitest/
+# wails build output
+build/bin/
+# wails build caches a hash of the frontend manifest here
+frontend/package.json.md5

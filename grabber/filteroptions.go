@@ -15,9 +15,10 @@ type FilterOptions struct {
 	Values []string
 	// All is set when the site accepts FilterAll, which keeps every value
 	All bool
-	// Current is the value the loaded list shows when no filter is set and All
-	// isn't either: sites that list one edition at a time (Manga Plus) show the
-	// edition the URL points at. It's empty otherwise.
+	// Current is the one value the loaded list shows when no filter is set, for
+	// the sites whose default is a single value rather than every value: sites
+	// that list one edition at a time (Manga Plus) show the edition the URL
+	// points at, and Atsumaru its largest group. It's empty otherwise.
 	Current string
 }
 

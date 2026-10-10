@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBF9FF"/><stop offset="1" stop-color="#E8E0FD"/></linearGradient></defs>
+  <defs><filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation="10"/><feOffset dy="10"/><feComponentTransfer><feFuncA type="linear" slope="0.3"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#t)" filter="url(#sh)"/>
+  <g transform="translate(512 518) scale(2.7778) translate(-128 -124)"><path fill="#7C5CE0" d="M20 104V194Q20 212 38 211C74 208 104 212 128 226C152 212 182 208 218 211Q236 212 236 194V104L232 46Q230 22 210 34L168 62Q146 68 128 82Q110 68 88 62L46 34Q26 22 24 46Z"/>
+  <path fill="#FF8FB3" stroke="#FF8FB3" stroke-width="8" stroke-linejoin="round" d="M217 50L220 80L192 66ZM39 50L36 80L64 66Z"/>
+  <path fill="none" stroke="#E6DEFD" stroke-width="4" stroke-linecap="round" d="M38 202C74 200 104 204 128 218C152 204 182 200 218 202"/>
+  <path fill="#FFFFFF" d="M128 102C148 88 180 82 220 86V194C184 192 152 196 128 210C104 196 72 192 36 194V108L58 84.5C86 82 110 90 128 102Z"/>
+  <path fill="#E6DEFD" d="M36 108L58 84.5V101Q58 108 51 108Z"/>
+  <path stroke="#E6DEFD" stroke-width="5" stroke-linecap="round" d="M128 106V122"/>
+  <g fill="#1E1A33"><ellipse cx="94" cy="146" rx="14" ry="18"/><ellipse cx="162" cy="146" rx="14" ry="18"/></g>
+  <g fill="#FFFFFF"><circle cx="99" cy="139" r="5.5"/><circle cx="167" cy="139" r="5.5"/><circle cx="89" cy="153" r="2.5"/><circle cx="157" cy="153" r="2.5"/></g>
+  <path fill="none" stroke="#1E1A33" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" d="M116 170q6 8 12 0q6 8 12 0"/>
+  <g fill="#FF8FB3"><ellipse cx="65" cy="174" rx="13" ry="8"/><ellipse cx="191" cy="174" rx="13" ry="8"/></g></g>
+</svg>

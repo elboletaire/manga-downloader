@@ -1,0 +1,21 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "Manga Downloader",
+  "outputfilename": "manga-downloader-gui",
+  "frontend:install": "pnpm install --frozen-lockfile",
+  "frontend:build": "pnpm build",
+  "frontend:dev:watcher": "pnpm dev",
+  "frontend:dev:serverUrl": "auto",
+  "wailsjsdir": "./frontend",
+  "info": {
+    "productName": "Manga Downloader",
+    "productVersion": "0.0.0",
+    "companyName": "Òscar Casajuana",
+    "copyright": "Copyright (C) 2023-2026 Òscar Casajuana Alonso",
+    "comments": "Downloads manga chapters from supported websites into CBZ files"
+  },
+  "author": {
+    "name": "Òscar Casajuana",
+    "email": "elboletaire@gmail.com"
+  }
+}

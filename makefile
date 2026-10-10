@@ -33,12 +33,41 @@ build/unix:
 build/win:
 	GOOS=windows go build -o manga-downloader.exe ${GOTAGS} ${GOFLAGS} .
 
+# the desktop app, deliberately not part of build: it needs the platform's
+# webview (WebKitGTK on Linux) and Node + pnpm for the frontend. It's written
+# next to the CLI, which is where `manga-downloader ui` looks for it. The tags
+# are Wails' (desktop, production: without them it refuses to start) plus
+# nodynamic, as above, and webkit2_41 for current Linux distros; the other
+# platforms ignore it.
+GUI_TAGS = -tags desktop,production,nodynamic,webkit2_41
+GUI_LDFLAGS = -w -s -X 'main.Version=$(VERSION)' -X 'main.Tag=$(BRANCH_OR_TAG)'
+
+# the frontend is embedded into the binary, so it has to exist before go builds
+build/gui/frontend:
+	cd gui/frontend && pnpm install --frozen-lockfile && pnpm build
+
+build/gui: build/gui/frontend
+	cd gui && go build -o ../manga-downloader-gui ${GUI_TAGS} -ldflags="$(GUI_LDFLAGS)" .
+
+# cross-compiled from any host, without cgo: Wails' Windows webview is pure Go.
+# -H windowsgui keeps the console from opening behind the window. The release
+# uses `wails build` instead, which also embeds the icon and manifest.
+build/gui/windows: build/gui/frontend
+	cd gui && CGO_ENABLED=0 GOOS=windows go build -o ../manga-downloader-gui.exe ${GUI_TAGS} \
+		-ldflags="$(GUI_LDFLAGS) -H windowsgui" .
+
 test:
 ifdef RICHGO
 	richgo test ${GOTAGS} -v ./...
 else
 	go test ${GOTAGS} -v ./...
 endif
+
+# gui/ is its own module, so ./... above never reaches it. The Go tests need
+# the frontend built (it's embedded) and the webview's headers, as build/gui does
+test/gui: build/gui/frontend
+	cd gui && go test ${GUI_TAGS} ./...
+	cd gui/frontend && pnpm test
 
 # one dependency per line, alphabetically sorted (grabber/html deliberately
 # last), so parallel site-support branches never edit the same line

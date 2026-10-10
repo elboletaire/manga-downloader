@@ -1,0 +1,51 @@
+name: GUI test
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - 'assets/**'
+      - 'website/**'
+      - 'demos/**'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'assets/**'
+      - 'website/**'
+      - 'demos/**'
+
+permissions:
+  contents: read
+
+# The GUI's Go module embeds the frontend's build output, so the frontend is
+# built first. Linux needs the WebKitGTK headers, as in release-gui.yaml.
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install WebKitGTK
+      run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: gui/go.mod
+        cache-dependency-path: |
+          go.sum
+          gui/go.sum
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: pnpm
+        cache-dependency-path: gui/frontend/pnpm-lock.yaml
+    - name: Test the frontend
+      working-directory: gui/frontend
+      run: pnpm install --frozen-lockfile && pnpm build && pnpm test
+    - name: Vet and test the Go app
+      working-directory: gui
+      run: |
+        set -euo pipefail
+        go vet -tags desktop,production,nodynamic,webkit2_41 ./...
+        go test -race -tags desktop,production,nodynamic,webkit2_41 ./...

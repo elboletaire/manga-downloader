@@ -7,3 +7,6 @@ demos/*.yml
 # agent scratch dirs (never commit)
 .pi-subagents/
 docs/.work/
+manga-downloader-gui
+manga-downloader-gui.exe
+.pnpm-store/

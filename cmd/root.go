@@ -253,6 +253,12 @@ func Execute() {
 		FlagsDataType: cc.Italic,
 	})
 
+	// before cobra, which would reject the bare run for missing its URL argument
+	if shouldOpenFromExplorer(os.Args[1:], launchedFromExplorer()) {
+		openFromExplorer()
+		return
+	}
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		exit(1)
