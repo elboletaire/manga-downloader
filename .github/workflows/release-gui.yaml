@@ -80,11 +80,18 @@ jobs:
       run: |
         set -euo pipefail
         # fyne packages Windows by building from source itself, ignoring any
-        # -executable, and it only takes ldflags from GOFLAGS (one -ldflags= per
-        # value, since GOFLAGS is split on spaces). It adds -H=windowsgui on its
-        # own, so the exe is a GUI-subsystem app and no console window opens.
-        sha=$(git rev-parse --short HEAD)
-        export GOFLAGS="-ldflags=-X=main.Version=$sha -ldflags=-X=main.Tag=$TAG"
+        # -executable, and it only passes ldflags it reads from GOFLAGS (which
+        # drops all but the last -ldflags=). So the version goes in as a generated
+        # file instead. It adds -H=windowsgui on its own, so the exe is a
+        # GUI-subsystem app and no console window opens.
+        cat > version_release.go <<VERSION
+        package main
+
+        func init() {
+        	Version = "$(git rev-parse --short HEAD)"
+        	Tag = "$TAG"
+        }
+        VERSION
         fyne package -os windows -tags nodynamic -icon Icon.png -name manga-downloader-gui \
           -app-id com.github.elboletaire.mangadownloader -app-version "${TAG#v}"
         name="manga-downloader-gui-$TAG-windows-amd64"
