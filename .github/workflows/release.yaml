@@ -10,14 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # build and publish in parallel: linux/386, linux/amd64, linux/arm64, windows/386, windows/amd64, darwin/amd64, darwin/arm64
+        # build and publish in parallel: linux/386, linux/amd64, linux/arm64, windows/386, windows/amd64, windows/arm64, darwin/amd64, darwin/arm64
         goos: [linux, windows, darwin]
         goarch: ["386", amd64, arm64]
         exclude:
           - goarch: "386"
             goos: darwin
-          - goarch: arm64
-            goos: windows
+        include:
+          # windows/386 is renamed so people stop downloading it by mistake. The action
+          # only uses asset_name when it's non-empty, so every other target keeps its
+          # default name. It can't expand the tag itself, hence the release event's tag_name.
+          - goos: windows
+            goarch: "386"
+            asset_name: manga-downloader-${{ github.event.release.tag_name }}-windows-32bit-legacy
     steps:
     - uses: actions/checkout@v4
     - name: Get short version and tag
@@ -32,11 +37,18 @@ jobs:
         goversion: "1.26"
         project_path: "."
         binary_name: "manga-downloader"
+        # empty (the default name) for every target but windows/386, see the matrix
+        asset_name: ${{ matrix.asset_name }}
         extra_files: LICENSE README.md
         # keep in sync with GOTAGS in the makefile: this is the only build path
         # that doesn't go through it. Without it, released binaries would try to
         # dlopen a system libavif instead of using the embedded WASM decoder.
-        build_flags: "-tags nodynamic"
+        # -trimpath keeps the runner's paths out of the binary (and makes the
+        # build reproducible); -s -w drop the symbol table and DWARF, about a
+        # third of the size. Panic traces don't need either: they come from the
+        # runtime's own pclntab, which stays.
+        build_flags: "-tags nodynamic -trimpath"
         ldflags: >-
+          -s -w
           -X 'github.com/elboletaire/manga-downloader/cmd.Version=${{ env.sha_short }}'
           -X 'github.com/elboletaire/manga-downloader/cmd.Tag=${{ env.tag }}'
