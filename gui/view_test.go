@@ -12,8 +12,10 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/software"
 	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/theme"
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
 )
@@ -23,6 +25,9 @@ func newTestView(t *testing.T, site fakeSite) (*view, *Controller, *fakeSite) {
 	t.Helper()
 	test.NewApp()
 	a := fyne.CurrentApp()
+	// the app's own theme, pinned to light, so the screenshots show what
+	// people see rather than the test theme
+	setVariant(theme.VariantLight)
 	w := a.NewWindow("test")
 	t.Cleanup(w.Close)
 
@@ -54,6 +59,26 @@ func snapshot(t *testing.T, v *view, name string) {
 	if err := png.Encode(f, c.Capture()); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// setVariant switches the app theme to a light or dark variant
+func setVariant(variant fyne.ThemeVariant) {
+	fyne.CurrentApp().Settings().SetTheme(&appTheme{variant: &variant})
+}
+
+// snapshotDark writes the window's current state in the dark variant. The
+// window is rebuilt over the same controller rather than repainted, since
+// colours a widget computed at creation would otherwise keep the light ones.
+func snapshotDark(t *testing.T, v *view, name string, tab func(*view) *container.TabItem) {
+	t.Helper()
+	if os.Getenv("GUI_SCREENSHOT_DIR") == "" {
+		return
+	}
+	setVariant(theme.VariantDark)
+	defer setVariant(theme.VariantLight)
+	dark := newView(v.app, v.win, v.ctrl, nil)
+	dark.tabs.Select(tab(dark))
+	snapshot(t, dark, name)
 }
 
 // waitFor polls cond until it's true
@@ -116,6 +141,7 @@ func TestViewScreens(t *testing.T) {
 	v.tabs.Select(v.progressTab)
 	v.refresh()
 	snapshot(t, v, "03-progress.png")
+	snapshotDark(t, v, "polish-dark-03-progress.png", func(d *view) *container.TabItem { return d.progressTab })
 	close(fs.pageGate)
 
 	s := waitFinished(t, c)
@@ -130,6 +156,7 @@ func TestViewScreens(t *testing.T) {
 		t.Error("Open folder is disabled after a run")
 	}
 	snapshot(t, v, "04-finished.png")
+	snapshotDark(t, v, "polish-dark-04-finished.png", func(d *view) *container.TabItem { return d.progressTab })
 
 	v.tabs.Select(v.optionsTab)
 	if err := c.Configure(func(s *grabber.Settings) { s.Language = "fr" }); err != nil {

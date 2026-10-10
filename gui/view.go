@@ -5,13 +5,16 @@ package main
 import (
 	"errors"
 	"fmt"
+	"image/color"
 	"net/url"
 	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -30,16 +33,12 @@ const noSeries = "No series loaded"
 // Hints shown where a list would be, while it has nothing to show
 const (
 	chaptersHint = "Paste a series URL above and press Load to list its chapters."
-	progressHint = "Nothing downloaded yet. Select chapters and press Download."
+	progressHint = "Select chapters and press Download to follow them here."
 	rangeHint    = "A range like 1-10,12 adds those chapters to the selection."
 )
 
 // view is the one window. It only reads the controller's state and calls its
 // actions; it never holds state the controller doesn't.
-//
-// The layout is a fixed header (URL, output folder), a split body (chapters
-// on the left, options/progress/log tabs on the right) and a fixed action
-// bar, so nothing a run changes can push the buttons around.
 type view struct {
 	app   fyne.App
 	win   fyne.Window
@@ -58,11 +57,15 @@ type view struct {
 	// notice is the line under the header: a load error, or the warning that
 	// the list no longer matches its filters
 	notice *widget.Label
+	// noticeBox is the tinted banner around notice, noticeIcon its glyph
+	noticeBox  *surface
+	noticeIcon *widget.Icon
 	// loadErr is the last load error, which notice shows ahead of anything else
 	loadErr string
 
 	title        *widget.Label
 	count        *widget.Label
+	countPill    *pill
 	selButtons   []fyne.Disableable
 	rangeEntry   *widget.Entry
 	rangeMsg     *widget.Label
@@ -94,16 +97,19 @@ type view struct {
 	// status is the one line next to the buttons: a Start refusal, the run's
 	// progress, or the last run's headline. It truncates rather than wraps, so
 	// it never changes the bar's height.
-	status *widget.Label
+	status     *widget.Label
+	statusPill *pill
 	// actionErr is the last Start refusal, cleared by the next attempt
 	actionErr string
 
 	progressHead *widget.Label
-	jobList      *widget.List
-	jobsNone     fyne.CanvasObject
-	jobs         []Job
-	details      *widget.Label
-	detailsBox   fyne.CanvasObject
+	// overallBar is the whole run at a glance, above the per-chapter rows
+	overallBar *thinBar
+	jobList    *widget.List
+	jobsNone   fyne.CanvasObject
+	jobs       []Job
+	details    *widget.Label
+	detailsBox fyne.CanvasObject
 
 	logLabel  *widget.Label
 	logScroll *container.Scroll
@@ -134,53 +140,83 @@ func (v *view) watch(changed <-chan struct{}) {
 	}
 }
 
+// The layout, top to bottom: a header band with the icon and the series
+// title, the URL and output rows, a split body (chapters on the left,
+// options/progress/log tabs on the right) and a fixed action bar, so nothing
+// a run changes can push the buttons around.
 func (v *view) build() {
 	header := v.buildHeader()
 	chapters := v.buildChapters()
 
-	v.optionsTab = container.NewTabItem("Options", v.buildOptions())
-	v.progressTab = container.NewTabItem("Progress", v.buildProgress())
-	v.logTab = container.NewTabItem("Log", v.buildLog())
+	v.optionsTab = container.NewTabItemWithIcon("Options", theme.SettingsIcon(), v.buildOptions())
+	v.progressTab = container.NewTabItemWithIcon("Progress", theme.DownloadIcon(), v.buildProgress())
+	v.logTab = container.NewTabItemWithIcon("Log", theme.DocumentIcon(), v.buildLog())
 	v.tabs = container.NewAppTabs(v.optionsTab, v.progressTab, v.logTab)
 
-	body := container.NewHSplit(chapters, v.tabs)
+	body := container.NewHSplit(padded(chapters), v.tabs)
 	body.Offset = 0.5
 
 	v.content = container.NewBorder(header, v.buildActions(), nil, nil, body)
 }
 
 func (v *view) buildHeader() fyne.CanvasObject {
+	// the brand band: the app's icon and name, and the series once loaded,
+	// which is the one thing the whole window is about
+	icon := canvas.NewImageFromResource(appIcon)
+	icon.FillMode = canvas.ImageFillContain
+	icon.SetMinSize(fyne.NewSquareSize(44))
+	appName := mutedText("MANGA DOWNLOADER", theme.SizeNameCaptionText, true)
+	v.title = widget.NewLabelWithStyle(noSeries, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	v.title.SizeName = theme.SizeNameSubHeadingText
+	v.title.Truncation = fyne.TextTruncateEllipsis
+	names := container.New(layout.NewCustomPaddedVBoxLayout(-2*theme.Padding()), appName, v.title)
+	brand := newSurface(container.NewBorder(nil, nil, container.NewCenter(icon), nil, names),
+		theme.ColorNameHeaderBackground, 0)
+	brand.inset = 2
+
 	v.urlEntry = widget.NewEntry()
 	v.urlEntry.SetPlaceHolder("Series URL, e.g. https://…")
 	v.urlEntry.OnSubmitted = func(string) { v.load() }
-	v.loadBtn = widget.NewButton("Load", v.load)
+	v.loadBtn = widget.NewButtonWithIcon("Load", theme.SearchIcon(), v.load)
 	v.loadBtn.Importance = widget.HighImportance
 	v.spinner = widget.NewActivity()
-	urlRow := container.NewBorder(nil, nil, nil, container.NewHBox(v.spinner, v.loadBtn), v.urlEntry)
+	labels := fieldLabels("Series", "Save to")
+	urlRow := container.NewBorder(nil, nil, labels[0], container.NewHBox(v.spinner, v.loadBtn), v.urlEntry)
 
 	// the output folder is what people look for first, so it's always in view
 	v.outputEntry = widget.NewEntry()
 	v.outputEntry.OnChanged = func(s string) { v.setOption(func(o *grabber.Settings) { o.OutputDir = s }) }
 	v.browseBtn = widget.NewButtonWithIcon("Browse…", theme.FolderOpenIcon(), v.browse)
-	outputRow := container.NewBorder(nil, nil, widget.NewLabel("Save to"), v.browseBtn, v.outputEntry)
+	outputRow := container.NewBorder(nil, nil, labels[1], v.browseBtn, v.outputEntry)
 
 	v.notice = widget.NewLabel("")
 	v.notice.Wrapping = fyne.TextWrapWord
+	v.noticeIcon = widget.NewIcon(nil)
+	v.noticeBox = newSurface(container.NewBorder(nil, nil, container.NewCenter(v.noticeIcon), nil, v.notice),
+		theme.ColorNameWarning, tintSoft)
+	v.noticeBox.radius = theme.InputRadiusSize()
+	v.noticeBox.Hide()
 
-	return container.NewVBox(urlRow, outputRow, v.notice)
+	fields := padded(container.NewVBox(urlRow, outputRow, v.noticeBox))
+	return container.NewVBox(brand, widget.NewSeparator(), fields, widget.NewSeparator())
 }
 
 func (v *view) buildChapters() fyne.CanvasObject {
-	v.title = widget.NewLabelWithStyle(noSeries, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	v.title.Truncation = fyne.TextTruncateEllipsis
 	v.count = widget.NewLabel("")
+	v.count.SizeName = theme.SizeNameCaptionText
+	v.count.TextStyle = fyne.TextStyle{Bold: true}
+	v.countPill = newPill(v.count)
 
+	// the selection helpers are secondary to the list itself, so they're
+	// flat; Add range keeps a face because it acts on what's typed next to it
 	selAll := widget.NewButton("Select all", func() { v.ctrl.SetAll(true) })
+	selAll.Importance = widget.LowImportance
 	selNone := widget.NewButton("Select none", func() { v.ctrl.SetAll(false) })
+	selNone.Importance = widget.LowImportance
 	v.rangeEntry = widget.NewEntry()
 	v.rangeEntry.SetPlaceHolder("e.g. 1-10,12")
 	v.rangeEntry.OnSubmitted = func(string) { v.selectRange() }
-	addRange := widget.NewButton("Add range", v.selectRange)
+	addRange := widget.NewButtonWithIcon("Add range", theme.ContentAddIcon(), v.selectRange)
 	v.selButtons = []fyne.Disableable{selAll, selNone, addRange, v.rangeEntry}
 	// the hint and a bad range share one line, so an error doesn't move the list
 	v.rangeMsg = widget.NewLabel(rangeHint)
@@ -189,23 +225,22 @@ func (v *view) buildChapters() fyne.CanvasObject {
 
 	v.chapterList = widget.NewList(
 		func() int { return len(v.chapters) },
-		func() fyne.CanvasObject { return widget.NewCheck("", nil) },
+		func() fyne.CanvasObject { return newChapterRow() },
 		func(id widget.ListItemID, o fyne.CanvasObject) {
-			check := o.(*widget.Check)
 			i := int(id)
-			check.OnChanged = nil
-			check.Text = v.chapterLabel(v.chapters[i])
-			check.SetChecked(v.ctrl.IsSelected(i))
-			check.OnChanged = func(on bool) { v.ctrl.SetSelected(i, on) }
+			o.(*chapterRow).set(v.chapters[i].GetTitle(), v.chapterLanguage(v.chapters[i]), v.ctrl.IsSelected(i),
+				func(on bool) { v.ctrl.SetSelected(i, on) })
 		},
 	)
-	v.chaptersNone = emptyHint(chaptersHint)
+	logo := canvas.NewImageFromResource(appIcon)
+	logo.FillMode = canvas.ImageFillContain
+	logo.SetMinSize(fyne.NewSquareSize(72))
+	v.chaptersNone = emptyState(logo, "Start with a series", chaptersHint)
 
 	head := container.NewVBox(
-		container.NewBorder(nil, nil, nil, v.count, v.title),
+		container.NewBorder(nil, nil, sectionLabel("Chapters"), v.countPill),
 		container.NewBorder(nil, nil, container.NewHBox(selAll, selNone), addRange, v.rangeEntry),
 		v.rangeMsg,
-		widget.NewSeparator(),
 	)
 	return container.NewBorder(head, nil, nil, nil, container.NewStack(v.chapterList, v.chaptersNone))
 }
@@ -239,7 +274,10 @@ func (v *view) buildOptions() fyne.CanvasObject {
 	v.scanEntry.SetPlaceHolder("group name, or all (empty: default)")
 	v.scanEntry.OnChanged = func(s string) { v.setOption(func(o *grabber.Settings) { o.Scanlator = s }) }
 	v.scanEntry.OnSubmitted = func(string) { v.reloadIfStale() }
+	// the one primary action of this tab; it's only enabled when there's
+	// something to apply
 	v.applyBtn = widget.NewButtonWithIcon("Apply and reload", theme.ViewRefreshIcon(), v.reloadIfStale)
+	v.applyBtn.Importance = widget.HighImportance
 
 	v.optionWidgets = []fyne.Disableable{v.outputEntry, v.browseBtn, v.formatSelect, v.convertSelect,
 		v.bundleCheck, v.languageEntry, v.scanEntry, v.skipEntry, v.templateEntry, v.browserCheck}
@@ -256,30 +294,35 @@ func (v *view) buildOptions() fyne.CanvasObject {
 		widget.NewFormItem("Language", v.languageEntry),
 		widget.NewFormItem("Scanlator", v.scanEntry),
 	)
-	filterNote := widget.NewLabel("These filter the chapter list, so changing them reloads it.")
+	filterNote := mutedText("These filter the chapter list, so changing them reloads it.", theme.SizeNameCaptionText, false)
 	filterNote.Wrapping = fyne.TextWrapWord
-	filterNote.SizeName = theme.SizeNameCaptionText
 
-	return container.NewVScroll(container.NewVBox(
-		heading("Download"),
+	return container.NewVScroll(padded(container.NewVBox(
+		sectionLabel("Download"),
 		output,
-		widget.NewSeparator(),
-		heading("Chapter list"),
+		gap(),
+		sectionLabel("Chapter list"),
 		filters,
 		container.NewBorder(nil, nil, nil, v.applyBtn, filterNote),
-	))
+	)))
 }
 
 func (v *view) buildProgress() fyne.CanvasObject {
 	v.progressHead = widget.NewLabelWithStyle("Progress", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	v.progressHead.Truncation = fyne.TextTruncateEllipsis
+	v.overallBar = newThinBar(overallHeight)
+	head := container.NewVBox(v.progressHead, padH(v.overallBar), gap())
+
 	v.jobList = widget.NewList(
 		func() int { return len(v.jobs) },
-		newJobRow,
-		func(id widget.ListItemID, o fyne.CanvasObject) { setJobRow(o, v.jobs[id]) },
+		func() fyne.CanvasObject { return newJobRow() },
+		func(id widget.ListItemID, o fyne.CanvasObject) { o.(*jobRow).set(v.jobs[id]) },
 	)
 	// the bars already divide the rows
 	v.jobList.HideSeparators = true
-	v.jobsNone = emptyHint(progressHint)
+	v.jobsNone = emptyState(container.NewGridWrap(fyne.NewSquareSize(56),
+		widget.NewIcon(theme.NewColoredResource(theme.DownloadIcon(), theme.ColorNamePlaceHolder))),
+		"No downloads yet", progressHint)
 
 	// the full summary, failures included, selectable so a reason can be
 	// copied into a bug report
@@ -288,17 +331,23 @@ func (v *view) buildProgress() fyne.CanvasObject {
 	v.details.Selectable = true
 	detailsScroll := container.NewVScroll(v.details)
 	detailsScroll.SetMinSize(fyne.NewSize(0, 96))
-	v.detailsBox = container.NewVBox(widget.NewSeparator(), detailsScroll)
+	summary := newSurface(container.NewBorder(sectionLabel("Summary"), nil, nil, nil, detailsScroll),
+		theme.ColorNameHeaderBackground, 0)
+	summary.radius = theme.InputRadiusSize()
+	v.detailsBox = container.NewVBox(gap(), summary)
 
-	return container.NewBorder(v.progressHead, v.detailsBox, nil, nil, container.NewStack(v.jobList, v.jobsNone))
+	return padded(container.NewBorder(head, v.detailsBox, nil, nil, container.NewStack(v.jobList, v.jobsNone)))
 }
 
 func (v *view) buildLog() fyne.CanvasObject {
 	v.logLabel = widget.NewLabel("")
 	v.logLabel.Wrapping = fyne.TextWrapWord
 	v.logLabel.Selectable = true
+	// a log reads as one: fixed-width lines line up their prefixes
+	v.logLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	v.logLabel.SizeName = theme.SizeNameCaptionText
 	v.logScroll = container.NewVScroll(v.logLabel)
-	return v.logScroll
+	return padded(v.logScroll)
 }
 
 func (v *view) buildActions() fyne.CanvasObject {
@@ -308,83 +357,198 @@ func (v *view) buildActions() fyne.CanvasObject {
 	v.openBtn = widget.NewButtonWithIcon("Open folder", theme.FolderOpenIcon(), v.openFolder)
 	v.status = widget.NewLabel("")
 	v.status.Truncation = fyne.TextTruncateEllipsis
+	v.status.TextStyle = fyne.TextStyle{Bold: true}
+	v.statusPill = newPill(v.status)
 
-	bar := container.NewBorder(nil, nil, container.NewHBox(v.downloadBtn, v.cancelBtn), v.openBtn, v.status)
-	return container.NewVBox(widget.NewSeparator(), bar)
+	bar := container.NewBorder(nil, nil, container.NewHBox(v.downloadBtn, v.cancelBtn), v.openBtn, padH(v.statusPill))
+	strip := newSurface(bar, theme.ColorNameHeaderBackground, 0)
+	strip.inset = 1.5
+	return container.NewVBox(widget.NewSeparator(), strip)
 }
 
-// heading is a section title inside a tab
-func heading(text string) *widget.Label {
-	return widget.NewLabelWithStyle(text, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+// sectionLabel is a muted, upper-case section title: it orders the window
+// without competing with the content under it
+func sectionLabel(text string) *widget.RichText {
+	return mutedText(strings.ToUpper(text), theme.SizeNameCaptionText, true)
 }
 
-// emptyHint is the centred text that stands in for an empty list
-func emptyHint(text string) fyne.CanvasObject {
-	l := widget.NewLabelWithStyle(text, fyne.TextAlignCenter, fyne.TextStyle{Italic: true})
-	l.Wrapping = fyne.TextWrapWord
-	l.Importance = widget.LowImportance
-	return container.NewVBox(widget.NewLabel(""), l)
+// fieldLabels are the labels in front of the header rows' entries, all as
+// wide as the widest so the entries after them start on one line
+func fieldLabels(texts ...string) []fyne.CanvasObject {
+	labels := make([]*widget.Label, len(texts))
+	w := float32(0)
+	for i, t := range texts {
+		labels[i] = widget.NewLabelWithStyle(t, fyne.TextAlignTrailing, fyne.TextStyle{Bold: true})
+		w = max(w, labels[i].MinSize().Width)
+	}
+	out := make([]fyne.CanvasObject, len(labels))
+	for i, l := range labels {
+		strut := canvas.NewRectangle(color.Transparent)
+		strut.SetMinSize(fyne.NewSize(w, 0))
+		out[i] = container.NewStack(strut, l)
+	}
+	return out
 }
 
-// newJobRow is a progress row: the chapter and its status on one line, a
-// slim bar under them
-func newJobRow() fyne.CanvasObject {
-	title := widget.NewLabel("")
-	title.Truncation = fyne.TextTruncateEllipsis
-	status := widget.NewLabel("")
-	status.Truncation = fyne.TextTruncateEllipsis
-	status.Alignment = fyne.TextAlignTrailing
-	return container.NewBorder(nil, newThinBar(), nil, nil, container.NewGridWithColumns(2, title, status))
+// mutedText is secondary text in the theme's placeholder colour. A Label's
+// low importance would use the disabled colour, which is close to invisible
+// on the dark background.
+func mutedText(text string, size fyne.ThemeSizeName, bold bool) *widget.RichText {
+	return widget.NewRichText(&widget.TextSegment{Text: text, Style: widget.RichTextStyle{
+		ColorName: theme.ColorNamePlaceHolder,
+		SizeName:  size,
+		TextStyle: fyne.TextStyle{Bold: bold},
+		Inline:    true,
+	}})
 }
 
-func setJobRow(o fyne.CanvasObject, j Job) {
-	row := o.(*fyne.Container)
-	grid := row.Objects[0].(*fyne.Container)
-	bar := row.Objects[1].(*thinBar)
-	title := grid.Objects[0].(*widget.Label)
-	status := grid.Objects[1].(*widget.Label)
+// padded insets o by the theme padding on every side
+func padded(o fyne.CanvasObject) fyne.CanvasObject {
+	return container.NewPadded(o)
+}
 
-	title.SetText(j.Title)
-	imp, colour := jobLook(j.State)
-	status.Importance = imp
-	status.Text = jobStatus(j)
-	status.Refresh()
+// padH insets o horizontally by the text's inner padding, so a bar or badge
+// lines up with the label text around it
+func padH(o fyne.CanvasObject) fyne.CanvasObject {
+	p := theme.InnerPadding()
+	return container.New(layout.NewCustomPaddedLayout(0, 0, p, p), o)
+}
 
+// gap is a blank padding-high space between groups
+func gap() fyne.CanvasObject {
+	r := canvas.NewRectangle(color.Transparent)
+	r.SetMinSize(fyne.NewSize(0, theme.Padding()))
+	return r
+}
+
+// emptyState stands in for an empty list: a picture, a title and a hint,
+// centred in the space the list would take
+func emptyState(picture fyne.CanvasObject, title, hint string) fyne.CanvasObject {
+	t := widget.NewLabelWithStyle(title, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	t.SizeName = theme.SizeNameSubHeadingText
+	h := widget.NewRichText(&widget.TextSegment{Text: hint, Style: widget.RichTextStyle{
+		ColorName: theme.ColorNamePlaceHolder,
+		Alignment: fyne.TextAlignCenter,
+	}})
+	h.Wrapping = fyne.TextWrapWord
+	return container.NewVBox(layout.NewSpacer(), container.NewCenter(picture), t, h, layout.NewSpacer())
+}
+
+// chapterRow is a chapter list row: its checkbox and title, and a language
+// badge when the list needs one to tell chapters apart
+type chapterRow struct {
+	widget.BaseWidget
+	check *widget.Check
+	lang  *widget.Label
+	badge *pill
+}
+
+func newChapterRow() *chapterRow {
+	r := &chapterRow{check: widget.NewCheck("", nil), lang: widget.NewLabel("")}
+	r.lang.SizeName = theme.SizeNameCaptionText
+	r.lang.TextStyle = fyne.TextStyle{Bold: true}
+	r.lang.Importance = widget.HighImportance
+	r.lang.Alignment = fyne.TextAlignCenter
+	r.badge = newPill(r.lang)
+	r.ExtendBaseWidget(r)
+	return r
+}
+
+// set fills the row; onChange is attached after the check is set, so filling
+// a recycled row never toggles a chapter
+func (r *chapterRow) set(title, lang string, checked bool, onChange func(bool)) {
+	r.check.OnChanged = nil
+	// SetText, not Text: SetChecked doesn't redraw when the state is
+	// unchanged, which left a recycled row showing its previous title
+	r.check.SetText(title)
+	r.check.SetChecked(checked)
+	r.check.OnChanged = onChange
+	if r.lang.Text != lang {
+		r.lang.Text = lang
+		r.badge.Refresh()
+	}
+	setShown(lang != "", r.badge)
+}
+
+func (r *chapterRow) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(container.NewBorder(nil, nil, nil, padH(r.badge), r.check))
+}
+
+// jobRow is a progress row: a state icon, the chapter and its status on one
+// line, and a slim bar under them
+type jobRow struct {
+	widget.BaseWidget
+	icon          *widget.Icon
+	title, status *widget.Label
+	bar           *thinBar
+}
+
+func newJobRow() *jobRow {
+	r := &jobRow{icon: widget.NewIcon(nil), title: widget.NewLabel(""), status: widget.NewLabel(""), bar: newThinBar(barHeight)}
+	r.title.Truncation = fyne.TextTruncateEllipsis
+	r.status.Truncation = fyne.TextTruncateEllipsis
+	r.status.Alignment = fyne.TextAlignTrailing
+	r.ExtendBaseWidget(r)
+	return r
+}
+
+func (r *jobRow) CreateRenderer() fyne.WidgetRenderer {
+	p := theme.InnerPadding()
+	bar := container.New(layout.NewCustomPaddedLayout(-theme.Padding(), p/2, p, p), r.bar)
+	line := container.NewBorder(nil, nil, padH(r.icon), nil, container.NewGridWithColumns(2, r.title, r.status))
+	return widget.NewSimpleRenderer(container.NewBorder(nil, bar, nil, nil, line))
+}
+
+func (r *jobRow) set(j Job) {
+	r.title.SetText(j.Title)
+	imp, colour, icon := jobLook(j.State)
+	r.status.Importance = imp
+	r.status.Text = jobStatus(j)
 	frac := 0.0
 	if j.Total > 0 {
 		frac = float64(j.Done) / float64(j.Total)
 	}
+	// a running row says how far it's got, which the bar alone can't say
+	// precisely
+	if (j.State == JobDownloading || j.State == JobArchiving) && j.Total > 0 {
+		r.status.Text = fmt.Sprintf("%s  %d%%", r.status.Text, int(frac*100))
+	}
+	r.status.Refresh()
+	r.icon.SetResource(icon)
+
 	// a failed row is filled red, so it can't pass for one still waiting
 	if j.State == JobDone || j.State == JobFailed {
 		frac = 1
 	}
-	bar.set(frac, colour)
+	r.bar.set(frac, colour)
 }
 
-// jobLook is the status colour of a row in each state, for its text and bar
-func jobLook(s JobState) (widget.Importance, fyne.ThemeColorName) {
+// jobLook is the status colour and icon of a row in each state
+func jobLook(s JobState) (widget.Importance, fyne.ThemeColorName, fyne.Resource) {
 	switch s {
 	case JobDone:
-		return widget.SuccessImportance, theme.ColorNameSuccess
+		return widget.SuccessImportance, theme.ColorNameSuccess, theme.NewSuccessThemedResource(theme.ConfirmIcon())
 	case JobFailed:
-		return widget.DangerImportance, theme.ColorNameError
+		return widget.DangerImportance, theme.ColorNameError, theme.NewErrorThemedResource(theme.ErrorIcon())
 	case JobSkipped:
-		return widget.WarningImportance, theme.ColorNameWarning
+		return widget.WarningImportance, theme.ColorNameWarning, theme.NewWarningThemedResource(theme.MediaSkipNextIcon())
+	case JobArchiving:
+		return widget.HighImportance, theme.ColorNamePrimary, theme.NewPrimaryThemedResource(theme.StorageIcon())
 	}
-	return widget.MediumImportance, theme.ColorNamePrimary
+	return widget.HighImportance, theme.ColorNamePrimary, theme.NewPrimaryThemedResource(theme.DownloadIcon())
 }
 
-// chapterLabel is a chapter's list label, with its language when the list
-// repeats numbers across languages (see core.HasDuplicateChapterNumbers)
-func (v *view) chapterLabel(ch grabber.Filterable) string {
-	title := ch.GetTitle()
+// chapterLanguage is the language badge of a chapter's row: only shown when
+// the list repeats numbers across languages (see
+// core.HasDuplicateChapterNumbers), where it tells the copies apart
+func (v *view) chapterLanguage(ch grabber.Filterable) string {
 	if !v.ctrl.HasDuplicates() {
-		return title
+		return ""
 	}
-	if l, ok := ch.(interface{ GetLanguage() string }); ok && l.GetLanguage() != "" {
-		return fmt.Sprintf("%s [%s]", title, l.GetLanguage())
+	if l, ok := ch.(interface{ GetLanguage() string }); ok {
+		return l.GetLanguage()
 	}
-	return title
+	return ""
 }
 
 // jobStatus is the status text of a progress row
@@ -447,7 +611,13 @@ func (v *view) refresh() {
 	setShown(!loaded, v.chaptersNone)
 
 	selected := v.ctrl.SelectedCount()
-	v.count.SetText(fmt.Sprintf("%d of %d selected", selected, total))
+	v.count.Text = fmt.Sprintf("%d of %d selected", selected, total)
+	v.count.Importance = widget.MediumImportance
+	if selected > 0 {
+		v.count.Importance = widget.HighImportance
+	}
+	v.countPill.Refresh()
+	setShown(loaded, v.countPill)
 	switch selected {
 	case 0:
 		v.downloadBtn.SetText("Download")
@@ -480,8 +650,16 @@ func (v *view) refreshNotice(stale bool) {
 	default:
 		setNotice(v.notice, "", widget.MediumImportance)
 	}
-	// an empty label still takes a line
-	setShown(v.notice.Text != "", v.notice)
+	switch v.notice.Importance {
+	case widget.DangerImportance:
+		v.noticeBox.setTint(theme.ColorNameError, tintSoft)
+		v.noticeIcon.SetResource(theme.NewErrorThemedResource(theme.ErrorIcon()))
+	default:
+		v.noticeBox.setTint(theme.ColorNameWarning, tintSoft)
+		v.noticeIcon.SetResource(theme.NewWarningThemedResource(theme.WarningIcon()))
+	}
+	// an empty banner would still take a line
+	setShown(v.notice.Text != "", v.noticeBox)
 }
 
 func setNotice(l *widget.Label, text string, imp widget.Importance) {
@@ -496,21 +674,56 @@ func setNotice(l *widget.Label, text string, imp widget.Importance) {
 // It returns the number of finished chapters.
 func (v *view) refreshProgress() int {
 	run := v.ctrl.Run()
+	setShown(run.Chapters > 0, v.overallBar)
 	if run.Bundle {
 		v.progressHead.SetText(fmt.Sprintf("Bundle of %s", plural(run.Chapters, "chapter", "chapters")))
+		// the bundle's single row already counts its pages; the overall bar
+		// mirrors it
+		if len(v.jobs) > 0 {
+			j := v.jobs[0]
+			frac := 0.0
+			if j.Total > 0 {
+				frac = float64(j.Done) / float64(j.Total)
+			}
+			if j.State == JobDone || j.State == JobFailed {
+				frac = 1
+			}
+			_, colour, _ := jobLook(j.State)
+			v.overallBar.set(frac, colour)
+		}
 		return 0
 	}
-	finished := 0
+	// the overall bar stacks saved, skipped and failed chapters, then the
+	// pages of the ones still going, so it creeps forward page by page and a
+	// failure shows the moment it happens
+	done, skipped, failed, partial := 0, 0, 0, 0.0
 	for _, j := range v.jobs {
-		if j.State == JobDone || j.State == JobFailed || j.State == JobSkipped {
-			finished++
+		switch j.State {
+		case JobDone:
+			done++
+		case JobSkipped:
+			skipped++
+		case JobFailed:
+			failed++
+		default:
+			if j.Total > 0 {
+				partial += float64(j.Done) / float64(j.Total)
+			}
 		}
 	}
+	finished := done + skipped + failed
 	if run.Chapters == 0 {
 		v.progressHead.SetText("Progress")
 		return 0
 	}
-	v.progressHead.SetText(fmt.Sprintf("Progress: %d of %d chapters finished", finished, run.Chapters))
+	v.progressHead.SetText(fmt.Sprintf("%d of %d chapters finished", finished, run.Chapters))
+	n := float64(run.Chapters)
+	v.overallBar.setSegments(
+		barSegment{float64(done) / n, theme.ColorNameSuccess},
+		barSegment{float64(skipped) / n, theme.ColorNameWarning},
+		barSegment{float64(failed) / n, theme.ColorNameError},
+		barSegment{partial / n, theme.ColorNamePrimary},
+	)
 	return finished
 }
 
@@ -529,9 +742,9 @@ func (v *view) refreshSummary(running bool, finished int) {
 	case v.actionErr != "":
 		setNotice(v.status, v.actionErr, widget.DangerImportance)
 	case running && run.Bundle:
-		setNotice(v.status, "Downloading the bundle…", widget.MediumImportance)
+		setNotice(v.status, "Downloading the bundle…", widget.HighImportance)
 	case running:
-		setNotice(v.status, fmt.Sprintf("Downloading: %d of %d chapters finished", finished, run.Chapters), widget.MediumImportance)
+		setNotice(v.status, fmt.Sprintf("Downloading: %d of %d chapters finished", finished, run.Chapters), widget.HighImportance)
 	case s != nil:
 		imp := widget.SuccessImportance
 		if len(s.Failures) > 0 || s.Err != nil {
@@ -543,6 +756,7 @@ func (v *view) refreshSummary(running bool, finished int) {
 	default:
 		setNotice(v.status, "", widget.MediumImportance)
 	}
+	v.statusPill.Refresh()
 }
 
 func (v *view) refreshLog() {
@@ -572,12 +786,14 @@ func (v *view) refreshLog() {
 
 	// the error count on the tab is how a failure in the log gets noticed
 	// without opening it
-	text := "Log"
+	text, icon := "Log", theme.DocumentIcon()
 	if errs > 0 {
 		text = fmt.Sprintf("Log (%s)", plural(errs, "error", "errors"))
+		icon = theme.NewErrorThemedResource(theme.ErrorIcon())
 	}
 	if v.logTab.Text != text {
 		v.logTab.Text = text
+		v.logTab.Icon = icon
 		v.tabs.Refresh()
 	}
 }

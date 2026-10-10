@@ -26,6 +26,7 @@ const appID = "com.github.elboletaire.mangadownloader"
 func main() {
 	a := app.NewWithID(appID)
 	a.SetIcon(appIcon)
+	a.Settings().SetTheme(newAppTheme())
 
 	w := a.NewWindow("Manga Downloader")
 	settings := defaultSettings()

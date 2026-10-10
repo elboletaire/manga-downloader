@@ -4,6 +4,7 @@ package main
 
 import (
 	"image/color"
+	"slices"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -11,64 +12,138 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// barHeight is the thickness of a progress row's bar
-const barHeight = 4
+// Bar thicknesses: a progress row's bar, and the run's overall one
+const (
+	barHeight     = 6
+	overallHeight = 10
+)
 
-// thinBar is a slim progress bar for the progress rows: widget.ProgressBar is
-// as tall as a button and prints a percentage, which made every row a block.
-// Its colour carries the row's state, so done and failed differ at a glance.
+// thinBar is a slim, rounded progress bar: widget.ProgressBar is as tall as a
+// button and prints a percentage, which made every progress row a block. Its
+// colour carries the row's state, so done and failed differ at a glance.
+//
+// It can also stack several coloured segments, which is how the overall bar
+// shows saved, skipped, failed and in-flight chapters side by side: one
+// colour for the whole run would make a single failure look like all of them.
 type thinBar struct {
 	widget.BaseWidget
+	segments []barSegment
+	height   float32
+}
+
+// barSegment is a stretch of the bar, as a fraction of its width
+type barSegment struct {
 	value  float64
 	colour fyne.ThemeColorName
 }
 
-func newThinBar() *thinBar {
-	b := &thinBar{colour: theme.ColorNamePrimary}
+func newThinBar(height float32) *thinBar {
+	b := &thinBar{height: height}
 	b.ExtendBaseWidget(b)
 	return b
 }
 
-// set updates the fill, as a fraction, and its colour
+// set fills the bar to value, as a fraction, in one colour
 func (b *thinBar) set(value float64, colour fyne.ThemeColorName) {
-	if value < 0 {
-		value = 0
+	b.setSegments(barSegment{value, colour})
+}
+
+// setSegments fills the bar with segs, left to right. Fractions are clamped
+// so the segments never run past the end.
+func (b *thinBar) setSegments(segs ...barSegment) {
+	left := 1.0
+	clamped := make([]barSegment, 0, len(segs))
+	for _, s := range segs {
+		s.value = min(max(s.value, 0), left)
+		left -= s.value
+		clamped = append(clamped, s)
 	}
-	if value > 1 {
-		value = 1
-	}
-	if b.value == value && b.colour == colour {
+	if slices.Equal(clamped, b.segments) {
 		return
 	}
-	b.value, b.colour = value, colour
+	b.segments = clamped
 	b.Refresh()
 }
 
 func (b *thinBar) CreateRenderer() fyne.WidgetRenderer {
-	r := &thinBarRenderer{bar: b, track: canvas.NewRectangle(color.Transparent), fill: canvas.NewRectangle(color.Transparent)}
+	r := &thinBarRenderer{bar: b, track: canvas.NewRectangle(color.Transparent)}
 	r.Refresh()
 	return r
 }
 
 type thinBarRenderer struct {
-	bar         *thinBar
-	track, fill *canvas.Rectangle
+	bar   *thinBar
+	track *canvas.Rectangle
+	fills []*canvas.Rectangle
 }
 
 func (r *thinBarRenderer) Layout(size fyne.Size) {
-	r.track.Resize(size)
-	r.fill.Resize(fyne.NewSize(size.Width*float32(r.bar.value), size.Height))
+	// the bar keeps its own thickness, centred, whatever height the layout
+	// hands it
+	h := min(r.bar.height, size.Height)
+	y := (size.Height - h) / 2
+	r.track.Move(fyne.NewPos(0, y))
+	r.track.Resize(fyne.NewSize(size.Width, h))
+	r.track.CornerRadius = h / 2
+
+	last := -1
+	for i, seg := range r.bar.segments {
+		if seg.value > 0 {
+			last = i
+		}
+	}
+	x := float32(0)
+	for i, f := range r.fills {
+		w := size.Width * float32(r.bar.segments[i].value)
+		f.Move(fyne.NewPos(x, y))
+		f.Resize(fyne.NewSize(w, h))
+		f.Hidden = w <= 0
+		// only the fill's two ends are round, so adjacent segments meet
+		// flush. A radius over half the width is what makes the software
+		// renderer draw negative rectangles, hence the cap.
+		radius := min(h, w) / 2
+		f.TopLeftCornerRadius, f.BottomLeftCornerRadius = 0, 0
+		f.TopRightCornerRadius, f.BottomRightCornerRadius = 0, 0
+		if x <= 0 {
+			f.TopLeftCornerRadius, f.BottomLeftCornerRadius = radius, radius
+		}
+		if i == last {
+			f.TopRightCornerRadius, f.BottomRightCornerRadius = radius, radius
+		}
+		x += w
+	}
 }
 
-func (r *thinBarRenderer) MinSize() fyne.Size { return fyne.NewSize(0, barHeight) }
+func (r *thinBarRenderer) MinSize() fyne.Size { return fyne.NewSize(0, r.bar.height) }
 
 func (r *thinBarRenderer) Refresh() {
-	r.track.FillColor = theme.Color(theme.ColorNameInputBackground)
-	r.fill.FillColor = theme.Color(r.bar.colour)
+	segs := r.bar.segments
+	for len(r.fills) < len(segs) {
+		r.fills = append(r.fills, canvas.NewRectangle(color.Transparent))
+	}
+	r.fills = r.fills[:len(segs)]
+	// a one-colour bar's track is that colour, faded, so even an empty bar
+	// says which state it's in; a stacked bar's is neutral
+	track := withAlpha(theme.Color(theme.ColorNameForeground), tintSoft)
+	if len(segs) == 1 {
+		track = withAlpha(theme.Color(segs[0].colour), tintStrong)
+	}
+	r.track.FillColor = track
+	for i, f := range r.fills {
+		f.FillColor = theme.Color(segs[i].colour)
+	}
 	r.Layout(r.bar.Size())
 	r.track.Refresh()
-	r.fill.Refresh()
+	for _, f := range r.fills {
+		f.Refresh()
+	}
 }
 
-func (r *thinBarRenderer) Objects() []fyne.CanvasObject { return []fyne.CanvasObject{r.track, r.fill} }
-func (r *thinBarRenderer) Destroy()                     {}
+func (r *thinBarRenderer) Objects() []fyne.CanvasObject {
+	objs := []fyne.CanvasObject{r.track}
+	for _, f := range r.fills {
+		objs = append(objs, f)
+	}
+	return objs
+}
+func (r *thinBarRenderer) Destroy() {}
