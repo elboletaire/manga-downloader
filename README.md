@@ -288,14 +288,16 @@ go install github.com/elboletaire/manga-downloader@latest
 There is also a desktop app with a window instead of a terminal. Download the
 `manga-downloader-gui` asset for your system from the [releases page][releases]:
 
-- **Windows** (`windows-amd64`): unzip and run `manga-downloader-gui.exe`. ARM
-  Windows devices run it emulated.
+- **Windows** (`windows-amd64` or `windows-arm64`, the latter for ARM devices
+  such as Snapdragon laptops): unzip and run `manga-downloader-gui.exe`. It uses
+  the Microsoft Edge WebView2 runtime, which Windows 11 and current Windows 10
+  already have; without it, the app downloads it on first launch.
 - **macOS** (`darwin-universal`): unzip and move `Manga Downloader.app` where you
   like. It isn't signed, so Gatekeeper blocks its first launch: allow it under
   *System Settings → Privacy & Security* (*Open Anyway*), same as the CLI.
 - **Linux** (`linux-amd64` or `linux-arm64`): extract the archive and run
-  `manga-downloader-gui`. It needs OpenGL and X11/Wayland libraries, which are
-  almost always installed already.
+  `manga-downloader-gui`. It needs WebKitGTK 4.1 (`libwebkit2gtk-4.1-0` on
+  Debian and Ubuntu), which most desktops already have.
 
 If the desktop app sits next to the CLI, `manga-downloader ui` launches it, and
 on Windows double-clicking `manga-downloader.exe` opens it too.
@@ -514,11 +516,14 @@ make install   # download dependencies
 make build     # test and build ./manga-downloader
 ~~~
 
-The desktop app needs cgo and, on Linux, the X11 and OpenGL development
-headers (`libgl1-mesa-dev xorg-dev` on Debian and Ubuntu):
+The desktop app is a [Wails](https://wails.io) app: a Go program showing a
+React frontend in the system's webview. It needs Node 22, pnpm 10, and on Linux
+the WebKitGTK 4.1 and GTK 3 development headers (`libgtk-3-dev
+libwebkit2gtk-4.1-dev` on Debian and Ubuntu):
 
 ~~~bash
-make build/gui # build ./manga-downloader-gui
+make build/gui         # build ./manga-downloader-gui (frontend first)
+make build/gui/windows # cross-build manga-downloader-gui.exe, no cgo needed
 ~~~
 
 ## Star history
