@@ -27,7 +27,7 @@ import (
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/http"
-	"github.com/fatih/color"
+	"github.com/elboletaire/manga-downloader/notice"
 )
 
 // visible determines if the browser window is shown (headed mode). Some
@@ -425,8 +425,8 @@ func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxC
 
 	var ce *challengeError
 	if errors.As(err, &ce) && !visible {
-		color.Yellow("%s didn't load in a headless browser (likely a challenge).", hostOf(pageURL))
-		color.Yellow("opening a visible browser window — solve the challenge there if one appears...")
+		notice.Warn("%s didn't load in a headless browser (likely a challenge).", hostOf(pageURL))
+		notice.Warn("opening a visible browser window — solve the challenge there if one appears...")
 		if rerr := goVisible(); rerr != nil {
 			return nil, rerr
 		}
@@ -608,8 +608,8 @@ func getHTML(url, waitSelector string, timeout time.Duration, preActions []chrom
 
 	var ce *challengeError
 	if errors.As(err, &ce) && !visible {
-		color.Yellow("%s didn't load in a headless browser (likely a challenge).", hostOf(url))
-		color.Yellow("opening a visible browser window — solve the challenge there if one appears...")
+		notice.Warn("%s didn't load in a headless browser (likely a challenge).", hostOf(url))
+		notice.Warn("opening a visible browser window — solve the challenge there if one appears...")
 		if rerr := goVisible(); rerr != nil {
 			return "", rerr
 		}

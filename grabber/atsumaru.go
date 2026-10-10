@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/elboletaire/manga-downloader/http"
-	"github.com/fatih/color"
+	"github.com/elboletaire/manga-downloader/notice"
 )
 
 // Atsumaru is a grabber for atsu.moe: a react SPA whose JSON api is completely
@@ -184,7 +184,7 @@ func (a *Atsumaru) selectGroups(groups []atsumaruGroup) ([]atsumaruGroup, error)
 	}
 
 	if len(groups) > 1 {
-		color.Yellow(
+		notice.Warn(
 			"this series has %d scanlation groups (%s); downloading %q (%d chapters) — pick another with --scanlator, or all of them with --scanlator all",
 			len(groups), strings.Join(groupNames(groups), ", "), best.displayName(), best.Count,
 		)
@@ -206,26 +206,26 @@ func (a *Atsumaru) fetchScanlators() []atsumaruScanlator {
 
 	body, err := http.Get(http.RequestParams{URL: a.URL})
 	if err != nil {
-		color.Yellow("could not fetch the series page to name the scanlation groups: %s", err.Error())
+		notice.Warn("could not fetch the series page to name the scanlation groups: %s", err.Error())
 		return nil
 	}
 	defer body.Close()
 
 	html, err := io.ReadAll(body)
 	if err != nil {
-		color.Yellow("could not read the series page to name the scanlation groups: %s", err.Error())
+		notice.Warn("could not read the series page to name the scanlation groups: %s", err.Error())
 		return nil
 	}
 
 	raw, err := extractBalancedJSON(string(html), `"scanlators":`)
 	if err != nil {
-		color.Yellow("could not find the scanlation groups in the series page: %s", err.Error())
+		notice.Warn("could not find the scanlation groups in the series page: %s", err.Error())
 		return nil
 	}
 
 	scanlators := []atsumaruScanlator{}
 	if err = json.Unmarshal([]byte(raw), &scanlators); err != nil {
-		color.Yellow("could not parse the scanlation groups from the series page: %s", err.Error())
+		notice.Warn("could not parse the scanlation groups from the series page: %s", err.Error())
 		return nil
 	}
 

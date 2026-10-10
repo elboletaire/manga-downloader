@@ -10,7 +10,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
-	"github.com/fatih/color"
+	"github.com/elboletaire/manga-downloader/notice"
 )
 
 // Tcb is a grabber for Madara-based wordpress sites (i.e. lhtranslation.net)
@@ -153,14 +153,14 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 			Referer: t.BaseUrl(),
 		})
 		if err != nil {
-			color.Yellow("error fetching page %d: %s", pageNum+1, err.Error())
+			notice.Warn("error fetching page %d: %s", pageNum+1, err.Error())
 			continue
 		}
 
 		pageDoc, err := goquery.NewDocumentFromReader(rbody)
 		rbody.Close()
 		if err != nil {
-			color.Yellow("error parsing page %d: %s", pageNum+1, err.Error())
+			notice.Warn("error parsing page %d: %s", pageNum+1, err.Error())
 			continue
 		}
 
@@ -168,7 +168,7 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 		pageDoc.Find("div.reading-content img").Each(func(i int, s *goquery.Selection) {
 			u := strings.TrimSpace(s.AttrOr("data-src", s.AttrOr("src", "")))
 			if u == "" {
-				color.Yellow("page %d of %s has an image with no URL to fetch from", pageNum+1, f.GetTitle())
+				notice.Warn("page %d of %s has an image with no URL to fetch from", pageNum+1, f.GetTitle())
 				return
 			}
 			if !strings.HasPrefix(u, "http") {

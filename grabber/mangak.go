@@ -12,7 +12,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
-	"github.com/fatih/color"
+	"github.com/elboletaire/manga-downloader/notice"
 )
 
 // mangakDefaultAPIURL is the fallback API base when the page doesn't
@@ -82,7 +82,7 @@ func (m *Mangak) FetchChapters() (chapters Filterables, errs []error) {
 	// raw list because number-less entries (site announcements like
 	// "Notice.110" or "Hitaus.156") are skipped above on purpose
 	if missing := mangakMissingChapters(manga); missing > 0 {
-		color.Yellow("found %d chapters but the site declares %d: the list may be incomplete", len(manga.Chapters), manga.Stats.ChaptersCount)
+		notice.Warn("found %d chapters but the site declares %d: the list may be incomplete", len(manga.Chapters), manga.Stats.ChaptersCount)
 	}
 
 	return
@@ -154,7 +154,7 @@ func (m *Mangak) fetchManga() (*mangakManga, error) {
 	default:
 		// short series: the page embeds every chapter the site declares (or
 		// the site declares no total), so the embedded list is usable as-is
-		color.Yellow("could not fetch the full chapter list from the api, using the list embedded in the page: %s", err)
+		notice.Warn("could not fetch the full chapter list from the api, using the list embedded in the page: %s", err)
 	}
 
 	m.manga = manga

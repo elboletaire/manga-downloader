@@ -9,7 +9,7 @@ import (
 
 	"github.com/elboletaire/manga-downloader/downloader"
 	"github.com/elboletaire/manga-downloader/grabber"
-	"github.com/fatih/color"
+	"github.com/elboletaire/manga-downloader/notice"
 )
 
 // Supported output formats (see grabber.Settings.Format)
@@ -82,7 +82,7 @@ func namePages(pages []*downloader.File, formats grabber.ConvertFormats) []File 
 				// aborting would lose the whole chapter (the whole bundle, when
 				// bundling) over a single bad page, and naming undecodable
 				// bytes .jpg would only make the failure more confusing
-				color.Yellow("- warning: page %03d: converting %s to jpeg: %s (keeping the original)", i, ext, err)
+				notice.Warn("- warning: page %03d: converting %s to jpeg: %s (keeping the original)", i, ext, err)
 			} else {
 				data, ext = converted, "jpg"
 			}

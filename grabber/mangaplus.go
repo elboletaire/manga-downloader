@@ -21,7 +21,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/fatih/color"
+	"github.com/elboletaire/manga-downloader/notice"
 )
 
 // mangaplusAPIBase is the app API's base URL (a var so tests can point it at a
@@ -294,7 +294,7 @@ func (m *Mangaplus) FetchChapters() (chapters Filterables, errs []error) {
 	}
 
 	if locked > 0 {
-		color.Yellow("%d of %d chapters need a Manga Plus MAX subscription and can't be downloaded", locked, len(chapters))
+		notice.Warn("%d of %d chapters need a Manga Plus MAX subscription and can't be downloaded", locked, len(chapters))
 	}
 
 	m.chapters = chapters
@@ -402,7 +402,7 @@ func (m *Mangaplus) detailLocked() (*mangaplusTitleDetail, error) {
 		if requested != "" {
 			hint = "pick another one with --language"
 		}
-		color.Yellow(
+		notice.Warn(
 			"This MangaPlus version lists only %d chapters (each language is a separate version: %s): %s",
 			len(detail.Chapters), mangaplusFlagLanguages(detail.languageCodes()), hint,
 		)
@@ -441,12 +441,12 @@ func (m *Mangaplus) resolveEditionLocked(detail *mangaplusTitleDetail, requested
 	titleID, ok := detail.editionTitleID(requested)
 	if !ok {
 		if available := detail.languageCodes(); len(available) > 0 {
-			color.Yellow(
+			notice.Warn(
 				"MangaPlus has no %s version of %s (available: %s); downloading the %s version the link points at",
 				mangaplusLanguageName(requested), detail.Title.Name, mangaplusFlagLanguages(available), mangaplusLanguageName(detail.Title.Language),
 			)
 		} else {
-			color.Yellow(
+			notice.Warn(
 				"MangaPlus listed no other versions of %s, so %s isn't available; downloading the %s version the link points at",
 				detail.Title.Name, mangaplusLanguageName(requested), mangaplusLanguageName(detail.Title.Language),
 			)
@@ -463,12 +463,12 @@ func (m *Mangaplus) resolveEditionLocked(detail *mangaplusTitleDetail, requested
 	// the languages list isn't always consistent with the detail it leads to,
 	// so the message follows what the refetched edition reports
 	if switched.Title.Language == requested {
-		color.Yellow(
+		notice.Warn(
 			"The provided MangaPlus link is for the %s version of %s; --language selected %s, so that's the version being downloaded",
 			mangaplusLanguageName(detail.Title.Language), detail.Title.Name, mangaplusLanguageName(requested),
 		)
 	} else {
-		color.Yellow(
+		notice.Warn(
 			"MangaPlus's listing for the %s version of %s doesn't match the title it returns: downloading the %s version",
 			mangaplusLanguageName(requested), detail.Title.Name, mangaplusLanguageName(switched.Title.Language),
 		)
@@ -565,7 +565,7 @@ func (m *Mangaplus) renewDeviceSecret(rejected string) (string, error) {
 		return "", err
 	}
 
-	color.Yellow("the cached MangaPlus device secret was rejected, registering a new device")
+	notice.Warn("the cached MangaPlus device secret was rejected, registering a new device")
 
 	return m.registerDeviceLocked(path)
 }
@@ -684,9 +684,9 @@ func (m *Mangaplus) registerDeviceLocked(path string) (string, error) {
 	m.secret = secret
 
 	if err = mangaplusStoreSecret(path, secret); err != nil {
-		color.Yellow("registered a new MangaPlus device, but could not store its secret in %s (it will be registered again on the next run): %s", path, err)
+		notice.Warn("registered a new MangaPlus device, but could not store its secret in %s (it will be registered again on the next run): %s", path, err)
 	} else {
-		color.Yellow("registered a new MangaPlus device, whose secret is stored in %s", path)
+		notice.Warn("registered a new MangaPlus device, whose secret is stored in %s", path)
 	}
 
 	return m.secret, nil

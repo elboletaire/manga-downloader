@@ -6,11 +6,7 @@ import (
 	"errors"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 // Grabber is the base struct for all grabbers/sites
@@ -56,6 +52,21 @@ type Settings struct {
 	Retry uint8
 }
 
+// Normalize caps the settings at the limits the CLI advertises: 5 concurrent
+// chapters, 10 concurrent pages and 3 retries. Values above a limit are
+// clamped rather than rejected.
+func (s *Settings) Normalize() {
+	if s.MaxConcurrency.Chapters > 5 {
+		s.MaxConcurrency.Chapters = 5
+	}
+	if s.MaxConcurrency.Pages > 10 {
+		s.MaxConcurrency.Pages = 10
+	}
+	if s.Retry > 3 {
+		s.Retry = 3
+	}
+}
+
 // MaxConcurrency is the max concurrency for a site
 type MaxConcurrency struct {
 	// Chapters is the max concurrency for chapters
@@ -66,8 +77,6 @@ type MaxConcurrency struct {
 
 // Site is the handler interface, base of all manga sites grabbers
 type Site interface {
-	// InitFlags initializes the command flags
-	InitFlags(cmd *cobra.Command)
 	// Test tests if the site is the one for the specified url
 	Test() (bool, error)
 	// FetchChapters fetches the chapters for the manga
@@ -215,20 +224,6 @@ func (g Grabber) GetConvertImages() ConvertFormats {
 	return formats
 }
 
-// InitFlags initializes the command flags
-func (g *Grabber) InitFlags(cmd *cobra.Command) {
-	g.SetMaxConcurrency(MaxConcurrency{
-		Chapters: maxUint8Flag(cmd.Flag("concurrency"), 5),
-		Pages:    maxUint8Flag(cmd.Flag("concurrency-pages"), 10),
-	})
-	g.Settings.Language = cmd.Flag("language").Value.String()
-	g.Settings.Scanlator = cmd.Flag("scanlator").Value.String()
-	g.Settings.FilenameTemplate = cmd.Flag("filename-template").Value.String()
-	g.Settings.Retry = maxUint8Flag(cmd.Flag("retry"), 3)
-	g.Settings.Format = cmd.Flag("format").Value.String()
-	g.Settings.ConvertImages = cmd.Flag("convert-images").Value.String()
-}
-
 // NewSite returns a new site based on the passed url
 func NewSite(url string, settings *Settings) (Site, []error) {
 	if !strings.HasPrefix(url, "http") {
@@ -247,13 +242,4 @@ func NewSite(url string, settings *Settings) (Site, []error) {
 func getUuid(s string) string {
 	re := regexp.MustCompile(`([\w\d]{8}(:?-[\w\d]{4}){3}-[\w\d]{12})`)
 	return re.FindString(s)
-}
-
-// maxUint8Flag returns the max value between the flag uint8 value and the passed max
-func maxUint8Flag(flag *pflag.Flag, max uint8) uint8 {
-	v, _ := strconv.ParseUint(flag.Value.String(), 10, 8)
-	if v > uint64(max) {
-		return max
-	}
-	return uint8(v)
 }
