@@ -5,6 +5,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -13,6 +14,11 @@ import (
 // log: the handler is the controller's own, so nothing here masks the order
 // main() relies on
 func TestStartupWarningsReachControllerLog(t *testing.T) {
+	// XDG_CONFIG_HOME only steers os.UserConfigDir on Linux; elsewhere this
+	// would read the developer's real gui.json
+	if runtime.GOOS != "linux" {
+		t.Skip("config dir override is Linux-only")
+	}
 	config := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", config)
 	dir := filepath.Join(config, "manga-downloader")
