@@ -9,3 +9,5 @@ demos/*.yml
 docs/.work/
 manga-downloader-gui
 manga-downloader-gui.exe
+.pnpm-store/
+.pnpm-store/

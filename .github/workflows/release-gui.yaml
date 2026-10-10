@@ -12,8 +12,8 @@ permissions:
 # native runners. Windows needs no cgo, so both its architectures are built
 # from one Linux runner, and macOS is built on a Mac for the universal binary.
 # The wailsjs/ bindings are committed, so the build doesn't need a webview to
-# generate them (-skipbindings). Windows arm64 is built natively; ARM Windows
-# would otherwise run the amd64 build emulated.
+# generate them (-skipbindings). Windows arm64 is built too, so ARM Windows
+# doesn't run the amd64 build emulated.
 jobs:
   linux:
     name: Linux ${{ matrix.goarch }}
@@ -52,6 +52,8 @@ jobs:
       working-directory: gui
       run: |
         set -euo pipefail
+        # the Windows version resource and the bundle's Info.plist take the version from wails.json
+        sed -i "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json
         wails build -platform linux/${{ matrix.goarch }} -tags nodynamic,webkit2_41 -skipbindings \
           -m -nosyncgomod -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
         name="manga-downloader-gui-$TAG-linux-${{ matrix.goarch }}"
@@ -104,6 +106,8 @@ jobs:
       working-directory: gui
       run: |
         set -euo pipefail
+        # the Windows version resource and the bundle's Info.plist take the version from wails.json
+        sed -i "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json
         # wails embeds the icon and manifest from build/windows into the exe,
         # and links it as a GUI app (no console window)
         wails build -platform windows/${{ matrix.goarch }} -tags nodynamic -skipbindings \
@@ -142,6 +146,8 @@ jobs:
       working-directory: gui
       run: |
         set -euo pipefail
+        # the Windows version resource and the bundle's Info.plist take the version from wails.json
+        sed -i "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json
         # a single universal target keeps the bundle's name as wails.json has
         # it ("Manga Downloader.app"), without an arch suffix
         wails build -platform darwin/universal -tags nodynamic -skipbindings \
