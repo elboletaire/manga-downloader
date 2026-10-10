@@ -514,6 +514,13 @@ make install   # download dependencies
 make build     # test and build ./manga-downloader
 ~~~
 
+The desktop app needs cgo and, on Linux, the X11 and OpenGL development
+headers (`libgl1-mesa-dev xorg-dev` on Debian and Ubuntu):
+
+~~~bash
+make build/gui # build ./manga-downloader-gui
+~~~
+
 ## Star history
 
 <div align="center">

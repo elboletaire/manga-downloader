@@ -33,12 +33,23 @@ build/unix:
 build/win:
 	GOOS=windows go build -o manga-downloader.exe ${GOTAGS} ${GOFLAGS} .
 
+# the desktop app, deliberately not part of build: it needs cgo and the
+# platform's windowing headers (X11/GL on Linux). It's written next to the CLI,
+# which is where `manga-downloader ui` looks for it
+build/gui:
+	cd gui && go build -o ../manga-downloader-gui ${GOTAGS} \
+		-ldflags="-X 'main.Version=$(VERSION)' -X 'main.Tag=$(BRANCH_OR_TAG)'" .
+
 test:
 ifdef RICHGO
 	richgo test ${GOTAGS} -v ./...
 else
 	go test ${GOTAGS} -v ./...
 endif
+
+# gui/ is its own module, so ./... above never reaches it
+test/gui:
+	cd gui && go test ${GOTAGS} ./...
 
 # one dependency per line, alphabetically sorted (grabber/html deliberately
 # last), so parallel site-support branches never edit the same line
