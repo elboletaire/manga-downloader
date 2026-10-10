@@ -1,0 +1,135 @@
+name: Release GUI
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+# The GUI needs cgo and the platform's windowing libraries, so it is built on
+# native runners instead of being cross-compiled like the CLI. Windows arm64 is
+# not built (see AGENTS.md): ARM Windows runs the amd64 build emulated.
+jobs:
+  linux:
+    name: Linux ${{ matrix.goarch }}
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            goarch: amd64
+          - runner: ubuntu-24.04-arm
+            goarch: arm64
+    runs-on: ${{ matrix.runner }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: gui/go.mod
+        cache-dependency-path: |
+          go.sum
+          gui/go.sum
+    - name: Install Fyne's build dependencies
+      run: sudo apt-get update && sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev
+    - name: Build and package
+      working-directory: gui
+      run: |
+        set -euo pipefail
+        go build -tags nodynamic \
+          -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'" \
+          -o stage-bin/manga-downloader-gui .
+        name="manga-downloader-gui-$TAG-linux-${{ matrix.goarch }}"
+        rm -rf "stage/$name" && mkdir -p "stage/$name"
+        cp stage-bin/manga-downloader-gui ../LICENSE "stage/$name/"
+        cp Icon.png "stage/$name/manga-downloader-gui.png"
+        cat > "stage/$name/manga-downloader-gui.desktop" <<'DESKTOP'
+        [Desktop Entry]
+        Type=Application
+        Name=Manga Downloader
+        Comment=Download manga chapters to CBZ files
+        Exec=manga-downloader-gui
+        Icon=manga-downloader-gui
+        Categories=Network;
+        Terminal=false
+        DESKTOP
+        tar -C stage -czf "$name.tar.gz" "$name"
+        gh release upload "$TAG" "$name.tar.gz" --clobber
+
+  windows:
+    name: Windows amd64
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: gui/go.mod
+        cache-dependency-path: |
+          go.sum
+          gui/go.sum
+    - name: Install the Fyne CLI
+      run: go install fyne.io/tools/cmd/fyne@latest
+    - name: Build and package
+      working-directory: gui
+      shell: bash
+      run: |
+        set -euo pipefail
+        # fyne packages Windows by building from source itself, ignoring any
+        # -executable, and it only takes ldflags from GOFLAGS (one -ldflags= per
+        # value, since GOFLAGS is split on spaces). It adds -H=windowsgui on its
+        # own, so the exe is a GUI-subsystem app and no console window opens.
+        sha=$(git rev-parse --short HEAD)
+        export GOFLAGS="-ldflags=-X=main.Version=$sha -ldflags=-X=main.Tag=$TAG"
+        fyne package -os windows -tags nodynamic -icon Icon.png -name manga-downloader-gui \
+          -app-id com.github.elboletaire.mangadownloader -app-version "${TAG#v}"
+        name="manga-downloader-gui-$TAG-windows-amd64"
+        rm -rf "stage/$name" && mkdir -p "stage/$name"
+        exe=$(find . -maxdepth 1 -name "*.exe" | head -n 1)
+        cp "$exe" "stage/$name/manga-downloader-gui.exe"
+        cp ../LICENSE "stage/$name/"
+        (cd stage && 7z a -tzip "../$name.zip" "$name" >/dev/null)
+        gh release upload "$TAG" "$name.zip" --clobber
+
+  macos:
+    name: macOS universal
+    runs-on: macos-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: gui/go.mod
+        cache-dependency-path: |
+          go.sum
+          gui/go.sum
+    - name: Install the Fyne CLI
+      run: go install fyne.io/tools/cmd/fyne@latest
+    - name: Build both architectures
+      working-directory: gui
+      run: |
+        set -euo pipefail
+        ldflags="-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
+        # the arch flags are explicit so the cross build doesn't rely on clang's host default
+        CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CGO_CFLAGS="-arch x86_64" CGO_LDFLAGS="-arch x86_64" \
+          go build -tags nodynamic -ldflags "$ldflags" -o stage-bin/amd64 .
+        CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CGO_CFLAGS="-arch arm64" CGO_LDFLAGS="-arch arm64" \
+          go build -tags nodynamic -ldflags "$ldflags" -o stage-bin/arm64 .
+        lipo -create -output stage-bin/manga-downloader-gui stage-bin/amd64 stage-bin/arm64
+        lipo -info stage-bin/manga-downloader-gui
+    - name: Package the app bundle
+      working-directory: gui
+      run: |
+        set -euo pipefail
+        fyne package -os darwin -executable stage-bin/manga-downloader-gui \
+          -icon Icon.png -name "Manga Downloader" -app-id com.github.elboletaire.mangadownloader \
+          -app-version "${TAG#v}"
+        name="manga-downloader-gui-$TAG-darwin-universal"
+        ditto -c -k --keepParent "Manga Downloader.app" "$name.zip"
+        gh release upload "$TAG" "$name.zip" --clobber
