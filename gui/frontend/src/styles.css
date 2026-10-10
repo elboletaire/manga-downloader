@@ -310,7 +310,7 @@ code {
   color: var(--text);
 }
 
-.load-btn {
+.btn.load-btn {
   height: 38px;
   min-width: 96px;
 }

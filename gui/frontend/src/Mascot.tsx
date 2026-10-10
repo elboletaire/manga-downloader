@@ -9,7 +9,7 @@ import softMark from '../../../assets/brand/mark/soft/mark.svg';
 import softMarkDark from '../../../assets/brand/mark/soft/mark-dark.svg';
 import smallMark from '../../../assets/brand/mark/soft/mark-small.svg';
 import smallMarkDark from '../../../assets/brand/mark/soft/mark-small-dark.svg';
-import { celebrating, celebratesOnOpen, type Expression } from './mascot';
+import { celebrating, celebratesOnOpen, type Expression } from './expression';
 import type { State } from './types';
 
 /** Below this the detailed artwork turns to mush; the brand's small one is used */
