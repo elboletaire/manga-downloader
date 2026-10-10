@@ -191,12 +191,35 @@ describe('mock filters', () => {
     );
   });
 
-  it('falls back to the default edition where the site has no all', async () => {
+  it('falls back to the edition the URL points at where the site has no all, and names it', async () => {
     const api = createMockApi({ scenario: 'loaded', site: 'plus' });
     await api.setOptions({ ...(await api.state()).options, language: 'xx' });
     await api.load((await api.state()).url);
 
-    expect((await api.state()).options.language).toBe('');
+    expect((await api.state()).options.language).toBe('en');
     expect((await api.state()).languages?.selected).toBe('en');
+    expect((await api.log()).map((l) => l.text)).toContain('language "xx" isn\'t in this series, loading "en" instead');
+  });
+
+  it('matches a typed language ignoring case, and takes the listed spelling', async () => {
+    const api = createMockApi({ scenario: 'loaded', site: 'multi' });
+    await api.setOptions({ ...(await api.state()).options, language: 'ES' });
+    await api.load((await api.state()).url);
+
+    expect((await api.state()).options.language).toBe('es');
+    expect((await api.state()).loadedLanguage).toBe('es');
+    expect((await api.log()).map((l) => l.text)).not.toContain('language "ES" isn\'t in this series, loading all of them instead');
+  });
+
+  it('is not stale while a reload started by a filter change runs', async () => {
+    const api = createMockApi({ scenario: 'loaded', site: 'multi' });
+    await api.setOptions({ ...(await api.state()).options, language: 'es' });
+    expect((await api.state()).stale).toBe(true);
+
+    const reload = api.load((await api.state()).url);
+    expect((await api.state()).loading).toBe(true);
+    expect((await api.state()).stale).toBe(false);
+    await reload;
+    expect((await api.state()).stale).toBe(false);
   });
 });

@@ -9,6 +9,7 @@ export type FilterKind = 'language' | 'scanlator';
 export interface FilterOption {
   value: string;
   label: string;
+  disabled?: boolean;
 }
 
 /** The sentinel the backend takes for "every value" (grabber.FilterAll) */
@@ -76,6 +77,11 @@ export function languageName(code: string, locale = 'en'): string {
  */
 export function filterOptions(filter: FilterChoice, kind: FilterKind, locale = 'en'): FilterOption[] {
   const options: FilterOption[] = [];
+  if (filter.selected === '') {
+    // no value is shown: a disabled placeholder, so the select doesn't show the
+    // first value as if it were the one the list is filtered by
+    options.push({ value: '', label: kind === 'language' ? 'Choose a language…' : 'Choose a group…', disabled: true });
+  }
   if (filter.all) {
     options.push({ value: FILTER_ALL, label: kind === 'language' ? 'All' : 'All groups' });
   }
@@ -87,11 +93,6 @@ export function filterOptions(filter: FilterChoice, kind: FilterKind, locale = '
   for (const value of values) {
     const label = kind === 'language' ? labelOfLanguage(value, locale) : value;
     options.push({ value, label });
-  }
-
-  if (filter.selected === '') {
-    // the site shows no single value, and none of the options is that
-    options.unshift({ value: '', label: "The site's default" });
   }
 
   return options;

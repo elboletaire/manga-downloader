@@ -412,6 +412,28 @@ func TestStaleAfterFilterChange(t *testing.T) {
 	}
 }
 
+func TestNotStaleWhileReloadingAfterFilterChange(t *testing.T) {
+	c, _, _ := newTestController(t, false, nil, chapters(1, 1)...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Configure(func(s *grabber.Settings) { s.Language = "fr" }); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.BeginLoad("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if c.Stale() {
+		t.Error("a reload started after a filter change is reported as stale while it loads")
+	}
+	if err := c.FinishLoad("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if c.Stale() {
+		t.Error("the list is stale after the reload applied the filter")
+	}
+}
+
 func TestLoadUnrecognisedSite(t *testing.T) {
 	c, _, _ := newTestController(t, false, nil, chapters(1, 1)...)
 	c.identify = func(string, *grabber.Settings) (grabber.Site, []error) { return nil, nil }

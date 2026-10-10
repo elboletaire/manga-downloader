@@ -22,7 +22,7 @@ interface TextFieldProps {
 interface SelectFieldProps {
   label: string;
   value: string;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; disabled?: boolean }[];
   /** Called with the picked value; the select only fires on a change */
   onChange: (value: string) => void;
   disabled?: boolean;
@@ -44,7 +44,7 @@ export function SelectField({ label, value, options, onChange, disabled, classNa
         onChange={(e) => onChange(e.target.value)}
       >
         {options.map((o) => (
-          <option key={o.value} value={o.value}>
+          <option key={o.value} value={o.value} disabled={o.disabled}>
             {o.label}
           </option>
         ))}

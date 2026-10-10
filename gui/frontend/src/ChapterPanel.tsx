@@ -50,7 +50,7 @@ function EmptyState() {
       <Mascot expression="happy" size={112} />
       <h2>Start with a series</h2>
       <p>
-        Paste the link to a series in the bar above and press <kbd>Enter</kbd>. A link to any of its chapters works too.
+        Paste the link to a series in the bar above. A link to any of its chapters works too.
       </p>
       <p className="muted">Its chapters will be listed here, ready to pick and save as CBZ files for your reader.</p>
     </section>

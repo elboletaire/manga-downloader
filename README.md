@@ -23,7 +23,6 @@ sites and packs them into CBZ files, ready to read on your e-reader or in your
 favorite comic app. It comes as a **desktop app** for Windows, macOS and Linux,
 and as a **command line tool** for scripts, servers and Docker.
 
-<!-- screenshot: assets/screenshots/02-loaded-{light,dark}.png, the desktop app with a series loaded -->
 <div align="center">
 
 <picture>
@@ -60,6 +59,9 @@ and as a **command line tool** for scripts, servers and Docker.
 - **Concurrent downloads** with retries.
 - **JavaScript and Cloudflare-protected sites** are handled by driving a local
   Chromium browser, which clicks "Verify you are human" checkboxes for you.
+
+**Command line**
+
 - **A single binary** with no runtime, no dependencies and no config file, plus
   Docker images.
 
@@ -239,7 +241,6 @@ Open the app and follow these steps:
    selectors only appear for series that list them, and picking one reloads the
    chapter list. Sites that support it also offer *All*.
 
-   <!-- screenshot: assets/screenshots/03-language-selector-{light,dark}.png, the language and scanlator selectors -->
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/03-language-selector-dark.png">
      <img alt="The language and scanlation group selectors" src="assets/screenshots/03-language-selector-light.png">
@@ -250,7 +251,6 @@ Open the app and follow these steps:
    chapters, *Convert to JPEG* for AVIF and WebP pages, pages to skip, the file
    name template, and whether to *Show the browser window*.
 
-   <!-- screenshot: assets/screenshots/06-options-{light,dark}.png, the Options tab -->
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.png">
      <img alt="The Options tab" src="assets/screenshots/06-options-light.png">
@@ -260,7 +260,6 @@ Open the app and follow these steps:
    packed. *Cancel* lets the chapters already downloading finish, and starts no
    new ones. A log is one click away in the status bar.
 
-   <!-- screenshot: assets/screenshots/04-downloading-{light,dark}.png, a download in progress -->
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/04-downloading-dark.png">
      <img alt="A download in progress" src="assets/screenshots/04-downloading-light.png">
@@ -269,7 +268,6 @@ Open the app and follow these steps:
 6. **When it's done**, the summary shows what was downloaded. Press
    *Open folder* to go straight to the files.
 
-   <!-- screenshot: assets/screenshots/05-done-{light,dark}.png, the finished summary with Open folder -->
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/05-done-dark.png">
      <img alt="The finished download summary" src="assets/screenshots/05-done-light.png">

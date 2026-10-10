@@ -73,7 +73,7 @@ func TestLoadFallsBackToAllWhenTypedLanguageIsMissing(t *testing.T) {
 	}
 }
 
-func TestLoadFallsBackToTheDefaultWithoutAll(t *testing.T) {
+func TestLoadFallsBackToTheCurrentWithoutAll(t *testing.T) {
 	// the site shows one edition by default, which the URL points at
 	c, _ := newLanguageController(t, grabber.FilterOptions{Values: []string{"en", "es"}, Current: "es"})
 	if err := c.Configure(func(s *grabber.Settings) { s.Language = "xx" }); err != nil {
@@ -83,8 +83,11 @@ func TestLoadFallsBackToTheDefaultWithoutAll(t *testing.T) {
 	if err := c.Load("https://example.com/manga/test"); err != nil {
 		t.Fatalf("Load = %v, want the fallback to load", err)
 	}
-	if language, _ := c.LoadedFilters(); language != "" {
-		t.Errorf("loaded language %q, want the default \"\"", language)
+	if language, _ := c.LoadedFilters(); language != "es" {
+		t.Errorf("loaded language %q, want the site's current \"es\"", language)
+	}
+	if !logHas(c, `language "xx" isn't in this series, loading "es" instead`) {
+		t.Errorf("no fallback line naming the value in the log: %v", c.Log())
 	}
 	language, _ := c.Filters()
 	if language == nil || language.Selected != "es" || language.All {
@@ -185,7 +188,8 @@ func TestUnmatchedFallback(t *testing.T) {
 		{"listed", "en", listed, "", false},
 		{"listed, other case", "EN", listed, "", false},
 		{"unlisted, all", "xx", listed, grabber.FilterAll, true},
-		{"unlisted, default", "xx", plain, "", true},
+		{"unlisted, no current, no filter", "xx", plain, "", true},
+		{"unlisted, current", "xx", &grabber.FilterOptions{Values: []string{"en", "fr"}, Current: "fr"}, "fr", true},
 		{"site lists nothing", "xx", nil, "", false},
 		{"site lists no values", "xx", &grabber.FilterOptions{}, "", false},
 	}

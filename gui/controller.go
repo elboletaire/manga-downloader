@@ -384,9 +384,10 @@ func (c *Controller) dropUnmatchedFilters(site grabber.Site, s *grabber.Settings
 }
 
 // unmatchedFallback is what a typed filter value falls back to when the series
-// doesn't offer it: "all" where the site takes it, the site's own default ("")
-// otherwise. reset is false when there's nothing to fall back from: no value,
-// "all" itself, a site that lists nothing, or a value the series does offer.
+// doesn't offer it: "all" where the site takes it, the site's Current value
+// otherwise, and no filter ("") when it has neither. reset is false when
+// there's nothing to fall back from: no value, "all" itself, a site that lists
+// nothing, or a value the series does offer.
 func unmatchedFallback(value string, options *grabber.FilterOptions) (fallback string, reset bool) {
 	if value == "" || value == grabber.FilterAll || options == nil || len(options.Values) == 0 {
 		return "", false
@@ -400,14 +401,18 @@ func unmatchedFallback(value string, options *grabber.FilterOptions) (fallback s
 		return grabber.FilterAll, true
 	}
 
-	return "", true
+	return options.Current, true
 }
 
-// fallbackMessage is the log line for a filter that was reset
+// fallbackMessage is the log line for a filter that was reset, naming what
+// the load went on with instead
 func fallbackMessage(kind, value, fallback string) string {
-	shown := "the site's default"
-	if fallback == grabber.FilterAll {
+	shown := fmt.Sprintf("%q", fallback)
+	switch fallback {
+	case grabber.FilterAll:
 		shown = "all of them"
+	case "":
+		shown = "no filter"
 	}
 
 	return fmt.Sprintf("%s %q isn't in this series, loading %s instead", kind, value, shown)
@@ -509,11 +514,12 @@ func commonLanguage(chapters grabber.Filterables) string {
 }
 
 // Stale reports whether the language or scanlator filter changed since the
-// loaded list was fetched, which means the list must be reloaded to match.
+// loaded list was fetched, which means the list must be reloaded to match. A
+// load already running is the reload that applies the change, so it isn't stale.
 func (c *Controller) Stale() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.series != nil && (c.settings.Language != c.loadedLanguage || c.settings.Scanlator != c.loadedScanlator)
+	return c.series != nil && !c.loading && (c.settings.Language != c.loadedLanguage || c.settings.Scanlator != c.loadedScanlator)
 }
 
 // URL is the last URL passed to Load

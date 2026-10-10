@@ -10,12 +10,10 @@ Mascot **Neko Book**: an open manga volume that is also a cat's face. One body, 
 |---|---|
 | `mark/soft/`, `mark/happy/` | `mark` (light), `mark-dark`, `mark-small` / `mark-small-dark` (16–32px), `mark-mono` / `mark-mono-small` (`currentColor`) |
 | `lockup/` | `lockup` (stacked, primary), `lockup-line` (one line, tight spaces); each `-dark` and `-mono` |
-| `app/appicon.png` | 1024², macOS tile → `gui/build/appicon.png` (Wails builds the .icns from it) |
-| `app/icon.ico` | 16/24/32 (small artwork, BMP) + 48/64 (BMP) + 256 (PNG) → `gui/build/windows/icon.ico` |
-| `app/linux/icon-256.png` | free shape, transparent → `gui/build/linux/icon.png` (window icon and .desktop file) |
-| `favicon/` | `favicon.svg` (switches colour with `prefers-color-scheme`) → the GUI's page icon; `favicon.ico` (16/32/48); `icon-pwa.svg`, `apple-touch-icon.svg` (sources for the PNGs) |
+| `app/appicon.svg` | source of the app icons, which live in `gui/build/`: `appicon.png` (1024², macOS tile; Wails builds the .icns from it), `windows/icon.ico` (16/24/32 small artwork, BMP, + 48/64 BMP + 256 PNG), `linux/icon.png` (free shape, transparent; window icon and .desktop file) |
+| `favicon/` | `favicon.svg` (switches colour with `prefers-color-scheme`) → the GUI's page icon; `icon-pwa.svg`, `apple-touch-icon.svg` (sources for the PNGs) |
 | `social/opengraph.{svg,png}` | 1280×640 social preview |
-| `readme/readme-header-{light,dark}.{svg,png}` | 1600×400 README header |
+| `readme/readme-header-{light,dark}.svg` | 1600×400 README header |
 
 The `.svg` masters are kept for every raster that's shipped. Other sizes (the app's Linux icon set, the favicon PNGs, the free-shape 1024 app icon, the brand sheet) are regenerated from the SVGs when needed and aren't committed.
 

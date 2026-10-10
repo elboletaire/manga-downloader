@@ -66,9 +66,21 @@ describe('filterOptions', () => {
     expect(options.map((o) => o.value)).toEqual(['en', 'es']);
   });
 
-  it('names the site default when it shows no single value', () => {
-    const options = filterOptions(choice({ values: ['Alpha', 'Delta'], selected: '' }), 'scanlator');
-    expect(options[0]).toEqual({ value: '', label: "The site's default" });
+  it('leads with a disabled placeholder when the site shows no single value', () => {
+    const groups = filterOptions(choice({ values: ['Alpha', 'Delta'], selected: '' }), 'scanlator');
+    expect(groups[0]).toEqual({ value: '', label: 'Choose a group…', disabled: true });
+    expect(groups.slice(1).map((o) => o.value)).toEqual(['Alpha', 'Delta']);
+
+    const languages = filterOptions(choice({ values: ['en', 'es'], selected: '' }), 'language');
+    expect(languages[0]).toEqual({ value: '', label: 'Choose a language…', disabled: true });
+  });
+
+  it('shows no placeholder when a value or all is selected', () => {
+    const picked = filterOptions(choice({ values: ['en', 'es'], selected: 'es' }), 'language');
+    expect(picked.some((o) => o.value === '' || o.disabled)).toBe(false);
+
+    const all = filterOptions(choice({ values: ['en', 'es'], all: true, selected: 'all' }), 'language');
+    expect(all.some((o) => o.value === '' || o.disabled)).toBe(false);
   });
 });
 

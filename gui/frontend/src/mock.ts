@@ -3,8 +3,8 @@
 // download, and pushes the same events the Go side does.
 //
 // Add ?mock to the URL to use it inside the app too. ?scenario= starts it in
-// a given state, so screenshots need no clicking: loading, error, loaded,
-// stale, running, bundle, cancelling or done. &freeze stops the simulated run
+// a given state, so screenshots need no clicking: empty, loading, error,
+// loaded, stale, running, bundle, cancelling or done. &freeze stops the simulated run
 // from moving (stable screenshots), &dupes lists some numbers twice, once per
 // language, and &chapters=N sets the list's length.
 //
@@ -14,7 +14,8 @@
 // with All, the largest shown by default, no languages), or none (both fields
 // disabled). A language or group the series doesn't list falls back on load,
 // as the backend does: typed "xx" under multi loads "all", under plus the
-// default edition.
+// edition the URL points at. Typed values match ignoring case, and take the
+// spelling the series lists.
 
 import type { Api, Unsubscribe } from './api';
 import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary } from './types';
@@ -212,19 +213,23 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     return { values: [...offer.values], all: offer.all, selected };
   };
   // a typed value the series doesn't offer falls back as the backend does: to
-  // "all" where the site takes it, else to the site's default
+  // "all" where the site takes it, else to the site's current value, else to no
+  // filter. A value that matches one ignoring case takes the listed spelling.
   const fallbackFor = (kind: 'language' | 'scanlator', label: string): void => {
     const offer = offers[kind];
     const typed = options[kind];
-    if (offer === null || typed === '' || typed === 'all' || offer.values.includes(typed)) {
+    if (offer === null || typed === '' || typed === 'all') {
       return;
     }
-    const fallback = offer.all ? 'all' : '';
+    const listed = offer.values.find((v) => v.toLowerCase() === typed.toLowerCase());
+    if (listed !== undefined) {
+      options[kind] = listed;
+      return;
+    }
+    const fallback = offer.all ? 'all' : offer.current;
     options[kind] = fallback;
-    pushLog(
-      'info',
-      `${label} "${typed}" isn't in this series, loading ${fallback === 'all' ? 'all of them' : "the site's default"} instead`,
-    );
+    const shown = fallback === 'all' ? 'all of them' : fallback === '' ? 'no filter' : `"${fallback}"`;
+    pushLog('info', `${label} "${typed}" isn't in this series, loading ${shown} instead`);
   };
   const snapshot = (): State => ({
     url,
@@ -234,7 +239,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     title,
     chapterCount: chapters.length,
     hasDuplicates: chapters.some((c) => c.language !== ''),
-    stale: loaded && (options.language !== applied.language || options.scanlator !== applied.scanlator),
+    stale: loaded && !loading && (options.language !== applied.language || options.scanlator !== applied.scanlator),
     loadedLanguage: applied.language,
     loadedScanlator: applied.scanlator,
     languages: filterOf('language'),
