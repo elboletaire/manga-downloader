@@ -232,6 +232,8 @@ func exitOpenError(err error) {
 	case errors.As(err, &nerr):
 		// an empty result usually means the language filter matched nothing
 		color.Yellow(nerr.Error())
+	default:
+		color.Red(err.Error())
 	}
 	exit(1)
 }

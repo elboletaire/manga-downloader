@@ -89,6 +89,9 @@ func (s *Series) Download(ctx context.Context, chapters grabber.Filterables, ski
 		// chapter is fetched again below, where they're reported
 		totalPages := int64(0)
 		for _, chap := range chapters {
+			if err := ctx.Err(); err != nil {
+				return "", err
+			}
 			chapter, err := s.Site.FetchChapter(chap)
 			if err == nil && chapter != nil {
 				chapter.SkipPages(skip)
@@ -106,6 +109,11 @@ func (s *Series) Download(ctx context.Context, chapters grabber.Filterables, ski
 
 loop:
 	for _, chap := range chapters {
+		// checked first: select picks at random when both cases are ready,
+		// which could start one more chapter after a cancellation
+		if ctx.Err() != nil {
+			break loop
+		}
 		select {
 		case <-ctx.Done():
 			break loop

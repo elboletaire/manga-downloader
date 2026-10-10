@@ -111,7 +111,9 @@ type Series struct {
 }
 
 // Open fetches the title and the chapter list of an identified site. s must
-// be the settings the site was identified with.
+// be the same settings pointer Identify was given: the site reads its
+// concurrency and format from it, and Download reads the bundle and output
+// settings from it.
 func Open(site grabber.Site, s *grabber.Settings) (*Series, error) {
 	title, err := site.FetchTitle()
 	if err != nil {
