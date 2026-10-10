@@ -7,9 +7,13 @@ on:
 permissions:
   contents: write
 
-# The GUI needs cgo and the platform's windowing libraries, so it is built on
-# native runners instead of being cross-compiled like the CLI. Windows arm64 is
-# not built (see AGENTS.md): ARM Windows runs the amd64 build emulated.
+# The GUI is a Wails app: a Go program embedding a React frontend that the
+# platform's webview shows. Linux needs the WebKitGTK headers, so it's built on
+# native runners. Windows needs no cgo, so both its architectures are built
+# from one Linux runner, and macOS is built on a Mac for the universal binary.
+# The wailsjs/ bindings are committed, so the build doesn't need a webview to
+# generate them (-skipbindings). Windows arm64 is built natively; ARM Windows
+# would otherwise run the amd64 build emulated.
 jobs:
   linux:
     name: Linux ${{ matrix.goarch }}
@@ -26,25 +30,34 @@ jobs:
       TAG: ${{ github.event.release.tag_name }}
     steps:
     - uses: actions/checkout@v4
+    - name: Install WebKitGTK
+      run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
     - uses: actions/setup-go@v5
       with:
         go-version-file: gui/go.mod
         cache-dependency-path: |
           go.sum
           gui/go.sum
-    - name: Install Fyne's build dependencies
-      run: sudo apt-get update && sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: pnpm
+        cache-dependency-path: gui/frontend/pnpm-lock.yaml
+    - name: Install the Wails CLI
+      run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
     - name: Build and package
       working-directory: gui
       run: |
         set -euo pipefail
-        go build -tags nodynamic \
-          -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'" \
-          -o stage-bin/manga-downloader-gui .
+        wails build -platform linux/${{ matrix.goarch }} -tags nodynamic,webkit2_41 -skipbindings \
+          -m -nosyncgomod -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
         name="manga-downloader-gui-$TAG-linux-${{ matrix.goarch }}"
         rm -rf "stage/$name" && mkdir -p "stage/$name"
-        cp stage-bin/manga-downloader-gui ../LICENSE "stage/$name/"
-        cp Icon.png "stage/$name/manga-downloader-gui.png"
+        cp build/bin/manga-downloader-gui ../LICENSE "stage/$name/"
+        cp build/appicon.png "stage/$name/manga-downloader-gui.png"
         cat > "stage/$name/manga-downloader-gui.desktop" <<'DESKTOP'
         [Desktop Entry]
         Type=Application
@@ -59,8 +72,13 @@ jobs:
         gh release upload "$TAG" "$name.tar.gz" --clobber
 
   windows:
-    name: Windows amd64
-    runs-on: windows-latest
+    name: Windows ${{ matrix.goarch }}
+    strategy:
+      matrix:
+        goarch: [amd64, arm64]
+    # no cgo is needed to build the webview for Windows, so one Linux runner
+    # does both architectures
+    runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TAG: ${{ github.event.release.tag_name }}
@@ -72,34 +90,28 @@ jobs:
         cache-dependency-path: |
           go.sum
           gui/go.sum
-    - name: Install the Fyne CLI
-      run: go install fyne.io/tools/cmd/fyne@latest
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: pnpm
+        cache-dependency-path: gui/frontend/pnpm-lock.yaml
+    - name: Install the Wails CLI
+      run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
     - name: Build and package
       working-directory: gui
-      shell: bash
       run: |
         set -euo pipefail
-        # fyne packages Windows by building from source itself, ignoring any
-        # -executable, and it only passes ldflags it reads from GOFLAGS (which
-        # drops all but the last -ldflags=). So the version goes in as a generated
-        # file instead. It adds -H=windowsgui on its own, so the exe is a
-        # GUI-subsystem app and no console window opens.
-        cat > version_release.go <<VERSION
-        package main
-
-        func init() {
-        	Version = "$(git rev-parse --short HEAD)"
-        	Tag = "$TAG"
-        }
-        VERSION
-        fyne package -os windows -tags nodynamic -icon Icon.png -name manga-downloader-gui \
-          -app-id com.github.elboletaire.mangadownloader -app-version "${TAG#v}"
-        name="manga-downloader-gui-$TAG-windows-amd64"
+        # wails embeds the icon and manifest from build/windows into the exe,
+        # and links it as a GUI app (no console window)
+        wails build -platform windows/${{ matrix.goarch }} -tags nodynamic -skipbindings \
+          -m -nosyncgomod -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
+        name="manga-downloader-gui-$TAG-windows-${{ matrix.goarch }}"
         rm -rf "stage/$name" && mkdir -p "stage/$name"
-        exe=$(find . -maxdepth 1 -name "*.exe" | head -n 1)
-        cp "$exe" "stage/$name/manga-downloader-gui.exe"
-        cp ../LICENSE "stage/$name/"
-        (cd stage && 7z a -tzip "../$name.zip" "$name" >/dev/null)
+        cp build/bin/manga-downloader-gui.exe ../LICENSE "stage/$name/"
+        (cd stage && zip -qr "../$name.zip" "$name")
         gh release upload "$TAG" "$name.zip" --clobber
 
   macos:
@@ -116,27 +128,24 @@ jobs:
         cache-dependency-path: |
           go.sum
           gui/go.sum
-    - name: Install the Fyne CLI
-      run: go install fyne.io/tools/cmd/fyne@latest
-    - name: Build both architectures
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: pnpm
+        cache-dependency-path: gui/frontend/pnpm-lock.yaml
+    - name: Install the Wails CLI
+      run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+    - name: Build the app bundle
       working-directory: gui
       run: |
         set -euo pipefail
-        ldflags="-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
-        # the arch flags are explicit so the cross build doesn't rely on clang's host default
-        CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CGO_CFLAGS="-arch x86_64" CGO_LDFLAGS="-arch x86_64" \
-          go build -tags nodynamic -ldflags "$ldflags" -o stage-bin/amd64 .
-        CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CGO_CFLAGS="-arch arm64" CGO_LDFLAGS="-arch arm64" \
-          go build -tags nodynamic -ldflags "$ldflags" -o stage-bin/arm64 .
-        lipo -create -output stage-bin/manga-downloader-gui stage-bin/amd64 stage-bin/arm64
-        lipo -info stage-bin/manga-downloader-gui
-    - name: Package the app bundle
-      working-directory: gui
-      run: |
-        set -euo pipefail
-        fyne package -os darwin -executable stage-bin/manga-downloader-gui \
-          -icon Icon.png -name "Manga Downloader" -app-id com.github.elboletaire.mangadownloader \
-          -app-version "${TAG#v}"
+        # a single universal target keeps the bundle's name as wails.json has
+        # it ("Manga Downloader.app"), without an arch suffix
+        wails build -platform darwin/universal -tags nodynamic -skipbindings \
+          -m -nosyncgomod -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
         name="manga-downloader-gui-$TAG-darwin-universal"
-        ditto -c -k --keepParent "Manga Downloader.app" "$name.zip"
+        ditto -c -k --keepParent "build/bin/Manga Downloader.app" "$name.zip"
         gh release upload "$TAG" "$name.zip" --clobber
