@@ -34,7 +34,13 @@ function siteData(): Plugin {
           '</urlset>\n',
       })
     },
-    transformIndexHtml(html) {
+    transformIndexHtml(html, ctx) {
+      // Preload the two Latin font files the first screen needs, so text
+      // doesn't reflow (and shift the page) when they swap in.
+      const fonts = Object.keys(ctx.bundle ?? {}).filter((f) => /(inter|fredoka)-latin-wght-normal-.*\.woff2$/.test(f))
+      const preloads = fonts
+        .map((f) => `<link rel="preload" href="${base}${f}" as="font" type="font/woff2" crossorigin />`)
+        .join('\n    ')
       const sites = parseSites(readFileSync(readmePath, 'utf8'))
       return html
         .replace('<!-- sites:list -->', renderSites(sites))
@@ -42,6 +48,7 @@ function siteData(): Plugin {
         .replaceAll('%OTHER_SITES_COUNT%', String(sites.length - 1))
         .replaceAll('%BROWSER_COUNT%', String(sites.filter((s) => s.browser).length))
         .replaceAll('%SITE_URL%', siteURL)
+        .replace('<!-- font-preloads -->', preloads)
     },
   }
 }

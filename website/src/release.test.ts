@@ -126,6 +126,7 @@ describe('chooseDownload', () => {
     expect(c.kind).toBe('cli')
     expect(c.href).toMatch(/v1\.10\.0-darwin-arm64\.tar\.gz$/)
     expect(c.label).toBe('Get the CLI for macOS')
+    expect(c.detail).toBe('v1.10.0 · Apple silicon · 10.0 MB · Desktop app coming in the next release')
   })
 
   it('sends people to the release page when nothing matches', () => {

@@ -185,7 +185,8 @@ export function chooseDownload(release: Release | null, p: Platform): DownloadCh
       kind: 'cli',
       href: cli.browser_download_url,
       label: `Get the CLI for ${osName}`,
-      detail: joinDetail([`Command line ${tag}`, archLabel(cli.name), formatSize(cli.size)]),
+      // Said on the same line, so nothing below the button moves when it appears.
+      detail: joinDetail([tag, archLabel(cli.name), formatSize(cli.size), 'Desktop app coming in the next release']),
     }
   }
 

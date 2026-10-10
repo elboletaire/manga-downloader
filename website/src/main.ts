@@ -71,7 +71,6 @@ function renderDownload(release: Release | null, platform: Platform, settled: bo
   const link = root.querySelector<HTMLAnchorElement>('[data-download-link]')!
   const label = root.querySelector<HTMLElement>('[data-download-label]')!
   const detail = root.querySelector<HTMLElement>('[data-download-detail]')!
-  const note = root.querySelector<HTMLElement>('[data-download-note]')!
 
   const choice = chooseDownload(release, platform)
   link.href = choice.href
@@ -79,15 +78,6 @@ function renderDownload(release: Release | null, platform: Platform, settled: bo
   label.textContent = choice.label
   // Until the API answers, keep the neutral line instead of flashing a fallback.
   if (settled) detail.textContent = choice.detail
-
-  if (settled && choice.kind === 'cli') {
-    note.innerHTML =
-      '<strong>The desktop app is coming in the next release.</strong> Until then, the command line does it all. ' +
-      '<a href="#install">How to install it</a>.'
-    note.hidden = false
-  } else {
-    note.hidden = true
-  }
 }
 
 function renderDownloads(release: Release | null): void {

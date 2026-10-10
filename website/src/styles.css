@@ -67,7 +67,7 @@
     --accent-soft: rgb(169 147 255 / 15%);
     --success-text: #5ee0b8;
     --disc: rgb(169 147 255 / 13%);
-    --blob-mint: rgb(79 216 176 / 7%);
+    --blob-mint: rgb(79 216 176 / 6%);
     --blob-pink: rgb(255 143 179 / 6%);
     --code-bg: #0f0d1f;
     --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px -12px rgb(0 0 0 / 50%);
@@ -298,16 +298,16 @@ code {
 .blob-mint {
   width: 360px;
   height: 360px;
-  right: -120px;
-  top: -150px;
+  right: -170px;
+  top: -190px;
   background: var(--blob-mint);
 }
 
 .blob-pink {
   width: 300px;
   height: 300px;
-  left: -150px;
-  bottom: -170px;
+  left: -190px;
+  top: 52%;
   background: var(--blob-pink);
 }
 
@@ -415,21 +415,6 @@ code {
   color: var(--muted);
   font-size: 0.9rem;
   min-height: 1.6em;
-}
-
-.download-note {
-  margin-top: 14px;
-  max-width: 30em;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-
-.download-note strong {
-  color: var(--text);
 }
 
 .download-alt {
