@@ -111,9 +111,10 @@ func guiFileName() string {
 	return guiName
 }
 
-// launchGUI starts the GUI without waiting for it, so the CLI can exit at once
+// launchGUI starts the GUI detached and without waiting for it, so the CLI can exit at once
 func launchGUI(path string) error {
 	c := exec.Command(path)
+	detach(c)
 	if err := c.Start(); err != nil {
 		return err
 	}
