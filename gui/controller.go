@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/elboletaire/manga-downloader/browser"
 	"github.com/elboletaire/manga-downloader/core"
@@ -55,8 +56,9 @@ const (
 )
 
 // Job is the progress of one chapter. In bundle mode there's a single Job for
-// the whole bundle, whose Total counts every page twice (download + archive)
-// like the CLI's bar.
+// the whole bundle, whose Total counts every page twice (download + archive).
+// The CLI's bar also adds each kept chapter's pages a second time, so it runs
+// past its total; the GUI counts each page once per phase.
 type Job struct {
 	Title  string
 	Number float64
@@ -119,11 +121,14 @@ type Controller struct {
 	// Configure only while nothing is running
 	settings *grabber.Settings
 
-	url      string
-	series   *core.Series
-	loading  bool
-	running  bool
-	selected []bool
+	url     string
+	series  *core.Series
+	loading bool
+	running bool
+	// cancelling is set once a run has been asked to stop, so repeated
+	// cancels log once
+	cancelling bool
+	selected   []bool
 	// hasDuplicates is core.HasDuplicateChapterNumbers for the loaded list
 	hasDuplicates bool
 	// loadedLanguage and loadedScanlator are the filters the list was fetched
@@ -206,6 +211,15 @@ func (c *Controller) Settings() grabber.Settings {
 // Load identifies the site for url and fetches its title and chapter list.
 // It replaces any loaded series and its selection.
 func (c *Controller) Load(url string) error {
+	if err := c.BeginLoad(url); err != nil {
+		return err
+	}
+	return c.FinishLoad(url)
+}
+
+// BeginLoad marks a load as started, synchronously, so the view can disable
+// its controls before the slow part (FinishLoad) runs on another goroutine.
+func (c *Controller) BeginLoad(url string) error {
 	c.mu.Lock()
 	if c.loading || c.running {
 		c.mu.Unlock()
@@ -220,6 +234,15 @@ func (c *Controller) Load(url string) error {
 	c.url = url
 	c.mu.Unlock()
 	c.emit()
+	return nil
+}
+
+// FinishLoad does the work BeginLoad started. Call it exactly once after a
+// successful BeginLoad.
+func (c *Controller) FinishLoad(url string) error {
+	c.mu.Lock()
+	s := c.settings
+	c.mu.Unlock()
 
 	err := c.load(url, s)
 
@@ -235,8 +258,6 @@ func (c *Controller) Load(url string) error {
 }
 
 func (c *Controller) load(url string, s *grabber.Settings) error {
-	browser.SetVisible(s.BrowserVisible)
-
 	site, siteErrs := c.identify(url, s)
 	for _, err := range siteErrs {
 		c.addLog(LogWarn, "site check: "+err.Error())
@@ -257,6 +278,11 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	c.hasDuplicates = core.HasDuplicateChapterNumbers(series.Chapters)
 	c.loadedLanguage = s.Language
 	c.loadedScanlator = s.Scanlator
+	// the previous series' results would otherwise show next to this title
+	c.jobs, c.bundle, c.byChap, c.failedC = nil, nil, nil, nil
+	c.summary = nil
+	c.runinfo = RunInfo{}
+	c.stats = runStats{}
 	c.appendLogLocked(LogInfo, fmt.Sprintf("Loaded %s: %d chapters", series.Title, len(series.Chapters)))
 	return nil
 }
@@ -483,6 +509,7 @@ func (c *Controller) Start() error {
 	c.running = true
 	c.rng = bundleRange(numbers, selected)
 	c.runinfo = RunInfo{Chapters: len(chapters), Bundle: c.settings.Bundle}
+	c.cancelling = false
 	c.jobs = nil
 	c.byChap = map[*grabber.Chapter]*Job{}
 	c.failedC = map[*grabber.Chapter]bool{}
@@ -500,14 +527,15 @@ func (c *Controller) Start() error {
 	c.mu.Unlock()
 	c.emit()
 
+	// the browser's visibility is read when it starts, so it must follow the
+	// option as of this run, not the one in force when the series was loaded
+	browser.SetVisible(settings.BrowserVisible)
 	go c.run(ctx, series, settings, chapters, skip, rng)
 	return nil
 }
 
 // run is the download goroutine
 func (c *Controller) run(ctx context.Context, series *core.Series, settings *grabber.Settings, chapters grabber.Filterables, skip []ranges.Range, rng string) {
-	defer c.cancelRun()
-
 	file, err := series.Download(ctx, chapters, skip, rng, events{c})
 
 	c.mu.Lock()
@@ -532,6 +560,12 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 		s.Err = err
 		s.Failures = append(s.Failures, "packing bundle: "+err.Error())
 		c.appendLogLocked(LogError, "packing bundle: "+err.Error())
+	case c.bundle != nil && c.stats.saved == 0:
+		// core still packs an empty bundle when every chapter failed (as the
+		// CLI does), so the file it leaves behind is not a result
+		s.Err = errors.New("no chapter could be downloaded")
+		s.Failures = append(s.Failures, "packing bundle: no chapter could be downloaded")
+		c.appendLogLocked(LogError, "packing bundle: no chapter could be downloaded")
 	default:
 		s.Bundle = file
 	}
@@ -546,39 +580,53 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 	}
 	c.summary = s
 	c.running = false
-}
-
-// cancelRun releases the run's context once it has finished
-func (c *Controller) cancelRun() {
-	c.mu.Lock()
-	cancel := c.cancel
-	c.cancel = nil
-	c.mu.Unlock()
-	if cancel != nil {
-		cancel()
+	// released under the lock, in the same step that clears running: once
+	// running is false a new Start may replace c.cancel
+	if c.cancel != nil {
+		c.cancel()
+		c.cancel = nil
 	}
 }
 
 // Cancel stops the run from starting new chapters. Chapters already in
-// flight finish. It's a no-op when nothing runs.
+// flight finish. It's a no-op when nothing runs or a cancel already happened.
 func (c *Controller) Cancel() {
 	c.mu.Lock()
 	cancel := c.cancel
-	if cancel != nil {
+	first := cancel != nil && !c.cancelling
+	if first {
+		c.cancelling = true
 		c.appendLogLocked(LogInfo, "Cancelling: chapters already downloading will finish, no new ones start")
 	}
 	c.mu.Unlock()
-	if cancel != nil {
+	if first {
 		cancel()
 		c.emit()
 	}
 }
 
+// shutdownWait bounds how long quitting waits for a run to wind down and for
+// the browser to close, so a stuck render can't hang the window's exit
+const shutdownWait = 3 * time.Second
+
 // Shutdown cancels any run and closes the browser, so Chrome doesn't outlive
-// the app. Safe to call more than once.
+// the app. It waits at most shutdownWait for each step. Safe to call more
+// than once.
 func (c *Controller) Shutdown() {
 	c.Cancel()
-	browser.Close()
+	deadline := time.Now().Add(shutdownWait)
+	for c.Running() && time.Now().Before(deadline) {
+		time.Sleep(50 * time.Millisecond)
+	}
+	done := make(chan struct{})
+	go func() {
+		browser.Close()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(shutdownWait):
+	}
 }
 
 // events maps core.Events onto the controller's state. Each method takes the

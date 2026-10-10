@@ -197,7 +197,6 @@ func (v *view) buildChapters() fyne.CanvasObject {
 			check.Text = v.chapterLabel(v.chapters[i])
 			check.SetChecked(v.ctrl.IsSelected(i))
 			check.OnChanged = func(on bool) { v.ctrl.SetSelected(i, on) }
-			check.Refresh()
 		},
 	)
 	v.chaptersNone = emptyHint(chaptersHint)
@@ -656,8 +655,15 @@ func (v *view) load() {
 
 func (v *view) loadURL(u string) {
 	v.loadErr = ""
+	// BeginLoad runs here, not in the goroutine, so the controls are disabled
+	// before a second click or Enter can start another load
+	if err := v.ctrl.BeginLoad(u); err != nil {
+		v.loadErr = loadMessage(err)
+		v.refresh()
+		return
+	}
 	go func() {
-		err := v.ctrl.Load(u)
+		err := v.ctrl.FinishLoad(u)
 		fyne.Do(func() {
 			v.loadErr = loadMessage(err)
 			v.refresh()
