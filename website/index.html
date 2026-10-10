@@ -157,24 +157,16 @@
           </header>
 
           <figure class="shot shot-hero">
-            <div class="shot-frame">
-              <div class="shot-bar" aria-hidden="true"><span></span><span></span><span></span></div>
-              <!-- TODO(screenshot): app-overview. Replace this placeholder with
-                   <img src="./src/assets/screenshots/app-overview.png" width="1600" height="1000" loading="lazy" alt="…"> -->
-              <div class="shot-placeholder" role="img" data-todo="screenshot" data-shot="app-overview"
-                   aria-label="The manga downloader desktop app with a series loaded: its cover and title, and the chapter list ready to download.">
-                <div class="sk sk-app" aria-hidden="true">
-                  <div class="sk-url"><span class="sk-dot"></span><span class="sk-bar w-60"></span><span class="sk-btn"></span></div>
-                  <div class="sk-body">
-                    <div class="sk-side"><span class="sk-cover"></span><span class="sk-bar w-80"></span><span class="sk-bar w-50"></span><span class="sk-bar w-70 thin"></span></div>
-                    <div class="sk-list">
-                      <span class="sk-row is-on"></span><span class="sk-row is-on"></span><span class="sk-row is-on"></span><span class="sk-row"></span><span class="sk-row"></span><span class="sk-row"></span>
-                    </div>
-                  </div>
-                </div>
-                <span class="shot-label">Screenshot coming soon</span>
-              </div>
-            </div>
+            <picture>
+              <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="./src/assets/screenshots/app-overview-dark-1000.webp 1000w, ./src/assets/screenshots/app-overview-dark-1600.webp 1600w"
+                      sizes="(min-width: 1160px) 1080px, 92vw" />
+              <source media="(prefers-color-scheme: dark)" srcset="./src/assets/screenshots/app-overview-dark-1000.png 1000w, ./src/assets/screenshots/app-overview-dark-1600.png 1600w"
+                      sizes="(min-width: 1160px) 1080px, 92vw" />
+              <source type="image/webp" srcset="./src/assets/screenshots/app-overview-light-1000.webp 1000w, ./src/assets/screenshots/app-overview-light-1600.webp 1600w"
+                      sizes="(min-width: 1160px) 1080px, 92vw" />
+              <img src="./src/assets/screenshots/app-overview-light-1600.png" srcset="./src/assets/screenshots/app-overview-light-1000.png 1000w, ./src/assets/screenshots/app-overview-light-1600.png 1600w"
+                   sizes="(min-width: 1160px) 1080px, 92vw" width="1600" height="1112" alt="The desktop app with One Piece loaded from MangaDex: its cover, title and chapter list, with two chapters selected and Catalan picked as the language." fetchpriority="high" />
+            </picture>
           </figure>
 
           <div class="showcase">
@@ -192,18 +184,16 @@
                 </p>
               </div>
               <figure class="shot">
-                <div class="shot-frame">
-                  <!-- TODO(screenshot): chapter-list. Replace with
-                       <img src="./src/assets/screenshots/chapter-list.png" width="1200" height="900" loading="lazy" alt="…"> -->
-                  <div class="shot-placeholder shot-4x3" role="img" data-todo="screenshot" data-shot="chapter-list"
-                       aria-label="The chapter list, with chapters 1 to 10 selected through a range and a Shift-click.">
-                    <div class="sk sk-chapters" aria-hidden="true">
-                      <div class="sk-field"><span class="sk-bar w-40"></span></div>
-                      <span class="sk-row is-on"></span><span class="sk-row is-on"></span><span class="sk-row is-on"></span><span class="sk-row is-on"></span><span class="sk-row"></span><span class="sk-row"></span>
-                    </div>
-                    <span class="shot-label">Screenshot coming soon</span>
-                  </div>
-                </div>
+                <picture>
+                  <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="./src/assets/screenshots/chapter-list-dark-1000.webp 1000w, ./src/assets/screenshots/chapter-list-dark-1600.webp 1600w"
+                          sizes="(min-width: 821px) 45vw, 92vw" />
+                  <source media="(prefers-color-scheme: dark)" srcset="./src/assets/screenshots/chapter-list-dark-1000.png 1000w, ./src/assets/screenshots/chapter-list-dark-1600.png 1600w"
+                          sizes="(min-width: 821px) 45vw, 92vw" />
+                  <source type="image/webp" srcset="./src/assets/screenshots/chapter-list-light-1000.webp 1000w, ./src/assets/screenshots/chapter-list-light-1600.webp 1600w"
+                          sizes="(min-width: 821px) 45vw, 92vw" />
+                  <img src="./src/assets/screenshots/chapter-list-light-1600.png" srcset="./src/assets/screenshots/chapter-list-light-1000.png 1000w, ./src/assets/screenshots/chapter-list-light-1600.png 1600w"
+                       sizes="(min-width: 821px) 45vw, 92vw" width="1600" height="1112" alt="The chapter list during a run: eight chapters selected, the first ones already saved and the rest in progress in the Activity panel." loading="lazy" />
+                </picture>
               </figure>
             </article>
 
@@ -216,23 +206,16 @@
                 </p>
               </div>
               <figure class="shot">
-                <div class="shot-frame">
-                  <!-- TODO(screenshot): language-selector. Replace with
-                       <img src="./src/assets/screenshots/language-selector.png" width="1200" height="900" loading="lazy" alt="…"> -->
-                  <div class="shot-placeholder shot-4x3" role="img" data-todo="screenshot" data-shot="language-selector"
-                       aria-label="The language selector open, listing the languages the series is available in.">
-                    <div class="sk sk-select" aria-hidden="true">
-                      <div class="sk-field is-open"><span class="sk-bar w-30"></span><span class="sk-caret"></span></div>
-                      <div class="sk-menu">
-                        <span class="sk-option is-on"><span class="sk-bar w-40"></span></span>
-                        <span class="sk-option"><span class="sk-bar w-60"></span></span>
-                        <span class="sk-option"><span class="sk-bar w-50"></span></span>
-                        <span class="sk-option"><span class="sk-bar w-30"></span></span>
-                      </div>
-                    </div>
-                    <span class="shot-label">Screenshot coming soon</span>
-                  </div>
-                </div>
+                <picture>
+                  <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="./src/assets/screenshots/language-selector-dark-1000.webp 1000w, ./src/assets/screenshots/language-selector-dark-1600.webp 1600w"
+                          sizes="(min-width: 821px) 45vw, 92vw" />
+                  <source media="(prefers-color-scheme: dark)" srcset="./src/assets/screenshots/language-selector-dark-1000.png 1000w, ./src/assets/screenshots/language-selector-dark-1600.png 1600w"
+                          sizes="(min-width: 821px) 45vw, 92vw" />
+                  <source type="image/webp" srcset="./src/assets/screenshots/language-selector-light-1000.webp 1000w, ./src/assets/screenshots/language-selector-light-1600.webp 1600w"
+                          sizes="(min-width: 821px) 45vw, 92vw" />
+                  <img src="./src/assets/screenshots/language-selector-light-1600.png" srcset="./src/assets/screenshots/language-selector-light-1000.png 1000w, ./src/assets/screenshots/language-selector-light-1600.png 1600w"
+                       sizes="(min-width: 821px) 45vw, 92vw" width="1600" height="1112" alt="The language dropdown open over the chapter list, with Catalan selected among the languages One Piece is available in." loading="lazy" />
+                </picture>
               </figure>
             </article>
 
@@ -247,24 +230,16 @@
                 <p>The app follows your system theme, so late-night reading sessions stay easy on the eyes.</p>
               </div>
               <figure class="shot">
-                <div class="shot-frame">
-                  <!-- TODO(screenshot): finished-run. Replace with
-                       <img src="./src/assets/screenshots/finished-run.png" width="1200" height="900" loading="lazy" alt="…">
-                       The real shot shows the Happy mascot in the app's "done" state. -->
-                  <div class="shot-placeholder shot-4x3 is-done" role="img" data-todo="screenshot" data-shot="finished-run"
-                       aria-label="A finished run: every chapter downloaded, with the happy mascot celebrating.">
-                    <div class="sk sk-done" aria-hidden="true">
-                      <picture>
-                        <source srcset="./src/assets/brand/happy-mark-dark.svg" media="(prefers-color-scheme: dark)" />
-                        <img src="./src/assets/brand/happy-mark.svg" alt="" width="96" height="96" loading="lazy" />
-                      </picture>
-                      <span class="sk-bar w-40 thick"></span>
-                      <span class="sk-progress"><span></span></span>
-                      <span class="sk-bar w-60 thin"></span>
-                    </div>
-                    <span class="shot-label">Screenshot coming soon</span>
-                  </div>
-                </div>
+                <picture>
+                  <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="./src/assets/screenshots/finished-run-dark-1000.webp 1000w, ./src/assets/screenshots/finished-run-dark-1600.webp 1600w"
+                          sizes="(min-width: 821px) 45vw, 92vw" />
+                  <source media="(prefers-color-scheme: dark)" srcset="./src/assets/screenshots/finished-run-dark-1000.png 1000w, ./src/assets/screenshots/finished-run-dark-1600.png 1600w"
+                          sizes="(min-width: 821px) 45vw, 92vw" />
+                  <source type="image/webp" srcset="./src/assets/screenshots/finished-run-light-1000.webp 1000w, ./src/assets/screenshots/finished-run-light-1600.webp 1600w"
+                          sizes="(min-width: 821px) 45vw, 92vw" />
+                  <img src="./src/assets/screenshots/finished-run-light-1600.png" srcset="./src/assets/screenshots/finished-run-light-1000.png 1000w, ./src/assets/screenshots/finished-run-light-1600.png 1600w"
+                       sizes="(min-width: 821px) 45vw, 92vw" width="1600" height="1112" alt="A finished run: eight chapters saved to the output folder, each listed as saved in the Activity panel." loading="lazy" />
+                </picture>
               </figure>
             </article>
           </div>

@@ -38,12 +38,24 @@ pnpm preview   # serve dist/
 
 ## Screenshots
 
-The desktop app section has four placeholders, marked with
-`TODO(screenshot)` comments and `data-todo="screenshot"` in `index.html`:
-`app-overview` (16:10), `chapter-list`, `language-selector` and `finished-run`
-(4:3, the Happy mascot moment). Drop the images in `src/assets/screenshots/`
-and replace each `.shot-placeholder` div with the `<img>` in its comment,
-keeping `width`, `height`, `loading="lazy"` and a real `alt`.
+The desktop app section shows four captures from `src/assets/screenshots/`,
+each in a light and a dark version, at 1600 and 1000 px wide: `<name>-<theme>-<width>.webp`
+with a `.png` fallback. A `<picture>` swaps the dark ones in with
+`prefers-color-scheme`, and Vite fingerprints them into `dist`.
+
+The files are converted offline and committed, so the build needs no image tools.
+To regenerate them from the 2000 px originals (ImageMagick):
+
+```bash
+magick IN.png -filter Lanczos -resize 1600x -strip -define webp:method=6 -quality 85 OUT-1600.webp
+magick IN.png -filter Lanczos -resize 1600x -strip -colors 256 -define png:compression-level=9 OUT-1600.png
+```
+
+Repeat with `1000x` for the smaller width. The PNGs are 256-colour palettes, which
+keeps the fallbacks small; browsers that read WebP never fetch them.
+
+Keep the `<img>` `width` and `height` (the 1600 px size) so the layout doesn't shift,
+and the first, above-the-fold image eager with `fetchpriority="high"`; the rest are `loading="lazy"`.
 
 ## Another domain
 
