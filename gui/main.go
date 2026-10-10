@@ -18,8 +18,8 @@ import (
 )
 
 // Version and Tag are set at link time by the release workflow (-X), the same
-// way the CLI gets its version: Tag is the release tag, Version a describe
-// string. Both stay at their defaults in a plain build.
+// way the CLI gets its version: Version is the short commit sha, Tag the
+// release tag. Both stay at their defaults in a plain build.
 var (
 	Version = "dev"
 	Tag     = ""

@@ -136,6 +136,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   let running = false;
   let cancelling = false;
   let runChapters = 0;
+  // the bundle option as the run started with it, as the backend's RunInfo
+  let runBundle = false;
   let jobs: Job[] = [];
   let summary: Summary | null = null;
   let log: LogLine[] = [];
@@ -165,7 +167,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     selectedCount: selected.size,
     running,
     cancelling,
-    run: { chapters: runChapters, bundle: options.bundle },
+    run: { chapters: runChapters, bundle: runBundle },
     jobs: jobs.map((j) => ({ ...j })),
     summary: summary ? { ...summary, failures: [...summary.failures] } : null,
     options: { ...options },
@@ -207,7 +209,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     const saved = jobs.filter((j) => j.state === 'done').length;
     const failures = jobs.filter((j) => j.state === 'failed').map((j) => `${j.title}: ${j.reason}`);
     const skipped = jobs.filter((j) => j.state === 'skipped').length;
-    const bundled = options.bundle;
+    const bundled = runBundle;
     summary = {
       dir: options.outputDir,
       cancelled: cancelling,
@@ -231,7 +233,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
 
   /** One step of the simulated run. Returns false once it's over. */
   function step(): boolean {
-    if (options.bundle) {
+    if (runBundle) {
       const j = jobs[0];
       const done = Math.min(j.total, j.done + 4);
       const fetched = done < j.total / 2;
@@ -297,9 +299,10 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     running = true;
     cancelling = false;
     runChapters = list.length;
+    runBundle = options.bundle;
     summary = null;
     pending = [...list];
-    jobs = options.bundle
+    jobs = runBundle
       ? [
           {
             title: `Bundle: chapters 1-${list.length}`,
@@ -414,6 +417,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       finishLoad();
     },
     async setSelected(index, on) {
+      if (loading || running) {
+        throw 'a series is loading or a download is running';
+      }
       if (index < 0 || index >= chapters.length) {
         return;
       }
@@ -443,11 +449,17 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       push();
     },
     async setAll(on) {
+      if (loading || running) {
+        throw 'a series is loading or a download is running';
+      }
       selected = new Set(on ? chapters.map((c) => c.index) : []);
       selectionBus.emit(selectionOf());
       push();
     },
     async selectRange(text) {
+      if (loading || running) {
+        throw 'a series is loading or a download is running';
+      }
       const matched: number[] = [];
       for (const part of text
         .split(',')
@@ -479,6 +491,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       push();
     },
     async chooseFolder() {
+      if (loading || running) {
+        throw 'a series is loading or a download is running';
+      }
       const picked = window.prompt('Output folder (mock dialog)', options.outputDir) ?? '';
       if (picked !== '') {
         options.outputDir = picked;
@@ -490,14 +505,14 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       pushLog('info', `would open ${options.outputDir} (mock)`);
     },
     async start() {
+      if (loading || running) {
+        throw 'a series is loading or a download is running';
+      }
       if (!loaded) {
         throw 'load a series first';
       }
       if (options.language !== applied.language || options.scanlator !== applied.scanlator) {
         throw 'the language or scanlator changed: reload the series first';
-      }
-      if (running) {
-        throw 'a series is loading or a download is running';
       }
       const picked = chapters.filter((c) => selected.has(c.index));
       if (picked.length === 0) {

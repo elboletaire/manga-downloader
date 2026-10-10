@@ -59,22 +59,6 @@ export function summarySentence(s: Summary): string {
   return 'Nothing was saved.';
 }
 
-/** The full story of a finished run, one entry per line */
-export function summaryLines(s: Summary): string[] {
-  const lines = [summarySentence(s)];
-  if (s.skipped > 0) {
-    lines.push(`${plural(s.skipped, 'chapter', 'chapters')} skipped: --skip-pages excluded every page.`);
-  }
-  if (s.failures.length > 0) {
-    lines.push(`${s.failures.length} failed:`);
-    for (const f of s.failures) {
-      lines.push(`  - ${f}`);
-    }
-  }
-
-  return lines;
-}
-
 /** The status text of a progress row */
 export function jobStatus(j: Job): string {
   switch (j.state) {

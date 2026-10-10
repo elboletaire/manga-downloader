@@ -17,7 +17,7 @@ import (
 // is where the archives go.
 //
 //	GUI_SMOKE_URL=https://dynasty-scans.com/series/please_bully_me_miss_villainess \
-//	GUI_SMOKE_RANGE=162 GUI_SMOKE_DIR=/tmp/md-fyne-ui/gui-smoke \
+//	GUI_SMOKE_RANGE=162 GUI_SMOKE_DIR=/tmp/manga-downloader-gui-smoke \
 //	go test -tags "nodynamic smoke" -run TestSmokeRealSite -v ./
 func TestSmokeRealSite(t *testing.T) {
 	url := os.Getenv("GUI_SMOKE_URL")
@@ -40,7 +40,10 @@ func TestSmokeRealSite(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := waitFinished(t, c)
-	t.Logf("summary:\n%s", summaryText(s))
+	t.Logf("summary: saved %d, skipped %d, bundle %q, cancelled %v, err %v", s.Saved, s.Skipped, s.Bundle, s.Cancelled, s.Err)
+	for _, f := range s.Failures {
+		t.Logf("failure: %s", f)
+	}
 	if s.Saved == 0 || len(s.Failures) > 0 {
 		t.Errorf("smoke download failed: %+v", s)
 	}

@@ -345,6 +345,53 @@ func TestConfigureRefusedWhileBusy(t *testing.T) {
 	waitFinished(t, c)
 }
 
+func TestSelectionRefusedWhileBusy(t *testing.T) {
+	gate := make(chan struct{})
+	c, _, _ := newTestController(t, false, gate, chapters(3, 1)...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	c.SetSelected(0, true)
+	if err := c.Start(); err != nil {
+		t.Fatal(err)
+	}
+	before := c.SelectedIndices()
+
+	check := func(state string) {
+		t.Helper()
+		if err := c.SetSelected(1, true); err != errBusy {
+			t.Errorf("SetSelected while %s = %v, want errBusy", state, err)
+		}
+		if err := c.SetAll(false); err != errBusy {
+			t.Errorf("SetAll while %s = %v, want errBusy", state, err)
+		}
+		if _, err := c.SelectRange("1-3"); err != errBusy {
+			t.Errorf("SelectRange while %s = %v, want errBusy", state, err)
+		}
+		if err := c.SetSelectedMany([]int{2}, true); err != errBusy {
+			t.Errorf("SetSelectedMany while %s = %v, want errBusy", state, err)
+		}
+		if got := c.SelectedIndices(); fmt.Sprint(got) != fmt.Sprint(before) {
+			t.Errorf("selection changed while %s: %v, was %v", state, got, before)
+		}
+	}
+	check("running")
+	if _, err := c.SelectRange("nope"); err != errBusy {
+		t.Errorf("a bad range while running = %v, want errBusy", err)
+	}
+	close(gate)
+	waitFinished(t, c)
+
+	if err := c.BeginLoad("https://example.com/manga/other"); err != nil {
+		t.Fatal(err)
+	}
+	check("loading")
+	if _, err := c.SelectRange("nope"); err != errBusy {
+		t.Errorf("a bad range while loading = %v, want errBusy", err)
+	}
+	c.abortLoad(fmt.Errorf("cancelled"))
+}
+
 func TestStaleAfterFilterChange(t *testing.T) {
 	c, _, _ := newTestController(t, false, nil, chapters(1, 1)...)
 	if err := c.Load("https://example.com/manga/test"); err != nil {

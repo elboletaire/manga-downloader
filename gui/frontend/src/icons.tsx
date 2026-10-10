@@ -69,22 +69,12 @@ export const ErrorIcon = icon(
   </>,
 );
 
-export const InfoIcon = icon(
-  <>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 11v5.5" />
-    <path d="M12 7.5h.01" />
-  </>,
-);
-
 export const RefreshIcon = icon(
   <>
     <path d="M20 12a8 8 0 1 1-2.34-5.66" />
     <path d="M20 4v5h-5" />
   </>,
 );
-
-export const ChevronIcon = icon(<path d="m9 6 6 6-6 6" />);
 
 export const SkipIcon = icon(
   <>
@@ -131,8 +121,6 @@ export const SlidersIcon = icon(
 );
 
 export const ActivityIcon = icon(<path d="M3 12h4l3 7 4-14 3 7h4" />);
-
-export const FilterIcon = icon(<path d="M4 5h16l-6 7.5V19l-4-2v-4.5z" />);
 
 /** The app's mark: an open book with a page turning */
 export function Logo({ size = 22 }: { size?: number }) {

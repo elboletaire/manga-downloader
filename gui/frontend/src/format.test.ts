@@ -6,7 +6,6 @@ import {
   jobStatus,
   plural,
   summaryHeadline,
-  summaryLines,
   summarySentence,
 } from './format';
 import type { Job, Summary } from './types';
@@ -41,19 +40,6 @@ describe('summaryHeadline', () => {
     expect(summaryHeadline({ ...base, cancelled: true, bundled: true })).toBe('Cancelled, no bundle written');
     expect(summaryHeadline({ ...base, bundled: true, bundle: 'a.cbz' })).toBe('Saved a.cbz');
     expect(summaryHeadline({ ...base, bundled: true, error: 'disk full' })).toBe('The bundle could not be written');
-  });
-});
-
-describe('summaryLines', () => {
-  it('lists failures under the outcome', () => {
-    const lines = summaryLines({ ...base, saved: 1, failures: ['Ch 4: 404'] });
-    expect(lines).toEqual(['Saved 1 chapter to /out.', '1 failed:', '  - Ch 4: 404']);
-  });
-
-  it('names the bundle and the chapter count', () => {
-    expect(summaryLines({ ...base, bundled: true, bundle: 'b.cbz', saved: 3 })).toEqual([
-      'Saved b.cbz to /out (3 chapters).',
-    ]);
   });
 });
 
@@ -92,9 +78,7 @@ describe('errorMessage', () => {
 });
 
 describe('summarySentence', () => {
-  it('is the first line of the summary', () => {
-    const s = { ...base, saved: 3, failures: ['x: y'] };
-    expect(summarySentence(s)).toBe(summaryLines(s)[0]);
+  it('says a cancelled run saved nothing', () => {
     expect(summarySentence({ ...base, cancelled: true })).toBe('Cancelled before anything was saved.');
   });
 });

@@ -56,6 +56,29 @@ describe('createMockApi', () => {
     expect(await api.selection()).toEqual([2, 4]);
   });
 
+  it('refuses to change the selection, pick a folder or start while a download runs', async () => {
+    const api = createMockApi({ scenario: 'running', freeze: true });
+    const busy = 'a series is loading or a download is running';
+    await expect(api.setSelected(0, false)).rejects.toBe(busy);
+    await expect(api.setSelectedMany([0], false)).rejects.toBe(busy);
+    await expect(api.setAll(false)).rejects.toBe(busy);
+    await expect(api.selectRange('1')).rejects.toBe(busy);
+    await expect(api.chooseFolder()).rejects.toBe(busy);
+    await expect(api.start()).rejects.toBe(busy);
+  });
+
+  it('refuses to start while a series loads', async () => {
+    const api = createMockApi({ scenario: 'loading', freeze: true });
+    await expect(api.start()).rejects.toBe('a series is loading or a download is running');
+  });
+
+  it('keeps the bundle flag a run started with', async () => {
+    const api = createMockApi('done');
+    expect((await api.state()).run.bundle).toBe(false);
+    await api.setOptions({ ...(await api.state()).options, bundle: true });
+    expect((await api.state()).run.bundle).toBe(false);
+  });
+
   it('reports the loaded language and scanlator, apart from the options', async () => {
     const api = createMockApi('loaded');
     await api.setOptions({ ...(await api.state()).options, language: 'es' });

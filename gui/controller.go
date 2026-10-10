@@ -447,17 +447,23 @@ func (c *Controller) SelectedCount() int {
 	return n
 }
 
-// SetSelected selects or deselects chapter i
-func (c *Controller) SetSelected(i int, on bool) {
+// SetSelected selects or deselects chapter i. It's refused while a series
+// loads or a download runs, as SetSelectedMany is.
+func (c *Controller) SetSelected(i int, on bool) error {
 	c.mu.Lock()
+	if c.loading || c.running {
+		c.mu.Unlock()
+		return errBusy
+	}
 	if i < 0 || i >= len(c.selected) {
 		c.mu.Unlock()
-		return
+		return nil
 	}
 	c.selected[i] = on
 	c.selGen++
 	c.mu.Unlock()
 	c.emit()
+	return nil
 }
 
 // SetSelectedMany selects or deselects the chapters at indices in one step,
@@ -485,27 +491,39 @@ func (c *Controller) SetSelectedMany(indices []int, on bool) error {
 	return nil
 }
 
-// SetAll selects or deselects every chapter
-func (c *Controller) SetAll(on bool) {
+// SetAll selects or deselects every chapter. It's refused while a series
+// loads or a download runs.
+func (c *Controller) SetAll(on bool) error {
 	c.mu.Lock()
+	if c.loading || c.running {
+		c.mu.Unlock()
+		return errBusy
+	}
 	for i := range c.selected {
 		c.selected[i] = on
 	}
 	c.selGen++
 	c.mu.Unlock()
 	c.emit()
+	return nil
 }
 
 // SelectRange selects the chapters whose number falls in the range text
 // (e.g. "1-10,12"), leaving the rest of the selection as it is. It returns how
-// many chapters the range matched.
+// many chapters the range matched. It's refused while a series loads or a
+// download runs.
 func (c *Controller) SelectRange(text string) (int, error) {
+	c.mu.Lock()
+	if c.loading || c.running {
+		c.mu.Unlock()
+		return 0, errBusy
+	}
+	// parsed under the lock: it's cheap, and the busy check must come first
 	rngs, err := ranges.Parse(text)
 	if err != nil {
+		c.mu.Unlock()
 		return 0, err
 	}
-
-	c.mu.Lock()
 	n := 0
 	if c.series != nil {
 		for i, chap := range c.series.Chapters {

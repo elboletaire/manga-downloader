@@ -4,6 +4,7 @@
 
 import { convertFlagsOf, convertValueOf } from './convertImages';
 import { Check, Segmented, Switch, TextField } from './fields';
+import { errorMessage } from './format';
 import { FolderIcon } from './icons';
 import type { Options, State } from './types';
 
@@ -47,7 +48,7 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
               type="button"
               className="btn small"
               disabled={locked}
-              onClick={() => onChooseFolder().catch((e) => onError(String(e)))}
+              onClick={() => onChooseFolder().catch((e) => onError(errorMessage(e)))}
             >
               Browse…
             </button>

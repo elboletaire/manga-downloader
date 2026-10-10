@@ -317,9 +317,10 @@ func (a *App) Load(url string) error {
 	return nil
 }
 
-// SetSelected selects or deselects the chapter at index
-func (a *App) SetSelected(index int, on bool) {
-	a.ctrl.SetSelected(index, on)
+// SetSelected selects or deselects the chapter at index. It's refused while a
+// series loads or a download runs.
+func (a *App) SetSelected(index int, on bool) error {
+	return a.ctrl.SetSelected(index, on)
 }
 
 // SetSelectedMany selects or deselects the chapters at indices in one step. An
@@ -328,9 +329,10 @@ func (a *App) SetSelectedMany(indices []int, on bool) error {
 	return a.ctrl.SetSelectedMany(indices, on)
 }
 
-// SetAll selects or deselects every chapter
-func (a *App) SetAll(on bool) {
-	a.ctrl.SetAll(on)
+// SetAll selects or deselects every chapter. It's refused while a series
+// loads or a download runs.
+func (a *App) SetAll(on bool) error {
+	return a.ctrl.SetAll(on)
 }
 
 // SelectRange selects the chapters whose number is in the range text

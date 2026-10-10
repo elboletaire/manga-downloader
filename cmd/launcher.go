@@ -19,8 +19,8 @@ const guiName = "manga-downloader-gui"
 
 const guiReleasesURL = "https://github.com/elboletaire/manga-downloader/releases"
 
-// uiCmd starts the desktop app. The GUI is a separate binary (it needs cgo and
-// a windowing stack), so this only launches it.
+// uiCmd starts the desktop app. The GUI is a separate binary (on Linux it
+// needs cgo and the webview stack), so this only launches it.
 var uiCmd = &cobra.Command{
 	Use:   "ui",
 	Short: "Opens the desktop app",
