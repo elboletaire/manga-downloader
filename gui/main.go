@@ -38,27 +38,19 @@ var assets embed.FS
 var appIcon []byte
 
 func main() {
-	settings := defaultSettings()
-	prefsPath, err := guiConfigPath()
-	if err != nil {
-		// the window still works, the options just won't outlive this run
-		notice.Warn("%v", err)
-		prefsPath = ""
-	}
-	if prefsPath != "" {
-		if err := loadOptions(prefsPath, settings); err != nil {
-			notice.Warn("ignoring the saved options: %v", err)
-		}
-	}
-
 	rt := &wailsRuntime{}
 	var app *App
 	// notify is called from the download goroutines too, so it reads app
-	// through the pointer set before the window opens
-	ctrl := NewController(settings, func() { app.notify() })
+	// through the pointer set before the window opens. Warnings raised while
+	// the options load come before that, hence the nil check.
+	ctrl, prefsPath := newSession(func() {
+		if app != nil {
+			app.notify()
+		}
+	})
 	app = newApp(ctrl, rt, prefsPath, versionString())
 
-	err = wails.Run(&options.App{
+	err := wails.Run(&options.App{
 		Title:            "Manga Downloader",
 		Width:            1100,
 		Height:           760,
@@ -76,6 +68,26 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// newSession returns the controller with the saved options applied, and the
+// path they're saved at (empty when there is none). The controller is created
+// first, so the warnings loading raises reach its log instead of stdout.
+func newSession(notify func()) (*Controller, string) {
+	settings := defaultSettings()
+	ctrl := NewController(settings, notify)
+
+	prefsPath, err := guiConfigPath()
+	if err != nil {
+		// the window still works, the options just won't outlive this run
+		notice.Warn("%v", err)
+		return ctrl, ""
+	}
+	if err := loadOptions(prefsPath, settings); err != nil {
+		notice.Warn("ignoring the saved options: %v", err)
+	}
+
+	return ctrl, prefsPath
 }
 
 // versionString is what the window's About text shows: the tag when there is
