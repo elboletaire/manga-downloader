@@ -14,14 +14,44 @@
   $repo = 'elboletaire/manga-downloader'
   $installDir = Join-Path $env:LOCALAPPDATA 'Programs\manga-downloader'
 
-  # there's no windows/arm64 build, but ARM machines run amd64 binaries emulated
-  $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'x86') { '386' } else { 'amd64' }
+  # the native architecture, not the process's: a 32-bit PowerShell on 64-bit Windows
+  # reports x86, and an x64 PowerShell emulated on ARM64 reports AMD64
+  function Get-WindowsArchitecture {
+    $arch = $null
+    try {
+      $arch = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Name PROCESSOR_ARCHITECTURE -ErrorAction Stop).PROCESSOR_ARCHITECTURE
+    } catch {}
+    if (-not $arch) { $arch = $env:PROCESSOR_ARCHITEW6432 }
+    if (-not $arch) { $arch = $env:PROCESSOR_ARCHITECTURE }
+    $arch
+  }
+
+  # asset suffixes to try, in order: the first one present in the latest release wins
+  function Get-AssetSuffixes($arch) {
+    switch ($arch) {
+      # no arm64 build in releases before it was added; ARM machines run amd64 emulated
+      'ARM64' { 'arm64', 'amd64' }
+      'AMD64' { 'amd64' }
+      # older releases named the 32-bit build 386
+      'x86'   { '32bit-legacy', '386' }
+      default { throw "Unsupported Windows architecture: '$arch'." }
+    }
+  }
+
+  $suffixes = @(Get-AssetSuffixes (Get-WindowsArchitecture))
 
   Write-Host "Looking for the latest release..."
   $release = Invoke-RestMethod "https://api.github.com/repos/$repo/releases/latest"
-  $zip = $release.assets | Where-Object { $_.name -like "*-windows-$arch.zip" } | Select-Object -First 1
+  $zip = $null
+  foreach ($suffix in $suffixes) {
+    # the desktop app's zips share the suffix, so they're excluded by name
+    $zip = $release.assets |
+      Where-Object { $_.name -like "*-windows-$suffix.zip" -and $_.name -notlike 'manga-downloader-gui-*' } |
+      Select-Object -First 1
+    if ($zip) { break }
+  }
+  if (-not $zip) { throw "No windows build ($($suffixes -join ', ')) found in release $($release.tag_name)." }
   $md5 = $release.assets | Where-Object { $_.name -eq "$($zip.name).md5" } | Select-Object -First 1
-  if (-not $zip) { throw "No windows-$arch build found in release $($release.tag_name)." }
 
   $tmp = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName())
   New-Item -ItemType Directory -Path $tmp | Out-Null
