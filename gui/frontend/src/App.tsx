@@ -95,6 +95,7 @@ export function App({ api }: { api: Api }) {
           selected={selected}
           disabled={busy}
           onToggle={(index, on) => api.setSelected(index, on)}
+          onToggleMany={(indices, on) => api.setSelectedMany(indices, on)}
           onSetAll={(on) => api.setAll(on)}
           onRange={(text) => api.selectRange(text)}
           onReload={() => load(state.url)}

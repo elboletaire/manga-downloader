@@ -58,6 +58,10 @@ export interface State {
   hasDuplicates: boolean;
   /** The language or scanlator changed since the list was fetched */
   stale: boolean;
+  /** The language the list was fetched with (what the filter applies to) */
+  loadedLanguage: string;
+  /** The scanlator the list was fetched with */
+  loadedScanlator: string;
   selectedCount: number;
   running: boolean;
   cancelling: boolean;

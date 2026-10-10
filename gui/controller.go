@@ -362,6 +362,14 @@ func (c *Controller) LogGen() uint64 {
 	return c.logGen
 }
 
+// LoadedFilters returns the language and scanlator the loaded list was
+// fetched with
+func (c *Controller) LoadedFilters() (language, scanlator string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.loadedLanguage, c.loadedScanlator
+}
+
 // Loading reports whether a series is being loaded
 func (c *Controller) Loading() bool {
 	c.mu.Lock()
@@ -450,6 +458,31 @@ func (c *Controller) SetSelected(i int, on bool) {
 	c.selGen++
 	c.mu.Unlock()
 	c.emit()
+}
+
+// SetSelectedMany selects or deselects the chapters at indices in one step,
+// with one change and one push. Every index is checked before any is set: one
+// out of range rejects the whole call. It's refused while a series loads or a
+// download runs, as Configure is.
+func (c *Controller) SetSelectedMany(indices []int, on bool) error {
+	c.mu.Lock()
+	if c.loading || c.running {
+		c.mu.Unlock()
+		return errBusy
+	}
+	for _, i := range indices {
+		if i < 0 || i >= len(c.selected) {
+			c.mu.Unlock()
+			return fmt.Errorf("chapter %d is not in the list", i)
+		}
+	}
+	for _, i := range indices {
+		c.selected[i] = on
+	}
+	c.selGen++
+	c.mu.Unlock()
+	c.emit()
+	return nil
 }
 
 // SetAll selects or deselects every chapter

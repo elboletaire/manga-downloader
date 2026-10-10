@@ -56,7 +56,7 @@ func main() {
 		Height:           760,
 		MinWidth:         900,
 		MinHeight:        600,
-		BackgroundColour: &options.RGBA{R: 0xf4, G: 0xf5, B: 0xf7, A: 0xff},
+		BackgroundColour: startupBackground(),
 		AssetServer:      &assetserver.Options{Assets: assets},
 		OnStartup: func(ctx context.Context) {
 			app.startup(ctx, rt)

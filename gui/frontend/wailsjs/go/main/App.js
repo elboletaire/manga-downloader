@@ -50,6 +50,10 @@ export function SetSelected(arg1, arg2) {
   return window['go']['main']['App']['SetSelected'](arg1, arg2);
 }
 
+export function SetSelectedMany(arg1, arg2) {
+  return window['go']['main']['App']['SetSelectedMany'](arg1, arg2);
+}
+
 export function Start() {
   return window['go']['main']['App']['Start']();
 }

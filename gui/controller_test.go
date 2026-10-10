@@ -372,3 +372,76 @@ func TestLoadUnrecognisedSite(t *testing.T) {
 		t.Errorf("Load of an unknown site = %v, loaded %v", err, c.Loaded())
 	}
 }
+
+func TestSetSelectedManyIsAllOrNothing(t *testing.T) {
+	c, _, _ := newTestController(t, false, nil, chapters(5, 1)...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.SetSelectedMany([]int{0, 2, 9}, true); err == nil {
+		t.Fatal("SetSelectedMany accepted an index out of range")
+	}
+	if err := c.SetSelectedMany([]int{-1}, true); err == nil {
+		t.Fatal("SetSelectedMany accepted a negative index")
+	}
+	if c.SelectedCount() != 0 {
+		t.Fatalf("a rejected call changed the selection: %d selected", c.SelectedCount())
+	}
+
+	if err := c.SetSelectedMany([]int{0, 2, 4}, true); err != nil {
+		t.Fatal(err)
+	}
+	if c.SelectedCount() != 3 || !c.IsSelected(2) || c.IsSelected(1) {
+		t.Errorf("selection after SetSelectedMany is wrong: %d selected", c.SelectedCount())
+	}
+	if err := c.SetSelectedMany([]int{2, 4}, false); err != nil {
+		t.Fatal(err)
+	}
+	if got := c.SelectedIndices(); len(got) != 1 || got[0] != 0 {
+		t.Errorf("deselecting left %v", got)
+	}
+}
+
+func TestSetSelectedManyNotifiesOnce(t *testing.T) {
+	c, _, _ := newTestController(t, false, nil, chapters(5, 1)...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	pushes := 0
+	c.notify = func() { pushes++ }
+
+	if err := c.SetSelectedMany([]int{0, 1, 2, 3}, true); err != nil {
+		t.Fatal(err)
+	}
+	if pushes != 1 {
+		t.Errorf("SetSelectedMany notified %d times, want 1", pushes)
+	}
+}
+
+func TestSetSelectedManyRefusedWhileBusy(t *testing.T) {
+	c, _, _ := newTestController(t, false, nil, chapters(3, 1)...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+
+	c.mu.Lock()
+	c.loading = true
+	c.mu.Unlock()
+	if err := c.SetSelectedMany([]int{0}, true); err != errBusy {
+		t.Errorf("SetSelectedMany while loading = %v, want errBusy", err)
+	}
+	c.mu.Lock()
+	c.loading = false
+	c.running = true
+	c.mu.Unlock()
+	if err := c.SetSelectedMany([]int{0}, true); err != errBusy {
+		t.Errorf("SetSelectedMany while running = %v, want errBusy", err)
+	}
+	c.mu.Lock()
+	c.running = false
+	c.mu.Unlock()
+	if c.SelectedCount() != 0 {
+		t.Errorf("refused calls changed the selection: %d selected", c.SelectedCount())
+	}
+}

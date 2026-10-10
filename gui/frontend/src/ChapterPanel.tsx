@@ -19,6 +19,8 @@ interface Props {
   /** Locked while a series loads or a download runs */
   disabled: boolean;
   onToggle: (index: number, on: boolean) => Promise<void>;
+  /** Shift-span: one call for the whole span, so it's one change for the window */
+  onToggleMany: (indices: number[], on: boolean) => Promise<void>;
   onSetAll: (on: boolean) => Promise<void>;
   onRange: (text: string) => Promise<number>;
   onReload: () => void;
@@ -106,7 +108,17 @@ function FailedState({ state, onRetry }: { state: State; onRetry: () => void }) 
   );
 }
 
-function ChapterList({ state, chapters, selected, disabled, onToggle, onSetAll, onRange, onError }: Props) {
+function ChapterList({
+  state,
+  chapters,
+  selected,
+  disabled,
+  onToggle,
+  onToggleMany,
+  onSetAll,
+  onRange,
+  onError,
+}: Props) {
   const [rangeText, setRangeText] = useState('');
   const [rangeNote, setRangeNote] = useState<{ text: string; bad: boolean } | null>(null);
   const [active, setActive] = useState(-1);
@@ -134,7 +146,10 @@ function ChapterList({ state, chapters, selected, disabled, onToggle, onSetAll, 
     if (extend && anchor.current >= 0) {
       // Shift: the whole span takes the state the clicked row is switching to
       const span = spanIndices(anchor.current, pos).map((p) => chapters[p].index);
-      Promise.all(span.filter((i) => chosen.has(i) !== on).map((i) => onToggle(i, on))).catch(fail);
+      const changing = span.filter((i) => chosen.has(i) !== on);
+      if (changing.length > 0) {
+        onToggleMany(changing, on).catch(fail);
+      }
     } else {
       onToggle(ch.index, on).catch(fail);
     }

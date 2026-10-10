@@ -160,6 +160,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     chapterCount: chapters.length,
     hasDuplicates: chapters.some((c) => c.language !== ''),
     stale: loaded && (options.language !== applied.language || options.scanlator !== applied.scanlator),
+    loadedLanguage: applied.language,
+    loadedScanlator: applied.scanlator,
     selectedCount: selected.size,
     running,
     cancelling,
@@ -419,6 +421,23 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         selected.add(index);
       } else {
         selected.delete(index);
+      }
+      selectionBus.emit(selectionOf());
+      push();
+    },
+    async setSelectedMany(indices, on) {
+      if (loading || running) {
+        throw 'a series is loading or a download is running';
+      }
+      if (indices.some((index) => index < 0 || index >= chapters.length)) {
+        throw `chapter ${indices.find((index) => index < 0 || index >= chapters.length)} is not in the list`;
+      }
+      for (const index of indices) {
+        if (on) {
+          selected.add(index);
+        } else {
+          selected.delete(index);
+        }
       }
       selectionBus.emit(selectionOf());
       push();

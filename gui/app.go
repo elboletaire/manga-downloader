@@ -144,22 +144,26 @@ func (a *App) shutdown(context.Context) {
 // State is everything the window shows except the chapter list, the
 // selection and the log, which have their own calls and events
 type State struct {
-	URL           string      `json:"url"`
-	Loading       bool        `json:"loading"`
-	Loaded        bool        `json:"loaded"`
-	LoadError     string      `json:"loadError"`
-	Title         string      `json:"title"`
-	ChapterCount  int         `json:"chapterCount"`
-	HasDuplicates bool        `json:"hasDuplicates"`
-	Stale         bool        `json:"stale"`
-	SelectedCount int         `json:"selectedCount"`
-	Running       bool        `json:"running"`
-	Cancelling    bool        `json:"cancelling"`
-	Run           RunDTO      `json:"run"`
-	Jobs          []JobDTO    `json:"jobs"`
-	Summary       *SummaryDTO `json:"summary"`
-	Options       OptionsDTO  `json:"options"`
-	Version       string      `json:"version"`
+	URL           string `json:"url"`
+	Loading       bool   `json:"loading"`
+	Loaded        bool   `json:"loaded"`
+	LoadError     string `json:"loadError"`
+	Title         string `json:"title"`
+	ChapterCount  int    `json:"chapterCount"`
+	HasDuplicates bool   `json:"hasDuplicates"`
+	Stale         bool   `json:"stale"`
+	// LoadedLanguage and LoadedScanlator are the filters the list was fetched
+	// with, so the window can tell which of the two went stale
+	LoadedLanguage  string      `json:"loadedLanguage"`
+	LoadedScanlator string      `json:"loadedScanlator"`
+	SelectedCount   int         `json:"selectedCount"`
+	Running         bool        `json:"running"`
+	Cancelling      bool        `json:"cancelling"`
+	Run             RunDTO      `json:"run"`
+	Jobs            []JobDTO    `json:"jobs"`
+	Summary         *SummaryDTO `json:"summary"`
+	Options         OptionsDTO  `json:"options"`
+	Version         string      `json:"version"`
 }
 
 // RunDTO describes the run in progress, or the last one
@@ -230,6 +234,7 @@ func (a *App) State() State {
 		Options:       optionsOf(c.Settings()),
 		Version:       a.version,
 	}
+	st.LoadedLanguage, st.LoadedScanlator = c.LoadedFilters()
 	if err := c.LoadError(); err != nil {
 		st.LoadError = loadMessage(err)
 	}
@@ -315,6 +320,12 @@ func (a *App) Load(url string) error {
 // SetSelected selects or deselects the chapter at index
 func (a *App) SetSelected(index int, on bool) {
 	a.ctrl.SetSelected(index, on)
+}
+
+// SetSelectedMany selects or deselects the chapters at indices in one step. An
+// index out of range rejects the whole call.
+func (a *App) SetSelectedMany(indices []int, on bool) error {
+	return a.ctrl.SetSelectedMany(indices, on)
 }
 
 // SetAll selects or deselects every chapter

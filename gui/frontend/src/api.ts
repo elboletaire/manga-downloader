@@ -18,6 +18,8 @@ export interface Api {
   // Actions. A rejected promise carries the reason as a string (or Error).
   load(url: string): Promise<void>;
   setSelected(index: number, on: boolean): Promise<void>;
+  /** Selects or deselects every index at once; rejects, changing nothing, if one is out of range */
+  setSelectedMany(indices: number[], on: boolean): Promise<void>;
   setAll(on: boolean): Promise<void>;
   /** Selects the chapters in the range text; resolves with how many matched */
   selectRange(text: string): Promise<number>;
@@ -75,6 +77,7 @@ export function createWailsApi(): Api {
 
     load: (url) => app.Load(url),
     setSelected: (index, on) => app.SetSelected(index, on),
+    setSelectedMany: (indices, on) => app.SetSelectedMany(indices, on),
     setAll: (on) => app.SetAll(on),
     selectRange: (text) => app.SelectRange(text),
     setOptions: (options) => app.SetOptions(options as unknown as Parameters<typeof app.SetOptions>[0]),

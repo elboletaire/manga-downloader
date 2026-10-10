@@ -354,3 +354,38 @@ func TestPanickingParserEndsTheLoad(t *testing.T) {
 	// the chapter list is still announced, so the window isn't waiting on it
 	waitUntil(t, "the chapters event", func() bool { return len(sink.named("chapters")) == 1 })
 }
+
+func TestStateCarriesTheLoadedFilters(t *testing.T) {
+	a, _, _ := newTestApp(t, 2)
+	if err := a.ctrl.Configure(func(s *grabber.Settings) { s.Language = "es"; s.Scanlator = "grp" }); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	waitUntil(t, "the load", func() bool { return !a.State().Loading })
+	if st := a.State(); st.LoadedLanguage != "es" || st.LoadedScanlator != "grp" || st.Stale {
+		t.Fatalf("after load: loaded %q/%q, stale %v", st.LoadedLanguage, st.LoadedScanlator, st.Stale)
+	}
+
+	if err := a.ctrl.Configure(func(s *grabber.Settings) { s.Language = "fr" }); err != nil {
+		t.Fatal(err)
+	}
+	st := a.State()
+	if st.LoadedLanguage != "es" || st.LoadedScanlator != "grp" || !st.Stale {
+		t.Errorf("after a language change: loaded %q/%q, stale %v", st.LoadedLanguage, st.LoadedScanlator, st.Stale)
+	}
+}
+
+func TestSetSelectedManyThroughTheApp(t *testing.T) {
+	a, _ := loadedApp(t, 4)
+	if err := a.SetSelectedMany([]int{1, 3}, true); err != nil {
+		t.Fatal(err)
+	}
+	if got := a.Selection(); len(got) != 2 || got[0] != 1 || got[1] != 3 {
+		t.Errorf("Selection = %v", got)
+	}
+	if err := a.SetSelectedMany([]int{7}, true); err == nil {
+		t.Error("App accepted an index out of range")
+	}
+}

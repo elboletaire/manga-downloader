@@ -26,6 +26,8 @@ export function SetOptions(arg1:main.OptionsDTO):Promise<void>;
 
 export function SetSelected(arg1:number,arg2:boolean):Promise<void>;
 
+export function SetSelectedMany(arg1:Array<number>,arg2:boolean):Promise<void>;
+
 export function Start():Promise<void>;
 
 export function State():Promise<main.State>;

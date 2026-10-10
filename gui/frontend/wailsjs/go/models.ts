@@ -133,6 +133,8 @@ export namespace main {
 	    chapterCount: number;
 	    hasDuplicates: boolean;
 	    stale: boolean;
+	    loadedLanguage: string;
+	    loadedScanlator: string;
 	    selectedCount: number;
 	    running: boolean;
 	    cancelling: boolean;
@@ -156,6 +158,8 @@ export namespace main {
 	        this.chapterCount = source["chapterCount"];
 	        this.hasDuplicates = source["hasDuplicates"];
 	        this.stale = source["stale"];
+	        this.loadedLanguage = source["loadedLanguage"];
+	        this.loadedScanlator = source["loadedScanlator"];
 	        this.selectedCount = source["selectedCount"];
 	        this.running = source["running"];
 	        this.cancelling = source["cancelling"];

@@ -43,6 +43,28 @@ describe('createMockApi', () => {
     expect((await api.state()).stale).toBe(false);
   });
 
+  it('selects a set of indices in one call, or none when one is out of range', async () => {
+    const api = createMockApi({ chapters: 10 });
+    await api.load('https://example.com/series/a');
+    await api.setSelectedMany([2, 3, 4], true);
+    expect(await api.selection()).toEqual([2, 3, 4]);
+
+    await expect(api.setSelectedMany([0, 99], true)).rejects.toBe('chapter 99 is not in the list');
+    expect(await api.selection()).toEqual([2, 3, 4]);
+
+    await api.setSelectedMany([3], false);
+    expect(await api.selection()).toEqual([2, 4]);
+  });
+
+  it('reports the loaded language and scanlator, apart from the options', async () => {
+    const api = createMockApi('loaded');
+    await api.setOptions({ ...(await api.state()).options, language: 'es' });
+    const state = await api.state();
+    expect(state.loadedLanguage).toBe('');
+    expect(state.options.language).toBe('es');
+    expect(state.loadedScanlator).toBe(state.options.scanlator);
+  });
+
   it('starts finished with a summary for the done scenario', async () => {
     const api = createMockApi('done');
     const state = await api.state();

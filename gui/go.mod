@@ -7,6 +7,7 @@ replace github.com/elboletaire/manga-downloader => ../
 require (
 	github.com/elboletaire/manga-downloader v0.0.0-00010101000000-000000000000
 	github.com/wailsapp/wails/v2 v2.16.0
+	golang.org/x/sys v0.47.0
 )
 
 require (
@@ -50,6 +51,5 @@ require (
 	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/image v0.44.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.40.0 // indirect
 )

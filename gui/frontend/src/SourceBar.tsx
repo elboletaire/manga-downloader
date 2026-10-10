@@ -22,6 +22,10 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal }: Pr
   const url = typed ?? state.url;
   const busy = state.loading || state.running;
   const same = state.loaded && url.trim() === state.url;
+  // each filter is stale on its own: only the one whose value differs from the
+  // loaded list is flagged
+  const languageStale = state.loaded && state.options.language !== state.loadedLanguage;
+  const scanlatorStale = state.loaded && state.options.scanlator !== state.loadedScanlator;
   // a failed load with nothing listed is told in the chapter area instead
   const problem = loadRefusal !== '' ? loadRefusal : state.loaded ? state.loadError : '';
 
@@ -93,7 +97,7 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal }: Pr
           value={state.options.language}
           placeholder="any"
           disabled={busy}
-          flagged={state.stale}
+          flagged={languageStale}
           onCommit={(language) => onOptions({ language })}
           onError={onError}
         />
@@ -103,7 +107,7 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal }: Pr
           value={state.options.scanlator}
           placeholder="any"
           disabled={busy}
-          flagged={state.stale}
+          flagged={scanlatorStale}
           onCommit={(scanlator) => onOptions({ scanlator })}
           onError={onError}
         />
