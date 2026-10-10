@@ -9,7 +9,6 @@ import (
 
 	"github.com/elboletaire/manga-downloader/downloader"
 	"github.com/elboletaire/manga-downloader/grabber"
-	"github.com/spf13/cobra"
 )
 
 // entryNames opens the zip at path and returns its entry names, in order.
@@ -102,7 +101,6 @@ type fakeSite struct {
 	convert  grabber.ConvertFormats
 }
 
-func (f *fakeSite) InitFlags(cmd *cobra.Command)                  {}
 func (f *fakeSite) Test() (bool, error)                           { return true, nil }
 func (f *fakeSite) FetchChapters() (grabber.Filterables, []error) { return nil, nil }
 func (f *fakeSite) FetchChapter(grabber.Filterable) (*grabber.Chapter, error) {

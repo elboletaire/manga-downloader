@@ -104,6 +104,9 @@ func Run(cmd *cobra.Command, args []string) {
 		cerr(err, "Error parsing --skip-pages: ")
 	}
 
+	// the limits are only read by the download, never while identifying the
+	// site, so clamping before NewSite is the same as clamping after it
+	settings.Normalize()
 	s, errs := grabber.NewSite(getUrlArg(args), &settings)
 	if len(errs) > 0 {
 		color.Red("Errors testing site (a site may be down):")
@@ -115,7 +118,6 @@ func Run(cmd *cobra.Command, args []string) {
 		color.Yellow("Site not recognised")
 		exit(1)
 	}
-	s.InitFlags(cmd)
 
 	// fetch series title
 	title, err := s.FetchTitle()
