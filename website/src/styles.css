@@ -31,8 +31,8 @@
   --success-text: var(--mint-deep);
   --ring: color-mix(in srgb, var(--violet) 55%, transparent);
   --disc: #ebe4fe;
-  --blob-mint: #d3f6eb;
-  --blob-pink: #ffe1eb;
+  --glow-mint: rgb(79 216 176 / 30%);
+  --glow-pink: rgb(255 143 179 / 26%);
   --code-bg: var(--night);
   --code-text: var(--moon);
   --shadow: 0 1px 2px rgb(30 26 51 / 4%), 0 8px 24px -12px rgb(30 26 51 / 14%);
@@ -67,8 +67,8 @@
     --accent-soft: rgb(169 147 255 / 15%);
     --success-text: #5ee0b8;
     --disc: rgb(169 147 255 / 13%);
-    --blob-mint: rgb(79 216 176 / 6%);
-    --blob-pink: rgb(255 143 179 / 6%);
+    --glow-mint: rgb(79 216 176 / 14%);
+    --glow-pink: rgb(255 143 179 / 12%);
     --code-bg: #0f0d1f;
     --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px -12px rgb(0 0 0 / 50%);
     --shadow-lg: 0 2px 4px rgb(0 0 0 / 30%), 0 24px 48px -24px rgb(0 0 0 / 70%);
@@ -290,25 +290,27 @@ code {
   pointer-events: none;
 }
 
+/* Soft light, not objects: a radial fade with no edge, so there is no disc to
+   read as a moon or a missing image. */
 .blob {
   position: absolute;
-  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--glow), transparent);
 }
 
 .blob-mint {
-  width: 360px;
-  height: 360px;
-  right: -170px;
-  top: -190px;
-  background: var(--blob-mint);
+  --glow: var(--glow-mint);
+  width: 640px;
+  height: 640px;
+  right: -240px;
+  top: -280px;
 }
 
 .blob-pink {
-  width: 300px;
-  height: 300px;
-  left: -190px;
+  --glow: var(--glow-pink);
+  width: 560px;
+  height: 560px;
+  left: -280px;
   top: 52%;
-  background: var(--blob-pink);
 }
 
 .hero-inner {
@@ -445,10 +447,19 @@ code {
   place-items: center;
 }
 
-.hero-disc img {
+/* The size goes on the <picture>, not the <img>: a percentage width on the img
+   resolves against a shrink-wrapped picture, which Firefox collapses to 0 for
+   an SVG without an intrinsic size. The mark's ink centre sits 1.6% below its
+   box centre, so it is lifted by that much to look centred in the disc. */
+.hero-disc picture {
   width: 76%;
+}
+
+.hero-disc img {
+  display: block;
+  width: 100%;
   height: auto;
-  transform: translateY(-3%);
+  transform: translateY(-1.6%);
 }
 
 .sparkle {

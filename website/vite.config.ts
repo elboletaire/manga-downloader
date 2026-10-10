@@ -57,8 +57,9 @@ export default defineConfig({
   base,
   plugins: [siteData()],
   build: {
-    // The mark SVGs are tiny; inlining them saves requests above the fold.
-    assetsInlineLimit: 4096,
+    // Never inline assets as data: URIs. Firefox doesn't render the SVG data:
+    // URI in the dark <picture> source, so the hero mascot disappeared there.
+    assetsInlineLimit: 0,
   },
   test: {
     include: ['src/**/*.test.ts', 'build/**/*.test.ts'],

@@ -39,23 +39,49 @@ pnpm preview   # serve dist/
 ## Screenshots
 
 The desktop app section shows four captures from `src/assets/screenshots/`,
-each in a light and a dark version, at 1600 and 1000 px wide: `<name>-<theme>-<width>.webp`
-with a `.png` fallback. A `<picture>` swaps the dark ones in with
-`prefers-color-scheme`, and Vite fingerprints them into `dist`.
+each in a light and a dark version. A `<picture>` swaps the dark ones in with
+`prefers-color-scheme`, and Vite fingerprints them into `dist`. WebP only, which
+every browser the site cares about reads, so there are no PNG fallbacks.
+
+- `app-overview` is the full window, at 1000 and 1600 px wide: the hero.
+- `language-selector`, `chapter-list` and `finished-run` are crops of the
+  2000 px originals in `/tmp/md-fyne-ui/mac-shots/opt/`, at 600 and 1000 px wide.
+  They are cut to the part that matters, so they stay readable at the
+  ~500 px they are shown at. Each gets the window's rounded corners and a soft
+  shadow on a transparent margin of 56 px.
 
 The files are converted offline and committed, so the build needs no image tools.
-To regenerate them from the 2000 px originals (ImageMagick):
+The crop script is [`build/crop-screenshots.sh`](build/crop-screenshots.sh). The
+geometry is `WxH+X+Y` on the 2000x1390 original, with the window's top-left at
+(85,58), so `03-language-selector-*.png` crops to `900x1000+85+58`:
+
+| Crop                | Original                                | Geometry            |
+| ------------------- | --------------------------------------- | ------------------- |
+| `language-selector` | `03-language-selector-{light,dark}.png` | `900x1000+85+58`    |
+| `chapter-list`      | `04-downloading-{light,dark}.png`       | `1265x1000+100+278` |
+| `finished-run`      | `05-done-{light,dark}.png`              | `580x760+1335+248`  |
+
+To regenerate from the originals, run it with the originals' folder and an
+output folder:
+
+```bash
+build/crop-screenshots.sh /tmp/md-fyne-ui/mac-shots/opt src/assets/screenshots
+```
+
+The hero (`app-overview`) is not cropped. Its WebP derivatives come from the
+full window with ImageMagick:
 
 ```bash
 magick IN.png -filter Lanczos -resize 1600x -strip -define webp:method=6 -quality 85 OUT-1600.webp
-magick IN.png -filter Lanczos -resize 1600x -strip -colors 256 -define png:compression-level=9 OUT-1600.png
 ```
 
-Repeat with `1000x` for the smaller width. The PNGs are 256-colour palettes, which
-keeps the fallbacks small; browsers that read WebP never fetch them.
+Repeat with `1000x` for the smaller width.
 
-Keep the `<img>` `width` and `height` (the 1600 px size) so the layout doesn't shift,
-and the first, above-the-fold image eager with `fetchpriority="high"`; the rest are `loading="lazy"`.
+Each crop is resized with ImageMagick to 1000 and 600 px wide, converted with
+`-define webp:method=6 -quality 85`, and stripped of metadata. The `<img>`
+`width` and `height` are the largest derivative's size, so the layout doesn't shift. Every
+screenshot is `loading="lazy"`: none of them is above the fold at 1440×900, and
+the hero text is the LCP element.
 
 ## Another domain
 
