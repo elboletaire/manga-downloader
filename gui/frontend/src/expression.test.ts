@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { celebratesOnOpen, celebrating, savedEverything } from './mascot';
+import { celebratesOnOpen, celebrating, savedEverything } from './expression';
 import type { Summary } from './types';
 
 const clean = (over: Partial<Summary> = {}): Summary => ({
