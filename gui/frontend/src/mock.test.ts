@@ -142,7 +142,61 @@ describe('mockSetupFrom', () => {
       freeze: true,
       dupes: true,
       chapters: 50,
+      site: 'multi',
     });
     expect(mockSetupFrom('?chapters=nope').chapters).toBeGreaterThan(100);
+  });
+
+  it('reads the site, defaulting to multi', () => {
+    expect(mockSetupFrom('?site=plus').site).toBe('plus');
+    expect(mockSetupFrom('?site=bogus').site).toBe('multi');
+  });
+});
+
+describe('mock filters', () => {
+  it('offers the languages of the site, and none for a site without them', async () => {
+    const multi = createMockApi({ scenario: 'loaded', site: 'multi' });
+    expect((await multi.state()).languages).toEqual({ values: ['en', 'es', 'ja'], all: true, selected: 'all' });
+    expect((await multi.state()).scanlators).toBeNull();
+
+    const none = createMockApi({ scenario: 'loaded', site: 'none' });
+    expect((await none.state()).languages).toBeNull();
+    expect((await none.state()).scanlators).toBeNull();
+  });
+
+  it('shows the default edition of a site with no All, and the largest group of an Atsumaru-like one', async () => {
+    const plus = createMockApi({ scenario: 'loaded', site: 'plus' });
+    expect((await plus.state()).languages).toEqual({ values: ['en', 'es'], all: false, selected: 'en' });
+
+    const groups = createMockApi({ scenario: 'loaded', site: 'groups' });
+    expect((await groups.state()).scanlators).toEqual({ values: ['Alpha', 'Delta'], all: true, selected: 'Delta' });
+  });
+
+  it('lists no filters before a load', async () => {
+    const api = createMockApi({ scenario: 'empty', site: 'multi' });
+    expect((await api.state()).languages).toBeNull();
+  });
+
+  it('falls back to all on a language the series lacks, and logs it', async () => {
+    const api = createMockApi({ scenario: 'loaded', site: 'multi' });
+    await api.setOptions({ ...(await api.state()).options, language: 'xx' });
+    await api.load((await api.state()).url);
+
+    const state = await api.state();
+    expect(state.options.language).toBe('all');
+    expect(state.loadedLanguage).toBe('all');
+    expect(state.stale).toBe(false);
+    expect((await api.log()).map((l) => l.text)).toContain(
+      'language "xx" isn\'t in this series, loading all of them instead',
+    );
+  });
+
+  it('falls back to the default edition where the site has no all', async () => {
+    const api = createMockApi({ scenario: 'loaded', site: 'plus' });
+    await api.setOptions({ ...(await api.state()).options, language: 'xx' });
+    await api.load((await api.state()).url);
+
+    expect((await api.state()).options.language).toBe('');
+    expect((await api.state()).languages?.selected).toBe('en');
   });
 });

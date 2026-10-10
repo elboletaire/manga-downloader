@@ -18,6 +18,22 @@ export namespace main {
 	        this.language = source["language"];
 	    }
 	}
+	export class FilterDTO {
+	    values: string[];
+	    all: boolean;
+	    selected: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new FilterDTO(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.values = source["values"];
+	        this.all = source["all"];
+	        this.selected = source["selected"];
+	    }
+	}
 	export class JobDTO {
 	    title: string;
 	    number: number;
@@ -142,6 +158,8 @@ export namespace main {
 	    jobs: JobDTO[];
 	    summary?: SummaryDTO;
 	    options: OptionsDTO;
+	    languages?: FilterDTO;
+	    scanlators?: FilterDTO;
 	    version: string;
 	
 	    static createFrom(source: any = {}) {
@@ -167,6 +185,8 @@ export namespace main {
 	        this.jobs = this.convertValues(source["jobs"], JobDTO);
 	        this.summary = this.convertValues(source["summary"], SummaryDTO);
 	        this.options = this.convertValues(source["options"], OptionsDTO);
+	        this.languages = this.convertValues(source["languages"], FilterDTO);
+	        this.scanlators = this.convertValues(source["scanlators"], FilterDTO);
 	        this.version = source["version"];
 	    }
 	

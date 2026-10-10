@@ -64,22 +64,29 @@ func (a *Atsumaru) FetchTitle() (string, error) {
 }
 
 // ScanlatorOptions lists the scanlation groups that uploaded chapters for the
-// series, by the names --scanlator takes
+// series, by the names --scanlator takes. Without --scanlator the list is the
+// largest group alone, which Current names.
 func (a *Atsumaru) ScanlatorOptions() FilterOptions {
 	info, err := a.mangaInfo()
 	if err != nil {
 		return FilterOptions{}
 	}
 
+	groups := a.groups(info)
 	var names []string
-	for _, g := range a.groups(info) {
+	for _, g := range groups {
 		names = append(names, g.displayName())
 	}
 
-	return FilterOptions{
+	options := FilterOptions{
 		Values: uniqueValues(names),
 		All:    true,
 	}
+	if strings.TrimSpace(a.Settings.Scanlator) == "" && len(groups) > 0 {
+		options.Current = largestGroup(groups).displayName()
+	}
+
+	return options
 }
 
 // FetchChapters returns the chapters of the manga
@@ -195,13 +202,7 @@ func (a *Atsumaru) selectGroups(groups []atsumaruGroup) ([]atsumaruGroup, error)
 		)
 	}
 
-	best := groups[0]
-	for _, g := range groups[1:] {
-		if g.Count > best.Count {
-			best = g
-		}
-	}
-
+	best := largestGroup(groups)
 	if len(groups) > 1 {
 		notice.Warn(
 			"this series has %d scanlation groups (%s); downloading %q (%d chapters) — pick another with --scanlator, or all of them with --scanlator all",
@@ -210,6 +211,19 @@ func (a *Atsumaru) selectGroups(groups []atsumaruGroup) ([]atsumaruGroup, error)
 	}
 
 	return []atsumaruGroup{best}, nil
+}
+
+// largestGroup returns the group with the most chapters, the first one listed
+// on a tie. groups must not be empty.
+func largestGroup(groups []atsumaruGroup) atsumaruGroup {
+	best := groups[0]
+	for _, g := range groups[1:] {
+		if g.Count > best.Count {
+			best = g
+		}
+	}
+
+	return best
 }
 
 // fetchScanlators returns the series' scanlation groups with their names. They

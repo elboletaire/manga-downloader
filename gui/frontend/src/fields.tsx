@@ -19,6 +19,40 @@ interface TextFieldProps {
   className?: string;
 }
 
+interface SelectFieldProps {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  /** Called with the picked value; the select only fires on a change */
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+/** A native select: keyboard and screen reader behaviour come from the browser */
+export function SelectField({ label, value, options, onChange, disabled, className }: SelectFieldProps) {
+  const id = useId();
+
+  return (
+    <div className={`field ${className ?? ''}`}>
+      <label htmlFor={id}>{label}</label>
+      <select
+        id={id}
+        className="input select-input"
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 /** A text option. Escape reverts to the committed value. */
 export function TextField(props: TextFieldProps) {
   const { label, value, onCommit, onError, placeholder, hint, disabled, mono, flagged, className } = props;

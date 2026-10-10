@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -135,6 +136,11 @@ type Controller struct {
 	// with, which Configure can make stale
 	loadedLanguage  string
 	loadedScanlator string
+	// languages and scanlators are the filter options of the site of the last
+	// load, nil for each one it doesn't list. They outlive a failed load, so
+	// its filters can still be changed.
+	languages  *grabber.FilterOptions
+	scanlators *grabber.FilterOptions
 
 	// loadErr is the last load's error, which the view shows under the URL
 	loadErr error
@@ -287,22 +293,47 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 		c.addLog(LogWarn, "site check: "+err.Error())
 	}
 	if site == nil {
+		c.mu.Lock()
+		c.languages, c.scanlators = nil, nil
+		c.mu.Unlock()
 		return errors.New("site not recognised")
 	}
 
 	series, err := core.Open(site, s)
-	if err != nil {
-		return err
+	if err != nil && c.dropUnmatchedFilters(site, s, err) {
+		// the reload gets a site of its own: the failed one may already have
+		// read the filters it was given
+		if retry, _ := c.identify(url, s); retry != nil {
+			site = retry
+			series, err = core.Open(site, s)
+		}
+	}
+
+	// the options are kept whether or not the load worked; a series already
+	// carries them, and asking the site again costs requests
+	var languages, scanlators *grabber.FilterOptions
+	if series != nil {
+		languages, scanlators = series.Languages, series.Scanlators
+	} else {
+		languages, scanlators = core.FilterOptionsOf(site)
 	}
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	c.languages, c.scanlators = languages, scanlators
+	// a value typed in another case takes the site's spelling, so the options
+	// saved, the loaded filters and the selector all agree on it
+	s.Language = listedSpelling(s.Language, languages)
+	s.Scanlator = listedSpelling(s.Scanlator, scanlators)
+	c.loadedLanguage = s.Language
+	c.loadedScanlator = s.Scanlator
+	if err != nil {
+		return err
+	}
 	c.series = series
 	c.selGen++
 	c.selected = make([]bool, len(series.Chapters))
 	c.hasDuplicates = core.HasDuplicateChapterNumbers(series.Chapters)
-	c.loadedLanguage = s.Language
-	c.loadedScanlator = s.Scanlator
 	// the previous series' results would otherwise show next to this title
 	c.jobs, c.bundle, c.byChap, c.failedC = nil, nil, nil, nil
 	c.summary = nil
@@ -310,6 +341,171 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	c.stats = runStats{}
 	c.appendLogLocked(LogInfo, fmt.Sprintf("Loaded %s: %d chapters", series.Title, len(series.Chapters)))
 	return nil
+}
+
+// dropUnmatchedFilters handles a load that found nothing for a filter the
+// series doesn't have, which the window would otherwise just fail on: each
+// such filter is reset to its fallback (see unmatchedFallback), logged, and
+// reported as reset so the caller can reload once. It only looks at errors
+// that mean "no chapters for this filter": a network failure keeps the value.
+func (c *Controller) dropUnmatchedFilters(site grabber.Site, s *grabber.Settings, err error) bool {
+	var noChapters *core.NoChaptersError
+	var chaptersErr *core.ChaptersError
+	if !errors.As(err, &noChapters) && !errors.As(err, &chaptersErr) {
+		return false
+	}
+
+	languages, scanlators := core.FilterOptionsOf(site)
+	// s is the settings the controller holds, so the typed values are read
+	// before they're overwritten
+	typedLanguage, typedScanlator := s.Language, s.Scanlator
+	language, languageReset := unmatchedFallback(typedLanguage, languages)
+	scanlator, scanlatorReset := unmatchedFallback(typedScanlator, scanlators)
+	if !languageReset && !scanlatorReset {
+		return false
+	}
+
+	c.mu.Lock()
+	if languageReset {
+		c.settings.Language = language
+	}
+	if scanlatorReset {
+		c.settings.Scanlator = scanlator
+	}
+	c.mu.Unlock()
+	if languageReset {
+		c.addLog(LogInfo, fallbackMessage("language", typedLanguage, language))
+	}
+	if scanlatorReset {
+		c.addLog(LogInfo, fallbackMessage("scanlation group", typedScanlator, scanlator))
+	}
+
+	return true
+}
+
+// unmatchedFallback is what a typed filter value falls back to when the series
+// doesn't offer it: "all" where the site takes it, the site's own default ("")
+// otherwise. reset is false when there's nothing to fall back from: no value,
+// "all" itself, a site that lists nothing, or a value the series does offer.
+func unmatchedFallback(value string, options *grabber.FilterOptions) (fallback string, reset bool) {
+	if value == "" || value == grabber.FilterAll || options == nil || len(options.Values) == 0 {
+		return "", false
+	}
+	for _, v := range options.Values {
+		if strings.EqualFold(v, value) {
+			return "", false
+		}
+	}
+	if options.All {
+		return grabber.FilterAll, true
+	}
+
+	return "", true
+}
+
+// fallbackMessage is the log line for a filter that was reset
+func fallbackMessage(kind, value, fallback string) string {
+	shown := "the site's default"
+	if fallback == grabber.FilterAll {
+		shown = "all of them"
+	}
+
+	return fmt.Sprintf("%s %q isn't in this series, loading %s instead", kind, value, shown)
+}
+
+// Filter is what a filter's selector offers for the loaded series
+type Filter struct {
+	// Values are the values the site lists for the filter
+	Values []string
+	// All is set when the site also takes "all" (every value, mixed)
+	All bool
+	// Selected is the value the loaded list shows: the one it was loaded with,
+	// or else what the site shows by default (see selectedFilter)
+	Selected string
+}
+
+// Filters returns the language and scanlator selectors: nil for a filter the
+// site doesn't list, or when no site was identified
+func (c *Controller) Filters() (language, scanlator *Filter) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	var chapters grabber.Filterables
+	if c.series != nil {
+		chapters = c.series.Chapters
+	}
+
+	language = newFilter(c.languages, selectedFilter(c.loadedLanguage, c.languages, commonLanguage(chapters)))
+	scanlator = newFilter(c.scanlators, selectedFilter(c.loadedScanlator, c.scanlators, ""))
+
+	return language, scanlator
+}
+
+// newFilter builds the selector of one filter, nil when the site doesn't list it
+func newFilter(options *grabber.FilterOptions, selected string) *Filter {
+	if options == nil || len(options.Values) == 0 {
+		return nil
+	}
+
+	return &Filter{
+		Values:   append([]string(nil), options.Values...),
+		All:      options.All,
+		Selected: selected,
+	}
+}
+
+// listedSpelling returns the spelling the site lists value under when it
+// matches one ignoring case ("delta" is "Delta"), value itself otherwise
+func listedSpelling(value string, options *grabber.FilterOptions) string {
+	if options == nil {
+		return value
+	}
+	for _, v := range options.Values {
+		if strings.EqualFold(v, value) {
+			return v
+		}
+	}
+
+	return value
+}
+
+// selectedFilter is the value the loaded list shows for one filter. A value
+// the list was loaded with is what it shows, in the site's spelling. With none,
+// the site's default shows: Current when the site has one, else the language
+// every chapter shares (sites whose default is one language, like "en"), else
+// every value when the site takes "all". uniform is commonLanguage, or "" for a
+// filter whose chapters don't say.
+func selectedFilter(loaded string, options *grabber.FilterOptions, uniform string) string {
+	switch {
+	case loaded != "" || options == nil:
+		return listedSpelling(loaded, options)
+	case options.Current != "":
+		return options.Current
+	case uniform != "":
+		return uniform
+	case options.All:
+		return grabber.FilterAll
+	}
+
+	return ""
+}
+
+// commonLanguage returns the language every chapter reports, "" when they
+// differ or don't report one
+func commonLanguage(chapters grabber.Filterables) string {
+	lang := ""
+	for i, chap := range chapters {
+		l, ok := chap.(interface{ GetLanguage() string })
+		if !ok {
+			return ""
+		}
+		if i == 0 {
+			lang = l.GetLanguage()
+		} else if l.GetLanguage() != lang {
+			return ""
+		}
+	}
+
+	return lang
 }
 
 // Stale reports whether the language or scanlator filter changed since the

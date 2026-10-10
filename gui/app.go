@@ -163,7 +163,19 @@ type State struct {
 	Jobs            []JobDTO    `json:"jobs"`
 	Summary         *SummaryDTO `json:"summary"`
 	Options         OptionsDTO  `json:"options"`
-	Version         string      `json:"version"`
+	// Languages and Scanlators are what the two filter selectors offer, null
+	// for a filter the site doesn't list
+	Languages  *FilterDTO `json:"languages"`
+	Scanlators *FilterDTO `json:"scanlators"`
+	Version    string     `json:"version"`
+}
+
+// FilterDTO is what a filter's selector offers: the values, whether the site
+// also takes "all", and the value the loaded list shows
+type FilterDTO struct {
+	Values   []string `json:"values"`
+	All      bool     `json:"all"`
+	Selected string   `json:"selected"`
 }
 
 // RunDTO describes the run in progress, or the last one
@@ -235,6 +247,8 @@ func (a *App) State() State {
 		Version:       a.version,
 	}
 	st.LoadedLanguage, st.LoadedScanlator = c.LoadedFilters()
+	language, scanlator := c.Filters()
+	st.Languages, st.Scanlators = filterDTO(language), filterDTO(scanlator)
 	if err := c.LoadError(); err != nil {
 		st.LoadError = loadMessage(err)
 	}
@@ -310,8 +324,14 @@ func (a *App) Load(url string) error {
 			}
 			a.sink.Emit("chapters", a.Chapters())
 		}()
+		// a filter the series doesn't have may have been reset to its fallback,
+		// which the saved options should show too
+		before := optionsOf(a.ctrl.Settings())
 		// the error is kept by the controller and reported through the state
 		_ = a.ctrl.FinishLoad(url)
+		if optionsOf(a.ctrl.Settings()) != before {
+			a.save()
+		}
 	}()
 
 	return nil
@@ -523,6 +543,15 @@ func loadMessage(err error) string {
 	}
 
 	return err.Error()
+}
+
+// filterDTO converts a filter's selector, nil when the site doesn't list it
+func filterDTO(f *Filter) *FilterDTO {
+	if f == nil {
+		return nil
+	}
+
+	return &FilterDTO{Values: f.Values, All: f.All, Selected: f.Selected}
 }
 
 func runDTO(r RunInfo) RunDTO {

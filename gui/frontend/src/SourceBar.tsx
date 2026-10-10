@@ -4,9 +4,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AUTO_LOAD_DELAY_MS, shouldAutoLoad } from './autoLoad';
-import { TextField } from './fields';
+import { SelectField, TextField } from './fields';
+import { filterControl, filtersIdentified, filterOptions, type FilterControl, type FilterKind } from './filters';
 import { AlertIcon, LinkIcon, Logo, RefreshIcon, Spinner } from './icons';
-import type { Options, State } from './types';
+import type { FilterChoice, Options, State } from './types';
 
 interface Props {
   state: State;
@@ -44,8 +45,18 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
   };
   // each filter is stale on its own: only the one whose value differs from the
   // loaded list is flagged
+  // free text until the first load; after it, each filter is the series' own
+  // selector, and a picked value reloads at once, so the filters are never
+  // left unapplied
+  const identified = filtersIdentified(state);
   const languageStale = state.loaded && state.options.language !== state.loadedLanguage;
   const scanlatorStale = state.loaded && state.options.scanlator !== state.loadedScanlator;
+  const pick = (patch: Partial<Options>) => {
+    onOptions(patch)
+      .then(() => onLoad(state.url))
+      // the refusal is already shown by onOptions' caller
+      .catch(() => undefined);
+  };
   // a failed load with nothing listed is told in the chapter area instead
   const problem = loadRefusal !== '' ? loadRefusal : state.loaded ? state.loadError : '';
 
@@ -115,24 +126,28 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
 
       <div className="filter-row">
         <span className="filter-label">Filter the list</span>
-        <TextField
-          className="inline-field"
+        <FilterField
+          kind="language"
           label="Language"
-          value={state.options.language}
-          placeholder="any"
-          disabled={busy}
+          typed={state.options.language}
+          choice={state.languages}
+          control={filterControl(state, state.languages)}
+          busy={busy}
           flagged={languageStale}
-          onCommit={(language) => onOptions({ language })}
+          onPick={(language) => pick({ language })}
+          onOptions={onOptions}
           onError={onError}
         />
-        <TextField
-          className="inline-field"
+        <FilterField
+          kind="scanlator"
           label="Scanlator"
-          value={state.options.scanlator}
-          placeholder="any"
-          disabled={busy}
+          typed={state.options.scanlator}
+          choice={state.scanlators}
+          control={filterControl(state, state.scanlators)}
+          busy={busy}
           flagged={scanlatorStale}
-          onCommit={(scanlator) => onOptions({ scanlator })}
+          onPick={(scanlator) => pick({ scanlator })}
+          onOptions={onOptions}
           onError={onError}
         />
         {state.stale ? (
@@ -144,7 +159,9 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
             </button>
           </div>
         ) : (
-          <span className="filter-hint">Applied when the series loads</span>
+          <span className="filter-hint">
+            {identified ? 'Picking one reloads the series' : 'Applied when the series loads'}
+          </span>
         )}
       </div>
 
@@ -161,5 +178,74 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
         </div>
       )}
     </header>
+  );
+}
+
+interface FilterFieldProps {
+  kind: FilterKind;
+  label: string;
+  /** The value typed (or last picked), shown until a load and by a site with no choice */
+  typed: string;
+  /** What the loaded series offers, null when the site lists none */
+  choice: FilterChoice | null;
+  control: FilterControl;
+  busy: boolean;
+  flagged: boolean;
+  onPick: (value: string) => void;
+  onOptions: (patch: Partial<Options>) => Promise<void>;
+  onError: (message: string) => void;
+}
+
+/** One filter: free text before a load, then a selector or a disabled field */
+function FilterField({
+  kind,
+  label,
+  typed,
+  choice,
+  control,
+  busy,
+  flagged,
+  onPick,
+  onOptions,
+  onError,
+}: FilterFieldProps) {
+  if (control === 'text') {
+    return (
+      <TextField
+        className="inline-field"
+        label={label}
+        value={typed}
+        placeholder="any"
+        disabled={busy}
+        flagged={flagged}
+        onCommit={(value) => onOptions(kind === 'language' ? { language: value } : { scanlator: value })}
+        onError={onError}
+      />
+    );
+  }
+  if (control === 'disabled' || choice === null) {
+    return (
+      <TextField
+        className="inline-field"
+        label={label}
+        value={typed}
+        placeholder="any"
+        disabled
+        hint={kind === 'language' ? 'This site has no language choice' : 'This site has no scanlation groups to choose from'}
+        onCommit={() => Promise.resolve()}
+        onError={onError}
+      />
+    );
+  }
+
+  return (
+    <SelectField
+      className="inline-field"
+      label={label}
+      value={choice.selected}
+      options={filterOptions(choice, kind)}
+      disabled={busy}
+      onChange={onPick}
+    />
   );
 }

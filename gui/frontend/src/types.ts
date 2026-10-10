@@ -47,6 +47,18 @@ export interface Summary {
   error: string;
 }
 
+/**
+ * What a language or scanlator selector offers, for a series the site lists
+ * them for. Values are what --language and --scanlator take.
+ */
+export interface FilterChoice {
+  values: string[];
+  /** The site also takes "all": every value, mixed */
+  all: boolean;
+  /** The value the loaded list shows; "" when the site shows no single one */
+  selected: string;
+}
+
 /** The window's state, without the chapter list, selection and log */
 export interface State {
   url: string;
@@ -69,6 +81,10 @@ export interface State {
   jobs: Job[];
   summary: Summary | null;
   options: Options;
+  /** null when the site doesn't list languages (or nothing is identified yet) */
+  languages: FilterChoice | null;
+  /** null when the site doesn't list scanlation groups */
+  scanlators: FilterChoice | null;
   version: string;
 }
 

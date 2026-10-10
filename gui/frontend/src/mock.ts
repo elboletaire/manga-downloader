@@ -7,9 +7,17 @@
 // stale, running, bundle, cancelling or done. &freeze stops the simulated run
 // from moving (stable screenshots), &dupes lists some numbers twice, once per
 // language, and &chapters=N sets the list's length.
+//
+// &site= picks what the series lists for the two filters: multi (the default:
+// languages en, es, ja with All, no groups), plus (Manga Plus: languages
+// without All, the URL's edition shown by default), groups (Atsumaru: groups
+// with All, the largest shown by default, no languages), or none (both fields
+// disabled). A language or group the series doesn't list falls back on load,
+// as the backend does: typed "xx" under multi loads "all", under plus the
+// default edition.
 
 import type { Api, Unsubscribe } from './api';
-import type { Chapter, Job, LogLine, Options, State, Summary } from './types';
+import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary } from './types';
 
 const CHAPTERS = 312;
 const PAGES = 12;
@@ -19,6 +27,10 @@ const SCENARIOS = ['empty', 'loading', 'error', 'loaded', 'stale', 'running', 'b
 
 export type Scenario = (typeof SCENARIOS)[number];
 
+const SITES = ['multi', 'plus', 'groups', 'none'] as const;
+
+export type MockSite = (typeof SITES)[number];
+
 export interface MockSetup {
   scenario: Scenario;
   /** The simulated run doesn't advance */
@@ -26,6 +38,32 @@ export interface MockSetup {
   /** Some numbers are listed twice, in two languages */
   dupes: boolean;
   chapters: number;
+  site: MockSite;
+}
+
+/** What the mock series offers for each filter; null when the site lists none */
+interface MockOffer {
+  values: string[];
+  all: boolean;
+  /** The value shown when no filter is set, for the sites that show one */
+  current: string;
+}
+
+interface MockOffers {
+  language: MockOffer | null;
+  scanlator: MockOffer | null;
+}
+
+const OFFERS: Record<MockSite, MockOffers> = {
+  multi: { language: { values: ['en', 'es', 'ja'], all: true, current: '' }, scanlator: null },
+  plus: { language: { values: ['en', 'es'], all: false, current: 'en' }, scanlator: null },
+  groups: { language: null, scanlator: { values: ['Alpha', 'Delta'], all: true, current: 'Delta' } },
+  none: { language: null, scanlator: null },
+};
+
+function siteFrom(search: string): MockSite {
+  const value = new URLSearchParams(search).get('site');
+  return (SITES as readonly string[]).includes(value ?? '') ? (value as MockSite) : 'multi';
 }
 
 function scenarioFrom(search: string): Scenario {
@@ -42,6 +80,7 @@ export function mockSetupFrom(search: string): MockSetup {
     freeze: params.has('freeze'),
     dupes: params.has('dupes'),
     chapters: Number.isInteger(n) && n > 0 ? n : CHAPTERS,
+    site: siteFrom(search),
   };
 }
 
@@ -117,13 +156,16 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     freeze,
     dupes,
     chapters: chapterCount,
+    site,
   } = {
     scenario: 'empty' as Scenario,
     freeze: false,
     dupes: false,
     chapters: CHAPTERS,
+    site: 'multi' as MockSite,
     ...(typeof setup === 'string' ? { scenario: setup } : setup),
   };
+  const offers = OFFERS[site];
   const options = defaultOptions();
   let url = '';
   let loading = false;
@@ -133,6 +175,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   let chapters: Chapter[] = [];
   let selected = new Set<number>();
   let applied = { language: '', scanlator: '' };
+  // whether a load has been attempted, so the filters are the series' own choices
+  let identified = false;
   let running = false;
   let cancelling = false;
   let runChapters = 0;
@@ -153,6 +197,35 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     log = [...log, { level, text }].slice(-500);
     logBus.emit(log);
   };
+  // what a filter's selector shows: the value the list was loaded with, else
+  // the site's default (its current value, else every value where it takes all)
+  const filterOf = (kind: 'language' | 'scanlator'): FilterChoice | null => {
+    const offer = offers[kind];
+    if (!identified || offer === null) {
+      return null;
+    }
+    const loadedWith = applied[kind];
+    let selected = loadedWith;
+    if (loadedWith === '') {
+      selected = offer.current !== '' ? offer.current : offer.all ? 'all' : '';
+    }
+    return { values: [...offer.values], all: offer.all, selected };
+  };
+  // a typed value the series doesn't offer falls back as the backend does: to
+  // "all" where the site takes it, else to the site's default
+  const fallbackFor = (kind: 'language' | 'scanlator', label: string): void => {
+    const offer = offers[kind];
+    const typed = options[kind];
+    if (offer === null || typed === '' || typed === 'all' || offer.values.includes(typed)) {
+      return;
+    }
+    const fallback = offer.all ? 'all' : '';
+    options[kind] = fallback;
+    pushLog(
+      'info',
+      `${label} "${typed}" isn't in this series, loading ${fallback === 'all' ? 'all of them' : "the site's default"} instead`,
+    );
+  };
   const snapshot = (): State => ({
     url,
     loading,
@@ -164,6 +237,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     stale: loaded && (options.language !== applied.language || options.scanlator !== applied.scanlator),
     loadedLanguage: applied.language,
     loadedScanlator: applied.scanlator,
+    languages: filterOf('language'),
+    scanlators: filterOf('scanlator'),
     selectedCount: selected.size,
     running,
     cancelling,
@@ -178,6 +253,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   function finishLoad(): void {
     loading = false;
     loaded = true;
+    identified = true;
+    fallbackFor('language', 'language');
+    fallbackFor('scanlator', 'scanlation group');
     title = 'The Cartographer of Lost Harbours';
     chapters = mockChapters(chapterCount, dupes || url.includes('dupes') || options.language === 'all');
     applied = { language: options.language, scanlator: options.scanlator };
@@ -193,6 +271,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   function failLoad(): void {
     loading = false;
     loaded = false;
+    identified = true;
+    applied = { language: options.language, scanlator: options.scanlator };
     chapters = [];
     selected = new Set<number>();
     loadError = "Couldn't fetch the chapter list: unexpected status 403 Forbidden";
