@@ -147,7 +147,7 @@ func (s Sacachispa) FetchChapter(f Filterable) (*Chapter, error) {
 
 	// a chapter may have several releases; prefer the requested language
 	release := rels.Data[0]
-	if lang := s.GetPreferredLanguage(); lang != "" {
+	if lang := s.GetPreferredLanguage(); lang != "" && lang != FilterAll {
 		for _, r := range rels.Data {
 			if r.Language == lang {
 				release = r

@@ -337,10 +337,10 @@ var mangafireLangAliases = map[string]string{
 }
 
 // mangafireLanguage resolves the --language value to a site language. An empty
-// value yields the zero value (leave the site's default list alone).
+// value, or "all", yields the zero value (leave the site's default list alone).
 func mangafireLanguage(v string) (mangafireLang, error) {
 	v = strings.ToLower(strings.TrimSpace(v))
-	if v == "" {
+	if v == "" || v == FilterAll {
 		return mangafireLang{}, nil
 	}
 	if a, ok := mangafireLangAliases[v]; ok {

@@ -308,6 +308,8 @@ Some sites, such as MangaDex, list each chapter once per language. Use
 manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece 1-10
 ~~~
 
+On sites that list several languages, `--language all` downloads every one of them.
+
 Sites that host several scanlation groups' versions of the same chapter download
 the group with the most chapters, and list the other groups. Use
 `--scanlator <name>` to pick a group, or `--scanlator all` to download every

@@ -3,6 +3,8 @@
 package core
 
 import (
+	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -138,5 +140,73 @@ func TestAllChaptersRangeNotStartingAtOne(t *testing.T) {
 	want := ranges.Range{Begin: 280, End: 282.5}
 	if got != want {
 		t.Errorf("expected %+v, got %+v", want, got)
+	}
+}
+
+// listSite is a site with one chapter list and no filter options
+type listSite struct {
+	grabber.Site
+	chapters grabber.Filterables
+}
+
+func (f listSite) FetchTitle() (string, error) { return "Title", nil }
+
+func (f listSite) FetchChapters() (grabber.Filterables, []error) { return f.chapters, nil }
+
+// listedSite also lists its languages and scanlation groups
+type listedSite struct {
+	listSite
+}
+
+func (f listedSite) LanguageOptions() grabber.FilterOptions {
+	return grabber.FilterOptions{Values: []string{"en", "es"}, All: true}
+}
+
+func (f listedSite) ScanlatorOptions() grabber.FilterOptions {
+	return grabber.FilterOptions{Values: []string{"Alpha"}, All: true}
+}
+
+func TestOpenFillsFilterOptions(t *testing.T) {
+	site := listedSite{listSite{chapters: grabber.Filterables{grabber.Chapter{Number: 1}}}}
+
+	series, err := Open(site, &grabber.Settings{})
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	if series.Languages == nil || !reflect.DeepEqual(series.Languages.Values, []string{"en", "es"}) || !series.Languages.All {
+		t.Errorf("Languages = %+v", series.Languages)
+	}
+	if series.Scanlators == nil || !reflect.DeepEqual(series.Scanlators.Values, []string{"Alpha"}) {
+		t.Errorf("Scanlators = %+v", series.Scanlators)
+	}
+}
+
+func TestOpenWithoutListersHasNoFilterOptions(t *testing.T) {
+	site := listSite{chapters: grabber.Filterables{grabber.Chapter{Number: 1}}}
+
+	series, err := Open(site, &grabber.Settings{})
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	if series.Languages != nil || series.Scanlators != nil {
+		t.Errorf("Languages = %+v, Scanlators = %+v; want both nil", series.Languages, series.Scanlators)
+	}
+}
+
+func TestFilterOptionsOfSurvivesNoChapters(t *testing.T) {
+	site := listedSite{}
+
+	_, err := Open(site, &grabber.Settings{Language: "xx"})
+	var nerr *NoChaptersError
+	if !errors.As(err, &nerr) {
+		t.Fatalf("Open() error = %v, want a NoChaptersError", err)
+	}
+
+	languages, scanlators := FilterOptionsOf(site)
+	if languages == nil || !reflect.DeepEqual(languages.Values, []string{"en", "es"}) {
+		t.Errorf("languages = %+v", languages)
+	}
+	if scanlators == nil || !reflect.DeepEqual(scanlators.Values, []string{"Alpha"}) {
+		t.Errorf("scanlators = %+v", scanlators)
 	}
 }

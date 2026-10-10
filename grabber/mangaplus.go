@@ -302,6 +302,29 @@ func (m *Mangaplus) FetchChapters() (chapters Filterables, errs []error) {
 	return chapters, nil
 }
 
+// LanguageOptions lists the languages of the editions. Each one is a separate
+// edition, so without --language the list is the edition the URL points at.
+func (m *Mangaplus) LanguageOptions() FilterOptions {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.detail == nil {
+		return FilterOptions{}
+	}
+
+	var flags []string
+	for _, code := range m.detail.languageCodes() {
+		flags = append(flags, mangaplusFlagCode(code))
+	}
+
+	options := FilterOptions{Values: uniqueValues(flags)}
+	if m.language != "" {
+		options.Current = mangaplusFlagCode(m.language)
+	}
+
+	return options
+}
+
 // FetchChapter fetches a chapter and its pages
 func (m *Mangaplus) FetchChapter(f Filterable) (*Chapter, error) {
 	chap := f.(*MangaplusChapter)
@@ -902,29 +925,34 @@ func mangaplusLanguageName(code string) string {
 	return code
 }
 
+// mangaplusFlagCode maps a language code to the way --language takes it ("en"
+// rather than the API's "eng"), keeping any code without a short form
+func mangaplusFlagCode(code string) string {
+	for short, long := range mangaplusLanguages {
+		if long == code {
+			return short
+		}
+	}
+
+	return code
+}
+
 // mangaplusFlagLanguages lists language codes the way --language takes them
-// ("en" rather than the API's "eng"), keeping any code without a short form
 func mangaplusFlagLanguages(codes []string) string {
 	flags := make([]string, 0, len(codes))
 	for _, code := range codes {
-		flag := code
-		for short, long := range mangaplusLanguages {
-			if long == code {
-				flag = short
-				break
-			}
-		}
-		flags = append(flags, flag)
+		flags = append(flags, mangaplusFlagCode(code))
 	}
 
 	return strings.Join(flags, ", ")
 }
 
 // mangaplusLanguage maps the --language flag to the API's code. An unknown code
-// is kept as-is, so it matches no edition instead of a default one.
+// is kept as-is, so it matches no edition instead of a default one. "all" is
+// the link's own edition, as an empty value is.
 func mangaplusLanguage(lang string) string {
 	lang = strings.ToLower(strings.TrimSpace(lang))
-	if lang == "" {
+	if lang == "" || lang == FilterAll {
 		return ""
 	}
 	if code, ok := mangaplusLanguages[lang]; ok {

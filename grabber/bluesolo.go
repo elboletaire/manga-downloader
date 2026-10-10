@@ -58,6 +58,26 @@ func (b *Bluesolo) FetchTitle() (string, error) {
 	return b.title, nil
 }
 
+// LanguageOptions lists the languages of the chapters that can still be read
+func (b *Bluesolo) LanguageOptions() FilterOptions {
+	feed, err := b.fetchComic()
+	if err != nil {
+		return FilterOptions{}
+	}
+
+	var languages []string
+	for _, c := range feed.Comic.Chapters {
+		if c.Licensed == 0 {
+			languages = append(languages, c.Language)
+		}
+	}
+
+	return FilterOptions{
+		Values: uniqueValues(languages),
+		All:    true,
+	}
+}
+
 // FetchChapters returns the chapters of the manga
 func (b *Bluesolo) FetchChapters() (chapters Filterables, errs []error) {
 	feed, err := b.fetchComic()
@@ -70,7 +90,7 @@ func (b *Bluesolo) FetchChapters() (chapters Filterables, errs []error) {
 			// licensed chapters can't be read anymore, skip them
 			continue
 		}
-		if b.Settings.Language != "" && c.Language != b.Settings.Language {
+		if b.Settings.Language != "" && b.Settings.Language != FilterAll && c.Language != b.Settings.Language {
 			continue
 		}
 

@@ -14,10 +14,16 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
+// mangadexAPI is the API's base URL (a var so tests can point it at a local
+// server)
+var mangadexAPI = "https://api.mangadex.org"
+
 // Mangadex is a grabber for mangadex.org
 type Mangadex struct {
 	*Grabber
 	title string
+	// manga caches the manga endpoint, read for the title and the languages
+	manga *mangadexManga
 	// rateLimiter rate limiter for the FetchChapter method. This call uses the '/at-home' endpoint which has a rate limit
 	// of 40 calls per minute, if we exceed this limit we get a 429, and the consequent chapters fail. This may eventually
 	// lead to an IP ban.
@@ -48,20 +54,8 @@ func (m *Mangadex) FetchTitle() (string, error) {
 		return m.title, nil
 	}
 
-	id := getUuid(m.URL)
-
-	rbody, err := http.Get(http.RequestParams{
-		URL:     "https://api.mangadex.org/manga/" + id,
-		Referer: m.BaseUrl(),
-	})
+	body, err := m.fetchManga()
 	if err != nil {
-		return "", err
-	}
-	defer rbody.Close()
-
-	// decode json response
-	body := mangadexManga{}
-	if err = json.NewDecoder(rbody).Decode(&body); err != nil {
 		return "", err
 	}
 
@@ -88,6 +82,48 @@ func (m *Mangadex) FetchTitle() (string, error) {
 	return m.title, nil
 }
 
+// fetchManga returns the manga endpoint's data, fetched once: FetchTitle and
+// LanguageOptions both read it
+func (m *Mangadex) fetchManga() (*mangadexManga, error) {
+	if m.manga != nil {
+		return m.manga, nil
+	}
+
+	id := getUuid(m.URL)
+
+	rbody, err := http.Get(http.RequestParams{
+		URL:     mangadexAPI + "/manga/" + id,
+		Referer: m.BaseUrl(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer rbody.Close()
+
+	// decode json response
+	body := &mangadexManga{}
+	if err = json.NewDecoder(rbody).Decode(body); err != nil {
+		return nil, err
+	}
+	m.manga = body
+
+	return body, nil
+}
+
+// LanguageOptions lists the languages the series is translated into. The feed
+// is filtered by language, so its own chapters can't tell them apart.
+func (m *Mangadex) LanguageOptions() FilterOptions {
+	body, err := m.fetchManga()
+	if err != nil {
+		return FilterOptions{}
+	}
+
+	return FilterOptions{
+		Values: uniqueValues(body.Data.Attributes.AvailableTranslatedLanguages),
+		All:    true,
+	}
+}
+
 // FetchChapters returns the chapters of the manga
 func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 	id := getUuid(m.URL)
@@ -96,14 +132,14 @@ func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 	var fetchChaps func(int)
 
 	fetchChaps = func(offset int) {
-		uri := fmt.Sprintf("https://api.mangadex.org/manga/%s/feed", id)
+		uri := fmt.Sprintf("%s/manga/%s/feed", mangadexAPI, id)
 		params := url.Values{}
 		params.Add("limit", fmt.Sprint(baseOffset))
 		params.Add("order[volume]", "asc")
 		params.Add("order[chapter]", "asc")
 		params.Add("offset", fmt.Sprint(offset))
-		if m.Settings.Language != "" {
-			params.Add("translatedLanguage[]", m.Settings.Language)
+		if lang := m.Settings.Language; lang != "" && lang != FilterAll {
+			params.Add("translatedLanguage[]", lang)
 		}
 		uri = fmt.Sprintf("%s?%s", uri, params.Encode())
 
@@ -156,7 +192,7 @@ func (m Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 	chap := f.(*MangadexChapter)
 	// download json
 	rbody, err := http.Get(http.RequestParams{
-		URL: "https://api.mangadex.org/at-home/server/" + chap.Id,
+		URL: mangadexAPI + "/at-home/server/" + chap.Id,
 	})
 	if err != nil {
 		return nil, err
@@ -193,8 +229,9 @@ type mangadexManga struct {
 	Id   string
 	Data struct {
 		Attributes struct {
-			Title     map[string]string
-			AltTitles altTitles
+			Title                        map[string]string
+			AltTitles                    altTitles
+			AvailableTranslatedLanguages []string
 		}
 	}
 }

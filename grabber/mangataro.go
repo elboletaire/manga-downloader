@@ -24,10 +24,22 @@ type Mangataro struct {
 	title   string
 	doc     *goquery.Document
 	mangaID string
+	// languages are the languages of every chapter the series lists, before
+	// the --language filter
+	languages []string
 }
 
 func NewMangataro(g *Grabber) *Mangataro {
 	return &Mangataro{Grabber: g}
+}
+
+// LanguageOptions lists the languages the series has chapters in. The chapters
+// are only fetched once FetchChapters has read them, so this is valid after it.
+func (m *Mangataro) LanguageOptions() FilterOptions {
+	return FilterOptions{
+		Values: uniqueValues(m.languages),
+		All:    true,
+	}
 }
 
 // MangataroChapter represents a Mangataro Chapter
@@ -105,7 +117,8 @@ func (m *Mangataro) FetchChapters() (chapters Filterables, errs []error) {
 		}
 
 		for _, c := range feed.Chapters {
-			if c.Language != language {
+			m.languages = append(m.languages, c.Language)
+			if language != FilterAll && c.Language != language {
 				continue
 			}
 			num, err := strconv.ParseFloat(c.Chapter, 64)
