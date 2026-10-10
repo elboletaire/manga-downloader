@@ -3,7 +3,6 @@ import {
   RELEASES_URL,
   archLabel,
   chooseDownload,
-  cliAssetNames,
   detectPlatform,
   guiAssetNames,
   resolveAssets,
@@ -61,20 +60,10 @@ describe('asset names', () => {
     expect(guiAssetNames(tag, { os: 'unknown', arch: 'unknown' })).toEqual([])
   })
 
-  it('names the command line archives', () => {
-    expect(cliAssetNames(tag, { os: 'windows', arch: 'amd64' })).toEqual(['manga-downloader-v1.11.0-windows-amd64.zip'])
-    expect(cliAssetNames(tag, { os: 'windows', arch: '386' })[0]).toBe('manga-downloader-v1.11.0-windows-32bit-legacy.zip')
-    expect(cliAssetNames(tag, { os: 'macos', arch: 'unknown' })).toEqual(['manga-downloader-v1.11.0-darwin-arm64.tar.gz'])
-    expect(cliAssetNames(tag, { os: 'macos', arch: 'amd64' })).toEqual(['manga-downloader-v1.11.0-darwin-amd64.tar.gz'])
-    expect(cliAssetNames(tag, { os: 'linux', arch: '386' })).toEqual(['manga-downloader-v1.11.0-linux-386.tar.gz'])
-  })
-
   it('labels architectures', () => {
     expect(archLabel('manga-downloader-gui-v1.11.0-darwin-universal.zip')).toBe('Universal')
-    expect(archLabel('manga-downloader-v1.11.0-darwin-arm64.tar.gz')).toBe('Apple silicon')
     expect(archLabel('manga-downloader-v1.11.0-windows-arm64.zip')).toBe('ARM64')
     expect(archLabel('manga-downloader-v1.11.0-windows-amd64.zip')).toBe('x64')
-    expect(archLabel('manga-downloader-v1.11.0-windows-32bit-legacy.zip')).toBe('32-bit')
   })
 })
 

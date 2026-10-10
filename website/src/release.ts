@@ -91,27 +91,6 @@ export function guiAssetNames(tag: string, p: Platform): string[] {
   }
 }
 
-/** Command line asset names for a platform, in order of preference. */
-export function cliAssetNames(tag: string, p: Platform): string[] {
-  const base = `manga-downloader-${tag}`
-  switch (p.os) {
-    case 'windows':
-      if (p.arch === 'arm64') return [`${base}-windows-arm64.zip`, `${base}-windows-amd64.zip`]
-      if (p.arch === '386') return [`${base}-windows-32bit-legacy.zip`, `${base}-windows-386.zip`]
-      return [`${base}-windows-amd64.zip`]
-    case 'macos':
-      // Browsers rarely say which Mac they run on, and Apple silicon is the
-      // safe default: Intel Macs are the ones that have to ask.
-      return [`${base}-darwin-${p.arch === 'amd64' ? 'amd64' : 'arm64'}.tar.gz`]
-    case 'linux': {
-      const arch = p.arch === 'unknown' ? 'amd64' : p.arch
-      return [`${base}-linux-${arch}.tar.gz`]
-    }
-    default:
-      return []
-  }
-}
-
 export function findAsset(release: Release, names: string[]): ReleaseAsset | undefined {
   for (const name of names) {
     const asset = release.assets.find((a) => a.name === name)
@@ -123,11 +102,8 @@ export function findAsset(release: Release, names: string[]): ReleaseAsset | und
 /** Human label for the architecture baked into an asset name. */
 export function archLabel(assetName: string): string {
   if (/universal/.test(assetName)) return 'Universal'
-  if (/darwin-arm64/.test(assetName)) return 'Apple silicon'
-  if (/darwin-amd64/.test(assetName)) return 'Intel'
   if (/arm64/.test(assetName)) return 'ARM64'
   if (/amd64/.test(assetName)) return 'x64'
-  if (/32bit|386/.test(assetName)) return '32-bit'
   return ''
 }
 
