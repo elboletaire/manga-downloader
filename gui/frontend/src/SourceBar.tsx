@@ -2,7 +2,8 @@
 // that shape the chapter list the site returns (language, scanlator). They sit
 // together because all three only take effect when the series is (re)loaded.
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AUTO_LOAD_DELAY_MS, shouldAutoLoad } from './autoLoad';
 import { TextField } from './fields';
 import { AlertIcon, LinkIcon, Logo, RefreshIcon, Spinner } from './icons';
 import type { Options, State } from './types';
@@ -24,6 +25,23 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
   const url = typed ?? state.url;
   const busy = state.loading || state.running;
   const same = state.loaded && url.trim() === state.url;
+  // a pasted or typed series URL loads once the typing pauses; the timer reads
+  // the latest state, since it fires after the render that started it
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const latest = useRef({ url: state.url, busy });
+  useEffect(() => {
+    latest.current = { url: state.url, busy };
+  }, [state.url, busy]);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const changeUrl = (value: string) => {
+    setTyped(value);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      if (shouldAutoLoad(value, latest.current)) {
+        onLoad(value.trim());
+      }
+    }, AUTO_LOAD_DELAY_MS);
+  };
   // each filter is stale on its own: only the one whose value differs from the
   // loaded list is flagged
   const languageStale = state.loaded && state.options.language !== state.loadedLanguage;
@@ -42,6 +60,8 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
           className="url-form"
           onSubmit={(e) => {
             e.preventDefault();
+            // Enter loads now, so the pending automatic load must not fire too
+            clearTimeout(timer.current);
             onLoad(url);
           }}
         >
@@ -58,7 +78,7 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
               aria-busy={busy}
               spellCheck={false}
               autoComplete="off"
-              onChange={(e) => setTyped(e.target.value)}
+              onChange={(e) => changeUrl(e.target.value)}
               onFocus={(e) => e.currentTarget.select()}
             />
             {url !== '' && !busy && (
@@ -67,7 +87,7 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
                 className="url-clear"
                 aria-label="Clear the URL"
                 title="Clear"
-                onClick={() => setTyped('')}
+                onClick={() => changeUrl('')}
               >
                 ×
               </button>
