@@ -13,7 +13,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
-	"github.com/fatih/color"
+	"github.com/elboletaire/manga-downloader/notice"
 )
 
 // Baozimh is a grabber for baozimh.com (包子漫画). The series page is plain
@@ -244,7 +244,7 @@ func (m *Baozimh) FetchChapter(f Filterable) (*Chapter, error) {
 			if img == "" {
 				// len(pages)+1 matches the 1-based Number the next page would get,
 				// rather than the 0-based DOM index (which drifts after a skip)
-				color.Yellow("page %d of %s has no URL to fetch from 😕 (will be ignored)", len(pages)+1, f.GetTitle())
+				notice.Warn("page %d of %s has no URL to fetch from 😕 (will be ignored)", len(pages)+1, f.GetTitle())
 				return
 			}
 			if seen[img] {

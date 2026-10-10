@@ -11,7 +11,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
-	"github.com/fatih/color"
+	"github.com/elboletaire/manga-downloader/notice"
 )
 
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)
@@ -493,7 +493,7 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 	for i, img := range pimages {
 		if img == "" {
 			// this error is not critical and is not from our side, so just log it out
-			color.Yellow("page %d of %s has no URL to fetch from 😕 (will be ignored)", i, chapter.GetTitle())
+			notice.Warn("page %d of %s has no URL to fetch from 😕 (will be ignored)", i, chapter.GetTitle())
 			continue
 		}
 		if !strings.HasPrefix(img, "http") {
