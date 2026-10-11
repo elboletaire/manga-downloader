@@ -1698,6 +1698,42 @@ fieldset:disabled .check {
   opacity: 0.8;
 }
 
+a.version {
+  text-decoration: none;
+}
+
+a.version:hover {
+  color: var(--text-2);
+  text-decoration: underline;
+}
+
+.version-group {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* the "!" that flags a newer release */
+.update-badge {
+  display: block;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--warning-solid);
+}
+
+/* the disc is filled with the soft tone, the ring and the mark take currentColor */
+.update-badge .update-disc {
+  fill: var(--warning-soft);
+  stroke: currentcolor;
+}
+
+.update-badge svg {
+  display: block;
+  overflow: visible;
+}
+
 .log-drawer {
   position: fixed;
   left: 16px;

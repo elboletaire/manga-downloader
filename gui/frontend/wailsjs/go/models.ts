@@ -140,6 +140,20 @@ export namespace main {
 	        this.error = source["error"];
 	    }
 	}
+	export class UpdateDTO {
+	    latest: string;
+	    url: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateDTO(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.latest = source["latest"];
+	        this.url = source["url"];
+	    }
+	}
 	export class State {
 	    url: string;
 	    loading: boolean;
@@ -161,6 +175,8 @@ export namespace main {
 	    languages?: FilterDTO;
 	    scanlators?: FilterDTO;
 	    version: string;
+	    releaseURL: string;
+	    update?: UpdateDTO;
 	
 	    static createFrom(source: any = {}) {
 	        return new State(source);
@@ -188,6 +204,8 @@ export namespace main {
 	        this.languages = this.convertValues(source["languages"], FilterDTO);
 	        this.scanlators = this.convertValues(source["scanlators"], FilterDTO);
 	        this.version = source["version"];
+	        this.releaseURL = source["releaseURL"];
+	        this.update = this.convertValues(source["update"], UpdateDTO);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

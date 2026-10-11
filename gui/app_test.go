@@ -63,7 +63,7 @@ func newTestApp(t *testing.T, n int) (*App, *fakeSink, string) {
 	c, _, _ := newTestController(t, false, nil, chapters(n, 2)...)
 	sink := &fakeSink{}
 	prefs := filepath.Join(t.TempDir(), "gui.json")
-	a := newApp(c, sink, prefs, "v1.2.3")
+	a := newApp(c, sink, prefs, "", "v1.2.3")
 	a.interval = time.Millisecond
 	c.notify = a.notify
 	return a, sink, prefs

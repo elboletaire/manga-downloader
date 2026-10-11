@@ -144,6 +144,8 @@ type Controller struct {
 
 	// loadErr is the last load's error, which the view shows under the URL
 	loadErr error
+	// update is the newer release the update check found, nil when none
+	update *Update
 	// selGen and logGen count changes to the selection and the log, so a view
 	// that pushes state can skip re-sending either when it hasn't moved
 	selGen uint64

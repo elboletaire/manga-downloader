@@ -4,9 +4,11 @@
 //
 // Add ?mock to the URL to use it inside the app too. ?scenario= starts it in
 // a given state, so screenshots need no clicking: empty, loading, error,
-// loaded, stale, running, bundle, cancelling or done. &freeze stops the simulated run
-// from moving (stable screenshots), &dupes lists some numbers twice, once per
-// language, and &chapters=N sets the list's length.
+// loaded, stale, running, bundle, cancelling, done or update. update is
+// loaded too, as a release build (v1.12.0) with a newer release (v1.13.0): the
+// status bar shows the yellow "!". &freeze stops the simulated run from moving
+// (stable screenshots), &dupes lists some numbers twice, once per language, and
+// &chapters=N sets the list's length.
 //
 // &site= picks what the series lists for the two filters: multi (the default:
 // languages en, es, ja with All, no groups), plus (Manga Plus: languages
@@ -18,13 +20,24 @@
 // spelling the series lists.
 
 import type { Api, Unsubscribe } from './api';
-import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary } from './types';
+import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary, Update } from './types';
 
 const CHAPTERS = 312;
 const PAGES = 12;
 const TICK_MS = 160;
 
-const SCENARIOS = ['empty', 'loading', 'error', 'loaded', 'stale', 'running', 'bundle', 'cancelling', 'done'] as const;
+const SCENARIOS = [
+  'empty',
+  'loading',
+  'error',
+  'loaded',
+  'stale',
+  'running',
+  'bundle',
+  'cancelling',
+  'done',
+  'update',
+] as const;
 
 export type Scenario = (typeof SCENARIOS)[number];
 
@@ -60,6 +73,14 @@ const OFFERS: Record<MockSite, MockOffers> = {
   plus: { language: { values: ['en', 'es'], all: false, current: 'en' }, scanlator: null },
   groups: { language: null, scanlator: { values: ['Alpha', 'Delta'], all: true, current: 'Delta' } },
   none: { language: null, scanlator: null },
+};
+
+const REPO = 'https://github.com/elboletaire/manga-downloader';
+const RELEASE_VERSION = 'v1.12.0';
+
+/** The newer release the update scenario reports; the others are dev builds */
+const UPDATES: Partial<Record<Scenario, Update>> = {
+  update: { latest: 'v1.13.0', url: `${REPO}/releases/latest` },
 };
 
 function siteFrom(search: string): MockSite {
@@ -251,7 +272,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     jobs: jobs.map((j) => ({ ...j })),
     summary: summary ? { ...summary, failures: [...summary.failures] } : null,
     options: { ...options },
-    version: 'v0.0.0-mock',
+    version: UPDATES[scenario] ? RELEASE_VERSION : 'v0.0.0-mock',
+    releaseURL: UPDATES[scenario] ? `${REPO}/releases/tag/${RELEASE_VERSION}` : '',
+    update: UPDATES[scenario] ?? null,
   });
   const push = () => stateBus.emit(snapshot());
 
@@ -588,6 +611,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     },
     async openFolder() {
       pushLog('info', `would open ${options.outputDir} (mock)`);
+    },
+    openURL(url) {
+      window.open(url, '_blank', 'noopener');
     },
     async start() {
       if (loading || running) {

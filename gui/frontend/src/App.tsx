@@ -184,7 +184,15 @@ export function App({ api }: { api: Api }) {
       </main>
 
       {logOpen && <LogDrawer log={log} onClose={() => setLogOpen(false)} />}
-      <StatusBar log={log} version={state.version} open={logOpen} onToggle={() => setLogOpen((o) => !o)} />
+      <StatusBar
+        log={log}
+        version={state.version}
+        releaseURL={state.releaseURL}
+        update={state.update}
+        open={logOpen}
+        onToggle={() => setLogOpen((o) => !o)}
+        onOpenURL={(url) => api.openURL(url)}
+      />
     </div>
   );
 }

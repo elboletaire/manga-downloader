@@ -3,7 +3,7 @@
 // them in a plain browser, so the UI can be worked on without the Go app.
 
 import * as app from '../wailsjs/go/main/App';
-import { EventsOn } from '../wailsjs/runtime/runtime';
+import { BrowserOpenURL, EventsOn } from '../wailsjs/runtime/runtime';
 import type { Chapter, LogLine, Options, State } from './types';
 
 export type Unsubscribe = () => void;
@@ -27,6 +27,8 @@ export interface Api {
   /** Native folder picker; resolves with "" when cancelled */
   chooseFolder(): Promise<string>;
   openFolder(): Promise<void>;
+  /** Opens the URL in the system's browser, never in the window */
+  openURL(url: string): void;
   start(): Promise<void>;
   cancel(): Promise<void>;
 
@@ -83,6 +85,7 @@ export function createWailsApi(): Api {
     setOptions: (options) => app.SetOptions(options as unknown as Parameters<typeof app.SetOptions>[0]),
     chooseFolder: () => app.ChooseFolder(),
     openFolder: () => app.OpenFolder(),
+    openURL: (url) => BrowserOpenURL(url),
     start: () => app.Start(),
     cancel: () => app.Cancel(),
 

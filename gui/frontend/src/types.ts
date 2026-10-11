@@ -86,6 +86,18 @@ export interface State {
   /** null when the site doesn't list scanlation groups */
   scanlators: FilterChoice | null;
   version: string;
+  /** The GitHub release of this build; "" for a dev build, which has none */
+  releaseURL: string;
+  /** null when there's no newer release (or the check hasn't found one) */
+  update: Update | null;
+}
+
+/** A release newer than the running build, from the update check */
+export interface Update {
+  /** The newest release's tag, as GitHub names it */
+  latest: string;
+  /** The page the update is linked to: the latest release */
+  url: string;
 }
 
 export interface Chapter {

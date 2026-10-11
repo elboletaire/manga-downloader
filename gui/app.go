@@ -51,8 +51,14 @@ type App struct {
 	// prefsPath is the gui.json the options are saved to, "" when there's no
 	// config dir to save them in (the options then last for this run only)
 	prefsPath string
-	version   string
-	interval  time.Duration
+	// tag is the build's release tag, "" for a dev build, which skips the
+	// update check
+	tag     string
+	version string
+	// updateCtx bounds the update check; cancelUpdate ends it at shutdown
+	updateCtx    context.Context
+	cancelUpdate context.CancelFunc
+	interval     time.Duration
 
 	// saveMu serialises writes to gui.json, so two saves can't race a rename
 	saveMu sync.Mutex
@@ -66,15 +72,19 @@ type App struct {
 // newApp wires an App to its controller and sink. The controller's notify
 // must be app.notify, which is how the App learns about changes; launch starts
 // the pushes once the window exists.
-func newApp(ctrl *Controller, s sink, prefsPath, version string) *App {
+func newApp(ctrl *Controller, s sink, prefsPath, tag, version string) *App {
+	updateCtx, cancelUpdate := context.WithCancel(context.Background())
 	return &App{
-		ctrl:      ctrl,
-		sink:      s,
-		prefsPath: prefsPath,
-		version:   version,
-		interval:  refreshInterval,
-		dirty:     make(chan struct{}, 1),
-		stop:      make(chan struct{}),
+		ctrl:         ctrl,
+		sink:         s,
+		prefsPath:    prefsPath,
+		tag:          tag,
+		version:      version,
+		updateCtx:    updateCtx,
+		cancelUpdate: cancelUpdate,
+		interval:     refreshInterval,
+		dirty:        make(chan struct{}, 1),
+		stop:         make(chan struct{}),
 	}
 }
 
@@ -129,12 +139,18 @@ func (a *App) pump() {
 func (a *App) startup(ctx context.Context, rt *wailsRuntime) {
 	rt.set(ctx)
 	a.launch()
+	// release builds only: a dev build has no release to compare with. The
+	// check runs behind the window, which is up already.
+	if a.tag != "" {
+		go a.ctrl.CheckUpdate(a.updateCtx, a.tag, latestReleaseAPI, updateClient)
+	}
 }
 
 // shutdown stops the pushes before the window goes away, then cancels any run
 // and closes the browser, as the controller's Shutdown does
 func (a *App) shutdown(context.Context) {
 	a.stopOnce.Do(func() { close(a.stop) })
+	a.cancelUpdate()
 	// events still in flight (a load finishing, a push) must not reach a
 	// window that's going away
 	a.sink.Close()
@@ -168,6 +184,16 @@ type State struct {
 	Languages  *FilterDTO `json:"languages"`
 	Scanlators *FilterDTO `json:"scanlators"`
 	Version    string     `json:"version"`
+	// ReleaseURL is the GitHub release of this build, "" for a dev build
+	ReleaseURL string `json:"releaseURL"`
+	// Update is the newer release the update check found, null when there's none
+	Update *UpdateDTO `json:"update"`
+}
+
+// UpdateDTO is a newer release than the running build
+type UpdateDTO struct {
+	Latest string `json:"latest"`
+	URL    string `json:"url"`
 }
 
 // FilterDTO is what a filter's selector offers: the values, whether the site
@@ -245,6 +271,8 @@ func (a *App) State() State {
 		Summary:       summaryDTO(c.Summary()),
 		Options:       optionsOf(c.Settings()),
 		Version:       a.version,
+		ReleaseURL:    releaseURL(a.tag),
+		Update:        updateDTO(c.Update()),
 	}
 	st.LoadedLanguage, st.LoadedScanlator = c.LoadedFilters()
 	language, scanlator := c.Filters()
@@ -543,6 +571,15 @@ func loadMessage(err error) string {
 	}
 
 	return err.Error()
+}
+
+// updateDTO converts an available update, nil when there's none
+func updateDTO(u *Update) *UpdateDTO {
+	if u == nil {
+		return nil
+	}
+
+	return &UpdateDTO{Latest: u.Latest, URL: latestReleasePage}
 }
 
 // filterDTO converts a filter's selector, nil when the site doesn't list it

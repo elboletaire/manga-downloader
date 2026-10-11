@@ -2,18 +2,30 @@
 // whole of it opens as a drawer over the window. Warnings and errors are
 // counted on the toggle, so a problem isn't missed with the drawer closed.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { AlertIcon, CopyIcon, ErrorIcon, LogIcon, XIcon } from './icons';
-import type { LogLine } from './types';
+import type { LogLine, Update } from './types';
 
 interface BarProps {
   log: LogLine[];
   version: string;
+  /** The GitHub release of this build; "" for a dev build, which has none */
+  releaseURL: string;
+  /** A newer release, when the update check found one */
+  update: Update | null;
   open: boolean;
   onToggle: () => void;
+  /** Opens a link in the system's browser */
+  onOpenURL: (url: string) => void;
 }
 
-export function StatusBar({ log, version, open, onToggle }: BarProps) {
+export function StatusBar({ log, version, releaseURL, update, open, onToggle, onOpenURL }: BarProps) {
+  // links open outside the window, which must stay on the app
+  const openLink = (url: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    onOpenURL(url);
+  };
+
   const lastLine = log.length > 0 ? log[log.length - 1] : undefined;
   let warns = 0;
   let errors = 0;
@@ -51,8 +63,31 @@ export function StatusBar({ log, version, open, onToggle }: BarProps) {
       <span className={`last-line level-${lastLine?.level ?? 'info'}`} aria-live="polite">
         {lastLine ? lastLine.text : 'Ready'}
       </span>
-      <span className="version" title="Version">
-        {version}
+      <span className="version-group">
+        {update && (
+          <a
+            className="update-badge warning"
+            href={update.url}
+            onClick={openLink(update.url)}
+            title={`Update available: ${update.latest}`}
+            aria-label={`Update available: ${update.latest}`}
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+              <circle className="update-disc" cx="8" cy="8" r="7" strokeWidth="1.5" />
+              <line x1="8" y1="4.6" x2="8" y2="8.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="8" cy="11.2" r="1.1" fill="currentColor" stroke="none" />
+            </svg>
+          </a>
+        )}
+        {releaseURL !== '' ? (
+          <a className="version" href={releaseURL} onClick={openLink(releaseURL)} title="This version's release">
+            {version}
+          </a>
+        ) : (
+          <span className="version" title="Version">
+            {version}
+          </span>
+        )}
       </span>
     </footer>
   );

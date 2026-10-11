@@ -49,7 +49,7 @@ func main() {
 			app.notify()
 		}
 	})
-	app = newApp(ctrl, rt, prefsPath, versionString())
+	app = newApp(ctrl, rt, prefsPath, Tag, versionString())
 
 	err := wails.Run(&options.App{
 		Title:            "Manga Downloader",
