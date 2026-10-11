@@ -440,6 +440,7 @@ grabber/html: \
 	grabber/ritharscans \
 	grabber/rokaricomics \
 	grabber/sanascans \
+	grabber/scanvf \
 	grabber/silentquill \
 	grabber/tcbscans \
 	grabber/thunderscans \
@@ -517,6 +518,8 @@ grabber/ritharscans:
 	go run . https://ritharscans.com/series/0f32cefc-20a7-4337-aed0-fa78f832012f 19
 grabber/sanascans:
 	go run . https://sanascans.com/series/my-beloved-daughter-is-a-villainess 11
+grabber/scanvf:
+	go run . https://www.scan-vf.net/jujutsu-kaisen-modulo 10
 grabber/thunderscans:
 	go run . https://en-thunderscans.com/comics/full-time-awakening/ 108
 grabber/violetscans:

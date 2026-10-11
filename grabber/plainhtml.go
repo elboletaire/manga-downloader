@@ -323,6 +323,19 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: "span",
 			Image:        `img[src*="media.mangavault.lat"]`,
 		},
+		// scan-vf.net (French, MyMangaReaderCMS): each chapter is an <h5> row
+		// whose link text ("Jujutsu Kaisen Modulo 25") has no chapter keyword,
+		// so the number comes from the "chapitre-25" URL. The reader keeps the
+		// real page in data-src, padded with spaces, behind a placeholder src
+		// (getPlainHTMLImageURL trims it).
+		{
+			Title:        `h2[style*="inline-block"]`,
+			Rows:         "h5.chapter-title-rtl",
+			Link:         "a",
+			Chapter:      "a",
+			ChapterTitle: "em",
+			Image:        "img.img-responsive",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -410,8 +423,8 @@ var volumeNumberRe = regexp.MustCompile(`(?i)\bvol(?:ume|umen)?\.?\s*(\d+\.?\d*)
 // carries no recognizable chapter/volume keyword (e.g. mangahub.io, whose
 // latest-chapter row often just repeats the manga name and number, like
 // "One Piece 1187" with no "Chapter" word) but whose reader URL always
-// contains "chapter-<number>".
-var urlChapterNumberRe = regexp.MustCompile(`(?i)chapter[-_](\d+\.?\d*)`)
+// contains "chapter-<number>" (or the French "chapitre-<number>").
+var urlChapterNumberRe = regexp.MustCompile(`(?i)chap(?:ter|itre)[-_](\d+\.?\d*)`)
 
 // parseChapterNumber extracts the chapter number from a chapter title, falling
 // back to a volume number. Returns false if no number could be found (these
@@ -627,11 +640,18 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		}
 		var fpages []foolslidePage
 		if err := json.Unmarshal([]byte(matches[1]), &fpages); err == nil {
+			// scan-vf.net has the same `var pages` shape, but its objects only
+			// carry a file name ("page_image"), so no url is found and the
+			// <img> data-src fallback below takes over
 			imgs := []string{}
 			for _, p := range fpages {
-				imgs = append(imgs, p.URL)
+				if p.URL != "" {
+					imgs = append(imgs, p.URL)
+				}
 			}
-			return imgs
+			if len(imgs) > 0 {
+				return imgs
+			}
 		}
 	}
 
@@ -646,11 +666,17 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 			Image string `json:"image"`
 		}
 		if err := json.Unmarshal([]byte(matches[1]), &pages); err == nil {
+			// the array's objects name files (scan-vf.net), not images, so
+			// without an image field the <img> tags below are used instead
 			imgs := []string{}
 			for _, p := range pages {
-				imgs = append(imgs, p.Image)
+				if p.Image != "" {
+					imgs = append(imgs, p.Image)
+				}
 			}
-			return imgs
+			if len(imgs) > 0 {
+				return imgs
+			}
 		}
 	}
 
