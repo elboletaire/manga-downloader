@@ -555,7 +555,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [sacachispa.site](https://sacachispa.site)
 - [sanascans.com (Sana Scans)](https://sanascans.com)
 - [setsuscans.com](https://setsuscans.com) \*
-- [silentquill.net (Armageddon Scanlation)](https://www.silentquill.net)
+- [silentquill.net (Armageddon Scanlation)](https://silentquill.net)
 - [stonescape.xyz](https://stonescape.xyz)
 - [sushiscan.net](https://sushiscan.net) \*
 - [taiyo.moe](https://taiyo.moe)

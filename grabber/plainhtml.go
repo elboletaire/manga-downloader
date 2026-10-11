@@ -169,8 +169,8 @@ func (m *PlainHTML) Test() (bool, error) {
 		},
 		// mangastream/themesia WordPress themes reachable over plain HTTP
 		// (same markup as the cloudflare-gated sushiscan.net in
-		// plainhtmlbrowser.go): silentquill.net, lagoonscans.com,
-		// rokaricomics.com and violetscans.org (witchscans.com moved to
+		// plainhtmlbrowser.go): lagoonscans.com, rokaricomics.com and
+		// violetscans.org (witchscans.com moved to
 		// witchtoons.net on a different platform; see the witchtoons
 		// grabber). Reader pages embed all pages in a ts_reader.run(...)
 		// blob, already handled by getPlainHTMLImageURL, so Image is just a
@@ -311,6 +311,18 @@ func (m *PlainHTML) Test() (bool, error) {
 			Chapter:      ".text-sm.truncate",
 			ChapterTitle: ".text-sm.truncate",
 			Image:        "img.myImage, #pages img",
+		},
+		// silentquill.net (Next.js App Router, server-rendered): every chapter
+		// is a plain <a> row linking to /{slug}-chapter-N/, while the series
+		// page's own <a> links to /series/... (recommendations) are excluded.
+		// The reader's page list is in the RSC payload, see the "pages"
+		// branch of getPlainHTMLImageURL.
+		{
+			Title:        "h1",
+			Rows:         `a.grid[href*="-chapter-"]:not([href^="/series/"])`,
+			Chapter:      "span.text-base",
+			ChapterTitle: "span.text-base",
+			Image:        "img",
 		},
 	}
 
@@ -597,6 +609,22 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 			}
 			return imgs
 		}
+	}
+
+	// silentquill.net (Next.js RSC too) embeds the same double-escaped list,
+	// but as objects with a "url" each, relative to the site root:
+	// `\"pages\":[{\"url\":\"/img/p/1-x\",\"width\":null,...}]`. The caller
+	// prefixes the base URL on relative paths. Matched before the flat array
+	// below, which would otherwise pick up every key of these objects.
+	re = regexp.MustCompile(`\\"pages\\":\[(\{\\"url\\":.*?)\]`)
+	matches = re.FindStringSubmatch(html)
+	if len(matches) > 1 {
+		urls := regexp.MustCompile(`\\"url\\":\\"([^\\"]+)\\"`).FindAllStringSubmatch(matches[1], -1)
+		imgs := []string{}
+		for _, u := range urls {
+			imgs = append(imgs, u[1])
+		}
+		return imgs
 	}
 
 	// templetoons.com's reader (Next.js RSC streaming) embeds the page list

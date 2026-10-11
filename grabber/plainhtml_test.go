@@ -123,6 +123,12 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want:     []string{"https://media.templetoons.com/1.jpg", "https://media.templetoons.com/2.jpg"},
 		},
 		{
+			name:     "silentquill.net double-escaped RSC pages objects (relative urls)",
+			selector: "img",
+			html:     `<html><body><script>self.__next_f.push([1,"...{\"pages\":[{\"url\":\"/img/p/1-a\",\"width\":null,\"height\":null},{\"url\":\"/img/p/2-b\",\"width\":null,\"height\":null}],\"x\":1}..."])</script></body></html>`,
+			want:     []string{"/img/p/1-a", "/img/p/2-b"},
+		},
+		{
 			name:     "FoOlSlide var pages JSON array (deathtollscans)",
 			selector: "img.open",
 			html:     `<html><body><script>var pages = [{"id":1,"url":"https:\/\/a.co\/1.png","thumb_url":"https:\/\/a.co\/t1.png"},{"id":2,"url":"https:\/\/a.co\/2.png","thumb_url":"https:\/\/a.co\/t2.png"}]; var next_chapter = "https://a.co/next/";</script></body></html>`,
