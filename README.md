@@ -47,7 +47,7 @@ and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[86 supported sites](#supported-sites)**, from big aggregators to small
+- **[87 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
@@ -484,7 +484,7 @@ Run `manga-downloader help` to list them in your terminal.
 ## Supported sites
 
 <details>
-<summary><b>Show all 86 supported sites</b></summary>
+<summary><b>Show all 87 supported sites</b></summary>
 <br>
 
 - [asmotoon.com (Asmodeus Scans)](https://asmotoon.com) \*
@@ -538,6 +538,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [mangaread.org](https://www.mangaread.org)
 - [mangasushi.org](https://mangasushi.org)
 - [mangataro.org](https://mangataro.org)
+- [mangatown.com](https://www.mangatown.com)
 - [mangtto.com (Mangitto)](https://mangtto.com)
 - [manhuaplus.com](https://manhuaplus.com)
 - [manhuatop.org](https://manhuatop.org) \*

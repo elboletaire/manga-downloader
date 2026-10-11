@@ -106,6 +106,7 @@ grabber: \
 	grabber/mangaplus \
 	grabber/mangasushi \
 	grabber/mangataro \
+	grabber/mangatown \
 	grabber/mangitto \
 	grabber/mgeko \
 	grabber/mkissa \
@@ -289,6 +290,9 @@ grabber/hijala:
 	go run . https://en-hijala.com/series/double-click 252
 grabber/mangataro:
 	go run . https://mangataro.org/manga/one-piece 1188
+# plain HTTP, one HTML document per reader page
+grabber/mangatown:
+	go run . https://www.mangatown.com/manga/koi_wa_amaagari_no_you_ni/ 10
 grabber/roliascan:
 	go run . https://roliascan.com/manga/no-marriage/ 77
 grabber/sacachispa:
