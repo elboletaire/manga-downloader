@@ -1,9 +1,12 @@
+import type { Release as PageRelease } from '../src/release.ts'
+
 export type OSKey = 'windows' | 'macos' | 'linux'
 
 export interface Stats {
   total: number
   byOS: Record<OSKey, number>
   dockerPulls: number | null
+  latest: PageRelease | null
 }
 
 interface Asset {
@@ -12,7 +15,11 @@ interface Asset {
 }
 
 interface Release {
-  assets: Asset[]
+  tag_name: string
+  html_url?: string
+  draft?: boolean
+  prerelease?: boolean
+  assets: (Asset & { browser_download_url?: string; size?: number })[]
 }
 
 /**
@@ -35,6 +42,29 @@ export function assetOS(name: string): OSKey | null {
   }
   if (name.includes('-linux-')) {
     return 'linux'
+  }
+  return null
+}
+
+/**
+ * Find the latest release that is neither draft nor prerelease.
+ * Returns the first such release (API lists newest first) trimmed to PageRelease shape,
+ * or null if none found. Matches what `/releases/latest` returns.
+ */
+export function latestRelease(releases: Release[]): PageRelease | null {
+  for (const release of releases) {
+    if (release.draft || release.prerelease) {
+      continue
+    }
+    return {
+      tag_name: release.tag_name,
+      html_url: release.html_url,
+      assets: release.assets.map((a) => ({
+        name: a.name,
+        browser_download_url: a.browser_download_url ?? '',
+        size: a.size,
+      })),
+    }
   }
   return null
 }
@@ -114,8 +144,9 @@ export async function fetchStats(fetchFn: typeof fetch = fetch): Promise<Stats |
     const releases = await fetchAllReleases(fetchFn)
     const { total, byOS } = sumDownloads(releases)
     const dockerPulls = await fetchDockerPulls(fetchFn)
+    const latest = latestRelease(releases)
 
-    return { total, byOS, dockerPulls }
+    return { total, byOS, dockerPulls, latest }
   } catch (error) {
     console.warn(`Failed to fetch stats: ${error instanceof Error ? error.message : String(error)}`)
     return null

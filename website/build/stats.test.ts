@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { assetOS, sumDownloads, compact, fetchStats, renderStats, EN_LABELS } from './stats'
+import { assetOS, sumDownloads, compact, fetchStats, renderStats, latestRelease, EN_LABELS } from './stats'
 
 describe('assetOS', () => {
   it('returns null for .md5 files', () => {
@@ -46,6 +46,7 @@ describe('sumDownloads', () => {
   it('sums downloads by OS', () => {
     const releases = [
       {
+        tag_name: 'v1.14.0',
         assets: [
           { name: 'manga-downloader-v1.14.0-windows-amd64.zip', download_count: 100 },
           { name: 'manga-downloader-v1.14.0-darwin-arm64.tar.gz', download_count: 50 },
@@ -66,6 +67,7 @@ describe('sumDownloads', () => {
   it('ignores .md5 files', () => {
     const releases = [
       {
+        tag_name: 'v1.14.0',
         assets: [
           { name: 'manga-downloader-v1.14.0-windows-amd64.zip', download_count: 100 },
           { name: 'manga-downloader-v1.14.0-windows-amd64.zip.md5', download_count: 1000 },
@@ -109,6 +111,124 @@ describe('compact', () => {
   })
 })
 
+describe('latestRelease', () => {
+  it('returns the first non-draft, non-prerelease release', () => {
+    const releases = [
+      {
+        tag_name: 'v1.14.0-pre',
+        html_url: 'https://github.com/elboletaire/manga-downloader/releases/tag/v1.14.0-pre',
+        draft: false,
+        prerelease: true,
+        assets: [],
+      },
+      {
+        tag_name: 'v1.13.0',
+        html_url: 'https://github.com/elboletaire/manga-downloader/releases/tag/v1.13.0',
+        draft: false,
+        prerelease: false,
+        assets: [
+          {
+            name: 'manga-downloader-v1.13.0-windows-amd64.zip',
+            download_count: 100,
+            browser_download_url: 'https://github.com/elboletaire/manga-downloader/releases/download/v1.13.0/manga-downloader-v1.13.0-windows-amd64.zip',
+            size: 8000000,
+          },
+        ],
+      },
+    ]
+
+    const result = latestRelease(releases)
+
+    expect(result).not.toBeNull()
+    expect(result?.tag_name).toBe('v1.13.0')
+    expect(result?.html_url).toBe('https://github.com/elboletaire/manga-downloader/releases/tag/v1.13.0')
+    expect(result?.assets).toHaveLength(1)
+    expect(result?.assets[0].name).toBe('manga-downloader-v1.13.0-windows-amd64.zip')
+    expect(result?.assets[0].browser_download_url).toBe('https://github.com/elboletaire/manga-downloader/releases/download/v1.13.0/manga-downloader-v1.13.0-windows-amd64.zip')
+    expect(result?.assets[0].size).toBe(8000000)
+  })
+
+  it('skips draft releases', () => {
+    const releases = [
+      {
+        tag_name: 'v1.14.0-draft',
+        html_url: 'https://github.com/elboletaire/manga-downloader/releases/tag/v1.14.0-draft',
+        draft: true,
+        prerelease: false,
+        assets: [],
+      },
+      {
+        tag_name: 'v1.13.0',
+        html_url: 'https://github.com/elboletaire/manga-downloader/releases/tag/v1.13.0',
+        draft: false,
+        prerelease: false,
+        assets: [],
+      },
+    ]
+
+    const result = latestRelease(releases)
+
+    expect(result?.tag_name).toBe('v1.13.0')
+  })
+
+  it('returns null when all releases are draft or prerelease', () => {
+    const releases = [
+      {
+        tag_name: 'v1.14.0-pre',
+        html_url: 'https://github.com/elboletaire/manga-downloader/releases/tag/v1.14.0-pre',
+        draft: false,
+        prerelease: true,
+        assets: [],
+      },
+      {
+        tag_name: 'v1.13.0-draft',
+        html_url: 'https://github.com/elboletaire/manga-downloader/releases/tag/v1.13.0-draft',
+        draft: true,
+        prerelease: false,
+        assets: [],
+      },
+    ]
+
+    const result = latestRelease(releases)
+
+    expect(result).toBeNull()
+  })
+
+  it('returns null for empty releases list', () => {
+    const result = latestRelease([])
+
+    expect(result).toBeNull()
+  })
+
+  it('trims assets to only the required fields', () => {
+    const releases = [
+      {
+        tag_name: 'v1.13.0',
+        html_url: 'https://example.com',
+        draft: false,
+        prerelease: false,
+        assets: [
+          {
+            name: 'test.zip',
+            browser_download_url: 'https://example.com/test.zip',
+            size: 1000,
+            download_count: 999,
+          } as any,
+        ],
+      },
+    ]
+
+    const result = latestRelease(releases)
+
+    expect(result?.assets[0]).toEqual({
+      name: 'test.zip',
+      browser_download_url: 'https://example.com/test.zip',
+      size: 1000,
+    })
+    expect('download_count' in result!.assets[0]).toBe(false)
+  })
+})
+
 describe('fetchStats', () => {
   let originalEnv: string | undefined
 
@@ -134,14 +254,20 @@ describe('fetchStats', () => {
     const mockFetch = vi.fn()
 
     // First page: 100 releases (continues pagination)
-    const page1: any = Array(100).fill(null).map(() => ({ assets: [{ name: 'test-windows-amd64.zip', download_count: 1 }] }))
+    const page1: any = Array(100).fill(null).map((_, i) => ({
+      tag_name: `v1.${100 - i}.0`,
+      assets: [{ name: 'test-windows-amd64.zip', download_count: 1 }],
+    }))
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: vi.fn(async () => page1),
     })
 
     // Second page: 50 releases (fewer than 100, so pagination stops)
-    const page2: any = Array(50).fill(null).map(() => ({ assets: [{ name: 'test-windows-amd64.zip', download_count: 1 }] }))
+    const page2: any = Array(50).fill(null).map((_, i) => ({
+      tag_name: `v1.${50 - i}.0`,
+      assets: [{ name: 'test-windows-amd64.zip', download_count: 1 }],
+    }))
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: vi.fn(async () => page2),
@@ -158,6 +284,7 @@ describe('fetchStats', () => {
     expect(result).not.toBeNull()
     expect(result?.total).toBe(150)
     expect(result?.dockerPulls).toBe(1000)
+    expect(result?.latest?.tag_name).toBe('v1.100.0')
     expect(mockFetch).toHaveBeenCalledTimes(3)
   })
 
@@ -165,14 +292,20 @@ describe('fetchStats', () => {
     const mockFetch = vi.fn()
 
     // First page: 100 releases (continues pagination)
-    const page1: any = Array(100).fill(null).map(() => ({ assets: [{ name: 'test-windows-amd64.zip', download_count: 1 }] }))
+    const page1: any = Array(100).fill(null).map((_, i) => ({
+      tag_name: `v1.${100 - i}.0`,
+      assets: [{ name: 'test-windows-amd64.zip', download_count: 1 }],
+    }))
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: vi.fn(async () => page1),
     })
 
     // Second page: 50 releases (fewer than 100, stops pagination)
-    const page2: any = Array(50).fill(null).map(() => ({ assets: [{ name: 'test-windows-amd64.zip', download_count: 1 }] }))
+    const page2: any = Array(50).fill(null).map((_, i) => ({
+      tag_name: `v1.${50 - i}.0`,
+      assets: [{ name: 'test-windows-amd64.zip', download_count: 1 }],
+    }))
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: vi.fn(async () => page2),
@@ -188,6 +321,7 @@ describe('fetchStats', () => {
 
     expect(result).not.toBeNull()
     expect(result?.total).toBe(150)
+    expect(result?.latest?.tag_name).toBe('v1.100.0')
     expect(mockFetch).toHaveBeenCalledTimes(3)
   })
 
@@ -210,7 +344,10 @@ describe('fetchStats', () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => [
-        { assets: [{ name: 'manga-downloader-v1.0.0-windows-amd64.zip', download_count: 100 }] },
+        {
+          tag_name: 'v1.0.0',
+          assets: [{ name: 'manga-downloader-v1.0.0-windows-amd64.zip', download_count: 100 }],
+        },
       ],
     })
 
@@ -231,6 +368,7 @@ describe('fetchStats', () => {
     expect(result).not.toBeNull()
     expect(result?.total).toBe(100)
     expect(result?.dockerPulls).toBeNull()
+    expect(result?.latest?.tag_name).toBe('v1.0.0')
   })
 })
 
@@ -249,6 +387,7 @@ describe('renderStats', () => {
       total: 13319,
       byOS: { windows: 6146, macos: 4000, linux: 3173 },
       dockerPulls: 25065,
+      latest: null,
     }
 
     const result = renderStats(stats)
@@ -265,6 +404,7 @@ describe('renderStats', () => {
       total: 13319,
       byOS: { windows: 6146, macos: 4000, linux: 3173 },
       dockerPulls: null,
+      latest: null,
     }
 
     const result = renderStats(stats)
@@ -279,6 +419,7 @@ describe('renderStats', () => {
       total: 13319,
       byOS: { windows: 6146, macos: 4000, linux: 3173 },
       dockerPulls: null,
+      latest: null,
     }
 
     const result = renderStats(stats)
@@ -293,6 +434,7 @@ describe('renderStats', () => {
       total: 5000,
       byOS: { windows: 5000, macos: 0, linux: 0 },
       dockerPulls: null,
+      latest: null,
     }
 
     const result = renderStats(stats)
@@ -307,6 +449,7 @@ describe('renderStats', () => {
       total: 13319,
       byOS: { windows: 6146, macos: 4000, linux: 3173 },
       dockerPulls: 25065,
+      latest: null,
     }
     const customLabels = { downloads: 'Descargas', dockerPulls: 'Extracciones de Docker' }
 

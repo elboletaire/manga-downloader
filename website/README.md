@@ -37,6 +37,10 @@ pnpm preview   # serve dist/
   hides them instead of breaking the build. A daily schedule in
   `.github/workflows/pages.yaml` refreshes them. Skip the fetch offline with
   `STATS=off pnpm dev`.
+- **Latest release**: the build also embeds the latest GitHub release (skipping
+  drafts and pre-releases) so the download button works even when the browser's
+  API request hits the rate limit. The browser fetches it again to show a newer
+  release if one was published since the build.
 - **Brand assets**: copied from the approved brand kit into `src/assets/brand/`
   and `public/` (favicons, `opengraph.png`). Don't redraw them.
 - **Terminal GIFs**: referenced from `demos/` on `master` via raw GitHub URLs,

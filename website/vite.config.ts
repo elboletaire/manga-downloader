@@ -113,7 +113,13 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
   const badge = { label: t('sites.badge.label'), srPrefix: t('sites.badge.srPrefix'), title: t('sites.badge.title') }
   const runtime = JSON.stringify(readLocale(lang).runtime).replace(/</g, '\\u003c')
   statsPromise ??= fetchStats()
-  const stats = renderStats(await statsPromise, { downloads: t('stats.downloads'), dockerPulls: t('stats.dockerPulls') })
+  const statsObj = await statsPromise
+  const stats = renderStats(statsObj, { downloads: t('stats.downloads'), dockerPulls: t('stats.dockerPulls') })
+
+  // Embed latest release data for the download button, with < escaped to prevent HTML injection
+  const releaseData = statsObj?.latest
+    ? JSON.stringify(statsObj.latest).replace(/</g, '\\u003c')
+    : ''
 
   // Function replacers, so a "$" in the inserted text is never a replacement pattern.
   return html
@@ -122,6 +128,7 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
     .replace('<!-- i18n:og-alternates -->', () => ogAlternates(lang))
     .replace('<!-- i18n:switcher -->', () => switcher(lang))
     .replace('<!-- i18n:runtime -->', () => `<script type="application/json" id="i18n-runtime">${runtime}</script>`)
+    .replace('<!-- release:data -->', () => (releaseData ? `<script type="application/json" id="latest-release">${releaseData}</script>` : ''))
     .replace('<!-- sites:list -->', () => renderSites(sites, badge))
     .replace(/<!-- (stats:\w+) -->/g, (_m, key: string) => stats[key] ?? '')
     .replace(/\{\{(t|a|j):([\w.]+)(?::(\w+))?\}\}/g, (_m, kind: string, key: string, countName?: string) => {

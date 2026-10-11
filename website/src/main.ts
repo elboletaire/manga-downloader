@@ -33,6 +33,23 @@ function runtimeStrings(): RuntimeStrings {
   return EN_RUNTIME
 }
 
+/** The latest release embedded at build time. Provides a fallback for download
+ * links when the browser's GitHub API request is rate-limited. */
+function embeddedRelease(): Release | null {
+  try {
+    const text = document.getElementById('latest-release')?.textContent
+    if (!text) return null
+    const data = JSON.parse(text) as unknown
+    // Validate shape: tag_name is required, assets must be an array
+    if (typeof data === 'object' && data !== null && 'tag_name' in data && typeof (data as any).tag_name === 'string' && Array.isArray((data as any).assets)) {
+      return data as Release
+    }
+  } catch {
+    // Missing or corrupt: will fetch from the API instead.
+  }
+  return null
+}
+
 const STRINGS = runtimeStrings()
 const LANG = document.documentElement.lang || 'en'
 
@@ -53,8 +70,9 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return Promise.race([p, new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))])
 }
 
-/** The latest release, or null if GitHub can't be reached. Cached for a few
- * minutes, since the unauthenticated API allows 60 calls an hour. */
+/** Fetch the latest release from GitHub. Returns null if the API can't be reached.
+ * Result is cached for a few minutes (the unauthenticated API allows 60 calls an hour).
+ * If an embedded release was built into the page, a fetch may still return a newer one. */
 async function latestRelease(): Promise<Release | null> {
   try {
     const cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) ?? 'null') as { at: number; release: Release } | null
@@ -121,9 +139,21 @@ async function enhanceDownload(): Promise<void> {
   document.documentElement.dataset.os = platform.os
   if (platform.os !== 'unknown') renderDownload(null, platform, false)
 
-  const release = await latestRelease()
-  renderDownload(release, platform, true)
-  renderDownloads(release)
+  // If a release was embedded at build time, render it immediately as settled
+  const embedded = embeddedRelease()
+  if (embedded) {
+    renderDownload(embedded, platform, true)
+    renderDownloads(embedded)
+  }
+
+  // Fetch the latest release (may be newer than the embedded one)
+  // If the fetch fails, keep the embedded version (or fallback to null)
+  const release = (await latestRelease()) ?? embedded
+  if (!embedded || release !== embedded) {
+    // Only re-render if we have a newer release or no embedded one
+    renderDownload(release, platform, true)
+    renderDownloads(release)
+  }
 }
 
 // Copy buttons ---------------------------------------------------------------
