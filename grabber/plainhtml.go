@@ -401,6 +401,19 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: ".lchx",
 			Image:        "#chimg-auh img",
 		},
+		// maid.my.id: Indonesian WordPress theme. The reader lazy-loads its
+		// pages from imgbox.com through data-lazy-src (src is a placeholder),
+		// and the same pages come again as plain <img>s without that attribute,
+		// so only the lazy ones are taken. The reader's community banner is
+		// hosted on the site itself and is left out by the host filter.
+		{
+			Title:        ".series-titlex h2",
+			Rows:         ".series-chapterlist li",
+			Link:         "a",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Image:        `.reader-area img[data-lazy-src*="imgbox.com"]`,
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -467,10 +480,11 @@ func (m PlainHTML) FetchTitle() (string, error) {
 // alternate-script/language titles in its <h1> — long enough to blow past
 // filesystem filename limits — and a relative/absolute chapter date, e.g.
 // "2 weeks ago", in every chapter row) and badge-like labels (e.g.
-// mangahub's "Hot" tag, class "manga-label").
+// mangahub's "Hot" tag, class "manga-label"), and the nested date span of
+// maid.my.id's chapter rows (class "date").
 func textWithoutNoise(s *goquery.Selection) string {
 	clone := s.Clone()
-	clone.Find("small, .manga-label").Remove()
+	clone.Find("small, .manga-label, .date").Remove()
 	return clone.Text()
 }
 
@@ -906,6 +920,10 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		src := s.AttrOr("src", "")
 		if src == "" || strings.HasPrefix(src, "data:image") {
 			src = s.AttrOr("data-src", "")
+		}
+		if src == "" {
+			// maid.my.id keeps the real URL in data-lazy-src only
+			src = s.AttrOr("data-lazy-src", "")
 		}
 		imgs = append(imgs, strings.Trim(src, " \n\r\t")) // trim whitespaces
 	})

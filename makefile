@@ -428,6 +428,7 @@ grabber/html: \
 	grabber/komikstation \
 	grabber/lagoonscans \
 	grabber/madarascans \
+	grabber/maid \
 	grabber/mangaberri \
 	grabber/mangakatana \
 	grabber/mangapill \
@@ -513,6 +514,8 @@ grabber/elftoon:
 	go run . https://elftoon.net/series/comic/god-level-assassin-im-the-shadow 123
 grabber/madarascans:
 	go run . https://madarascans.org/series/my-disciples-are-all-big-villains/ 481
+grabber/maid:
+	go run . https://www.maid.my.id/manga/watashi-no-oshi-wa-akuyaku-reijou/ 50
 grabber/mangaberri:
 	go run . https://mangaberri.com/title/dai-dark 37
 grabber/kingofshojo:

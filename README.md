@@ -47,7 +47,7 @@ and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[109 supported sites](#supported-sites)**, from big aggregators to small
+- **[110 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
@@ -484,7 +484,7 @@ Run `manga-downloader help` to list them in your terminal.
 ## Supported sites
 
 <details>
-<summary><b>Show all 109 supported sites</b></summary>
+<summary><b>Show all 110 supported sites</b></summary>
 <br>
 
 - [3asq.online (Arabic, former 3asq.org)](https://3asq.online)
@@ -530,6 +530,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [limonmanga.com](https://limonmanga.com)
 - [luacomic.org (LuaScans)](https://luacomic.org)
 - [madarascans.org (former madarascans.com)](https://madarascans.org)
+- [maid.my.id](https://www.maid.my.id)
 - [mangaball.com (former mangaball.net)](https://mangaball.com)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
 - [mangaberri.com](https://mangaberri.com)
