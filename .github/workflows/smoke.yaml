@@ -72,7 +72,6 @@ jobs:
           - templetoons
           - deathtollscans
           - furyosociety
-          - asmotoon
           - madarascans
           - lagoonscans
           - rokaricomics
@@ -112,6 +111,9 @@ jobs:
           #                # signed responses — excluded from the matrix like
           #                # every other browser grabber. Run `make
           #                # grabber/mangafire` locally.
+          # - asmotoon     # now browser-based: cloudflare challenges plain HTTP
+          #                # and headless alike. Run `make grabber/asmotoon`
+          #                # locally.
     steps:
       - uses: actions/checkout@v4
 

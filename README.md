@@ -487,7 +487,7 @@ Run `manga-downloader help` to list them in your terminal.
 <summary><b>Show all 86 supported sites</b></summary>
 <br>
 
-- [asmotoon.com (Asmodeus Scans)](https://asmotoon.com)
+- [asmotoon.com (Asmodeus Scans)](https://asmotoon.com) \*
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
 - [atsu.moe (Atsumaru)](https://atsu.moe)
 - [aurorascans.com (redirects to qimanga.com)](https://aurorascans.com)

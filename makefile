@@ -315,6 +315,7 @@ grabber/mkissa:
 # open a Chrome window and may require solving an interactive challenge
 # (cloudflare). Run them one by one and solve the challenge if prompted.
 grabber/browser: \
+	grabber/asmotoon \
 	grabber/dragontea \
 	grabber/kappabeast \
 	grabber/mangahub \
@@ -333,6 +334,9 @@ grabber/toonily:
 
 grabber/toongod:
 	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
+
+grabber/asmotoon:
+	go run . --browser-visible https://asmotoon.com/series/official-adultery/ 1
 
 grabber/dragontea:
 	go run . --browser-visible https://dragontea.ink/novel/it-all-starts-with-trillions-of-nether-currency/ 290
@@ -373,7 +377,6 @@ grabber/mangapark:
 	go run . --browser-visible https://mangapark.page/series/rowdy-reunion 41
 
 grabber/html: \
-	grabber/asmotoon \
 	grabber/asura \
 	grabber/deathtollscans \
 	grabber/demonicscans \
@@ -443,8 +446,6 @@ grabber/furyosociety:
 # old domain still 301s /manga/{slug}/ and the grabber remaps old URLs in code
 grabber/elftoon:
 	go run . https://elftoon.net/series/comic/god-level-assassin-im-the-shadow 123
-grabber/asmotoon:
-	go run . https://asmotoon.com/series/official-adultery/ 1
 grabber/madarascans:
 	go run . https://madarascans.org/series/my-disciples-are-all-big-villains/ 481
 grabber/lagoonscans:

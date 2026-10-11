@@ -158,6 +158,25 @@ var browserSelectors = []BrowserSiteSelector{
 		ChaptersWait: "li.wp-manga-chapter",
 		ImageWait:    `div.reading-content img[id^="image-"]`,
 	},
+	// asmotoon.com (Asmodeus Scans): the whole domain sits behind a
+	// cloudflare challenge that headless doesn't pass, usually needs
+	// --browser-visible. Chapter rows are plain <a> children of #chapters.
+	// The reader lazy-loads pages, so most <img> keep a shared placeholder
+	// src until scrolled into view; the real per-page id is in the uid
+	// attribute (see getPlainHTMLImageURL), so src/data-src are only a
+	// fallback.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1",
+			Rows:         "#chapters > a",
+			Chapter:      ".text-sm.truncate",
+			ChapterTitle: ".text-sm.truncate",
+			Image:        "img.myImage",
+		},
+		Domains:      []string{"asmotoon.com"},
+		ChaptersWait: "#chapters > a",
+		ImageWait:    "img.myImage",
+	},
 }
 
 // PlainHTMLBrowser is the browser-rendered variant of PlainHTML: pages are

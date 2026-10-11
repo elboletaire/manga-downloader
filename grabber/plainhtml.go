@@ -228,18 +228,6 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         ".title a",
 			Image:        "img.open",
 		},
-		// asmotoon.com (Asmodeus Scans): chapter rows are plain <a> children
-		// of #chapters. The reader lazy-loads pages, so most <img> keep a
-		// shared placeholder src until scrolled into view; the real per-page
-		// id always lives in the img's uid attribute (see
-		// getPlainHTMLImageURL), so src/data-src are only used as a fallback.
-		{
-			Title:        "h1",
-			Rows:         "#chapters > a",
-			Chapter:      ".text-sm.truncate",
-			ChapterTitle: ".text-sm.truncate",
-			Image:        "img.myImage",
-		},
 		// madarascans.com/.org: mangareader/themesia theme; the reader page
 		// already carries all its images in a ts_reader.run(...) blob (see
 		// getPlainHTMLImageURL) so the Image selector is only a fallback.
