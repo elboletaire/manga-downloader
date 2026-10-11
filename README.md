@@ -516,7 +516,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [kappabeast.com](https://kappabeast.com) \*
 - [kaynscans.com (Kayn Scans, former kaynscan.org)](https://kaynscans.com)
 - [lagoonscans.com](https://lagoonscans.com)
-- [leercapitulo.co](https://www.leercapitulo.co) \*
+- [leercapitulo.co](https://www.leercapitulo.co)
 - [lhtranslation.net (LHTranslation)](https://lhtranslation.net)
 - [luacomic.org (LuaScans)](https://luacomic.org)
 - [madarascans.org (former madarascans.com)](https://madarascans.org)

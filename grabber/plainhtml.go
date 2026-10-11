@@ -582,8 +582,9 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		}
 	}
 
-	// silentquill.net (Next.js RSC too) embeds the same double-escaped list,
-	// but as objects with a "url" each, relative to the site root:
+	// silentquill.net (Next.js RSC too) embeds a double-escaped list of
+	// objects with a "url" each, relative to the site root (templetoons.com
+	// is handled further down, with its own key-agnostic match):
 	// `\"pages\":[{\"url\":\"/img/p/1-x\",\"width\":null,...}]`. The caller
 	// prefixes the base URL on relative paths. Matched before the flat array
 	// below, which would otherwise pick up every key of these objects.
