@@ -5,7 +5,7 @@ Manga Downloader is installed with Homebrew from a tap of its own,
 
 ```sh
 brew install elboletaire/tap/manga-downloader              # the command line tool
-brew install --cask elboletaire/tap/manga-downloader       # the desktop app (macOS)
+brew install --cask elboletaire/tap/manga-downloader       # the desktop app and the CLI (macOS)
 ```
 
 `tap/` here is that repository's content and the source of truth for the
@@ -15,7 +15,7 @@ README is shared with Fastlight and is edited in the tap by hand.
 | Path | What |
 |---|---|
 | `tap/Formula/manga-downloader.rb` | The CLI formula. `version`, `url` and `sha256` name the last release this copy was checked against; the release workflow sets them in the tap. |
-| `tap/Casks/manga-downloader.rb` | The desktop app cask, same idea. Its `binary` stanza puts `manga-downloader-gui` on `PATH`, where `manga-downloader ui` looks for it. |
+| `tap/Casks/manga-downloader.rb` | The desktop app cask, same idea. Its `binary` stanza puts `manga-downloader-gui` on `PATH`, where `manga-downloader ui` looks for it, and it depends on the formula, since `ui` is the CLI's. |
 | `../../scripts/update-homebrew.sh` | Sets `version` and every `sha256` in a formula or cask, from the release assets in a directory. |
 
 ## Why a tap, not homebrew-core or homebrew/cask
