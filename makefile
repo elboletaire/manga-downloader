@@ -41,13 +41,18 @@ build/win:
 # platforms ignore it.
 GUI_TAGS = -tags desktop,production,nodynamic,webkit2_41
 GUI_LDFLAGS = -w -s -X 'main.Version=$(VERSION)' -X 'main.Tag=$(BRANCH_OR_TAG)'
+# Wails' macOS frontend uses UTType but leaves linking UniformTypeIdentifiers
+# to `wails build`, so a plain go build has to ask for it.
+ifeq ($(shell uname -s),Darwin)
+GUI_CGO = CGO_LDFLAGS="$(CGO_LDFLAGS) -framework UniformTypeIdentifiers"
+endif
 
 # the frontend is embedded into the binary, so it has to exist before go builds
 build/gui/frontend:
 	cd gui/frontend && pnpm install --frozen-lockfile && pnpm build
 
 build/gui: build/gui/frontend
-	cd gui && go build -o ../manga-downloader-gui ${GUI_TAGS} -ldflags="$(GUI_LDFLAGS)" .
+	cd gui && $(GUI_CGO) go build -o ../manga-downloader-gui ${GUI_TAGS} -ldflags="$(GUI_LDFLAGS)" .
 
 # cross-compiled from any host, without cgo: Wails' Windows webview is pure Go.
 # -H windowsgui keeps the console from opening behind the window. The release
@@ -66,7 +71,7 @@ endif
 # gui/ is its own module, so ./... above never reaches it. The Go tests need
 # the frontend built (it's embedded) and the webview's headers, as build/gui does
 test/gui: build/gui/frontend
-	cd gui && go test ${GUI_TAGS} ./...
+	cd gui && $(GUI_CGO) go test ${GUI_TAGS} ./...
 	cd gui/frontend && pnpm test
 
 # one dependency per line, alphabetically sorted (grabber/html deliberately
