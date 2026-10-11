@@ -72,6 +72,7 @@ test/gui: build/gui/frontend
 # one dependency per line, alphabetically sorted (grabber/html deliberately
 # last), so parallel site-support branches never edit the same line
 grabber: \
+	grabber/3asq \
 	grabber/atsumaru \
 	grabber/aurorascans \
 	grabber/baozimh \
@@ -221,6 +222,11 @@ grabber/mangalivre:
 # generic Tcb grabber (no new code needed)
 grabber/tritinia:
 	go run . https://tritinia.org/manga/blue-period/ 64
+
+# Arabic Madara wordpress site (3asq.org redirects here), matched by the
+# generic Tcb grabber with no code changes
+grabber/3asq:
+	go run . https://3asq.online/manga/berserk/ 6
 
 grabber/flamecomics:
 	go run . https://flamecomics.xyz/series/154 104
