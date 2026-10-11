@@ -122,6 +122,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewGuya(g),
 		NewAtsumaru(g),
 		NewVortexscans(g),
+		NewAzorafly(g),
 		NewBigsolo(g),
 		NewDrakecomic(g),
 		NewElftoon(g),

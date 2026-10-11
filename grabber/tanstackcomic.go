@@ -16,7 +16,7 @@ import (
 )
 
 // tanstackComic is the shared implementation for the TanStack Start comic
-// platform behind hivetoons.org and vortexscans.org. Their series pages only
+// platform behind hivetoons.org, vortexscans.org and azorafly.com. Their series pages only
 // server-render the ~20 most recent chapters as DOM rows (the rest sits behind
 // a client-side "Load more"), but the FULL chapter list ships in the page's
 // seroval stream: an `initialChapters:$R[n]=[...]` literal followed by

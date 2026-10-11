@@ -51,6 +51,7 @@ jobs:
           - stonescape
           - utoon
           - vortexscans
+          - azorafly
           - genztoon
           - kaynscan
           - elftoon

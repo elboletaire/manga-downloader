@@ -75,6 +75,7 @@ grabber: \
 	grabber/3asq \
 	grabber/atsumaru \
 	grabber/aurorascans \
+	grabber/azorafly \
 	grabber/baozimh \
 	grabber/bigsolo \
 	grabber/bluesolo \
@@ -297,6 +298,12 @@ grabber/kaynscan:
 # smoke run proves the embedded list is what's being read
 grabber/hivetoons:
 	go run . https://hivetoons.org/series/eleceed 200
+
+# azorafly is another tanstackComic site: the same chapter list sits in the
+# seroval data, so a chapter well behind the newest ones proves it's read.
+grabber/azorafly:
+	go run . https://azorafly.com/series/a-ghostly-song 20
+
 grabber/hijala:
 	go run . https://en-hijala.com/series/double-click 252
 grabber/mangataro:
