@@ -434,6 +434,7 @@ grabber/html: \
 	grabber/mangavault \
 	grabber/mangaworld \
 	grabber/manhuaplus \
+	grabber/manhwaonline \
 	grabber/mistscans \
 	grabber/ravenscans \
 	grabber/rawkuma \
@@ -471,6 +472,9 @@ grabber/trmanga:
 
 grabber/uzaymanga:
 	go run . https://uzaymanga.com/manga/kunlun-daginin-seytani-ustasi 10
+
+grabber/manhwaonline:
+	go run . https://manhwaonline.org/manga/a-wonderful-new-world/ 150
 
 grabber/zonatmo:
 	go run . https://zonatmo.org/library/manga/31322/one-piece 1188

@@ -367,6 +367,17 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitleStrip: `^\d+(\.\d+)?\.?\s*Bölüm( Manga Oku)?$`,
 			Image:             `img[alt*="sayfa"]`,
 		},
+		// manhwaonline.org: English manhwa on a custom WordPress theme (not
+		// Madara's ajax chapters, so tcb can't serve it). The full list ships
+		// in one ul.chapter-list of plain links, and reader pages are plain
+		// <img> tags inside .reading-content.
+		{
+			Title:        "h1.main-info-title",
+			Rows:         "ul.chapter-list li a",
+			Chapter:      ".chapter-name",
+			ChapterTitle: ".chapter-name",
+			Image:        ".reading-content img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
