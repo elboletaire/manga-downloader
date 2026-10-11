@@ -47,7 +47,7 @@ and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[91 supported sites](#supported-sites)**, from big aggregators to small
+- **[92 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
@@ -484,7 +484,7 @@ Run `manga-downloader help` to list them in your terminal.
 ## Supported sites
 
 <details>
-<summary><b>Show all 91 supported sites</b></summary>
+<summary><b>Show all 92 supported sites</b></summary>
 <br>
 
 - [arenascan.com](https://arenascan.com)
@@ -516,6 +516,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [jestful.net](https://jestful.net)
 - [kappabeast.com](https://kappabeast.com) \*
 - [kaynscans.com (Kayn Scans, former kaynscan.org)](https://kaynscans.com)
+- [kingofshojo.com](https://kingofshojo.com)
 - [lagoonscans.com](https://lagoonscans.com)
 - [leercapitulo.co](https://www.leercapitulo.co)
 - [lhtranslation.net (LHTranslation)](https://lhtranslation.net)

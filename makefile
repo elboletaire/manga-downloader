@@ -396,6 +396,7 @@ grabber/html: \
 	grabber/demonicscans \
 	grabber/dynastyscans \
 	grabber/furyosociety \
+	grabber/kingofshojo \
 	grabber/lagoonscans \
 	grabber/madarascans \
 	grabber/mangaberri \
@@ -467,6 +468,8 @@ grabber/madarascans:
 	go run . https://madarascans.org/series/my-disciples-are-all-big-villains/ 481
 grabber/mangaberri:
 	go run . https://mangaberri.com/title/dai-dark 37
+grabber/kingofshojo:
+	go run . https://kingofshojo.com/manga/although-i-was-a-condemned-witch-everyone-dotes-on-me-after-regressing/ 14
 grabber/lagoonscans:
 	go run . https://lagoonscans.com/manga/crimson-reset/ 52
 grabber/rokaricomics:
