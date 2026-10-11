@@ -1,6 +1,8 @@
 // Pure logic behind the Download button: which OS the visitor is on, and
 // which release asset matches it. No DOM access here, so it's all testable.
 
+import { EN_RUNTIME, fill, type DownloadStrings } from './i18n'
+
 export const REPO = 'elboletaire/manga-downloader'
 export const RELEASES_URL = `https://github.com/${REPO}/releases/latest`
 export const LATEST_RELEASE_API = `https://api.github.com/repos/${REPO}/releases/latest`
@@ -126,13 +128,13 @@ export interface DownloadChoice {
  * When the release has no matching file (yet), the button keeps its label and
  * links to the releases page.
  */
-export function chooseDownload(release: Release | null, p: Platform): DownloadChoice {
+export function chooseDownload(release: Release | null, p: Platform, s: DownloadStrings = EN_RUNTIME.download): DownloadChoice {
   if (p.os === 'unknown') {
     return {
       kind: 'page',
       href: '#downloads',
-      label: 'Download the desktop app',
-      detail: 'Pick your system in the downloads below',
+      label: s.generic,
+      detail: s.genericDetail,
     }
   }
   const osName = OS_NAMES[p.os]
@@ -140,8 +142,8 @@ export function chooseDownload(release: Release | null, p: Platform): DownloadCh
     return {
       kind: 'page',
       href: RELEASES_URL,
-      label: `Download for ${osName}`,
-      detail: 'Latest release on GitHub',
+      label: fill(s.forOS, { os: osName }),
+      detail: s.latest,
     }
   }
 
@@ -151,16 +153,16 @@ export function chooseDownload(release: Release | null, p: Platform): DownloadCh
     return {
       kind: 'gui',
       href: gui.browser_download_url,
-      label: `Download for ${osName}`,
-      detail: joinDetail([`Desktop app ${tag}`, archLabel(gui.name), formatSize(gui.size)]),
+      label: fill(s.forOS, { os: osName }),
+      detail: joinDetail([fill(s.desktopApp, { tag }), archLabel(gui.name), formatSize(gui.size)]),
     }
   }
 
   return {
     kind: 'page',
     href: RELEASES_URL,
-    label: `Download for ${osName}`,
-    detail: 'Latest release on GitHub',
+    label: fill(s.forOS, { os: osName }),
+    detail: s.latest,
   }
 }
 

@@ -260,7 +260,30 @@ code {
   background: var(--surface);
 }
 
-@media (max-width: 860px) {
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.site-nav .lang-switch a {
+  padding: 5px 9px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.site-nav .lang-switch a[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+@media (max-width: 960px) {
   .nav-optional {
     display: none;
   }
