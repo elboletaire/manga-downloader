@@ -83,6 +83,10 @@ Download the `manga-downloader-gui` asset for your system from the
   brew install --cask elboletaire/tap/manga-downloader
   ~~~
 
+  Mind the `--cask`: without it, Homebrew installs the
+  [command line tool](#homebrew) instead, which shares the name. The cask only
+  installs the desktop app, so add the command line tool too if you want both.
+
 - **Linux**: `manga-downloader-gui-<tag>-linux-amd64.tar.gz`, or
   `-linux-arm64.tar.gz`. Extract it and run `manga-downloader-gui`. It needs
   WebKitGTK 4.1 (`libwebkit2gtk-4.1-0` on Debian and Ubuntu), which most desktops
@@ -98,8 +102,9 @@ Download the `manga-downloader-gui` asset for your system from the
 > If SmartScreen shows *"Windows protected your PC"*, click **More info** →
 > **Run anyway**: the file is only flagged because it isn't signed.
 
-If the desktop app sits next to the command line tool, `manga-downloader ui`
-opens it. On Windows, double-clicking `manga-downloader.exe` does the same.
+If the desktop app sits next to the command line tool or is on your `PATH` (the
+Homebrew cask puts it there), `manga-downloader ui` opens it. On Windows,
+double-clicking `manga-downloader.exe` does the same.
 
 ### Command line
 
@@ -111,8 +116,17 @@ On macOS and Linux, install the command line tool from [Homebrew][homebrew]:
 brew install elboletaire/tap/manga-downloader
 ~~~
 
-Homebrew doesn't quarantine what it installs, so there's no Gatekeeper step on
-macOS. `brew upgrade manga-downloader` updates it.
+Homebrew doesn't quarantine the command line tool, so there's no Gatekeeper
+step on macOS. `brew upgrade manga-downloader` updates it.
+
+This installs only the command line tool. On macOS, the
+[desktop app](#desktop-app) is a separate cask with the same name, so install
+both to get `manga-downloader ui` working:
+
+~~~bash
+brew install elboletaire/tap/manga-downloader
+brew install --cask elboletaire/tap/manga-downloader
+~~~
 
 #### Prebuilt binary
 
