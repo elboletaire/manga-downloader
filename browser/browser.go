@@ -64,7 +64,8 @@ var (
 // ErrNoBrowser is returned when no Chrome-like browser is installed
 var ErrNoBrowser = errors.New(
 	"no Chrome-like browser found: this site needs a real browser to be scraped.\n" +
-		"Install Google Chrome (or Chromium/Brave/Edge) and try again",
+		"Install Google Chrome, Chromium, Brave or Edge and try again, or set " +
+		browserOverrideEnv + " to the path of one",
 )
 
 // start boots the shared browser instance (only once)
@@ -73,7 +74,13 @@ func start() error {
 		return nil
 	}
 
-	opts := chromedp.DefaultExecAllocatorOptions[:]
+	execPath, err := findBrowser(systemHost())
+	if err != nil {
+		return err
+	}
+
+	opts := []chromedp.ExecAllocatorOption{chromedp.ExecPath(execPath)}
+	opts = append(opts, chromedp.DefaultExecAllocatorOptions[:]...)
 	if visible {
 		// not minimized: when visible it's because a challenge needs to be seen
 		// (and possibly solved) by the user

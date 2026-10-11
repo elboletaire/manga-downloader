@@ -642,6 +642,18 @@ need you to click them yourself. To show the window from the start, pass
 </details>
 
 <details>
+<summary><b>No browser found</b></summary>
+<br>
+
+Sites marked with `*` need Google Chrome, Chromium, Brave or Edge installed in
+one of its usual places. To use another Chromium-based browser, set
+`MANGA_DOWNLOADER_BROWSER` to the full path of its executable (or a command on your `PATH`), for example
+`MANGA_DOWNLOADER_BROWSER=/usr/bin/brave-browser`. It works for the command line
+and the app alike (for the app, set it in the environment that starts it).
+
+</details>
+
+<details>
 <summary><b>Pages don't show up on my e-reader</b></summary>
 <br>
 

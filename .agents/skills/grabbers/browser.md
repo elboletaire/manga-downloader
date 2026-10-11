@@ -1,6 +1,6 @@
 # The browser package
 
-`browser/browser.go` drives a locally-installed Chromium (auto-discovered by chromedp) for sites plain HTTP can't scrape. One process, started lazily and reused. `GetHTML` returns rendered HTML and harvests cookies + UA into `http/session.go`, so images still download over fast plain HTTP reusing the browser's Cloudflare clearance. Variants: `GetHTMLWithScroll`, `GetReaderHTML`, `GetAPIResponses`.
+`browser/browser.go` drives a locally-installed Chromium-family browser (found by `browser/find.go`: chromedp's own candidates first, then Brave and Edge; `MANGA_DOWNLOADER_BROWSER=/abs/path` overrides the search) for sites plain HTTP can't scrape. One process, started lazily and reused. `GetHTML` returns rendered HTML and harvests cookies + UA into `http/session.go`, so images still download over fast plain HTTP reusing the browser's Cloudflare clearance. Variants: `GetHTMLWithScroll`, `GetReaderHTML`, `GetAPIResponses`.
 
 - **Always try the site's own API/HTTP first.** mangafire's API was wide open until it started signing calls with a CF-gated `vrf` token (403 "Missing token"), forcing a browser; zonatmo went the other way and dropped its TLS block. Re-verify instead of assuming either direction is permanent.
 - **Headless loses to Cloudflare; headed usually wins.** `GetHTML` handles this: a short headless probe, then a teardown and reopen as visible on `challengeError`. `--browser-visible` skips the wasted probe.
