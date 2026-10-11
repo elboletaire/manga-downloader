@@ -395,6 +395,7 @@ grabber/html: \
 	grabber/deathtollscans \
 	grabber/demonicscans \
 	grabber/dynastyscans \
+	grabber/evascans \
 	grabber/furyosociety \
 	grabber/kingofshojo \
 	grabber/lagoonscans \
@@ -458,6 +459,8 @@ grabber/silentquill:
 	go run . https://silentquill.net/series/i-was-invited-to-join-the-country-as-an-otherworldly-warrior-but-i-refused-and-decided-to-start-as-a-soldier/ 59
 grabber/deathtollscans:
 	go run . https://reader.deathtollscans.net/series/kakushigoto/ 30
+grabber/evascans:
+	go run . https://evascans.net/series/about-things-that-havent-occurred-yet/ 13
 grabber/furyosociety:
 	go run . https://furyosociety.com/series/a-bout/ 3
 # elftoon.com moved to elftoon.net (same RSC platform as witchtoons.net); the
