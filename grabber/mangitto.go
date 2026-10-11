@@ -58,15 +58,13 @@ func (m *Mangitto) FetchTitle() (string, error) {
 	}
 
 	feed := struct {
-		Data struct {
-			Title string `json:"title"`
-		} `json:"data"`
+		Title string `json:"title"`
 	}{}
 	if err = json.Unmarshal([]byte(body), &feed); err != nil {
 		return "", err
 	}
 
-	m.title = sanitizeTitle(feed.Data.Title)
+	m.title = sanitizeTitle(feed.Title)
 
 	return m.title, nil
 }
@@ -78,9 +76,9 @@ func (m Mangitto) FetchChapters() (chapters Filterables, errs []error) {
 		return nil, []error{err}
 	}
 
-	page := 1
+	skip := 0
 	for {
-		uri := fmt.Sprintf("%s/api/manga/%s/chapters?page=%d", m.BaseUrl(), slug, page)
+		uri := fmt.Sprintf("%s/api/manga/%s/chapters?skip=%d&take=%d", m.BaseUrl(), slug, skip, mangittoChaptersPerPage)
 		body, err := http.GetText(http.RequestParams{
 			URL:     uri,
 			Referer: m.URL,
@@ -96,7 +94,7 @@ func (m Mangitto) FetchChapters() (chapters Filterables, errs []error) {
 			return
 		}
 
-		for _, c := range feed.Data.Chapters {
+		for _, c := range feed.Chapters {
 			chapters = append(chapters, &MangittoChapter{
 				Chapter{
 					Number:   c.Number,
@@ -106,10 +104,10 @@ func (m Mangitto) FetchChapters() (chapters Filterables, errs []error) {
 			})
 		}
 
-		if page >= feed.Data.Pages || len(feed.Data.Chapters) == 0 {
+		skip += len(feed.Chapters)
+		if len(feed.Chapters) == 0 || skip >= feed.Total {
 			return
 		}
-		page++
 	}
 }
 
@@ -168,12 +166,13 @@ func (m Mangitto) slug() (string, error) {
 	return matches[1], nil
 }
 
+// mangittoChaptersPerPage is the page size the chapters feed uses by default
+const mangittoChaptersPerPage = 20
+
 // mangittoChaptersFeed is the JSON feed for the paginated chapters list
 type mangittoChaptersFeed struct {
-	Data struct {
-		Chapters []struct {
-			Number float64 `json:"chapter"`
-		} `json:"chapters"`
-		Pages int `json:"pages"`
-	} `json:"data"`
+	Chapters []struct {
+		Number float64 `json:"chapter"`
+	} `json:"chapters"`
+	Total int `json:"total"`
 }
