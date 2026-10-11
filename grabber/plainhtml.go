@@ -146,12 +146,12 @@ func (m *PlainHTML) Test() (bool, error) {
 			Image:        "#imgs img",
 		},
 		// rawkuma.net: raw (Japanese) manga, Kiru WordPress theme. The reader
-		// page looks JS-rendered (images load via a "chapter" JS module) but
-		// the page URLs are already plain <img src='...'> tags (single-quoted
-		// attrs, still fine for goquery) inside a `[data-image-data]` section
-		// in the initial HTML - no browser needed. Plain "h1" is ambiguous: an
-		// info-sidebar "Last Updates" label is also an <h1> earlier in the
-		// DOM, so the title selector must be scoped to the real series title.
+		// page's full page list is server-rendered as plain <img src="..."> tags
+		// inside a `[data-image-data]` section, so no browser is needed. Plain
+		// "h1" is ambiguous: an info-sidebar "Last Updates" label is also an <h1>
+		// earlier in the DOM, so the title selector must be scoped to the real
+		// series title. Chapter numbers come from the row's text ("Chapter
+		// 29.6"), never from the URL's postid.
 		{
 			Title:        `h1[itemprop="name"]`,
 			Rows:         "#chapter-list [data-chapter-number]",
