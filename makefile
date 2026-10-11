@@ -431,6 +431,7 @@ grabber/html: \
 	grabber/mangakatana \
 	grabber/mangapill \
 	grabber/mangaread \
+	grabber/mangaworld \
 	grabber/manhuaplus \
 	grabber/mistscans \
 	grabber/ravenscans \
@@ -502,6 +503,8 @@ grabber/kingofshojo:
 	go run . https://kingofshojo.com/manga/although-i-was-a-condemned-witch-everyone-dotes-on-me-after-regressing/ 14
 grabber/komikstation:
 	go run . https://komikstation.org/manga/boukun-wo-teki-ni-mawashita-akujo-desu-ga-bankaisa-sete-itadakimasu/ 10
+grabber/mangaworld:
+	go run . https://www.mangaworld.mx/manga/1683/kingdom 400
 grabber/lagoonscans:
 	go run . https://lagoonscans.com/manga/crimson-reset/ 52
 grabber/rokaricomics:

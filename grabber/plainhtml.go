@@ -33,6 +33,10 @@ type SiteSelector struct {
 	Chapter      string
 	ChapterTitle string
 	Image        string
+	// ChapterQuery, when set, is appended to every chapter URL before it is
+	// fetched (e.g. "style=list" for readers that render one page at a time
+	// unless asked for the whole list)
+	ChapterQuery string
 }
 
 // PlainHTMLChapter represents a PlainHTML Chapter
@@ -296,6 +300,19 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: "strong",
 			Image:        ".reader-pages img",
 		},
+		// mangaworld.mx (Italian): server-rendered, unquoted attributes are
+		// fine for goquery. Chapter rows are <a class="chap"> inside one
+		// <div class="chapter"> per chapter, the number in a span ("Capitolo
+		// 835"). The reader renders a single page per chapter unless it gets
+		// ?style=list, which lists every page as img.page-image.
+		{
+			Title:        "h1",
+			Rows:         "div.chapter a.chap",
+			Chapter:      "span",
+			ChapterTitle: "span",
+			Image:        "img.page-image",
+			ChapterQuery: "style=list",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
@@ -370,9 +387,9 @@ func textWithoutNoise(s *goquery.Selection) string {
 }
 
 // chapterNumberRe matches a chapter number in a chapter title, accepting
-// "Chapter 10", "Ch. 10", "C. 10", the Spanish "Capítulo 10" and the French
-// "Chapitre 10" (case insensitive).
-var chapterNumberRe = regexp.MustCompile(`(?i)\b(?:chapter|chapitre|cap[ií]tulo|ch|c)\.?\s*(\d+\.?\d*)`)
+// "Chapter 10", "Ch. 10", "C. 10", "Cap. 10", the Spanish "Capítulo 10", the
+// Italian "Capitolo 10" and the French "Chapitre 10" (case insensitive).
+var chapterNumberRe = regexp.MustCompile(`(?i)\b(?:chapter|chapitre|cap(?:[ií]tulo|itolo)?|ch|c)\.?\s*(\d+\.?\d*)`)
 
 // volumeNumberRe matches a volume number ("Volume 18", "Vol. 2", the Spanish
 // "Volumen 3"), used as a fallback for sites that list volumes instead of
@@ -429,6 +446,13 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 
 		if !strings.HasPrefix(u, "http") {
 			u = m.BaseUrl() + u
+		}
+		if m.site.ChapterQuery != "" {
+			sep := "?"
+			if strings.Contains(u, "?") {
+				sep = "&"
+			}
+			u += sep + m.site.ChapterQuery
 		}
 		title := chapterText
 		if m.site.ChapterTitle != "" {
