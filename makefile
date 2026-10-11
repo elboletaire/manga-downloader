@@ -390,6 +390,7 @@ grabber/mangapark:
 	go run . --browser-visible https://mangapark1.com/manga/rowdy-reunion 41
 
 grabber/html: \
+	grabber/arenascan \
 	grabber/asura \
 	grabber/deathtollscans \
 	grabber/demonicscans \
@@ -426,6 +427,8 @@ skip-pages:
 	go run . --skip-pages=-1 https://tcbonepiecechapters.com/mangas/5/one-piece 1146
 	go run ./tools/verify-cbz "One Piece 1146 - A Stirring in the Stillness.cbz"
 
+grabber/arenascan:
+	go run . https://arenascan.com/manga/academys-genius-swordmaster/ 80
 grabber/asura:
 	go run . https://asurascans.com/comics/absolute-regression-f886a8af 1
 

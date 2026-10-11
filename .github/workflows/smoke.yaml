@@ -63,6 +63,7 @@ jobs:
           - webtoons
           # Plain-HTML (goquery) scrapers
           - tcbscans
+          - arenascan
           - asura
           - zonatmo
           - mangapill
