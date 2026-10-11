@@ -132,7 +132,7 @@ grabber/mangadex:
 	go run . https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece --language ca 1187 --bundle
 
 grabber/mangabats:
-	go run . https://www.mangabats.com/manga/after-the-possessor-left 1
+	go run . https://www.mangabats.com/manga/after-the-possessor-left 30
 
 # uses a real (headless) browser: the SPA signs every JSON API call with a
 # per-session, cloudflare-challenge-gated vrf token, so we render the pages,
