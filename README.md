@@ -47,7 +47,7 @@ and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[102 supported sites](#supported-sites)**, from big aggregators to small
+- **[106 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
@@ -484,7 +484,7 @@ Run `manga-downloader help` to list them in your terminal.
 ## Supported sites
 
 <details>
-<summary><b>Show all 102 supported sites</b></summary>
+<summary><b>Show all 106 supported sites</b></summary>
 <br>
 
 - [3asq.online (Arabic, former 3asq.org)](https://3asq.online)
@@ -503,9 +503,11 @@ Run `manga-downloader help` to list them in your terminal.
 - [dragontea.ink](https://dragontea.ink) \*
 - [drakecomic.net (Drake Scans, former drakecomic.org)](https://drakecomic.net)
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
+- [eldermanga.com](https://eldermanga.com)
 - [elftoon.net (Elf Toon, former elftoon.com)](https://elftoon.net)
 - [en-hijala.com (Hijala Translations)](https://en-hijala.com)
 - [en-thunderscans.com (Thunderscans)](https://en-thunderscans.com)
+- [eskimangalar.com](https://eskimangalar.com)
 - [evascans.net (former evascans.org)](https://evascans.net)
 - [fanfox.net (Manga Fox)](https://fanfox.net)
 - [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
@@ -524,6 +526,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [lagoonscans.com](https://lagoonscans.com)
 - [leercapitulo.co](https://www.leercapitulo.co)
 - [lhtranslation.net (LHTranslation)](https://lhtranslation.net)
+- [limonmanga.com](https://limonmanga.com)
 - [luacomic.org (LuaScans)](https://luacomic.org)
 - [madarascans.org (former madarascans.com)](https://madarascans.org)
 - [mangaball.com (former mangaball.net)](https://mangaball.com)
@@ -582,6 +585,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [trmanga.com](https://trmanga.com)
 - [twmanga.com (包子漫画, baozimh.com mirror)](https://www.twmanga.com)
 - [utoon.us (UToon, home of reset-scans' content)](https://www.utoon.us)
+- [uzaymanga.com](https://uzaymanga.com)
 - [violetscans.org](https://violetscans.org)
 - [vortexscans.org](https://vortexscans.org)
 - [webtoons.com (WEBTOON, free episodes only)](https://www.webtoons.com)

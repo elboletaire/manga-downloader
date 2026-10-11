@@ -445,6 +445,7 @@ grabber/html: \
 	grabber/tcbscans \
 	grabber/thunderscans \
 	grabber/trmanga \
+	grabber/uzaymanga \
 	grabber/violetscans \
 	grabber/writerscans \
 	grabber/zonatmo
@@ -467,6 +468,9 @@ grabber/asura:
 
 grabber/trmanga:
 	go run . https://trmanga.com/webtoon/no-place-for-the-fake-princess 50
+
+grabber/uzaymanga:
+	go run . https://uzaymanga.com/manga/kunlun-daginin-seytani-ustasi 10
 
 grabber/zonatmo:
 	go run . https://zonatmo.org/library/manga/31322/one-piece 1188

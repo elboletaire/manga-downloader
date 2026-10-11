@@ -352,6 +352,21 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: "em",
 			Image:        "img.img-responsive",
 		},
+		// uzaymanga.com, eldermanga.com, eskimangalar.com and limonmanga.com:
+		// one Turkish manga platform, chapter URLs are /manga/{slug}/{n}-bolum-oku.
+		// The series page repeats the newest and oldest chapters in larger
+		// cards (no .w-10 number badge), so only the list rows are taken. The
+		// row's span carries the series title and "{n}. Bölüm Manga Oku", which
+		// parseChapterNumber reads. Reader pages are plain <img> tags with an
+		// "... Sayfa N" alt.
+		{
+			Title:             "h1.text-3xl",
+			Rows:              `a[href*="-bolum-oku"]:has(.w-10)`,
+			Chapter:           "span.font-bold",
+			ChapterTitle:      "span.font-bold",
+			ChapterTitleStrip: `^\d+(\.\d+)?\.?\s*Bölüm( Manga Oku)?$`,
+			Image:             `img[alt*="sayfa"]`,
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
