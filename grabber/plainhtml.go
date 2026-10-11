@@ -313,6 +313,16 @@ func (m *PlainHTML) Test() (bool, error) {
 			Image:        "img.page-image",
 			ChapterQuery: "style=list",
 		},
+		// mangavault.lat (Spanish, Astro): the series page lists every chapter
+		// as a plain link in one <ul> (the "Cap. N" label is a span), and the
+		// reader's pages are plain <img> tags on media.mangavault.lat
+		{
+			Title:        "h1",
+			Rows:         "ul.divide-y a",
+			Chapter:      "span",
+			ChapterTitle: "span",
+			Image:        `img[src*="media.mangavault.lat"]`,
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
