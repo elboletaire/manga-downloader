@@ -9,8 +9,8 @@ import (
 )
 
 // Kaynscan is a grabber for kaynscans.com (Kayn Scans, formerly kaynscan.org,
-// which was an Astro/astro-island site — see astroisland.go — until the move,
-// around Aug 2026). The new domain runs the same server-rendered Next.js RSC
+// which was an Astro/astro-island site until around Aug 2026). The new domain
+// runs the same server-rendered Next.js RSC
 // comic platform as witchtoons.net, implemented in rsccomic.go: series live
 // under /series/comic/{slug} and both the (paginated) chapter list and the
 // reader page images ship inside the RSC flight payload, all over plain HTTP.

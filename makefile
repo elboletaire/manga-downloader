@@ -279,8 +279,8 @@ grabber/kaynscan:
 	go run . https://kaynscans.com/series/comic/heavenly-demon-cultivation-simulation 191
 # hivetoons only server-renders the ~20 newest chapter anchors ("Load more"
 # does the rest client-side), so the grabber reads the full list out of the
-# astro-island blob; use a chapter well behind that window so the smoke run
-# proves the embedded list is what's being read
+# page's TanStack (seroval) data; use a chapter well behind that window so the
+# smoke run proves the embedded list is what's being read
 grabber/hivetoons:
 	go run . https://hivetoons.org/series/eleceed 200
 grabber/hijala:
