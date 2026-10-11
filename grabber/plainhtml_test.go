@@ -135,6 +135,12 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want:     []string{"https://a.co/storage/series/webtoon/abc/chapters/def/001.jpg"},
 		},
 		{
+			name:     "ritharscans.com Alpine.js JSON.parse blob with absolute paths",
+			selector: "img",
+			html:     `<html><body><div x-data="immersiveReader({ canRead: true, pages: JSON.parse('[{\u0022path\u0022:\u0022https:\\\/\\\/cdn.a.co\\\/x\\\/001.jpg\u0022,\u0022width\u0022:500},{\u0022path\u0022:\u0022https:\\\/\\\/cdn.a.co\\\/x\\\/002.jpg\u0022,\u0022width\u0022:500}]'), baseLink: 'https:\/\/cdn.a.co\/' })"></div></body></html>`,
+			want:     []string{"https://cdn.a.co/x/001.jpg", "https://cdn.a.co/x/002.jpg"},
+		},
+		{
 			name:     "plain img src",
 			selector: "div.reading-content img",
 			html:     `<html><body><div class="reading-content"><img src="https://a.co/1.jpg"/><img src="https://a.co/2.jpg"/></div></body></html>`,

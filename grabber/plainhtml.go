@@ -614,20 +614,31 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		return imgs
 	}
 
-	// ritharscans.com's Alpine.js reader stores every page's relative path
-	// (plus a `baseLink` to prefix them with) inline in an `x-data` attribute:
+	// ritharscans.com's Alpine.js reader stores every page's path inline in an
+	// `x-data` attribute, either as a literal list with paths relative to a
+	// `baseLink`:
 	// x-data="immersiveReader({ pages: [{"path":"...","width":...},...], baseLink: 'https://.../storage/', ... })"
+	// or, since the reader moved to the CDN, as a JS string holding the JSON
+	// (quotes as ", absolute paths):
+	// x-data="immersiveReader({ pages: JSON.parse('[{"path":"https:\\\/\\\/cdn...",...}]'), baseLink: 'https:\/\/cdn...\/', ... })"
 	reader := doc.Find(`[x-data*="immersiveReader("]`)
 	if reader.Length() > 0 {
 		xdata := reader.First().AttrOr("x-data", "")
 		base := ""
-		if m := regexp.MustCompile(`baseLink:\s*'([^']*)'`).FindStringSubmatch(xdata); len(m) > 1 {
-			base = m[1]
+		if m := regexp.MustCompile(`baseLink:\s*'((?:[^'\\]|\\.)*)'`).FindStringSubmatch(xdata); len(m) > 1 {
+			base = unescapeJSString(m[1])
+		}
+		if m := regexp.MustCompile(`JSON\.parse\('((?:[^'\\]|\\.)*)'\)`).FindStringSubmatch(xdata); len(m) > 1 {
+			xdata = unescapeJSString(m[1])
 		}
 		paths := regexp.MustCompile(`"path":"([^"]+)"`).FindAllStringSubmatch(xdata, -1)
 		imgs := []string{}
 		for _, p := range paths {
-			imgs = append(imgs, base+strings.ReplaceAll(p[1], `\/`, "/"))
+			path := strings.ReplaceAll(p[1], `\/`, "/")
+			if !strings.HasPrefix(path, "http") {
+				path = base + path
+			}
+			imgs = append(imgs, path)
 		}
 		if len(imgs) > 0 {
 			return imgs
@@ -673,6 +684,21 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 	})
 
 	return imgs
+}
+
+// unescapeJSString undoes the escapes of a JavaScript string literal body
+// (`\uXXXX`, and `\c` for any other character c), e.g. the `"` quotes
+// inside a `JSON.parse('...')` argument.
+func unescapeJSString(s string) string {
+	escapes := regexp.MustCompile(`\\u([0-9a-fA-F]{4})|\\(.)`)
+	return escapes.ReplaceAllStringFunc(s, func(m string) string {
+		sub := escapes.FindStringSubmatch(m)
+		if sub[1] != "" {
+			r, _ := strconv.ParseUint(sub[1], 16, 32)
+			return string(rune(r))
+		}
+		return sub[2]
+	})
 }
 
 // sanitizeTitle sanitizes titles, trimming and removing extra spaces from titles
