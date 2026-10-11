@@ -60,6 +60,7 @@ jobs:
           - gdscans
           - mangalivre
           - tritinia
+          - webtoons
           # Plain-HTML (goquery) scrapers
           - tcbscans
           - asura

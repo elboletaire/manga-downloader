@@ -47,7 +47,7 @@ and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[88 supported sites](#supported-sites)**, from big aggregators to small
+- **[89 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
@@ -484,7 +484,7 @@ Run `manga-downloader help` to list them in your terminal.
 ## Supported sites
 
 <details>
-<summary><b>Show all 88 supported sites</b></summary>
+<summary><b>Show all 89 supported sites</b></summary>
 <br>
 
 - [asmotoon.com (Asmodeus Scans)](https://asmotoon.com) \*
@@ -571,6 +571,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [utoon.us (UToon, home of reset-scans' content)](https://www.utoon.us)
 - [violetscans.org](https://violetscans.org)
 - [vortexscans.org](https://vortexscans.org)
+- [webtoons.com (WEBTOON, free episodes only)](https://www.webtoons.com)
 - [weebcentral.com](https://weebcentral.com)
 - [witchtoons.net (WitchToons, former witchscans.com)](https://witchtoons.net)
 - [writerscans.com](https://writerscans.com)

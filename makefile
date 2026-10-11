@@ -123,6 +123,7 @@ grabber: \
 	grabber/utoon \
 	grabber/vortexscans \
 	grabber/weebcentral \
+	grabber/webtoons \
 	grabber/witchtoons \
 	grabber/html
 
@@ -473,6 +474,10 @@ grabber/thunderscans:
 	go run . https://en-thunderscans.com/comics/full-time-awakening/ 108
 grabber/violetscans:
 	go run . https://violetscans.org/comics/after-all-ill-marry-you/ 21
+# a free, early episode (episode_no 2 is Season 1 Ep. 1, 52 pages); the
+# list is paginated, so this also walks the whole episode list
+grabber/webtoons:
+	go run . 'https://www.webtoons.com/en/fantasy/tower-of-god/list?title_no=95' 2
 # witchscans.com rebranded to witchtoons.net: new platform (Next.js, chapters
 # and pages in the RSC payload), so it has its own grabber instead of a
 # plainhtml selector entry
