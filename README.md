@@ -47,7 +47,7 @@ and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[95 supported sites](#supported-sites)**, from big aggregators to small
+- **[96 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
@@ -484,7 +484,7 @@ Run `manga-downloader help` to list them in your terminal.
 ## Supported sites
 
 <details>
-<summary><b>Show all 95 supported sites</b></summary>
+<summary><b>Show all 96 supported sites</b></summary>
 <br>
 
 - [3asq.online (Arabic, former 3asq.org)](https://3asq.online)
@@ -538,6 +538,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [mangakatana.com](https://mangakatana.com)
 - [mangalib.me (MangaLib)](https://mangalib.me)
 - [mangalivre.to (Manga Livre, former mangalivre.tv/mangalivre.net)](https://mangalivre.to)
+- [manganato.gg (MangaNato)](https://www.manganato.gg)
 - [mangapark1.com (MangaPark, the current host: mangapark.page now redirects to it)](https://mangapark1.com) \*
 - [mangapill.com](https://mangapill.com)
 - [mangaplus.shueisha.co.jp (Manga Plus, Shueisha's official reader)](https://mangaplus.shueisha.co.jp)

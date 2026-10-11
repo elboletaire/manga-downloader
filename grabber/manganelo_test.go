@@ -165,6 +165,8 @@ func TestManganeloTest(t *testing.T) {
 		{"https://mangakakalot.gg/manga/apotheosis", true},
 		{"https://www.natomanga.com/manga/rebirth-from-0-to-1", true},
 		{"https://natomanga.com/manga/rebirth-from-0-to-1", true},
+		{"https://www.manganato.gg/manga/apotheosis", true},
+		{"https://manganato.gg/manga/apotheosis", true},
 		{"https://example.com/manga/one-piece", false},
 		// hostname anchored: no substring matches
 		{"https://notmangabats.com/manga/one-piece", false},

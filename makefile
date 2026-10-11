@@ -104,6 +104,7 @@ grabber: \
 	grabber/mangak \
 	grabber/mangalib \
 	grabber/mangalivre \
+	grabber/manganato \
 	grabber/mangaplus \
 	grabber/mangasushi \
 	grabber/mangataro \
@@ -138,6 +139,9 @@ grabber/mangadex:
 
 grabber/mangabats:
 	go run . https://www.mangabats.com/manga/after-the-possessor-left 30
+
+grabber/manganato:
+	go run . https://www.manganato.gg/manga/apotheosis 2
 
 # uses a real (headless) browser: the SPA signs every JSON API call with a
 # per-session, cloudflare-challenge-gated vrf token, so we render the pages,

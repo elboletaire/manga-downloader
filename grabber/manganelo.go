@@ -48,7 +48,7 @@ type ManganeloChapter struct {
 }
 
 // manganeloHostRe matches the family domains and their subdomains
-var manganeloHostRe = regexp.MustCompile(`(?i)(^|\.)(mangabats\.com|mangakakalot\.gg|natomanga\.com)$`)
+var manganeloHostRe = regexp.MustCompile(`(?i)(^|\.)(mangabats\.com|mangakakalot\.gg|manganato\.gg|natomanga\.com)$`)
 
 // manganeloSeriesWait is a selector that exists only on a rendered series
 // page, never on a Cloudflare interstitial: waiting on something the
