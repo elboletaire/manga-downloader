@@ -16,8 +16,9 @@ import (
 // Tcb is a grabber for Madara-based wordpress sites (i.e. lhtranslation.net)
 type Tcb struct {
 	*Grabber
-	chaps *goquery.Selection
-	title string
+	chaps  *goquery.Selection
+	title  string
+	series string // series URL, which a pasted chapter URL is reduced to
 }
 
 func NewTcb(g *Grabber) *Tcb {
@@ -30,15 +31,21 @@ type TcbChapter struct {
 	URL string
 }
 
+// tcbSeriesRe matches the series path of a Madara URL: /manga/<slug>/ on most
+// themes, /gl/<slug>/ on some (lilymanga.net). The slug must end in a slash,
+// so a pasted chapter URL such as /manga/<slug>/<chapter>/ maps to its series,
+// while /somanga/ and /glimpse/ don't match at all.
+var tcbSeriesRe = regexp.MustCompile(`/((?:manga|gl)/[^/]+)/`)
+
 // Test returns true if the URL is a compatible TCBScans URL
 func (t *Tcb) Test() (bool, error) {
-	re := regexp.MustCompile(`manga\/(.*)\/$`)
-	if !re.MatchString(t.URL) {
+	match := tcbSeriesRe.FindStringSubmatch(t.URL)
+	if match == nil {
 		return false, nil
 	}
 
-	mid := re.FindStringSubmatch(t.URL)[1]
-	uri, _ := url.JoinPath(t.BaseUrl(), "manga", mid, "ajax", "chapters")
+	t.series = t.BaseUrl() + "/" + match[1] + "/"
+	uri, _ := url.JoinPath(t.BaseUrl(), match[1], "ajax", "chapters")
 
 	rbody, err := http.Post(http.RequestParams{
 		URL:     uri,
@@ -69,7 +76,7 @@ func (t *Tcb) FetchTitle() (string, error) {
 	}
 
 	rbody, err := http.Get(http.RequestParams{
-		URL: t.URL,
+		URL: t.series,
 	})
 	if err != nil {
 		return "", err

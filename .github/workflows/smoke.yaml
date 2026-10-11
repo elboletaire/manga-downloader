@@ -138,6 +138,8 @@ jobs:
           # - asmotoon     # now browser-based: cloudflare challenges plain HTTP
           #                # and headless alike. Run `make grabber/asmotoon`
           #                # locally.
+          # - lilymanga    # rate-limits hard (429 on the series path, even
+          #                # from residential IPs); smoke-test locally.
     steps:
       - uses: actions/checkout@v4
 

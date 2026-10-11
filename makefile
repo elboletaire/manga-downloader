@@ -95,6 +95,7 @@ grabber: \
 	grabber/jestful \
 	grabber/kaynscan \
 	grabber/leercapitulo \
+	grabber/lilymanga \
 	grabber/luascans \
 	grabber/mangaball \
 	grabber/mangabats \
@@ -241,6 +242,12 @@ grabber/tritinia:
 # generic Tcb grabber with no code changes
 grabber/3asq:
 	go run . https://3asq.online/manga/berserk/ 6
+
+# Madara wordpress site whose series URLs live under /gl/ instead of /manga/;
+# the generic Tcb grabber matches them through the same ajax/chapters endpoint.
+# Chapter 2 is not the newest (6 episodes), and it sits in the list-style reader.
+grabber/lilymanga:
+	go run . https://lilymanga.net/gl/a-love-hate-chord/ 2
 
 grabber/flamecomics:
 	go run . https://flamecomics.xyz/series/154 104

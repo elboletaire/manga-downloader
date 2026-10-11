@@ -3,6 +3,8 @@
 package grabber
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -86,5 +88,78 @@ func TestTcbFetchChaptersSkipsVolumeWrappers(t *testing.T) {
 		if !seen {
 			t.Fatalf("expected chapter number %v not found", num)
 		}
+	}
+}
+
+func TestTcbSeriesRe(t *testing.T) {
+	tests := []struct {
+		url    string
+		series string // empty when the URL must not match
+	}{
+		{"https://lhtranslation.net/manga/gaikotsu-kishi-sama/", "manga/gaikotsu-kishi-sama"},
+		{"https://lilymanga.net/gl/a-love-hate-chord/", "gl/a-love-hate-chord"},
+		{"https://mangalivre.to/manga/chainsaw-man-pt-br/", "manga/chainsaw-man-pt-br"},
+		{"https://lhtranslation.net/manga/gaikotsu-kishi-sama/chapter-1/", "manga/gaikotsu-kishi-sama"},
+		{"https://gdscans.com/manga/example/volume-10/chapter-50/", "manga/example"},
+		{"https://lilymanga.net/gl/a-love-hate-chord/episode-02/", "gl/a-love-hate-chord"},
+		{"https://lilymanga.net/gl/a-love-hate-chord", ""},
+		{"https://lhtranslation.net/manga/", ""},
+		{"https://example.com/somanga/foo/", ""},
+		{"https://example.com/glimpse/foo/", ""},
+		{"https://example.com/comics/foo/", ""},
+		{"https://example.com/", ""},
+	}
+
+	for _, tt := range tests {
+		match := tcbSeriesRe.FindStringSubmatch(tt.url)
+		got := ""
+		if match != nil {
+			got = match[1]
+		}
+		if got != tt.series {
+			t.Errorf("tcbSeriesRe on %q: got %q, want %q", tt.url, got, tt.series)
+		}
+	}
+}
+
+// A pasted chapter URL must download its series: the ajax/chapters list and
+// the title both come from the series page, not from the chapter page.
+func TestTcbChapterURLUsesSeries(t *testing.T) {
+	const seriesHTML = `<html><body><h1>A Love-Hate Chord</h1></body></html>`
+	const chaptersHTML = `<ul><li class="wp-manga-chapter"><a href="/gl/a-love-hate-chord/episode-01/">Episode 01</a></li></ul>`
+
+	var requested []string
+	mux := http.NewServeMux()
+	mux.HandleFunc("/gl/a-love-hate-chord/ajax/chapters", func(w http.ResponseWriter, r *http.Request) {
+		requested = append(requested, r.URL.Path)
+		_, _ = w.Write([]byte(chaptersHTML))
+	})
+	mux.HandleFunc("/gl/a-love-hate-chord/", func(w http.ResponseWriter, r *http.Request) {
+		requested = append(requested, r.URL.Path)
+		_, _ = w.Write([]byte(seriesHTML))
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	tcb := NewTcb(&Grabber{URL: srv.URL + "/gl/a-love-hate-chord/episode-01/", Settings: &Settings{}})
+	ok, err := tcb.Test()
+	if err != nil || !ok {
+		t.Fatalf("Test() = %v, %v; want the chapter URL to match its series", ok, err)
+	}
+	if want := srv.URL + "/gl/a-love-hate-chord/"; tcb.series != want {
+		t.Fatalf("series URL = %q, want %q", tcb.series, want)
+	}
+
+	title, err := tcb.FetchTitle()
+	if err != nil {
+		t.Fatalf("FetchTitle() error: %s", err)
+	}
+	if title != "A Love-Hate Chord" {
+		t.Errorf("FetchTitle() = %q, want the series title", title)
+	}
+
+	want := []string{"/gl/a-love-hate-chord/ajax/chapters", "/gl/a-love-hate-chord/"}
+	if len(requested) != len(want) || requested[0] != want[0] || requested[1] != want[1] {
+		t.Errorf("requested paths = %v, want %v", requested, want)
 	}
 }
