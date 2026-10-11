@@ -309,13 +309,11 @@ func TestFallbackIsSavedWithTheOptions(t *testing.T) {
 	if got := a.Options().Language; got != grabber.FilterAll {
 		t.Errorf("options language %q after the fallback, want %q", got, grabber.FilterAll)
 	}
-	saved := defaultSettings()
-	if err := loadOptions(prefs, saved); err != nil {
-		t.Fatal(err)
-	}
-	if saved.Language != grabber.FilterAll {
-		t.Errorf("saved language %q, want the fallback %q", saved.Language, grabber.FilterAll)
-	}
+	// the load's goroutine saves just after it clears Loading
+	waitUntil(t, "the fallback to be saved", func() bool {
+		saved := defaultSettings()
+		return loadOptions(prefs, saved) == nil && saved.Language == grabber.FilterAll
+	})
 }
 
 func TestLoadCanonicalizesTheTypedSpelling(t *testing.T) {
