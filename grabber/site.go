@@ -124,6 +124,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewVortexscans(g),
 		NewBigsolo(g),
 		NewDrakecomic(g),
+		NewElftoon(g),
 		NewFmteam(g),
 		NewGenzToon(g),
 		NewHivetoons(g),

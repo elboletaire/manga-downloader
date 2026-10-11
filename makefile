@@ -80,6 +80,7 @@ grabber: \
 	grabber/comix \
 	grabber/danke \
 	grabber/drakecomic \
+	grabber/elftoon \
 	grabber/fanfox \
 	grabber/flamecomics \
 	grabber/fmteam \
@@ -377,7 +378,6 @@ grabber/html: \
 	grabber/deathtollscans \
 	grabber/demonicscans \
 	grabber/dynastyscans \
-	grabber/elftoon \
 	grabber/furyosociety \
 	grabber/lagoonscans \
 	grabber/madarascans \
@@ -439,8 +439,10 @@ grabber/deathtollscans:
 	go run . https://reader.deathtollscans.net/series/kakushigoto/ 30
 grabber/furyosociety:
 	go run . https://furyosociety.com/series/a-bout/ 3
+# elftoon.com moved to elftoon.net (same RSC platform as witchtoons.net); the
+# old domain still 301s /manga/{slug}/ and the grabber remaps old URLs in code
 grabber/elftoon:
-	go run . https://elftoon.com/manga/god-level-assassin-im-the-shadow/ 123
+	go run . https://elftoon.net/series/comic/god-level-assassin-im-the-shadow 123
 grabber/asmotoon:
 	go run . https://asmotoon.com/series/official-adultery/ 1
 grabber/madarascans:

@@ -500,7 +500,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [dragontea.ink](https://dragontea.ink) \*
 - [drakecomic.net (Drake Scans, former drakecomic.org)](https://drakecomic.net)
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
-- [elftoon.com](https://elftoon.com)
+- [elftoon.net (Elf Toon, former elftoon.com)](https://elftoon.net)
 - [en-hijala.com (Hijala Translations)](https://en-hijala.com)
 - [en-thunderscans.com (Thunderscans)](https://en-thunderscans.com)
 - [fanfox.net (Manga Fox)](https://fanfox.net)

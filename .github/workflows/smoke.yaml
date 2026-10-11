@@ -50,6 +50,7 @@ jobs:
           - vortexscans
           - genztoon
           - kaynscan
+          - elftoon
           - hijala
           - mangataro
           - tcb
@@ -71,7 +72,6 @@ jobs:
           - templetoons
           - deathtollscans
           - furyosociety
-          - elftoon
           - asmotoon
           - madarascans
           - lagoonscans

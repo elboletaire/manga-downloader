@@ -246,15 +246,15 @@ func TestResolveURL(t *testing.T) {
 	}
 }
 
-// TestFetchChaptersSkipsLockedRowsAndSanitizesTitles exercises the elftoon.com
-// selector: gem-locked chapters use a "#" overlay link instead of a real URL
-// and must be skipped by the Rows selector, and chapter titles coming from
-// whitespace-heavy markup (a real quirk of elftoon's markup) must be
-// collapsed like series titles already are.
+// TestFetchChaptersSkipsLockedRowsAndSanitizesTitles exercises a
+// mangastream-style chapter selector: gem-locked chapters use a "#" overlay
+// link instead of a real URL and must be skipped by the Rows selector, and
+// chapter titles coming from whitespace-heavy markup must be collapsed like
+// series titles already are.
 func TestFetchChaptersSkipsLockedRowsAndSanitizesTitles(t *testing.T) {
 	html := `<html><body><ul id="chapterlist">
 		<li data-num="2"><a class="chapter-link-overlay" href="#"></a><span class="chapternum">Chapter    2</span></li>
-		<li data-num="1"><a class="chapter-link-overlay" href="https://elftoon.com/manga-chapter-1/"></a><span class="chapternum">Chapter    1</span></li>
+		<li data-num="1"><a class="chapter-link-overlay" href="https://example.com/manga-chapter-1/"></a><span class="chapternum">Chapter    1</span></li>
 	</ul></body></html>`
 
 	m := PlainHTML{
@@ -283,7 +283,7 @@ func TestFetchChaptersSkipsLockedRowsAndSanitizesTitles(t *testing.T) {
 	if chap.GetTitle() != "Chapter 1" {
 		t.Errorf("expected sanitized title %q, got %q", "Chapter 1", chap.GetTitle())
 	}
-	if chap.URL != "https://elftoon.com/manga-chapter-1/" {
+	if chap.URL != "https://example.com/manga-chapter-1/" {
 		t.Errorf("unexpected chapter URL: %q", chap.URL)
 	}
 }
