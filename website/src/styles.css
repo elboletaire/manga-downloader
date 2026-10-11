@@ -576,6 +576,33 @@ code {
   }
 }
 
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: clamp(20px, 3vw, 32px);
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.stats strong {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.platform-stats {
+  margin-top: 8px;
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.platform-stats strong {
+  color: var(--text);
+}
+
 /* sections -------------------------------------------------------------- */
 
 .section {

@@ -31,6 +31,12 @@ pnpm preview   # serve dist/
   matches it against the assets of the latest GitHub release. If the API fails
   or the release has no matching desktop app file, it links to the releases
   page. Without a detectable OS it offers the desktop app downloads section.
+- **Download stats**: fetched at build time from the GitHub releases API (all
+  releases, `.md5` checksums excluded) and Docker Hub by `build/stats.ts` (pure,
+  tested). The stats appear in the hero and on each platform card. A failed fetch
+  hides them instead of breaking the build. A daily schedule in
+  `.github/workflows/pages.yaml` refreshes them. Skip the fetch offline with
+  `STATS=off pnpm dev`.
 - **Brand assets**: copied from the approved brand kit into `src/assets/brand/`
   and `public/` (favicons, `opengraph.png`). Don't redraw them.
 - **Terminal GIFs**: referenced from `demos/` on `master` via raw GitHub URLs,

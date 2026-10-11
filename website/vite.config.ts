@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
 import { parseSites, renderSites } from './build/sites.ts'
+import { fetchStats, renderStats, type Stats } from './build/stats.ts'
 
 // Where the site is served from. GitHub Pages serves a project site under
 // /<repo>/; with a custom domain, set BASE_PATH=/ and SITE_URL to it.
@@ -10,6 +11,8 @@ const base = process.env.BASE_PATH ?? '/manga-downloader/'
 const siteURL = process.env.SITE_URL ?? `https://elboletaire.github.io${base}`
 
 const readmePath = fileURLToPath(new URL('../README.md', import.meta.url))
+
+let statsPromise: Promise<Stats | null> | undefined
 
 /** Fills index.html's placeholders, including the sites list from the README. */
 function siteData(): Plugin {
@@ -34,7 +37,7 @@ function siteData(): Plugin {
           '</urlset>\n',
       })
     },
-    transformIndexHtml(html, ctx) {
+    async transformIndexHtml(html, ctx) {
       // Preload the two Latin font files the first screen needs, so text
       // doesn't reflow (and shift the page) when they swap in.
       const fonts = Object.keys(ctx.bundle ?? {}).filter((f) => /(inter|fredoka)-latin-wght-normal-.*\.woff2$/.test(f))
@@ -42,6 +45,14 @@ function siteData(): Plugin {
         .map((f) => `<link rel="preload" href="${base}${f}" as="font" type="font/woff2" crossorigin />`)
         .join('\n    ')
       const sites = parseSites(readFileSync(readmePath, 'utf8'))
+
+      // Fetch stats lazily, memoised in a module-level promise
+      if (!statsPromise) {
+        statsPromise = fetchStats()
+      }
+      const stats = await statsPromise
+      const statsHtml = renderStats(stats)
+
       return html
         .replace('<!-- sites:list -->', renderSites(sites))
         .replaceAll('%SITES_COUNT%', String(sites.length))
@@ -49,6 +60,10 @@ function siteData(): Plugin {
         .replaceAll('%BROWSER_COUNT%', String(sites.filter((s) => s.browser).length))
         .replaceAll('%SITE_URL%', siteURL)
         .replace('<!-- font-preloads -->', preloads)
+        .replace('<!-- stats:hero -->', statsHtml['stats:hero'])
+        .replace('<!-- stats:windows -->', statsHtml['stats:windows'])
+        .replace('<!-- stats:macos -->', statsHtml['stats:macos'])
+        .replace('<!-- stats:linux -->', statsHtml['stats:linux'])
     },
   }
 }
