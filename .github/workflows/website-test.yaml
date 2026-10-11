@@ -1,7 +1,9 @@
 name: Website testing
 
+# pushes to master, plus pull requests: a PR branch would otherwise run twice
 on:
   push:
+    branches: [master]
     paths:
       - "website/**"
       # the supported sites list is generated from it

@@ -6,9 +6,24 @@ on:
       - 'master'
     tags:
       - 'v*'
+    # nothing that ends up in the images (path filters don't apply to tag pushes)
+    paths-ignore:
+      - '**.md'
+      - 'assets/**'
+      - 'website/**'
+      - 'demos/**'
+      - '.github/workflows/pages.yaml'
+      - '.github/workflows/website-test.yaml'
   pull_request:
     branches:
       - 'master'
+    paths-ignore:
+      - '**.md'
+      - 'assets/**'
+      - 'website/**'
+      - 'demos/**'
+      - '.github/workflows/pages.yaml'
+      - '.github/workflows/website-test.yaml'
 jobs:
   publish:
     name: Push docker image to docker hub

@@ -1,6 +1,10 @@
 name: Testing
 
-on: [push]
+# pushes to master, plus pull requests: a PR branch would otherwise run twice
+on:
+  push:
+    branches: [master]
+  pull_request:
 
 jobs:
   test:

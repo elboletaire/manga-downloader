@@ -1,7 +1,9 @@
 name: GUI test
 
+# pushes to master, plus pull requests: a PR branch would otherwise run twice
 on:
   push:
+    branches: [master]
     paths-ignore:
       - '**.md'
       - 'assets/**'
