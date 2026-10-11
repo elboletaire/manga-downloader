@@ -131,22 +131,37 @@ func (m *Baozimh) FetchTitle() (string, error) {
 	return m.title, m.titleErr
 }
 
-// baozimhSeriesURL maps a reader URL (/comic/chapter/<slug>/0_8.html) to the
-// series page it belongs to (/comic/<slug>), the only page that lists every
-// chapter. Any other URL is returned unchanged.
+// baozimhSeriesURL maps reader URLs to the series page (/comic/<slug>):
+// - /comic/chapter/<slug>/0_8.html -> /comic/<slug>
+// - /user/page_direct?comic_id=<comic_id>&… -> /comic/<comic_id>
+// Any other URL is returned unchanged. Preserves scheme and host for mirror handling.
 func baozimhSeriesURL(rawURL string) string {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return rawURL
 	}
+
+	// Handle chapter page URLs (/comic/chapter/<slug>/...)
 	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
-	if len(parts) < 3 || parts[0] != "comic" || parts[1] != "chapter" {
-		return rawURL
+	if len(parts) >= 3 && parts[0] == "comic" && parts[1] == "chapter" {
+		u.Path = "/comic/" + parts[2]
+		u.RawQuery = ""
+		u.Fragment = ""
+		return u.String()
 	}
-	u.Path = "/comic/" + parts[2]
-	u.RawQuery = ""
-	u.Fragment = ""
-	return u.String()
+
+	// Handle reader page URLs (/user/page_direct?comic_id=<id>&...)
+	if u.Path == "/user/page_direct" {
+		comicID := u.Query().Get("comic_id")
+		if comicID != "" {
+			u.Path = "/comic/" + comicID
+			u.RawQuery = ""
+			u.Fragment = ""
+			return u.String()
+		}
+	}
+
+	return rawURL
 }
 
 // seriesDoc fetches and parses the series page once, then hands the same

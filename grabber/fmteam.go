@@ -12,6 +12,10 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
+var (
+	fmteamChapterRe = regexp.MustCompile(`^https?://fmteam\.fr/read/([^/]+)/([^/]+)/ch/\d+(?:\?.*)?$`)
+)
+
 // Fmteam is a grabber for fmteam.fr: a French scanlation site whose Vue SPA
 // exposes a wide-open JSON API (const API_BASE_URL = BASE_URL + 'api' in the
 // homepage HTML) for both the chapters list and the reader pages, so no
@@ -47,7 +51,15 @@ type FmteamChapter struct {
 // Test returns true if the URL is a fmteam.fr comic URL
 func (f *Fmteam) Test() (bool, error) {
 	re := regexp.MustCompile(`fmteam\.fr/comics/`)
-	return re.MatchString(f.URL), nil
+	if re.MatchString(f.URL) {
+		return true, nil
+	}
+	// Accept chapter URLs and convert them to series URLs
+	if fmteamChapterRe.MatchString(f.URL) {
+		f.resolveSeriesURL()
+		return true, nil
+	}
+	return false, nil
 }
 
 // FetchTitle fetches and returns the manga title
@@ -131,6 +143,18 @@ func (f Fmteam) FetchChapter(fl Filterable) (*Chapter, error) {
 	}
 
 	return chapter, nil
+}
+
+// resolveSeriesURL converts a chapter URL to a series URL if needed.
+func (f *Fmteam) resolveSeriesURL() {
+	if !fmteamChapterRe.MatchString(f.URL) {
+		return
+	}
+	matches := fmteamChapterRe.FindStringSubmatch(f.URL)
+	if len(matches) >= 2 {
+		slug := matches[1]
+		f.URL = fmt.Sprintf("https://fmteam.fr/comics/%s", slug)
+	}
 }
 
 // seriesSlug returns the series slug from the URL (i.e. "batuque" for

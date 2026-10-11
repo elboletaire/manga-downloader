@@ -269,3 +269,49 @@ func TestLuascansSeriesIDRe(t *testing.T) {
 		t.Errorf("seriesIDRe = %q, want %q", matches[1], "312")
 	}
 }
+
+func TestLuascansResolveSeriesURL(t *testing.T) {
+	cases := []struct {
+		name   string
+		input  string
+		wanted string
+	}{
+		{
+			name:   "chapter URL resolves to series URL",
+			input:  "https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement/chapter-63",
+			wanted: "https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement",
+		},
+		{
+			name:   "chapter URL with trailing slash",
+			input:  "https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement/chapter-63/",
+			wanted: "https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement",
+		},
+		{
+			name:   "series URL unchanged",
+			input:  "https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement",
+			wanted: "https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement",
+		},
+		{
+			name:   "series URL with trailing slash unchanged",
+			input:  "https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement/",
+			wanted: "https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement/",
+		},
+		{
+			name:   "unrelated path unchanged",
+			input:  "https://luacomic.org/",
+			wanted: "https://luacomic.org/",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			l := &Luascans{Grabber: &Grabber{URL: c.input}}
+			if err := l.resolveSeriesURL(); err != nil {
+				t.Fatalf("resolveSeriesURL() error = %v", err)
+			}
+			if l.URL != c.wanted {
+				t.Errorf("got %q, want %q", l.URL, c.wanted)
+			}
+		})
+	}
+}
