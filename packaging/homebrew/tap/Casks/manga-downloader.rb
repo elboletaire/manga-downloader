@@ -12,6 +12,10 @@ cask "manga-downloader" do
     strategy :github_latest
   end
 
+  # The app and the command line tool go together: `manga-downloader ui` is the
+  # CLI's, and the formula shares this cask's name, so it's easy to miss.
+  depends_on formula: "elboletaire/tap/manga-downloader"
+
   app "Manga Downloader.app"
   # `manga-downloader ui` looks for manga-downloader-gui next to the CLI or on
   # PATH, so link the app's executable there.
