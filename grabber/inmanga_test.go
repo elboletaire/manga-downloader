@@ -27,6 +27,13 @@ func TestInmangaSeriesURL(t *testing.T) {
 			wantOK:     true,
 		},
 		{
+			name:       "uppercase chapter id",
+			chapterURL: "https://inmanga.com/ver/manga/One-Piece/1195/A5BA0582-83C8-4556-BCFE-DC1D80142F58",
+			html:       "var mid = 'dfc7ecb5-e9b3-4aa5-a61b-a498993cd935';",
+			wantURL:    "https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935",
+			wantOK:     true,
+		},
+		{
 			name:       "series URL returns false",
 			chapterURL: "https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935",
 			html:       "var mid = 'dfc7ecb5-e9b3-4aa5-a61b-a498993cd935';",

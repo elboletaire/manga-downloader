@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	inmangaChapterRe = regexp.MustCompile(`^https?://inmanga\.com/ver/manga/[^/]+/\d+/[a-f0-9-]+(?:\?.*)?$`)
-	inmangaMidRe     = regexp.MustCompile(`var\s+mid\s*=\s*'([a-f0-9-]+)'`)
-	inmangaSlugRe    = regexp.MustCompile(`^https?://inmanga\.com/ver/manga/([^/]+)/`)
+	inmangaChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?inmanga\.com/ver/manga/[^/]+/\d+/[a-f0-9-]+(?:\?.*)?$`)
+	inmangaMidRe     = regexp.MustCompile(`(?i)var\s+mid\s*=\s*'([a-f0-9-]+)'`)
+	inmangaSlugRe    = regexp.MustCompile(`(?i)^https?://(?:www\.)?inmanga\.com/ver/manga/([^/]+)/`)
 )
 
 // Inmanga is a grabber for inmanga.com
