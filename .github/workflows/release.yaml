@@ -52,3 +52,74 @@ jobs:
           -s -w
           -X 'github.com/elboletaire/manga-downloader/cmd.Version=${{ env.sha_short }}'
           -X 'github.com/elboletaire/manga-downloader/cmd.Tag=${{ env.tag }}'
+
+  homebrew:
+    name: Update the Homebrew formula
+    needs: releases-matrix
+    # prereleases don't go to the tap
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    # release.yaml and release-gui.yaml both push to the tap, one formula and one
+    # cask each: one at a time, so neither has to win a race
+    concurrency:
+      group: homebrew-tap
+      cancel-in-progress: false
+    env:
+      HAS_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
+    steps:
+    - name: No tap token
+      if: env.HAS_TAP_TOKEN != 'true'
+      run: echo "::notice::HOMEBREW_TAP_TOKEN isn't set, so the Homebrew tap wasn't updated"
+    - uses: actions/checkout@v4
+      if: env.HAS_TAP_TOKEN == 'true'
+      with:
+        path: manga-downloader
+        sparse-checkout: |
+          packaging/homebrew
+          scripts
+        persist-credentials: false
+    - uses: actions/checkout@v4
+      if: env.HAS_TAP_TOKEN == 'true'
+      with:
+        repository: elboletaire/homebrew-tap
+        token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        path: tap
+        persist-credentials: false
+    - name: Update the formula
+      if: env.HAS_TAP_TOKEN == 'true'
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+        TAG: ${{ github.event.release.tag_name }}
+        TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      run: |
+        set -euo pipefail
+        version="${TAG#v}"
+        assets="$RUNNER_TEMP/assets"
+        mkdir -p "$assets"
+        # the four CLI archives: darwin and linux, amd64 and arm64
+        gh release download "$TAG" -p "manga-downloader-$TAG-*.tar.gz" -D "$assets"
+        mkdir -p tap/Formula
+        cp manga-downloader/packaging/homebrew/tap/Formula/manga-downloader.rb tap/Formula/manga-downloader.rb
+        manga-downloader/scripts/update-homebrew.sh "$version" tap/Formula/manga-downloader.rb "$assets"
+        ruby -c tap/Formula/manga-downloader.rb
+        cd tap
+        git add Formula/manga-downloader.rb
+        if git diff --cached --quiet; then echo "The tap already has manga-downloader $version"; exit 0; fi
+        git config user.name 'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+        git commit --quiet -m "manga-downloader $version"
+        auth="$(printf 'x-access-token:%s' "$TAP_TOKEN" | base64 -w0)"
+        echo "::add-mask::$auth"
+        git_auth=(-c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth")
+        for attempt in 1 2 3; do
+          if git "${git_auth[@]}" push --quiet origin HEAD:main; then exit 0; fi
+          # a rejected last push is the end: rebasing again would never be pushed
+          if [ "$attempt" = 3 ]; then break; fi
+          # the tap moved since the checkout (the other release workflow, say): rebase onto it, then push again
+          echo "::warning::the tap rejected the push, rebasing onto it (attempt $attempt)"
+          git "${git_auth[@]}" fetch --quiet origin main
+          git rebase --quiet FETCH_HEAD
+        done
+        echo "::error::couldn't push the formula to the tap"
+        exit 1

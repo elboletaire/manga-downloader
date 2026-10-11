@@ -331,6 +331,11 @@
               <p class="card-foot">Move it to a folder in your <code>PATH</code>, like <code>/usr/local/bin</code>, to run it from anywhere.</p>
             </article>
             <article class="card install-card">
+              <h4>Homebrew</h4>
+              <p>On macOS and Linux, from the <code>elboletaire/tap</code> tap. <code>brew upgrade</code> keeps it current.</p>
+              <div class="code" data-copy><pre><code>brew install elboletaire/tap/manga-downloader</code></pre></div>
+            </article>
+            <article class="card install-card">
               <h4>Docker</h4>
               <p>Files land in the mounted folder. Use the <code>:browser</code> image for sites tagged <span class="site-badge">browser</span>.</p>
               <div class="code" data-copy><pre><code>docker run --rm -it -v "$PWD:/downloads" elboletaire/manga-downloader [url] [chapters]</code></pre></div>
