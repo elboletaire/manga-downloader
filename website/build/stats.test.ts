@@ -251,10 +251,11 @@ describe('renderStats', () => {
 
     const result = renderStats(stats)
 
-    expect(result['stats:hero']).toContain('<p class="stats" data-stats>')
-    expect(result['stats:hero']).toContain('<strong>13K+</strong> downloads')
-    expect(result['stats:hero']).toContain('<strong>25K+</strong> Docker pulls')
-    expect(result['stats:hero']).toContain('<span aria-hidden="true">·</span>')
+    expect(result['stats:hero']).toContain('<div class="hero-stats" data-stats>')
+    expect(result['stats:hero']).toContain('<strong>13K+</strong>')
+    expect(result['stats:hero']).toContain('<span>downloads</span>')
+    expect(result['stats:hero']).toContain('<strong>25K+</strong>')
+    expect(result['stats:hero']).toContain('<span>Docker pulls</span>')
   })
 
   it('renders hero stats without docker pulls when null', () => {
@@ -266,7 +267,8 @@ describe('renderStats', () => {
 
     const result = renderStats(stats)
 
-    expect(result['stats:hero']).toContain('<strong>13K+</strong> downloads')
+    expect(result['stats:hero']).toContain('<strong>13K+</strong>')
+    expect(result['stats:hero']).toContain('<span>downloads</span>')
     expect(result['stats:hero']).not.toContain('Docker pulls')
   })
 

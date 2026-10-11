@@ -202,15 +202,14 @@ export function renderStats(stats: Stats | null): Record<string, string> {
   }
 
   // Hero stats: total downloads and docker pulls
-  let heroHtml = `<p class="stats" data-stats>`
-  heroHtml += `<span><strong>${compact(stats.total)}</strong> downloads</span>`
+  let heroHtml = `<div class="hero-stats" data-stats>`
+  heroHtml += `<div><strong>${compact(stats.total)}</strong><span>downloads</span></div>`
 
   if (stats.dockerPulls !== null) {
-    heroHtml += `<span aria-hidden="true">·</span>`
-    heroHtml += `<span><strong>${compact(stats.dockerPulls)}</strong> Docker pulls</span>`
+    heroHtml += `<div><strong>${compact(stats.dockerPulls)}</strong><span>Docker pulls</span></div>`
   }
 
-  heroHtml += `</p>`
+  heroHtml += `</div>`
   result['stats:hero'] = heroHtml
 
   // Platform stats
