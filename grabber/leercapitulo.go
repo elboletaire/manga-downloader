@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -17,6 +18,27 @@ import (
 type LeerCapitulo struct {
 	*Grabber
 	doc *goquery.Document
+}
+
+// leerCapituloChapterRe matches chapter URLs like
+// https://www.leercapitulo.co/leer/0cj9hhn6di/kingdom/886/
+var leerCapituloChapterRe = regexp.MustCompile(`^(https?://[^/]*leercapitulo\.co)/leer/([^/]+)/([^/]+)/\d+/?$`)
+
+// leerCapituloChapterURL checks if the URL is a chapter URL.
+func leerCapituloChapterURL(url string) bool {
+	return leerCapituloChapterRe.MatchString(url)
+}
+
+// leerCapituloSeriesURL extracts the series URL from a chapter URL by regex.
+func leerCapituloSeriesURL(chapterURL string) (string, bool) {
+	matches := leerCapituloChapterRe.FindStringSubmatch(chapterURL)
+	if len(matches) < 4 {
+		return "", false
+	}
+	baseURL := matches[1]
+	id := matches[2]
+	slug := matches[3]
+	return baseURL + "/manga/" + id + "/" + slug + "/", true
 }
 
 func NewLeerCapitulo(g *Grabber) *LeerCapitulo {
@@ -36,6 +58,18 @@ func (m *LeerCapitulo) Test() (bool, error) {
 		return false, err
 	}
 	return strings.TrimPrefix(u.Hostname(), "www.") == "leercapitulo.co", nil
+}
+
+// resolveSeriesURL resolves a chapter URL to the series URL if needed.
+func (m *LeerCapitulo) resolveSeriesURL() error {
+	seriesURL, ok := leerCapituloSeriesURL(m.URL)
+	if !ok {
+		return nil
+	}
+
+	m.URL = seriesURL
+	m.doc = nil // invalidate cached doc
+	return nil
 }
 
 // fetchDoc fetches and caches the manga series page
@@ -63,6 +97,10 @@ func (m *LeerCapitulo) fetchDoc() (*goquery.Document, error) {
 
 // FetchTitle fetches and returns the manga title
 func (m *LeerCapitulo) FetchTitle() (string, error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return "", err
+	}
+
 	doc, err := m.fetchDoc()
 	if err != nil {
 		return "", err
@@ -73,6 +111,10 @@ func (m *LeerCapitulo) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (m *LeerCapitulo) FetchChapters() (chapters Filterables, errs []error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
 	doc, err := m.fetchDoc()
 	if err != nil {
 		return nil, []error{err}

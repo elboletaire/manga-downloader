@@ -2,7 +2,10 @@
 
 package grabber
 
-import "testing"
+import (
+	"net/http"
+	"testing"
+)
 
 func TestUtoonTest(t *testing.T) {
 	cases := []struct {
@@ -25,6 +28,24 @@ func TestUtoonTest(t *testing.T) {
 		if got != c.want {
 			t.Errorf("Test(%q) = %v, want %v", c.url, got, c.want)
 		}
+	}
+}
+
+func TestUtoonResolveSeriesURL(t *testing.T) {
+	const chapterPath = "/en/gachiakuta/gachiakuta-chapter-167.html"
+
+	mux := http.NewServeMux()
+	// Minimal chapter page with manga-series link (goquery reverses attr order on output
+	// so the resolver uses Find("a.manga-series") rather than regex on raw HTML)
+	respond(mux, chapterPath, `<html><body><a class="manga-series" href="https://www.utoon.us/en/manga/gachiakuta.html">Gachiakuta</a></body></html>`)
+	srv := serve(t, mux)
+
+	seriesURL, err := utoonResolveSeriesURL(srv.URL + chapterPath)
+	if err != nil {
+		t.Fatalf("utoonResolveSeriesURL() error = %v", err)
+	}
+	if want := "https://www.utoon.us/en/manga/gachiakuta.html"; seriesURL != want {
+		t.Errorf("utoonResolveSeriesURL() = %q, want %q", seriesURL, want)
 	}
 }
 
