@@ -67,6 +67,42 @@ func TestBaozimhChapterNumber(t *testing.T) {
 	}
 }
 
+func TestBaozimhSeriesURL(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{
+			"reader URL maps to its series",
+			"https://www.twmanga.com/comic/chapter/shishangzuiqiangzhuixu-yuewenmanhua/0_8.html",
+			"https://www.twmanga.com/comic/shishangzuiqiangzhuixu-yuewenmanhua",
+		},
+		{
+			"reader URL without the file name still maps",
+			"https://www.twmanga.com/comic/chapter/shishangzuiqiangzhuixu-yuewenmanhua",
+			"https://www.twmanga.com/comic/shishangzuiqiangzhuixu-yuewenmanhua",
+		},
+		{
+			"series URL is left alone",
+			"https://www.twmanga.com/comic/shishangzuiqiangzhuixu-yuewenmanhua",
+			"https://www.twmanga.com/comic/shishangzuiqiangzhuixu-yuewenmanhua",
+		},
+		{
+			"query and fragment are dropped",
+			"https://www.baozimh.com/comic/chapter/some-slug/0_8.html?x=1#top",
+			"https://www.baozimh.com/comic/some-slug",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := baozimhSeriesURL(tt.in); got != tt.want {
+				t.Errorf("baozimhSeriesURL(%q) = %q, want %q", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestBaozimhNextPartURL(t *testing.T) {
 	tests := []struct {
 		name string

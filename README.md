@@ -491,7 +491,6 @@ Run `manga-downloader help` to list them in your terminal.
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
 - [atsu.moe (Atsumaru)](https://atsu.moe)
 - [aurorascans.com (redirects to qimanga.com)](https://aurorascans.com)
-- [baozimh.com (包子漫画)](https://www.baozimh.com)
 - [bigsolo.org](https://bigsolo.org)
 - [bluesolo.org (Blue Solo, French scantrad)](https://bluesolo.org)
 - [comix.to](https://comix.to) \*
@@ -566,6 +565,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [toongod.org](https://www.toongod.org) \*
 - [toonily.com](https://toonily.com) \*
 - [tritinia.org (Tritinia Scans)](https://tritinia.org)
+- [twmanga.com (包子漫画, baozimh.com mirror)](https://www.twmanga.com)
 - [utoon.us (UToon, home of reset-scans' content)](https://www.utoon.us)
 - [violetscans.org](https://violetscans.org)
 - [vortexscans.org](https://vortexscans.org)

@@ -131,12 +131,30 @@ func (m *Baozimh) FetchTitle() (string, error) {
 	return m.title, m.titleErr
 }
 
+// baozimhSeriesURL maps a reader URL (/comic/chapter/<slug>/0_8.html) to the
+// series page it belongs to (/comic/<slug>), the only page that lists every
+// chapter. Any other URL is returned unchanged.
+func baozimhSeriesURL(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	parts := strings.Split(strings.Trim(u.Path, "/"), "/")
+	if len(parts) < 3 || parts[0] != "comic" || parts[1] != "chapter" {
+		return rawURL
+	}
+	u.Path = "/comic/" + parts[2]
+	u.RawQuery = ""
+	u.Fragment = ""
+	return u.String()
+}
+
 // seriesDoc fetches and parses the series page once, then hands the same
 // document to FetchTitle and FetchChapters instead of each fetching the page.
 func (m *Baozimh) seriesDoc() (*goquery.Document, error) {
 	m.docOnce.Do(func() {
 		body, err := http.Get(http.RequestParams{
-			URL: m.URL,
+			URL: baozimhSeriesURL(m.URL),
 		})
 		if err != nil {
 			m.docErr = err
