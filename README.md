@@ -76,7 +76,13 @@ Download the `manga-downloader-gui` asset for your system from the
   `-windows-arm64.zip` for ARM devices such as Snapdragon laptops. Unzip it and
   run `manga-downloader-gui.exe`.
 - **macOS**: `manga-downloader-gui-<tag>-darwin-universal.zip`. Unzip it and move
-  `Manga Downloader.app` wherever you like.
+  `Manga Downloader.app` wherever you like. Or install it with
+  [Homebrew][homebrew], which also puts `manga-downloader-gui` on your `PATH`:
+
+  ~~~bash
+  brew install --cask elboletaire/tap/manga-downloader
+  ~~~
+
 - **Linux**: `manga-downloader-gui-<tag>-linux-amd64.tar.gz`, or
   `-linux-arm64.tar.gz`. Extract it and run `manga-downloader-gui`. It needs
   WebKitGTK 4.1 (`libwebkit2gtk-4.1-0` on Debian and Ubuntu), which most desktops
@@ -96,6 +102,17 @@ If the desktop app sits next to the command line tool, `manga-downloader ui`
 opens it. On Windows, double-clicking `manga-downloader.exe` does the same.
 
 ### Command line
+
+#### Homebrew
+
+On macOS and Linux, install the command line tool from [Homebrew][homebrew]:
+
+~~~bash
+brew install elboletaire/tap/manga-downloader
+~~~
+
+Homebrew doesn't quarantine what it installs, so there's no Gatekeeper step on
+macOS. `brew upgrade manga-downloader` updates it.
 
 #### Prebuilt binary
 
@@ -634,6 +651,7 @@ make build/gui/windows # cross-build manga-downloader-gui.exe, no cgo needed
 
 [license]: ./LICENSE
 [releases]: https://github.com/elboletaire/manga-downloader/releases
+[homebrew]: https://brew.sh
 [issues]: https://github.com/elboletaire/manga-downloader/issues
 [stargazers]: https://github.com/elboletaire/manga-downloader/stargazers
 [star history]: https://raw.githubusercontent.com/elboletaire/manga-downloader/star-tracker-data/charts/star-history.svg
