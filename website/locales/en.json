@@ -25,7 +25,7 @@
     "language": "Language"
   },
   "hero": {
-    "eyebrow": "New in v1.11: a desktop app for Windows, macOS and Linux",
+    "eyebrow": "Since v1.11: a desktop app for Windows, macOS and Linux",
     "title": "Manga chapters <span class=\"arrow\">→</span> <span class=\"accent\">reader&#8209;ready CBZ</span>",
     "lede_one": "Paste a link from MangaDex or {{count}} other supported site, pick your chapters, and get clean CBZ files that open on your e-reader or in your favourite comic app.",
     "lede_other": "Paste a link from MangaDex or any of {{count}} other supported sites, pick your chapters, and get clean CBZ files that open on your e-reader or in your favourite comic app.",
@@ -44,7 +44,7 @@
     }
   },
   "desktop": {
-    "newTag": "New in v1.11",
+    "newTag": "Since v1.11",
     "title": "Everything the CLI does, in a window",
     "lede": "No terminal, no flags to remember. The same downloader, with a native window on Windows, macOS and Linux.",
     "overviewAlt": "The desktop app with One Piece loaded from MangaDex: its cover, title and chapter list, with two chapters selected and Catalan picked as the language.",

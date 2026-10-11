@@ -25,7 +25,7 @@
     "language": "Llengua"
   },
   "hero": {
-    "eyebrow": "Novetat de la v1.11: aplicació d'escriptori per a Windows, macOS i Linux",
+    "eyebrow": "Des de la v1.11: aplicació d'escriptori per a Windows, macOS i Linux",
     "title": "Capítols de manga <span class=\"arrow\">→</span> <span class=\"accent\">CBZ a punt per llegir</span>",
     "lede_one": "Enganxa un enllaç de MangaDex o de {{count}} lloc compatible més, tria els capítols i aconsegueix fitxers CBZ nets que s'obren al teu lector electrònic o a la teva aplicació de còmics preferida.",
     "lede_other": "Enganxa un enllaç de MangaDex o de qualsevol dels altres {{count}} llocs compatibles, tria els capítols i aconsegueix fitxers CBZ nets que s'obren al teu lector electrònic o a la teva aplicació de còmics preferida.",
@@ -44,7 +44,7 @@
     }
   },
   "desktop": {
-    "newTag": "Novetat de la v1.11",
+    "newTag": "Des de la v1.11",
     "title": "Tot el que fa la CLI, en una finestra",
     "lede": "Sense terminal ni opcions per memoritzar. El mateix descarregador, amb una finestra nativa a Windows, macOS i Linux.",
     "overviewAlt": "L'aplicació d'escriptori amb One Piece carregat des de MangaDex: la portada, el títol i la llista de capítols, amb dos capítols seleccionats i el català triat com a llengua.",
