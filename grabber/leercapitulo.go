@@ -7,19 +7,13 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/elboletaire/manga-downloader/browser"
 	"github.com/elboletaire/manga-downloader/http"
 )
 
 // LeerCapitulo is a grabber for leercapitulo.co (Spanish aggregator, popular
-// with ex-TuMangaOnline readers). Its series/chapter-list pages are plain
-// HTML, but the reader page hides the real page image URLs behind an
-// obfuscated blob that's only decoded by the site's own javascript, and by
-// default only decodes/shows one page at a time. A real browser is used just
-// for the reader page: it toggles the site's "load every page at once"
-// client-side preference (stored in localStorage, checked on load) before
-// reading the resulting <img> tags, so no cipher reverse-engineering is
-// needed.
+// with ex-TuMangaOnline readers). Series, chapter list and reader pages are
+// all plain server-rendered HTML, the reader included: every page image is
+// already in the markup as an <img data-src>.
 type LeerCapitulo struct {
 	*Grabber
 	doc *goquery.Document
@@ -74,7 +68,7 @@ func (m *LeerCapitulo) FetchTitle() (string, error) {
 		return "", err
 	}
 
-	return sanitizeTitle(doc.Find("h1.title-manga").Text()), nil
+	return sanitizeTitle(doc.Find("h1.h3").Text()), nil
 }
 
 // FetchChapters returns the chapters of the manga
@@ -84,12 +78,10 @@ func (m *LeerCapitulo) FetchChapters() (chapters Filterables, errs []error) {
 		return nil, []error{err}
 	}
 
-	doc.Find(".chapter-list li.row").Each(func(i int, s *goquery.Selection) {
-		a := s.Find("a.xanh")
-		text := a.Text()
+	doc.Find("#chapterList a.lc-chapter-row").Each(func(i int, a *goquery.Selection) {
+		text := a.Find("span.n").Text()
 		number, ok := parseChapterNumber(text)
 		if !ok {
-			// section announcements and similar rows without a chapter number
 			return
 		}
 
@@ -110,32 +102,24 @@ func (m *LeerCapitulo) FetchChapters() (chapters Filterables, errs []error) {
 	return
 }
 
-// leerCapituloStorageKey/Value is the localStorage flag the reader's own
-// javascript checks on load to decide whether to decode & display every page
-// of the chapter at once ("Todo en uno") instead of one page at a time (the
-// default "Uno por uno" mode). Without setting it, only the first page ever
-// makes it into the DOM.
-const (
-	leerCapituloStorageKey    = "display_mode"
-	leerCapituloStorageValue  = "1"
-	leerCapituloImageSelector = ".comic_wraCon img"
-)
+// leerCapituloImageSelector matches every page of the reader, which the
+// server renders in full (pages are lazy-loaded via data-src)
+const leerCapituloImageSelector = "#lcPages img"
 
-// FetchChapter renders the chapter reader page in a real browser (the page
-// images only get decoded client-side from an obfuscated blob) and extracts
-// its pages
+// FetchChapter fetches the chapter reader page over plain HTTP, which already
+// contains every page image, and extracts its pages
 func (m *LeerCapitulo) FetchChapter(f Filterable) (*Chapter, error) {
 	chap := f.(*LeerCapituloChapter)
 
-	html, err := browser.GetHTMLWithLocalStorage(
-		chap.URL, leerCapituloStorageKey, leerCapituloStorageValue,
-		leerCapituloImageSelector, 0,
-	)
+	body, err := http.Get(http.RequestParams{
+		URL: chap.URL,
+	})
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	doc, err := goquery.NewDocumentFromReader(body)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +131,10 @@ func (m *LeerCapitulo) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	doc.Find(leerCapituloImageSelector).Each(func(i int, s *goquery.Selection) {
-		src := s.AttrOr("data-original", "")
+		src := s.AttrOr("data-src", "")
+		if src == "" {
+			src = s.AttrOr("data-original", "")
+		}
 		if src == "" {
 			src = s.AttrOr("src", "")
 		}

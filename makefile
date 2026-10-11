@@ -232,8 +232,7 @@ grabber/jestful:
 grabber/weebcentral:
 	go run . https://weebcentral.com/series/01J76XYDXH7KT6AABVG3JAT3ZP/Shangri-La-Frontier 274
 
-# uses a real (headless) browser just to toggle the reader's "load all pages"
-# client-side preference, no --browser-visible needed (no cloudflare here)
+# plain HTTP only, the reader renders every page in the markup (no browser)
 grabber/leercapitulo:
 	go run . https://www.leercapitulo.co/manga/0cj9hhn6di/kingdom/ 883
 

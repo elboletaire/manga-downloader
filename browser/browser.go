@@ -181,20 +181,6 @@ func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
 	return getHTML(url, waitSelector, timeout, nil)
 }
 
-// GetHTMLWithLocalStorage is like GetHTML, but first sets a single localStorage
-// key/value pair on the page's origin and reloads it before waiting on
-// waitSelector. Some sites gate content behind a client-side preference that's
-// only checked on load (e.g. a "load every page at once" reader mode stored in
-// localStorage instead of a URL or cookie), so a plain navigation isn't enough.
-func GetHTMLWithLocalStorage(url, key, value, waitSelector string, timeout time.Duration) (string, error) {
-	pre := []chromedp.Action{
-		chromedp.WaitReady("body", chromedp.ByQuery),
-		chromedp.Evaluate(fmt.Sprintf("localStorage.setItem(%q, %q)", key, value), nil),
-		chromedp.Reload(),
-	}
-	return getHTML(url, waitSelector, timeout, pre)
-}
-
 // GetHTMLWithScroll is like GetHTML, but after waitSelector matches it scrolls
 // the page down in increments (scrollIterations times, pausing scrollPause
 // between each), then takes the final HTML snapshot. Some readers virtualize
@@ -585,8 +571,8 @@ func waitForGrowth(ctx context.Context, count func() int, baseline int) bool {
 	}
 }
 
-// getHTML is the shared implementation behind GetHTML and
-// GetHTMLWithLocalStorage: it renders url in a headless browser and, if the
+// getHTML is the shared implementation behind the GetHTML variants: it renders
+// url in a headless browser and, if the
 // wait selector times out (typically a cloudflare/JS challenge), transparently
 // reopens a visible window and retries.
 func getHTML(url, waitSelector string, timeout time.Duration, preActions []chromedp.Action) (string, error) {
@@ -628,8 +614,8 @@ func getHTML(url, waitSelector string, timeout time.Duration, preActions []chrom
 // render performs a single navigation in the shared browser, reusing its
 // initial tab (a new tab would spawn in the background, leaving the blank
 // first tab in front and hiding the page). preActions, if any, run right
-// after the initial navigation and before waitSelector is awaited (e.g. to
-// set a localStorage flag and reload). Callers must hold mu.
+// after the initial navigation and before waitSelector is awaited. Callers
+// must hold mu.
 func render(url, waitSelector string, timeout time.Duration, preActions []chromedp.Action) (string, error) {
 	if err := start(); err != nil {
 		return "", err
