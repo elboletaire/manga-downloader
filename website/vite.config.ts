@@ -185,7 +185,7 @@ export default defineConfig({
     // URI in the dark <picture> source, so the hero mascot disappeared there.
     assetsInlineLimit: 0,
     // One page per language; es/ and ca/ index.html are stubs rendered from index.html.
-    rollupOptions: {
+    rolldownOptions: {
       input: Object.fromEntries(LANGS.map((l) => [l, path.join(root, LANG_INFO[l].path, 'index.html')])),
     },
   },

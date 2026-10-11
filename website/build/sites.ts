@@ -12,7 +12,7 @@ export interface Site {
 }
 
 export interface BadgeLabels { label: string; srPrefix: string; title: string }
-const EN_BADGE: BadgeLabels = { label: 'browser', srPrefix: 'needs a', title: 'Needs Chrome, Chromium, Brave or Edge' }
+export const EN_BADGE: BadgeLabels = { label: 'browser', srPrefix: 'needs a', title: 'Needs Chrome, Chromium, Brave or Edge' }
 
 const ITEM = /^\s*[-*]\s+\[(.+)\]\((\S+?)\)\s*(\\?\*)?\s*$/
 

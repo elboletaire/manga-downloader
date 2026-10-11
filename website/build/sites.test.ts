@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { parseSites, renderSites } from './sites'
+import { parseSites, renderSites, EN_BADGE } from './sites'
 
 const sample = `
 ## Features
@@ -59,5 +59,14 @@ describe('renderSites', () => {
     expect(html).toContain('href="https://a.com/?q=&quot;1&quot;"')
     expect(html).toContain('data-browser')
     expect(html).toContain('<span class="visually-hidden">needs a </span>browser</span>')
+  })
+})
+
+describe('EN_BADGE', () => {
+  it('matches en.json sites.badge labels', () => {
+    const enJson = JSON.parse(readFileSync(fileURLToPath(new URL('../locales/en.json', import.meta.url)), 'utf8'))
+    expect(EN_BADGE.label).toBe(enJson.sites.badge.label)
+    expect(EN_BADGE.srPrefix).toBe(enJson.sites.badge.srPrefix)
+    expect(EN_BADGE.title).toBe(enJson.sites.badge.title)
   })
 })

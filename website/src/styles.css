@@ -339,7 +339,7 @@ code {
 .hero-inner {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   align-items: center;
   gap: clamp(24px, 5vw, 64px);
 }
@@ -394,6 +394,8 @@ code {
 
 .download {
   margin-top: 32px;
+  /* the stats stack under the button when the row doesn't fit (see @container below) */
+  container-type: inline-size;
 }
 
 .button {
@@ -444,7 +446,6 @@ code {
 
 .download-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: flex-start;
   gap: clamp(18px, 2.5vw, 30px);
 }
@@ -628,22 +629,16 @@ code {
   }
 }
 
-@media (max-width: 480px) {
-  .button-download {
-    width: 100%;
-  }
-  .chips li {
-    font-size: 0.86rem;
-    padding: 6px 12px;
-  }
+@container (max-width: 560px) {
   .download-row {
     flex-direction: column;
     gap: 0;
   }
   .download-main {
-    width: 100%;
+    align-self: stretch;
   }
   .hero-stats {
+    width: 100%;
     border-left: none;
     border-top: 1px solid var(--border-strong);
     padding-left: 0;
@@ -652,16 +647,14 @@ code {
   }
 }
 
-
-.platform-stats {
-  margin-top: 8px;
-  margin-bottom: 6px;
-  font-size: 0.78rem;
-  color: var(--muted);
-}
-
-.platform-stats strong {
-  color: var(--text);
+@media (max-width: 480px) {
+  .button-download {
+    width: 100%;
+  }
+  .chips li {
+    font-size: 0.86rem;
+    padding: 6px 12px;
+  }
 }
 
 /* sections -------------------------------------------------------------- */
@@ -882,6 +875,17 @@ code {
   height: 14px;
   background: currentColor;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.platform-stats {
+  margin-top: 8px;
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.platform-stats strong {
+  color: var(--text);
 }
 
 .downloads-foot {

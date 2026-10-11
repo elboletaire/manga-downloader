@@ -192,7 +192,7 @@ async function fetchDockerPulls(fetchFn: typeof fetch): Promise<number | null> {
  */
 export interface StatsLabels { downloads: string; dockerPulls: string }
 
-const EN_LABELS: StatsLabels = { downloads: 'downloads', dockerPulls: 'Docker pulls' }
+export const EN_LABELS: StatsLabels = { downloads: 'downloads', dockerPulls: 'Docker pulls' }
 
 export function renderStats(stats: Stats | null, labels: StatsLabels = EN_LABELS): Record<string, string> {
   const result: Record<string, string> = {}

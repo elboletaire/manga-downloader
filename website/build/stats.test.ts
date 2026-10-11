@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { assetOS, sumDownloads, compact, fetchStats, renderStats } from './stats'
+import { assetOS, sumDownloads, compact, fetchStats, renderStats, EN_LABELS } from './stats'
 
 describe('assetOS', () => {
   it('returns null for .md5 files', () => {
@@ -298,5 +300,28 @@ describe('renderStats', () => {
     expect(result['stats:windows']).toContain('<strong>5K</strong>')
     expect(result['stats:macos']).toBe('')
     expect(result['stats:linux']).toBe('')
+  })
+
+  it('renders with custom labels and includes them in hero markup', () => {
+    const stats = {
+      total: 13319,
+      byOS: { windows: 6146, macos: 4000, linux: 3173 },
+      dockerPulls: 25065,
+    }
+    const customLabels = { downloads: 'Descargas', dockerPulls: 'Extracciones de Docker' }
+
+    const result = renderStats(stats, customLabels)
+
+    expect(result['stats:hero']).toContain('Descargas')
+    expect(result['stats:hero']).toContain('Extracciones de Docker')
+    expect(result['stats:windows']).toContain('Descargas')
+  })
+})
+
+describe('EN_LABELS', () => {
+  it('matches en.json stats labels', () => {
+    const enJson = JSON.parse(readFileSync(fileURLToPath(new URL('../locales/en.json', import.meta.url)), 'utf8'))
+    expect(EN_LABELS.downloads).toBe(enJson.stats.downloads)
+    expect(EN_LABELS.dockerPulls).toBe(enJson.stats.dockerPulls)
   })
 })

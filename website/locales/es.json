@@ -178,6 +178,6 @@
   },
   "stats": {
     "downloads": "descargas",
-    "dockerPulls": "descargas en Docker"
+    "dockerPulls": "pulls en Docker"
   }
 }

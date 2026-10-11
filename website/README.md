@@ -116,6 +116,8 @@ Tests check that every locale has en's keys, placeholders and tags.
 
 The supported-sites notes stay in English.
 
+The download statistics in the hero section (numbers and labels like "downloads", "Docker pulls") live under `stats.*` in each locale file. The compact numbers (`11K+`) stay in that notation across all languages, even though `Intl.NumberFormat('compact')` would produce language-specific text like "11 mil"; see `build/stats.ts`.
+
 To add a language: add it to `LANGS`/`LANG_INFO`, create `locales/xx.json` and an `xx/index.html` stub, and extend `redirectTarget` if it should auto-redirect.
 
 ## Another domain
