@@ -64,6 +64,18 @@ func (m *PlainHTML) Test() (bool, error) {
 
 	// order is important, since some sites have very similar selectors
 	selectors := []SiteSelector{
+		// rizzfables.com: its #chapterlist markup is shared with several themes
+		// (en-thunderscans below, and the #readerarea one), which would match
+		// first and read the reader's avatar and banner <img>s. Rows are
+		// restricted to the site's own chapter links, so this entry can't
+		// shadow any other site and goes first.
+		{
+			Title:        "h1.entry-title",
+			Rows:         `#chapterlist li[data-num] a[href*="rizzfables.com/chapter/"]`,
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Image:        "#readerarea > img",
+		},
 		// tcbonepiecechapters.com (former tcbscans.com)
 		{
 			Title:        "h1",

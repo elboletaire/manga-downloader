@@ -439,6 +439,7 @@ grabber/html: \
 	grabber/ravenscans \
 	grabber/rawkuma \
 	grabber/ritharscans \
+	grabber/rizzfables \
 	grabber/rokaricomics \
 	grabber/sanascans \
 	grabber/scanvf \
@@ -523,6 +524,8 @@ grabber/mangaworld:
 	go run . https://www.mangaworld.mx/manga/1683/kingdom 400
 grabber/lagoonscans:
 	go run . https://lagoonscans.com/manga/crimson-reset/ 52
+grabber/rizzfables:
+	go run . https://rizzfables.com/series/r2311170-an-s-rank-hunters-healing-journey-with-monsters 3
 grabber/rokaricomics:
 	go run . https://rokaricomics.com/manga/caregivers-alliance/ 5
 # note: use a free chapter (older ones); recent chapters are often coin-gated
