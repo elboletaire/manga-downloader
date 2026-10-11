@@ -47,7 +47,7 @@ and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[97 supported sites](#supported-sites)**, from big aggregators to small
+- **[98 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
@@ -484,7 +484,7 @@ Run `manga-downloader help` to list them in your terminal.
 ## Supported sites
 
 <details>
-<summary><b>Show all 97 supported sites</b></summary>
+<summary><b>Show all 98 supported sites</b></summary>
 <br>
 
 - [3asq.online (Arabic, former 3asq.org)](https://3asq.online)
@@ -574,6 +574,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [templetoons.com (Temple Scan)](https://templetoons.com) \*
 - [toongod.org](https://www.toongod.org) \*
 - [toonily.com](https://toonily.com) \*
+- [tortugaceviri.com (Tortuga Çeviri)](https://tortugaceviri.com)
 - [tritinia.org (Tritinia Scans)](https://tritinia.org)
 - [twmanga.com (包子漫画, baozimh.com mirror)](https://www.twmanga.com)
 - [utoon.us (UToon, home of reset-scans' content)](https://www.utoon.us)

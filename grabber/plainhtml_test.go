@@ -3,6 +3,9 @@
 package grabber
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
@@ -333,5 +336,56 @@ func TestSanitizeTitle(t *testing.T) {
 		if got := sanitizeTitle(c.in); got != c.want {
 			t.Errorf("sanitizeTitle(%q) = %q, want %q", c.in, got, c.want)
 		}
+	}
+}
+
+// PlainHTML.Test must only claim a site whose rows it can number: an entry
+// matching rows with no readable chapter number would list nothing, and that
+// shadows the later grabbers (tcb) that can. The entry used here is the
+// li.wp-manga-chapter one, with Chapter/Link selectors on the <a>.
+func TestPlainHTMLTestNeedsReadableNumbers(t *testing.T) {
+	cases := []struct {
+		name string
+		html string
+		want bool
+	}{
+		{
+			name: "rows without a readable number are declined",
+			html: `<ul><li class="wp-manga-chapter"><a href="https://example.com/manga/berserk/berserk-326/">Berserk 326</a></li></ul>`,
+			want: false,
+		},
+		{
+			name: "rows with a number in the text are claimed",
+			html: `<ul><li class="wp-manga-chapter"><a href="https://example.com/manga/berserk/berserk-326/">Chapter 326</a></li></ul>`,
+			want: true,
+		},
+		{
+			name: "rows numbered from the reader url are claimed",
+			html: `<ul><li class="wp-manga-chapter"><a href="https://example.com/manga/berserk/chapter-326/">Berserk</a></li></ul>`,
+			want: true,
+		},
+		{
+			name: "a page with no matching rows is declined as before",
+			html: `<ul><li>nothing here</li></ul>`,
+			want: false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprint(w, "<html><body>"+c.html+"</body></html>")
+			}))
+			defer srv.Close()
+
+			m := NewPlainHTML(&Grabber{URL: srv.URL + "/manga/berserk/"})
+			got, err := m.Test()
+			if err != nil {
+				t.Fatalf("Test() error = %v", err)
+			}
+			if got != c.want {
+				t.Errorf("Test() = %v, want %v", got, c.want)
+			}
+		})
 	}
 }

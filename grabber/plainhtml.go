@@ -309,11 +309,47 @@ func (m *PlainHTML) Test() (bool, error) {
 		}
 	}
 
-	if m.rows == nil {
+	if m.rows == nil || m.rows.Length() == 0 {
 		return false, nil
 	}
 
-	return m.rows.Length() > 0, nil
+	// a matched entry whose rows carry no readable chapter number (titles
+	// like "Berserk 326" have no keyword) would list nothing, so decline and
+	// let a later grabber (tcb for Madara) take the site
+	readable := false
+	m.rows.Each(func(_ int, s *goquery.Selection) {
+		if _, ok := m.rowChapterNumber(s); ok {
+			readable = true
+		}
+	})
+
+	return readable, nil
+}
+
+// rowChapterNumber returns the chapter number of a row, read from its text
+// or, failing that, from its reader URL. FetchChapters and Test share it, so
+// Test only claims rows FetchChapters can actually number.
+func (m PlainHTML) rowChapterNumber(s *goquery.Selection) (float64, bool) {
+	chapterText := textWithoutNoise(s)
+	if m.site.Chapter != "" {
+		chapterText = textWithoutNoise(s.Find(m.site.Chapter))
+	}
+	if number, ok := parseChapterNumber(chapterText); ok {
+		return number, true
+	}
+
+	u := s.AttrOr("href", "")
+	if m.site.Link != "" {
+		u = s.Find(m.site.Link).AttrOr("href", "")
+	}
+	match := urlChapterNumberRe.FindStringSubmatch(u)
+	if len(match) > 0 {
+		if n, err := strconv.ParseFloat(match[1], 64); err == nil {
+			return n, true
+		}
+	}
+
+	return 0, false
 }
 
 // Ttitle returns the manga title
@@ -386,17 +422,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 		}
 		u = m.resolveURL(u)
 
-		number, ok := parseChapterNumber(chapterText)
-		if !ok {
-			// fall back to extracting the number from the reader URL itself
-			match := urlChapterNumberRe.FindStringSubmatch(u)
-			if len(match) > 0 {
-				if n, err := strconv.ParseFloat(match[1], 64); err == nil {
-					number = n
-					ok = true
-				}
-			}
-		}
+		number, ok := m.rowChapterNumber(s)
 		if !ok {
 			return
 		}

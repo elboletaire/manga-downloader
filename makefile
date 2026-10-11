@@ -122,6 +122,7 @@ grabber: \
 	grabber/tcb \
 	grabber/teamshadowi \
 	grabber/templetoons \
+	grabber/tortugaceviri \
 	grabber/tritinia \
 	grabber/utoon \
 	grabber/vortexscans \
@@ -217,6 +218,14 @@ grabber/mangasushi:
 # scoping fix)
 grabber/gdscans:
 	go run . https://gdscans.com/manga/a-rank-boukensha-no-slow-life/ 50
+
+# another Madara wordpress site (Turkish). Its series page lists every row
+# under "<title> N" titles, which the PlainHTML li.wp-manga-chapter entry
+# can't number, so PlainHTML declines it and the Tcb grabber reads the full
+# ajax/chapters list instead.
+grabber/tortugaceviri:
+	go run . https://tortugaceviri.com/manga/berserk/ 326
+
 # mangalivre.tv/mangalivre.net shut down (redirects to a "support official
 # sources" closure page); mangalivre.to is the actively-updated successor.
 # Its markup is a customized Madara theme, matched by the existing Tcb
