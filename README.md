@@ -561,7 +561,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [taiyo.moe](https://taiyo.moe)
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [team-shadowi.com](https://www.team-shadowi.com)
-- [templetoons.com (Temple Scan)](https://templetoons.com)
+- [templetoons.com (Temple Scan)](https://templetoons.com) \*
 - [toongod.org](https://www.toongod.org) \*
 - [toonily.com](https://toonily.com) \*
 - [tritinia.org (Tritinia Scans)](https://tritinia.org)

@@ -129,6 +129,18 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want:     []string{"/img/p/1-a", "/img/p/2-b"},
 		},
 		{
+			name:     "templetoons.com double-escaped RSC array under an obfuscated key",
+			selector: "img",
+			html:     `<html><head><link rel="canonical" href="https://templetoons.com/comic/bl-antidote/chapter-88"></head><body><script>self.__next_f.push([1,"...{\"gzap5a2\":[\"https://media.templetoons.com/1.jpg\",\"https://media.templetoons.com/2.jpg\"]}..."])</script></body></html>`,
+			want:     []string{"https://media.templetoons.com/1.jpg", "https://media.templetoons.com/2.jpg"},
+		},
+		{
+			name:     "arbitrary-key URL array on another Next.js site is not a page list",
+			selector: "img",
+			html:     `<html><head><link rel="canonical" href="https://a.co/comic/x/chapter-1"></head><body><script>self.__next_f.push([1,"...{\"gzap5a2\":[\"https://media.a.co/1.jpg\",\"https://media.a.co/2.jpg\"]}..."])</script><img src="https://a.co/fallback.jpg"/></body></html>`,
+			want:     []string{"https://a.co/fallback.jpg"},
+		},
+		{
 			name:     "FoOlSlide var pages JSON array (deathtollscans)",
 			selector: "img.open",
 			html:     `<html><body><script>var pages = [{"id":1,"url":"https:\/\/a.co\/1.png","thumb_url":"https:\/\/a.co\/t1.png"},{"id":2,"url":"https:\/\/a.co\/2.png","thumb_url":"https:\/\/a.co\/t2.png"}]; var next_chapter = "https://a.co/next/";</script></body></html>`,

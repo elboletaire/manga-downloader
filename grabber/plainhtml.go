@@ -189,20 +189,6 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         "a",
 			Image:        "#readerarea img",
 		},
-		// templetoons.com (Temple Scan): Next.js RSC-streamed page, but
-		// server-rendered, so plain HTTP already gets the full chapter list
-		// (unlike mangak.io, no need to reach for the __NEXT_DATA__ blob).
-		// Each row is itself the <a> (Link empty), the chapter number lives
-		// in a nested h1. Reader pages embed the page list as a flat JSON
-		// "pages" array handled by getPlainHTMLImageURL, so Image is unused
-		// but kept as a fallback.
-		{
-			Title:        "h1.text-3xl",
-			Rows:         "div.grid.grid-cols-6 > a",
-			Chapter:      "h1",
-			ChapterTitle: "h1",
-			Image:        "img",
-		},
 		// furyosociety.com: French scanlation site on the FoOlSlide engine.
 		// Each chapter is listed twice (a desktop <div> and a mobile <a>);
 		// only the mobile <a> is itself the reader link, so scoping Rows to
@@ -496,6 +482,17 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 	return chapter
 }
 
+// canonicalHost returns the host of the page's canonical link, without the
+// www. prefix, or "" when the page has none
+func canonicalHost(doc *goquery.Document) string {
+	href := doc.Find(`link[rel="canonical"]`).AttrOr("href", "")
+	u, err := url.Parse(href)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimPrefix(u.Hostname(), "www.")
+}
+
 func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 	// Check for chapImages JavaScript variable first
 
@@ -614,6 +611,23 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 			imgs = append(imgs, u[1])
 		}
 		return imgs
+	}
+
+	// the same reader's key is obfuscated and changes between builds (it was
+	// "pages", now "gzap5a2"), so on templetoons.com alone any key whose array
+	// starts with a URL is the page list. Other Next.js sites carry URL arrays
+	// too, hence the gate on the canonical host.
+	if canonicalHost(doc) == "templetoons.com" {
+		re = regexp.MustCompile(`\\"[\w-]+\\":\[(\\"https?://[^\]]+)\]`)
+		matches = re.FindStringSubmatch(html)
+		if len(matches) > 1 {
+			urls := regexp.MustCompile(`"([^"\\]+)\\?"`).FindAllStringSubmatch(matches[1], -1)
+			imgs := []string{}
+			for _, u := range urls {
+				imgs = append(imgs, u[1])
+			}
+			return imgs
+		}
 	}
 
 	// ritharscans.com's Alpine.js reader stores every page's path inline in an

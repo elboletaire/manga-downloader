@@ -117,6 +117,7 @@ grabber: \
 	grabber/taiyo \
 	grabber/tcb \
 	grabber/teamshadowi \
+	grabber/templetoons \
 	grabber/tritinia \
 	grabber/utoon \
 	grabber/vortexscans \
@@ -305,6 +306,12 @@ grabber/utoon:
 # no cloudflare here, no --browser-visible needed
 grabber/comix:
 	go run . https://comix.to/title/e1wlg-the-scandal-maker-has-returned 24
+# uses a real (headless) browser: the whole site sits behind a cloudflare
+# Turnstile challenge that plain HTTP is redirected to, and headless clears it
+# in a few seconds; the reader's page list is in the RSC payload, and the
+# images then download over plain HTTP. No --browser-visible needed.
+grabber/templetoons:
+	go run . https://templetoons.com/comic/bl-antidote 88
 # reader route 403s cloudflare on direct navigation, but not through the
 # app's own client-side (SPA) routing, which is what the grabber uses; no
 # --browser-visible needed, the challenge is never actually triggered
@@ -395,7 +402,6 @@ grabber/html: \
 	grabber/sanascans \
 	grabber/silentquill \
 	grabber/tcbscans \
-	grabber/templetoons \
 	grabber/thunderscans \
 	grabber/violetscans \
 	grabber/writerscans \
@@ -436,8 +442,6 @@ grabber/manhuaplus:
 	go run . https://manhuaplus.com/manga/tales-of-demons-and-gods01/ 522.6
 grabber/silentquill:
 	go run . https://silentquill.net/series/i-was-invited-to-join-the-country-as-an-otherworldly-warrior-but-i-refused-and-decided-to-start-as-a-soldier/ 59
-grabber/templetoons:
-	go run . https://templetoons.com/comic/bl-antidote 88
 grabber/deathtollscans:
 	go run . https://reader.deathtollscans.net/series/kakushigoto/ 30
 grabber/furyosociety:

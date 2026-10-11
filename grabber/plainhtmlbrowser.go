@@ -177,6 +177,24 @@ var browserSelectors = []BrowserSiteSelector{
 		ChaptersWait: "#chapters > a",
 		ImageWait:    "img.myImage",
 	},
+	// templetoons.com (Temple Scan): Next.js RSC site behind a cloudflare
+	// Turnstile challenge (plain HTTP is redirected to /challenge), which a
+	// headless browser clears in a few seconds. Each row is itself the <a>
+	// (Link empty), with the chapter number in its label. Reader pages embed
+	// the page list in the RSC payload under an obfuscated key, handled by
+	// getPlainHTMLImageURL, so Image is unused but kept as a fallback.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1#series-title",
+			Rows:         `a[id^="chapter-link-"]`,
+			Chapter:      "span.font-semibold",
+			ChapterTitle: "span.font-semibold",
+			Image:        "img",
+		},
+		Domains:      []string{"templetoons.com"},
+		ChaptersWait: `a[id^="chapter-link-"]`,
+		ImageWait:    "img",
+	},
 }
 
 // PlainHTMLBrowser is the browser-rendered variant of PlainHTML: pages are

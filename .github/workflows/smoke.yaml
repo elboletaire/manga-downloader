@@ -5,7 +5,7 @@ name: Site smoke tests
 # resulting CBZ actually contains images.
 #
 # Only plain-HTTP grabbers are listed: browser-based sites (make grabber/browser
-# plus the headless-Chrome comix/leercapitulo/mkissa) need a real Chrome and
+# plus the headless-Chrome comix/mkissa/templetoons) need a real Chrome and
 # often an interactive Cloudflare challenge, which cannot work on a headless
 # datacenter runner, so they are intentionally excluded.
 on:
@@ -69,7 +69,6 @@ jobs:
           - dynastyscans
           - mangaread
           - manhuaplus
-          - templetoons
           - deathtollscans
           - furyosociety
           - madarascans
@@ -111,6 +110,9 @@ jobs:
           #                # signed responses — excluded from the matrix like
           #                # every other browser grabber. Run `make
           #                # grabber/mangafire` locally.
+          # - templetoons  # now browser-based: plain HTTP is redirected to the
+          #                # site's own Turnstile /challenge page, which only a
+          #                # browser clears. Run `make grabber/templetoons` locally.
           # - asmotoon     # now browser-based: cloudflare challenges plain HTTP
           #                # and headless alike. Run `make grabber/asmotoon`
           #                # locally.
