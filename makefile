@@ -403,6 +403,7 @@ grabber/html: \
 	grabber/mangaread \
 	grabber/manhuaplus \
 	grabber/mistscans \
+	grabber/ravenscans \
 	grabber/rawkuma \
 	grabber/ritharscans \
 	grabber/rokaricomics \
@@ -439,6 +440,8 @@ grabber/demonicscans:
 
 grabber/mangakatana:
 	go run . https://mangakatana.com/manga/dandadan.25818 241
+grabber/ravenscans:
+	go run . https://ravenscans.org/manga/academys-genius-swordmaster/ 79
 grabber/rawkuma:
 	go run . https://rawkuma.net/manga/jujutsu-kaisen/ 271
 grabber/dynastyscans:
