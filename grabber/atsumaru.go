@@ -14,6 +14,10 @@ import (
 	"github.com/elboletaire/manga-downloader/notice"
 )
 
+// atsumaruCDN hosts the page images. The api's image paths are the same ones
+// the reader requests, but atsu.moe/static answers 410 Gone for them now.
+const atsumaruCDN = "https://cdn.atsu.moe"
+
 // Atsumaru is a grabber for atsu.moe: a react SPA whose JSON api is completely
 // open to plain HTTP, no cookies/auth needed. The html isn't a bare shell
 // either: the series page ships a server-rendered window.mangaPage blob, which
@@ -324,7 +328,7 @@ func (a *Atsumaru) FetchChapter(f Filterable) (*Chapter, error) {
 	for i, p := range feed.ReadChapter.Pages {
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),
-			URL:    a.BaseUrl() + p.Image,
+			URL:    atsumaruCDN + p.Image,
 		})
 	}
 
