@@ -398,6 +398,7 @@ grabber/html: \
 	grabber/evascans \
 	grabber/furyosociety \
 	grabber/kingofshojo \
+	grabber/komikstation \
 	grabber/lagoonscans \
 	grabber/madarascans \
 	grabber/mangaberri \
@@ -473,6 +474,8 @@ grabber/mangaberri:
 	go run . https://mangaberri.com/title/dai-dark 37
 grabber/kingofshojo:
 	go run . https://kingofshojo.com/manga/although-i-was-a-condemned-witch-everyone-dotes-on-me-after-regressing/ 14
+grabber/komikstation:
+	go run . https://komikstation.org/manga/boukun-wo-teki-ni-mawashita-akujo-desu-ga-bankaisa-sete-itadakimasu/ 10
 grabber/lagoonscans:
 	go run . https://lagoonscans.com/manga/crimson-reset/ 52
 grabber/rokaricomics:
