@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AUTO_LOAD_DELAY_MS, shouldAutoLoad } from './autoLoad';
 import { SelectField, TextField } from './fields';
-import { filterControl, filtersIdentified, filterOptions, type FilterControl, type FilterKind } from './filters';
+import { filterControl, filtersIdentified, filterOptions, shownSelection, type FilterControl, type FilterKind } from './filters';
 import { AlertIcon, LinkIcon, RefreshIcon, Spinner } from './icons';
 import { Mascot, useExpression } from './Mascot';
 import type { FilterChoice, Options, State } from './types';
@@ -134,6 +134,7 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
           typed={state.options.language}
           choice={state.languages}
           control={filterControl(state, state.languages)}
+          loaded={state.loaded}
           busy={busy}
           flagged={languageStale}
           onPick={(language) => pick({ language })}
@@ -146,6 +147,7 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
           typed={state.options.scanlator}
           choice={state.scanlators}
           control={filterControl(state, state.scanlators)}
+          loaded={state.loaded}
           busy={busy}
           flagged={scanlatorStale}
           onPick={(scanlator) => pick({ scanlator })}
@@ -191,6 +193,8 @@ interface FilterFieldProps {
   /** What the loaded series offers, null when the site lists none */
   choice: FilterChoice | null;
   control: FilterControl;
+  /** Whether the series loaded: a failed load's typed value isn't an option */
+  loaded: boolean;
   busy: boolean;
   flagged: boolean;
   onPick: (value: string) => void;
@@ -205,6 +209,7 @@ function FilterField({
   typed,
   choice,
   control,
+  loaded,
   busy,
   flagged,
   onPick,
@@ -226,11 +231,13 @@ function FilterField({
     );
   }
   if (control === 'disabled' || choice === null) {
+    // cleared: the site ignores the value, so showing it would suggest it
+    // applies. The saved value stays, for the sites that do take it.
     return (
       <TextField
         className="inline-field"
         label={label}
-        value={typed}
+        value=""
         placeholder="any"
         disabled
         hint={kind === 'language' ? 'This site has no language choice' : 'This site has no scanlation groups to choose from'}
@@ -244,8 +251,8 @@ function FilterField({
     <SelectField
       className="inline-field"
       label={label}
-      value={choice.selected}
-      options={filterOptions(choice, kind)}
+      value={shownSelection(choice, loaded)}
+      options={filterOptions(choice, kind, 'en', loaded)}
       disabled={busy}
       onChange={onPick}
     />

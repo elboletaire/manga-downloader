@@ -302,12 +302,29 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	}
 
 	series, err := core.Open(site, s)
-	if err != nil && c.dropUnmatchedFilters(site, s, err) {
-		// the reload gets a site of its own: the failed one may already have
-		// read the filters it was given
-		if retry, _ := c.identify(url, s); retry != nil {
-			site = retry
-			series, err = core.Open(site, s)
+	if err != nil {
+		// the reload gets a site of its own, with the settings dropUnmatchedFilters
+		// chose: the failed one may already have read the filters it was given
+		if reload, dropLanguage := c.dropUnmatchedFilters(site, s, err); reload {
+			// the site keeps the pointer it's identified with, and Configure
+			// changes c.settings: a copy would leave the download ignoring
+			// later option changes. So the language is cleared in place just
+			// for the retry (nothing else touches s while a load runs).
+			typed := s.Language
+			if dropLanguage {
+				c.mu.Lock()
+				s.Language = ""
+				c.mu.Unlock()
+			}
+			if retry, _ := c.identify(url, s); retry != nil {
+				site = retry
+				series, err = core.Open(site, s)
+			}
+			if dropLanguage {
+				c.mu.Lock()
+				s.Language = typed
+				c.mu.Unlock()
+			}
 		}
 	}
 
@@ -327,6 +344,8 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	// saved, the loaded filters and the selector all agree on it
 	s.Language = listedSpelling(s.Language, languages)
 	s.Scanlator = listedSpelling(s.Scanlator, scanlators)
+	// a language dropped for this load on a site that lists none is recorded as
+	// typed: no selector shows it, and the field would read as stale otherwise
 	c.loadedLanguage = s.Language
 	c.loadedScanlator = s.Scanlator
 	if err != nil {
@@ -347,14 +366,26 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 
 // dropUnmatchedFilters handles a load that found nothing for a filter the
 // series doesn't have, which the window would otherwise just fail on: each
-// such filter is reset to its fallback (see unmatchedFallback), logged, and
-// reported as reset so the caller can reload once. It only looks at errors
-// that mean "no chapters for this filter": a network failure keeps the value.
-func (c *Controller) dropUnmatchedFilters(site grabber.Site, s *grabber.Settings, err error) bool {
+// such filter is reset to its fallback (see unmatchedFallback) and logged, and
+// whether to reload is returned, and whether to do so without the language. It
+// only looks at errors that mean "no chapters for this filter": a network
+// failure keeps the value.
+//
+// A language on a site that lists none is dropped for this load only: the
+// saved language stays, for the other sites that take it. The caller clears it
+// on the shared settings for the reload only and puts it back. Such a site can't say which languages it has, so only
+// a NoChaptersError with no scanlator to blame is taken as the language's
+// doing: a scanlator the site lists, or none, can't have emptied the list. A
+// typed scanlator it doesn't list is reset instead, so the language is kept.
+func (c *Controller) dropUnmatchedFilters(site grabber.Site, s *grabber.Settings, err error) (reload, dropLanguage bool) {
 	var noChapters *core.NoChaptersError
 	var chaptersErr *core.ChaptersError
-	if !errors.As(err, &noChapters) && !errors.As(err, &chaptersErr) {
-		return false
+	var unavailable *grabber.UnavailableFilterError
+	// a site that picks the filter while fetching the title fails there
+	// instead, with an error of its own
+	rejected := errors.As(err, &unavailable)
+	if !errors.As(err, &noChapters) && !errors.As(err, &chaptersErr) && !rejected {
+		return false, false
 	}
 
 	languages, scanlators := core.FilterOptionsOf(site)
@@ -363,8 +394,11 @@ func (c *Controller) dropUnmatchedFilters(site grabber.Site, s *grabber.Settings
 	typedLanguage, typedScanlator := s.Language, s.Scanlator
 	language, languageReset := unmatchedFallback(typedLanguage, languages)
 	scanlator, scanlatorReset := unmatchedFallback(typedScanlator, scanlators)
-	if !languageReset && !scanlatorReset {
-		return false
+	scanlatorCleared := typedScanlator == "" || typedScanlator == grabber.FilterAll || listsValue(scanlators, typedScanlator)
+	languageDropped := !languageReset && !listsValues(languages) && (noChapters != nil || (rejected && unavailable.Filter == "language")) &&
+		typedLanguage != "" && typedLanguage != grabber.FilterAll && scanlatorCleared
+	if !languageReset && !scanlatorReset && !languageDropped {
+		return false, false
 	}
 
 	c.mu.Lock()
@@ -382,7 +416,25 @@ func (c *Controller) dropUnmatchedFilters(site grabber.Site, s *grabber.Settings
 		c.addLog(LogInfo, fallbackMessage("scanlation group", typedScanlator, scanlator))
 	}
 
-	return true
+	if languageDropped {
+		c.addLog(LogInfo, fallbackMessage("language", typedLanguage, ""))
+	}
+
+	return true, languageDropped
+}
+
+// listsValue reports whether the site offers value for a filter, ignoring case
+func listsValue(options *grabber.FilterOptions, value string) bool {
+	if !listsValues(options) {
+		return false
+	}
+	for _, v := range options.Values {
+		if strings.EqualFold(v, value) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // unmatchedFallback is what a typed filter value falls back to when the series
@@ -391,19 +443,23 @@ func (c *Controller) dropUnmatchedFilters(site grabber.Site, s *grabber.Settings
 // there's nothing to fall back from: no value, "all" itself, a site that lists
 // nothing, or a value the series does offer.
 func unmatchedFallback(value string, options *grabber.FilterOptions) (fallback string, reset bool) {
-	if value == "" || value == grabber.FilterAll || options == nil || len(options.Values) == 0 {
+	if value == "" || value == grabber.FilterAll || !listsValues(options) {
 		return "", false
 	}
-	for _, v := range options.Values {
-		if strings.EqualFold(v, value) {
-			return "", false
-		}
+	if listsValue(options, value) {
+		return "", false
 	}
 	if options.All {
 		return grabber.FilterAll, true
 	}
 
 	return options.Current, true
+}
+
+// listsValues reports whether the site offers any value for a filter: the
+// selector isn't shown otherwise (see newFilter), so nothing can be matched
+func listsValues(options *grabber.FilterOptions) bool {
+	return options != nil && len(options.Values) > 0
 }
 
 // fallbackMessage is the log line for a filter that was reset, naming what

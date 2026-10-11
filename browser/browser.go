@@ -13,6 +13,7 @@ package browser
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -397,9 +398,14 @@ type APIResponse struct {
 // collected page by page. The browser session (cookies + user agent) is
 // harvested afterwards so images still download over plain HTTP.
 //
+// setupJS, if non-empty, runs once the initial responses are in. It resolves to
+// {"wait": bool, "result": any} (see parseSetup): result is returned as setup
+// for the caller to read, and wait says the script made the page issue a new
+// request, so the responses are awaited before the call returns.
+//
 // Like GetHTML it tries headless first and transparently escalates to a visible
 // window if the wait selector times out (typically a challenge).
-func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration, setupJS string) ([]APIResponse, error) {
+func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration, setupJS string) (responses []APIResponse, setup json.RawMessage, err error) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -411,9 +417,9 @@ func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxC
 		}
 	}
 
-	res, err := captureAPI(pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, t, setupJS)
+	responses, setup, err = captureAPI(pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, t, setupJS)
 	if err == nil {
-		return res, nil
+		return responses, setup, nil
 	}
 
 	var ce *challengeError
@@ -421,25 +427,25 @@ func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxC
 		notice.Warn("%s didn't load in a headless browser (likely a challenge).", hostOf(pageURL))
 		notice.Warn("opening a visible browser window — solve the challenge there if one appears...")
 		if rerr := goVisible(); rerr != nil {
-			return nil, rerr
+			return nil, nil, rerr
 		}
-		if res, err = captureAPI(pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, visibleTimeout, setupJS); err == nil {
-			return res, nil
+		if responses, setup, err = captureAPI(pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, visibleTimeout, setupJS); err == nil {
+			return responses, setup, nil
 		}
 	}
 
 	if errors.As(err, &ce) {
-		return nil, fmt.Errorf("%w: the challenge may not have been solved in time", err)
+		return nil, nil, fmt.Errorf("%w: the challenge may not have been solved in time", err)
 	}
-	return nil, err
+	return nil, nil, err
 }
 
 // captureAPI performs a single render capturing the response bodies whose URL
 // contains urlSubstr, optionally clicking through nextSelector pagination.
 // Callers must hold mu.
-func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration, setupJS string) ([]APIResponse, error) {
+func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration, setupJS string) ([]APIResponse, json.RawMessage, error) {
 	if err := start(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// the timeout only has to bound the initial render (that's what tells a
@@ -484,9 +490,9 @@ func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks
 	}
 	if err := chromedp.Run(ctx, nav...); err != nil {
 		if ctx.Err() != nil && waitSelector != "" {
-			return nil, &challengeError{url: pageURL, selector: waitSelector}
+			return nil, nil, &challengeError{url: pageURL, selector: waitSelector}
 		}
-		return nil, err
+		return nil, nil, err
 	}
 
 	count := func() int {
@@ -501,19 +507,24 @@ func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks
 	timer.Reset(paginationTimeout)
 
 	// page-specific setup (e.g. switching the chapter list's language); the
-	// script is async and resolves to an error message, or "" on success
+	// script is async and resolves to what parseSetup reads
+	var setupResult json.RawMessage
 	if setupJS != "" {
 		before := count()
-		var msg string
-		if err := chromedp.Run(ctx, chromedp.Evaluate(setupJS, &msg, func(p *runtime.EvaluateParams) *runtime.EvaluateParams {
+		var raw string
+		if err := chromedp.Run(ctx, chromedp.Evaluate(setupJS, &raw, func(p *runtime.EvaluateParams) *runtime.EvaluateParams {
 			return p.WithAwaitPromise(true)
 		})); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		if msg != "" {
-			return nil, errors.New(msg)
+		wait, result, err := parseSetup(raw)
+		if err != nil {
+			return nil, nil, err
 		}
-		waitForGrowth(ctx, count, before)
+		setupResult = result
+		if wait {
+			waitForGrowth(ctx, count, before)
+		}
 	}
 
 	if nextSelector != "" {
@@ -525,7 +536,7 @@ func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks
 			before := count()
 			var status string
 			if err := chromedp.Run(ctx, chromedp.Evaluate(clickJS, &status)); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			if status != "clicked" {
 				break
@@ -557,7 +568,21 @@ func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks
 			out = append(out, APIResponse{URL: e.url, Body: string(body)})
 		}
 	}
-	return out, nil
+	return out, setupResult, nil
+}
+
+// parseSetup reads what a setup script resolved to: whether it caused a new
+// request (wait), and the result the caller reads
+func parseSetup(raw string) (wait bool, result json.RawMessage, err error) {
+	var env struct {
+		Wait   bool            `json:"wait"`
+		Result json.RawMessage `json:"result"`
+	}
+	if err := json.Unmarshal([]byte(raw), &env); err != nil {
+		return false, nil, fmt.Errorf("the page setup didn't resolve to JSON: %w", err)
+	}
+
+	return env.Wait, env.Result, nil
 }
 
 // waitForGrowth polls until count() exceeds baseline or a short grace period

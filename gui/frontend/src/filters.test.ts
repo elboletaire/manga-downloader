@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterControl, filtersIdentified, filterOptions, languageName } from './filters';
+import { filterControl, filtersIdentified, filterOptions, languageName, shownSelection } from './filters';
 import type { FilterChoice } from './types';
 
 const choice = (over: Partial<FilterChoice>): FilterChoice => ({
@@ -59,6 +59,15 @@ describe('filterOptions', () => {
   it('keeps the selected value even when the site does not list it', () => {
     const options = filterOptions(choice({ values: ['en'], selected: 'fr' }), 'language');
     expect(options.map((o) => o.value)).toEqual(['en', 'fr']);
+  });
+
+  it('does not offer the typed value of a failed load', () => {
+    const failed = choice({ values: ['en'], selected: 'ca' });
+    expect(shownSelection(failed, false)).toBe('');
+    const options = filterOptions(failed, 'language', 'en', false);
+    expect(options.map((o) => o.value)).toEqual(['', 'en']);
+    expect(options[0].disabled).toBe(true);
+    expect(shownSelection(choice({ values: ['en'], selected: 'en' }), false)).toBe('en');
   });
 
   it('does not repeat a listed selected value', () => {

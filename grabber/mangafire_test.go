@@ -3,6 +3,8 @@
 package grabber
 
 import (
+	"encoding/json"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -246,5 +248,44 @@ func TestMangafireChaptersFilteredByLanguage(t *testing.T) {
 	got := parseMangafireChapters(responses, base+"?language=pt-br&")
 	if len(got) != 2 || got[0].Id != 2 || got[1].Id != 3 {
 		t.Errorf("got %+v, want only the pt-br chapters 233 and 232", got)
+	}
+}
+
+func TestMangafireOptions(t *testing.T) {
+	raw := `{"selected":"English","labels":["English","Spanish (LATAM)","Klingon","Português"]}`
+	d, err := parseMangafireDropdown(json.RawMessage(raw))
+	if err != nil {
+		t.Fatalf("parseMangafireDropdown: %v", err)
+	}
+	got := mangafireOptions(d)
+	// Klingon has no code to type, so it's left out; the order is the site's
+	if want := []string{"en", "es-la"}; !reflect.DeepEqual(got.Values, want) {
+		t.Errorf("Values = %v, want %v", got.Values, want)
+	}
+	if got.Current != "en" || got.All {
+		t.Errorf("Current = %q, All = %v, want en and false", got.Current, got.All)
+	}
+	if !d.offers("Spanish (LATAM)") || d.offers("Spanish") {
+		t.Errorf("offers doesn't match the labels the dropdown shows")
+	}
+}
+
+func TestParseMangafireDropdownError(t *testing.T) {
+	if _, err := parseMangafireDropdown(json.RawMessage(`{"error":"language selector not found"}`)); err == nil {
+		t.Error("expected the script's error to surface")
+	}
+	if _, err := parseMangafireDropdown(nil); err == nil {
+		t.Error("expected an empty result to fail")
+	}
+}
+
+func TestMangafireUnavailableLanguage(t *testing.T) {
+	m := &Mangafire{languages: FilterOptions{Values: []string{"en", "es-la"}}}
+	err := m.unavailableLanguage("ca")
+	if want := `language "ca" isn't available for this title (available: en, es-la)`; err.Error() != want {
+		t.Errorf("got %q, want %q", err.Error(), want)
+	}
+	if got := (&Mangafire{}).unavailableLanguage("ca").Error(); !strings.Contains(got, "available: none") {
+		t.Errorf("got %q, want the none listing", got)
 	}
 }

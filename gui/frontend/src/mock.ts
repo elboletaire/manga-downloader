@@ -14,10 +14,11 @@
 // languages en, es, ja with All, no groups), plus (Manga Plus: languages
 // without All, the URL's edition shown by default), groups (Atsumaru: groups
 // with All, the largest shown by default, no languages), or none (both fields
-// disabled). A language or group the series doesn't list falls back on load,
-// as the backend does: typed "xx" under multi loads "all", under plus the
-// edition the URL points at. Typed values match ignoring case, and take the
-// spelling the series lists.
+// disabled: a typed value shows cleared, as the site ignores it, and is kept
+// for the sites that take it). A language or group the series doesn't list
+// falls back on load, as the backend does: typed "xx" under multi loads "all",
+// under plus the edition the URL points at. Typed values match ignoring case,
+// and take the spelling the series lists.
 
 import type { Api, Unsubscribe } from './api';
 import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary, Update } from './types';

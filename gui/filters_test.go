@@ -338,3 +338,151 @@ func TestLoadCanonicalizesTheTypedSpelling(t *testing.T) {
 		t.Errorf("language selector = %+v, want es selected", language)
 	}
 }
+
+func TestLoadDropsALanguageTheSiteListsNoneOf(t *testing.T) {
+	// no options: the site doesn't say which languages it has, and the typed one
+	// matches nothing (a NoChaptersError), so this load goes without it
+	c, site := newLanguageController(t, grabber.FilterOptions{})
+	if err := c.Configure(func(s *grabber.Settings) { s.Language = "ca" }); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatalf("Load = %v, want the language dropped and the series loaded", err)
+	}
+	if len(c.Chapters()) != 3 {
+		t.Errorf("%d chapters, want the unfiltered list of 3", len(c.Chapters()))
+	}
+	if !logHas(c, `language "ca" isn't in this series, loading no filter instead`) {
+		t.Errorf("no fallback line in the log: %v", c.Log())
+	}
+	if language, _ := c.Filters(); language != nil {
+		t.Errorf("language selector = %+v, want none for a site that lists none", language)
+	}
+	if c.Stale() {
+		t.Error("the dropped language reads as stale")
+	}
+	// the saved language is what the next series gets, so it's never cleared
+	if got := c.Settings().Language; got != "ca" {
+		t.Errorf("settings language %q after the load, want the saved \"ca\" kept", got)
+	}
+	// the site the series downloads with must share the controller's settings,
+	// or an option changed after the load is ignored by the download
+	if err := c.Configure(func(s *grabber.Settings) { s.Retry = 7; s.Format = "raw" }); err != nil {
+		t.Fatal(err)
+	}
+	if site.GetRetries() != 7 || site.GetFormat() != "raw" {
+		t.Errorf("site retries/format = %d/%q after Configure, want 7/raw", site.GetRetries(), site.GetFormat())
+	}
+}
+
+func TestLoadKeepsTheLanguageWhenAnotherFilterMayBeTheCause(t *testing.T) {
+	// a typed scanlator the site doesn't list could be what emptied the list,
+	// so the language isn't blamed: the load fails, and both values are kept
+	c, _ := newLanguageController(t, grabber.FilterOptions{})
+	if err := c.Configure(func(s *grabber.Settings) { s.Language = "ca"; s.Scanlator = "Zeta" }); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Load("https://example.com/manga/test"); err == nil {
+		t.Fatal("Load succeeded, want the empty list reported")
+	}
+	if got := c.Settings(); got.Language != "ca" || got.Scanlator != "Zeta" {
+		t.Errorf("settings = %q/%q, want ca and Zeta kept", got.Language, got.Scanlator)
+	}
+}
+
+func TestNoLanguageSiteLeavesTheSavedLanguageForTheNextSeries(t *testing.T) {
+	a, _, prefs := newTestApp(t, 3)
+	noLanguage := &languageSite{
+		fakeSite: &fakeSite{Grabber: &grabber.Grabber{URL: "https://example.com/manga/none"}, chapters: chapters(3, 1)},
+	}
+	withLanguage := &languageSite{
+		fakeSite: &fakeSite{Grabber: &grabber.Grabber{URL: "https://example.com/manga/ca"}, chapters: chapters(3, 1)},
+		options:  grabber.FilterOptions{Values: []string{"en", "ca"}, All: true},
+	}
+	a.ctrl.identify = func(url string, s *grabber.Settings) (grabber.Site, []error) {
+		site := noLanguage
+		if strings.Contains(url, "/ca") {
+			site = withLanguage
+		}
+		site.Settings = s
+		return site, nil
+	}
+	o := a.Options()
+	o.Language = "ca"
+	if err := a.SetOptions(o); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := a.Load("https://example.com/manga/none"); err != nil {
+		t.Fatal(err)
+	}
+	waitUntil(t, "the load of the site that lists no languages", func() bool { return !a.State().Loading })
+	if got := a.Options().Language; got != "ca" {
+		t.Errorf("options language %q after the load of a site without languages, want ca kept", got)
+	}
+	saved := defaultSettings()
+	if err := loadOptions(prefs, saved); err != nil || saved.Language != "ca" {
+		t.Errorf("saved language %q (%v) after that load, want ca", saved.Language, err)
+	}
+
+	if err := a.Load("https://example.com/manga/ca"); err != nil {
+		t.Fatal(err)
+	}
+	waitUntil(t, "the load of the site that lists languages", func() bool { return !a.State().Loading })
+	if language, _ := a.ctrl.LoadedFilters(); language != "ca" {
+		t.Errorf("the next series loaded with %q, want the saved ca", language)
+	}
+	if got := len(a.ctrl.Chapters()); got != 3 {
+		t.Errorf("%d chapters for the next series, want 3", got)
+	}
+}
+
+func TestUnmatchedFallbackNeverDropsOnNoOptions(t *testing.T) {
+	// without a NoChaptersError the typed value is kept, as for a site that
+	// fails: only a load that matched nothing proves the language can't be used
+	if fallback, reset := unmatchedFallback("ca", nil); reset || fallback != "" {
+		t.Errorf("unmatchedFallback(ca, nil) = %q, %v, want no reset", fallback, reset)
+	}
+}
+
+// titleLanguageSite picks its language while fetching the title, as mangafire
+// does, so an unlisted one fails there rather than at the chapter list
+type titleLanguageSite struct {
+	*languageSite
+}
+
+func (s titleLanguageSite) FetchTitle() (string, error) {
+	lang := s.Settings.Language
+	if lang != "" && lang != grabber.FilterAll && !slices.Contains(s.options.Values, lang) {
+		return "", &grabber.UnavailableFilterError{Filter: "language", Value: lang, Available: s.options.Values}
+	}
+
+	return s.languageSite.FetchTitle()
+}
+
+func TestLoadFallsBackWhenTheTitleFetchRejectsTheLanguage(t *testing.T) {
+	c, site := newLanguageController(t, grabber.FilterOptions{Values: []string{"en"}, Current: "en"})
+	c.identify = func(_ string, s *grabber.Settings) (grabber.Site, []error) {
+		site.Settings = s
+		return titleLanguageSite{site}, nil
+	}
+	if err := c.Configure(func(s *grabber.Settings) { s.Language = "ca" }); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatalf("Load = %v, want the fallback to the site's current language", err)
+	}
+	if language, _ := c.LoadedFilters(); language != "en" {
+		t.Errorf("loaded language %q, want en", language)
+	}
+	language, _ := c.Filters()
+	if language == nil || !reflect.DeepEqual(language.Values, []string{"en"}) || language.Selected != "en" {
+		t.Errorf("language selector = %+v, want only en, selected", language)
+	}
+	if !logHas(c, `language "ca" isn't in this series, loading "en" instead`) {
+		t.Errorf("no fallback line in the log: %v", c.Log())
+	}
+}

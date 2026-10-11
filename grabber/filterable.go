@@ -3,7 +3,9 @@
 package grabber
 
 import (
+	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/elboletaire/manga-downloader/ranges"
 )
@@ -61,4 +63,22 @@ func (f Filterables) SortByNumber() Filterables {
 	})
 
 	return f
+}
+
+// UnavailableFilterError is the error for a filter value (a --language, say)
+// the title doesn't offer. Available lists what it does, empty when the site
+// can't say.
+type UnavailableFilterError struct {
+	Filter    string
+	Value     string
+	Available []string
+}
+
+func (e *UnavailableFilterError) Error() string {
+	available := "none"
+	if len(e.Available) > 0 {
+		available = strings.Join(e.Available, ", ")
+	}
+
+	return fmt.Sprintf("%s %q isn't available for this title (available: %s)", e.Filter, e.Value, available)
 }

@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -46,6 +47,7 @@ type Mangafire struct {
 	title      string
 	readerBase string // canonical reader-URL base, e.g. https://mangafire.to/title/dkw-one-piece
 	chapters   Filterables
+	languages  FilterOptions // the title's languages, read from the dropdown by load
 }
 
 func NewMangafire(g *Grabber) *Mangafire {
@@ -76,6 +78,12 @@ func (m *Mangafire) FetchTitle() (string, error) {
 	return m.title, nil
 }
 
+// LanguageOptions returns the languages the title offers, as load read them
+// from its chapter list's dropdown
+func (m *Mangafire) LanguageOptions() FilterOptions {
+	return m.languages
+}
+
 // FetchChapters returns the chapters of the manga
 func (m *Mangafire) FetchChapters() (Filterables, []error) {
 	if err := m.load(); err != nil {
@@ -91,7 +99,7 @@ func (m *Mangafire) FetchChapter(f Filterable) (*Chapter, error) {
 	// rendering the reader page makes the SPA call /api/chapters/{id} with a
 	// valid vrf; we intercept that single response (which carries the full
 	// pages list) instead of trying to sign the call ourselves
-	responses, err := browser.GetAPIResponses(
+	responses, _, err := browser.GetAPIResponses(
 		mchap.URL,
 		".reader-img",
 		fmt.Sprintf("/api/chapters/%d", mchap.Id),
@@ -155,30 +163,36 @@ func (m *Mangafire) load() error {
 		return err
 	}
 
-	lang, err := mangafireLanguage(m.Settings.Language)
-	if err != nil {
-		m.loadErr = err
-		return err
-	}
-	setup := ""
-	if lang.code != "" {
-		setup = mangafireLanguageJS(lang)
-	}
+	// the language dropdown is only in the DOM once it's opened, so it's read
+	// in this same render, which also picks the requested language. An unknown
+	// language is only an error once the title's own list is known.
+	lang, langErr := mangafireLanguage(m.Settings.Language)
 
 	// urlSubstr matches the title (/api/titles/{hid}?...), the volumes list and
 	// every chapters page (/api/titles/{hid}/chapters?...); they're told apart
 	// below by their exact URL
-	responses, err := browser.GetAPIResponses(
+	responses, dropdownJSON, err := browser.GetAPIResponses(
 		m.URL,
 		".title-detail__row-link",
 		"/api/titles/"+hid,
 		mangafireNextPageSelector,
 		mangafireMaxChapterPages,
 		0,
-		setup,
+		mangafireDropdownJS(lang.label),
 	)
 	if err != nil {
 		m.loadErr = fmt.Errorf("error fetching chapters: %w", err)
+		return m.loadErr
+	}
+
+	dropdown, err := parseMangafireDropdown(dropdownJSON)
+	if err != nil {
+		m.loadErr = err
+		return err
+	}
+	m.languages = mangafireOptions(dropdown)
+	if langErr != nil || (lang.code != "" && !dropdown.offers(lang.label)) {
+		m.loadErr = m.unavailableLanguage(m.Settings.Language)
 		return m.loadErr
 	}
 
@@ -356,24 +370,89 @@ func mangafireLanguage(v string) (mangafireLang, error) {
 	return mangafireLang{}, fmt.Errorf("unsupported language %q for mangafire (use one of: %s)", v, strings.Join(codes, ", "))
 }
 
-// mangafireLanguageJS returns an async script that picks the language in the
-// chapter list's "Lang" dropdown, which makes the SPA refetch the list with a
-// freshly signed call. It resolves to "" on success or an error message listing
-// what the title actually offers.
-func mangafireLanguageJS(l mangafireLang) string {
-	label, _ := json.Marshal(l.label)
+// mangafireDropdown is what the chapter list's language dropdown resolves to:
+// the label shown before any pick, every label it offers, and the error when
+// the selector isn't on the page
+type mangafireDropdown struct {
+	Error    string   `json:"error"`
+	Selected string   `json:"selected"`
+	Labels   []string `json:"labels"`
+}
+
+// offers reports whether the dropdown lists the label
+func (d mangafireDropdown) offers(label string) bool {
+	for _, l := range d.Labels {
+		if l == label {
+			return true
+		}
+	}
+	return false
+}
+
+// mangafireDropdownJS returns an async script that opens the chapter list's
+// "Lang" dropdown and reads what it offers. If want is set and offered, it
+// picks it, which makes the SPA refetch the list with a freshly signed call,
+// and the script says so (wait), so the browser awaits that refetch. It
+// resolves to the JSON browser.GetAPIResponses reads, with the dropdown as
+// result.
+func mangafireDropdownJS(want string) string {
+	label, _ := json.Marshal(want)
 	return `(async function(){
 var want=` + string(label) + `;
 var norm=function(s){return s.replace(/^[^A-Za-z]+/,"").trim()};
 var btn=document.querySelector(".title-detail__toolbar .select");
-if(!btn)return "language selector not found";
-if(norm(btn.querySelector(".select__value").textContent)===want)return "";
+if(!btn)return JSON.stringify({wait:false,result:{error:"language selector not found"}});
+var selected=norm(btn.querySelector(".select__value").textContent);
 btn.click();
 await new Promise(function(r){setTimeout(r,500)});
 var items=Array.from(document.querySelectorAll(".dropdown__item"));
-var it=items.find(function(e){return norm(e.textContent)===want});
-if(!it)return "language not available for this title (available: "+items.map(function(e){return norm(e.textContent)}).join(", ")+")";
-it.click();
-return "";
+var labels=items.map(function(e){return norm(e.textContent)});
+var it=want&&want!==selected?items.find(function(e){return norm(e.textContent)===want}):null;
+if(it)it.click();else btn.click();
+return JSON.stringify({wait:it!==null,result:{selected:selected,labels:labels}});
 })()`
+}
+
+// parseMangafireDropdown reads the dropdown browser.GetAPIResponses returned
+func parseMangafireDropdown(raw json.RawMessage) (mangafireDropdown, error) {
+	var d mangafireDropdown
+	if err := json.Unmarshal(raw, &d); err != nil {
+		return d, fmt.Errorf("could not read the language list: %w", err)
+	}
+	if d.Error != "" {
+		return d, errors.New(d.Error)
+	}
+	return d, nil
+}
+
+// mangafireOptions turns the dropdown into the language options: the codes
+// --language takes, in the site's order, with the label shown by default as
+// Current. A label without a code in mangafireLangs can't be typed, so it's
+// left out.
+func mangafireOptions(d mangafireDropdown) FilterOptions {
+	var options FilterOptions
+	for _, label := range d.Labels {
+		if code := mangafireCodeOf(label); code != "" {
+			options.Values = append(options.Values, code)
+		}
+	}
+	options.Current = mangafireCodeOf(d.Selected)
+
+	return options
+}
+
+// mangafireCodeOf returns the code of a dropdown label, "" when unknown
+func mangafireCodeOf(label string) string {
+	for _, l := range mangafireLangs {
+		if l.label == label {
+			return l.code
+		}
+	}
+	return ""
+}
+
+// unavailableLanguage is the error for a --language the title doesn't offer,
+// listing the codes it does
+func (m *Mangafire) unavailableLanguage(v string) error {
+	return &UnavailableFilterError{Filter: "language", Value: v, Available: m.languages.Values}
 }

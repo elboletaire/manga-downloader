@@ -70,14 +70,28 @@ export function languageName(code: string, locale = 'en'): string {
 }
 
 /**
+ * The value a selector shows as picked. After a failed load the selected value
+ * is only what was typed, so one the site doesn't list is not shown as if it
+ * were an option: the placeholder stands in.
+ */
+export function shownSelection(filter: FilterChoice, loaded: boolean): string {
+  if (!loaded && filter.selected !== FILTER_ALL && !filter.values.includes(filter.selected)) {
+    return '';
+  }
+
+  return filter.selected;
+}
+
+/**
  * The options of one selector, in the order shown: "All" first where the site
  * takes it, then the values as the site lists them. The selected value is
  * always among them, even when the site doesn't list it (a value the series
  * was loaded with), so the select never shows the wrong one.
  */
-export function filterOptions(filter: FilterChoice, kind: FilterKind, locale = 'en'): FilterOption[] {
+export function filterOptions(filter: FilterChoice, kind: FilterKind, locale = 'en', loaded = true): FilterOption[] {
   const options: FilterOption[] = [];
-  if (filter.selected === '') {
+  const selected = shownSelection(filter, loaded);
+  if (selected === '') {
     // no value is shown: a disabled placeholder, so the select doesn't show the
     // first value as if it were the one the list is filtered by
     options.push({ value: '', label: kind === 'language' ? 'Choose a language…' : 'Choose a group…', disabled: true });
@@ -87,8 +101,8 @@ export function filterOptions(filter: FilterChoice, kind: FilterKind, locale = '
   }
 
   const values = [...filter.values];
-  if (filter.selected !== '' && filter.selected !== FILTER_ALL && !values.includes(filter.selected)) {
-    values.push(filter.selected);
+  if (selected !== '' && selected !== FILTER_ALL && !values.includes(selected)) {
+    values.push(selected);
   }
   for (const value of values) {
     const label = kind === 'language' ? labelOfLanguage(value, locale) : value;
