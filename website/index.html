@@ -1,14 +1,13 @@
 <!doctype html>
-<html lang="en">
+<html lang="%PAGE_LANG%">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>manga downloader: download manga as CBZ for e-readers</title>
-    <meta
-      name="description"
-      content="Free desktop app and CLI that downloads manga from MangaDex and %OTHER_SITES_COUNT% other sites into CBZ files for Kobo, KOReader and comic apps. Windows, macOS and Linux."
-    />
-    <link rel="canonical" href="%SITE_URL%" />
+    <!-- i18n:detect -->
+    <title>{{a:meta.title}}</title>
+    <meta name="description" content="{{a:meta.description:others}}" />
+    <link rel="canonical" href="%PAGE_URL%" />
+    <!-- i18n:alternates -->
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#F6F2FF" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#16132A" media="(prefers-color-scheme: dark)" />
@@ -21,25 +20,20 @@
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="manga downloader" />
-    <meta property="og:locale" content="en" />
-    <meta property="og:title" content="manga downloader: manga chapters → reader-ready CBZ" />
-    <meta
-      property="og:description"
-      content="Download manga from MangaDex and %OTHER_SITES_COUNT% other sites as CBZ files for your e-reader or comic app. A desktop app and a CLI, free and open source."
-    />
-    <meta property="og:url" content="%SITE_URL%" />
+    <meta property="og:locale" content="%OG_LOCALE%" />
+    <!-- i18n:og-alternates -->
+    <meta property="og:title" content="{{a:meta.socialTitle}}" />
+    <meta property="og:description" content="{{a:meta.socialDescription:others}}" />
+    <meta property="og:url" content="%PAGE_URL%" />
     <meta property="og:image" content="%SITE_URL%opengraph.png" />
     <meta property="og:image:width" content="1280" />
     <meta property="og:image:height" content="640" />
-    <meta property="og:image:alt" content="The manga downloader mascot, a cat-shaped open book, next to the tagline: Manga chapters → reader-ready CBZ." />
+    <meta property="og:image:alt" content="{{a:meta.imageAlt}}" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="manga downloader: manga chapters → reader-ready CBZ" />
-    <meta
-      name="twitter:description"
-      content="Download manga from MangaDex and %OTHER_SITES_COUNT% other sites as CBZ files for your e-reader or comic app. A desktop app and a CLI, free and open source."
-    />
+    <meta name="twitter:title" content="{{a:meta.socialTitle}}" />
+    <meta name="twitter:description" content="{{a:meta.socialDescription:others}}" />
     <meta name="twitter:image" content="%SITE_URL%opengraph.png" />
-    <meta name="twitter:image:alt" content="The manga downloader mascot, a cat-shaped open book, next to the tagline: Manga chapters → reader-ready CBZ." />
+    <meta name="twitter:image:alt" content="{{a:meta.imageAlt}}" />
 
     <script type="application/ld+json">
       {
@@ -47,8 +41,9 @@
         "@type": "SoftwareApplication",
         "name": "manga downloader",
         "alternateName": "manga-downloader",
-        "description": "A desktop app and command line tool that downloads manga chapters from MangaDex and %OTHER_SITES_COUNT% other sites and packs them into CBZ files for e-readers and comic apps.",
-        "url": "%SITE_URL%",
+        "description": "{{j:meta.jsonLdDescription:others}}",
+        "url": "%PAGE_URL%",
+        "inLanguage": "%PAGE_LANG%",
         "image": "%SITE_URL%opengraph.png",
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Windows, macOS, Linux",
@@ -72,25 +67,30 @@
       gtag("config", "G-4E9CR0LDZE");
     </script>
 
+    <!-- i18n:runtime -->
+    <!-- release:data -->
     <script type="module" src="/src/main.ts"></script>
   </head>
   <body>
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main">{{t:nav.skip}}</a>
 
     <header class="site-header">
       <div class="container header-inner">
-        <a class="brand" href="#top" aria-label="manga downloader, back to top">
+        <a class="brand" href="#top" aria-label="{{a:nav.brand}}">
           <picture>
-            <source srcset="./src/assets/brand/lockup-line-dark.svg" media="(prefers-color-scheme: dark)" />
-            <img src="./src/assets/brand/lockup-line.svg" alt="" width="199" height="32" />
+            <source srcset="/src/assets/brand/lockup-line-dark.svg" media="(prefers-color-scheme: dark)" />
+            <img src="/src/assets/brand/lockup-line.svg" alt="" width="199" height="32" />
           </picture>
         </a>
-        <nav class="site-nav" aria-label="Main">
+        <nav class="site-nav" aria-label="{{a:nav.main}}">
           <ul>
-            <li class="nav-optional"><a href="#desktop">Desktop app</a></li>
-            <li class="nav-optional"><a href="#cli">Command line</a></li>
-            <li class="nav-optional"><a href="#sites">Sites</a></li>
-            <li class="nav-optional"><a href="#faq">FAQ</a></li>
+            <li class="nav-optional"><a href="#desktop">{{t:nav.desktop}}</a></li>
+            <li class="nav-optional"><a href="#cli">{{t:nav.cli}}</a></li>
+            <li class="nav-optional"><a href="#sites">{{t:nav.sites}}</a></li>
+            <li class="nav-optional"><a href="#faq">{{t:nav.faq}}</a></li>
+            <li>
+              <div class="lang-switch" role="group" aria-label="{{a:nav.language}}"><!-- i18n:switcher --></div>
+            </li>
             <li>
               <a class="nav-github" href="https://github.com/elboletaire/manga-downloader">
                 <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -108,25 +108,27 @@
         <div class="hero-deco" aria-hidden="true"><span class="blob blob-mint"></span><span class="blob blob-pink"></span></div>
         <div class="container hero-inner">
           <div class="hero-copy">
-            <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>New in v1.11: a desktop app for Windows, macOS and Linux</p>
-            <h1 id="hero-title">Manga chapters <span class="arrow">→</span> <span class="accent">reader&#8209;ready CBZ</span></h1>
-            <p class="lede">
-              Paste a link from MangaDex or any of %OTHER_SITES_COUNT% other supported sites, pick your chapters,
-              and get clean CBZ files that open on your e-reader or in your favourite comic app.
-            </p>
+            <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>{{t:hero.eyebrow}}</p>
+            <h1 id="hero-title">{{t:hero.title}}</h1>
+            <p class="lede">{{t:hero.lede:others}}</p>
 
             <div class="download" data-download>
-              <a class="button button-primary button-download" href="https://github.com/elboletaire/manga-downloader/releases/latest" data-download-link>
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span data-download-label>Download the desktop app</span>
-              </a>
-              <p class="download-detail" data-download-detail aria-live="polite">For Windows, macOS and Linux</p>
+              <div class="download-row">
+                <div class="download-main">
+                  <a class="button button-primary button-download" href="https://github.com/elboletaire/manga-downloader/releases/latest" data-download-link>
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span data-download-label>{{t:hero.downloadLabel}}</span>
+                  </a>
+                  <p class="download-detail" data-download-detail aria-live="polite">{{t:hero.downloadDetail}}</p>
+                </div>
+                <!-- stats:hero -->
+              </div>
               <p class="download-alt">
-                <a href="#downloads">Other platforms</a>
+                <a href="#downloads">{{t:hero.otherPlatforms}}</a>
                 <span aria-hidden="true">·</span>
-                <a href="#cli">Command line</a>
+                <a href="#cli">{{t:common.commandLine}}</a>
                 <span aria-hidden="true">·</span>
-                <a href="https://github.com/elboletaire/manga-downloader">Source code</a>
+                <a href="https://github.com/elboletaire/manga-downloader">{{t:hero.sourceCode}}</a>
               </p>
             </div>
           </div>
@@ -137,20 +139,20 @@
             <svg class="sparkle sparkle-3" viewBox="0 0 24 24"><path d="M12 0c1 7 5 11 12 12-7 1-11 5-12 12-1-7-5-11-12-12 7-1 11-5 12-12z"/></svg>
             <div class="hero-disc">
               <picture>
-                <source srcset="./src/assets/brand/soft-mark-dark.svg" media="(prefers-color-scheme: dark)" />
-                <img src="./src/assets/brand/soft-mark.svg" alt="" width="320" height="320" fetchpriority="high" />
+                <source srcset="/src/assets/brand/soft-mark-dark.svg" media="(prefers-color-scheme: dark)" />
+                <img src="/src/assets/brand/soft-mark.svg" alt="" width="320" height="320" fetchpriority="high" />
               </picture>
             </div>
           </div>
         </div>
 
         <div class="container">
-          <ul class="chips" aria-label="Highlights">
-            <li><span class="dot dot-violet" aria-hidden="true"></span>%SITES_COUNT% sites</li>
-            <li><span class="dot dot-mint" aria-hidden="true"></span>CBZ or raw images</li>
-            <li><span class="dot dot-pink" aria-hidden="true"></span>E-reader ready</li>
-            <li><span class="dot dot-ink" aria-hidden="true"></span>Desktop app + CLI</li>
-            <li><span class="dot dot-violet" aria-hidden="true"></span>Free and open source</li>
+          <ul class="chips" aria-label="{{a:hero.highlights}}">
+            <li><span class="dot dot-violet" aria-hidden="true"></span>{{t:hero.chips.sites:sites}}</li>
+            <li><span class="dot dot-mint" aria-hidden="true"></span>{{t:hero.chips.formats}}</li>
+            <li><span class="dot dot-pink" aria-hidden="true"></span>{{t:hero.chips.ereader}}</li>
+            <li><span class="dot dot-ink" aria-hidden="true"></span>{{t:hero.chips.apps}}</li>
+            <li><span class="dot dot-violet" aria-hidden="true"></span>{{t:hero.chips.free}}</li>
           </ul>
         </div>
       </section>
@@ -159,88 +161,74 @@
       <section class="section" id="desktop" aria-labelledby="desktop-title">
         <div class="container">
           <header class="section-head">
-            <p class="kicker">Desktop app <span class="tag">New in v1.11</span></p>
-            <h2 id="desktop-title">Everything the CLI does, in a window</h2>
-            <p class="section-lede">
-              No terminal, no flags to remember. The same downloader, with a native window on Windows, macOS and Linux.
-            </p>
+            <p class="kicker">{{t:common.desktopApp}} <span class="tag">{{t:desktop.newTag}}</span></p>
+            <h2 id="desktop-title">{{t:desktop.title}}</h2>
+            <p class="section-lede">{{t:desktop.lede}}</p>
           </header>
 
           <figure class="shot shot-hero">
             <picture>
-              <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="./src/assets/screenshots/app-overview-dark-1000.webp 1000w, ./src/assets/screenshots/app-overview-dark-1600.webp 1600w"
+              <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="/src/assets/screenshots/app-overview-dark-1000.webp 1000w, /src/assets/screenshots/app-overview-dark-1600.webp 1600w"
                       sizes="(min-width: 1160px) 1080px, 92vw" />
-              <source type="image/webp" srcset="./src/assets/screenshots/app-overview-light-1000.webp 1000w, ./src/assets/screenshots/app-overview-light-1600.webp 1600w"
+              <source type="image/webp" srcset="/src/assets/screenshots/app-overview-light-1000.webp 1000w, /src/assets/screenshots/app-overview-light-1600.webp 1600w"
                       sizes="(min-width: 1160px) 1080px, 92vw" />
-              <img src="./src/assets/screenshots/app-overview-light-1600.webp" srcset="./src/assets/screenshots/app-overview-light-1000.webp 1000w, ./src/assets/screenshots/app-overview-light-1600.webp 1600w"
-                   sizes="(min-width: 1160px) 1080px, 92vw" width="1600" height="1112" alt="The desktop app with One Piece loaded from MangaDex: its cover, title and chapter list, with two chapters selected and Catalan picked as the language." loading="lazy" />
+              <img src="/src/assets/screenshots/app-overview-light-1600.webp" srcset="/src/assets/screenshots/app-overview-light-1000.webp 1000w, /src/assets/screenshots/app-overview-light-1600.webp 1600w"
+                   sizes="(min-width: 1160px) 1080px, 92vw" width="1600" height="1112" alt="{{a:desktop.overviewAlt}}" loading="lazy" />
             </picture>
           </figure>
 
           <div class="showcase">
             <article class="showcase-item">
               <div class="showcase-copy">
-                <h3>Paste a link, that's it</h3>
-                <p>
-                  Paste a series URL and the app loads its title, cover and chapters straight away. No "load" button,
-                  no copying chapter links one by one.
-                </p>
-                <h3>Pick chapters your way</h3>
-                <p>
-                  Type a range such as <code>1-10,12,15-20</code>, or click a chapter and Shift-click another to select
-                  everything in between.
-                </p>
+                <h3>{{t:desktop.pasteTitle}}</h3>
+                <p>{{t:desktop.pasteText}}</p>
+                <h3>{{t:desktop.pickTitle}}</h3>
+                <p>{{t:desktop.pickText}}</p>
               </div>
               <figure class="shot">
                 <picture>
-                  <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="./src/assets/screenshots/chapter-list-dark-600.webp 600w, ./src/assets/screenshots/chapter-list-dark-1000.webp 1000w"
+                  <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="/src/assets/screenshots/chapter-list-dark-600.webp 600w, /src/assets/screenshots/chapter-list-dark-1000.webp 1000w"
                           sizes="(min-width: 821px) 45vw, 92vw" />
-                  <source type="image/webp" srcset="./src/assets/screenshots/chapter-list-light-600.webp 600w, ./src/assets/screenshots/chapter-list-light-1000.webp 1000w"
+                  <source type="image/webp" srcset="/src/assets/screenshots/chapter-list-light-600.webp 600w, /src/assets/screenshots/chapter-list-light-1000.webp 1000w"
                           sizes="(min-width: 821px) 45vw, 92vw" />
-                  <img src="./src/assets/screenshots/chapter-list-light-1000.webp" srcset="./src/assets/screenshots/chapter-list-light-600.webp 600w, ./src/assets/screenshots/chapter-list-light-1000.webp 1000w"
-                       sizes="(min-width: 821px) 45vw, 92vw" width="1000" height="815" alt="The chapter list during a run: eight chapters selected, the first ones already saved and the rest in progress in the Activity panel." loading="lazy" />
+                  <img src="/src/assets/screenshots/chapter-list-light-1000.webp" srcset="/src/assets/screenshots/chapter-list-light-600.webp 600w, /src/assets/screenshots/chapter-list-light-1000.webp 1000w"
+                       sizes="(min-width: 821px) 45vw, 92vw" width="1000" height="815" alt="{{a:desktop.chapterListAlt}}" loading="lazy" />
                 </picture>
               </figure>
             </article>
 
             <article class="showcase-item is-flipped">
               <div class="showcase-copy">
-                <h3>Your language, your group</h3>
-                <p>
-                  When a series comes in several languages or from several scanlation groups, the app lists the ones
-                  it actually offers, so you pick from real options instead of guessing codes.
-                </p>
+                <h3>{{t:desktop.languageTitle}}</h3>
+                <p>{{t:desktop.languageText}}</p>
               </div>
               <figure class="shot">
                 <picture>
-                  <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="./src/assets/screenshots/language-selector-dark-600.webp 600w, ./src/assets/screenshots/language-selector-dark-1000.webp 1000w"
+                  <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="/src/assets/screenshots/language-selector-dark-600.webp 600w, /src/assets/screenshots/language-selector-dark-1000.webp 1000w"
                           sizes="(min-width: 821px) 45vw, 92vw" />
-                  <source type="image/webp" srcset="./src/assets/screenshots/language-selector-light-600.webp 600w, ./src/assets/screenshots/language-selector-light-1000.webp 1000w"
+                  <source type="image/webp" srcset="/src/assets/screenshots/language-selector-light-600.webp 600w, /src/assets/screenshots/language-selector-light-1000.webp 1000w"
                           sizes="(min-width: 821px) 45vw, 92vw" />
-                  <img src="./src/assets/screenshots/language-selector-light-1000.webp" srcset="./src/assets/screenshots/language-selector-light-600.webp 600w, ./src/assets/screenshots/language-selector-light-1000.webp 1000w"
-                       sizes="(min-width: 821px) 45vw, 92vw" width="1000" height="1094" alt="The language dropdown open over the chapter list, with Catalan selected among the languages One Piece is available in." loading="lazy" />
+                  <img src="/src/assets/screenshots/language-selector-light-1000.webp" srcset="/src/assets/screenshots/language-selector-light-600.webp 600w, /src/assets/screenshots/language-selector-light-1000.webp 1000w"
+                       sizes="(min-width: 821px) 45vw, 92vw" width="1000" height="1094" alt="{{a:desktop.languageAlt}}" loading="lazy" />
                 </picture>
               </figure>
             </article>
 
             <article class="showcase-item">
               <div class="showcase-copy">
-                <h3>Watch it happen</h3>
-                <p>
-                  Live progress for every chapter, with the files landing in the folder you picked through your
-                  system's own folder dialog. When the last one's done, so are you.
-                </p>
-                <h3>Light or dark</h3>
-                <p>The app follows your system theme, so late-night reading sessions stay easy on the eyes.</p>
+                <h3>{{t:desktop.watchTitle}}</h3>
+                <p>{{t:desktop.watchText}}</p>
+                <h3>{{t:desktop.themeTitle}}</h3>
+                <p>{{t:desktop.themeText}}</p>
               </div>
               <figure class="shot">
                 <picture>
-                  <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="./src/assets/screenshots/finished-run-dark-600.webp 600w, ./src/assets/screenshots/finished-run-dark-1000.webp 1000w"
+                  <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="/src/assets/screenshots/finished-run-dark-600.webp 600w, /src/assets/screenshots/finished-run-dark-1000.webp 1000w"
                           sizes="(min-width: 821px) 45vw, 92vw" />
-                  <source type="image/webp" srcset="./src/assets/screenshots/finished-run-light-600.webp 600w, ./src/assets/screenshots/finished-run-light-1000.webp 1000w"
+                  <source type="image/webp" srcset="/src/assets/screenshots/finished-run-light-600.webp 600w, /src/assets/screenshots/finished-run-light-1000.webp 1000w"
                           sizes="(min-width: 821px) 45vw, 92vw" />
-                  <img src="./src/assets/screenshots/finished-run-light-1000.webp" srcset="./src/assets/screenshots/finished-run-light-600.webp 600w, ./src/assets/screenshots/finished-run-light-1000.webp 1000w"
-                       sizes="(min-width: 821px) 45vw, 92vw" width="1000" height="1287" alt="A finished run: eight chapters saved to the output folder, each listed as saved in the Activity panel." loading="lazy" />
+                  <img src="/src/assets/screenshots/finished-run-light-1000.webp" srcset="/src/assets/screenshots/finished-run-light-600.webp 600w, /src/assets/screenshots/finished-run-light-1000.webp 1000w"
+                       sizes="(min-width: 821px) 45vw, 92vw" width="1000" height="1287" alt="{{a:desktop.finishedAlt}}" loading="lazy" />
                 </picture>
               </figure>
             </article>
@@ -250,58 +238,55 @@
                upgraded to the exact files of the latest release. -->
           <div class="downloads" id="downloads" data-downloads>
             <header class="downloads-head">
-              <h3>All downloads</h3>
-              <p>
-                Latest release <a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-release-tag>on GitHub</a>.
-                Unsure which one? Most PCs are x64; Macs take the universal app.
-              </p>
+              <h3>{{t:downloads.title}}</h3>
+              <p>{{t:downloads.intro}}</p>
             </header>
             <div class="downloads-grid">
               <section class="platform" aria-labelledby="dl-windows">
                 <h4 id="dl-windows">Windows</h4>
-                <p class="platform-kind">Desktop app</p>
+                <!-- stats:windows -->
+                <p class="platform-kind">{{t:common.desktopApp}}</p>
                 <ul>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="gui-windows-amd64.zip">x64</a></li>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="gui-windows-arm64.zip">ARM64</a></li>
                 </ul>
-                <p class="platform-kind">Command line</p>
+                <p class="platform-kind">{{t:common.commandLine}}</p>
                 <ul>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="windows-amd64.zip">x64</a></li>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="windows-arm64.zip">ARM64</a></li>
-                  <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="windows-32bit-legacy.zip">32-bit (legacy)</a></li>
+                  <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="windows-32bit-legacy.zip">{{t:downloads.legacy32}}</a></li>
                 </ul>
               </section>
               <section class="platform" aria-labelledby="dl-macos">
                 <h4 id="dl-macos">macOS</h4>
-                <p class="platform-kind">Desktop app</p>
+                <!-- stats:macos -->
+                <p class="platform-kind">{{t:common.desktopApp}}</p>
                 <ul>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="gui-darwin-universal.zip">Universal</a></li>
                 </ul>
-                <p class="platform-kind">Command line</p>
+                <p class="platform-kind">{{t:common.commandLine}}</p>
                 <ul>
-                  <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="darwin-arm64.tar.gz">Apple silicon</a></li>
+                  <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="darwin-arm64.tar.gz">{{t:downloads.appleSilicon}}</a></li>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="darwin-amd64.tar.gz">Intel</a></li>
                 </ul>
               </section>
               <section class="platform" aria-labelledby="dl-linux">
                 <h4 id="dl-linux">Linux</h4>
-                <p class="platform-kind">Desktop app</p>
+                <!-- stats:linux -->
+                <p class="platform-kind">{{t:common.desktopApp}}</p>
                 <ul>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="gui-linux-amd64.tar.gz">x64</a></li>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="gui-linux-arm64.tar.gz">ARM64</a></li>
                 </ul>
-                <p class="platform-kind">Command line</p>
+                <p class="platform-kind">{{t:common.commandLine}}</p>
                 <ul>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="linux-amd64.tar.gz">x64</a></li>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="linux-arm64.tar.gz">ARM64</a></li>
-                  <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="linux-386.tar.gz">32-bit</a></li>
+                  <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="linux-386.tar.gz">{{t:downloads.bit32}}</a></li>
                 </ul>
               </section>
             </div>
-            <p class="downloads-foot">
-              The builds aren't signed, so Windows and macOS warn you the first time.
-              <a href="#faq-smartscreen">Here's how to get past it</a>.
-            </p>
+            <p class="downloads-foot">{{t:downloads.foot}}</p>
           </div>
         </div>
       </section>
@@ -310,61 +295,59 @@
       <section class="section section-tint" id="cli" aria-labelledby="cli-title">
         <div class="container">
           <header class="section-head">
-            <p class="kicker">Command line</p>
-            <h2 id="cli-title">One binary, no dependencies</h2>
-            <p class="section-lede">
-              No runtime, no config file. Great for scripts, servers and anyone who lives in a terminal.
-            </p>
+            <p class="kicker">{{t:common.commandLine}}</p>
+            <h2 id="cli-title">{{t:cli.title}}</h2>
+            <p class="section-lede">{{t:cli.lede}}</p>
           </header>
 
-          <h3 class="subhead" id="install">Install it</h3>
+          <h3 class="subhead" id="install">{{t:cli.installTitle}}</h3>
           <div class="install-grid">
             <article class="card install-card">
               <h4>Windows</h4>
-              <p>Paste this in <strong>PowerShell</strong>. It installs to your user folder and adds it to your <code>PATH</code>, no admin rights needed. Run it again to update.</p>
+              <p>{{t:cli.windowsText}}</p>
               <div class="code" data-copy><pre><code>irm https://raw.githubusercontent.com/elboletaire/manga-downloader/master/install.ps1 | iex</code></pre></div>
             </article>
             <article class="card install-card">
-              <h4>Prebuilt binary</h4>
-              <p>Grab the archive for your system from <a href="#downloads">the downloads</a>, extract it and run it:</p>
+              <h4>{{t:cli.binaryTitle}}</h4>
+              <p>{{t:cli.binaryText}}</p>
               <div class="code" data-copy><pre><code>./manga-downloader --help</code></pre></div>
-              <p class="card-foot">Move it to a folder in your <code>PATH</code>, like <code>/usr/local/bin</code>, to run it from anywhere.</p>
+              <p class="card-foot">{{t:cli.binaryFoot}}</p>
             </article>
             <article class="card install-card">
               <h4>Homebrew</h4>
-              <p>On macOS and Linux, from the <code>elboletaire/tap</code> tap. <code>brew upgrade</code> keeps it current.</p>
+              <p>{{t:cli.brewText}}</p>
               <div class="code" data-copy><pre><code>brew install elboletaire/tap/manga-downloader</code></pre></div>
-              <p class="card-foot">That's the command line tool only. On macOS, add <code>--cask</code> to get the desktop app with it.</p>
+              <p class="card-foot">{{t:cli.brewFoot}}</p>
             </article>
             <article class="card install-card">
               <h4>Docker</h4>
-              <p>Files land in the mounted folder. Use the <code>:browser</code> image for sites tagged <span class="site-badge">browser</span>.</p>
+              <p>{{t:cli.dockerText}}</p>
               <div class="code" data-copy><pre><code>docker run --rm -it -v "$PWD:/downloads" elboletaire/manga-downloader [url] [chapters]</code></pre></div>
             </article>
             <article class="card install-card">
               <h4>Go</h4>
-              <p>With Go installed, build it from source in one go:</p>
+              <p>{{t:cli.goText}}</p>
               <div class="code" data-copy><pre><code>go install github.com/elboletaire/manga-downloader@latest</code></pre></div>
             </article>
           </div>
 
-          <h3 class="subhead">Use it</h3>
+          <h3 class="subhead">{{t:cli.useTitle}}</h3>
           <div class="usage">
             <ol class="examples">
               <li>
-                <p>Point it at a manga's index page and say which chapters you want:</p>
+                <p>{{t:cli.example1}}</p>
                 <div class="code" data-copy><pre><code>manga-downloader https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece 1-10</code></pre></div>
               </li>
               <li>
-                <p>Only the Spanish chapters, bundled into a single CBZ:</p>
+                <p>{{t:cli.example2}}</p>
                 <div class="code" data-copy><pre><code>manga-downloader --language es --bundle [url] 1-8</code></pre></div>
               </li>
               <li>
-                <p>A strict e-ink setup, converting both AVIF and WebP pages to JPEG:</p>
+                <p>{{t:cli.example3}}</p>
                 <div class="code" data-copy><pre><code>manga-downloader --convert-images avif,webp [url] 1-10</code></pre></div>
               </li>
               <li>
-                <p>Drop the credits page and the last page of every chapter:</p>
+                <p>{{t:cli.example4}}</p>
                 <div class="code" data-copy><pre><code>manga-downloader --skip-pages 2,-1 [url] 1100-1110</code></pre></div>
               </li>
             </ol>
@@ -373,26 +356,22 @@
                 <img
                   src="https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/download.gif"
                   width="960" height="420" loading="lazy" decoding="async"
-                  alt="Terminal recording: manga-downloader downloads eight One Piece chapters at once, each with its own progress bar."
+                  alt="{{a:cli.downloadGifAlt}}"
                 />
-                <figcaption>Eight chapters, downloaded side by side.</figcaption>
+                <figcaption>{{t:cli.downloadGifCaption}}</figcaption>
               </figure>
               <figure class="terminal">
                 <img
                   src="https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/bundle.gif"
                   width="960" height="420" loading="lazy" decoding="async"
-                  alt="Terminal recording: the same chapters downloaded with --bundle, packed into a single CBZ file."
+                  alt="{{a:cli.bundleGifAlt}}"
                 />
-                <figcaption>Add <code>--bundle</code> and they end up in a single file.</figcaption>
+                <figcaption>{{t:cli.bundleGifCaption}}</figcaption>
               </figure>
             </div>
           </div>
 
-          <p class="more">
-            Every flag is in the
-            <a href="https://github.com/elboletaire/manga-downloader#using-the-command-line">usage guide</a>, or run
-            <code>manga-downloader help</code>.
-          </p>
+          <p class="more">{{t:cli.more}}</p>
         </div>
       </section>
 
@@ -400,49 +379,49 @@
       <section class="section" id="features" aria-labelledby="features-title">
         <div class="container">
           <header class="section-head">
-            <p class="kicker">Features</p>
-            <h2 id="features-title">Made for reading, not fiddling</h2>
+            <p class="kicker">{{t:features.kicker}}</p>
+            <h2 id="features-title">{{t:features.title}}</h2>
           </header>
           <ul class="features">
             <li class="feature">
               <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M8.5 7h7M8.5 10.5h7M8.5 14h4"/></svg></span>
-              <h3>E-reader friendly</h3>
-              <p>AVIF pages become JPEG automatically, so they don't show up blank on Kobo, KOReader or Calibre. WebP too, if you ask.</p>
+              <h3>{{t:features.ereaderTitle}}</h3>
+              <p>{{t:features.ereaderText}}</p>
             </li>
             <li class="feature">
               <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg></span>
-              <h3>CBZ or raw</h3>
-              <p>One CBZ per chapter, or plain image folders with <code>--format raw</code> when you'd rather do the packing yourself.</p>
+              <h3>{{t:features.cbzTitle}}</h3>
+              <p>{{t:features.cbzText}}</p>
             </li>
             <li class="feature">
               <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="16" rx="1.5"/><rect x="9.5" y="4" width="5" height="16" rx="1.5"/><path d="m16 5.2 3.3-.9 2.2 15.3-3.3.9z"/></svg></span>
-              <h3>Bundles</h3>
-              <p><code>--bundle</code> packs a whole arc into one file, with a folder per chapter inside it.</p>
+              <h3>{{t:features.bundlesTitle}}</h3>
+              <p>{{t:features.bundlesText}}</p>
             </li>
             <li class="feature">
               <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h3M10 6h10M4 12h9M16 12h4M4 18h5M12 18h8"/></svg></span>
-              <h3>Chapter ranges</h3>
-              <p>Ask for <code>1,3,5-10</code> and get just those, so catching up means downloading only what's missing. Skip credit pages with <code>--skip-pages</code>.</p>
+              <h3>{{t:features.rangesTitle}}</h3>
+              <p>{{t:features.rangesText}}</p>
             </li>
             <li class="feature">
               <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3.2 8.2 7.5 9.5 4.3-1.3 7.5-5 7.5-9.5V6z"/><path d="m8.8 12 2.2 2.2 4.4-4.4"/></svg></span>
-              <h3>Cloudflare, handled</h3>
-              <p>Sites that need JavaScript or sit behind Cloudflare run through your own Chrome, Edge or Brave, which even ticks "Verify you are human" for you.</p>
+              <h3>{{t:features.cloudflareTitle}}</h3>
+              <p>{{t:features.cloudflareText}}</p>
             </li>
             <li class="feature">
               <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12.5h16.5c.8 2.5-1.5 7.5-8 7.5C6 20 3.5 16.5 3 12.5z"/><path d="M5 9.5h3v3H5zM8.5 9.5h3v3h-3zM12 9.5h3v3h-3zM8.5 6h3v3h-3z"/></svg></span>
-              <h3>Docker images</h3>
-              <p>A tiny image for plain sites, and a <code>:browser</code> one with Chromium and a virtual display for the rest.</p>
+              <h3>{{t:features.dockerTitle}}</h3>
+              <p>{{t:features.dockerText}}</p>
             </li>
             <li class="feature">
               <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.5 5.2 3.5 8.5s-1.1 6.1-3.5 8.5c-2.4-2.4-3.5-5.2-3.5-8.5S9.6 5.9 12 3.5z"/></svg></span>
-              <h3>Languages and groups</h3>
-              <p>Pick a language with <code>--language</code>, or a scanlation group with <code>--scanlator</code> when a site hosts several versions.</p>
+              <h3>{{t:features.languagesTitle}}</h3>
+              <p>{{t:features.languagesText}}</p>
             </li>
             <li class="feature">
               <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
-              <h3>Your file names</h3>
-              <p>Name files your way with a template like <code>{{.Series}} {{.Number}}</code>. Clashing names get a version suffix, never an overwrite.</p>
+              <h3>{{t:features.namesTitle}}</h3>
+              <p>{{t:features.namesText}}</p>
             </li>
           </ul>
         </div>
@@ -452,45 +431,35 @@
       <section class="section section-tint" id="sites" aria-labelledby="sites-title">
         <div class="container">
           <header class="section-head">
-            <p class="kicker">Supported sites</p>
-            <h2 id="sites-title">%SITES_COUNT% sites and counting</h2>
-            <p class="section-lede">
-              From big aggregators to small scanlation groups. Other sites built on the same platforms often work too,
-              even when they aren't listed. If yours doesn't,
-              <a href="https://github.com/elboletaire/manga-downloader/issues">open an issue</a>.
-            </p>
+            <p class="kicker">{{t:sites.kicker}}</p>
+            <h2 id="sites-title">{{t:sites.title:sites}}</h2>
+            <p class="section-lede">{{t:sites.lede}}</p>
           </header>
 
           <div class="sites-tools" data-sites-tools hidden>
             <label class="search">
-              <span class="visually-hidden">Filter sites</span>
+              <span class="visually-hidden">{{t:sites.filterLabel}}</span>
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              <input type="search" placeholder="Search sites, e.g. mangadex or scans" autocomplete="off" spellcheck="false" data-sites-filter />
+              <input type="search" placeholder="{{a:sites.filterPlaceholder}}" autocomplete="off" spellcheck="false" data-sites-filter />
             </label>
             <label class="toggle">
               <input type="checkbox" data-sites-browser />
-              <span>Only sites that need a browser</span>
+              <span>{{t:sites.browserOnly}}</span>
             </label>
             <p class="sites-count" data-sites-count aria-live="polite"></p>
           </div>
 
-          <p class="sites-legend">
-            Sites tagged <span class="site-badge">browser</span> (%BROWSER_COUNT% of them) need Chrome, Chromium, Brave or
-            Edge installed. manga downloader opens it for you and only shows a window when a challenge needs solving.
-          </p>
+          <p class="sites-legend">{{t:sites.legend:browsers}}</p>
 
           <ul class="sites" data-sites>
 <!-- sites:list -->
           </ul>
           <div class="sites-empty" data-sites-empty hidden>
             <picture>
-              <source srcset="./src/assets/brand/happy-mark-dark.svg" media="(prefers-color-scheme: dark)" />
-              <img src="./src/assets/brand/happy-mark.svg" alt="" width="72" height="72" loading="lazy" />
+              <source srcset="/src/assets/brand/happy-mark-dark.svg" media="(prefers-color-scheme: dark)" />
+              <img src="/src/assets/brand/happy-mark.svg" alt="" width="72" height="72" loading="lazy" />
             </picture>
-            <p>
-              <strong>Not on the list yet.</strong> Give it a try anyway: sites built on the same platforms often just work.
-              If it doesn't, <a href="https://github.com/elboletaire/manga-downloader/issues/new">ask for it</a>.
-            </p>
+            <p>{{t:sites.emptyText}}</p>
           </div>
         </div>
       </section>
@@ -499,66 +468,41 @@
       <section class="section" id="faq" aria-labelledby="faq-title">
         <div class="container container-narrow">
           <header class="section-head">
-            <p class="kicker">FAQ</p>
-            <h2 id="faq-title">When things don't go to plan</h2>
+            <p class="kicker">{{t:faq.kicker}}</p>
+            <h2 id="faq-title">{{t:faq.title}}</h2>
           </header>
           <div class="faq">
             <details id="faq-smartscreen">
-              <summary><span>Windows says "Windows protected your PC"</span></summary>
-              <p>
-                That's SmartScreen. The app is only flagged because it isn't signed. Click <strong>More info</strong>,
-                then <strong>Run anyway</strong>. Windows remembers your choice.
-              </p>
+              <summary><span>{{t:faq.smartscreenQ}}</span></summary>
+              <p>{{t:faq.smartscreenA}}</p>
             </details>
             <details id="faq-gatekeeper">
-              <summary><span>macOS won't open it</span></summary>
-              <p>
-                Gatekeeper blocks unsigned apps the first time. Try to open it once and dismiss the warning, then go to
-                <strong>System Settings → Privacy &amp; Security</strong>, scroll down to <strong>Security</strong> and click
-                <strong>Open Anyway</strong>. Open it again and confirm. You only need to do this once, for the app and
-                for the command line alike.
-              </p>
+              <summary><span>{{t:faq.gatekeeperQ}}</span></summary>
+              <p>{{t:faq.gatekeeperA}}</p>
             </details>
             <details>
-              <summary><span>Double-clicking <code>manga-downloader.exe</code> just flashes a window</span></summary>
-              <p>
-                That's the command line tool, which runs from a terminal. Use the
-                <a href="#install">PowerShell one-liner</a> and run it from there, or get the
-                <a href="#desktop">desktop app</a> if you'd rather click.
-              </p>
+              <summary><span>{{t:faq.exeQ}}</span></summary>
+              <p>{{t:faq.exeA}}</p>
             </details>
             <details>
-              <summary><span>The newest chapter downloads empty or is missing</span></summary>
-              <p>
-                Many sites keep their latest chapters behind a paywall, and the page often looks normal. Try a slightly
-                older chapter to confirm that the site works.
-              </p>
+              <summary><span>{{t:faq.paywallQ}}</span></summary>
+              <p>{{t:faq.paywallA}}</p>
             </details>
             <details>
-              <summary><span>Old chapters are missing, or a warning says the range starts before the first chapter</span></summary>
-              <p>Sites often delete old chapters. manga downloader can only download chapters that the site still lists.</p>
+              <summary><span>{{t:faq.oldQ}}</span></summary>
+              <p>{{t:faq.oldA}}</p>
             </details>
             <details>
-              <summary><span>A browser window pops up</span></summary>
-              <p>
-                That's expected for sites tagged <span class="site-badge">browser</span> in the <a href="#sites">list</a>. The window opens when the site shows a
-                Cloudflare challenge. Checkboxes are clicked automatically, but some challenges need you to click them
-                yourself.
-              </p>
+              <summary><span>{{t:faq.browserQ}}</span></summary>
+              <p>{{t:faq.browserA}}</p>
             </details>
             <details>
-              <summary><span>Pages don't show up on my e-reader</span></summary>
-              <p>
-                The site probably serves WebP images. Download the chapters again with
-                <code>--convert-images avif,webp</code>.
-              </p>
+              <summary><span>{{t:faq.ereaderQ}}</span></summary>
+              <p>{{t:faq.ereaderA}}</p>
             </details>
             <details>
-              <summary><span>My site isn't supported</span></summary>
-              <p>
-                Try it anyway: sites built on the same platforms as listed ones often work. If it doesn't,
-                <a href="https://github.com/elboletaire/manga-downloader/issues">open an issue</a> or send a pull request.
-              </p>
+              <summary><span>{{t:faq.unsupportedQ}}</span></summary>
+              <p>{{t:faq.unsupportedA}}</p>
             </details>
           </div>
         </div>
@@ -569,17 +513,17 @@
       <div class="container footer-inner">
         <div class="footer-brand">
           <picture>
-            <source srcset="./src/assets/brand/lockup-line-dark.svg" media="(prefers-color-scheme: dark)" />
-            <img src="./src/assets/brand/lockup-line.svg" alt="manga downloader" width="174" height="28" loading="lazy" />
+            <source srcset="/src/assets/brand/lockup-line-dark.svg" media="(prefers-color-scheme: dark)" />
+            <img src="/src/assets/brand/lockup-line.svg" alt="manga downloader" width="174" height="28" loading="lazy" />
           </picture>
-          <p>Free and open source, under the <a href="https://github.com/elboletaire/manga-downloader/blob/master/LICENSE">AGPL-3.0 licence</a>.</p>
-          <p>Made by <a href="https://github.com/elboletaire">elboletaire</a>.</p>
+          <p>{{t:footer.license}}</p>
+          <p>{{t:footer.madeBy}}</p>
         </div>
-        <nav class="footer-nav" aria-label="Project">
+        <nav class="footer-nav" aria-label="{{a:footer.nav}}">
           <ul>
             <li><a href="https://github.com/elboletaire/manga-downloader">GitHub</a></li>
-            <li><a href="https://github.com/elboletaire/manga-downloader/releases">Releases</a></li>
-            <li><a href="https://github.com/elboletaire/manga-downloader/issues">Report an issue</a></li>
+            <li><a href="https://github.com/elboletaire/manga-downloader/releases">{{t:footer.releases}}</a></li>
+            <li><a href="https://github.com/elboletaire/manga-downloader/issues">{{t:footer.issue}}</a></li>
             <li><a href="https://hub.docker.com/r/elboletaire/manga-downloader">Docker Hub</a></li>
           </ul>
         </nav>

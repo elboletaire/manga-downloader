@@ -260,7 +260,30 @@ code {
   background: var(--surface);
 }
 
-@media (max-width: 860px) {
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.site-nav .lang-switch a {
+  padding: 5px 9px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.site-nav .lang-switch a[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+@media (max-width: 960px) {
   .nav-optional {
     display: none;
   }
@@ -316,7 +339,7 @@ code {
 .hero-inner {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   align-items: center;
   gap: clamp(24px, 5vw, 64px);
 }
@@ -351,6 +374,12 @@ code {
   color: var(--text);
 }
 
+/* "Capítulos de manga →" is ~20% longer than "Manga chapters →": 10% smaller
+   keeps it on one line at every width, as the English title is */
+.hero h1:lang(es) {
+  font-size: clamp(2.16rem, 4.68vw, 3.69rem);
+}
+
 .hero h1 .arrow {
   font-family: var(--font-ui);
   font-weight: 400;
@@ -371,6 +400,8 @@ code {
 
 .download {
   margin-top: 32px;
+  /* the stats stack under the button when the row doesn't fit (see @container below) */
+  container-type: inline-size;
 }
 
 .button {
@@ -417,6 +448,44 @@ code {
   color: var(--muted);
   font-size: 0.9rem;
   min-height: 1.6em;
+}
+
+.download-row {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(18px, 2.5vw, 30px);
+}
+
+.download-main {
+  flex: 0 1 auto;
+}
+
+.hero-stats {
+  display: flex;
+  gap: clamp(18px, 2.5vw, 30px);
+  padding-left: clamp(18px, 2.5vw, 30px);
+  border-left: 1px solid var(--border-strong);
+  min-height: 56px;
+  align-items: center;
+}
+
+.hero-stats div {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-stats strong {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.9rem;
+  line-height: 1;
+  color: var(--accent-text);
+}
+
+.hero-stats span {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 .download-alt {
@@ -563,6 +632,24 @@ code {
   }
   .hero-copy {
     text-align: left;
+  }
+}
+
+@container (max-width: 560px) {
+  .download-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  .download-main {
+    align-self: stretch;
+  }
+  .hero-stats {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border-strong);
+    padding-left: 0;
+    padding-top: 14px;
+    margin-top: 14px;
   }
 }
 
@@ -794,6 +881,17 @@ code {
   height: 14px;
   background: currentColor;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.platform-stats {
+  margin-top: 8px;
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.platform-stats strong {
+  color: var(--text);
 }
 
 .downloads-foot {

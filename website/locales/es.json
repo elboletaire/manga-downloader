@@ -1,0 +1,183 @@
+{
+  "meta": {
+    "title": "manga downloader: descarga manga en CBZ para tu e-reader",
+    "description_one": "App de escritorio y CLI gratuitas que descargan manga de MangaDex y {{count}} sitio más en archivos CBZ para Kobo, KOReader y apps de cómics. Windows, macOS y Linux.",
+    "description_other": "App de escritorio y CLI gratuitas que descargan manga de MangaDex y {{count}} sitios más en archivos CBZ para Kobo, KOReader y apps de cómics. Windows, macOS y Linux.",
+    "socialTitle": "manga downloader: capítulos de manga → CBZ listos para leer",
+    "socialDescription_one": "Descarga manga de MangaDex y {{count}} sitio más en archivos CBZ para tu e-reader o tu app de cómics. App de escritorio y CLI, gratis y de código abierto.",
+    "socialDescription_other": "Descarga manga de MangaDex y {{count}} sitios más en archivos CBZ para tu e-reader o tu app de cómics. App de escritorio y CLI, gratis y de código abierto.",
+    "imageAlt": "La mascota de manga downloader, un libro abierto con forma de gato, junto al lema «Manga chapters → reader-ready CBZ».",
+    "jsonLdDescription_one": "Aplicación de escritorio y herramienta de línea de comandos que descarga capítulos de manga de MangaDex y {{count}} sitio más y los empaqueta en archivos CBZ para e-readers y apps de cómics.",
+    "jsonLdDescription_other": "Aplicación de escritorio y herramienta de línea de comandos que descarga capítulos de manga de MangaDex y {{count}} sitios más y los empaqueta en archivos CBZ para e-readers y apps de cómics."
+  },
+  "common": {
+    "desktopApp": "App de escritorio",
+    "commandLine": "Línea de comandos"
+  },
+  "nav": {
+    "skip": "Saltar al contenido",
+    "brand": "manga downloader, volver arriba",
+    "main": "Principal",
+    "desktop": "App",
+    "cli": "CLI",
+    "sites": "Sitios",
+    "faq": "Preguntas",
+    "language": "Idioma"
+  },
+  "hero": {
+    "eyebrow": "Desde la v1.11: app de escritorio para Windows, macOS y Linux",
+    "title": "Capítulos de manga <span class=\"arrow\">→</span> <span class=\"accent\">CBZ listos para leer</span>",
+    "lede_one": "Pega un enlace de MangaDex o de {{count}} sitio compatible más, elige los capítulos y consigue archivos CBZ limpios que se abren en tu e-reader o en tu app de cómics favorita.",
+    "lede_other": "Pega un enlace de MangaDex o de cualquiera de los otros {{count}} sitios compatibles, elige los capítulos y consigue archivos CBZ limpios que se abren en tu e-reader o en tu app de cómics favorita.",
+    "downloadLabel": "Descargar la app de escritorio",
+    "downloadDetail": "Para Windows, macOS y Linux",
+    "otherPlatforms": "Otras plataformas",
+    "sourceCode": "Código fuente",
+    "highlights": "Lo más destacado",
+    "chips": {
+      "sites_one": "{{count}} sitio",
+      "sites_other": "{{count}} sitios",
+      "formats": "CBZ o imágenes sueltas",
+      "ereader": "Listo para tu e-reader",
+      "apps": "App de escritorio + CLI",
+      "free": "Gratis y de código abierto"
+    }
+  },
+  "desktop": {
+    "newTag": "Desde la v1.11",
+    "title": "Todo lo que hace la CLI, en una ventana",
+    "lede": "Sin terminal ni opciones que memorizar. El mismo descargador, con una ventana nativa en Windows, macOS y Linux.",
+    "overviewAlt": "La app de escritorio con One Piece cargado desde MangaDex: su portada, su título y la lista de capítulos, con dos capítulos seleccionados y el catalán elegido como idioma.",
+    "pasteTitle": "Pega un enlace y listo",
+    "pasteText": "Pega la URL de una serie y la app carga al momento su título, portada y capítulos. Sin botón de «cargar» ni copiar enlaces de capítulos uno a uno.",
+    "pickTitle": "Elige los capítulos a tu manera",
+    "pickText": "Escribe un rango como <code>1-10,12,15-20</code>, o haz clic en un capítulo y Mayús+clic en otro para seleccionar todos los que hay entre ambos.",
+    "chapterListAlt": "La lista de capítulos durante una descarga: ocho capítulos seleccionados, los primeros ya guardados y el resto en curso en el panel Activity.",
+    "languageTitle": "Tu idioma, tu grupo",
+    "languageText": "Cuando una serie está en varios idiomas o la traducen varios grupos de scanlation, la app te muestra solo los que ofrece de verdad, así que eliges entre opciones reales en lugar de adivinar códigos.",
+    "languageAlt": "El desplegable de idioma abierto sobre la lista de capítulos, con el catalán seleccionado entre los idiomas en los que está disponible One Piece.",
+    "watchTitle": "Míralo en directo",
+    "watchText": "Progreso en directo de cada capítulo, mientras los archivos van llegando a la carpeta que elegiste con el selector de carpetas de tu sistema. Cuando acaba el último, ya lo tienes todo.",
+    "themeTitle": "Claro u oscuro",
+    "themeText": "La app sigue el tema de tu sistema, así que tus sesiones de lectura nocturnas no te cansan la vista.",
+    "finishedAlt": "Una descarga terminada: ocho capítulos guardados en la carpeta de destino, cada uno marcado como guardado en el panel Activity."
+  },
+  "downloads": {
+    "title": "Todas las descargas",
+    "intro": "Última versión <a href=\"{{repo}}/releases/latest\" data-release-tag>en GitHub</a>. ¿No sabes cuál elegir? La mayoría de los PC son x64; para Mac, la app universal.",
+    "legacy32": "32 bits (antiguo)",
+    "bit32": "32 bits",
+    "appleSilicon": "Chip de Apple",
+    "foot": "Los ejecutables no están firmados, así que Windows y macOS te avisarán la primera vez. <a href=\"#faq-smartscreen\">Así puedes saltarte el aviso</a>."
+  },
+  "cli": {
+    "title": "Un solo binario, sin dependencias",
+    "lede": "Sin entorno de ejecución ni archivo de configuración. Ideal para scripts, servidores y para quien vive en la terminal.",
+    "installTitle": "Instálalo",
+    "windowsText": "Pega esto en <strong>PowerShell</strong>. Se instala en tu carpeta de usuario y se añade a tu <code>PATH</code>, sin necesidad de permisos de administrador. Vuelve a ejecutarlo para actualizar.",
+    "binaryTitle": "Binario precompilado",
+    "binaryText": "Descarga el archivo comprimido para tu sistema desde <a href=\"#downloads\">las descargas</a>, descomprímelo y ejecuta el programa:",
+    "binaryFoot": "Muévelo a una carpeta de tu <code>PATH</code>, como <code>/usr/local/bin</code>, para ejecutarlo desde cualquier sitio.",
+    "brewText": "En macOS y Linux, desde el tap <code>elboletaire/tap</code>. <code>brew upgrade</code> lo mantiene al día.",
+    "brewFoot": "Esto instala solo la herramienta de línea de comandos. En macOS, añade <code>--cask</code> para llevarte también la app de escritorio.",
+    "dockerText": "Los archivos se guardan en la carpeta montada. Usa la imagen <code>:browser</code> para los sitios marcados como <span class=\"site-badge\">navegador</span>.",
+    "goText": "Si tienes Go instalado, compílalo desde el código fuente con un solo comando:",
+    "useTitle": "Úsalo",
+    "example1": "Pásale la página principal de un manga e indica qué capítulos quieres:",
+    "example2": "Solo los capítulos en español, agrupados en un único CBZ:",
+    "example3": "Para un lector de tinta electrónica exigente, convierte a JPEG tanto las páginas AVIF como las WebP:",
+    "example4": "Quita la página de créditos y la última página de cada capítulo:",
+    "downloadGifAlt": "Grabación de terminal: manga-downloader descarga ocho capítulos de One Piece a la vez, cada uno con su propia barra de progreso.",
+    "downloadGifCaption": "Ocho capítulos, descargados en paralelo.",
+    "bundleGifAlt": "Grabación de terminal: los mismos capítulos descargados con --bundle, empaquetados en un único archivo CBZ.",
+    "bundleGifCaption": "Añade <code>--bundle</code> y acaban todos en un solo archivo.",
+    "more": "Tienes todas las opciones en la <a href=\"{{repo}}#using-the-command-line\">guía de uso</a> (en inglés), o ejecuta <code>manga-downloader help</code>."
+  },
+  "features": {
+    "kicker": "Características",
+    "title": "Hecho para leer, no para pelearte con ajustes",
+    "ereaderTitle": "Pensado para e-readers",
+    "ereaderText": "Las páginas AVIF se convierten a JPEG automáticamente, para que no salgan en blanco en Kobo, KOReader o Calibre. Y las WebP también, si se lo pides.",
+    "cbzTitle": "CBZ o imágenes sueltas",
+    "cbzText": "Un CBZ por capítulo, o carpetas de imágenes con <code>--format raw</code> si prefieres empaquetarlas tú.",
+    "bundlesTitle": "Paquetes",
+    "bundlesText": "<code>--bundle</code> empaqueta un arco entero en un solo archivo, con una carpeta por capítulo dentro.",
+    "rangesTitle": "Rangos de capítulos",
+    "rangesText": "Pide <code>1,3,5-10</code> y descarga solo esos, así ponerte al día es bajar solo lo que te falta. Sáltate las páginas de créditos con <code>--skip-pages</code>.",
+    "cloudflareTitle": "Cloudflare, resuelto",
+    "cloudflareText": "Los sitios que necesitan JavaScript o están detrás de Cloudflare se abren con tu propio Chrome, Edge o Brave, que incluso marca por ti la casilla de verificación.",
+    "dockerTitle": "Imágenes de Docker",
+    "dockerText": "Una imagen mínima para los sitios sencillos y otra <code>:browser</code> con Chromium y una pantalla virtual para el resto.",
+    "languagesTitle": "Idiomas y grupos",
+    "languagesText": "Elige un idioma con <code>--language</code>, o un grupo de scanlation con <code>--scanlator</code> cuando un sitio tiene varias versiones.",
+    "namesTitle": "Tus nombres de archivo",
+    "namesText": "Pon nombre a los archivos a tu manera con una plantilla como <code>{{filenameTemplate}}</code>. Si dos nombres coinciden, se añade un sufijo de versión; nunca se sobrescribe nada."
+  },
+  "sites": {
+    "kicker": "Sitios compatibles",
+    "title_one": "{{count}} sitio y sumando",
+    "title_other": "{{count}} sitios y sumando",
+    "lede": "Desde grandes agregadores hasta pequeños grupos de scanlation. Otros sitios hechos con las mismas plataformas suelen funcionar también, aunque no estén en la lista. Si el tuyo no funciona, <a href=\"{{repo}}/issues\">abre una incidencia</a>.",
+    "filterLabel": "Filtrar sitios",
+    "filterPlaceholder": "Busca sitios, p. ej. mangadex o scans",
+    "browserOnly": "Solo sitios que necesitan navegador",
+    "legend_one": "El sitio marcado como <span class=\"site-badge\">navegador</span> ({{count}} en total) necesita Chrome, Chromium, Brave o Edge instalado. manga downloader lo abre por ti y solo muestra una ventana cuando hay que resolver un desafío.",
+    "legend_other": "Los sitios marcados como <span class=\"site-badge\">navegador</span> ({{count}} en total) necesitan Chrome, Chromium, Brave o Edge instalado. manga downloader lo abre por ti y solo muestra una ventana cuando hay que resolver un desafío.",
+    "emptyText": "<strong>Aún no está en la lista.</strong> Pruébalo de todos modos: los sitios hechos con las mismas plataformas suelen funcionar sin más. Si no va, <a href=\"{{repo}}/issues/new\">pídelo</a>.",
+    "badge": {
+      "label": "navegador",
+      "srPrefix": "necesita un",
+      "title": "Necesita Chrome, Chromium, Brave o Edge"
+    }
+  },
+  "faq": {
+    "kicker": "Preguntas frecuentes",
+    "title": "Cuando algo no sale como esperabas",
+    "smartscreenQ": "Windows dice «Windows protegió su PC»",
+    "smartscreenA": "Es el filtro SmartScreen. Solo marca la app porque no está firmada. Haz clic en <strong>Más información</strong> y luego en <strong>Ejecutar de todas formas</strong>. Windows recordará tu elección.",
+    "gatekeeperQ": "macOS no lo abre",
+    "gatekeeperA": "Gatekeeper bloquea las apps sin firmar la primera vez. Intenta abrirla una vez y cierra el aviso; luego ve a <strong>Ajustes del Sistema → Privacidad y seguridad</strong>, baja hasta <strong>Seguridad</strong> y haz clic en <strong>Abrir igualmente</strong>. Vuelve a abrirla y confirma. Solo tienes que hacerlo una vez, tanto para la app como para la línea de comandos.",
+    "exeQ": "Al hacer doble clic en <code>manga-downloader.exe</code> solo aparece una ventana un instante",
+    "exeA": "Esa es la herramienta de línea de comandos, que se usa desde una terminal. Instálala con el <a href=\"#install\">comando de PowerShell</a> y ejecútala desde ahí, o descarga la <a href=\"#desktop\">app de escritorio</a> si prefieres hacer clic.",
+    "paywallQ": "El capítulo más reciente se descarga vacío o no aparece",
+    "paywallA": "Muchos sitios ponen sus últimos capítulos tras un muro de pago, y a menudo la página parece normal. Prueba con un capítulo un poco más antiguo para confirmar que el sitio funciona.",
+    "oldQ": "Faltan capítulos antiguos, o un aviso dice que el rango empieza antes del primer capítulo",
+    "oldA": "Los sitios suelen borrar capítulos antiguos. manga downloader solo puede descargar los capítulos que el sitio sigue mostrando.",
+    "browserQ": "Se abre una ventana del navegador",
+    "browserA": "Es lo normal en los sitios marcados como <span class=\"site-badge\">navegador</span> en la <a href=\"#sites\">lista</a>. La ventana se abre cuando el sitio muestra un desafío de Cloudflare. Las casillas se marcan solas, pero algunos desafíos necesitan que hagas clic tú.",
+    "ereaderQ": "Las páginas no se ven en mi e-reader",
+    "ereaderA": "Seguramente el sitio sirve imágenes WebP. Vuelve a descargar los capítulos con <code>--convert-images avif,webp</code>.",
+    "unsupportedQ": "Mi sitio no es compatible",
+    "unsupportedA": "Pruébalo igualmente: los sitios hechos con las mismas plataformas que los de la lista suelen funcionar. Si no va, <a href=\"{{repo}}/issues\">abre una incidencia</a> o envía una pull request."
+  },
+  "footer": {
+    "license": "Libre y de código abierto, bajo la <a href=\"{{repo}}/blob/master/LICENSE\">licencia AGPL-3.0</a>.",
+    "madeBy": "Hecho por <a href=\"{{author}}\">elboletaire</a>.",
+    "nav": "Proyecto",
+    "releases": "Versiones",
+    "issue": "Informar de un problema"
+  },
+  "runtime": {
+    "download": {
+      "generic": "Descargar la app de escritorio",
+      "genericDetail": "Elige tu sistema en las descargas de abajo",
+      "forOS": "Descargar para {{os}}",
+      "latest": "Última versión en GitHub",
+      "desktopApp": "App de escritorio {{tag}}"
+    },
+    "copy": {
+      "label": "Copiar comando",
+      "done": "Copiado"
+    },
+    "sites": {
+      "all_one": "{{count}} sitio",
+      "all_other": "{{count}} sitios",
+      "filtered_one": "{{shown}} de {{count}} sitio",
+      "filtered_other": "{{shown}} de {{count}} sitios"
+    }
+  },
+  "stats": {
+    "downloads": "descargas",
+    "dockerPulls": "pulls en Docker"
+  }
+}

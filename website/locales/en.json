@@ -1,0 +1,183 @@
+{
+  "meta": {
+    "title": "manga downloader: download manga as CBZ for e-readers",
+    "description_one": "Free desktop app and CLI that downloads manga from MangaDex and {{count}} other site into CBZ files for Kobo, KOReader and comic apps. Windows, macOS and Linux.",
+    "description_other": "Free desktop app and CLI that downloads manga from MangaDex and {{count}} other sites into CBZ files for Kobo, KOReader and comic apps. Windows, macOS and Linux.",
+    "socialTitle": "manga downloader: manga chapters → reader-ready CBZ",
+    "socialDescription_one": "Download manga from MangaDex and {{count}} other site as CBZ files for your e-reader or comic app. A desktop app and a CLI, free and open source.",
+    "socialDescription_other": "Download manga from MangaDex and {{count}} other sites as CBZ files for your e-reader or comic app. A desktop app and a CLI, free and open source.",
+    "imageAlt": "The manga downloader mascot, a cat-shaped open book, next to the tagline: Manga chapters → reader-ready CBZ.",
+    "jsonLdDescription_one": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other site and packs them into CBZ files for e-readers and comic apps.",
+    "jsonLdDescription_other": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other sites and packs them into CBZ files for e-readers and comic apps."
+  },
+  "common": {
+    "desktopApp": "Desktop app",
+    "commandLine": "Command line"
+  },
+  "nav": {
+    "skip": "Skip to content",
+    "brand": "manga downloader, back to top",
+    "main": "Main",
+    "desktop": "App",
+    "cli": "CLI",
+    "sites": "Sites",
+    "faq": "FAQ",
+    "language": "Language"
+  },
+  "hero": {
+    "eyebrow": "Since v1.11: a desktop app for Windows, macOS and Linux",
+    "title": "Manga chapters <span class=\"arrow\">→</span> <span class=\"accent\">reader&#8209;ready CBZ</span>",
+    "lede_one": "Paste a link from MangaDex or {{count}} other supported site, pick your chapters, and get clean CBZ files that open on your e-reader or in your favourite comic app.",
+    "lede_other": "Paste a link from MangaDex or any of {{count}} other supported sites, pick your chapters, and get clean CBZ files that open on your e-reader or in your favourite comic app.",
+    "downloadLabel": "Download the desktop app",
+    "downloadDetail": "For Windows, macOS and Linux",
+    "otherPlatforms": "Other platforms",
+    "sourceCode": "Source code",
+    "highlights": "Highlights",
+    "chips": {
+      "sites_one": "{{count}} site",
+      "sites_other": "{{count}} sites",
+      "formats": "CBZ or raw images",
+      "ereader": "E-reader ready",
+      "apps": "Desktop app + CLI",
+      "free": "Free and open source"
+    }
+  },
+  "desktop": {
+    "newTag": "Since v1.11",
+    "title": "Everything the CLI does, in a window",
+    "lede": "No terminal, no flags to remember. The same downloader, with a native window on Windows, macOS and Linux.",
+    "overviewAlt": "The desktop app with One Piece loaded from MangaDex: its cover, title and chapter list, with two chapters selected and Catalan picked as the language.",
+    "pasteTitle": "Paste a link, that's it",
+    "pasteText": "Paste a series URL and the app loads its title, cover and chapters straight away. No \"load\" button, no copying chapter links one by one.",
+    "pickTitle": "Pick chapters your way",
+    "pickText": "Type a range such as <code>1-10,12,15-20</code>, or click a chapter and Shift-click another to select everything in between.",
+    "chapterListAlt": "The chapter list during a run: eight chapters selected, the first ones already saved and the rest in progress in the Activity panel.",
+    "languageTitle": "Your language, your group",
+    "languageText": "When a series comes in several languages or from several scanlation groups, the app lists the ones it actually offers, so you pick from real options instead of guessing codes.",
+    "languageAlt": "The language dropdown open over the chapter list, with Catalan selected among the languages One Piece is available in.",
+    "watchTitle": "Watch it happen",
+    "watchText": "Live progress for every chapter, with the files landing in the folder you picked through your system's own folder dialog. When the last one's done, so are you.",
+    "themeTitle": "Light or dark",
+    "themeText": "The app follows your system theme, so late-night reading sessions stay easy on the eyes.",
+    "finishedAlt": "A finished run: eight chapters saved to the output folder, each listed as saved in the Activity panel."
+  },
+  "downloads": {
+    "title": "All downloads",
+    "intro": "Latest release <a href=\"{{repo}}/releases/latest\" data-release-tag>on GitHub</a>. Unsure which one? Most PCs are x64; Macs take the universal app.",
+    "legacy32": "32-bit (legacy)",
+    "bit32": "32-bit",
+    "appleSilicon": "Apple silicon",
+    "foot": "The builds aren't signed, so Windows and macOS warn you the first time. <a href=\"#faq-smartscreen\">Here's how to get past it</a>."
+  },
+  "cli": {
+    "title": "One binary, no dependencies",
+    "lede": "No runtime, no config file. Great for scripts, servers and anyone who lives in a terminal.",
+    "installTitle": "Install it",
+    "windowsText": "Paste this in <strong>PowerShell</strong>. It installs to your user folder and adds it to your <code>PATH</code>, no admin rights needed. Run it again to update.",
+    "binaryTitle": "Prebuilt binary",
+    "binaryText": "Grab the archive for your system from <a href=\"#downloads\">the downloads</a>, extract it and run it:",
+    "binaryFoot": "Move it to a folder in your <code>PATH</code>, like <code>/usr/local/bin</code>, to run it from anywhere.",
+    "brewText": "On macOS and Linux, from the <code>elboletaire/tap</code> tap. <code>brew upgrade</code> keeps it current.",
+    "brewFoot": "That's the command line tool only. On macOS, add <code>--cask</code> to get the desktop app with it.",
+    "dockerText": "Files land in the mounted folder. Use the <code>:browser</code> image for sites tagged <span class=\"site-badge\">browser</span>.",
+    "goText": "With Go installed, build it from source in one go:",
+    "useTitle": "Use it",
+    "example1": "Point it at a manga's index page and say which chapters you want:",
+    "example2": "Only the Spanish chapters, bundled into a single CBZ:",
+    "example3": "A strict e-ink setup, converting both AVIF and WebP pages to JPEG:",
+    "example4": "Drop the credits page and the last page of every chapter:",
+    "downloadGifAlt": "Terminal recording: manga-downloader downloads eight One Piece chapters at once, each with its own progress bar.",
+    "downloadGifCaption": "Eight chapters, downloaded side by side.",
+    "bundleGifAlt": "Terminal recording: the same chapters downloaded with --bundle, packed into a single CBZ file.",
+    "bundleGifCaption": "Add <code>--bundle</code> and they end up in a single file.",
+    "more": "Every flag is in the <a href=\"{{repo}}#using-the-command-line\">usage guide</a>, or run <code>manga-downloader help</code>."
+  },
+  "features": {
+    "kicker": "Features",
+    "title": "Made for reading, not fiddling",
+    "ereaderTitle": "E-reader friendly",
+    "ereaderText": "AVIF pages become JPEG automatically, so they don't show up blank on Kobo, KOReader or Calibre. WebP too, if you ask.",
+    "cbzTitle": "CBZ or raw",
+    "cbzText": "One CBZ per chapter, or plain image folders with <code>--format raw</code> when you'd rather do the packing yourself.",
+    "bundlesTitle": "Bundles",
+    "bundlesText": "<code>--bundle</code> packs a whole arc into one file, with a folder per chapter inside it.",
+    "rangesTitle": "Chapter ranges",
+    "rangesText": "Ask for <code>1,3,5-10</code> and get just those, so catching up means downloading only what's missing. Skip credit pages with <code>--skip-pages</code>.",
+    "cloudflareTitle": "Cloudflare, handled",
+    "cloudflareText": "Sites that need JavaScript or sit behind Cloudflare run through your own Chrome, Edge or Brave, which even ticks \"Verify you are human\" for you.",
+    "dockerTitle": "Docker images",
+    "dockerText": "A tiny image for plain sites, and a <code>:browser</code> one with Chromium and a virtual display for the rest.",
+    "languagesTitle": "Languages and groups",
+    "languagesText": "Pick a language with <code>--language</code>, or a scanlation group with <code>--scanlator</code> when a site hosts several versions.",
+    "namesTitle": "Your file names",
+    "namesText": "Name files your way with a template like <code>{{filenameTemplate}}</code>. Clashing names get a version suffix, never an overwrite."
+  },
+  "sites": {
+    "kicker": "Supported sites",
+    "title_one": "{{count}} site and counting",
+    "title_other": "{{count}} sites and counting",
+    "lede": "From big aggregators to small scanlation groups. Other sites built on the same platforms often work too, even when they aren't listed. If yours doesn't, <a href=\"{{repo}}/issues\">open an issue</a>.",
+    "filterLabel": "Filter sites",
+    "filterPlaceholder": "Search sites, e.g. mangadex or scans",
+    "browserOnly": "Only sites that need a browser",
+    "legend_one": "The site tagged <span class=\"site-badge\">browser</span> ({{count}} in total) needs Chrome, Chromium, Brave or Edge installed. manga downloader opens it for you and only shows a window when a challenge needs solving.",
+    "legend_other": "Sites tagged <span class=\"site-badge\">browser</span> ({{count}} of them) need Chrome, Chromium, Brave or Edge installed. manga downloader opens it for you and only shows a window when a challenge needs solving.",
+    "emptyText": "<strong>Not on the list yet.</strong> Give it a try anyway: sites built on the same platforms often just work. If it doesn't, <a href=\"{{repo}}/issues/new\">ask for it</a>.",
+    "badge": {
+      "label": "browser",
+      "srPrefix": "needs a",
+      "title": "Needs Chrome, Chromium, Brave or Edge"
+    }
+  },
+  "faq": {
+    "kicker": "FAQ",
+    "title": "When things don't go to plan",
+    "smartscreenQ": "Windows says \"Windows protected your PC\"",
+    "smartscreenA": "That's SmartScreen. The app is only flagged because it isn't signed. Click <strong>More info</strong>, then <strong>Run anyway</strong>. Windows remembers your choice.",
+    "gatekeeperQ": "macOS won't open it",
+    "gatekeeperA": "Gatekeeper blocks unsigned apps the first time. Try to open it once and dismiss the warning, then go to <strong>System Settings → Privacy & Security</strong>, scroll down to <strong>Security</strong> and click <strong>Open Anyway</strong>. Open it again and confirm. You only need to do this once, for the app and for the command line alike.",
+    "exeQ": "Double-clicking <code>manga-downloader.exe</code> just flashes a window",
+    "exeA": "That's the command line tool, which runs from a terminal. Use the <a href=\"#install\">PowerShell one-liner</a> and run it from there, or get the <a href=\"#desktop\">desktop app</a> if you'd rather click.",
+    "paywallQ": "The newest chapter downloads empty or is missing",
+    "paywallA": "Many sites keep their latest chapters behind a paywall, and the page often looks normal. Try a slightly older chapter to confirm that the site works.",
+    "oldQ": "Old chapters are missing, or a warning says the range starts before the first chapter",
+    "oldA": "Sites often delete old chapters. manga downloader can only download chapters that the site still lists.",
+    "browserQ": "A browser window pops up",
+    "browserA": "That's expected for sites tagged <span class=\"site-badge\">browser</span> in the <a href=\"#sites\">list</a>. The window opens when the site shows a Cloudflare challenge. Checkboxes are clicked automatically, but some challenges need you to click them yourself.",
+    "ereaderQ": "Pages don't show up on my e-reader",
+    "ereaderA": "The site probably serves WebP images. Download the chapters again with <code>--convert-images avif,webp</code>.",
+    "unsupportedQ": "My site isn't supported",
+    "unsupportedA": "Try it anyway: sites built on the same platforms as listed ones often work. If it doesn't, <a href=\"{{repo}}/issues\">open an issue</a> or send a pull request."
+  },
+  "footer": {
+    "license": "Free and open source, under the <a href=\"{{repo}}/blob/master/LICENSE\">AGPL-3.0 licence</a>.",
+    "madeBy": "Made by <a href=\"{{author}}\">elboletaire</a>.",
+    "nav": "Project",
+    "releases": "Releases",
+    "issue": "Report an issue"
+  },
+  "runtime": {
+    "download": {
+      "generic": "Download the desktop app",
+      "genericDetail": "Pick your system in the downloads below",
+      "forOS": "Download for {{os}}",
+      "latest": "Latest release on GitHub",
+      "desktopApp": "Desktop app {{tag}}"
+    },
+    "copy": {
+      "label": "Copy command",
+      "done": "Copied"
+    },
+    "sites": {
+      "all_one": "{{count}} site",
+      "all_other": "{{count}} sites",
+      "filtered_one": "{{shown}} of {{count}} site",
+      "filtered_other": "{{shown}} of {{count}} sites"
+    }
+  },
+  "stats": {
+    "downloads": "downloads",
+    "dockerPulls": "Docker pulls"
+  }
+}

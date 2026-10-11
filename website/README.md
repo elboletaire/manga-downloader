@@ -5,16 +5,16 @@ The project site, published to GitHub Pages at
 [`.github/workflows/pages.yaml`](../.github/workflows/pages.yaml) on every push
 to `master` that touches `website/` or `README.md`.
 
-A single static page: Vite and TypeScript, no UI framework. Everything is in
+One static page per language (English at `/`, Spanish at `/es/`, Catalan at `/ca/`): Vite and TypeScript, no UI framework. Everything is in
 the built HTML, so it works and indexes without JavaScript; the script only
 picks the right download for the visitor's OS, filters the sites list and adds
-copy buttons.
+copy buttons. The page text is translated at build time with i18next.
 
 ## Develop
 
 ```bash
 pnpm install
-pnpm dev       # http://localhost:5173/manga-downloader/
+pnpm dev       # http://localhost:5173/manga-downloader/ (also serves /es/ and /ca/)
 pnpm test      # vitest
 pnpm build     # typecheck + build to dist/
 pnpm preview   # serve dist/
@@ -31,6 +31,16 @@ pnpm preview   # serve dist/
   matches it against the assets of the latest GitHub release. If the API fails
   or the release has no matching desktop app file, it links to the releases
   page. Without a detectable OS it offers the desktop app downloads section.
+- **Download stats**: fetched at build time from the GitHub releases API (all
+  releases, `.md5` checksums excluded) and Docker Hub by `build/stats.ts` (pure,
+  tested). The stats appear in the hero and on each platform card. A failed fetch
+  hides them instead of breaking the build. A daily schedule in
+  `.github/workflows/pages.yaml` refreshes them. Skip the fetch offline with
+  `STATS=off pnpm dev`.
+- **Latest release**: the build also embeds the latest GitHub release (skipping
+  drafts and pre-releases) so the download button works even when the browser's
+  API request hits the rate limit. The browser fetches it again to show a newer
+  release if one was published since the build.
 - **Brand assets**: copied from the approved brand kit into `src/assets/brand/`
   and `public/` (favicons, `opengraph.png`). Don't redraw them.
 - **Terminal GIFs**: referenced from `demos/` on `master` via raw GitHub URLs,
@@ -90,9 +100,33 @@ Each crop is resized with ImageMagick to 1000 and 600 px wide, converted with
 screenshot is `loading="lazy"`: none of them is above the fold at 1440×900, and
 the hero text is the LCP element.
 
+## Languages
+
+Strings live in `locales/{en,es,ca}.json` (i18next JSON v4: nested keys, `_one`/`_other` plurals, `{{var}}`). The same format will be used by the GUI's react-i18next and by Weblate.
+
+`index.html` is the template. `{{t:key}}` inserts HTML, `{{a:key}}` attribute-escaped text, `{{j:key}}` JSON-escaped text, and an optional `:sites|others|browsers` picks the plural count.
+
+The `site-data` plugin renders it with i18next at build time. `es/index.html` and `ca/index.html` are stubs it replaces.
+
+Asset URLs in the template must be root-absolute (`/src/...`).
+
+Strings that scripts write live under `runtime` and are embedded as JSON (`#i18n-runtime`). `src/i18n.ts` formats them without i18next.
+
+The English page carries an inline script (`redirectTarget` in `src/lang.ts`). It sends a first-time visitor whose preferred language is Spanish or Catalan to that page once. A language picked in the header switcher is saved in `localStorage` (`md:lang`) and turns this off.
+
+Each page gets `hreflang` alternates (plus `x-default` pointing to English), `og:locale` and its alternates, and its own canonical URL. `sitemap.xml` lists all three pages.
+
+Tests check that every locale has en's keys, placeholders and tags.
+
+The supported-sites notes stay in English.
+
+The download statistics in the hero section (numbers and labels like "downloads", "Docker pulls") live under `stats.*` in each locale file. The compact numbers (`11K+`) stay in that notation across all languages, even though `Intl.NumberFormat('compact')` would produce language-specific text like "11 mil"; see `build/stats.ts`.
+
+To add a language: add it to `LANGS`/`LANG_INFO`, create `locales/xx.json` and an `xx/index.html` stub, and extend `redirectTarget` if it should auto-redirect.
+
 ## Another domain
 
 `BASE_PATH` (default `/manga-downloader/`) and `SITE_URL` (default
 `https://elboletaire.github.io/manga-downloader/`) set the base path, the
-canonical and social URLs, `robots.txt` and `sitemap.xml`. For a custom domain,
+canonical and social URLs, `robots.txt` and `sitemap.xml`. SITE_URL also drives the per-language canonicals and hreflang links. For a custom domain,
 set `BASE_PATH=/` and `SITE_URL=https://example.com/` in the workflow.

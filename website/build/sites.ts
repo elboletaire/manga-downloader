@@ -11,6 +11,9 @@ export interface Site {
   browser: boolean
 }
 
+export interface BadgeLabels { label: string; srPrefix: string; title: string }
+export const EN_BADGE: BadgeLabels = { label: 'browser', srPrefix: 'needs a', title: 'Needs Chrome, Chromium, Brave or Edge' }
+
 const ITEM = /^\s*[-*]\s+\[(.+)\]\((\S+?)\)\s*(\\?\*)?\s*$/
 
 /** Parses every list item between "## Supported sites" and the next "## ". */
@@ -41,18 +44,18 @@ const escapeHTML = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 
 /** Renders the sites as `<li>`s; `data-search` is what the filter matches. */
-export function renderSites(sites: Site[]): string {
+export function renderSites(sites: Site[], badge: BadgeLabels = EN_BADGE): string {
   return sites
     .map((s) => {
       const search = `${s.domain} ${s.note}`.toLowerCase()
-      const badge = s.browser
-        ? '<span class="site-badge" title="Needs Chrome, Chromium, Brave or Edge"><span class="visually-hidden">needs a </span>browser</span>'
+      const badgeHtml = s.browser
+        ? `<span class="site-badge" title="${escapeHTML(badge.title)}"><span class="visually-hidden">${escapeHTML(badge.srPrefix)} </span>${escapeHTML(badge.label)}</span>`
         : ''
       const note = s.note ? `<span class="site-note">${escapeHTML(s.note)}</span>` : ''
       return (
         `<li class="site" data-search="${escapeHTML(search)}"${s.browser ? ' data-browser' : ''}>` +
         `<a href="${escapeHTML(s.url)}" rel="nofollow noopener" target="_blank">` +
-        `<span class="site-domain">${escapeHTML(s.domain)}</span>${badge}</a>${note}</li>`
+        `<span class="site-domain">${escapeHTML(s.domain)}</span>${badgeHtml}</a>${note}</li>`
       )
     })
     .join('\n')

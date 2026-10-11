@@ -9,6 +9,9 @@ on:
       - "README.md"
       - ".github/workflows/pages.yaml"
   workflow_dispatch:
+  schedule:
+    # Refresh the download stats daily
+    - cron: "17 5 * * *"
 
 permissions:
   contents: read
@@ -44,6 +47,8 @@ jobs:
       - run: pnpm test
 
       - run: pnpm build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

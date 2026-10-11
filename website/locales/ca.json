@@ -1,0 +1,183 @@
+{
+  "meta": {
+    "title": "manga downloader: descarrega manga en CBZ per al teu lector electrònic",
+    "description_one": "Aplicació d'escriptori i CLI gratuïtes que descarreguen manga de MangaDex i {{count}} lloc més en fitxers CBZ per a Kobo, KOReader i aplicacions de còmics. Windows, macOS i Linux.",
+    "description_other": "Aplicació d'escriptori i CLI gratuïtes que descarreguen manga de MangaDex i {{count}} llocs més en fitxers CBZ per a Kobo, KOReader i aplicacions de còmics. Windows, macOS i Linux.",
+    "socialTitle": "manga downloader: capítols de manga → CBZ a punt per llegir",
+    "socialDescription_one": "Descarrega manga de MangaDex i {{count}} lloc més en fitxers CBZ per al teu lector electrònic o la teva aplicació de còmics. Aplicació d'escriptori i CLI, gratuïtes i de codi obert.",
+    "socialDescription_other": "Descarrega manga de MangaDex i {{count}} llocs més en fitxers CBZ per al teu lector electrònic o la teva aplicació de còmics. Aplicació d'escriptori i CLI, gratuïtes i de codi obert.",
+    "imageAlt": "La mascota de manga downloader, un llibre obert en forma de gat, al costat del lema «Manga chapters → reader-ready CBZ».",
+    "jsonLdDescription_one": "Aplicació d'escriptori i eina de línia d'ordres que descarrega capítols de manga de MangaDex i {{count}} lloc més i els empaqueta en fitxers CBZ per a lectors electrònics i aplicacions de còmics.",
+    "jsonLdDescription_other": "Aplicació d'escriptori i eina de línia d'ordres que descarrega capítols de manga de MangaDex i {{count}} llocs més i els empaqueta en fitxers CBZ per a lectors electrònics i aplicacions de còmics."
+  },
+  "common": {
+    "desktopApp": "Aplicació d'escriptori",
+    "commandLine": "Línia d'ordres"
+  },
+  "nav": {
+    "skip": "Vés al contingut",
+    "brand": "manga downloader, torna a dalt",
+    "main": "Principal",
+    "desktop": "App",
+    "cli": "CLI",
+    "sites": "Llocs",
+    "faq": "Preguntes",
+    "language": "Llengua"
+  },
+  "hero": {
+    "eyebrow": "Des de la v1.11: aplicació d'escriptori per a Windows, macOS i Linux",
+    "title": "Capítols de manga <span class=\"arrow\">→</span> <span class=\"accent\">CBZ a punt per llegir</span>",
+    "lede_one": "Enganxa un enllaç de MangaDex o de {{count}} lloc compatible més, tria els capítols i aconsegueix fitxers CBZ nets que s'obren al teu lector electrònic o a la teva aplicació de còmics preferida.",
+    "lede_other": "Enganxa un enllaç de MangaDex o de qualsevol dels altres {{count}} llocs compatibles, tria els capítols i aconsegueix fitxers CBZ nets que s'obren al teu lector electrònic o a la teva aplicació de còmics preferida.",
+    "downloadLabel": "Descarrega l'aplicació d'escriptori",
+    "downloadDetail": "Per a Windows, macOS i Linux",
+    "otherPlatforms": "Altres plataformes",
+    "sourceCode": "Codi font",
+    "highlights": "Punts destacats",
+    "chips": {
+      "sites_one": "{{count}} lloc",
+      "sites_other": "{{count}} llocs",
+      "formats": "CBZ o imatges soltes",
+      "ereader": "A punt per al lector electrònic",
+      "apps": "Aplicació d'escriptori + CLI",
+      "free": "Gratuït i de codi obert"
+    }
+  },
+  "desktop": {
+    "newTag": "Des de la v1.11",
+    "title": "Tot el que fa la CLI, en una finestra",
+    "lede": "Sense terminal ni opcions per memoritzar. El mateix descarregador, amb una finestra nativa a Windows, macOS i Linux.",
+    "overviewAlt": "L'aplicació d'escriptori amb One Piece carregat des de MangaDex: la portada, el títol i la llista de capítols, amb dos capítols seleccionats i el català triat com a llengua.",
+    "pasteTitle": "Enganxa un enllaç i ja està",
+    "pasteText": "Enganxa l'URL d'una sèrie i l'aplicació en carrega a l'instant el títol, la portada i els capítols. Sense cap botó de «carrega» ni haver de copiar enllaços de capítols un per un.",
+    "pickTitle": "Tria els capítols a la teva manera",
+    "pickText": "Escriu un interval com <code>1-10,12,15-20</code>, o fes clic en un capítol i Maj+clic en un altre per seleccionar tots els que hi ha entremig.",
+    "chapterListAlt": "La llista de capítols durant una descàrrega: vuit capítols seleccionats, els primers ja desats i la resta en curs al tauler Activity.",
+    "languageTitle": "La teva llengua, el teu grup",
+    "languageText": "Quan una sèrie està en diverses llengües o la tradueixen diversos grups de scanlation, l'aplicació mostra només les opcions que ofereix realment, i així tries entre opcions reals en comptes d'endevinar codis.",
+    "languageAlt": "El desplegable de llengua obert sobre la llista de capítols, amb el català seleccionat entre les llengües en què està disponible One Piece.",
+    "watchTitle": "Mira-ho en directe",
+    "watchText": "Progrés en directe de cada capítol, mentre els fitxers van arribant a la carpeta que has triat amb el selector de carpetes del sistema. Quan acaba l'últim, ja ho tens tot.",
+    "themeTitle": "Clar o fosc",
+    "themeText": "L'aplicació segueix el tema del sistema, perquè les sessions de lectura de matinada no et cansin la vista.",
+    "finishedAlt": "Una descàrrega acabada: vuit capítols desats a la carpeta de destinació, cadascun marcat com a desat al tauler Activity."
+  },
+  "downloads": {
+    "title": "Totes les descàrregues",
+    "intro": "Última versió <a href=\"{{repo}}/releases/latest\" data-release-tag>a GitHub</a>. No saps quina triar? La majoria d'ordinadors són x64; per a Mac, l'aplicació universal.",
+    "legacy32": "32 bits (antic)",
+    "bit32": "32 bits",
+    "appleSilicon": "Xip d'Apple",
+    "foot": "Els executables no estan signats, així que el Windows i el macOS t'avisaran la primera vegada. <a href=\"#faq-smartscreen\">Així pots saltar-te l'avís</a>."
+  },
+  "cli": {
+    "title": "Un sol binari, sense dependències",
+    "lede": "Sense entorn d'execució ni fitxer de configuració. Ideal per a scripts, servidors i per a qui viu en un terminal.",
+    "installTitle": "Instal·la'l",
+    "windowsText": "Enganxa això al <strong>PowerShell</strong>. S'instal·la a la teva carpeta d'usuari i s'afegeix al teu <code>PATH</code>, sense permisos d'administrador. Torna a executar-ho per actualitzar.",
+    "binaryTitle": "Binari precompilat",
+    "binaryText": "Descarrega l'arxiu comprimit per al teu sistema des de <a href=\"#downloads\">les descàrregues</a>, descomprimeix-lo i executa el programa:",
+    "binaryFoot": "Mou-lo a una carpeta del teu <code>PATH</code>, com ara <code>/usr/local/bin</code>, per executar-lo des de qualsevol lloc.",
+    "brewText": "A macOS i Linux, des del tap <code>elboletaire/tap</code>. <code>brew upgrade</code> el manté al dia.",
+    "brewFoot": "Això només instal·la l'eina de línia d'ordres. A macOS, afegeix <code>--cask</code> per tenir també l'aplicació d'escriptori.",
+    "dockerText": "Els fitxers es desen a la carpeta muntada. Fes servir la imatge <code>:browser</code> per als llocs marcats com a <span class=\"site-badge\">navegador</span>.",
+    "goText": "Si tens Go instal·lat, compila'l des del codi font amb una sola ordre:",
+    "useTitle": "Fes-lo servir",
+    "example1": "Passa-li la pàgina principal d'un manga i indica quins capítols vols:",
+    "example2": "Només els capítols en castellà, agrupats en un sol CBZ:",
+    "example3": "Per a un lector de tinta electrònica exigent, converteix a JPEG tant les pàgines AVIF com les WebP:",
+    "example4": "Treu la pàgina de crèdits i l'última pàgina de cada capítol:",
+    "downloadGifAlt": "Enregistrament del terminal: manga-downloader descarrega vuit capítols de One Piece alhora, cadascun amb la seva barra de progrés.",
+    "downloadGifCaption": "Vuit capítols, descarregats en paral·lel.",
+    "bundleGifAlt": "Enregistrament del terminal: els mateixos capítols descarregats amb --bundle, empaquetats en un sol fitxer CBZ.",
+    "bundleGifCaption": "Afegeix <code>--bundle</code> i acaben tots en un sol fitxer.",
+    "more": "Tens totes les opcions a la <a href=\"{{repo}}#using-the-command-line\">guia d'ús</a> (en anglès), o executa <code>manga-downloader help</code>."
+  },
+  "features": {
+    "kicker": "Característiques",
+    "title": "Fet per llegir, no per barallar-te amb la configuració",
+    "ereaderTitle": "Pensat per a lectors electrònics",
+    "ereaderText": "Les pàgines AVIF es converteixen a JPEG automàticament, perquè no surtin en blanc a Kobo, KOReader o Calibre. I les WebP també, si ho demanes.",
+    "cbzTitle": "CBZ o imatges soltes",
+    "cbzText": "Un CBZ per capítol, o carpetes d'imatges amb <code>--format raw</code> si t'estimes més empaquetar-les tu.",
+    "bundlesTitle": "Paquets",
+    "bundlesText": "<code>--bundle</code> empaqueta un arc sencer en un sol fitxer, amb una carpeta per capítol a dins.",
+    "rangesTitle": "Intervals de capítols",
+    "rangesText": "Demana <code>1,3,5-10</code> i descarrega només aquests: posar-te al dia vol dir baixar només el que et falta. Salta't les pàgines de crèdits amb <code>--skip-pages</code>.",
+    "cloudflareTitle": "Cloudflare, resolt",
+    "cloudflareText": "Els llocs que necessiten JavaScript o són darrere de Cloudflare s'obren amb el teu propi Chrome, Edge o Brave, que fins i tot marca per tu la casella de verificació.",
+    "dockerTitle": "Imatges de Docker",
+    "dockerText": "Una imatge mínima per als llocs senzills i una altra <code>:browser</code> amb Chromium i una pantalla virtual per a la resta.",
+    "languagesTitle": "Llengües i grups",
+    "languagesText": "Tria una llengua amb <code>--language</code>, o un grup de scanlation amb <code>--scanlator</code> quan un lloc té diverses versions.",
+    "namesTitle": "Els teus noms de fitxer",
+    "namesText": "Posa nom als fitxers com vulguis amb una plantilla com <code>{{filenameTemplate}}</code>. Si dos noms coincideixen, s'hi afegeix un sufix de versió; mai no se sobreescriu res."
+  },
+  "sites": {
+    "kicker": "Llocs compatibles",
+    "title_one": "{{count}} lloc i sumant",
+    "title_other": "{{count}} llocs i sumant",
+    "lede": "Des de grans agregadors fins a petits grups de scanlation. Altres llocs fets amb les mateixes plataformes també solen funcionar, encara que no siguin a la llista. Si el teu no funciona, <a href=\"{{repo}}/issues\">obre una incidència</a>.",
+    "filterLabel": "Filtra els llocs",
+    "filterPlaceholder": "Cerca llocs, p. ex. mangadex o scans",
+    "browserOnly": "Només llocs que necessiten navegador",
+    "legend_one": "El lloc marcat com a <span class=\"site-badge\">navegador</span> ({{count}} en total) necessita Chrome, Chromium, Brave o Edge instal·lat. manga downloader l'obre per tu i només mostra una finestra quan cal resoldre un repte.",
+    "legend_other": "Els llocs marcats com a <span class=\"site-badge\">navegador</span> ({{count}} en total) necessiten Chrome, Chromium, Brave o Edge instal·lat. manga downloader l'obre per tu i només mostra una finestra quan cal resoldre un repte.",
+    "emptyText": "<strong>Encara no és a la llista.</strong> Prova-ho igualment: els llocs fets amb les mateixes plataformes sovint funcionen sense més. Si no va, <a href=\"{{repo}}/issues/new\">demana'l</a>.",
+    "badge": {
+      "label": "navegador",
+      "srPrefix": "necessita un",
+      "title": "Necessita Chrome, Chromium, Brave o Edge"
+    }
+  },
+  "faq": {
+    "kicker": "Preguntes freqüents",
+    "title": "Quan alguna cosa no surt com esperaves",
+    "smartscreenQ": "El Windows diu que ha protegit l'ordinador",
+    "smartscreenA": "És el filtre SmartScreen. Només marca l'aplicació perquè no està signada. Fes clic a <strong>Més informació</strong> i després a <strong>Executa igualment</strong>. El Windows recordarà la teva elecció.",
+    "gatekeeperQ": "El macOS no l'obre",
+    "gatekeeperA": "El Gatekeeper bloqueja les aplicacions sense signar la primera vegada. Intenta obrir-la un cop i tanca l'avís; després ves a <strong>Configuració del Sistema → Privacitat i seguretat</strong>, desplaça't fins a <strong>Seguretat</strong> i fes clic a <strong>Obre igualment</strong>. Torna-la a obrir i confirma-ho. Només cal fer-ho una vegada, tant per a l'aplicació com per a la línia d'ordres.",
+    "exeQ": "En fer doble clic a <code>manga-downloader.exe</code> només apareix una finestra un moment",
+    "exeA": "Aquesta és l'eina de línia d'ordres, que s'executa des d'un terminal. Instal·la-la amb l'<a href=\"#install\">ordre del PowerShell</a> i executa-la des d'allà, o descarrega l'<a href=\"#desktop\">aplicació d'escriptori</a> si prefereixes fer clic.",
+    "paywallQ": "El capítol més recent es descarrega buit o no hi és",
+    "paywallA": "Molts llocs tenen els últims capítols darrere d'un mur de pagament, i sovint la pàgina sembla normal. Prova un capítol una mica més antic per confirmar que el lloc funciona.",
+    "oldQ": "Falten capítols antics, o un avís diu que l'interval comença abans del primer capítol",
+    "oldA": "Els llocs sovint esborren capítols antics. manga downloader només pot descarregar els capítols que el lloc encara mostra.",
+    "browserQ": "S'obre una finestra del navegador",
+    "browserA": "És normal en els llocs marcats com a <span class=\"site-badge\">navegador</span> a la <a href=\"#sites\">llista</a>. La finestra s'obre quan el lloc mostra un repte de Cloudflare. Les caselles es marquen soles, però alguns reptes necessiten que hi facis clic tu.",
+    "ereaderQ": "Les pàgines no es veuen al meu lector electrònic",
+    "ereaderA": "Segurament el lloc serveix imatges WebP. Torna a descarregar els capítols amb <code>--convert-images avif,webp</code>.",
+    "unsupportedQ": "El meu lloc no és compatible",
+    "unsupportedA": "Prova-ho igualment: els llocs fets amb les mateixes plataformes que els de la llista solen funcionar. Si no va, <a href=\"{{repo}}/issues\">obre una incidència</a> o envia una pull request."
+  },
+  "footer": {
+    "license": "Lliure i de codi obert, amb la <a href=\"{{repo}}/blob/master/LICENSE\">llicència AGPL-3.0</a>.",
+    "madeBy": "Fet per <a href=\"{{author}}\">elboletaire</a>.",
+    "nav": "Projecte",
+    "releases": "Versions",
+    "issue": "Informa d'un problema"
+  },
+  "runtime": {
+    "download": {
+      "generic": "Descarrega l'aplicació d'escriptori",
+      "genericDetail": "Tria el teu sistema a les descàrregues d'aquí sota",
+      "forOS": "Descarrega per a {{os}}",
+      "latest": "Última versió a GitHub",
+      "desktopApp": "Aplicació d'escriptori {{tag}}"
+    },
+    "copy": {
+      "label": "Copia l'ordre",
+      "done": "Copiat"
+    },
+    "sites": {
+      "all_one": "{{count}} lloc",
+      "all_other": "{{count}} llocs",
+      "filtered_one": "{{shown}} de {{count}} lloc",
+      "filtered_other": "{{shown}} de {{count}} llocs"
+    }
+  },
+  "stats": {
+    "downloads": "descàrregues",
+    "dockerPulls": "pulls a Docker"
+  }
+}
