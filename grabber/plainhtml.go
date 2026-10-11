@@ -262,20 +262,21 @@ func (m *PlainHTML) Test() (bool, error) {
 		},
 		// ritharscans.com: chapter pages aren't in <img> tags at all, they're
 		// parsed out of an Alpine.js `immersiveReader(...)` blob (see
-		// getPlainHTMLImageURL), so Image is unused but set for consistency
-		// writerscans.com: each chapter row is a plain <a> inside #chapters;
-		// reader page images are lazy-loaded (a placeholder `src` and a `uid`
-		// attribute), see the getPlainHTMLImageURL template-literal fallback
-		// mistscans.com (former Arven Scans members): each chapter row is the
-		// <a> itself (no dedicated Link), the number lives in a child span
-		// (see FetchChapters/Chapter), and reader images are lazy-loaded
-		// client-side from a `uid` attribute (see getPlainHTMLImageURL)
+		// getPlainHTMLImageURL), so Image doesn't matter for it.
+		// writerscans.com & mistscans.com (meowing.org platform): each chapter
+		// row is a plain <a> inside #chapters (the number in a child span, see
+		// FetchChapters/Chapter); reader page images are lazy-loaded (a
+		// placeholder `src` and a `uid` attribute), see the getPlainHTMLImageURL
+		// template-literal fallback. Image must stay scoped to the reader: a
+		// bare "img" also picks up the header's icon <img>s, which have no uid
+		// and turn into bare uploads/ URLs that 403. It's a union so it matches
+		// both sites' reader markup.
 		{
 			Title:        "h1",
 			Rows:         "#chapters a",
 			Chapter:      ".text-sm.truncate",
 			ChapterTitle: ".text-sm.truncate",
-			Image:        "img",
+			Image:        "img.myImage, #pages img",
 		},
 		// en-thunderscans.com: mangastream/themesia theme (reader page uses
 		// ts_reader.run, already handled generically). Some recent chapters
@@ -291,18 +292,6 @@ func (m *PlainHTML) Test() (bool, error) {
 			Chapter:      ".chapternum",
 			ChapterTitle: ".chapternum",
 			Image:        ".readercontent img",
-		},
-		// writerscans.com & mistscans.com (meowing.org platform): each chapter
-		// row is a plain <a> inside #chapters; reader page images are lazy-loaded
-		// (a placeholder `src` and a `uid` attribute), see the
-		// getPlainHTMLImageURL template-literal fallback. Image is a union so it
-		// matches both sites' reader markup.
-		{
-			Title:        "h1",
-			Rows:         "#chapters a",
-			Chapter:      ".text-sm.truncate",
-			ChapterTitle: ".text-sm.truncate",
-			Image:        "img.myImage, #pages img",
 		},
 		// silentquill.net (Next.js App Router, server-rendered): every chapter
 		// is a plain <a> row linking to /{slug}-chapter-N/, while the series
