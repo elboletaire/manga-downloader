@@ -424,6 +424,7 @@ grabber/html: \
 	grabber/evascans \
 	grabber/furyosociety \
 	grabber/kingofshojo \
+	grabber/komikindo \
 	grabber/komikstation \
 	grabber/lagoonscans \
 	grabber/madarascans \
@@ -516,6 +517,8 @@ grabber/mangaberri:
 	go run . https://mangaberri.com/title/dai-dark 37
 grabber/kingofshojo:
 	go run . https://kingofshojo.com/manga/although-i-was-a-condemned-witch-everyone-dotes-on-me-after-regressing/ 14
+grabber/komikindo:
+	go run . https://komikindo.ch/komik/155895-nano-machine/ 98
 grabber/komikstation:
 	go run . https://komikstation.org/manga/boukun-wo-teki-ni-mawashita-akujo-desu-ga-bankaisa-sete-itadakimasu/ 10
 grabber/mangavault:

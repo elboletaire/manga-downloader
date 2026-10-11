@@ -390,6 +390,17 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: ".chapter-name",
 			Image:        ".reading-content img",
 		},
+		// komikindo.ch: custom WordPress theme. The full list is #chapter_list
+		// (the "Chapter Awal" box above it has different markup). Reader pages
+		// sit in #chimg-auh, apart from the blogger and .lol ad banners around it.
+		{
+			Title:        `h1[itemprop="name"]`,
+			Rows:         "#chapter_list li:has(.lchx)",
+			Link:         "a",
+			Chapter:      ".lchx",
+			ChapterTitle: ".lchx",
+			Image:        "#chimg-auh img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors
