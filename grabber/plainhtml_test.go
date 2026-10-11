@@ -31,7 +31,13 @@ func TestParseChapterNumber(t *testing.T) {
 		{"Volume 18", 18, true},       // volume fallback (sushiscan)
 		{"Vol. 2", 2, true},
 		{"Vol.2 Chapter 15", 15, true}, // chapter preferred over volume
-		{"Notice", 0, false},           // announcements have no number
+		{"Bölüm 12", 12, true},         // turkish (eldermanga)
+		{"Bolum 3", 3, true},           // turkish, no diacritics
+		{"507. Bölüm Manga Oku", 507, true},
+		{"375.1. Bölüm", 375.1, true}, // turkish decimal
+		{"#124 .Bölüm", 124, true},    // turkish, number first (trmanga)
+		{"İlk Bölüm", 0, false},       // turkish, no number
+		{"Notice", 0, false},          // announcements have no number
 		{"", 0, false},
 	}
 
@@ -387,5 +393,66 @@ func TestPlainHTMLTestNeedsReadableNumbers(t *testing.T) {
 				t.Errorf("Test() = %v, want %v", got, c.want)
 			}
 		})
+	}
+}
+
+func TestStripSeriesTitle(t *testing.T) {
+	cases := []struct {
+		title, series, want string
+	}{
+		{"One Piece Chapter 5", "One Piece", "Chapter 5"},
+		{"one piece - Chapter 5", "One Piece", "Chapter 5"},
+		{"One Piece", "One Piece", ""},
+		{"Dan Chapter 1", "Dan", "Chapter 1"},           // whole word only
+		{"Danger Chapter 1", "Dan", "Danger Chapter 1"}, // not a prefix of a word
+		{"Chapter 5", "One Piece", "Chapter 5"},         // no series prefix
+		{"Chapter 5", "", "Chapter 5"},                  // unknown series title
+	}
+	for _, c := range cases {
+		if got := stripSeriesTitle(c.title, c.series); got != c.want {
+			t.Errorf("stripSeriesTitle(%q, %q) = %q, want %q", c.title, c.series, got, c.want)
+		}
+	}
+}
+
+// TestFetchChaptersTitles covers the title clean-up in FetchChapters: the
+// series title is dropped from the chapter title, ChapterTitleStrip removes the
+// site's own noise, and a title left with just the number is labelled "Chapter N".
+func TestFetchChaptersTitles(t *testing.T) {
+	html := `<html><head></head><body>
+		<h1 class="title">One Piece</h1>
+		<ul id="chapterlist">
+			<li><a href="https://example.com/c/1"><span class="n">Chapter 1</span><span class="t">One Piece Chapter 1</span></a></li>
+			<li><a href="https://example.com/c/2"><span class="n">Chapter 2.5</span><span class="t">Chapter 2.5</span></a></li>
+			<li><a href="https://example.com/c/3"><span class="n">Chapter 3</span><span class="t">#3 Bölüm</span></a></li>
+			<li><a href="https://example.com/c/4"><span class="n">Chapter 4</span><span class="t">4</span></a></li>
+			<li><a href="https://example.com/c/5"><span class="n">Chapter 5</span><span class="t">  </span></a></li>
+			<li><a href="https://example.com/c/6"><span class="n">Announcement</span><span class="t">One Piece</span></a></li>
+		</ul></body></html>`
+	m := PlainHTML{
+		doc: docFromHTML(t, html),
+		site: SiteSelector{
+			Title:             "h1.title",
+			Rows:              "#chapterlist li a",
+			Chapter:           "span.n",
+			ChapterTitle:      "span.t",
+			ChapterTitleStrip: `^#?\d+\s*Bölüm$`,
+		},
+	}
+	m.rows = m.doc.Find(m.site.Rows)
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) != 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	// the announcement row has no chapter number, so it is dropped
+	want := []string{"Chapter 1", "Chapter 2.5", "Chapter 3", "Chapter 4", "Chapter 5"}
+	if len(chapters) != len(want) {
+		t.Fatalf("expected %d chapters, got %d", len(want), len(chapters))
+	}
+	for i, c := range chapters {
+		if got := c.GetTitle(); got != want[i] {
+			t.Errorf("chapter %d title = %q, want %q", i, got, want[i])
+		}
 	}
 }

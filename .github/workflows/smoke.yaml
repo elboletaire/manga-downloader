@@ -93,6 +93,7 @@ jobs:
           - sanascans
           - scanvf
           - thunderscans
+          - trmanga
           - violetscans
           - witchtoons
           - writerscans

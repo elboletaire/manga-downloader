@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
@@ -37,6 +38,9 @@ type SiteSelector struct {
 	// fetched (e.g. "style=list" for readers that render one page at a time
 	// unless asked for the whole list)
 	ChapterQuery string
+	// ChapterTitleStrip is a regexp removing site-specific noise from a
+	// sanitized chapter title (e.g. "^#?\d+\s*\.?\s*Bölüm$" for a bare number)
+	ChapterTitleStrip string
 }
 
 // PlainHTMLChapter represents a PlainHTML Chapter
@@ -232,6 +236,18 @@ func (m *PlainHTML) Test() (bool, error) {
 			Link:         "a.ch-main-anchor",
 			Image:        "#readerarea img",
 		},
+		// trmanga.com: Turkish webtoon site. Its chapter table is #chapters
+		// too, so this entry must sit before the #chapters ones below (they'd
+		// claim it with no chapter text). Rows are the links in the first
+		// column, labelled "#124 .Bölüm" (number first, see
+		// parseChapterNumber); the reader's images are lazy data-src
+		// attributes, except the first one which also carries a src.
+		{
+			Title:             "h1.movie__title",
+			Rows:              "tr.wt-ch-row td.ps-0 a",
+			ChapterTitleStrip: `^#?\d+(\.\d+)?\s*\.?\s*Bölüm$`,
+			Image:             "#images img.reader-img",
+		},
 		// ritharscans.com: chapter pages aren't in <img> tags at all, they're
 		// parsed out of an Alpine.js `immersiveReader(...)` blob (see
 		// getPlainHTMLImageURL), so Image is unused but set for consistency
@@ -426,11 +442,23 @@ var volumeNumberRe = regexp.MustCompile(`(?i)\bvol(?:ume|umen)?\.?\s*(\d+\.?\d*)
 // contains "chapter-<number>" (or the French "chapitre-<number>").
 var urlChapterNumberRe = regexp.MustCompile(`(?i)chap(?:ter|itre)[-_](\d+\.?\d*)`)
 
+// turkishChapterNumberRe matches the Turkish "Bölüm 12" (or ASCII "Bolum 12"),
+// and turkishSuffixChapterNumberRe the number-first order some Turkish sites
+// use: "12. Bölüm", "375.1. Bölüm" or "#12 .Bölüm".
+var turkishChapterNumberRe = regexp.MustCompile(`(?i)b[öo]l[üu]m\.?\s*(\d+\.?\d*)`)
+var turkishSuffixChapterNumberRe = regexp.MustCompile(`(?i)#?(\d+\.?\d*)\s*\.?\s*b[öo]l[üu]m`)
+
 // parseChapterNumber extracts the chapter number from a chapter title, falling
 // back to a volume number. Returns false if no number could be found (these
 // are usually site announcements rather than actual chapters).
 func parseChapterNumber(text string) (float64, bool) {
 	match := chapterNumberRe.FindStringSubmatch(text)
+	if len(match) == 0 {
+		match = turkishChapterNumberRe.FindStringSubmatch(text)
+	}
+	if len(match) == 0 {
+		match = turkishSuffixChapterNumberRe.FindStringSubmatch(text)
+	}
 	if len(match) == 0 {
 		// only checked as fallback so "Vol.2 Chapter 15" still prefers the chapter
 		match = volumeNumberRe.FindStringSubmatch(text)
@@ -447,6 +475,11 @@ func parseChapterNumber(text string) (float64, bool) {
 
 // FetchChapters returns a slice of chapters
 func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
+	seriesTitle, _ := m.FetchTitle()
+	var strip *regexp.Regexp
+	if m.site.ChapterTitleStrip != "" {
+		strip = regexp.MustCompile(m.site.ChapterTitleStrip)
+	}
 	m.rows.Each(func(i int, s *goquery.Selection) {
 		// an empty Chapter/ChapterTitle selector means the row itself carries
 		// the text (i.e. mangapill, where each chapter row is a plain <a>
@@ -482,6 +515,14 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 			title = textWithoutNoise(s.Find(m.site.ChapterTitle))
 		}
 		title = sanitizeTitle(title)
+		title = stripSeriesTitle(title, seriesTitle)
+		if strip != nil {
+			title = sanitizeTitle(strip.ReplaceAllString(title, ""))
+		}
+		if title == "" || chapterOnlyTitleRe.MatchString(title) {
+			// nothing left but the number, so the filename gets a real label
+			title = "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
+		}
 		chapter := &PlainHTMLChapter{
 			Chapter{
 				Number: number,
@@ -494,6 +535,28 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	})
 
 	return
+}
+
+// chapterOnlyTitleRe matches a chapter title that is just its number ("12",
+// "#12", "12.5."), which says nothing once it's a filename
+var chapterOnlyTitleRe = regexp.MustCompile(`^#?\s*\d+(\.\d+)?\.?$`)
+
+// stripSeriesTitle drops the series title from the start of a chapter title,
+// case insensitively, with the separators that follow it, so "One Piece
+// Chapter 5" reads "Chapter 5". The title must end right after the series
+// name or at a non-letter, so a series "Dan" doesn't eat "Danger".
+func stripSeriesTitle(title, series string) string {
+	if series == "" {
+		return title
+	}
+	t, s := []rune(title), []rune(series)
+	if len(t) < len(s) || !strings.EqualFold(string(t[:len(s)]), series) {
+		return title
+	}
+	if len(t) > len(s) && unicode.IsLetter(t[len(s)]) {
+		return title
+	}
+	return sanitizeTitle(strings.TrimLeft(string(t[len(s):]), " \t-–—:|·"))
 }
 
 // resolveURL turns a possibly-relative href into an absolute URL, resolved
