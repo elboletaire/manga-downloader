@@ -3,39 +3,42 @@
 package grabber
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
 	"regexp"
+	"strconv"
+	"strings"
+	"sync/atomic"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/browser"
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Mangapark is a grabber for mangapark.page (mangapark.to's content, served
-// from a mirror domain: mangapark.to now redirects to comicpark.org, which is
-// a parked domain, and every other .to/.io/.net/.com/.org/.me mirror is dead —
-// mangapark.page is the only live host). The series page only server-renders
-// the newest ~20 chapters (parsed out of a `window.seriesData` JS blob), but
-// its "Load All Chapters" button hits a plain JSON API
-// (`/get-chapter-list?slug=...`) that returns the complete list. Reader pages
-// are static HTML with every page image already in an `<img data-src>`.
+// Mangapark is a grabber for mangapark1.com, the current home of MangaPark.
+// The older mangapark.to/.io/.page hosts redirect there or are dead, and their
+// /series/{slug} URLs map to the same slug. Series pages live at
+// /manga/{slug} and readers at /read/{slug}/chapter-N. The series page only
+// server-renders its newest ~20 chapters, but every reader page carries a
+// chapter dropdown with the complete list, so FetchChapters reads it from one
+// reader page.
 //
-// Since Aug 2026 the whole domain sits behind a Cloudflare JS challenge, so
-// the *first* request has to go through a browser. Only that one does: the
-// browser harvests the clearance cookies into the shared http session, after
-// which the chapters API, the reader pages and the page images all keep
-// downloading over plain HTTP (a chapter is ~200 images, so it matters). The
-// challenge is a Cloudflare setting rather than anything structural about the
-// site, so fetchSeriesData still tries plain HTTP first and only falls back to
-// the browser — if the challenge is ever turned off, the grabber silently goes
-// back to being browser-free (and CI-testable) with no code change.
+// The whole domain sits behind a Cloudflare JS challenge that the browser
+// passes. The clearance it harvests carries to the page images on the CDN, but
+// not to HTML requests over Go's HTTP client, which get a 403. So every HTML
+// page (series and reader alike) is rendered through the browser, after one
+// plain request that is skipped once the site has refused one. The images
+// keep downloading over plain HTTP, which is what matters, since a chapter is
+// ~200 of them.
 type Mangapark struct {
 	*Grabber
 	title string
 	slug  string
+	// readerURL is a chapter reader page of the series, whose chapter
+	// dropdown lists every chapter
+	readerURL string
 }
 
 func NewMangapark(g *Grabber) *Mangapark {
@@ -48,24 +51,82 @@ type MangaparkChapter struct {
 	Slug string
 }
 
-// mangaparkSeriesDataRe extracts the title and slug fields out of the
-// `window.seriesData = {...}` JS object embedded in the series page.
-// The blob also carries a `slug_hash` ("rowdy-reunion.NTFztg") that the site's
-// own chapter links now use, but `slug:` is matched before it and the bare
-// slug still works for both the API and the reader URLs, so it's ignored.
-var mangaparkSeriesDataRe = regexp.MustCompile(`(?s)window\.seriesData\s*=\s*\{.*?title:\s*"([^"]*)".*?slug:\s*"([^"]*)"`)
+// mangaparkBase is the origin every request goes to
+const mangaparkBase = "https://mangapark1.com"
+
+// mangaparkHostRe matches mangapark1.com and the hosts it replaced
+var mangaparkHostRe = regexp.MustCompile(`mangapark(?:1\.com|\.(?:to|io|page))`)
+
+// mangaparkPathRe matches the slug in a path: `/manga/{slug}` or
+// `/read/{slug}/...` on the site, `/series/{slug}` on the old hosts, or a bare
+// `/{slug}` (group 2), which is only accepted on the old hosts.
+var mangaparkPathRe = regexp.MustCompile(`^/(?:manga|read|series)/([^/]+)|^/([^/]+)/?$`)
+
+// mangaparkTitleRe extracts the series name out of the schema.org ComicSeries
+// block every series page carries.
+var mangaparkTitleRe = regexp.MustCompile(`(?s)"@type":\s*"ComicSeries".*?"name":\s*"([^"]*)"`)
 
 // mangaparkSeriesWait is a selector that exists only on a rendered series page
-// (its chapter and related-series links), never on a Cloudflare interstitial.
+// (its chapter links), never on a Cloudflare interstitial or the 404 page.
 // Waiting on something the challenge page also has — `body`, say — would make
 // the challenge look like a successful render, and the browser package keys
 // its escalation to a visible window off exactly this selector timing out.
-const mangaparkSeriesWait = `a[href*="/series/"]`
+const mangaparkSeriesWait = `a[href*="/read/"]`
 
-// Test returns true if the URL is a mangapark URL
+// mangaparkReaderWait is the equivalent for a reader page: its page images,
+// which the server renders into the HTML.
+const mangaparkReaderWait = `img.image-thumb[data-number]`
+
+// mangaparkPlainBlocked is set once a plain HTTP request gets a 403, so the
+// rest of the run goes straight to the browser instead of paying for a request
+// the site refuses.
+var mangaparkPlainBlocked atomic.Bool
+
+// mangaparkSeriesURL returns the series page on mangapark1.com for any URL the
+// grabber accepts: a series or chapter URL there, or an old-host URL.
+func mangaparkSeriesURL(raw string) (string, error) {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", err
+	}
+
+	matches := mangaparkPathRe.FindStringSubmatch(u.Path)
+	if matches == nil {
+		return "", fmt.Errorf("mangapark: could not find the series slug in %q", raw)
+	}
+	slug := matches[1]
+	if slug == "" {
+		if u.Hostname() == "mangapark1.com" {
+			return "", fmt.Errorf("mangapark: could not find the series slug in %q", raw)
+		}
+		slug = matches[2]
+	}
+
+	return mangaparkBase + "/manga/" + slug, nil
+}
+
+// fetchMangaparkPage returns the HTML of a page on the site, rendered through
+// the browser (see Mangapark). Plain HTTP is tried first, unless it was already
+// refused, as it's all that's needed if the challenge is ever turned off.
+func fetchMangaparkPage(pageURL, referer, wait string) (string, error) {
+	if !mangaparkPlainBlocked.Load() {
+		body, err := http.GetText(http.RequestParams{URL: pageURL, Referer: referer})
+		if err == nil {
+			return body, nil
+		}
+
+		var statusErr *http.StatusError
+		if errors.As(err, &statusErr) && statusErr.Code == 403 {
+			mangaparkPlainBlocked.Store(true)
+		}
+	}
+
+	return browser.GetHTML(pageURL, wait, 0)
+}
+
+// Test returns true if the URL is a MangaPark URL
 func (m *Mangapark) Test() (bool, error) {
-	re := regexp.MustCompile(`mangapark\.(to|page)`)
-	return re.MatchString(m.URL), nil
+	return mangaparkHostRe.MatchString(m.URL), nil
 }
 
 // FetchTitle fetches and returns the manga title
@@ -77,49 +138,70 @@ func (m *Mangapark) FetchTitle() (string, error) {
 	return m.title, nil
 }
 
-// FetchChapters returns the chapters of the manga. get-chapter-list takes no
-// paging params and returned complete lists in every audited case, but no
-// 500+-chapter series could be verified (Cloudflare blocks access) — re-check
-// this endpoint if truncation is ever reported.
+// FetchChapters returns the complete chapter list, read from the chapter
+// dropdown of a reader page (the series page only lists its newest chapters).
 func (m *Mangapark) FetchChapters() (Filterables, []error) {
 	if err := m.fetchSeriesData(); err != nil {
 		return nil, []error{err}
 	}
 
-	uri, err := url.Parse(m.BaseUrl())
-	if err != nil {
-		return nil, []error{err}
-	}
-	uri.Path = "/get-chapter-list"
-	q := uri.Query()
-	q.Set("slug", m.slug)
-	uri.RawQuery = q.Encode()
-
-	body, err := http.GetText(http.RequestParams{
-		URL:     uri.String(),
-		Referer: m.URL,
-	})
+	body, err := fetchMangaparkPage(m.readerURL, m.URL, mangaparkReaderWait)
 	if err != nil {
 		return nil, []error{err}
 	}
 
-	feed := mangaparkChaptersFeed{}
-	if err = json.Unmarshal([]byte(body), &feed); err != nil {
+	chapters, err := parseMangaparkDropdown(body)
+	if err != nil {
 		return nil, []error{err}
 	}
-	if !feed.Success {
-		return nil, []error{fmt.Errorf("mangapark: %s", feed.Error)}
+
+	return chapters, nil
+}
+
+// parseMangaparkDropdown reads the chapter list out of a reader page's
+// chapter dropdown. Each option's value is the chapter's reader URL, whose
+// last segment is `chapter-N` (N may be decimal, like `chapter-23.5`).
+func parseMangaparkDropdown(body string) (Filterables, error) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
+	if err != nil {
+		return nil, err
 	}
 
-	chapters := make(Filterables, 0, len(feed.Data))
-	for _, c := range feed.Data {
+	chapters := Filterables{}
+	var errs []error
+	// the reader renders the dropdown twice (top and bottom bars), with the
+	// same options: only the first one is the list
+	doc.Find("select.chapter-dropdown").First().Find("option").Each(func(i int, s *goquery.Selection) {
+		value := s.AttrOr("value", "")
+		if value == "" {
+			return
+		}
+
+		u, err := url.Parse(value)
+		if err != nil {
+			errs = append(errs, err)
+			return
+		}
+		slug := path.Base(u.Path)
+		number, err := strconv.ParseFloat(strings.TrimPrefix(slug, "chapter-"), 64)
+		if !strings.HasPrefix(slug, "chapter-") || err != nil {
+			errs = append(errs, fmt.Errorf("mangapark: unexpected chapter link %q", value))
+			return
+		}
+
 		chapters = append(chapters, &MangaparkChapter{
 			Chapter{
-				Number: c.Number,
-				Title:  c.Name,
+				Number: number,
+				Title:  sanitizeTitle(s.Text()),
 			},
-			c.Slug,
+			slug,
 		})
+	})
+	if len(errs) > 0 {
+		return nil, errs[0]
+	}
+	if len(chapters) == 0 {
+		return nil, errors.New("mangapark: no chapters found in the reader page")
 	}
 
 	return chapters, nil
@@ -129,21 +211,17 @@ func (m *Mangapark) FetchChapters() (Filterables, []error) {
 func (m *Mangapark) FetchChapter(f Filterable) (*Chapter, error) {
 	mchap := f.(*MangaparkChapter)
 
-	uri, err := url.JoinPath(m.BaseUrl(), "series", m.slug, mchap.Slug)
+	uri, err := url.JoinPath(mangaparkBase, "read", m.slug, mchap.Slug)
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := http.Get(http.RequestParams{
-		URL:     uri,
-		Referer: m.URL,
-	})
+	body, err := fetchMangaparkPage(uri, m.URL, mangaparkReaderWait)
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
 
-	doc, err := goquery.NewDocumentFromReader(body)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -154,10 +232,10 @@ func (m *Mangapark) FetchChapter(f Filterable) (*Chapter, error) {
 		Language: "en",
 	}
 
-	// every page image is a `.image-thumb` with a `data-number` attribute
-	// (this pairing is exclusive to reader pages: nothing else on the page
-	// carries `data-number`), holding the real URL in `data-src`
-	doc.Find("img.image-thumb[data-number]").Each(func(i int, s *goquery.Selection) {
+	// every page image is a `.image-thumb` with a numeric `data-number`
+	// attribute, holding the real URL in `data-src` (or `src`). The reader
+	// also puts a `notice` banner in the same list, which is not a page
+	doc.Find(`img.image-thumb[data-number]:not([data-number="notice"])`).Each(func(i int, s *goquery.Selection) {
 		src := s.AttrOr("data-src", s.AttrOr("src", ""))
 		if src == "" {
 			return
@@ -176,30 +254,26 @@ func (m *Mangapark) FetchChapter(f Filterable) (*Chapter, error) {
 	return chapter, nil
 }
 
-// fetchSeriesData fetches the series page and caches its title and slug,
-// parsed out of the `window.seriesData` JS blob. The slug is needed to hit
-// the paginated chapters API, since the series page itself only renders the
-// newest ~20 chapters.
+// fetchSeriesData resolves the series page from the URL the user gave (a
+// series, chapter or old-host URL), then caches its title, parsed out of the
+// ComicSeries JSON-LD, and the reader URL of its first chapter. The chapter
+// list is read from that reader page.
 //
-// This is the only request in the grabber that may need a browser, so it is
-// also what warms up the Cloudflare clearance for everything that follows.
+// The grabber's URL is replaced by the canonical series page, so every later
+// request (the Referer, the chapter URLs) goes to mangapark1.com.
 func (m *Mangapark) fetchSeriesData() error {
-	if m.slug != "" {
+	if m.title != "" {
 		return nil
 	}
 
-	// plain HTTP first: it's a single fast request, and it's all that's needed
-	// whenever the challenge happens to be off
-	if body, err := http.GetText(http.RequestParams{URL: m.URL}); err == nil {
-		if err = m.parseSeriesData(body); err == nil {
-			return nil
-		}
+	seriesURL, err := mangaparkSeriesURL(m.URL)
+	if err != nil {
+		return err
 	}
+	m.URL = seriesURL
+	m.slug = path.Base(seriesURL)
 
-	// blocked (403 "Just a moment..."): render it, which also harvests the
-	// clearance cookies into http/session.go for the plain-HTTP requests that
-	// FetchChapters and FetchChapter make afterwards
-	html, err := browser.GetHTML(m.URL, mangaparkSeriesWait, 0)
+	html, err := fetchMangaparkPage(m.URL, "", mangaparkSeriesWait)
 	if err != nil {
 		return err
 	}
@@ -207,26 +281,26 @@ func (m *Mangapark) fetchSeriesData() error {
 	return m.parseSeriesData(html)
 }
 
-// parseSeriesData pulls the title and slug out of a fetched series page.
+// parseSeriesData pulls the title and the reader URL out of a fetched series
+// page. The reader URL is the first chapter link of this series, which the
+// series page renders under the series slug.
 func (m *Mangapark) parseSeriesData(body string) error {
-	matches := mangaparkSeriesDataRe.FindStringSubmatch(body)
-	if len(matches) != 3 {
+	matches := mangaparkTitleRe.FindStringSubmatch(body)
+	if len(matches) != 2 {
 		return errors.New("could not find series data in the series page")
 	}
 
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
+	if err != nil {
+		return err
+	}
+	href, ok := doc.Find(fmt.Sprintf(`a[href*="/read/%s/"]`, m.slug)).First().Attr("href")
+	if !ok {
+		return errors.New("could not find a chapter in the series page")
+	}
+
 	m.title = sanitizeTitle(matches[1])
-	m.slug = matches[2]
+	m.readerURL = href
 
 	return nil
-}
-
-// mangaparkChaptersFeed is the JSON feed for the chapters list
-type mangaparkChaptersFeed struct {
-	Success bool   `json:"success"`
-	Error   string `json:"error"`
-	Data    []struct {
-		Slug   string  `json:"chapter_slug"`
-		Name   string  `json:"chapter_name"`
-		Number float64 `json:"chapter_num"`
-	} `json:"data"`
 }

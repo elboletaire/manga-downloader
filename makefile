@@ -376,12 +376,13 @@ grabber/manhuatop:
 grabber/setsuscans:
 	go run . --browser-visible https://setsuscans.com/manga/a-story-about-accidentally-finding-out-a-girls-secret-at-school/ 13
 
-# the whole domain went behind a cloudflare JS challenge (Aug 2026), which
-# headless never passes: only the series page is rendered, and the clearance it
-# harvests carries the chapters API and the ~200 page images per chapter over
-# plain HTTP. --browser-visible just skips the pointless 30s headless probe.
+# mangapark.page now redirects to mangapark1.com, behind a cloudflare JS
+# challenge that headless never passes, so the series and reader HTML are
+# rendered in the visible browser. The clearance it harvests carries the ~200
+# page images per chapter over plain HTTP, though not the HTML requests.
+# --browser-visible just skips the pointless 30s headless probe.
 grabber/mangapark:
-	go run . --browser-visible https://mangapark.page/series/rowdy-reunion 41
+	go run . --browser-visible https://mangapark1.com/manga/rowdy-reunion 41
 
 grabber/html: \
 	grabber/asura \

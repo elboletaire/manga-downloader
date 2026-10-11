@@ -47,6 +47,15 @@ func (r RequestParams) GetReferer() string {
 // "Go-http-client" user agent with a 403/500
 const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 
+// StatusError is returned for a response whose status isn't 200
+type StatusError struct {
+	Code int
+}
+
+func (e *StatusError) Error() string {
+	return fmt.Sprintf("received %d response code", e.Code)
+}
+
 // request sends a request to the given URL
 func request(t string, params Params) (body io.ReadCloser, err error) {
 	tr := &http.Transport{
@@ -106,7 +115,7 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 	}
 
 	if resp.StatusCode != 200 {
-		err = fmt.Errorf("received %d response code", resp.StatusCode)
+		err = &StatusError{Code: resp.StatusCode}
 		return
 	}
 

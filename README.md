@@ -532,7 +532,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [mangakatana.com](https://mangakatana.com)
 - [mangalib.me (MangaLib)](https://mangalib.me)
 - [mangalivre.to (Manga Livre, former mangalivre.tv/mangalivre.net)](https://mangalivre.to)
-- [mangapark.page (MangaPark, the only live host: mangapark.to and the other mirrors are dead)](https://mangapark.page) \*
+- [mangapark1.com (MangaPark, the current host: mangapark.page now redirects to it)](https://mangapark1.com) \*
 - [mangapill.com](https://mangapill.com)
 - [mangaplus.shueisha.co.jp (Manga Plus, Shueisha's official reader)](https://mangaplus.shueisha.co.jp)
 - [mangaread.org](https://www.mangaread.org)
