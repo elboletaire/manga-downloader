@@ -112,11 +112,16 @@
             <p class="lede">{{t:hero.lede:others}}</p>
 
             <div class="download" data-download>
-              <a class="button button-primary button-download" href="https://github.com/elboletaire/manga-downloader/releases/latest" data-download-link>
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span data-download-label>{{t:hero.downloadLabel}}</span>
-              </a>
-              <p class="download-detail" data-download-detail aria-live="polite">{{t:hero.downloadDetail}}</p>
+              <div class="download-row">
+                <div class="download-main">
+                  <a class="button button-primary button-download" href="https://github.com/elboletaire/manga-downloader/releases/latest" data-download-link>
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span data-download-label>{{t:hero.downloadLabel}}</span>
+                  </a>
+                  <p class="download-detail" data-download-detail aria-live="polite">{{t:hero.downloadDetail}}</p>
+                </div>
+                <!-- stats:hero -->
+              </div>
               <p class="download-alt">
                 <a href="#downloads">{{t:hero.otherPlatforms}}</a>
                 <span aria-hidden="true">·</span>
@@ -238,6 +243,7 @@
             <div class="downloads-grid">
               <section class="platform" aria-labelledby="dl-windows">
                 <h4 id="dl-windows">Windows</h4>
+                <!-- stats:windows -->
                 <p class="platform-kind">{{t:common.desktopApp}}</p>
                 <ul>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="gui-windows-amd64.zip">x64</a></li>
@@ -252,6 +258,7 @@
               </section>
               <section class="platform" aria-labelledby="dl-macos">
                 <h4 id="dl-macos">macOS</h4>
+                <!-- stats:macos -->
                 <p class="platform-kind">{{t:common.desktopApp}}</p>
                 <ul>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="gui-darwin-universal.zip">Universal</a></li>
@@ -264,6 +271,7 @@
               </section>
               <section class="platform" aria-labelledby="dl-linux">
                 <h4 id="dl-linux">Linux</h4>
+                <!-- stats:linux -->
                 <p class="platform-kind">{{t:common.desktopApp}}</p>
                 <ul>
                   <li><a href="https://github.com/elboletaire/manga-downloader/releases/latest" data-asset="gui-linux-amd64.tar.gz">x64</a></li>

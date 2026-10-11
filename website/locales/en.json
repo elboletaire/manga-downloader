@@ -175,5 +175,9 @@
       "filtered_one": "{{shown}} of {{count}} site",
       "filtered_other": "{{shown}} of {{count}} sites"
     }
+  },
+  "stats": {
+    "downloads": "downloads",
+    "dockerPulls": "Docker pulls"
   }
 }

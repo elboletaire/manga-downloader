@@ -6,6 +6,7 @@ import i18next from 'i18next'
 import { defineConfig, type Plugin } from 'vite'
 import { parseSites, renderSites } from './build/sites.ts'
 import { LANG_INFO, LANG_KEY, LANGS, redirectTarget, type Lang } from './src/lang.ts'
+import { fetchStats, renderStats, type Stats } from './build/stats.ts'
 
 // Where the site is served from. GitHub Pages serves a project site under
 // /<repo>/; with a custom domain, set BASE_PATH=/ and SITE_URL to it.
@@ -25,6 +26,9 @@ const GLOBALS = {
 }
 
 type Tree = { [key: string]: string | Tree }
+
+// Fetched once per build (or dev server), shared by every language's page.
+let statsPromise: Promise<Stats | null> | undefined
 
 const pageURL = (lang: Lang) => siteURL + LANG_INFO[lang].path
 const readLocale = (lang: Lang) => JSON.parse(readFileSync(path.join(localesDir, `${lang}.json`), 'utf8')) as Tree
@@ -108,6 +112,8 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
 
   const badge = { label: t('sites.badge.label'), srPrefix: t('sites.badge.srPrefix'), title: t('sites.badge.title') }
   const runtime = JSON.stringify(readLocale(lang).runtime).replace(/</g, '\\u003c')
+  statsPromise ??= fetchStats()
+  const stats = renderStats(await statsPromise, { downloads: t('stats.downloads'), dockerPulls: t('stats.dockerPulls') })
 
   // Function replacers, so a "$" in the inserted text is never a replacement pattern.
   return html
@@ -117,6 +123,7 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
     .replace('<!-- i18n:switcher -->', () => switcher(lang))
     .replace('<!-- i18n:runtime -->', () => `<script type="application/json" id="i18n-runtime">${runtime}</script>`)
     .replace('<!-- sites:list -->', () => renderSites(sites, badge))
+    .replace(/<!-- (stats:\w+) -->/g, (_m, key: string) => stats[key] ?? '')
     .replace(/\{\{(t|a|j):([\w.]+)(?::(\w+))?\}\}/g, (_m, kind: string, key: string, countName?: string) => {
       const text = t(key, countName)
       if (kind === 'a') return escapeAttr(text)

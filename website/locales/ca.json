@@ -175,5 +175,9 @@
       "filtered_one": "{{shown}} de {{count}} lloc",
       "filtered_other": "{{shown}} de {{count}} llocs"
     }
+  },
+  "stats": {
+    "downloads": "descàrregues",
+    "dockerPulls": "descàrregues a Docker"
   }
 }
