@@ -284,6 +284,18 @@ func (m *PlainHTML) Test() (bool, error) {
 			ChapterTitle: "span.text-base",
 			Image:        "img",
 		},
+		// mangaberri.com: the chapter section has Chapters, Volumes and RAW
+		// tabs, each in its own panel. Only #chapters-panel is taken (the
+		// Volumes and RAW panels would double count or mix in untranslated
+		// releases). The series page also carries an ad-blocker <h1> in the
+		// page's access wall, so the title is scoped to the .detail block.
+		{
+			Title:        ".detail h1",
+			Rows:         "#chapters-panel a[data-chapter-group]",
+			Chapter:      "strong",
+			ChapterTitle: "strong",
+			Image:        ".reader-pages img",
+		},
 	}
 
 	// for the same priority reasons, we need to iterate over the selectors

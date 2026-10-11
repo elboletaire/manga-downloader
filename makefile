@@ -396,6 +396,7 @@ grabber/html: \
 	grabber/furyosociety \
 	grabber/lagoonscans \
 	grabber/madarascans \
+	grabber/mangaberri \
 	grabber/mangakatana \
 	grabber/mangapill \
 	grabber/mangaread \
@@ -457,6 +458,8 @@ grabber/elftoon:
 	go run . https://elftoon.net/series/comic/god-level-assassin-im-the-shadow 123
 grabber/madarascans:
 	go run . https://madarascans.org/series/my-disciples-are-all-big-villains/ 481
+grabber/mangaberri:
+	go run . https://mangaberri.com/title/dai-dark 37
 grabber/lagoonscans:
 	go run . https://lagoonscans.com/manga/crimson-reset/ 52
 grabber/rokaricomics:
