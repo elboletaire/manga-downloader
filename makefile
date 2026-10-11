@@ -159,7 +159,7 @@ grabber/mangak:
 grabber/mgeko:
 	go run . https://www.mgeko.cc/manga/solo-leveling-mg1/ 198
 grabber/mangaball:
-	go run . https://mangaball.net/title-detail/baki-gaiden-shin-chiharu-6a5ffe5d90273b5b995225d2/ 1
+	go run . https://mangaball.com/title-detail/baki-gaiden-shin-chiharu-6a5ffe5d90273b5b995225d2/ 1
 grabber/mangalib:
 	go run . https://mangalib.me/ru/manga/206--one-piece 1188
 grabber/mangadenizi:

@@ -83,14 +83,13 @@ func TestMangaballLanguageOptions(t *testing.T) {
 	const series = "/title-detail/baki-6a5ffe5d90273b5b995225d2/"
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(series, func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte(`<html><head><meta name="csrf-token" content="tok"></head><body><div class="comic-detail-card"><h6>Baki</h6></div></body></html>`))
-	})
-	respond(mux, "/api/v1/chapter/chapter-listing-by-title-id/", `{"code":200,"message":"","ALL_CHAPTERS":[`+
-		`{"number_float":1,"title":"","translations":[{"language":"en","pages":3,"url":"https://mangaball.net/a"},{"language":"es","pages":3,"url":"https://mangaball.net/b"}]},`+
-		`{"number_float":2,"title":"","translations":[{"language":"en","pages":3,"url":"https://mangaball.net/c"}]}]}`)
+	respond(mux, "/api/v1/chapter/chapter-listing-by-title-id", `{"status":"success","data":[`+
+		`{"id":"a","lang":"en","name":"","number":1},`+
+		`{"id":"b","lang":"es","name":"","number":1},`+
+		`{"id":"c","lang":"en","name":"","number":2}]}`)
 	srv := serve(t, mux)
 	overrideBase(t, &mangaballAPI, srv.URL+"/api/v1")
+	overrideBase(t, &mangaballSite, srv.URL)
 
 	cases := []struct {
 		lang   string

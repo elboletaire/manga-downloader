@@ -520,7 +520,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [lhtranslation.net (LHTranslation)](https://lhtranslation.net)
 - [luacomic.org (LuaScans)](https://luacomic.org)
 - [madarascans.org (former madarascans.com)](https://madarascans.org)
-- [mangaball.net](https://mangaball.net)
+- [mangaball.com (former mangaball.net)](https://mangaball.com)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
 - [mangadenizi.net](https://www.mangadenizi.net)
 - [mangadex.org (MangaDex)](https://mangadex.org)

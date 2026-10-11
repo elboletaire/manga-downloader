@@ -6,30 +6,30 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"regexp"
-	"strings"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Mangaball is a grabber for mangaball.net: the chapters list is served by a
-// CSRF-protected JSON API (the CSRF token and session cookie are read off
-// the series page and reused for the API call), while the chapter images are
-// a plain JSON array embedded straight in the reader page's HTML
+// Mangaball is a grabber for mangaball.com (mangaball.net redirects to it): the
+// title comes from the series page's Next.js payload, the chapters list from a
+// JSON API, and the chapter images are a "pages" array in the reader page's
+// RSC payload
 type Mangaball struct {
 	*Grabber
 	title string
-	csrf  string
-	// languages are the languages of every translation the series lists, before
+	// languages are the languages of every chapter the series lists, before
 	// the --language filter
 	languages []string
 }
 
 // mangaballAPI is the site's base URL for its API (a var so tests can point it
 // at a local server)
-var mangaballAPI = "https://mangaball.net/api/v1"
+var mangaballAPI = "https://api.mangaball.com/api/v1"
+
+// mangaballSite is the site's base URL, where the reader pages live (a var so
+// tests can point it at a local server)
+var mangaballSite = "https://mangaball.com"
 
 func NewMangaball(g *Grabber) *Mangaball {
 	return &Mangaball{Grabber: g}
@@ -52,9 +52,9 @@ type MangaballChapter struct {
 	URL string
 }
 
-// Test returns true if the URL is a mangaball.net URL
+// Test returns true if the URL is a mangaball.com or mangaball.net URL
 func (m *Mangaball) Test() (bool, error) {
-	re := regexp.MustCompile(`mangaball\.net`)
+	re := regexp.MustCompile(`mangaball\.(com|net)`)
 	return re.MatchString(m.URL), nil
 }
 
@@ -64,7 +64,7 @@ func (m *Mangaball) FetchTitle() (string, error) {
 		return m.title, nil
 	}
 
-	if _, err := m.fetchCSRF(); err != nil {
+	if err := m.fetchTitle(); err != nil {
 		return "", err
 	}
 
@@ -79,26 +79,25 @@ func (m *Mangaball) FetchChapters() (chapters Filterables, errs []error) {
 		return
 	}
 
-	csrf, err := m.fetchCSRF()
-	if err != nil {
-		errs = append(errs, err)
-		return
-	}
-
 	language := m.Settings.Language
 	if language == "" {
 		language = "en"
 	}
 
-	form := url.Values{}
-	form.Set("title_id", tid)
-	form.Set("userSettingsEnabled", "false")
+	body, err := json.Marshal(map[string]string{"title_id": tid})
+	if err != nil {
+		errs = append(errs, err)
+		return
+	}
 
 	rbody, err := http.Post(http.RequestParams{
-		URL:     mangaballAPI + "/chapter/chapter-listing-by-title-id/",
+		URL:     mangaballAPI + "/chapter/chapter-listing-by-title-id",
 		Referer: m.URL,
-		Headers: map[string]string{"X-CSRF-TOKEN": csrf},
-		Form:    form,
+		// the API only takes a JSON body, which the http package can't send
+		// on its own: the body goes out url-encoded, and this header replaces
+		// the content type it sets for it
+		Headers: map[string]string{"Content-Type": "application/json"},
+		Body:    string(body),
 	})
 	if err != nil {
 		errs = append(errs, err)
@@ -111,31 +110,24 @@ func (m *Mangaball) FetchChapters() (chapters Filterables, errs []error) {
 		errs = append(errs, err)
 		return
 	}
-	if feed.Code != 200 {
-		errs = append(errs, fmt.Errorf("mangaball api returned code %d: %s", feed.Code, feed.Message))
+	if feed.Status != "success" {
+		errs = append(errs, fmt.Errorf("mangaball api returned status %q", feed.Status))
 		return
 	}
 
-	for _, c := range feed.AllChapters {
-		for _, t := range c.Translations {
-			m.languages = append(m.languages, t.Language)
-			if language != FilterAll && t.Language != language {
-				continue
-			}
-			title := t.Name
-			if title == "" {
-				title = c.Title
-			}
-			chapters = append(chapters, &MangaballChapter{
-				Chapter{
-					Number:     c.NumberFloat,
-					Title:      title,
-					Language:   t.Language,
-					PagesCount: t.Pages,
-				},
-				t.URL,
-			})
+	for _, c := range feed.Data {
+		m.languages = append(m.languages, c.Lang)
+		if language != FilterAll && c.Lang != language {
+			continue
 		}
+		chapters = append(chapters, &MangaballChapter{
+			Chapter{
+				Number:   c.Number,
+				Title:    c.Name,
+				Language: c.Lang,
+			},
+			mangaballSite + "/chapter-detail/" + c.ID,
+		})
 	}
 
 	return
@@ -176,7 +168,7 @@ func (m Mangaball) FetchChapter(f Filterable) (*Chapter, error) {
 
 // titleID returns the title's internal id (a 24-char hex ObjectId suffixed
 // to the series slug, e.g. "6a5ffe5d90273b5b995225d2" for
-// https://mangaball.net/title-detail/baki-gaiden-shin-chiharu-6a5ffe5d90273b5b995225d2/)
+// https://mangaball.com/title-detail/baki-gaiden-shin-chiharu-6a5ffe5d90273b5b995225d2/)
 func (m Mangaball) titleID() (string, error) {
 	re := regexp.MustCompile(`[0-9a-f]{24}`)
 	matches := re.FindAllString(m.URL, -1)
@@ -186,51 +178,54 @@ func (m Mangaball) titleID() (string, error) {
 	return matches[len(matches)-1], nil
 }
 
-// fetchCSRF fetches the series page, caching both the manga title and the
-// CSRF token needed to call the chapter-listing API (the API validates the
-// token against the PHPSESSID cookie set by this same request, which the
-// http package harvests automatically)
-func (m *Mangaball) fetchCSRF() (string, error) {
-	if m.csrf != "" {
-		return m.csrf, nil
-	}
-
+// fetchTitle fetches the series page and caches the manga title, read off the
+// `initialTitleData` object of its RSC payload
+func (m *Mangaball) fetchTitle() error {
 	body, err := http.GetText(http.RequestParams{
 		URL: m.URL,
 	})
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
+	stream, err := nextFlightStream(body)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	m.title = sanitizeTitle(doc.Find(".comic-detail-card h6").First().Text())
-
-	csrf, ok := doc.Find(`meta[name="csrf-token"]`).Attr("content")
-	if !ok || csrf == "" {
-		return "", errors.New("could not find csrf token on the series page")
+	raw, err := extractBalancedJSON(stream, `"initialTitleData":`)
+	if err != nil {
+		return err
 	}
-	m.csrf = csrf
 
-	return m.csrf, nil
+	data := struct {
+		Name string `json:"name"`
+	}{}
+	if err = json.Unmarshal([]byte(raw), &data); err != nil {
+		return err
+	}
+	if data.Name == "" {
+		return errors.New("could not find the title on the series page")
+	}
+	m.title = sanitizeTitle(data.Name)
+
+	return nil
 }
 
-// mangaballChapterImagesRe extracts the `chapterImages` JSON array embedded
-// in the reader page, e.g.:
-// const chapterImages = JSON.parse(`["https://.../001.webp", ...]`);
-var mangaballChapterImagesRe = regexp.MustCompile("const chapterImages = JSON\\.parse\\(`(\\[.*?\\])`\\);")
-
-// mangaballChapterImages extracts the page image URLs from a reader page
+// mangaballChapterImages extracts the page image URLs from a reader page: they
+// sit in the `pages` array of the chapter in the page's RSC payload
 func mangaballChapterImages(html string) (images []string, err error) {
-	matches := mangaballChapterImagesRe.FindStringSubmatch(html)
-	if len(matches) != 2 {
-		return nil, errors.New("could not find the chapterImages variable in the reader page")
+	stream, err := nextFlightStream(html)
+	if err != nil {
+		return nil, err
 	}
 
-	if err = json.Unmarshal([]byte(matches[1]), &images); err != nil {
+	raw, err := extractBalancedJSON(stream, `"pages":`)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = json.Unmarshal([]byte(raw), &images); err != nil {
 		return nil, err
 	}
 
@@ -239,17 +234,11 @@ func mangaballChapterImages(html string) (images []string, err error) {
 
 // mangaballChaptersFeed is the JSON feed returned by the chapter listing API
 type mangaballChaptersFeed struct {
-	Code        int    `json:"code"`
-	Message     string `json:"message"`
-	AllChapters []struct {
-		NumberFloat float64 `json:"number_float"`
-		Title       string  `json:"title"`
-
-		Translations []struct {
-			Name     string `json:"name"`
-			Language string `json:"language"`
-			Pages    int64  `json:"pages"`
-			URL      string `json:"url"`
-		} `json:"translations"`
-	} `json:"ALL_CHAPTERS"`
+	Status string `json:"status"`
+	Data   []struct {
+		ID     string  `json:"id"`
+		Lang   string  `json:"lang"`
+		Name   string  `json:"name"`
+		Number float64 `json:"number"`
+	} `json:"data"`
 }
