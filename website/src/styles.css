@@ -374,6 +374,12 @@ code {
   color: var(--text);
 }
 
+/* "Capítulos de manga →" is ~20% longer than "Manga chapters →": 10% smaller
+   keeps it on one line at every width, as the English title is */
+.hero h1:lang(es) {
+  font-size: clamp(2.16rem, 4.68vw, 3.69rem);
+}
+
 .hero h1 .arrow {
   font-family: var(--font-ui);
   font-weight: 400;
