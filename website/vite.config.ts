@@ -192,6 +192,26 @@ function siteData(): Plugin[] {
         return html.replace('<!-- font-preloads -->', () => preloads)
       },
     },
+    {
+      // Vite injects <link rel="stylesheet"> at the end of <head>, after the
+      // large data scripts, so the browser only discovers the CSS at byte
+      // ~10 KB. With network throttling the preload scanner may not have
+      // scanned that far before making a first paint, causing a flash of
+      // unstyled content. Move the link to right after <meta name="viewport">
+      // so it sits in the first ~300 bytes and is discovered immediately.
+      // The post order guarantees Vite has already injected it.
+      name: 'site-data:early-css',
+      transformIndexHtml: {
+        order: 'post',
+        handler(html) {
+          const link = html.match(/<link rel="stylesheet"[^>]*>/)?.[0]
+          if (!link) return html
+          return html
+            .replace(link, '')
+            .replace(/(<meta name="viewport"[^>]*\/>)/, `$1\n    ${link}`)
+        },
+      },
+    },
   ]
 }
 
