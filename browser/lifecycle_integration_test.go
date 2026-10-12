@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
@@ -233,6 +234,8 @@ func TestIntegrationClosesPopupTabs(t *testing.T) {
 		switch r.URL.Path {
 		case "/popup":
 			fmt.Fprint(w, `<html><body>popup</body></html>`)
+		case "/warmup":
+			fmt.Fprint(w, `<html><body><div id="ok">ok</div></body></html>`)
 		case "/page":
 			fmt.Fprint(w, `<html><body>
 				<div id="ready">ready</div>
@@ -248,8 +251,9 @@ func TestIntegrationClosesPopupTabs(t *testing.T) {
 	}))
 	t.Cleanup(popupSrv.Close)
 
-	if _, err := GetHTML(popupSrv.URL+"/page", "#ready", 30*time.Second); err != nil {
-		t.Fatalf("loading a page that opens a popup: %v", err)
+	// starts the browser, so the listener below sees the tab it creates
+	if _, err := GetHTML(popupSrv.URL+"/warmup", "#ok", 30*time.Second); err != nil {
+		t.Fatalf("starting the browser: %v", err)
 	}
 
 	mu.Lock()
@@ -258,17 +262,31 @@ func TestIntegrationClosesPopupTabs(t *testing.T) {
 	if b == nil {
 		t.Fatal("no browser running after load")
 	}
+	popupCount := countPopupsFrom(b.ctx)
 
-	if !waitPageTargets(t, b, 1, 3*time.Second) {
-		t.Error("popup from script was not closed")
+	if _, err := GetHTML(popupSrv.URL+"/page", "#ready", 30*time.Second); err != nil {
+		t.Fatalf("loading a page that opens a popup: %v", err)
 	}
+
+	// a popup that closed before we looked would pass the target count alone,
+	// so each case first waits for its popup to be seen
+	waitUntil(t, func() bool { return popupCount.Load() >= 1 }, 3*time.Second, "script popup never opened")
+	if !waitPageTargets(t, b, 1, 3*time.Second) {
+		t.Error("script popup was not closed")
+	}
+
+	before := popupCount.Load()
 	clickAt(t, b, 200, 225) // button
+	waitUntil(t, func() bool { return popupCount.Load() > before }, 3*time.Second, "button popup never opened")
 	if !waitPageTargets(t, b, 1, 3*time.Second) {
-		t.Error("popup from button onclick was not closed")
+		t.Error("button popup was not closed")
 	}
+
+	before = popupCount.Load()
 	clickAt(t, b, 200, 325) // link with target=_blank
+	waitUntil(t, func() bool { return popupCount.Load() > before }, 3*time.Second, "link popup never opened")
 	if !waitPageTargets(t, b, 1, 3*time.Second) {
-		t.Error("popup from link target=_blank was not closed")
+		t.Error("link popup was not closed")
 	}
 
 	// the notice is emitted from the closing goroutine, so it may trail the
@@ -286,6 +304,33 @@ func TestIntegrationClosesPopupTabs(t *testing.T) {
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
+}
+
+// countPopupsFrom registers a ListenTarget on ctx and returns an atomic counter
+// that increments each time a popup page target whose OpenerID is ctx's tab is created.
+func countPopupsFrom(ctx context.Context) *atomic.Int32 {
+	var n atomic.Int32
+	c := chromedp.FromContext(ctx)
+	tabID := c.Target.TargetID
+	chromedp.ListenTarget(ctx, func(ev any) {
+		if e, ok := ev.(*target.EventTargetCreated); ok && isPopupOf(e.TargetInfo, tabID) {
+			n.Add(1)
+		}
+	})
+	return &n
+}
+
+// waitUntil polls cond until it holds (or deadline), failing the test with msg otherwise.
+func waitUntil(t *testing.T, cond func() bool, deadline time.Duration, msg string) {
+	t.Helper()
+	end := time.Now().Add(deadline)
+	for time.Now().Before(end) {
+		if cond() {
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	t.Error(msg)
 }
 
 // waitPageTargets polls until exactly n page targets remain (or deadline).
