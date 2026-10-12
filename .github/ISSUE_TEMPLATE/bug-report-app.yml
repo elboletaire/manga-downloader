@@ -1,0 +1,67 @@
+name: Bug in the desktop app
+description: Something doesn't work in the Manga Downloader app (Windows, macOS, Linux)
+title: "[Bug]: "
+labels: ["bug", "app"]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: Link
+      description: The series or chapter link you pasted into the app.
+      placeholder: e.g. https://mangadex.org/title/...
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: What did you pick?
+      description: >-
+        The chapters you selected, and any option you changed (language,
+        scanlation group, image conversion, "Show the browser window"…). Write
+        "defaults" if you didn't change anything.
+      placeholder: e.g. chapters 10 to 20, language Spanish, everything else default
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: >-
+        The version shown in the bar at the bottom of the window. If the app
+        says an update is available, please check whether the problem still
+        happens with the [latest
+        release](https://github.com/elboletaire/manga-downloader/releases/latest)
+        first: sites change constantly and fixes ship often.
+      placeholder: e.g. v1.14.0
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: What happened
+      description: >-
+        What did you expect, and what happened instead? Open the log at the
+        bottom of the window, use its Copy button and paste it here. If the
+        download "worked" but the files are empty or don't open, say so.
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else? (optional)
+      description: >-
+        Whether it worked before, whether other series on the same site work,
+        how you installed the app (download, Homebrew), or screenshots.
+    validations:
+      required: false
