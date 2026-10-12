@@ -276,9 +276,8 @@ func TestFetchFile_RetriesOnTransformFailure(t *testing.T) {
 	}
 }
 
-// rateLimitedServer answers 429 to the first request, with the given
-// Retry-After header (none if empty), then serves the page. It records when
-// each request arrived.
+// rateLimitedServer answers 429 to the first request (with the given
+// Retry-After, if any), then serves the page. It records each request's arrival.
 func rateLimitedServer(t *testing.T, retryAfter func() string) (*httptest.Server, *[]time.Time) {
 	t.Helper()
 	var mu sync.Mutex

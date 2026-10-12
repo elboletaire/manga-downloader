@@ -35,9 +35,7 @@ type File struct {
 type ProgressCallback func(page, progress int, err error)
 
 // FetchChapter downloads all the pages of a chapter. Cancelling ctx cuts
-// short the waits between retries (failing the page); requests already under
-// way still finish. Sites implementing grabber.PagePacer are asked to pace
-// every page request, retries included.
+// short the waits between retries; requests already under way still finish.
 func FetchChapter(ctx context.Context, site grabber.Site, chapter *grabber.Chapter, onprogress ProgressCallback) ([]*File, error) {
 	var pace func()
 	if p, ok := site.(grabber.PagePacer); ok {
@@ -112,10 +110,9 @@ func FetchChapter(ctx context.Context, site grabber.Site, chapter *grabber.Chapt
 // FetchFile gets an online file returning a new *File with its contents.
 // On failure (either the GET itself, a mid-body read, or the optional
 // transform) it retries up to `retries` additional times, with a short
-// growing delay between attempts, or after a 429 the delay the server asked
-// for (see retryWait). transform, if non-nil, post-processes the downloaded
-// bytes (e.g. a site's own page.Transform) before they're stored. Cancelling
-// ctx abandons the wait before a retry and returns the context's error.
+// growing delay between attempts (or the server's Retry-After after a 429,
+// see retryWait). transform, if non-nil, post-processes the downloaded bytes.
+// Cancelling ctx abandons the wait before a retry.
 func FetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error)) (*File, error) {
 	return fetchFile(ctx, params, page, retries, transform, nil)
 }
@@ -154,10 +151,8 @@ func fetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 }
 
 // retryWait is the delay before retrying after attempt (0-based) failed with
-// err. A 429 waits as long as its Retry-After says (already capped at
-// http.MaxRetryAfter), or rateLimitDelay without one: the linear delay used
-// for other failures would come back while the limit is still in force and
-// burn the retry on another 429.
+// err. A 429 waits out its Retry-After (or rateLimitDelay): the linear delay
+// would retry while the rate limit still applies.
 func retryWait(err error, attempt uint8) time.Duration {
 	var se *http.StatusError
 	if errors.As(err, &se) && se.Code == stdhttp.StatusTooManyRequests {

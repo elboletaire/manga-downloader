@@ -45,20 +45,13 @@ func NewMangadex(g *Grabber) *Mangadex {
 	return &Mangadex{Grabber: g, rateLimiter: time.Tick(time.Minute / 39)}
 }
 
-// MangaDex@Home image servers sit behind a per-IP rate limit (Cloudflare
-// error 1015, a 429 with Retry-After up to 60s). Probed at about 1000
-// requests a minute: 971 back-to-back requests went through in 20s before
-// the first 429. Cached images come back in ~50ms, so the default 5 chapters
-// x 10 pages reached that within seconds and failed most chapters of a
-// two-volume download. The limit counts every request from the IP, so stay
-// well under it: 8 pages a second (480 a minute) leaves room for retries and
-// for a reader open in a browser on the same network.
+// mangadexPagesPerSecond stays well under the image servers' ~1000 requests
+// a minute per-IP limit (Cloudflare 1015), leaving room for retries and a
+// reader open on the same network.
 const mangadexPagesPerSecond = 8
 
-// mangadexMaxConcurrency caps the user's concurrency for this site. With the
-// pacing above more parallel downloads add nothing but a burst of requests
-// queued on the pacer; 2x5 still keeps the pace when the images aren't
-// cached and take over a second each.
+// mangadexMaxConcurrency caps the user's concurrency: the pacer already
+// keeps the pace, so more parallel downloads only queue bursts on it.
 var mangadexMaxConcurrency = MaxConcurrency{Chapters: 2, Pages: 5}
 
 // mangadexPagePacer spaces page requests evenly. It's shared by every

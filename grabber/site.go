@@ -110,11 +110,9 @@ type Site interface {
 	GetRetries() uint8
 }
 
-// PagePacer is implemented by sites whose image servers limit how fast pages
-// may be requested, which a concurrency cap alone can't guarantee: a handful
-// of parallel downloads of cached images still makes dozens of requests a
-// second. downloader.FetchChapter calls WaitPage before every page request,
-// retries included; it blocks until the request may go.
+// PagePacer is implemented by sites whose image servers limit the request
+// rate, which a concurrency cap alone can't enforce. WaitPage blocks until
+// the next page request may go out.
 type PagePacer interface {
 	WaitPage()
 }

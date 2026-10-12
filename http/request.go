@@ -58,10 +58,8 @@ const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/5
 // StatusError is returned for a response whose status isn't 200
 type StatusError struct {
 	Code int
-	// RetryAfter is the delay the server asked for in a Retry-After header
-	// (seconds or an HTTP date), capped at MaxRetryAfter; zero when it sent
-	// none. Callers with their own retry loop (downloader.FetchFile) wait
-	// this long before trying again.
+	// RetryAfter is the capped Retry-After delay, zero when the server sent none
+	// (retry loops that can wait it out, like downloader.FetchFile, honour it)
 	RetryAfter time.Duration
 }
 
@@ -79,10 +77,8 @@ var (
 	maxAttempts    = 4
 	retryBaseDelay = 500 * time.Millisecond
 	retryMaxDelay  = 8 * time.Second
-	// MaxRetryAfter caps the delay honoured from a Retry-After header, so a
-	// misbehaving server can't park a download for hours. A minute covers
-	// the rate-limit windows seen in the wild (a Cloudflare 1015 asks for up
-	// to 60s).
+	// MaxRetryAfter caps the honoured Retry-After delay, so a misbehaving
+	// server can't park a download for hours (Cloudflare's 1015 asks for 60s).
 	MaxRetryAfter = 60 * time.Second
 )
 
@@ -165,10 +161,8 @@ func request(t string, params Params) (io.ReadCloser, error) {
 			return nil, err
 		}
 		// honour a Retry-After delay if the server sent one; it replaces
-		// the exponential delay for the next attempt. This loop has no
-		// context to cancel it, so it stays within retryMaxDelay: callers
-		// that can wait longer (and be cancelled) use their own loop and
-		// StatusError.RetryAfter
+		// the exponential delay for the next attempt. This loop can't be
+		// cancelled, so it stays within retryMaxDelay (see StatusError.RetryAfter)
 		if retryAfterDelay > 0 {
 			nextDelay = min(retryAfterDelay, retryMaxDelay)
 		}
