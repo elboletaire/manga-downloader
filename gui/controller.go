@@ -1487,6 +1487,12 @@ func (e events) VolumePacked(v *core.Volume, name string, err error) {
 			j.State = JobSkipped
 			j.Reason = "cancelled before all of its chapters started"
 		}
+	case errors.Is(err, core.ErrSkippedVolume):
+		// its chapters were each counted as skipped already
+		if j != nil {
+			j.State = JobSkipped
+			j.Reason = err.Error()
+		}
 	case err != nil:
 		msg := fmt.Sprintf("%s: %s", label, err)
 		c.stats.failures = append(c.stats.failures, msg)

@@ -268,6 +268,18 @@ function ChapterList({
       }
       return;
     }
+    // and left on a volume's chapter goes up to its header
+    if (row?.kind === 'chapter' && grouping !== null && e.key === 'ArrowLeft') {
+      e.preventDefault();
+      for (let p = active - 1; p >= 0; p--) {
+        if (rows[p].kind === 'group') {
+          setActive(p);
+          list.reveal(p);
+          break;
+        }
+      }
+      return;
+    }
     if (row?.kind === 'group' && e.key === 'Enter') {
       e.preventDefault();
       toggleFold(row.key);

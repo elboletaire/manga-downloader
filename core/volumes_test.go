@@ -13,6 +13,7 @@ import (
 
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/packer"
+	"github.com/elboletaire/manga-downloader/ranges"
 )
 
 // chapters builds a sorted listing out of number/volume pairs
@@ -341,5 +342,23 @@ func TestDownloadVolumesIgnoredWhenBundling(t *testing.T) {
 	}
 	if rec.count("volume-") != 0 {
 		t.Errorf("volume events in bundle mode: %q", rec.events)
+	}
+}
+
+func TestDownloadVolumesAllSkipped(t *testing.T) {
+	site := newFakeSite(t, fakeChapter{number: 1, pages: 1}, fakeChapter{number: 2, pages: 1})
+	series, dir := newSeries(t, site, false)
+	site.Settings.Volumes = "1-2"
+	rec := &recorder{}
+
+	// every page of both chapters is excluded: the volume is skipped, not failed
+	if _, err := series.Download(context.Background(), listed(site), []ranges.Range{{Begin: 1, End: 1}}, "", rec); err != nil {
+		t.Fatal(err)
+	}
+	if rec.count("volume-failed 1 "+ErrSkippedVolume.Error()) != 1 || rec.count("skipped") != 2 {
+		t.Errorf("events %q, want both chapters skipped and the volume reported skipped", rec.events)
+	}
+	if len(cbzFiles(t, dir)) != 0 {
+		t.Error("an empty volume was written")
 	}
 }

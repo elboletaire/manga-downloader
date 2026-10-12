@@ -67,7 +67,8 @@ type Events interface {
 	VolumeArchived(v *Volume, n int)
 	// VolumePacked reports the end of v, with the file it wrote and the error,
 	// if any: a packing error, ErrEmptyVolume when none of its chapters could
-	// be downloaded, or the context's error when the run was cancelled before
+	// be downloaded, ErrSkippedVolume when --skip-pages emptied all of them
+	// (already reported by Skipped, so not a failure), or the context's error when the run was cancelled before
 	// all of them started
 	VolumePacked(v *Volume, name string, err error)
 }
@@ -97,6 +98,10 @@ func (NoEvents) VolumePacked(*Volume, string, error)     {}
 // could be downloaded, which leaves nothing to pack
 var ErrEmptyVolume = errors.New("none of its chapters could be downloaded")
 
+// ErrSkippedVolume is the VolumePacked error of a volume whose chapters were
+// all skipped by --skip-pages: there's nothing to pack, and nothing failed
+var ErrSkippedVolume = errors.New("--skip-pages excludes every page of its chapters")
+
 // volumeRun tracks a volume through the download: it's packed by whichever
 // of its chapters finishes last
 type volumeRun struct {
@@ -105,16 +110,21 @@ type volumeRun struct {
 	mu         sync.Mutex
 	remaining  int
 	downloaded grabber.Filterables
-	packed     bool
+	// skipped counts the chapters --skip-pages emptied
+	skipped int
+	packed  bool
 }
 
 // finish records one of the volume's chapters as done, d being nil when it
 // failed or was skipped, and reports whether it was the last one
-func (r *volumeRun) finish(d *packer.DownloadedChapter) bool {
+func (r *volumeRun) finish(d *packer.DownloadedChapter, skipped bool) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if d != nil {
 		r.downloaded = append(r.downloaded, d)
+	}
+	if skipped {
+		r.skipped++
 	}
 	r.remaining--
 	if r.remaining == 0 {
@@ -226,9 +236,10 @@ loop:
 			run := volumeOf[chap]
 			// what the chapter leaves for its volume, nil unless downloaded
 			var kept *packer.DownloadedChapter
+			skippedAll := false
 			if run != nil {
 				defer func() {
-					if run.finish(kept) {
+					if run.finish(kept, skippedAll) {
 						s.packVolume(run, outDir, ev)
 					}
 				}()
@@ -249,6 +260,7 @@ loop:
 			// the chapter
 			if skipped := chapter.SkipPages(skip); skipped > 0 && len(chapter.Pages) == 0 {
 				ev.Skipped(chapter)
+				skippedAll = true
 				return
 			}
 
@@ -342,7 +354,11 @@ func fillVolume(chapter *grabber.Chapter, listed grabber.Filterable) {
 // packVolume packs a volume whose chapters are all done, or reports it empty
 func (s *Series) packVolume(r *volumeRun, outDir string, ev Events) {
 	if len(r.downloaded) == 0 {
-		ev.VolumePacked(r.v, "", ErrEmptyVolume)
+		err := ErrEmptyVolume
+		if r.skipped == len(r.v.Chapters) {
+			err = ErrSkippedVolume
+		}
+		ev.VolumePacked(r.v, "", err)
 		return
 	}
 	downloaded := r.downloaded.SortByNumber()

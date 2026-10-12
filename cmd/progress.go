@@ -3,6 +3,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -315,6 +316,13 @@ func (pr *progress) VolumePacked(v *core.Volume, name string, err error) {
 	pr.mu.Lock()
 	vb := pr.volumes[v]
 	pr.mu.Unlock()
+	if errors.Is(err, core.ErrSkippedVolume) {
+		yellow("- skipping %s: %s", core.VolumeLabel(v.Number), err.Error())
+		if vb != nil {
+			vb.bar.Abort(false)
+		}
+		return
+	}
 	if err != nil {
 		red("- error packing %s: %s", core.VolumeLabel(v.Number), err.Error())
 		if vb != nil {
