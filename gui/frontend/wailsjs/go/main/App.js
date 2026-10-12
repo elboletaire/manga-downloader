@@ -14,6 +14,10 @@ export function ChooseFolder() {
   return window['go']['main']['App']['ChooseFolder']();
 }
 
+export function Clear() {
+  return window['go']['main']['App']['Clear']();
+}
+
 export function Load(arg1) {
   return window['go']['main']['App']['Load'](arg1);
 }

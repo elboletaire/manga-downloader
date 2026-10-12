@@ -8,6 +8,8 @@ export function Chapters():Promise<Array<main.ChapterDTO>>;
 
 export function ChooseFolder():Promise<string>;
 
+export function Clear():Promise<void>;
+
 export function Load(arg1:string):Promise<void>;
 
 export function Log():Promise<Array<main.LogDTO>>;

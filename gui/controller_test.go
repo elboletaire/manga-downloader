@@ -199,6 +199,61 @@ func TestLoadListsChaptersAndSelection(t *testing.T) {
 	}
 }
 
+func TestClearForgetsTheSeriesAndKeepsTheOptions(t *testing.T) {
+	c, _, _ := newTestController(t, false, nil, chapters(5, 2)...)
+	if err := c.Configure(func(s *grabber.Settings) { s.Format = "epub" }); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.SelectRange("1-2"); err != nil {
+		t.Fatal(err)
+	}
+	// a finished run's results, as the Activity tab shows them
+	c.mu.Lock()
+	c.jobs = []*Job{{}}
+	c.summary = &Summary{Saved: 2}
+	c.mu.Unlock()
+	gen, logged := c.SelectionGen(), len(c.Log())
+
+	if err := c.Clear(); err != nil {
+		t.Fatal(err)
+	}
+	if c.Loaded() || c.URL() != "" || c.Title() != "" || len(c.Chapters()) != 0 || c.SelectedCount() != 0 {
+		t.Errorf("Clear left a series: url %q, loaded %v, %d chapters", c.URL(), c.Loaded(), len(c.Chapters()))
+	}
+	if c.Summary() != nil || len(c.Jobs()) != 0 {
+		t.Errorf("Clear left the results: summary %v, %d jobs", c.Summary(), len(c.Jobs()))
+	}
+	if c.SelectionGen() == gen {
+		t.Error("Clear didn't change the selection generation, so the window keeps the old selection")
+	}
+	if language, scanlator := c.Filters(); language != nil || scanlator != nil {
+		t.Errorf("Clear left the filters: language %v, scanlator %v", language, scanlator)
+	}
+	if len(c.Log()) != logged {
+		t.Errorf("Clear changed the log: %d lines, want %d", len(c.Log()), logged)
+	}
+	if c.Settings().Format != "epub" {
+		t.Errorf("Clear changed the options: format %q", c.Settings().Format)
+	}
+}
+
+func TestClearRefusedWhileLoading(t *testing.T) {
+	const url = "https://example.com/manga/test"
+	c, _, _ := newTestController(t, false, nil, chapters(1, 1)...)
+	if err := c.BeginLoad(url); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Clear(); err != errBusy {
+		t.Fatalf("Clear while loading = %v; want errBusy", err)
+	}
+	if err := c.FinishLoad(url); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestStartValidatesBeforeDownloading(t *testing.T) {
 	c, _, _ := newTestController(t, false, nil, chapters(2, 1)...)
 	if err := c.Start(); err == nil {

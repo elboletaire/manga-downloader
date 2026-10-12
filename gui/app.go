@@ -332,6 +332,16 @@ func (a *App) Log() []LogDTO {
 	return out
 }
 
+// Clear forgets the loaded series (see Controller.Clear) and empties the
+// chapter list the window holds.
+func (a *App) Clear() error {
+	if err := a.ctrl.Clear(); err != nil {
+		return err
+	}
+	a.sink.Emit("chapters", a.Chapters())
+	return nil
+}
+
 // Load identifies the site for url and fetches its title and chapters. It
 // returns once loading has started; the outcome arrives in the state (loading,
 // loadError) and the "chapters" event.

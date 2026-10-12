@@ -533,6 +533,24 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       }
       finishLoad();
     },
+    async clear() {
+      if (loading || running) {
+        throw 'a series is loading or a download is running';
+      }
+      url = '';
+      loaded = false;
+      loadError = '';
+      identified = false;
+      applied = { language: '', scanlator: '' };
+      title = '';
+      chapters = [];
+      selected = new Set<number>();
+      jobs = [];
+      summary = null;
+      chaptersBus.emit([]);
+      selectionBus.emit([]);
+      push();
+    },
     async setSelected(index, on) {
       if (loading || running) {
         throw 'a series is loading or a download is running';

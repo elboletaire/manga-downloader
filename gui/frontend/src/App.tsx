@@ -78,6 +78,10 @@ export function App({ api }: { api: Api }) {
     setActionError('');
     api.load(target).catch((e) => setLoadRefusal(errorMessage(e)));
   };
+  const clear = () => {
+    setLoadRefusal('');
+    api.clear().catch((e) => setLoadRefusal(errorMessage(e)));
+  };
   const setOptions = (patch: Partial<Options>) => {
     setOptionError('');
     return optionsWriter.patch(patch).catch((e: unknown) => {
@@ -93,6 +97,7 @@ export function App({ api }: { api: Api }) {
       <SourceBar
         state={state}
         onLoad={load}
+        onClear={clear}
         onOptions={setOptions}
         onError={setOptionError}
         loadRefusal={loadRefusal}
