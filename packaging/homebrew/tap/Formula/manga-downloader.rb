@@ -1,6 +1,6 @@
 class MangaDownloader < Formula
   desc "Download manga chapters from supported sites into CBZ files"
-  homepage "https://elboletaire.github.io/manga-downloader/"
+  homepage "https://mangadownloader.cat/"
   version "1.11.1"
   license "AGPL-3.0-only"
 
