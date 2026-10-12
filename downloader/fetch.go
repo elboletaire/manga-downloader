@@ -117,8 +117,11 @@ func FetchFile(params http.RequestParams, page uint, retries uint8, transform fu
 	}
 }
 
-// fetchFileOnce performs a single GET + body read attempt
+// fetchFileOnce performs a single GET + body read attempt. DisableRetry is
+// set so the HTTP package's own retry loop doesn't fire — FetchFile has its
+// own retry loop and the two would otherwise multiply for every 5xx page.
 func fetchFileOnce(params http.RequestParams) (data []byte, err error) {
+	params.DisableRetry = true
 	body, err := http.Get(params)
 	if err != nil {
 		return

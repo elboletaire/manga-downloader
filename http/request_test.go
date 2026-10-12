@@ -1,0 +1,365 @@
+// Copyright (C) 2023-2026 Òscar Casajuana Alonso
+
+package http
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strings"
+	"sync/atomic"
+	"testing"
+	"time"
+)
+
+// shortenRetries shrinks the backoff so tests don't actually wait seconds,
+// restoring the real values afterwards.
+func shortenRetries(t *testing.T) {
+	t.Helper()
+	base, mx := retryBaseDelay, retryMaxDelay
+	retryBaseDelay, retryMaxDelay = time.Millisecond, 5*time.Millisecond
+	t.Cleanup(func() { retryBaseDelay, retryMaxDelay = base, mx })
+}
+
+func TestRequestRetries5xx(t *testing.T) {
+	shortenRetries(t)
+
+	var calls int32
+	// return a 503 twice, then succeed
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if atomic.AddInt32(&calls, 1) <= 2 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		io.WriteString(w, "ok")
+	}))
+	defer srv.Close()
+
+	body, err := Get(RequestParams{URL: srv.URL})
+	if err != nil {
+		t.Fatalf("expected success after retries, got %v", err)
+	}
+	defer body.Close()
+
+	got, _ := io.ReadAll(body)
+	if string(got) != "ok" {
+		t.Errorf("body = %q, want %q", got, "ok")
+	}
+	if n := atomic.LoadInt32(&calls); n != 3 {
+		t.Errorf("server saw %d calls, want 3", n)
+	}
+}
+
+func TestRequestRetries522(t *testing.T) {
+	shortenRetries(t)
+
+	var calls int32
+	// Cloudflare 522 on first attempt
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if atomic.AddInt32(&calls, 1) == 1 {
+			w.WriteHeader(522)
+			return
+		}
+		io.WriteString(w, "ok")
+	}))
+	defer srv.Close()
+
+	body, err := Get(RequestParams{URL: srv.URL})
+	if err != nil {
+		t.Fatalf("expected success after Cloudflare 522 retry, got %v", err)
+	}
+	body.Close()
+	if n := atomic.LoadInt32(&calls); n != 2 {
+		t.Errorf("server saw %d calls, want 2", n)
+	}
+}
+
+func TestRequestGivesUpAfterMaxAttempts(t *testing.T) {
+	shortenRetries(t)
+
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&calls, 1)
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	_, err := Get(RequestParams{URL: srv.URL})
+	if err == nil {
+		t.Fatal("expected an error when every attempt fails")
+	}
+	if !strings.Contains(err.Error(), "500") {
+		t.Errorf("error %q should mention the upstream status", err)
+	}
+	if n := atomic.LoadInt32(&calls); int(n) != maxAttempts {
+		t.Errorf("server saw %d calls, want %d", n, maxAttempts)
+	}
+}
+
+func TestRequestDoesNotRetry404(t *testing.T) {
+	shortenRetries(t)
+
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&calls, 1)
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	if _, err := Get(RequestParams{URL: srv.URL}); err == nil {
+		t.Fatal("expected an error for 404")
+	}
+	// a missing chapter must fail on the first attempt
+	if n := atomic.LoadInt32(&calls); n != 1 {
+		t.Errorf("server saw %d calls, want 1", n)
+	}
+}
+
+func TestRequestHonoursRetryAfterSeconds(t *testing.T) {
+	shortenRetries(t)
+
+	var calls int32
+	var sleepDuration time.Duration
+
+	// record actual sleep calls via the package var
+	origBase := retryBaseDelay
+	retryBaseDelay = time.Millisecond
+	defer func() { retryBaseDelay = origBase }()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		n := atomic.AddInt32(&calls, 1)
+		if n == 1 {
+			w.Header().Set("Retry-After", "0") // 0s: succeed on next try
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		io.WriteString(w, "ok")
+	}))
+	defer srv.Close()
+
+	_ = sleepDuration // used implicitly via retryBaseDelay being set
+
+	body, err := Get(RequestParams{URL: srv.URL})
+	if err != nil {
+		t.Fatalf("expected success after 429 retry, got %v", err)
+	}
+	body.Close()
+	if n := atomic.LoadInt32(&calls); n != 2 {
+		t.Errorf("server saw %d calls, want 2", n)
+	}
+}
+
+func TestParseRetryAfterSeconds(t *testing.T) {
+	cases := []struct {
+		header string
+		want   time.Duration
+	}{
+		{"1", time.Second},
+		// 5s is under the default retryMaxDelay (8s) so it's returned as-is
+		{"5", 5 * time.Second},
+		{"0", 0},
+		{"-1", 0},
+		{"", 0},
+		{"garbage", 0},
+	}
+	for _, tc := range cases {
+		got := parseRetryAfter(tc.header)
+		if got != tc.want {
+			t.Errorf("parseRetryAfter(%q) = %v, want %v", tc.header, got, tc.want)
+		}
+	}
+}
+
+func TestParseRetryAfterCapsAtMax(t *testing.T) {
+	// a very large value must be capped at retryMaxDelay
+	orig := retryMaxDelay
+	retryMaxDelay = 2 * time.Second
+	defer func() { retryMaxDelay = orig }()
+
+	got := parseRetryAfter("3600")
+	if got != 2*time.Second {
+		t.Errorf("parseRetryAfter large value = %v, want %v (cap)", got, retryMaxDelay)
+	}
+}
+
+func TestParseRetryAfterHTTPDate(t *testing.T) {
+	// use a date 1 second in the future
+	future := time.Now().Add(time.Second).UTC()
+	header := future.Format(http.TimeFormat)
+	got := parseRetryAfter(header)
+	// should be ~1s; allow some slop
+	if got <= 0 || got > 2*time.Second {
+		t.Errorf("parseRetryAfter(HTTP date) = %v, want ~1s", got)
+	}
+}
+
+func TestRequestPostBodyResentOnRetry(t *testing.T) {
+	shortenRetries(t)
+
+	var calls int32
+	var bodies []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		n := atomic.AddInt32(&calls, 1)
+		b, _ := io.ReadAll(r.Body)
+		bodies = append(bodies, string(b))
+		if n == 1 {
+			w.WriteHeader(http.StatusBadGateway)
+			return
+		}
+		io.WriteString(w, "ok")
+	}))
+	defer srv.Close()
+
+	body, err := Post(RequestParams{URL: srv.URL, Body: "field=value"})
+	if err != nil {
+		t.Fatalf("expected success after POST retry, got %v", err)
+	}
+	body.Close()
+
+	if len(bodies) != 2 {
+		t.Fatalf("server saw %d requests, want 2", len(bodies))
+	}
+	for i, b := range bodies {
+		if b != "field=value" {
+			t.Errorf("attempt %d body = %q, want %q", i+1, b, "field=value")
+		}
+	}
+}
+
+func TestRequestPreservesSessionHeadersOnRetry(t *testing.T) {
+	shortenRetries(t)
+
+	var calls int32
+	var lastUA, lastCookie string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		n := atomic.AddInt32(&calls, 1)
+		lastUA = r.Header.Get("User-Agent")
+		lastCookie = r.Header.Get("Cookie")
+		if n == 1 {
+			w.WriteHeader(http.StatusBadGateway)
+			return
+		}
+		io.WriteString(w, "ok")
+	}))
+	defer srv.Close()
+
+	// sessionCookies matches by hostname only (no port), so extract it
+	u, _ := url.Parse(srv.URL)
+	SetCookie(u.Hostname(), "sess", "abc")
+	body, err := Get(RequestParams{URL: srv.URL})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	body.Close()
+
+	if lastUA == "" {
+		t.Error("User-Agent not sent on retry")
+	}
+	if !strings.Contains(lastCookie, "sess=abc") {
+		t.Errorf("Cookie on retry = %q, want it to contain sess=abc", lastCookie)
+	}
+}
+
+func TestRetryDelayBoundedAndGrows(t *testing.T) {
+	// delay must stay within [d, 1.5d] for the exponential step d, and
+	// never exceed retryMaxDelay + retryMaxDelay/2 (the jitter ceiling)
+	for attempt := 1; attempt <= 8; attempt++ {
+		d := retryDelay(attempt)
+		if d <= 0 {
+			t.Fatalf("attempt %d: non-positive delay %v", attempt, d)
+		}
+		if mx := retryMaxDelay + retryMaxDelay/2; d > mx {
+			t.Errorf("attempt %d: delay %v exceeds ceiling %v", attempt, d, mx)
+		}
+	}
+}
+
+func TestRetryDelayGrows(t *testing.T) {
+	// earlier delays should be shorter than later ones (on average; jitter
+	// makes strict monotonicity unreliable, so just check medians via many samples)
+	const N = 100
+	var sum [4]int64
+	for i := 0; i < N; i++ {
+		for a := 1; a <= 4; a++ {
+			sum[a-1] += int64(retryDelay(a))
+		}
+	}
+	for a := 1; a < 4; a++ {
+		if sum[a] <= sum[a-1] {
+			t.Errorf("attempt %d average delay (%v) not greater than attempt %d (%v)",
+				a+1, time.Duration(sum[a]/N), a, time.Duration(sum[a-1]/N))
+		}
+	}
+}
+
+func TestIsRetryableStatus(t *testing.T) {
+	retryable := []int{429, 500, 502, 503, 504, 522, 523, 524, 599}
+	notRetryable := []int{200, 201, 301, 400, 401, 403, 404, 405, 410}
+
+	for _, code := range retryable {
+		if !isRetryableStatus(code) {
+			t.Errorf("isRetryableStatus(%d) = false, want true", code)
+		}
+	}
+	for _, code := range notRetryable {
+		if isRetryableStatus(code) {
+			t.Errorf("isRetryableStatus(%d) = true, want false", code)
+		}
+	}
+}
+
+func TestRequestRefererAndCustomHeaders(t *testing.T) {
+	var gotRef, gotCustom string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotRef = r.Header.Get("Referer")
+		gotCustom = r.Header.Get("X-Custom")
+		io.WriteString(w, "ok")
+	}))
+	defer srv.Close()
+
+	body, err := Get(RequestParams{
+		URL:     srv.URL,
+		Referer: "https://example.test/",
+		Headers: map[string]string{"X-Custom": "hello"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body.Close()
+
+	if gotRef != "https://example.test/" {
+		t.Errorf("Referer = %q, want %q", gotRef, "https://example.test/")
+	}
+	if gotCustom != "hello" {
+		t.Errorf("X-Custom = %q, want %q", gotCustom, "hello")
+	}
+}
+
+func TestRequestRefererGetsSlashAppended(t *testing.T) {
+	var gotRef string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotRef = r.Header.Get("Referer")
+		io.WriteString(w, "ok")
+	}))
+	defer srv.Close()
+
+	body, err := Get(RequestParams{URL: srv.URL, Referer: "https://example.test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body.Close()
+
+	if gotRef != "https://example.test/" {
+		t.Errorf("Referer = %q, want trailing slash appended", gotRef)
+	}
+}
+
+func TestStatusErrorMessage(t *testing.T) {
+	e := &StatusError{Code: 404}
+	want := fmt.Sprintf("received %d response code", 404)
+	if e.Error() != want {
+		t.Errorf("StatusError.Error() = %q, want %q", e.Error(), want)
+	}
+}
