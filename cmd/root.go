@@ -102,6 +102,8 @@ func Run(cmd *cobra.Command, args []string) {
 		exitSettingError(err)
 	}
 
+	// load the series (identify and open), then close the browser after
+	releaseLd := browser.Hold()
 	s, errs := core.Identify(getUrlArg(args), &settings)
 	if len(errs) > 0 {
 		red("Errors testing site (a site may be down):")
@@ -110,11 +112,13 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 	}
 	if s == nil {
+		releaseLd()
 		yellow("Site not recognised")
 		exit(1)
 	}
 
 	series, err := core.Open(s, &settings)
+	releaseLd()
 	if err != nil {
 		exitOpenError(err)
 	}
@@ -170,6 +174,8 @@ func Run(cmd *cobra.Command, args []string) {
 		// Non-TTY (piped, CI, docker without -t): plain line-based output.
 		// No interactive bars; one line per chapter start/done/fail.
 		// Non-terminal output defaults to 80-column-equivalent logging.
+		releaseDl := browser.Hold()
+		defer releaseDl()
 		ev := plainEvents{}
 		bundleFile, err := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
 		if !settings.Bundle {
@@ -204,14 +210,17 @@ func Run(cmd *cobra.Command, args []string) {
 		err  error
 	}
 	resultCh := make(chan downloadResult, 1)
+	releaseDl := browser.Hold()
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
 				// Restore the terminal before the stack trace is printed.
 				prog.Kill()
+				releaseDl()
 				panic(r)
 			}
 		}()
+		defer releaseDl()
 		file, dlErr := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
 		prog.Send(downloadDoneMsg{})
 		resultCh <- downloadResult{file: file, err: dlErr}

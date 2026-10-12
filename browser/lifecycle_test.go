@@ -107,7 +107,6 @@ func withFake(t *testing.T) (*fakeBrowser, func() []string) {
 		notice.SetHandler(nil)
 		SetAttentionHandler(nil)
 		SetVisible(false)
-		SetIdleTimeout(0)
 		resetHosts()
 	})
 	return f, func() []string {
@@ -340,28 +339,28 @@ func TestCloseAbortsARunningLoad(t *testing.T) {
 	}
 }
 
-func TestIdleTimeoutClosesTheBrowser(t *testing.T) {
+func TestBrowserClosesWhenHoldIsReleased(t *testing.T) {
 	f, _ := withFake(t)
-	SetIdleTimeout(50 * time.Millisecond)
 
+	release := Hold()
 	if err := run(ok); err != nil {
 		t.Fatal(err)
 	}
-	deadline := time.Now().Add(2 * time.Second)
-	for {
-		if _, closed := f.counts(); closed == 1 {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("the idle browser was never closed")
-		}
-		time.Sleep(10 * time.Millisecond)
+	if launched, closed := f.counts(); launched != 1 || closed != 0 {
+		t.Errorf("launched %d, closed %d; want browser open while held", launched, closed)
 	}
+
+	release()
+	if _, closed := f.counts(); closed != 1 {
+		t.Errorf("closed %d after release; want browser closed immediately", closed)
+	}
+
+	// next run starts a fresh browser
 	if err := run(ok); err != nil {
 		t.Fatal(err)
 	}
 	if launched, _ := f.counts(); launched != 2 {
-		t.Errorf("launched %d, want a new browser after the idle close", launched)
+		t.Errorf("launched %d, want a new browser after the held one was released", launched)
 	}
 }
 
@@ -486,30 +485,26 @@ func TestCloseAbortsASlowStart(t *testing.T) {
 	}
 }
 
-func TestHeldBrowserIsNotIdleClosed(t *testing.T) {
+func TestReleaseHoldsAreIdempotent(t *testing.T) {
 	f, _ := withFake(t)
-	SetIdleTimeout(30 * time.Millisecond)
 
 	release := Hold()
 	if err := run(ok); err != nil {
 		t.Fatal(err)
 	}
-	time.Sleep(150 * time.Millisecond)
 	if _, closed := f.counts(); closed != 0 {
-		t.Fatal("a held browser was closed for being idle")
+		t.Fatal("browser was closed while still held")
 	}
 
+	// calling release multiple times is safe; the browser only closes once
 	release()
-	release() // harmless twice
-	deadline := time.Now().Add(2 * time.Second)
-	for {
-		if _, closed := f.counts(); closed == 1 {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("the released browser was never idle-closed")
-		}
-		time.Sleep(10 * time.Millisecond)
+	if _, closed := f.counts(); closed != 1 {
+		t.Errorf("closed %d after first release; want 1", closed)
+	}
+	release() // harmless; already released
+
+	if _, closed := f.counts(); closed != 1 {
+		t.Errorf("closed %d after second release; want still 1", closed)
 	}
 }
 

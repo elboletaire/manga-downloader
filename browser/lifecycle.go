@@ -172,7 +172,6 @@ func Close() {
 
 	mu.Lock()
 	defer mu.Unlock()
-	stopIdle()
 	teardown()
 
 	abortMu.Lock()
@@ -180,69 +179,28 @@ func Close() {
 	abortMu.Unlock()
 }
 
-// idle closes the browser once it's been unused for idleTimeout (zero keeps
-// it until Close). idleGen tells the timer whether the browser was used since
-// it was armed. Both guarded by mu.
-var (
-	idleTimeout time.Duration
-	idleTimer   *time.Timer
-	idleGen     uint64
-	// holds counts the Hold calls not yet released
-	holds int
-)
+// holds counts the Hold calls not yet released, guarded by mu
+var holds int
 
-// Hold keeps the idle timeout from closing the browser until the returned
-// release is called, for work (a download run) that uses it now and then
-// and must not lose it in between. release is safe to call more than once.
+// Hold keeps the browser open until the returned release is called, for work
+// (a download run) that uses it now and then. The browser closes when the last
+// holder releases, so it doesn't linger after the operation is done. release is
+// safe to call more than once.
 func Hold() (release func()) {
 	mu.Lock()
 	defer mu.Unlock()
 	holds++
-	stopIdle()
 	var once sync.Once
 	return func() {
 		once.Do(func() {
 			mu.Lock()
 			defer mu.Unlock()
 			holds--
-			armIdle()
+			if holds <= 0 && inst != nil {
+				teardown()
+			}
 		})
 	}
-}
-
-// SetIdleTimeout closes the browser after it's gone unused for d, so a
-// long-running app doesn't keep it (and possibly its window) open after the
-// pages that needed it are done. Zero, the default, keeps it until Close.
-func SetIdleTimeout(d time.Duration) {
-	mu.Lock()
-	defer mu.Unlock()
-	idleTimeout = d
-	stopIdle()
-}
-
-// stopIdle disarms the idle timer. Callers must hold mu.
-func stopIdle() {
-	idleGen++
-	if idleTimer != nil {
-		idleTimer.Stop()
-		idleTimer = nil
-	}
-}
-
-// armIdle starts the idle countdown after a page load. Callers must hold mu.
-func armIdle() {
-	stopIdle()
-	if idleTimeout <= 0 || inst == nil || holds > 0 {
-		return
-	}
-	gen := idleGen
-	idleTimer = time.AfterFunc(idleTimeout, func() {
-		mu.Lock()
-		defer mu.Unlock()
-		if gen == idleGen {
-			teardown()
-		}
-	})
 }
 
 // pageOp is one page operation run in the shared browser's tab. ctx ends when
@@ -269,7 +227,6 @@ type hooks struct {
 // may be dead or stuck. That's deliberate: a failed browser is always
 // discarded, at the cost of passing a check again. Callers must hold mu.
 func runPage(abort context.Context, pageURL string, timeout time.Duration, escalate bool, op pageOp) error {
-	stopIdle()
 	host := hostOf(pageURL)
 
 	err := attempt(host, pageURL, timeout, abort, op)
@@ -281,20 +238,18 @@ func runPage(abort context.Context, pageURL string, timeout time.Duration, escal
 			err = attempt(host, pageURL, visibleTimeout, abort, op)
 		}
 	}
-	if err == nil {
-		armIdle()
-		return nil
-	}
+	if err != nil {
+		if inst != nil && !errors.Is(err, ErrClosed) {
+			notice.Info("Closing the browser after the failure, so the next try starts a fresh one.")
+		}
+		teardown()
 
-	if inst != nil && !errors.Is(err, ErrClosed) {
-		notice.Info("Closing the browser after the failure, so the next try starts a fresh one.")
+		if errors.As(err, &ce) {
+			return fmt.Errorf("%w: the challenge may not have been solved in time", err)
+		}
+		return err
 	}
-	teardown()
-
-	if errors.As(err, &ce) {
-		return fmt.Errorf("%w: the challenge may not have been solved in time", err)
-	}
-	return err
+	return nil
 }
 
 // attempt is a single run of op, bounded by timeout (zero picks the default
