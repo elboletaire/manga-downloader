@@ -5,9 +5,12 @@ package http
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // Params is an interface for request parameters
@@ -31,6 +34,11 @@ type RequestParams struct {
 	// application/x-www-form-urlencoded (used by wp-admin/admin-ajax.php
 	// style endpoints, i.e. utoon.us)
 	Body string
+	// DisableRetry disables the HTTP-level exponential-backoff retry for
+	// this request. Set it when the caller (e.g. downloader.FetchFile) has
+	// its own retry loop so the two mechanisms don't multiply into absurd
+	// wait times for page downloads.
+	DisableRetry bool
 }
 
 // GetURL returns the request URL
@@ -56,8 +64,115 @@ func (e *StatusError) Error() string {
 	return fmt.Sprintf("received %d response code", e.Code)
 }
 
-// request sends a request to the given URL
-func request(t string, params Params) (body io.ReadCloser, err error) {
+// Retry policy for transient upstream failures. Some sites sit on flaky
+// origins that intermittently return Cloudflare 52x errors or 429s on
+// otherwise valid requests. Without retries a single such blip fails a whole
+// chapter or chapter list fetch.
+//
+// These are vars rather than consts so tests can shrink the delays.
+var (
+	maxAttempts    = 4
+	retryBaseDelay = 500 * time.Millisecond
+	retryMaxDelay  = 8 * time.Second
+)
+
+// isRetryableStatus reports whether a response code is worth another try.
+// 5xx covers both genuine origin errors and Cloudflare's 52x family (522
+// connection timed out, 523 origin unreachable, 524 timeout). 429 is included
+// because backing off is exactly the right response to a rate-limit. Every
+// 4xx other than 429 is excluded: a 404 for a chapter that doesn't exist must
+// fail immediately rather than costing four requests and several seconds.
+func isRetryableStatus(code int) bool {
+	return code == http.StatusTooManyRequests || (code >= 500 && code <= 599)
+}
+
+// retryDelay returns the backoff before the given attempt number (1-based),
+// growing exponentially from retryBaseDelay up to retryMaxDelay, with up to
+// 50% jitter so concurrent page downloads that fail together don't all come
+// back at the same instant.
+func retryDelay(attempt int) time.Duration {
+	d := retryBaseDelay << (attempt - 1)
+	if d > retryMaxDelay || d <= 0 {
+		d = retryMaxDelay
+	}
+	return d + time.Duration(rand.Int63n(int64(d/2)+1))
+}
+
+// parseRetryAfter parses a Retry-After header value (seconds integer or HTTP
+// date) and returns the indicated delay, capped at retryMaxDelay. Returns 0
+// if the header is absent or unparseable.
+func parseRetryAfter(header string) time.Duration {
+	if header == "" {
+		return 0
+	}
+	// try seconds integer first
+	if secs, err := strconv.ParseFloat(strings.TrimSpace(header), 64); err == nil && secs > 0 {
+		d := time.Duration(secs * float64(time.Second))
+		if d > retryMaxDelay {
+			d = retryMaxDelay
+		}
+		return d
+	}
+	// try HTTP date
+	if t, err := http.ParseTime(header); err == nil {
+		d := time.Until(t)
+		if d < 0 {
+			return 0
+		}
+		if d > retryMaxDelay {
+			d = retryMaxDelay
+		}
+		return d
+	}
+	return 0
+}
+
+// request sends a request to the given URL, retrying transient failures with
+// exponential backoff. Both GET and POST are retried safely: POST bodies are
+// rebuilt from params on each attempt so the body reader is never exhausted.
+// Retrying is skipped when RequestParams.DisableRetry is true.
+func request(t string, params Params) (io.ReadCloser, error) {
+	rp, _ := params.(RequestParams)
+	attempts := maxAttempts
+	if rp.DisableRetry {
+		attempts = 1
+	}
+
+	var lastErr error
+	var nextDelay time.Duration // overrides exponential backoff when set
+
+	for attempt := 1; attempt <= attempts; attempt++ {
+		if attempt > 1 {
+			if nextDelay > 0 {
+				time.Sleep(nextDelay)
+				nextDelay = 0
+			} else {
+				time.Sleep(retryDelay(attempt - 1))
+			}
+		}
+
+		body, retryAfterDelay, retryable, err := doRequest(t, params)
+		if err == nil {
+			return body, nil
+		}
+		lastErr = err
+		if !retryable {
+			return nil, err
+		}
+		// honour a Retry-After delay if the server sent one; it replaces
+		// the exponential delay for the next attempt
+		if retryAfterDelay > 0 {
+			nextDelay = retryAfterDelay
+		}
+	}
+
+	return nil, fmt.Errorf("giving up after %d attempts: %w", attempts, lastErr)
+}
+
+// doRequest performs a single attempt and reports whether to retry, plus any
+// server-requested delay (Retry-After). The request is built fresh on every
+// call so the body reader is never exhausted across retries.
+func doRequest(t string, params Params) (body io.ReadCloser, retryAfter time.Duration, retryable bool, err error) {
 	tr := &http.Transport{
 		DisableCompression: true,
 	}
@@ -72,7 +187,11 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 		reqBody = strings.NewReader(rp.Body)
 	}
 
-	req, _ := http.NewRequest(t, params.GetURL(), reqBody)
+	req, err := http.NewRequest(t, params.GetURL(), reqBody)
+	if err != nil {
+		// malformed URL: never going to succeed
+		return nil, 0, false, err
+	}
 	req.Header.Set("User-Agent", sessionUserAgent(userAgent))
 	if cookies := sessionCookies(req.URL.Hostname()); cookies != "" {
 		req.Header.Set("Cookie", cookies)
@@ -83,7 +202,7 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 	if ref := params.GetReferer(); ref != "" {
 		// browsers always send at least the root path in the referer; some
 		// image cdns reject referers without it
-		if u, err := url.Parse(ref); err == nil && u.Path == "" {
+		if u, parseErr := url.Parse(ref); parseErr == nil && u.Path == "" {
 			ref += "/"
 		}
 		req.Header.Add("Referer", ref)
@@ -100,7 +219,9 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return
+		// transport-level failures (connection reset, timeout, DNS hiccup)
+		// are transient enough to be worth another attempt
+		return nil, 0, true, err
 	}
 
 	// harvest any session cookies the server sets (e.g. a PHPSESSID tied to
@@ -115,10 +236,14 @@ func request(t string, params Params) (body io.ReadCloser, err error) {
 	}
 
 	if resp.StatusCode != 200 {
-		err = &StatusError{Code: resp.StatusCode}
-		return
+		// drain a bounded amount before closing so the connection can go
+		// back to the pool instead of being torn down on every failure
+		io.Copy(io.Discard, io.LimitReader(resp.Body, 4<<10))
+		resp.Body.Close()
+
+		ra := parseRetryAfter(resp.Header.Get("Retry-After"))
+		return nil, ra, isRetryableStatus(resp.StatusCode), &StatusError{Code: resp.StatusCode}
 	}
 
-	body = resp.Body
-	return
+	return resp.Body, 0, false, nil
 }
