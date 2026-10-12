@@ -212,6 +212,9 @@ func newProgressModel(seriesTitle, bundleRange string, bundle, showLang, hasDark
 }
 
 // makeBar creates a progress.Model with brand gradient colours.
+// The fill glyphs are '▇' (U+2587, lower seven-eighths block) for both the
+// filled and empty portions, so each row occupies only 7/8 of the cell height
+// and leaves a 1-pixel gap between stacked rows.
 func (m progressModel) makeBar(width int) *progress.Model {
 	var from, to string
 	if m.hasDarkBg {
@@ -225,6 +228,7 @@ func (m progressModel) makeBar(width int) *progress.Model {
 		progress.WithoutPercentage(),
 		progress.WithWidth(width),
 		progress.WithColors(lipgloss.Color(from), lipgloss.Color(to)),
+		progress.WithFillCharacters('▇', '▇'),
 	)
 	return &b
 }
@@ -236,6 +240,7 @@ func makeDangerBar(width int) *progress.Model {
 		progress.WithoutPercentage(),
 		progress.WithWidth(width),
 		progress.WithColors(lipgloss.Color(danger), lipgloss.Color(danger)),
+		progress.WithFillCharacters('▇', '▇'),
 	)
 	return &b
 }
