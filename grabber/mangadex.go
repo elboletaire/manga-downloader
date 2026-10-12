@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/elboletaire/manga-downloader/http"
@@ -42,6 +43,62 @@ func NewMangadex(g *Grabber) *Mangadex {
 	// we set the rate limit at 39 calls per minute instead of 40 to make sure the rate limit is under the threshold,
 	// otherwise we occasionally get hit by the rate limiter.
 	return &Mangadex{Grabber: g, rateLimiter: time.Tick(time.Minute / 39)}
+}
+
+// MangaDex@Home image servers sit behind a per-IP rate limit (Cloudflare
+// error 1015, a 429 with Retry-After up to 60s). Probed at about 1000
+// requests a minute: 971 back-to-back requests went through in 20s before
+// the first 429. Cached images come back in ~50ms, so the default 5 chapters
+// x 10 pages reached that within seconds and failed most chapters of a
+// two-volume download. The limit counts every request from the IP, so stay
+// well under it: 8 pages a second (480 a minute) leaves room for retries and
+// for a reader open in a browser on the same network.
+const mangadexPagesPerSecond = 8
+
+// mangadexMaxConcurrency caps the user's concurrency for this site. With the
+// pacing above more parallel downloads add nothing but a burst of requests
+// queued on the pacer; 2x5 still keeps the pace when the images aren't
+// cached and take over a second each.
+var mangadexMaxConcurrency = MaxConcurrency{Chapters: 2, Pages: 5}
+
+// mangadexPagePacer spaces page requests evenly. It's shared by every
+// Mangadex instance because the limit is per IP, not per download.
+var mangadexPagePacer = &pacer{interval: time.Second / mangadexPagesPerSecond}
+
+// pacer hands out request slots at most one per interval
+type pacer struct {
+	mu       sync.Mutex
+	interval time.Duration
+	next     time.Time
+}
+
+// wait blocks until the caller's slot comes up
+func (p *pacer) wait() {
+	p.mu.Lock()
+	now := time.Now()
+	slot := p.next
+	if slot.Before(now) {
+		slot = now
+	}
+	p.next = slot.Add(p.interval)
+	p.mu.Unlock()
+	time.Sleep(time.Until(slot))
+}
+
+// GetMaxConcurrency caps the configured concurrency at what the image
+// servers tolerate. Lower settings are kept; higher ones are clamped, since
+// the limit is the server's and going over it only gets pages refused.
+func (m *Mangadex) GetMaxConcurrency() MaxConcurrency {
+	mc := m.Grabber.GetMaxConcurrency()
+	mc.Chapters = min(mc.Chapters, mangadexMaxConcurrency.Chapters)
+	mc.Pages = min(mc.Pages, mangadexMaxConcurrency.Pages)
+	return mc
+}
+
+// WaitPage paces page downloads to the image servers' rate limit
+// (PagePacer)
+func (m *Mangadex) WaitPage() {
+	mangadexPagePacer.wait()
 }
 
 // mangadexChapterURL checks if the URL is a chapter URL (not a series URL).
@@ -268,6 +325,7 @@ func (m *Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rbody.Close()
 	// parse json body
 	body := mangadexPagesFeed{}
 	if err = json.NewDecoder(rbody).Decode(&body); err != nil {
