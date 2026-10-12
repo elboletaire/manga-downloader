@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { assetOS, sumDownloads, compact, fetchStats, renderStats, latestRelease, EN_LABELS } from './stats'
+import { assetOS, sumDownloads, compact, fetchStats, renderStats, latestRelease, EN_LABELS, downloadsBadgeEndpoint, dockerPullsBadgeEndpoint } from './stats'
 
 describe('assetOS', () => {
   it('returns null for .md5 files', () => {
@@ -466,5 +466,68 @@ describe('EN_LABELS', () => {
     const enJson = JSON.parse(readFileSync(fileURLToPath(new URL('../locales/en.json', import.meta.url)), 'utf8'))
     expect(EN_LABELS.downloads).toBe(enJson.stats.downloads)
     expect(EN_LABELS.dockerPulls).toBe(enJson.stats.dockerPulls)
+  })
+})
+
+describe('downloadsBadgeEndpoint', () => {
+  it('returns null when stats is null', () => {
+    expect(downloadsBadgeEndpoint(null)).toBeNull()
+  })
+
+  it('returns a valid shields.io endpoint object with compact total', () => {
+    const stats = {
+      total: 13319,
+      byOS: { windows: 6146, macos: 4000, linux: 3173 },
+      dockerPulls: 25065,
+      latest: null,
+    }
+    const result = downloadsBadgeEndpoint(stats)
+    expect(result).not.toBeNull()
+    expect(result?.schemaVersion).toBe(1)
+    expect(result?.label).toBe('downloads')
+    expect(result?.message).toBe('13K+')
+    expect(result?.color).toBe('blue')
+  })
+
+  it('uses compact formatting from the same function', () => {
+    const stats = {
+      total: 1000,
+      byOS: { windows: 1000, macos: 0, linux: 0 },
+      dockerPulls: null,
+      latest: null,
+    }
+    const result = downloadsBadgeEndpoint(stats)
+    expect(result?.message).toBe('1K')
+  })
+})
+
+describe('dockerPullsBadgeEndpoint', () => {
+  it('returns null when stats is null', () => {
+    expect(dockerPullsBadgeEndpoint(null)).toBeNull()
+  })
+
+  it('returns null when dockerPulls is null', () => {
+    const stats = {
+      total: 13319,
+      byOS: { windows: 6146, macos: 4000, linux: 3173 },
+      dockerPulls: null,
+      latest: null,
+    }
+    expect(dockerPullsBadgeEndpoint(stats)).toBeNull()
+  })
+
+  it('returns a valid shields.io endpoint object with compact docker pull count', () => {
+    const stats = {
+      total: 13319,
+      byOS: { windows: 6146, macos: 4000, linux: 3173 },
+      dockerPulls: 25065,
+      latest: null,
+    }
+    const result = dockerPullsBadgeEndpoint(stats)
+    expect(result).not.toBeNull()
+    expect(result?.schemaVersion).toBe(1)
+    expect(result?.label).toBe('docker pulls')
+    expect(result?.message).toBe('25K+')
+    expect(result?.color).toBe('blue')
   })
 })
