@@ -331,3 +331,29 @@ func TestJsStringSlice(t *testing.T) {
 		t.Error("jsStringSlice(missing) should have errored")
 	}
 }
+
+func TestManganeloResolveSeriesURL(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		// chapter URLs: strip the /chapter-N suffix
+		{"https://www.mangabats.com/manga/after-the-possessor-left/chapter-27", "https://www.mangabats.com/manga/after-the-possessor-left"},
+		{"https://www.manganato.gg/manga/apotheosis/chapter-1297", "https://www.manganato.gg/manga/apotheosis"},
+		{"https://www.manganato.gg/manga/apotheosis/chapter-1.5", "https://www.manganato.gg/manga/apotheosis"},
+		{"https://www.manganato.gg/manga/apotheosis/chapter-1297/", "https://www.manganato.gg/manga/apotheosis"},
+		// series URLs: unchanged
+		{"https://www.mangabats.com/manga/after-the-possessor-left", "https://www.mangabats.com/manga/after-the-possessor-left"},
+		{"https://www.manganato.gg/manga/apotheosis", "https://www.manganato.gg/manga/apotheosis"},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			m := &Manganelo{Grabber: &Grabber{URL: c.in}}
+			m.resolveSeriesURL()
+			if m.URL != c.want {
+				t.Errorf("resolveSeriesURL(%q) URL = %q, want %q", c.in, m.URL, c.want)
+			}
+		})
+	}
+}

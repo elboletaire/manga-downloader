@@ -225,23 +225,39 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitleStrip: `^#?\d+(\.\d+)?\s*\.?\s*Bölüm$`,
 		Image:             "#images img.reader-img",
 	},
-	// ritharscans.com: chapter pages aren't in <img> tags at all, they're
-	// parsed out of an Alpine.js `immersiveReader(...)` blob (see
-	// getPlainHTMLImageURL), so Image doesn't matter for it.
-	// writerscans.com & mistscans.com (meowing.org platform): each chapter
-	// row is a plain <a> inside #chapters (the number in a child span, see
-	// FetchChapters/Chapter); reader page images are lazy-loaded (a
-	// placeholder `src` and a `uid` attribute), see the getPlainHTMLImageURL
-	// template-literal fallback. Image must stay scoped to the reader: a
-	// bare "img" also picks up the header's icon <img>s, which have no uid
-	// and turn into bare uploads/ URLs that 403. It's a union so it matches
-	// both sites' reader markup.
+	// ritharscans.com: chapters are wrapped in div.chapter-card inside
+	// #chapters (unlike mistscans/writerscans where <a> is a direct child),
+	// so Rows uses the card wrapper to tell the two platforms apart. Reader
+	// pages parse images out of an Alpine.js `immersiveReader(...)` blob.
+	// Chapter reader pages carry a `class="group"` link back to the series;
+	// FollowSeriesLink ensures both series and chapter URLs give the same title.
 	{
-		Title:        "h1",
-		Rows:         "#chapters a",
-		Chapter:      ".text-sm.truncate",
-		ChapterTitle: ".text-sm.truncate",
-		Image:        "img.myImage, #pages img",
+		Title:            "h1",
+		Rows:             "#chapters div.chapter-card a",
+		Chapter:          ".text-sm.truncate",
+		ChapterTitle:     ".text-sm.truncate",
+		Image:            `[x-data*="immersiveReader"]`,
+		SeriesLink:       `a.group[href*="/series/"]`,
+		FollowSeriesLink: true,
+	},
+	// writerscans.com & mistscans.com (meowing.org platform): each chapter
+	// row is a plain <a> direct child of #chapters (the number in a child
+	// span, see FetchChapters/Chapter); reader page images are lazy-loaded
+	// (a placeholder `src` and a `uid` attribute), see the
+	// getPlainHTMLImageURL template-literal fallback. Image must stay scoped
+	// to the reader: a bare "img" also picks up the header's icon <img>s,
+	// which have no uid and turn into bare uploads/ URLs that 403. It's a
+	// union so it matches both sites' reader markup. Reader pages nest the
+	// series title in `<h1><span><a href="/series/…">`, so FollowSeriesLink
+	// redirects chapter URLs to the series page for a clean title.
+	{
+		Title:            "h1",
+		Rows:             "#chapters a",
+		Chapter:          ".text-sm.truncate",
+		ChapterTitle:     ".text-sm.truncate",
+		Image:            "img.myImage, #pages img",
+		SeriesLink:       `h1 a[href^="/series/"]`,
+		FollowSeriesLink: true,
 	},
 	// en-thunderscans.com: mangastream/themesia theme (reader page uses
 	// ts_reader.run, already handled generically). Some recent chapters

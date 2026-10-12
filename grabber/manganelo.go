@@ -72,6 +72,17 @@ const manganeloChaptersLimit = 9999
 // that appends the same page forever.
 const manganeloMaxChapterPages = 100
 
+// manganeloChapterSuffixRe matches the /chapter-N suffix of chapter reader
+// URLs (e.g. /manga/apotheosis/chapter-1297) to strip it to the series URL.
+var manganeloChapterSuffixRe = regexp.MustCompile(`(?i)/chapter-[\d.]+/?$`)
+
+// resolveSeriesURL strips the /chapter-N suffix from chapter reader URLs so
+// that FetchTitle always operates on the series page.
+// For series URLs it is a no-op.
+func (m *Manganelo) resolveSeriesURL() {
+	m.URL = manganeloChapterSuffixRe.ReplaceAllString(m.URL, "")
+}
+
 // Test returns true if the URL hostname is one of the manganelo family
 // domains. It only checks the hostname (no fetch) so it can be tried early
 // without extra requests.
@@ -91,6 +102,8 @@ func (m *Manganelo) FetchTitle() (string, error) {
 	if m.title != "" {
 		return m.title, nil
 	}
+
+	m.resolveSeriesURL()
 
 	// plain HTTP first: it's a single fast request, and it's all that's
 	// needed whenever the challenge happens to be off (always, on mangabats)

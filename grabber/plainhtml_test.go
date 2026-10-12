@@ -641,3 +641,126 @@ func TestResolveSeriesURLFetchCap(t *testing.T) {
 		t.Errorf("fetched %d candidates, want 3 (cap at 3)", fetches)
 	}
 }
+
+// TestFollowSeriesLinkMistscans verifies that a chapter page for the
+// mistscans/writerscans platform (h1 contains a /series/ link, #chapters has
+// direct-child <a> rows) is resolved to the series page: Test() follows the
+// SeriesLink, updates m.URL, and FetchTitle returns the series title.
+func TestFollowSeriesLinkMistscans(t *testing.T) {
+	mux := http.NewServeMux()
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	chapterHTML := `<html><body>` +
+		`<h1><span><a href="/series/my-manga/">My Series</a> - Chapter 5</span></h1>` +
+		`<div id="chapters">` +
+		`<a href="/chapter/aaa/" class="group"><span class="text-sm truncate">Chapter 5</span></a>` +
+		`<a href="/chapter/bbb/" class="group"><span class="text-sm truncate">Chapter 4</span></a>` +
+		`</div>` +
+		`<div id="pages"><img src="/placeholder.svg" uid="img1" class="lazy"/></div>` +
+		`<script>let realUrl = ` + "`https://cdn.example.org/uploads/${uid}`" + `;</script>` +
+		`</body></html>`
+
+	seriesHTML := `<html><body>` +
+		`<h1>My Series</h1>` +
+		`<div id="chapters">` +
+		`<a href="/chapter/aaa/" class="group"><span class="text-sm truncate">Chapter 5</span></a>` +
+		`<a href="/chapter/bbb/" class="group"><span class="text-sm truncate">Chapter 4</span></a>` +
+		`</div>` +
+		`</body></html>`
+
+	mux.HandleFunc("/chapter/abc/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, chapterHTML)
+	})
+	mux.HandleFunc("/series/my-manga/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, seriesHTML)
+	})
+	// testCandidateSeriesURL may also try /chapter/ as a candidate
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `<html><body><p>not found</p></body></html>`)
+	})
+
+	m := NewPlainHTML(&Grabber{URL: srv.URL + "/chapter/abc/", Settings: &Settings{}})
+	ok, err := m.Test()
+	if err != nil {
+		t.Fatalf("Test() error = %v", err)
+	}
+	if !ok {
+		t.Fatal("Test() = false, want true")
+	}
+
+	wantURL := srv.URL + "/series/my-manga/"
+	if m.URL != wantURL {
+		t.Errorf("m.URL = %q, want %q", m.URL, wantURL)
+	}
+
+	title, err := m.FetchTitle()
+	if err != nil {
+		t.Fatalf("FetchTitle() error = %v", err)
+	}
+	if title != "My Series" {
+		t.Errorf("FetchTitle() = %q, want %q", title, "My Series")
+	}
+}
+
+// TestFollowSeriesLinkRitharscans verifies that a chapter page for the
+// ritharscans platform (div.chapter-card wrapper, a.group series link) is
+// resolved to the series page by Test() following the SeriesLink.
+func TestFollowSeriesLinkRitharscans(t *testing.T) {
+	mux := http.NewServeMux()
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	chapterHTML := `<html><body>` +
+		`<h1>` +
+		`<span class="block truncate text-sm font-bold text-white">My Series</span>` +
+		`<span class="block text-xs font-normal text-white/60">Chapter 5</span>` +
+		`</h1>` +
+		`<a class="group flex min-w-0 items-center" href="/series/uuid-series/">My Series</a>` +
+		`<div id="chapters">` +
+		`<div class="chapter-card group"><a href="/read/uuid-ch5/"><div><span class="text-sm truncate">Chapter 5</span></div></a></div>` +
+		`<div class="chapter-card group"><a href="/read/uuid-ch4/"><div><span class="text-sm truncate">Chapter 4</span></div></a></div>` +
+		`</div>` +
+		`<div x-data="immersiveReader({ pages: [], baseLink: 'https://cdn.example.com/' })"></div>` +
+		`</body></html>`
+
+	seriesHTML := `<html><body>` +
+		`<h1>My Series</h1>` +
+		`<div id="chapters">` +
+		`<div class="chapter-card group"><a href="/read/uuid-ch5/"><div><span class="text-sm truncate">Chapter 5</span></div></a></div>` +
+		`<div class="chapter-card group"><a href="/read/uuid-ch4/"><div><span class="text-sm truncate">Chapter 4</span></div></a></div>` +
+		`</div>` +
+		`</body></html>`
+
+	mux.HandleFunc("/read/uuid-ch5/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, chapterHTML)
+	})
+	mux.HandleFunc("/series/uuid-series/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, seriesHTML)
+	})
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `<html><body><p>not found</p></body></html>`)
+	})
+
+	m := NewPlainHTML(&Grabber{URL: srv.URL + "/read/uuid-ch5/", Settings: &Settings{}})
+	ok, err := m.Test()
+	if err != nil {
+		t.Fatalf("Test() error = %v", err)
+	}
+	if !ok {
+		t.Fatal("Test() = false, want true")
+	}
+
+	wantURL := srv.URL + "/series/uuid-series/"
+	if m.URL != wantURL {
+		t.Errorf("m.URL = %q, want %q", m.URL, wantURL)
+	}
+
+	title, err := m.FetchTitle()
+	if err != nil {
+		t.Fatalf("FetchTitle() error = %v", err)
+	}
+	if title != "My Series" {
+		t.Errorf("FetchTitle() = %q, want %q", title, "My Series")
+	}
+}
