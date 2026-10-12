@@ -243,9 +243,8 @@ func Run(cmd *cobra.Command, args []string) {
 	// raised before anything was fetched: --volumes auto on a site without
 	// volumes, or a volume filename template that doesn't work
 	var serr *core.SettingError
-	if errors.As(err, &serr) {
-		p.Wait()
-		exitSettingError(err)
+	if errors.As(res.err, &serr) {
+		exitSettingError(res.err)
 	}
 
 	if !settings.Bundle {

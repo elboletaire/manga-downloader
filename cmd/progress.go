@@ -583,10 +583,10 @@ func (e *bubbleEvents) BundleArchived(n int) {
 
 // Volume event stubs: volumes are not yet rendered in the TUI; they compile
 // and satisfy core.Events so the rebase builds while full support is added.
-func (e *bubbleEvents) VolumeStart(v *core.Volume) {}
+func (e *bubbleEvents) VolumeStart(v *core.Volume)                       {}
 func (e *bubbleEvents) VolumeChapter(v *core.Volume, c *grabber.Chapter) {}
-func (e *bubbleEvents) VolumePacking(v *core.Volume) {}
-func (e *bubbleEvents) VolumeProgress(v *core.Volume, fraction float64) {}
+func (e *bubbleEvents) VolumePacking(v *core.Volume)                     {}
+func (e *bubbleEvents) VolumeProgress(v *core.Volume, fraction float64)  {}
 func (e *bubbleEvents) VolumePacked(v *core.Volume, name string, err error) {
 	if errors.Is(err, core.ErrSkippedVolume) {
 		return
@@ -638,10 +638,10 @@ func (plainEvents) Packed(_ *grabber.Chapter, _ string, err error) {
 }
 
 // Volume event stubs for plainEvents
-func (plainEvents) VolumeStart(v *core.Volume) {}
-func (plainEvents) VolumeChapter(v *core.Volume, c *grabber.Chapter) {}
-func (plainEvents) VolumePacking(v *core.Volume) {}
-func (plainEvents) VolumeProgress(v *core.Volume, fraction float64) {}
+func (plainEvents) VolumeStart(v *core.Volume)                          {}
+func (plainEvents) VolumeChapter(v *core.Volume, c *grabber.Chapter)    {}
+func (plainEvents) VolumePacking(v *core.Volume)                        {}
+func (plainEvents) VolumeProgress(v *core.Volume, fraction float64)     {}
 func (plainEvents) VolumePacked(v *core.Volume, name string, err error) {}
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
