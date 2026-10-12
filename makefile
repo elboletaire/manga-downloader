@@ -467,12 +467,14 @@ grabber/html: \
 	grabber/komikindo \
 	grabber/komikstation \
 	grabber/lagoonscans \
+	grabber/lelmanga \
 	grabber/madarascans \
 	grabber/maid \
 	grabber/mangaberri \
 	grabber/mangakatana \
 	grabber/mangapill \
 	grabber/mangaread \
+	grabber/mangasusuku \
 	grabber/mangavault \
 	grabber/mangaworld \
 	grabber/manhuaplus \
@@ -570,6 +572,10 @@ grabber/mangaworld:
 	go run . https://www.mangaworld.mx/manga/1683/kingdom 400
 grabber/lagoonscans:
 	go run . https://lagoonscans.com/manga/crimson-reset/ 52
+grabber/lelmanga:
+	go run . https://www.lelmanga.com/manga/one-piece 1100
+grabber/mangasusuku:
+	go run . https://mangasusuku.com/komik/get-out/ 10
 grabber/rizzfables:
 	go run . https://rizzfables.com/series/r2311170-an-s-rank-hunters-healing-journey-with-monsters 3
 grabber/rokaricomics:

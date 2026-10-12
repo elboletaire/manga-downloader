@@ -47,7 +47,7 @@ and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[115 supported sites](#supported-sites)**, from big aggregators to small
+- **[117 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
@@ -554,7 +554,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 115 supported sites</b></summary>
+<summary><b>Show all 117 supported sites</b></summary>
 <br>
 
 - [3asq.online (Arabic, former 3asq.org)](https://3asq.online)
@@ -599,6 +599,7 @@ to a minute.
 - [komikstation.org (Indonesian)](https://komikstation.org)
 - [lagoonscans.com](https://lagoonscans.com)
 - [leercapitulo.co](https://www.leercapitulo.co)
+- [lelmanga.com (French)](https://www.lelmanga.com)
 - [lhtranslation.net (LHTranslation)](https://lhtranslation.net)
 - [lilymanga.net (yuri, some NSFW)](https://lilymanga.net)
 - [limonmanga.com](https://limonmanga.com)
@@ -624,6 +625,7 @@ to a minute.
 - [mangaplus.shueisha.co.jp (Manga Plus, Shueisha's official reader)](https://mangaplus.shueisha.co.jp)
 - [mangaread.org](https://www.mangaread.org)
 - [mangasushi.org](https://mangasushi.org)
+- [mangasusuku.com (Indonesian, mostly NSFW)](https://mangasusuku.com)
 - [mangataro.org](https://mangataro.org)
 - [mangatown.com](https://www.mangatown.com)
 - [mangavault.lat (MangaVault)](https://mangavault.lat)
