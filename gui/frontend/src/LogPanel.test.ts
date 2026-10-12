@@ -2,11 +2,11 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { StatusBar } from './LogPanel';
-import type { Update } from './types';
+import type { LogLine, Update } from './types';
 
 const RELEASE = 'https://github.com/elboletaire/manga-downloader/releases/tag/v1.12.0';
 
-function bar(overrides: { releaseURL?: string; update?: Update | null } = {}): string {
+function bar(overrides: { releaseURL?: string; update?: Update | null; log?: LogLine[] } = {}): string {
   return renderToStaticMarkup(
     createElement(StatusBar, {
       log: [],
@@ -45,4 +45,19 @@ describe('StatusBar version', () => {
     expect(html.indexOf('update-badge')).toBeLessThan(html.indexOf('class="version"'));
   });
 
+});
+
+describe('StatusBar last-line title', () => {
+  it('sets a title attribute on the log preview so the full text is visible on hover', () => {
+    const text =
+      'site check: timed out waiting for selector at https://example.com/manga/the-cartographer-of-lost-harbours';
+    const html = bar({ log: [{ level: 'warn', text }] });
+    expect(html).toContain(`title="${text}"`);
+  });
+
+  it('omits the title attribute when no log line has been emitted yet', () => {
+    const html = bar({ log: [] });
+    // the "Ready" placeholder has no tooltip — there is nothing to expand
+    expect(html).toContain('aria-live="polite">Ready</span>');
+  });
 });

@@ -469,6 +469,12 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   if (scenario === 'stale') {
     options.language = 'es';
   }
+  if (scenario === 'update') {
+    pushLog(
+      'warn',
+      'site check: timed out waiting for "li.list-group-item, img.PB0mN" at https://example.com/manga/the-cartographer-of-lost-harbours',
+    );
+  }
   if (scenario === 'running' || scenario === 'cancelling' || scenario === 'bundle' || scenario === 'done') {
     options.bundle = scenario === 'bundle';
     const picked = chapters.filter((c) => selected.has(c.index)).slice(0, 12);
