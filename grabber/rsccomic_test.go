@@ -104,3 +104,45 @@ func TestRSCComicFetchChaptersGuardsIncompleteCount(t *testing.T) {
 		t.Fatalf("FetchChapters() returned %d chapters and no error, want an error", len(chapters))
 	}
 }
+
+func TestRSCComicResolveSeriesURL(t *testing.T) {
+	cases := []struct {
+		name   string
+		input  string
+		wanted string
+	}{
+		{
+			name:   "chapter URL resolves to series URL",
+			input:  "https://kaynscans.com/series/comic/heavenly-demon-cultivation-simulation/chapter/198",
+			wanted: "https://kaynscans.com/series/comic/heavenly-demon-cultivation-simulation",
+		},
+		{
+			name:   "chapter URL with query string",
+			input:  "https://witchtoons.net/series/comic/i-am-a-cultivation-big-shot/chapter/596?page=1",
+			wanted: "https://witchtoons.net/series/comic/i-am-a-cultivation-big-shot",
+		},
+		{
+			name:   "series URL unchanged",
+			input:  "https://kaynscans.com/series/comic/heavenly-demon-cultivation-simulation",
+			wanted: "https://kaynscans.com/series/comic/heavenly-demon-cultivation-simulation",
+		},
+		{
+			name:   "series URL with trailing slash unchanged",
+			input:  "https://kaynscans.com/series/comic/heavenly-demon-cultivation-simulation/",
+			wanted: "https://kaynscans.com/series/comic/heavenly-demon-cultivation-simulation/",
+		},
+		{
+			name:   "unrelated path unchanged",
+			input:  "https://kaynscans.com/",
+			wanted: "https://kaynscans.com/",
+		},
+	}
+
+	for _, c := range cases {
+		r := &rscComic{Grabber: &Grabber{URL: c.input}}
+		r.resolveSeriesURL()
+		if r.URL != c.wanted {
+			t.Errorf("%s: got %q, want %q", c.name, r.URL, c.wanted)
+		}
+	}
+}

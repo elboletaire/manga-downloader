@@ -9,6 +9,7 @@ import (
 	"path"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/elboletaire/manga-downloader/http"
@@ -17,6 +18,13 @@ import (
 // mangadexAPI is the API's base URL (a var so tests can point it at a local
 // server)
 var mangadexAPI = "https://api.mangadex.org"
+
+var (
+	// mangadexChapterURLRe matches chapter URLs like
+	// https://mangadex.org/chapter/c780a907-8cf7-4d64-97fd-750519f8ff79
+	// www. and UUID case are handled inline via (?:www\.)? and (?i).
+	mangadexChapterURLRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?mangadex\.org/chapter/([a-f0-9-]+)`)
+)
 
 // Mangadex is a grabber for mangadex.org
 type Mangadex struct {
@@ -36,6 +44,58 @@ func NewMangadex(g *Grabber) *Mangadex {
 	return &Mangadex{Grabber: g, rateLimiter: time.Tick(time.Minute / 39)}
 }
 
+// mangadexChapterURL checks if the URL is a chapter URL (not a series URL).
+func mangadexChapterURL(url string) bool {
+	return mangadexChapterURLRe.MatchString(url)
+}
+
+// mangadexSeriesURL extracts the series URL from a chapter UUID by fetching
+// the chapter endpoint and extracting the manga ID from relationships.
+func mangadexSeriesURL(chapterUUID, chapterURL string) (string, error) {
+	rbody, err := http.Get(http.RequestParams{
+		URL: mangadexAPI + "/chapter/" + chapterUUID,
+	})
+	if err != nil {
+		return "", err
+	}
+	defer rbody.Close()
+
+	var resp mangadexChapterResponse
+	if err = json.NewDecoder(rbody).Decode(&resp); err != nil {
+		return "", err
+	}
+
+	// Find the manga relationship
+	for _, rel := range resp.Data.Relationships {
+		if rel.Type == "manga" {
+			return fmt.Sprintf("https://mangadex.org/title/%s", rel.Id), nil
+		}
+	}
+
+	return "", errSeriesNotFound(chapterURL)
+}
+
+// resolveSeriesURL resolves a chapter URL to the series URL if needed.
+func (m *Mangadex) resolveSeriesURL() error {
+	if !mangadexChapterURL(m.URL) {
+		return nil
+	}
+
+	matches := mangadexChapterURLRe.FindStringSubmatch(m.URL)
+	if len(matches) < 2 {
+		return fmt.Errorf("could not extract chapter UUID from %s", m.URL)
+	}
+	chapterUUID := strings.ToLower(matches[1])
+
+	seriesURL, err := mangadexSeriesURL(chapterUUID, m.URL)
+	if err != nil {
+		return err
+	}
+
+	m.URL = seriesURL
+	return nil
+}
+
 // MangadexChapter represents a MangaDex Chapter
 type MangadexChapter struct {
 	Chapter
@@ -48,10 +108,14 @@ func (m *Mangadex) Test() (bool, error) {
 	return re.MatchString(m.URL), nil
 }
 
-// GetTitle returns the title of the manga
+// FetchTitle returns the title of the manga
 func (m *Mangadex) FetchTitle() (string, error) {
 	if m.title != "" {
 		return m.title, nil
+	}
+
+	if err := m.resolveSeriesURL(); err != nil {
+		return "", err
 	}
 
 	body, err := m.fetchManga()
@@ -89,7 +153,8 @@ func (m *Mangadex) fetchManga() (*mangadexManga, error) {
 		return m.manga, nil
 	}
 
-	id := getUuid(m.URL)
+	// the API only knows lowercase ids
+	id := strings.ToLower(getUuid(m.URL))
 
 	rbody, err := http.Get(http.RequestParams{
 		URL:     mangadexAPI + "/manga/" + id,
@@ -125,8 +190,13 @@ func (m *Mangadex) LanguageOptions() FilterOptions {
 }
 
 // FetchChapters returns the chapters of the manga
-func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
-	id := getUuid(m.URL)
+func (m *Mangadex) FetchChapters() (chapters Filterables, errs []error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
+	// the API only knows lowercase ids
+	id := strings.ToLower(getUuid(m.URL))
 
 	baseOffset := 500
 	var fetchChaps func(int)
@@ -187,7 +257,7 @@ func (m Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 }
 
 // FetchChapter fetches a chapter and its pages
-func (m Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
+func (m *Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 	<-m.rateLimiter
 	chap := f.(*MangadexChapter)
 	// download json
@@ -273,4 +343,15 @@ type mangadexPagesFeed struct {
 		Data      []string
 		DataSaver []string
 	}
+}
+
+// mangadexChapterResponse represents the json object returned by the chapter endpoint
+type mangadexChapterResponse struct {
+	Data struct {
+		Id            string `json:"id"`
+		Relationships []struct {
+			Id   string `json:"id"`
+			Type string `json:"type"`
+		} `json:"relationships"`
+	} `json:"data"`
 }

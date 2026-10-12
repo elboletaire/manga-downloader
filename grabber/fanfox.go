@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,14 +34,18 @@ type FanfoxChapter struct {
 	URL string
 }
 
-// fanfoxDomainRe matches fanfox.net (with or without www.)
-var fanfoxDomainRe = regexp.MustCompile(`fanfox\.net`)
+// fanfoxDomainRe matches fanfox.net and any of its subdomains (m., www., …)
+var fanfoxDomainRe = regexp.MustCompile(`(?i)(?:^|\.)fanfox\.net$`)
 
-// Test returns true if the URL is a fanfox.net URL
+// Test returns true if the URL is a fanfox.net URL. Any subdomain is moved to
+// the bare fanfox.net host so the desktop markup is served consistently.
 func (m *Fanfox) Test() (bool, error) {
-	if !fanfoxDomainRe.MatchString(m.URL) {
+	u, err := url.Parse(m.URL)
+	if err != nil || !fanfoxDomainRe.MatchString(u.Hostname()) {
 		return false, nil
 	}
+	u.Host = "fanfox.net"
+	m.URL = u.String()
 
 	// fanfox gates the chapter list behind an age-confirmation interstitial
 	// (even for non-mature titles, e.g. Chainsaw Man) unless this cookie is
@@ -51,10 +56,25 @@ func (m *Fanfox) Test() (bool, error) {
 	return true, nil
 }
 
+// resolveSeriesURL resolves a chapter URL to the series URL if needed.
+func (m *Fanfox) resolveSeriesURL() error {
+	seriesURL, ok := mangahereSeriesURL(m.URL)
+	if !ok {
+		return nil
+	}
+
+	m.URL = seriesURL
+	return nil
+}
+
 // FetchTitle fetches and returns the manga title
 func (m *Fanfox) FetchTitle() (string, error) {
 	if m.title != "" {
 		return m.title, nil
+	}
+
+	if err := m.resolveSeriesURL(); err != nil {
+		return "", err
 	}
 
 	doc, err := m.fetchDoc(m.URL)
@@ -68,7 +88,11 @@ func (m *Fanfox) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (m Fanfox) FetchChapters() (Filterables, []error) {
+func (m *Fanfox) FetchChapters() (Filterables, []error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
 	doc, err := m.fetchDoc(m.URL)
 	if err != nil {
 		return nil, []error{err}
@@ -100,7 +124,7 @@ func (m Fanfox) FetchChapters() (Filterables, []error) {
 }
 
 // FetchChapter fetches a chapter and its pages
-func (m Fanfox) FetchChapter(f Filterable) (*Chapter, error) {
+func (m *Fanfox) FetchChapter(f Filterable) (*Chapter, error) {
 	fchap := f.(*FanfoxChapter)
 
 	doc, err := m.fetchDoc(fchap.URL)

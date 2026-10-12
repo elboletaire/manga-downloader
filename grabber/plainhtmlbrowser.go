@@ -29,6 +29,12 @@ type BrowserSiteSelector struct {
 	// elements to the DOM after the first one shows up). Zero means no
 	// extra wait, matching every other site's immediate-render behavior.
 	Settle time.Duration
+	// SeriesPathDepth is the number of non-empty path segments in a series
+	// URL (e.g. 2 for /serie/{slug}). When > 0, Test() reconstructs the
+	// series URL by trimming any extra path segments, so chapter URLs like
+	// /serie/{slug}/chapter-N are resolved without a wasted browser render.
+	// 0 disables reconstruction.
+	SeriesPathDepth int
 }
 
 // browserSelectors is the list of sites that need browser rendering. Their
@@ -46,9 +52,10 @@ var browserSelectors = []BrowserSiteSelector{
 			Link:         "a",
 			Image:        "div.reading-content img",
 		},
-		Domains:      []string{"toongod.org", "dragontea.ink", "manhuaus.com", "toonily.com"},
-		ChaptersWait: "li.wp-manga-chapter",
-		ImageWait:    "div.reading-content",
+		Domains:         []string{"toongod.org", "dragontea.ink", "manhuaus.com", "toonily.com"},
+		ChaptersWait:    "li.wp-manga-chapter",
+		ImageWait:       "div.reading-content",
+		SeriesPathDepth: 2,
 	},
 	// setsuscans.com: Madara wordpress theme behind a cloudflare challenge
 	// (chapter list loads via an admin-ajax call the browser must run, so a
@@ -64,12 +71,15 @@ var browserSelectors = []BrowserSiteSelector{
 			Link:         "a",
 			Image:        "div.reading-content img",
 		},
-		Domains:      []string{"setsuscans.com"},
-		ChaptersWait: "li.wp-manga-chapter",
-		ImageWait:    "div.reading-content img",
+		Domains:         []string{"setsuscans.com"},
+		ChaptersWait:    "li.wp-manga-chapter",
+		ImageWait:       "div.reading-content img",
+		SeriesPathDepth: 2,
 	},
 	// kappabeast.com: react SPA behind a cloudflare challenge, usually
 	// needs --browser-visible. Images are hosted on blogger/strapi CDNs.
+	// Chapter links nest one level deeper than the series (/series/{slug}/reader/…)
+	// so depth 2 trims them correctly.
 	{
 		SiteSelector: SiteSelector{
 			Title:        "h1",
@@ -78,13 +88,18 @@ var browserSelectors = []BrowserSiteSelector{
 			ChapterTitle: "p",
 			Image:        `img[alt^="Page"]`,
 		},
-		Domains:      []string{"kappabeast.com"},
-		ChaptersWait: `a[href*="/reader/"]`,
-		ImageWait:    `img[alt^="Page"]`,
+		Domains:         []string{"kappabeast.com"},
+		ChaptersWait:    `a[href*="/reader/"]`,
+		ImageWait:       `img[alt^="Page"]`,
+		SeriesPathDepth: 2,
 	},
 	// sushiscan.net (french): mangastream/themesia theme behind a
 	// cloudflare challenge, usually needs --browser-visible. All the reader
 	// pages come from the embedded ts_reader javascript call.
+	// Chapter URLs use the format /{slug}-volume-N/ (one path segment,
+	// different tree from series /catalogue/{slug}/), so SeriesPathDepth
+	// can't reconstruct the series URL; the reader's .allc div carries
+	// a direct link back to the series page instead.
 	//
 	// drakecomic.org (Drake Scans) used to share this entry too, but the
 	// site moved wholesale to a plain-HTTP Next.js RSC platform on
@@ -98,10 +113,12 @@ var browserSelectors = []BrowserSiteSelector{
 			ChapterTitle: ".chapternum",
 			Link:         "a",
 			Image:        "#readerarea img",
+			SeriesLink:   ".allc a",
 		},
-		Domains:      []string{"sushiscan.net"},
-		ChaptersWait: "#chapterlist li",
-		ImageWait:    "#readerarea img",
+		Domains:         []string{"sushiscan.net"},
+		ChaptersWait:    "#chapterlist li",
+		ImageWait:       "#readerarea img",
+		SeriesPathDepth: 2,
 	},
 	// mangahub.io: behind a cloudflare managed challenge that a visible
 	// browser clears in a few seconds; images are served from a plain CDN
@@ -133,7 +150,8 @@ var browserSelectors = []BrowserSiteSelector{
 		// the reader appends page <img> tags progressively; without this,
 		// GetHTML returns as soon as the first one shows up and later
 		// pages are missing (a 16-page chapter yielded only 6 without it)
-		Settle: 5 * time.Second,
+		Settle:          5 * time.Second,
+		SeriesPathDepth: 2,
 	},
 	// manhuatop.org: Madara wordpress theme behind a cloudflare challenge,
 	// usually needs --browser-visible. Its reader wraps real pages in
@@ -153,9 +171,10 @@ var browserSelectors = []BrowserSiteSelector{
 			Link:         "a",
 			Image:        `div.reading-content img[id^="image-"]`,
 		},
-		Domains:      []string{"manhuatop.org"},
-		ChaptersWait: "li.wp-manga-chapter",
-		ImageWait:    `div.reading-content img[id^="image-"]`,
+		Domains:         []string{"manhuatop.org"},
+		ChaptersWait:    "li.wp-manga-chapter",
+		ImageWait:       `div.reading-content img[id^="image-"]`,
+		SeriesPathDepth: 2,
 	},
 	// asmotoon.com (Asmodeus Scans): the whole domain sits behind a
 	// cloudflare challenge that headless doesn't pass, usually needs
@@ -172,9 +191,10 @@ var browserSelectors = []BrowserSiteSelector{
 			ChapterTitle: ".text-sm.truncate",
 			Image:        "img.myImage",
 		},
-		Domains:      []string{"asmotoon.com"},
-		ChaptersWait: "#chapters > a",
-		ImageWait:    "img.myImage",
+		Domains:         []string{"asmotoon.com"},
+		ChaptersWait:    "#chapters > a",
+		ImageWait:       "img.myImage",
+		SeriesPathDepth: 2,
 	},
 	// templetoons.com (Temple Scan): Next.js RSC site behind a cloudflare
 	// Turnstile challenge (plain HTTP is redirected to /challenge), which a
@@ -190,9 +210,10 @@ var browserSelectors = []BrowserSiteSelector{
 			ChapterTitle: "span.font-semibold",
 			Image:        "img",
 		},
-		Domains:      []string{"templetoons.com"},
-		ChaptersWait: `a[id^="chapter-link-"]`,
-		ImageWait:    "img",
+		Domains:         []string{"templetoons.com"},
+		ChaptersWait:    `a[id^="chapter-link-"]`,
+		ImageWait:       "img",
+		SeriesPathDepth: 2,
 	},
 }
 
@@ -223,8 +244,36 @@ func matchBrowserSelector(host string) (BrowserSiteSelector, bool) {
 	return BrowserSiteSelector{}, false
 }
 
+// pathSeriesURL returns the series URL derived from m.URL's path when it
+// looks like a chapter URL (more path segments than m.selector.SeriesPathDepth).
+// Returns "" when no reconstruction is needed: the URL is already at series
+// depth, or SeriesPathDepth is 0 (disabled). Query and fragment are stripped
+// from the result.
+func (m *PlainHTMLBrowser) pathSeriesURL() string {
+	depth := m.selector.SeriesPathDepth
+	if depth == 0 {
+		return ""
+	}
+	u, err := url.Parse(m.URL)
+	if err != nil {
+		return ""
+	}
+	parts := strings.FieldsFunc(u.Path, func(r rune) bool { return r == '/' })
+	if len(parts) <= depth {
+		return ""
+	}
+	seriesU := *u
+	seriesU.Path = "/" + strings.Join(parts[:depth], "/")
+	seriesU.RawQuery = ""
+	seriesU.Fragment = ""
+	return seriesU.String()
+}
+
 // Test matches the URL against the registered browser-based site domains and,
-// on match, renders the series page in the browser
+// on match, renders the series page in the browser. When the URL looks like a
+// chapter URL (more path segments than SeriesPathDepth), the series URL is
+// reconstructed from the path and rendered directly, avoiding a timeout that
+// would occur while waiting for chapter-list rows on a reader page.
 func (m *PlainHTMLBrowser) Test() (bool, error) {
 	u, err := url.Parse(m.URL)
 	if err != nil {
@@ -240,9 +289,26 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 	m.site = selector.SiteSelector
 	browser.SetSettle(m.selector.Settle)
 
+	// Prefer path reconstruction: when the URL has more segments than the
+	// series depth, trim the extras to get the series URL without rendering.
+	// This avoids a multi-minute timeout from waiting for chapter-list rows
+	// on a reader page.
+	renderURL := m.URL
+	if reconstructed := m.pathSeriesURL(); reconstructed != "" {
+		renderURL = reconstructed
+	}
+
+	// When we know the render target is a series URL (reconstruction worked),
+	// wait only for chapter rows. Otherwise use a combined selector so both
+	// series and reader pages resolve quickly.
+	waitSel := m.selector.ChaptersWait
+	if renderURL == m.URL && m.selector.ImageWait != "" {
+		waitSel = m.selector.ChaptersWait + ", " + m.selector.ImageWait
+	}
+
 	// GetHTML tries headless first and, if the page is behind a challenge,
 	// automatically reopens a visible window and retries — no flag needed.
-	html, err := browser.GetHTML(m.URL, m.selector.ChaptersWait, 0)
+	html, err := browser.GetHTML(renderURL, waitSel, 0)
 	if err != nil {
 		return false, err
 	}
@@ -253,7 +319,42 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 	}
 	m.rows = m.doc.Find(m.site.Rows)
 
-	return m.rows.Length() > 0, nil
+	if m.rows.Length() > 0 {
+		m.URL = renderURL
+		return true, nil
+	}
+
+	// No chapter rows on the rendered page. If a SeriesLink is defined and the
+	// Image selector (when set) confirms this is a reader page, follow the
+	// link and render the series URL (one extra render). The Image guard
+	// mirrors PlainHTML's seriesURLCandidates to prevent a loose SeriesLink
+	// from firing on unrelated pages.
+	if m.site.SeriesLink != "" &&
+		(m.site.Image == "" || m.doc.Find(m.site.Image).Length() > 0) {
+		parsedURL, _ := url.Parse(renderURL)
+		if link := m.doc.Find(m.site.SeriesLink).First(); link.Length() > 0 {
+			if href, ok := link.Attr("href"); ok {
+				seriesURL := resolveURLRelative(href, parsedURL)
+				if seriesURL != "" && seriesURL != renderURL {
+					seriesHTML, serr := browser.GetHTML(seriesURL, m.selector.ChaptersWait, 0)
+					if serr == nil {
+						seriesDoc, serr := goquery.NewDocumentFromReader(strings.NewReader(seriesHTML))
+						if serr == nil {
+							seriesRows := seriesDoc.Find(m.site.Rows)
+							if seriesRows.Length() > 0 {
+								m.URL = seriesURL
+								m.doc = seriesDoc
+								m.rows = seriesRows
+								return true, nil
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false, nil
 }
 
 // FetchChapter renders the reader page in the browser and extracts its pages

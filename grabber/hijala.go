@@ -59,10 +59,34 @@ var hijalaImageRe = regexp.MustCompile(`https://storage\.en-hijala\.com/upload/s
 // guarantee reading order the way <img> document order would.
 var hijalaPageNumberRe = regexp.MustCompile(`/page-(\d+)_`)
 
+// hijalaChapterSuffixRe matches the /chapter-N (or /chapter-N.5) suffix of
+// chapter reader URL paths so resolveSeriesURL can strip it from u.Path.
+var hijalaChapterSuffixRe = regexp.MustCompile(`(?i)/chapter-[\d.]+/?$`)
+
+// hijalaHostRe matches en-hijala.com case-insensitively.
+var hijalaHostRe = regexp.MustCompile(`(?i)en-hijala\.com`)
+
 // Test returns true if the URL is an en-hijala.com URL
 func (h *Hijala) Test() (bool, error) {
-	re := regexp.MustCompile(`en-hijala\.com`)
-	return re.MatchString(h.URL), nil
+	return hijalaHostRe.MatchString(h.URL), nil
+}
+
+// resolveSeriesURL strips the /chapter-N suffix from chapter reader URLs so
+// that FetchTitle and seriesPostID always operate on the series page.
+// Matches on the parsed path so query and fragment don't interfere.
+// For series URLs it is a no-op.
+func (h *Hijala) resolveSeriesURL() {
+	u, err := url.Parse(h.URL)
+	if err != nil {
+		return
+	}
+	if !hijalaChapterSuffixRe.MatchString(u.Path) {
+		return
+	}
+	u.Path = hijalaChapterSuffixRe.ReplaceAllString(u.Path, "")
+	u.RawQuery = ""
+	u.Fragment = ""
+	h.URL = u.String()
 }
 
 // FetchTitle fetches and returns the manga title
@@ -70,6 +94,8 @@ func (h *Hijala) FetchTitle() (string, error) {
 	if h.title != "" {
 		return h.title, nil
 	}
+
+	h.resolveSeriesURL()
 
 	body, err := http.GetText(http.RequestParams{URL: h.URL})
 	if err != nil {
@@ -96,6 +122,8 @@ func (h *Hijala) seriesPostID() (string, error) {
 	if h.postID != "" {
 		return h.postID, nil
 	}
+
+	h.resolveSeriesURL()
 
 	body, err := http.GetText(http.RequestParams{URL: h.URL})
 	if err != nil {

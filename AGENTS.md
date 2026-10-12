@@ -39,11 +39,13 @@ The download flow lives in `core` (`core/download.go`, `Series.Download`), UI-ag
 
 The steps:
 
-1. `grabber.NewSite(url, settings)` → `IdentifySite()` calls `Test()` on each registered grabber (`grabber/site.go`), matching by domain or by fetching the URL. **Order matters**: domain-matching grabbers first, then `PlainHTML`, then the remaining fetch-testing ones.
+1. `grabber.NewSite(url, settings)` → `IdentifySite()` calls `Test()` on each registered grabber (`grabber/site.go`), matching by domain or by fetching the URL. **Order matters**: domain-matching grabbers first, then `PlainHTML`, then the remaining fetch-testing ones. After all grabbers decline, `PlainHTML` gets a final chance via `resolveSeriesURL()`.
 2. The matched `Site` fetches title and chapters; the range argument (`ranges.Parse`, `1-10,12,15-20`) filters them.
 3. Each fetched chapter is passed through `Chapter.SkipPages` (`--skip-pages`, see below) before anything is downloaded, inside `core.Download`.
 4. Chapters download concurrently (`downloader.FetchChapter`), bounded by `--concurrency` (max 5) and `--concurrency-pages` (max 10). Pages are plain GETs with a Referer.
 5. `packer` writes CBZ files (`PackSingle`, or `PackBundle` with `--bundle`), named via a text/template (`--filename-template`, `packer/filename.go`); duplicate names get a `v{{.Version}}` suffix. Both paths go through `namePages` (`packer/pack.go`), which sniffs each page's format to name it `000.jpg`, `001.png`, … and transcodes per `--convert-images`.
+
+**Chapter URL resolution**: both series and chapter links are accepted; see the grabbers skill for the full pattern.
 
 **Design every feature for both the CLI and the desktop app.** They're meant to stay (almost) 1:1: a new option or behaviour lands in `core` where possible, then gets a flag in `cmd/` *and* a control in `gui/` (see the `gui` skill), with the same name, default and semantics, in the same change. The deliberate exceptions are few — `--concurrency`/`--concurrency-pages`/`--retry` aren't exposed in the app, and the app selects chapters from a list (with a range box that takes the same `1-10,12` syntax) instead of a positional range argument — so don't treat "the CLI already has it" as done, and say so explicitly when a feature is intentionally one-sided.
 

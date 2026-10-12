@@ -221,3 +221,28 @@ func TestAtsumaruFetchChaptersAllKeepsDuplicateNumbers(t *testing.T) {
 		t.Errorf("both chapter 1s share the title %q, they'd collide when packed", ones[0].GetTitle())
 	}
 }
+
+func TestAtsumaruResolveSeriesURL(t *testing.T) {
+	cases := []struct {
+		input string
+		want  string
+	}{
+		{"https://atsu.moe/read/2VgNt/vJly4Skj", "https://atsu.moe/manga/2VgNt"},
+		{"https://www.atsu.moe/read/2VgNt/vJly4Skj", "https://www.atsu.moe/manga/2VgNt"},
+		{"https://atsu.moe/read/2VgNt/vJly4Skj?page=3", "https://atsu.moe/manga/2VgNt"},
+		{"https://atsu.moe/read/2VgNt/vJly4Skj#section", "https://atsu.moe/manga/2VgNt"},
+		{"https://ATSU.MOE/read/2VgNt/vJly4Skj", "https://ATSU.MOE/manga/2VgNt"},
+		// series URLs unchanged
+		{"https://atsu.moe/manga/2VgNt", "https://atsu.moe/manga/2VgNt"},
+		// unrelated paths unchanged
+		{"https://atsu.moe/browse", "https://atsu.moe/browse"},
+	}
+
+	for _, c := range cases {
+		a := &Atsumaru{Grabber: &Grabber{URL: c.input}}
+		a.resolveSeriesURL()
+		if a.URL != c.want {
+			t.Errorf("resolveSeriesURL(%q) = %q, want %q", c.input, a.URL, c.want)
+		}
+	}
+}

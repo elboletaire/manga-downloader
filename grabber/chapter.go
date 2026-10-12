@@ -3,10 +3,31 @@
 package grabber
 
 import (
+	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/elboletaire/manga-downloader/ranges"
 )
+
+// errSeriesNotFound returns the standard error for a chapter URL that the
+// grabber could not map to a series page.
+func errSeriesNotFound(chapterURL string) error {
+	return fmt.Errorf("couldn't find the series of chapter %s; try the series link instead", chapterURL)
+}
+
+// chapterPath parses rawURL and returns its lowercased host (www. stripped)
+// and path (query and fragment dropped). Used by taiyo to match chapter paths
+// transparently across www. variants and URLs with trailing query/fragment.
+func chapterPath(rawURL string) (host, path string, ok bool) {
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Host == "" {
+		return "", "", false
+	}
+	host = strings.ToLower(strings.TrimPrefix(u.Host, "www."))
+	path = u.Path
+	return host, path, true
+}
 
 // Chapter represents a manga chapter
 type Chapter struct {

@@ -83,3 +83,52 @@ func TestProjectsukiImageRe(t *testing.T) {
 		}
 	}
 }
+
+func TestProjectsukiResolveSeriesURL(t *testing.T) {
+	cases := []struct {
+		name   string
+		input  string
+		wanted string
+	}{
+		{
+			name:   "chapter URL resolves to series URL",
+			input:  "https://projectsuki.com/read/159270/40014/999999",
+			wanted: "https://projectsuki.com/book/159270",
+		},
+		{
+			name:   "chapter URL without page number resolves to series URL",
+			input:  "https://projectsuki.com/read/159270/40014",
+			wanted: "https://projectsuki.com/book/159270",
+		},
+		{
+			name:   "chapter URL trailing slash resolves to series URL",
+			input:  "https://projectsuki.com/read/159270/40014/",
+			wanted: "https://projectsuki.com/book/159270",
+		},
+		{
+			name:   "chapter URL with query resolves to series URL",
+			input:  "https://projectsuki.com/read/159270/40014?page=1",
+			wanted: "https://projectsuki.com/book/159270",
+		},
+		{
+			name:   "series URL unchanged",
+			input:  "https://projectsuki.com/book/159270",
+			wanted: "https://projectsuki.com/book/159270",
+		},
+		{
+			name:   "unrelated path unchanged",
+			input:  "https://projectsuki.com/",
+			wanted: "https://projectsuki.com/",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			p := &Projectsuki{Grabber: &Grabber{URL: c.input}}
+			p.resolveSeriesURL()
+			if p.URL != c.wanted {
+				t.Errorf("got %q, want %q", p.URL, c.wanted)
+			}
+		})
+	}
+}

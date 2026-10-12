@@ -1629,6 +1629,7 @@ fieldset:disabled .check {
   border-top: 1px solid var(--border);
   background: var(--surface);
   font-size: 12px;
+  min-width: 0; /* grid item: don't expand past the track; the flex layout handles the rest */
 }
 
 .log-toggle {

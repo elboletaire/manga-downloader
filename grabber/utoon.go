@@ -22,6 +22,13 @@ type Utoon struct {
 	*Grabber
 }
 
+// utoonChapterRe matches chapter URLs like
+// https://www.utoon.us/en/gachiakuta/gachiakuta-chapter-167.html
+// It requires -chapter- in the filename to avoid matching series URLs like
+// https://www.utoon.us/en/manga/gachiakuta.html
+// Query strings and fragments after .html are tolerated.
+var utoonChapterRe = regexp.MustCompile(`^https?://[^/]+/en/([^/]+)/[^/]+-chapter-\d[^/]*\.html(?:[?#].*)?$`)
+
 func NewUtoon(g *Grabber) *Utoon {
 	return &Utoon{Grabber: g}
 }
@@ -38,8 +45,60 @@ func (u *Utoon) Test() (bool, error) {
 	return re.MatchString(u.URL), nil
 }
 
+// utoonChapterURL checks if the URL is a chapter URL.
+func utoonChapterURL(url string) bool {
+	return utoonChapterRe.MatchString(url)
+}
+
+// utoonResolveSeriesURL finds the series URL from a chapter page by querying
+// the <a class="manga-series"> link, which is distinct from sidebar links.
+func utoonResolveSeriesURL(chapterURL string) (string, error) {
+	if !utoonChapterURL(chapterURL) {
+		return "", nil
+	}
+
+	body, err := http.Get(http.RequestParams{
+		URL: chapterURL,
+	})
+	if err != nil {
+		return "", err
+	}
+	defer body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(body)
+	if err != nil {
+		return "", err
+	}
+
+	href, ok := doc.Find("a.manga-series").First().Attr("href")
+	if !ok || href == "" {
+		return "", errSeriesNotFound(chapterURL)
+	}
+
+	return href, nil
+}
+
+// resolveSeriesURL resolves a chapter URL to the series URL if needed.
+func (u *Utoon) resolveSeriesURL() error {
+	if !utoonChapterURL(u.URL) {
+		return nil
+	}
+
+	seriesURL, err := utoonResolveSeriesURL(u.URL)
+	if err != nil {
+		return err
+	}
+
+	u.URL = seriesURL
+	return nil
+}
+
 // FetchTitle fetches and returns the manga title
-func (u Utoon) FetchTitle() (string, error) {
+func (u *Utoon) FetchTitle() (string, error) {
+	if err := u.resolveSeriesURL(); err != nil {
+		return "", err
+	}
+
 	doc, err := u.seriesDoc()
 	if err != nil {
 		return "", err
@@ -58,7 +117,11 @@ var utoonAjaxConfigRe = regexp.MustCompile(`var mangaverse_ajax = \{"ajax_url":"
 // entries (same chapter URL) turn up in the tail pages due to what looks
 // like an off-by-one in the theme's own pagination query, so entries are
 // deduplicated by URL as they're collected.
-func (u Utoon) FetchChapters() (chapters Filterables, errs []error) {
+func (u *Utoon) FetchChapters() (chapters Filterables, errs []error) {
+	if err := u.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
 	doc, err := u.seriesDoc()
 	if err != nil {
 		return nil, []error{err}
@@ -141,7 +204,7 @@ func (u Utoon) FetchChapters() (chapters Filterables, errs []error) {
 }
 
 // FetchChapter fetches a chapter and its pages
-func (u Utoon) FetchChapter(f Filterable) (*Chapter, error) {
+func (u *Utoon) FetchChapter(f Filterable) (*Chapter, error) {
 	uchap := f.(*UtoonChapter)
 
 	body, err := http.Get(http.RequestParams{
@@ -183,7 +246,7 @@ func (u Utoon) FetchChapter(f Filterable) (*Chapter, error) {
 }
 
 // seriesDoc fetches and parses the series page
-func (u Utoon) seriesDoc() (*goquery.Document, error) {
+func (u *Utoon) seriesDoc() (*goquery.Document, error) {
 	body, err := http.Get(http.RequestParams{
 		URL: u.URL,
 	})

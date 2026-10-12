@@ -42,6 +42,12 @@ type GenzToonChapter struct {
 // genzToonHostRe matches genzupdates.com and its subdomains
 var genzToonHostRe = regexp.MustCompile(`(?i)(^|\.)genzupdates\.com$`)
 
+// genzToonChapterPathRe matches the /chapter/ path prefix of reader pages.
+var genzToonChapterPathRe = regexp.MustCompile(`(?i)^/chapter/`)
+
+// genzToonSeriesPathRe matches the /series/ path prefix of series pages.
+var genzToonSeriesPathRe = regexp.MustCompile(`(?i)^/series/`)
+
 // genzToonUidRe extracts the uid used to build a page's image URL from the
 // inline reader script, i.e. `https://cdn.meowing.org/uploads/${uid}`
 var genzToonImageBaseRe = regexp.MustCompile(`https://([\w.-]+)/uploads/\$\{uid\}`)
@@ -57,8 +63,52 @@ func (g *GenzToon) Test() (bool, error) {
 	return genzToonHostRe.MatchString(u.Hostname()), nil
 }
 
+// resolveSeriesURL rewrites g.URL from a chapter URL to its series URL.
+// Reader pages nest the series title in `<h1><span><a href="/series/…">`.
+// The title is extracted from the link text so FetchTitle needs no extra fetch.
+// For series URLs it is a no-op.
+func (g *GenzToon) resolveSeriesURL() error {
+	u, err := url.Parse(g.URL)
+	if err != nil || !genzToonChapterPathRe.MatchString(u.Path) {
+		return nil
+	}
+
+	body, err := http.Get(http.RequestParams{URL: g.URL})
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(body)
+	if err != nil {
+		return err
+	}
+
+	link := doc.Find("h1 a[href]").First()
+	href, ok := link.Attr("href")
+	if !ok || !genzToonSeriesPathRe.MatchString(href) {
+		return errSeriesNotFound(g.URL)
+	}
+
+	// Cache the title from the link text (just the series name, not "- Chapter N").
+	g.title = sanitizeTitle(link.Text())
+
+	base, _ := url.Parse(g.URL)
+	seriesURL, _ := base.Parse(href)
+	g.URL = seriesURL.String()
+	return nil
+}
+
 // FetchTitle fetches and returns the manga title
 func (g *GenzToon) FetchTitle() (string, error) {
+	if g.title != "" {
+		return g.title, nil
+	}
+
+	if err := g.resolveSeriesURL(); err != nil {
+		return "", err
+	}
+
 	if g.title != "" {
 		return g.title, nil
 	}
@@ -82,7 +132,11 @@ func (g *GenzToon) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (g GenzToon) FetchChapters() (chapters Filterables, errs []error) {
+func (g *GenzToon) FetchChapters() (chapters Filterables, errs []error) {
+	if err := g.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
 	body, err := http.Get(http.RequestParams{
 		URL: g.URL,
 	})

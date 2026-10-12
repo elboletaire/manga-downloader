@@ -48,6 +48,18 @@ type MkissaChapter struct {
 // https://mkissa.to/manga/eaYBWW65WLabNiLEi
 var mkissaIdRe = regexp.MustCompile(`mkissa\.to/manga/([A-Za-z0-9]+)`)
 
+// mkissaChapterRe matches chapter reader URLs that have extra path after
+// /manga/{id} (e.g. /manga/eaYBWW65WLabNiLEi/chapter-59-sub).
+var mkissaChapterRe = regexp.MustCompile(`(?i)^(https?://(?:www\.)?mkissa\.to/manga/[A-Za-z0-9]+)/[^/?#]`)
+
+// resolveSeriesURL rewrites m.URL to the series URL when it is a chapter
+// reader URL (/manga/{id}/{chapter-slug}). Series URLs are unchanged.
+func (m *Mkissa) resolveSeriesURL() {
+	if match := mkissaChapterRe.FindStringSubmatch(m.URL); match != nil {
+		m.URL = match[1]
+	}
+}
+
 // Test returns true if the URL is a mkissa.to series URL
 func (m *Mkissa) Test() (bool, error) {
 	return mkissaIdRe.MatchString(m.URL), nil
@@ -129,6 +141,7 @@ func (m *Mkissa) fetchInfo() (*mkissaMangaInfo, error) {
 
 // FetchTitle fetches and returns the manga title
 func (m *Mkissa) FetchTitle() (string, error) {
+	m.resolveSeriesURL()
 	info, err := m.fetchInfo()
 	if err != nil {
 		return "", err
@@ -144,6 +157,7 @@ func (m *Mkissa) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga (translated/"sub" only)
 func (m *Mkissa) FetchChapters() (chapters Filterables, errs []error) {
+	m.resolveSeriesURL()
 	info, err := m.fetchInfo()
 	if err != nil {
 		return nil, []error{err}

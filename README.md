@@ -47,7 +47,7 @@ and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[111 supported sites](#supported-sites)**, from big aggregators to small
+- **[115 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
@@ -484,7 +484,7 @@ Run `manga-downloader help` to list them in your terminal.
 ## Supported sites
 
 <details>
-<summary><b>Show all 111 supported sites</b></summary>
+<summary><b>Show all 115 supported sites</b></summary>
 <br>
 
 - [3asq.online (Arabic, former 3asq.org)](https://3asq.online)
@@ -496,6 +496,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [azorafly.com (Azorafly, Arabic)](https://azorafly.com)
 - [bigsolo.org](https://bigsolo.org)
 - [bluesolo.org (Blue Solo, French scantrad)](https://bluesolo.org)
+- [chainsawman-chapter.online (Chainsaw Man)](https://chainsawman-chapter.online)
 - [comix.to](https://comix.to) \*
 - [danke.moe (Danke fürs Lesen)](https://danke.moe)
 - [deathtollscans.net](https://reader.deathtollscans.net)
@@ -516,9 +517,11 @@ Run `manga-downloader help` to list them in your terminal.
 - [gdscans.com (GalaxyDegenScans)](https://gdscans.com)
 - [genzupdates.com (Genz Toon)](https://genzupdates.com)
 - [guya.moe (Guya, Kaguya-sama)](https://guya.moe)
+- [heavenly-delusion.com (Heavenly Delusion)](https://heavenly-delusion.com)
 - [hivetoons.org (HiveToons, VoidScans)](https://hivetoons.org)
 - [inmanga.com](https://inmanga.com)
 - [jestful.net](https://jestful.net)
+- [jojolandsmanga.com (The JoJoLands)](https://jojolandsmanga.com)
 - [kappabeast.com](https://kappabeast.com) \*
 - [kaynscans.com (Kayn Scans, former kaynscan.org)](https://kaynscans.com)
 - [kingofshojo.com](https://kingofshojo.com)
@@ -530,7 +533,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [lilymanga.net (yuri, some NSFW)](https://lilymanga.net)
 - [limonmanga.com](https://limonmanga.com)
 - [luacomic.org (LuaScans)](https://luacomic.org)
-- [madarascans.org (former madarascans.com)](https://madarascans.org)
+- [madarascans.net (former madarascans.org/.com)](https://madarascans.net)
 - [maid.my.id](https://www.maid.my.id)
 - [mangaball.com (former mangaball.net)](https://mangaball.com)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
@@ -583,6 +586,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
 - [team-shadowi.com](https://www.team-shadowi.com)
 - [templetoons.com (Temple Scan)](https://templetoons.com) \*
+- [the-apothecary-diaries.com (The Apothecary Diaries)](https://the-apothecary-diaries.com)
 - [toongod.org](https://www.toongod.org) \*
 - [toonily.com](https://toonily.com) \*
 - [tortugaceviri.com (Tortuga Çeviri)](https://tortugaceviri.com)

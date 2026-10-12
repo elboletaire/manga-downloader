@@ -62,6 +62,10 @@ type ComixChapter struct {
 // comixHostRe matches comix.to and its subdomains
 var comixHostRe = regexp.MustCompile(`(?i)(^|\.)comix\.to$`)
 
+// comixChapterRe matches chapter reader URLs whose path is
+// /title/{slug}/{chapter-id}: the series URL is the first two path segments.
+var comixChapterRe = regexp.MustCompile(`(?i)^(https?://(?:www\.)?comix\.to/title/[^/?#]+)/[^/?#]`)
+
 // comixPagingRe extracts the "showing X to Y of Z items" chapter-list footer
 // text, used to know when pagination is exhausted
 var comixPagingRe = regexp.MustCompile(`(\d+)\s+to\s+(\d+)\s+of\s+(\d+)`)
@@ -88,11 +92,20 @@ func (c *Comix) Test() (bool, error) {
 	return comixHostRe.MatchString(u.Hostname()), nil
 }
 
+// resolveSeriesURL rewrites c.URL to the series URL when it is a chapter
+// reader URL (/title/{slug}/{chapter-id}). Series URLs are unchanged.
+func (c *Comix) resolveSeriesURL() {
+	if match := comixChapterRe.FindStringSubmatch(c.URL); match != nil {
+		c.URL = match[1]
+	}
+}
+
 // fetchPage1 renders (and caches) the first page of the series' chapter list
 func (c *Comix) fetchPage1() (*goquery.Document, error) {
 	if c.doc != nil {
 		return c.doc, nil
 	}
+	c.resolveSeriesURL()
 
 	html, err := browser.GetHTML(c.URL, comixFooterSelector, 0)
 	if err != nil {

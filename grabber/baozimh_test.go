@@ -93,6 +93,16 @@ func TestBaozimhSeriesURL(t *testing.T) {
 			"https://www.baozimh.com/comic/chapter/some-slug/0_8.html?x=1#top",
 			"https://www.baozimh.com/comic/some-slug",
 		},
+		{
+			"page_direct with comic_id resolves to series",
+			"https://www.twmanga.com/user/page_direct?comic_id=zhihuojintiandelunhuiqishi-leehyunminiankanara&section_slot=0&chapter_slot=108",
+			"https://www.twmanga.com/comic/zhihuojintiandelunhuiqishi-leehyunminiankanara",
+		},
+		{
+			"unrelated path unchanged",
+			"https://www.twmanga.com/",
+			"https://www.twmanga.com/",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

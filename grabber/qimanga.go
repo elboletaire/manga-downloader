@@ -14,6 +14,11 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
+// qimangaChapterRe matches chapter URLs like /series/{slug}/chapter-{num}
+// (applies to qimanga.com, qimanhwa.com, and aurorascans.com which all
+// 301-redirect path-for-path to qimanga.com)
+var qimangaChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?(?:qimanga\.com|qimanhwa\.com|aurorascans\.com)/series/([^/?#]+)/[^/?#]`)
+
 // Qimanga is a grabber for qimanga.com: the reader pages are server side
 // rendered, but the series page only renders the newest chapters, so the
 // full chapters list needs to be fetched from their paginated JSON api
@@ -32,16 +37,36 @@ type QimangaChapter struct {
 	Slug string
 }
 
+// qimangaHostRe matches the qimanga.com family domains case-insensitively.
+var qimangaHostRe = regexp.MustCompile(`(?i)qimanga\.com|qimanhwa\.com|aurorascans\.com`)
+
 // Test returns true if the URL is a qimanga.com URL (or one of its rebrand
 // aliases, which 301-redirect path-for-path to qimanga.com: aurorascans.com
 // -> qimanhwa.com -> qimanga.com)
 func (q *Qimanga) Test() (bool, error) {
-	re := regexp.MustCompile(`qimanga\.com|qimanhwa\.com|aurorascans\.com`)
-	return re.MatchString(q.URL), nil
+	return qimangaHostRe.MatchString(q.URL), nil
+}
+
+// resolveSeriesURL rewrites a chapter URL (/series/{slug}/chapter-...) to the
+// series URL (/series/{slug}). No-op for series URLs.
+func (q *Qimanga) resolveSeriesURL() {
+	m := qimangaChapterRe.FindStringSubmatch(q.URL)
+	if m == nil {
+		return
+	}
+	u, err := url.Parse(q.URL)
+	if err != nil {
+		return
+	}
+	u.Path = "/series/" + m[1]
+	u.RawQuery = ""
+	u.Fragment = ""
+	q.URL = u.String()
 }
 
 // FetchTitle fetches and returns the manga title
 func (q *Qimanga) FetchTitle() (string, error) {
+	q.resolveSeriesURL()
 	if q.title != "" {
 		return q.title, nil
 	}
@@ -65,7 +90,8 @@ func (q *Qimanga) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (q Qimanga) FetchChapters() (chapters Filterables, errs []error) {
+func (q *Qimanga) FetchChapters() (chapters Filterables, errs []error) {
+	q.resolveSeriesURL()
 	slug, err := q.seriesSlug()
 	if err != nil {
 		return nil, []error{err}

@@ -5,6 +5,7 @@ package grabber
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -36,14 +37,35 @@ type MangahereChapter struct {
 	URL string
 }
 
-// Test returns true if the URL is a mangahere.cc URL
+// Test returns true if the URL is a mangahere.cc URL. Any subdomain (m.,
+// newm., bare) is moved to www.mangahere.cc so the desktop markup is served.
 func (m *Mangahere) Test() (bool, error) {
-	re := regexp.MustCompile(`mangahere\.cc`)
-	return re.MatchString(m.URL), nil
+	u, err := url.Parse(m.URL)
+	if err != nil || !mangahereHostRe.MatchString(u.Hostname()) {
+		return false, nil
+	}
+	u.Host = "www.mangahere.cc"
+	m.URL = u.String()
+	return true, nil
+}
+
+// resolveSeriesURL resolves a chapter URL to the series URL if needed.
+func (m *Mangahere) resolveSeriesURL() error {
+	seriesURL, ok := mangahereSeriesURL(m.URL)
+	if !ok {
+		return nil
+	}
+
+	m.URL = seriesURL
+	return nil
 }
 
 // FetchTitle fetches and returns the manga title
 func (m *Mangahere) FetchTitle() (string, error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return "", err
+	}
+
 	body, err := http.Get(http.RequestParams{
 		URL: m.URL,
 	})
@@ -61,7 +83,11 @@ func (m *Mangahere) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (m Mangahere) FetchChapters() (chapters Filterables, errs []error) {
+func (m *Mangahere) FetchChapters() (chapters Filterables, errs []error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
 	body, err := http.Get(http.RequestParams{
 		URL: m.URL,
 	})
@@ -106,7 +132,7 @@ var (
 )
 
 // FetchChapter fetches a chapter and its pages
-func (m Mangahere) FetchChapter(f Filterable) (*Chapter, error) {
+func (m *Mangahere) FetchChapter(f Filterable) (*Chapter, error) {
 	mchap := f.(*MangahereChapter)
 
 	body, err := http.GetText(http.RequestParams{

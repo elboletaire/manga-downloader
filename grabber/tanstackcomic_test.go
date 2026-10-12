@@ -174,3 +174,45 @@ func TestTanstackComicSeriesSlug(t *testing.T) {
 		}
 	}
 }
+
+func TestTanstackComicResolveSeriesURL(t *testing.T) {
+	cases := []struct {
+		name   string
+		input  string
+		wanted string
+	}{
+		{
+			name:   "chapter URL resolves to series URL",
+			input:  "https://vortexscans.org/series/archmage-curriculum/chapter-46",
+			wanted: "https://vortexscans.org/series/archmage-curriculum",
+		},
+		{
+			name:   "chapter URL with query string",
+			input:  "https://hivetoons.org/series/eleceed/chapter-417?page=1",
+			wanted: "https://hivetoons.org/series/eleceed",
+		},
+		{
+			name:   "series URL unchanged",
+			input:  "https://vortexscans.org/series/archmage-curriculum",
+			wanted: "https://vortexscans.org/series/archmage-curriculum",
+		},
+		{
+			name:   "series URL with trailing slash unchanged",
+			input:  "https://vortexscans.org/series/archmage-curriculum/",
+			wanted: "https://vortexscans.org/series/archmage-curriculum/",
+		},
+		{
+			name:   "unrelated path unchanged",
+			input:  "https://vortexscans.org/",
+			wanted: "https://vortexscans.org/",
+		},
+	}
+
+	for _, c := range cases {
+		tc := &tanstackComic{Grabber: &Grabber{URL: c.input}}
+		tc.resolveSeriesURL()
+		if tc.URL != c.wanted {
+			t.Errorf("%s: got %q, want %q", c.name, tc.URL, c.wanted)
+		}
+	}
+}

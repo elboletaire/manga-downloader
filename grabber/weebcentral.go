@@ -45,6 +45,58 @@ var weebCentralHostRe = regexp.MustCompile(`(?i)(^|\.)weebcentral\.com$`)
 // https://weebcentral.com/series/01J76XYDXH7KT6AABVG3JAT3ZP/Some-Manga
 var weebCentralSeriesRe = regexp.MustCompile(`/series/([A-Za-z0-9]+)`)
 
+// weebCentralSeriesLinkRe matches a link to a series page by its ULID.
+var weebCentralSeriesLinkRe = regexp.MustCompile(`/series/[0-9A-Za-z]{26}(?:/|$)`)
+
+// weebCentralChapterRe matches chapter URLs like
+// https://weebcentral.com/chapters/01M20S9HSSGNNMVT849MH5V86R (www. included)
+var weebCentralChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?weebcentral\.com/chapters/([A-Za-z0-9]+)`)
+
+// weebCentralChapterURL checks if the URL is a chapter URL.
+func weebCentralChapterURL(url string) bool {
+	return weebCentralChapterRe.MatchString(url)
+}
+
+// weebCentralResolveSeriesURL finds the series URL from a chapter page.
+func weebCentralResolveSeriesURL(chapterURL string) (string, error) {
+	if !weebCentralChapterURL(chapterURL) {
+		return "", nil
+	}
+
+	body, err := http.Get(http.RequestParams{
+		URL: chapterURL,
+	})
+	if err != nil {
+		return "", err
+	}
+	defer body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(body)
+	if err != nil {
+		return "", err
+	}
+
+	// The nav also links /series/random and the like, so only a 26-character
+	// ULID counts.
+	base, _ := url.Parse(chapterURL)
+	var seriesURL string
+	doc.Find(`a[href*="/series/"]`).EachWithBreak(func(_ int, s *goquery.Selection) bool {
+		href, _ := s.Attr("href")
+		if !weebCentralSeriesLinkRe.MatchString(href) {
+			return true
+		}
+		if u, err := base.Parse(href); err == nil {
+			seriesURL = u.String()
+		}
+		return false
+	})
+	if seriesURL == "" {
+		return "", errSeriesNotFound(chapterURL)
+	}
+
+	return seriesURL, nil
+}
+
 // Test returns true if the URL is a weebcentral.com URL. It only checks the
 // hostname (no fetch) so it can be tried early without extra requests.
 func (w *WeebCentral) Test() (bool, error) {
@@ -60,6 +112,10 @@ func (w *WeebCentral) Test() (bool, error) {
 func (w *WeebCentral) FetchTitle() (string, error) {
 	if w.title != "" {
 		return w.title, nil
+	}
+
+	if err := w.resolveSeriesURL(); err != nil {
+		return "", err
 	}
 
 	body, err := http.Get(http.RequestParams{
@@ -80,8 +136,27 @@ func (w *WeebCentral) FetchTitle() (string, error) {
 	return w.title, nil
 }
 
+// resolveSeriesURL resolves a chapter URL to the series URL if needed.
+func (w *WeebCentral) resolveSeriesURL() error {
+	if !weebCentralChapterURL(w.URL) {
+		return nil
+	}
+
+	seriesURL, err := weebCentralResolveSeriesURL(w.URL)
+	if err != nil {
+		return err
+	}
+
+	w.URL = seriesURL
+	return nil
+}
+
 // FetchChapters returns the chapters of the manga
-func (w WeebCentral) FetchChapters() (chapters Filterables, errs []error) {
+func (w *WeebCentral) FetchChapters() (chapters Filterables, errs []error) {
+	if err := w.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
 	id, err := w.seriesID()
 	if err != nil {
 		return nil, []error{err}
@@ -130,7 +205,7 @@ func (w WeebCentral) FetchChapters() (chapters Filterables, errs []error) {
 }
 
 // FetchChapter fetches a chapter and its pages
-func (w WeebCentral) FetchChapter(f Filterable) (*Chapter, error) {
+func (w *WeebCentral) FetchChapter(f Filterable) (*Chapter, error) {
 	wchap := f.(*WeebCentralChapter)
 
 	uri := fmt.Sprintf("%s/images?is_prev=False&current_page=1&reading_style=long_strip", wchap.URL)
@@ -172,7 +247,7 @@ func (w WeebCentral) FetchChapter(f Filterable) (*Chapter, error) {
 // seriesID returns the series ULID from the URL (i.e.
 // "01J76XYDXH7KT6AABVG3JAT3ZP" for
 // https://weebcentral.com/series/01J76XYDXH7KT6AABVG3JAT3ZP/Some-Manga)
-func (w WeebCentral) seriesID() (string, error) {
+func (w *WeebCentral) seriesID() (string, error) {
 	matches := weebCentralSeriesRe.FindStringSubmatch(w.URL)
 	if len(matches) != 2 {
 		return "", fmt.Errorf("could not find series id in url %s", w.URL)

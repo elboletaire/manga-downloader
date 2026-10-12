@@ -4,6 +4,39 @@ package grabber
 
 import "testing"
 
+func TestFanfoxTest(t *testing.T) {
+	cases := []struct {
+		url     string
+		want    bool
+		wantURL string
+	}{
+		// bare host preserved
+		{"https://fanfox.net/manga/chainsaw_man/c228/1.html", true, "https://fanfox.net/manga/chainsaw_man/c228/1.html"},
+		// www. → bare fanfox.net
+		{"https://www.fanfox.net/manga/chainsaw_man/", true, "https://fanfox.net/manga/chainsaw_man/"},
+		// mobile host → bare fanfox.net
+		{"https://m.fanfox.net/manga/chainsaw_man/c228/1.html", true, "https://fanfox.net/manga/chainsaw_man/c228/1.html"},
+		// other domains — declined
+		{"https://www.mangahere.cc/manga/kengan_omega/", false, "https://www.mangahere.cc/manga/kengan_omega/"},
+		{"https://fanfox.net.example.org/manga/x/", false, "https://fanfox.net.example.org/manga/x/"},
+	}
+
+	for _, c := range cases {
+		m := Fanfox{Grabber: &Grabber{URL: c.url, Settings: &Settings{}}}
+		got, err := m.Test()
+		if err != nil {
+			t.Errorf("Test(%q) unexpected error: %v", c.url, err)
+			continue
+		}
+		if got != c.want {
+			t.Errorf("Test(%q) = %v, want %v", c.url, got, c.want)
+		}
+		if m.URL != c.wantURL {
+			t.Errorf("Test(%q) left URL %q, want %q", c.url, m.URL, c.wantURL)
+		}
+	}
+}
+
 // realChapterfunPayload is a real (captured) chapterfun.ashx response for
 // Chainsaw Man chapter 1, page 1: a P.A.C.K.E.R.-packed script that builds
 // an array of 2 image URLs (the current page, and the next page's preload).

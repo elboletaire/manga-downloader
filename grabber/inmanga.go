@@ -5,11 +5,23 @@ package grabber
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"regexp"
 	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
+)
+
+var (
+	// inmangaChapterRe matches chapter URLs of the form
+	// /ver/manga/<slug>/<chapter-num>/<chapter-uuid> where chapter-num may be
+	// a decimal like "912-5" (inmanga's notation for chapter 912, part 5).
+	// The chapter UUID segment distinguishes chapter URLs from series URLs,
+	// which only have a single UUID after the slug.
+	inmangaChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?inmanga\.com/ver/manga/[^/]+/[^/]+/[a-f0-9-]+/?(?:[?#].*)?$`)
+	inmangaMidRe     = regexp.MustCompile(`(?i)var\s+mid\s*=\s*'([a-f0-9-]+)'`)
+	inmangaSlugRe    = regexp.MustCompile(`(?i)^https?://(?:www\.)?inmanga\.com/ver/manga/([^/]+)/`)
 )
 
 // Inmanga is a grabber for inmanga.com
@@ -20,6 +32,33 @@ type Inmanga struct {
 
 func NewInmanga(g *Grabber) *Inmanga {
 	return &Inmanga{Grabber: g}
+}
+
+// inmangaChapterURL checks if the URL is a chapter URL (not a series URL).
+func inmangaChapterURL(url string) bool {
+	return inmangaChapterRe.MatchString(url)
+}
+
+// inmangaSeriesURL extracts the series URL from a chapter URL, given HTML containing the manga ID.
+func inmangaSeriesURL(chapterURL, html string) (string, bool) {
+	if !inmangaChapterURL(chapterURL) {
+		return "", false
+	}
+
+	// Extract mid from html: var mid = '<uuid>';
+	matches := inmangaMidRe.FindStringSubmatch(html)
+	if len(matches) < 2 {
+		return "", false
+	}
+	mid := matches[1]
+
+	slugMatches := inmangaSlugRe.FindStringSubmatch(chapterURL)
+	if len(slugMatches) < 2 {
+		return "", false
+	}
+	slug := slugMatches[1]
+
+	return fmt.Sprintf("https://inmanga.com/ver/manga/%s/%s", slug, mid), true
 }
 
 // InmangaChapter is a chapter representation from InManga
@@ -34,10 +73,43 @@ func (i *Inmanga) Test() (bool, error) {
 	return re.MatchString(i.URL), nil
 }
 
-// GetTitle fetches the manga title
+// resolveSeriesURL resolves a chapter URL to the series URL if needed.
+func (i *Inmanga) resolveSeriesURL() error {
+	if !inmangaChapterURL(i.URL) {
+		return nil
+	}
+
+	body, err := http.Get(http.RequestParams{
+		URL: i.URL,
+	})
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+
+	htmlBytes, err := io.ReadAll(body)
+	if err != nil {
+		return err
+	}
+	html := string(htmlBytes)
+
+	seriesURL, ok := inmangaSeriesURL(i.URL, html)
+	if !ok {
+		return errSeriesNotFound(i.URL)
+	}
+
+	i.URL = seriesURL
+	return nil
+}
+
+// FetchTitle fetches the manga title
 func (i *Inmanga) FetchTitle() (string, error) {
 	if i.title != "" {
 		return i.title, nil
+	}
+
+	if err := i.resolveSeriesURL(); err != nil {
+		return "", err
 	}
 
 	body, err := http.Get(http.RequestParams{
@@ -59,10 +131,13 @@ func (i *Inmanga) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (i Inmanga) FetchChapters() (Filterables, []error) {
+func (i *Inmanga) FetchChapters() (Filterables, []error) {
+	if err := i.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
 	id := getUuid(i.URL)
 
-	// retrieve chapters json list
 	body, err := http.GetText(http.RequestParams{
 		URL: "https://inmanga.com/chapter/getall?mangaIdentification=" + id,
 	})
@@ -92,7 +167,7 @@ func (i Inmanga) FetchChapters() (Filterables, []error) {
 }
 
 // FetchChapter fetches the chapter with its pages
-func (i Inmanga) FetchChapter(chap Filterable) (*Chapter, error) {
+func (i *Inmanga) FetchChapter(chap Filterable) (*Chapter, error) {
 	ichap := chap.(*InmangaChapter)
 	body, err := http.Get(http.RequestParams{
 		URL: "https://inmanga.com/chapter/chapterIndexControls?identification=" + ichap.Id,

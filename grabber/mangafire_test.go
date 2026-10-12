@@ -289,3 +289,57 @@ func TestMangafireUnavailableLanguage(t *testing.T) {
 		t.Errorf("got %q, want the none listing", got)
 	}
 }
+
+func TestMangafireResolveSeriesURL(t *testing.T) {
+	cases := []struct {
+		name   string
+		input  string
+		wanted string
+	}{
+		{
+			name:   "chapter URL resolves to series URL",
+			input:  "https://mangafire.to/title/dkw-one-piece/chapter/9485827",
+			wanted: "https://mangafire.to/title/dkw-one-piece",
+		},
+		{
+			name:   "www. prefix preserved",
+			input:  "https://www.mangafire.to/title/dkw-one-piece/chapter/9485827",
+			wanted: "https://www.mangafire.to/title/dkw-one-piece",
+		},
+		{
+			name:   "legacy /manga/ format",
+			input:  "https://mangafire.to/manga/one-piecee.dkw/chapter/9485827",
+			wanted: "https://mangafire.to/manga/one-piecee.dkw",
+		},
+		{
+			name:   "series URL unchanged",
+			input:  "https://mangafire.to/title/dkw-one-piece",
+			wanted: "https://mangafire.to/title/dkw-one-piece",
+		},
+		{
+			name:   "short series URL unchanged",
+			input:  "https://mangafire.to/title/9062q-itoko-no-onee-chan-ni-amaechau",
+			wanted: "https://mangafire.to/title/9062q-itoko-no-onee-chan-ni-amaechau",
+		},
+		{
+			name:   "series URL with query unchanged",
+			input:  "https://mangafire.to/title/dkw-one-piece?lang=en",
+			wanted: "https://mangafire.to/title/dkw-one-piece?lang=en",
+		},
+		{
+			name:   "unrelated path unchanged",
+			input:  "https://mangafire.to/",
+			wanted: "https://mangafire.to/",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			m := &Mangafire{Grabber: &Grabber{URL: c.input}}
+			m.resolveSeriesURL()
+			if m.URL != c.wanted {
+				t.Errorf("got %q, want %q", m.URL, c.wanted)
+			}
+		})
+	}
+}

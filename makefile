@@ -78,12 +78,14 @@ test/gui: build/gui/frontend
 # last), so parallel site-support branches never edit the same line
 grabber: \
 	grabber/3asq \
+	grabber/apothecary \
 	grabber/atsumaru \
 	grabber/aurorascans \
 	grabber/azorafly \
 	grabber/baozimh \
 	grabber/bigsolo \
 	grabber/bluesolo \
+	grabber/chainsawman \
 	grabber/comix \
 	grabber/danke \
 	grabber/drakecomic \
@@ -94,10 +96,12 @@ grabber: \
 	grabber/gdscans \
 	grabber/genztoon \
 	grabber/guya \
+	grabber/heavenlydelusion \
 	grabber/hijala \
 	grabber/hivetoons \
 	grabber/inmanga \
 	grabber/jestful \
+	grabber/jojolands \
 	grabber/kaynscan \
 	grabber/leercapitulo \
 	grabber/lilymanga \
@@ -204,6 +208,10 @@ grabber/baozimh:
 	go run . https://www.twmanga.com/comic/zhihuojintiandelunhuiqishi-leehyunminiankanara 100
 grabber/bluesolo:
 	go run . https://bluesolo.org/comics/frieren 147
+# single-manga WordPress site, rotating wN. subdomains; use a chapter slightly
+# behind the newest to keep the target stable as new chapters release
+grabber/chainsawman:
+	go run . https://w2.chainsawman-chapter.online 230
 # use a chapter with price 0 (recent chapters are often premium/paywalled)
 grabber/luascans:
 	go run . https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement 56
@@ -262,8 +270,16 @@ grabber/flamecomics:
 # grabber rather than a PlainHTML selector
 grabber/mangahere:
 	go run . https://www.mangahere.cc/manga/kengan_omega/ 363
+grabber/apothecary:
+	go run . https://the-apothecary-diaries.com 85
 grabber/jestful:
 	go run . https://jestful.net/hwms-jitsu-wa-ore-saikyou-deshita.html 150
+
+grabber/jojolands:
+	go run . https://jojolandsmanga.com 39
+
+grabber/heavenlydelusion:
+	go run . https://heavenly-delusion.com 83
 
 grabber/weebcentral:
 	go run . https://weebcentral.com/series/01J76XYDXH7KT6AABVG3JAT3ZP/Shangri-La-Frontier 274
@@ -525,7 +541,7 @@ grabber/furyosociety:
 grabber/elftoon:
 	go run . https://elftoon.net/series/comic/god-level-assassin-im-the-shadow 123
 grabber/madarascans:
-	go run . https://madarascans.org/series/my-disciples-are-all-big-villains/ 481
+	go run . https://madarascans.net/series/my-disciples-are-all-big-villains/ 481
 grabber/maid:
 	go run . https://www.maid.my.id/manga/watashi-no-oshi-wa-akuyaku-reijou/ 50
 grabber/mangaberri:

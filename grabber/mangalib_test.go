@@ -14,6 +14,8 @@ func TestMangalibSeriesSlug(t *testing.T) {
 		{"https://mangalib.me/manga/206--one-piece", "206--one-piece", false},
 		{"https://mangalib.me/manga/one-piece", "one-piece", false},
 		{"https://mangalib.me/ru/manga/206--one-piece?query=1", "206--one-piece", false},
+		// chapter reader URL: extra path segments after the slug are ignored
+		{"https://mangalib.me/ru/manga/206--one-piece/v1/c1188", "206--one-piece", false},
 		{"https://mangalib.me/ru/manga/", "", true},
 		{"https://mangalib.me/", "", true},
 	}

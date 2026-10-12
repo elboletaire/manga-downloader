@@ -57,6 +57,11 @@ var manganeloHostRe = regexp.MustCompile(`(?i)(^|\.)(mangabats\.com|mangakakalot
 // would never fire.
 const manganeloSeriesWait = ".chapter-list a"
 
+// manganeloChapterPathRe matches chapter reader URLs that have extra path
+// after /manga/{slug} (e.g. /manga/apotheosis/chapter-1297). The capturing
+// group is the series URL prefix.
+var manganeloChapterPathRe = regexp.MustCompile(`(?i)^(https?://[^/?#]+/manga/[^/?#]+)/[^/?#]`)
+
 // manganeloChaptersLimit is the per-request page size asked of the chapters
 // API. The API defaults to 50 (what the series page shows) but honors much
 // bigger limits, so even the longest series comes back in a single call; the
@@ -84,10 +89,19 @@ func (m *Manganelo) Test() (bool, error) {
 	return manganeloHostRe.MatchString(u.Hostname()), nil
 }
 
+// resolveSeriesURL rewrites m.URL to the series URL when it is a chapter
+// reader URL (/manga/{slug}/{chapter-slug}). Series URLs are unchanged.
+func (m *Manganelo) resolveSeriesURL() {
+	if match := manganeloChapterPathRe.FindStringSubmatch(m.URL); match != nil {
+		m.URL = match[1]
+	}
+}
+
 // FetchTitle fetches and returns the manga title. This is the only request
 // in the grabber that may need a browser, so it is also what warms up the
 // Cloudflare clearance for the plain HTTP requests that follow.
 func (m *Manganelo) FetchTitle() (string, error) {
+	m.resolveSeriesURL()
 	if m.title != "" {
 		return m.title, nil
 	}
@@ -142,6 +156,7 @@ func manganeloTitleFrom(body string) string {
 // FetchChapters returns the chapters of the manga, fetched from the
 // paginated chapters API (the series page DOM only carries the newest 50)
 func (m *Manganelo) FetchChapters() (Filterables, []error) {
+	m.resolveSeriesURL()
 	slug, err := m.slug()
 	if err != nil {
 		return nil, []error{err}
@@ -236,7 +251,7 @@ func (m *Manganelo) FetchChapter(f Filterable) (*Chapter, error) {
 // slug returns the manga slug from the URL (i.e. "one-piece" for
 // https://www.mangabats.com/manga/one-piece)
 func (m Manganelo) slug() (string, error) {
-	re := regexp.MustCompile(`/manga/([^/]+)`)
+	re := regexp.MustCompile(`/manga/([^/?#]+)`)
 	matches := re.FindStringSubmatch(m.URL)
 	if len(matches) != 2 {
 		return "", fmt.Errorf("could not find manga slug in url %s", m.URL)

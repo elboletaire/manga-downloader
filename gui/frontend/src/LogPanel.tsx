@@ -60,7 +60,7 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
           </span>
         )}
       </button>
-      <span className={`last-line level-${lastLine?.level ?? 'info'}`} aria-live="polite">
+      <span className={`last-line level-${lastLine?.level ?? 'info'}`} aria-live="polite" title={lastLine?.text}>
         {lastLine ? lastLine.text : 'Ready'}
       </span>
       <span className="version-group">
