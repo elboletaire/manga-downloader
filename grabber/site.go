@@ -41,7 +41,7 @@ type Settings struct {
 	Range string
 	// Volumes packs one file per volume instead of one per chapter: either
 	// "auto" (the volumes the site files chapters under) or chapter ranges
-	// separated by semicolons, one group per volume ("1-7;8-16"). Empty packs
+	// separated by slashes, one group per volume ("1-7/8-16"). Empty packs
 	// per chapter, and it can't be combined with Bundle.
 	Volumes string
 	// SkipPages is the range of pages to exclude from every downloaded

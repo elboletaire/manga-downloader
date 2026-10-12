@@ -812,7 +812,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         volumesSite === '' &&
         volumesText === ''
       ) {
-        throw `the site doesn't say which volume these chapters are in; give the volumes as chapter ranges instead, e.g. "1-7;8-16"`;
+        throw `the site doesn't say which volume these chapters are in; give the volumes as chapter ranges instead, e.g. "1-7/8-16"`;
       }
       pushLog('info', `Downloading ${picked.length} chapter(s) of ${title}`);
       simulateRun(picked);

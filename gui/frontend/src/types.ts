@@ -110,7 +110,7 @@ export interface State {
 
 /** The Volumes box, used when the options pack as volumes */
 export interface Volumes {
-  /** The volumes a run packs, as chapter ranges per volume ("1-7; 8-16"); "" for the site's own */
+  /** The volumes a run packs, as chapter ranges per volume ("1-7/8-16"); "" for the site's own */
   text: string;
   /** The site's volumes in the same syntax; "" when the site doesn't say */
   site: string;

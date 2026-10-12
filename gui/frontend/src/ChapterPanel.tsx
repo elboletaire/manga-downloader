@@ -584,7 +584,8 @@ function VolumesBar({ text, site, volumes, loose, disabled, onVolumes }: Volumes
           id="volumes-input"
           type="text"
           className={`input small mono${error !== '' ? ' invalid' : ''}`}
-          placeholder="1-7; 8-16"
+          placeholder="1-7/8-16"
+          title='Chapter ranges, one group per volume, separated by "/". Start a group with "N:" to give its volume number, e.g. "16:112-114".'
           value={draft}
           disabled={disabled}
           spellCheck={false}

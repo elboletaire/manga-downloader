@@ -26,7 +26,7 @@ export interface Api {
   /** Selects the chapters in the range text; resolves with how many matched */
   selectRange(text: string): Promise<number>;
   setOptions(options: Options): Promise<void>;
-  /** Sets the Volumes box ("1-7; 8-16", "" for the site's own); rejects a value that doesn't parse */
+  /** Sets the Volumes box ("1-7/8-16", "" for the site's own); rejects a value that doesn't parse */
   setVolumes(text: string): Promise<void>;
   /** Native folder picker; resolves with "" when cancelled */
   chooseFolder(): Promise<string>;

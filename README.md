@@ -364,17 +364,24 @@ manga-downloader --format raw [url] 1-8
 
 `--volumes` packs one file per volume. `auto` uses the volumes the site files
 chapters under (not every site lists them); otherwise give the chapters of each
-volume, separated by semicolons, in the chapter range syntax:
+volume, separated by slashes, in the chapter range syntax:
 
 ~~~bash
-manga-downloader --volumes "1-7;8-16" [url] 1-20
+manga-downloader --volumes 1-7/8-16 [url] 1-20
 ~~~
 
 That writes `Series Vol. 01.cbz` and `Series Vol. 02.cbz`, with a folder per
 chapter inside, and chapters 17 to 20, outside every volume, one file each.
 The chapters argument still picks what's downloaded: a volume packs the
-chapters of it you asked for. An empty group skips a number (`1-7;;20-30` has
-no volume 2), and it can't be combined with `--bundle`.
+chapters of it you asked for. A group can give its volume number with `N:`,
+and the groups after it count on from there:
+
+~~~bash
+manga-downloader --volumes 16:112-114/115-118 [url] 112-118
+~~~
+
+That's volumes 16 and 17. An empty group also skips a number (`1-7//20-30` has
+no volume 2), and `--volumes` can't be combined with `--bundle`.
 
 ### Image conversion
 
@@ -495,7 +502,7 @@ A URL points at one edition, and `--language` downloads another one instead
 | --------------------- | ----- | -------------------------------------------------------- | -------------- |
 | `--output-dir`        | `-o`  | Folder to write the downloaded files to                  | current folder |
 | `--bundle`            | `-b`  | Bundle all chapters into a single file                   | off            |
-| `--volumes`           |       | One file per volume: `auto` or ranges like `1-7;8-16`    | off            |
+| `--volumes`           |       | One file per volume: `auto`, `1-7/8-16`, `16:112-114`    | off            |
 | `--format`            | `-f`  | Output format: `cbz` or `raw`                            | `cbz`          |
 | `--filename-template` | `-t`  | Template for the file names                              | see above      |
 | `--language`          | `-l`  | Only download the specified language                     | site default   |

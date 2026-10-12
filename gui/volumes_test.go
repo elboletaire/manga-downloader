@@ -44,17 +44,17 @@ func TestLoadPrefillsSiteVolumes(t *testing.T) {
 		t.Fatal(err)
 	}
 	text, site := c.Volumes()
-	if site != "1-2; 3-4; 5" || text != site {
-		t.Errorf("Volumes() = %q, %q; want the site's 1-2; 3-4; 5 in both", text, site)
+	if site != "1-2/3-4/5" || text != site {
+		t.Errorf("Volumes() = %q, %q; want the site's 1-2/3-4/5 in both", text, site)
 	}
 
-	if err := c.SetVolumes("1-3;3-5"); err == nil {
+	if err := c.SetVolumes("1-3/3-5"); err == nil {
 		t.Error("overlapping volumes were accepted")
 	}
-	if err := c.SetVolumes(" 1-3; 4 "); err != nil {
+	if err := c.SetVolumes(" 1-3/4 "); err != nil {
 		t.Fatal(err)
 	}
-	if text, _ := c.Volumes(); text != "1-3; 4" {
+	if text, _ := c.Volumes(); text != "1-3/4" {
 		t.Errorf("box = %q, want it trimmed", text)
 	}
 
@@ -66,6 +66,29 @@ func TestLoadPrefillsSiteVolumes(t *testing.T) {
 	}
 }
 
+// A listing whose first volume isn't 1 (one language's chapters only) names
+// it, rather than prefilling a run of empty groups
+func TestLoadPrefillsNamedVolume(t *testing.T) {
+	list := volumeChapters(5, 1, 0)
+	for i := range list {
+		list[i].volume = 16
+	}
+	list[4].volume = 18
+	c, _, _ := newTestController(t, false, nil, list...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if text, site := c.Volumes(); site != "16:1-4/18:5" || text != site {
+		t.Errorf("Volumes() = %q, %q; want 16:1-4/18:5 in both", text, site)
+	}
+	if err := c.SetVolumes("16: 1-2/3-4"); err != nil {
+		t.Errorf("named volumes were refused: %v", err)
+	}
+	if err := c.SetVolumes("16: 1-2/16: 3"); err == nil {
+		t.Error("a volume given twice was accepted")
+	}
+}
+
 func TestDownloadVolumes(t *testing.T) {
 	c, _, dir := newTestController(t, false, nil, volumeChapters(5, 2, 0)...)
 	if err := c.Configure(func(s *grabber.Settings) { applyPackAs(s, PackVolumes) }); err != nil {
@@ -74,7 +97,7 @@ func TestDownloadVolumes(t *testing.T) {
 	if err := c.Load("https://example.com/manga/test"); err != nil {
 		t.Fatal(err)
 	}
-	if err := c.SetVolumes("1-2;3-4"); err != nil {
+	if err := c.SetVolumes("1-2/3-4"); err != nil {
 		t.Fatal(err)
 	}
 	c.SetAll(true)

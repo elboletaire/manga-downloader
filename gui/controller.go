@@ -956,7 +956,7 @@ func (c *Controller) Volumes() (text, site string) {
 }
 
 // SetVolumes sets the Volumes box: chapter ranges, one group per volume
-// ("1-7;8-16"), "auto" or "" for the site's own. A value that doesn't parse
+// ("1-7/8-16", "16:112-114"), "auto" or "" for the site's own. A value that doesn't parse
 // is refused, as is any change while a series loads or a download runs.
 func (c *Controller) SetVolumes(text string) error {
 	c.mu.Lock()

@@ -18,7 +18,7 @@ const VolumesAuto = "auto"
 
 // ErrNoVolumes is returned by GroupVolumes for --volumes auto when none of
 // the chapters says which volume it's in
-var ErrNoVolumes = errors.New(`the site doesn't say which volume these chapters are in; give the volumes as chapter ranges instead, e.g. "1-7;8-16"`)
+var ErrNoVolumes = errors.New(`the site doesn't say which volume these chapters are in; give the volumes as chapter ranges instead, e.g. "1-7/8-16"`)
 
 // errVolumesBundle is the conflict between --volumes and --bundle
 var errVolumesBundle = errors.New("can't be combined with --bundle")
@@ -32,8 +32,8 @@ type VolumeSpec struct {
 }
 
 // ParseVolumes parses a --volumes value: "auto", or chapter ranges separated
-// by semicolons, one group per volume. An empty value is a nil spec, packing
-// per chapter.
+// by slashes, one group per volume, optionally numbered ("16:112-114"). An
+// empty value is a nil spec, packing per chapter.
 func ParseVolumes(s string) (*VolumeSpec, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
@@ -115,12 +115,13 @@ func groupOf(number float64, groups [][]ranges.Range) int {
 }
 
 // SiteVolumes writes the volumes the site files chapters under as a --volumes
-// value ("1-7;8-16"), so the desktop app can prefill its box with something
+// value ("1-7/8-16"), so the desktop app can prefill its box with something
 // that can be edited. chapters must be sorted by number. Each group lists
 // runs of consecutive chapters, so a chapter of another volume (or of none)
-// between two of a volume's never gets swept into its range. A volume number
-// with no chapters keeps its place as an empty group. It's "" when no chapter
-// has a volume.
+// between two of a volume's never gets swept into its range. A volume is
+// named ("16:112-114") only where it doesn't follow the previous one, which
+// is at the start when the first isn't volume 1, and after a missing volume.
+// It's "" when no chapter has a volume.
 func SiteVolumes(chapters grabber.Filterables) string {
 	// the volume of each listed position; a number listed more than once (one
 	// entry per language, say) belongs to the first volume it shows up in,
@@ -163,11 +164,22 @@ func SiteVolumes(chapters grabber.Filterables) string {
 		i = j + 1
 	}
 
-	parts := make([]string, len(groups))
+	var parts []string
+	prev := 0
 	for i, g := range groups {
-		parts[i] = strings.Join(g, ",")
+		if len(g) == 0 {
+			continue
+		}
+		part := strings.Join(g, ",")
+		// name the volume only where counting on from the previous one
+		// wouldn't land on it
+		if i+1 != prev+1 {
+			part = strconv.Itoa(i+1) + ":" + part
+		}
+		parts = append(parts, part)
+		prev = i + 1
 	}
-	return strings.Join(parts, "; ")
+	return strings.Join(parts, "/")
 }
 
 // VolumeLabel is how a volume is shown in progress and messages: "Vol. 01"

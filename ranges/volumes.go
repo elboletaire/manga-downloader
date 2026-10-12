@@ -5,19 +5,35 @@ package ranges
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
-// ParseVolumes parses volume groups separated by semicolons, each in Parse's
-// syntax: "1-7;8-16,18" is volume 1 holding chapters 1 to 7, and volume 2
-// holding 8 to 16 plus 18. A volume's number is its position, so an empty
-// group keeps the count going ("1-7;;20-30" has no volume 2), while trailing
-// empty groups are dropped. Groups can't overlap, as a chapter can only go
-// into one volume; ranges within the same group can.
+// maxVolume bounds an explicit volume number, as volumes are indexed by it
+const maxVolume = 9999
+
+// volumePrefix matches a group naming its volume: "16:112-114"
+var volumePrefix = regexp.MustCompile(`(?s)^([^:]*):(.*)$`)
+
+// wholeNumber is what a volume number has to be, matching grabber.Chapter's
+// integer Volume
+var wholeNumber = regexp.MustCompile(`^\d+$`)
+
+// ParseVolumes parses volume groups separated by slashes, each in Parse's
+// syntax: "1-7/8-16,18" is volume 1 holding chapters 1 to 7, and volume 2
+// holding 8 to 16 plus 18. Volume N is the Nth element of the result.
+//
+// A group can name its volume with an "N:" prefix ("16:112-114"); one
+// without continues from the previous group's number, so "1-7/5:30/31-40" is
+// volumes 1, 5 and 6. An empty group keeps the count going ("1-7//20-30" has
+// no volume 2), while trailing empty groups are dropped. Spaces around "/"
+// and ":" are fine. Neither clashes with Parse, which takes neither. A volume can't
+// be given twice, and groups can't overlap, as a chapter can only go into one
+// volume; ranges within the same group can.
 func ParseVolumes(s string) ([][]Range, error) {
-	segments := strings.Split(s, ";")
-	// trailing empty groups (a final ";") number nothing
+	segments := strings.Split(s, "/")
+	// trailing empty groups (a final "/") number nothing
 	for len(segments) > 0 && strings.TrimSpace(segments[len(segments)-1]) == "" {
 		segments = segments[:len(segments)-1]
 	}
@@ -25,17 +41,39 @@ func ParseVolumes(s string) ([][]Range, error) {
 		return nil, errors.New("no volumes given")
 	}
 
-	volumes := make([][]Range, len(segments))
-	for i, seg := range segments {
+	var volumes [][]Range
+	number := 0
+	for _, seg := range segments {
+		number++
 		seg = strings.TrimSpace(seg)
 		if seg == "" {
 			continue
 		}
+		if m := volumePrefix.FindStringSubmatch(seg); m != nil {
+			n, err := volumeNumber(strings.TrimSpace(m[1]))
+			if err != nil {
+				return nil, fmt.Errorf("volume %d: %w", number, err)
+			}
+			number = n
+			seg = strings.TrimSpace(m[2])
+			if seg == "" {
+				return nil, fmt.Errorf("volume %d: no chapters given", number)
+			}
+		}
+		if number > maxVolume {
+			return nil, fmt.Errorf("volume %d: volume numbers go up to %d", number, maxVolume)
+		}
 		rngs, err := Parse(seg)
 		if err != nil {
-			return nil, fmt.Errorf("volume %d: %w", i+1, err)
+			return nil, fmt.Errorf("volume %d: %w", number, err)
 		}
-		volumes[i] = rngs
+		for len(volumes) < number {
+			volumes = append(volumes, nil)
+		}
+		if volumes[number-1] != nil {
+			return nil, fmt.Errorf("volume %d is given twice", number)
+		}
+		volumes[number-1] = rngs
 	}
 
 	for i := range volumes {
@@ -47,6 +85,21 @@ func ParseVolumes(s string) ([][]Range, error) {
 	}
 
 	return volumes, nil
+}
+
+// volumeNumber parses the N of an "N:" prefix, a whole number from 1
+func volumeNumber(s string) (int, error) {
+	if !wholeNumber.MatchString(s) {
+		return 0, fmt.Errorf("invalid volume number %q, it must be a whole number like 4", s)
+	}
+	n, err := strconv.Atoi(s)
+	if err != nil || n > maxVolume {
+		return 0, fmt.Errorf("invalid volume number %q, volume numbers go up to %d", s, maxVolume)
+	}
+	if n == 0 {
+		return 0, errors.New(`invalid volume number "0", volumes start at 1`)
+	}
+	return n, nil
 }
 
 // overlap returns the first pair of ranges of a and b sharing a number

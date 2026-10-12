@@ -4,8 +4,10 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -41,10 +43,10 @@ func TestParseVolumesSpec(t *testing.T) {
 	if spec, err := ParseVolumes("AUTO"); err != nil || !spec.Auto {
 		t.Errorf("auto: got %+v, %v", spec, err)
 	}
-	if spec, err := ParseVolumes("1-7;8"); err != nil || len(spec.Groups) != 2 {
+	if spec, err := ParseVolumes("1-7/8"); err != nil || len(spec.Groups) != 2 {
 		t.Errorf("groups: got %+v, %v", spec, err)
 	}
-	if _, err := ParseVolumes("1-7;5"); err == nil {
+	if _, err := ParseVolumes("1-7/5"); err == nil {
 		t.Error("overlap: want an error")
 	}
 }
@@ -59,10 +61,10 @@ func TestGroupVolumes(t *testing.T) {
 		wantErr error
 	}{
 		{"auto", "auto", map[int][]float64{1: {1, 2}, 2: {3, 4}, 4: {6}}, []float64{2.5, 5}, nil},
-		{"explicit", "1-2;3-4", map[int][]float64{1: {1, 2}, 2: {3, 4}}, []float64{2.5, 5, 6}, nil},
-		{"decimals and commas", "1-2.5,6;3", map[int][]float64{1: {1, 2, 2.5, 6}, 2: {3}}, []float64{4, 5}, nil},
-		{"empty group keeps numbering", "1-2;;3-6", map[int][]float64{1: {1, 2}, 3: {3, 4, 5, 6}}, []float64{2.5}, nil},
-		{"group matching nothing", "1-2;100-200", map[int][]float64{1: {1, 2}}, []float64{2.5, 3, 4, 5, 6}, nil},
+		{"explicit", "1-2/3-4", map[int][]float64{1: {1, 2}, 2: {3, 4}}, []float64{2.5, 5, 6}, nil},
+		{"decimals and commas", "1-2.5,6/3", map[int][]float64{1: {1, 2, 2.5, 6}, 2: {3}}, []float64{4, 5}, nil},
+		{"empty group keeps numbering", "1-2//3-6", map[int][]float64{1: {1, 2}, 3: {3, 4, 5, 6}}, []float64{2.5}, nil},
+		{"group matching nothing", "1-2/100-200", map[int][]float64{1: {1, 2}}, []float64{2.5, 3, 4, 5, 6}, nil},
 	}
 	for _, tt := range tests {
 		spec, err := ParseVolumes(tt.spec)
@@ -102,12 +104,14 @@ func TestSiteVolumes(t *testing.T) {
 		want string
 	}{
 		{"none", chapters(1, 0, 2, 0), ""},
-		{"contiguous", chapters(1, 1, 2, 1, 3, 2, 4, 2), "1-2; 3-4"},
-		{"single chapter volume", chapters(1, 1, 2, 2), "1; 2"},
-		{"loose chapter breaks the run", chapters(1, 1, 1.5, 0, 2, 1, 3, 2), "1,2; 3"},
-		{"missing volume keeps its place", chapters(1, 1, 2, 3), "1; ; 2"},
+		{"contiguous", chapters(1, 1, 2, 1, 3, 2, 4, 2), "1-2/3-4"},
+		{"single chapter volume", chapters(1, 1, 2, 2), "1/2"},
+		{"loose chapter breaks the run", chapters(1, 1, 1.5, 0, 2, 1, 3, 2), "1,2/3"},
+		{"missing volume is named", chapters(1, 1, 2, 3, 3, 4), "1/3:2/3"},
+		{"first volume isn't 1", chapters(112, 16, 113, 16, 114, 16), "16:112-114"},
+		{"late start and a gap", chapters(1, 2, 2, 3, 3, 6), "2:1/2/6:3"},
 		{"loose tail", chapters(1, 1, 2, 1, 3, 0, 4, 0), "1-2"},
-		{"repeated number stays in its first volume", chapters(1, 1, 2, 1, 2, 2, 3, 2), "1-2; 3"},
+		{"repeated number stays in its first volume", chapters(1, 1, 2, 1, 2, 2, 3, 2), "1-2/3"},
 	}
 	for _, tt := range tests {
 		got := SiteVolumes(tt.list)
@@ -123,10 +127,20 @@ func TestSiteVolumes(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: %q doesn't parse: %v", tt.name, got, err)
 		}
-		auto, _, _ := GroupVolumes(tt.list, &VolumeSpec{Auto: true})
-		explicit, _, _ := GroupVolumes(tt.list, spec)
-		if len(auto) != len(explicit) {
-			t.Errorf("%s: %d volumes from the site, %d from %q", tt.name, len(auto), len(explicit), got)
+		// each chapter lands in its site volume (the first one, for a number
+		// listed twice, as groups can't overlap)
+		owner := map[float64]int{}
+		for _, chap := range tt.list {
+			if v := grabber.VolumeOf(chap); v > 0 {
+				if _, ok := owner[chap.GetNumber()]; !ok {
+					owner[chap.GetNumber()] = v
+				}
+			}
+		}
+		for _, chap := range tt.list {
+			if g := groupOf(chap.GetNumber(), spec.Groups); g != owner[chap.GetNumber()] {
+				t.Errorf("%s: %q puts chapter %v in volume %d, the site in %d", tt.name, got, chap.GetNumber(), g, owner[chap.GetNumber()])
+			}
 		}
 	}
 }
@@ -139,9 +153,9 @@ func TestValidateVolumes(t *testing.T) {
 	}{
 		{"", true, true},
 		{"auto", false, true},
-		{"1-7;8-16", false, true},
-		{"1-7;6-16", false, false},
-		{"1-7;x", false, false},
+		{"1-7/8-16", false, true},
+		{"1-7/6-16", false, false},
+		{"1-7/x", false, false},
 		{"auto", true, false},
 		{"1-7", true, false},
 	}
@@ -177,7 +191,7 @@ func TestDownloadVolumes(t *testing.T) {
 		fakeChapter{number: 5, pages: 1},
 	)
 	series, dir := newSeries(t, site, false)
-	site.Settings.Volumes = "1-2;3-4"
+	site.Settings.Volumes = "1-2/3-4"
 	rec := &recorder{}
 
 	name, err := series.Download(context.Background(), listed(site), nil, "", rec)
@@ -287,7 +301,7 @@ func TestDownloadVolumesFailingChapters(t *testing.T) {
 		fakeChapter{number: 3, pages: 1, fail: map[int]bool{0: true}},
 	)
 	series, dir := newSeries(t, site, false)
-	site.Settings.Volumes = "1-2;3"
+	site.Settings.Volumes = "1-2/3"
 	rec := &recorder{}
 
 	if _, err := series.Download(context.Background(), listed(site), nil, "", rec); err != nil {
@@ -415,6 +429,33 @@ func TestDownloadVolumesProgressNeverGoesBack(t *testing.T) {
 	for vol := 1; vol <= 3; vol++ {
 		if ended[vol] != "packed" || last[vol] != 1 {
 			t.Errorf("volume %d ended %q at %.3f, want packed at 1", vol, ended[vol], last[vol])
+		}
+	}
+}
+
+// TestSiteVolumesShared runs the cases gui/frontend/src/volumes.ts runs too
+func TestSiteVolumesShared(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "ranges", "testdata", "volumes.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cases struct {
+		Site []struct {
+			Name     string       `json:"name"`
+			Chapters [][2]float64 `json:"chapters"`
+			Want     string       `json:"want"`
+		} `json:"site"`
+	}
+	if err := json.Unmarshal(data, &cases); err != nil {
+		t.Fatal(err)
+	}
+	for _, tt := range cases.Site {
+		var pairs []float64
+		for _, c := range tt.Chapters {
+			pairs = append(pairs, c[0], c[1])
+		}
+		if got := SiteVolumes(chapters(pairs...)); got != tt.Want {
+			t.Errorf("%s: SiteVolumes = %q, want %q", tt.Name, got, tt.Want)
 		}
 	}
 }

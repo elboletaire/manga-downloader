@@ -429,7 +429,7 @@ func (a *App) SelectRange(text string) (int, error) {
 	return a.ctrl.SelectRange(text)
 }
 
-// SetVolumes sets the Volumes box ("1-7;8-16", "" for the site's volumes).
+// SetVolumes sets the Volumes box ("1-7/8-16", "" for the site's volumes).
 // A value that doesn't parse is refused, as is any change while busy.
 func (a *App) SetVolumes(text string) error {
 	return a.ctrl.SetVolumes(text)

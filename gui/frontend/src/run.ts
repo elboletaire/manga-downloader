@@ -83,7 +83,7 @@ export function downloadBlocker(state: State): string {
     return 'Select at least one chapter.';
   }
   if (state.options.packAs === 'volumes' && isSiteVolumes(state.volumes.text) && state.volumes.site === '') {
-    return 'The site lists no volumes: enter them as chapter ranges, e.g. 1-7; 8-16.';
+    return 'The site lists no volumes: enter them as chapter ranges, e.g. 1-7/8-16.';
   }
 
   return '';

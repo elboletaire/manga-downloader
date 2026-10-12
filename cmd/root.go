@@ -60,7 +60,7 @@ It would also download chapters 10 to 20 of Black Clover from mangadex.org in Sp
 
   manga-downloader --volumes auto https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover 1-30
 
-Would pack chapters 1 to 30 into one file per volume, as the site groups them. Volumes can also be given as chapter ranges, one per volume: --volumes "1-7;8-16".
+Would pack chapters 1 to 30 into one file per volume, as the site groups them. Volumes can also be given as chapter ranges, one per volume: --volumes 1-7/8-16.
 
 Note arguments aren't really positional, you can specify them in any order:
 
@@ -298,7 +298,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
 	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz or raw (a folder with the images)")
 	rootCmd.Flags().StringVar(&settings.ConvertImages, "convert-images", grabber.ConvertImagesDefault, `comma-separated source image formats to convert to jpeg for e-reader compatibility: "avif", "webp" or "none"`)
-	rootCmd.Flags().StringVar(&settings.Volumes, "volumes", "", `pack one file per volume: "auto" uses the site's volumes, or give chapter ranges, one group per volume ("1-7;8-16"); chapters outside every volume are packed on their own`)
+	rootCmd.Flags().StringVar(&settings.Volumes, "volumes", "", `pack one file per volume: "auto" uses the site's volumes, or give chapter ranges, one group per volume ("1-7/8-16"), "N:" giving a group's number ("16:112-114"); chapters outside every volume are packed on their own`)
 	rootCmd.Flags().BoolVar(&settings.BrowserVisible, "browser-visible", false, "always show the browser window; rarely needed, as it opens on its own for sites that need it")
 	rootCmd.Flags().Uint8VarP(&settings.Retry, "retry", "r", 1, "number of retries for failed page downloads, hard-limited to 3 (0 disables retrying)")
 	// no shorthand on purpose: a long flag takes the next argument verbatim as

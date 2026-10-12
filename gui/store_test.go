@@ -188,9 +188,9 @@ func TestApplyPackAsKeepsVolumes(t *testing.T) {
 	if s.Volumes != "auto" || s.Bundle {
 		t.Fatalf("volumes: %q bundle %v", s.Volumes, s.Bundle)
 	}
-	s.Volumes = "1-7;8-16"
+	s.Volumes = "1-7/8-16"
 	applyPackAs(s, PackVolumes)
-	if s.Volumes != "1-7;8-16" {
+	if s.Volumes != "1-7/8-16" {
 		t.Errorf("re-applying volumes replaced them with %q", s.Volumes)
 	}
 	applyPackAs(s, PackBundle)

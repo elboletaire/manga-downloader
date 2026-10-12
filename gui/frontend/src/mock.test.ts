@@ -175,17 +175,17 @@ describe('mock volumes', () => {
     const api = createMockApi({ chapters: 30 });
     await api.load('https://example.com/series/a');
     const { volumes } = await api.state();
-    expect(volumes.site).toBe('1-9; 10-18');
+    expect(volumes.site).toBe('1-9/10-18');
     expect(volumes.text).toBe(volumes.site);
     expect((await api.chapters())[0].volume).toBe(1);
   });
 
   it('takes a Volumes box that parses, and refuses one that does not', async () => {
     const api = createMockApi({ scenario: 'loaded', chapters: 30 });
-    await api.setVolumes(' 1-5; 6-10 ');
-    expect((await api.state()).volumes.text).toBe('1-5; 6-10');
-    await expect(api.setVolumes('1-5;5-9')).rejects.toBe('volumes 1 and 2 overlap (1-5 and 5-9)');
-    expect((await api.state()).volumes.text).toBe('1-5; 6-10');
+    await api.setVolumes(' 1-5/6-10 ');
+    expect((await api.state()).volumes.text).toBe('1-5/6-10');
+    await expect(api.setVolumes('1-5/5-9')).rejects.toBe('volumes 1 and 2 overlap (1-5 and 5-9)');
+    expect((await api.state()).volumes.text).toBe('1-5/6-10');
   });
 
   it('has no site volumes with novolumes, and refuses to start without any', async () => {
@@ -215,7 +215,7 @@ describe('mock volumes', () => {
     vi.useFakeTimers();
     try {
       const api = createMockApi({ scenario: 'volumes', chapters: 40 });
-      await api.setVolumes('1-3; 4-5');
+      await api.setVolumes('1-3/4-5');
       await api.setAll(false);
       await api.selectRange('1-5,7');
       await api.start();

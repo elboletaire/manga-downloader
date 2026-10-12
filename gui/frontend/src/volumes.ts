@@ -1,4 +1,4 @@
-// The Volumes box: chapter ranges, one group per volume ("1-7; 8-16"), the
+// The Volumes box: chapter ranges, one group per volume ("1-7/8-16"), the
 // same syntax as --volumes. The backend is the authority (it refuses what
 // doesn't parse, and groups the run); this is the same grouping for the
 // chapter list to show, before the run.
@@ -34,34 +34,86 @@ function rangeText(r: Range): string {
   return r.begin === r.end ? formatNumber(r.begin) : `${formatNumber(r.begin)}-${formatNumber(r.end)}`;
 }
 
+/** The highest volume number, as volumes are indexed by it */
+const MAX_VOLUME = 9999;
+
+/** A group naming its volume: "16:112-114" */
+const VOLUME_PREFIX = /^([^:]*):(.*)$/s;
+
+/** The N of an "N:" prefix, a whole number from 1 (grabbers' volumes are integers) */
+function volumeNumber(text: string): number {
+  if (!/^\d+$/.test(text)) {
+    throw new Error(`invalid volume number "${text}", it must be a whole number like 4`);
+  }
+  const n = Number(text);
+  if (n > MAX_VOLUME) {
+    throw new Error(`invalid volume number "${text}", volume numbers go up to ${MAX_VOLUME}`);
+  }
+  if (n === 0) {
+    throw new Error('invalid volume number "0", volumes start at 1');
+  }
+  return n;
+}
+
 /**
  * Parses the Volumes box. Empty or "auto" is the site's volumes. Otherwise
- * groups are separated by ";", and an empty group keeps the numbering going
- * ("1-7;;20" has no volume 2). Groups can't overlap. Throws with the reason
- * when the text doesn't parse, in the backend's words.
+ * groups are separated by "/". A group can name its volume ("16:112-114");
+ * one without continues from the previous group's number, and an empty group
+ * keeps the numbering going ("1-7//20" has no volume 2). A volume can't be
+ * given twice and groups can't overlap. Throws with the reason when the text
+ * doesn't parse, in the backend's words (ranges.ParseVolumes).
  */
 export function parseVolumes(text: string): VolumeSpec {
   const trimmed = text.trim();
   if (trimmed === '' || trimmed.toLowerCase() === 'auto') {
     return { auto: true };
   }
-  const segments = trimmed.split(';');
+  const segments = trimmed.split('/');
   while (segments.length > 0 && segments[segments.length - 1].trim() === '') {
     segments.pop();
   }
   if (segments.length === 0) {
     throw new Error('no volumes given');
   }
-  const groups = segments.map((seg, i) => {
-    if (seg.trim() === '') {
-      return [];
+  const groups: Range[][] = [];
+  const given = new Set<number>();
+  let number = 0;
+  for (const raw of segments) {
+    number++;
+    let seg = raw.trim();
+    if (seg === '') {
+      continue;
     }
+    const m = VOLUME_PREFIX.exec(seg);
+    if (m !== null) {
+      try {
+        number = volumeNumber(m[1].trim());
+      } catch (e) {
+        throw new Error(`volume ${number}: ${(e as Error).message}`);
+      }
+      seg = m[2].trim();
+      if (seg === '') {
+        throw new Error(`volume ${number}: no chapters given`);
+      }
+    }
+    if (number > MAX_VOLUME) {
+      throw new Error(`volume ${number}: volume numbers go up to ${MAX_VOLUME}`);
+    }
+    let rngs: Range[];
     try {
-      return parseRanges(seg);
+      rngs = parseRanges(seg);
     } catch (e) {
-      throw new Error(`volume ${i + 1}: ${(e as Error).message}`);
+      throw new Error(`volume ${number}: ${(e as Error).message}`);
     }
-  });
+    while (groups.length < number) {
+      groups.push([]);
+    }
+    if (given.has(number)) {
+      throw new Error(`volume ${number} is given twice`);
+    }
+    given.add(number);
+    groups[number - 1] = rngs;
+  }
   for (let i = 0; i < groups.length; i++) {
     for (let j = i + 1; j < groups.length; j++) {
       for (const a of groups[i]) {
@@ -179,9 +231,10 @@ export function selectedIn(chapters: Chapter[], chosen: ReadonlySet<number>): nu
 }
 
 /**
- * The site's volumes as a Volumes box ("1-7; 8-16"), as the backend writes
+ * The site's volumes as a Volumes box ("1-7/8-16"), as the backend writes
  * them (core.SiteVolumes): each group lists runs of consecutive chapters, a
- * missing volume keeps its place as an empty group, and a number listed twice
+ * volume is named ("16:112-114") only where it doesn't follow the previous
+ * one, at the start or after a missing volume, and a number listed twice
  * stays in the first volume it shows up in. "" when no chapter has a volume.
  * chapters must be in list order. The mock uses it; the app gets it from Go.
  */
@@ -223,5 +276,17 @@ export function siteVolumes(chapters: Chapter[]): string {
     i = j + 1;
   }
 
-  return groups.map((g) => g.join(',')).join('; ');
+  // name a volume only where counting on from the previous one wouldn't land on it
+  const parts: string[] = [];
+  let prev = 0;
+  groups.forEach((g, i) => {
+    if (g.length === 0) {
+      return;
+    }
+    const n = i + 1;
+    parts.push(n === prev + 1 ? g.join(',') : `${n}:${g.join(',')}`);
+    prev = n;
+  });
+
+  return parts.join('/');
 }
