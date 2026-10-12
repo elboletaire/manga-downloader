@@ -3,6 +3,7 @@
 package browser
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"html"
@@ -16,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/chromedp/cdproto/target"
 	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/http"
 	"github.com/elboletaire/manga-downloader/notice"
@@ -183,6 +185,88 @@ func TestIntegrationCloseAbortsALoadAndEndsTheBrowser(t *testing.T) {
 		}
 	}
 	mustLoad(t, srv.URL+"/ok")
+}
+
+func TestIntegrationClosesPopupTabs(t *testing.T) {
+	if os.Getenv("MANGA_DOWNLOADER_BROWSER_TESTS") != "1" {
+		t.Skip("set MANGA_DOWNLOADER_BROWSER_TESTS=1 to run the real browser tests")
+	}
+	if runtime.GOOS != "linux" {
+		t.Skip("the real browser tests run on Linux only")
+	}
+	if _, err := findBrowser(systemHost()); err != nil {
+		t.Skip("no browser installed:", err)
+	}
+	t.Setenv("DISPLAY", "")
+	t.Setenv("WAYLAND_DISPLAY", "")
+	t.Cleanup(Close)
+	SetVisible(false)
+	mu.Lock()
+	prev := visibleTimeout
+	visibleTimeout = 10 * time.Second
+	mu.Unlock()
+	t.Cleanup(func() {
+		mu.Lock()
+		visibleTimeout = prev
+		mu.Unlock()
+	})
+
+	// serve a page that opens a popup via window.open on load, plus a link
+	// with target=_blank to show both patterns; the popup page itself is plain
+	popupSrv := httptest.NewServer(nethttp.HandlerFunc(func(w nethttp.ResponseWriter, r *nethttp.Request) {
+		switch r.URL.Path {
+		case "/popup":
+			fmt.Fprint(w, `<html><body>popup</body></html>`)
+		case "/page":
+			popupURL := "http://" + r.Host + "/popup"
+			fmt.Fprintf(w, `<html><body>
+				<div id="ready">ready</div>
+				<a id="link" href="%s" target="_blank">open with link</a>
+				<script>window.open(%q);</script>
+			</body></html>`, popupURL, popupURL)
+		default:
+			nethttp.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(popupSrv.Close)
+
+	if _, err := GetHTML(popupSrv.URL+"/page", "#ready", 30*time.Second); err != nil {
+		t.Fatalf("loading a page that opens a popup: %v", err)
+	}
+
+	// the popup target is closed in a goroutine; poll until it's gone
+	mu.Lock()
+	b := inst
+	mu.Unlock()
+	if b == nil {
+		t.Fatal("no browser running after load")
+	}
+
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		ctx, cancel := context.WithTimeout(b.ctx, 5*time.Second)
+		var infos []*target.Info
+		err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
+			var e error
+			infos, e = target.GetTargets().Do(ctx)
+			return e
+		}))
+		cancel()
+		if err != nil {
+			t.Fatalf("listing targets: %v", err)
+		}
+		popupOpen := false
+		for _, ti := range infos {
+			if ti.Type == "page" && strings.Contains(ti.URL, "/popup") {
+				popupOpen = true
+			}
+		}
+		if !popupOpen {
+			return // closed as expected
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	t.Error("popup tab was not closed within 3 seconds")
 }
 
 // between returns the text of s between the first from and the next to
