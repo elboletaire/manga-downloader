@@ -108,6 +108,14 @@ If the desktop app sits next to the command line tool or is on your `PATH` (the
 Homebrew cask puts it there), `manga-downloader ui` opens it. On Windows,
 double-clicking `manga-downloader.exe` does the same.
 
+When a newer release is out, a yellow *!* next to the version in the status bar
+links to it.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/09-update-dark.png">
+  <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/09-update-light.png">
+</picture>
+
 ### Command line
 
 #### Homebrew
@@ -278,7 +286,7 @@ Open the app and follow these steps:
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/03-language-selector-dark.png">
-     <img alt="The language and scanlation group selectors" src="assets/screenshots/03-language-selector-light.png">
+     <img alt="The scanlation group selector open, listing the groups the series offers" src="assets/screenshots/03-language-selector-light.png">
    </picture>
 
 4. **Set the options** in the *Options* tab: where the files go, the format
@@ -290,7 +298,12 @@ Open the app and follow these steps:
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.png">
-     <img alt="The Options tab" src="assets/screenshots/06-options-light.png">
+     <img alt="The Options tab, with the format, Pack as and Convert to JPEG options" src="assets/screenshots/06-options-light.png">
+   </picture>
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/07-volumes-dark.png">
+     <img alt="Packing by volume: the Volumes box above the chapter list, the list grouped by volume, and the Download button naming the volumes" src="assets/screenshots/07-volumes-light.png">
    </picture>
 
 5. **Press Download.** The *Activity* tab shows each chapter as it's fetched and
@@ -695,6 +708,11 @@ tells you when it may need you. Checkboxes are clicked automatically, but some
 challenges need you to solve them yourself; the download carries on once the
 page loads. You rarely need to show the window from the start, but you can with
 `--browser-visible` or *Show the browser window* in the app.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/08-browser-alert-dark.png">
+  <img alt="The app's alert asking you to look at the browser window, with Dismiss and Show the browser window buttons" src="assets/screenshots/08-browser-alert-light.png">
+</picture>
 
 </details>
 
