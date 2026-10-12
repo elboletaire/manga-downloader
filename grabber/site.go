@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -154,6 +155,9 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewMangahere(g),
 		NewMangatown(g),
 		NewMangaplus(g),
+		NewChainsawManOnline(g),
+		NewHeavenlyDelusion(g),
+		NewToivoLite(g),
 		plainHTML,
 		NewInmanga(g),
 		NewMangadex(g),
@@ -252,6 +256,44 @@ func NewSite(url string, settings *Settings) (Site, []error) {
 	}
 
 	return g.IdentifySite()
+}
+
+// chapterSlugNumRe extracts the chapter number from a URL slug ending in
+// "-chapter-N" or "-chapter-N-D" (where N is the whole part and D the decimal),
+// e.g. "...chapter-63-2" → 63.2.
+var chapterSlugNumRe = regexp.MustCompile(`-chapter-(\d+)(?:-(\d+))?/?$`)
+
+// parseChapterSlugNum returns the chapter number encoded in a URL slug, and
+// its string form as written in the slug ("13.5"), or ok=false if the URL
+// carries no chapter number.
+func parseChapterSlugNum(url string) (num float64, numStr string, ok bool) {
+	m := chapterSlugNumRe.FindStringSubmatch(url)
+	if m == nil {
+		return 0, "", false
+	}
+	numStr = m[1]
+	if m[2] != "" {
+		numStr += "." + m[2]
+	}
+	num, err := strconv.ParseFloat(numStr, 64)
+	if err != nil {
+		return 0, "", false
+	}
+	return num, numStr, true
+}
+
+// hostMatchesDomain reports whether rawURL's host is exactly domain or a
+// subdomain of it (e.g. w1.example.com matches example.com). The comparison
+// is case-insensitive and only inspects the host component of the URL, so a
+// domain name that appears only in the path or query string does not match.
+func hostMatchesDomain(rawURL, domain string) bool {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	host := strings.ToLower(u.Hostname())
+	d := strings.ToLower(domain)
+	return host == d || strings.HasSuffix(host, "."+d)
 }
 
 // getUuid returns the first uuid found in the passed string
