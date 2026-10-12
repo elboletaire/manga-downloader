@@ -192,6 +192,22 @@ function siteData(): Plugin[] {
         return html.replace('<!-- font-preloads -->', () => preloads)
       },
     },
+    {
+      // Vite injects the stylesheet at the end of <head>, after ~10 KB of data
+      // scripts, so slow connections paint unstyled first. Move it up to the
+      // viewport meta; post order runs once Vite has injected it.
+      name: 'site-data:early-css',
+      transformIndexHtml: {
+        order: 'post',
+        handler(html) {
+          const link = html.match(/<link rel="stylesheet"[^>]*>/)?.[0]
+          if (!link) return html
+          return html
+            .replace(link, '')
+            .replace(/(<meta name="viewport"[^>]*\/>)/, `$1\n    ${link}`)
+        },
+      },
+    },
   ]
 }
 
