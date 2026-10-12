@@ -11,6 +11,15 @@ import (
 	"github.com/elboletaire/manga-downloader/browser"
 )
 
+// Cloudflare blocks the headless browser on these sites outright
+func init() {
+	browser.RequireVisible("dragontea.ink")
+	browser.RequireVisible("toongod.org")
+	browser.RequireVisible("manhuaus.com")
+	browser.RequireVisible("setsuscans.com")
+	browser.RequireVisible("asmotoon.com")
+}
+
 // BrowserSiteSelector is a SiteSelector for sites that need a real browser
 // (javascript rendering, TLS-fingerprint blocks or cloudflare challenges).
 // Unlike plain SiteSelector entries, these are matched by domain instead of
