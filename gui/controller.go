@@ -117,6 +117,9 @@ type Controller struct {
 	identify func(url string, s *grabber.Settings) (grabber.Site, []error)
 	// closeBrowser is browser.Close, replaced in tests
 	closeBrowser func()
+	// closing tracks a browser close running in the background (see Clear),
+	// which loads wait for rather than meet a browser going away
+	closing sync.WaitGroup
 
 	mu sync.Mutex
 	// settings is the one pointer the site and core read their settings
@@ -277,6 +280,8 @@ func (c *Controller) FinishLoad(url string) error {
 	s := c.settings
 	c.mu.Unlock()
 
+	// a browser still closing after Clear would fail the load
+	c.closing.Wait()
 	// the browser's visibility is read when it starts, and loading a site
 	// may be what starts it
 	browser.SetVisible(s.BrowserVisible)
@@ -601,11 +606,17 @@ func (c *Controller) Clear() error {
 	c.loadedLanguage, c.loadedScanlator = "", ""
 	c.loadErr = nil
 	c.resetResultsLocked()
-	c.mu.Unlock()
 	// done with the series: its browser (and maybe window) can go. Nothing
-	// can be using it, as Clear is refused while loading or running.
-	c.closeBrowser()
+	// can be using it, as Clear is refused while loading or running. It's
+	// closed in the background, as that can take seconds; added under mu so
+	// a load that starts next is sure to wait for it.
+	c.closing.Add(1)
+	c.mu.Unlock()
 	c.emit()
+	go func() {
+		defer c.closing.Done()
+		c.closeBrowser()
+	}()
 	return nil
 }
 
