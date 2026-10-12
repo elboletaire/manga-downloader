@@ -3,7 +3,7 @@
 // doesn't parse, and groups the run); this is the same grouping for the
 // chapter list to show, before the run.
 
-import { formatNumber } from './run';
+import { formatNumber } from './format';
 import type { Chapter } from './types';
 
 export interface Range {

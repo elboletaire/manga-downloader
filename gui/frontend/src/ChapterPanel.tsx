@@ -3,11 +3,11 @@
 // arrows move, Space toggles, Shift extends, as in a native list box.
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
-import { errorMessage, plural } from './format';
+import { errorMessage, formatNumber, plural } from './format';
 import { AlertIcon, ChevronIcon, LinkIcon, RefreshIcon } from './icons';
 import { Mascot } from './Mascot';
 import { extendsSpan, moveActive, spanIndices } from './listKeys';
-import { formatNumber, hostOf } from './run';
+import { hostOf } from './run';
 import type { Chapter, State } from './types';
 import { useVirtualList } from './virtual';
 import { chapterSpan, groupChapters, groupedRows, parseVolumes, selectedIn, type GroupedRow } from './volumes';

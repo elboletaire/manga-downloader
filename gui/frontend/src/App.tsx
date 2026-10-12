@@ -179,6 +179,8 @@ export function App({ api }: { api: Api }) {
           <DownloadDock
             state={state}
             error={actionError}
+            chapters={chapters}
+            selected={selected}
             onStart={() => {
               setActionError('');
               api.start().catch((e) => setActionError(errorMessage(e)));

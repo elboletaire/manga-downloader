@@ -2,7 +2,8 @@
 // along it is, and how it ended. format.ts has the per-job and summary wording.
 
 import { jobFraction, plural } from './format';
-import type { Job, JobState, State, Summary } from './types';
+import type { Chapter, Job, JobState, State, Summary } from './types';
+import { groupChapters, parseVolumes, selectedIn, type Grouping } from './volumes';
 
 /** The states a job ends in */
 export function isFinished(j: Job): boolean {
@@ -95,8 +96,12 @@ function isSiteVolumes(text: string): boolean {
   return t === '' || t === 'auto';
 }
 
-/** The Download button's label */
-export function downloadLabel(state: Pick<State, 'selectedCount' | 'options'>): string {
+/** The Download button's label; chapters and selected are the loaded list and its selected indices */
+export function downloadLabel(
+  state: Pick<State, 'selectedCount' | 'options' | 'volumes'>,
+  chapters: Chapter[],
+  selected: number[],
+): string {
   const n = state.selectedCount;
   if (n === 0) {
     return 'Download';
@@ -105,10 +110,40 @@ export function downloadLabel(state: Pick<State, 'selectedCount' | 'options'>): 
     return `Download ${n} chapters as one file`;
   }
   if (state.options.packAs === 'volumes') {
-    return `Download ${plural(n, 'chapter', 'chapters')} by volume`;
+    const label = volumesLabel(state.volumes.text, chapters, selected);
+    if (label !== '') {
+      return label;
+    }
   }
 
   return `Download ${plural(n, 'chapter', 'chapters')}`;
+}
+
+/**
+ * The label of a volumes run: the volumes with a selected chapter, and the
+ * selected chapters outside them. "" when the Volumes box doesn't parse or no
+ * volume has a selected chapter, so the caller falls back to the chapter count.
+ */
+function volumesLabel(text: string, chapters: Chapter[], selected: number[]): string {
+  let grouping: Grouping;
+  try {
+    grouping = groupChapters(chapters, parseVolumes(text));
+  } catch {
+    return '';
+  }
+  const chosen = new Set(selected);
+  const volumes = grouping.volumes.map((v) => selectedIn(v.chapters, chosen)).filter((k) => k > 0);
+  if (volumes.length === 0) {
+    return '';
+  }
+  const inVolumes = volumes.reduce((sum, k) => sum + k, 0);
+  const loose = selectedIn(grouping.loose, chosen);
+  const named = plural(volumes.length, 'volume', 'volumes');
+  if (loose > 0) {
+    return `Download ${named} and ${plural(loose, 'chapter', 'chapters')}`;
+  }
+
+  return `Download ${named} (${plural(inVolumes, 'chapter', 'chapters')})`;
 }
 
 export type Tone = 'success' | 'warning' | 'danger' | 'neutral';
@@ -151,13 +186,4 @@ export function hostOf(url: string): string {
   } catch {
     return '';
   }
-}
-
-/** A chapter number as the site would print it: 12, 12.5, never 12.000001 */
-export function formatNumber(n: number): string {
-  if (Number.isInteger(n)) {
-    return String(n);
-  }
-
-  return String(Math.round(n * 100) / 100);
 }

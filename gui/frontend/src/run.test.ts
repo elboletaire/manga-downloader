@@ -3,7 +3,6 @@ import { createMockApi } from './mock';
 import {
   downloadBlocker,
   downloadLabel,
-  formatNumber,
   hostOf,
   overallProgress,
   splitFailure,
@@ -142,15 +141,66 @@ describe('downloadBlocker', () => {
 describe('downloadLabel', () => {
   it('names the count, and the bundle when there is one', async () => {
     const s = await loadedState();
-    expect(downloadLabel({ ...s, selectedCount: 0 })).toBe('Download');
-    expect(downloadLabel({ ...s, selectedCount: 1 })).toBe('Download 1 chapter');
-    expect(downloadLabel({ ...s, selectedCount: 5 })).toBe('Download 5 chapters');
-    expect(downloadLabel({ ...s, selectedCount: 5, options: { ...s.options, packAs: 'bundle' } })).toBe(
+    expect(downloadLabel({ ...s, selectedCount: 0 }, [], [])).toBe('Download');
+    expect(downloadLabel({ ...s, selectedCount: 1 }, [], [])).toBe('Download 1 chapter');
+    expect(downloadLabel({ ...s, selectedCount: 5 }, [], [])).toBe('Download 5 chapters');
+    expect(downloadLabel({ ...s, selectedCount: 5, options: { ...s.options, packAs: 'bundle' } }, [], [])).toBe(
       'Download 5 chapters as one file',
     );
-    expect(downloadLabel({ ...s, selectedCount: 5, options: { ...s.options, packAs: 'volumes' } })).toBe(
-      'Download 5 chapters by volume',
-    );
+  });
+
+  describe('packing as volumes', () => {
+    // chapters 1 to 20 at indices 0 to 19; the Volumes box puts 1-7 in volume 1 and 8-16 in volume 2
+    const list = Array.from({ length: 20 }, (_, i) => ({
+      index: i,
+      number: i + 1,
+      title: '',
+      language: '',
+      volume: 0,
+    }));
+    const from = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, i) => first - 1 + i);
+
+    it('names the volumes and their chapters', async () => {
+      const s = await loadedState();
+      const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '1-7/8-16', site: '' } };
+      expect(downloadLabel({ ...volumes, selectedCount: 16 }, list, from(1, 16))).toBe(
+        'Download 2 volumes (16 chapters)',
+      );
+      expect(downloadLabel({ ...volumes, selectedCount: 7 }, list, from(1, 7))).toBe('Download 1 volume (7 chapters)');
+    });
+
+    it('names the loose chapters beside the volumes', async () => {
+      const s = await loadedState();
+      const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '1-7/8-16', site: '' } };
+      expect(downloadLabel({ ...volumes, selectedCount: 19 }, list, [...from(1, 16), ...from(17, 19)])).toBe(
+        'Download 2 volumes and 3 chapters',
+      );
+      expect(downloadLabel({ ...volumes, selectedCount: 8 }, list, [...from(1, 7), 16])).toBe(
+        'Download 1 volume and 1 chapter',
+      );
+    });
+
+    it('takes the site volumes when the Volumes box is empty', async () => {
+      const s = await loadedState();
+      const sited = list.map((ch, i) => ({ ...ch, volume: i < 7 ? 1 : i < 16 ? 2 : 0 }));
+      const site = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '', site: '' } };
+      expect(downloadLabel({ ...site, selectedCount: 16 }, sited, from(1, 16))).toBe('Download 2 volumes (16 chapters)');
+      expect(downloadLabel({ ...site, selectedCount: 17 }, sited, [...from(1, 16), 17])).toBe(
+        'Download 2 volumes and 1 chapter',
+      );
+    });
+
+    it('falls back to the chapter count when no selected chapter is in a volume', async () => {
+      const s = await loadedState();
+      const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '1-7/8-16', site: '' } };
+      expect(downloadLabel({ ...volumes, selectedCount: 3 }, list, from(17, 19))).toBe('Download 3 chapters');
+    });
+
+    it('falls back to the chapter count when the Volumes box does not parse', async () => {
+      const s = await loadedState();
+      const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: 'nope', site: '' } };
+      expect(downloadLabel({ ...volumes, selectedCount: 16 }, list, from(1, 16))).toBe('Download 16 chapters');
+    });
   });
 });
 
@@ -182,13 +232,5 @@ describe('hostOf', () => {
     expect(hostOf('https://www.example.com/series/a')).toBe('example.com');
     expect(hostOf(' https://sub.example.org/x ')).toBe('sub.example.org');
     expect(hostOf('not a url')).toBe('');
-  });
-});
-
-describe('formatNumber', () => {
-  it('prints whole and fractional chapter numbers cleanly', () => {
-    expect(formatNumber(12)).toBe('12');
-    expect(formatNumber(12.5)).toBe('12.5');
-    expect(formatNumber(1.0100000001)).toBe('1.01');
   });
 });
