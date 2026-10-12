@@ -47,7 +47,7 @@ and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[113 supported sites](#supported-sites)**, from big aggregators to small
+- **[114 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
@@ -484,7 +484,7 @@ Run `manga-downloader help` to list them in your terminal.
 ## Supported sites
 
 <details>
-<summary><b>Show all 113 supported sites</b></summary>
+<summary><b>Show all 114 supported sites</b></summary>
 <br>
 
 - [3asq.online (Arabic, former 3asq.org)](https://3asq.online)
@@ -521,6 +521,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [hivetoons.org (HiveToons, VoidScans)](https://hivetoons.org)
 - [inmanga.com](https://inmanga.com)
 - [jestful.net](https://jestful.net)
+- [jojolandsmanga.com (The JoJoLands)](https://jojolandsmanga.com)
 - [kappabeast.com](https://kappabeast.com) \*
 - [kaynscans.com (Kayn Scans, former kaynscan.org)](https://kaynscans.com)
 - [kingofshojo.com](https://kingofshojo.com)
