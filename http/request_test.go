@@ -200,8 +200,10 @@ func TestParseRetryAfterSeconds(t *testing.T) {
 		want   time.Duration
 	}{
 		{"1", time.Second},
-		// 5s is under the default retryMaxDelay (8s) so it's returned as-is
+		// under MaxRetryAfter, so returned as-is
 		{"5", 5 * time.Second},
+		{"30", 30 * time.Second},
+		{" 2 ", 2 * time.Second},
 		{"0", 0},
 		{"-1", 0},
 		{"", 0},
@@ -216,14 +218,38 @@ func TestParseRetryAfterSeconds(t *testing.T) {
 }
 
 func TestParseRetryAfterCapsAtMax(t *testing.T) {
-	// a very large value must be capped at retryMaxDelay
-	orig := retryMaxDelay
-	retryMaxDelay = 2 * time.Second
-	defer func() { retryMaxDelay = orig }()
+	// a very large value must be capped at MaxRetryAfter, including one
+	// that would overflow a time.Duration
+	for _, header := range []string{"3600", "1e300", time.Now().Add(time.Hour).UTC().Format(http.TimeFormat)} {
+		if got := parseRetryAfter(header); got != MaxRetryAfter {
+			t.Errorf("parseRetryAfter(%q) = %v, want %v (cap)", header, got, MaxRetryAfter)
+		}
+	}
+}
 
-	got := parseRetryAfter("3600")
-	if got != 2*time.Second {
-		t.Errorf("parseRetryAfter large value = %v, want %v (cap)", got, retryMaxDelay)
+// A past HTTP date means "now", not a negative wait
+func TestParseRetryAfterPastDate(t *testing.T) {
+	if got := parseRetryAfter(time.Now().Add(-time.Minute).UTC().Format(http.TimeFormat)); got != 0 {
+		t.Errorf("parseRetryAfter(past date) = %v, want 0", got)
+	}
+}
+
+// The error of a 429 carries the server's Retry-After, so a caller with its
+// own retry loop can honour it
+func TestStatusErrorCarriesRetryAfter(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Retry-After", "18")
+		w.WriteHeader(http.StatusTooManyRequests)
+	}))
+	defer srv.Close()
+
+	_, err := Get(RequestParams{URL: srv.URL, DisableRetry: true})
+	var se *StatusError
+	if !errors.As(err, &se) {
+		t.Fatalf("err = %v, want a *StatusError", err)
+	}
+	if se.Code != http.StatusTooManyRequests || se.RetryAfter != 18*time.Second {
+		t.Errorf("StatusError = %+v, want code 429 and RetryAfter 18s", se)
 	}
 }
 
@@ -404,5 +430,32 @@ func TestStatusErrorMessage(t *testing.T) {
 	want := fmt.Sprintf("received %d response code", 404)
 	if e.Error() != want {
 		t.Errorf("StatusError.Error() = %q, want %q", e.Error(), want)
+	}
+}
+
+// The in-request retry loop can't be cancelled, so it clamps a long
+// Retry-After to retryMaxDelay instead of sleeping for a minute
+func TestRequestClampsRetryAfter(t *testing.T) {
+	shortenRetries(t)
+
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if atomic.AddInt32(&calls, 1) == 1 {
+			w.Header().Set("Retry-After", "60")
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		io.WriteString(w, "ok")
+	}))
+	defer srv.Close()
+
+	start := time.Now()
+	body, err := Get(RequestParams{URL: srv.URL})
+	if err != nil {
+		t.Fatalf("expected success after a 429, got %v", err)
+	}
+	body.Close()
+	if elapsed := time.Since(start); elapsed > 5*time.Second {
+		t.Errorf("took %v, want the 60s Retry-After clamped to retryMaxDelay", elapsed)
 	}
 }

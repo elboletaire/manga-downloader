@@ -3,9 +3,11 @@
 package downloader
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -51,7 +53,7 @@ func TestFetchChapter_AppliesPageHeaders(t *testing.T) {
 		}},
 	}
 
-	files, err := FetchChapter(site, chapter, func(page, progress int, err error) {})
+	files, err := FetchChapter(context.Background(), site, chapter, func(page, progress int, err error) {})
 	if err != nil {
 		t.Fatalf("FetchChapter: %v", err)
 	}
@@ -94,7 +96,7 @@ func TestFetchChapter_Referer(t *testing.T) {
 				Pages:  []grabber.Page{{Number: 1, URL: server.URL + "/page", NoReferer: c.noReferer}},
 			}
 
-			if _, err := FetchChapter(site, chapter, func(page, progress int, err error) {}); err != nil {
+			if _, err := FetchChapter(context.Background(), site, chapter, func(page, progress int, err error) {}); err != nil {
 				t.Fatalf("FetchChapter: %v", err)
 			}
 			_, sent := headers["Referer"]
@@ -135,7 +137,7 @@ func TestFetchFile_RetriesOnGetFailure(t *testing.T) {
 	}))
 	defer server.Close()
 
-	file, err := FetchFile(mangahttp.RequestParams{URL: server.URL}, 1, 1, nil)
+	file, err := FetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL}, 1, 1, nil)
 	if err != nil {
 		t.Fatalf("expected no error after retry, got: %v", err)
 	}
@@ -173,7 +175,7 @@ func TestFetchFile_RetriesOnMidBodyReadFailure(t *testing.T) {
 	}))
 	defer server.Close()
 
-	file, err := FetchFile(mangahttp.RequestParams{URL: server.URL}, 1, 1, nil)
+	file, err := FetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL}, 1, 1, nil)
 	if err != nil {
 		t.Fatalf("expected no error after retry, got: %v", err)
 	}
@@ -195,7 +197,7 @@ func TestFetchFile_ExhaustsRetries(t *testing.T) {
 	}))
 	defer server.Close()
 
-	_, err := FetchFile(mangahttp.RequestParams{URL: server.URL}, 1, 1, nil)
+	_, err := FetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL}, 1, 1, nil)
 	if err == nil {
 		t.Fatal("expected an error after exhausting retries")
 	}
@@ -214,7 +216,7 @@ func TestFetchFile_NoRetries(t *testing.T) {
 	}))
 	defer server.Close()
 
-	_, err := FetchFile(mangahttp.RequestParams{URL: server.URL}, 1, 0, nil)
+	_, err := FetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL}, 1, 0, nil)
 	if err == nil {
 		t.Fatal("expected an error on first failure")
 	}
@@ -234,7 +236,7 @@ func TestFetchFile_AppliesTransform(t *testing.T) {
 		return append(data, []byte(" transformed")...), nil
 	}
 
-	file, err := FetchFile(mangahttp.RequestParams{URL: server.URL}, 1, 1, transform)
+	file, err := FetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL}, 1, 1, transform)
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -262,7 +264,7 @@ func TestFetchFile_RetriesOnTransformFailure(t *testing.T) {
 		return data, nil
 	}
 
-	file, err := FetchFile(mangahttp.RequestParams{URL: server.URL}, 1, 1, transform)
+	file, err := FetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL}, 1, 1, transform)
 	if err != nil {
 		t.Fatalf("expected no error after retry, got: %v", err)
 	}
@@ -271,5 +273,150 @@ func TestFetchFile_RetriesOnTransformFailure(t *testing.T) {
 	}
 	if got := atomic.LoadInt32(&requests); got != 2 {
 		t.Errorf("expected 2 requests (transform failure re-fetches), got %d", got)
+	}
+}
+
+// rateLimitedServer answers 429 to the first request, with the given
+// Retry-After header (none if empty), then serves the page. It records when
+// each request arrived.
+func rateLimitedServer(t *testing.T, retryAfter func() string) (*httptest.Server, *[]time.Time) {
+	t.Helper()
+	var mu sync.Mutex
+	var hits []time.Time
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		hits = append(hits, time.Now())
+		n := len(hits)
+		mu.Unlock()
+		if n == 1 {
+			if ra := retryAfter(); ra != "" {
+				w.Header().Set("Retry-After", ra)
+			}
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		_, _ = w.Write([]byte("page"))
+	}))
+	t.Cleanup(server.Close)
+	return server, &hits
+}
+
+// A 429 is retried after the delay its Retry-After asks for, in seconds or as
+// an HTTP date, rather than the short linear delay used for other failures
+func TestFetchFile_429HonoursRetryAfter(t *testing.T) {
+	withFastRetryDelay(t)
+	cases := []struct {
+		name       string
+		retryAfter func() string
+		// the HTTP date only has whole seconds, so it can land up to one
+		// second early
+		min time.Duration
+	}{
+		{"seconds", func() string { return "1" }, time.Second},
+		{"HTTP date", func() string { return time.Now().Add(2 * time.Second).UTC().Format(http.TimeFormat) }, time.Second},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			server, hits := rateLimitedServer(t, c.retryAfter)
+
+			file, err := FetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL}, 1, 1, nil)
+			if err != nil {
+				t.Fatalf("expected the retry to succeed, got: %v", err)
+			}
+			if string(file.Data) != "page" {
+				t.Errorf("file data = %q, want %q", file.Data, "page")
+			}
+			if len(*hits) != 2 {
+				t.Fatalf("server saw %d requests, want 2", len(*hits))
+			}
+			if gap := (*hits)[1].Sub((*hits)[0]); gap < c.min || gap > 3*time.Second {
+				t.Errorf("retried after %v, want the Retry-After delay (>= %v)", gap, c.min)
+			}
+		})
+	}
+}
+
+// A 429 without Retry-After waits rateLimitDelay, not retryDelay
+func TestFetchFile_429WithoutRetryAfter(t *testing.T) {
+	withFastRetryDelay(t)
+	orig := rateLimitDelay
+	rateLimitDelay = 300 * time.Millisecond
+	t.Cleanup(func() { rateLimitDelay = orig })
+
+	server, hits := rateLimitedServer(t, func() string { return "" })
+	if _, err := FetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL}, 1, 1, nil); err != nil {
+		t.Fatalf("expected the retry to succeed, got: %v", err)
+	}
+	if gap := (*hits)[1].Sub((*hits)[0]); gap < rateLimitDelay {
+		t.Errorf("retried after %v, want at least rateLimitDelay (%v)", gap, rateLimitDelay)
+	}
+}
+
+// Cancelling during a Retry-After wait returns at once, so the app's Cancel
+// doesn't hang for up to a minute
+func TestFetchFile_CancelDuringBackoff(t *testing.T) {
+	server, hits := rateLimitedServer(t, func() string { return "60" })
+
+	ctx, cancel := context.WithCancel(context.Background())
+	time.AfterFunc(100*time.Millisecond, cancel)
+
+	start := time.Now()
+	_, err := FetchFile(ctx, mangahttp.RequestParams{URL: server.URL}, 1, 3, nil)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("err = %v, want context.Canceled", err)
+	}
+	var se *mangahttp.StatusError
+	if !errors.As(err, &se) || se.Code != http.StatusTooManyRequests {
+		t.Errorf("err = %v, want it to keep the 429 that caused the wait", err)
+	}
+	if elapsed := time.Since(start); elapsed > 5*time.Second {
+		t.Errorf("returned after %v, want right after the cancel", elapsed)
+	}
+	if len(*hits) != 1 {
+		t.Errorf("server saw %d requests, want 1 (no retry after cancelling)", len(*hits))
+	}
+}
+
+// pacedSite is a fetchChapterTestSite that also paces its pages
+type pacedSite struct {
+	fetchChapterTestSite
+	waits atomic.Int32
+}
+
+func (p *pacedSite) WaitPage() { p.waits.Add(1) }
+
+// FetchChapter asks a PagePacer site for a slot before every page request,
+// retries included
+func TestFetchChapter_PacesPages(t *testing.T) {
+	withFastRetryDelay(t)
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// the first request fails, so one page needs a retry
+		if requests.Add(1) == 1 {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		_, _ = w.Write([]byte("page"))
+	}))
+	defer server.Close()
+
+	site := &pacedSite{fetchChapterTestSite: fetchChapterTestSite{Grabber: &grabber.Grabber{
+		URL: server.URL,
+		Settings: &grabber.Settings{
+			MaxConcurrency: grabber.MaxConcurrency{Chapters: 1, Pages: 1},
+			Retry:          1,
+		},
+	}}}
+	chapter := &grabber.Chapter{Number: 1, Pages: []grabber.Page{
+		{Number: 1, URL: server.URL + "/1"},
+		{Number: 2, URL: server.URL + "/2"},
+		{Number: 3, URL: server.URL + "/3"},
+	}}
+
+	if _, err := FetchChapter(context.Background(), site, chapter, func(page, progress int, err error) {}); err != nil {
+		t.Fatalf("FetchChapter: %v", err)
+	}
+	if got, want := site.waits.Load(), requests.Load(); got != want || want != 4 {
+		t.Errorf("WaitPage called %d times for %d requests, want 4 each", got, want)
 	}
 }

@@ -379,7 +379,7 @@ loop:
 				run.start(chap, len(chapter.Pages))
 			}
 
-			files, err := downloader.FetchChapter(s.Site, chapter, func(_ int, idx int, err error) {
+			files, err := downloader.FetchChapter(ctx, s.Site, chapter, func(_ int, idx int, err error) {
 				ev.Page(chapter, idx, err)
 				if run != nil && err == nil {
 					run.page(chap)

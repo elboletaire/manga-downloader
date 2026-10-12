@@ -110,6 +110,15 @@ type Site interface {
 	GetRetries() uint8
 }
 
+// PagePacer is implemented by sites whose image servers limit how fast pages
+// may be requested, which a concurrency cap alone can't guarantee: a handful
+// of parallel downloads of cached images still makes dozens of requests a
+// second. downloader.FetchChapter calls WaitPage before every page request,
+// retries included; it blocks until the request may go.
+type PagePacer interface {
+	WaitPage()
+}
+
 // IdentifySite returns the site passing the Test() for the specified url
 func (g *Grabber) IdentifySite() (Site, []error) {
 	// PlainHTML is pre-created so IdentifySite can call its chapter-URL
