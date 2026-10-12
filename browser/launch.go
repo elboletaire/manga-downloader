@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/chromedp/cdproto/emulation"
+	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/cdproto/target"
 	"github.com/chromedp/chromedp"
 )
@@ -110,12 +111,11 @@ func launchChrome(headed bool) (*instance, error) {
 	}, nil
 }
 
-// hideHeadless strips "Headless" from the user agent of a headless browser.
-// HeadlessChrome is a giveaway Cloudflare blocks on, and the user agent is
-// harvested for the plain HTTP requests too (see harvestSession): left as is,
-// once any page had gone through the headless browser, every later request,
-// even to sites that work without a browser, went out as HeadlessChrome and
-// could get a 403. Best effort: the page still loads without it.
+// hideHeadless strips "Headless" from the user agent of a headless browser,
+// and from its client hints (Sec-CH-UA). HeadlessChrome is a giveaway
+// Cloudflare blocks on, and the user agent is harvested for plain HTTP
+// requests too (see harvestSession), where it got later requests to any site
+// 403s. Best effort: the page still loads without it.
 func hideHeadless(browserCtx context.Context) {
 	ctx, cancel := context.WithTimeout(browserCtx, 10*time.Second)
 	defer cancel()
@@ -127,8 +127,45 @@ func hideHeadless(browserCtx context.Context) {
 		if !strings.Contains(ua, "Headless") {
 			return nil
 		}
-		return emulation.SetUserAgentOverride(strings.ReplaceAll(ua, "HeadlessChrome", "Chrome")).Do(ctx)
+		override := emulation.SetUserAgentOverride(strings.ReplaceAll(ua, "HeadlessChrome", "Chrome"))
+		// an override without metadata empties the client hints, and
+		// about:blank doesn't expose them (not a secure context), so they're
+		// read from an internal page
+		var md *emulation.UserAgentMetadata
+		err := chromedp.Run(ctx,
+			chromedp.Navigate("chrome://version"),
+			chromedp.Evaluate(clientHintsJS, &md, func(p *runtime.EvaluateParams) *runtime.EvaluateParams {
+				return p.WithAwaitPromise(true)
+			}),
+			chromedp.Navigate("about:blank"),
+		)
+		if err == nil && md != nil {
+			unheadBrands(md.Brands)
+			unheadBrands(md.FullVersionList)
+			override = override.WithUserAgentMetadata(md)
+		}
+		return override.Do(ctx)
 	}))
+}
+
+// clientHintsJS reads the browser's client hints in the shape of
+// emulation.UserAgentMetadata, or null where they aren't exposed
+const clientHintsJS = `(async () => {
+	const d = navigator.userAgentData;
+	if (!d) return null;
+	const h = await d.getHighEntropyValues(["platform", "platformVersion", "architecture", "model", "bitness", "fullVersionList", "wow64"]);
+	return {brands: d.brands, mobile: d.mobile, platform: h.platform || "", platformVersion: h.platformVersion || "",
+		architecture: h.architecture || "", model: h.model || "", bitness: h.bitness || "",
+		fullVersionList: h.fullVersionList || [], wow64: !!h.wow64};
+})()`
+
+// unheadBrands renames the HeadlessChrome brand to the one Chrome reports
+func unheadBrands(brands []*emulation.UserAgentBrandVersion) {
+	for _, b := range brands {
+		if b != nil && b.Brand == "HeadlessChrome" {
+			b.Brand = "Google Chrome"
+		}
+	}
 }
 
 // inContainer reports whether we're running inside a container (docker sets

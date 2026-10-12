@@ -21,9 +21,9 @@ func closeBrowserOnInterrupt() (stop func()) {
 	done := make(chan struct{})
 	go func() {
 		select {
-		case <-sig:
+		case s := <-sig:
 			browser.Close()
-			os.Exit(130)
+			os.Exit(exitCode(s))
 		case <-done:
 		}
 	}()
@@ -31,4 +31,12 @@ func closeBrowserOnInterrupt() (stop func()) {
 		signal.Stop(sig)
 		close(done)
 	}
+}
+
+// exitCode is the shell's code for a process ended by s: 128 + the signal
+func exitCode(s os.Signal) int {
+	if s == syscall.SIGTERM {
+		return 143
+	}
+	return 130
 }

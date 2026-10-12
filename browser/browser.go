@@ -134,7 +134,7 @@ const dismissModalJS = `(function(){var c=document.querySelector('.modal-backdro
 // the requested chapter) stays stable for two checks in a row, or after a
 // generous number of scrolls as a safety cap.
 func GetReaderHTML(seriesURL, tabSelector, paginationSelector, linkSelector, imgSelector, urlSubstr string, timeout time.Duration) (string, error) {
-	mu.Lock()
+	abort := lock()
 	defer mu.Unlock()
 
 	t := timeout
@@ -142,7 +142,7 @@ func GetReaderHTML(seriesURL, tabSelector, paginationSelector, linkSelector, img
 		t = visibleTimeout
 	}
 	var html string
-	err := runPage(seriesURL, "", t, false, func(ctx context.Context, _ func(time.Duration)) error {
+	err := runPage(abort, seriesURL, "", t, false, func(ctx context.Context, _ func(time.Duration)) error {
 		var err error
 		html, err = readerHTML(ctx, seriesURL, tabSelector, paginationSelector, linkSelector, imgSelector, urlSubstr)
 		return err
@@ -305,10 +305,10 @@ type APIResponse struct {
 // Like GetHTML it tries headless first and transparently escalates to a visible
 // window if the wait selector times out (typically a challenge).
 func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration, setupJS string) (responses []APIResponse, setup json.RawMessage, err error) {
-	mu.Lock()
+	abort := lock()
 	defer mu.Unlock()
 
-	err = runPage(pageURL, waitSelector, timeout, true, func(ctx context.Context, rearm func(time.Duration)) error {
+	err = runPage(abort, pageURL, waitSelector, timeout, true, func(ctx context.Context, rearm func(time.Duration)) error {
 		var err error
 		responses, setup, err = captureAPI(ctx, rearm, pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, setupJS)
 		return err
@@ -474,11 +474,11 @@ func waitForGrowth(ctx context.Context, count func() int, baseline int) bool {
 // cloudflare/JS challenge), transparently reopens a visible window and
 // retries.
 func getHTML(url, waitSelector string, timeout time.Duration, preActions []chromedp.Action) (string, error) {
-	mu.Lock()
+	abort := lock()
 	defer mu.Unlock()
 
 	var html string
-	err := runPage(url, waitSelector, timeout, true, func(ctx context.Context, _ func(time.Duration)) error {
+	err := runPage(abort, url, waitSelector, timeout, true, func(ctx context.Context, _ func(time.Duration)) error {
 		var err error
 		html, err = render(ctx, url, waitSelector, preActions)
 		return err

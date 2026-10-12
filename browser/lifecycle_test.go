@@ -86,9 +86,9 @@ func withFake(t *testing.T) (*fakeBrowser, func() []string) {
 }
 
 func run(op pageOp) error {
-	mu.Lock()
+	abort := lock()
 	defer mu.Unlock()
-	return runPage("https://www.example.com/series/1", "#list", time.Second, true, op)
+	return runPage(abort, "https://www.example.com/series/1", "#list", time.Second, true, op)
 }
 
 func ok(context.Context, func(time.Duration)) error { return nil }
@@ -348,5 +348,36 @@ func TestSlowLoadReportsWaiting(t *testing.T) {
 	}
 	if !hasNotice(notices(), "Waiting for example.com to load in the browser") {
 		t.Errorf("no waiting notice: %q", notices())
+	}
+}
+
+func TestCloseAbortsALoadQueuedBehindIt(t *testing.T) {
+	f, _ := withFake(t)
+
+	started := make(chan struct{})
+	first := make(chan error, 1)
+	go func() {
+		first <- run(func(ctx context.Context, _ func(time.Duration)) error {
+			close(started)
+			<-ctx.Done()
+			return ctx.Err()
+		})
+	}()
+	<-started
+
+	second := make(chan error, 1)
+	go func() { second <- run(ok) }()
+	// let the second load reach the lock and wait there
+	time.Sleep(50 * time.Millisecond)
+
+	Close()
+	if err := <-first; !errors.Is(err, ErrClosed) {
+		t.Errorf("running load: got %v, want ErrClosed", err)
+	}
+	if err := <-second; !errors.Is(err, ErrClosed) {
+		t.Errorf("queued load: got %v, want ErrClosed", err)
+	}
+	if launched, closed := f.counts(); launched != 1 || closed != 1 {
+		t.Errorf("launched %d, closed %d; a queued load started a browser after Close", launched, closed)
 	}
 }

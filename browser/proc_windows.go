@@ -22,14 +22,21 @@ import (
 // process ends, however it ends.
 type procGuard struct {
 	job windows.Handle
-	pid uint32
+	// proc stays open until release: Windows doesn't reuse the pid of a
+	// process someone holds a handle to, so the sweep can't hit a stranger
+	proc windows.Handle
 }
 
 func guardProcess(p *os.Process) procGuard {
+	var g procGuard
 	if p == nil {
-		return procGuard{}
+		return g
 	}
-	g := procGuard{pid: uint32(p.Pid)}
+	h, err := windows.OpenProcess(windows.PROCESS_SET_QUOTA|windows.PROCESS_TERMINATE|windows.PROCESS_QUERY_LIMITED_INFORMATION, false, uint32(p.Pid))
+	if err != nil {
+		return g
+	}
+	g.proc = h
 
 	job, err := windows.CreateJobObject(nil, nil)
 	if err != nil {
@@ -45,12 +52,6 @@ func guardProcess(p *os.Process) procGuard {
 		windows.CloseHandle(job)
 		return g
 	}
-	h, err := windows.OpenProcess(windows.PROCESS_SET_QUOTA|windows.PROCESS_TERMINATE, false, g.pid)
-	if err != nil {
-		windows.CloseHandle(job)
-		return g
-	}
-	defer windows.CloseHandle(h)
 	if err := windows.AssignProcessToJobObject(job, h); err != nil {
 		windows.CloseHandle(job)
 		return g
@@ -64,23 +65,32 @@ func guardProcess(p *os.Process) procGuard {
 // were already running by the time chromedp handed it over), then closes the
 // job, which kills everything left in it.
 func (g procGuard) release() {
-	if g.pid != 0 {
-		for _, pid := range descendants(g.pid) {
-			if h, err := windows.OpenProcess(windows.PROCESS_TERMINATE, false, pid); err == nil {
-				windows.TerminateProcess(h, 1)
-				windows.CloseHandle(h)
-			}
+	if g.proc != 0 {
+		for _, h := range descendants(g.proc) {
+			windows.TerminateProcess(h, 1)
+			windows.CloseHandle(h)
 		}
+		windows.CloseHandle(g.proc)
 	}
 	if g.job != 0 {
 		windows.CloseHandle(g.job)
 	}
 }
 
-// descendants lists the processes started by pid, and by those, and so on.
-// Windows keeps a process's parent id after the parent exits, so this still
-// works once the browser process itself is gone.
-func descendants(pid uint32) []uint32 {
+// descendants opens the processes started by root, and by those, and so on.
+// Windows keeps a process's parent id after the parent exits, so this works
+// once the browser is gone too. A pid can be reused once its process has
+// exited, so a child only counts if it was created after its parent.
+func descendants(root windows.Handle) []windows.Handle {
+	rootPid, err := windows.GetProcessId(root)
+	if err != nil {
+		return nil
+	}
+	rootCreated, ok := created(root)
+	if !ok {
+		return nil
+	}
+
 	snap, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPPROCESS, 0)
 	if err != nil {
 		return nil
@@ -96,19 +106,44 @@ func descendants(pid uint32) []uint32 {
 		}
 	}
 
-	var out []uint32
-	seen := map[uint32]bool{pid: true}
-	queue := []uint32{pid}
+	type node struct {
+		pid     uint32
+		created int64
+	}
+	var out []windows.Handle
+	seen := map[uint32]bool{rootPid: true}
+	queue := []node{{rootPid, rootCreated}}
 	for len(queue) > 0 {
-		p := queue[0]
+		parent := queue[0]
 		queue = queue[1:]
-		for _, c := range children[p] {
-			if !seen[c] {
-				seen[c] = true
-				out = append(out, c)
-				queue = append(queue, c)
+		for _, pid := range children[parent.pid] {
+			if seen[pid] {
+				continue
 			}
+			seen[pid] = true
+			// the handle is kept open (in out) so this pid can't be reused
+			// before it's terminated
+			h, err := windows.OpenProcess(windows.PROCESS_TERMINATE|windows.PROCESS_QUERY_LIMITED_INFORMATION, false, pid)
+			if err != nil {
+				continue
+			}
+			c, ok := created(h)
+			if !ok || c < parent.created {
+				windows.CloseHandle(h)
+				continue
+			}
+			out = append(out, h)
+			queue = append(queue, node{pid, c})
 		}
 	}
 	return out
+}
+
+// created returns when a process was created, in Windows file time
+func created(h windows.Handle) (int64, bool) {
+	var c, exit, kernel, user windows.Filetime
+	if err := windows.GetProcessTimes(h, &c, &exit, &kernel, &user); err != nil {
+		return 0, false
+	}
+	return c.Nanoseconds(), true
 }

@@ -5,6 +5,7 @@ package browser
 import (
 	"errors"
 	"fmt"
+	"html"
 	nethttp "net/http"
 	"net/http/httptest"
 	"os"
@@ -37,6 +38,13 @@ func integration(t *testing.T) *httptest.Server {
 		switch r.URL.Path {
 		case "/ok":
 			fmt.Fprint(w, `<html><body><div id="ok">ready</div></body></html>`)
+		case "/hints":
+			// the request's client hints, and the page's view of them
+			fmt.Fprintf(w, `<html><body><pre id="header">%s</pre><pre id="js"></pre><script>
+				document.getElementById("js").textContent = navigator.userAgentData
+					? JSON.stringify(navigator.userAgentData.brands) : "unavailable";
+				document.getElementById("js").id = "ok";
+			</script></body></html>`, html.EscapeString(r.Header.Get("Sec-CH-UA")))
 		case "/ua":
 			fmt.Fprint(w, r.Header.Get("User-Agent"))
 		default:
@@ -101,6 +109,20 @@ func TestIntegrationHarvestedUserAgentIsNotHeadless(t *testing.T) {
 	if strings.Contains(ua, "Headless") {
 		t.Errorf("plain HTTP requests now send a headless user agent: %q", ua)
 	}
+
+	page, err := GetHTML(srv.URL+"/hints", "#ok", 30*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	header := between(page, `<pre id="header">`, "</pre>")
+	brands := between(page, `<pre id="ok">`, "</pre>")
+	t.Logf("Sec-CH-UA: %s; navigator.userAgentData.brands: %s", header, brands)
+	if strings.Contains(header+brands, "Headless") {
+		t.Errorf("the client hints still say headless: %s / %s", header, brands)
+	}
+	if brands == "[]" {
+		t.Error("the client hints lost their brands")
+	}
 }
 
 // testBrowserPID returns the process id of the running browser
@@ -145,4 +167,11 @@ func TestIntegrationCloseAbortsALoadAndEndsTheBrowser(t *testing.T) {
 		}
 	}
 	mustLoad(t, srv.URL+"/ok")
+}
+
+// between returns the text of s between the first from and the next to
+func between(s, from, to string) string {
+	_, after, _ := strings.Cut(s, from)
+	text, _, _ := strings.Cut(after, to)
+	return text
 }

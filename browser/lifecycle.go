@@ -76,11 +76,16 @@ func SetVisible(v bool) {
 	visible.Store(v)
 }
 
-// currentAbort returns the context Close cancels
-func currentAbort() context.Context {
+// lock takes mu for a page load and returns the abort context to run it
+// with. The context is read before waiting for mu, so a load queued behind
+// one that Close is ending gets aborted too, instead of starting a new
+// browser after Close returned.
+func lock() context.Context {
 	abortMu.Lock()
-	defer abortMu.Unlock()
-	return abortCtx
+	abort := abortCtx
+	abortMu.Unlock()
+	mu.Lock()
+	return abort
 }
 
 // start makes sure a live browser is running, replacing one that died since
@@ -198,17 +203,17 @@ func armIdle() {
 // It returns a *challengeError when the wait selector never matched.
 type pageOp func(ctx context.Context, rearm func(time.Duration)) error
 
-// runPage runs op in the shared browser, starting it if needed.
+// runPage runs op in the shared browser, starting it if needed. abort is the
+// context from lock.
 //
 // If escalate is set and a headless attempt hits a challenge, it transparently
 // reopens a visible window and retries. After any failure the browser is
 // closed, so the next request starts a fresh one instead of reusing one that
-// may be dead or stuck (a closed window, a tab stuck behind a dialog, a
-// visible window that failed to open...). Callers must hold mu.
-func runPage(pageURL, waitSelector string, timeout time.Duration, escalate bool, op pageOp) error {
+// may be dead or stuck. That's deliberate: a failed browser is always
+// discarded, at the cost of passing a check again. Callers must hold mu.
+func runPage(abort context.Context, pageURL, waitSelector string, timeout time.Duration, escalate bool, op pageOp) error {
 	stopIdle()
 	host := hostOf(pageURL)
-	abort := currentAbort()
 
 	err := attempt(host, pageURL, timeout, abort, op)
 	var ce *challengeError
