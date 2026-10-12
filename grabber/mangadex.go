@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/elboletaire/manga-downloader/http"
@@ -42,6 +43,55 @@ func NewMangadex(g *Grabber) *Mangadex {
 	// we set the rate limit at 39 calls per minute instead of 40 to make sure the rate limit is under the threshold,
 	// otherwise we occasionally get hit by the rate limiter.
 	return &Mangadex{Grabber: g, rateLimiter: time.Tick(time.Minute / 39)}
+}
+
+// mangadexPagesPerSecond stays well under the image servers' ~1000 requests
+// a minute per-IP limit (Cloudflare 1015), leaving room for retries and a
+// reader open on the same network.
+const mangadexPagesPerSecond = 8
+
+// mangadexMaxConcurrency caps the user's concurrency: the pacer already
+// keeps the pace, so more parallel downloads only queue bursts on it.
+var mangadexMaxConcurrency = MaxConcurrency{Chapters: 2, Pages: 5}
+
+// mangadexPagePacer spaces page requests evenly. It's shared by every
+// Mangadex instance because the limit is per IP, not per download.
+var mangadexPagePacer = &pacer{interval: time.Second / mangadexPagesPerSecond}
+
+// pacer hands out request slots at most one per interval
+type pacer struct {
+	mu       sync.Mutex
+	interval time.Duration
+	next     time.Time
+}
+
+// wait blocks until the caller's slot comes up
+func (p *pacer) wait() {
+	p.mu.Lock()
+	now := time.Now()
+	slot := p.next
+	if slot.Before(now) {
+		slot = now
+	}
+	p.next = slot.Add(p.interval)
+	p.mu.Unlock()
+	time.Sleep(time.Until(slot))
+}
+
+// GetMaxConcurrency caps the configured concurrency at what the image
+// servers tolerate. Lower settings are kept; higher ones are clamped, since
+// the limit is the server's and going over it only gets pages refused.
+func (m *Mangadex) GetMaxConcurrency() MaxConcurrency {
+	mc := m.Grabber.GetMaxConcurrency()
+	mc.Chapters = min(mc.Chapters, mangadexMaxConcurrency.Chapters)
+	mc.Pages = min(mc.Pages, mangadexMaxConcurrency.Pages)
+	return mc
+}
+
+// WaitPage paces page downloads to the image servers' rate limit
+// (PagePacer)
+func (m *Mangadex) WaitPage() {
+	mangadexPagePacer.wait()
 }
 
 // mangadexChapterURL checks if the URL is a chapter URL (not a series URL).
@@ -268,6 +318,7 @@ func (m *Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rbody.Close()
 	// parse json body
 	body := mangadexPagesFeed{}
 	if err = json.NewDecoder(rbody).Decode(&body); err != nil {

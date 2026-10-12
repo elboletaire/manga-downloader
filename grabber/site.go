@@ -110,6 +110,13 @@ type Site interface {
 	GetRetries() uint8
 }
 
+// PagePacer is implemented by sites whose image servers limit the request
+// rate, which a concurrency cap alone can't enforce. WaitPage blocks until
+// the next page request may go out.
+type PagePacer interface {
+	WaitPage()
+}
+
 // IdentifySite returns the site passing the Test() for the specified url
 func (g *Grabber) IdentifySite() (Site, []error) {
 	// PlainHTML is pre-created so IdentifySite can call its chapter-URL

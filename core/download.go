@@ -172,7 +172,9 @@ func (r *volumeRun) report() {
 	if r.archiveTotal > 0 {
 		f += float64(r.archived) / float64(r.archiveTotal) / 2
 	}
-	if f > r.reported {
+	// the map's order is random, so the same progress can sum to a value a
+	// rounding error above the last one: that isn't a step forward
+	if f > r.reported+1e-9 {
 		r.reported = f
 		r.ev.VolumeProgress(r.v, f)
 	}
@@ -379,7 +381,7 @@ loop:
 				run.start(chap, len(chapter.Pages))
 			}
 
-			files, err := downloader.FetchChapter(s.Site, chapter, func(_ int, idx int, err error) {
+			files, err := downloader.FetchChapter(ctx, s.Site, chapter, func(_ int, idx int, err error) {
 				ev.Page(chapter, idx, err)
 				if run != nil && err == nil {
 					run.page(chap)

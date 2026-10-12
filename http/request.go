@@ -58,6 +58,9 @@ const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/5
 // StatusError is returned for a response whose status isn't 200
 type StatusError struct {
 	Code int
+	// RetryAfter is the capped Retry-After delay, zero when the server sent none
+	// (retry loops that can wait it out, like downloader.FetchFile, honour it)
+	RetryAfter time.Duration
 }
 
 func (e *StatusError) Error() string {
@@ -74,6 +77,9 @@ var (
 	maxAttempts    = 4
 	retryBaseDelay = 500 * time.Millisecond
 	retryMaxDelay  = 8 * time.Second
+	// MaxRetryAfter caps the honoured Retry-After delay, so a misbehaving
+	// server can't park a download for hours (Cloudflare's 1015 asks for 60s).
+	MaxRetryAfter = 60 * time.Second
 )
 
 // isRetryableStatus reports whether a response code is worth another try.
@@ -99,32 +105,27 @@ func retryDelay(attempt int) time.Duration {
 }
 
 // parseRetryAfter parses a Retry-After header value (seconds integer or HTTP
-// date) and returns the indicated delay, capped at retryMaxDelay. Returns 0
+// date) and returns the indicated delay, capped at MaxRetryAfter. Returns 0
 // if the header is absent or unparseable.
 func parseRetryAfter(header string) time.Duration {
+	header = strings.TrimSpace(header)
 	if header == "" {
 		return 0
 	}
-	// try seconds integer first
-	if secs, err := strconv.ParseFloat(strings.TrimSpace(header), 64); err == nil && secs > 0 {
-		d := time.Duration(secs * float64(time.Second))
-		if d > retryMaxDelay {
-			d = retryMaxDelay
+	var d time.Duration
+	if secs, err := strconv.ParseFloat(header, 64); err == nil {
+		// compared as seconds first: a huge value would overflow Duration
+		if secs > MaxRetryAfter.Seconds() {
+			return MaxRetryAfter
 		}
-		return d
+		d = time.Duration(secs * float64(time.Second))
+	} else if t, err := http.ParseTime(header); err == nil {
+		d = time.Until(t)
 	}
-	// try HTTP date
-	if t, err := http.ParseTime(header); err == nil {
-		d := time.Until(t)
-		if d < 0 {
-			return 0
-		}
-		if d > retryMaxDelay {
-			d = retryMaxDelay
-		}
-		return d
+	if d <= 0 {
+		return 0
 	}
-	return 0
+	return min(d, MaxRetryAfter)
 }
 
 // request sends a request to the given URL, retrying transient failures with
@@ -160,9 +161,10 @@ func request(t string, params Params) (io.ReadCloser, error) {
 			return nil, err
 		}
 		// honour a Retry-After delay if the server sent one; it replaces
-		// the exponential delay for the next attempt
+		// the exponential delay for the next attempt. This loop can't be
+		// cancelled, so it stays within retryMaxDelay (see StatusError.RetryAfter)
 		if retryAfterDelay > 0 {
-			nextDelay = retryAfterDelay
+			nextDelay = min(retryAfterDelay, retryMaxDelay)
 		}
 	}
 
@@ -246,7 +248,7 @@ func doRequest(t string, params Params) (body io.ReadCloser, retryAfter time.Dur
 		resp.Body.Close()
 
 		ra := parseRetryAfter(resp.Header.Get("Retry-After"))
-		return nil, ra, isRetryableStatus(resp.StatusCode), &StatusError{Code: resp.StatusCode}
+		return nil, ra, isRetryableStatus(resp.StatusCode), &StatusError{Code: resp.StatusCode, RetryAfter: ra}
 	}
 
 	return resp.Body, 0, false, nil

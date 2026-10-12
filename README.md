@@ -313,6 +313,8 @@ it. Files go to your Downloads folder (or your home folder, if there isn't one)
 unless you choose another folder.
 
 The app uses the command line's defaults for concurrency and retries.
+Sites whose image servers limit the request rate get lower limits
+automatically, in both the app and the command line.
 
 ## Using the command line
 
@@ -516,6 +518,11 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--version`           | `-v`  | Show version information                                 |                |
 
 Run `manga-downloader help` to list them in your terminal.
+
+Some sites cap the concurrency lower, because their image servers refuse
+requests that come too fast; a lower value still applies there. Pages refused
+for coming too fast (a 429) are retried after the wait the server asks for, up
+to a minute.
 
 ![help img]
 

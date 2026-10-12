@@ -3,8 +3,11 @@
 package downloader
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
+	stdhttp "net/http"
 	"sort"
 	"sync"
 	"time"
@@ -14,8 +17,13 @@ import (
 )
 
 // retryDelay is the base delay between retry attempts (multiplied by the
-// attempt number). It's a package-level var so tests can shrink it.
-var retryDelay = time.Second
+// attempt number). rateLimitDelay is the wait after a 429 whose response
+// didn't say how long to back off: a rate limit needs longer than a blip.
+// Package-level vars so tests can shrink them.
+var (
+	retryDelay     = time.Second
+	rateLimitDelay = 10 * time.Second
+)
 
 // File represents a downloaded file
 type File struct {
@@ -26,8 +34,14 @@ type File struct {
 // ProgressCallback is a function type for progress updates with optional error
 type ProgressCallback func(page, progress int, err error)
 
-// FetchChapter downloads all the pages of a chapter
-func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress ProgressCallback) ([]*File, error) {
+// FetchChapter downloads all the pages of a chapter. Cancelling ctx cuts
+// short the waits between retries; requests already under way still finish.
+func FetchChapter(ctx context.Context, site grabber.Site, chapter *grabber.Chapter, onprogress ProgressCallback) ([]*File, error) {
+	var pace func()
+	if p, ok := site.(grabber.PagePacer); ok {
+		pace = p.WaitPage
+	}
+
 	wg := sync.WaitGroup{}
 	guard := make(chan struct{}, site.GetMaxConcurrency().Pages)
 	errChan := make(chan error, 1)
@@ -50,11 +64,11 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress Progre
 			if page.NoReferer {
 				referer = ""
 			}
-			file, err := FetchFile(http.RequestParams{
+			file, err := fetchFile(ctx, http.RequestParams{
 				URL:     page.URL,
 				Referer: referer,
 				Headers: page.Headers,
-			}, uint(page.Number), site.GetRetries(), page.Transform)
+			}, uint(page.Number), site.GetRetries(), page.Transform, pace)
 
 			if err != nil {
 				select {
@@ -96,10 +110,19 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress Progre
 // FetchFile gets an online file returning a new *File with its contents.
 // On failure (either the GET itself, a mid-body read, or the optional
 // transform) it retries up to `retries` additional times, with a short
-// growing delay between attempts. transform, if non-nil, post-processes the
-// downloaded bytes (e.g. a site's own page.Transform) before they're stored.
-func FetchFile(params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error)) (file *File, err error) {
+// growing delay between attempts (or the server's Retry-After after a 429,
+// see retryWait). transform, if non-nil, post-processes the downloaded bytes.
+// Cancelling ctx abandons the wait before a retry.
+func FetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error)) (*File, error) {
+	return fetchFile(ctx, params, page, retries, transform, nil)
+}
+
+// fetchFile is FetchFile with an optional pace, called before every attempt
+func fetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error), pace func()) (file *File, err error) {
 	for attempt := uint8(0); ; attempt++ {
+		if pace != nil {
+			pace()
+		}
 		var data []byte
 		data, err = fetchFileOnce(params)
 		if err == nil && transform != nil {
@@ -117,8 +140,28 @@ func FetchFile(params http.RequestParams, page uint, retries uint8, transform fu
 			return
 		}
 
-		time.Sleep(retryDelay * time.Duration(attempt+1))
+		t := time.NewTimer(retryWait(err, attempt))
+		select {
+		case <-ctx.Done():
+			t.Stop()
+			return nil, fmt.Errorf("%w (while waiting to retry after: %w)", ctx.Err(), err)
+		case <-t.C:
+		}
 	}
+}
+
+// retryWait is the delay before retrying after attempt (0-based) failed with
+// err. A 429 waits out its Retry-After (or rateLimitDelay): the linear delay
+// would retry while the rate limit still applies.
+func retryWait(err error, attempt uint8) time.Duration {
+	var se *http.StatusError
+	if errors.As(err, &se) && se.Code == stdhttp.StatusTooManyRequests {
+		if se.RetryAfter > 0 {
+			return se.RetryAfter
+		}
+		return rateLimitDelay
+	}
+	return retryDelay * time.Duration(attempt+1)
 }
 
 // fetchFileOnce performs a single GET + body read attempt. DisableRetry is
