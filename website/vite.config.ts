@@ -193,13 +193,9 @@ function siteData(): Plugin[] {
       },
     },
     {
-      // Vite injects <link rel="stylesheet"> at the end of <head>, after the
-      // large data scripts, so the browser only discovers the CSS at byte
-      // ~10 KB. With network throttling the preload scanner may not have
-      // scanned that far before making a first paint, causing a flash of
-      // unstyled content. Move the link to right after <meta name="viewport">
-      // so it sits in the first ~300 bytes and is discovered immediately.
-      // The post order guarantees Vite has already injected it.
+      // Vite injects the stylesheet at the end of <head>, after ~10 KB of data
+      // scripts, so slow connections paint unstyled first. Move it up to the
+      // viewport meta; post order runs once Vite has injected it.
       name: 'site-data:early-css',
       transformIndexHtml: {
         order: 'post',
