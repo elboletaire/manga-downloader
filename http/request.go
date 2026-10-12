@@ -166,6 +166,10 @@ func request(t string, params Params) (io.ReadCloser, error) {
 		}
 	}
 
+	// with a single attempt nothing was retried, so don't claim otherwise
+	if attempts == 1 {
+		return nil, lastErr
+	}
 	return nil, fmt.Errorf("giving up after %d attempts: %w", attempts, lastErr)
 }
 

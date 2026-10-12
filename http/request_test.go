@@ -3,6 +3,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -95,6 +96,48 @@ func TestRequestGivesUpAfterMaxAttempts(t *testing.T) {
 	}
 	if n := atomic.LoadInt32(&calls); int(n) != maxAttempts {
 		t.Errorf("server saw %d calls, want %d", n, maxAttempts)
+	}
+}
+
+func TestRequestErrorWording(t *testing.T) {
+	shortenRetries(t)
+
+	cases := []struct {
+		name         string
+		disableRetry bool
+		wantCalls    int32
+		wantPrefix   string // empty means the error must not be wrapped with a "giving up" prefix
+	}{
+		{name: "retry disabled", disableRetry: true, wantCalls: 1},
+		{name: "retries exhausted", wantCalls: 4, wantPrefix: "giving up after 4 attempts: "},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var calls int32
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				atomic.AddInt32(&calls, 1)
+				w.WriteHeader(http.StatusInternalServerError)
+			}))
+			defer srv.Close()
+
+			_, err := Get(RequestParams{URL: srv.URL, DisableRetry: tc.disableRetry})
+			if err == nil {
+				t.Fatal("expected an error")
+			}
+			if tc.wantPrefix == "" && strings.Contains(err.Error(), "giving up") {
+				t.Errorf("error %q claims a retry was attempted", err)
+			}
+			if tc.wantPrefix != "" && !strings.HasPrefix(err.Error(), tc.wantPrefix) {
+				t.Errorf("error %q, want prefix %q", err, tc.wantPrefix)
+			}
+			var statusErr *StatusError
+			if !errors.As(err, &statusErr) || statusErr.Code != http.StatusInternalServerError {
+				t.Errorf("errors.As(%v) lost the *StatusError", err)
+			}
+			if n := atomic.LoadInt32(&calls); n != tc.wantCalls {
+				t.Errorf("server saw %d calls, want %d", n, tc.wantCalls)
+			}
+		})
 	}
 }
 
