@@ -11,6 +11,8 @@ permissions:
 # platform's webview shows. Linux needs the WebKitGTK headers, so it's built on
 # native runners. Windows needs no cgo, so both its architectures are built
 # from one Linux runner, and macOS is built on a Mac for the universal binary.
+# The tags and ldflags come from the makefile, which takes the jobs' $TAG as its
+# TAG; `wails build` adds the desktop,production tags and -s -w itself.
 # The wailsjs/ bindings are committed, so the build doesn't need a webview to
 # generate them (-skipbindings). Windows arm64 is built too, so ARM Windows
 # doesn't run the amd64 build emulated.
@@ -54,8 +56,10 @@ jobs:
         set -euo pipefail
         # the Windows version resource and the bundle's Info.plist take the version from wails.json
         sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
-        wails build -platform linux/${{ matrix.goarch }} -tags nodynamic,webkit2_41 -skipbindings \
-          -m -nosyncgomod -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
+        tags="$(make -s -C .. --no-print-directory print-GUI_TAGS)"
+        ldflags="$(make -s -C .. --no-print-directory print-GUI_LDFLAGS)"
+        wails build -platform linux/${{ matrix.goarch }} -tags "$tags" -trimpath -skipbindings \
+          -m -nosyncgomod -ldflags "$ldflags"
         name="manga-downloader-gui-$TAG-linux-${{ matrix.goarch }}"
         rm -rf "stage/$name" && mkdir -p "stage/$name"
         cp build/bin/manga-downloader-gui ../LICENSE "stage/$name/"
@@ -110,8 +114,10 @@ jobs:
         sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
         # wails embeds the icon and manifest from build/windows into the exe,
         # and links it as a GUI app (no console window)
-        wails build -platform windows/${{ matrix.goarch }} -tags nodynamic -skipbindings \
-          -m -nosyncgomod -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
+        tags="$(make -s -C .. --no-print-directory print-GUI_TAGS)"
+        ldflags="$(make -s -C .. --no-print-directory print-GUI_LDFLAGS)"
+        wails build -platform windows/${{ matrix.goarch }} -tags "$tags" -trimpath -skipbindings \
+          -m -nosyncgomod -ldflags "$ldflags"
         name="manga-downloader-gui-$TAG-windows-${{ matrix.goarch }}"
         rm -rf "stage/$name" && mkdir -p "stage/$name"
         cp build/bin/manga-downloader-gui.exe ../LICENSE "stage/$name/"
@@ -150,8 +156,10 @@ jobs:
         sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
         # a single universal target keeps the bundle's name as wails.json has
         # it ("Manga Downloader.app"), without an arch suffix
-        wails build -platform darwin/universal -tags nodynamic -skipbindings \
-          -m -nosyncgomod -ldflags "-X 'main.Version=$(git rev-parse --short HEAD)' -X 'main.Tag=$TAG'"
+        tags="$(make -s -C .. --no-print-directory print-GUI_TAGS)"
+        ldflags="$(make -s -C .. --no-print-directory print-GUI_LDFLAGS)"
+        wails build -platform darwin/universal -tags "$tags" -trimpath -skipbindings \
+          -m -nosyncgomod -ldflags "$ldflags"
         name="manga-downloader-gui-$TAG-darwin-universal"
         ditto -c -k --keepParent "build/bin/Manga Downloader.app" "$name.zip"
         gh release upload "$TAG" "$name.zip" --clobber

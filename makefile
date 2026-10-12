@@ -1,20 +1,23 @@
-ifdef CI_COMMIT_REF_NAME
-BRANCH_OR_TAG := $(CI_COMMIT_REF_NAME)
-else
-BRANCH_OR_TAG := develop
-endif
+# The single source of the build flags: the release workflows build through
+# these targets, or read the variables with `make -s print-VAR`.
 
-VERSION := $(shell git rev-parse --short HEAD)
-GOLDFLAGS += -X 'github.com/elboletaire/manga-downloader/cmd.Version=$(VERSION)'
-GOLDFLAGS += -X 'github.com/elboletaire/manga-downloader/cmd.Tag=$(BRANCH_OR_TAG)'
-GOFLAGS = -ldflags="$(GOLDFLAGS)"
+# both can be overridden, as the release workflows do (make VERSION=… TAG=…)
+VERSION ?= $(shell git rev-parse --short HEAD 2> /dev/null)
+TAG ?= $(or $(CI_COMMIT_REF_NAME),develop)
+
 # nodynamic forces gen2brain/avif to use its embedded libavif/dav1d WASM build
 # (run under wazero, no cgo) instead of dlopen'ing whatever libavif happens to
-# be installed on the machine, so page conversion decodes identically here, in
-# CI and in the released binaries. Keep it in sync with the build_flags in
-# .github/workflows/release.yaml, which is the only build path that doesn't go
-# through this makefile.
-GOTAGS = -tags nodynamic
+# be installed, so page conversion decodes identically everywhere.
+BUILD_TAGS = nodynamic
+GOTAGS = -tags $(BUILD_TAGS)
+# -s -w drop the symbol table and DWARF (about a third of the size; panic traces
+# use the runtime's pclntab, which stays). -trimpath keeps local paths out.
+GO_LDFLAGS = -s -w \
+	-X 'github.com/elboletaire/manga-downloader/cmd.Version=$(VERSION)' \
+	-X 'github.com/elboletaire/manga-downloader/cmd.Tag=$(TAG)'
+GOBUILD = CGO_ENABLED=0 go build -trimpath $(GOTAGS) -ldflags="$(GO_LDFLAGS)"
+# set by the caller when cross-compiling (GOOS=windows make build/release)
+EXE = $(if $(filter windows,$(GOOS)),.exe)
 RICHGO := $(shell command -v richgo 2> /dev/null)
 
 clean:
@@ -28,19 +31,30 @@ build: clean test build/unix
 build/all: clean test build/unix build/win
 
 build/unix:
-	CGO_ENABLED=0 go build -o manga-downloader ${GOTAGS} ${GOFLAGS} .
+	$(GOBUILD) -o manga-downloader .
 
 build/win:
-	GOOS=windows go build -o manga-downloader.exe ${GOTAGS} ${GOFLAGS} .
+	GOOS=windows $(GOBUILD) -o manga-downloader.exe .
+
+# what the release builds for each GOOS/GOARCH (from the environment, the host's
+# by default): manga-downloader, or manga-downloader.exe for windows
+build/release:
+	$(GOBUILD) -o manga-downloader$(EXE) .
+
+# prints a variable; fails if undefined, to catch typos in the workflows
+print-%: ; $(if $(filter undefined,$(origin $*)),$(error $* is not defined),$(info $($*)))@:
 
 # the desktop app, deliberately not part of build: it needs the platform's
 # webview (WebKitGTK on Linux) and Node + pnpm for the frontend. It's written
-# next to the CLI, which is where `manga-downloader ui` looks for it. The tags
-# are Wails' (desktop, production: without them it refuses to start) plus
-# nodynamic, as above, and webkit2_41 for current Linux distros; the other
-# platforms ignore it.
-GUI_TAGS = -tags desktop,production,nodynamic,webkit2_41
-GUI_LDFLAGS = -w -s -X 'main.Version=$(VERSION)' -X 'main.Tag=$(BRANCH_OR_TAG)'
+# next to the CLI, which is where `manga-downloader ui` looks for it.
+# GUI_TAGS and GUI_LDFLAGS are what release-gui.yaml hands to `wails build`,
+# which adds the desktop,production tags (without them the app refuses to
+# start) and -s -w itself; plain go build gets them from GUI_GO_*. webkit2_41
+# is for current Linux distros; the other platforms ignore it.
+GUI_TAGS = $(BUILD_TAGS),webkit2_41
+GUI_LDFLAGS = -X 'main.Version=$(VERSION)' -X 'main.Tag=$(TAG)'
+GUI_GO_TAGS = desktop,production,$(GUI_TAGS)
+GUI_GO_LDFLAGS = -s -w $(GUI_LDFLAGS)
 # Wails' macOS frontend uses UTType but leaves linking UniformTypeIdentifiers
 # to `wails build`, so a plain go build has to ask for it.
 ifeq ($(shell uname -s),Darwin)
@@ -52,14 +66,15 @@ build/gui/frontend:
 	cd gui/frontend && pnpm install --frozen-lockfile && pnpm build
 
 build/gui: build/gui/frontend
-	cd gui && $(GUI_CGO) go build -o ../manga-downloader-gui ${GUI_TAGS} -ldflags="$(GUI_LDFLAGS)" .
+	cd gui && $(GUI_CGO) go build -trimpath -tags $(GUI_GO_TAGS) -ldflags="$(GUI_GO_LDFLAGS)" \
+		-o ../manga-downloader-gui .
 
 # cross-compiled from any host, without cgo: Wails' Windows webview is pure Go.
 # -H windowsgui keeps the console from opening behind the window. The release
 # uses `wails build` instead, which also embeds the icon and manifest.
 build/gui/windows: build/gui/frontend
-	cd gui && CGO_ENABLED=0 GOOS=windows go build -o ../manga-downloader-gui.exe ${GUI_TAGS} \
-		-ldflags="$(GUI_LDFLAGS) -H windowsgui" .
+	cd gui && CGO_ENABLED=0 GOOS=windows go build -trimpath -tags $(GUI_GO_TAGS) \
+		-ldflags="$(GUI_GO_LDFLAGS) -H windowsgui" -o ../manga-downloader-gui.exe .
 
 test:
 ifdef RICHGO
@@ -71,7 +86,7 @@ endif
 # gui/ is its own module, so ./... above never reaches it. The Go tests need
 # the frontend built (it's embedded) and the webview's headers, as build/gui does
 test/gui: build/gui/frontend
-	cd gui && $(GUI_CGO) go test ${GUI_TAGS} ./...
+	cd gui && $(GUI_CGO) go test -tags $(GUI_GO_TAGS) ./...
 	cd gui/frontend && pnpm test
 
 # one dependency per line, alphabetically sorted (grabber/html deliberately
