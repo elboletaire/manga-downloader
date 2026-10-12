@@ -289,6 +289,8 @@ func TestManganeloSlug(t *testing.T) {
 	}{
 		{"https://www.mangabats.com/manga/one-piece", "one-piece", false},
 		{"https://www.mangakakalot.gg/manga/apotheosis/chapter-2", "apotheosis", false},
+		// query must not be included in the slug
+		{"https://www.mangabats.com/manga/one-piece?page=1", "one-piece", false},
 		{"https://www.natomanga.com/genre/action", "", true},
 	}
 

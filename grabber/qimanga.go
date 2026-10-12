@@ -37,12 +37,14 @@ type QimangaChapter struct {
 	Slug string
 }
 
+// qimangaHostRe matches the qimanga.com family domains case-insensitively.
+var qimangaHostRe = regexp.MustCompile(`(?i)qimanga\.com|qimanhwa\.com|aurorascans\.com`)
+
 // Test returns true if the URL is a qimanga.com URL (or one of its rebrand
 // aliases, which 301-redirect path-for-path to qimanga.com: aurorascans.com
 // -> qimanhwa.com -> qimanga.com)
 func (q *Qimanga) Test() (bool, error) {
-	re := regexp.MustCompile(`qimanga\.com|qimanhwa\.com|aurorascans\.com`)
-	return re.MatchString(q.URL), nil
+	return qimangaHostRe.MatchString(q.URL), nil
 }
 
 // resolveSeriesURL rewrites a chapter URL (/series/{slug}/chapter-...) to the

@@ -4,6 +4,28 @@ package grabber
 
 import "testing"
 
+func TestQimangaTest(t *testing.T) {
+	cases := []struct {
+		url  string
+		want bool
+	}{
+		{"https://qimanga.com/series/some-slug", true},
+		{"https://QIMANGA.COM/series/some-slug", true},
+		{"https://Qimanga.Com/series/some-slug", true},
+		{"https://aurorascans.com/series/some-slug", true},
+		{"https://AURORASCANS.COM/series/some-slug", true},
+		{"https://qimanhwa.com/series/some-slug", true},
+		{"https://othermanga.com/series/some-slug", false},
+	}
+	for _, c := range cases {
+		q := NewQimanga(&Grabber{URL: c.url})
+		got, _ := q.Test()
+		if got != c.want {
+			t.Errorf("Test(%q) = %v, want %v", c.url, got, c.want)
+		}
+	}
+}
+
 func TestQimangaResolveSeriesURL(t *testing.T) {
 	cases := []struct {
 		input string

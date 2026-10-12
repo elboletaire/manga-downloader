@@ -97,6 +97,10 @@ var browserSelectors = []BrowserSiteSelector{
 	// sushiscan.net (french): mangastream/themesia theme behind a
 	// cloudflare challenge, usually needs --browser-visible. All the reader
 	// pages come from the embedded ts_reader javascript call.
+	// Chapter URLs use the format /{slug}-volume-N/ (one path segment,
+	// different tree from series /catalogue/{slug}/), so SeriesPathDepth
+	// can't reconstruct the series URL; the reader's .allc div carries
+	// a direct link back to the series page instead.
 	//
 	// drakecomic.org (Drake Scans) used to share this entry too, but the
 	// site moved wholesale to a plain-HTTP Next.js RSC platform on
@@ -110,6 +114,7 @@ var browserSelectors = []BrowserSiteSelector{
 			ChapterTitle: ".chapternum",
 			Link:         "a",
 			Image:        "#readerarea img",
+			SeriesLink:   ".allc a",
 		},
 		Domains:         []string{"sushiscan.net"},
 		ChaptersWait:    "#chapterlist li",
@@ -322,10 +327,13 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 		return true, nil
 	}
 
-	// No chapter rows on the rendered page. If a SeriesLink is defined, the
-	// rendered page may be a reader page with a link back to the series.
-	// Follow it and render the series URL (one extra render).
-	if m.site.SeriesLink != "" {
+	// No chapter rows on the rendered page. If a SeriesLink is defined and the
+	// Image selector (when set) confirms this is a reader page, follow the
+	// link and render the series URL (one extra render). The Image guard
+	// mirrors PlainHTML's seriesURLCandidates to prevent a loose SeriesLink
+	// from firing on unrelated pages.
+	if m.site.SeriesLink != "" &&
+		(m.site.Image == "" || m.doc.Find(m.site.Image).Length() > 0) {
 		parsedURL, _ := url.Parse(renderURL)
 		if link := m.doc.Find(m.site.SeriesLink).First(); link.Length() > 0 {
 			if href, ok := link.Attr("href"); ok {

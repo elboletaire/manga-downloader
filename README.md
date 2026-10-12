@@ -530,7 +530,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [lilymanga.net (yuri, some NSFW)](https://lilymanga.net)
 - [limonmanga.com](https://limonmanga.com)
 - [luacomic.org (LuaScans)](https://luacomic.org)
-- [madarascans.org (former madarascans.com)](https://madarascans.org)
+- [madarascans.net (former madarascans.org/.com)](https://madarascans.net)
 - [maid.my.id](https://www.maid.my.id)
 - [mangaball.com (former mangaball.net)](https://mangaball.com)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)

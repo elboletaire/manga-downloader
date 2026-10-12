@@ -158,15 +158,16 @@ var plainHTMLSelectors = []SiteSelector{
 	// grabber). Reader pages embed all pages in a ts_reader.run(...)
 	// blob, already handled by getPlainHTMLImageURL, so Image is just a
 	// fallback here. Some of these coin-paywall their most recent
-	// chapters (no href / no images in the HTML); test with an older,
-	// unlocked chapter. Rows requires .chapternum so a bare #chapterlist
-	// wrapper on an unrelated site (e.g. mangahere.cc) can't match this
-	// entry, and Title is scoped by itemprop because some of these
-	// (violetscans) also render decorative <h1> stat labels
-	// (Type/Status/Views).
+	// chapters (no href / no images in the HTML); the :has(a[href]) guard
+	// on Rows skips those locked rows entirely so they don't produce
+	// bogus BaseUrl() entries in the chapter list. Rows requires
+	// .chapternum so a bare #chapterlist wrapper on an unrelated site
+	// (e.g. mangahere.cc) can't match this entry, and Title is scoped by
+	// itemprop because some of these (violetscans) also render decorative
+	// <h1> stat labels (Type/Status/Views).
 	{
 		Title:        `h1[itemprop="name"]`,
-		Rows:         "#chapterlist li:has(.chapternum)",
+		Rows:         "#chapterlist li:has(.chapternum):has(a[href])",
 		Chapter:      ".chapternum",
 		ChapterTitle: ".chapternum",
 		Link:         "a",
@@ -200,19 +201,20 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:        "img.open",
 		SeriesLink:   "h1.tbtitle a",
 	},
-	// madarascans.com/.org: mangareader/themesia theme; the reader page
-	// already carries all its images in a ts_reader.run(...) blob (see
-	// getPlainHTMLImageURL) so the Image selector is only a fallback.
-	// Recent chapters are paywalled ("locked" class, no ts_reader blob in
-	// the plain HTML) and simply won't parse any pages; only free
-	// chapters are downloadable.
+	// madarascans.net (formerly .com/.org, which now 301-redirect to .net):
+	// mangareader WordPress theme. Chapter rows are <li data-num> elements
+	// containing an <a> link; paywalled/locked chapters use a modal trigger
+	// instead of an href, so `a[href]` on Rows picks only free chapters.
+	// Images are loaded via admin-ajax.php (not in the HTML).
+	// Free reader pages carry a div.allc link back to the series; locked
+	// reader pages use a.btn-back-enhanced instead. No Image guard: the images
+	// never appear in the HTML, so one would always suppress the SeriesLink.
 	{
-		Title:        "h1",
-		Rows:         ".ch-item",
-		Chapter:      ".ch-num",
-		ChapterTitle: ".ch-num",
-		Link:         "a.ch-main-anchor",
-		Image:        "#readerarea img",
+		Title:        "h1.entry-title",
+		Rows:         "li[data-num] a[href]",
+		Chapter:      ".chapternum",
+		ChapterTitle: ".chapternum",
+		SeriesLink:   "div.allc a, a.btn-back-enhanced",
 	},
 	// trmanga.com: Turkish webtoon site. Its chapter table is #chapters
 	// too, so this entry must sit before the #chapters ones below (they'd

@@ -251,7 +251,7 @@ func (m *Manganelo) FetchChapter(f Filterable) (*Chapter, error) {
 // slug returns the manga slug from the URL (i.e. "one-piece" for
 // https://www.mangabats.com/manga/one-piece)
 func (m Manganelo) slug() (string, error) {
-	re := regexp.MustCompile(`/manga/([^/]+)`)
+	re := regexp.MustCompile(`/manga/([^/?#]+)`)
 	matches := re.FindStringSubmatch(m.URL)
 	if len(matches) != 2 {
 		return "", fmt.Errorf("could not find manga slug in url %s", m.URL)
