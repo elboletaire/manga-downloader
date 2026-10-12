@@ -41,9 +41,8 @@ build/win:
 build/release:
 	$(GOBUILD) -o manga-downloader$(EXE) .
 
-# prints a variable, for the workflows: make -s print-GUI_LDFLAGS
-print-%:
-	@printf '%s\n' "$($*)"
+# prints a variable; fails if undefined, to catch typos in the workflows
+print-%: ; $(if $(filter undefined,$(origin $*)),$(error $* is not defined),$(info $($*)))@:
 
 # the desktop app, deliberately not part of build: it needs the platform's
 # webview (WebKitGTK on Linux) and Node + pnpm for the frontend. It's written
