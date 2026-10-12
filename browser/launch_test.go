@@ -3,6 +3,7 @@
 package browser
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/chromedp/cdproto/emulation"
@@ -68,4 +69,17 @@ func TestUnheadBrands(t *testing.T) {
 		}
 	}
 	unheadBrands(nil) // no brands: nothing to do
+}
+
+func TestPopupClosedNoticeText(t *testing.T) {
+	// TargetInfo.URL is empty at EventTargetCreated time, so the notice must not
+	// attempt to embed a host (which renders as "by ."). Verify the constant is safe.
+	for _, bad := range []string{"by .", "%s", "://", "by %"} {
+		if strings.Contains(popupClosedNotice, bad) {
+			t.Errorf("popupClosedNotice %q contains %q; must not reference the URL", popupClosedNotice, bad)
+		}
+	}
+	if !strings.Contains(popupClosedNotice, "pop-up") {
+		t.Errorf("popupClosedNotice %q doesn't mention pop-up", popupClosedNotice)
+	}
 }

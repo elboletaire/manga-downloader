@@ -43,10 +43,6 @@ func launchChrome(abort context.Context, headed bool) (*instance, error) {
 	// signal, plus the "Chrome is being controlled" infobar); strict cloudflare
 	// configs (e.g. sakuramangas) loop the challenge forever when they see it
 	opts = append(opts, chromedp.Flag("enable-automation", false))
-	// disable the popup blocker so that popup/ad tabs opened by any mechanism
-	// (including non-gesture script calls) reach EventTargetCreated and are
-	// closed immediately, rather than being silently swallowed by Chrome
-	opts = append(opts, chromedp.Flag("disable-popup-blocking", true))
 	if inContainer() {
 		// chrome's sandbox can't initialize in unprivileged containers
 		// (no setuid helper, user namespaces blocked by the default seccomp
@@ -90,12 +86,13 @@ func launchChrome(abort context.Context, headed bool) (*instance, error) {
 	lost, lose := context.WithCancel(context.Background())
 	context.AfterFunc(browserCtx, lose)
 	tabID := c.Target.TargetID
+	var noticeOnce sync.Once
 	// Target events (like EventTargetCreated for popups opened by window.open)
 	// come through the tab's session, so they must be listened to via
 	// ListenTarget, not ListenBrowser. This mirrors chromedp's own WaitNewTarget.
 	chromedp.ListenTarget(browserCtx, func(ev any) {
 		if e, ok := ev.(*target.EventTargetCreated); ok && isPopupOf(e.TargetInfo, tabID) {
-			go closePopup(browserCtx, e.TargetInfo.TargetID, e.TargetInfo.URL)
+			go closePopup(browserCtx, e.TargetInfo.TargetID, &noticeOnce)
 		}
 	})
 	chromedp.ListenBrowser(browserCtx, func(ev any) {
@@ -227,13 +224,19 @@ func isPopupOf(ti *target.Info, ourTab target.ID) bool {
 	return ti != nil && ti.Type == "page" && ti.OpenerID == ourTab
 }
 
-// closePopup closes a popup tab opened by the page and emits a short notice.
-// target.CloseTarget must be sent via the browser executor (cdp.WithExecutor
-// with c.Browser), not the tab executor: Target.Execute blocks CommandCloseTarget
-// and suggests cancelling the target's context — but for a popup we didn't
-// open, we have no chromedp context for it. Best-effort: errors (e.g. the tab
-// was already closed) are silently ignored. Must be called in a goroutine.
-func closePopup(browserCtx context.Context, popupID target.ID, popupURL string) {
+// popupClosedNotice is what the user sees when a popup tab is closed. It
+// doesn't name the popup's URL: TargetInfo.URL is still empty when the target
+// is created.
+const popupClosedNotice = "Closed a pop-up tab."
+
+// closePopup closes a popup tab opened by the page and emits a short notice,
+// once per browser through noticeOnce. target.CloseTarget must be sent via the
+// browser executor (cdp.WithExecutor with c.Browser), not the tab executor:
+// Target.Execute refuses CommandCloseTarget and tells the caller to cancel the
+// target's context or use chromedp.Cancel — but for a popup we didn't open, we
+// have no chromedp context for it. Best-effort: errors (e.g. the tab was
+// already closed) are silently ignored. Must be called in a goroutine.
+func closePopup(browserCtx context.Context, popupID target.ID, noticeOnce *sync.Once) {
 	c := chromedp.FromContext(browserCtx)
 	if c == nil || c.Browser == nil {
 		return
@@ -242,6 +245,6 @@ func closePopup(browserCtx context.Context, popupID target.ID, popupURL string) 
 	defer cancel()
 	err := target.CloseTarget(popupID).Do(cdp.WithExecutor(ctx, c.Browser))
 	if err == nil {
-		notice.Info("Closed a pop-up tab opened by %s.", hostOf(popupURL))
+		noticeOnce.Do(func() { notice.Info(popupClosedNotice) })
 	}
 }
