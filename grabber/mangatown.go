@@ -122,6 +122,20 @@ func (m *Mangatown) FetchTitle() (string, error) {
 // /manga/<slug>/[v<volume>/]c<number>[.<part>]/, e.g. v98/c1196 or c009.5.
 var mangatownChapterNumberRe = regexp.MustCompile(`/c(\d+(?:\.\d+)?)/?$`)
 
+// urlVolumeRe matches the volume segment of a mangatown, mangahere or fanfox
+// chapter URL: the v98 of /manga/one_piece/v98/c1195/. Chapters not yet in a
+// volume are filed under v00 or vTBD, which parseVolume reads as unknown.
+var urlVolumeRe = regexp.MustCompile(`/(v[^/]+)/c\d+(?:\.\d+)?(?:/|$)`)
+
+// urlVolume returns the volume of a chapter URL, 0 when it has none
+func urlVolume(href string) int {
+	match := urlVolumeRe.FindStringSubmatch(href)
+	if match == nil {
+		return 0
+	}
+	return parseVolume(match[1])
+}
+
 // mangatownChapterNumber returns the chapter number of a chapter URL
 func mangatownChapterNumber(href string) (float64, bool) {
 	match := mangatownChapterNumberRe.FindStringSubmatch(href)
@@ -185,6 +199,7 @@ func (m Mangatown) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: number,
 				Title:  mangatownChapterTitle(seriesTitle, s.Text(), number),
+				Volume: urlVolume(href),
 			},
 			href,
 		})

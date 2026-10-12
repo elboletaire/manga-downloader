@@ -115,6 +115,7 @@ func (m *Fanfox) FetchChapters() (Filterables, []error) {
 			Chapter{
 				Number: number,
 				Title:  text,
+				Volume: urlVolume(u),
 			},
 			u,
 		})

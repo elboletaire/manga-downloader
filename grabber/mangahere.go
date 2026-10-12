@@ -117,6 +117,7 @@ func (m *Mangahere) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: number,
 				Title:  title,
+				Volume: urlVolume(href),
 			},
 			href,
 		})

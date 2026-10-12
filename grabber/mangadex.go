@@ -241,6 +241,7 @@ func (m *Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 					Title:      c.Attributes.Title,
 					Language:   c.Attributes.TranslatedLanguage,
 					PagesCount: c.Attributes.Pages,
+					Volume:     parseVolume(c.Attributes.Volume),
 				},
 				c.Id,
 			})
