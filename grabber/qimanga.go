@@ -17,7 +17,7 @@ import (
 // qimangaChapterRe matches chapter URLs like /series/{slug}/chapter-{num}
 // (applies to qimanga.com, qimanhwa.com, and aurorascans.com which all
 // 301-redirect path-for-path to qimanga.com)
-var qimangaChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?(?:qimanga\.com|qimanhwa\.com|aurorascans\.com)/series/([^/?#]+)/`)
+var qimangaChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?(?:qimanga\.com|qimanhwa\.com|aurorascans\.com)/series/([^/?#]+)/[^/?#]`)
 
 // Qimanga is a grabber for qimanga.com: the reader pages are server side
 // rendered, but the series page only renders the newest chapters, so the

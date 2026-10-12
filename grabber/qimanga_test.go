@@ -20,6 +20,7 @@ func TestQimangaResolveSeriesURL(t *testing.T) {
 		{"https://qimanga.com/series/4190634673-eleceed/chapter-417.5/", "https://qimanga.com/series/4190634673-eleceed"},
 		// series URLs unchanged
 		{"https://qimanga.com/series/4190634673-eleceed", "https://qimanga.com/series/4190634673-eleceed"},
+		{"https://qimanga.com/series/4190634673-eleceed/", "https://qimanga.com/series/4190634673-eleceed/"},
 		// unrelated paths unchanged
 		{"https://qimanga.com/browse", "https://qimanga.com/browse"},
 	}
