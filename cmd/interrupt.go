@@ -49,9 +49,14 @@ func closeBrowserOnInterrupt() (stop func()) {
 
 // onInterrupt handles the first interrupt. stopSignals goes first, so a
 // second Ctrl+C kills the process at once if closing the browser hangs.
+// CompareAndSwap guards against a second invocation racing from the
+// closeBrowserOnInterrupt goroutine while Run's ErrInterrupted path is
+// already in progress; the second call is a no-op.
 func onInterrupt(s os.Signal, stopSignals func()) {
+	if !interrupted.CompareAndSwap(0, int32(exitCode(s))) {
+		return
+	}
 	stopSignals()
-	interrupted.Store(int32(exitCode(s)))
 	closeBrowser()
 	osExit(exitCode(s))
 }

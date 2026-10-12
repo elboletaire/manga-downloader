@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -185,7 +186,7 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	// TTY mode: Bubble Tea interactive progress bars.
-	hasDarkBg := lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
+	hasDarkBg := detectDarkBg()
 	model := newProgressModel(series.Title, settings.Range, settings.Bundle, showLanguage, hasDarkBg)
 	prog := tea.NewProgram(model)
 
@@ -195,9 +196,9 @@ func Run(cmd *cobra.Command, args []string) {
 	ev := &bubbleEvents{prog: prog, done: evDone}
 
 	// Override the notice and attention handlers with TUI-aware versions that
-	// route through prog.Println (safe) instead of printing directly.
-	notice.SetHandler(teaNoticeHandler(prog, evDone))
-	browser.SetAttentionHandler(teaAttentionHandler(prog, evDone))
+	// route through prog.Send (safe after quit) instead of printing directly.
+	notice.SetHandler(teaNoticeHandler(ev))
+	browser.SetAttentionHandler(teaAttentionHandler(ev))
 
 	type downloadResult struct {
 		file string
@@ -443,18 +444,21 @@ func truncateString(input string, maxLength int) string {
 	return truncated[:truncationPoint] + "..."
 }
 
-// chapterBarTitle builds the label of a chapter's progress bar from the fetched
-// chapter data. When showLanguage is set (multiple versions of the same chapter
-// are being downloaded, e.g. one per translated language), the chapter language
-// is appended after the title so same-numbered bars can be told apart. The tag
-// is added after truncation so it never gets cut off.
-func chapterBarTitle(seriesTitle string, chapter *grabber.Chapter, mangaLen, chapterLen int, showLanguage bool) string {
-	chapTitle := truncateString(chapter.GetTitle(), chapterLen)
-	if showLanguage && chapter.Language != "" {
-		chapTitle += " [" + chapter.Language + "]"
+// detectDarkBg queries the terminal background colour, defaulting to dark if
+// the query takes more than 150 ms (e.g. when Ctrl+C is hit before Run(), or
+// the terminal doesn't respond). Dark is the safer default: most terminals are.
+func detectDarkBg() bool {
+	type result struct{ dark bool }
+	ch := make(chan result, 1)
+	go func() {
+		ch <- result{dark: lipgloss.HasDarkBackground(os.Stdin, os.Stdout)}
+	}()
+	select {
+	case r := <-ch:
+		return r.dark
+	case <-time.After(150 * time.Millisecond):
+		return true // default to dark
 	}
-
-	return fmt.Sprintf("%s - %s", truncateString(seriesTitle, mangaLen), chapTitle)
 }
 
 func toMetaFunc(c *color.Color) func(string) string {

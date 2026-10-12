@@ -3,12 +3,15 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
 )
 
@@ -29,55 +32,6 @@ func TestTruncateStringNeverSplitsRunes(t *testing.T) {
 	}
 	if !strings.HasPrefix(got, "Wǒǒǒǒǒǒ") {
 		t.Errorf("expected a clean 7-rune cut, got %q", got)
-	}
-}
-
-func TestChapterBarTitleShowsLanguage(t *testing.T) {
-	chapter := &grabber.Chapter{
-		Title:    "Chapter 0001 Anuku Hilang",
-		Language: "id",
-	}
-	got := chapterBarTitle("Wǒ Kě'ài Dào Bào", chapter, 40, 30, true)
-	want := "Wǒ Kě'ài Dào Bào - Chapter 0001 Anuku Hilang [id]"
-	if got != want {
-		t.Errorf("expected %q, got %q", want, got)
-	}
-}
-
-func TestChapterBarTitleUntitledChapter(t *testing.T) {
-	// untitled mangadex chapters still carry the "Chapter %04d" prefix in
-	// their fetched title; the bar must not render a dangling "- :"
-	chapter := &grabber.Chapter{
-		Title:    "Chapter 0003",
-		Language: "vi",
-	}
-	got := chapterBarTitle("Series", chapter, 40, 30, true)
-	want := "Series - Chapter 0003 [vi]"
-	if got != want {
-		t.Errorf("expected %q, got %q", want, got)
-	}
-}
-
-func TestChapterBarTitleWithoutLanguage(t *testing.T) {
-	chapter := &grabber.Chapter{
-		Title:    "Capítulo 1142",
-		Language: "es",
-	}
-	got := chapterBarTitle("One Piece", chapter, 40, 30, false)
-	want := "One Piece - Capítulo 1142"
-	if got != want {
-		t.Errorf("expected %q, got %q", want, got)
-	}
-}
-
-func TestChapterBarTitleLanguageTagSurvivesTruncation(t *testing.T) {
-	chapter := &grabber.Chapter{
-		Title:    "Chapter 0002 Menghancurkan Mimpi Orang Lain!",
-		Language: "id",
-	}
-	got := chapterBarTitle("Series", chapter, 40, 20, true)
-	if !strings.HasSuffix(got, "[id]") {
-		t.Errorf("language tag must survive truncation, got %q", got)
 	}
 }
 
@@ -187,12 +141,16 @@ func TestFailedBarNotFull(t *testing.T) {
 		t.Error("failBar should be non-nil after rendering a failed chapter")
 	}
 
-	// The row must not show a full bar (current=10, total=40 → 25%).
-	// We can't parse the bar drawing chars directly, but we can verify
-	// that the bar was rendered with ViewAs(0.25) not ViewAs(1.0) by checking
-	// that the failBar was used (already done above) and that s.bar.SetPercent(1.0)
-	// was NOT called (s.bar is still at the animated value, not forced to 1.0).
-	_ = row // render was successful
+	// The failed bar renders at actual progress (10/40 = 25%), not full (100%).
+	// Compare the rendered width against ViewAs(0.25) and ViewAs(1.0).
+	failView25 := s.failBar.ViewAs(0.25)
+	failView100 := s.failBar.ViewAs(1.0)
+	if !strings.Contains(row, failView25) {
+		t.Errorf("failed bar row does not contain 25%% bar\nrow:      %q\nexpected: %q", row, failView25)
+	}
+	if strings.Contains(row, failView100) && failView25 != failView100 {
+		t.Errorf("failed bar row contains 100%% bar (should be at 25%%)\nrow: %q", row)
+	}
 
 	// A done chapter should use ViewAs(1.0) via the brand bar, not the failBar.
 	chapter2 := &grabber.Chapter{Title: "Chapter 0002", PagesCount: 10}
@@ -389,6 +347,37 @@ func TestViewWidths(t *testing.T) {
 			checkRowWidth(t, row, w, "bundle")
 		})
 	}
+}
+
+// TestPrintlnNoBlockAfterQuit verifies that bubbleEvents.println does not
+// block after the Bubble Tea program has quit (i.e., after done is closed).
+// It is primarily a hang-detector: if println blocks, the test times out.
+func TestPrintlnNoBlockAfterQuit(t *testing.T) {
+	prog := tea.NewProgram(progressModel{
+		width:         80,
+		states:        make(map[*grabber.Chapter]*barState),
+		volStates:     make(map[*core.Volume]*volumeBarState),
+		chapterVolume: make(map[*grabber.Chapter]*core.Volume),
+	})
+	done := make(chan struct{})
+	ev := &bubbleEvents{prog: prog, done: done}
+
+	const N = 20
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < N; i++ {
+			ev.println(fmt.Sprintf("line %02d", i))
+		}
+		prog.Send(downloadDoneMsg{})
+	}()
+	prog.Run()
+	close(done)
+	wg.Wait()
+
+	// After done is closed, println must not block regardless of program state.
+	ev.println("after quit")
 }
 
 // checkRowWidth strips ANSI codes and checks the visible width.
