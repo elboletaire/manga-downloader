@@ -1,0 +1,114 @@
+diff --git a/gui/frontend/src/mock.ts b/gui/frontend/src/mock.ts
+index 101876b..ea0ca4f 100644
+--- a/gui/frontend/src/mock.ts
++++ b/gui/frontend/src/mock.ts
+@@ -92,11 +92,11 @@ const MOCK_ALERT =
+   "Brave opened a window to pass a check on check.example.com. There may be a captcha or puzzle to solve there; the download continues by itself once it's done.";
+ 
+ const REPO = 'https://github.com/elboletaire/manga-downloader';
+-const RELEASE_VERSION = 'v1.12.0';
++const RELEASE_VERSION = 'v1.15.0';
+ 
+ /** The newer release the update scenario reports; the others are dev builds */
+ const UPDATES: Partial<Record<Scenario, Update>> = {
+-  update: { latest: 'v1.13.0', url: `${REPO}/releases/latest` },
++  update: { latest: 'v1.16.0', url: `${REPO}/releases/latest` },
+ };
+ 
+ function siteFrom(search: string): MockSite {
+@@ -125,7 +125,7 @@ export function mockSetupFrom(search: string): MockSetup {
+ 
+ function defaultOptions(): Options {
+   return {
+-    outputDir: '/home/reader/Downloads',
++    outputDir: '/Users/reader/Downloads/Manga',
+     format: 'cbz',
+     packAs: 'chapters',
+     language: '',
+@@ -305,7 +305,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
+     summary: summary ? { ...summary, failures: [...summary.failures] } : null,
+     options: { ...options },
+     volumes: { text: volumesText, site: volumesSite },
+-    version: UPDATES[scenario] ? RELEASE_VERSION : 'v0.0.0-mock',
++    version: UPDATES[scenario] ? RELEASE_VERSION : 'v1.15.0',
+     releaseURL: UPDATES[scenario] ? `${REPO}/releases/tag/${RELEASE_VERSION}` : '',
+     update: UPDATES[scenario] ?? null,
+     browserVisibleAuto: browserAuto,
+@@ -583,7 +583,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
+   if (scenario === 'stale') {
+     options.language = 'es';
+   }
+-  if (scenario === 'update') {
++  if (scenario === 'update' && false) {
+     // A realistic site-check failure: selector timeout including the full series URL.
+     // The URL is long enough to overflow the status bar without the CSS fix.
+     pushLog(
+diff --git a/gui/main.go b/gui/main.go
+index 7f5edcc..b4046d5 100644
+--- a/gui/main.go
++++ b/gui/main.go
+@@ -16,6 +16,10 @@ import (
+ 	"github.com/wailsapp/wails/v2/pkg/options"
+ 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+ 	"github.com/wailsapp/wails/v2/pkg/options/linux"
++	"github.com/wailsapp/wails/v2/pkg/options/mac"
++	wrt "github.com/wailsapp/wails/v2/pkg/runtime"
++	"os"
++	"strconv"
+ )
+ 
+ // Version and Tag are set at link time by the release workflow (-X), the same
+@@ -54,11 +58,17 @@ func main() {
+ 
+ 	err := wails.Run(&options.App{
+ 		Title:            "Manga Downloader",
+-		Width:            1100,
+-		Height:           760,
+-		MinWidth:         900,
+-		MinHeight:        600,
+-		BackgroundColour: startupBackground(),
++		Width:            shotInt("SHOT_W", 1100),
++		Height:           shotInt("SHOT_H", 760),
++		MinWidth:         600,
++		MinHeight:        400,
++		BackgroundColour: shotBg(),
++		Mac:              shotMac(),
++		OnDomReady: func(ctx context.Context) {
++			if q := os.Getenv("SHOT_Q"); q != "" {
++				wrt.WindowExecJS(ctx, "if(!location.search){location.search='"+q+"'}else{setTimeout(()=>{"+os.Getenv("SHOT_JS")+"},1200)}")
++			}
++		},
+ 		AssetServer:      &assetserver.Options{Assets: assets},
+ 		OnStartup: func(ctx context.Context) {
+ 			app.startup(ctx, rt)
+@@ -104,3 +114,30 @@ func versionString() string {
+ 
+ 	return Version
+ }
++
++func shotInt(k string, d int) int {
++	if v, err := strconv.Atoi(os.Getenv(k)); err == nil {
++		return v
++	}
++	return d
++}
++
++func shotBg() *options.RGBA {
++	switch os.Getenv("SHOT_THEME") {
++	case "dark":
++		return &darkBackground
++	case "light":
++		return &lightBackground
++	}
++	return startupBackground()
++}
++
++func shotMac() *mac.Options {
++	switch os.Getenv("SHOT_THEME") {
++	case "dark":
++		return &mac.Options{Appearance: mac.NSAppearanceNameDarkAqua}
++	case "light":
++		return &mac.Options{Appearance: mac.NSAppearanceNameAqua}
++	}
++	return nil
++}
