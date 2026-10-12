@@ -370,6 +370,8 @@ func (c *Controller) FinishLoad(url string) error {
 	// the browser's visibility is read when it starts, and loading a site
 	// may be what starts it
 	browser.SetVisible(s.BrowserVisible)
+	release := browser.Hold()
+	defer release()
 	err := c.load(url, s)
 
 	c.mu.Lock()
@@ -1109,9 +1111,7 @@ func (c *Controller) Start() error {
 	// the browser's visibility is read when it starts, so it must follow the
 	// option as of this run, not the one in force when the series was loaded
 	browser.SetVisible(settings.BrowserVisible)
-	// the idle close mustn't drop the browser between chapters: run closes
-	// it at the end instead. Hold can wait up to the browser's close timeout
-	// when an idle teardown is in progress.
+	// Hold keeps the browser open; releasing closes it when the download is done
 	release := browser.Hold()
 	go func() {
 		defer release()
@@ -1123,9 +1123,6 @@ func (c *Controller) Start() error {
 // run is the download goroutine
 func (c *Controller) run(ctx context.Context, series *core.Series, settings *grabber.Settings, chapters grabber.Filterables, skip []ranges.Range, rng string) {
 	file, err := series.Download(ctx, chapters, skip, rng, events{c})
-	// the pages that needed the browser are done: close it rather than keep
-	// it (and maybe its window) open until the app quits
-	c.closeBrowser()
 
 	c.mu.Lock()
 	defer func() {
