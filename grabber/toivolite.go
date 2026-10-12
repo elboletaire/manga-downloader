@@ -17,6 +17,7 @@ import (
 // heavenly-delusion.com uses HeavenlyDelusion (sitemap-based, not the widget).
 var toivoLiteSites = []string{
 	"jojolandsmanga.com",
+	"the-apothecary-diaries.com",
 }
 
 // ToivoLite is a grabber for single-manga WordPress blogs running the "Toivo

@@ -78,6 +78,7 @@ test/gui: build/gui/frontend
 # last), so parallel site-support branches never edit the same line
 grabber: \
 	grabber/3asq \
+	grabber/apothecary \
 	grabber/atsumaru \
 	grabber/aurorascans \
 	grabber/azorafly \
@@ -269,6 +270,8 @@ grabber/flamecomics:
 # grabber rather than a PlainHTML selector
 grabber/mangahere:
 	go run . https://www.mangahere.cc/manga/kengan_omega/ 363
+grabber/apothecary:
+	go run . https://the-apothecary-diaries.com 85
 grabber/jestful:
 	go run . https://jestful.net/hwms-jitsu-wa-ore-saikyou-deshita.html 150
 

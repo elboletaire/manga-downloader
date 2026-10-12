@@ -292,11 +292,21 @@ func TestToivoLiteTest(t *testing.T) {
 		}
 	}
 
+	// jojolandsmanga.com
 	yes("https://jojolandsmanga.com/")
 	yes("https://w9.jojolandsmanga.com/manga/jojolands-chapter-41/")
 	yes("https://JOJOLANDSMANGA.COM/")
 	no("https://myjojolandsmanga.com/")
 	no("https://example.com/?site=jojolandsmanga.com")
+
+	// the-apothecary-diaries.com
+	yes("https://the-apothecary-diaries.com/")
+	yes("https://w9.the-apothecary-diaries.com/manga/the-apothecary-diaries-chapter-63-2/")
+	yes("https://THE-APOTHECARY-DIARIES.COM/")
+	no("https://mythe-apothecary-diaries.com/")
+	no("https://example.com/?url=the-apothecary-diaries.com")
+
+	// unrelated
 	no("https://mangadex.org/")
 	no("https://heavenly-delusion.com/") // handled by HeavenlyDelusion, not ToivoLite
 }
