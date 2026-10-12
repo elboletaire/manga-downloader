@@ -51,6 +51,14 @@ func integration(t *testing.T) *httptest.Server {
 					? JSON.stringify(navigator.userAgentData.brands) : "unavailable";
 				document.getElementById("js").id = "ok";
 			</script></body></html>`, html.EscapeString(r.Header.Get("Sec-CH-UA")))
+		case "/init":
+			// what the page's own first script sees of an init script
+			fmt.Fprint(w, `<html><head><script>
+				var seeded = localStorage.getItem("seed") || "none", flag = window.__seeded || "none";
+			</script></head><body><pre id="ok"></pre><script>
+				document.getElementById("ok").textContent = seeded + "/" + flag;
+				localStorage.removeItem("seed");
+			</script></body></html>`)
 		case "/ua":
 			fmt.Fprint(w, r.Header.Get("User-Agent"))
 		default:
@@ -265,4 +273,26 @@ func childProcesses(t *testing.T) []string {
 		}
 	}
 	return kids
+}
+
+func TestIntegrationInitScriptRunsBeforeThePageOnce(t *testing.T) {
+	srv := integration(t)
+
+	s := Scroll{Done: "true", Init: `localStorage.setItem("seed", "all"); window.__seeded = "yes";`}
+	page, err := GetHTMLWithScroll(srv.URL+"/init", "#ok", s, 30*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := between(page, `<pre id="ok">`, "</pre>"); got != "all/yes" {
+		t.Errorf("the page saw %q, want the init script's all/yes", got)
+	}
+
+	// the tab is reused: the script mustn't run on the next page
+	page, err = GetHTML(srv.URL+"/init", "#ok", 30*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := between(page, `<pre id="ok">`, "</pre>"); got != "none/none" {
+		t.Errorf("the next page saw %q, want none/none", got)
+	}
 }

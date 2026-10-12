@@ -135,6 +135,8 @@ func TestComixPages(t *testing.T) {
 		return fmt.Sprintf(`<div class="rpage-page" data-page="%d"><img class="rpage-page__img" referrerpolicy="no-referrer" src="https://rxn.example.site/hi/p%d"></div>`, n, n)
 	}
 	loader := `<div class="rpage-page" data-page="3"><div class="rpage-page__loader" aria-label="Page 3"><span class="rpage-page__counter mono">3 / 3</span></div></div>`
+	// mounted but still downloading: the img is there, and so is the loader
+	mounting := `<div class="rpage-page is-loading" data-page="3"><img class="rpage-page__img" referrerpolicy="no-referrer" src="https://rxn.example.site/hi/p3"><div class="rpage-page__loader" aria-hidden="true"><span class="rpage-page__counter mono">3 / 3</span></div></div>`
 
 	cases := []struct {
 		name    string
@@ -143,7 +145,9 @@ func TestComixPages(t *testing.T) {
 		wantErr string
 	}{
 		{"every page mounted", img(1) + img(2), []string{"https://rxn.example.site/hi/p1", "https://rxn.example.site/hi/p2"}, ""},
-		{"a page still loading", img(1) + img(2) + loader, nil, "1 of 3 pages never loaded"},
+		{"a page mounted but not downloaded", img(1) + img(2) + mounting, []string{"https://rxn.example.site/hi/p1", "https://rxn.example.site/hi/p2", "https://rxn.example.site/hi/p3"}, ""},
+		{"a page never mounted", img(1) + img(2) + loader, nil, "1 of 3 pages never loaded"},
+		{"an img without a src", img(1) + `<div class="rpage-page" data-page="2"><img class="rpage-page__img" src=""></div>`, nil, "1 of 2 pages never loaded"},
 		{"no pages", `<main class="rpage-main"></main>`, nil, "no pages found"},
 	}
 	for _, c := range cases {
@@ -171,5 +175,25 @@ func TestComixPages(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestComixReaderScroll(t *testing.T) {
+	init := comixReaderScroll.Init
+	for _, want := range []string{`"reader.default.v3"`, `"reader.webtoon.v3"`, `preload:"all"`, "Object.assign({},v.state,", "try{", "catch(e){}"} {
+		if !strings.Contains(init, want) {
+			t.Errorf("init script lacks %s: %s", want, init)
+		}
+	}
+	if strings.Contains(init, "`") {
+		t.Errorf("init script has a backtick: %s", init)
+	}
+	// Done is spliced into the scroll step's JS: its quotes must nest
+	done := comixReaderScroll.Done
+	if !strings.HasPrefix(done, "(function(){") || !strings.HasSuffix(done, "})()") {
+		t.Errorf("Done isn't a self-contained expression: %s", done)
+	}
+	if !strings.Contains(done, `querySelector('img.rpage-page__img[src]:not([src=""])')`) {
+		t.Errorf("Done doesn't check for a mounted img: %s", done)
 	}
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/cdproto/input"
 	"github.com/chromedp/cdproto/network"
+	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/http"
@@ -91,7 +92,7 @@ func (e *challengeError) Error() string {
 // visible browser, it transparently reopens a visible window and retries — so
 // users don't need to know about --browser-visible.
 func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
-	return getHTML(url, waitSelector, timeout, nil)
+	return getHTML(url, waitSelector, timeout, "", nil)
 }
 
 // Scroll says how GetHTMLWithScroll scrolls a page
@@ -105,6 +106,10 @@ type Scroll struct {
 	Done string
 	// Pause is the wait after each step
 	Pause time.Duration
+	// Init, if set, is JS run in every document before the page's own
+	// scripts, e.g. to seed localStorage settings that make the page mount
+	// everything up front
+	Init string
 }
 
 // scrollSettleSteps is how many steps a scroll keeps waiting at the bottom
@@ -118,7 +123,7 @@ const scrollSettleSteps = 3
 // GetHTML only captures the handful of pages near the top; stepping a
 // viewport at a time mounts every one of them, where bigger jumps skip some.
 func GetHTMLWithScroll(url, waitSelector string, s Scroll, timeout time.Duration) (string, error) {
-	return getHTML(url, waitSelector, timeout, []chromedp.Action{chromedp.ActionFunc(func(ctx context.Context) error {
+	return getHTML(url, waitSelector, timeout, s.Init, []chromedp.Action{chromedp.ActionFunc(func(ctx context.Context) error {
 		return scroll(ctx, s)
 	})})
 }
@@ -534,14 +539,14 @@ func waitForGrowth(ctx context.Context, count func() int, baseline int) bool {
 // url in a headless browser and, if the wait selector times out (typically a
 // cloudflare/JS challenge), transparently reopens a visible window and
 // retries.
-func getHTML(url, waitSelector string, timeout time.Duration, afterWait []chromedp.Action) (string, error) {
+func getHTML(url, waitSelector string, timeout time.Duration, init string, afterWait []chromedp.Action) (string, error) {
 	abort := lock()
 	defer mu.Unlock()
 
 	var html string
 	err := runPage(abort, url, timeout, true, func(ctx context.Context, h hooks) error {
 		var err error
-		html, err = render(ctx, h, url, waitSelector, afterWait)
+		html, err = render(ctx, h, url, waitSelector, init, afterWait)
 		return err
 	})
 	return html, err
@@ -549,15 +554,29 @@ func getHTML(url, waitSelector string, timeout time.Duration, afterWait []chrome
 
 // render performs a single navigation in the shared browser, reusing its
 // initial tab (a new tab would spawn in the background, leaving the blank
-// first tab in front and hiding the page). afterWait, if any, runs once
-// waitSelector matches, before the snapshot.
-func render(ctx context.Context, h hooks, url, waitSelector string, afterWait []chromedp.Action) (string, error) {
+// first tab in front and hiding the page). init, if any, runs in every new
+// document before its own scripts, for this navigation only. afterWait, if
+// any, runs once waitSelector matches, before the snapshot.
+func render(ctx context.Context, h hooks, url, waitSelector, init string, afterWait []chromedp.Action) (string, error) {
 	if NetLog != nil {
 		chromedp.ListenTarget(ctx, func(ev interface{}) {
 			if resp, ok := ev.(*network.EventResponseReceived); ok {
 				NetLog(resp.Response.URL, int(resp.Response.Status), resp.Response.MimeType)
 			}
 		})
+	}
+
+	if init != "" {
+		var id page.ScriptIdentifier
+		if err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
+			var err error
+			id, err = page.AddScriptToEvaluateOnNewDocument(init).Do(ctx)
+			return err
+		})); err != nil {
+			return "", err
+		}
+		// the tab is reused, so the script mustn't outlive this page
+		defer chromedp.Run(ctx, page.RemoveScriptToEvaluateOnNewDocument(id))
 	}
 
 	var html string

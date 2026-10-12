@@ -33,9 +33,13 @@ import (
 //
 // The reader lazily mounts its page images via an IntersectionObserver, in
 // an inner scroll container (.rpage-main: window.scrollTo does nothing
-// there), each slot showing a loader until its image mounts.
-// browser.GetHTMLWithScroll steps that container a viewport at a time until
-// no loader is left, so the snapshot holds every page.
+// there). Its "Preload images: all" setting (persisted in localStorage)
+// mounts every page at once instead, so an init script turns it on before
+// the reader loads. The snapshot is taken as soon as every slot has its img
+// mounted, without waiting for the images to download (a slot keeps its
+// loader until then). If the setting doesn't take,
+// browser.GetHTMLWithScroll steps the container a viewport at a time until
+// they're all mounted.
 //
 // The images live on rotating hosts that refuse any request with a Referer
 // (403; the reader sets referrerpolicy="no-referrer"), so pages are
@@ -73,16 +77,28 @@ var comixPagingRe = regexp.MustCompile(`(\d+)\s+to\s+(\d+)\s+of\s+(\d+)`)
 const (
 	comixChapterRowSelector = ".mchap-item"
 	comixFooterSelector     = ".mchap-foot__hint"
-	comixImageSelector      = ".rpage-page__img"
-	comixLoaderSelector     = ".rpage-page__loader"
+	comixSlotSelector       = ".rpage-page"
+	comixImageSelector      = `img.rpage-page__img[src]:not([src=""])`
 	comixReaderScrollPause  = 150 * time.Millisecond
 )
 
-// comixReaderScroll scrolls the reader until every page slot has mounted
+// comixPreloadJS sets the reader's "Preload images" to "all" in both of its
+// persisted settings (paged and webtoon), keeping whatever else is there
+const comixPreloadJS = `try{for(const k of["reader.default.v3","reader.webtoon.v3"]){` +
+	`const v=JSON.parse(localStorage.getItem(k)||"null")||{state:{},version:0};` +
+	`v.state=Object.assign({},v.state,{preload:"all"});` +
+	`localStorage.setItem(k,JSON.stringify(v))}}catch(e){}`
+
+// comixReaderScroll preloads every page, scrolling the reader as a fallback,
+// until every slot has its img mounted
 var comixReaderScroll = browser.Scroll{
 	Container: ".rpage-main",
-	Done:      `document.querySelector(".rpage-page") && !document.querySelector("` + comixLoaderSelector + `")`,
-	Pause:     comixReaderScrollPause,
+	Done: `(function(){var s=document.querySelectorAll("` + comixSlotSelector + `");` +
+		`if(!s.length)return false;` +
+		`for(var i=0;i<s.length;i++)if(!s[i].querySelector('` + comixImageSelector + `'))return false;` +
+		`return true})()`,
+	Pause: comixReaderScrollPause,
+	Init:  comixPreloadJS,
 }
 
 // Test returns true if the URL is a comix.to URL. It only checks the
@@ -205,9 +221,9 @@ func (c *Comix) FetchChapters() (chapters Filterables, errs []error) {
 	return chapters, errs
 }
 
-// FetchChapter renders the chapter reader page in a real browser, scrolling
-// it so every lazily-mounted page image gets inserted into the DOM before
-// reading it back out
+// FetchChapter renders the chapter reader page in a real browser, with
+// every page preloaded (or scrolled into view), and reads the mounted page
+// images back out
 func (c *Comix) FetchChapter(f Filterable) (*Chapter, error) {
 	chap := f.(*ComixChapter)
 
@@ -235,19 +251,21 @@ func (c *Comix) FetchChapter(f Filterable) (*Chapter, error) {
 	}, nil
 }
 
-// comixPages reads the page images off a rendered reader. A slot still
-// showing its loader never mounted, which would silently drop the page, so
-// it's an error instead.
+// comixPages reads the page images off a rendered reader. A slot without
+// its img never mounted, which would silently drop the page, so it's an
+// error instead.
 func comixPages(doc *goquery.Document) ([]Page, error) {
-	if missing := doc.Find(comixLoaderSelector).Length(); missing > 0 {
-		total := missing + doc.Find(comixImageSelector).Length()
-		return nil, fmt.Errorf("%d of %d pages never loaded in the reader", missing, total)
+	slots := doc.Find(comixSlotSelector)
+	if slots.Length() == 0 {
+		return nil, fmt.Errorf("no pages found in the reader")
 	}
 
 	var pages []Page
-	doc.Find(comixImageSelector).Each(func(i int, s *goquery.Selection) {
-		src := strings.TrimSpace(s.AttrOr("src", s.AttrOr("data-src", "")))
+	missing := 0
+	slots.Each(func(i int, s *goquery.Selection) {
+		src := strings.TrimSpace(s.Find(comixImageSelector).First().AttrOr("src", ""))
 		if src == "" {
+			missing++
 			return
 		}
 		pages = append(pages, Page{
@@ -256,8 +274,8 @@ func comixPages(doc *goquery.Document) ([]Page, error) {
 			NoReferer: true,
 		})
 	})
-	if len(pages) == 0 {
-		return nil, fmt.Errorf("no pages found in the reader")
+	if missing > 0 {
+		return nil, fmt.Errorf("%d of %d pages never loaded in the reader", missing, slots.Length())
 	}
 
 	return pages, nil
