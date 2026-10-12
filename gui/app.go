@@ -234,7 +234,8 @@ type JobDTO struct {
 	Title  string  `json:"title"`
 	Number float64 `json:"number"`
 	// Total and Done count pages: each page is downloaded and then archived,
-	// so Total is twice the page count
+	// so Total is twice the page count. A volume's row, whose pages aren't
+	// known until it's packed, counts its progress out of a fixed Total.
 	Total  int64  `json:"total"`
 	Done   int64  `json:"done"`
 	State  string `json:"state"`

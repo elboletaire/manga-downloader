@@ -33,7 +33,7 @@ export interface Run {
 export interface Job {
   title: string;
   number: number;
-  /** Pages counted twice: once downloaded, once archived */
+  /** Pages counted twice: once downloaded, once archived; a volume's row is a fixed scale instead */
   total: number;
   done: number;
   state: JobState;

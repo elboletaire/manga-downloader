@@ -58,11 +58,14 @@ func newProgress(p *mpb.Progress, cfg progressConfig) *progress {
 	}
 }
 
-// volumeBar is the bar of one volume. Its total grows as its chapters start,
-// since a chapter's page count is only known once it's fetched.
+// volumeScale is the total of a volume's bar, which shows the fraction
+// VolumeProgress reports: a volume's page count isn't known until all of its
+// chapters are fetched, and growing the total as they start pulled it back
+const volumeScale = 1000
+
+// volumeBar is the bar of one volume
 type volumeBar struct {
-	bar   *mpb.Bar
-	total int64
+	bar *mpb.Bar
 	// archiving is set once the volume's archive is being written
 	archiving bool
 }
@@ -160,12 +163,8 @@ func (pr *progress) Started(c *grabber.Chapter) {
 
 	pr.mu.Lock()
 	vb := pr.volumeFor(c)
-	if vb != nil {
-		// pages to download plus pages to archive, as for a chapter's bar
-		vb.total += c.PagesCount * 2
-		vb.bar.SetTotal(vb.total, false)
-	}
 	pr.mu.Unlock()
+	// a volume's bar moves with VolumeProgress
 	if vb != nil {
 		return
 	}
@@ -197,16 +196,19 @@ func (pr *progress) Started(c *grabber.Chapter) {
 }
 
 func (pr *progress) Page(c *grabber.Chapter, idx int, err error) {
-	bar := pr.barFor(c)
 	if err != nil {
-		if own := pr.ownBar(c); own != nil {
-			own.SetCurrent(int64(idx))
-		}
 		red("- error downloading page %d: %s", idx+1, err.Error())
 		return
 	}
+	// a volume's bar moves with VolumeProgress instead
+	pr.mu.Lock()
+	inVolume := pr.volumeFor(c) != nil
+	pr.mu.Unlock()
+	if inVolume {
+		return
+	}
 	// Increment by 1 since we're processing one page at a time
-	if bar != nil {
+	if bar := pr.barFor(c); bar != nil {
 		bar.IncrBy(1)
 	}
 }
@@ -236,7 +238,7 @@ func (pr *progress) Packed(c *grabber.Chapter, _ string, err error) {
 }
 
 func (pr *progress) Downloaded(c *grabber.Chapter) {
-	// a volume's archive progress comes from VolumeArchived instead
+	// a volume's bar moves with VolumeProgress instead
 	if !pr.cfg.bundle {
 		return
 	}
@@ -262,14 +264,16 @@ func (pr *progress) finishBundle() {
 	}
 }
 
-// VolumeStart adds the bar of a volume, empty until its chapters start
+// VolumeStart adds the bar of a volume. It shows VolumeProgress's fraction,
+// so it counts chapters rather than pages, which aren't known until the end.
 func (pr *progress) VolumeStart(v *core.Volume) {
 	vb := &volumeBar{}
 	title := fmt.Sprintf("%s - %s:", truncateString(pr.cfg.title, pr.cfg.mangaLen), core.VolumeLabel(v.Number))
-	vb.bar = pr.p.AddBar(0,
+	vb.bar = pr.p.AddBar(volumeScale,
 		mpb.PrependDecorators(
 			decor.Name(title, decor.WCSyncWidthR),
-			decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DextraSpace}),
+			// where a chapter's bar has its page counter
+			decor.Name(fmt.Sprintf("%d ch.", len(v.Chapters)), decor.WC{C: decor.DextraSpace}),
 		),
 		mpb.AppendDecorators(
 			decor.Percentage(decor.WC{W: 4}),
@@ -303,12 +307,12 @@ func (pr *progress) VolumePacking(v *core.Volume) {
 	}
 }
 
-func (pr *progress) VolumeArchived(v *core.Volume, n int) {
+func (pr *progress) VolumeProgress(v *core.Volume, fraction float64) {
 	pr.mu.Lock()
 	vb := pr.volumes[v]
 	pr.mu.Unlock()
 	if vb != nil {
-		vb.bar.IncrBy(n)
+		vb.bar.SetCurrent(int64(fraction * volumeScale))
 	}
 }
 
@@ -330,8 +334,7 @@ func (pr *progress) VolumePacked(v *core.Volume, name string, err error) {
 		}
 		return
 	}
-	if vb != nil {
-		// pages of chapters that failed were never counted: done is what's left
-		vb.bar.SetTotal(-1, true)
+	if vb != nil && !vb.bar.Completed() {
+		vb.bar.SetCurrent(volumeScale)
 	}
 }

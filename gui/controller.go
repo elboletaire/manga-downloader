@@ -58,7 +58,8 @@ const (
 
 // Job is the progress of one chapter. In bundle mode there's a single Job for
 // the whole bundle, whose Total counts every page twice (download + archive),
-// and with volumes one per volume, whose Total grows as its chapters start.
+// and with volumes one per volume, whose Done is core.VolumeProgress out of a
+// fixed Total of volumeScale (its pages aren't known until it's packed).
 // The CLI's bar also adds each kept chapter's pages a second time, so it runs
 // past its total; the GUI counts each page once per phase.
 type Job struct {
@@ -1312,9 +1313,8 @@ func (e events) Started(ch *grabber.Chapter) {
 	if c.bundle != nil {
 		c.bundle.Status = "Downloading " + ch.GetTitle()
 	} else if j := c.chapVol[ch]; j != nil {
-		// a volume's total is only known as its chapters start. Its row is
-		// too narrow for the chapter's title: the phase and count say enough
-		j.Total += ch.PagesCount * 2
+		// its row is too narrow for the chapter's title: the phase and
+		// percentage say enough. The bar moves with VolumeProgress.
 		j.Status = ""
 	} else {
 		// the CLI's bar: pages to download plus pages to archive
@@ -1331,12 +1331,10 @@ func (e events) Page(ch *grabber.Chapter, idx int, err error) {
 	c.mu.Lock()
 	if err != nil {
 		c.appendLogLocked(LogError, fmt.Sprintf("error downloading page %d of %s: %s", idx+1, ch.GetTitle(), err))
-	} else if j := c.jobFor(ch); j != nil && c.live(ch) {
+	} else if j := c.jobFor(ch); j != nil && !j.Volume && c.live(ch) {
+		// a volume's row moves with VolumeProgress instead
 		j.Done++
-		// a volume can't tell from its count: its total is still growing
-		if !j.Volume {
-			advance(j)
-		}
+		advance(j)
 	}
 	c.mu.Unlock()
 	c.emit()
@@ -1435,7 +1433,7 @@ func volumeTitle(v *core.Volume) string {
 func (e events) VolumeStart(v *core.Volume) {
 	c := e.c
 	c.mu.Lock()
-	j := &Job{Title: volumeTitle(v), Number: v.FirstNumber(), State: JobDownloading, Status: "Waiting...", Volume: true}
+	j := &Job{Title: volumeTitle(v), Number: v.FirstNumber(), Total: volumeScale, State: JobDownloading, Status: "Waiting...", Volume: true}
 	c.jobs = append(c.jobs, j)
 	c.byVolume[v] = j
 	for _, chap := range v.Chapters {
@@ -1465,11 +1463,17 @@ func (e events) VolumePacking(v *core.Volume) {
 	c.emit()
 }
 
-func (e events) VolumeArchived(v *core.Volume, n int) {
+// volumeScale is the Total of a volume's row, whose Done is VolumeProgress's
+// fraction of it
+const volumeScale = 10000
+
+func (e events) VolumeProgress(v *core.Volume, fraction float64) {
 	c := e.c
 	c.mu.Lock()
-	if j := c.byVolume[v]; j != nil {
-		j.Done += int64(n)
+	// core never reports a volume going back; max keeps the row honest even
+	// so, and leaves a row that already ended alone
+	if j := c.byVolume[v]; j != nil && j.State != JobDone && j.State != JobFailed && j.State != JobSkipped {
+		j.Done = max(j.Done, int64(fraction*volumeScale))
 	}
 	c.mu.Unlock()
 	c.emit()
@@ -1505,7 +1509,6 @@ func (e events) VolumePacked(v *core.Volume, name string, err error) {
 		c.stats.volumes++
 		if j != nil {
 			j.State = JobDone
-			// the pages of the chapters that failed were never counted
 			j.Done = j.Total
 		}
 		c.appendLogLocked(LogInfo, "saved "+name)

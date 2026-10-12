@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
+	"sync"
 	"testing"
 
 	"github.com/elboletaire/manga-downloader/core"
@@ -99,8 +100,8 @@ func TestDownloadVolumes(t *testing.T) {
 	if !reflect.DeepEqual(titles, want) {
 		t.Errorf("jobs %q, want %q", titles, want)
 	}
-	if j := c.Jobs()[0]; !j.Volume || j.Total != 8 {
-		t.Errorf("volume job = %+v, want a volume row of 2 chapters × 2 pages × 2", j)
+	if j := c.Jobs()[0]; !j.Volume || j.Total != volumeScale {
+		t.Errorf("volume job = %+v, want a volume row out of volumeScale", j)
 	}
 	// the test template is a custom one, so it names the volumes too
 	files := written(t, dir)
@@ -165,4 +166,78 @@ func TestStartVolumesWithoutSiteVolumes(t *testing.T) {
 	if len(entries) != 0 {
 		t.Errorf("a refused run wrote %d files", len(entries))
 	}
+}
+
+// TestVolumeProgressNeverGoesBack runs volumes of uneven chapters
+// concurrently and checks, after every event, that no row and not the run as
+// a whole (as the window works them out, see run.ts) ever moves backwards. A
+// volume's total used to grow as each of its chapters started, pulling its
+// row and the overall bar back every time.
+func TestVolumeProgressNeverGoesBack(t *testing.T) {
+	chaps := []fakeChapter{
+		{number: 1, pages: 9, volume: 1},
+		{number: 2, pages: 1, volume: 1},
+		{number: 3, pages: 6, volume: 1},
+		{number: 4, pages: 2, volume: 2},
+		{number: 5, pages: 8, volume: 2, fail: map[int]bool{7: true}},
+		{number: 6, pages: 3},
+	}
+	c, _, _ := newTestController(t, false, nil, chaps...)
+	c.Configure(func(s *grabber.Settings) { applyPackAs(s, PackVolumes) })
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	c.SetAll(true)
+
+	// each snapshot is taken and checked under one lock, so they're checked
+	// in the order the controller's state went through them
+	var mu sync.Mutex
+	rowLast := map[string]float64{}
+	overallLast := 0.0
+	snapshots := 0
+	c.notify = func() {
+		mu.Lock()
+		defer mu.Unlock()
+		rows := c.Run().Rows
+		if rows == 0 {
+			return
+		}
+		snapshots++
+		sum := 0.0
+		for _, j := range c.Jobs() {
+			f := jobFraction(j)
+			if f < rowLast[j.Title] {
+				t.Errorf("row %q went back from %.3f to %.3f", j.Title, rowLast[j.Title], f)
+			}
+			rowLast[j.Title] = f
+			sum += f
+		}
+		overall := sum / float64(rows)
+		if overall < overallLast {
+			t.Errorf("overall progress went back from %.3f to %.3f", overallLast, overall)
+		}
+		overallLast = overall
+	}
+
+	if err := c.Start(); err != nil {
+		t.Fatal(err)
+	}
+	waitFinished(t, c)
+	mu.Lock()
+	defer mu.Unlock()
+	if snapshots < 20 || overallLast != 1 {
+		t.Errorf("%d snapshots ending at %.3f, want the run seen through to 1", snapshots, overallLast)
+	}
+}
+
+// jobFraction is the window's jobFraction (format.ts), a finished row being
+// complete whatever its count
+func jobFraction(j Job) float64 {
+	switch {
+	case j.State == JobDone || j.State == JobFailed || j.State == JobSkipped:
+		return 1
+	case j.Total <= 0:
+		return 0
+	}
+	return min(1, max(0, float64(j.Done)/float64(j.Total)))
 }

@@ -65,8 +65,10 @@ func (r *recorder) VolumeStart(v *Volume)         { r.add("volume-start %d", v.N
 func (r *recorder) VolumeChapter(v *Volume, c *grabber.Chapter) {
 	r.add("volume-chapter %d %g", v.Number, c.Number)
 }
-func (r *recorder) VolumePacking(v *Volume)         { r.add("volume-packing %d", v.Number) }
-func (r *recorder) VolumeArchived(v *Volume, n int) { r.add("volume-archived %d %d", v.Number, n) }
+func (r *recorder) VolumePacking(v *Volume) { r.add("volume-packing %d", v.Number) }
+func (r *recorder) VolumeProgress(v *Volume, f float64) {
+	r.add("volume-progress %d %.3f", v.Number, f)
+}
 func (r *recorder) VolumePacked(v *Volume, name string, err error) {
 	if err != nil {
 		r.add("volume-failed %d %v", v.Number, err)

@@ -55,7 +55,8 @@ type Events interface {
 	// told apart from the chapters packed on their own by VolumeChapter.
 
 	// VolumeStart is called once per volume, in order, before any chapter is
-	// downloaded. Its page total is only known as its chapters start.
+	// downloaded. Its page total is only known as its chapters start, so
+	// its progress comes from VolumeProgress rather than from page counts.
 	VolumeStart(v *Volume)
 	// VolumeChapter reports that the fetched chapter c goes into v. It comes
 	// right after the fetch, before any other event about c.
@@ -63,8 +64,13 @@ type Events interface {
 	// VolumePacking is called once every chapter of v is done (downloaded or
 	// failed) and its archive is about to be written
 	VolumePacking(v *Volume)
-	// VolumeArchived reports n pages written to v's archive
-	VolumeArchived(v *Volume, n int)
+	// VolumeProgress reports how far along v is, from 0 to 1: each of its
+	// chapters weighs the same in the download half (by its pages once it
+	// starts, in full once it's done or failed), and the archive's pages make
+	// up the other half. It never decreases, and the calls for one volume
+	// arrive in order, so renderers can show it as is. It doesn't reach 1 for
+	// a volume that fails; VolumePacked says how it ended.
+	VolumeProgress(v *Volume, fraction float64)
 	// VolumePacked reports the end of v, with the file it wrote and the error,
 	// if any: a packing error, ErrEmptyVolume when none of its chapters could
 	// be downloaded, ErrSkippedVolume when --skip-pages emptied all of them
@@ -91,7 +97,7 @@ func (NoEvents) BundleArchived(int)                      {}
 func (NoEvents) VolumeStart(*Volume)                     {}
 func (NoEvents) VolumeChapter(*Volume, *grabber.Chapter) {}
 func (NoEvents) VolumePacking(*Volume)                   {}
-func (NoEvents) VolumeArchived(*Volume, int)             {}
+func (NoEvents) VolumeProgress(*Volume, float64)         {}
 func (NoEvents) VolumePacked(*Volume, string, error)     {}
 
 // ErrEmptyVolume is the VolumePacked error of a volume none of whose chapters
@@ -105,7 +111,8 @@ var ErrSkippedVolume = errors.New("--skip-pages excludes every page of its chapt
 // volumeRun tracks a volume through the download: it's packed by whichever
 // of its chapters finishes last
 type volumeRun struct {
-	v *Volume
+	v  *Volume
+	ev Events
 
 	mu         sync.Mutex
 	remaining  int
@@ -113,11 +120,84 @@ type volumeRun struct {
 	// skipped counts the chapters --skip-pages emptied
 	skipped int
 	packed  bool
+
+	// chapters is the progress of each started or finished chapter, by
+	// listing entry. archived and archiveTotal are the archive's pages, the
+	// total known once packing starts. reported is the last VolumeProgress.
+	chapters     map[grabber.Filterable]*chapterProgress
+	archived     int
+	archiveTotal int
+	reported     float64
+}
+
+// chapterProgress is a volume chapter's share of the download half
+type chapterProgress struct {
+	done, total int
+	finished    bool
+}
+
+func (p *chapterProgress) fraction() float64 {
+	switch {
+	case p.finished:
+		return 1
+	case p.total <= 0:
+		return 0
+	}
+	return float64(p.done) / float64(p.total)
+}
+
+func newVolumeRun(v *Volume, ev Events) *volumeRun {
+	return &volumeRun{v: v, ev: ev, remaining: len(v.Chapters), chapters: map[grabber.Filterable]*chapterProgress{}}
+}
+
+// chapter returns the progress of a listed chapter. Callers hold mu.
+func (r *volumeRun) chapter(listed grabber.Filterable) *chapterProgress {
+	p := r.chapters[listed]
+	if p == nil {
+		p = &chapterProgress{}
+		r.chapters[listed] = p
+	}
+	return p
+}
+
+// report sends VolumeProgress when the volume moved forward. It's called
+// with mu held, which keeps one volume's reports in order: a page finishing
+// in another goroutine can't overtake it with an older value.
+func (r *volumeRun) report() {
+	sum := 0.0
+	for _, p := range r.chapters {
+		sum += p.fraction()
+	}
+	f := sum / float64(len(r.v.Chapters)) / 2
+	if r.archiveTotal > 0 {
+		f += float64(r.archived) / float64(r.archiveTotal) / 2
+	}
+	if f > r.reported {
+		r.reported = f
+		r.ev.VolumeProgress(r.v, f)
+	}
+}
+
+// start records the page count of a listed chapter about to download
+func (r *volumeRun) start(listed grabber.Filterable, pages int) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.chapter(listed).total = pages
+}
+
+// page records one downloaded page of a listed chapter
+func (r *volumeRun) page(listed grabber.Filterable) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if p := r.chapter(listed); !p.finished && p.done < p.total {
+		p.done++
+		r.report()
+	}
 }
 
 // finish records one of the volume's chapters as done, d being nil when it
 // failed or was skipped, and reports whether it was the last one
-func (r *volumeRun) finish(d *packer.DownloadedChapter, skipped bool) bool {
+func (r *volumeRun) finish(listed grabber.Filterable, d *packer.DownloadedChapter, skipped bool) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if d != nil {
@@ -126,12 +206,31 @@ func (r *volumeRun) finish(d *packer.DownloadedChapter, skipped bool) bool {
 	if skipped {
 		r.skipped++
 	}
+	r.chapter(listed).finished = true
+	r.report()
 	r.remaining--
 	if r.remaining == 0 {
 		r.packed = true
 		return true
 	}
 	return false
+}
+
+// packing sets the archive's page total, before its pages are written
+func (r *volumeRun) packing(pages int) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.archiveTotal = pages
+}
+
+// archive records one page written to the volume's archive
+func (r *volumeRun) archive() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.archived < r.archiveTotal {
+		r.archived++
+		r.report()
+	}
 }
 
 // Download fetches, downloads and packs the given chapters, which must already
@@ -178,7 +277,7 @@ func (s *Series) Download(ctx context.Context, chapters grabber.Filterables, ski
 			}
 			volumeOf = map[grabber.Filterable]*volumeRun{}
 			for _, v := range volumes {
-				r := &volumeRun{v: v, remaining: len(v.Chapters)}
+				r := newVolumeRun(v, ev)
 				runs = append(runs, r)
 				for _, chap := range v.Chapters {
 					volumeOf[chap] = r
@@ -239,7 +338,7 @@ loop:
 			skippedAll := false
 			if run != nil {
 				defer func() {
-					if run.finish(kept, skippedAll) {
+					if run.finish(chap, kept, skippedAll) {
 						s.packVolume(run, outDir, ev)
 					}
 				}()
@@ -276,9 +375,15 @@ loop:
 			}
 
 			ev.Started(chapter)
+			if run != nil {
+				run.start(chap, len(chapter.Pages))
+			}
 
 			files, err := downloader.FetchChapter(s.Site, chapter, func(_ int, idx int, err error) {
 				ev.Page(chapter, idx, err)
+				if run != nil && err == nil {
+					run.page(chap)
+				}
 			})
 			if err != nil {
 				ev.DownloadFailed(chapter, err)
@@ -367,9 +472,15 @@ func (s *Series) packVolume(r *volumeRun, outDir string, ev Events) {
 		dc[i] = d.(*packer.DownloadedChapter)
 	}
 
+	pages := 0
+	for _, d := range dc {
+		pages += len(d.Files)
+	}
+	r.packing(pages)
+
 	ev.VolumePacking(r.v)
-	name, err := packer.PackVolume(outDir, s.Site, r.v.Number, dc, func(page, _ int) {
-		ev.VolumeArchived(r.v, page)
+	name, err := packer.PackVolume(outDir, s.Site, r.v.Number, dc, func(_, _ int) {
+		r.archive()
 	})
 	ev.VolumePacked(r.v, name, err)
 }

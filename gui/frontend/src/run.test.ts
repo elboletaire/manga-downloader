@@ -49,6 +49,31 @@ describe('overallProgress', () => {
     expect(o).toEqual({ finished: 1, total: 4, queued: 2, fraction: 1.5 / 4 });
   });
 
+  it('never moves back through a run by volumes', () => {
+    // the rows the backend reports along a run of two volumes and one loose
+    // chapter: a volume's row counts out of a fixed total, the loose
+    // chapter's row only appears once it starts
+    const run = { chapters: 5, bundle: false, volumes: true, rows: 3 };
+    const vol = (n: number, over: Partial<Job>) =>
+      job({ title: `Vol. 0${n}`, number: n, total: 10000, volume: true, status: 'Waiting...', ...over });
+    const loose = (over: Partial<Job>) => job({ title: 'Chapter 5', number: 5, total: 6, ...over });
+    const steps: Job[][] = [
+      [vol(1, {}), vol(2, {})],
+      [vol(1, { status: '', done: 1250 }), vol(2, {})],
+      [vol(1, { status: '', done: 2500 }), vol(2, { status: '', done: 500 })],
+      [vol(1, { status: '', done: 2500 }), vol(2, { status: '', done: 500 }), loose({ done: 1 })],
+      [vol(1, { state: 'archiving', status: 'Packing...', done: 5000 }), vol(2, { done: 2500 }), loose({ done: 3 })],
+      [vol(1, { state: 'archiving', status: 'Packing...', done: 8333 }), vol(2, { done: 5000 }), loose({ done: 5 })],
+      [vol(1, { state: 'done', done: 10000 }), vol(2, { state: 'failed', done: 5000 }), loose({ done: 5 })],
+      [vol(1, { state: 'done', done: 10000 }), vol(2, { state: 'failed', done: 5000 }), loose({ state: 'done', done: 6 })],
+    ];
+    const fractions = steps.map((jobs) => overallProgress({ run, jobs }).fraction);
+    for (let i = 1; i < fractions.length; i++) {
+      expect(fractions[i]).toBeGreaterThanOrEqual(fractions[i - 1]);
+    }
+    expect(fractions.at(-1)).toBe(1);
+  });
+
   it('counts a failed or skipped chapter as finished', () => {
     const o = overallProgress({
       run: { chapters: 2, bundle: false, volumes: false, rows: 0 },

@@ -5,6 +5,7 @@ package core
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -193,12 +194,13 @@ func TestDownloadVolumes(t *testing.T) {
 	}
 	want := []string{
 		"volume-start 1", "volume-start 2",
-		"volume-chapter 1 1", "started 1", "page 1 0", "page 1 1", "downloaded 1",
-		"volume-chapter 1 2", "started 2", "page 2 0", "downloaded 2",
-		"volume-packing 1", "volume-archived 1 1", "volume-archived 1 1", "volume-archived 1 1", "volume-packed 1 Test Series Vol. 01.cbz",
-		"volume-chapter 2 3", "started 3", "page 3 0", "downloaded 3",
-		"volume-chapter 2 4", "started 4", "page 4 0", "downloaded 4",
-		"volume-packing 2", "volume-archived 2 1", "volume-archived 2 1", "volume-packed 2 Test Series Vol. 02.cbz",
+		// each chapter is half of its volume's download half, whatever its pages
+		"volume-chapter 1 1", "started 1", "page 1 0", "volume-progress 1 0.125", "page 1 1", "volume-progress 1 0.250", "downloaded 1",
+		"volume-chapter 1 2", "started 2", "page 2 0", "volume-progress 1 0.500", "downloaded 2",
+		"volume-packing 1", "volume-progress 1 0.667", "volume-progress 1 0.833", "volume-progress 1 1.000", "volume-packed 1 Test Series Vol. 01.cbz",
+		"volume-chapter 2 3", "started 3", "page 3 0", "volume-progress 2 0.250", "downloaded 3",
+		"volume-chapter 2 4", "started 4", "page 4 0", "volume-progress 2 0.500", "downloaded 4",
+		"volume-packing 2", "volume-progress 2 0.750", "volume-progress 2 1.000", "volume-packed 2 Test Series Vol. 02.cbz",
 		"started 5", "page 5 0", "archived 5", "packed 5",
 	}
 	if strings.Join(rec.events, "|") != strings.Join(want, "|") {
@@ -360,5 +362,59 @@ func TestDownloadVolumesAllSkipped(t *testing.T) {
 	}
 	if len(cbzFiles(t, dir)) != 0 {
 		t.Error("an empty volume was written")
+	}
+}
+
+// TestDownloadVolumesProgressNeverGoesBack replays a concurrent multi-volume
+// run, with chapters of uneven length, one that fails to download and one
+// that can't be fetched, and checks each volume's progress only ever moves
+// forward. Its total used to grow as each chapter started, which pulled the
+// bars back every time.
+func TestDownloadVolumesProgressNeverGoesBack(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 7, volume: 1},
+		fakeChapter{number: 2, pages: 2, volume: 1},
+		fakeChapter{number: 3, pages: 5, volume: 1, fail: map[int]bool{4: true}},
+		fakeChapter{number: 4, pages: 1, volume: 2},
+		fakeChapter{number: 5, pages: 9, volume: 2},
+		fakeChapter{number: 6, pages: 3, volume: 3},
+	)
+	site.Settings.MaxConcurrency = grabber.MaxConcurrency{Chapters: 3, Pages: 4}
+	series, _ := newSeries(t, site, false)
+	site.Settings.Volumes = "auto"
+	rec := &recorder{}
+
+	// chapter 7 is listed in volume 3 but the site can't fetch it
+	chapters := append(listed(site), &grabber.Chapter{Number: 7, Volume: 3})
+	if _, err := series.Download(context.Background(), chapters, nil, "", rec); err != nil {
+		t.Fatal(err)
+	}
+
+	last := map[int]float64{}
+	ended := map[int]string{}
+	for _, e := range rec.events {
+		var vol int
+		var f float64
+		if n, _ := fmt.Sscanf(e, "volume-progress %d %f", &vol, &f); n == 2 {
+			if ended[vol] != "" {
+				t.Errorf("volume %d moved to %.3f after it ended", vol, f)
+			}
+			if f <= last[vol] || f > 1 {
+				t.Errorf("volume %d went from %.3f to %.3f", vol, last[vol], f)
+			}
+			last[vol] = f
+			continue
+		}
+		if n, _ := fmt.Sscanf(e, "volume-packed %d", &vol); n == 1 {
+			ended[vol] = "packed"
+		}
+		if n, _ := fmt.Sscanf(e, "volume-failed %d", &vol); n == 1 {
+			ended[vol] = "failed"
+		}
+	}
+	for vol := 1; vol <= 3; vol++ {
+		if ended[vol] != "packed" || last[vol] != 1 {
+			t.Errorf("volume %d ended %q at %.3f, want packed at 1", vol, ended[vol], last[vol])
+		}
 	}
 }
