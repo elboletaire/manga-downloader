@@ -115,6 +115,8 @@ type Controller struct {
 	notify func()
 	// identify finds the site for a URL; core.Identify, replaced in tests
 	identify func(url string, s *grabber.Settings) (grabber.Site, []error)
+	// closeBrowser is browser.Close, replaced in tests
+	closeBrowser func()
 
 	mu sync.Mutex
 	// settings is the one pointer the site and core read their settings
@@ -170,9 +172,10 @@ func NewController(settings *grabber.Settings, notifyFn func()) *Controller {
 		notifyFn = func() {}
 	}
 	c := &Controller{
-		notify:   notifyFn,
-		identify: core.Identify,
-		settings: settings,
+		notify:       notifyFn,
+		identify:     core.Identify,
+		closeBrowser: browser.Close,
+		settings:     settings,
 	}
 	notice.SetHandler(func(level notice.Level, msg string) {
 		lvl := LogInfo
@@ -599,6 +602,9 @@ func (c *Controller) Clear() error {
 	c.loadErr = nil
 	c.resetResultsLocked()
 	c.mu.Unlock()
+	// done with the series: its browser (and maybe window) can go. Nothing
+	// can be using it, as Clear is refused while loading or running.
+	c.closeBrowser()
 	c.emit()
 	return nil
 }
@@ -944,7 +950,8 @@ func (c *Controller) Start() error {
 	// option as of this run, not the one in force when the series was loaded
 	browser.SetVisible(settings.BrowserVisible)
 	// the idle close mustn't drop the browser between chapters: run closes
-	// it at the end instead
+	// it at the end instead. Hold can wait up to the browser's close timeout
+	// when an idle teardown is in progress.
 	release := browser.Hold()
 	go func() {
 		defer release()
@@ -958,7 +965,7 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 	file, err := series.Download(ctx, chapters, skip, rng, events{c})
 	// the pages that needed the browser are done: close it rather than keep
 	// it (and maybe its window) open until the app quits
-	browser.Close()
+	c.closeBrowser()
 
 	c.mu.Lock()
 	defer func() {

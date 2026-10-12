@@ -6,8 +6,13 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"runtime"
+	"strings"
 	"syscall"
 	"testing"
+
+	"github.com/elboletaire/manga-downloader/notice"
+	"github.com/fatih/color"
 )
 
 func TestExitCode(t *testing.T) {
@@ -63,17 +68,33 @@ func TestInterruptedRunExitsWithTheSignalCode(t *testing.T) {
 	}
 }
 
-func TestOutputMutedOnceInterrupted(t *testing.T) {
+func TestErrorsMutedOnceInterrupted(t *testing.T) {
 	stubExit(t)
 	var buf bytes.Buffer
-	w := muted{&buf}
+	prev := color.Output
+	color.Output = &buf
+	t.Cleanup(func() { color.Output = prev })
 
-	w.Write([]byte("before\n"))
+	red("before")
 	interrupted.Store(130)
-	if n, err := w.Write([]byte("error: browser closed\n")); n != 22 || err != nil {
-		t.Errorf("muted write = %d, %v", n, err)
+	red("error: %s", "browser closed")
+	yellow("site not recognised")
+	printNotice(notice.LevelInfo, "closing the browser")
+	printNotice(notice.LevelWarn, "a warning")
+	if got := buf.String(); !strings.Contains(got, "before") || strings.Count(got, "\n") != 1 {
+		t.Errorf("output = %q, want only what came before the interrupt", got)
 	}
-	if buf.String() != "before\n" {
-		t.Errorf("output = %q, want only what came before the interrupt", buf.String())
+}
+
+func TestProgressBarsWriteToTheTerminal(t *testing.T) {
+	prev := color.Output
+	stop := closeBrowserOnInterrupt()
+	// mpb only sizes its bars to the terminal when given the *os.File
+	if color.Output != prev {
+		t.Errorf("color.Output was replaced: %T", color.Output)
 	}
+	if _, ok := color.Output.(*os.File); !ok && runtime.GOOS != "windows" {
+		t.Errorf("color.Output is a %T, not the terminal's *os.File", color.Output)
+	}
+	stop()
 }

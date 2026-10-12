@@ -48,8 +48,11 @@ func launchChrome(abort context.Context, headed bool) (*instance, error) {
 		opts = append(opts, chromedp.NoSandbox)
 	}
 
-	allocCtx, allocCancel := chromedp.NewExecAllocator(context.Background(), opts...)
-	browserCtx, browserStop := chromedp.NewContext(allocCtx)
+	allocCtx, allocCancelWait := chromedp.NewExecAllocator(context.Background(), opts...)
+	browserCtx, browserStopWait := chromedp.NewContext(allocCtx)
+	// once each: a second call of chromedp's cancel-and-wait blocks forever,
+	// and the abort below may race the cleanup for them
+	browserStop, allocCancel := onceFunc(browserStopWait), onceFunc(allocCancelWait)
 	// killing the browser ends the Run and hideHeadless below early
 	unwatch := context.AfterFunc(abort, func() {
 		browserStop()
@@ -201,4 +204,11 @@ func inContainer() bool {
 		}
 	}
 	return false
+}
+
+// onceFunc returns f made safe to call more than once and concurrently: every
+// call returns once f has
+func onceFunc(f func()) func() {
+	var once sync.Once
+	return func() { once.Do(f) }
 }

@@ -9,6 +9,7 @@ import (
 	nethttp "net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/http"
+	"github.com/elboletaire/manga-downloader/notice"
 )
 
 // These tests drive a real headless browser, so they only run when
@@ -188,4 +190,79 @@ func between(s, from, to string) string {
 	_, after, _ := strings.Cut(s, from)
 	text, _, _ := strings.Cut(after, to)
 	return text
+}
+
+func TestIntegrationSlowWorkAfterRenderIsNotAChallenge(t *testing.T) {
+	srv := integration(t)
+
+	// 3 x 1.5s of scrolling after the selector matched, with a 2s budget for
+	// the render: the scroll gets its own
+	html, err := GetHTMLWithScroll(srv.URL+"/ok", "#ok", 3, 1500*time.Millisecond, 2*time.Second)
+	if err != nil {
+		t.Fatalf("slow scroll after the page rendered: %v", err)
+	}
+	if !strings.Contains(html, "ready") {
+		t.Fatalf("unexpected html: %s", html)
+	}
+}
+
+func TestIntegrationCloseDuringStart(t *testing.T) {
+	srv := integration(t)
+
+	starting := make(chan struct{}, 1)
+	notice.SetHandler(func(_ notice.Level, msg string) {
+		if strings.Contains(msg, "starting it") {
+			select {
+			case starting <- struct{}{}:
+			default:
+			}
+		}
+	})
+	t.Cleanup(func() { notice.SetHandler(nil) })
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := GetHTML(srv.URL+"/never", "#ok", time.Minute)
+		done <- err
+	}()
+	<-starting
+	began := time.Now()
+	Close()
+	if waited := time.Since(began); waited > 8*time.Second {
+		t.Errorf("Close took %s", waited)
+	}
+	select {
+	case err := <-done:
+		if !errors.Is(err, ErrClosed) {
+			t.Errorf("load ended with %v, want ErrClosed", err)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("the load didn't end after Close")
+	}
+	if kids := childProcesses(t); len(kids) > 0 {
+		t.Errorf("browser processes left after Close: %v", kids)
+	}
+}
+
+// childProcesses lists this process's live children (Linux)
+func childProcesses(t *testing.T) []string {
+	t.Helper()
+	tasks, _ := filepath.Glob(fmt.Sprintf("/proc/%d/task/*/children", os.Getpid()))
+	var kids []string
+	for _, f := range tasks {
+		b, err := os.ReadFile(f)
+		if err != nil {
+			continue
+		}
+		for _, pid := range strings.Fields(string(b)) {
+			// a zombie is dead, just not reaped: chromedp never waits for a
+			// browser killed before it was handed over
+			stat, err := os.ReadFile("/proc/" + pid + "/stat")
+			if err != nil || strings.Contains(string(stat), ") Z ") {
+				continue
+			}
+			kids = append(kids, pid)
+		}
+	}
+	return kids
 }

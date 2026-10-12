@@ -60,6 +60,9 @@ const (
 	// paginationTimeout bounds clicking through a paginated list once the page
 	// has rendered
 	paginationTimeout = 5 * time.Minute
+	// afterRenderTimeout bounds what a render does once its wait selector
+	// matched (scrolling, settling, the snapshot)
+	afterRenderTimeout = 2 * time.Minute
 )
 
 // visibleTimeout bounds a load in a visible window, where a challenge may
@@ -508,8 +511,13 @@ func render(ctx context.Context, h hooks, url, waitSelector string, afterWait []
 	if waitSelector != "" {
 		actions = append(actions, chromedp.WaitVisible(waitSelector, chromedp.ByQuery))
 	}
+	matched := false
 	actions = append(actions, chromedp.ActionFunc(func(context.Context) error {
+		matched = true
 		h.rendered()
+		// what follows (scrolling, settling) gets its own budget, so it
+		// can't eat the probe's and pass for a challenge
+		h.rearm(afterRenderTimeout)
 		return nil
 	}))
 	actions = append(actions, afterWait...)
@@ -529,13 +537,22 @@ func render(ctx context.Context, h hooks, url, waitSelector string, afterWait []
 	)
 
 	if err := chromedp.Run(ctx, actions...); err != nil {
-		if ctx.Err() != nil && waitSelector != "" {
-			return "", &challengeError{url: url, selector: waitSelector}
-		}
-		return "", err
+		return "", renderError(ctx, err, url, waitSelector, matched)
 	}
 
 	return html, nil
+}
+
+// renderError explains a failed render: a timeout before waitSelector matched
+// is a challenge, one after it is just a slow page
+func renderError(ctx context.Context, err error, url, waitSelector string, matched bool) error {
+	if ctx.Err() == nil || waitSelector == "" {
+		return err
+	}
+	if !matched {
+		return &challengeError{url: url, selector: waitSelector}
+	}
+	return fmt.Errorf("%s loaded but didn't finish in time: %w", hostOf(url), err)
 }
 
 // startChallengeClicker polls the page in the background and, whenever a

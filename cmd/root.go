@@ -14,6 +14,7 @@ import (
 	"github.com/elboletaire/manga-downloader/browser"
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/elboletaire/manga-downloader/notice"
 	"github.com/elboletaire/manga-downloader/packer"
 	"github.com/elboletaire/manga-downloader/ranges"
 	"github.com/fatih/color"
@@ -82,6 +83,8 @@ func Run(cmd *cobra.Command, args []string) {
 	// an interrupted one
 	defer browser.Close()
 	defer closeBrowserOnInterrupt()()
+	notice.SetHandler(printNotice)
+	defer notice.SetHandler(nil)
 	browser.SetVisible(settings.BrowserVisible)
 
 	// validated before anything is fetched, so a typo fails fast
@@ -92,13 +95,13 @@ func Run(cmd *cobra.Command, args []string) {
 
 	s, errs := core.Identify(getUrlArg(args), &settings)
 	if len(errs) > 0 {
-		color.Red("Errors testing site (a site may be down):")
+		red("Errors testing site (a site may be down):")
 		for _, err := range errs {
-			color.Red(err.Error())
+			red(err.Error())
 		}
 	}
 	if s == nil {
-		color.Yellow("Site not recognised")
+		yellow("Site not recognised")
 		exit(1)
 	}
 
@@ -122,7 +125,7 @@ func Run(cmd *cobra.Command, args []string) {
 		_, err := prompt.Run()
 
 		if err != nil {
-			color.Yellow("Canceled by user")
+			yellow("Canceled by user")
 			exit(0)
 		}
 
@@ -138,7 +141,7 @@ func Run(cmd *cobra.Command, args []string) {
 	// user-typed range below the first listed chapter would silently skip
 	// that part; warn only when the range was explicit, not synthesised
 	if floor := chapters[0].GetNumber(); rangeRequested && core.RequestsBelowListedFloor(rngs, floor) {
-		color.Yellow(
+		yellow(
 			"Only chapters %g and up are listed for this series; the requested chapters below that will be skipped",
 			floor,
 		)
@@ -148,7 +151,7 @@ func Run(cmd *cobra.Command, args []string) {
 	chapters = chapters.FilterRanges(rngs)
 
 	if len(chapters) == 0 {
-		color.Yellow("No chapters found for the specified ranges")
+		yellow("No chapters found for the specified ranges")
 		exit(1)
 	}
 
@@ -192,11 +195,11 @@ func Run(cmd *cobra.Command, args []string) {
 	p.Wait()
 
 	if err != nil {
-		color.Red(err.Error())
+		red(err.Error())
 		exit(1)
 	}
 
-	fmt.Fprintf(color.Output, "- %s %s\n", color.GreenString("saved file"), color.HiBlackString(bundleFile))
+	fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(bundleFile))
 }
 
 // exitSettingError prints a setting that failed validation in the words each
@@ -207,9 +210,9 @@ func exitSettingError(err error) {
 
 	switch se.Setting {
 	case "format":
-		color.Red("Error: invalid format %q, must be %q or %q", se.Value, packer.FormatCBZ, packer.FormatRaw)
+		red("Error: invalid format %q, must be %q or %q", se.Value, packer.FormatCBZ, packer.FormatRaw)
 	case "convert-images":
-		color.Red("Error: invalid --convert-images value: %s", se.Err)
+		red("Error: invalid --convert-images value: %s", se.Err)
 	default:
 		cerr(se.Err, "Error parsing --"+se.Setting+": ")
 	}
@@ -226,16 +229,16 @@ func exitOpenError(err error) {
 	case errors.As(err, &terr):
 		cerr(terr.Err, "Error fetching title: ")
 	case errors.As(err, &cerrs):
-		color.Red("Errors fetching chapters:")
+		red("Errors fetching chapters:")
 		for _, err := range cerrs.Errs {
-			color.Red(err.Error())
+			red(err.Error())
 		}
 		exit(1)
 	case errors.As(err, &nerr):
 		// an empty result usually means the language filter matched nothing
-		color.Yellow(nerr.Error())
+		yellow(nerr.Error())
 	default:
-		color.Red(err.Error())
+		red(err.Error())
 	}
 	exit(1)
 }
@@ -302,7 +305,7 @@ func exit(code int) {
 
 func cerr(err error, prefix string) {
 	if err != nil {
-		fmt.Fprintln(color.Output, color.RedString(prefix+err.Error()))
+		red("%s", prefix+err.Error())
 		exit(1)
 	}
 }

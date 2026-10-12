@@ -240,14 +240,35 @@ func TestClearForgetsTheSeriesAndKeepsTheOptions(t *testing.T) {
 	}
 }
 
+func TestClearClosesTheBrowser(t *testing.T) {
+	c, _, _ := newTestController(t, false, nil, chapters(2, 1)...)
+	closed := 0
+	c.closeBrowser = func() { closed++ }
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Clear(); err != nil {
+		t.Fatal(err)
+	}
+	if closed != 1 {
+		t.Errorf("Clear closed the browser %d times, want once", closed)
+	}
+}
+
 func TestClearRefusedWhileLoading(t *testing.T) {
 	const url = "https://example.com/manga/test"
 	c, _, _ := newTestController(t, false, nil, chapters(1, 1)...)
+	closed := 0
+	c.closeBrowser = func() { closed++ }
 	if err := c.BeginLoad(url); err != nil {
 		t.Fatal(err)
 	}
 	if err := c.Clear(); err != errBusy {
 		t.Fatalf("Clear while loading = %v; want errBusy", err)
+	}
+	if closed != 0 {
+		t.Error("a refused Clear closed the browser in use")
 	}
 	if err := c.FinishLoad(url); err != nil {
 		t.Fatal(err)

@@ -3,13 +3,13 @@
 package cmd
 
 import (
-	"io"
 	"os"
 	"os/signal"
 	"sync/atomic"
 	"syscall"
 
 	"github.com/elboletaire/manga-downloader/browser"
+	"github.com/elboletaire/manga-downloader/notice"
 	"github.com/fatih/color"
 )
 
@@ -26,12 +26,8 @@ var (
 // interrupted (Ctrl+C, or the console closing), then exits. Without it, an
 // interrupt kills the process before its deferred browser.Close runs, which
 // leaves the browser running on Windows and macOS (Linux kills it with the
-// parent). Output is muted from the interrupt on, so the loads it aborts
-// don't print errors. The returned function stops listening.
+// parent). The returned function stops listening.
 func closeBrowserOnInterrupt() (stop func()) {
-	out, errOut := color.Output, color.Error
-	color.Output, color.Error = muted{out}, muted{errOut}
-
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 	done := make(chan struct{})
@@ -48,7 +44,6 @@ func closeBrowserOnInterrupt() (stop func()) {
 		if interrupted.Load() != 0 {
 			exit(0)
 		}
-		color.Output, color.Error = out, errOut
 	}
 }
 
@@ -69,12 +64,27 @@ func exitCode(s os.Signal) int {
 	return 130
 }
 
-// muted drops what's written once the CLI was interrupted
-type muted struct{ w io.Writer }
-
-func (m muted) Write(p []byte) (int, error) {
-	if interrupted.Load() != 0 {
-		return len(p), nil
+// red and yellow print like color.Red and color.Yellow, but nothing once the
+// CLI was interrupted: the loads the interrupt aborts would print errors. The
+// progress bars aren't muted, as mpb needs the terminal itself to size them.
+func red(format string, a ...any) {
+	if interrupted.Load() == 0 {
+		color.Red(format, a...)
 	}
-	return m.w.Write(p)
+}
+
+func yellow(format string, a ...any) {
+	if interrupted.Load() == 0 {
+		color.Yellow(format, a...)
+	}
+}
+
+// printNotice is the CLI's notice handler: the default colours, muted once
+// interrupted like red and yellow
+func printNotice(level notice.Level, msg string) {
+	if level == notice.LevelWarn {
+		yellow(msg)
+	} else if interrupted.Load() == 0 {
+		color.Blue(msg)
+	}
 }
