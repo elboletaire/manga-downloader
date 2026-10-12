@@ -27,6 +27,7 @@ import (
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/cdproto/input"
 	"github.com/chromedp/cdproto/network"
+	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/http"
@@ -91,25 +92,85 @@ func (e *challengeError) Error() string {
 // visible browser, it transparently reopens a visible window and retries — so
 // users don't need to know about --browser-visible.
 func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
-	return getHTML(url, waitSelector, timeout, nil)
+	return getHTML(url, waitSelector, timeout, "", nil)
 }
 
+// Scroll says how GetHTMLWithScroll scrolls a page
+type Scroll struct {
+	// Container selects the element that scrolls; empty (or no match)
+	// scrolls the document. Readers that scroll an inner element ignore
+	// window.scrollTo entirely.
+	Container string
+	// Done is a JS expression that's true once everything lazy has mounted.
+	// Empty, or never true, stops at the bottom instead.
+	Done string
+	// Pause is the wait after each step
+	Pause time.Duration
+	// Init, if set, is JS run in every frame and document of the
+	// navigation, before the page's own scripts, e.g. to seed localStorage
+	// settings that make the page mount everything up front
+	Init string
+}
+
+// scrollSettleSteps is how many steps a scroll keeps waiting at the bottom
+// for Done before giving up on it, so the last pages can still mount
+const scrollSettleSteps = 3
+
 // GetHTMLWithScroll is like GetHTML, but after waitSelector matches it scrolls
-// the page down in increments (scrollIterations times, pausing scrollPause
-// between each), then takes the final HTML snapshot. Some readers virtualize
-// or lazy-mount their page images via an IntersectionObserver, so a plain
-// GetHTML only captures the handful of pages near the top; scrolling lets the
-// site's own JS progressively mount the rest before the snapshot is taken.
-func GetHTMLWithScroll(url, waitSelector string, scrollIterations int, scrollPause time.Duration, timeout time.Duration) (string, error) {
-	scroll := []chromedp.Action{}
-	for i := 1; i <= scrollIterations; i++ {
-		frac := float64(i) / float64(scrollIterations)
-		scroll = append(scroll,
-			chromedp.Evaluate(fmt.Sprintf(`window.scrollTo(0, document.body.scrollHeight * %f)`, frac), nil),
-			chromedp.Sleep(scrollPause),
-		)
+// the page down one viewport at a time until s.Done holds or the bottom is
+// reached, then takes the final HTML snapshot. Some readers virtualize or
+// lazy-mount their page images via an IntersectionObserver, so a plain
+// GetHTML only captures the handful of pages near the top; stepping a
+// viewport at a time mounts every one of them, where bigger jumps skip some.
+func GetHTMLWithScroll(url, waitSelector string, s Scroll, timeout time.Duration) (string, error) {
+	return getHTML(url, waitSelector, timeout, s.Init, []chromedp.Action{chromedp.ActionFunc(func(ctx context.Context) error {
+		return scroll(ctx, s)
+	})})
+}
+
+// scrollStepJS returns the JS for one scroll step: it checks done first,
+// then scrolls the container a viewport down (instantly: a smooth scroll
+// gets cut short by the next step) and reports whether it was already at
+// the bottom
+func scrollStepJS(s Scroll) string {
+	done := "false"
+	if s.Done != "" {
+		done = s.Done
 	}
-	return getHTML(url, waitSelector, timeout, scroll)
+	return fmt.Sprintf(`(function(){
+		if (%s) return "done";
+		var el = (%q && document.querySelector(%q)) || document.scrollingElement || document.documentElement;
+		var bottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+		el.scrollBy({top: el.clientHeight, behavior: "instant"});
+		return bottom ? "bottom" : "scrolled";
+	})()`, done, s.Container, s.Container)
+}
+
+// scroll steps through the page as described by s
+func scroll(ctx context.Context, s Scroll) error {
+	js := scrollStepJS(s)
+	atBottom := 0
+	// no step cap: afterRenderTimeout bounds a page that keeps growing
+	for {
+		var state string
+		if err := chromedp.Evaluate(js, &state).Do(ctx); err != nil {
+			return err
+		}
+		switch state {
+		case "done":
+			return nil
+		case "bottom":
+			atBottom++
+			if atBottom > scrollSettleSteps {
+				return nil
+			}
+		default:
+			atBottom = 0
+		}
+		if err := chromedp.Sleep(s.Pause).Do(ctx); err != nil {
+			return err
+		}
+	}
 }
 
 // dismissModalJS closes an open modal dialog (e.g. mkissa's "Sign in to
@@ -478,30 +539,48 @@ func waitForGrowth(ctx context.Context, count func() int, baseline int) bool {
 // url in a headless browser and, if the wait selector times out (typically a
 // cloudflare/JS challenge), transparently reopens a visible window and
 // retries.
-func getHTML(url, waitSelector string, timeout time.Duration, afterWait []chromedp.Action) (string, error) {
+func getHTML(url, waitSelector string, timeout time.Duration, init string, afterWait []chromedp.Action) (string, error) {
 	abort := lock()
 	defer mu.Unlock()
 
 	var html string
 	err := runPage(abort, url, timeout, true, func(ctx context.Context, h hooks) error {
 		var err error
-		html, err = render(ctx, h, url, waitSelector, afterWait)
+		html, err = renderPage(ctx, h, url, waitSelector, init, afterWait)
 		return err
 	})
 	return html, err
 }
 
+// renderPage is render, replaced in tests
+var renderPage = render
+
 // render performs a single navigation in the shared browser, reusing its
 // initial tab (a new tab would spawn in the background, leaving the blank
-// first tab in front and hiding the page). afterWait, if any, runs once
-// waitSelector matches, before the snapshot.
-func render(ctx context.Context, h hooks, url, waitSelector string, afterWait []chromedp.Action) (string, error) {
+// first tab in front and hiding the page). init, if any, runs in every new
+// document before its own scripts, for this navigation only. afterWait, if
+// any, runs once waitSelector matches, before the snapshot.
+func render(ctx context.Context, h hooks, url, waitSelector, init string, afterWait []chromedp.Action) (string, error) {
 	if NetLog != nil {
 		chromedp.ListenTarget(ctx, func(ev interface{}) {
 			if resp, ok := ev.(*network.EventResponseReceived); ok {
 				NetLog(resp.Response.URL, int(resp.Response.Status), resp.Response.MimeType)
 			}
 		})
+	}
+
+	if init != "" {
+		var id page.ScriptIdentifier
+		if err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
+			var err error
+			id, err = page.AddScriptToEvaluateOnNewDocument(init).Do(ctx)
+			return err
+		})); err != nil {
+			return "", err
+		}
+		// the tab is reused, so the script mustn't outlive this page. A
+		// failed removal is fine: after any failure the browser is discarded.
+		defer chromedp.Run(ctx, page.RemoveScriptToEvaluateOnNewDocument(id))
 	}
 
 	var html string
