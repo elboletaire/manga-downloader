@@ -48,14 +48,35 @@ type MangataroChapter struct {
 	Id string
 }
 
+// mangataroReaderRe matches reader URLs like /read/{series-slug}/...
+var mangataroReaderRe = regexp.MustCompile(`(?i)/read/([^/?#]+)/`)
+
 // Test returns true if the URL is a mangataro.org URL
 func (m *Mangataro) Test() (bool, error) {
 	re := regexp.MustCompile(`mangataro\.org`)
 	return re.MatchString(m.URL), nil
 }
 
+// resolveSeriesURL rewrites a reader URL (/read/{slug}/...) to the series URL
+// (/manga/{slug}). No-op for series URLs.
+func (m *Mangataro) resolveSeriesURL() {
+	matches := mangataroReaderRe.FindStringSubmatch(m.URL)
+	if matches == nil {
+		return
+	}
+	u, err := url.Parse(m.URL)
+	if err != nil {
+		return
+	}
+	u.Path = "/manga/" + matches[1]
+	u.RawQuery = ""
+	u.Fragment = ""
+	m.URL = u.String()
+}
+
 // FetchTitle fetches and returns the manga title
 func (m *Mangataro) FetchTitle() (string, error) {
+	m.resolveSeriesURL()
 	if m.title != "" {
 		return m.title, nil
 	}
@@ -72,6 +93,7 @@ func (m *Mangataro) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (m *Mangataro) FetchChapters() (chapters Filterables, errs []error) {
+	m.resolveSeriesURL()
 	id, err := m.id()
 	if err != nil {
 		return nil, []error{err}

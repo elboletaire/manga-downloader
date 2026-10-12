@@ -7,12 +7,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
 	"github.com/elboletaire/manga-downloader/notice"
+)
+
+var (
+	mangakChapterURLRe = regexp.MustCompile(`^/([^/?#]+)/chapter-`)
 )
 
 // mangakDefaultAPIURL is the fallback API base when the page doesn't
@@ -44,8 +49,35 @@ func (m *Mangak) Test() (bool, error) {
 	return re.MatchString(m.URL), nil
 }
 
+// resolveSeriesURL converts a chapter URL to a series URL if needed.
+func (m *Mangak) resolveSeriesURL() error {
+	parsed, err := url.Parse(m.URL)
+	if err != nil {
+		return err
+	}
+
+	// Check if the path matches the chapter pattern
+	if !mangakChapterURLRe.MatchString(parsed.Path) {
+		return nil
+	}
+
+	matches := mangakChapterURLRe.FindStringSubmatch(parsed.Path)
+	if len(matches) >= 2 {
+		slug := matches[1]
+		parsed.Path = "/" + slug
+		parsed.RawQuery = ""
+		parsed.Fragment = ""
+		m.URL = parsed.String()
+	}
+
+	return nil
+}
+
 // FetchTitle fetches and returns the manga title
 func (m *Mangak) FetchTitle() (string, error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return "", err
+	}
 	manga, err := m.fetchManga()
 	if err != nil {
 		return "", err
@@ -56,6 +88,9 @@ func (m *Mangak) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (m *Mangak) FetchChapters() (chapters Filterables, errs []error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
 	manga, err := m.fetchManga()
 	if err != nil {
 		return nil, []error{err}

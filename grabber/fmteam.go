@@ -12,6 +12,11 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
+// fmteamChapterRe matches chapter reader URLs like
+// https://fmteam.fr/read/batuque/fr/ch/157 and decimal variants like ch/12.5.
+// www. is accepted; trailing slash, query and fragment are all tolerated.
+var fmteamChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?fmteam\.fr/read/([^/]+)/([^/]+)/ch/[\d.]+/?(?:[?#].*)?$`)
+
 // Fmteam is a grabber for fmteam.fr: a French scanlation site whose Vue SPA
 // exposes a wide-open JSON API (const API_BASE_URL = BASE_URL + 'api' in the
 // homepage HTML) for both the chapters list and the reader pages, so no
@@ -44,9 +49,10 @@ type FmteamChapter struct {
 	ReadUrl string
 }
 
-// Test returns true if the URL is a fmteam.fr comic URL
+// Test returns true if the URL is a fmteam.fr series or chapter URL.
+// Chapter URLs are resolved to series URLs lazily in FetchTitle/FetchChapters.
 func (f *Fmteam) Test() (bool, error) {
-	re := regexp.MustCompile(`fmteam\.fr/comics/`)
+	re := regexp.MustCompile(`(?i)fmteam\.fr/(?:comics/|read/)`)
 	return re.MatchString(f.URL), nil
 }
 
@@ -55,6 +61,8 @@ func (f *Fmteam) FetchTitle() (string, error) {
 	if f.title != "" {
 		return f.title, nil
 	}
+
+	f.resolveSeriesURL()
 
 	data, err := f.seriesData()
 	if err != nil {
@@ -68,6 +76,8 @@ func (f *Fmteam) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (f *Fmteam) FetchChapters() (chapters Filterables, errs []error) {
+	f.resolveSeriesURL()
+
 	data, err := f.seriesData()
 	if err != nil {
 		return nil, []error{err}
@@ -131,6 +141,18 @@ func (f Fmteam) FetchChapter(fl Filterable) (*Chapter, error) {
 	}
 
 	return chapter, nil
+}
+
+// resolveSeriesURL converts a chapter URL to a series URL if needed.
+func (f *Fmteam) resolveSeriesURL() {
+	if !fmteamChapterRe.MatchString(f.URL) {
+		return
+	}
+	matches := fmteamChapterRe.FindStringSubmatch(f.URL)
+	if len(matches) >= 2 {
+		slug := matches[1]
+		f.URL = fmt.Sprintf("https://fmteam.fr/comics/%s", slug)
+	}
 }
 
 // seriesSlug returns the series slug from the URL (i.e. "batuque" for

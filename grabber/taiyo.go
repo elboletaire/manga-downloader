@@ -26,6 +26,22 @@ type Taiyo struct {
 	title   string
 }
 
+// taiyoChapterPathRe matches the chapter path /chapter/<uuid>[/<page>] on
+// taiyo.moe. The page number is optional (the site 307s to /1 without it).
+// UUID chars are matched case-insensitively; www. is handled by chapterPath.
+var taiyoChapterPathRe = regexp.MustCompile(`(?i)^/chapter/[a-f0-9-]+(?:/\d+)?/?(?:[?#].*)?$`)
+
+// taiyoMediaIDRe extracts the media ID from the RSC payload in chapter pages.
+// The escaped JSON is \"media\":{\"id\":\"<uuid>\",... (followed by more fields,
+// not immediately a closing brace).
+var taiyoMediaIDRe = regexp.MustCompile(`\\"media\\":\{\\"id\\":\\"([a-f0-9-]+)\\"`)
+
+// taiyoChapterURL checks if the URL is a chapter URL.
+func taiyoChapterURL(rawURL string) bool {
+	host, path, ok := chapterPath(rawURL)
+	return ok && host == "taiyo.moe" && taiyoChapterPathRe.MatchString(path)
+}
+
 func NewTaiyo(g *Grabber) *Taiyo {
 	return &Taiyo{Grabber: g}
 }
@@ -42,10 +58,37 @@ func (t *Taiyo) Test() (bool, error) {
 	return re.MatchString(t.URL), nil
 }
 
+// resolveSeriesURL resolves a chapter URL to extract the media ID if needed.
+func (t *Taiyo) resolveSeriesURL() error {
+	if !taiyoChapterURL(t.URL) {
+		return nil
+	}
+
+	body, err := http.GetText(http.RequestParams{
+		URL: t.URL,
+	})
+	if err != nil {
+		return err
+	}
+
+	matches := taiyoMediaIDRe.FindStringSubmatch(body)
+	if len(matches) < 2 {
+		return errSeriesNotFound(t.URL)
+	}
+
+	t.mediaId = matches[1]
+	t.URL = "https://taiyo.moe/media/" + t.mediaId
+	return nil
+}
+
 // FetchTitle fetches and returns the manga title
 func (t *Taiyo) FetchTitle() (string, error) {
 	if t.title != "" {
 		return t.title, nil
+	}
+
+	if err := t.resolveSeriesURL(); err != nil {
+		return "", err
 	}
 
 	body, err := http.Get(http.RequestParams{
@@ -69,6 +112,10 @@ func (t *Taiyo) FetchTitle() (string, error) {
 // FetchChapters returns the chapters of the manga, paginating the tRPC
 // chapters.getByMediaId endpoint until it runs out of pages
 func (t *Taiyo) FetchChapters() (chapters Filterables, errs []error) {
+	if err := t.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
 	mediaId, err := t.mediaID()
 	if err != nil {
 		return nil, []error{err}

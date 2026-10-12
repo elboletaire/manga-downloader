@@ -31,6 +31,30 @@ var mangaballAPI = "https://api.mangaball.com/api/v1"
 // tests can point it at a local server)
 var mangaballSite = "https://mangaball.com"
 
+// mangaballChapterRe matches chapter URLs like
+// https://mangaball.com/chapter-detail/6a6711d656b91853f2dc9927 (www. and
+// hex case handled inline via (?:www\.)? / (?i))
+var mangaballChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?mangaball\.(com|net)/chapter-detail/([a-f0-9]+)`)
+
+// mangaballSeriesURLRe extracts the series URL from JSON-LD isPartOf field.
+// The actual format is {"@type":"ComicSeries","name":"...","url":"..."} so
+// we match any fields between @type and url.
+var mangaballSeriesURLRe = regexp.MustCompile(`"isPartOf":\{"@type":"ComicSeries"[^}]*?"url":"(https://mangaball\.com/title-detail/[^"]+)"`)
+
+// mangaballChapterURL checks if the URL is a chapter URL.
+func mangaballChapterURL(url string) bool {
+	return mangaballChapterRe.MatchString(url)
+}
+
+// mangaballSeriesURL extracts the series URL from a chapter page.
+func mangaballSeriesURL(html string) (string, bool) {
+	matches := mangaballSeriesURLRe.FindStringSubmatch(html)
+	if len(matches) < 2 {
+		return "", false
+	}
+	return matches[1], true
+}
+
 func NewMangaball(g *Grabber) *Mangaball {
 	return &Mangaball{Grabber: g}
 }
@@ -58,10 +82,36 @@ func (m *Mangaball) Test() (bool, error) {
 	return re.MatchString(m.URL), nil
 }
 
+// resolveSeriesURL resolves a chapter URL to the series URL if needed.
+func (m *Mangaball) resolveSeriesURL() error {
+	if !mangaballChapterURL(m.URL) {
+		return nil
+	}
+
+	body, err := http.GetText(http.RequestParams{
+		URL: m.URL,
+	})
+	if err != nil {
+		return err
+	}
+
+	seriesURL, ok := mangaballSeriesURL(body)
+	if !ok {
+		return errSeriesNotFound(m.URL)
+	}
+
+	m.URL = seriesURL
+	return nil
+}
+
 // FetchTitle fetches and returns the manga title
 func (m *Mangaball) FetchTitle() (string, error) {
 	if m.title != "" {
 		return m.title, nil
+	}
+
+	if err := m.resolveSeriesURL(); err != nil {
+		return "", err
 	}
 
 	if err := m.fetchTitle(); err != nil {
@@ -73,6 +123,11 @@ func (m *Mangaball) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (m *Mangaball) FetchChapters() (chapters Filterables, errs []error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		errs = append(errs, err)
+		return
+	}
+
 	tid, err := m.titleID()
 	if err != nil {
 		errs = append(errs, err)

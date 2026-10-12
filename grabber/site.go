@@ -107,6 +107,11 @@ type Site interface {
 
 // IdentifySite returns the site passing the Test() for the specified url
 func (g *Grabber) IdentifySite() (Site, []error) {
+	// PlainHTML is pre-created so IdentifySite can call its chapter-URL
+	// resolution as a last resort after every other grabber has declined,
+	// reusing the already-fetched doc and avoiding extra requests for URLs
+	// that a later, domain-matched grabber (tcb, jestful, …) would serve.
+	plainHTML := NewPlainHTML(g)
 	sites := []Site{
 		// Sites matching by domain/URL (no fetch) go before PlainHTML: their
 		// Test() is precise and free, and it keeps PlainHTML's generic
@@ -153,7 +158,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewChainsawManOnline(g),
 		NewHeavenlyDelusion(g),
 		NewToivoLite(g),
-		NewPlainHTML(g),
+		plainHTML,
 		NewInmanga(g),
 		NewMangadex(g),
 		NewMangafire(g),
@@ -177,6 +182,13 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		if ok {
 			return s, errs
 		}
+	}
+
+	// Last resort: if PlainHTML fetched the page but found no rows (e.g. a
+	// chapter URL whose series page a later grabber would serve), try its
+	// chapter-URL resolution now that every grabber has declined.
+	if plainHTML.doc != nil && plainHTML.resolveSeriesURL() {
+		return plainHTML, errs
 	}
 
 	return nil, errs

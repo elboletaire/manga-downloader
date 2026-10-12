@@ -15,6 +15,392 @@ import (
 	"github.com/elboletaire/manga-downloader/notice"
 )
 
+// plainHTMLSelectors is the master list of site selectors used by PlainHTML sites.
+// Order is critical: entries that could shadow later ones must come first.
+// This list is used by both Test() (to identify sites on series pages) and
+// resolveSeriesURL() (to test chapter URLs and find working series pages).
+var plainHTMLSelectors = []SiteSelector{
+	// rizzfables.com: its #chapterlist markup is shared with several themes
+	// (en-thunderscans below, and the #readerarea one), which would match
+	// first and read the reader's avatar and banner <img>s. Rows are
+	// restricted to the site's own chapter links, so this entry can't
+	// shadow any other site and goes first.
+	{
+		Title:        "h1.entry-title",
+		Rows:         `#chapterlist li[data-num] a[href*="rizzfables.com/chapter/"]`,
+		Chapter:      ".chapternum",
+		ChapterTitle: ".chapternum",
+		Image:        "#readerarea > img",
+	},
+	// tcbonepiecechapters.com (former tcbscans.com)
+	{
+		Title:        "h1",
+		Rows:         "main .mx-auto .grid .col-span-2 a",
+		Chapter:      ".font-bold",
+		ChapterTitle: ".text-gray-500",
+		// picture.fixed-ratio is tcb-specific; the broader "picture img"
+		// would match other sites and let the SeriesLink fire on them.
+		Image:      "picture.fixed-ratio img",
+		SeriesLink: `a[href*="/mangas/"]`,
+	},
+	// asurascans.com (former asuratoon.com)
+	{
+		Title:        "h1",
+		Rows:         `a[data-astro-prefetch][href*="/chapter/"]`,
+		Chapter:      "span.font-medium",
+		ChapterTitle: "span.font-medium",
+		Image:        "img[data-page-index]",
+	},
+	// sanascans.com: same Astro-based reader template family as
+	// asurascans.com, but chapter URLs use "/chapter-N" (hyphen) instead
+	// of "/chapter/N" (slash), so the two selectors don't collide. The
+	// series page has several decorative <h1> stat labels (Status, Type,
+	// Chapters, Last update) alongside the real title, so a plain "h1"
+	// selector would concatenate all of them - scope it to the one with
+	// itemprop="name". Recent chapters are often coin-locked (paid early
+	// access) and render with zero page images (no error, just an empty
+	// chapter) - pick an older/free chapter when testing.
+	{
+		Title:        `h1[itemprop="name"]`,
+		Rows:         `a[data-astro-prefetch][href*="/chapter-"]`,
+		Chapter:      "span.font-medium",
+		ChapterTitle: "span.font-medium",
+		Image:        "img[data-reader-page-image]",
+	},
+	// zonatmo.org (TuMangaOnline, former zonatmo.com)
+	{
+		Title:        "h1.element-title",
+		Rows:         "li.upload-link",
+		Chapter:      ".chapter-number",
+		ChapterTitle: ".chapter-number",
+		Link:         ".chapter-detail a.btn-primary",
+		Image:        "img.reader-image",
+		SeriesLink:   `a[href*="/library/manga/"]`,
+	},
+	// mangapill.com: each chapter row is a plain <a> with the chapter
+	// number as its own text (no dedicated child selector), hence the
+	// empty Chapter/ChapterTitle (see FetchChapters)
+	{
+		Title:      "h1",
+		Rows:       "#chapters [data-filter-list] a",
+		Image:      "img.js-page",
+		SeriesLink: `a[data-hotkey="m"]`,
+	},
+	// demonicscans.org: reader page embeds the real (non-lazy) image
+	// src directly, no JS variable needed
+	{
+		Title:      "h1",
+		Rows:       "#chapters-list li",
+		Link:       "a",
+		Image:      "img.imgholder",
+		SeriesLink: "h1 a",
+	},
+	// mangakatana.com: reader page images never land in the HTML as real
+	// <img src>/data-src (they stay as data-src="#" placeholders), they
+	// are only assigned client-side from an obfuscated JS array (see
+	// getPlainHTMLImageURL), so this Image selector is mostly unused
+	{
+		Title:        "h1.heading",
+		Rows:         ".chapters tr",
+		Chapter:      ".chapter a",
+		ChapterTitle: ".chapter a",
+		Link:         ".chapter a",
+		Image:        "#imgs img",
+	},
+	// rawkuma.net: raw (Japanese) manga, Kiru WordPress theme. The reader
+	// page's full page list is server-rendered as plain <img src="..."> tags
+	// inside a `[data-image-data]` section, so no browser is needed. Plain
+	// "h1" is ambiguous: an info-sidebar "Last Updates" label is also an <h1>
+	// earlier in the DOM, so the title selector must be scoped to the real
+	// series title. Chapter numbers come from the row's text ("Chapter
+	// 29.6"), never from the URL's postid.
+	{
+		Title:        `h1[itemprop="name"]`,
+		Rows:         "#chapter-list [data-chapter-number]",
+		Chapter:      "span",
+		ChapterTitle: "span",
+		Link:         "a",
+		Image:        "[data-image-data] img",
+	},
+	// dynasty-scans.com: chapters are <a class="name"> rows inside a
+	// <dl class="chapter-list">; volume headers are sibling <dt>s so a
+	// plain descendant selector already skips them. The row is the link
+	// itself (empty Chapter/ChapterTitle/Link, like mangapill above).
+	// Reader pages only place the first page's <img> in the DOM; the
+	// rest come from a `var pages = [...]` JSON blob handled in
+	// getPlainHTMLImageURL, so Image here is just a fallback.
+	{
+		Title:      ".tag-title b",
+		Rows:       "dl.chapter-list dd a.name",
+		Image:      "#reader img",
+		SeriesLink: `h3#chapter-title a[href^="/series/"]`,
+	},
+	// mangaread.org & manhuaplus.com: plain-HTTP Madara wordpress themes
+	// (not cloudflare-walled, unlike the toongod/dragontea/manhuaus group
+	// in plainhtmlbrowser.go). The full chapter list ships in the series
+	// page HTML (no ajax pagination) and reader pages are single-page.
+	// manhuaplus prunes old chapters (pruned URLs soft-404 to the series
+	// page with HTTP 200); the list is still complete for what's
+	// downloadable, so nothing to work around here.
+	{
+		Title:        "h1",
+		Rows:         "li.wp-manga-chapter",
+		Chapter:      "a",
+		ChapterTitle: "a",
+		Link:         "a",
+		Image:        "div.reading-content img",
+	},
+	// mangastream/themesia WordPress themes reachable over plain HTTP
+	// (same markup as the cloudflare-gated sushiscan.net in
+	// plainhtmlbrowser.go): lagoonscans.com, rokaricomics.com and
+	// violetscans.org (witchscans.com moved to
+	// witchtoons.net on a different platform; see the witchtoons
+	// grabber). Reader pages embed all pages in a ts_reader.run(...)
+	// blob, already handled by getPlainHTMLImageURL, so Image is just a
+	// fallback here. Some of these coin-paywall their most recent
+	// chapters (no href / no images in the HTML); the :has(a[href]) guard
+	// on Rows skips those locked rows entirely so they don't produce
+	// bogus BaseUrl() entries in the chapter list. Rows requires
+	// .chapternum so a bare #chapterlist wrapper on an unrelated site
+	// (e.g. mangahere.cc) can't match this entry, and Title is scoped by
+	// itemprop because some of these (violetscans) also render decorative
+	// <h1> stat labels (Type/Status/Views).
+	{
+		Title:        `h1[itemprop="name"]`,
+		Rows:         "#chapterlist li:has(.chapternum):has(a[href])",
+		Chapter:      ".chapternum",
+		ChapterTitle: ".chapternum",
+		Link:         "a",
+		Image:        "#readerarea img",
+	},
+	// furyosociety.com: French scanlation site on the FoOlSlide engine.
+	// Each chapter is listed twice (a desktop <div> and a mobile <a>);
+	// only the mobile <a> is itself the reader link, so scoping Rows to
+	// it avoids duplicate chapters. The reader page renders every page
+	// image server-side (no ajax pagination), so a plain selector works.
+	// Reader pages link back to the series via .fs-read-comic-link.
+	{
+		Title:        "h1.fs-comic-title",
+		Rows:         ".fs-chapter-list a.element.mobile",
+		Chapter:      ".title-grp .title",
+		ChapterTitle: ".name",
+		Image:        ".fs-reader-page-container img",
+		SeriesLink:   ".fs-read-comic-link a",
+	},
+	// reader.deathtollscans.net: FoOlSlide reader. The reader page only
+	// renders the current page's <img class="open">, but embeds every
+	// page's URL in a `var pages = [...]` JSON blob (see
+	// getPlainHTMLImageURL), so the Image selector below is just a
+	// fallback/documentation of what a single rendered page looks like.
+	{
+		Title:        "h1.title",
+		Rows:         ".list .element",
+		Chapter:      ".title a",
+		ChapterTitle: ".title a",
+		Link:         ".title a",
+		Image:        "img.open",
+		SeriesLink:   "h1.tbtitle a",
+	},
+	// madarascans.net (formerly .com/.org, which now 301-redirect to .net):
+	// mangareader WordPress theme. Chapter rows are <li data-num> elements
+	// containing an <a> link; paywalled/locked chapters use a modal trigger
+	// instead of an href, so `a[href]` on Rows picks only free chapters.
+	// Images are loaded via admin-ajax.php (not in the HTML).
+	// Free reader pages carry a div.allc link back to the series; locked
+	// reader pages use a.btn-back-enhanced instead. No Image guard: the images
+	// never appear in the HTML, so one would always suppress the SeriesLink.
+	{
+		Title:        "h1.entry-title",
+		Rows:         "li[data-num] a[href]",
+		Chapter:      ".chapternum",
+		ChapterTitle: ".chapternum",
+		SeriesLink:   "div.allc a, a.btn-back-enhanced",
+	},
+	// trmanga.com: Turkish webtoon site. Its chapter table is #chapters
+	// too, so this entry must sit before the #chapters ones below (they'd
+	// claim it with no chapter text). Rows are the links in the first
+	// column, labelled "#124 .Bölüm" (number first, see
+	// parseChapterNumber); the reader's images are lazy data-src
+	// attributes, except the first one which also carries a src.
+	{
+		Title:             "h1.movie__title",
+		Rows:              "tr.wt-ch-row td.ps-0 a",
+		ChapterTitleStrip: `^#?\d+(\.\d+)?\s*\.?\s*Bölüm$`,
+		Image:             "#images img.reader-img",
+	},
+	// ritharscans.com: chapters are wrapped in div.chapter-card inside
+	// #chapters (unlike mistscans/writerscans where <a> is a direct child),
+	// so Rows uses the card wrapper to tell the two platforms apart. Reader
+	// pages parse images out of an Alpine.js `immersiveReader(...)` blob.
+	// Chapter reader pages carry a `class="group"` link back to the series;
+	// FollowSeriesLink ensures both series and chapter URLs give the same title.
+	{
+		Title:            "h1",
+		Rows:             "#chapters div.chapter-card a",
+		Chapter:          ".text-sm.truncate",
+		ChapterTitle:     ".text-sm.truncate",
+		Image:            `[x-data*="immersiveReader"]`,
+		SeriesLink:       `a.group[href*="/series/"]`,
+		FollowSeriesLink: true,
+	},
+	// writerscans.com & mistscans.com (meowing.org platform): each chapter
+	// row is a plain <a> direct child of #chapters (the number in a child
+	// span, see FetchChapters/Chapter); reader page images are lazy-loaded
+	// (a placeholder `src` and a `uid` attribute), see the
+	// getPlainHTMLImageURL template-literal fallback. Image must stay scoped
+	// to the reader: a bare "img" also picks up the header's icon <img>s,
+	// which have no uid and turn into bare uploads/ URLs that 403. It's a
+	// union so it matches both sites' reader markup. Reader pages nest the
+	// series title in `<h1><span><a href="/series/…">`, so FollowSeriesLink
+	// redirects chapter URLs to the series page for a clean title.
+	{
+		Title:            "h1",
+		Rows:             "#chapters a",
+		Chapter:          ".text-sm.truncate",
+		ChapterTitle:     ".text-sm.truncate",
+		Image:            "img.myImage, #pages img",
+		SeriesLink:       `h1 a[href^="/series/"]`,
+		FollowSeriesLink: true,
+	},
+	// en-thunderscans.com: mangastream/themesia theme (reader page uses
+	// ts_reader.run, already handled generically). Some recent chapters
+	// are coin-locked premium content whose row has no href (just a
+	// data-bs-toggle modal trigger); the `a[href]` filter on Rows keeps
+	// those out of the chapter list entirely instead of yielding bogus
+	// URLs. Title uses a specific class because the page has several
+	// unrelated bare <h1> tags (Type, Status, Released...) whose text
+	// would otherwise get concatenated in.
+	{
+		Title:        "h1.entry-title",
+		Rows:         "#chapterlist li[data-num] a[href]",
+		Chapter:      ".chapternum",
+		ChapterTitle: ".chapternum",
+		Image:        ".readercontent img",
+	},
+	// silentquill.net (Next.js App Router, server-rendered): every chapter
+	// is a plain <a> row linking to /{slug}-chapter-N/, while the series
+	// page's own <a> links to /series/... (recommendations) are excluded.
+	// The reader's page list is in the RSC payload, see the "pages"
+	// branch of getPlainHTMLImageURL. Reader pages link back via a
+	// /series/{slug} link (not the bare /series/ listing).
+	// No Image: the RSC reader renders no <img> tags in SSR HTML, so an
+	// Image guard would suppress the SeriesLink on reader pages.
+	{
+		Title:        "h1",
+		Rows:         `a.grid[href*="-chapter-"]:not([href^="/series/"])`,
+		Chapter:      "span.text-base",
+		ChapterTitle: "span.text-base",
+		SeriesLink:   `a[href^="/series/"]:not([href="/series/"])`,
+	},
+	// mangaberri.com: the chapter section has Chapters, Volumes and RAW
+	// tabs, each in its own panel. Only #chapters-panel is taken (the
+	// Volumes and RAW panels would double count or mix in untranslated
+	// releases). The series page also carries an ad-blocker <h1> in the
+	// page's access wall, so the title is scoped to the .detail block.
+	{
+		Title:        ".detail h1",
+		Rows:         "#chapters-panel a[data-chapter-group]",
+		Chapter:      "strong",
+		ChapterTitle: "strong",
+		Image:        ".reader-pages img",
+		SeriesLink:   ".reader-heading a",
+	},
+	// mangaworld.mx (Italian): server-rendered, unquoted attributes are
+	// fine for goquery. Chapter rows are <a class="chap"> inside one
+	// <div class="chapter"> per chapter, the number in a span ("Capitolo
+	// 835"). The reader renders a single page per chapter unless it gets
+	// ?style=list, which lists every page as img.page-image.
+	{
+		Title:        "h1",
+		Rows:         "div.chapter a.chap",
+		Chapter:      "span",
+		ChapterTitle: "span",
+		Image:        "img.page-image",
+		ChapterQuery: "style=list",
+	},
+	// mangavault.lat (Spanish, Astro): the series page lists every chapter
+	// as a plain link in one <ul> (the "Cap. N" label is a span), and the
+	// reader's pages are plain <img> tags on media.mangavault.lat
+	{
+		Title:        "h1",
+		Rows:         "ul.divide-y a",
+		Chapter:      "span",
+		ChapterTitle: "span",
+		Image:        `img[src*="media.mangavault.lat"]`,
+	},
+	// scan-vf.net (French, MyMangaReaderCMS): each chapter is an <h5> row
+	// whose link text ("Jujutsu Kaisen Modulo 25") has no chapter keyword,
+	// so the number comes from the "chapitre-25" URL. The reader keeps the
+	// real page in data-src, padded with spaces, behind a placeholder src
+	// (getPlainHTMLImageURL trims it).
+	{
+		Title:        `h2[style*="inline-block"]`,
+		Rows:         "h5.chapter-title-rtl",
+		Link:         "a",
+		Chapter:      "a",
+		ChapterTitle: "em",
+		Image:        "img.img-responsive",
+	},
+	// uzaymanga.com, eldermanga.com, eskimangalar.com and limonmanga.com:
+	// one Turkish manga platform, chapter URLs are /manga/{slug}/{n}-bolum-oku.
+	// The series page repeats the newest and oldest chapters in larger
+	// cards (no .w-10 number badge), so only the list rows are taken. The
+	// row's span carries the series title and "{n}. Bölüm Manga Oku", which
+	// parseChapterNumber reads. Reader pages are plain <img> tags with an
+	// "... Sayfa N" alt.
+	{
+		Title:             "h1.text-3xl",
+		Rows:              `a[href*="-bolum-oku"]:has(.w-10)`,
+		Chapter:           "span.font-bold",
+		ChapterTitle:      "span.font-bold",
+		ChapterTitleStrip: `^\d+(\.\d+)?\.?\s*Bölüm( Manga Oku)?$`,
+		Image:             `img[alt*="sayfa"]`,
+	},
+	// manhwaonline.org: English manhwa on a custom WordPress theme (not
+	// Madara's ajax chapters, so tcb can't serve it). The full list ships
+	// in one ul.chapter-list of plain links, and reader pages are plain
+	// <img> tags inside .reading-content.
+	{
+		Title:        "h1.main-info-title",
+		Rows:         "ul.chapter-list li a",
+		Chapter:      ".chapter-name",
+		ChapterTitle: ".chapter-name",
+		Image:        ".reading-content img",
+	},
+	// komikindo.ch: custom WordPress theme. The full list is #chapter_list
+	// (the "Chapter Awal" box above it has different markup). Reader pages
+	// sit in #chimg-auh, apart from the blogger and .lol ad banners around it.
+	// The reader's #chapter_list is a short dropdown (≤5 recent chapters),
+	// not the full list; the series link in div.nextprev leads to the full one.
+	{
+		Title:            `h1[itemprop="name"]`,
+		Rows:             "#chapter_list li:has(.lchx)",
+		Link:             "a",
+		Chapter:          ".lchx",
+		ChapterTitle:     ".lchx",
+		Image:            "#chimg-auh img",
+		SeriesLink:       `div.nextprev a[href*="/komik/"]`,
+		FollowSeriesLink: true,
+	},
+	// maid.my.id: Indonesian WordPress theme. The reader lazy-loads its
+	// pages from imgbox.com through data-lazy-src (src is a placeholder),
+	// and the same pages come again as plain <img>s without that attribute,
+	// so only the lazy ones are taken. The reader's community banner is
+	// hosted on the site itself and is left out by the host filter.
+	// The reader also renders a short chapter list (.series-chapterlist);
+	// #chapnav holds the link back to the full series page.
+	{
+		Title:            ".series-titlex h2",
+		Rows:             ".series-chapterlist li",
+		Link:             "a",
+		Chapter:          "a",
+		ChapterTitle:     "a",
+		Image:            `.reader-area img[data-lazy-src*="imgbox.com"]`,
+		SeriesLink:       `#chapnav a[href*="/manga/"]`,
+		FollowSeriesLink: true,
+	},
+}
+
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)
 type PlainHTML struct {
 	*Grabber
@@ -33,7 +419,11 @@ type SiteSelector struct {
 	Link         string
 	Chapter      string
 	ChapterTitle string
-	Image        string
+	// Image is a CSS selector for an element that only appears on reader/chapter
+	// pages for this site. It is used as a guard for SeriesLink in
+	// seriesURLCandidates: a SeriesLink is only applied when Image also matches,
+	// preventing one site's SeriesLink selector from firing on another site's page.
+	Image string
 	// ChapterQuery, when set, is appended to every chapter URL before it is
 	// fetched (e.g. "style=list" for readers that render one page at a time
 	// unless asked for the whole list)
@@ -41,6 +431,15 @@ type SiteSelector struct {
 	// ChapterTitleStrip is a regexp removing site-specific noise from a
 	// sanitized chapter title (e.g. "^#?\d+\s*\.?\s*Bölüm$" for a bare number)
 	ChapterTitleStrip string
+	// SeriesLink is a CSS selector for finding a link to the series page on
+	// reader/chapter pages. Used during chapter URL resolution as the first
+	// candidate before generic link extraction.
+	SeriesLink string
+	// FollowSeriesLink, when true, makes Test() follow the SeriesLink even
+	// when the page already has readable chapter rows. Use for sites whose
+	// reader pages contain a partial chapter list: the link leads to the
+	// series page with the full list.
+	FollowSeriesLink bool
 }
 
 // PlainHTMLChapter represents a PlainHTML Chapter
@@ -63,352 +462,8 @@ func (m *PlainHTML) Test() (bool, error) {
 		return false, err
 	}
 
-	// order is important, since some sites have very similar selectors
-	selectors := []SiteSelector{
-		// rizzfables.com: its #chapterlist markup is shared with several themes
-		// (en-thunderscans below, and the #readerarea one), which would match
-		// first and read the reader's avatar and banner <img>s. Rows are
-		// restricted to the site's own chapter links, so this entry can't
-		// shadow any other site and goes first.
-		{
-			Title:        "h1.entry-title",
-			Rows:         `#chapterlist li[data-num] a[href*="rizzfables.com/chapter/"]`,
-			Chapter:      ".chapternum",
-			ChapterTitle: ".chapternum",
-			Image:        "#readerarea > img",
-		},
-		// tcbonepiecechapters.com (former tcbscans.com)
-		{
-			Title:        "h1",
-			Rows:         "main .mx-auto .grid .col-span-2 a",
-			Chapter:      ".font-bold",
-			ChapterTitle: ".text-gray-500",
-			Image:        "picture img",
-		},
-		// asurascans.com (former asuratoon.com)
-		{
-			Title:        "h1",
-			Rows:         `a[data-astro-prefetch][href*="/chapter/"]`,
-			Chapter:      "span.font-medium",
-			ChapterTitle: "span.font-medium",
-			Image:        "img[data-page-index]",
-		},
-		// sanascans.com: same Astro-based reader template family as
-		// asurascans.com, but chapter URLs use "/chapter-N" (hyphen) instead
-		// of "/chapter/N" (slash), so the two selectors don't collide. The
-		// series page has several decorative <h1> stat labels (Status, Type,
-		// Chapters, Last update) alongside the real title, so a plain "h1"
-		// selector would concatenate all of them - scope it to the one with
-		// itemprop="name". Recent chapters are often coin-locked (paid early
-		// access) and render with zero page images (no error, just an empty
-		// chapter) - pick an older/free chapter when testing.
-		{
-			Title:        `h1[itemprop="name"]`,
-			Rows:         `a[data-astro-prefetch][href*="/chapter-"]`,
-			Chapter:      "span.font-medium",
-			ChapterTitle: "span.font-medium",
-			Image:        "img[data-reader-page-image]",
-		},
-		// zonatmo.org (TuMangaOnline, former zonatmo.com)
-		{
-			Title:        "h1.element-title",
-			Rows:         "li.upload-link",
-			Chapter:      ".chapter-number",
-			ChapterTitle: ".chapter-number",
-			Link:         ".chapter-detail a.btn-primary",
-			Image:        "img.reader-image",
-		},
-		// mangapill.com: each chapter row is a plain <a> with the chapter
-		// number as its own text (no dedicated child selector), hence the
-		// empty Chapter/ChapterTitle (see FetchChapters)
-		{
-			Title: "h1",
-			Rows:  "#chapters [data-filter-list] a",
-			Image: "img.js-page",
-		},
-		// demonicscans.org: reader page embeds the real (non-lazy) image
-		// src directly, no JS variable needed
-		{
-			Title: "h1",
-			Rows:  "#chapters-list li",
-			Link:  "a",
-			Image: "img.imgholder",
-		},
-		// mangakatana.com: reader page images never land in the HTML as real
-		// <img src>/data-src (they stay as data-src="#" placeholders), they
-		// are only assigned client-side from an obfuscated JS array (see
-		// getPlainHTMLImageURL), so this Image selector is mostly unused
-		{
-			Title:        "h1.heading",
-			Rows:         ".chapters tr",
-			Chapter:      ".chapter a",
-			ChapterTitle: ".chapter a",
-			Link:         ".chapter a",
-			Image:        "#imgs img",
-		},
-		// rawkuma.net: raw (Japanese) manga, Kiru WordPress theme. The reader
-		// page's full page list is server-rendered as plain <img src="..."> tags
-		// inside a `[data-image-data]` section, so no browser is needed. Plain
-		// "h1" is ambiguous: an info-sidebar "Last Updates" label is also an <h1>
-		// earlier in the DOM, so the title selector must be scoped to the real
-		// series title. Chapter numbers come from the row's text ("Chapter
-		// 29.6"), never from the URL's postid.
-		{
-			Title:        `h1[itemprop="name"]`,
-			Rows:         "#chapter-list [data-chapter-number]",
-			Chapter:      "span",
-			ChapterTitle: "span",
-			Link:         "a",
-			Image:        "[data-image-data] img",
-		},
-		// dynasty-scans.com: chapters are <a class="name"> rows inside a
-		// <dl class="chapter-list">; volume headers are sibling <dt>s so a
-		// plain descendant selector already skips them. The row is the link
-		// itself (empty Chapter/ChapterTitle/Link, like mangapill above).
-		// Reader pages only place the first page's <img> in the DOM; the
-		// rest come from a `var pages = [...]` JSON blob handled in
-		// getPlainHTMLImageURL, so Image here is just a fallback.
-		{
-			Title: ".tag-title b",
-			Rows:  "dl.chapter-list dd a.name",
-			Image: "#reader img",
-		},
-		// mangaread.org & manhuaplus.com: plain-HTTP Madara wordpress themes
-		// (not cloudflare-walled, unlike the toongod/dragontea/manhuaus group
-		// in plainhtmlbrowser.go). The full chapter list ships in the series
-		// page HTML (no ajax pagination) and reader pages are single-page.
-		// manhuaplus prunes old chapters (pruned URLs soft-404 to the series
-		// page with HTTP 200); the list is still complete for what's
-		// downloadable, so nothing to work around here.
-		{
-			Title:        "h1",
-			Rows:         "li.wp-manga-chapter",
-			Chapter:      "a",
-			ChapterTitle: "a",
-			Link:         "a",
-			Image:        "div.reading-content img",
-		},
-		// mangastream/themesia WordPress themes reachable over plain HTTP
-		// (same markup as the cloudflare-gated sushiscan.net in
-		// plainhtmlbrowser.go): lagoonscans.com, rokaricomics.com and
-		// violetscans.org (witchscans.com moved to
-		// witchtoons.net on a different platform; see the witchtoons
-		// grabber). Reader pages embed all pages in a ts_reader.run(...)
-		// blob, already handled by getPlainHTMLImageURL, so Image is just a
-		// fallback here. Some of these coin-paywall their most recent
-		// chapters (no href / no images in the HTML); test with an older,
-		// unlocked chapter. Rows requires .chapternum so a bare #chapterlist
-		// wrapper on an unrelated site (e.g. mangahere.cc) can't match this
-		// entry, and Title is scoped by itemprop because some of these
-		// (violetscans) also render decorative <h1> stat labels
-		// (Type/Status/Views).
-		{
-			Title:        `h1[itemprop="name"]`,
-			Rows:         "#chapterlist li:has(.chapternum)",
-			Chapter:      ".chapternum",
-			ChapterTitle: ".chapternum",
-			Link:         "a",
-			Image:        "#readerarea img",
-		},
-		// furyosociety.com: French scanlation site on the FoOlSlide engine.
-		// Each chapter is listed twice (a desktop <div> and a mobile <a>);
-		// only the mobile <a> is itself the reader link, so scoping Rows to
-		// it avoids duplicate chapters. The reader page renders every page
-		// image server-side (no ajax pagination), so a plain selector works.
-		{
-			Title:        "h1.fs-comic-title",
-			Rows:         ".fs-chapter-list a.element.mobile",
-			Chapter:      ".title-grp .title",
-			ChapterTitle: ".name",
-			Image:        ".fs-reader-page-container img",
-		},
-		// reader.deathtollscans.net: FoOlSlide reader. The reader page only
-		// renders the current page's <img class="open">, but embeds every
-		// page's URL in a `var pages = [...]` JSON blob (see
-		// getPlainHTMLImageURL), so the Image selector below is just a
-		// fallback/documentation of what a single rendered page looks like.
-		{
-			Title:        "h1.title",
-			Rows:         ".list .element",
-			Chapter:      ".title a",
-			ChapterTitle: ".title a",
-			Link:         ".title a",
-			Image:        "img.open",
-		},
-		// madarascans.com/.org: mangareader/themesia theme; the reader page
-		// already carries all its images in a ts_reader.run(...) blob (see
-		// getPlainHTMLImageURL) so the Image selector is only a fallback.
-		// Recent chapters are paywalled ("locked" class, no ts_reader blob in
-		// the plain HTML) and simply won't parse any pages; only free
-		// chapters are downloadable.
-		{
-			Title:        "h1",
-			Rows:         ".ch-item",
-			Chapter:      ".ch-num",
-			ChapterTitle: ".ch-num",
-			Link:         "a.ch-main-anchor",
-			Image:        "#readerarea img",
-		},
-		// trmanga.com: Turkish webtoon site. Its chapter table is #chapters
-		// too, so this entry must sit before the #chapters ones below (they'd
-		// claim it with no chapter text). Rows are the links in the first
-		// column, labelled "#124 .Bölüm" (number first, see
-		// parseChapterNumber); the reader's images are lazy data-src
-		// attributes, except the first one which also carries a src.
-		{
-			Title:             "h1.movie__title",
-			Rows:              "tr.wt-ch-row td.ps-0 a",
-			ChapterTitleStrip: `^#?\d+(\.\d+)?\s*\.?\s*Bölüm$`,
-			Image:             "#images img.reader-img",
-		},
-		// ritharscans.com: chapter pages aren't in <img> tags at all, they're
-		// parsed out of an Alpine.js `immersiveReader(...)` blob (see
-		// getPlainHTMLImageURL), so Image doesn't matter for it.
-		// writerscans.com & mistscans.com (meowing.org platform): each chapter
-		// row is a plain <a> inside #chapters (the number in a child span, see
-		// FetchChapters/Chapter); reader page images are lazy-loaded (a
-		// placeholder `src` and a `uid` attribute), see the getPlainHTMLImageURL
-		// template-literal fallback. Image must stay scoped to the reader: a
-		// bare "img" also picks up the header's icon <img>s, which have no uid
-		// and turn into bare uploads/ URLs that 403. It's a union so it matches
-		// both sites' reader markup.
-		{
-			Title:        "h1",
-			Rows:         "#chapters a",
-			Chapter:      ".text-sm.truncate",
-			ChapterTitle: ".text-sm.truncate",
-			Image:        "img.myImage, #pages img",
-		},
-		// en-thunderscans.com: mangastream/themesia theme (reader page uses
-		// ts_reader.run, already handled generically). Some recent chapters
-		// are coin-locked premium content whose row has no href (just a
-		// data-bs-toggle modal trigger); the `a[href]` filter on Rows keeps
-		// those out of the chapter list entirely instead of yielding bogus
-		// URLs. Title uses a specific class because the page has several
-		// unrelated bare <h1> tags (Type, Status, Released...) whose text
-		// would otherwise get concatenated in.
-		{
-			Title:        "h1.entry-title",
-			Rows:         "#chapterlist li[data-num] a[href]",
-			Chapter:      ".chapternum",
-			ChapterTitle: ".chapternum",
-			Image:        ".readercontent img",
-		},
-		// silentquill.net (Next.js App Router, server-rendered): every chapter
-		// is a plain <a> row linking to /{slug}-chapter-N/, while the series
-		// page's own <a> links to /series/... (recommendations) are excluded.
-		// The reader's page list is in the RSC payload, see the "pages"
-		// branch of getPlainHTMLImageURL.
-		{
-			Title:        "h1",
-			Rows:         `a.grid[href*="-chapter-"]:not([href^="/series/"])`,
-			Chapter:      "span.text-base",
-			ChapterTitle: "span.text-base",
-			Image:        "img",
-		},
-		// mangaberri.com: the chapter section has Chapters, Volumes and RAW
-		// tabs, each in its own panel. Only #chapters-panel is taken (the
-		// Volumes and RAW panels would double count or mix in untranslated
-		// releases). The series page also carries an ad-blocker <h1> in the
-		// page's access wall, so the title is scoped to the .detail block.
-		{
-			Title:        ".detail h1",
-			Rows:         "#chapters-panel a[data-chapter-group]",
-			Chapter:      "strong",
-			ChapterTitle: "strong",
-			Image:        ".reader-pages img",
-		},
-		// mangaworld.mx (Italian): server-rendered, unquoted attributes are
-		// fine for goquery. Chapter rows are <a class="chap"> inside one
-		// <div class="chapter"> per chapter, the number in a span ("Capitolo
-		// 835"). The reader renders a single page per chapter unless it gets
-		// ?style=list, which lists every page as img.page-image.
-		{
-			Title:        "h1",
-			Rows:         "div.chapter a.chap",
-			Chapter:      "span",
-			ChapterTitle: "span",
-			Image:        "img.page-image",
-			ChapterQuery: "style=list",
-		},
-		// mangavault.lat (Spanish, Astro): the series page lists every chapter
-		// as a plain link in one <ul> (the "Cap. N" label is a span), and the
-		// reader's pages are plain <img> tags on media.mangavault.lat
-		{
-			Title:        "h1",
-			Rows:         "ul.divide-y a",
-			Chapter:      "span",
-			ChapterTitle: "span",
-			Image:        `img[src*="media.mangavault.lat"]`,
-		},
-		// scan-vf.net (French, MyMangaReaderCMS): each chapter is an <h5> row
-		// whose link text ("Jujutsu Kaisen Modulo 25") has no chapter keyword,
-		// so the number comes from the "chapitre-25" URL. The reader keeps the
-		// real page in data-src, padded with spaces, behind a placeholder src
-		// (getPlainHTMLImageURL trims it).
-		{
-			Title:        `h2[style*="inline-block"]`,
-			Rows:         "h5.chapter-title-rtl",
-			Link:         "a",
-			Chapter:      "a",
-			ChapterTitle: "em",
-			Image:        "img.img-responsive",
-		},
-		// uzaymanga.com, eldermanga.com, eskimangalar.com and limonmanga.com:
-		// one Turkish manga platform, chapter URLs are /manga/{slug}/{n}-bolum-oku.
-		// The series page repeats the newest and oldest chapters in larger
-		// cards (no .w-10 number badge), so only the list rows are taken. The
-		// row's span carries the series title and "{n}. Bölüm Manga Oku", which
-		// parseChapterNumber reads. Reader pages are plain <img> tags with an
-		// "... Sayfa N" alt.
-		{
-			Title:             "h1.text-3xl",
-			Rows:              `a[href*="-bolum-oku"]:has(.w-10)`,
-			Chapter:           "span.font-bold",
-			ChapterTitle:      "span.font-bold",
-			ChapterTitleStrip: `^\d+(\.\d+)?\.?\s*Bölüm( Manga Oku)?$`,
-			Image:             `img[alt*="sayfa"]`,
-		},
-		// manhwaonline.org: English manhwa on a custom WordPress theme (not
-		// Madara's ajax chapters, so tcb can't serve it). The full list ships
-		// in one ul.chapter-list of plain links, and reader pages are plain
-		// <img> tags inside .reading-content.
-		{
-			Title:        "h1.main-info-title",
-			Rows:         "ul.chapter-list li a",
-			Chapter:      ".chapter-name",
-			ChapterTitle: ".chapter-name",
-			Image:        ".reading-content img",
-		},
-		// komikindo.ch: custom WordPress theme. The full list is #chapter_list
-		// (the "Chapter Awal" box above it has different markup). Reader pages
-		// sit in #chimg-auh, apart from the blogger and .lol ad banners around it.
-		{
-			Title:        `h1[itemprop="name"]`,
-			Rows:         "#chapter_list li:has(.lchx)",
-			Link:         "a",
-			Chapter:      ".lchx",
-			ChapterTitle: ".lchx",
-			Image:        "#chimg-auh img",
-		},
-		// maid.my.id: Indonesian WordPress theme. The reader lazy-loads its
-		// pages from imgbox.com through data-lazy-src (src is a placeholder),
-		// and the same pages come again as plain <img>s without that attribute,
-		// so only the lazy ones are taken. The reader's community banner is
-		// hosted on the site itself and is left out by the host filter.
-		{
-			Title:        ".series-titlex h2",
-			Rows:         ".series-chapterlist li",
-			Link:         "a",
-			Chapter:      "a",
-			ChapterTitle: "a",
-			Image:        `.reader-area img[data-lazy-src*="imgbox.com"]`,
-		},
-	}
-
-	// for the same priority reasons, we need to iterate over the selectors
-	// using a simple `,` joining all selectors would return missmatches
-	for _, selector := range selectors {
+	// Order matters: some selectors share markup, and shadowing is intentional.
+	for _, selector := range plainHTMLSelectors {
 		rows := m.doc.Find(selector.Rows)
 		if rows.Length() > 0 {
 			m.rows = rows
@@ -418,7 +473,29 @@ func (m *PlainHTML) Test() (bool, error) {
 	}
 
 	if m.rows == nil || m.rows.Length() == 0 {
+		// No rows found; IdentifySite calls resolveSeriesURL as a final
+		// fallback (after every other grabber has declined) to avoid extra
+		// fetches for URLs that a domain-matched grabber further down the list
+		// would serve.
 		return false, nil
+	}
+
+	// FollowSeriesLink: some reader pages embed a short chapter list that
+	// matches the selector but is incomplete. Follow the SeriesLink to the
+	// full series page even though rows were found.
+	if m.site.FollowSeriesLink && m.site.SeriesLink != "" {
+		parsedURL, _ := url.Parse(m.URL)
+		if link := m.doc.Find(m.site.SeriesLink).First(); link.Length() > 0 {
+			if href, ok := link.Attr("href"); ok {
+				resolved := resolveURLRelative(href, parsedURL)
+				if resolved != "" && resolved != m.URL {
+					if m.testCandidateSeriesURL(resolved) {
+						m.URL = resolved
+						return true, nil
+					}
+				}
+			}
+		}
 	}
 
 	// a matched entry whose rows carry no readable chapter number (titles
@@ -434,21 +511,82 @@ func (m *PlainHTML) Test() (bool, error) {
 	return readable, nil
 }
 
-// rowChapterNumber returns the chapter number of a row, read from its text
-// or, failing that, from its reader URL. FetchChapters and Test share it, so
-// Test only claims rows FetchChapters can actually number.
-func (m PlainHTML) rowChapterNumber(s *goquery.Selection) (float64, bool) {
+// resolveSeriesURL tries to find and load a series URL when the current page
+// has no chapter rows. It fetches up to 3 candidate URLs and tests each against
+// the site selectors. If a candidate works, updates m.URL, m.doc, m.rows and
+// m.site, and returns true.
+func (m *PlainHTML) resolveSeriesURL() bool {
+	candidates := seriesURLCandidates(m.doc, m.URL, plainHTMLSelectors)
+	for i, candidate := range candidates {
+		if i >= 3 {
+			// Cap fetches at 3
+			break
+		}
+		if m.testCandidateSeriesURL(candidate) {
+			m.URL = candidate
+			return true
+		}
+	}
+	return false
+}
+
+// testCandidateSeriesURL fetches and tests a candidate series URL against
+// the selectors. Returns true if a selector matches readable chapter rows.
+func (m *PlainHTML) testCandidateSeriesURL(candidateURL string) bool {
+	body, err := http.Get(http.RequestParams{
+		URL:          candidateURL,
+		DisableRetry: true, // identification probe: a 5xx means "not this site"
+	})
+	if err != nil {
+		return false
+	}
+	defer body.Close()
+	doc, err := goquery.NewDocumentFromReader(body)
+	if err != nil {
+		return false
+	}
+
+	// Test each selector against the candidate page.
+	// Pass the selector explicitly so rowChapterNumber can use it directly.
+	for _, selector := range plainHTMLSelectors {
+		rows := doc.Find(selector.Rows)
+		if rows.Length() == 0 {
+			continue
+		}
+
+		// Check if any row has a readable chapter number
+		readable := false
+		rows.Each(func(_ int, s *goquery.Selection) {
+			if _, ok := checkRowChapterNumber(s, selector); ok {
+				readable = true
+			}
+		})
+
+		if readable {
+			m.doc = doc
+			m.rows = rows
+			m.site = selector
+			return true
+		}
+	}
+	return false
+}
+
+// checkRowChapterNumber is a helper that reads chapter numbers from a row,
+// given an explicit selector (rather than relying on m.site).
+// This is used by testCandidateSeriesURL to avoid relying on m.site being set.
+func checkRowChapterNumber(s *goquery.Selection, selector SiteSelector) (float64, bool) {
 	chapterText := textWithoutNoise(s)
-	if m.site.Chapter != "" {
-		chapterText = textWithoutNoise(s.Find(m.site.Chapter))
+	if selector.Chapter != "" {
+		chapterText = textWithoutNoise(s.Find(selector.Chapter))
 	}
 	if number, ok := parseChapterNumber(chapterText); ok {
 		return number, true
 	}
 
 	u := s.AttrOr("href", "")
-	if m.site.Link != "" {
-		u = s.Find(m.site.Link).AttrOr("href", "")
+	if selector.Link != "" {
+		u = s.Find(selector.Link).AttrOr("href", "")
 	}
 	match := urlChapterNumberRe.FindStringSubmatch(u)
 	if len(match) > 0 {
@@ -458,6 +596,13 @@ func (m PlainHTML) rowChapterNumber(s *goquery.Selection) (float64, bool) {
 	}
 
 	return 0, false
+}
+
+// rowChapterNumber returns the chapter number of a row, read from its text
+// or, failing that, from its reader URL. FetchChapters and Test share it, so
+// Test only claims rows FetchChapters can actually number.
+func (m PlainHTML) rowChapterNumber(s *goquery.Selection) (float64, bool) {
+	return checkRowChapterNumber(s, m.site)
 }
 
 // Ttitle returns the manga title
@@ -476,6 +621,172 @@ func textWithoutNoise(s *goquery.Selection) string {
 	clone := s.Clone()
 	clone.Find("small, .manga-label, .date").Remove()
 	return clone.Text()
+}
+
+// seriesURLCandidates extracts potential series URLs from a reader/chapter page.
+// It tries: SeriesLink selector (if any), breadcrumb links, reader back-links,
+// and same-host parent paths. Returns the ordered list of candidates for
+// testCandidateSeriesURL to verify.
+func seriesURLCandidates(doc *goquery.Document, pageURL string, selectors []SiteSelector) []string {
+	var candidates []string
+	parsedURL, _ := url.Parse(pageURL)
+	if parsedURL == nil {
+		return candidates
+	}
+
+	// SeriesLink selectors: when a selector has an Image field, only apply
+	// its SeriesLink if that Image selector also matches the page, confirming
+	// the page belongs to that site. Without this guard, a site's SeriesLink
+	// can fire on another site's page (e.g. tcb's a[href*="/mangas/"]
+	// matching mangapill's navigation links and exhausting the fetch cap).
+	for _, selector := range selectors {
+		if selector.SeriesLink == "" {
+			continue
+		}
+		if selector.Image != "" && doc.Find(selector.Image).Length() == 0 {
+			continue
+		}
+		doc.Find(selector.SeriesLink).Each(func(i int, s *goquery.Selection) {
+			if href, ok := s.Attr("href"); ok {
+				resolvedURL := resolveURLRelative(href, parsedURL)
+				if resolvedURL != "" && resolvedURL != pageURL {
+					candidates = append(candidates, resolvedURL)
+				}
+			}
+		})
+	}
+
+	// Breadcrumb links
+	breadcrumbSelectors := []string{
+		".breadcrumb a",
+		`[itemtype*="BreadcrumbList"] a`,
+		`nav[aria-label*="readcrumb" i] a`,
+		"ol.breadcrumb a",
+	}
+	for _, sel := range breadcrumbSelectors {
+		doc.Find(sel).Each(func(i int, s *goquery.Selection) {
+			if href, ok := s.Attr("href"); ok {
+				resolvedURL := resolveURLRelative(href, parsedURL)
+				if resolvedURL != "" && resolvedURL != pageURL {
+					candidates = append(candidates, resolvedURL)
+				}
+			}
+		})
+	}
+
+	// Reader back-links (themesia/mangastream)
+	backLinkSelectors := []string{
+		".allc a",
+		".headpost a",
+	}
+	for _, sel := range backLinkSelectors {
+		doc.Find(sel).Each(func(i int, s *goquery.Selection) {
+			if href, ok := s.Attr("href"); ok {
+				resolvedURL := resolveURLRelative(href, parsedURL)
+				if resolvedURL != "" && resolvedURL != pageURL {
+					candidates = append(candidates, resolvedURL)
+				}
+			}
+		})
+	}
+
+	// Same-host parent paths: links whose path is a parent of current path
+	normalizedCurrentPath := strings.TrimSuffix(parsedURL.Path, "/")
+	doc.Find("a").Each(func(i int, s *goquery.Selection) {
+		if href, ok := s.Attr("href"); ok {
+			linkURL, _ := url.Parse(href)
+			if linkURL == nil || linkURL.Host == "" {
+				// Root-relative or relative path: resolve against the page URL.
+				linkURL, _ = parsedURL.Parse(href)
+				if linkURL == nil {
+					return
+				}
+			}
+			normalizedLinkHost := strings.TrimPrefix(linkURL.Host, "www.")
+			normalizedCurrentHost := strings.TrimPrefix(parsedURL.Host, "www.")
+			if normalizedLinkHost == normalizedCurrentHost && linkURL.Path != "" {
+				normalizedLinkPath := strings.TrimSuffix(linkURL.Path, "/")
+				// Is this a parent path? Current must start with link path + "/"
+				if normalizedLinkPath != normalizedCurrentPath &&
+					normalizedLinkPath != "/" &&
+					strings.HasPrefix(normalizedCurrentPath, normalizedLinkPath+"/") {
+					fullURL := linkURL.String()
+					if fullURL != "" && fullURL != pageURL {
+						candidates = append(candidates, fullURL)
+					}
+				}
+			}
+		}
+	})
+
+	// Deduplicate
+	seen := make(map[string]bool)
+	var unique []string
+	for _, c := range candidates {
+		if !seen[c] && !isListingPath(c) && isValidSeriesCandidate(c, parsedURL) {
+			seen[c] = true
+			unique = append(unique, c)
+		}
+	}
+
+	return unique
+}
+
+// resolveURLRelative resolves a potentially relative URL against a base URL.
+// Returns the absolute URL, or empty string if invalid.
+func resolveURLRelative(href string, base *url.URL) string {
+	if base == nil {
+		return ""
+	}
+	href = strings.TrimSpace(href)
+	if href == "" {
+		return ""
+	}
+	u, _ := url.Parse(href)
+	if u == nil {
+		return ""
+	}
+	if u.Host != "" && u.Scheme != "" {
+		// Absolute URL
+		return u.String()
+	}
+	// Relative URL
+	resolved, _ := base.Parse(href)
+	if resolved == nil {
+		return ""
+	}
+	return resolved.String()
+}
+
+// isValidSeriesCandidate checks basic validity: not root, not listing path
+func isValidSeriesCandidate(urlStr string, pageURL *url.URL) bool {
+	u, _ := url.Parse(urlStr)
+	if u == nil {
+		return false
+	}
+	if u.Path == "/" || u.Path == "" {
+		return false
+	}
+	normalizedPageHost := strings.TrimPrefix(pageURL.Host, "www.")
+	normalizedURLHost := strings.TrimPrefix(u.Host, "www.")
+	if normalizedURLHost != normalizedPageHost {
+		return false
+	}
+	return true
+}
+
+// isListingPath checks if a path looks like a series listing page
+func isListingPath(urlStr string) bool {
+	u, _ := url.Parse(urlStr)
+	if u == nil {
+		return false
+	}
+	path := strings.ToLower(strings.TrimSuffix(u.Path, "/"))
+	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
+	if len(parts) == 1 && (parts[0] == "manga" || parts[0] == "series" || parts[0] == "comics") {
+		return true
+	}
+	return false
 }
 
 // chapterNumberRe matches a chapter number in a chapter title, accepting
@@ -613,24 +924,13 @@ func stripSeriesTitle(title, series string) string {
 }
 
 // resolveURL turns a possibly-relative href into an absolute URL, resolved
-// against the series page URL (m.URL). This correctly handles both
-// root-relative hrefs ("/manga/x/chapter-1", the common case, equivalent to
-// the old BaseUrl()-prefixing behaviour) and directory-relative hrefs with no
-// leading slash (e.g. templetoons.com, whose rows link to "slug/chapter-1"
-// relative to the series page's own directory).
+// against the series page URL (m.URL).
 func (m PlainHTML) resolveURL(href string) string {
 	if strings.HasPrefix(href, "http") {
 		return href
 	}
-	base, err := url.Parse(m.URL)
-	if err != nil {
-		return m.BaseUrl() + href
-	}
-	ref, err := url.Parse(href)
-	if err != nil {
-		return m.BaseUrl() + href
-	}
-	return base.ResolveReference(ref).String()
+	base, _ := url.Parse(m.URL)
+	return resolveURLRelative(href, base)
 }
 
 // FetchChapter fetches a chapter and its pages

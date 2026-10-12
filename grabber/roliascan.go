@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 	"time"
@@ -51,14 +52,35 @@ type RoliascanChapter struct {
 	Id string
 }
 
+// roliascanReaderRe matches reader URLs like /read/{series-slug}/...
+var roliascanReaderRe = regexp.MustCompile(`(?i)/read/([^/?#]+)/`)
+
 // Test returns true if the URL is a roliascan.com URL
 func (m *Roliascan) Test() (bool, error) {
 	re := regexp.MustCompile(`roliascan\.com`)
 	return re.MatchString(m.URL), nil
 }
 
+// resolveSeriesURL rewrites a reader URL (/read/{slug}/...) to the series URL
+// (/manga/{slug}/). No-op for series URLs.
+func (m *Roliascan) resolveSeriesURL() {
+	matches := roliascanReaderRe.FindStringSubmatch(m.URL)
+	if matches == nil {
+		return
+	}
+	u, err := url.Parse(m.URL)
+	if err != nil {
+		return
+	}
+	u.Path = "/manga/" + matches[1] + "/"
+	u.RawQuery = ""
+	u.Fragment = ""
+	m.URL = u.String()
+}
+
 // FetchTitle fetches and returns the manga title
 func (m *Roliascan) FetchTitle() (string, error) {
+	m.resolveSeriesURL()
 	if m.title == "" {
 		if err := m.fetchSeriesPage(); err != nil {
 			return "", err
@@ -70,6 +92,7 @@ func (m *Roliascan) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (m *Roliascan) FetchChapters() (Filterables, []error) {
+	m.resolveSeriesURL()
 	if m.mangaId == "" {
 		if err := m.fetchSeriesPage(); err != nil {
 			return nil, []error{err}

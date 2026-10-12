@@ -541,7 +541,7 @@ grabber/furyosociety:
 grabber/elftoon:
 	go run . https://elftoon.net/series/comic/god-level-assassin-im-the-shadow 123
 grabber/madarascans:
-	go run . https://madarascans.org/series/my-disciples-are-all-big-villains/ 481
+	go run . https://madarascans.net/series/my-disciples-are-all-big-villains/ 481
 grabber/maid:
 	go run . https://www.maid.my.id/manga/watashi-no-oshi-wa-akuyaku-reijou/ 50
 grabber/mangaberri:

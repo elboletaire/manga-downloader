@@ -207,3 +207,49 @@ func TestMangakFetchChaptersAPIFailureShortSeries(t *testing.T) {
 		t.Fatalf("FetchChapters() got %d chapters, want 38", len(chapters))
 	}
 }
+
+func TestMangakResolveSeriesURL(t *testing.T) {
+	cases := []struct {
+		name   string
+		input  string
+		wanted string
+	}{
+		{
+			name:   "chapter URL resolves to series URL",
+			input:  "https://mangak.io/nano-machine/chapter-329",
+			wanted: "https://mangak.io/nano-machine",
+		},
+		{
+			name:   "chapter URL with query string",
+			input:  "https://mangak.io/nano-machine/chapter-329?page=1",
+			wanted: "https://mangak.io/nano-machine",
+		},
+		{
+			name:   "series URL unchanged",
+			input:  "https://mangak.io/nano-machine",
+			wanted: "https://mangak.io/nano-machine",
+		},
+		{
+			name:   "series URL with trailing slash unchanged",
+			input:  "https://mangak.io/nano-machine/",
+			wanted: "https://mangak.io/nano-machine/",
+		},
+		{
+			name:   "unrelated path unchanged",
+			input:  "https://mangak.io/",
+			wanted: "https://mangak.io/",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			m := &Mangak{Grabber: &Grabber{URL: c.input}}
+			if err := m.resolveSeriesURL(); err != nil {
+				t.Fatalf("resolveSeriesURL() error = %v", err)
+			}
+			if m.URL != c.wanted {
+				t.Errorf("got %q, want %q", m.URL, c.wanted)
+			}
+		})
+	}
+}

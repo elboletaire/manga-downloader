@@ -79,3 +79,47 @@ func TestComixTest(t *testing.T) {
 		}
 	}
 }
+
+func TestComixResolveSeriesURL(t *testing.T) {
+	cases := []struct {
+		name   string
+		input  string
+		wanted string
+	}{
+		{
+			name:   "chapter URL resolves to series URL",
+			input:  "https://comix.to/title/e1wlg-the-scandal-maker-has-returned/11475745-chapter-34",
+			wanted: "https://comix.to/title/e1wlg-the-scandal-maker-has-returned",
+		},
+		{
+			name:   "www. prefix preserved",
+			input:  "https://www.comix.to/title/e1wlg-the-scandal-maker-has-returned/11475745-chapter-34",
+			wanted: "https://www.comix.to/title/e1wlg-the-scandal-maker-has-returned",
+		},
+		{
+			name:   "series URL unchanged",
+			input:  "https://comix.to/title/e1wlg-the-scandal-maker-has-returned",
+			wanted: "https://comix.to/title/e1wlg-the-scandal-maker-has-returned",
+		},
+		{
+			name:   "series URL with query unchanged",
+			input:  "https://comix.to/title/e1wlg-the-scandal-maker-has-returned?page=2",
+			wanted: "https://comix.to/title/e1wlg-the-scandal-maker-has-returned?page=2",
+		},
+		{
+			name:   "unrelated path unchanged",
+			input:  "https://comix.to/",
+			wanted: "https://comix.to/",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			comix := &Comix{Grabber: &Grabber{URL: c.input}}
+			comix.resolveSeriesURL()
+			if comix.URL != c.wanted {
+				t.Errorf("got %q, want %q", comix.URL, c.wanted)
+			}
+		})
+	}
+}

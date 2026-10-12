@@ -56,3 +56,45 @@ func TestFmteamChapterNumber(t *testing.T) {
 		}
 	}
 }
+
+func TestFmteamResolveSeriesURL(t *testing.T) {
+	cases := []struct {
+		name   string
+		input  string
+		wanted string
+	}{
+		{
+			name:   "chapter URL resolves to series URL",
+			input:  "https://fmteam.fr/read/batuque/fr/ch/153",
+			wanted: "https://fmteam.fr/comics/batuque",
+		},
+		{
+			name:   "chapter URL with query string",
+			input:  "https://fmteam.fr/read/batuque/fr/ch/153?page=1",
+			wanted: "https://fmteam.fr/comics/batuque",
+		},
+		{
+			name:   "series URL unchanged",
+			input:  "https://fmteam.fr/comics/batuque",
+			wanted: "https://fmteam.fr/comics/batuque",
+		},
+		{
+			name:   "series URL with trailing slash unchanged",
+			input:  "https://fmteam.fr/comics/batuque/",
+			wanted: "https://fmteam.fr/comics/batuque/",
+		},
+		{
+			name:   "unrelated path unchanged",
+			input:  "https://fmteam.fr/",
+			wanted: "https://fmteam.fr/",
+		},
+	}
+
+	for _, c := range cases {
+		f := &Fmteam{Grabber: &Grabber{URL: c.input}}
+		f.resolveSeriesURL()
+		if f.URL != c.wanted {
+			t.Errorf("%s: got %q, want %q", c.name, f.URL, c.wanted)
+		}
+	}
+}

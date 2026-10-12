@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -45,14 +46,35 @@ type AtsumaruChapter struct {
 	Id string
 }
 
-// Test returns true if the URL is an atsu.moe series URL
+// atsumaruChapterRe matches reader URLs like /read/{mangaId}/{chapterId}
+var atsumaruChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?atsu\.moe/read/([^/?#]+)/`)
+
+// Test returns true if the URL is an atsu.moe series or reader URL
 func (a *Atsumaru) Test() (bool, error) {
-	re := regexp.MustCompile(`atsu\.moe/manga/`)
+	re := regexp.MustCompile(`atsu\.moe/(manga|read)/`)
 	return re.MatchString(a.URL), nil
+}
+
+// resolveSeriesURL rewrites a reader URL (/read/{id}/...) to the series URL
+// (/manga/{id}). No-op for series URLs.
+func (a *Atsumaru) resolveSeriesURL() {
+	m := atsumaruChapterRe.FindStringSubmatch(a.URL)
+	if m == nil {
+		return
+	}
+	u, err := url.Parse(a.URL)
+	if err != nil {
+		return
+	}
+	u.Path = "/manga/" + m[1]
+	u.RawQuery = ""
+	u.Fragment = ""
+	a.URL = u.String()
 }
 
 // FetchTitle fetches and returns the manga title
 func (a *Atsumaru) FetchTitle() (string, error) {
+	a.resolveSeriesURL()
 	if a.title != "" {
 		return a.title, nil
 	}
@@ -95,6 +117,7 @@ func (a *Atsumaru) ScanlatorOptions() FilterOptions {
 
 // FetchChapters returns the chapters of the manga
 func (a *Atsumaru) FetchChapters() (chapters Filterables, errs []error) {
+	a.resolveSeriesURL()
 	info, err := a.mangaInfo()
 	if err != nil {
 		return nil, []error{err}
