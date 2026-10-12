@@ -474,7 +474,7 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--concurrency`       | `-c`  | Number of chapters downloaded at once (max 5)            | 5              |
 | `--concurrency-pages` | `-C`  | Number of pages downloaded at once per chapter (max 10)  | 10             |
 | `--retry`             | `-r`  | Retries per failed page (max 3, `0` disables retrying)   | 1              |
-| `--browser-visible`   |       | Show the browser window from the start                   | off            |
+| `--browser-visible`   |       | Always show the browser window (rarely needed)           | off            |
 | `--version`           | `-v`  | Show version information                                 |                |
 
 Run `manga-downloader help` to list them in your terminal.
@@ -609,8 +609,9 @@ Run `manga-downloader help` to list them in your terminal.
 > **Sites marked with `*` need a Chromium-based browser** (Google Chrome,
 > Chromium, Brave or Edge). They either render with JavaScript or sit behind a
 > Cloudflare challenge. Manga Downloader launches the browser itself and only
-> shows a window when a challenge needs solving. Pass `--browser-visible` to
-> skip the headless attempt and show the window from the start.
+> shows a window when a challenge needs solving, remembering the sites that
+> needed one until it exits. `--browser-visible` shows it for every site, which
+> is rarely needed.
 
 Other sites built on the same platforms often work too, even when they aren't
 listed. If one doesn't, [open an issue][issues] or send a pull request.
@@ -640,9 +641,11 @@ site still lists.
 <br>
 
 This is expected for sites marked with `*`. The window opens when the site shows
-a Cloudflare challenge. Checkboxes are clicked automatically, but some challenges
-need you to click them yourself. To show the window from the start, pass
-`--browser-visible` or tick *Show the browser window* in the app.
+a Cloudflare challenge or a captcha of its own, and the terminal (or the app)
+tells you when it may need you. Checkboxes are clicked automatically, but some
+challenges need you to solve them yourself; the download carries on once the
+page loads. You rarely need to show the window from the start, but you can with
+`--browser-visible` or *Show the browser window* in the app.
 
 </details>
 

@@ -144,7 +144,7 @@
     "oldQ": "Faltan capítulos antiguos, o un aviso dice que el rango empieza antes del primer capítulo",
     "oldA": "Los sitios suelen borrar capítulos antiguos. manga downloader solo puede descargar los capítulos que el sitio sigue mostrando.",
     "browserQ": "Se abre una ventana del navegador",
-    "browserA": "Es lo normal en los sitios marcados como <span class=\"site-badge\">navegador</span> en la <a href=\"#sites\">lista</a>. La ventana se abre cuando el sitio muestra un desafío de Cloudflare. Las casillas se marcan solas, pero algunos desafíos necesitan que hagas clic tú.",
+    "browserA": "Es lo normal en los sitios marcados como <span class=\"site-badge\">navegador</span> en la <a href=\"#sites\">lista</a>. La ventana se abre cuando el sitio muestra un desafío de Cloudflare o un captcha propio, y se te avisa cuando puede necesitarte. Las casillas se marcan solas, pero algunos desafíos necesitan que los resuelvas tú; luego la descarga sigue sola.",
     "ereaderQ": "Las páginas no se ven en mi e-reader",
     "ereaderA": "Seguramente el sitio sirve imágenes WebP. Vuelve a descargar los capítulos con <code>--convert-images avif,webp</code>.",
     "unsupportedQ": "Mi sitio no es compatible",

@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/elboletaire/manga-downloader/browser"
 	"github.com/elboletaire/manga-downloader/notice"
 	"github.com/fatih/color"
 )
@@ -97,4 +98,30 @@ func TestProgressBarsWriteToTheTerminal(t *testing.T) {
 		t.Errorf("color.Output is a %T, not the terminal's *os.File", color.Output)
 	}
 	stop()
+}
+
+func TestAttentionPrintsOneHighlightedLine(t *testing.T) {
+	stubExit(t)
+	var buf bytes.Buffer
+	prev, prevNoColor := color.Output, color.NoColor
+	color.Output, color.NoColor = &buf, false
+	t.Cleanup(func() { color.Output, color.NoColor = prev, prevNoColor })
+
+	a := browser.Attention{Active: true, Host: "example.com", Browser: "Brave"}
+	printAttention(a)
+	printAttention(browser.Attention{Host: "example.com", Browser: "Brave"})
+
+	got := buf.String()
+	if strings.Count(got, "\n") != 1 || !strings.Contains(got, a.Message()) {
+		t.Fatalf("output = %q, want the message on one line", got)
+	}
+	if !strings.Contains(got, "\x1b[93;1m") {
+		t.Errorf("output = %q, want it bold bright yellow", got)
+	}
+
+	interrupted.Store(130)
+	printAttention(a)
+	if strings.Count(buf.String(), "\n") != 1 {
+		t.Errorf("printed after the interrupt: %q", buf.String())
+	}
 }

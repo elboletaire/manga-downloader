@@ -18,6 +18,10 @@ export function Clear() {
   return window['go']['main']['App']['Clear']();
 }
 
+export function DismissBrowserAlert() {
+  return window['go']['main']['App']['DismissBrowserAlert']();
+}
+
 export function Load(arg1) {
   return window['go']['main']['App']['Load'](arg1);
 }
@@ -56,6 +60,10 @@ export function SetSelected(arg1, arg2) {
 
 export function SetSelectedMany(arg1, arg2) {
   return window['go']['main']['App']['SetSelectedMany'](arg1, arg2);
+}
+
+export function ShowBrowser() {
+  return window['go']['main']['App']['ShowBrowser']();
 }
 
 export function Start() {

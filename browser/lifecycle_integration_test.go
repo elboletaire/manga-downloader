@@ -45,6 +45,7 @@ func integration(t *testing.T) *httptest.Server {
 	}
 	t.Setenv("DISPLAY", "")
 	t.Setenv("WAYLAND_DISPLAY", "")
+	headlessOnly(t)
 	srv := httptest.NewServer(nethttp.HandlerFunc(func(w nethttp.ResponseWriter, r *nethttp.Request) {
 		switch r.URL.Path {
 		case "/ok":
@@ -86,6 +87,26 @@ func integration(t *testing.T) *httptest.Server {
 	})
 	SetVisible(false)
 	return srv
+}
+
+// headlessOnly refuses to launch a visible browser, whatever the display, so
+// an escalation always fails instead of opening a window on the desktop, and
+// forgets the hosts that escalated, so none starts visible
+func headlessOnly(t *testing.T) {
+	t.Helper()
+	prev := launch
+	launch = func(abort context.Context, headed bool) (*instance, error) {
+		if headed {
+			return nil, errors.New("no visible browser in the tests")
+		}
+		return launchChrome(abort, headed)
+	}
+	t.Cleanup(func() {
+		launch = prev
+		hostsMu.Lock()
+		needed = map[string]bool{}
+		hostsMu.Unlock()
+	})
 }
 
 func mustLoad(t *testing.T, url string) {
@@ -210,6 +231,7 @@ func TestIntegrationClosesPopupTabs(t *testing.T) {
 	}
 	t.Setenv("DISPLAY", "")
 	t.Setenv("WAYLAND_DISPLAY", "")
+	headlessOnly(t)
 	t.Cleanup(Close)
 	SetVisible(false)
 	mu.Lock()

@@ -10,6 +10,8 @@ export function ChooseFolder():Promise<string>;
 
 export function Clear():Promise<void>;
 
+export function DismissBrowserAlert():Promise<void>;
+
 export function Load(arg1:string):Promise<void>;
 
 export function Log():Promise<Array<main.LogDTO>>;
@@ -29,6 +31,8 @@ export function SetOptions(arg1:main.OptionsDTO):Promise<void>;
 export function SetSelected(arg1:number,arg2:boolean):Promise<void>;
 
 export function SetSelectedMany(arg1:Array<number>,arg2:boolean):Promise<void>;
+
+export function ShowBrowser():Promise<void>;
 
 export function Start():Promise<void>;
 

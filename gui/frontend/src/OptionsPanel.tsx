@@ -2,6 +2,7 @@
 // as a patch; App applies each patch over the last options sent, so two
 // controls can't overwrite each other's edits.
 
+import { browserSwitchOf } from './browserVisible';
 import { convertFlagsOf, convertValueOf } from './convertImages';
 import { Check, Segmented, Switch, TextField } from './fields';
 import { errorMessage } from './format';
@@ -19,6 +20,7 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
   const o = state.options;
   const locked = state.loading || state.running;
   const flags = convertFlagsOf(o.convertImages);
+  const browser = browserSwitchOf(state);
   const set = (patch: Partial<Options>) => {
     onOptions(patch).catch(() => undefined);
   };
@@ -127,9 +129,9 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
           />
           <Switch
             label="Show the browser window"
-            description="For sites behind a Cloudflare check: a visible browser passes it more often."
-            checked={o.browserVisible}
-            disabled={locked}
+            description={browser.hint}
+            checked={browser.checked}
+            disabled={browser.disabled}
             onChange={(browserVisible) => set({ browserVisible })}
           />
         </div>

@@ -4,9 +4,11 @@
 //
 // Add ?mock to the URL to use it inside the app too. ?scenario= starts it in
 // a given state, so screenshots need no clicking: empty, loading, error,
-// loaded, stale, running, bundle, cancelling, done or update. update is
+// loaded, stale, running, bundle, cancelling, done, update or check. update is
 // loaded too, as a release build (v1.12.0) with a newer release (v1.13.0): the
-// status bar shows the yellow "!". &freeze stops the simulated run from moving
+// status bar shows the yellow "!". check is loading a site that needs the
+// browser window, with the alert asking the user to look at it; loading a URL
+// with "check" in it does the same until the load ends. &freeze stops the simulated run from moving
 // (stable screenshots), &dupes lists some numbers twice, once per language, and
 // &chapters=N sets the list's length.
 //
@@ -38,6 +40,7 @@ const SCENARIOS = [
   'cancelling',
   'done',
   'update',
+  'check',
 ] as const;
 
 export type Scenario = (typeof SCENARIOS)[number];
@@ -75,6 +78,9 @@ const OFFERS: Record<MockSite, MockOffers> = {
   groups: { language: null, scanlator: { values: ['Alpha', 'Delta'], all: true, current: 'Delta' } },
   none: { language: null, scanlator: null },
 };
+
+const MOCK_ALERT =
+  "Brave opened a window to pass a check on check.example.com. There may be a captcha or puzzle to solve there; the download continues by itself once it's done.";
 
 const REPO = 'https://github.com/elboletaire/manga-downloader';
 const RELEASE_VERSION = 'v1.12.0';
@@ -209,6 +215,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   let summary: Summary | null = null;
   let log: LogLine[] = [];
   let timer: ReturnType<typeof setInterval> | undefined;
+  // the loaded site needs the browser window, and the alert about it
+  let browserAuto = false;
+  let browserAlert = '';
 
   const stateBus = new Bus<State>();
   const chaptersBus = new Bus<Chapter[]>();
@@ -276,6 +285,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     version: UPDATES[scenario] ? RELEASE_VERSION : 'v0.0.0-mock',
     releaseURL: UPDATES[scenario] ? `${REPO}/releases/tag/${RELEASE_VERSION}` : '',
     update: UPDATES[scenario] ?? null,
+    browserVisibleAuto: browserAuto,
+    browserAlert,
   });
   const push = () => stateBus.emit(snapshot());
 
@@ -442,7 +453,18 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     }
   }
 
-  if (scenario === 'loading') {
+  if (scenario === 'check') {
+    url = 'https://check.example.com/series/the-cartographer';
+    loading = true;
+    browserAuto = true;
+    browserAlert = MOCK_ALERT;
+    if (!freeze) {
+      setTimeout(() => {
+        browserAlert = '';
+        finishLoad();
+      }, 4000);
+    }
+  } else if (scenario === 'loading') {
     url = 'https://example.com/series/the-cartographer';
     loading = true;
     if (!freeze) {
@@ -525,8 +547,11 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       url = trimmed;
       loadError = '';
       loading = true;
+      browserAuto = trimmed.includes('check');
+      browserAlert = browserAuto ? MOCK_ALERT : '';
       push();
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      await new Promise((resolve) => setTimeout(resolve, browserAuto ? 3000 : 400));
+      browserAlert = '';
       if (trimmed.includes('unknown')) {
         failLoad();
         return;
@@ -541,6 +566,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       loaded = false;
       loadError = '';
       identified = false;
+      browserAuto = false;
+      browserAlert = '';
       applied = { language: '', scanlator: '' };
       title = '';
       chapters = [];
@@ -658,6 +685,13 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       }
       pushLog('info', `Downloading ${picked.length} chapter(s) of ${title}`);
       simulateRun(picked);
+    },
+    async showBrowser() {
+      pushLog('info', 'would bring the browser window to the front (mock)');
+    },
+    async dismissBrowserAlert() {
+      browserAlert = '';
+      push();
     },
     async cancel() {
       if (!running || cancelling) {

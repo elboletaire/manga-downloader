@@ -121,10 +121,16 @@ func launchChrome(abort context.Context, headed bool) (*instance, error) {
 	}
 
 	var once sync.Once
+	var front func()
+	if headed {
+		front = func() { bringToFront(browserCtx) }
+	}
 	return &instance{
 		ctx:    browserCtx,
 		lost:   lost,
 		headed: headed,
+		name:   browserName(execPath),
+		front:  front,
 		close: func() {
 			once.Do(func() {
 				// graceful first (Cancel waits for the process to exit, up

@@ -1911,3 +1911,44 @@ a.version:hover {
     gap: 6px;
   }
 }
+
+/* the browser waiting for the user (BrowserAlert.tsx) */
+.browser-alert-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(20 18 15 / 45%);
+}
+
+.browser-alert {
+  width: min(440px, 100%);
+  padding: 20px 22px 18px;
+  border: 1px solid var(--warning-solid);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  animation: pop-in 0.2s var(--ease);
+}
+
+.browser-alert h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: var(--warning);
+}
+
+.browser-alert p {
+  margin: 0 0 16px;
+  color: var(--text-2);
+}
+
+.browser-alert-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
