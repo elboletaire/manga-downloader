@@ -9,8 +9,9 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"syscall"
 
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/elboletaire/manga-downloader/browser"
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -20,7 +21,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
-	"github.com/vbauerster/mpb/v8"
 	"golang.org/x/term"
 
 	cc "github.com/ivanpirog/coloredcobra"
@@ -161,31 +161,63 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(1)
 	}
 
-	p := mpb.New(
-		// No WithWidth: on a terminal mpb reads the real size each render and
-		// the bar filler takes whatever space is left after the decorators.
-		// On non-terminal output (piped/redirected) mpb defaults to 80 columns.
-		mpb.WithOutput(color.Output),
-		mpb.WithAutoRefresh(),
-	)
+	showLanguage := core.HasDuplicateChapterNumbers(chapters)
 
-	// Get terminal width for title truncation
-	termWidth := getTerminalWidth()
-	mangaLen, chapterLen := calculateTitleLengths(termWidth)
+	if !term.IsTerminal(int(os.Stdout.Fd())) {
+		// Non-TTY (piped, CI, docker without -t): plain line-based output.
+		// No interactive bars; one line per chapter start/done/fail.
+		// Non-terminal output defaults to 80-column-equivalent logging.
+		ev := plainEvents{}
+		bundleFile, err := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
+		if !settings.Bundle {
+			exit(0)
+		}
+		if err != nil {
+			red(err.Error())
+			exit(1)
+		}
+		fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(bundleFile))
+		return
+	}
 
-	ev := newProgress(p, progressConfig{
-		title:  series.Title,
-		bundle: settings.Bundle,
-		// the range the bundle is named after, shown while it's packed
-		bundleRange: settings.Range,
-		mangaLen:    mangaLen,
-		chapterLen:  chapterLen,
-		// sites like mangadex can return the same chapter multiple times, once per
-		// translated language; tag each bar with its language in that case
-		showLanguage: core.HasDuplicateChapterNumbers(chapters),
-	})
+	// TTY mode: Bubble Tea interactive progress bars.
+	hasDarkBg := lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
+	model := newProgressModel(series.Title, settings.Range, settings.Bundle, showLanguage, hasDarkBg)
+	prog := tea.NewProgram(model)
+	ev := &bubbleEvents{prog: prog}
 
-	bundleFile, err := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
+	// Redirect library notices through the Bubble Tea program so they don't
+	// tear the rendered rows.
+	notice.SetHandler(teaNoticeHandler(prog))
+
+	type downloadResult struct {
+		file string
+		err  error
+	}
+	resultCh := make(chan downloadResult, 1)
+	go func() {
+		file, dlErr := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
+		prog.Send(downloadDoneMsg{})
+		resultCh <- downloadResult{file: file, err: dlErr}
+	}()
+
+	_, runErr := prog.Run()
+
+	// Restore the default notice handler after the bars are gone.
+	notice.SetHandler(printNotice)
+
+	if errors.Is(runErr, tea.ErrInterrupted) {
+		// Ctrl+C: match the existing interrupt behaviour (exit 130, close browser).
+		onInterrupt(os.Interrupt, func() {})
+		return // unreachable; onInterrupt calls os.Exit
+	}
+	if runErr != nil {
+		// The TUI failed to start (e.g. can't open TTY). Continue and wait for the
+		// download goroutine so the user at least gets the result on stderr.
+		fmt.Fprintf(os.Stderr, "warning: TUI error: %v\n", runErr)
+	}
+
+	res := <-resultCh
 
 	// raised before anything was fetched: --volumes auto on a site without
 	// volumes, or a volume filename template that doesn't work
@@ -196,26 +228,15 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	if !settings.Bundle {
-		// let the render loop paint the final state of the bars before
-		// exiting; without this, fast packing (e.g. raw folders) ends with
-		// the last painted frame stuck at whatever the previous refresh saw
-		p.Wait()
-		// if we're not bundling, we're done
 		exit(0)
 	}
 
-	// failed chapters leave the bundle bar short of its total; mark it
-	// done so p.Wait() won't hang
-	ev.finishBundle()
-	// flush the final render before printing the outcome
-	p.Wait()
-
-	if err != nil {
-		red(err.Error())
+	if res.err != nil {
+		red(res.err.Error())
 		exit(1)
 	}
 
-	fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(bundleFile))
+	fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(res.file))
 }
 
 // exitSettingError prints a setting that failed validation in the words each
@@ -377,15 +398,6 @@ func getUrlArg(args []string) string {
 	return args[1]
 }
 
-// getTerminalWidth returns the current terminal width or a default value if it can't be determined
-func getTerminalWidth() int {
-	width, _, err := term.GetSize(int(syscall.Stdin))
-	if err != nil {
-		return 80 // default terminal width
-	}
-	return width
-}
-
 // fixedDecorWidth is the approximate total width consumed by the non-title
 // decorators on every bar row:
 //   - counter  "9999/9999 " ≈ 10
@@ -467,7 +479,7 @@ func chapterBarTitle(seriesTitle string, chapter *grabber.Chapter, mangaLen, cha
 		chapTitle += " [" + chapter.Language + "]"
 	}
 
-	return fmt.Sprintf("%s - %s:", truncateString(seriesTitle, mangaLen), chapTitle)
+	return fmt.Sprintf("%s - %s", truncateString(seriesTitle, mangaLen), chapTitle)
 }
 
 func toMetaFunc(c *color.Color) func(string) string {
