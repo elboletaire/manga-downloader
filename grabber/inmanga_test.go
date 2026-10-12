@@ -34,6 +34,27 @@ func TestInmangaSeriesURL(t *testing.T) {
 			wantOK:     true,
 		},
 		{
+			name:       "decimal chapter number (912-5 notation)",
+			chapterURL: "https://inmanga.com/ver/manga/One-Piece/912-5/50CCD107-1234-5678-ABCD-EF1234567890",
+			html:       "var mid = 'dfc7ecb5-e9b3-4aa5-a61b-a498993cd935';",
+			wantURL:    "https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935",
+			wantOK:     true,
+		},
+		{
+			name:       "trailing slash",
+			chapterURL: "https://inmanga.com/ver/manga/One-Piece/1195/a5ba0582-83c8-4556-bcfe-dc1d80142f58/",
+			html:       "var mid = 'dfc7ecb5-e9b3-4aa5-a61b-a498993cd935';",
+			wantURL:    "https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935",
+			wantOK:     true,
+		},
+		{
+			name:       "fragment",
+			chapterURL: "https://inmanga.com/ver/manga/One-Piece/1195/a5ba0582-83c8-4556-bcfe-dc1d80142f58#page33",
+			html:       "var mid = 'dfc7ecb5-e9b3-4aa5-a61b-a498993cd935';",
+			wantURL:    "https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935",
+			wantOK:     true,
+		},
+		{
 			name:       "series URL returns false",
 			chapterURL: "https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935",
 			html:       "var mid = 'dfc7ecb5-e9b3-4aa5-a61b-a498993cd935';",

@@ -248,8 +248,8 @@ func parseRSCComicSeriesPage(html string) (*rscComicSeriesPage, error) {
 }
 
 var (
-	rscComicTotalPagesRe   = regexp.MustCompile(`"totalPages":(\d+)`)
-	rscComicChapterURLRe   = regexp.MustCompile(`/series/comic/([^/?#]+)/chapter/`)
+	rscComicTotalPagesRe = regexp.MustCompile(`"totalPages":(\d+)`)
+	rscComicChapterURLRe = regexp.MustCompile(`/series/comic/([^/?#]+)/chapter/`)
 )
 
 // resolveSeriesURL converts a chapter URL to a series URL if needed.

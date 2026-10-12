@@ -21,6 +21,11 @@ func TestWeebCentralChapterURL(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "www. prefix",
+			url:  "https://www.weebcentral.com/chapters/01M20S9HSSGNNMVT849MH5V86R",
+			want: true,
+		},
+		{
 			name: "series URL",
 			url:  "https://weebcentral.com/series/01J76XYDXH7KT6AABVG3JAT3ZP/Shangri-La-Frontier",
 			want: false,

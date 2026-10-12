@@ -96,6 +96,21 @@ func TestProjectsukiResolveSeriesURL(t *testing.T) {
 			wanted: "https://projectsuki.com/book/159270",
 		},
 		{
+			name:   "chapter URL without page number resolves to series URL",
+			input:  "https://projectsuki.com/read/159270/40014",
+			wanted: "https://projectsuki.com/book/159270",
+		},
+		{
+			name:   "chapter URL trailing slash resolves to series URL",
+			input:  "https://projectsuki.com/read/159270/40014/",
+			wanted: "https://projectsuki.com/book/159270",
+		},
+		{
+			name:   "chapter URL with query resolves to series URL",
+			input:  "https://projectsuki.com/read/159270/40014?page=1",
+			wanted: "https://projectsuki.com/book/159270",
+		},
+		{
 			name:   "series URL unchanged",
 			input:  "https://projectsuki.com/book/159270",
 			wanted: "https://projectsuki.com/book/159270",

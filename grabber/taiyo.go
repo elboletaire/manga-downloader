@@ -26,9 +26,10 @@ type Taiyo struct {
 	title   string
 }
 
-// taiyoChapterRe matches chapter URLs like
-// https://taiyo.moe/chapter/6b95d938-b08e-4f7e-a5bb-0f07db85246a/1
-var taiyoChapterRe = regexp.MustCompile(`^https?://taiyo\.moe/chapter/[a-f0-9-]+/\d+`)
+// taiyoChapterPathRe matches the chapter path /chapter/<uuid>[/<page>] on
+// taiyo.moe. The page number is optional (the site 307s to /1 without it).
+// UUID chars are matched case-insensitively; www. is handled by chapterPath.
+var taiyoChapterPathRe = regexp.MustCompile(`(?i)^/chapter/[a-f0-9-]+(?:/\d+)?/?(?:[?#].*)?$`)
 
 // taiyoMediaIDRe extracts the media ID from the RSC payload in chapter pages.
 // The escaped JSON is \"media\":{\"id\":\"<uuid>\",... (followed by more fields,
@@ -36,8 +37,9 @@ var taiyoChapterRe = regexp.MustCompile(`^https?://taiyo\.moe/chapter/[a-f0-9-]+
 var taiyoMediaIDRe = regexp.MustCompile(`\\"media\\":\{\\"id\\":\\"([a-f0-9-]+)\\"`)
 
 // taiyoChapterURL checks if the URL is a chapter URL.
-func taiyoChapterURL(url string) bool {
-	return taiyoChapterRe.MatchString(url)
+func taiyoChapterURL(rawURL string) bool {
+	host, path, ok := chapterPath(rawURL)
+	return ok && host == "taiyo.moe" && taiyoChapterPathRe.MatchString(path)
 }
 
 func NewTaiyo(g *Grabber) *Taiyo {

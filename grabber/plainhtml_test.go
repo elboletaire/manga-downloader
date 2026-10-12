@@ -457,7 +457,6 @@ func TestFetchChaptersTitles(t *testing.T) {
 	}
 }
 
-
 // TestSeriesURLCandidates tests the SeriesLink selector precedence and generic
 // candidate extraction (breadcrumbs, back-links, parent paths).
 func TestSeriesURLCandidates(t *testing.T) {
@@ -480,9 +479,9 @@ func TestSeriesURLCandidates(t *testing.T) {
 			},
 		},
 		{
-			name:    "reject listing paths like /manga/",
-			pageURL: "https://example.com/series/slug/chapter-1/",
-			html:    `<html><body><a href="/manga/">List</a></body></html>`,
+			name:      "reject listing paths like /manga/",
+			pageURL:   "https://example.com/series/slug/chapter-1/",
+			html:      `<html><body><a href="/manga/">List</a></body></html>`,
 			selectors: []SiteSelector{},
 			check: func(candidates []string) bool {
 				for _, c := range candidates {
@@ -494,9 +493,9 @@ func TestSeriesURLCandidates(t *testing.T) {
 			},
 		},
 		{
-			name:    "root-relative parent path is a candidate",
-			pageURL: "https://example.com/comics/my-series/chapter/5",
-			html:    `<html><body><a href="/comics/my-series">Series</a></body></html>`,
+			name:      "root-relative parent path is a candidate",
+			pageURL:   "https://example.com/comics/my-series/chapter/5",
+			html:      `<html><body><a href="/comics/my-series">Series</a></body></html>`,
 			selectors: []SiteSelector{},
 			check: func(candidates []string) bool {
 				for _, c := range candidates {
@@ -632,8 +631,11 @@ func TestResolveSeriesURLFetchCap(t *testing.T) {
 
 	m := NewPlainHTML(&Grabber{URL: srv.URL + "/chapter-5/", Settings: &Settings{}})
 	ok, err := m.Test()
-	if err != nil || !ok {
-		t.Fatalf("Test() = %v, %v; expected series to be resolved", ok, err)
+	if err != nil || ok {
+		t.Fatalf("Test() = %v, %v; expected false (resolution deferred to tryResolveSeriesURL)", ok, err)
+	}
+	if !m.tryResolveSeriesURL() {
+		t.Fatal("tryResolveSeriesURL() = false; expected series to be resolved")
 	}
 	if fetches != 3 {
 		t.Errorf("fetched %d candidates, want 3 (cap at 3)", fetches)

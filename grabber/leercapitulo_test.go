@@ -24,6 +24,24 @@ func TestLeerCapituloSeriesURL(t *testing.T) {
 			wantOK:     true,
 		},
 		{
+			name:       "decimal chapter number",
+			chapterURL: "https://www.leercapitulo.co/leer/0cj9hhn6di/kingdom/733.5/",
+			wantURL:    "https://www.leercapitulo.co/manga/0cj9hhn6di/kingdom/",
+			wantOK:     true,
+		},
+		{
+			name:       "chapter URL with query string",
+			chapterURL: "https://www.leercapitulo.co/leer/0cj9hhn6di/kingdom/886/?page=2",
+			wantURL:    "https://www.leercapitulo.co/manga/0cj9hhn6di/kingdom/",
+			wantOK:     true,
+		},
+		{
+			name:       "chapter URL with fragment",
+			chapterURL: "https://www.leercapitulo.co/leer/0cj9hhn6di/kingdom/886/#top",
+			wantURL:    "https://www.leercapitulo.co/manga/0cj9hhn6di/kingdom/",
+			wantOK:     true,
+		},
+		{
 			name:       "series URL returns false",
 			chapterURL: "https://www.leercapitulo.co/manga/0cj9hhn6di/kingdom/",
 			wantURL:    "",

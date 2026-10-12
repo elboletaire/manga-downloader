@@ -12,9 +12,10 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-var (
-	fmteamChapterRe = regexp.MustCompile(`^https?://fmteam\.fr/read/([^/]+)/([^/]+)/ch/\d+(?:\?.*)?$`)
-)
+// fmteamChapterRe matches chapter reader URLs like
+// https://fmteam.fr/read/batuque/fr/ch/157 and decimal variants like ch/12.5.
+// www. is accepted; trailing slash, query and fragment are all tolerated.
+var fmteamChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?fmteam\.fr/read/([^/]+)/([^/]+)/ch/[\d.]+/?(?:[?#].*)?$`)
 
 // Fmteam is a grabber for fmteam.fr: a French scanlation site whose Vue SPA
 // exposes a wide-open JSON API (const API_BASE_URL = BASE_URL + 'api' in the
@@ -48,18 +49,11 @@ type FmteamChapter struct {
 	ReadUrl string
 }
 
-// Test returns true if the URL is a fmteam.fr comic URL
+// Test returns true if the URL is a fmteam.fr series or chapter URL.
+// Chapter URLs are resolved to series URLs lazily in FetchTitle/FetchChapters.
 func (f *Fmteam) Test() (bool, error) {
-	re := regexp.MustCompile(`fmteam\.fr/comics/`)
-	if re.MatchString(f.URL) {
-		return true, nil
-	}
-	// Accept chapter URLs and convert them to series URLs
-	if fmteamChapterRe.MatchString(f.URL) {
-		f.resolveSeriesURL()
-		return true, nil
-	}
-	return false, nil
+	re := regexp.MustCompile(`(?i)fmteam\.fr/(?:comics/|read/)`)
+	return re.MatchString(f.URL), nil
 }
 
 // FetchTitle fetches and returns the manga title
@@ -67,6 +61,8 @@ func (f *Fmteam) FetchTitle() (string, error) {
 	if f.title != "" {
 		return f.title, nil
 	}
+
+	f.resolveSeriesURL()
 
 	data, err := f.seriesData()
 	if err != nil {
@@ -80,6 +76,8 @@ func (f *Fmteam) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (f *Fmteam) FetchChapters() (chapters Filterables, errs []error) {
+	f.resolveSeriesURL()
+
 	data, err := f.seriesData()
 	if err != nil {
 		return nil, []error{err}

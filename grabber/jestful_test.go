@@ -21,6 +21,21 @@ func TestJestfulChapterURL(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "www. prefix",
+			url:  "https://www.jestful.net/bsaq-manga-name-chapter-154.html",
+			want: true,
+		},
+		{
+			name: "chapter URL with query",
+			url:  "https://jestful.net/bsaq-manga-name-chapter-154.html?page=1",
+			want: true,
+		},
+		{
+			name: "chapter URL with fragment",
+			url:  "https://jestful.net/bsaq-manga-name-chapter-154.html#top",
+			want: true,
+		},
+		{
 			name: "series URL",
 			url:  "https://jestful.net/hwms-jitsu-wa-ore-saikyou-deshita.html",
 			want: false,
@@ -62,6 +77,16 @@ func TestJestfulResolveSeriesURL(t *testing.T) {
 			name:    "chapter URL with decimal",
 			url:     "https://jestful.net/bsaq-some-manga-chapter-1.5.html",
 			wantURL: "https://jestful.net/hwms-some-manga.html",
+		},
+		{
+			name:    "www. chapter URL",
+			url:     "https://www.jestful.net/bsaq-jitsu-wa-ore-saikyou-deshita-chapter-154.html",
+			wantURL: "https://jestful.net/hwms-jitsu-wa-ore-saikyou-deshita.html",
+		},
+		{
+			name:    "chapter URL with query string",
+			url:     "https://jestful.net/bsaq-jitsu-wa-ore-saikyou-deshita-chapter-154.html?page=1",
+			wantURL: "https://jestful.net/hwms-jitsu-wa-ore-saikyou-deshita.html",
 		},
 		{
 			name:    "series URL unchanged",

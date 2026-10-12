@@ -29,11 +29,9 @@ import (
 //     page <img> tags for that chapter.
 //
 // Both endpoints 403 without a Referer header pointing at the site.
-// Chapter reader URLs are of the form /{slug}-chapter-{n}.html, but the
-// site's API-based chapter discovery makes deriving the series URL from a
-// chapter URL impractical: there's no chapter-to-series mapping in the URL
-// itself, and fetching a chapter page yields only a loading placeholder with
-// no series link in the HTML.
+// Chapter reader URLs are of the form /bsaq-{slug}-chapter-{n}.html; the
+// series URL is derived purely from the chapter URL (no request needed) by
+// stripping the "bsaq-" prefix and the "-chapter-N" suffix.
 type Jestful struct {
 	*Grabber
 	title string
@@ -41,12 +39,13 @@ type Jestful struct {
 
 // jestfulChapterRe matches chapter URLs like
 // https://jestful.net/bsaq-hwms-jitsu-wa-ore-saikyou-deshita-chapter-154.html
-var jestfulChapterRe = regexp.MustCompile(`^https?://jestful\.net/[^/]+-chapter-\d+[^/]*\.html$`)
+// and decimal variants (chapter-154.5). www., query strings and fragments are tolerated.
+var jestfulChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?jestful\.net/[^/]+-chapter-[\d.]+[^/]*\.html(?:[?#].*)?$`)
 
 // jestfulChapterSlugRe extracts the slug from a chapter URL.
 // Chapter URL format: https://jestful.net/bsaq-<slug>-chapter-<N>.html
 // The slug is everything between "bsaq-" and the last "-chapter-<digits>" segment.
-var jestfulChapterSlugRe = regexp.MustCompile(`^https?://jestful\.net/bsaq-(.+)-chapter-[\d.]+[^/]*\.html$`)
+var jestfulChapterSlugRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?jestful\.net/bsaq-(.+)-chapter-[\d.]+[^/]*\.html(?:[?#].*)?$`)
 
 func NewJestful(g *Grabber) *Jestful {
 	return &Jestful{Grabber: g}
@@ -74,6 +73,9 @@ func (m *Jestful) Test() (bool, error) {
 // Old format: https://jestful.net/bsaq-hwms-<slug>-chapter-<N>.html (redirects to 404).
 // The mapping is purely syntactic; no request is needed.
 func (m *Jestful) resolveSeriesURL() error {
+	if !jestfulChapterRe.MatchString(m.URL) {
+		return nil
+	}
 	matches := jestfulChapterSlugRe.FindStringSubmatch(m.URL)
 	if len(matches) < 2 {
 		return nil

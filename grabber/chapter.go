@@ -3,10 +3,25 @@
 package grabber
 
 import (
+	"net/url"
 	"strings"
 
 	"github.com/elboletaire/manga-downloader/ranges"
 )
+
+// chapterPath parses rawURL and returns its lowercased host (www. stripped)
+// and path (query and fragment dropped). Use it in resolveSeriesURL helpers so
+// they transparently match www. variants, uppercase IDs, and URLs with a
+// trailing query string or fragment.
+func chapterPath(rawURL string) (host, path string, ok bool) {
+	u, err := url.Parse(rawURL)
+	if err != nil || u.Host == "" {
+		return "", "", false
+	}
+	host = strings.ToLower(strings.TrimPrefix(u.Host, "www."))
+	path = u.Path
+	return host, path, true
+}
 
 // Chapter represents a manga chapter
 type Chapter struct {

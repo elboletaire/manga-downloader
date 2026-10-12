@@ -52,8 +52,10 @@ var projectsukiChapterNumRe = regexp.MustCompile(`Chapter\s+([\d.]+)`)
 // book 159270, hash "5b1dd2d9...", page 16
 var projectsukiImageRe = regexp.MustCompile(`/images/gallery/(\d+)/([0-9a-f]+)/00(\d+)`)
 
-// projectsukiChapterURLRe matches the book and chapter ids out of a reader link
-var projectsukiChapterURLRe = regexp.MustCompile(`/read/(\d+)/\d+/`)
+// projectsukiChapterURLRe matches the book and chapter ids out of a reader
+// link. The page number is optional: the site 302s /read/{book}/{ch} (no page)
+// to /read/{book}/{ch}/1.
+var projectsukiChapterURLRe = regexp.MustCompile(`/read/(\d+)/\d+(?:/|\?|#|$)`)
 
 // Test returns true if the URL is a projectsuki.com URL
 func (p *Projectsuki) Test() (bool, error) {

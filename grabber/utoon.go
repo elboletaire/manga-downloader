@@ -26,7 +26,8 @@ type Utoon struct {
 // https://www.utoon.us/en/gachiakuta/gachiakuta-chapter-167.html
 // It requires -chapter- in the filename to avoid matching series URLs like
 // https://www.utoon.us/en/manga/gachiakuta.html
-var utoonChapterRe = regexp.MustCompile(`^https?://[^/]+/en/([^/]+)/[^/]+-chapter-\d[^/]*\.html$`)
+// Query strings and fragments after .html are tolerated.
+var utoonChapterRe = regexp.MustCompile(`^https?://[^/]+/en/([^/]+)/[^/]+-chapter-\d[^/]*\.html(?:[?#].*)?$`)
 
 func NewUtoon(g *Grabber) *Utoon {
 	return &Utoon{Grabber: g}

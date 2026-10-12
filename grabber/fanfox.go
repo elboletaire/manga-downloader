@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -36,22 +37,42 @@ type FanfoxChapter struct {
 // fanfoxDomainRe matches fanfox.net (with or without www.)
 var fanfoxDomainRe = regexp.MustCompile(`fanfox\.net`)
 
-// fanfoxChapterRe matches chapter URLs like
-// https://fanfox.net/manga/chainsaw_man/c228/1.html
-var fanfoxChapterRe = regexp.MustCompile(`^(https?://[^/]+/manga/[^/]+)(/c\d+/.*)$`)
-
-// fanfoxChapterURL checks if the URL is a chapter URL.
-func fanfoxChapterURL(url string) bool {
-	return fanfoxChapterRe.MatchString(url)
+// fanfoxChapterURL reports whether rawURL is a chapter/reader URL. It uses
+// mangatownSeriesPathRe (shared with mangahere and mangatown) to extract the
+// /manga/<slug> prefix and then checks that more path follows, so volume
+// segments (/v01/, /vTBD/) and decimal chapter numbers (/c001.1/) are
+// accepted transparently.
+func fanfoxChapterURL(rawURL string) bool {
+	u, _ := url.Parse(rawURL)
+	if u == nil {
+		return false
+	}
+	m := mangatownSeriesPathRe.FindStringSubmatch(u.Path)
+	if m == nil {
+		return false
+	}
+	return strings.TrimPrefix(u.Path[len(m[1]):], "/") != ""
 }
 
-// fanfoxSeriesURL extracts the series URL from a chapter URL by regex.
-func fanfoxSeriesURL(chapterURL string) (string, bool) {
-	matches := fanfoxChapterRe.FindStringSubmatch(chapterURL)
-	if len(matches) < 2 {
+// fanfoxSeriesURL extracts the series URL from a chapter URL. It returns the
+// URL with its path trimmed to /manga/<slug>/ and any query/fragment stripped.
+// Returns ("", false) for series URLs (no additional path segments).
+func fanfoxSeriesURL(rawURL string) (string, bool) {
+	u, _ := url.Parse(rawURL)
+	if u == nil {
 		return "", false
 	}
-	return matches[1] + "/", true
+	m := mangatownSeriesPathRe.FindStringSubmatch(u.Path)
+	if m == nil {
+		return "", false
+	}
+	if strings.TrimPrefix(u.Path[len(m[1]):], "/") == "" {
+		return "", false
+	}
+	u.Path = m[1] + "/"
+	u.RawQuery = ""
+	u.Fragment = ""
+	return u.String(), true
 }
 
 // Test returns true if the URL is a fanfox.net URL

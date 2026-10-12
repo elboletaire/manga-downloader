@@ -32,8 +32,9 @@ var mangaballAPI = "https://api.mangaball.com/api/v1"
 var mangaballSite = "https://mangaball.com"
 
 // mangaballChapterRe matches chapter URLs like
-// https://mangaball.com/chapter-detail/6a6711d656b91853f2dc9927
-var mangaballChapterRe = regexp.MustCompile(`^https?://mangaball\.(com|net)/chapter-detail/([a-f0-9]+)`)
+// https://mangaball.com/chapter-detail/6a6711d656b91853f2dc9927 (www. and
+// uppercase hex handled via chapterPath / (?i))
+var mangaballChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?mangaball\.(com|net)/chapter-detail/([a-f0-9]+)`)
 
 // mangaballSeriesURLRe extracts the series URL from JSON-LD isPartOf field.
 // The actual format is {"@type":"ComicSeries","name":"...","url":"..."} so

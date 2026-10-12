@@ -45,10 +45,14 @@ func (m *Mgeko) Test() (bool, error) {
 // resolved against base. Tries h1 a[href*="/manga/"] first, then og:url.
 // Returns "" when neither matches.
 func mgekoExtractSeriesURL(doc *goquery.Document, base string) string {
+	baseURL, _ := url.Parse(base)
 	if link := doc.Find(`h1 a[href*="/manga/"]`).First(); link.Length() > 0 {
 		if href, ok := link.Attr("href"); ok && href != "" {
-			resolved, _ := url.JoinPath(base, href)
-			return resolved
+			if baseURL != nil {
+				if resolved, _ := baseURL.Parse(href); resolved != nil {
+					return resolved.String()
+				}
+			}
 		}
 	}
 	if ogURL, ok := doc.Find(`meta[property="og:url"]`).First().Attr("content"); ok && ogURL != "" {
@@ -75,9 +79,11 @@ func (m *Mgeko) resolveSeriesURL() error {
 		return err
 	}
 
-	if u := mgekoExtractSeriesURL(doc, m.BaseUrl()); u != "" {
-		m.URL = u
+	u := mgekoExtractSeriesURL(doc, m.BaseUrl())
+	if u == "" {
+		return fmt.Errorf("couldn't find the series of chapter %s; try the series link instead", m.URL)
 	}
+	m.URL = u
 	return nil
 }
 
@@ -118,7 +124,8 @@ var mgekoChapterNumberRe = regexp.MustCompile(`^(\d+(?:\.\d+)?)`)
 // mgekoChapterURLRe matches reader URLs (/reader/en/.../) to detect chapter pages.
 // Reader URLs lack the version suffix present in series URLs, so they're fetched
 // to extract the real series URL from h1 a[href*="/manga/"] or og:url.
-var mgekoChapterURLRe = regexp.MustCompile(`/reader/en/.+-eng-li/?$`)
+// Query strings and fragments after the path are tolerated.
+var mgekoChapterURLRe = regexp.MustCompile(`/reader/en/.+-eng-li/?(?:[?#].*)?$`)
 
 // parseMgekoChapterNumber extracts the chapter number from a chapter row's
 // text

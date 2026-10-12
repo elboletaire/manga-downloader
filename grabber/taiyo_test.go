@@ -4,6 +4,33 @@ package grabber
 
 import "testing"
 
+func TestTaiyoChapterURL(t *testing.T) {
+	cases := []struct {
+		url  string
+		want bool
+	}{
+		// standard with page number
+		{"https://taiyo.moe/chapter/6b95d938-b08e-4f7e-a5bb-0f07db85246a/1", true},
+		// no page number (site 307s to /1)
+		{"https://taiyo.moe/chapter/6b95d938-b08e-4f7e-a5bb-0f07db85246a", true},
+		// trailing slash (no page)
+		{"https://taiyo.moe/chapter/6b95d938-b08e-4f7e-a5bb-0f07db85246a/", true},
+		// www.
+		{"https://www.taiyo.moe/chapter/6b95d938-b08e-4f7e-a5bb-0f07db85246a/1", true},
+		// uppercase UUID
+		{"https://taiyo.moe/chapter/6B95D938-B08E-4F7E-A5BB-0F07DB85246A/1", true},
+		// series URL — must return false
+		{"https://taiyo.moe/media/000bdf97-407f-4ca8-95a1-ee2a3114e73a", false},
+		// unrelated domain
+		{"https://example.com/chapter/6b95d938-b08e-4f7e-a5bb-0f07db85246a/1", false},
+	}
+	for _, c := range cases {
+		if got := taiyoChapterURL(c.url); got != c.want {
+			t.Errorf("taiyoChapterURL(%q) = %v, want %v", c.url, got, c.want)
+		}
+	}
+}
+
 func TestTaiyoMediaID(t *testing.T) {
 	cases := []struct {
 		url     string

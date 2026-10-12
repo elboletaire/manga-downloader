@@ -21,6 +21,16 @@ func TestMangadexChapterURL(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "www. prefix (308 to apex)",
+			url:  "https://www.mangadex.org/chapter/c780a907-8cf7-4d64-97fd-750519f8ff79",
+			want: true,
+		},
+		{
+			name: "uppercase UUID",
+			url:  "https://mangadex.org/chapter/C780A907-8CF7-4D64-97FD-750519F8FF79",
+			want: true,
+		},
+		{
 			name: "series URL",
 			url:  "https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece",
 			want: false,

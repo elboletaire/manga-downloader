@@ -14,7 +14,12 @@ import (
 )
 
 var (
-	inmangaChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?inmanga\.com/ver/manga/[^/]+/\d+/[a-f0-9-]+(?:\?.*)?$`)
+	// inmangaChapterRe matches chapter URLs of the form
+	// /ver/manga/<slug>/<chapter-num>/<chapter-uuid> where chapter-num may be
+	// a decimal like "912-5" (inmanga's notation for chapter 912, part 5).
+	// The chapter UUID segment distinguishes chapter URLs from series URLs,
+	// which only have a single UUID after the slug.
+	inmangaChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?inmanga\.com/ver/manga/[^/]+/[^/]+/[a-f0-9-]+/?(?:[?#].*)?$`)
 	inmangaMidRe     = regexp.MustCompile(`(?i)var\s+mid\s*=\s*'([a-f0-9-]+)'`)
 	inmangaSlugRe    = regexp.MustCompile(`(?i)^https?://(?:www\.)?inmanga\.com/ver/manga/([^/]+)/`)
 )

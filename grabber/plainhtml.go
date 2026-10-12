@@ -279,12 +279,12 @@ var plainHTMLSelectors = []SiteSelector{
 	// releases). The series page also carries an ad-blocker <h1> in the
 	// page's access wall, so the title is scoped to the .detail block.
 	{
-		Title:      ".detail h1",
-		Rows:       "#chapters-panel a[data-chapter-group]",
-		Chapter:    "strong",
+		Title:        ".detail h1",
+		Rows:         "#chapters-panel a[data-chapter-group]",
+		Chapter:      "strong",
 		ChapterTitle: "strong",
-		Image:      ".reader-pages img",
-		SeriesLink: ".reader-heading a",
+		Image:        ".reader-pages img",
+		SeriesLink:   ".reader-heading a",
 	},
 	// mangaworld.mx (Italian): server-rendered, unquoted attributes are
 	// fine for goquery. Chapter rows are <a class="chap"> inside one
@@ -382,7 +382,6 @@ var plainHTMLSelectors = []SiteSelector{
 	},
 }
 
-
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)
 type PlainHTML struct {
 	*Grabber
@@ -401,7 +400,11 @@ type SiteSelector struct {
 	Link         string
 	Chapter      string
 	ChapterTitle string
-	Image        string
+	// Image is a CSS selector for an element that only appears on reader/chapter
+	// pages for this site. It is used as a guard for SeriesLink in
+	// seriesURLCandidates: a SeriesLink is only applied when Image also matches,
+	// preventing one site's SeriesLink selector from firing on another site's page.
+	Image string
 	// ChapterQuery, when set, is appended to every chapter URL before it is
 	// fetched (e.g. "style=list" for readers that render one page at a time
 	// unless asked for the whole list)
@@ -450,11 +453,10 @@ func (m *PlainHTML) Test() (bool, error) {
 	}
 
 	if m.rows == nil || m.rows.Length() == 0 {
-		// No chapter rows found. Try to resolve this as a chapter/reader URL
-		// and load the series page instead.
-		if m.resolveSeriesURL() {
-			return true, nil
-		}
+		// No rows found; IdentifySite will call tryResolveSeriesURL as a final
+		// fallback (after every other grabber has declined) to avoid extra
+		// fetches for URLs that a domain-matched grabber further down the list
+		// would serve.
 		return false, nil
 	}
 
@@ -506,6 +508,13 @@ func (m *PlainHTML) resolveSeriesURL() bool {
 		}
 	}
 	return false
+}
+
+// tryResolveSeriesURL is called by IdentifySite as a final fallback after all
+// other grabbers have declined. It reuses the already-fetched doc (set in
+// Test) to avoid a second fetch of the same URL.
+func (m *PlainHTML) tryResolveSeriesURL() bool {
+	return m.resolveSeriesURL()
 }
 
 // testCandidateSeriesURL fetches and tests a candidate series URL against
@@ -621,8 +630,8 @@ func textWithoutNoise(s *goquery.Selection) string {
 
 // seriesURLCandidates extracts potential series URLs from a reader/chapter page.
 // It tries: SeriesLink selector (if any), breadcrumb links, reader back-links,
-// same-host parent paths, and URL-shape fallbacks. Returns up to the ordered list
-// of candidates for testCandidateSeriesURL to verify.
+// and same-host parent paths. Returns the ordered list of candidates for
+// testCandidateSeriesURL to verify.
 func seriesURLCandidates(doc *goquery.Document, pageURL string, selectors []SiteSelector) []string {
 	var candidates []string
 	parsedURL, _ := url.Parse(pageURL)
@@ -692,11 +701,10 @@ func seriesURLCandidates(doc *goquery.Document, pageURL string, selectors []Site
 		if href, ok := s.Attr("href"); ok {
 			linkURL, _ := url.Parse(href)
 			if linkURL == nil || linkURL.Host == "" {
-				// Root-relative or relative path: resolve against the page host.
-				linkURL = &url.URL{
-					Scheme: parsedURL.Scheme,
-					Host:   parsedURL.Host,
-					Path:   href,
+				// Root-relative or relative path: resolve against the page URL.
+				linkURL, _ = parsedURL.Parse(href)
+				if linkURL == nil {
+					return
 				}
 			}
 			normalizedLinkHost := strings.TrimPrefix(linkURL.Host, "www.")

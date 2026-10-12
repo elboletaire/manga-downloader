@@ -45,13 +45,12 @@ var weebCentralHostRe = regexp.MustCompile(`(?i)(^|\.)weebcentral\.com$`)
 // https://weebcentral.com/series/01J76XYDXH7KT6AABVG3JAT3ZP/Some-Manga
 var weebCentralSeriesRe = regexp.MustCompile(`/series/([A-Za-z0-9]+)`)
 
-// weebCentralChapterRe matches chapter URLs like
-// https://weebcentral.com/chapters/01M20S9HSSGNNMVT849MH5V86R
-var weebCentralChapterRe = regexp.MustCompile(`^https?://weebcentral\.com/chapters/([A-Za-z0-9]+)`)
+// weebCentralSeriesLinkRe matches a link to a series page by its ULID.
+var weebCentralSeriesLinkRe = regexp.MustCompile(`/series/[0-9A-Za-z]{26}(?:/|$)`)
 
-// weebCentralSeriesLinkRe extracts the series URL from chapter page links,
-// looking for absolute href="https://weebcentral.com/series/<ulid>/..." pattern
-var weebCentralSeriesLinkRe = regexp.MustCompile(`href="(https://weebcentral\.com/series/[A-Za-z0-9]+/[^"]+)"`)
+// weebCentralChapterRe matches chapter URLs like
+// https://weebcentral.com/chapters/01M20S9HSSGNNMVT849MH5V86R (www. included)
+var weebCentralChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?weebcentral\.com/chapters/([A-Za-z0-9]+)`)
 
 // weebCentralChapterURL checks if the URL is a chapter URL.
 func weebCentralChapterURL(url string) bool {
@@ -77,13 +76,25 @@ func weebCentralResolveSeriesURL(chapterURL string) (string, error) {
 		return "", err
 	}
 
-	html, _ := doc.Html()
-	matches := weebCentralSeriesLinkRe.FindStringSubmatch(html)
-	if len(matches) < 2 {
-		return "", fmt.Errorf("could not find series link in chapter page %s", chapterURL)
+	// The nav also links /series/random and the like, so only a 26-character
+	// ULID counts.
+	base, _ := url.Parse(chapterURL)
+	var seriesURL string
+	doc.Find(`a[href*="/series/"]`).EachWithBreak(func(_ int, s *goquery.Selection) bool {
+		href, _ := s.Attr("href")
+		if !weebCentralSeriesLinkRe.MatchString(href) {
+			return true
+		}
+		if u, err := base.Parse(href); err == nil {
+			seriesURL = u.String()
+		}
+		return false
+	})
+	if seriesURL == "" {
+		return "", fmt.Errorf("couldn't find the series of chapter %s; try the series link instead", chapterURL)
 	}
 
-	return matches[1], nil
+	return seriesURL, nil
 }
 
 // Test returns true if the URL is a weebcentral.com URL. It only checks the

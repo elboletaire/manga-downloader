@@ -9,6 +9,7 @@ import (
 	"path"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/elboletaire/manga-downloader/http"
@@ -21,7 +22,8 @@ var mangadexAPI = "https://api.mangadex.org"
 var (
 	// mangadexChapterURLRe matches chapter URLs like
 	// https://mangadex.org/chapter/c780a907-8cf7-4d64-97fd-750519f8ff79
-	mangadexChapterURLRe = regexp.MustCompile(`^https?://mangadex\.org/chapter/([a-f0-9-]+)`)
+	// www. is handled by chapterPath; UUIDs are matched case-insensitively.
+	mangadexChapterURLRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?mangadex\.org/chapter/([a-f0-9-]+)`)
 )
 
 // Mangadex is a grabber for mangadex.org
@@ -83,7 +85,7 @@ func (m *Mangadex) resolveSeriesURL() error {
 	if len(matches) < 2 {
 		return fmt.Errorf("could not extract chapter UUID from %s", m.URL)
 	}
-	chapterUUID := matches[1]
+	chapterUUID := strings.ToLower(matches[1])
 
 	seriesURL, err := mangadexSeriesURL(chapterUUID)
 	if err != nil {
@@ -151,7 +153,8 @@ func (m *Mangadex) fetchManga() (*mangadexManga, error) {
 		return m.manga, nil
 	}
 
-	id := getUuid(m.URL)
+	// the API only knows lowercase ids
+	id := strings.ToLower(getUuid(m.URL))
 
 	rbody, err := http.Get(http.RequestParams{
 		URL:     mangadexAPI + "/manga/" + id,
@@ -192,7 +195,8 @@ func (m *Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 		return nil, []error{err}
 	}
 
-	id := getUuid(m.URL)
+	// the API only knows lowercase ids
+	id := strings.ToLower(getUuid(m.URL))
 
 	baseOffset := 500
 	var fetchChaps func(int)

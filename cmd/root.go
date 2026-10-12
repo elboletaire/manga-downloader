@@ -36,7 +36,7 @@ var rootCmd = &cobra.Command{
 
 You only need to specify the URL of the manga and the chapters you want to download as a range.
 
-Note the URL must be of the index of the manga, not a single chapter.`,
+You can use either a series/index URL or a chapter URL; chapter URLs are automatically resolved to the series.`,
 	Example: colorizeHelp(`  manga-downloader https://inmanga.com/ver/manga/Fire-Punch/17748683-8986-4628-934a-e94a47fe5d59
 
 Would ask you if you want to download all chapters of Fire Punch (1-83).

@@ -4,6 +4,55 @@ package grabber
 
 import "testing"
 
+func TestFanfoxChapterURL(t *testing.T) {
+	cases := []struct {
+		url  string
+		want bool
+	}{
+		// standard chapter
+		{"https://fanfox.net/manga/chainsaw_man/c228/1.html", true},
+		// volume segment
+		{"https://fanfox.net/manga/onepunch_man/vTBD/c237/1.html", true},
+		{"https://fanfox.net/manga/onepunch_man/v01/c001/1.html", true},
+		// decimal chapter
+		{"https://fanfox.net/manga/one_piece/v00/c001.1/1.html", true},
+		// www.
+		{"https://www.fanfox.net/manga/chainsaw_man/c228/1.html", true},
+		// series URLs — must return false
+		{"https://fanfox.net/manga/chainsaw_man/", false},
+		{"https://fanfox.net/manga/chainsaw_man", false},
+		// path without /manga/ prefix
+		{"https://fanfox.net/other/chainsaw_man/c1/", false},
+	}
+	for _, c := range cases {
+		if got := fanfoxChapterURL(c.url); got != c.want {
+			t.Errorf("fanfoxChapterURL(%q) = %v, want %v", c.url, got, c.want)
+		}
+	}
+}
+
+func TestFanfoxSeriesURL(t *testing.T) {
+	cases := []struct {
+		url     string
+		wantURL string
+		wantOK  bool
+	}{
+		{"https://fanfox.net/manga/chainsaw_man/c228/1.html", "https://fanfox.net/manga/chainsaw_man/", true},
+		{"https://fanfox.net/manga/onepunch_man/vTBD/c237/1.html", "https://fanfox.net/manga/onepunch_man/", true},
+		{"https://fanfox.net/manga/one_piece/v00/c001.1/1.html", "https://fanfox.net/manga/one_piece/", true},
+		{"https://www.fanfox.net/manga/chainsaw_man/c228/1.html", "https://www.fanfox.net/manga/chainsaw_man/", true},
+		// series URL — no-op
+		{"https://fanfox.net/manga/chainsaw_man/", "", false},
+		{"https://fanfox.net/manga/chainsaw_man", "", false},
+	}
+	for _, c := range cases {
+		got, ok := fanfoxSeriesURL(c.url)
+		if ok != c.wantOK || got != c.wantURL {
+			t.Errorf("fanfoxSeriesURL(%q) = (%q, %v), want (%q, %v)", c.url, got, ok, c.wantURL, c.wantOK)
+		}
+	}
+}
+
 // realChapterfunPayload is a real (captured) chapterfun.ashx response for
 // Chainsaw Man chapter 1, page 1: a P.A.C.K.E.R.-packed script that builds
 // an array of 2 image URLs (the current page, and the next page's preload).
