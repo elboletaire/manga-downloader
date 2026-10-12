@@ -3,6 +3,7 @@
 package browser
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"html"
@@ -12,10 +13,14 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
 
+	"github.com/chromedp/cdproto/input"
+	"github.com/chromedp/cdproto/target"
 	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/http"
 	"github.com/elboletaire/manga-downloader/notice"
@@ -191,6 +196,200 @@ func TestIntegrationCloseAbortsALoadAndEndsTheBrowser(t *testing.T) {
 		}
 	}
 	mustLoad(t, srv.URL+"/ok")
+}
+
+func TestIntegrationClosesPopupTabs(t *testing.T) {
+	if os.Getenv("MANGA_DOWNLOADER_BROWSER_TESTS") != "1" {
+		t.Skip("set MANGA_DOWNLOADER_BROWSER_TESTS=1 to run the real browser tests")
+	}
+	if runtime.GOOS != "linux" {
+		t.Skip("the real browser tests run on Linux only")
+	}
+	if _, err := findBrowser(systemHost()); err != nil {
+		t.Skip("no browser installed:", err)
+	}
+	t.Setenv("DISPLAY", "")
+	t.Setenv("WAYLAND_DISPLAY", "")
+	t.Cleanup(Close)
+	SetVisible(false)
+	mu.Lock()
+	prev := visibleTimeout
+	visibleTimeout = 10 * time.Second
+	mu.Unlock()
+	t.Cleanup(func() {
+		mu.Lock()
+		visibleTimeout = prev
+		mu.Unlock()
+	})
+
+	var (
+		noticesMu sync.Mutex
+		gotNotice string
+	)
+	notice.SetHandler(func(_ notice.Level, msg string) {
+		noticesMu.Lock()
+		defer noticesMu.Unlock()
+		if strings.Contains(msg, "pop-up") && gotNotice == "" {
+			gotNotice = msg
+		}
+	})
+	t.Cleanup(func() { notice.SetHandler(nil) })
+
+	// the page opens a popup on load (script), from a button's onclick and
+	// from a link with target=_blank; the popup page itself is plain. The
+	// button and link are absolutely placed so the clicks have known targets
+	popupSrv := httptest.NewServer(nethttp.HandlerFunc(func(w nethttp.ResponseWriter, r *nethttp.Request) {
+		switch r.URL.Path {
+		case "/popup":
+			fmt.Fprint(w, `<html><body>popup</body></html>`)
+		case "/warmup":
+			fmt.Fprint(w, `<html><body><div id="ok">ok</div></body></html>`)
+		case "/page":
+			fmt.Fprint(w, `<html><body>
+				<div id="ready">ready</div>
+				<a id="link" href="/popup" target="_blank" rel="noopener"
+					style="position:absolute;left:100px;top:300px;display:block;width:200px;height:50px">open with link</a>
+				<button id="btn" onclick="window.open('/popup')"
+					style="position:absolute;left:100px;top:200px;width:200px;height:50px">open popup</button>
+				<script>window.open('/popup');</script>
+			</body></html>`)
+		default:
+			nethttp.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(popupSrv.Close)
+
+	// starts the browser, so the listener below sees the tab it creates
+	if _, err := GetHTML(popupSrv.URL+"/warmup", "#ok", 30*time.Second); err != nil {
+		t.Fatalf("starting the browser: %v", err)
+	}
+
+	mu.Lock()
+	b := inst
+	mu.Unlock()
+	if b == nil {
+		t.Fatal("no browser running after load")
+	}
+	popupCount := countPopupsFrom(b.ctx)
+
+	if _, err := GetHTML(popupSrv.URL+"/page", "#ready", 30*time.Second); err != nil {
+		t.Fatalf("loading a page that opens a popup: %v", err)
+	}
+
+	// a popup that closed before we looked would pass the target count alone,
+	// so each case first waits for its popup to be seen
+	waitUntil(t, func() bool { return popupCount.Load() >= 1 }, 3*time.Second, "script popup never opened")
+	if !waitPageTargets(t, b, 1, 3*time.Second) {
+		t.Error("script popup was not closed")
+	}
+
+	before := popupCount.Load()
+	clickAt(t, b, 200, 225) // button
+	waitUntil(t, func() bool { return popupCount.Load() > before }, 3*time.Second, "button popup never opened")
+	if !waitPageTargets(t, b, 1, 3*time.Second) {
+		t.Error("button popup was not closed")
+	}
+
+	before = popupCount.Load()
+	clickAt(t, b, 200, 325) // link with target=_blank
+	waitUntil(t, func() bool { return popupCount.Load() > before }, 3*time.Second, "link popup never opened")
+	if !waitPageTargets(t, b, 1, 3*time.Second) {
+		t.Error("link popup was not closed")
+	}
+
+	// the notice is emitted from the closing goroutine, so it may trail the
+	// target going away by a moment
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		noticesMu.Lock()
+		got := gotNotice
+		noticesMu.Unlock()
+		if got != "" || time.Now().After(deadline) {
+			if got != popupClosedNotice {
+				t.Errorf("popup notice = %q, want %q", got, popupClosedNotice)
+			}
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+// countPopupsFrom registers a ListenTarget on ctx and returns an atomic counter
+// that increments each time a popup page target whose OpenerID is ctx's tab is created.
+func countPopupsFrom(ctx context.Context) *atomic.Int32 {
+	var n atomic.Int32
+	c := chromedp.FromContext(ctx)
+	tabID := c.Target.TargetID
+	chromedp.ListenTarget(ctx, func(ev any) {
+		if e, ok := ev.(*target.EventTargetCreated); ok && isPopupOf(e.TargetInfo, tabID) {
+			n.Add(1)
+		}
+	})
+	return &n
+}
+
+// waitUntil polls cond until it holds (or deadline), failing the test with msg otherwise.
+func waitUntil(t *testing.T, cond func() bool, deadline time.Duration, msg string) {
+	t.Helper()
+	end := time.Now().Add(deadline)
+	for time.Now().Before(end) {
+		if cond() {
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	t.Error(msg)
+}
+
+// waitPageTargets polls until exactly n page targets remain (or deadline).
+func waitPageTargets(t *testing.T, b *instance, n int, deadline time.Duration) bool {
+	t.Helper()
+	end := time.Now().Add(deadline)
+	for time.Now().Before(end) {
+		ctx, cancel := context.WithTimeout(b.ctx, 5*time.Second)
+		var infos []*target.Info
+		err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
+			var e error
+			infos, e = target.GetTargets().Do(ctx)
+			return e
+		}))
+		cancel()
+		if err != nil {
+			t.Logf("listing targets: %v", err)
+			time.Sleep(50 * time.Millisecond)
+			continue
+		}
+		count := 0
+		for _, ti := range infos {
+			if ti.Type == "page" {
+				count++
+			}
+		}
+		if count == n {
+			return true
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	return false
+}
+
+// clickAt dispatches a trusted mouse click at (x, y) via CDP input events.
+func clickAt(t *testing.T, b *instance, x, y float64) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(b.ctx, 5*time.Second)
+	defer cancel()
+	err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
+		for _, typ := range []input.MouseType{input.MousePressed, input.MouseReleased} {
+			ev := input.DispatchMouseEvent(typ, x, y).WithButton(input.Left).WithClickCount(1)
+			if err := ev.Do(ctx); err != nil {
+				return err
+			}
+		}
+		return nil
+	}))
+	if err != nil {
+		t.Fatalf("clicking at (%v, %v): %v", x, y, err)
+	}
 }
 
 // between returns the text of s between the first from and the next to
