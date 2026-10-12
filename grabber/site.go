@@ -232,6 +232,11 @@ func (g *Grabber) SetMaxConcurrency(m MaxConcurrency) {
 	g.Settings.MaxConcurrency = m
 }
 
+// SetSettings updates the settings pointer. The controller calls this when
+// reusing a site across filter-only reloads so the site and the new settings
+// share the same pointer, keeping later Configure changes visible.
+func (g *Grabber) SetSettings(s *Settings) { g.Settings = s }
+
 // GetFilenameTemplate returns the defined filename template
 func (g Grabber) GetFilenameTemplate() string {
 	return g.Settings.FilenameTemplate

@@ -137,6 +137,9 @@ type Controller struct {
 	// closing tracks a browser close running in the background (see Clear),
 	// which loads wait for rather than meet a browser going away
 	closing sync.WaitGroup
+	// reuseOnLoad is set by BeginLoad when a filter-only reload can skip
+	// re-identifying the site; load() reads and clears it
+	reuseOnLoad grabber.Site
 
 	mu sync.Mutex
 	// settings is the one pointer the site and core read their settings
@@ -339,6 +342,20 @@ func (c *Controller) BeginLoad(url string) error {
 	s := new(grabber.Settings)
 	*s = *c.settings
 	c.settings = s
+	// Reuse the existing site for a filter-only reload only when the grabber
+	// explicitly opts in via grabber.Refilterable (same URL, series loaded,
+	// filter changed). Grabbers that must re-fetch to apply their filter
+	// (mangadex, mangafire, mangaplus) are always re-identified.
+	if c.series != nil && url == c.url &&
+		(s.Language != c.loadedLanguage || s.Scanlator != c.loadedScanlator) {
+		if _, ok := c.series.Site.(grabber.Refilterable); ok {
+			c.reuseOnLoad = c.series.Site
+		} else {
+			c.reuseOnLoad = nil
+		}
+	} else {
+		c.reuseOnLoad = nil
+	}
 	c.url = url
 	c.mu.Unlock()
 	c.emit()
@@ -388,15 +405,33 @@ func (c *Controller) FinishLoad(url string) error {
 }
 
 func (c *Controller) load(url string, s *grabber.Settings) error {
-	site, siteErrs := c.identify(url, s)
-	for _, err := range siteErrs {
-		c.addLog(LogWarn, "site check: "+err.Error())
-	}
-	if site == nil {
-		c.mu.Lock()
-		c.languages, c.scanlators = nil, nil
-		c.mu.Unlock()
-		return errors.New("site not recognised")
+	// Take and clear the reuse-site set by BeginLoad so it never bleeds
+	// into a later load, then skip re-identifying when it's available.
+	c.mu.Lock()
+	reuse := c.reuseOnLoad
+	c.reuseOnLoad = nil
+	c.mu.Unlock()
+
+	var site grabber.Site
+	if reuse != nil {
+		// Update the site's settings pointer to the new one so any options
+		// configured between loads are visible to FetchChapter and helpers.
+		if su, ok := reuse.(interface{ SetSettings(*grabber.Settings) }); ok {
+			su.SetSettings(s)
+		}
+		site = reuse
+	} else {
+		var siteErrs []error
+		site, siteErrs = c.identify(url, s)
+		for _, err := range siteErrs {
+			c.addLog(LogWarn, "site check: "+err.Error())
+		}
+		if site == nil {
+			c.mu.Lock()
+			c.languages, c.scanlators = nil, nil
+			c.mu.Unlock()
+			return errors.New("site not recognised")
+		}
 	}
 
 	series, err := core.Open(site, s)

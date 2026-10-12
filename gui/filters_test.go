@@ -486,3 +486,120 @@ func TestLoadFallsBackWhenTheTitleFetchRejectsTheLanguage(t *testing.T) {
 		t.Errorf("no fallback line in the log: %v", c.Log())
 	}
 }
+
+// scanlatorSite lists scanlation groups (does NOT implement Refilterable)
+type scanlatorSite struct {
+	*fakeSite
+	options grabber.FilterOptions
+}
+
+func (s *scanlatorSite) ScanlatorOptions() grabber.FilterOptions { return s.options }
+
+// refilterableSite wraps scanlatorSite and opts in to filter-only reuse,
+// mimicking a grabber (like comix) that caches its chapter walk in memory.
+type refilterableSite struct {
+	*scanlatorSite
+}
+
+func (*refilterableSite) Refilterable() {}
+
+// newScanlatorController returns a controller whose site lists scanlators
+func newScanlatorController(t *testing.T, options grabber.FilterOptions) (*Controller, *scanlatorSite) {
+	t.Helper()
+	c, base, _ := newTestController(t, false, nil, chapters(3, 1)...)
+	site := &scanlatorSite{fakeSite: base, options: options}
+	c.identify = func(_ string, s *grabber.Settings) (grabber.Site, []error) {
+		site.Settings = s
+		return site, nil
+	}
+	return c, site
+}
+
+func TestFilterOnlyReloadReIdentifiesNonRefilterable(t *testing.T) {
+	// A site that does not implement grabber.Refilterable (e.g. mangafire)
+	// must be re-identified on every load, including a filter change, so
+	// its internal per-language caches are not served stale.
+	options := grabber.FilterOptions{Values: []string{"Alpha", "Beta"}, All: true}
+	c, site := newScanlatorController(t, options)
+
+	identifyCalls := 0
+	c.identify = func(_ string, s *grabber.Settings) (grabber.Site, []error) {
+		identifyCalls++
+		site.Settings = s
+		return site, nil
+	}
+
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if identifyCalls != 1 {
+		t.Fatalf("first load: identify %d times, want 1", identifyCalls)
+	}
+
+	// Filter change on the same URL: must call identify again (no reuse)
+	if err := c.Configure(func(s *grabber.Settings) { s.Scanlator = "Alpha" }); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if identifyCalls != 2 {
+		t.Errorf("after filter reload: identify %d times, want 2 (no reuse for non-Refilterable)", identifyCalls)
+	}
+}
+
+func TestFilterOnlyReloadReusesRefilterable(t *testing.T) {
+	// A grabber.Refilterable site (like comix) is reused on a filter change
+	// so its cached page walk is not repeated; a different URL or an explicit
+	// reload of the same URL (no filter change) still creates a fresh site.
+	options := grabber.FilterOptions{Values: []string{"Alpha", "Beta"}, All: true}
+	c, base := newScanlatorController(t, options)
+	site := &refilterableSite{scanlatorSite: base}
+
+	identifyCalls := 0
+	c.identify = func(_ string, s *grabber.Settings) (grabber.Site, []error) {
+		identifyCalls++
+		site.Settings = s
+		return site, nil
+	}
+
+	// First load: identify called once
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if identifyCalls != 1 {
+		t.Fatalf("first load: identify %d times, want 1", identifyCalls)
+	}
+	firstInstance := c.series.Site
+
+	// Filter change on the same URL: reuse, no identify
+	if err := c.Configure(func(s *grabber.Settings) { s.Scanlator = "Alpha" }); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if identifyCalls != 1 {
+		t.Errorf("after filter reload: identify %d times, want still 1", identifyCalls)
+	}
+	if c.series.Site != firstInstance {
+		t.Error("filter reload replaced the site instance, want the same one reused")
+	}
+
+	// Explicit reload (no filter change): fresh identify
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if identifyCalls != 2 {
+		t.Errorf("after explicit reload: identify %d times, want 2", identifyCalls)
+	}
+
+	// Different URL: fresh identify
+	identifyCalls = 0
+	if err := c.Load("https://example.com/manga/other"); err != nil {
+		t.Fatal(err)
+	}
+	if identifyCalls != 1 {
+		t.Errorf("different URL: identify %d times, want 1", identifyCalls)
+	}
+}
