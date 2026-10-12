@@ -274,6 +274,9 @@ func (c *Controller) FinishLoad(url string) error {
 	s := c.settings
 	c.mu.Unlock()
 
+	// the browser's visibility is read when it starts, and loading a site
+	// may be what starts it
+	browser.SetVisible(s.BrowserVisible)
 	err := c.load(url, s)
 
 	c.mu.Lock()
@@ -918,6 +921,9 @@ func (c *Controller) Start() error {
 // run is the download goroutine
 func (c *Controller) run(ctx context.Context, series *core.Series, settings *grabber.Settings, chapters grabber.Filterables, skip []ranges.Range, rng string) {
 	file, err := series.Download(ctx, chapters, skip, rng, events{c})
+	// the pages that needed the browser are done: close it rather than keep
+	// it (and maybe its window) open until the app quits
+	browser.Close()
 
 	c.mu.Lock()
 	defer func() {

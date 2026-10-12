@@ -9,7 +9,6 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/browser"
-	"github.com/elboletaire/manga-downloader/notice"
 )
 
 // BrowserSiteSelector is a SiteSelector for sites that need a real browser
@@ -241,7 +240,6 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 	m.site = selector.SiteSelector
 	browser.SetSettle(m.selector.Settle)
 
-	notice.Info("this site needs a real browser, launching Chrome (may take a few seconds)...")
 	// GetHTML tries headless first and, if the page is behind a challenge,
 	// automatically reopens a visible window and retries — no flag needed.
 	html, err := browser.GetHTML(m.URL, m.selector.ChaptersWait, 0)

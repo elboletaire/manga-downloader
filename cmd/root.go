@@ -78,8 +78,10 @@ func Run(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// ensure the shared Chrome process (if any) is killed on exit
+	// ensure the shared Chrome process (if any) is killed on exit, including
+	// an interrupted one
 	defer browser.Close()
+	defer closeBrowserOnInterrupt()()
 	browser.SetVisible(settings.BrowserVisible)
 
 	// validated before anything is fetched, so a typo fails fast
