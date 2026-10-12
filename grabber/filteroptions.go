@@ -34,6 +34,17 @@ type ScanlatorLister interface {
 	ScanlatorOptions() FilterOptions
 }
 
+// Refilterable is implemented by grabbers whose FetchChapters re-applies the
+// current filter from Settings to already-fetched data, without a network
+// round-trip. The controller reuses such a site on a filter-only reload.
+// Grabbers that must fetch to apply their filter (mangadex, mangafire,
+// mangaplus) must not implement this.
+type Refilterable interface {
+	// Refilterable marks that FetchChapters serves cached data on a filter
+	// change: no browser or network access is needed.
+	Refilterable()
+}
+
 // uniqueValues drops the empty and repeated values, keeping the first
 // occurrence of each in its place
 func uniqueValues(values []string) []string {
