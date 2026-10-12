@@ -20,7 +20,7 @@ import (
 )
 
 // These tests drive a real headless browser, so they only run when
-// MANGA_DOWNLOADER_BROWSER_TESTS=1 (and a Chrome-like browser is installed).
+// MANGA_DOWNLOADER_BROWSER_TESTS=1, on Linux, with a Chrome-like browser.
 // DISPLAY and WAYLAND_DISPLAY are cleared so a visible window can't open: the
 // escalation to a visible browser fails instead, which is one more failure
 // the shared browser has to recover from.
@@ -28,6 +28,10 @@ func integration(t *testing.T) *httptest.Server {
 	t.Helper()
 	if os.Getenv("MANGA_DOWNLOADER_BROWSER_TESTS") != "1" {
 		t.Skip("set MANGA_DOWNLOADER_BROWSER_TESTS=1 to run the real browser tests")
+	}
+	if runtime.GOOS != "linux" {
+		// clearing DISPLAY only keeps a visible window from opening on Linux
+		t.Skip("the real browser tests run on Linux only")
 	}
 	if _, err := findBrowser(systemHost()); err != nil {
 		t.Skip("no browser installed:", err)
@@ -55,6 +59,16 @@ func integration(t *testing.T) *httptest.Server {
 	}))
 	t.Cleanup(srv.Close)
 	t.Cleanup(Close)
+	// the failed escalation mustn't wait the full visible timeout
+	mu.Lock()
+	prev := visibleTimeout
+	visibleTimeout = 10 * time.Second
+	mu.Unlock()
+	t.Cleanup(func() {
+		mu.Lock()
+		visibleTimeout = prev
+		mu.Unlock()
+	})
 	SetVisible(false)
 	return srv
 }

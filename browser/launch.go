@@ -20,8 +20,9 @@ import (
 // killed
 const closeTimeout = 5 * time.Second
 
-// launchChrome starts a Chrome-like browser and its first tab
-func launchChrome(headed bool) (*instance, error) {
+// launchChrome starts a Chrome-like browser and its first tab. If abort ends
+// first, the half-started browser is killed and ErrClosed returned.
+func launchChrome(abort context.Context, headed bool) (*instance, error) {
 	execPath, err := findBrowser(systemHost())
 	if err != nil {
 		return nil, err
@@ -49,11 +50,20 @@ func launchChrome(headed bool) (*instance, error) {
 
 	allocCtx, allocCancel := chromedp.NewExecAllocator(context.Background(), opts...)
 	browserCtx, browserStop := chromedp.NewContext(allocCtx)
+	// killing the browser ends the Run and hideHeadless below early
+	unwatch := context.AfterFunc(abort, func() {
+		browserStop()
+		allocCancel()
+	})
 
 	// starting the browser eagerly gives a nicer error when chrome is missing
 	if err := chromedp.Run(browserCtx); err != nil {
+		unwatch()
 		browserStop()
 		allocCancel()
+		if abort.Err() != nil {
+			return nil, ErrClosed
+		}
 		if strings.Contains(err.Error(), "executable file not found") {
 			return nil, ErrNoBrowser
 		}
@@ -87,6 +97,14 @@ func launchChrome(headed bool) (*instance, error) {
 	if !headed {
 		hideHeadless(browserCtx)
 	}
+	if !unwatch() {
+		// aborted: the browser is being killed
+		browserStop()
+		guard.release()
+		allocCancel()
+		lose()
+		return nil, ErrClosed
+	}
 
 	var once sync.Once
 	return &instance{
@@ -101,10 +119,12 @@ func launchChrome(headed bool) (*instance, error) {
 				_ = chromedp.Cancel(ctx)
 				cancel()
 				browserStop()
+				// helpers first, so they're gone before chromedp removes
+				// the profile dir once the process exits
+				guard.release()
 				// cancels the process context (killing it, if it's still
 				// up) and waits for it to exit
 				allocCancel()
-				guard.release()
 				lose()
 			})
 		},

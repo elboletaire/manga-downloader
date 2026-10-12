@@ -22,9 +22,23 @@ type fakeBrowser struct {
 	instances []*instance
 	cancels   []context.CancelFunc
 	failNext  error
+	// slow, when set, makes launch block until aborted, closing slow once
+	// it's started
+	slow chan struct{}
+	// halfStarted counts the slow launches killed by an abort
+	halfStarted int
 }
 
-func (f *fakeBrowser) launch(headed bool) (*instance, error) {
+func (f *fakeBrowser) launch(abort context.Context, headed bool) (*instance, error) {
+	if f.slow != nil {
+		close(f.slow)
+		// a browser that takes long to start: only abort ends it
+		<-abort.Done()
+		f.mu.Lock()
+		f.halfStarted++
+		f.mu.Unlock()
+		return nil, ErrClosed
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.failNext != nil {
@@ -88,12 +102,12 @@ func withFake(t *testing.T) (*fakeBrowser, func() []string) {
 func run(op pageOp) error {
 	abort := lock()
 	defer mu.Unlock()
-	return runPage(abort, "https://www.example.com/series/1", "#list", time.Second, true, op)
+	return runPage(abort, "https://www.example.com/series/1", time.Second, true, op)
 }
 
-func ok(context.Context, func(time.Duration)) error { return nil }
+func ok(context.Context, hooks) error { return nil }
 
-func challenge(context.Context, func(time.Duration)) error {
+func challenge(context.Context, hooks) error {
 	return &challengeError{url: "https://www.example.com/series/1", selector: "#list"}
 }
 
@@ -126,7 +140,7 @@ func TestBrowserResetsAfterAFailure(t *testing.T) {
 	f, notices := withFake(t)
 
 	boom := errors.New("boom")
-	if err := run(func(context.Context, func(time.Duration)) error { return boom }); !errors.Is(err, boom) {
+	if err := run(func(context.Context, hooks) error { return boom }); !errors.Is(err, boom) {
 		t.Fatalf("got %v, want the op's error", err)
 	}
 	if _, closed := f.counts(); closed != 1 {
@@ -167,7 +181,7 @@ func TestBrowserReplacedWhenItDied(t *testing.T) {
 func TestBrowserDyingMidLoadIsNotAChallenge(t *testing.T) {
 	f, notices := withFake(t)
 
-	err := run(func(ctx context.Context, _ func(time.Duration)) error {
+	err := run(func(ctx context.Context, _ hooks) error {
 		f.cancels[0]()
 		<-ctx.Done()
 		return &challengeError{url: "https://www.example.com/series/1", selector: "#list"}
@@ -188,10 +202,10 @@ func TestChallengeEscalatesToVisibleThenResets(t *testing.T) {
 	f, notices := withFake(t)
 
 	calls := 0
-	err := run(func(ctx context.Context, r func(time.Duration)) error {
+	err := run(func(ctx context.Context, h hooks) error {
 		calls++
 		if calls == 1 {
-			return challenge(ctx, r)
+			return challenge(ctx, h)
 		}
 		return nil
 	})
@@ -229,10 +243,10 @@ func TestFailedVisibleStartDoesNotStick(t *testing.T) {
 	f, _ := withFake(t)
 
 	calls := 0
-	err := run(func(ctx context.Context, r func(time.Duration)) error {
+	err := run(func(ctx context.Context, h hooks) error {
 		calls++
 		f.failNext = errors.New("no display")
-		return challenge(ctx, r)
+		return challenge(ctx, h)
 	})
 	if err == nil || !strings.Contains(err.Error(), "no display") {
 		t.Fatalf("got %v, want the start error", err)
@@ -274,7 +288,7 @@ func TestCloseAbortsARunningLoad(t *testing.T) {
 	started := make(chan struct{})
 	done := make(chan error, 1)
 	go func() {
-		done <- run(func(ctx context.Context, _ func(time.Duration)) error {
+		done <- run(func(ctx context.Context, _ hooks) error {
 			close(started)
 			<-ctx.Done()
 			return &challengeError{url: "https://www.example.com/series/1", selector: "#list"}
@@ -340,7 +354,7 @@ func TestSlowLoadReportsWaiting(t *testing.T) {
 		mu.Unlock()
 	})
 
-	if err := run(func(context.Context, func(time.Duration)) error {
+	if err := run(func(context.Context, hooks) error {
 		time.Sleep(100 * time.Millisecond)
 		return nil
 	}); err != nil {
@@ -357,7 +371,7 @@ func TestCloseAbortsALoadQueuedBehindIt(t *testing.T) {
 	started := make(chan struct{})
 	first := make(chan error, 1)
 	go func() {
-		first <- run(func(ctx context.Context, _ func(time.Duration)) error {
+		first <- run(func(ctx context.Context, _ hooks) error {
 			close(started)
 			<-ctx.Done()
 			return ctx.Err()
@@ -365,10 +379,13 @@ func TestCloseAbortsALoadQueuedBehindIt(t *testing.T) {
 	}()
 	<-started
 
+	queued := make(chan struct{})
+	lockHook = func() { close(queued) }
+	t.Cleanup(func() { lockHook = nil })
 	second := make(chan error, 1)
 	go func() { second <- run(ok) }()
-	// let the second load reach the lock and wait there
-	time.Sleep(50 * time.Millisecond)
+	// the second load has its abort context and is about to wait for mu
+	<-queued
 
 	Close()
 	if err := <-first; !errors.Is(err, ErrClosed) {
@@ -379,5 +396,96 @@ func TestCloseAbortsALoadQueuedBehindIt(t *testing.T) {
 	}
 	if launched, closed := f.counts(); launched != 1 || closed != 1 {
 		t.Errorf("launched %d, closed %d; a queued load started a browser after Close", launched, closed)
+	}
+}
+
+func TestRenderedPageStopsTheWaitingNotice(t *testing.T) {
+	_, notices := withFake(t)
+	mu.Lock()
+	prevAfter, prevEvery := waitNoticeAfter, waitNoticeEvery
+	waitNoticeAfter, waitNoticeEvery = 20*time.Millisecond, 20*time.Millisecond
+	mu.Unlock()
+	t.Cleanup(func() {
+		mu.Lock()
+		waitNoticeAfter, waitNoticeEvery = prevAfter, prevEvery
+		mu.Unlock()
+	})
+
+	// rendered at once, then a long scroll or pagination
+	if err := run(func(_ context.Context, h hooks) error {
+		h.rendered()
+		time.Sleep(100 * time.Millisecond)
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if hasNotice(notices(), "Waiting for") {
+		t.Errorf("waiting notice after the page rendered: %q", notices())
+	}
+
+	// never renders in time
+	if err := run(func(context.Context, hooks) error {
+		time.Sleep(100 * time.Millisecond)
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if !hasNotice(notices(), "Waiting for example.com") {
+		t.Errorf("no waiting notice for a page that didn't render: %q", notices())
+	}
+}
+
+func TestCloseAbortsASlowStart(t *testing.T) {
+	f, _ := withFake(t)
+	f.slow = make(chan struct{})
+
+	done := make(chan error, 1)
+	go func() { done <- run(ok) }()
+	<-f.slow
+
+	closed := make(chan struct{})
+	go func() {
+		Close()
+		close(closed)
+	}()
+	select {
+	case <-closed:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Close waited for the browser to start")
+	}
+	if err := <-done; !errors.Is(err, ErrClosed) {
+		t.Errorf("got %v, want ErrClosed", err)
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.halfStarted != 1 || len(f.instances) != 0 {
+		t.Errorf("half started %d, instances %d; want the start killed and none kept", f.halfStarted, len(f.instances))
+	}
+}
+
+func TestHeldBrowserIsNotIdleClosed(t *testing.T) {
+	f, _ := withFake(t)
+	SetIdleTimeout(30 * time.Millisecond)
+
+	release := Hold()
+	if err := run(ok); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(150 * time.Millisecond)
+	if _, closed := f.counts(); closed != 0 {
+		t.Fatal("a held browser was closed for being idle")
+	}
+
+	release()
+	release() // harmless twice
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if _, closed := f.counts(); closed == 1 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("the released browser was never idle-closed")
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }

@@ -57,11 +57,14 @@ var ErrNoBrowser = errors.New(
 // user wait we escalate to a visible browser as soon as it times out.
 const (
 	headlessProbeTimeout = 30 * time.Second
-	visibleTimeout       = 5 * time.Minute
 	// paginationTimeout bounds clicking through a paginated list once the page
 	// has rendered
 	paginationTimeout = 5 * time.Minute
 )
+
+// visibleTimeout bounds a load in a visible window, where a challenge may
+// need solving by hand. A var for the tests, guarded by mu.
+var visibleTimeout = 5 * time.Minute
 
 // challengeError is returned when the wait selector never shows up, which
 // almost always means the page sits behind a challenge (e.g. cloudflare) that
@@ -95,18 +98,15 @@ func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
 // GetHTML only captures the handful of pages near the top; scrolling lets the
 // site's own JS progressively mount the rest before the snapshot is taken.
 func GetHTMLWithScroll(url, waitSelector string, scrollIterations int, scrollPause time.Duration, timeout time.Duration) (string, error) {
-	pre := []chromedp.Action{}
-	if waitSelector != "" {
-		pre = append(pre, chromedp.WaitVisible(waitSelector, chromedp.ByQuery))
-	}
+	scroll := []chromedp.Action{}
 	for i := 1; i <= scrollIterations; i++ {
 		frac := float64(i) / float64(scrollIterations)
-		pre = append(pre,
+		scroll = append(scroll,
 			chromedp.Evaluate(fmt.Sprintf(`window.scrollTo(0, document.body.scrollHeight * %f)`, frac), nil),
 			chromedp.Sleep(scrollPause),
 		)
 	}
-	return getHTML(url, "", timeout, pre)
+	return getHTML(url, waitSelector, timeout, scroll)
 }
 
 // dismissModalJS closes an open modal dialog (e.g. mkissa's "Sign in to
@@ -142,16 +142,16 @@ func GetReaderHTML(seriesURL, tabSelector, paginationSelector, linkSelector, img
 		t = visibleTimeout
 	}
 	var html string
-	err := runPage(abort, seriesURL, "", t, false, func(ctx context.Context, _ func(time.Duration)) error {
+	err := runPage(abort, seriesURL, t, false, func(ctx context.Context, h hooks) error {
 		var err error
-		html, err = readerHTML(ctx, seriesURL, tabSelector, paginationSelector, linkSelector, imgSelector, urlSubstr)
+		html, err = readerHTML(ctx, h, seriesURL, tabSelector, paginationSelector, linkSelector, imgSelector, urlSubstr)
 		return err
 	})
 	return html, err
 }
 
 // readerHTML is GetReaderHTML's single attempt
-func readerHTML(ctx context.Context, seriesURL, tabSelector, paginationSelector, linkSelector, imgSelector, urlSubstr string) (string, error) {
+func readerHTML(ctx context.Context, h hooks, seriesURL, tabSelector, paginationSelector, linkSelector, imgSelector, urlSubstr string) (string, error) {
 	if NetLog != nil {
 		chromedp.ListenTarget(ctx, func(ev interface{}) {
 			if resp, ok := ev.(*network.EventResponseReceived); ok {
@@ -191,6 +191,7 @@ func readerHTML(ctx context.Context, seriesURL, tabSelector, paginationSelector,
 			return "", fmt.Errorf("opening chapter list: chapters tab never became selected")
 		}
 	}
+	h.rendered()
 
 	// click through pagination pages until the target chapter link shows up
 	linkExistsJS := fmt.Sprintf(`!!document.querySelector(%q)`, linkSelector)
@@ -308,9 +309,9 @@ func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxC
 	abort := lock()
 	defer mu.Unlock()
 
-	err = runPage(abort, pageURL, waitSelector, timeout, true, func(ctx context.Context, rearm func(time.Duration)) error {
+	err = runPage(abort, pageURL, timeout, true, func(ctx context.Context, h hooks) error {
 		var err error
-		responses, setup, err = captureAPI(ctx, rearm, pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, setupJS)
+		responses, setup, err = captureAPI(ctx, h, pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, setupJS)
 		return err
 	})
 	if err != nil {
@@ -326,7 +327,7 @@ func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxC
 // tells a challenge apart), so it's re-armed with a full paginationTimeout
 // once the page has loaded: clicking through hundreds of chapters takes far
 // longer than the headless probe is allowed to.
-func captureAPI(ctx context.Context, rearm func(time.Duration), pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, setupJS string) ([]APIResponse, json.RawMessage, error) {
+func captureAPI(ctx context.Context, h hooks, pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, setupJS string) ([]APIResponse, json.RawMessage, error) {
 	type entry struct {
 		id  network.RequestID
 		url string
@@ -370,7 +371,8 @@ func captureAPI(ctx context.Context, rearm func(time.Duration), pageURL, waitSel
 	// wait for the initial matching response(s) the SPA fires on load, so we
 	// don't fetch bodies before they exist
 	waitForGrowth(ctx, count, 0)
-	rearm(paginationTimeout)
+	h.rendered()
+	h.rearm(paginationTimeout)
 
 	// page-specific setup (e.g. switching the chapter list's language); the
 	// script is async and resolves to what parseSetup reads
@@ -473,14 +475,14 @@ func waitForGrowth(ctx context.Context, count func() int, baseline int) bool {
 // url in a headless browser and, if the wait selector times out (typically a
 // cloudflare/JS challenge), transparently reopens a visible window and
 // retries.
-func getHTML(url, waitSelector string, timeout time.Duration, preActions []chromedp.Action) (string, error) {
+func getHTML(url, waitSelector string, timeout time.Duration, afterWait []chromedp.Action) (string, error) {
 	abort := lock()
 	defer mu.Unlock()
 
 	var html string
-	err := runPage(abort, url, waitSelector, timeout, true, func(ctx context.Context, _ func(time.Duration)) error {
+	err := runPage(abort, url, timeout, true, func(ctx context.Context, h hooks) error {
 		var err error
-		html, err = render(ctx, url, waitSelector, preActions)
+		html, err = render(ctx, h, url, waitSelector, afterWait)
 		return err
 	})
 	return html, err
@@ -488,9 +490,9 @@ func getHTML(url, waitSelector string, timeout time.Duration, preActions []chrom
 
 // render performs a single navigation in the shared browser, reusing its
 // initial tab (a new tab would spawn in the background, leaving the blank
-// first tab in front and hiding the page). preActions, if any, run right
-// after the initial navigation and before waitSelector is awaited.
-func render(ctx context.Context, url, waitSelector string, preActions []chromedp.Action) (string, error) {
+// first tab in front and hiding the page). afterWait, if any, runs once
+// waitSelector matches, before the snapshot.
+func render(ctx context.Context, h hooks, url, waitSelector string, afterWait []chromedp.Action) (string, error) {
 	if NetLog != nil {
 		chromedp.ListenTarget(ctx, func(ev interface{}) {
 			if resp, ok := ev.(*network.EventResponseReceived); ok {
@@ -503,10 +505,14 @@ func render(ctx context.Context, url, waitSelector string, preActions []chromedp
 	actions := []chromedp.Action{
 		chromedp.Navigate(url),
 	}
-	actions = append(actions, preActions...)
 	if waitSelector != "" {
 		actions = append(actions, chromedp.WaitVisible(waitSelector, chromedp.ByQuery))
 	}
+	actions = append(actions, chromedp.ActionFunc(func(context.Context) error {
+		h.rendered()
+		return nil
+	}))
+	actions = append(actions, afterWait...)
 	if settle > 0 {
 		actions = append(actions, chromedp.Sleep(settle))
 	}

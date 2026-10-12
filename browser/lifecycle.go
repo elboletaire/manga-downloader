@@ -27,8 +27,8 @@ type instance struct {
 	close func()
 }
 
-// launch starts a browser; replaced in tests so the lifecycle can be checked
-// without a real one
+// launch starts a browser, giving up when abort ends; replaced in tests so
+// the lifecycle can be checked without a real one
 var launch = launchChrome
 
 var (
@@ -84,14 +84,21 @@ func lock() context.Context {
 	abortMu.Lock()
 	abort := abortCtx
 	abortMu.Unlock()
+	if lockHook != nil {
+		lockHook()
+	}
 	mu.Lock()
 	return abort
 }
 
+// lockHook, when set, runs in lock between reading the abort context and
+// waiting for mu. Tests only.
+var lockHook func()
+
 // start makes sure a live browser is running, replacing one that died since
 // it was last used. host names the site it's started for, for the notices.
 // Callers must hold mu.
-func start(host string) error {
+func start(abort context.Context, host string) error {
 	if inst != nil {
 		if inst.lost.Err() == nil {
 			return nil
@@ -106,7 +113,7 @@ func start(host string) error {
 	} else {
 		notice.Info("%s needs a real browser: starting it in the background (this can take a few seconds)...", host)
 	}
-	i, err := launch(headed)
+	i, err := launch(abort, headed)
 	if err != nil {
 		return err
 	}
@@ -128,10 +135,10 @@ func teardown() {
 
 // goVisible replaces the current headless browser with a visible one.
 // Callers must hold mu.
-func goVisible(host string) error {
+func goVisible(abort context.Context, host string) error {
 	teardown()
 	escalated = true
-	return start(host)
+	return start(abort, host)
 }
 
 // Close shuts down the shared browser, if it was started, ending any page
@@ -160,7 +167,28 @@ var (
 	idleTimeout time.Duration
 	idleTimer   *time.Timer
 	idleGen     uint64
+	// holds counts the Hold calls not yet released
+	holds int
 )
+
+// Hold keeps the idle timeout from closing the browser until the returned
+// release is called, for work (a download run) that uses it now and then
+// and must not lose it in between. release is safe to call more than once.
+func Hold() (release func()) {
+	mu.Lock()
+	defer mu.Unlock()
+	holds++
+	stopIdle()
+	var once sync.Once
+	return func() {
+		once.Do(func() {
+			mu.Lock()
+			defer mu.Unlock()
+			holds--
+			armIdle()
+		})
+	}
+}
 
 // SetIdleTimeout closes the browser after it's gone unused for d, so a
 // long-running app doesn't keep it (and possibly its window) open after the
@@ -184,7 +212,7 @@ func stopIdle() {
 // armIdle starts the idle countdown after a page load. Callers must hold mu.
 func armIdle() {
 	stopIdle()
-	if idleTimeout <= 0 || inst == nil {
+	if idleTimeout <= 0 || inst == nil || holds > 0 {
 		return
 	}
 	gen := idleGen
@@ -198,10 +226,19 @@ func armIdle() {
 }
 
 // pageOp is one page operation run in the shared browser's tab. ctx ends when
-// the attempt times out, is aborted or the browser is lost; rearm restarts
-// the timeout (for operations that keep working once the page has rendered).
-// It returns a *challengeError when the wait selector never matched.
-type pageOp func(ctx context.Context, rearm func(time.Duration)) error
+// the attempt times out, is aborted or the browser is lost. It returns a
+// *challengeError when the wait selector never matched.
+type pageOp func(ctx context.Context, h hooks) error
+
+// hooks let a pageOp report its progress to the attempt running it
+type hooks struct {
+	// rearm restarts the timeout, for operations that keep working once the
+	// page has rendered
+	rearm func(time.Duration)
+	// rendered says the page is in, which stops the "still waiting" notices:
+	// what follows (scrolling, pagination) is slow by design
+	rendered func()
+}
 
 // runPage runs op in the shared browser, starting it if needed. abort is the
 // context from lock.
@@ -211,7 +248,7 @@ type pageOp func(ctx context.Context, rearm func(time.Duration)) error
 // closed, so the next request starts a fresh one instead of reusing one that
 // may be dead or stuck. That's deliberate: a failed browser is always
 // discarded, at the cost of passing a check again. Callers must hold mu.
-func runPage(abort context.Context, pageURL, waitSelector string, timeout time.Duration, escalate bool, op pageOp) error {
+func runPage(abort context.Context, pageURL string, timeout time.Duration, escalate bool, op pageOp) error {
 	stopIdle()
 	host := hostOf(pageURL)
 
@@ -220,7 +257,7 @@ func runPage(abort context.Context, pageURL, waitSelector string, timeout time.D
 	if errors.As(err, &ce) && escalate && inst != nil && !inst.headed {
 		notice.Warn("%s didn't load in a headless browser (probably a Cloudflare check).", host)
 		notice.Warn("Opening a visible browser window to pass the check: solve it there if asked...")
-		if err = goVisible(host); err == nil {
+		if err = goVisible(abort, host); err == nil {
 			err = attempt(host, pageURL, visibleTimeout, abort, op)
 		}
 	}
@@ -246,7 +283,10 @@ func attempt(host, pageURL string, timeout time.Duration, abort context.Context,
 	if abort.Err() != nil {
 		return ErrClosed
 	}
-	if err := start(host); err != nil {
+	if err := start(abort, host); err != nil {
+		if abort.Err() != nil {
+			return ErrClosed
+		}
 		return err
 	}
 	b := inst
@@ -268,9 +308,14 @@ func attempt(host, pageURL string, timeout time.Duration, abort context.Context,
 	if b.headed {
 		startChallengeClicker(ctx)
 	}
-	go reportWaiting(ctx, host, b.headed, waitNoticeAfter, waitNoticeEvery)
+	waiting, rendered := context.WithCancel(ctx)
+	defer rendered()
+	go reportWaiting(waiting, host, b.headed, waitNoticeAfter, waitNoticeEvery)
 
-	err := op(ctx, func(d time.Duration) { timer.Reset(d) })
+	err := op(ctx, hooks{
+		rearm:    func(d time.Duration) { timer.Reset(d) },
+		rendered: rendered,
+	})
 	switch {
 	case err == nil:
 		return nil

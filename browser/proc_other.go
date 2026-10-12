@@ -6,10 +6,11 @@ package browser
 
 import "os"
 
-// procGuard keeps a browser's processes from outliving the app. Elsewhere
-// than on Windows there's nothing to add: chromedp kills the browser itself,
-// with SIGKILL on the parent's death on Linux, and Chrome's helper processes
-// exit along with it.
+// procGuard keeps a browser's processes from outliving the app; only Windows
+// has one. On Linux chromedp has the browser SIGKILLed when the app dies
+// (Pdeathsig), and Chrome's helpers exit along with it. macOS has no such
+// thing: Close and the CLI's interrupt handler cover normal exits, but an app
+// that crashes or is killed can leave the browser running.
 type procGuard struct{}
 
 func guardProcess(*os.Process) procGuard { return procGuard{} }

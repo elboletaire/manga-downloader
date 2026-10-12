@@ -914,7 +914,13 @@ func (c *Controller) Start() error {
 	// the browser's visibility is read when it starts, so it must follow the
 	// option as of this run, not the one in force when the series was loaded
 	browser.SetVisible(settings.BrowserVisible)
-	go c.run(ctx, series, settings, chapters, skip, rng)
+	// the idle close mustn't drop the browser between chapters: run closes
+	// it at the end instead
+	release := browser.Hold()
+	go func() {
+		defer release()
+		c.run(ctx, series, settings, chapters, skip, rng)
+	}()
 	return nil
 }
 

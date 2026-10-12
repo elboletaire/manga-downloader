@@ -196,7 +196,7 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(1)
 	}
 
-	fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(bundleFile))
+	fmt.Fprintf(color.Output, "- %s %s\n", color.GreenString("saved file"), color.HiBlackString(bundleFile))
 }
 
 // exitSettingError prints a setting that failed validation in the words each
@@ -292,13 +292,17 @@ func init() {
 // exit closes the shared browser (if any was started) before exiting,
 // otherwise the Chrome process would be left running in the background
 func exit(code int) {
-	browser.Close()
-	os.Exit(code)
+	// an interrupted run ends with the signal's code, whatever failed after
+	if c := interrupted.Load(); c != 0 {
+		code = int(c)
+	}
+	closeBrowser()
+	osExit(code)
 }
 
 func cerr(err error, prefix string) {
 	if err != nil {
-		fmt.Println(color.RedString(prefix + err.Error()))
+		fmt.Fprintln(color.Output, color.RedString(prefix+err.Error()))
 		exit(1)
 	}
 }
