@@ -36,6 +36,19 @@ func TestMangaballFetchTitle(t *testing.T) {
 	}
 }
 
+func TestMangaballSeriesURL(t *testing.T) {
+	// Actual JSON-LD from the chapter page: name comes before url
+	html := `<script type="application/ld+json">{"@type":"ComicStory","isPartOf":{"@type":"ComicSeries","name":"Baki Gaiden: Shin Chiharu","url":"https://mangaball.com/title-detail/6a5ffe5d90273b5b995225d2"}}</script>`
+
+	got, ok := mangaballSeriesURL(html)
+	if !ok {
+		t.Fatal("mangaballSeriesURL: no match")
+	}
+	if want := "https://mangaball.com/title-detail/6a5ffe5d90273b5b995225d2"; got != want {
+		t.Errorf("mangaballSeriesURL() = %q, want %q", got, want)
+	}
+}
+
 func TestMangaballChapterImages(t *testing.T) {
 	page := `<html><body><script>self.__next_f.push([1,"1a:[[\"$\",\"$L24\",null,{\"initialChapter\":{\"id\":\"x\",\"pages\":[\"https://cdn.example/x-001.png\",\"https://cdn.example/x-002.png\"]}}]]\n"])</script></body></html>`
 

@@ -29,10 +29,24 @@ import (
 //     page <img> tags for that chapter.
 //
 // Both endpoints 403 without a Referer header pointing at the site.
+// Chapter reader URLs are of the form /{slug}-chapter-{n}.html, but the
+// site's API-based chapter discovery makes deriving the series URL from a
+// chapter URL impractical: there's no chapter-to-series mapping in the URL
+// itself, and fetching a chapter page yields only a loading placeholder with
+// no series link in the HTML.
 type Jestful struct {
 	*Grabber
 	title string
 }
+
+// jestfulChapterRe matches chapter URLs like
+// https://jestful.net/bsaq-hwms-jitsu-wa-ore-saikyou-deshita-chapter-154.html
+var jestfulChapterRe = regexp.MustCompile(`^https?://jestful\.net/[^/]+-chapter-\d+[^/]*\.html$`)
+
+// jestfulChapterSlugRe extracts the slug from a chapter URL.
+// Chapter URL format: https://jestful.net/bsaq-<slug>-chapter-<N>.html
+// The slug is everything between "bsaq-" and the last "-chapter-<digits>" segment.
+var jestfulChapterSlugRe = regexp.MustCompile(`^https?://jestful\.net/bsaq-(.+)-chapter-[\d.]+[^/]*\.html$`)
 
 func NewJestful(g *Grabber) *Jestful {
 	return &Jestful{Grabber: g}
@@ -55,10 +69,29 @@ func (m *Jestful) Test() (bool, error) {
 	return re.MatchString(m.URL), nil
 }
 
+// resolveSeriesURL rewrites a chapter URL to its series URL.
+// New format: https://jestful.net/bsaq-<slug>-chapter-<N>.html → hwms-<slug>.html
+// Old format: https://jestful.net/bsaq-hwms-<slug>-chapter-<N>.html (redirects to 404).
+// The mapping is purely syntactic; no request is needed.
+func (m *Jestful) resolveSeriesURL() error {
+	matches := jestfulChapterSlugRe.FindStringSubmatch(m.URL)
+	if len(matches) < 2 {
+		return nil
+	}
+	// Old URLs had "hwms-" in the filename; strip it to avoid doubling.
+	slug := strings.TrimPrefix(matches[1], "hwms-")
+	m.URL = "https://jestful.net/hwms-" + slug + ".html"
+	return nil
+}
+
 // FetchTitle fetches and returns the manga title
 func (m *Jestful) FetchTitle() (string, error) {
 	if m.title != "" {
 		return m.title, nil
+	}
+
+	if err := m.resolveSeriesURL(); err != nil {
+		return "", err
 	}
 
 	body, err := http.Get(http.RequestParams{
@@ -82,7 +115,11 @@ func (m *Jestful) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (m Jestful) FetchChapters() (Filterables, []error) {
+func (m *Jestful) FetchChapters() (Filterables, []error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
 	slug, err := m.slug()
 	if err != nil {
 		return nil, []error{err}
@@ -128,7 +165,7 @@ func (m Jestful) FetchChapters() (Filterables, []error) {
 }
 
 // FetchChapter fetches a chapter and its pages
-func (m Jestful) FetchChapter(f Filterable) (*Chapter, error) {
+func (m *Jestful) FetchChapter(f Filterable) (*Chapter, error) {
 	jchap, ok := f.(*JestfulChapter)
 	if !ok {
 		return nil, fmt.Errorf("invalid chapter type %T", f)

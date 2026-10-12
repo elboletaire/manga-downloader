@@ -36,6 +36,24 @@ type FanfoxChapter struct {
 // fanfoxDomainRe matches fanfox.net (with or without www.)
 var fanfoxDomainRe = regexp.MustCompile(`fanfox\.net`)
 
+// fanfoxChapterRe matches chapter URLs like
+// https://fanfox.net/manga/chainsaw_man/c228/1.html
+var fanfoxChapterRe = regexp.MustCompile(`^(https?://[^/]+/manga/[^/]+)(/c\d+/.*)$`)
+
+// fanfoxChapterURL checks if the URL is a chapter URL.
+func fanfoxChapterURL(url string) bool {
+	return fanfoxChapterRe.MatchString(url)
+}
+
+// fanfoxSeriesURL extracts the series URL from a chapter URL by regex.
+func fanfoxSeriesURL(chapterURL string) (string, bool) {
+	matches := fanfoxChapterRe.FindStringSubmatch(chapterURL)
+	if len(matches) < 2 {
+		return "", false
+	}
+	return matches[1] + "/", true
+}
+
 // Test returns true if the URL is a fanfox.net URL
 func (m *Fanfox) Test() (bool, error) {
 	if !fanfoxDomainRe.MatchString(m.URL) {
@@ -51,10 +69,25 @@ func (m *Fanfox) Test() (bool, error) {
 	return true, nil
 }
 
+// resolveSeriesURL resolves a chapter URL to the series URL if needed.
+func (m *Fanfox) resolveSeriesURL() error {
+	seriesURL, ok := fanfoxSeriesURL(m.URL)
+	if !ok {
+		return nil
+	}
+
+	m.URL = seriesURL
+	return nil
+}
+
 // FetchTitle fetches and returns the manga title
 func (m *Fanfox) FetchTitle() (string, error) {
 	if m.title != "" {
 		return m.title, nil
+	}
+
+	if err := m.resolveSeriesURL(); err != nil {
+		return "", err
 	}
 
 	doc, err := m.fetchDoc(m.URL)
@@ -68,7 +101,11 @@ func (m *Fanfox) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (m Fanfox) FetchChapters() (Filterables, []error) {
+func (m *Fanfox) FetchChapters() (Filterables, []error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
 	doc, err := m.fetchDoc(m.URL)
 	if err != nil {
 		return nil, []error{err}
@@ -100,7 +137,7 @@ func (m Fanfox) FetchChapters() (Filterables, []error) {
 }
 
 // FetchChapter fetches a chapter and its pages
-func (m Fanfox) FetchChapter(f Filterable) (*Chapter, error) {
+func (m *Fanfox) FetchChapter(f Filterable) (*Chapter, error) {
 	fchap := f.(*FanfoxChapter)
 
 	doc, err := m.fetchDoc(fchap.URL)

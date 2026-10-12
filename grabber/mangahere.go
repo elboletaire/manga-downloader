@@ -26,6 +26,24 @@ type Mangahere struct {
 	*Grabber
 }
 
+// mangahereChapterRe matches chapter URLs like
+// https://www.mangahere.cc/manga/kengan_omega/c369/1.html
+var mangahereChapterRe = regexp.MustCompile(`^(https?://[^/]+/manga/[^/]+)(/c\d+/.*)$`)
+
+// mangahereChapterURL checks if the URL is a chapter URL.
+func mangahereChapterURL(url string) bool {
+	return mangahereChapterRe.MatchString(url)
+}
+
+// mangahereSeriesURL extracts the series URL from a chapter URL by regex.
+func mangahereSeriesURL(chapterURL string) (string, bool) {
+	matches := mangahereChapterRe.FindStringSubmatch(chapterURL)
+	if len(matches) < 2 {
+		return "", false
+	}
+	return matches[1] + "/", true
+}
+
 func NewMangahere(g *Grabber) *Mangahere {
 	return &Mangahere{Grabber: g}
 }
@@ -42,8 +60,23 @@ func (m *Mangahere) Test() (bool, error) {
 	return re.MatchString(m.URL), nil
 }
 
+// resolveSeriesURL resolves a chapter URL to the series URL if needed.
+func (m *Mangahere) resolveSeriesURL() error {
+	seriesURL, ok := mangahereSeriesURL(m.URL)
+	if !ok {
+		return nil
+	}
+
+	m.URL = seriesURL
+	return nil
+}
+
 // FetchTitle fetches and returns the manga title
 func (m *Mangahere) FetchTitle() (string, error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return "", err
+	}
+
 	body, err := http.Get(http.RequestParams{
 		URL: m.URL,
 	})
@@ -61,7 +94,11 @@ func (m *Mangahere) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (m Mangahere) FetchChapters() (chapters Filterables, errs []error) {
+func (m *Mangahere) FetchChapters() (chapters Filterables, errs []error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
 	body, err := http.Get(http.RequestParams{
 		URL: m.URL,
 	})
@@ -106,7 +143,7 @@ var (
 )
 
 // FetchChapter fetches a chapter and its pages
-func (m Mangahere) FetchChapter(f Filterable) (*Chapter, error) {
+func (m *Mangahere) FetchChapter(f Filterable) (*Chapter, error) {
 	mchap := f.(*MangahereChapter)
 
 	body, err := http.GetText(http.RequestParams{
