@@ -1,6 +1,6 @@
 module github.com/elboletaire/manga-downloader/gui
 
-go 1.26
+go 1.26.0
 
 replace github.com/elboletaire/manga-downloader => ../
 

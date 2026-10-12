@@ -86,7 +86,11 @@ func Run(cmd *cobra.Command, args []string) {
 	// ensure the shared Chrome process (if any) is killed on exit, including
 	// an interrupted one
 	defer browser.Close()
-	defer closeBrowserOnInterrupt()()
+	// Capture the stop func so we can pass it to onInterrupt on Ctrl+C, which
+	// deregisters the handler before calling closeBrowser — this lets a second
+	// Ctrl+C kill the process immediately instead of re-entering closeBrowser.
+	stopSignals := closeBrowserOnInterrupt()
+	defer stopSignals()
 	notice.SetHandler(printNotice)
 	defer notice.SetHandler(nil)
 	browser.SetAttentionHandler(printAttention)
@@ -184,11 +188,16 @@ func Run(cmd *cobra.Command, args []string) {
 	hasDarkBg := lipgloss.HasDarkBackground(os.Stdin, os.Stdout)
 	model := newProgressModel(series.Title, settings.Range, settings.Bundle, showLanguage, hasDarkBg)
 	prog := tea.NewProgram(model)
-	ev := &bubbleEvents{prog: prog}
 
-	// Redirect library notices through the Bubble Tea program so they don't
-	// tear the rendered rows.
-	notice.SetHandler(teaNoticeHandler(prog))
+	// evDone is closed when prog.Run() returns so that bubbleEvents methods
+	// that call prog.Println can fall back to stderr instead of deadlocking.
+	evDone := make(chan struct{})
+	ev := &bubbleEvents{prog: prog, done: evDone}
+
+	// Override the notice and attention handlers with TUI-aware versions that
+	// route through prog.Println (safe) instead of printing directly.
+	notice.SetHandler(teaNoticeHandler(prog, evDone))
+	browser.SetAttentionHandler(teaAttentionHandler(prog, evDone))
 
 	type downloadResult struct {
 		file string
@@ -196,6 +205,13 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 	resultCh := make(chan downloadResult, 1)
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				// Restore the terminal before the stack trace is printed.
+				prog.Kill()
+				panic(r)
+			}
+		}()
 		file, dlErr := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
 		prog.Send(downloadDoneMsg{})
 		resultCh <- downloadResult{file: file, err: dlErr}
@@ -203,17 +219,22 @@ func Run(cmd *cobra.Command, args []string) {
 
 	_, runErr := prog.Run()
 
-	// Restore the default notice handler after the bars are gone.
+	// Signal that the program has stopped; ev.safePrintln will use stderr from now on.
+	close(evDone)
+
+	// Restore the plain notice and attention handlers after the bars are gone.
 	notice.SetHandler(printNotice)
+	browser.SetAttentionHandler(printAttention)
 
 	if errors.Is(runErr, tea.ErrInterrupted) {
-		// Ctrl+C: match the existing interrupt behaviour (exit 130, close browser).
-		onInterrupt(os.Interrupt, func() {})
+		// Ctrl+C: deregister the signal handler first so a second Ctrl+C kills
+		// the process immediately while closeBrowser runs, matching master's behaviour.
+		onInterrupt(os.Interrupt, stopSignals)
 		return // unreachable; onInterrupt calls os.Exit
 	}
 	if runErr != nil {
-		// The TUI failed to start (e.g. can't open TTY). Continue and wait for the
-		// download goroutine so the user at least gets the result on stderr.
+		// The TUI failed to start (e.g. can't open TTY). Continue and wait for
+		// the download goroutine; ev.safePrintln falls back to stderr.
 		fmt.Fprintf(os.Stderr, "warning: TUI error: %v\n", runErr)
 	}
 
@@ -396,51 +417,6 @@ func getUrlArg(args []string) string {
 	}
 
 	return args[1]
-}
-
-// fixedDecorWidth is the approximate total width consumed by the non-title
-// decorators on every bar row:
-//   - counter  "9999/9999 " ≈ 10
-//   - percentage " 100%"     ≈  5
-//   - status   " downloading" ≈ 12
-//   - two spaces mpb inserts around the bar filler  = 2
-const fixedDecorWidth = 29
-
-// minBarWidth is the minimum filler width we want to leave for the bar.
-// The title is pre-capped so that on most terminal sizes the bar is at least
-// this wide; on narrower terminals mpb shrinks and eventually truncates the
-// title itself rather than letting the bar disappear entirely.
-const minBarWidth = 15
-
-// titleSeparatorWidth is the number of characters added around the two title
-// parts in the formatted label "manga - chapter:" (space, dash, space, colon).
-const titleSeparatorWidth = 4
-
-// calculateTitleLengths returns how many runes the manga-title and
-// chapter-title portions of a bar label may each occupy before being
-// truncated.  The remaining terminal width (after the full title row,
-// the fixed decorators, and the minimum bar) is given to the bar filler.
-//
-// On terminals that are wide enough the invariant
-//
-//	termWidth - (mangaLen + titleSeparatorWidth + chapterLen) - fixedDecorWidth >= minBarWidth
-//
-// holds exactly.  On very narrow terminals (below about 64 columns) the
-// parts are set to 1 each so the bar still has some room; mpb will then
-// truncate or elide the title further if required.
-func calculateTitleLengths(termWidth int) (mangaLen, chapterLen int) {
-	// Available runes for mangaLen + chapterLen combined.  The rendered title
-	// also uses titleSeparatorWidth characters (" - " and ":") so we subtract
-	// that too, leaving at least minBarWidth columns for the filler.
-	maxParts := termWidth - fixedDecorWidth - minBarWidth - titleSeparatorWidth
-	if maxParts > 60 {
-		// Cap on very wide terminals: a 60-rune parts budget is already generous.
-		maxParts = 60
-	}
-	// Always show at least 1 rune per part; mpb will truncate further if needed.
-	mangaLen = max(1, maxParts*6/10)
-	chapterLen = max(1, maxParts*4/10)
-	return
 }
 
 // truncateString truncates the input string at a specified maximum length

@@ -65,8 +65,8 @@ func exitCode(s os.Signal) int {
 }
 
 // red and yellow print like color.Red and color.Yellow, but nothing once the
-// CLI was interrupted: the loads the interrupt aborts would print errors. The
-// progress bars aren't muted, as mpb needs the terminal itself to size them.
+// CLI was interrupted: the loads the interrupt aborts would print errors.
+// bubbleEvents.safePrintln also checks interrupted so TUI output is muted too.
 func red(format string, a ...any) {
 	if interrupted.Load() == 0 {
 		color.Red(format, a...)

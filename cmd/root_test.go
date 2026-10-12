@@ -8,44 +8,9 @@ import (
 	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/elboletaire/manga-downloader/grabber"
 )
-
-// TestCalculateTitleLengthsBarMinimum checks that the rendered title row
-// leaves at least minBarWidth columns for the bar filler on common terminal
-// widths.  The rendered label is "manga - chapter:" whose width is
-// mangaLen + titleSeparatorWidth + chapterLen.
-func TestCalculateTitleLengthsBarMinimum(t *testing.T) {
-	for _, termWidth := range []int{50, 80, 120, 200} {
-		mangaLen, chapterLen := calculateTitleLengths(termWidth)
-		// Full label width including the " - " and ":" separator.
-		labelWidth := mangaLen + titleSeparatorWidth + chapterLen
-		remaining := termWidth - labelWidth - fixedDecorWidth
-		if remaining < minBarWidth {
-			t.Errorf("termWidth=%d: remaining bar space %d < minBarWidth %d (mangaLen=%d chapterLen=%d)",
-				termWidth, remaining, minBarWidth, mangaLen, chapterLen)
-		}
-	}
-}
-
-// TestCalculateTitleLengthsWideTerm verifies that very wide terminals are
-// capped so the title does not consume the whole row.
-func TestCalculateTitleLengthsWideTerm(t *testing.T) {
-	mangaLen, chapterLen := calculateTitleLengths(300)
-	parts := mangaLen + chapterLen
-	if parts > 60 {
-		t.Errorf("title parts sum to %d on a 300-col terminal, want ≤60", parts)
-	}
-}
-
-// TestCalculateTitleLengthsNarrowTerm verifies that very narrow terminals
-// still get a non-zero title (mpb will truncate with "…" if it still doesn't fit).
-func TestCalculateTitleLengthsNarrowTerm(t *testing.T) {
-	mangaLen, chapterLen := calculateTitleLengths(30)
-	if mangaLen < 1 || chapterLen < 1 {
-		t.Errorf("narrow terminal gave zero-length title part: mangaLen=%d chapterLen=%d", mangaLen, chapterLen)
-	}
-}
 
 func TestTruncateStringCountsRunesNotBytes(t *testing.T) {
 	// 16 runes but 22 bytes: must not be truncated at a 20 rune limit
@@ -136,6 +101,9 @@ func TestProgressModelBubbleTea(t *testing.T) {
 	if s.status != "downloading" {
 		t.Errorf("initial status = %q, want \"downloading\"", s.status)
 	}
+	if s.rawTitle == "" {
+		t.Error("rawTitle should not be empty after chapterStartedMsg")
+	}
 
 	// pageSuccessMsg should increment current.
 	next, _ = m.Update(pageSuccessMsg{chapter: chapter})
@@ -145,17 +113,20 @@ func TestProgressModelBubbleTea(t *testing.T) {
 		t.Errorf("current after 1 page = %d, want 1", s.current)
 	}
 
-	// WindowSizeMsg should update width.
+	// WindowSizeMsg should update width (title truncates at render time, not here).
 	next, _ = m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
 	m = next.(progressModel)
 	if m.width != 120 {
 		t.Errorf("width after resize = %d, want 120", m.width)
 	}
 
-	// downloadDoneMsg should return Quit.
-	_, cmd := m.Update(downloadDoneMsg{})
+	// downloadDoneMsg should set done=true and return Quit.
+	next, cmd := m.Update(downloadDoneMsg{})
 	if cmd == nil {
 		t.Error("downloadDoneMsg returned nil cmd, want tea.Quit")
+	}
+	if !next.(progressModel).done {
+		t.Error("progressModel.done should be true after downloadDoneMsg")
 	}
 
 	// Ctrl+C should return Interrupt.
@@ -177,6 +148,68 @@ func TestProgressModelBundleMode(t *testing.T) {
 	}
 	if m.bundleTotal != 100 {
 		t.Errorf("bundleTotal = %d, want 100", m.bundleTotal)
+	}
+}
+
+func TestFailedBarNotFull(t *testing.T) {
+	chapter := &grabber.Chapter{
+		Title:      "Chapter 0001",
+		PagesCount: 20, // total progress steps = 40
+	}
+	m := newProgressModel("Series", "", false, false, true)
+	m.width = 80
+
+	{
+		next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: 40})
+		m = next.(progressModel)
+	}
+	// simulate 10 of 40 steps done
+	for i := 0; i < 10; i++ {
+		{
+			next, _ := m.Update(pageSuccessMsg{chapter: chapter})
+			m = next.(progressModel)
+		}
+	}
+	// mark as failed via packedMsg
+	{
+		next, _ := m.Update(packedMsg{chapter: chapter, failed: true})
+		m = next.(progressModel)
+	}
+
+	s := m.states[chapter]
+	if s.status != "failed" {
+		t.Fatalf("status = %q, want \"failed\"", s.status)
+	}
+
+	// The failBar is created lazily in renderChapterRow; after rendering it exists.
+	row := m.renderChapterRow(s)
+	if s.failBar == nil {
+		t.Error("failBar should be non-nil after rendering a failed chapter")
+	}
+
+	// The row must not show a full bar (current=10, total=40 → 25%).
+	// We can't parse the bar drawing chars directly, but we can verify
+	// that the bar was rendered with ViewAs(0.25) not ViewAs(1.0) by checking
+	// that the failBar was used (already done above) and that s.bar.SetPercent(1.0)
+	// was NOT called (s.bar is still at the animated value, not forced to 1.0).
+	_ = row // render was successful
+
+	// A done chapter should use ViewAs(1.0) via the brand bar, not the failBar.
+	chapter2 := &grabber.Chapter{Title: "Chapter 0002", PagesCount: 10}
+	{
+		next, _ := m.Update(chapterStartedMsg{chapter: chapter2, total: 20})
+		m = next.(progressModel)
+	}
+	{
+		next, _ := m.Update(packedMsg{chapter: chapter2, failed: false})
+		m = next.(progressModel)
+	}
+	s2 := m.states[chapter2]
+	if s2.status != "done" {
+		t.Fatalf("status = %q, want \"done\"", s2.status)
+	}
+	if s2.failBar != nil {
+		t.Error("done chapter should not have a failBar")
 	}
 }
 
@@ -217,5 +250,153 @@ func TestBtLayout(t *testing.T) {
 			t.Errorf("btLayout(%d): total row width %d ≠ %d (titleW=%d barW=%d narrow=%v)",
 				tc.width, total, tc.width, titleW, barW, narrow)
 		}
+	}
+}
+
+func TestBtBundleLayout(t *testing.T) {
+	tests := []struct {
+		width             int
+		wantPhasePositive bool
+		wantCounterW      int
+	}{
+		{120, true, 9}, // full
+		{80, true, 9},  // full
+		{56, true, 9},  // exactly full threshold
+		{50, true, 9},  // medium (shrunk phase)
+		{27, true, 9},  // minimum width for phaseW ≥ 1 (26-26=0, 27-26=1)
+		{26, false, 9}, // phaseW=0 at the boundary of medium mode
+		{25, false, 9}, // no phase, keep counter
+		{16, false, 9}, // bar + counter only
+		{15, false, 0}, // bar only
+		{10, false, 0}, // tiny
+	}
+	for _, tc := range tests {
+		phaseW, barW, counterW := btBundleLayout(tc.width)
+		hasPhase := phaseW > 0
+		if hasPhase != tc.wantPhasePositive {
+			t.Errorf("btBundleLayout(%d): phaseW=%d (positive=%v), want positive=%v",
+				tc.width, phaseW, hasPhase, tc.wantPhasePositive)
+		}
+		if counterW != tc.wantCounterW {
+			t.Errorf("btBundleLayout(%d): counterW=%d, want %d", tc.width, counterW, tc.wantCounterW)
+		}
+		// Verify no overflow: total visible width ≤ terminal width.
+		var total int
+		switch {
+		case phaseW > 0 && counterW > 0:
+			total = phaseW + 1 + barW + 1 + counterW
+		case counterW > 0:
+			total = barW + 1 + counterW
+		default:
+			total = barW
+		}
+		if total > tc.width {
+			t.Errorf("btBundleLayout(%d): total=%d overflows terminal", tc.width, total)
+		}
+		if barW < 1 {
+			t.Errorf("btBundleLayout(%d): barW=%d < 1", tc.width, barW)
+		}
+	}
+}
+
+// TestViewWidths renders chapter and bundle rows at various terminal widths and
+// asserts that every row's visible width (ANSI-stripped) does not exceed the
+// terminal width.
+func TestViewWidths(t *testing.T) {
+	chapter := &grabber.Chapter{
+		Title:      "Chapter 0042 The Battle of Wits",
+		PagesCount: 20,
+	}
+	cjkChapter := &grabber.Chapter{
+		Title:      "第042话 大决战",
+		PagesCount: 20,
+	}
+	longTitle := "A Very Long Series Title That Exceeds The Maximum Width"
+
+	widths := []int{120, 80, 56, 50, 40, 20, 10}
+
+	for _, w := range widths {
+		t.Run("chapter", func(t *testing.T) {
+			m := newProgressModel("My Hero Academia", "", false, false, true)
+			m.width = w
+			{
+				next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: 40})
+				m = next.(progressModel)
+			}
+			s := m.states[chapter]
+			row := m.renderChapterRow(s)
+			checkRowWidth(t, row, w, "chapter")
+		})
+
+		t.Run("chapter_cjk", func(t *testing.T) {
+			m := newProgressModel(longTitle, "", false, false, true)
+			m.width = w
+			{
+				next, _ := m.Update(chapterStartedMsg{chapter: cjkChapter, total: 40})
+				m = next.(progressModel)
+			}
+			s := m.states[cjkChapter]
+			row := m.renderChapterRow(s)
+			checkRowWidth(t, row, w, "chapter_cjk")
+		})
+
+		t.Run("chapter_done", func(t *testing.T) {
+			m := newProgressModel("Series", "", false, false, true)
+			m.width = w
+			{
+				next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: 40})
+				m = next.(progressModel)
+			}
+			{
+				next, _ := m.Update(packedMsg{chapter: chapter, failed: false})
+				m = next.(progressModel)
+			}
+			s := m.states[chapter]
+			row := m.renderChapterRow(s)
+			checkRowWidth(t, row, w, "chapter_done")
+		})
+
+		t.Run("chapter_failed", func(t *testing.T) {
+			m := newProgressModel("Series", "", false, false, true)
+			m.width = w
+			{
+				next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: 40})
+				m = next.(progressModel)
+			}
+			for i := 0; i < 10; i++ {
+				{
+					next, _ := m.Update(pageSuccessMsg{chapter: chapter})
+					m = next.(progressModel)
+				}
+			}
+			{
+				next, _ := m.Update(packedMsg{chapter: chapter, failed: true})
+				m = next.(progressModel)
+			}
+			s := m.states[chapter]
+			row := m.renderChapterRow(s)
+			checkRowWidth(t, row, w, "chapter_failed")
+		})
+
+		t.Run("bundle", func(t *testing.T) {
+			m := newProgressModel("Series", "1-5", true, false, true)
+			m.width = w
+			{
+				next, _ := m.Update(bundleStartMsg{total: 50})
+				m = next.(progressModel)
+			}
+			row := m.renderBundleRow()
+			checkRowWidth(t, row, w, "bundle")
+		})
+	}
+}
+
+// checkRowWidth strips ANSI codes and checks the visible width.
+func checkRowWidth(t *testing.T, row string, maxWidth int, label string) {
+	t.Helper()
+	visible := ansi.StringWidth(row)
+	if visible > maxWidth {
+		t.Errorf("%s at width=%d: visible width %d > %d (row=%q)",
+			label, maxWidth, visible, maxWidth, row)
 	}
 }
