@@ -149,6 +149,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewMangahere(g),
 		NewMangatown(g),
 		NewMangaplus(g),
+		NewChainsawManOnline(g),
 		NewPlainHTML(g),
 		NewInmanga(g),
 		NewMangadex(g),
@@ -240,6 +241,20 @@ func NewSite(url string, settings *Settings) (Site, []error) {
 	}
 
 	return g.IdentifySite()
+}
+
+// hostMatchesDomain reports whether rawURL's host is exactly domain or a
+// subdomain of it (e.g. w1.example.com matches example.com). The comparison
+// is case-insensitive and only inspects the host component of the URL, so a
+// domain name that appears only in the path or query string does not match.
+func hostMatchesDomain(rawURL, domain string) bool {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	host := strings.ToLower(u.Hostname())
+	d := strings.ToLower(domain)
+	return host == d || strings.HasSuffix(host, "."+d)
 }
 
 // getUuid returns the first uuid found in the passed string

@@ -47,7 +47,7 @@ and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[111 supported sites](#supported-sites)**, from big aggregators to small
+- **[112 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
@@ -484,7 +484,7 @@ Run `manga-downloader help` to list them in your terminal.
 ## Supported sites
 
 <details>
-<summary><b>Show all 111 supported sites</b></summary>
+<summary><b>Show all 112 supported sites</b></summary>
 <br>
 
 - [3asq.online (Arabic, former 3asq.org)](https://3asq.online)
@@ -496,6 +496,7 @@ Run `manga-downloader help` to list them in your terminal.
 - [azorafly.com (Azorafly, Arabic)](https://azorafly.com)
 - [bigsolo.org](https://bigsolo.org)
 - [bluesolo.org (Blue Solo, French scantrad)](https://bluesolo.org)
+- [chainsawman-chapter.online (Chainsaw Man)](https://chainsawman-chapter.online)
 - [comix.to](https://comix.to) \*
 - [danke.moe (Danke fürs Lesen)](https://danke.moe)
 - [deathtollscans.net](https://reader.deathtollscans.net)

@@ -84,6 +84,7 @@ grabber: \
 	grabber/baozimh \
 	grabber/bigsolo \
 	grabber/bluesolo \
+	grabber/chainsawman \
 	grabber/comix \
 	grabber/danke \
 	grabber/drakecomic \
@@ -204,6 +205,10 @@ grabber/baozimh:
 	go run . https://www.twmanga.com/comic/zhihuojintiandelunhuiqishi-leehyunminiankanara 100
 grabber/bluesolo:
 	go run . https://bluesolo.org/comics/frieren 147
+# single-manga WordPress site, rotating wN. subdomains; use a chapter slightly
+# behind the newest to keep the target stable as new chapters release
+grabber/chainsawman:
+	go run . https://w2.chainsawman-chapter.online 230
 # use a chapter with price 0 (recent chapters are often premium/paywalled)
 grabber/luascans:
 	go run . https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement 56
