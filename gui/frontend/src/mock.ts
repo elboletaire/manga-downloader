@@ -469,6 +469,14 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   if (scenario === 'stale') {
     options.language = 'es';
   }
+  if (scenario === 'update') {
+    // A realistic site-check failure: selector timeout including the full series URL.
+    // The URL is long enough to overflow the status bar without the CSS fix.
+    pushLog(
+      'warn',
+      'site check: timed out waiting for "li.list-group-item, img.PB0mN" at https://example.com/manga/the-cartographer-of-lost-harbours-collected-edition',
+    );
+  }
   if (scenario === 'running' || scenario === 'cancelling' || scenario === 'bundle' || scenario === 'done') {
     options.bundle = scenario === 'bundle';
     const picked = chapters.filter((c) => selected.has(c.index)).slice(0, 12);
