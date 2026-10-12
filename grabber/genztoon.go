@@ -3,7 +3,6 @@
 package grabber
 
 import (
-	"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -88,7 +87,7 @@ func (g *GenzToon) resolveSeriesURL() error {
 	link := doc.Find("h1 a[href]").First()
 	href, ok := link.Attr("href")
 	if !ok || !genzToonSeriesPathRe.MatchString(href) {
-		return fmt.Errorf("couldn't find the series of chapter %s; try the series link instead", g.URL)
+		return errSeriesNotFound(g.URL)
 	}
 
 	// Cache the title from the link text (just the series name, not "- Chapter N").

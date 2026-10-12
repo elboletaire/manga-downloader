@@ -155,6 +155,7 @@ func manganeloTitleFrom(body string) string {
 // FetchChapters returns the chapters of the manga, fetched from the
 // paginated chapters API (the series page DOM only carries the newest 50)
 func (m *Manganelo) FetchChapters() (Filterables, []error) {
+	m.resolveSeriesURL()
 	slug, err := m.slug()
 	if err != nil {
 		return nil, []error{err}
