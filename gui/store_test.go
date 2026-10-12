@@ -16,7 +16,7 @@ func TestOptionsSaveAndLoadRoundTrip(t *testing.T) {
 	want := OptionsDTO{
 		OutputDir:        "/books",
 		Format:           "raw",
-		Bundle:           true,
+		PackAs:           PackBundle,
 		Language:         "es",
 		Scanlator:        "group",
 		ConvertImages:    "avif,webp",
@@ -146,5 +146,59 @@ func TestLoadOptionsRejectsConvertImagesFallsBackToDefault(t *testing.T) {
 	}
 	if _, err := grabber.ParseConvertFormats(s.ConvertImages); err != nil {
 		t.Errorf("the fallback is rejected by the parser: %v", err)
+	}
+}
+
+// files saved before "Pack as" only had the bundle switch
+func TestLoadOptionsMigratesBundle(t *testing.T) {
+	tests := []struct {
+		file string
+		want string
+	}{
+		{`{"bundle":true}`, PackBundle},
+		{`{"bundle":false}`, PackChapters},
+		{`{"packAs":"volumes"}`, PackVolumes},
+		{`{"packAs":"volumes","bundle":true}`, PackVolumes},
+		{`{"packAs":"nonsense"}`, PackChapters},
+		{`{}`, PackChapters},
+	}
+	notice.SetHandler(func(notice.Level, string) {})
+	t.Cleanup(func() { notice.SetHandler(nil) })
+	for _, tt := range tests {
+		path := filepath.Join(t.TempDir(), "gui.json")
+		if err := os.WriteFile(path, []byte(tt.file), 0600); err != nil {
+			t.Fatal(err)
+		}
+		s := defaultSettings()
+		if err := loadOptions(path, s); err != nil {
+			t.Fatal(err)
+		}
+		if got := optionsOf(*s).PackAs; got != tt.want {
+			t.Errorf("%s: pack-as %q, want %q", tt.file, got, tt.want)
+		}
+		if s.Bundle != (tt.want == PackBundle) || (s.Volumes != "") != (tt.want == PackVolumes) {
+			t.Errorf("%s: settings bundle %v volumes %q", tt.file, s.Bundle, s.Volumes)
+		}
+	}
+}
+
+func TestApplyPackAsKeepsVolumes(t *testing.T) {
+	s := defaultSettings()
+	applyPackAs(s, PackVolumes)
+	if s.Volumes != "auto" || s.Bundle {
+		t.Fatalf("volumes: %q bundle %v", s.Volumes, s.Bundle)
+	}
+	s.Volumes = "1-7;8-16"
+	applyPackAs(s, PackVolumes)
+	if s.Volumes != "1-7;8-16" {
+		t.Errorf("re-applying volumes replaced them with %q", s.Volumes)
+	}
+	applyPackAs(s, PackBundle)
+	if s.Volumes != "" || !s.Bundle {
+		t.Errorf("bundle: %q bundle %v", s.Volumes, s.Bundle)
+	}
+	applyPackAs(s, PackChapters)
+	if s.Volumes != "" || s.Bundle {
+		t.Errorf("chapters: %q bundle %v", s.Volumes, s.Bundle)
 	}
 }

@@ -62,6 +62,10 @@ export function SetSelectedMany(arg1, arg2) {
   return window['go']['main']['App']['SetSelectedMany'](arg1, arg2);
 }
 
+export function SetVolumes(arg1) {
+  return window['go']['main']['App']['SetVolumes'](arg1);
+}
+
 export function ShowBrowser() {
   return window['go']['main']['App']['ShowBrowser']();
 }

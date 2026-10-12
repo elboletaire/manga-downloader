@@ -237,15 +237,15 @@ type languageListing struct {
 func (l languageListing) GetLanguage() string { return l.language }
 
 func TestCommonLanguage(t *testing.T) {
-	en := languageListing{listing{1, "one"}, "en"}
-	es := languageListing{listing{2, "dos"}, "es"}
-	if got := commonLanguage(grabber.Filterables{en, languageListing{listing{2, "two"}, "en"}}); got != "en" {
+	en := languageListing{listing{number: 1, title: "one"}, "en"}
+	es := languageListing{listing{number: 2, title: "dos"}, "es"}
+	if got := commonLanguage(grabber.Filterables{en, languageListing{listing{number: 2, title: "two"}, "en"}}); got != "en" {
 		t.Errorf("one language = %q, want en", got)
 	}
 	if got := commonLanguage(grabber.Filterables{en, es}); got != "" {
 		t.Errorf("two languages = %q, want none", got)
 	}
-	if got := commonLanguage(grabber.Filterables{listing{1, "one"}}); got != "" {
+	if got := commonLanguage(grabber.Filterables{listing{number: 1, title: "one"}}); got != "" {
 		t.Errorf("chapters without a language = %q, want none", got)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/notice"
 	"github.com/elboletaire/manga-downloader/packer"
@@ -19,13 +20,51 @@ import (
 type OptionsDTO struct {
 	OutputDir        string `json:"outputDir"`
 	Format           string `json:"format"`
-	Bundle           bool   `json:"bundle"`
+	PackAs           string `json:"packAs"`
 	Language         string `json:"language"`
 	Scanlator        string `json:"scanlator"`
 	ConvertImages    string `json:"convertImages"`
 	SkipPages        string `json:"skipPages"`
 	FilenameTemplate string `json:"filenameTemplate"`
 	BrowserVisible   bool   `json:"browserVisible"`
+}
+
+// How the chapters are packed: the window's "Pack as" choice
+const (
+	// PackChapters is one file per chapter
+	PackChapters = "chapters"
+	// PackVolumes is one file per volume (--volumes)
+	PackVolumes = "volumes"
+	// PackBundle is one file for everything (--bundle)
+	PackBundle = "bundle"
+)
+
+// packAsOf returns the "Pack as" choice the settings amount to
+func packAsOf(s grabber.Settings) string {
+	switch {
+	case s.Bundle:
+		return PackBundle
+	case s.Volumes != "":
+		return PackVolumes
+	}
+	return PackChapters
+}
+
+// applyPackAs sets the settings for a "Pack as" choice. Volumes keeps the
+// volumes the settings already have; the Volumes box replaces them at Start,
+// so "auto" only stands for the choice until then.
+func applyPackAs(s *grabber.Settings, packAs string) {
+	switch packAs {
+	case PackBundle:
+		s.Bundle, s.Volumes = true, ""
+	case PackVolumes:
+		s.Bundle = false
+		if s.Volumes == "" {
+			s.Volumes = core.VolumesAuto
+		}
+	default:
+		s.Bundle, s.Volumes = false, ""
+	}
 }
 
 // defaultSettings are the settings the CLI starts from, with the output
@@ -60,7 +99,7 @@ func optionsOf(s grabber.Settings) OptionsDTO {
 	return OptionsDTO{
 		OutputDir:        s.OutputDir,
 		Format:           s.Format,
-		Bundle:           s.Bundle,
+		PackAs:           packAsOf(s),
 		Language:         s.Language,
 		Scanlator:        s.Scanlator,
 		ConvertImages:    s.ConvertImages,
@@ -75,7 +114,7 @@ func optionsOf(s grabber.Settings) OptionsDTO {
 func applyOptions(s *grabber.Settings, o OptionsDTO) {
 	s.OutputDir = o.OutputDir
 	s.Format = o.Format
-	s.Bundle = o.Bundle
+	applyPackAs(s, o.PackAs)
 	s.Language = o.Language
 	s.Scanlator = o.Scanlator
 	s.ConvertImages = o.ConvertImages
@@ -109,6 +148,24 @@ func loadOptions(path string, s *grabber.Settings) error {
 	o := optionsOf(*s)
 	if err := json.Unmarshal(data, &o); err != nil {
 		return fmt.Errorf("%s: %w", path, err)
+	}
+	// files from before "Pack as" saved the bundle switch on its own
+	var legacy struct {
+		Bundle *bool   `json:"bundle"`
+		PackAs *string `json:"packAs"`
+	}
+	_ = json.Unmarshal(data, &legacy)
+	if legacy.PackAs == nil && legacy.Bundle != nil {
+		o.PackAs = PackChapters
+		if *legacy.Bundle {
+			o.PackAs = PackBundle
+		}
+	}
+	switch o.PackAs {
+	case PackChapters, PackVolumes, PackBundle:
+	default:
+		notice.Warn("ignoring the saved pack-as %q, using %q", o.PackAs, PackChapters)
+		o.PackAs = PackChapters
 	}
 	// a value the parser rejects would only fail at Start, once a series is
 	// loaded, so fall back to the default now and say so

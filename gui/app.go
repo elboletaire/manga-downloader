@@ -179,6 +179,8 @@ type State struct {
 	Jobs            []JobDTO    `json:"jobs"`
 	Summary         *SummaryDTO `json:"summary"`
 	Options         OptionsDTO  `json:"options"`
+	// Volumes is the Volumes box, used when the options pack as volumes
+	Volumes VolumesDTO `json:"volumes"`
 	// Languages and Scanlators are what the two filter selectors offer, null
 	// for a filter the site doesn't list
 	Languages  *FilterDTO `json:"languages"`
@@ -194,6 +196,14 @@ type State struct {
 	// BrowserAlert is the message of a browser window waiting for the user,
 	// "" when none is
 	BrowserAlert string `json:"browserAlert"`
+}
+
+// VolumesDTO is the Volumes box: the volumes a run packs, in --volumes'
+// syntax ("" for the site's own), and the site's volumes in the same syntax,
+// "" when the site doesn't say
+type VolumesDTO struct {
+	Text string `json:"text"`
+	Site string `json:"site"`
 }
 
 // UpdateDTO is a newer release than the running build
@@ -214,6 +224,9 @@ type FilterDTO struct {
 type RunDTO struct {
 	Chapters int  `json:"chapters"`
 	Bundle   bool `json:"bundle"`
+	Volumes  bool `json:"volumes"`
+	// Rows is how many progress rows the run ends up with
+	Rows int `json:"rows"`
 }
 
 // JobDTO is the progress of one chapter (or of the whole bundle)
@@ -226,8 +239,10 @@ type JobDTO struct {
 	Done   int64  `json:"done"`
 	State  string `json:"state"`
 	Reason string `json:"reason"`
-	// Status is the bundle's current phase; empty for single chapters
+	// Status is the bundle's or volume's current phase; empty for single chapters
 	Status string `json:"status"`
+	// Volume is set on the row of a volume
+	Volume bool `json:"volume"`
 }
 
 // SummaryDTO is the outcome of a finished run
@@ -235,6 +250,7 @@ type SummaryDTO struct {
 	Dir       string   `json:"dir"`
 	Cancelled bool     `json:"cancelled"`
 	Saved     int      `json:"saved"`
+	Volumes   int      `json:"volumes"`
 	Bundled   bool     `json:"bundled"`
 	Bundle    string   `json:"bundle"`
 	Skipped   int      `json:"skipped"`
@@ -250,6 +266,8 @@ type ChapterDTO struct {
 	Number   float64 `json:"number"`
 	Title    string  `json:"title"`
 	Language string  `json:"language"`
+	// Volume is the volume the site files the chapter under, 0 when it doesn't say
+	Volume int `json:"volume"`
 }
 
 // LogDTO is one line of the log
@@ -284,6 +302,7 @@ func (a *App) State() State {
 		BrowserAlert:       c.BrowserAlert(),
 	}
 	st.LoadedLanguage, st.LoadedScanlator = c.LoadedFilters()
+	st.Volumes.Text, st.Volumes.Site = c.Volumes()
 	language, scanlator := c.Filters()
 	st.Languages, st.Scanlators = filterDTO(language), filterDTO(scanlator)
 	if err := c.LoadError(); err != nil {
@@ -298,6 +317,7 @@ func (a *App) State() State {
 			State:  jobStateName(j.State),
 			Reason: j.Reason,
 			Status: j.Status,
+			Volume: j.Volume,
 		})
 	}
 
@@ -310,7 +330,7 @@ func (a *App) Chapters() []ChapterDTO {
 	out := make([]ChapterDTO, 0, len(list))
 	dupes := a.ctrl.HasDuplicates()
 	for i, ch := range list {
-		row := ChapterDTO{Index: i, Number: ch.GetNumber(), Title: ch.GetTitle()}
+		row := ChapterDTO{Index: i, Number: ch.GetNumber(), Title: ch.GetTitle(), Volume: grabber.VolumeOf(ch)}
 		// the language only tells copies of the same number apart, so it's
 		// only sent when the list has such copies (as the CLI shows it)
 		if l, ok := ch.(interface{ GetLanguage() string }); ok && dupes {
@@ -406,6 +426,12 @@ func (a *App) SetAll(on bool) error {
 // ("1-10,12") and returns how many matched
 func (a *App) SelectRange(text string) (int, error) {
 	return a.ctrl.SelectRange(text)
+}
+
+// SetVolumes sets the Volumes box ("1-7;8-16", "" for the site's volumes).
+// A value that doesn't parse is refused, as is any change while busy.
+func (a *App) SetVolumes(text string) error {
+	return a.ctrl.SetVolumes(text)
 }
 
 // Options returns the current options
@@ -622,7 +648,7 @@ func filterDTO(f *Filter) *FilterDTO {
 }
 
 func runDTO(r RunInfo) RunDTO {
-	return RunDTO{Chapters: r.Chapters, Bundle: r.Bundle}
+	return RunDTO{Chapters: r.Chapters, Bundle: r.Bundle, Volumes: r.Volumes, Rows: r.Rows}
 }
 
 func summaryDTO(s *Summary) *SummaryDTO {
@@ -633,6 +659,7 @@ func summaryDTO(s *Summary) *SummaryDTO {
 		Dir:       s.Dir,
 		Cancelled: s.Cancelled,
 		Saved:     s.Saved,
+		Volumes:   s.Volumes,
 		Bundled:   s.Bundled,
 		Bundle:    s.Bundle,
 		Skipped:   s.Skipped,

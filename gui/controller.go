@@ -57,7 +57,8 @@ const (
 )
 
 // Job is the progress of one chapter. In bundle mode there's a single Job for
-// the whole bundle, whose Total counts every page twice (download + archive).
+// the whole bundle, whose Total counts every page twice (download + archive),
+// and with volumes one per volume, whose Total grows as its chapters start.
 // The CLI's bar also adds each kept chapter's pages a second time, so it runs
 // past its total; the GUI counts each page once per phase.
 type Job struct {
@@ -67,9 +68,11 @@ type Job struct {
 	Done   int64
 	State  JobState
 	Reason string
-	// Status is the bundle's phase ("Downloading <chapter>", "Creating
-	// bundle..."); unused for single chapters
+	// Status is the bundle's or the volume's phase ("Downloading
+	// <chapter>", "Creating bundle..."); unused for single chapters
 	Status string
+	// Volume is set on the row of a volume
+	Volume bool
 }
 
 // RunInfo describes the run in progress, or the last one
@@ -77,14 +80,22 @@ type RunInfo struct {
 	// Chapters is how many chapters the run was started with
 	Chapters int
 	Bundle   bool
+	// Volumes is set when the run packs one file per volume
+	Volumes bool
+	// Rows is how many progress rows the run ends up with: one per chapter,
+	// one for a bundle, or one per volume plus one per chapter outside them
+	Rows int
 }
 
 // Summary is what a finished run produced
 type Summary struct {
 	Dir       string
 	Cancelled bool
-	// Saved counts chapters written to disk (or, in bundle mode, kept for the bundle)
+	// Saved counts chapters written to disk (or, in bundle mode, kept for the
+	// bundle, and with volumes, kept for their volume)
 	Saved int
+	// Volumes counts the volume files written
+	Volumes int
 	// Bundled is set in bundle mode, where Bundle is the bundle's filename
 	// (empty when none was written)
 	Bundled  bool
@@ -98,6 +109,7 @@ type Summary struct {
 // runStats collects what the events report during a run, for the summary
 type runStats struct {
 	saved    int
+	volumes  int
 	skipped  int
 	failures []string
 	bundle   string
@@ -153,6 +165,11 @@ type Controller struct {
 
 	// loadErr is the last load's error, which the view shows under the URL
 	loadErr error
+	// volumesText is the Volumes box, the volumes a run in volume mode packs:
+	// --volumes' syntax, "" meaning the site's own. siteVolumes is the site's
+	// volumes in the same syntax, what the box starts with on each load.
+	volumesText string
+	siteVolumes string
 	// update is the newer release the update check found, nil when none
 	update *Update
 	// attention is the browser window waiting for the user (a check to pass
@@ -170,9 +187,14 @@ type Controller struct {
 	byChap  map[*grabber.Chapter]*Job
 	bundle  *Job
 	failedC map[*grabber.Chapter]bool
-	stats   runStats
-	summary *Summary
-	log     []LogLine
+	// the rows of the volumes, by volume, by listed chapter (for a failed
+	// fetch) and by fetched chapter
+	byVolume  map[*core.Volume]*Job
+	listedVol map[grabber.Filterable]*Job
+	chapVol   map[*grabber.Chapter]*Job
+	stats     runStats
+	summary   *Summary
+	log       []LogLine
 }
 
 // NewController returns a controller that works on its own copy of settings
@@ -428,6 +450,8 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	c.selGen++
 	c.selected = make([]bool, len(series.Chapters))
 	c.hasDuplicates = core.HasDuplicateChapterNumbers(series.Chapters)
+	c.siteVolumes = core.SiteVolumes(series.Chapters)
+	c.volumesText = c.siteVolumes
 	c.resetResultsLocked()
 	c.appendLogLocked(LogInfo, fmt.Sprintf("Loaded %s: %d chapters", series.Title, len(series.Chapters)))
 	return nil
@@ -437,6 +461,7 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 // series' results don't show next to a new title. The caller holds c.mu.
 func (c *Controller) resetResultsLocked() {
 	c.jobs, c.bundle, c.byChap, c.failedC = nil, nil, nil, nil
+	c.byVolume, c.listedVol, c.chapVol = nil, nil, nil
 	c.summary = nil
 	c.runinfo = RunInfo{}
 	c.stats = runStats{}
@@ -664,6 +689,7 @@ func (c *Controller) Clear() error {
 	c.selected = nil
 	c.selGen++
 	c.hasDuplicates = false
+	c.volumesText, c.siteVolumes = "", ""
 	c.languages, c.scanlators = nil, nil
 	c.loadedLanguage, c.loadedScanlator = "", ""
 	c.loadErr = nil
@@ -920,6 +946,42 @@ func inRanges(n float64, rngs []ranges.Range) bool {
 	return false
 }
 
+// Volumes returns the Volumes box and the site's volumes, in --volumes'
+// syntax; site is "" when the site doesn't say
+func (c *Controller) Volumes() (text, site string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.volumesText, c.siteVolumes
+}
+
+// SetVolumes sets the Volumes box: chapter ranges, one group per volume
+// ("1-7;8-16"), "auto" or "" for the site's own. A value that doesn't parse
+// is refused, as is any change while a series loads or a download runs.
+func (c *Controller) SetVolumes(text string) error {
+	c.mu.Lock()
+	if c.loading || c.running {
+		c.mu.Unlock()
+		return errBusy
+	}
+	if _, err := core.ParseVolumes(text); err != nil {
+		c.mu.Unlock()
+		return err
+	}
+	c.volumesText = strings.TrimSpace(text)
+	c.mu.Unlock()
+	c.emit()
+	return nil
+}
+
+// runVolumes is the --volumes value a run in volume mode packs: the box,
+// or the site's volumes when it's empty. Callers hold mu.
+func (c *Controller) runVolumes() string {
+	if c.volumesText == "" {
+		return core.VolumesAuto
+	}
+	return c.volumesText
+}
+
 // Run describes the current or last run
 func (c *Controller) Run() RunInfo {
 	c.mu.Lock()
@@ -976,6 +1038,11 @@ func (c *Controller) Start() error {
 		c.mu.Unlock()
 		return errors.New("the language or scanlator changed: reload the series first")
 	}
+	// volume mode packs the Volumes box, which isn't saved with the options
+	volumes := c.settings.Volumes != ""
+	if volumes {
+		c.settings.Volumes = c.runVolumes()
+	}
 	skip, err := core.Validate(c.settings)
 	if err != nil {
 		c.mu.Unlock()
@@ -996,16 +1063,34 @@ func (c *Controller) Start() error {
 		c.mu.Unlock()
 		return errors.New("select at least one chapter")
 	}
+	rows := len(chapters)
+	if c.settings.Bundle {
+		rows = 1
+	}
+	if volumes {
+		// grouped here too, so a site without volumes is refused before the
+		// run starts rather than failing it
+		spec, _ := core.ParseVolumes(c.settings.Volumes)
+		groups, loose, err := core.GroupVolumes(chapters, spec)
+		if err != nil {
+			c.mu.Unlock()
+			return err
+		}
+		rows = len(groups) + len(loose)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	c.cancel = cancel
 	c.running = true
 	c.rng = bundleRange(numbers, selected)
-	c.runinfo = RunInfo{Chapters: len(chapters), Bundle: c.settings.Bundle}
+	c.runinfo = RunInfo{Chapters: len(chapters), Bundle: c.settings.Bundle, Volumes: volumes, Rows: rows}
 	c.cancelling = false
 	c.jobs = nil
 	c.byChap = map[*grabber.Chapter]*Job{}
 	c.failedC = map[*grabber.Chapter]bool{}
+	c.byVolume = map[*core.Volume]*Job{}
+	c.listedVol = map[grabber.Filterable]*Job{}
+	c.chapVol = map[*grabber.Chapter]*Job{}
 	c.bundle = nil
 	c.stats = runStats{}
 	c.summary = nil
@@ -1051,10 +1136,16 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 		Dir:      settings.OutputDir,
 		Bundled:  c.bundle != nil,
 		Saved:    c.stats.saved,
+		Volumes:  c.stats.volumes,
 		Skipped:  c.stats.skipped,
 		Failures: c.stats.failures,
 	}
 	switch {
+	case err != nil && c.runinfo.Volumes && !errors.Is(err, context.Canceled):
+		// only the volumes check Start already ran can fail a volume run
+		s.Err = err
+		s.Failures = append(s.Failures, "volumes: "+err.Error())
+		c.appendLogLocked(LogError, "volumes: "+err.Error())
 	case errors.Is(err, context.Canceled):
 		// a cancelled bundle is never packed: the chapters it never started
 		// would be silently missing from it
@@ -1145,6 +1236,9 @@ func (c *Controller) jobFor(ch *grabber.Chapter) *Job {
 	if c.bundle != nil {
 		return c.bundle
 	}
+	if j := c.chapVol[ch]; j != nil {
+		return j
+	}
 	return c.byChap[ch]
 }
 
@@ -1178,7 +1272,7 @@ func (e events) FetchFailed(listed grabber.Filterable, err error) {
 	c.mu.Lock()
 	msg := fmt.Sprintf("%s: %s", listed.GetTitle(), err)
 	c.stats.failures = append(c.stats.failures, msg)
-	if c.bundle == nil {
+	if c.bundle == nil && c.listedVol[listed] == nil {
 		c.jobs = append(c.jobs, &Job{Title: listed.GetTitle(), Number: listed.GetNumber(), State: JobFailed, Reason: err.Error()})
 	}
 	c.appendLogLocked(LogError, "error fetching chapter "+msg)
@@ -1190,7 +1284,7 @@ func (e events) Skipped(ch *grabber.Chapter) {
 	c := e.c
 	c.mu.Lock()
 	c.stats.skipped++
-	if c.bundle == nil {
+	if c.bundle == nil && c.chapVol[ch] == nil {
 		c.jobs = append(c.jobs, &Job{Title: ch.GetTitle(), Number: ch.GetNumber(), State: JobSkipped, Reason: "every page excluded by --skip-pages"})
 	}
 	c.appendLogLocked(LogWarn, fmt.Sprintf("skipping %s: every page is excluded by --skip-pages", ch.GetTitle()))
@@ -1217,6 +1311,10 @@ func (e events) Started(ch *grabber.Chapter) {
 	c.mu.Lock()
 	if c.bundle != nil {
 		c.bundle.Status = "Downloading " + ch.GetTitle()
+	} else if j := c.chapVol[ch]; j != nil {
+		// a volume's total is only known as its chapters start
+		j.Total += ch.PagesCount * 2
+		j.Status = "Downloading " + ch.GetTitle()
 	} else {
 		// the CLI's bar: pages to download plus pages to archive
 		j := &Job{Title: ch.GetTitle(), Number: ch.GetNumber(), Total: ch.PagesCount * 2, State: JobDownloading}
@@ -1234,7 +1332,10 @@ func (e events) Page(ch *grabber.Chapter, idx int, err error) {
 		c.appendLogLocked(LogError, fmt.Sprintf("error downloading page %d of %s: %s", idx+1, ch.GetTitle(), err))
 	} else if j := c.jobFor(ch); j != nil && c.live(ch) {
 		j.Done++
-		advance(j)
+		// a volume can't tell from its count: its total is still growing
+		if !j.Volume {
+			advance(j)
+		}
 	}
 	c.mu.Unlock()
 	c.emit()
@@ -1246,6 +1347,7 @@ func (e events) DownloadFailed(ch *grabber.Chapter, err error) {
 	c.failedC[ch] = true
 	msg := fmt.Sprintf("%s: %s", ch.GetTitle(), err)
 	c.stats.failures = append(c.stats.failures, msg)
+	// a volume goes on with its other chapters
 	if j := c.byChap[ch]; j != nil && c.bundle == nil {
 		j.State = JobFailed
 		j.Reason = "download: " + err.Error()
@@ -1315,6 +1417,94 @@ func (e events) BundleArchived(n int) {
 	c.mu.Lock()
 	if c.bundle != nil {
 		c.bundle.Done += int64(n)
+	}
+	c.mu.Unlock()
+	c.emit()
+}
+
+// volumeTitle is the row title of a volume: "Vol. 01 · chapters 1–7"
+func volumeTitle(v *core.Volume) string {
+	first, last := formatNumber(v.FirstNumber()), formatNumber(v.LastNumber())
+	if first == last {
+		return fmt.Sprintf("%s · chapter %s", core.VolumeLabel(v.Number), first)
+	}
+	return fmt.Sprintf("%s · chapters %s–%s", core.VolumeLabel(v.Number), first, last)
+}
+
+func (e events) VolumeStart(v *core.Volume) {
+	c := e.c
+	c.mu.Lock()
+	j := &Job{Title: volumeTitle(v), Number: v.FirstNumber(), State: JobDownloading, Status: "Waiting...", Volume: true}
+	c.jobs = append(c.jobs, j)
+	c.byVolume[v] = j
+	for _, chap := range v.Chapters {
+		c.listedVol[chap] = j
+	}
+	c.mu.Unlock()
+	c.emit()
+}
+
+func (e events) VolumeChapter(v *core.Volume, ch *grabber.Chapter) {
+	c := e.c
+	c.mu.Lock()
+	if j := c.byVolume[v]; j != nil {
+		c.chapVol[ch] = j
+	}
+	c.mu.Unlock()
+}
+
+func (e events) VolumePacking(v *core.Volume) {
+	c := e.c
+	c.mu.Lock()
+	if j := c.byVolume[v]; j != nil {
+		j.State = JobArchiving
+		j.Status = "Packing..."
+	}
+	c.mu.Unlock()
+	c.emit()
+}
+
+func (e events) VolumeArchived(v *core.Volume, n int) {
+	c := e.c
+	c.mu.Lock()
+	if j := c.byVolume[v]; j != nil {
+		j.Done += int64(n)
+	}
+	c.mu.Unlock()
+	c.emit()
+}
+
+func (e events) VolumePacked(v *core.Volume, name string, err error) {
+	c := e.c
+	c.mu.Lock()
+	j := c.byVolume[v]
+	label := core.VolumeLabel(v.Number)
+	switch {
+	case errors.Is(err, context.Canceled):
+		// a cancelled run says so in its summary; the row only stops
+		if j != nil {
+			j.State = JobSkipped
+			j.Reason = "cancelled before all of its chapters started"
+		}
+	case err != nil:
+		msg := fmt.Sprintf("%s: %s", label, err)
+		c.stats.failures = append(c.stats.failures, msg)
+		if j != nil {
+			j.State = JobFailed
+			j.Reason = err.Error()
+		}
+		c.appendLogLocked(LogError, "error packing "+msg)
+	default:
+		c.stats.volumes++
+		if j != nil {
+			j.State = JobDone
+			// the pages of the chapters that failed were never counted
+			j.Done = j.Total
+		}
+		c.appendLogLocked(LogInfo, "saved "+name)
+	}
+	if j != nil {
+		j.Status = ""
 	}
 	c.mu.Unlock()
 	c.emit()
