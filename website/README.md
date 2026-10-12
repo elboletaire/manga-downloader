@@ -1,7 +1,6 @@
 # manga downloader website
 
-The project site, published to GitHub Pages at
-<https://elboletaire.github.io/manga-downloader/> by
+The project site, published to GitHub Pages at <https://mangadownloader.cat/> by
 [`.github/workflows/pages.yaml`](../.github/workflows/pages.yaml) on every push
 to `master` that touches `website/` or `README.md`.
 
@@ -126,7 +125,9 @@ To add a language: add it to `LANGS`/`LANG_INFO`, create `locales/xx.json` and a
 
 ## Another domain
 
-`BASE_PATH` (default `/manga-downloader/`) and `SITE_URL` (default
-`https://elboletaire.github.io/manga-downloader/`) set the base path, the
+`BASE_PATH` (default `/`) and `SITE_URL` (default
+`https://mangadownloader.cat/`) set the base path, the
 canonical and social URLs, `robots.txt` and `sitemap.xml`. SITE_URL also drives the per-language canonicals and hreflang links. For a custom domain,
-set `BASE_PATH=/` and `SITE_URL=https://example.com/` in the workflow.
+set `SITE_URL=https://example.com/` in the workflow; without one, the
+project site needs `BASE_PATH=/manga-downloader/` and
+`SITE_URL=https://elboletaire.github.io/manga-downloader/`.

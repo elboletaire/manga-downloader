@@ -8,10 +8,10 @@ import { parseSites, renderSites } from './build/sites.ts'
 import { LANG_INFO, LANG_KEY, LANGS, redirectTarget, type Lang } from './src/lang.ts'
 import { fetchStats, renderStats, type Stats } from './build/stats.ts'
 
-// Where the site is served from. GitHub Pages serves a project site under
-// /<repo>/; with a custom domain, set BASE_PATH=/ and SITE_URL to it.
-const base = process.env.BASE_PATH ?? '/manga-downloader/'
-const siteURL = process.env.SITE_URL ?? `https://elboletaire.github.io${base}`
+// Where the site is served from: the custom domain at its root. Without one,
+// GitHub Pages serves a project site under /<repo>/ (BASE_PATH=/manga-downloader/).
+const base = process.env.BASE_PATH ?? '/'
+const siteURL = process.env.SITE_URL ?? `https://mangadownloader.cat${base}`
 
 const root = fileURLToPath(new URL('.', import.meta.url))
 const readmePath = fileURLToPath(new URL('../README.md', import.meta.url))
