@@ -41,8 +41,9 @@ const komikindoSeriesHTML = `<html><head><title>Komik Nano Machine - KomikIndo</
 
 // komikindoReaderHTML is a trimmed copy of a reader page: the pages are in
 // #chimg-auh, after a blogger banner and ahead of an embedded video, both of
-// which must be skipped
+// which must be skipped. The div.nextprev link leads back to the series page.
 const komikindoReaderHTML = `<html><head><title>Komik Nano Machine Chapter 98 Bahasa Indonesia - KomikIndo</title></head><body>
+<div class="nextprev"><a href="https://komikindo.ch/komik/155895-nano-machine/">Daftar Chapter</a></div>
 <div class="chapter-image eastengine bc" id="Baca_Komik">
     <div class="gulai_asam_manis setdah"><a href="https://orangarab.fun/777">
 <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjObdXKe3Db1vCZcvajoU7qAxQCS12l3xR7Ojww6gu9Kgu5wrMm89u_DVC8D.jpg">
@@ -99,6 +100,54 @@ func TestKomikindo(t *testing.T) {
 	}
 	if title := chapters[2].GetTitle(); title != "Chapter 98" {
 		t.Errorf("chapter 98 title = %q, want %q", title, "Chapter 98")
+	}
+}
+
+// TestKomikindoChapterURL verifies that a reader URL loads the full series,
+// not the partial chapter list in the reader's dropdown.
+func TestKomikindoChapterURL(t *testing.T) {
+	// Reader page HTML rewritten with the test server's origin so the
+	// div.nextprev link resolves to the series handler below.
+	readerWithLocalLink := func(seriesURL string) string {
+		return `<html><head></head><body>` +
+			`<div class="nextprev"><a href="` + seriesURL + `">Daftar Chapter</a></div>` +
+			`<div id="chapter_list"><ul>` +
+			`<li><span class="lchx"><a href="/nano-machine-chapter-333/">Chapter 333</a></span></li>` +
+			`</ul></div>` +
+			`<div id="chimg-auh"><img src="https://cdn.example.com/page1.jpg"/></div>` +
+			`</body></html>`
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/komik/155895-nano-machine/", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(komikindoSeriesHTML))
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	readerHTML := readerWithLocalLink(srv.URL + "/komik/155895-nano-machine/")
+	mux.HandleFunc("/nano-machine-chapter-329/", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(readerHTML))
+	})
+
+	m := NewPlainHTML(&Grabber{URL: srv.URL + "/nano-machine-chapter-329/", Settings: &Settings{}})
+	ok, err := m.Test()
+	if err != nil || !ok {
+		t.Fatalf("Test() = %v, %v; want the chapter URL to resolve to the series", ok, err)
+	}
+
+	// Must resolve to the series URL, not stay on the reader.
+	if m.URL != srv.URL+"/komik/155895-nano-machine/" {
+		t.Errorf("resolved URL = %q, want series URL", m.URL)
+	}
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) != 0 {
+		t.Fatalf("FetchChapters() errors: %v", errs)
+	}
+	// Series page has 3 chapters (333, 98.5, 98); reader dropdown had only 1.
+	if len(chapters) != 3 {
+		t.Errorf("got %d chapters, want 3 (full series, not reader dropdown)", len(chapters))
 	}
 }
 
