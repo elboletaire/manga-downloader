@@ -2,20 +2,23 @@
 // when idle (with the reason it can't start, if any), the run's overall
 // progress and Cancel while it runs.
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { DownloadIcon, Spinner, XIcon } from './icons';
 import { downloadBlocker, downloadLabel, overallProgress } from './run';
-import type { Options, State } from './types';
+import type { Chapter, Options, State } from './types';
 
 interface Props {
   state: State;
   /** The backend's refusal of the last Download or Cancel */
   error: string;
+  /** The loaded chapters and the selected indices, for the Download label's volumes */
+  chapters: Chapter[];
+  selected: number[];
   onStart: () => void;
   onCancel: () => void;
 }
 
-export function DownloadDock({ state, error, onStart, onCancel }: Props) {
+export function DownloadDock({ state, error, chapters, selected, onStart, onCancel }: Props) {
   // Download and Cancel are different buttons, so the focus moves to the other
   // one when the run starts or ends, rather than falling to the body
   const focused = useRef<'start' | 'cancel' | null>(null);
@@ -33,6 +36,12 @@ export function DownloadDock({ state, error, onStart, onCancel }: Props) {
       }
     }
   }, [state.running]);
+
+  // the label regroups the chapters, so it's kept across the progress ticks
+  const label = useMemo(
+    () => downloadLabel(state, chapters, selected),
+    [state.selectedCount, state.options.packAs, state.volumes.text, chapters, selected],
+  );
 
   if (state.running) {
     const overall = overallProgress(state);
@@ -108,7 +117,7 @@ export function DownloadDock({ state, error, onStart, onCancel }: Props) {
         onBlur={() => (focused.current = null)}
         onClick={onStart}
       >
-        <DownloadIcon /> {downloadLabel(state)}
+        <DownloadIcon /> {label}
       </button>
       {error !== '' ? (
         <p className="error-text small" role="alert">

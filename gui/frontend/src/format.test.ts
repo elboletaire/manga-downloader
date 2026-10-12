@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   errorMessage,
+  formatNumber,
   jobFraction,
   jobShortStatus,
   jobStatus,
@@ -116,5 +117,13 @@ describe('jobShortStatus', () => {
     expect(jobShortStatus(job({ state: 'done' }))).toBe('Saved');
     expect(jobShortStatus(job({ state: 'failed', reason: '404' }))).toBe('Failed');
     expect(jobShortStatus(job({ state: 'skipped' }))).toBe('Skipped');
+  });
+});
+
+describe('formatNumber', () => {
+  it('prints whole and fractional chapter numbers cleanly', () => {
+    expect(formatNumber(12)).toBe('12');
+    expect(formatNumber(12.5)).toBe('12.5');
+    expect(formatNumber(1.0100000001)).toBe('1.01');
   });
 });

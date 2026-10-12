@@ -119,3 +119,12 @@ export function errorMessage(e: unknown): string {
 
   return String(e);
 }
+
+/** A chapter number as the site would print it: 12, 12.5, never 12.000001 */
+export function formatNumber(n: number): string {
+  if (Number.isInteger(n)) {
+    return String(n);
+  }
+
+  return String(Math.round(n * 100) / 100);
+}
