@@ -289,12 +289,16 @@ code {
   }
 }
 
+/* the label overflows its pill below this width (iPhone 11–14 and the like) */
+@media (max-width: 450px) {
+  .nav-github span {
+    display: none;
+  }
+}
+
 @media (max-width: 400px) {
   .brand img {
     height: 24px;
-  }
-  .nav-github span {
-    display: none;
   }
 }
 
