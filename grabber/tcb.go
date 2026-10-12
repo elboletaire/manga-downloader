@@ -48,8 +48,9 @@ func (t *Tcb) Test() (bool, error) {
 	uri, _ := url.JoinPath(t.BaseUrl(), match[1], "ajax", "chapters")
 
 	rbody, err := http.Post(http.RequestParams{
-		URL:     uri,
-		Referer: t.BaseUrl(),
+		URL:          uri,
+		Referer:      t.BaseUrl(),
+		DisableRetry: true, // identification probe: a 5xx means "not this site"
 	})
 	if err != nil {
 		return false, err

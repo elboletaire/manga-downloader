@@ -451,7 +451,8 @@ type PlainHTMLChapter struct {
 // Test returns true if the URL is a valid grabber URL
 func (m *PlainHTML) Test() (bool, error) {
 	body, err := http.Get(http.RequestParams{
-		URL: m.URL,
+		URL:          m.URL,
+		DisableRetry: true, // identification probe: a 5xx means "not this site"
 	})
 	if err != nil {
 		return false, err
