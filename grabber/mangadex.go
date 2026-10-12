@@ -22,7 +22,7 @@ var mangadexAPI = "https://api.mangadex.org"
 var (
 	// mangadexChapterURLRe matches chapter URLs like
 	// https://mangadex.org/chapter/c780a907-8cf7-4d64-97fd-750519f8ff79
-	// www. is handled by chapterPath; UUIDs are matched case-insensitively.
+	// www. and UUID case are handled inline via (?:www\.)? and (?i).
 	mangadexChapterURLRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?mangadex\.org/chapter/([a-f0-9-]+)`)
 )
 
@@ -51,7 +51,7 @@ func mangadexChapterURL(url string) bool {
 
 // mangadexSeriesURL extracts the series URL from a chapter UUID by fetching
 // the chapter endpoint and extracting the manga ID from relationships.
-func mangadexSeriesURL(chapterUUID string) (string, error) {
+func mangadexSeriesURL(chapterUUID, chapterURL string) (string, error) {
 	rbody, err := http.Get(http.RequestParams{
 		URL: mangadexAPI + "/chapter/" + chapterUUID,
 	})
@@ -72,7 +72,7 @@ func mangadexSeriesURL(chapterUUID string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("manga relationship not found in chapter %s", chapterUUID)
+	return "", errSeriesNotFound(chapterURL)
 }
 
 // resolveSeriesURL resolves a chapter URL to the series URL if needed.
@@ -87,7 +87,7 @@ func (m *Mangadex) resolveSeriesURL() error {
 	}
 	chapterUUID := strings.ToLower(matches[1])
 
-	seriesURL, err := mangadexSeriesURL(chapterUUID)
+	seriesURL, err := mangadexSeriesURL(chapterUUID, m.URL)
 	if err != nil {
 		return err
 	}

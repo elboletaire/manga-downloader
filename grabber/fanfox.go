@@ -34,52 +34,18 @@ type FanfoxChapter struct {
 	URL string
 }
 
-// fanfoxDomainRe matches fanfox.net (with or without www.)
-var fanfoxDomainRe = regexp.MustCompile(`fanfox\.net`)
+// fanfoxDomainRe matches fanfox.net and any of its subdomains (m., www., …)
+var fanfoxDomainRe = regexp.MustCompile(`(?i)(?:^|\.)fanfox\.net$`)
 
-// fanfoxChapterURL reports whether rawURL is a chapter/reader URL. It uses
-// mangatownSeriesPathRe (shared with mangahere and mangatown) to extract the
-// /manga/<slug> prefix and then checks that more path follows, so volume
-// segments (/v01/, /vTBD/) and decimal chapter numbers (/c001.1/) are
-// accepted transparently.
-func fanfoxChapterURL(rawURL string) bool {
-	u, _ := url.Parse(rawURL)
-	if u == nil {
-		return false
-	}
-	m := mangatownSeriesPathRe.FindStringSubmatch(u.Path)
-	if m == nil {
-		return false
-	}
-	return strings.TrimPrefix(u.Path[len(m[1]):], "/") != ""
-}
-
-// fanfoxSeriesURL extracts the series URL from a chapter URL. It returns the
-// URL with its path trimmed to /manga/<slug>/ and any query/fragment stripped.
-// Returns ("", false) for series URLs (no additional path segments).
-func fanfoxSeriesURL(rawURL string) (string, bool) {
-	u, _ := url.Parse(rawURL)
-	if u == nil {
-		return "", false
-	}
-	m := mangatownSeriesPathRe.FindStringSubmatch(u.Path)
-	if m == nil {
-		return "", false
-	}
-	if strings.TrimPrefix(u.Path[len(m[1]):], "/") == "" {
-		return "", false
-	}
-	u.Path = m[1] + "/"
-	u.RawQuery = ""
-	u.Fragment = ""
-	return u.String(), true
-}
-
-// Test returns true if the URL is a fanfox.net URL
+// Test returns true if the URL is a fanfox.net URL. Any subdomain is moved to
+// the bare fanfox.net host so the desktop markup is served consistently.
 func (m *Fanfox) Test() (bool, error) {
-	if !fanfoxDomainRe.MatchString(m.URL) {
+	u, err := url.Parse(m.URL)
+	if err != nil || !fanfoxDomainRe.MatchString(u.Hostname()) {
 		return false, nil
 	}
+	u.Host = "fanfox.net"
+	m.URL = u.String()
 
 	// fanfox gates the chapter list behind an age-confirmation interstitial
 	// (even for non-mature titles, e.g. Chainsaw Man) unless this cookie is
@@ -92,7 +58,7 @@ func (m *Fanfox) Test() (bool, error) {
 
 // resolveSeriesURL resolves a chapter URL to the series URL if needed.
 func (m *Fanfox) resolveSeriesURL() error {
-	seriesURL, ok := fanfoxSeriesURL(m.URL)
+	seriesURL, ok := mangahereSeriesURL(m.URL)
 	if !ok {
 		return nil
 	}

@@ -632,10 +632,10 @@ func TestResolveSeriesURLFetchCap(t *testing.T) {
 	m := NewPlainHTML(&Grabber{URL: srv.URL + "/chapter-5/", Settings: &Settings{}})
 	ok, err := m.Test()
 	if err != nil || ok {
-		t.Fatalf("Test() = %v, %v; expected false (resolution deferred to tryResolveSeriesURL)", ok, err)
+		t.Fatalf("Test() = %v, %v; expected false (resolution deferred to resolveSeriesURL)", ok, err)
 	}
-	if !m.tryResolveSeriesURL() {
-		t.Fatal("tryResolveSeriesURL() = false; expected series to be resolved")
+	if !m.resolveSeriesURL() {
+		t.Fatal("resolveSeriesURL() = false; expected series to be resolved")
 	}
 	if fetches != 3 {
 		t.Errorf("fetched %d candidates, want 3 (cap at 3)", fetches)

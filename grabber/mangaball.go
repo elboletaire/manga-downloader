@@ -33,7 +33,7 @@ var mangaballSite = "https://mangaball.com"
 
 // mangaballChapterRe matches chapter URLs like
 // https://mangaball.com/chapter-detail/6a6711d656b91853f2dc9927 (www. and
-// uppercase hex handled via chapterPath / (?i))
+// hex case handled inline via (?:www\.)? / (?i))
 var mangaballChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?mangaball\.(com|net)/chapter-detail/([a-f0-9]+)`)
 
 // mangaballSeriesURLRe extracts the series URL from JSON-LD isPartOf field.
@@ -97,7 +97,7 @@ func (m *Mangaball) resolveSeriesURL() error {
 
 	seriesURL, ok := mangaballSeriesURL(body)
 	if !ok {
-		return fmt.Errorf("could not find series URL in chapter page %s", m.URL)
+		return errSeriesNotFound(m.URL)
 	}
 
 	m.URL = seriesURL

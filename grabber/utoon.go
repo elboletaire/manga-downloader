@@ -72,7 +72,7 @@ func utoonResolveSeriesURL(chapterURL string) (string, error) {
 
 	href, ok := doc.Find("a.manga-series").First().Attr("href")
 	if !ok || href == "" {
-		return "", fmt.Errorf("could not find series link in chapter page %s", chapterURL)
+		return "", errSeriesNotFound(chapterURL)
 	}
 
 	return href, nil

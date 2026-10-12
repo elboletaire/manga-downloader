@@ -73,7 +73,7 @@ func (t *Taiyo) resolveSeriesURL() error {
 
 	matches := taiyoMediaIDRe.FindStringSubmatch(body)
 	if len(matches) < 2 {
-		return fmt.Errorf("could not find media id in chapter page %s", t.URL)
+		return errSeriesNotFound(t.URL)
 	}
 
 	t.mediaId = matches[1]

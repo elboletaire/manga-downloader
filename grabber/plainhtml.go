@@ -469,7 +469,7 @@ func (m *PlainHTML) Test() (bool, error) {
 	}
 
 	if m.rows == nil || m.rows.Length() == 0 {
-		// No rows found; IdentifySite will call tryResolveSeriesURL as a final
+		// No rows found; IdentifySite calls resolveSeriesURL as a final
 		// fallback (after every other grabber has declined) to avoid extra
 		// fetches for URLs that a domain-matched grabber further down the list
 		// would serve.
@@ -524,13 +524,6 @@ func (m *PlainHTML) resolveSeriesURL() bool {
 		}
 	}
 	return false
-}
-
-// tryResolveSeriesURL is called by IdentifySite as a final fallback after all
-// other grabbers have declined. It reuses the already-fetched doc (set in
-// Test) to avoid a second fetch of the same URL.
-func (m *PlainHTML) tryResolveSeriesURL() bool {
-	return m.resolveSeriesURL()
 }
 
 // testCandidateSeriesURL fetches and tests a candidate series URL against
@@ -604,26 +597,7 @@ func checkRowChapterNumber(s *goquery.Selection, selector SiteSelector) (float64
 // or, failing that, from its reader URL. FetchChapters and Test share it, so
 // Test only claims rows FetchChapters can actually number.
 func (m PlainHTML) rowChapterNumber(s *goquery.Selection) (float64, bool) {
-	chapterText := textWithoutNoise(s)
-	if m.site.Chapter != "" {
-		chapterText = textWithoutNoise(s.Find(m.site.Chapter))
-	}
-	if number, ok := parseChapterNumber(chapterText); ok {
-		return number, true
-	}
-
-	u := s.AttrOr("href", "")
-	if m.site.Link != "" {
-		u = s.Find(m.site.Link).AttrOr("href", "")
-	}
-	match := urlChapterNumberRe.FindStringSubmatch(u)
-	if len(match) > 0 {
-		if n, err := strconv.ParseFloat(match[1], 64); err == nil {
-			return n, true
-		}
-	}
-
-	return 0, false
+	return checkRowChapterNumber(s, m.site)
 }
 
 // Ttitle returns the manga title
@@ -945,24 +919,13 @@ func stripSeriesTitle(title, series string) string {
 }
 
 // resolveURL turns a possibly-relative href into an absolute URL, resolved
-// against the series page URL (m.URL). This correctly handles both
-// root-relative hrefs ("/manga/x/chapter-1", the common case, equivalent to
-// the old BaseUrl()-prefixing behaviour) and directory-relative hrefs with no
-// leading slash (e.g. templetoons.com, whose rows link to "slug/chapter-1"
-// relative to the series page's own directory).
+// against the series page URL (m.URL).
 func (m PlainHTML) resolveURL(href string) string {
 	if strings.HasPrefix(href, "http") {
 		return href
 	}
-	base, err := url.Parse(m.URL)
-	if err != nil {
-		return m.BaseUrl() + href
-	}
-	ref, err := url.Parse(href)
-	if err != nil {
-		return m.BaseUrl() + href
-	}
-	return base.ResolveReference(ref).String()
+	base, _ := url.Parse(m.URL)
+	return resolveURLRelative(href, base)
 }
 
 // FetchChapter fetches a chapter and its pages
