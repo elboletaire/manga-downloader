@@ -64,6 +64,19 @@ type MangafireChapter struct {
 	Id int64
 }
 
+// mangafireChapterRe matches chapter reader URLs (/title/{slug}/chapter/{id}
+// and the legacy /manga/{slug}/chapter/{id}). The capturing group is the
+// series URL prefix.
+var mangafireChapterRe = regexp.MustCompile(`(?i)^(https?://(?:www\.)?mangafire\.to/(?:title|manga)/[^/?#]+)/chapter/`)
+
+// resolveSeriesURL rewrites m.URL to the series URL when it is a chapter
+// reader URL. Series URLs are unchanged.
+func (m *Mangafire) resolveSeriesURL() {
+	if match := mangafireChapterRe.FindStringSubmatch(m.URL); match != nil {
+		m.URL = match[1]
+	}
+}
+
 // Test returns true if the URL is a mangafire.to series URL
 func (m *Mangafire) Test() (bool, error) {
 	re := regexp.MustCompile(`mangafire\.to/(title|manga)/`)
@@ -156,6 +169,7 @@ func (m *Mangafire) load() error {
 		return m.loadErr
 	}
 	m.loaded = true
+	m.resolveSeriesURL()
 
 	hid, err := m.hid()
 	if err != nil {

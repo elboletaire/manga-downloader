@@ -331,3 +331,62 @@ func TestJsStringSlice(t *testing.T) {
 		t.Error("jsStringSlice(missing) should have errored")
 	}
 }
+
+func TestManganeloResolveSeriesURL(t *testing.T) {
+	cases := []struct {
+		name   string
+		input  string
+		wanted string
+	}{
+		{
+			name:   "mangakakalot chapter URL resolves to series URL",
+			input:  "https://www.mangakakalot.gg/manga/apotheosis/chapter-1297",
+			wanted: "https://www.mangakakalot.gg/manga/apotheosis",
+		},
+		{
+			name:   "natomanga chapter URL resolves to series URL",
+			input:  "https://www.natomanga.com/manga/rebirth-from-0-to-1/chapter-5",
+			wanted: "https://www.natomanga.com/manga/rebirth-from-0-to-1",
+		},
+		{
+			name:   "mangabats chapter URL resolves to series URL",
+			input:  "https://www.mangabats.com/manga/after-the-possessor-left/chapter-27",
+			wanted: "https://www.mangabats.com/manga/after-the-possessor-left",
+		},
+		{
+			name:   "decimal chapter number",
+			input:  "https://www.mangakakalot.gg/manga/apotheosis/chapter-1297.5",
+			wanted: "https://www.mangakakalot.gg/manga/apotheosis",
+		},
+		{
+			name:   "series URL unchanged",
+			input:  "https://www.mangakakalot.gg/manga/apotheosis",
+			wanted: "https://www.mangakakalot.gg/manga/apotheosis",
+		},
+		{
+			name:   "series URL with query unchanged",
+			input:  "https://www.mangakakalot.gg/manga/apotheosis?page=1",
+			wanted: "https://www.mangakakalot.gg/manga/apotheosis?page=1",
+		},
+		{
+			name:   "manganato chapter URL resolves to series URL",
+			input:  "https://www.manganato.gg/manga/apotheosis/chapter-1297",
+			wanted: "https://www.manganato.gg/manga/apotheosis",
+		},
+		{
+			name:   "unrelated path unchanged",
+			input:  "https://www.mangakakalot.gg/",
+			wanted: "https://www.mangakakalot.gg/",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			m := &Manganelo{Grabber: &Grabber{URL: c.input}}
+			m.resolveSeriesURL()
+			if m.URL != c.wanted {
+				t.Errorf("got %q, want %q", m.URL, c.wanted)
+			}
+		})
+	}
+}
