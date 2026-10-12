@@ -53,16 +53,20 @@ func main() {
 	start := time.Now()
 	var html string
 	var err error
-	if s := os.Getenv("PROBE_SCROLL"); s != "" {
-		iterations := 20
-		fmt.Sscanf(s, "%d", &iterations)
+	if os.Getenv("PROBE_SCROLL") != "" {
+		// PROBE_SCROLL=1 scrolls the document; PROBE_SCROLL_IN=<selector>
+		// scrolls an inner element, PROBE_SCROLL_DONE=<js> stops early
 		pause := 400 * time.Millisecond
 		if p := os.Getenv("PROBE_SCROLL_PAUSE"); p != "" {
 			if d, perr := time.ParseDuration(p); perr == nil {
 				pause = d
 			}
 		}
-		html, err = browser.GetHTMLWithScroll(url, wait, iterations, pause, timeout)
+		html, err = browser.GetHTMLWithScroll(url, wait, browser.Scroll{
+			Container: os.Getenv("PROBE_SCROLL_IN"),
+			Done:      os.Getenv("PROBE_SCROLL_DONE"),
+			Pause:     pause,
+		}, timeout)
 	} else {
 		html, err = browser.GetHTML(url, wait, timeout)
 	}

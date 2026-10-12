@@ -2,7 +2,13 @@
 
 package grabber
 
-import "testing"
+import (
+	"fmt"
+	"strings"
+	"testing"
+
+	"github.com/PuerkitoBio/goquery"
+)
 
 func TestComixParsePaging(t *testing.T) {
 	cases := []struct {
@@ -119,6 +125,50 @@ func TestComixResolveSeriesURL(t *testing.T) {
 			comix.resolveSeriesURL()
 			if comix.URL != c.wanted {
 				t.Errorf("got %q, want %q", comix.URL, c.wanted)
+			}
+		})
+	}
+}
+
+func TestComixPages(t *testing.T) {
+	img := func(n int) string {
+		return fmt.Sprintf(`<div class="rpage-page" data-page="%d"><img class="rpage-page__img" referrerpolicy="no-referrer" src="https://rxn.example.site/hi/p%d"></div>`, n, n)
+	}
+	loader := `<div class="rpage-page" data-page="3"><div class="rpage-page__loader" aria-label="Page 3"><span class="rpage-page__counter mono">3 / 3</span></div></div>`
+
+	cases := []struct {
+		name    string
+		html    string
+		want    []string
+		wantErr string
+	}{
+		{"every page mounted", img(1) + img(2), []string{"https://rxn.example.site/hi/p1", "https://rxn.example.site/hi/p2"}, ""},
+		{"a page still loading", img(1) + img(2) + loader, nil, "1 of 3 pages never loaded"},
+		{"no pages", `<main class="rpage-main"></main>`, nil, "no pages found"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			doc, err := goquery.NewDocumentFromReader(strings.NewReader(`<main class="rpage-main">` + c.html + `</main>`))
+			if err != nil {
+				t.Fatal(err)
+			}
+			pages, err := comixPages(doc)
+			if c.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), c.wantErr) {
+					t.Fatalf("err = %v, want %q", err, c.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(pages) != len(c.want) {
+				t.Fatalf("got %d pages, want %d", len(pages), len(c.want))
+			}
+			for i, p := range pages {
+				if p.URL != c.want[i] || p.Number != int64(i+1) || !p.NoReferer {
+					t.Errorf("page %d = %+v, want %s numbered %d without a referer", i, p, c.want[i], i+1)
+				}
 			}
 		})
 	}

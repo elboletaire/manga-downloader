@@ -195,9 +195,9 @@ func between(s, from, to string) string {
 func TestIntegrationSlowWorkAfterRenderIsNotAChallenge(t *testing.T) {
 	srv := integration(t)
 
-	// 3 x 1.5s of scrolling after the selector matched, with a 2s budget for
-	// the render: the scroll gets its own
-	html, err := GetHTMLWithScroll(srv.URL+"/ok", "#ok", 3, 1500*time.Millisecond, 2*time.Second)
+	// waiting out the bottom (3 x 1.5s) after the selector matched, with a 2s
+	// budget for the render: the scroll gets its own
+	html, err := GetHTMLWithScroll(srv.URL+"/ok", "#ok", Scroll{Pause: 1500 * time.Millisecond}, 2*time.Second)
 	if err != nil {
 		t.Fatalf("slow scroll after the page rendered: %v", err)
 	}

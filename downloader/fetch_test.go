@@ -63,6 +63,48 @@ func TestFetchChapter_AppliesPageHeaders(t *testing.T) {
 	}
 }
 
+// Pages are sent with the site's Referer unless they opt out: some image
+// hosts answer 403 to any request that carries one
+func TestFetchChapter_Referer(t *testing.T) {
+	cases := []struct {
+		name      string
+		noReferer bool
+		wantSent  bool
+	}{
+		{"default sends the site", false, true},
+		{"NoReferer sends none", true, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var headers http.Header
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				headers = r.Header.Clone()
+				_, _ = w.Write([]byte("page"))
+			}))
+			defer server.Close()
+
+			site := &fetchChapterTestSite{Grabber: &grabber.Grabber{
+				URL: server.URL,
+				Settings: &grabber.Settings{
+					MaxConcurrency: grabber.MaxConcurrency{Chapters: 1, Pages: 1},
+				},
+			}}
+			chapter := &grabber.Chapter{
+				Number: 1,
+				Pages:  []grabber.Page{{Number: 1, URL: server.URL + "/page", NoReferer: c.noReferer}},
+			}
+
+			if _, err := FetchChapter(site, chapter, func(page, progress int, err error) {}); err != nil {
+				t.Fatalf("FetchChapter: %v", err)
+			}
+			_, sent := headers["Referer"]
+			if sent != c.wantSent {
+				t.Errorf("Referer sent = %v (%q), want %v", sent, headers.Get("Referer"), c.wantSent)
+			}
+		})
+	}
+}
+
 // fetchChapterTestSite is a grabber.Site stub: everything FetchChapter doesn't
 // call is inherited from the base grabber
 type fetchChapterTestSite struct {

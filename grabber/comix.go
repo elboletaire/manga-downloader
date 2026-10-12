@@ -31,15 +31,15 @@ import (
 // per scanlation group upload), so FetchChapters dedupes by number, keeping
 // the first (highest-ranked) row seen for each.
 //
-// The reader page virtualizes/lazily-mounts its page images via an
-// IntersectionObserver, so a plain render only ever captures a handful of
-// pages near the top; browser.GetHTMLWithScroll progressively scrolls the
-// page so the site's own JS mounts (and decrypts) the rest before the final
-// HTML snapshot. Every 10th "page" turns out to be an ad slot with no image
-// container at all (confirmed by comparing the reader's own page counter,
-// e.g. "137", against the real image count after scrolling, which
-// consistently landed at 137 minus one skipped slot per 10 — those aren't
-// missed content, there's nothing to scrape there.
+// The reader lazily mounts its page images via an IntersectionObserver, in
+// an inner scroll container (.rpage-main: window.scrollTo does nothing
+// there), each slot showing a loader until its image mounts.
+// browser.GetHTMLWithScroll steps that container a viewport at a time until
+// no loader is left, so the snapshot holds every page.
+//
+// The images live on rotating hosts that refuse any request with a Referer
+// (403; the reader sets referrerpolicy="no-referrer"), so pages are
+// downloaded without one. They need no cookies.
 type Comix struct {
 	*Grabber
 	title string
@@ -74,13 +74,16 @@ const (
 	comixChapterRowSelector = ".mchap-item"
 	comixFooterSelector     = ".mchap-foot__hint"
 	comixImageSelector      = ".rpage-page__img"
-	// scrolling the reader page in fractional steps of the (growing)
-	// document height reliably mounts every real page regardless of the
-	// chapter's actual length, since each step re-reads the current
-	// scrollHeight rather than assuming a fixed page size upfront
-	comixReaderScrollIterations = 35
-	comixReaderScrollPause      = 600 * time.Millisecond
+	comixLoaderSelector     = ".rpage-page__loader"
+	comixReaderScrollPause  = 150 * time.Millisecond
 )
+
+// comixReaderScroll scrolls the reader until every page slot has mounted
+var comixReaderScroll = browser.Scroll{
+	Container: ".rpage-main",
+	Done:      `document.querySelector(".rpage-page") && !document.querySelector("` + comixLoaderSelector + `")`,
+	Pause:     comixReaderScrollPause,
+}
 
 // Test returns true if the URL is a comix.to URL. It only checks the
 // hostname (no fetch) so it can be tried early, before starting a browser.
@@ -203,14 +206,12 @@ func (c *Comix) FetchChapters() (chapters Filterables, errs []error) {
 }
 
 // FetchChapter renders the chapter reader page in a real browser, scrolling
-// it so every lazily-mounted page image gets decrypted and inserted into the
-// DOM before reading it back out
+// it so every lazily-mounted page image gets inserted into the DOM before
+// reading it back out
 func (c *Comix) FetchChapter(f Filterable) (*Chapter, error) {
 	chap := f.(*ComixChapter)
 
-	html, err := browser.GetHTMLWithScroll(
-		chap.URL, comixImageSelector, comixReaderScrollIterations, comixReaderScrollPause, 0,
-	)
+	html, err := browser.GetHTMLWithScroll(chap.URL, comixImageSelector, comixReaderScroll, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -220,25 +221,46 @@ func (c *Comix) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
-	chapter := &Chapter{
-		Title:    f.GetTitle(),
-		Number:   f.GetNumber(),
-		Language: "en",
+	pages, err := comixPages(doc)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", f.GetTitle(), err)
 	}
 
+	return &Chapter{
+		Title:      f.GetTitle(),
+		Number:     f.GetNumber(),
+		Language:   "en",
+		Pages:      pages,
+		PagesCount: int64(len(pages)),
+	}, nil
+}
+
+// comixPages reads the page images off a rendered reader. A slot still
+// showing its loader never mounted, which would silently drop the page, so
+// it's an error instead.
+func comixPages(doc *goquery.Document) ([]Page, error) {
+	if missing := doc.Find(comixLoaderSelector).Length(); missing > 0 {
+		total := missing + doc.Find(comixImageSelector).Length()
+		return nil, fmt.Errorf("%d of %d pages never loaded in the reader", missing, total)
+	}
+
+	var pages []Page
 	doc.Find(comixImageSelector).Each(func(i int, s *goquery.Selection) {
 		src := strings.TrimSpace(s.AttrOr("src", s.AttrOr("data-src", "")))
 		if src == "" {
 			return
 		}
-		chapter.Pages = append(chapter.Pages, Page{
-			Number: int64(len(chapter.Pages) + 1),
-			URL:    src,
+		pages = append(pages, Page{
+			Number:    int64(len(pages) + 1),
+			URL:       src,
+			NoReferer: true,
 		})
 	})
-	chapter.PagesCount = int64(len(chapter.Pages))
+	if len(pages) == 0 {
+		return nil, fmt.Errorf("no pages found in the reader")
+	}
 
-	return chapter, nil
+	return pages, nil
 }
 
 // comixWithPage returns seriesURL with its "page" query param set to page

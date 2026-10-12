@@ -54,6 +54,10 @@ type Page struct {
 	// own image URLs, which can't live in the shared http session without
 	// chapters downloaded in parallel sending each other's token)
 	Headers map[string]string
+	// NoReferer downloads the page without the site's Referer, for image
+	// hosts that refuse a request carrying one (their reader sets
+	// referrerpolicy="no-referrer" on its images)
+	NoReferer bool
 	// Transform, if non-nil, post-processes the raw downloaded page bytes
 	// before they're packed (e.g. undoing a site's client-side image
 	// scrambling). Errors are retried the same as a failed download.

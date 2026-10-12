@@ -46,9 +46,13 @@ func FetchChapter(site grabber.Site, chapter *grabber.Chapter, onprogress Progre
 		go func(page grabber.Page, idx int) {
 			defer wg.Done()
 
+			referer := site.BaseUrl()
+			if page.NoReferer {
+				referer = ""
+			}
 			file, err := FetchFile(http.RequestParams{
 				URL:     page.URL,
-				Referer: site.BaseUrl(),
+				Referer: referer,
 				Headers: page.Headers,
 			}, uint(page.Number), site.GetRetries(), page.Transform)
 
