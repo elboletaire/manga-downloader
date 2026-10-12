@@ -35,6 +35,29 @@ func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, pr
 // so chapter boundaries survive bundling instead of a single flat renumbering.
 func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter, rng string, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
+	return pack(outputdir, s.GetFormat(), s.GetFilenameTemplate(), title, FilenameTemplateParts{
+		Series: title,
+		Number: rng,
+		Title:  "bundle",
+	}, chapterFolders(chapters, s.GetConvertImages()), progress)
+}
+
+// PackVolume packs the downloaded chapters of a volume into one file, laid
+// out as a bundle is (a folder per chapter), and named with VolumeTemplate.
+// chapters must be sorted by number.
+func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*DownloadedChapter, progress func(page, progress int)) (string, error) {
+	title, _ := s.FetchTitle()
+	listed := make([]*grabber.Chapter, len(chapters))
+	for i, c := range chapters {
+		listed[i] = c.Chapter
+	}
+	return pack(outputdir, s.GetFormat(), VolumeTemplate(s.GetFilenameTemplate()), title,
+		NewVolumeFileTemplateParts(title, volume, listed), chapterFolders(chapters, s.GetConvertImages()), progress)
+}
+
+// chapterFolders names the pages of several chapters for one archive, each
+// chapter in its own folder (Chapter 0001/000.jpg, ...)
+func chapterFolders(chapters []*DownloadedChapter, formats grabber.ConvertFormats) []File {
 	files := []File{}
 	// Several chapters can share a number (a site re-releasing the same chapter,
 	// or two genuinely distinct chapters both numbered, e.g. a pair of
@@ -51,7 +74,7 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 		}
 		usedFolders[base]++
 
-		for _, page := range namePages(chapter.Files, s.GetConvertImages()) {
+		for _, page := range namePages(chapter.Files, formats) {
 			files = append(files, File{
 				Name: fmt.Sprintf("%s/%s", folder, page.Name),
 				Data: page.Data,
@@ -59,11 +82,7 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 		}
 	}
 
-	return pack(outputdir, s.GetFormat(), s.GetFilenameTemplate(), title, FilenameTemplateParts{
-		Series: title,
-		Number: rng,
-		Title:  "bundle",
-	}, files, progress)
+	return files
 }
 
 // namePages names a chapter's pages sequentially (000.jpg, 001.png, ...),

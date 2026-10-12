@@ -35,6 +35,10 @@ type progress struct {
 	mu        sync.Mutex
 	bars      map[*grabber.Chapter]*mpb.Bar
 	bundleBar *mpb.Bar
+	// volumes are the bars of a --volumes run, and chapterVolume the volume
+	// each of its chapters goes into
+	volumes       map[*core.Volume]*volumeBar
+	chapterVolume map[*grabber.Chapter]*core.Volume
 	// phase is the status shown by the bundle bar
 	phase string
 }
@@ -47,7 +51,28 @@ func newProgress(p *mpb.Progress, cfg progressConfig) *progress {
 		cfg:  cfg,
 		blue: color.New(color.FgBlue),
 		bars: map[*grabber.Chapter]*mpb.Bar{},
+
+		volumes:       map[*core.Volume]*volumeBar{},
+		chapterVolume: map[*grabber.Chapter]*core.Volume{},
 	}
+}
+
+// volumeBar is the bar of one volume. Its total grows as its chapters start,
+// since a chapter's page count is only known once it's fetched.
+type volumeBar struct {
+	bar   *mpb.Bar
+	total int64
+	// archiving is set once the volume's archive is being written
+	archiving bool
+}
+
+// volumeFor returns the bar of the volume c goes into, nil when c is packed
+// on its own. Callers hold mu.
+func (pr *progress) volumeFor(c *grabber.Chapter) *volumeBar {
+	if v, ok := pr.chapterVolume[c]; ok {
+		return pr.volumes[v]
+	}
+	return nil
 }
 
 // phaseText is read by the bundle bar's decorator from the render goroutine
@@ -69,6 +94,20 @@ func (pr *progress) setPhase(s string) {
 func (pr *progress) barFor(c *grabber.Chapter) *mpb.Bar {
 	if pr.cfg.bundle {
 		return pr.bundleBar
+	}
+	pr.mu.Lock()
+	defer pr.mu.Unlock()
+	if vb := pr.volumeFor(c); vb != nil {
+		return vb.bar
+	}
+	return pr.bars[c]
+}
+
+// ownBar returns the chapter's own bar: nil in bundle mode, for a chapter in
+// a volume, and for one that never got a bar
+func (pr *progress) ownBar(c *grabber.Chapter) *mpb.Bar {
+	if pr.cfg.bundle {
+		return nil
 	}
 	pr.mu.Lock()
 	defer pr.mu.Unlock()
@@ -118,6 +157,18 @@ func (pr *progress) Started(c *grabber.Chapter) {
 		return
 	}
 
+	pr.mu.Lock()
+	vb := pr.volumeFor(c)
+	if vb != nil {
+		// pages to download plus pages to archive, as for a chapter's bar
+		vb.total += c.PagesCount * 2
+		vb.bar.SetTotal(vb.total, false)
+	}
+	pr.mu.Unlock()
+	if vb != nil {
+		return
+	}
+
 	// For non-bundle mode, create a single bar per chapter that combines download + archive
 	// (using the fetched chapter, whose title includes the chapter number)
 	barTitle := chapterBarTitle(pr.cfg.title, c, pr.cfg.mangaLen, pr.cfg.chapterLen, pr.cfg.showLanguage)
@@ -147,8 +198,8 @@ func (pr *progress) Started(c *grabber.Chapter) {
 func (pr *progress) Page(c *grabber.Chapter, idx int, err error) {
 	bar := pr.barFor(c)
 	if err != nil {
-		if !pr.cfg.bundle && bar != nil {
-			bar.SetCurrent(int64(idx))
+		if own := pr.ownBar(c); own != nil {
+			own.SetCurrent(int64(idx))
 		}
 		red("- error downloading page %d: %s", idx+1, err.Error())
 		return
@@ -161,8 +212,9 @@ func (pr *progress) Page(c *grabber.Chapter, idx int, err error) {
 
 func (pr *progress) DownloadFailed(c *grabber.Chapter, err error) {
 	red("- error downloading chapter %s: %s", c.GetTitle(), err.Error())
-	if !pr.cfg.bundle {
-		pr.barFor(c).Abort(false)
+	// a volume's bar goes on with its other chapters
+	if own := pr.ownBar(c); own != nil {
+		own.Abort(false)
 	}
 }
 
@@ -183,6 +235,10 @@ func (pr *progress) Packed(c *grabber.Chapter, _ string, err error) {
 }
 
 func (pr *progress) Downloaded(c *grabber.Chapter) {
+	// a volume's archive progress comes from VolumeArchived instead
+	if !pr.cfg.bundle {
+		return
+	}
 	// For bundle mode, increment archive progress
 	pr.bundleBar.IncrBy(int(c.PagesCount))
 }
@@ -202,5 +258,72 @@ func (pr *progress) BundleArchived(n int) {
 func (pr *progress) finishBundle() {
 	if pr.bundleBar != nil && !pr.bundleBar.Completed() {
 		pr.bundleBar.Abort(false)
+	}
+}
+
+// VolumeStart adds the bar of a volume, empty until its chapters start
+func (pr *progress) VolumeStart(v *core.Volume) {
+	vb := &volumeBar{}
+	title := fmt.Sprintf("%s - %s:", truncateString(pr.cfg.title, pr.cfg.mangaLen), core.VolumeLabel(v.Number))
+	vb.bar = pr.p.AddBar(0,
+		mpb.PrependDecorators(
+			decor.Name(title, decor.WCSyncWidthR),
+			decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DextraSpace}),
+		),
+		mpb.AppendDecorators(
+			decor.Percentage(decor.WC{W: 4}),
+			decor.Any(func(s decor.Statistics) string {
+				pr.mu.Lock()
+				archiving := vb.archiving
+				pr.mu.Unlock()
+				if archiving {
+					return pr.blue.Sprintf(" archiving ")
+				}
+				return pr.blue.Sprintf(" downloading")
+			}, decor.WC{W: 10}),
+		),
+	)
+	pr.mu.Lock()
+	pr.volumes[v] = vb
+	pr.mu.Unlock()
+}
+
+func (pr *progress) VolumeChapter(v *core.Volume, c *grabber.Chapter) {
+	pr.mu.Lock()
+	defer pr.mu.Unlock()
+	pr.chapterVolume[c] = v
+}
+
+func (pr *progress) VolumePacking(v *core.Volume) {
+	pr.mu.Lock()
+	defer pr.mu.Unlock()
+	if vb := pr.volumes[v]; vb != nil {
+		vb.archiving = true
+	}
+}
+
+func (pr *progress) VolumeArchived(v *core.Volume, n int) {
+	pr.mu.Lock()
+	vb := pr.volumes[v]
+	pr.mu.Unlock()
+	if vb != nil {
+		vb.bar.IncrBy(n)
+	}
+}
+
+func (pr *progress) VolumePacked(v *core.Volume, name string, err error) {
+	pr.mu.Lock()
+	vb := pr.volumes[v]
+	pr.mu.Unlock()
+	if err != nil {
+		red("- error packing %s: %s", core.VolumeLabel(v.Number), err.Error())
+		if vb != nil {
+			vb.bar.Abort(false)
+		}
+		return
+	}
+	if vb != nil {
+		// pages of chapters that failed were never counted: done is what's left
+		vb.bar.SetTotal(-1, true)
 	}
 }

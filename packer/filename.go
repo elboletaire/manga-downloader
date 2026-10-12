@@ -20,12 +20,31 @@ type FilenameTemplateParts struct {
 	Number string
 	// Title represents the chapter title (e.g. "The Beginning")
 	Title string
+	// Volume is the volume number: the chapter's own (0 when the site doesn't
+	// say) or, for a volume file, the volume's (e.g. 3). It's an int, so
+	// {{printf "%02d" .Volume}} pads it.
+	Volume int
 	// Version placeholder appended to the title in case of duplicate filenames (e.g. "3")
 	Version int
 }
 
 // FilenameTemplateDefault is the default filename template
 const FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}"
+
+// FilenameVolumeTemplateDefault is the template volume files (--volumes) are
+// named with while --filename-template is left at its default, which names
+// chapters and would read oddly on a volume
+const FilenameVolumeTemplateDefault = `{{.Series}} Vol. {{printf "%02d" .Volume}}{{if gt .Version 1}} v{{.Version}}{{end}}`
+
+// VolumeTemplate returns the template volume files are named with: the
+// volume default when the filename template is the chapter default (or
+// unset), the user's own template otherwise
+func VolumeTemplate(templ string) string {
+	if templ == "" || templ == FilenameTemplateDefault {
+		return FilenameVolumeTemplateDefault
+	}
+	return templ
+}
 
 // NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template
 func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string, error) {
@@ -46,7 +65,33 @@ func NewChapterFileTemplateParts(title string, chapter *grabber.Chapter) Filenam
 		Series: SanitizeFilename(title),
 		Number: strings.Replace(fmt.Sprintf("%.1f", chapter.GetNumber()), ".0", "", 1),
 		Title:  SanitizeFilename(chapter.GetTitle()),
+		Volume: chapter.Volume,
 	}
+}
+
+// NewVolumeFileTemplateParts returns the FilenameTemplateParts of a volume
+// file: Volume is its number, Number the chapters it holds ("1-7") and Title
+// "Vol. 01", for templates written with chapters in mind
+func NewVolumeFileTemplateParts(title string, volume int, chapters []*grabber.Chapter) FilenameTemplateParts {
+	number := ""
+	if len(chapters) > 0 {
+		first, last := chapters[0].GetNumber(), chapters[len(chapters)-1].GetNumber()
+		number = formatChapterNumber(first)
+		if last != first {
+			number += "-" + formatChapterNumber(last)
+		}
+	}
+	return FilenameTemplateParts{
+		Series: SanitizeFilename(title),
+		Number: number,
+		Title:  fmt.Sprintf("Vol. %02d", volume),
+		Volume: volume,
+	}
+}
+
+// formatChapterNumber formats a chapter number as filenames show it: 1, 10.5
+func formatChapterNumber(n float64) string {
+	return strconv.FormatFloat(n, 'f', -1, 64)
 }
 
 // paddedChapterNumber formats a chapter number zero-padded to (at least) 4

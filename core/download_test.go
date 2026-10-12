@@ -61,6 +61,19 @@ func (r *recorder) Packed(c *grabber.Chapter, _ string, err error) {
 func (r *recorder) Downloaded(c *grabber.Chapter) { r.add("downloaded %g", c.Number) }
 func (r *recorder) BundlePacking()                { r.add("bundle-packing") }
 func (r *recorder) BundleArchived(n int)          { r.add("bundle-archived %d", n) }
+func (r *recorder) VolumeStart(v *Volume)         { r.add("volume-start %d", v.Number) }
+func (r *recorder) VolumeChapter(v *Volume, c *grabber.Chapter) {
+	r.add("volume-chapter %d %g", v.Number, c.Number)
+}
+func (r *recorder) VolumePacking(v *Volume)         { r.add("volume-packing %d", v.Number) }
+func (r *recorder) VolumeArchived(v *Volume, n int) { r.add("volume-archived %d %d", v.Number, n) }
+func (r *recorder) VolumePacked(v *Volume, name string, err error) {
+	if err != nil {
+		r.add("volume-failed %d %v", v.Number, err)
+		return
+	}
+	r.add("volume-packed %d %s", v.Number, name)
+}
 
 // count returns how many recorded events start with prefix
 func (r *recorder) count(prefix string) int {
@@ -79,6 +92,8 @@ type fakeChapter struct {
 	number float64
 	pages  int
 	fail   map[int]bool
+	// volume is the volume the listing gives the chapter, 0 for none
+	volume int
 }
 
 // fakeSite serves fakeChapters from an httptest server
@@ -183,7 +198,7 @@ func newSeries(t *testing.T, site *fakeSite, bundle bool) (*Series, string) {
 func listed(site *fakeSite) grabber.Filterables {
 	var out grabber.Filterables
 	for _, c := range site.chapters {
-		out = append(out, &grabber.Chapter{Number: c.number})
+		out = append(out, &grabber.Chapter{Number: c.number, Volume: c.volume})
 	}
 	return out
 }

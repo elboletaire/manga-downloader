@@ -58,6 +58,10 @@ Would download chapters 10 to 20 of Black Clover from mangadex.org in Spanish.
 
 It would also download chapters 10 to 20 of Black Clover from mangadex.org in Spanish, but in this case would bundle them into a single file.
 
+  manga-downloader --volumes auto https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover 1-30
+
+Would pack chapters 1 to 30 into one file per volume, as the site groups them. Volumes can also be given as chapter ranges, one per volume: --volumes "1-7;8-16".
+
 Note arguments aren't really positional, you can specify them in any order:
 
   manga-downloader --language es 10-20 https://mangadex.org/title/e7eabe96-aa17-476f-b431-2497d5e9d060/black-clover --bundle`),
@@ -181,6 +185,14 @@ func Run(cmd *cobra.Command, args []string) {
 
 	bundleFile, err := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
 
+	// raised before anything was fetched: --volumes auto on a site without
+	// volumes, or a volume filename template that doesn't work
+	var serr *core.SettingError
+	if errors.As(err, &serr) {
+		p.Wait()
+		exitSettingError(err)
+	}
+
 	if !settings.Bundle {
 		// let the render loop paint the final state of the bars before
 		// exiting; without this, fast packing (e.g. raw folders) ends with
@@ -215,6 +227,10 @@ func exitSettingError(err error) {
 		red("Error: invalid format %q, must be %q or %q", se.Value, packer.FormatCBZ, packer.FormatRaw)
 	case "convert-images":
 		red("Error: invalid --convert-images value: %s", se.Err)
+	case "volumes":
+		red("Error: invalid --volumes value: %s", se.Err)
+	case "filename-template":
+		red("Error: the volume filename template %q doesn't work: %s", se.Value, se.Err)
 	default:
 		cerr(se.Err, "Error parsing --"+se.Setting+": ")
 	}
@@ -282,6 +298,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
 	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz or raw (a folder with the images)")
 	rootCmd.Flags().StringVar(&settings.ConvertImages, "convert-images", grabber.ConvertImagesDefault, `comma-separated source image formats to convert to jpeg for e-reader compatibility: "avif", "webp" or "none"`)
+	rootCmd.Flags().StringVar(&settings.Volumes, "volumes", "", `pack one file per volume: "auto" uses the site's volumes, or give chapter ranges, one group per volume ("1-7;8-16"); chapters outside every volume are packed on their own`)
 	rootCmd.Flags().BoolVar(&settings.BrowserVisible, "browser-visible", false, "always show the browser window; rarely needed, as it opens on its own for sites that need it")
 	rootCmd.Flags().Uint8VarP(&settings.Retry, "retry", "r", 1, "number of retries for failed page downloads, hard-limited to 3 (0 disables retrying)")
 	// no shorthand on purpose: a long flag takes the next argument verbatim as
@@ -326,7 +343,7 @@ func colorizeHelp(help string) string {
 	})
 
 	// --arguments in blue
-	bre := regexp.MustCompile(`((--language|--bundle)( es)?)`)
+	bre := regexp.MustCompile(`((--language|--bundle|--volumes)( es| auto)?)`)
 	help = bre.ReplaceAllStringFunc(help, func(s string) string {
 		return color.HiBlueString(s)
 	})
