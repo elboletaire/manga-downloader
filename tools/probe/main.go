@@ -54,8 +54,9 @@ func main() {
 	var html string
 	var err error
 	if os.Getenv("PROBE_SCROLL") != "" {
-		// PROBE_SCROLL=1 scrolls the document; PROBE_SCROLL_IN=<selector>
-		// scrolls an inner element, PROBE_SCROLL_DONE=<js> stops early
+		// PROBE_SCROLL is just on/off (any value, e.g. 1): it scrolls the
+		// document, PROBE_SCROLL_IN=<selector> an inner element instead,
+		// and PROBE_SCROLL_DONE=<js> stops early
 		pause := 400 * time.Millisecond
 		if p := os.Getenv("PROBE_SCROLL_PAUSE"); p != "" {
 			if d, perr := time.ParseDuration(p); perr == nil {

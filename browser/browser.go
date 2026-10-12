@@ -111,9 +111,6 @@ type Scroll struct {
 // for Done before giving up on it, so the last pages can still mount
 const scrollSettleSteps = 3
 
-// scrollMaxSteps caps a scroll whose height keeps growing forever
-const scrollMaxSteps = 2000
-
 // GetHTMLWithScroll is like GetHTML, but after waitSelector matches it scrolls
 // the page down one viewport at a time until s.Done holds or the bottom is
 // reached, then takes the final HTML snapshot. Some readers virtualize or
@@ -148,7 +145,8 @@ func scrollStepJS(s Scroll) string {
 func scroll(ctx context.Context, s Scroll) error {
 	js := scrollStepJS(s)
 	atBottom := 0
-	for i := 0; i < scrollMaxSteps; i++ {
+	// no step cap: afterRenderTimeout bounds a page that keeps growing
+	for {
 		var state string
 		if err := chromedp.Evaluate(js, &state).Do(ctx); err != nil {
 			return err
@@ -168,7 +166,6 @@ func scroll(ctx context.Context, s Scroll) error {
 			return err
 		}
 	}
-	return nil
 }
 
 // dismissModalJS closes an open modal dialog (e.g. mkissa's "Sign in to
