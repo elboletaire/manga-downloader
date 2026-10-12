@@ -50,6 +50,13 @@ type ManganeloChapter struct {
 // manganeloHostRe matches the family domains and their subdomains
 var manganeloHostRe = regexp.MustCompile(`(?i)(^|\.)(mangabats\.com|mangakakalot\.gg|manganato\.gg|natomanga\.com)$`)
 
+// Cloudflare blocks the headless browser on these manganelo family sites
+func init() {
+	browser.RequireVisible("mangakakalot.gg")
+	browser.RequireVisible("natomanga.com")
+	browser.RequireVisible("manganato.gg")
+}
+
 // manganeloSeriesWait is a selector that exists only on a rendered series
 // page, never on a Cloudflare interstitial: waiting on something the
 // challenge page also has (e.g. `body`) would make the challenge look like a
