@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -36,6 +37,50 @@ var mangatownURLRe = regexp.MustCompile(`^https?://(?:www\.|m\.)?mangatown\.com(
 // mangatownSeriesPathRe takes the series path out of a series, chapter or
 // reader page path: /manga/<slug>/[v<volume>/]c<number>/[<page>.html]
 var mangatownSeriesPathRe = regexp.MustCompile(`^(/manga/[^/?#]+)(?:/|$)`)
+
+// mangahereHostRe matches any mangahere.cc host: bare, www., m., newm., etc.
+var mangahereHostRe = regexp.MustCompile(`(?i)(?:^|\.)mangahere\.cc$`)
+
+// mangahereChapterURL reports whether rawURL is a chapter/reader URL on
+// mangahere.cc or fanfox.net. It extracts the /manga/<slug> prefix via
+// mangatownSeriesPathRe and checks that more path follows, so volume segments
+// (/v98/) and decimal chapter numbers (/c001.1/) are accepted.
+func mangahereChapterURL(rawURL string) bool {
+	u, _ := url.Parse(rawURL)
+	if u == nil {
+		return false
+	}
+	m := mangatownSeriesPathRe.FindStringSubmatch(u.Path)
+	if m == nil {
+		return false
+	}
+	return strings.TrimPrefix(u.Path[len(m[1]):], "/") != ""
+}
+
+// mangahereSeriesURL extracts the series URL from a chapter URL, trimming the
+// path to /manga/<slug>/ and stripping query and fragment. Any *.mangahere.cc
+// host (m., newm., bare) is rewritten to www.mangahere.cc. Returns ("", false)
+// for series URLs (nothing after the slug).
+func mangahereSeriesURL(rawURL string) (string, bool) {
+	u, _ := url.Parse(rawURL)
+	if u == nil {
+		return "", false
+	}
+	if mangahereHostRe.MatchString(u.Hostname()) {
+		u.Host = "www.mangahere.cc"
+	}
+	m := mangatownSeriesPathRe.FindStringSubmatch(u.Path)
+	if m == nil {
+		return "", false
+	}
+	if strings.TrimPrefix(u.Path[len(m[1]):], "/") == "" {
+		return "", false
+	}
+	u.Path = m[1] + "/"
+	u.RawQuery = ""
+	u.Fragment = ""
+	return u.String(), true
+}
 
 // Test returns true if the URL is a mangatown.com URL. The mobile host serves
 // the same paths, but its markup differs, so the URL is moved to www. A chapter

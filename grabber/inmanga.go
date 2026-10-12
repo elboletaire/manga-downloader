@@ -95,7 +95,7 @@ func (i *Inmanga) resolveSeriesURL() error {
 
 	seriesURL, ok := inmangaSeriesURL(i.URL, html)
 	if !ok {
-		return fmt.Errorf("couldn't find the series of chapter %s", i.URL)
+		return errSeriesNotFound(i.URL)
 	}
 
 	i.URL = seriesURL

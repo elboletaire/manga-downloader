@@ -183,7 +183,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 	// Last resort: if PlainHTML fetched the page but found no rows (e.g. a
 	// chapter URL whose series page a later grabber would serve), try its
 	// chapter-URL resolution now that every grabber has declined.
-	if plainHTML.doc != nil && plainHTML.tryResolveSeriesURL() {
+	if plainHTML.doc != nil && plainHTML.resolveSeriesURL() {
 		return plainHTML, errs
 	}
 

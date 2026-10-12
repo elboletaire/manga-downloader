@@ -4,51 +4,35 @@ package grabber
 
 import "testing"
 
-func TestFanfoxChapterURL(t *testing.T) {
-	cases := []struct {
-		url  string
-		want bool
-	}{
-		// standard chapter
-		{"https://fanfox.net/manga/chainsaw_man/c228/1.html", true},
-		// volume segment
-		{"https://fanfox.net/manga/onepunch_man/vTBD/c237/1.html", true},
-		{"https://fanfox.net/manga/onepunch_man/v01/c001/1.html", true},
-		// decimal chapter
-		{"https://fanfox.net/manga/one_piece/v00/c001.1/1.html", true},
-		// www.
-		{"https://www.fanfox.net/manga/chainsaw_man/c228/1.html", true},
-		// series URLs — must return false
-		{"https://fanfox.net/manga/chainsaw_man/", false},
-		{"https://fanfox.net/manga/chainsaw_man", false},
-		// path without /manga/ prefix
-		{"https://fanfox.net/other/chainsaw_man/c1/", false},
-	}
-	for _, c := range cases {
-		if got := fanfoxChapterURL(c.url); got != c.want {
-			t.Errorf("fanfoxChapterURL(%q) = %v, want %v", c.url, got, c.want)
-		}
-	}
-}
-
-func TestFanfoxSeriesURL(t *testing.T) {
+func TestFanfoxTest(t *testing.T) {
 	cases := []struct {
 		url     string
+		want    bool
 		wantURL string
-		wantOK  bool
 	}{
-		{"https://fanfox.net/manga/chainsaw_man/c228/1.html", "https://fanfox.net/manga/chainsaw_man/", true},
-		{"https://fanfox.net/manga/onepunch_man/vTBD/c237/1.html", "https://fanfox.net/manga/onepunch_man/", true},
-		{"https://fanfox.net/manga/one_piece/v00/c001.1/1.html", "https://fanfox.net/manga/one_piece/", true},
-		{"https://www.fanfox.net/manga/chainsaw_man/c228/1.html", "https://www.fanfox.net/manga/chainsaw_man/", true},
-		// series URL — no-op
-		{"https://fanfox.net/manga/chainsaw_man/", "", false},
-		{"https://fanfox.net/manga/chainsaw_man", "", false},
+		// bare host preserved
+		{"https://fanfox.net/manga/chainsaw_man/c228/1.html", true, "https://fanfox.net/manga/chainsaw_man/c228/1.html"},
+		// www. → bare fanfox.net
+		{"https://www.fanfox.net/manga/chainsaw_man/", true, "https://fanfox.net/manga/chainsaw_man/"},
+		// mobile host → bare fanfox.net
+		{"https://m.fanfox.net/manga/chainsaw_man/c228/1.html", true, "https://fanfox.net/manga/chainsaw_man/c228/1.html"},
+		// other domains — declined
+		{"https://www.mangahere.cc/manga/kengan_omega/", false, "https://www.mangahere.cc/manga/kengan_omega/"},
+		{"https://fanfox.net.example.org/manga/x/", false, "https://fanfox.net.example.org/manga/x/"},
 	}
+
 	for _, c := range cases {
-		got, ok := fanfoxSeriesURL(c.url)
-		if ok != c.wantOK || got != c.wantURL {
-			t.Errorf("fanfoxSeriesURL(%q) = (%q, %v), want (%q, %v)", c.url, got, ok, c.wantURL, c.wantOK)
+		m := Fanfox{Grabber: &Grabber{URL: c.url, Settings: &Settings{}}}
+		got, err := m.Test()
+		if err != nil {
+			t.Errorf("Test(%q) unexpected error: %v", c.url, err)
+			continue
+		}
+		if got != c.want {
+			t.Errorf("Test(%q) = %v, want %v", c.url, got, c.want)
+		}
+		if m.URL != c.wantURL {
+			t.Errorf("Test(%q) left URL %q, want %q", c.url, m.URL, c.wantURL)
 		}
 	}
 }

@@ -85,6 +85,77 @@ func TestMangatownChapterTitle(t *testing.T) {
 	}
 }
 
+// TestMangahereChapterURL covers mangahereChapterURL (shared by mangahere and
+// fanfox). The function is path-only, so domain doesn't affect the result.
+func TestMangahereChapterURL(t *testing.T) {
+	cases := []struct {
+		url  string
+		want bool
+	}{
+		// mangahere.cc
+		{"https://www.mangahere.cc/manga/kengan_omega/c369/1.html", true},
+		{"https://www.mangahere.cc/manga/one_piece/v98/c1195/1.html", true},
+		{"https://www.mangahere.cc/manga/one_piece/v00/c001.1/1.html", true},
+		{"https://mangahere.cc/manga/kengan_omega/c369/1.html", true},
+		{"https://m.mangahere.cc/manga/a_villainous_baby_killer_whale/c116/1.html", true},
+		{"https://newm.mangahere.cc/manga/hinako_note/c034/1.html", true},
+		// fanfox.net uses the same path format
+		{"https://fanfox.net/manga/chainsaw_man/c228/1.html", true},
+		{"https://fanfox.net/manga/onepunch_man/vTBD/c237/1.html", true},
+		{"https://fanfox.net/manga/one_piece/v00/c001.1/1.html", true},
+		{"https://www.fanfox.net/manga/chainsaw_man/c228/1.html", true},
+		// series URLs — must return false
+		{"https://www.mangahere.cc/manga/kengan_omega/", false},
+		{"https://www.mangahere.cc/manga/kengan_omega", false},
+		{"https://fanfox.net/manga/chainsaw_man/", false},
+		{"https://fanfox.net/manga/chainsaw_man", false},
+		// path without /manga/ prefix
+		{"https://www.mangahere.cc/other/kengan_omega/c1/1.html", false},
+		{"https://fanfox.net/other/chainsaw_man/c1/", false},
+	}
+	for _, c := range cases {
+		if got := mangahereChapterURL(c.url); got != c.want {
+			t.Errorf("mangahereChapterURL(%q) = %v, want %v", c.url, got, c.want)
+		}
+	}
+}
+
+// TestMangahereSeriesURL covers mangahereSeriesURL (shared by mangahere and
+// fanfox). Any *.mangahere.cc host is normalised to www.mangahere.cc; fanfox
+// hosts are passed through unchanged.
+func TestMangahereSeriesURL(t *testing.T) {
+	cases := []struct {
+		url     string
+		wantURL string
+		wantOK  bool
+	}{
+		// mangahere.cc — www. preserved
+		{"https://www.mangahere.cc/manga/kengan_omega/c369/1.html", "https://www.mangahere.cc/manga/kengan_omega/", true},
+		{"https://www.mangahere.cc/manga/one_piece/v98/c1195/1.html", "https://www.mangahere.cc/manga/one_piece/", true},
+		{"https://www.mangahere.cc/manga/one_piece/v00/c001.1/1.html", "https://www.mangahere.cc/manga/one_piece/", true},
+		// bare and mobile hosts rewritten to www.mangahere.cc
+		{"https://mangahere.cc/manga/kengan_omega/c369/1.html", "https://www.mangahere.cc/manga/kengan_omega/", true},
+		{"https://m.mangahere.cc/manga/a_villainous_baby_killer_whale/c116/1.html", "https://www.mangahere.cc/manga/a_villainous_baby_killer_whale/", true},
+		{"https://newm.mangahere.cc/manga/hinako_note/c034/1.html", "https://www.mangahere.cc/manga/hinako_note/", true},
+		// fanfox.net — host unchanged
+		{"https://fanfox.net/manga/chainsaw_man/c228/1.html", "https://fanfox.net/manga/chainsaw_man/", true},
+		{"https://fanfox.net/manga/onepunch_man/vTBD/c237/1.html", "https://fanfox.net/manga/onepunch_man/", true},
+		{"https://fanfox.net/manga/one_piece/v00/c001.1/1.html", "https://fanfox.net/manga/one_piece/", true},
+		{"https://www.fanfox.net/manga/chainsaw_man/c228/1.html", "https://www.fanfox.net/manga/chainsaw_man/", true},
+		// series URLs — no-op
+		{"https://www.mangahere.cc/manga/kengan_omega/", "", false},
+		{"https://www.mangahere.cc/manga/kengan_omega", "", false},
+		{"https://fanfox.net/manga/chainsaw_man/", "", false},
+		{"https://fanfox.net/manga/chainsaw_man", "", false},
+	}
+	for _, c := range cases {
+		got, ok := mangahereSeriesURL(c.url)
+		if ok != c.wantOK || got != c.wantURL {
+			t.Errorf("mangahereSeriesURL(%q) = (%q, %v), want (%q, %v)", c.url, got, ok, c.wantURL, c.wantOK)
+		}
+	}
+}
+
 // reader page markup as served by mangatown.com (image attributes in the
 // same order as the site, plus a page whose <img> carries no src)
 const (

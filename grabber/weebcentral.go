@@ -91,7 +91,7 @@ func weebCentralResolveSeriesURL(chapterURL string) (string, error) {
 		return false
 	})
 	if seriesURL == "" {
-		return "", fmt.Errorf("couldn't find the series of chapter %s; try the series link instead", chapterURL)
+		return "", errSeriesNotFound(chapterURL)
 	}
 
 	return seriesURL, nil

@@ -27,43 +27,6 @@ type Mangahere struct {
 	*Grabber
 }
 
-// mangahereChapterURL reports whether rawURL is a chapter/reader URL. It uses
-// mangatownSeriesPathRe (shared with fanfox and mangatown) to extract the
-// /manga/<slug> prefix and then checks that more path follows, so volume
-// segments (/v98/) and decimal chapter numbers (/c001.1/) are accepted.
-func mangahereChapterURL(rawURL string) bool {
-	u, _ := url.Parse(rawURL)
-	if u == nil {
-		return false
-	}
-	m := mangatownSeriesPathRe.FindStringSubmatch(u.Path)
-	if m == nil {
-		return false
-	}
-	return strings.TrimPrefix(u.Path[len(m[1]):], "/") != ""
-}
-
-// mangahereSeriesURL extracts the series URL from a chapter URL, trimming the
-// path to /manga/<slug>/ and stripping query and fragment. Returns ("", false)
-// for series URLs (nothing after the slug).
-func mangahereSeriesURL(rawURL string) (string, bool) {
-	u, _ := url.Parse(rawURL)
-	if u == nil {
-		return "", false
-	}
-	m := mangatownSeriesPathRe.FindStringSubmatch(u.Path)
-	if m == nil {
-		return "", false
-	}
-	if strings.TrimPrefix(u.Path[len(m[1]):], "/") == "" {
-		return "", false
-	}
-	u.Path = m[1] + "/"
-	u.RawQuery = ""
-	u.Fragment = ""
-	return u.String(), true
-}
-
 func NewMangahere(g *Grabber) *Mangahere {
 	return &Mangahere{Grabber: g}
 }
@@ -74,10 +37,16 @@ type MangahereChapter struct {
 	URL string
 }
 
-// Test returns true if the URL is a mangahere.cc URL
+// Test returns true if the URL is a mangahere.cc URL. Any subdomain (m.,
+// newm., bare) is moved to www.mangahere.cc so the desktop markup is served.
 func (m *Mangahere) Test() (bool, error) {
-	re := regexp.MustCompile(`mangahere\.cc`)
-	return re.MatchString(m.URL), nil
+	u, err := url.Parse(m.URL)
+	if err != nil || !mangahereHostRe.MatchString(u.Hostname()) {
+		return false, nil
+	}
+	u.Host = "www.mangahere.cc"
+	m.URL = u.String()
+	return true, nil
 }
 
 // resolveSeriesURL resolves a chapter URL to the series URL if needed.

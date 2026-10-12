@@ -81,7 +81,7 @@ func (m *Mgeko) resolveSeriesURL() error {
 
 	u := mgekoExtractSeriesURL(doc, m.BaseUrl())
 	if u == "" {
-		return fmt.Errorf("couldn't find the series of chapter %s; try the series link instead", m.URL)
+		return errSeriesNotFound(m.URL)
 	}
 	m.URL = u
 	return nil
