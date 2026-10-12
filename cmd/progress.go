@@ -5,336 +5,899 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"sync"
+	"os"
+	"strings"
 
+	"charm.land/bubbles/v2/progress"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
+	"github.com/mattn/go-runewidth"
+
+	"github.com/elboletaire/manga-downloader/browser"
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/elboletaire/manga-downloader/notice"
 	"github.com/fatih/color"
-	"github.com/vbauerster/mpb/v8"
-	"github.com/vbauerster/mpb/v8/decor"
 )
 
-// progressConfig is what the terminal output depends on besides the events
-type progressConfig struct {
-	title        string
-	bundle       bool
-	bundleRange  string
-	mangaLen     int
-	chapterLen   int
-	showLanguage bool
+// ── Bubble Tea messages (sent from event callbacks into the model) ──────────
+
+type bundleStartMsg struct{ total int64 }
+type chapterStartedMsg struct {
+	chapter *grabber.Chapter
+	total   int64
+}
+type pageSuccessMsg struct{ chapter *grabber.Chapter }
+type downloadFailedMsg struct{ chapter *grabber.Chapter }
+type archivedMsg struct{ chapter *grabber.Chapter }
+type packedMsg struct {
+	chapter *grabber.Chapter
+	failed  bool
+}
+type bundleDownloadedMsg struct{ pages int }
+type bundlePackingMsg struct{}
+type bundleArchivedMsg struct{ n int }
+type downloadDoneMsg struct{}
+
+// Volume messages
+type volumeStartMsg struct {
+	volume  *core.Volume
+	chCount int // len(v.Chapters), shown in the counter column as "N ch."
+}
+type volumeChapterMsg struct {
+	volume  *core.Volume
+	chapter *grabber.Chapter
+}
+type volumeProgressMsg struct {
+	volume   *core.Volume
+	fraction float64
+}
+type volumePackingMsg struct {
+	volume *core.Volume
+}
+type volumePackedMsg struct {
+	volume *core.Volume
+	err    error
 }
 
-// progress draws core.Download's events as the progress bars and messages the
-// CLI always printed. Events arrive from several goroutines, so the bars map
-// and the bundle phase are guarded by mu.
-type progress struct {
-	p   *mpb.Progress
-	cfg progressConfig
+// ── Per-chapter bar state ───────────────────────────────────────────────────
 
-	blue *color.Color
-
-	mu        sync.Mutex
-	bars      map[*grabber.Chapter]*mpb.Bar
-	bundleBar *mpb.Bar
-	// volumes are the bars of a --volumes run, and chapterVolume the volume
-	// each of its chapters goes into
-	volumes       map[*core.Volume]*volumeBar
-	chapterVolume map[*grabber.Chapter]*core.Volume
-	// phase is the status shown by the bundle bar
-	phase string
+type barState struct {
+	rawTitle string // untruncated title; truncated to titleW at render time
+	current  int64
+	total    int64
+	status   string          // "downloading" | "archiving" | "done" | "failed"
+	bar      *progress.Model // brand-coloured bar (violet gradient while active, green when done)
+	failBar  *progress.Model // danger-coloured bar, created lazily on failure
 }
 
-var _ core.Events = (*progress)(nil)
+// ── Per-volume bar state ────────────────────────────────────────────────────
 
-func newProgress(p *mpb.Progress, cfg progressConfig) *progress {
-	return &progress{
-		p:    p,
-		cfg:  cfg,
-		blue: color.New(color.FgBlue),
-		bars: map[*grabber.Chapter]*mpb.Bar{},
+type volumeBarState struct {
+	rawTitle string          // "Series - Vol. 01", untruncated
+	chCount  int             // number of chapters shown in counter column as "N ch."
+	fraction float64         // 0→1, set from VolumeProgress (never decreasing)
+	status   string          // "downloading" | "archiving" | "done" | "failed" | "skipped"
+	bar      *progress.Model // brand-coloured bar
+	failBar  *progress.Model // danger-coloured bar, created lazily on failure
+}
 
-		volumes:       map[*core.Volume]*volumeBar{},
-		chapterVolume: map[*grabber.Chapter]*core.Volume{},
+// ── Layout constants ────────────────────────────────────────────────────────
+
+const (
+	// Chapter bar row (full): title(titleW) + " " + bar(barW) + " " + counter(9) + " " + status(12)
+	btCounterW  = 9                                // "9999/9999"
+	btStatusW   = 12                               // " downloading"
+	btGapsW     = 3                                // spaces between title, bar, counter, status
+	btFixedW    = btCounterW + btStatusW + btGapsW // 24
+	btMinBarW   = 15
+	btMaxTitleW = 40
+
+	// Bundle bar row (full): phase(30) + " " + bar(barW) + " " + counter(9)
+	btPhaseW       = 30
+	btBundleGapsW  = 2
+	btBundleFixedW = btPhaseW + btCounterW + btBundleGapsW // 41
+)
+
+// btLayout returns titleW, barW, and narrow for a chapter row.
+// When narrow is false the full row is: title(titleW) + " " + bar(barW) + " " + counter(9) + " " + status(12)
+// totalling exactly width. When narrow is true the counter and status are omitted:
+// title(titleW) + " " + bar(barW) totalling exactly width.
+func btLayout(width int) (titleW, barW int, narrow bool) {
+	if width <= 0 {
+		width = 80
+	}
+	avail := width - btFixedW
+	if avail < btMinBarW+1 {
+		// Too narrow for full layout; omit counter and status.
+		narrow = true
+		titleW = max(1, width/3)
+		barW = width - titleW - 1 // 1 space between title and bar
+		if barW < 1 {
+			barW = 1
+			titleW = max(1, width-2)
+		}
+		return
+	}
+	titleW = min(btMaxTitleW, avail-btMinBarW)
+	if titleW < 1 {
+		titleW = 1
+	}
+	barW = avail - titleW
+	return
+}
+
+// btBundleLayout returns phaseW, barW, and counterW for a bundle row.
+// It degrades gracefully as the terminal narrows:
+//   - Full  (width ≥ 56): phase(30) + " " + bar(width-41) + " " + counter(9)
+//   - Shrunk (width ≥ 26): phase(width-26) + " " + bar(15) + " " + counter(9)
+//   - No-phase (width ≥ 11): bar(width-10) + " " + counter(9)
+//   - Tiny (width < 11): bar(width) only
+func btBundleLayout(width int) (phaseW, barW, counterW int) {
+	if width <= 0 {
+		width = 80
+	}
+	switch {
+	case width >= btBundleFixedW+btMinBarW: // ≥ 56
+		return btPhaseW, width - btBundleFixedW, btCounterW
+	case width >= btMinBarW+1+btCounterW+1: // ≥ 26: shrink phase
+		phaseW = width - btMinBarW - 1 - btCounterW - 1
+		return phaseW, btMinBarW, btCounterW
+	case width >= btMinBarW+1: // ≥ 16: drop phase, keep counter
+		return 0, width - btCounterW - 1, btCounterW
+	default: // < 16: bar only
+		return 0, max(1, width), 0
 	}
 }
 
-// volumeScale is the total of a volume's bar, which shows the fraction
-// VolumeProgress reports: a volume's page count isn't known until all of its
-// chapters are fetched, and growing the total as they start pulled it back
-const volumeScale = 1000
-
-// volumeBar is the bar of one volume
-type volumeBar struct {
-	bar *mpb.Bar
-	// archiving is set once the volume's archive is being written
-	archiving bool
-}
-
-// volumeFor returns the bar of the volume c goes into, nil when c is packed
-// on its own. Callers hold mu.
-func (pr *progress) volumeFor(c *grabber.Chapter) *volumeBar {
-	if v, ok := pr.chapterVolume[c]; ok {
-		return pr.volumes[v]
+// fixedW renders s in exactly w visible cells: truncates with "…" or pads with spaces.
+func fixedW(s string, w int) string {
+	if w <= 0 {
+		return ""
 	}
-	return nil
+	return runewidth.FillRight(runewidth.Truncate(s, w, "…"), w)
 }
 
-// phaseText is read by the bundle bar's decorator from the render goroutine
-func (pr *progress) phaseText() string {
-	pr.mu.Lock()
-	defer pr.mu.Unlock()
-	return pr.phase
-}
-
-func (pr *progress) setPhase(s string) {
-	pr.mu.Lock()
-	defer pr.mu.Unlock()
-	pr.phase = s
-}
-
-// barFor returns the bar a chapter's progress goes to: the shared bundle bar
-// in bundle mode, the chapter's own bar otherwise. It's nil if the chapter
-// never got one (its fetch, skip or filename failed).
-func (pr *progress) barFor(c *grabber.Chapter) *mpb.Bar {
-	if pr.cfg.bundle {
-		return pr.bundleBar
+// clipRow clips a rendered row (which may contain ANSI codes) to width visible cells.
+// It is called as a last-resort guard; when layout arithmetic is correct the clip is a no-op.
+func clipRow(s string, width int) string {
+	if width <= 0 {
+		return ""
 	}
-	pr.mu.Lock()
-	defer pr.mu.Unlock()
-	if vb := pr.volumeFor(c); vb != nil {
-		return vb.bar
-	}
-	return pr.bars[c]
+	return ansi.Truncate(s, width, "")
 }
 
-// ownBar returns the chapter's own bar: nil in bundle mode, for a chapter in
-// a volume, and for one that never got a bar
-func (pr *progress) ownBar(c *grabber.Chapter) *mpb.Bar {
-	if pr.cfg.bundle {
-		return nil
-	}
-	pr.mu.Lock()
-	defer pr.mu.Unlock()
-	return pr.bars[c]
+// ── Bubble Tea model ────────────────────────────────────────────────────────
+
+type progressModel struct {
+	seriesTitle string
+	bundle      bool
+	bundleRange string
+	showLang    bool
+	hasDarkBg   bool
+	width       int
+	done        bool // set true on downloadDoneMsg; View renders full bars immediately
+
+	// non-bundle, loose chapters
+	chapters []*grabber.Chapter
+	states   map[*grabber.Chapter]*barState
+
+	// volumes support
+	volumes       []*core.Volume
+	volStates     map[*core.Volume]*volumeBarState
+	chapterVolume map[*grabber.Chapter]*core.Volume // which volume each chapter belongs to
+
+	// bundle
+	bundlePhase   string
+	bundleCurrent int64
+	bundleTotal   int64
+	bundleBar     *progress.Model
 }
 
-// BundleStart creates the single bar of a bundle, whose total is every page of
-// every chapter, twice: once downloaded, once archived
-func (pr *progress) BundleStart(pages int64) {
-	pr.bundleBar = pr.p.AddBar(pages*2,
-		mpb.PrependDecorators(
-			// Dynamic status showing current chapter
-			decor.Any(func(s decor.Statistics) string {
-				return pr.blue.Sprintf("%-30s", pr.phaseText())
-			}, decor.WCSyncWidthR),
-			decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DextraSpace}),
-		),
-		mpb.AppendDecorators(
-			decor.Percentage(decor.WC{W: 4}), // W: 4 to remove space before %
-			// Status at the end to prevent shifting
-			decor.Any(func(s decor.Statistics) string {
-				if s.Current >= s.Total {
-					return pr.blue.Sprintf(" bundling ")
-				}
-				return pr.blue.Sprintf(" downloading")
-			}, decor.WC{W: 10}),
-		),
+var _ tea.Model = progressModel{}
+
+func newProgressModel(seriesTitle, bundleRange string, bundle, showLang, hasDarkBg bool) progressModel {
+	return progressModel{
+		seriesTitle:   seriesTitle,
+		bundle:        bundle,
+		bundleRange:   bundleRange,
+		showLang:      showLang,
+		hasDarkBg:     hasDarkBg,
+		width:         80,
+		states:        make(map[*grabber.Chapter]*barState),
+		volStates:     make(map[*core.Volume]*volumeBarState),
+		chapterVolume: make(map[*grabber.Chapter]*core.Volume),
+	}
+}
+
+// makeBar creates a progress.Model with brand gradient colours.
+// The fill glyphs are '▇' (U+2587, lower seven-eighths block) for both the
+// filled and empty portions, so each row occupies only 7/8 of the cell height
+// and leaves a 1-pixel gap between stacked rows.
+func (m progressModel) makeBar(width int) *progress.Model {
+	var from, to string
+	if m.hasDarkBg {
+		from = "#5b3fc4" // violet-deep
+		to = "#a993ff"   // violet-soft
+	} else {
+		from = "#6a4bd3" // accent-hover
+		to = "#7c5ce0"   // violet
+	}
+	b := progress.New(
+		progress.WithoutPercentage(),
+		progress.WithWidth(width),
+		progress.WithColors(lipgloss.Color(from), lipgloss.Color(to)),
+		progress.WithFillCharacters('▇', '▇'),
 	)
-	pr.setPhase("Gathering info...")
+	return &b
 }
 
-func (pr *progress) FetchFailed(listed grabber.Filterable, err error) {
+// makeDangerBar creates a progress.Model in the danger colour for failed chapters.
+func makeDangerBar(width int) *progress.Model {
+	const danger = "#c0344b"
+	b := progress.New(
+		progress.WithoutPercentage(),
+		progress.WithWidth(width),
+		progress.WithColors(lipgloss.Color(danger), lipgloss.Color(danger)),
+		progress.WithFillCharacters('▇', '▇'),
+	)
+	return &b
+}
+
+func (m progressModel) Init() tea.Cmd { return tea.RequestBackgroundColor }
+
+func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+
+	case tea.BackgroundColorMsg:
+		m.hasDarkBg = msg.IsDark()
+		// Recolour all existing bars with the now-known background.
+		_, barW, _ := btLayout(m.width)
+		for _, s := range m.states {
+			newBar := m.makeBar(s.bar.Width())
+			if s.bar.Width() == 0 {
+				newBar = m.makeBar(barW)
+			}
+			*s.bar = *newBar
+			// failBar uses danger colour (bg-independent); no rebuild needed
+		}
+		for _, vs := range m.volStates {
+			newBar := m.makeBar(vs.bar.Width())
+			if vs.bar.Width() == 0 {
+				newBar = m.makeBar(barW)
+			}
+			*vs.bar = *newBar
+		}
+		_, bBarW, _ := btBundleLayout(m.width)
+		if m.bundleBar != nil {
+			newBar := m.makeBar(m.bundleBar.Width())
+			if m.bundleBar.Width() == 0 {
+				newBar = m.makeBar(bBarW)
+			}
+			*m.bundleBar = *newBar
+		}
+
+	case tea.KeyPressMsg:
+		if msg.String() == "ctrl+c" {
+			return m, tea.Interrupt
+		}
+
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		_, barW, _ := btLayout(m.width)
+		for _, s := range m.states {
+			s.bar.SetWidth(barW)
+			if s.failBar != nil {
+				s.failBar.SetWidth(barW)
+			}
+		}
+		for _, vs := range m.volStates {
+			vs.bar.SetWidth(barW)
+			if vs.failBar != nil {
+				vs.failBar.SetWidth(barW)
+			}
+		}
+		_, bBarW, _ := btBundleLayout(m.width)
+		if m.bundleBar != nil {
+			m.bundleBar.SetWidth(bBarW)
+		}
+
+	case bundleStartMsg:
+		m.bundleTotal = msg.total * 2
+		_, bBarW, _ := btBundleLayout(m.width)
+		bar := m.makeBar(bBarW)
+		m.bundleBar = bar
+		m.bundlePhase = "Gathering info..."
+
+	case chapterStartedMsg:
+		if m.bundle {
+			m.bundlePhase = "Downloading " + truncateString(msg.chapter.GetTitle(), btPhaseW-12)
+			return m, nil
+		}
+		// Skip chapters that belong to a volume; volumes have their own bars.
+		if _, inVolume := m.chapterVolume[msg.chapter]; inVolume {
+			return m, nil
+		}
+		_, barW, _ := btLayout(m.width)
+		bar := m.makeBar(barW)
+		m.chapters = append(m.chapters, msg.chapter)
+		// Compute the raw (untruncated) title here so it adapts when the terminal
+		// is resized; renderChapterRow truncates it to titleW at render time.
+		rawTitle := chapterRawTitle(m.seriesTitle, msg.chapter, m.showLang)
+		m.states[msg.chapter] = &barState{
+			rawTitle: rawTitle,
+			total:    msg.total,
+			status:   "downloading",
+			bar:      bar,
+		}
+		return m, nil
+
+	case pageSuccessMsg:
+		if m.bundle {
+			m.bundleCurrent++
+			if m.bundleBar != nil {
+				return m, m.bundleBar.SetPercent(safePercent(m.bundleCurrent, m.bundleTotal))
+			}
+			return m, nil
+		}
+		// Skip page events for chapters inside a volume.
+		if _, inVolume := m.chapterVolume[msg.chapter]; inVolume {
+			return m, nil
+		}
+		s := m.states[msg.chapter]
+		if s == nil {
+			return m, nil
+		}
+		s.current++
+		if s.current > s.total/2 {
+			s.status = "archiving"
+		}
+		return m, s.bar.SetPercent(safePercent(s.current, s.total))
+
+	case downloadFailedMsg:
+		if !m.bundle {
+			if _, inVolume := m.chapterVolume[msg.chapter]; inVolume {
+				return m, nil
+			}
+			if s := m.states[msg.chapter]; s != nil {
+				s.status = "failed"
+			}
+		}
+
+	case archivedMsg:
+		if m.bundle {
+			return m, nil
+		}
+		if _, inVolume := m.chapterVolume[msg.chapter]; inVolume {
+			return m, nil
+		}
+		s := m.states[msg.chapter]
+		if s == nil {
+			return m, nil
+		}
+		s.current++
+		s.status = "archiving"
+		return m, s.bar.SetPercent(safePercent(s.current, s.total))
+
+	case packedMsg:
+		if m.bundle {
+			return m, nil
+		}
+		if _, inVolume := m.chapterVolume[msg.chapter]; inVolume {
+			return m, nil
+		}
+		s := m.states[msg.chapter]
+		if s == nil {
+			return m, nil
+		}
+		if msg.failed {
+			// Leave s.current as-is; the danger bar renders at actual progress.
+			s.status = "failed"
+			return m, nil
+		}
+		s.status = "done"
+		return m, s.bar.SetPercent(1.0)
+
+	case bundleDownloadedMsg:
+		m.bundleCurrent += int64(msg.pages)
+		if m.bundleBar != nil {
+			return m, m.bundleBar.SetPercent(safePercent(m.bundleCurrent, m.bundleTotal))
+		}
+
+	case bundlePackingMsg:
+		// "Bundling chapters X-Y" instead of "Creating bundle for chapters X-Y"
+		// to keep the range within the 30-char phase field.
+		m.bundlePhase = truncateString(
+			fmt.Sprintf("Bundling chapters %s", m.bundleRange), btPhaseW)
+
+	case bundleArchivedMsg:
+		m.bundleCurrent += int64(msg.n)
+		if m.bundleBar != nil {
+			return m, m.bundleBar.SetPercent(safePercent(m.bundleCurrent, m.bundleTotal))
+		}
+
+	case volumeStartMsg:
+		if m.bundle {
+			return m, nil // volumes don't run with --bundle
+		}
+		_, barW, _ := btLayout(m.width)
+		bar := m.makeBar(barW)
+		m.volumes = append(m.volumes, msg.volume)
+		m.volStates[msg.volume] = &volumeBarState{
+			rawTitle: m.seriesTitle + " - " + core.VolumeLabel(msg.volume.Number),
+			chCount:  msg.chCount,
+			status:   "downloading",
+			bar:      bar,
+		}
+
+	case volumeChapterMsg:
+		m.chapterVolume[msg.chapter] = msg.volume
+
+	case volumeProgressMsg:
+		vs := m.volStates[msg.volume]
+		if vs == nil {
+			return m, nil
+		}
+		vs.fraction = msg.fraction
+		return m, vs.bar.SetPercent(msg.fraction)
+
+	case volumePackingMsg:
+		if vs := m.volStates[msg.volume]; vs != nil {
+			vs.status = "archiving"
+		}
+
+	case volumePackedMsg:
+		vs := m.volStates[msg.volume]
+		if vs == nil {
+			return m, nil
+		}
+		if errors.Is(msg.err, core.ErrSkippedVolume) {
+			vs.status = "skipped"
+			return m, nil
+		}
+		if msg.err != nil {
+			vs.status = "failed"
+			return m, nil
+		}
+		vs.status = "done"
+		return m, vs.bar.SetPercent(1.0)
+
+	case downloadDoneMsg:
+		// Mark done so View() renders all non-failed bars at 100% in the final
+		// frame, bypassing the spring animation that would freeze mid-flight on Quit.
+		m.done = true
+		return m, tea.Quit
+
+	case progress.FrameMsg:
+		var cmds []tea.Cmd
+		for _, s := range m.states {
+			var cmd tea.Cmd
+			*s.bar, cmd = s.bar.Update(msg)
+			if cmd != nil {
+				cmds = append(cmds, cmd)
+			}
+			if s.failBar != nil {
+				var fc tea.Cmd
+				*s.failBar, fc = s.failBar.Update(msg)
+				if fc != nil {
+					cmds = append(cmds, fc)
+				}
+			}
+		}
+		for _, vs := range m.volStates {
+			var cmd tea.Cmd
+			*vs.bar, cmd = vs.bar.Update(msg)
+			if cmd != nil {
+				cmds = append(cmds, cmd)
+			}
+			if vs.failBar != nil {
+				var fc tea.Cmd
+				*vs.failBar, fc = vs.failBar.Update(msg)
+				if fc != nil {
+					cmds = append(cmds, fc)
+				}
+			}
+		}
+		if m.bundleBar != nil {
+			var cmd tea.Cmd
+			*m.bundleBar, cmd = m.bundleBar.Update(msg)
+			if cmd != nil {
+				cmds = append(cmds, cmd)
+			}
+		}
+		if len(cmds) > 0 {
+			return m, tea.Batch(cmds...)
+		}
+	}
+
+	return m, nil
+}
+
+// safePercent returns current/total clamped to [0,1], guarding division by zero.
+func safePercent(current, total int64) float64 {
+	if total <= 0 {
+		return 0
+	}
+	p := float64(current) / float64(total)
+	if p > 1 {
+		return 1
+	}
+	return p
+}
+
+func (m progressModel) View() tea.View {
+	var sb strings.Builder
+
+	if m.bundle {
+		sb.WriteString(m.renderBundleRow())
+		sb.WriteByte('\n')
+	} else {
+		// Volume rows first (VolumeStart precedes chapter events).
+		for _, v := range m.volumes {
+			vs := m.volStates[v]
+			if vs == nil {
+				continue
+			}
+			sb.WriteString(m.renderVolumeRow(vs))
+			sb.WriteByte('\n')
+		}
+		// Loose chapter rows (chapters not in any volume).
+		for _, c := range m.chapters {
+			if _, inVolume := m.chapterVolume[c]; inVolume {
+				continue
+			}
+			s := m.states[c]
+			if s == nil {
+				continue
+			}
+			sb.WriteString(m.renderChapterRow(s))
+			sb.WriteByte('\n')
+		}
+	}
+
+	v := tea.NewView(sb.String())
+	v.WindowTitle = "manga-downloader"
+	return v
+}
+
+func (m progressModel) statusStyle(status string) string {
+	text := fmt.Sprintf("%-12s", status)
+	var fgHex string
+	switch status {
+	case "done":
+		if m.hasDarkBg {
+			fgHex = "#4fd8b0" // mint
+		} else {
+			fgHex = "#1b7a5e" // mint-deep
+		}
+	case "failed":
+		fgHex = "#c0344b" // danger
+	case "skipped":
+		if m.hasDarkBg {
+			fgHex = "#f5c400" // yellow
+		} else {
+			fgHex = "#b28800" // yellow-deep
+		}
+	default: // "downloading", "archiving"
+		if m.hasDarkBg {
+			fgHex = "#a993ff" // violet-soft
+		} else {
+			fgHex = "#5b3fc4" // violet-deep
+		}
+	}
+	return lipgloss.NewStyle().Foreground(lipgloss.Color(fgHex)).Render(text)
+}
+
+func (m progressModel) renderChapterRow(s *barState) string {
+	titleW, barW, narrow := btLayout(m.width)
+	if s.bar.Width() != barW {
+		s.bar.SetWidth(barW)
+	}
+	title := fixedW(s.rawTitle, titleW)
+
+	var barStr string
+	switch {
+	case s.status == "failed":
+		// Danger-coloured bar at actual progress reached, never 100%.
+		if s.failBar == nil {
+			s.failBar = makeDangerBar(barW)
+		} else if s.failBar.Width() != barW {
+			s.failBar.SetWidth(barW)
+		}
+		barStr = s.failBar.ViewAs(safePercent(s.current, s.total))
+	case m.done || s.status == "done":
+		// Render done bars at full immediately, bypassing the spring animation.
+		barStr = s.bar.ViewAs(1.0)
+	default:
+		barStr = s.bar.View()
+	}
+
+	var row string
+	if narrow {
+		row = title + " " + barStr
+	} else {
+		counter := fmt.Sprintf("%9s", fmt.Sprintf("%d/%d", s.current, s.total))
+		row = title + " " + barStr + " " + counter + " " + m.statusStyle(s.status)
+	}
+	return clipRow(row, m.width)
+}
+
+func (m progressModel) renderVolumeRow(vs *volumeBarState) string {
+	titleW, barW, narrow := btLayout(m.width)
+	if vs.bar.Width() != barW {
+		vs.bar.SetWidth(barW)
+	}
+	title := fixedW(vs.rawTitle, titleW)
+
+	var barStr string
+	switch {
+	case vs.status == "failed":
+		// Danger-coloured bar at the reached fraction, never 100%.
+		if vs.failBar == nil {
+			vs.failBar = makeDangerBar(barW)
+		} else if vs.failBar.Width() != barW {
+			vs.failBar.SetWidth(barW)
+		}
+		barStr = vs.failBar.ViewAs(vs.fraction)
+	case m.done || vs.status == "done":
+		barStr = vs.bar.ViewAs(1.0)
+	default:
+		barStr = vs.bar.View()
+	}
+
+	if narrow {
+		return clipRow(title+" "+barStr, m.width)
+	}
+	// Counter column shows "N ch." instead of "current/total".
+	counter := fmt.Sprintf("%9s", fmt.Sprintf("%d ch.", vs.chCount))
+	row := title + " " + barStr + " " + counter + " " + m.statusStyle(vs.status)
+	return clipRow(row, m.width)
+}
+
+func (m progressModel) renderBundleRow() string {
+	phaseW, barW, counterW := btBundleLayout(m.width)
+
+	if m.bundleBar != nil && m.bundleBar.Width() != barW {
+		m.bundleBar.SetWidth(barW)
+	}
+
+	var barStr string
+	switch {
+	case m.bundleBar == nil:
+		barStr = strings.Repeat("░", barW)
+	case m.done:
+		barStr = m.bundleBar.ViewAs(1.0)
+	default:
+		barStr = m.bundleBar.View()
+	}
+
+	var row string
+	switch {
+	case phaseW > 0 && counterW > 0:
+		phase := fixedW(m.bundlePhase, phaseW)
+		counter := fmt.Sprintf("%9s", fmt.Sprintf("%d/%d", m.bundleCurrent, m.bundleTotal))
+		row = phase + " " + barStr + " " + counter
+	case counterW > 0:
+		counter := fmt.Sprintf("%9s", fmt.Sprintf("%d/%d", m.bundleCurrent, m.bundleTotal))
+		row = barStr + " " + counter
+	default:
+		row = barStr
+	}
+	return clipRow(row, m.width)
+}
+
+// ── bubbleEvents implements core.Events by sending to a tea.Program ─────────
+
+type bubbleEvents struct {
+	prog *tea.Program
+	done <-chan struct{} // closed after prog.Run() returns
+}
+
+var _ core.Events = (*bubbleEvents)(nil)
+
+// println prints a line above the TUI, or to stderr if the program has stopped.
+// It uses prog.Send (which selects on ctx.Done) instead of prog.Println (which
+// blocks forever on a closed channel), so it never hangs after Run() returns.
+func (e *bubbleEvents) println(s string) {
+	if interrupted.Load() != 0 {
+		return
+	}
+	select {
+	case <-e.done:
+		fmt.Fprintln(os.Stderr, s)
+	default:
+		e.prog.Send(tea.Println(s)())
+	}
+}
+
+func (e *bubbleEvents) BundleStart(pages int64) {
+	e.prog.Send(bundleStartMsg{total: pages})
+}
+
+func (e *bubbleEvents) FetchFailed(listed grabber.Filterable, err error) {
+	e.println(color.RedString("- error fetching chapter %s: %s", listed.GetTitle(), err.Error()))
+}
+
+func (e *bubbleEvents) Skipped(c *grabber.Chapter) {
+	e.println(color.YellowString(
+		"- skipping chapter %s: --skip-pages excludes all of its pages", c.GetTitle()))
+}
+
+func (e *bubbleEvents) FilenameFailed(c *grabber.Chapter, err error) {
+	e.println(color.RedString(
+		"- error creating filename for chapter %s: %s", c.GetTitle(), err.Error()))
+}
+
+func (e *bubbleEvents) Started(c *grabber.Chapter) {
+	e.prog.Send(chapterStartedMsg{chapter: c, total: int64(c.PagesCount) * 2})
+}
+
+func (e *bubbleEvents) Page(c *grabber.Chapter, idx int, err error) {
+	if err != nil {
+		e.println(color.RedString("- error downloading page %d: %s", idx+1, err.Error()))
+		return
+	}
+	e.prog.Send(pageSuccessMsg{chapter: c})
+}
+
+func (e *bubbleEvents) DownloadFailed(c *grabber.Chapter, err error) {
+	e.println(color.RedString(
+		"- error downloading chapter %s: %s", c.GetTitle(), err.Error()))
+	e.prog.Send(downloadFailedMsg{chapter: c})
+}
+
+func (e *bubbleEvents) Archived(c *grabber.Chapter) {
+	e.prog.Send(archivedMsg{chapter: c})
+}
+
+func (e *bubbleEvents) Packed(c *grabber.Chapter, _ string, err error) {
+	if err != nil {
+		e.println(color.RedString(err.Error()))
+	}
+	e.prog.Send(packedMsg{chapter: c, failed: err != nil})
+}
+
+func (e *bubbleEvents) Downloaded(c *grabber.Chapter) {
+	e.prog.Send(bundleDownloadedMsg{pages: int(c.PagesCount)})
+}
+
+func (e *bubbleEvents) BundlePacking() {
+	e.prog.Send(bundlePackingMsg{})
+}
+
+func (e *bubbleEvents) BundleArchived(n int) {
+	e.prog.Send(bundleArchivedMsg{n: n})
+}
+
+func (e *bubbleEvents) VolumeStart(v *core.Volume) {
+	e.prog.Send(volumeStartMsg{volume: v, chCount: len(v.Chapters)})
+}
+
+func (e *bubbleEvents) VolumeChapter(v *core.Volume, c *grabber.Chapter) {
+	e.prog.Send(volumeChapterMsg{volume: v, chapter: c})
+}
+
+func (e *bubbleEvents) VolumePacking(v *core.Volume) {
+	e.prog.Send(volumePackingMsg{volume: v})
+}
+
+func (e *bubbleEvents) VolumeProgress(v *core.Volume, fraction float64) {
+	e.prog.Send(volumeProgressMsg{volume: v, fraction: fraction})
+}
+
+func (e *bubbleEvents) VolumePacked(v *core.Volume, name string, err error) {
+	if errors.Is(err, core.ErrSkippedVolume) {
+		e.println(color.YellowString("- skipping %s: %s", core.VolumeLabel(v.Number), err.Error()))
+	} else if err != nil {
+		e.println(color.RedString("- error packing %s: %s", core.VolumeLabel(v.Number), err.Error()))
+	}
+	e.prog.Send(volumePackedMsg{volume: v, err: err})
+}
+
+// ── plainEvents implements core.Events for non-TTY output ───────────────────
+
+type plainEvents struct{}
+
+var _ core.Events = plainEvents{}
+
+func (plainEvents) BundleStart(int64)           {}
+func (plainEvents) Downloaded(*grabber.Chapter) {}
+func (plainEvents) BundlePacking()              {}
+func (plainEvents) BundleArchived(int)          {}
+func (plainEvents) Archived(*grabber.Chapter)   {}
+
+func (plainEvents) FetchFailed(listed grabber.Filterable, err error) {
 	red("- error fetching chapter %s: %s", listed.GetTitle(), err.Error())
 }
 
-func (pr *progress) Skipped(c *grabber.Chapter) {
+func (plainEvents) Skipped(c *grabber.Chapter) {
 	yellow("- skipping chapter %s: --skip-pages excludes all of its pages", c.GetTitle())
 }
 
-func (pr *progress) FilenameFailed(c *grabber.Chapter, err error) {
+func (plainEvents) FilenameFailed(c *grabber.Chapter, err error) {
 	red("- error creating filename for chapter %s: %s", c.GetTitle(), err.Error())
 }
 
-func (pr *progress) Started(c *grabber.Chapter) {
-	if pr.cfg.bundle {
-		pr.setPhase(fmt.Sprintf("Downloading %s", c.GetTitle()))
-		return
-	}
-
-	pr.mu.Lock()
-	vb := pr.volumeFor(c)
-	pr.mu.Unlock()
-	// a volume's bar moves with VolumeProgress
-	if vb != nil {
-		return
-	}
-
-	// For non-bundle mode, create a single bar per chapter that combines download + archive
-	// (using the fetched chapter, whose title includes the chapter number)
-	barTitle := chapterBarTitle(pr.cfg.title, c, pr.cfg.mangaLen, pr.cfg.chapterLen, pr.cfg.showLanguage)
-	// Total steps = pages (download) + pages (archive)
-	total := c.PagesCount * 2
-	bar := pr.p.AddBar(total,
-		mpb.PrependDecorators(
-			decor.Name(barTitle, decor.WCSyncWidthR),
-			decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DextraSpace}),
-		),
-		mpb.AppendDecorators(
-			decor.Percentage(decor.WC{W: 4}), // W: 4 to remove space before %
-			// Status at the end to prevent shifting
-			decor.Any(func(s decor.Statistics) string {
-				if s.Current >= total/2 {
-					return pr.blue.Sprintf(" archiving ")
-				}
-				return pr.blue.Sprintf(" downloading") // Add space before status
-			}, decor.WC{W: 10}),
-		),
-	)
-	pr.mu.Lock()
-	pr.bars[c] = bar
-	pr.mu.Unlock()
+func (plainEvents) Started(c *grabber.Chapter) {
+	fmt.Fprintf(color.Output, "downloading %s...\n", c.GetTitle())
 }
 
-func (pr *progress) Page(c *grabber.Chapter, idx int, err error) {
+func (plainEvents) Page(c *grabber.Chapter, idx int, err error) {
 	if err != nil {
 		red("- error downloading page %d: %s", idx+1, err.Error())
-		return
-	}
-	// a volume's bar moves with VolumeProgress instead
-	pr.mu.Lock()
-	inVolume := pr.volumeFor(c) != nil
-	pr.mu.Unlock()
-	if inVolume {
-		return
-	}
-	// Increment by 1 since we're processing one page at a time
-	if bar := pr.barFor(c); bar != nil {
-		bar.IncrBy(1)
 	}
 }
 
-func (pr *progress) DownloadFailed(c *grabber.Chapter, err error) {
+func (plainEvents) DownloadFailed(c *grabber.Chapter, err error) {
 	red("- error downloading chapter %s: %s", c.GetTitle(), err.Error())
-	// a volume's bar goes on with its other chapters
-	if own := pr.ownBar(c); own != nil {
-		own.Abort(false)
-	}
 }
 
-func (pr *progress) Archived(c *grabber.Chapter) {
-	pr.barFor(c).IncrBy(1) // Increment archive progress
-}
-
-func (pr *progress) Packed(c *grabber.Chapter, _ string, err error) {
+func (plainEvents) Packed(_ *grabber.Chapter, _ string, err error) {
 	if err != nil {
 		red(err.Error())
 	}
-	bar := pr.barFor(c)
-	if !bar.Completed() {
-		// the bar can no longer reach its total (packing failed or
-		// pages were skipped); mark it done so p.Wait() won't hang
-		bar.Abort(false)
-	}
 }
 
-func (pr *progress) Downloaded(c *grabber.Chapter) {
-	// a volume's bar moves with VolumeProgress instead
-	if !pr.cfg.bundle {
-		return
-	}
-	// For bundle mode, increment archive progress
-	pr.bundleBar.IncrBy(int(c.PagesCount))
+func (plainEvents) VolumeStart(v *core.Volume) {
+	fmt.Fprintf(color.Output, "downloading %s...\n", core.VolumeLabel(v.Number))
 }
 
-func (pr *progress) BundlePacking() {
-	pr.setPhase(fmt.Sprintf("Creating bundle for chapters %s", pr.cfg.bundleRange))
+func (plainEvents) VolumeChapter(*core.Volume, *grabber.Chapter) {}
+
+func (plainEvents) VolumePacking(v *core.Volume) {
+	fmt.Fprintf(color.Output, "archiving %s...\n", core.VolumeLabel(v.Number))
 }
 
-func (pr *progress) BundleArchived(n int) {
-	if pr.bundleBar != nil {
-		pr.bundleBar.IncrBy(n)
-	}
-}
+func (plainEvents) VolumeProgress(*core.Volume, float64) {}
 
-// finishBundle marks the bundle bar done if some chapters failed and left it
-// short of its total, so p.Wait() won't hang
-func (pr *progress) finishBundle() {
-	if pr.bundleBar != nil && !pr.bundleBar.Completed() {
-		pr.bundleBar.Abort(false)
-	}
-}
-
-// VolumeStart adds the bar of a volume. It shows VolumeProgress's fraction,
-// so it counts chapters rather than pages, which aren't known until the end.
-func (pr *progress) VolumeStart(v *core.Volume) {
-	vb := &volumeBar{}
-	title := fmt.Sprintf("%s - %s:", truncateString(pr.cfg.title, pr.cfg.mangaLen), core.VolumeLabel(v.Number))
-	vb.bar = pr.p.AddBar(volumeScale,
-		mpb.PrependDecorators(
-			decor.Name(title, decor.WCSyncWidthR),
-			// where a chapter's bar has its page counter
-			decor.Name(fmt.Sprintf("%d ch.", len(v.Chapters)), decor.WC{C: decor.DextraSpace}),
-		),
-		mpb.AppendDecorators(
-			decor.Percentage(decor.WC{W: 4}),
-			decor.Any(func(s decor.Statistics) string {
-				pr.mu.Lock()
-				archiving := vb.archiving
-				pr.mu.Unlock()
-				if archiving {
-					return pr.blue.Sprintf(" archiving ")
-				}
-				return pr.blue.Sprintf(" downloading")
-			}, decor.WC{W: 10}),
-		),
-	)
-	pr.mu.Lock()
-	pr.volumes[v] = vb
-	pr.mu.Unlock()
-}
-
-func (pr *progress) VolumeChapter(v *core.Volume, c *grabber.Chapter) {
-	pr.mu.Lock()
-	defer pr.mu.Unlock()
-	pr.chapterVolume[c] = v
-}
-
-func (pr *progress) VolumePacking(v *core.Volume) {
-	pr.mu.Lock()
-	defer pr.mu.Unlock()
-	if vb := pr.volumes[v]; vb != nil {
-		vb.archiving = true
-	}
-}
-
-func (pr *progress) VolumeProgress(v *core.Volume, fraction float64) {
-	pr.mu.Lock()
-	vb := pr.volumes[v]
-	pr.mu.Unlock()
-	if vb != nil {
-		vb.bar.SetCurrent(int64(fraction * volumeScale))
-	}
-}
-
-func (pr *progress) VolumePacked(v *core.Volume, name string, err error) {
-	pr.mu.Lock()
-	vb := pr.volumes[v]
-	pr.mu.Unlock()
+func (plainEvents) VolumePacked(v *core.Volume, _ string, err error) {
 	if errors.Is(err, core.ErrSkippedVolume) {
 		yellow("- skipping %s: %s", core.VolumeLabel(v.Number), err.Error())
-		if vb != nil {
-			vb.bar.Abort(false)
-		}
 		return
 	}
 	if err != nil {
 		red("- error packing %s: %s", core.VolumeLabel(v.Number), err.Error())
-		if vb != nil {
-			vb.bar.Abort(false)
-		}
-		return
 	}
-	if vb != nil && !vb.bar.Completed() {
-		vb.bar.SetCurrent(volumeScale)
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+// chapterRawTitle builds an untruncated "Series - Chapter [lang]" title for a
+// chapter. The caller passes showLanguage (true when the series has chapters in
+// more than one language). The result is stored in barState.rawTitle and
+// truncated to titleW at render time so resizing the terminal shows more text.
+func chapterRawTitle(seriesTitle string, c *grabber.Chapter, showLanguage bool) string {
+	chapTitle := c.GetTitle()
+	if showLanguage && c.Language != "" {
+		chapTitle += " [" + c.Language + "]"
+	}
+	if seriesTitle == "" {
+		return chapTitle
+	}
+	return seriesTitle + " - " + chapTitle
+}
+
+// teaNoticeHandler returns a notice handler that routes output through the TUI.
+// It respects the interrupted mute flag and falls back to stderr when the
+// program has stopped (done channel closed).
+func teaNoticeHandler(e *bubbleEvents) func(notice.Level, string) {
+	return func(level notice.Level, msg string) {
+		if level == notice.LevelWarn {
+			e.println(color.YellowString(msg))
+		} else {
+			e.println(color.BlueString(msg))
+		}
+	}
+}
+
+// teaAttentionHandler returns a browser attention handler that routes output
+// through the TUI, with the same done-channel fallback as teaNoticeHandler.
+func teaAttentionHandler(e *bubbleEvents) func(browser.Attention) {
+	return func(a browser.Attention) {
+		if !a.Active {
+			return
+		}
+		e.println(attentionColor.Sprint(a.Message()))
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"runtime"
 	"strings"
 	"syscall"
 	"testing"
@@ -87,18 +86,8 @@ func TestErrorsMutedOnceInterrupted(t *testing.T) {
 	}
 }
 
-func TestProgressBarsWriteToTheTerminal(t *testing.T) {
-	prev := color.Output
-	stop := closeBrowserOnInterrupt()
-	// mpb only sizes its bars to the terminal when given the *os.File
-	if color.Output != prev {
-		t.Errorf("color.Output was replaced: %T", color.Output)
-	}
-	if _, ok := color.Output.(*os.File); !ok && runtime.GOOS != "windows" {
-		t.Errorf("color.Output is a %T, not the terminal's *os.File", color.Output)
-	}
-	stop()
-}
+// TestProgressBarsWriteToTheTerminal was removed: the Bubble Tea renderer
+// does not replace color.Output, so there is nothing to assert.
 
 func TestAttentionPrintsOneHighlightedLine(t *testing.T) {
 	stubExit(t)

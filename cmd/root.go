@@ -9,8 +9,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"syscall"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/elboletaire/manga-downloader/browser"
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -20,7 +20,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
-	"github.com/vbauerster/mpb/v8"
 	"golang.org/x/term"
 
 	cc "github.com/ivanpirog/coloredcobra"
@@ -86,7 +85,11 @@ func Run(cmd *cobra.Command, args []string) {
 	// ensure the shared Chrome process (if any) is killed on exit, including
 	// an interrupted one
 	defer browser.Close()
-	defer closeBrowserOnInterrupt()()
+	// Capture the stop func so we can pass it to onInterrupt on Ctrl+C, which
+	// deregisters the handler before calling closeBrowser — this lets a second
+	// Ctrl+C kill the process immediately instead of re-entering closeBrowser.
+	stopSignals := closeBrowserOnInterrupt()
+	defer stopSignals()
 	notice.SetHandler(printNotice)
 	defer notice.SetHandler(nil)
 	browser.SetAttentionHandler(printAttention)
@@ -161,59 +164,99 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(1)
 	}
 
-	p := mpb.New(
-		mpb.WithWidth(40),
-		mpb.WithOutput(color.Output),
-		mpb.WithAutoRefresh(),
-	)
+	showLanguage := core.HasDuplicateChapterNumbers(chapters)
 
-	// Get terminal width for title truncation
-	termWidth := getTerminalWidth()
-	mangaLen, chapterLen := calculateTitleLengths(termWidth)
+	if !term.IsTerminal(int(os.Stdout.Fd())) {
+		// Non-TTY (piped, CI, docker without -t): plain line-based output.
+		// No interactive bars; one line per chapter start/done/fail.
+		// Non-terminal output defaults to 80-column-equivalent logging.
+		ev := plainEvents{}
+		bundleFile, err := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
+		if !settings.Bundle {
+			exit(0)
+		}
+		if err != nil {
+			red(err.Error())
+			exit(1)
+		}
+		fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(bundleFile))
+		return
+	}
 
-	ev := newProgress(p, progressConfig{
-		title:  series.Title,
-		bundle: settings.Bundle,
-		// the range the bundle is named after, shown while it's packed
-		bundleRange: settings.Range,
-		mangaLen:    mangaLen,
-		chapterLen:  chapterLen,
-		// sites like mangadex can return the same chapter multiple times, once per
-		// translated language; tag each bar with its language in that case
-		showLanguage: core.HasDuplicateChapterNumbers(chapters),
-	})
+	// TTY mode: Bubble Tea interactive progress bars.
+	// Background detection happens inside the model via tea.RequestBackgroundColor.
+	// Default to dark until the BackgroundColorMsg arrives.
+	model := newProgressModel(series.Title, settings.Range, settings.Bundle, showLanguage, true)
+	prog := tea.NewProgram(model)
 
-	bundleFile, err := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
+	// evDone is closed when prog.Run() returns so that bubbleEvents methods
+	// that call prog.Println can fall back to stderr instead of deadlocking.
+	evDone := make(chan struct{})
+	ev := &bubbleEvents{prog: prog, done: evDone}
+
+	// Override the notice and attention handlers with TUI-aware versions that
+	// route through prog.Send (safe after quit) instead of printing directly.
+	notice.SetHandler(teaNoticeHandler(ev))
+	browser.SetAttentionHandler(teaAttentionHandler(ev))
+
+	type downloadResult struct {
+		file string
+		err  error
+	}
+	resultCh := make(chan downloadResult, 1)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				// Restore the terminal before the stack trace is printed.
+				prog.Kill()
+				panic(r)
+			}
+		}()
+		file, dlErr := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
+		prog.Send(downloadDoneMsg{})
+		resultCh <- downloadResult{file: file, err: dlErr}
+	}()
+
+	_, runErr := prog.Run()
+
+	// Signal that the program has stopped; ev.safePrintln will use stderr from now on.
+	close(evDone)
+
+	// Restore the plain notice and attention handlers after the bars are gone.
+	notice.SetHandler(printNotice)
+	browser.SetAttentionHandler(printAttention)
+
+	if errors.Is(runErr, tea.ErrInterrupted) {
+		// Ctrl+C: deregister the signal handler first so a second Ctrl+C kills
+		// the process immediately while closeBrowser runs, matching master's behaviour.
+		onInterrupt(os.Interrupt, stopSignals)
+		return // unreachable; onInterrupt calls os.Exit
+	}
+	if runErr != nil {
+		// The TUI failed to start (e.g. can't open TTY). Continue and wait for
+		// the download goroutine; ev.safePrintln falls back to stderr.
+		fmt.Fprintf(os.Stderr, "warning: TUI error: %v\n", runErr)
+	}
+
+	res := <-resultCh
 
 	// raised before anything was fetched: --volumes auto on a site without
 	// volumes, or a volume filename template that doesn't work
 	var serr *core.SettingError
-	if errors.As(err, &serr) {
-		p.Wait()
-		exitSettingError(err)
+	if errors.As(res.err, &serr) {
+		exitSettingError(res.err)
 	}
 
 	if !settings.Bundle {
-		// let the render loop paint the final state of the bars before
-		// exiting; without this, fast packing (e.g. raw folders) ends with
-		// the last painted frame stuck at whatever the previous refresh saw
-		p.Wait()
-		// if we're not bundling, we're done
 		exit(0)
 	}
 
-	// failed chapters leave the bundle bar short of its total; mark it
-	// done so p.Wait() won't hang
-	ev.finishBundle()
-	// flush the final render before printing the outcome
-	p.Wait()
-
-	if err != nil {
-		red(err.Error())
+	if res.err != nil {
+		red(res.err.Error())
 		exit(1)
 	}
 
-	fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(bundleFile))
+	fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(res.file))
 }
 
 // exitSettingError prints a setting that failed validation in the words each
@@ -375,38 +418,6 @@ func getUrlArg(args []string) string {
 	return args[1]
 }
 
-// getTerminalWidth returns the current terminal width or a default value if it can't be determined
-func getTerminalWidth() int {
-	width, _, err := term.GetSize(int(syscall.Stdin))
-	if err != nil {
-		return 80 // default terminal width
-	}
-	return width
-}
-
-// calculateTitleLengths calculates how much space to allocate for manga and chapter titles
-func calculateTitleLengths(termWidth int) (mangaLen, chapterLen int) {
-	// Reserve space for other elements in the progress bar:
-	// - status (e.g. "downloading", "archiving", etc.): ~15 chars
-	// - progress counter (e.g. "123/456"): ~10 chars
-	// - percentage: ~5 chars
-	// - decorators (spaces, colons, etc.): ~5 chars
-	reservedSpace := 35
-	availableSpace := termWidth - reservedSpace
-
-	// Allocate 60% to manga title and 40% to chapter title if there's enough space
-	if availableSpace > 20 {
-		mangaLen = (availableSpace * 60) / 100
-		chapterLen = (availableSpace * 40) / 100
-	} else {
-		// If space is very limited, use minimal lengths
-		mangaLen = 10
-		chapterLen = 10
-	}
-
-	return
-}
-
 // truncateString truncates the input string at a specified maximum length
 // without cutting words. It finds the last space within the limit and truncates there.
 // Length is counted in runes, so multi-byte titles are never split mid-character.
@@ -430,20 +441,6 @@ func truncateString(input string, maxLength int) string {
 
 	// Return substring up to the last found space
 	return truncated[:truncationPoint] + "..."
-}
-
-// chapterBarTitle builds the label of a chapter's progress bar from the fetched
-// chapter data. When showLanguage is set (multiple versions of the same chapter
-// are being downloaded, e.g. one per translated language), the chapter language
-// is appended after the title so same-numbered bars can be told apart. The tag
-// is added after truncation so it never gets cut off.
-func chapterBarTitle(seriesTitle string, chapter *grabber.Chapter, mangaLen, chapterLen int, showLanguage bool) string {
-	chapTitle := truncateString(chapter.GetTitle(), chapterLen)
-	if showLanguage && chapter.Language != "" {
-		chapTitle += " [" + chapter.Language + "]"
-	}
-
-	return fmt.Sprintf("%s - %s:", truncateString(seriesTitle, mangaLen), chapTitle)
 }
 
 func toMetaFunc(c *color.Color) func(string) string {

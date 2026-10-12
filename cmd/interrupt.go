@@ -49,9 +49,14 @@ func closeBrowserOnInterrupt() (stop func()) {
 
 // onInterrupt handles the first interrupt. stopSignals goes first, so a
 // second Ctrl+C kills the process at once if closing the browser hangs.
+// CompareAndSwap guards against a second invocation racing from the
+// closeBrowserOnInterrupt goroutine while Run's ErrInterrupted path is
+// already in progress; the second call is a no-op.
 func onInterrupt(s os.Signal, stopSignals func()) {
+	if !interrupted.CompareAndSwap(0, int32(exitCode(s))) {
+		return
+	}
 	stopSignals()
-	interrupted.Store(int32(exitCode(s)))
 	closeBrowser()
 	osExit(exitCode(s))
 }
@@ -65,8 +70,8 @@ func exitCode(s os.Signal) int {
 }
 
 // red and yellow print like color.Red and color.Yellow, but nothing once the
-// CLI was interrupted: the loads the interrupt aborts would print errors. The
-// progress bars aren't muted, as mpb needs the terminal itself to size them.
+// CLI was interrupted: the loads the interrupt aborts would print errors.
+// bubbleEvents.safePrintln also checks interrupted so TUI output is muted too.
 func red(format string, a ...any) {
 	if interrupted.Load() == 0 {
 		color.Red(format, a...)
