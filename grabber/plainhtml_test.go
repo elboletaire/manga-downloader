@@ -456,3 +456,186 @@ func TestFetchChaptersTitles(t *testing.T) {
 		}
 	}
 }
+
+
+// TestSeriesURLCandidates tests the SeriesLink selector precedence and generic
+// candidate extraction (breadcrumbs, back-links, parent paths).
+func TestSeriesURLCandidates(t *testing.T) {
+	tests := []struct {
+		name      string
+		pageURL   string
+		html      string
+		selectors []SiteSelector
+		check     func(candidates []string) bool
+	}{
+		{
+			name:    "SeriesLink selector comes first",
+			pageURL: "https://example.com/chapter-5/",
+			html:    `<html><body><a class="back-link" href="/series/slug/">Back</a><a href="/other/">Other</a></body></html>`,
+			selectors: []SiteSelector{
+				{SeriesLink: ".back-link"},
+			},
+			check: func(candidates []string) bool {
+				return len(candidates) > 0 && strings.Contains(candidates[0], "/series/slug/")
+			},
+		},
+		{
+			name:    "reject listing paths like /manga/",
+			pageURL: "https://example.com/series/slug/chapter-1/",
+			html:    `<html><body><a href="/manga/">List</a></body></html>`,
+			selectors: []SiteSelector{},
+			check: func(candidates []string) bool {
+				for _, c := range candidates {
+					if strings.Contains(c, "/manga/") && !strings.Contains(c, "/series/") {
+						return false
+					}
+				}
+				return true
+			},
+		},
+		{
+			name:    "root-relative parent path is a candidate",
+			pageURL: "https://example.com/comics/my-series/chapter/5",
+			html:    `<html><body><a href="/comics/my-series">Series</a></body></html>`,
+			selectors: []SiteSelector{},
+			check: func(candidates []string) bool {
+				for _, c := range candidates {
+					if strings.Contains(c, "/comics/my-series") {
+						return true
+					}
+				}
+				return false
+			},
+		},
+		{
+			name:    "SeriesLink from matching Image selector beats parent path ordering",
+			pageURL: "https://example.com/chapter-5/",
+			html: `<html><body>` +
+				`<img class="reader-img" src="page1.jpg"/>` +
+				`<a class="back" href="/series/the-slug/">Back</a>` +
+				`<a href="/chapter-4/">Prev</a>` +
+				`</body></html>`,
+			selectors: []SiteSelector{
+				{Image: "img.reader-img", SeriesLink: "a.back"},
+			},
+			check: func(candidates []string) bool {
+				return len(candidates) > 0 && strings.Contains(candidates[0], "/series/the-slug/")
+			},
+		},
+		{
+			name:    "SeriesLink skipped when Image selector does not match",
+			pageURL: "https://example.com/chapter-5/",
+			html: `<html><body>` +
+				`<a class="back" href="/series/other-series/">Back</a>` +
+				`</body></html>`,
+			selectors: []SiteSelector{
+				// Image selector won't match (no picture elements on the page)
+				{Image: "picture img", SeriesLink: "a.back"},
+			},
+			check: func(candidates []string) bool {
+				for _, c := range candidates {
+					if strings.Contains(c, "/series/other-series/") {
+						return false // SeriesLink should have been skipped
+					}
+				}
+				return true
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc := docFromHTML(t, tt.html)
+			candidates := seriesURLCandidates(doc, tt.pageURL, tt.selectors)
+			if !tt.check(candidates) {
+				t.Errorf("seriesURLCandidates check failed. Got: %v", candidates)
+			}
+		})
+	}
+}
+
+// TestIsListingPath verifies that paths like /manga/, /series/, /comics/ are
+// rejected as listing pages rather than series pages.
+func TestIsListingPath(t *testing.T) {
+	tests := []struct {
+		url      string
+		wantTrue bool
+	}{
+		{"https://example.com/manga/", true},
+		{"https://example.com/series/", true},
+		{"https://example.com/comics/", true},
+		{"https://example.com/manga/slug/", false},
+		{"https://example.com/series/slug/", false},
+		{"https://example.com/", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.url, func(t *testing.T) {
+			if isListingPath(tt.url) != tt.wantTrue {
+				t.Errorf("isListingPath got %v, want %v", !tt.wantTrue, tt.wantTrue)
+			}
+		})
+	}
+}
+
+// TestResolveSeriesURLFetchCap verifies that resolveSeriesURL fetches at most
+// 3 candidates even when more are available, and returns the first that works.
+func TestResolveSeriesURLFetchCap(t *testing.T) {
+	// Series page uses the mangapill-style selector so testCandidateSeriesURL
+	// can recognise it. The path /manga/the-series/ has two segments, so
+	// isListingPath won't filter it out.
+	const seriesHTML = `<html><body>
+<h1>My Series</h1>
+<div id="chapters"><ul data-filter-list="">
+  <a href="/chapters/1">Chapter 1</a>
+  <a href="/chapters/2">Chapter 2</a>
+</ul></div>
+</body></html>`
+
+	fetches := 0
+	mux := http.NewServeMux()
+	// Candidates 1 and 2 return no rows; candidate 3 is the real series page.
+	// Candidate 4 must never be fetched.
+	for _, path := range []string{"/miss1/", "/miss2/"} {
+		p := path
+		mux.HandleFunc(p, func(w http.ResponseWriter, r *http.Request) {
+			fetches++
+			_, _ = w.Write([]byte(`<html><body><p>nothing</p></body></html>`))
+		})
+	}
+	mux.HandleFunc("/manga/the-series/", func(w http.ResponseWriter, r *http.Request) {
+		fetches++
+		_, _ = w.Write([]byte(seriesHTML))
+	})
+	mux.HandleFunc("/miss4/", func(w http.ResponseWriter, r *http.Request) {
+		fetches++
+		t.Error("4th candidate fetched; cap should have stopped at 3")
+		_, _ = w.Write([]byte(`<html><body></body></html>`))
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	// Reader HTML whose breadcrumbs produce four candidates in order.
+	// All URLs are absolute so they won't be filtered by isListingPath
+	// (single-segment paths like /manga/ would be).
+	readerHTML := `<html><body>` +
+		`<nav aria-label="Breadcrumb">` +
+		`<a href="` + srv.URL + `/miss1/">A</a>` +
+		`<a href="` + srv.URL + `/miss2/">B</a>` +
+		`<a href="` + srv.URL + `/manga/the-series/">C</a>` +
+		`<a href="` + srv.URL + `/miss4/">D</a>` +
+		`</nav>` +
+		`</body></html>`
+	mux.HandleFunc("/chapter-5/", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(readerHTML))
+	})
+
+	m := NewPlainHTML(&Grabber{URL: srv.URL + "/chapter-5/", Settings: &Settings{}})
+	ok, err := m.Test()
+	if err != nil || !ok {
+		t.Fatalf("Test() = %v, %v; expected series to be resolved", ok, err)
+	}
+	if fetches != 3 {
+		t.Errorf("fetched %d candidates, want 3 (cap at 3)", fetches)
+	}
+}
