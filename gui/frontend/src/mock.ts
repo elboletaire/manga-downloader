@@ -8,9 +8,9 @@
 // loaded too, as a release build (v1.12.0) with a newer release (v1.13.0): the
 // status bar shows the yellow "!". check is loading a site that needs the
 // browser window, with the alert asking the user to look at it; loading a URL
-// with "check" in it does the same until the load ends. &freeze stops the simulated run from moving
-// (stable screenshots), &dupes lists some numbers twice, once per language, and
-// &chapters=N sets the list's length.
+// with "check" in it does the same until the load ends. &freeze stops the
+// simulated run from moving (stable screenshots), &dupes lists some numbers
+// twice, once per language, and &chapters=N sets the list's length.
 //
 // &site= picks what the series lists for the two filters: multi (the default:
 // languages en, es, ja with All, no groups), plus (Manga Plus: languages

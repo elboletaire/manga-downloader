@@ -8,6 +8,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	cdpbrowser "github.com/chromedp/cdproto/browser"
 )
 
 // attentions records what the attention handler is told
@@ -327,5 +329,56 @@ func TestBrowserName(t *testing.T) {
 		if got := browserName(path); got != want {
 			t.Errorf("browserName(%q) = %q, want %q", path, got, want)
 		}
+	}
+}
+
+func TestUserWindowAlertsWhenSlowForASiteThatNeedsIt(t *testing.T) {
+	_, _ = withFake(t)
+	got := attentions(t)
+	mu.Lock()
+	prevAfter, prevEvery := waitNoticeAfter, waitNoticeEvery
+	waitNoticeAfter, waitNoticeEvery = 20*time.Millisecond, time.Hour
+	mu.Unlock()
+	t.Cleanup(func() {
+		mu.Lock()
+		waitNoticeAfter, waitNoticeEvery = prevAfter, prevEvery
+		mu.Unlock()
+	})
+	SetVisible(true)
+
+	slow := func(context.Context, hooks) error {
+		time.Sleep(100 * time.Millisecond)
+		return nil
+	}
+	// a window the user asked for, opened for a site that doesn't need it
+	if err := runAt("https://other.org/x", slow); err != nil {
+		t.Fatal(err)
+	}
+	if as := got(); len(as) != 0 {
+		t.Fatalf("attentions = %+v, want none for a site that doesn't need the window", as)
+	}
+
+	RequireVisible("example.com")
+	if err := run(slow); err != nil {
+		t.Fatal(err)
+	}
+	if as := got(); !equalBools(actives(as), []bool{true, false}) {
+		t.Errorf("attentions = %+v, want the slow page of a site that needs it to raise one", as)
+	}
+}
+
+func TestOnlyAMinimizedWindowIsRestored(t *testing.T) {
+	for state, want := range map[cdpbrowser.WindowState]bool{
+		cdpbrowser.WindowStateMinimized:  true,
+		cdpbrowser.WindowStateNormal:     false,
+		cdpbrowser.WindowStateMaximized:  false,
+		cdpbrowser.WindowStateFullscreen: false,
+	} {
+		if got := needsRestore(&cdpbrowser.Bounds{WindowState: state}); got != want {
+			t.Errorf("needsRestore(%s) = %v, want %v", state, got, want)
+		}
+	}
+	if needsRestore(nil) {
+		t.Error("needsRestore(nil) = true")
 	}
 }

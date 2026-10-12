@@ -177,11 +177,17 @@ func bringToFront(ctx context.Context) {
 	defer cancel()
 	_ = chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
 		// a minimized window has to be restored before it can come forward
-		if id, _, err := cdpbrowser.GetWindowForTarget().Do(ctx); err == nil {
+		if id, bounds, err := cdpbrowser.GetWindowForTarget().Do(ctx); err == nil && needsRestore(bounds) {
 			_ = cdpbrowser.SetWindowBounds(id, &cdpbrowser.Bounds{WindowState: cdpbrowser.WindowStateNormal}).Do(ctx)
 		}
 		return page.BringToFront().Do(ctx)
 	}))
+}
+
+// needsRestore reports whether a window must be restored to come forward:
+// only a minimized one, so a maximized or fullscreen window stays as it is
+func needsRestore(b *cdpbrowser.Bounds) bool {
+	return b != nil && b.WindowState == cdpbrowser.WindowStateMinimized
 }
 
 // browserName is the name users know the browser at execPath by, "" when

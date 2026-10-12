@@ -333,13 +333,15 @@ func attempt(host, pageURL string, timeout time.Duration, abort context.Context,
 	// a later page only once the page is slow to render
 	al := &alert{a: Attention{Host: host, Browser: b.name}, front: b.front}
 	defer al.end()
+	// a site that needs the window may wait for the user in one opened for
+	// another reason (the user's choice, another site) too
 	raise := func() {}
-	if b.needsUser {
+	if b.headed && (b.needsUser || NeedsVisible(host)) {
 		raise = al.raise
-		if b.greet {
-			b.greet = false
-			al.raise()
-		}
+	}
+	if b.greet {
+		b.greet = false
+		al.raise()
 	}
 
 	waiting, stopWaiting := context.WithCancel(ctx)
