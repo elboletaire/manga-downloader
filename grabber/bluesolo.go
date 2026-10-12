@@ -5,6 +5,7 @@ package grabber
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 
@@ -36,14 +37,35 @@ type BluesoloChapter struct {
 	ApiUrl string
 }
 
+// bluesoloChapterRe matches reader URLs like /read/{slug}/{lang}/ch/{num}
+var bluesoloChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?bluesolo\.org/read/([^/?#]+)/`)
+
 // Test returns true if the URL is a bluesolo.org series URL
 func (b *Bluesolo) Test() (bool, error) {
 	re := regexp.MustCompile(`bluesolo\.org`)
 	return re.MatchString(b.URL), nil
 }
 
+// resolveSeriesURL rewrites a reader URL (/read/{slug}/...) to the series URL
+// (/comics/{slug}). No-op for series URLs.
+func (b *Bluesolo) resolveSeriesURL() {
+	m := bluesoloChapterRe.FindStringSubmatch(b.URL)
+	if m == nil {
+		return
+	}
+	u, err := url.Parse(b.URL)
+	if err != nil {
+		return
+	}
+	u.Path = "/comics/" + m[1]
+	u.RawQuery = ""
+	u.Fragment = ""
+	b.URL = u.String()
+}
+
 // FetchTitle fetches and returns the manga title
 func (b *Bluesolo) FetchTitle() (string, error) {
+	b.resolveSeriesURL()
 	if b.title != "" {
 		return b.title, nil
 	}
@@ -80,6 +102,7 @@ func (b *Bluesolo) LanguageOptions() FilterOptions {
 
 // FetchChapters returns the chapters of the manga
 func (b *Bluesolo) FetchChapters() (chapters Filterables, errs []error) {
+	b.resolveSeriesURL()
 	feed, err := b.fetchComic()
 	if err != nil {
 		return nil, []error{err}

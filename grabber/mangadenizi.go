@@ -5,6 +5,7 @@ package grabber
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 
@@ -33,14 +34,35 @@ type MangadeniziChapter struct {
 	Slug string
 }
 
+// mangadeniziChapterRe matches reader URLs like /read/{slug}/{chapter}
+var mangadeniziChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?mangadenizi\.net/read/([^/?#]+)/`)
+
 // Test returns true if the URL is a mangadenizi.net URL
 func (m *Mangadenizi) Test() (bool, error) {
 	re := regexp.MustCompile(`mangadenizi\.net`)
 	return re.MatchString(m.URL), nil
 }
 
+// resolveSeriesURL rewrites a reader URL (/read/{slug}/...) to the series URL
+// (/manga/{slug}). No-op for series URLs.
+func (m *Mangadenizi) resolveSeriesURL() {
+	match := mangadeniziChapterRe.FindStringSubmatch(m.URL)
+	if match == nil {
+		return
+	}
+	u, err := url.Parse(m.URL)
+	if err != nil {
+		return
+	}
+	u.Path = "/manga/" + match[1]
+	u.RawQuery = ""
+	u.Fragment = ""
+	m.URL = u.String()
+}
+
 // FetchTitle fetches and returns the manga title
 func (m *Mangadenizi) FetchTitle() (string, error) {
+	m.resolveSeriesURL()
 	manga, err := m.fetchManga()
 	if err != nil {
 		return "", err
@@ -51,6 +73,7 @@ func (m *Mangadenizi) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (m *Mangadenizi) FetchChapters() (chapters Filterables, errs []error) {
+	m.resolveSeriesURL()
 	manga, err := m.fetchManga()
 	if err != nil {
 		return nil, []error{err}

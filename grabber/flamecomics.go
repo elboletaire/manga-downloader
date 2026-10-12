@@ -5,9 +5,11 @@ package grabber
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
@@ -20,6 +22,9 @@ type Flamecomics struct {
 	*Grabber
 	title string
 }
+
+// flamecomicsChapterURLRe matches /series/{id}/{token} chapter URLs
+var flamecomicsChapterURLRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?flamecomics\.xyz/series/\d+/[0-9a-f]+(?:[/?#].*)?$`)
 
 func NewFlamecomics(g *Grabber) *Flamecomics {
 	return &Flamecomics{Grabber: g}
@@ -38,8 +43,27 @@ func (f *Flamecomics) Test() (bool, error) {
 	return re.MatchString(f.URL), nil
 }
 
+// resolveSeriesURL strips the chapter token from a chapter URL, leaving
+// the series URL. No-op for series URLs (/series/{id} with no token).
+func (f *Flamecomics) resolveSeriesURL() {
+	if !flamecomicsChapterURLRe.MatchString(f.URL) {
+		return
+	}
+	parsed, err := url.Parse(f.URL)
+	if err != nil {
+		return
+	}
+	// strip the last path segment (the chapter token)
+	path := strings.TrimSuffix(parsed.Path, "/")
+	parsed.Path = path[:strings.LastIndex(path, "/")]
+	parsed.RawQuery = ""
+	parsed.Fragment = ""
+	f.URL = parsed.String()
+}
+
 // FetchTitle fetches and returns the manga title
 func (f *Flamecomics) FetchTitle() (string, error) {
+	f.resolveSeriesURL()
 	if f.title != "" {
 		return f.title, nil
 	}
@@ -55,7 +79,8 @@ func (f *Flamecomics) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (f Flamecomics) FetchChapters() (chapters Filterables, errs []error) {
+func (f *Flamecomics) FetchChapters() (chapters Filterables, errs []error) {
+	f.resolveSeriesURL()
 	data, err := f.seriesData()
 	if err != nil {
 		return nil, []error{err}
