@@ -9,10 +9,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"time"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	"github.com/elboletaire/manga-downloader/browser"
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -186,8 +184,9 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	// TTY mode: Bubble Tea interactive progress bars.
-	hasDarkBg := detectDarkBg()
-	model := newProgressModel(series.Title, settings.Range, settings.Bundle, showLanguage, hasDarkBg)
+	// Background detection happens inside the model via tea.RequestBackgroundColor.
+	// Default to dark until the BackgroundColorMsg arrives.
+	model := newProgressModel(series.Title, settings.Range, settings.Bundle, showLanguage, true)
 	prog := tea.NewProgram(model)
 
 	// evDone is closed when prog.Run() returns so that bubbleEvents methods
@@ -442,23 +441,6 @@ func truncateString(input string, maxLength int) string {
 
 	// Return substring up to the last found space
 	return truncated[:truncationPoint] + "..."
-}
-
-// detectDarkBg queries the terminal background colour, defaulting to dark if
-// the query takes more than 150 ms (e.g. when Ctrl+C is hit before Run(), or
-// the terminal doesn't respond). Dark is the safer default: most terminals are.
-func detectDarkBg() bool {
-	type result struct{ dark bool }
-	ch := make(chan result, 1)
-	go func() {
-		ch <- result{dark: lipgloss.HasDarkBackground(os.Stdin, os.Stdout)}
-	}()
-	select {
-	case r := <-ch:
-		return r.dark
-	case <-time.After(150 * time.Millisecond):
-		return true // default to dark
-	}
 }
 
 func toMetaFunc(c *color.Color) func(string) string {

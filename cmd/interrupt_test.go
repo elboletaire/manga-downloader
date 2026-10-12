@@ -86,9 +86,8 @@ func TestErrorsMutedOnceInterrupted(t *testing.T) {
 	}
 }
 
-// TestProgressBarsWriteToTheTerminal tested that mpb didn't replace
-// color.Output; the Bubble Tea renderer does not touch color.Output, so the
-// test is no longer meaningful and has been removed.
+// TestProgressBarsWriteToTheTerminal was removed: the Bubble Tea renderer
+// does not replace color.Output, so there is nothing to assert.
 
 func TestAttentionPrintsOneHighlightedLine(t *testing.T) {
 	stubExit(t)

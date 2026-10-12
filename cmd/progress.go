@@ -229,22 +229,6 @@ func (m progressModel) makeBar(width int) *progress.Model {
 	return &b
 }
 
-// makeDoneBar creates a progress.Model in the mint/done colour.
-func (m progressModel) makeDoneBar(width int) *progress.Model {
-	var c string
-	if m.hasDarkBg {
-		c = "#4fd8b0" // mint
-	} else {
-		c = "#1b7a5e" // mint-deep
-	}
-	b := progress.New(
-		progress.WithoutPercentage(),
-		progress.WithWidth(width),
-		progress.WithColors(lipgloss.Color(c), lipgloss.Color(c)),
-	)
-	return &b
-}
-
 // makeDangerBar creates a progress.Model in the danger colour for failed chapters.
 func makeDangerBar(width int) *progress.Model {
 	const danger = "#c0344b"
@@ -256,10 +240,38 @@ func makeDangerBar(width int) *progress.Model {
 	return &b
 }
 
-func (m progressModel) Init() tea.Cmd { return nil }
+func (m progressModel) Init() tea.Cmd { return tea.RequestBackgroundColor }
 
 func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+
+	case tea.BackgroundColorMsg:
+		m.hasDarkBg = msg.IsDark()
+		// Recolour all existing bars with the now-known background.
+		_, barW, _ := btLayout(m.width)
+		for _, s := range m.states {
+			newBar := m.makeBar(s.bar.Width())
+			if s.bar.Width() == 0 {
+				newBar = m.makeBar(barW)
+			}
+			*s.bar = *newBar
+			// failBar uses danger colour (bg-independent); no rebuild needed
+		}
+		for _, vs := range m.volStates {
+			newBar := m.makeBar(vs.bar.Width())
+			if vs.bar.Width() == 0 {
+				newBar = m.makeBar(barW)
+			}
+			*vs.bar = *newBar
+		}
+		_, bBarW, _ := btBundleLayout(m.width)
+		if m.bundleBar != nil {
+			newBar := m.makeBar(m.bundleBar.Width())
+			if m.bundleBar.Width() == 0 {
+				newBar = m.makeBar(bBarW)
+			}
+			*m.bundleBar = *newBar
+		}
 
 	case tea.KeyPressMsg:
 		if msg.String() == "ctrl+c" {
