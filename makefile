@@ -95,6 +95,7 @@ grabber: \
 	grabber/gdscans \
 	grabber/genztoon \
 	grabber/guya \
+	grabber/heavenlydelusion \
 	grabber/hijala \
 	grabber/hivetoons \
 	grabber/inmanga \
@@ -269,6 +270,9 @@ grabber/mangahere:
 	go run . https://www.mangahere.cc/manga/kengan_omega/ 363
 grabber/jestful:
 	go run . https://jestful.net/hwms-jitsu-wa-ore-saikyou-deshita.html 150
+
+grabber/heavenlydelusion:
+	go run . https://heavenly-delusion.com 83
 
 grabber/weebcentral:
 	go run . https://weebcentral.com/series/01J76XYDXH7KT6AABVG3JAT3ZP/Shangri-La-Frontier 274
