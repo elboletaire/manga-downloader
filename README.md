@@ -594,7 +594,7 @@ to a minute.
 - [mangalib.me (MangaLib)](https://mangalib.me)
 - [mangalivre.to (Manga Livre, former mangalivre.tv/mangalivre.net)](https://mangalivre.to)
 - [manganato.gg (MangaNato)](https://www.manganato.gg)
-- [mangapark1.com (MangaPark, the current host: mangapark.page now redirects to it)](https://mangapark1.com) \*
+- [mangapark.cc (MangaPark)](https://mangapark.cc)
 - [mangapill.com](https://mangapill.com)
 - [mangaplus.shueisha.co.jp (Manga Plus, Shueisha's official reader)](https://mangaplus.shueisha.co.jp)
 - [mangaread.org](https://www.mangaread.org)

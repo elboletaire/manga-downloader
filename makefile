@@ -130,6 +130,7 @@ grabber: \
 	grabber/mangak \
 	grabber/mangalib \
 	grabber/mangalivre \
+	grabber/mangapark \
 	grabber/manganato \
 	grabber/mangaplus \
 	grabber/mangasushi \
@@ -401,7 +402,6 @@ grabber/browser: \
 	grabber/kappabeast \
 	grabber/mangahub \
 	grabber/mangakakalot \
-	grabber/mangapark \
 	grabber/manhuatop \
 	grabber/manhuaus \
 	grabber/natomanga \
@@ -450,13 +450,10 @@ grabber/manhuatop:
 grabber/setsuscans:
 	go run . --browser-visible https://setsuscans.com/manga/a-story-about-accidentally-finding-out-a-girls-secret-at-school/ 13
 
-# mangapark.page now redirects to mangapark1.com, behind a cloudflare JS
-# challenge that headless never passes, so the series and reader HTML are
-# rendered in the visible browser. The clearance it harvests carries the ~200
-# page images per chapter over plain HTTP, though not the HTML requests.
-# --browser-visible just skips the pointless 30s headless probe.
+# mangapark.cc serves plain HTML with no browser required. Chapters API
+# paginates with ?lang=LANG&offset=N; images are on an external CDN.
 grabber/mangapark:
-	go run . --browser-visible https://mangapark1.com/manga/rowdy-reunion 41
+	go run . https://mangapark.cc/manga/shonan-junai-gumi 266-267
 
 grabber/html: \
 	grabber/arenascan \
