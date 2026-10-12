@@ -188,6 +188,12 @@ type State struct {
 	ReleaseURL string `json:"releaseURL"`
 	// Update is the newer release the update check found, null when there's none
 	Update *UpdateDTO `json:"update"`
+	// BrowserVisibleAuto is set when the loaded site opens the browser
+	// visible on its own, whatever Options.BrowserVisible says
+	BrowserVisibleAuto bool `json:"browserVisibleAuto"`
+	// BrowserAlert is the message of a browser window waiting for the user,
+	// "" when none is
+	BrowserAlert string `json:"browserAlert"`
 }
 
 // UpdateDTO is a newer release than the running build
@@ -273,6 +279,9 @@ func (a *App) State() State {
 		Version:       a.version,
 		ReleaseURL:    releaseURL(a.tag),
 		Update:        updateDTO(c.Update()),
+
+		BrowserVisibleAuto: c.BrowserVisibleAuto(),
+		BrowserAlert:       c.BrowserAlert(),
 	}
 	st.LoadedLanguage, st.LoadedScanlator = c.LoadedFilters()
 	language, scanlator := c.Filters()
@@ -511,6 +520,17 @@ func (a *App) Start() error {
 // Cancel stops the run from starting new chapters
 func (a *App) Cancel() {
 	a.ctrl.Cancel()
+}
+
+// ShowBrowser brings the browser window to the front again
+func (a *App) ShowBrowser() {
+	a.ctrl.ShowBrowser()
+}
+
+// DismissBrowserAlert hides the alert about the browser window; the window
+// and the load waiting for it go on
+func (a *App) DismissBrowserAlert() {
+	a.ctrl.DismissBrowserAlert()
 }
 
 // Version returns the release tag, or the build's version when it has none

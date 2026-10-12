@@ -28,6 +28,8 @@ type fakeBrowser struct {
 	slow chan struct{}
 	// halfStarted counts the slow launches killed by an abort
 	halfStarted int
+	// fronts counts the times a window was brought to the front
+	fronts int
 }
 
 func (f *fakeBrowser) launch(abort context.Context, headed bool) (*instance, error) {
@@ -50,7 +52,14 @@ func (f *fakeBrowser) launch(abort context.Context, headed bool) (*instance, err
 	f.launched = append(f.launched, headed)
 	ctx, cancel := context.WithCancel(context.Background())
 	var once sync.Once
-	i := &instance{ctx: ctx, lost: ctx, headed: headed}
+	i := &instance{ctx: ctx, lost: ctx, headed: headed, name: "Fakefox"}
+	if headed {
+		i.front = func() {
+			f.mu.Lock()
+			f.fronts++
+			f.mu.Unlock()
+		}
+	}
 	i.close = func() {
 		once.Do(func() {
 			f.mu.Lock()
@@ -86,12 +95,20 @@ func withFake(t *testing.T) (*fakeBrowser, func() []string) {
 		notices = append(notices, msg)
 		nmu.Unlock()
 	})
+	resetHosts := func() {
+		hostsMu.Lock()
+		required, needed = map[string]bool{}, map[string]bool{}
+		hostsMu.Unlock()
+	}
+	resetHosts()
 	t.Cleanup(func() {
 		Close()
 		launch = prev
 		notice.SetHandler(nil)
+		SetAttentionHandler(nil)
 		SetVisible(false)
 		SetIdleTimeout(0)
+		resetHosts()
 	})
 	return f, func() []string {
 		nmu.Lock()
@@ -101,9 +118,13 @@ func withFake(t *testing.T) (*fakeBrowser, func() []string) {
 }
 
 func run(op pageOp) error {
+	return runAt("https://www.example.com/series/1", op)
+}
+
+func runAt(url string, op pageOp) error {
 	abort := lock()
 	defer mu.Unlock()
-	return runPage(abort, "https://www.example.com/series/1", time.Second, true, op)
+	return runPage(abort, url, time.Second, true, op)
 }
 
 func ok(context.Context, hooks) error { return nil }
@@ -199,7 +220,7 @@ func TestBrowserDyingMidLoadIsNotAChallenge(t *testing.T) {
 	}
 }
 
-func TestChallengeEscalatesToVisibleThenResets(t *testing.T) {
+func TestChallengeEscalatesToVisibleAndIsRemembered(t *testing.T) {
 	f, notices := withFake(t)
 
 	calls := 0
@@ -228,15 +249,16 @@ func TestChallengeEscalatesToVisibleThenResets(t *testing.T) {
 		t.Errorf("launched %d, want the visible browser reused", launched)
 	}
 
-	// ...but a failure there goes back to the user's choice, headless
+	// ...and the site is remembered: after a failure closed it, the next
+	// browser opens visible straight away
 	if err := run(challenge); err == nil || !strings.Contains(err.Error(), "may not have been solved") {
 		t.Fatalf("got %v, want a challenge error", err)
 	}
 	if err := run(ok); err != nil {
 		t.Fatal(err)
 	}
-	if got := f.launched; len(got) != 3 || got[2] {
-		t.Errorf("launches (headed) = %v, want a headless one after the failure", got)
+	if got := f.launched; len(got) != 3 || !got[2] {
+		t.Errorf("launches (headed) = %v, want a visible one after the failure", got)
 	}
 }
 

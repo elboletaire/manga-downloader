@@ -33,6 +33,10 @@ export interface Api {
   openURL(url: string): void;
   start(): Promise<void>;
   cancel(): Promise<void>;
+  /** Brings the browser window to the front again */
+  showBrowser(): Promise<void>;
+  /** Hides browserAlert; the window and the load waiting for it go on */
+  dismissBrowserAlert(): Promise<void>;
 
   // Pushes. Each returns a function that stops the callback.
   onState(cb: (s: State) => void): Unsubscribe;
@@ -91,6 +95,8 @@ export function createWailsApi(): Api {
     openURL: (url) => BrowserOpenURL(url),
     start: () => app.Start(),
     cancel: () => app.Cancel(),
+    showBrowser: () => app.ShowBrowser(),
+    dismissBrowserAlert: () => app.DismissBrowserAlert(),
 
     onState: (cb) => state.subscribe(cb),
     onChapters: (cb) => chapters.subscribe(cb),

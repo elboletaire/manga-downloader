@@ -144,7 +144,7 @@
     "oldQ": "Old chapters are missing, or a warning says the range starts before the first chapter",
     "oldA": "Sites often delete old chapters. manga downloader can only download chapters that the site still lists.",
     "browserQ": "A browser window pops up",
-    "browserA": "That's expected for sites tagged <span class=\"site-badge\">browser</span> in the <a href=\"#sites\">list</a>. The window opens when the site shows a Cloudflare challenge. Checkboxes are clicked automatically, but some challenges need you to click them yourself.",
+    "browserA": "That's expected for sites tagged <span class=\"site-badge\">browser</span> in the <a href=\"#sites\">list</a>. The window opens when the site shows a Cloudflare challenge or a captcha of its own, and you're told when it may need you. Checkboxes are clicked automatically, but some challenges need you to solve them yourself; the download carries on by itself afterwards.",
     "ereaderQ": "Pages don't show up on my e-reader",
     "ereaderA": "The site probably serves WebP images. Download the chapters again with <code>--convert-images avif,webp</code>.",
     "unsupportedQ": "My site isn't supported",

@@ -88,3 +88,15 @@ func printNotice(level notice.Level, msg string) {
 		color.Blue(msg)
 	}
 }
+
+// attentionColor highlights the line asking the user to look at the browser
+var attentionColor = color.New(color.FgHiYellow, color.Bold)
+
+// printAttention is the CLI's browser attention handler: a highlighted line
+// when a browser window may need the user. The end needs no line: the
+// download's own output carries on.
+func printAttention(a browser.Attention) {
+	if a.Active && interrupted.Load() == 0 {
+		attentionColor.Fprintln(color.Output, a.Message())
+	}
+}

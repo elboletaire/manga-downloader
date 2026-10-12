@@ -22,6 +22,15 @@ type instance struct {
 	lost context.Context
 	// headed tells a visible window from a headless browser
 	headed bool
+	// name is the browser's name for the user ("Brave"), "" when unknown
+	name string
+	// front brings the window to the front, best effort; nil when headless
+	front func()
+	// needsUser is set on a window opened because the site needs one
+	// (declared, remembered or escalated), where a check may wait for the
+	// user. greet is set until the first load in it raised the alert.
+	needsUser bool
+	greet     bool
 	// close stops the browser and waits for its processes to end, within a
 	// bounded time. Safe to call more than once.
 	close func()
@@ -37,13 +46,11 @@ var (
 	visible atomic.Bool
 
 	// mu serializes everything done in the shared browser, and guards inst
-	// and escalated
 	mu   sync.Mutex
 	inst *instance
-	// escalated is set when a headless attempt hit a challenge and the
-	// browser was reopened visible. It lasts as long as that browser does,
-	// so the next pages of the same site skip the wasted headless probe.
-	escalated bool
+	// current mirrors inst for BringToFront, which mustn't wait for mu (a
+	// load holds it while a check waits for the user)
+	current atomic.Pointer[instance]
 
 	// abortCtx is cancelled by Close, so whatever runs in the browser ends
 	// at once instead of Close waiting behind it for mu (a visible window
@@ -96,18 +103,24 @@ func lock() context.Context {
 var lockHook func()
 
 // start makes sure a live browser is running, replacing one that died since
-// it was last used. host names the site it's started for, for the notices.
+// it was last used, or a headless one when host needs a visible window (see
+// NeedsVisible). host names the site it's started for, for the notices.
 // Callers must hold mu.
 func start(abort context.Context, host string) error {
+	auto := NeedsVisible(host)
 	if inst != nil {
-		if inst.lost.Err() == nil {
+		switch {
+		case inst.lost.Err() != nil:
+			notice.Warn("The browser closed unexpectedly (its window was closed, or it crashed); starting a new one.")
+		case auto && !inst.headed:
+			// left by another site: this one needs a window
+		default:
 			return nil
 		}
-		notice.Warn("The browser closed unexpectedly (its window was closed, or it crashed); starting a new one.")
 		teardown()
 	}
 
-	headed := visible.Load() || escalated
+	headed := visible.Load() || auto
 	if headed {
 		notice.Info("%s needs a real browser: starting it with a visible window (this can take a few seconds)...", host)
 	} else {
@@ -117,28 +130,35 @@ func start(abort context.Context, host string) error {
 	if err != nil {
 		return err
 	}
+	if headed && auto {
+		i.needsUser, i.greet = true, true
+	}
 	inst = i
+	current.Store(i)
 	return nil
 }
 
-// teardown stops the browser, if one runs, and forgets any escalation to a
-// visible window, so the next start begins from the user's choice again.
-// Callers must hold mu.
+// teardown stops the browser, if one runs. Callers must hold mu.
 func teardown() {
-	escalated = false
 	if inst == nil {
 		return
 	}
+	current.Store(nil)
 	inst.close()
 	inst = nil
 }
 
-// goVisible replaces the current headless browser with a visible one.
-// Callers must hold mu.
+// goVisible replaces the current headless browser with a visible one, and
+// remembers host needs it for the rest of the process. Callers must hold mu.
 func goVisible(abort context.Context, host string) error {
 	teardown()
-	escalated = true
-	return start(abort, host)
+	forget := rememberVisible(host)
+	err := start(abort, host)
+	if err != nil {
+		// a window that can't open (no display) mustn't stick
+		forget()
+	}
+	return err
 }
 
 // Close shuts down the shared browser, if it was started, ending any page
@@ -308,9 +328,29 @@ func attempt(host, pageURL string, timeout time.Duration, abort context.Context,
 	if b.headed {
 		startChallengeClicker(ctx)
 	}
-	waiting, rendered := context.WithCancel(ctx)
-	defer rendered()
-	go reportWaiting(waiting, host, b.headed, waitNoticeAfter, waitNoticeEvery)
+
+	// a window opened for the site tells the user at once; one reused for
+	// a later page only once the page is slow to render
+	al := &alert{a: Attention{Host: host, Browser: b.name}, front: b.front}
+	defer al.end()
+	// a site that needs the window may wait for the user in one opened for
+	// another reason (the user's choice, another site) too
+	raise := func() {}
+	if b.headed && (b.needsUser || NeedsVisible(host)) {
+		raise = al.raise
+	}
+	if b.greet {
+		b.greet = false
+		al.raise()
+	}
+
+	waiting, stopWaiting := context.WithCancel(ctx)
+	rendered := func() {
+		stopWaiting()
+		al.end()
+	}
+	defer stopWaiting()
+	go reportWaiting(waiting, host, b.headed, waitNoticeAfter, waitNoticeEvery, raise)
 
 	err := op(ctx, hooks{
 		rearm:    func(d time.Duration) { timer.Reset(d) },
@@ -335,8 +375,9 @@ var (
 )
 
 // reportWaiting tells the user a slow page load is still going, so nothing
-// looks stuck while a challenge is being waited out. Returns when ctx ends.
-func reportWaiting(ctx context.Context, host string, headed bool, after, every time.Duration) {
+// looks stuck while a challenge is being waited out, calling slow with each
+// notice. Returns when ctx ends.
+func reportWaiting(ctx context.Context, host string, headed bool, after, every time.Duration, slow func()) {
 	began := time.Now()
 	t := time.NewTimer(after)
 	defer t.Stop()
@@ -346,6 +387,7 @@ func reportWaiting(ctx context.Context, host string, headed bool, after, every t
 			return
 		case <-t.C:
 		}
+		slow()
 		waited := time.Since(began).Round(time.Second)
 		if headed {
 			notice.Info("Waiting for %s to load in the browser window (%s); solve the check there if one is showing...", host, waited)

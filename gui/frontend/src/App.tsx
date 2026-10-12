@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityPanel } from './ActivityPanel';
 import type { Api } from './api';
+import { BrowserAlert } from './BrowserAlert';
 import { ChapterPanel } from './ChapterPanel';
 import { DownloadDock } from './DownloadDock';
 import { errorMessage } from './format';
@@ -189,6 +190,17 @@ export function App({ api }: { api: Api }) {
       </main>
 
       {logOpen && <LogDrawer log={log} onClose={() => setLogOpen(false)} />}
+      {state.browserAlert !== '' && (
+        <BrowserAlert
+          message={state.browserAlert}
+          onShow={() => {
+            api.showBrowser().catch(() => undefined);
+          }}
+          onDismiss={() => {
+            api.dismissBrowserAlert().catch(() => undefined);
+          }}
+        />
+      )}
       <StatusBar
         log={log}
         version={state.version}

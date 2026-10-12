@@ -90,6 +90,10 @@ export interface State {
   releaseURL: string;
   /** null when there's no newer release (or the check hasn't found one) */
   update: Update | null;
+  /** The loaded site opens the browser window by itself, whatever options.browserVisible says */
+  browserVisibleAuto: boolean;
+  /** What to tell the user while the browser window waits for them; "" when it isn't */
+  browserAlert: string;
 }
 
 /** A release newer than the running build, from the update check */

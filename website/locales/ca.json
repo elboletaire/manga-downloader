@@ -144,7 +144,7 @@
     "oldQ": "Falten capítols antics, o un avís diu que l'interval comença abans del primer capítol",
     "oldA": "Els llocs sovint esborren capítols antics. manga downloader només pot descarregar els capítols que el lloc encara mostra.",
     "browserQ": "S'obre una finestra del navegador",
-    "browserA": "És normal en els llocs marcats com a <span class=\"site-badge\">navegador</span> a la <a href=\"#sites\">llista</a>. La finestra s'obre quan el lloc mostra un repte de Cloudflare. Les caselles es marquen soles, però alguns reptes necessiten que hi facis clic tu.",
+    "browserA": "És normal en els llocs marcats com a <span class=\"site-badge\">navegador</span> a la <a href=\"#sites\">llista</a>. La finestra s'obre quan el lloc mostra un repte de Cloudflare o un captcha propi, i se t'avisa quan et pot necessitar. Les caselles es marquen soles, però alguns reptes necessiten que els resolguis tu; després la descàrrega continua sola.",
     "ereaderQ": "Les pàgines no es veuen al meu lector electrònic",
     "ereaderA": "Segurament el lloc serveix imatges WebP. Torna a descarregar els capítols amb <code>--convert-images avif,webp</code>.",
     "unsupportedQ": "El meu lloc no és compatible",

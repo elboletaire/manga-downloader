@@ -117,6 +117,10 @@ type Controller struct {
 	identify func(url string, s *grabber.Settings) (grabber.Site, []error)
 	// closeBrowser is browser.Close, replaced in tests
 	closeBrowser func()
+	// needsVisible is browser.NeedsVisible, and bringToFront
+	// browser.BringToFront, replaced in tests
+	needsVisible func(url string) bool
+	bringToFront func()
 	// closing tracks a browser close running in the background (see Clear),
 	// which loads wait for rather than meet a browser going away
 	closing sync.WaitGroup
@@ -151,6 +155,9 @@ type Controller struct {
 	loadErr error
 	// update is the newer release the update check found, nil when none
 	update *Update
+	// attention is the browser window waiting for the user (a check to pass
+	// there), nil when none is or the user dismissed it
+	attention *browser.Attention
 	// selGen and logGen count changes to the selection and the log, so a view
 	// that pushes state can skip re-sending either when it hasn't moved
 	selGen uint64
@@ -178,6 +185,8 @@ func NewController(settings *grabber.Settings, notifyFn func()) *Controller {
 		notify:       notifyFn,
 		identify:     core.Identify,
 		closeBrowser: browser.Close,
+		needsVisible: browser.NeedsVisible,
+		bringToFront: browser.BringToFront,
 		settings:     settings,
 	}
 	notice.SetHandler(func(level notice.Level, msg string) {
@@ -187,7 +196,60 @@ func NewController(settings *grabber.Settings, notifyFn func()) *Controller {
 		}
 		c.addLog(lvl, msg)
 	})
+	browser.SetAttentionHandler(c.onAttention)
 	return c
+}
+
+// onAttention keeps the browser's attention requests, which the view shows
+// over the window until the page renders or its load ends
+func (c *Controller) onAttention(a browser.Attention) {
+	c.mu.Lock()
+	if a.Active {
+		c.attention = &a
+		c.appendLogLocked(LogWarn, a.Message())
+	} else {
+		c.attention = nil
+	}
+	c.mu.Unlock()
+	c.emit()
+}
+
+// BrowserAlert is the message of the browser window waiting for the user, ""
+// when none is
+func (c *Controller) BrowserAlert() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.attention == nil {
+		return ""
+	}
+	return c.attention.Message()
+}
+
+// DismissBrowserAlert hides the alert; the window stays open, and the load
+// goes on waiting for it
+func (c *Controller) DismissBrowserAlert() {
+	c.mu.Lock()
+	had := c.attention != nil
+	c.attention = nil
+	c.mu.Unlock()
+	if had {
+		c.emit()
+	}
+}
+
+// ShowBrowser brings the browser window to the front again
+func (c *Controller) ShowBrowser() {
+	c.bringToFront()
+}
+
+// BrowserVisibleAuto reports whether the browser opens visible on its own for
+// the site of the URL loaded: the site needs it (declared by its grabber, or
+// escalated earlier in this session), whatever the option says
+func (c *Controller) BrowserVisibleAuto() bool {
+	c.mu.Lock()
+	url := c.url
+	c.mu.Unlock()
+	return url != "" && c.needsVisible(url)
 }
 
 // emit tells the view something changed. Callers must not hold mu.
@@ -605,6 +667,7 @@ func (c *Controller) Clear() error {
 	c.languages, c.scanlators = nil, nil
 	c.loadedLanguage, c.loadedScanlator = "", ""
 	c.loadErr = nil
+	c.attention = nil
 	c.resetResultsLocked()
 	// done with the series: its browser (and maybe window) can go. Nothing
 	// can be using it, as Clear is refused while loading or running. It's

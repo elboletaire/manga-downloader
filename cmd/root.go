@@ -85,6 +85,8 @@ func Run(cmd *cobra.Command, args []string) {
 	defer closeBrowserOnInterrupt()()
 	notice.SetHandler(printNotice)
 	defer notice.SetHandler(nil)
+	browser.SetAttentionHandler(printAttention)
+	defer browser.SetAttentionHandler(nil)
 	browser.SetVisible(settings.BrowserVisible)
 
 	// validated before anything is fetched, so a typo fails fast
@@ -280,7 +282,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
 	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz or raw (a folder with the images)")
 	rootCmd.Flags().StringVar(&settings.ConvertImages, "convert-images", grabber.ConvertImagesDefault, `comma-separated source image formats to convert to jpeg for e-reader compatibility: "avif", "webp" or "none"`)
-	rootCmd.Flags().BoolVar(&settings.BrowserVisible, "browser-visible", false, "open the browser window from the start (it opens automatically anyway when a headless attempt hits a challenge)")
+	rootCmd.Flags().BoolVar(&settings.BrowserVisible, "browser-visible", false, "always show the browser window; rarely needed, as it opens on its own for sites that need it")
 	rootCmd.Flags().Uint8VarP(&settings.Retry, "retry", "r", 1, "number of retries for failed page downloads, hard-limited to 3 (0 disables retrying)")
 	// no shorthand on purpose: a long flag takes the next argument verbatim as
 	// its value (pflag never looks for a leading "-" there), so `--skip-pages

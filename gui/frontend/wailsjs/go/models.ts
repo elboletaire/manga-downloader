@@ -177,6 +177,8 @@ export namespace main {
 	    version: string;
 	    releaseURL: string;
 	    update?: UpdateDTO;
+	    browserVisibleAuto: boolean;
+	    browserAlert: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new State(source);
@@ -206,6 +208,8 @@ export namespace main {
 	        this.version = source["version"];
 	        this.releaseURL = source["releaseURL"];
 	        this.update = this.convertValues(source["update"], UpdateDTO);
+	        this.browserVisibleAuto = source["browserVisibleAuto"];
+	        this.browserAlert = source["browserAlert"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
