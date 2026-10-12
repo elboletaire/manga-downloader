@@ -9,11 +9,15 @@ import { errorMessage } from './format';
 import { FolderIcon } from './icons';
 import type { Options, PackAs, State } from './types';
 
-const PACK_HINTS: Record<PackAs, string> = {
+export const PACK_HINTS: Record<PackAs, string> = {
   chapters: 'One file per chapter.',
   volumes: 'One file per volume, set above the chapter list. Chapters outside every volume get a file each.',
   bundle: 'The selected chapters in a single file.',
 };
+
+/** The volumes hint when no series is loaded: the box isn't visible yet */
+export const VOLUMES_HINT_NOT_LOADED =
+  'One file per volume, set above the chapter list (when loaded). Chapters outside every volume get a file each.';
 
 interface Props {
   state: State;
@@ -86,7 +90,9 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
             ]}
             onChange={(packAs) => set({ packAs })}
           />
-          <p className="hint">{PACK_HINTS[o.packAs]}</p>
+          <p className="hint">
+            {o.packAs === 'volumes' && !state.loaded ? VOLUMES_HINT_NOT_LOADED : PACK_HINTS[o.packAs]}
+          </p>
         </div>
       </section>
 
