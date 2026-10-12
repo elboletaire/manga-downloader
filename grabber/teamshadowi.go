@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -36,14 +37,35 @@ type TeamshadowiChapter struct {
 	Chapter
 }
 
+// teamshadowiChapterRe matches reader URLs like /read/{slug}/{chapter}
+var teamshadowiChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?team-shadowi\.com/read/([^/?#]+)/`)
+
 // Test returns true if the URL is a team-shadowi.com URL
 func (t *Teamshadowi) Test() (bool, error) {
 	re := regexp.MustCompile(`team-shadowi\.com`)
 	return re.MatchString(t.URL), nil
 }
 
+// resolveSeriesURL rewrites a reader URL (/read/{slug}/...) to the series URL
+// (/series/{slug}). No-op for series URLs.
+func (t *Teamshadowi) resolveSeriesURL() {
+	m := teamshadowiChapterRe.FindStringSubmatch(t.URL)
+	if m == nil {
+		return
+	}
+	u, err := url.Parse(t.URL)
+	if err != nil {
+		return
+	}
+	u.Path = "/series/" + m[1]
+	u.RawQuery = ""
+	u.Fragment = ""
+	t.URL = u.String()
+}
+
 // FetchTitle fetches and returns the manga title
 func (t *Teamshadowi) FetchTitle() (string, error) {
+	t.resolveSeriesURL()
 	data, err := t.fetchData()
 	if err != nil {
 		return "", err
@@ -55,6 +77,7 @@ func (t *Teamshadowi) FetchTitle() (string, error) {
 // FetchChapters returns the chapters of the manga, including their page
 // images (already embedded in the series page payload)
 func (t *Teamshadowi) FetchChapters() (Filterables, []error) {
+	t.resolveSeriesURL()
 	data, err := t.fetchData()
 	if err != nil {
 		return nil, []error{err}

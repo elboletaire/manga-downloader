@@ -198,6 +198,7 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitle: ".title a",
 		Link:         ".title a",
 		Image:        "img.open",
+		SeriesLink:   "h1.tbtitle a",
 	},
 	// madarascans.com/.org: mangareader/themesia theme; the reader page
 	// already carries all its images in a ts_reader.run(...) blob (see
