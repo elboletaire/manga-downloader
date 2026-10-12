@@ -101,15 +101,15 @@ func (pr *progress) BundleStart(pages int64) {
 }
 
 func (pr *progress) FetchFailed(listed grabber.Filterable, err error) {
-	color.Red("- error fetching chapter %s: %s", listed.GetTitle(), err.Error())
+	red("- error fetching chapter %s: %s", listed.GetTitle(), err.Error())
 }
 
 func (pr *progress) Skipped(c *grabber.Chapter) {
-	color.Yellow("- skipping chapter %s: --skip-pages excludes all of its pages", c.GetTitle())
+	yellow("- skipping chapter %s: --skip-pages excludes all of its pages", c.GetTitle())
 }
 
 func (pr *progress) FilenameFailed(c *grabber.Chapter, err error) {
-	color.Red("- error creating filename for chapter %s: %s", c.GetTitle(), err.Error())
+	red("- error creating filename for chapter %s: %s", c.GetTitle(), err.Error())
 }
 
 func (pr *progress) Started(c *grabber.Chapter) {
@@ -150,7 +150,7 @@ func (pr *progress) Page(c *grabber.Chapter, idx int, err error) {
 		if !pr.cfg.bundle && bar != nil {
 			bar.SetCurrent(int64(idx))
 		}
-		color.Red("- error downloading page %d: %s", idx+1, err.Error())
+		red("- error downloading page %d: %s", idx+1, err.Error())
 		return
 	}
 	// Increment by 1 since we're processing one page at a time
@@ -160,7 +160,7 @@ func (pr *progress) Page(c *grabber.Chapter, idx int, err error) {
 }
 
 func (pr *progress) DownloadFailed(c *grabber.Chapter, err error) {
-	color.Red("- error downloading chapter %s: %s", c.GetTitle(), err.Error())
+	red("- error downloading chapter %s: %s", c.GetTitle(), err.Error())
 	if !pr.cfg.bundle {
 		pr.barFor(c).Abort(false)
 	}
@@ -172,7 +172,7 @@ func (pr *progress) Archived(c *grabber.Chapter) {
 
 func (pr *progress) Packed(c *grabber.Chapter, _ string, err error) {
 	if err != nil {
-		color.Red(err.Error())
+		red(err.Error())
 	}
 	bar := pr.barFor(c)
 	if !bar.Completed() {

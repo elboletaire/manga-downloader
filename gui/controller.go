@@ -115,6 +115,11 @@ type Controller struct {
 	notify func()
 	// identify finds the site for a URL; core.Identify, replaced in tests
 	identify func(url string, s *grabber.Settings) (grabber.Site, []error)
+	// closeBrowser is browser.Close, replaced in tests
+	closeBrowser func()
+	// closing tracks a browser close running in the background (see Clear),
+	// which loads wait for rather than meet a browser going away
+	closing sync.WaitGroup
 
 	mu sync.Mutex
 	// settings is the one pointer the site and core read their settings
@@ -170,9 +175,10 @@ func NewController(settings *grabber.Settings, notifyFn func()) *Controller {
 		notifyFn = func() {}
 	}
 	c := &Controller{
-		notify:   notifyFn,
-		identify: core.Identify,
-		settings: settings,
+		notify:       notifyFn,
+		identify:     core.Identify,
+		closeBrowser: browser.Close,
+		settings:     settings,
 	}
 	notice.SetHandler(func(level notice.Level, msg string) {
 		lvl := LogInfo
@@ -274,6 +280,11 @@ func (c *Controller) FinishLoad(url string) error {
 	s := c.settings
 	c.mu.Unlock()
 
+	// a browser still closing after Clear would fail the load
+	c.closing.Wait()
+	// the browser's visibility is read when it starts, and loading a site
+	// may be what starts it
+	browser.SetVisible(s.BrowserVisible)
 	err := c.load(url, s)
 
 	c.mu.Lock()
@@ -595,8 +606,17 @@ func (c *Controller) Clear() error {
 	c.loadedLanguage, c.loadedScanlator = "", ""
 	c.loadErr = nil
 	c.resetResultsLocked()
+	// done with the series: its browser (and maybe window) can go. Nothing
+	// can be using it, as Clear is refused while loading or running. It's
+	// closed in the background, as that can take seconds; added under mu so
+	// a load that starts next is sure to wait for it.
+	c.closing.Add(1)
 	c.mu.Unlock()
 	c.emit()
+	go func() {
+		defer c.closing.Done()
+		c.closeBrowser()
+	}()
 	return nil
 }
 
@@ -940,13 +960,23 @@ func (c *Controller) Start() error {
 	// the browser's visibility is read when it starts, so it must follow the
 	// option as of this run, not the one in force when the series was loaded
 	browser.SetVisible(settings.BrowserVisible)
-	go c.run(ctx, series, settings, chapters, skip, rng)
+	// the idle close mustn't drop the browser between chapters: run closes
+	// it at the end instead. Hold can wait up to the browser's close timeout
+	// when an idle teardown is in progress.
+	release := browser.Hold()
+	go func() {
+		defer release()
+		c.run(ctx, series, settings, chapters, skip, rng)
+	}()
 	return nil
 }
 
 // run is the download goroutine
 func (c *Controller) run(ctx context.Context, series *core.Series, settings *grabber.Settings, chapters grabber.Filterables, skip []ranges.Range, rng string) {
 	file, err := series.Download(ctx, chapters, skip, rng, events{c})
+	// the pages that needed the browser are done: close it rather than keep
+	// it (and maybe its window) open until the app quits
+	c.closeBrowser()
 
 	c.mu.Lock()
 	defer func() {

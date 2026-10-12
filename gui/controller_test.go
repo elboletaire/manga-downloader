@@ -240,14 +240,98 @@ func TestClearForgetsTheSeriesAndKeepsTheOptions(t *testing.T) {
 	}
 }
 
+func TestClearClosesTheBrowser(t *testing.T) {
+	c, _, _ := newTestController(t, false, nil, chapters(2, 1)...)
+	closed := 0
+	c.closeBrowser = func() { closed++ }
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Clear(); err != nil {
+		t.Fatal(err)
+	}
+	// it closes in the background
+	c.closing.Wait()
+	if closed != 1 {
+		t.Errorf("Clear closed the browser %d times, want once", closed)
+	}
+}
+
+func TestClearEmitsBeforeTheBrowserCloses(t *testing.T) {
+	notified := make(chan struct{}, 100)
+	c, _, _ := newTestController(t, false, nil, chapters(2, 1)...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	c.notify = func() {
+		select {
+		case notified <- struct{}{}:
+		default:
+		}
+	}
+	unblock := make(chan struct{})
+	closed := make(chan struct{})
+	c.closeBrowser = func() {
+		<-unblock
+		close(closed)
+	}
+
+	done := make(chan error, 1)
+	go func() { done <- c.Clear() }()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("Clear waited for the browser to close")
+	}
+	select {
+	case <-notified:
+	default:
+		t.Error("Clear didn't emit the cleared state before the browser closed")
+	}
+	if c.Loaded() {
+		t.Error("the series is still loaded")
+	}
+
+	// a load issued meanwhile waits for the close, then works
+	loaded := make(chan error, 1)
+	go func() { loaded <- c.Load("https://example.com/manga/test") }()
+	select {
+	case err := <-loaded:
+		t.Fatalf("the load didn't wait for the closing browser: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+	close(unblock)
+	<-closed
+	select {
+	case err := <-loaded:
+		if err != nil {
+			t.Fatalf("load after the close: %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the load never finished")
+	}
+	if !c.Loaded() {
+		t.Error("the load after the close didn't load the series")
+	}
+}
+
 func TestClearRefusedWhileLoading(t *testing.T) {
 	const url = "https://example.com/manga/test"
 	c, _, _ := newTestController(t, false, nil, chapters(1, 1)...)
+	closed := 0
+	c.closeBrowser = func() { closed++ }
 	if err := c.BeginLoad(url); err != nil {
 		t.Fatal(err)
 	}
 	if err := c.Clear(); err != errBusy {
 		t.Fatalf("Clear while loading = %v; want errBusy", err)
+	}
+	if closed != 0 {
+		t.Error("a refused Clear closed the browser in use")
 	}
 	if err := c.FinishLoad(url); err != nil {
 		t.Fatal(err)

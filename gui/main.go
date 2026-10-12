@@ -9,7 +9,9 @@ import (
 	"context"
 	"embed"
 	"log"
+	"time"
 
+	"github.com/elboletaire/manga-downloader/browser"
 	"github.com/elboletaire/manga-downloader/notice"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -38,6 +40,10 @@ var assets embed.FS
 //go:embed build/linux/icon.png
 var appIcon []byte
 
+// browserIdleTimeout is how long the browser stays open unused before it's
+// closed (it starts again when a page needs it)
+const browserIdleTimeout = 2 * time.Minute
+
 func main() {
 	rt := &wailsRuntime{}
 	var app *App
@@ -50,6 +56,9 @@ func main() {
 		}
 	})
 	app = newApp(ctrl, rt, prefsPath, Tag, versionString())
+	// a loaded series may never be downloaded: don't keep the browser (and
+	// maybe its window) open until the app quits
+	browser.SetIdleTimeout(browserIdleTimeout)
 
 	err := wails.Run(&options.App{
 		Title:            "Manga Downloader",
@@ -66,6 +75,9 @@ func main() {
 		Bind:       []interface{}{app},
 		Linux:      &linux.Options{Icon: appIcon},
 	})
+	// OnShutdown already closed it; this covers a Run that failed or returned
+	// without calling it
+	browser.Close()
 	if err != nil {
 		log.Fatal(err)
 	}

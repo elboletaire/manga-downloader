@@ -9,6 +9,9 @@
 // grabbers. After each page load the session cookies and real user agent are
 // harvested into the http package, so images can still be downloaded with
 // fast plain HTTP requests instead of through the browser.
+//
+// After a failed load the browser is closed, so the next one starts fresh
+// (see runPage in lifecycle.go), and Close must be called before exiting.
 package browser
 
 import (
@@ -17,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -28,18 +30,7 @@ import (
 	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/http"
-	"github.com/elboletaire/manga-downloader/notice"
 )
-
-// visible determines if the browser window is shown (headed mode). Some
-// Cloudflare challenges only pass in headed mode, where the user can also
-// solve interactive captchas manually.
-var visible bool
-
-// SetVisible toggles headed mode. Must be called before the first page fetch.
-func SetVisible(v bool) {
-	visible = v
-}
 
 // settle is an extra wait applied after the wait selector matches, for pages
 // that keep populating content after the first elements appear
@@ -54,14 +45,6 @@ func SetSettle(d time.Duration) {
 // rendering pages. Only meant for debugging/site investigation.
 var NetLog func(url string, status int, mime string)
 
-var (
-	mu          sync.Mutex
-	allocCtx    context.Context
-	allocCancel context.CancelFunc
-	browserCtx  context.Context
-	browserStop context.CancelFunc
-)
-
 // ErrNoBrowser is returned when no Chrome-like browser is installed
 var ErrNoBrowser = errors.New(
 	"no Chrome-like browser found: this site needs a real browser to be scraped.\n" +
@@ -69,100 +52,22 @@ var ErrNoBrowser = errors.New(
 		browserOverrideEnv + " to the path of one",
 )
 
-// start boots the shared browser instance (only once)
-func start() error {
-	if browserCtx != nil {
-		return nil
-	}
-
-	execPath, err := findBrowser(systemHost())
-	if err != nil {
-		return err
-	}
-
-	opts := []chromedp.ExecAllocatorOption{chromedp.ExecPath(execPath)}
-	opts = append(opts, chromedp.DefaultExecAllocatorOptions[:]...)
-	if visible {
-		// not minimized: when visible it's because a challenge needs to be seen
-		// (and possibly solved) by the user
-		opts = append(opts, chromedp.Flag("headless", false))
-	}
-	// reduce automation fingerprint: this flag adds navigator.webdriver etc.
-	opts = append(opts, chromedp.Flag("disable-blink-features", "AutomationControlled"))
-	// chromedp's defaults pass --enable-automation (another loud automation
-	// signal, plus the "Chrome is being controlled" infobar); strict cloudflare
-	// configs (e.g. sakuramangas) loop the challenge forever when they see it
-	opts = append(opts, chromedp.Flag("enable-automation", false))
-	if inContainer() {
-		// chrome's sandbox can't initialize in unprivileged containers
-		// (no setuid helper, user namespaces blocked by the default seccomp
-		// profile), so without this flag it crashes on startup
-		opts = append(opts, chromedp.NoSandbox)
-	}
-
-	allocCtx, allocCancel = chromedp.NewExecAllocator(context.Background(), opts...)
-	browserCtx, browserStop = chromedp.NewContext(allocCtx)
-
-	// starting the browser eagerly gives a nicer error when chrome is missing
-	if err := chromedp.Run(browserCtx); err != nil {
-		browserStop()
-		allocCancel()
-		browserCtx, allocCtx = nil, nil
-		if strings.Contains(err.Error(), "executable file not found") {
-			return ErrNoBrowser
-		}
-		return fmt.Errorf("error starting browser: %w", err)
-	}
-
-	return nil
-}
-
-// inContainer reports whether we're running inside a container (docker sets
-// /.dockerenv, podman /run/.containerenv). BROWSER_NO_SANDBOX=1 forces it for
-// container runtimes that leave no marker.
-func inContainer() bool {
-	if os.Getenv("BROWSER_NO_SANDBOX") == "1" {
-		return true
-	}
-	for _, marker := range []string{"/.dockerenv", "/run/.containerenv"} {
-		if _, err := os.Stat(marker); err == nil {
-			return true
-		}
-	}
-	return false
-}
-
-// Close shuts down the shared browser instance, if it was started. Safe to
-// call multiple times, must be called before exiting or the Chrome process
-// is left behind.
-func Close() {
-	mu.Lock()
-	defer mu.Unlock()
-	teardown()
-}
-
-// teardown stops the browser instance if running. Callers must hold mu.
-func teardown() {
-	if browserCtx == nil {
-		return
-	}
-	// gracefully close the browser (Cancel waits for it, browserStop doesn't)
-	chromedp.Cancel(browserCtx)
-	browserStop()
-	allocCancel()
-	browserCtx, allocCtx = nil, nil
-}
-
 // timeouts for the first render attempt. The headless probe is kept short:
 // a page behind a challenge will never pass headless, so instead of making the
 // user wait we escalate to a visible browser as soon as it times out.
 const (
 	headlessProbeTimeout = 30 * time.Second
-	visibleTimeout       = 5 * time.Minute
 	// paginationTimeout bounds clicking through a paginated list once the page
 	// has rendered
 	paginationTimeout = 5 * time.Minute
+	// afterRenderTimeout bounds what a render does once its wait selector
+	// matched (scrolling, settling, the snapshot)
+	afterRenderTimeout = 2 * time.Minute
 )
+
+// visibleTimeout bounds a load in a visible window, where a challenge may
+// need solving by hand. A var for the tests, guarded by mu.
+var visibleTimeout = 5 * time.Minute
 
 // challengeError is returned when the wait selector never shows up, which
 // almost always means the page sits behind a challenge (e.g. cloudflare) that
@@ -196,18 +101,15 @@ func GetHTML(url, waitSelector string, timeout time.Duration) (string, error) {
 // GetHTML only captures the handful of pages near the top; scrolling lets the
 // site's own JS progressively mount the rest before the snapshot is taken.
 func GetHTMLWithScroll(url, waitSelector string, scrollIterations int, scrollPause time.Duration, timeout time.Duration) (string, error) {
-	pre := []chromedp.Action{}
-	if waitSelector != "" {
-		pre = append(pre, chromedp.WaitVisible(waitSelector, chromedp.ByQuery))
-	}
+	scroll := []chromedp.Action{}
 	for i := 1; i <= scrollIterations; i++ {
 		frac := float64(i) / float64(scrollIterations)
-		pre = append(pre,
+		scroll = append(scroll,
 			chromedp.Evaluate(fmt.Sprintf(`window.scrollTo(0, document.body.scrollHeight * %f)`, frac), nil),
 			chromedp.Sleep(scrollPause),
 		)
 	}
-	return getHTML(url, "", timeout, pre)
+	return getHTML(url, waitSelector, timeout, scroll)
 }
 
 // dismissModalJS closes an open modal dialog (e.g. mkissa's "Sign in to
@@ -235,24 +137,24 @@ const dismissModalJS = `(function(){var c=document.querySelector('.modal-backdro
 // the requested chapter) stays stable for two checks in a row, or after a
 // generous number of scrolls as a safety cap.
 func GetReaderHTML(seriesURL, tabSelector, paginationSelector, linkSelector, imgSelector, urlSubstr string, timeout time.Duration) (string, error) {
-	mu.Lock()
+	abort := lock()
 	defer mu.Unlock()
-
-	if err := start(); err != nil {
-		return "", err
-	}
 
 	t := timeout
 	if t <= 0 {
 		t = visibleTimeout
 	}
-	ctx, cancel := context.WithTimeout(browserCtx, t)
-	defer cancel()
+	var html string
+	err := runPage(abort, seriesURL, t, false, func(ctx context.Context, h hooks) error {
+		var err error
+		html, err = readerHTML(ctx, h, seriesURL, tabSelector, paginationSelector, linkSelector, imgSelector, urlSubstr)
+		return err
+	})
+	return html, err
+}
 
-	if visible {
-		startChallengeClicker(ctx)
-	}
-
+// readerHTML is GetReaderHTML's single attempt
+func readerHTML(ctx context.Context, h hooks, seriesURL, tabSelector, paginationSelector, linkSelector, imgSelector, urlSubstr string) (string, error) {
 	if NetLog != nil {
 		chromedp.ListenTarget(ctx, func(ev interface{}) {
 			if resp, ok := ev.(*network.EventResponseReceived); ok {
@@ -292,6 +194,7 @@ func GetReaderHTML(seriesURL, tabSelector, paginationSelector, linkSelector, img
 			return "", fmt.Errorf("opening chapter list: chapters tab never became selected")
 		}
 	}
+	h.rendered()
 
 	// click through pagination pages until the target chapter link shows up
 	linkExistsJS := fmt.Sprintf(`!!document.querySelector(%q)`, linkSelector)
@@ -406,61 +309,28 @@ type APIResponse struct {
 // Like GetHTML it tries headless first and transparently escalates to a visible
 // window if the wait selector times out (typically a challenge).
 func GetAPIResponses(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration, setupJS string) (responses []APIResponse, setup json.RawMessage, err error) {
-	mu.Lock()
+	abort := lock()
 	defer mu.Unlock()
 
-	t := timeout
-	if t <= 0 {
-		t = headlessProbeTimeout
-		if visible {
-			t = visibleTimeout
-		}
+	err = runPage(abort, pageURL, timeout, true, func(ctx context.Context, h hooks) error {
+		var err error
+		responses, setup, err = captureAPI(ctx, h, pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, setupJS)
+		return err
+	})
+	if err != nil {
+		return nil, nil, err
 	}
-
-	responses, setup, err = captureAPI(pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, t, setupJS)
-	if err == nil {
-		return responses, setup, nil
-	}
-
-	var ce *challengeError
-	if errors.As(err, &ce) && !visible {
-		notice.Warn("%s didn't load in a headless browser (likely a challenge).", hostOf(pageURL))
-		notice.Warn("opening a visible browser window — solve the challenge there if one appears...")
-		if rerr := goVisible(); rerr != nil {
-			return nil, nil, rerr
-		}
-		if responses, setup, err = captureAPI(pageURL, waitSelector, urlSubstr, nextSelector, maxClicks, visibleTimeout, setupJS); err == nil {
-			return responses, setup, nil
-		}
-	}
-
-	if errors.As(err, &ce) {
-		return nil, nil, fmt.Errorf("%w: the challenge may not have been solved in time", err)
-	}
-	return nil, nil, err
+	return responses, setup, nil
 }
 
 // captureAPI performs a single render capturing the response bodies whose URL
 // contains urlSubstr, optionally clicking through nextSelector pagination.
-// Callers must hold mu.
-func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, timeout time.Duration, setupJS string) ([]APIResponse, json.RawMessage, error) {
-	if err := start(); err != nil {
-		return nil, nil, err
-	}
-
-	// the timeout only has to bound the initial render (that's what tells a
-	// challenge apart), so it's re-armed with a full paginationTimeout once the
-	// page has loaded: clicking through hundreds of chapters takes far longer
-	// than the headless probe is allowed to
-	ctx, cancel := context.WithCancel(browserCtx)
-	defer cancel()
-	timer := time.AfterFunc(timeout, cancel)
-	defer timer.Stop()
-
-	if visible {
-		startChallengeClicker(ctx)
-	}
-
+//
+// The attempt's timeout only has to bound the initial render (that's what
+// tells a challenge apart), so it's re-armed with a full paginationTimeout
+// once the page has loaded: clicking through hundreds of chapters takes far
+// longer than the headless probe is allowed to.
+func captureAPI(ctx context.Context, h hooks, pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks int, setupJS string) ([]APIResponse, json.RawMessage, error) {
 	type entry struct {
 		id  network.RequestID
 		url string
@@ -504,7 +374,8 @@ func captureAPI(pageURL, waitSelector, urlSubstr, nextSelector string, maxClicks
 	// wait for the initial matching response(s) the SPA fires on load, so we
 	// don't fetch bodies before they exist
 	waitForGrowth(ctx, count, 0)
-	timer.Reset(paginationTimeout)
+	h.rendered()
+	h.rearm(paginationTimeout)
 
 	// page-specific setup (e.g. switching the chapter list's language); the
 	// script is async and resolves to what parseSetup reads
@@ -604,62 +475,27 @@ func waitForGrowth(ctx context.Context, count func() int, baseline int) bool {
 }
 
 // getHTML is the shared implementation behind the GetHTML variants: it renders
-// url in a headless browser and, if the
-// wait selector times out (typically a cloudflare/JS challenge), transparently
-// reopens a visible window and retries.
-func getHTML(url, waitSelector string, timeout time.Duration, preActions []chromedp.Action) (string, error) {
-	mu.Lock()
+// url in a headless browser and, if the wait selector times out (typically a
+// cloudflare/JS challenge), transparently reopens a visible window and
+// retries.
+func getHTML(url, waitSelector string, timeout time.Duration, afterWait []chromedp.Action) (string, error) {
+	abort := lock()
 	defer mu.Unlock()
 
-	t := timeout
-	if t <= 0 {
-		t = headlessProbeTimeout
-		if visible {
-			t = visibleTimeout
-		}
-	}
-
-	html, err := render(url, waitSelector, t, preActions)
-	if err == nil {
-		return html, nil
-	}
-
-	var ce *challengeError
-	if errors.As(err, &ce) && !visible {
-		notice.Warn("%s didn't load in a headless browser (likely a challenge).", hostOf(url))
-		notice.Warn("opening a visible browser window — solve the challenge there if one appears...")
-		if rerr := goVisible(); rerr != nil {
-			return "", rerr
-		}
-		if html, err = render(url, waitSelector, visibleTimeout, preActions); err == nil {
-			return html, nil
-		}
-	}
-
-	if errors.As(err, &ce) {
-		// visible (or just escalated to it) and still no luck
-		return "", fmt.Errorf("%w: the challenge may not have been solved in time", err)
-	}
-	return "", err
+	var html string
+	err := runPage(abort, url, timeout, true, func(ctx context.Context, h hooks) error {
+		var err error
+		html, err = render(ctx, h, url, waitSelector, afterWait)
+		return err
+	})
+	return html, err
 }
 
 // render performs a single navigation in the shared browser, reusing its
 // initial tab (a new tab would spawn in the background, leaving the blank
-// first tab in front and hiding the page). preActions, if any, run right
-// after the initial navigation and before waitSelector is awaited. Callers
-// must hold mu.
-func render(url, waitSelector string, timeout time.Duration, preActions []chromedp.Action) (string, error) {
-	if err := start(); err != nil {
-		return "", err
-	}
-
-	ctx, cancel := context.WithTimeout(browserCtx, timeout)
-	defer cancel()
-
-	if visible {
-		startChallengeClicker(ctx)
-	}
-
+// first tab in front and hiding the page). afterWait, if any, runs once
+// waitSelector matches, before the snapshot.
+func render(ctx context.Context, h hooks, url, waitSelector string, afterWait []chromedp.Action) (string, error) {
 	if NetLog != nil {
 		chromedp.ListenTarget(ctx, func(ev interface{}) {
 			if resp, ok := ev.(*network.EventResponseReceived); ok {
@@ -672,10 +508,19 @@ func render(url, waitSelector string, timeout time.Duration, preActions []chrome
 	actions := []chromedp.Action{
 		chromedp.Navigate(url),
 	}
-	actions = append(actions, preActions...)
 	if waitSelector != "" {
 		actions = append(actions, chromedp.WaitVisible(waitSelector, chromedp.ByQuery))
 	}
+	matched := false
+	actions = append(actions, chromedp.ActionFunc(func(context.Context) error {
+		matched = true
+		h.rendered()
+		// what follows (scrolling, settling) gets its own budget, so it
+		// can't eat the probe's and pass for a challenge
+		h.rearm(afterRenderTimeout)
+		return nil
+	}))
+	actions = append(actions, afterWait...)
 	if settle > 0 {
 		actions = append(actions, chromedp.Sleep(settle))
 	}
@@ -692,13 +537,22 @@ func render(url, waitSelector string, timeout time.Duration, preActions []chrome
 	)
 
 	if err := chromedp.Run(ctx, actions...); err != nil {
-		if ctx.Err() != nil && waitSelector != "" {
-			return "", &challengeError{url: url, selector: waitSelector}
-		}
-		return "", err
+		return "", renderError(ctx, err, url, waitSelector, matched)
 	}
 
 	return html, nil
+}
+
+// renderError explains a failed render: a timeout before waitSelector matched
+// is a challenge, one after it is just a slow page
+func renderError(ctx context.Context, err error, url, waitSelector string, matched bool) error {
+	if ctx.Err() == nil || waitSelector == "" {
+		return err
+	}
+	if !matched {
+		return &challengeError{url: url, selector: waitSelector}
+	}
+	return fmt.Errorf("%s loaded but didn't finish in time: %w", hostOf(url), err)
 }
 
 // startChallengeClicker polls the page in the background and, whenever a
@@ -753,14 +607,6 @@ func clickChallenge(ctx context.Context) {
 		input.DispatchMouseEvent(input.MouseReleased, x, y).
 			WithButton(input.Left).WithClickCount(1),
 	)
-}
-
-// goVisible tears down the current headless browser and forces the next start
-// into visible mode. Callers must hold mu.
-func goVisible() error {
-	teardown()
-	visible = true
-	return start()
 }
 
 // hostOf returns the host of a URL without the www. prefix, for user messages.

@@ -9,7 +9,6 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/browser"
-	"github.com/elboletaire/manga-downloader/notice"
 )
 
 // BrowserSiteSelector is a SiteSelector for sites that need a real browser
@@ -289,8 +288,6 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 	m.selector = selector
 	m.site = selector.SiteSelector
 	browser.SetSettle(m.selector.Settle)
-
-	notice.Info("this site needs a real browser, launching Chrome (may take a few seconds)...")
 
 	// Prefer path reconstruction: when the URL has more segments than the
 	// series depth, trim the extras to get the series URL without rendering.
