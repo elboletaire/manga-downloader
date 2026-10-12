@@ -52,8 +52,9 @@ and as a **command line tool** for scripts, servers and Docker.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
   they don't show up blank on Kobo, KOReader or Calibre.
-- **Flexible output**: one CBZ per chapter, a single bundled CBZ (`--bundle`),
-  or plain image folders (`--format raw`), named from a template.
+- **Flexible output**: one CBZ per chapter, one per volume (`--volumes`), a
+  single bundled CBZ (`--bundle`), or plain image folders (`--format raw`),
+  named from a template.
 - **Language and scanlation group filters** for sites that host several versions
   of a chapter, and **skipping pages** such as credits or ads.
 - **Concurrent downloads** with retries.
@@ -277,9 +278,11 @@ Open the app and follow these steps:
    </picture>
 
 4. **Set the options** in the *Options* tab: where the files go, the format
-   (CBZ archive or image folder), *One file for everything* to bundle the
-   chapters, *Convert to JPEG* for AVIF and WebP pages, pages to skip, the file
-   name template, and whether to *Show the browser window*.
+   (CBZ archive or image folder), *Pack as* (a file per chapter, per volume, or
+   one for everything), *Convert to JPEG* for AVIF and WebP pages, pages to
+   skip, the file name template, and whether to *Show the browser window*.
+   Packing by volume adds a *Volumes* box above the chapter list, filled with
+   the site's volumes when it lists them, and groups the list by volume.
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.png">
@@ -357,6 +360,22 @@ manga-downloader --format raw [url] 1-8
 
 ![bundle img]
 
+### Volumes
+
+`--volumes` packs one file per volume. `auto` uses the volumes the site files
+chapters under (not every site lists them); otherwise give the chapters of each
+volume, separated by semicolons, in the chapter range syntax:
+
+~~~bash
+manga-downloader --volumes "1-7;8-16" [url] 1-20
+~~~
+
+That writes `Series Vol. 01.cbz` and `Series Vol. 02.cbz`, with a folder per
+chapter inside, and chapters 17 to 20, outside every volume, one file each.
+The chapters argument still picks what's downloaded: a volume packs the
+chapters of it you asked for. An empty group skips a number (`1-7;;20-30` has
+no volume 2), and it can't be combined with `--bundle`.
+
 ### Image conversion
 
 Most e-readers can't display AVIF, so a chapter with AVIF pages looks empty on
@@ -421,7 +440,18 @@ Use `--filename-template` to change file names. It takes a
 ~~~
 
 `{{.Version}}` is a counter that's added when two files would have the same
-name.
+name, and `{{.Volume}}` is the volume number (0 when the site doesn't say);
+`{{printf "%02d" .Volume}}` pads it.
+
+Volume files (`--volumes`) get their own default name while the template is
+left as is:
+
+~~~
+{{.Series}} Vol. {{printf "%02d" .Volume}}{{if gt .Version 1}} v{{.Version}}{{end}}
+~~~
+
+A custom template names them too, with `{{.Number}}` being the volume's
+chapters (`1-7`) and `{{.Title}}` `Vol. 01`.
 
 ### Environment variables
 
@@ -465,6 +495,7 @@ A URL points at one edition, and `--language` downloads another one instead
 | --------------------- | ----- | -------------------------------------------------------- | -------------- |
 | `--output-dir`        | `-o`  | Folder to write the downloaded files to                  | current folder |
 | `--bundle`            | `-b`  | Bundle all chapters into a single file                   | off            |
+| `--volumes`           |       | One file per volume: `auto` or ranges like `1-7;8-16`    | off            |
 | `--format`            | `-f`  | Output format: `cbz` or `raw`                            | `cbz`          |
 | `--filename-template` | `-t`  | Template for the file names                              | see above      |
 | `--language`          | `-l`  | Only download the specified language                     | site default   |

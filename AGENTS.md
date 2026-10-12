@@ -50,6 +50,14 @@ The steps:
 
 **Design every feature for both the CLI and the desktop app.** They're meant to stay (almost) 1:1: a new option or behaviour lands in `core` where possible, then gets a flag in `cmd/` *and* a control in `gui/` (see the `gui` skill), with the same name, default and semantics, in the same change. The deliberate exceptions are few — `--concurrency`/`--concurrency-pages`/`--retry` aren't exposed in the app, and the app selects chapters from a list (with a range box that takes the same `1-10,12` syntax) instead of a positional range argument — so don't treat "the CLI already has it" as done, and say so explicitly when a feature is intentionally one-sided.
 
+### Volumes (`--volumes`)
+
+One file per volume, between the per-chapter default and `--bundle`. `core/volumes.go` groups the chapters (`GroupVolumes`): `auto` by `grabber.VolumeOf` (the listing's `Chapter.Volume`, 0 = unknown, filled only by grabbers whose listing already says: mangadex, mangalib, the mangahere family's `v98/c1195` URLs, Madara's "Volume N" wrappers in `tcb`), or by `ranges.ParseVolumes` groups (`"1-7;8-16"`, volume N = Nth group, overlaps refused). Chapters outside every volume are packed one file each, never dropped.
+
+- **No totals pre-pass**: unlike `--bundle`, each chapter is fetched once; a volume's progress total grows as its chapters start (`VolumeStart` comes first, then the chapter events, routed by `VolumeChapter`). A volume is packed by whichever of its chapters finishes last, so memory holds one volume at a time, not the run.
+- **Naming**: `packer.VolumeTemplate` swaps in `FilenameVolumeTemplateDefault` only while `--filename-template` is the chapter default; a custom template names volumes too. It's checked before anything is fetched, since a volume failing to name would waste every chapter in it.
+- **App**: "Pack as" (`packAs` in `gui.json`, migrated from the old `bundle` key) maps onto `Bundle`/`Volumes`; the Volumes box is per load (prefilled from `core.SiteVolumes`), not an option, and replaces `Settings.Volumes` at `Start`. `frontend/src/volumes.ts` mirrors the parsing and grouping for the list; keep it in step with `ranges.ParseVolumes`/`core.GroupVolumes`/`core.SiteVolumes`.
+
 ### Page conversion (`--convert-images`, #155)
 
 Some sites serve pages e-readers can't render — AVIF (atsu.moe, mistscans, mangalib) and WebP (unreliable on e-ink). `packer/convert.go` re-encodes to JPEG q90: AVIF by default, WebP opt-in (`avif,webp`), `none` disables both.
