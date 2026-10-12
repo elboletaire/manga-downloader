@@ -694,10 +694,10 @@ make build/gui/windows # cross-build manga-downloader-gui.exe, no cgo needed
 
 </div>
 
-[downloads badge]: https://img.shields.io/github/downloads/elboletaire/manga-downloader/total
+[downloads badge]: https://img.shields.io/endpoint?url=https%3A%2F%2Fmangadownloader.cat%2Fbadges%2Fdownloads.json&cacheSeconds=86400
 [go reference badge]: https://pkg.go.dev/badge/github.com/elboletaire/manga-downloader.svg
 [release badge]: https://img.shields.io/github/release/elboletaire/manga-downloader.svg
-[pulls badge]: https://img.shields.io/docker/pulls/elboletaire/manga-downloader
+[pulls badge]: https://img.shields.io/endpoint?url=https%3A%2F%2Fmangadownloader.cat%2Fbadges%2Fdocker-pulls.json&cacheSeconds=86400
 [license badge]: https://img.shields.io/github/license/elboletaire/manga-downloader?color=green
 [tests badge]: https://github.com/elboletaire/manga-downloader/actions/workflows/test.yaml/badge.svg?branch=master
 [tests]: https://github.com/elboletaire/manga-downloader/actions/workflows/test.yaml
