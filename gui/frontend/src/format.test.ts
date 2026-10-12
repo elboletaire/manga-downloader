@@ -14,6 +14,7 @@ const base: Summary = {
   dir: '/out',
   cancelled: false,
   saved: 0,
+  volumes: 0,
   bundled: false,
   bundle: '',
   skipped: 0,
@@ -35,6 +36,11 @@ describe('summaryHeadline', () => {
     expect(summaryHeadline(base)).toBe('Nothing was saved');
   });
 
+  it('describes a volume run', () => {
+    expect(summaryHeadline({ ...base, saved: 12, volumes: 2 })).toBe('12 saved in 2 volumes');
+    expect(summarySentence({ ...base, saved: 12, volumes: 1 })).toBe('Saved 12 chapters to /out, with 1 volume file.');
+  });
+
   it('describes cancelled and bundled runs', () => {
     expect(summaryHeadline({ ...base, cancelled: true, saved: 2 })).toBe('Cancelled, 2 saved');
     expect(summaryHeadline({ ...base, cancelled: true, bundled: true })).toBe('Cancelled, no bundle written');
@@ -52,6 +58,7 @@ describe('job helpers', () => {
     state: 'downloading',
     reason: '',
     status: '',
+    volume: false,
     ...over,
   });
 
@@ -92,6 +99,7 @@ describe('jobShortStatus', () => {
     state: 'downloading',
     reason: '',
     status: '',
+    volume: false,
     ...over,
   });
 

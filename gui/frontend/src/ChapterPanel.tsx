@@ -4,12 +4,13 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { errorMessage, plural } from './format';
-import { AlertIcon, LinkIcon, RefreshIcon } from './icons';
+import { AlertIcon, ChevronIcon, LinkIcon, RefreshIcon } from './icons';
 import { Mascot } from './Mascot';
 import { extendsSpan, moveActive, spanIndices } from './listKeys';
 import { formatNumber, hostOf } from './run';
 import type { Chapter, State } from './types';
 import { useVirtualList } from './virtual';
+import { chapterSpan, groupChapters, groupedRows, parseVolumes, selectedIn, type GroupedRow } from './volumes';
 
 const ROW_HEIGHT = 34;
 
@@ -24,6 +25,8 @@ interface Props {
   onToggleMany: (indices: number[], on: boolean) => Promise<void>;
   onSetAll: (on: boolean) => Promise<void>;
   onRange: (text: string) => Promise<number>;
+  /** Sets the Volumes box; rejects a value that doesn't parse */
+  onVolumes: (text: string) => Promise<void>;
   onReload: () => void;
   onError: (message: string) => void;
 }
@@ -114,41 +117,114 @@ function ChapterList({
   onToggleMany,
   onSetAll,
   onRange,
+  onVolumes,
   onError,
 }: Props) {
   const [rangeText, setRangeText] = useState('');
   const [rangeNote, setRangeNote] = useState<{ text: string; bad: boolean } | null>(null);
   const [active, setActive] = useState(-1);
+  // the volumes folded away, by number (LOOSE for "Not in a volume")
+  const [collapsed, setCollapsed] = useState<ReadonlySet<number>>(new Set());
   // where Shift+click and Shift+Space extend from
   const anchor = useRef(-1);
-  const list = useVirtualList(chapters.length, ROW_HEIGHT);
   const chosen = useMemo(() => new Set(selected), [selected]);
   const host = hostOf(state.url);
+  const byVolume = state.options.packAs === 'volumes';
 
-  // a new list starts at the top, with nothing active
+  // the backend only takes a Volumes box that parses, so this is the grouping
+  // a run would pack; the site's volumes stand in should it not
+  const grouping = useMemo(() => {
+    if (!byVolume) {
+      return null;
+    }
+    let spec;
+    try {
+      spec = parseVolumes(state.volumes.text);
+    } catch {
+      spec = parseVolumes('');
+    }
+    return groupChapters(chapters, spec);
+  }, [byVolume, chapters, state.volumes.text]);
+  const rows: GroupedRow[] = useMemo(
+    () =>
+      grouping === null ? chapters.map((chapter) => ({ kind: 'chapter', chapter })) : groupedRows(grouping, collapsed),
+    [grouping, chapters, collapsed],
+  );
+  const list = useVirtualList(rows.length, ROW_HEIGHT);
+
+  // a new list starts at the top, with nothing active and nothing folded
   useEffect(() => {
     list.reset();
     setActive(-1);
+    setCollapsed(new Set());
     anchor.current = -1;
   }, [chapters, list.reset]);
 
+  // rows come and go as groups fold: keep the active row in the list
+  useEffect(() => {
+    if (active >= rows.length) {
+      setActive(rows.length - 1);
+    }
+  }, [rows.length, active]);
+
   const fail = (e: unknown) => onError(errorMessage(e));
 
+  // the chapters a span of rows covers: a header stands for its chapters
+  // only while folded, as unfolded they're rows of the span already
+  const chaptersOf = (positions: number[]) => {
+    const out: number[] = [];
+    for (const p of positions) {
+      const row = rows[p];
+      if (row.kind === 'chapter') {
+        out.push(row.chapter.index);
+      } else if (row.collapsed) {
+        out.push(...row.chapters.map((c) => c.index));
+      }
+    }
+    return out;
+  };
+
+  const toggleGroup = (row: Extract<GroupedRow, { kind: 'group' }>) => {
+    const on = selectedIn(row.chapters, chosen) < row.chapters.length;
+    const changing = row.chapters.map((c) => c.index).filter((i) => chosen.has(i) !== on);
+    if (changing.length > 0) {
+      onToggleMany(changing, on).catch(fail);
+    }
+  };
+
+  const toggleFold = (key: number) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
   const toggleRow = (pos: number, extend: boolean) => {
-    const ch = chapters[pos];
-    if (!ch || disabled) {
+    const row = rows[pos];
+    if (!row || disabled) {
       return;
     }
-    const on = !chosen.has(ch.index);
+    if (row.kind === 'group' && !extend) {
+      toggleGroup(row);
+      anchor.current = pos;
+      setActive(pos);
+      return;
+    }
+    const on =
+      row.kind === 'chapter' ? !chosen.has(row.chapter.index) : selectedIn(row.chapters, chosen) < row.chapters.length;
     if (extend && anchor.current >= 0) {
       // Shift: the whole span takes the state the clicked row is switching to
-      const span = spanIndices(anchor.current, pos).map((p) => chapters[p].index);
-      const changing = span.filter((i) => chosen.has(i) !== on);
+      const changing = chaptersOf(spanIndices(anchor.current, pos)).filter((i) => chosen.has(i) !== on);
       if (changing.length > 0) {
         onToggleMany(changing, on).catch(fail);
       }
-    } else {
-      onToggle(ch.index, on).catch(fail);
+    } else if (row.kind === 'chapter') {
+      onToggle(row.chapter.index, on).catch(fail);
     }
     anchor.current = pos;
     setActive(pos);
@@ -162,9 +238,7 @@ function ChapterList({
     if (anchor.current < 0) {
       anchor.current = pos;
     }
-    const changing = spanIndices(anchor.current, pos)
-      .map((p) => chapters[p].index)
-      .filter((i) => !chosen.has(i));
+    const changing = chaptersOf(spanIndices(anchor.current, pos)).filter((i) => !chosen.has(i));
     if (changing.length > 0) {
       onToggleMany(changing, true).catch(fail);
     }
@@ -172,7 +246,7 @@ function ChapterList({
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const page = Math.max(1, Math.floor(list.viewHeight / ROW_HEIGHT));
-    const next = moveActive(e.key, active, chapters.length, page);
+    const next = moveActive(e.key, active, rows.length, page);
     if (next !== null) {
       e.preventDefault();
       if (extendsSpan(e.key, e.shiftKey) && !disabled) {
@@ -183,6 +257,20 @@ function ChapterList({
       }
       setActive(next);
       list.reveal(next);
+      return;
+    }
+    const row = rows[active];
+    // left and right fold and unfold a volume, as in a tree
+    if (row?.kind === 'group' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      e.preventDefault();
+      if (row.collapsed === (e.key === 'ArrowRight')) {
+        toggleFold(row.key);
+      }
+      return;
+    }
+    if (row?.kind === 'group' && e.key === 'Enter') {
+      e.preventDefault();
+      toggleFold(row.key);
       return;
     }
     if (e.key === ' ' || e.key === 'Enter') {
@@ -214,6 +302,7 @@ function ChapterList({
   const all = state.chapterCount > 0 && state.selectedCount === state.chapterCount;
   const some = state.selectedCount > 0 && !all;
   const { first, last } = list.span;
+  const activeRow = active >= first && active < last ? rows[active] : undefined;
 
   return (
     <section className="panel chapters" aria-label="Chapters">
@@ -303,6 +392,16 @@ function ChapterList({
           {rangeNote.text}
         </p>
       )}
+      {grouping !== null && (
+        <VolumesBar
+          text={state.volumes.text}
+          site={state.volumes.site}
+          volumes={grouping.volumes.length}
+          loose={grouping.loose.length}
+          disabled={disabled}
+          onVolumes={onVolumes}
+        />
+      )}
 
       <div
         className={`list${disabled ? ' locked' : ''}`}
@@ -314,35 +413,76 @@ function ChapterList({
         aria-disabled={disabled || undefined}
         aria-activedescendant={
           // only a row that's rendered can be the descendant; scrolling may have moved the active one out
-          active >= first && active < last && chapters[active] ? `chapter-${chapters[active].index}` : undefined
+          activeRow ? rowId(activeRow) : undefined
         }
         tabIndex={0}
         onKeyDown={onKeyDown}
         onFocus={() => {
-          if (active < 0 && chapters.length > 0) {
-            setActive(Math.min(chapters.length - 1, Math.floor((list.ref.current?.scrollTop ?? 0) / ROW_HEIGHT)));
+          if (active < 0 && rows.length > 0) {
+            setActive(Math.min(rows.length - 1, Math.floor((list.ref.current?.scrollTop ?? 0) / ROW_HEIGHT)));
           }
         }}
       >
-        <div className="list-inner" style={{ height: chapters.length * ROW_HEIGHT }}>
-          {chapters.slice(first, last).map((ch, i) => {
+        <div className="list-inner" style={{ height: rows.length * ROW_HEIGHT }}>
+          {rows.slice(first, last).map((row, i) => {
             const pos = first + i;
+            const style = { transform: `translateY(${pos * ROW_HEIGHT}px)`, height: ROW_HEIGHT };
+            const keepFocus = (e: MouseEvent) => {
+              // keep the focus on the list and stop Shift from selecting text
+              e.preventDefault();
+              list.ref.current?.focus({ preventScroll: true });
+            };
+            if (row.kind === 'group') {
+              const n = selectedIn(row.chapters, chosen);
+              const on = n === row.chapters.length;
+              const label = `${row.label} · ${row.key === 0 ? plural(row.chapters.length, 'chapter', 'chapters') : chapterSpan(row.chapters)}`;
+              return (
+                <div
+                  key={rowId(row)}
+                  id={rowId(row)}
+                  role="option"
+                  aria-setsize={rows.length}
+                  aria-posinset={pos + 1}
+                  aria-selected={on}
+                  aria-label={`${label}, ${n} of ${row.chapters.length} selected${row.collapsed ? ', folded' : ''}`}
+                  className={`row group-row${on ? ' on' : ''}${pos === active ? ' active' : ''}`}
+                  style={style}
+                  onMouseDown={keepFocus}
+                  onClick={(e) => toggleRow(pos, e.shiftKey)}
+                >
+                  <span className={`box${on ? ' on' : n > 0 ? ' some' : ''}`} aria-hidden="true" />
+                  <button
+                    type="button"
+                    className={`fold${row.collapsed ? '' : ' open'}`}
+                    tabIndex={-1}
+                    aria-label={row.collapsed ? `Unfold ${row.label}` : `Fold ${row.label}`}
+                    onMouseDown={keepFocus}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFold(row.key);
+                      setActive(pos);
+                    }}
+                  >
+                    <ChevronIcon size={14} />
+                  </button>
+                  <span className="title group-title">{label}</span>
+                  <span className="group-count">{n > 0 ? `${n} selected` : 'none selected'}</span>
+                </div>
+              );
+            }
+            const ch = row.chapter;
             const on = chosen.has(ch.index);
             return (
               <div
-                key={ch.index}
-                id={`chapter-${ch.index}`}
+                key={rowId(row)}
+                id={rowId(row)}
                 role="option"
-                aria-setsize={chapters.length}
+                aria-setsize={rows.length}
                 aria-posinset={pos + 1}
                 aria-selected={on}
-                className={`row${on ? ' on' : ''}${pos === active ? ' active' : ''}`}
-                style={{ transform: `translateY(${pos * ROW_HEIGHT}px)`, height: ROW_HEIGHT }}
-                onMouseDown={(e: MouseEvent) => {
-                  // keep the focus on the list and stop Shift from selecting text
-                  e.preventDefault();
-                  list.ref.current?.focus({ preventScroll: true });
-                }}
+                className={`row${grouping !== null ? ' in-group' : ''}${on ? ' on' : ''}${pos === active ? ' active' : ''}`}
+                style={style}
+                onMouseDown={keepFocus}
                 onClick={(e) => toggleRow(pos, e.shiftKey)}
               >
                 <span className={`box${on ? ' on' : ''}`} aria-hidden="true" />
@@ -357,6 +497,11 @@ function ChapterList({
       <p className="list-foot">
         {state.hasDuplicates ? (
           <>Some numbers are listed once per language; the language tag tells them apart.</>
+        ) : grouping !== null ? (
+          <>
+            Click a volume to pick all of its chapters · <kbd>←</kbd>
+            <kbd>→</kbd> fold · <kbd>Space</kbd> toggles
+          </>
         ) : (
           <>
             <kbd>Shift</kbd>+click selects a span · <kbd>↑</kbd>
@@ -365,5 +510,109 @@ function ChapterList({
         )}
       </p>
     </section>
+  );
+}
+
+function rowId(row: GroupedRow): string {
+  return row.kind === 'group' ? `volume-${row.key}` : `chapter-${row.chapter.index}`;
+}
+
+interface VolumesBarProps {
+  text: string;
+  site: string;
+  volumes: number;
+  loose: number;
+  disabled: boolean;
+  onVolumes: (text: string) => Promise<void>;
+}
+
+/**
+ * The Volumes box: chapter ranges, one group per volume, as --volumes takes
+ * them. It starts with the site's volumes, when the site lists any, and
+ * commits on Enter or when it loses focus, like the options.
+ */
+function VolumesBar({ text, site, volumes, loose, disabled, onVolumes }: VolumesBarProps) {
+  const [draft, setDraft] = useState(text);
+  const [error, setError] = useState('');
+  // a pushed value replaces the draft, as in the option fields
+  useEffect(() => {
+    setDraft(text);
+    setError('');
+  }, [text]);
+
+  const commit = (value: string) => {
+    if (value.trim() === text.trim()) {
+      setError('');
+      return;
+    }
+    onVolumes(value).then(
+      () => setError(''),
+      (e: unknown) => setError(errorMessage(e)),
+    );
+  };
+
+  const summary =
+    volumes === 0
+      ? site === '' && text === ''
+        ? 'The site lists no volumes: enter them as chapter ranges.'
+        : 'No chapter falls in these volumes.'
+      : `${plural(volumes, 'volume', 'volumes')}${loose > 0 ? `, ${plural(loose, 'chapter', 'chapters')} outside them` : ''}`;
+
+  return (
+    <div className="volumes-bar">
+      <form
+        className="volumes-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          commit(draft);
+        }}
+      >
+        <label htmlFor="volumes-input">Volumes</label>
+        <input
+          id="volumes-input"
+          type="text"
+          className={`input small mono${error !== '' ? ' invalid' : ''}`}
+          placeholder="1-7; 8-16"
+          value={draft}
+          disabled={disabled}
+          spellCheck={false}
+          autoComplete="off"
+          aria-describedby="volumes-note"
+          aria-invalid={error !== '' || undefined}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            setError('');
+          }}
+          onBlur={() => commit(draft)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setDraft(text);
+              setError('');
+            }
+          }}
+        />
+        {site !== '' && (
+          <button
+            type="button"
+            className="btn ghost small"
+            disabled={disabled || (text === site && draft === site)}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              setDraft(site);
+              commit(site);
+            }}
+          >
+            Use the site's volumes
+          </button>
+        )}
+      </form>
+      <p
+        id="volumes-note"
+        className={`volumes-note${error !== '' ? ' bad' : ''}`}
+        role={error !== '' ? 'alert' : undefined}
+      >
+        {error !== '' ? error : summary}
+      </p>
+    </div>
   );
 }

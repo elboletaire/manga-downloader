@@ -23,7 +23,7 @@ export function summaryHeadline(s: Summary): string {
 
   const parts: string[] = [];
   if (s.saved > 0) {
-    parts.push(`${s.saved} saved`);
+    parts.push(s.volumes > 0 ? `${s.saved} saved in ${plural(s.volumes, 'volume', 'volumes')}` : `${s.saved} saved`);
   }
   if (s.failures.length > 0) {
     parts.push(`${s.failures.length} failed`);
@@ -51,6 +51,9 @@ export function summarySentence(s: Summary): string {
   }
   if (s.bundled && s.bundle !== '') {
     return `Saved ${s.bundle} to ${s.dir} (${plural(s.saved, 'chapter', 'chapters')}).`;
+  }
+  if (s.saved > 0 && s.volumes > 0) {
+    return `Saved ${plural(s.saved, 'chapter', 'chapters')} to ${s.dir}, with ${plural(s.volumes, 'volume file', 'volume files')}.`;
   }
   if (s.saved > 0) {
     return `Saved ${plural(s.saved, 'chapter', 'chapters')} to ${s.dir}.`;

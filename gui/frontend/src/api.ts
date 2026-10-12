@@ -26,6 +26,8 @@ export interface Api {
   /** Selects the chapters in the range text; resolves with how many matched */
   selectRange(text: string): Promise<number>;
   setOptions(options: Options): Promise<void>;
+  /** Sets the Volumes box ("1-7; 8-16", "" for the site's own); rejects a value that doesn't parse */
+  setVolumes(text: string): Promise<void>;
   /** Native folder picker; resolves with "" when cancelled */
   chooseFolder(): Promise<string>;
   openFolder(): Promise<void>;
@@ -90,6 +92,7 @@ export function createWailsApi(): Api {
     setAll: (on) => app.SetAll(on),
     selectRange: (text) => app.SelectRange(text),
     setOptions: (options) => app.SetOptions(options as unknown as Parameters<typeof app.SetOptions>[0]),
+    setVolumes: (text) => app.SetVolumes(text),
     chooseFolder: () => app.ChooseFolder(),
     openFolder: () => app.OpenFolder(),
     openURL: (url) => BrowserOpenURL(url),

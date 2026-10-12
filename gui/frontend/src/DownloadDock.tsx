@@ -5,7 +5,7 @@
 import { useEffect, useRef } from 'react';
 import { DownloadIcon, Spinner, XIcon } from './icons';
 import { downloadBlocker, downloadLabel, overallProgress } from './run';
-import type { State } from './types';
+import type { Options, State } from './types';
 
 interface Props {
   state: State;
@@ -47,7 +47,7 @@ export function DownloadDock({ state, error, onStart, onCancel }: Props) {
                 ? 'Finishing the current chapters'
                 : state.run.bundle
                   ? 'Building the bundle'
-                  : `${overall.finished} of ${overall.total} chapters done`}
+                  : `${overall.finished} of ${overall.total} ${state.run.volumes ? 'files' : 'chapters'} done`}
             </span>
             <span className="dock-pct">{pct}%</span>
           </div>
@@ -93,7 +93,7 @@ export function DownloadDock({ state, error, onStart, onCancel }: Props) {
   return (
     <div className="dock">
       <p className="dock-dest" title={o.outputDir}>
-        {o.format === 'cbz' ? (o.bundle ? 'One CBZ' : 'CBZ files') : 'Image folders'} in{' '}
+        {destination(o)} in{' '}
         <span className="mono">
           <bdi>{o.outputDir || '…'}</bdi>
         </span>
@@ -123,4 +123,16 @@ export function DownloadDock({ state, error, onStart, onCancel }: Props) {
       )}
     </div>
   );
+}
+
+/** What the run writes, as the dock's first words */
+function destination(o: Options): string {
+  const cbz = o.format === 'cbz';
+  switch (o.packAs) {
+    case 'bundle':
+      return cbz ? 'One CBZ' : 'One image folder';
+    case 'volumes':
+      return cbz ? 'A CBZ per volume' : 'A folder per volume';
+  }
+  return cbz ? 'CBZ files' : 'Image folders';
 }

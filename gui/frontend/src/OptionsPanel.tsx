@@ -7,7 +7,13 @@ import { convertFlagsOf, convertValueOf } from './convertImages';
 import { Check, Segmented, Switch, TextField } from './fields';
 import { errorMessage } from './format';
 import { FolderIcon } from './icons';
-import type { Options, State } from './types';
+import type { Options, PackAs, State } from './types';
+
+const PACK_HINTS: Record<PackAs, string> = {
+  chapters: 'One file per chapter.',
+  volumes: 'One file per volume, set above the chapter list. Chapters outside every volume get a file each.',
+  bundle: 'The selected chapters in a single file.',
+};
 
 interface Props {
   state: State;
@@ -68,13 +74,20 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
           onChange={(format) => set({ format })}
         />
 
-        <Switch
-          label="One file for everything"
-          description="Bundle the selected chapters into a single archive."
-          checked={o.bundle}
-          disabled={locked}
-          onChange={(bundle) => set({ bundle })}
-        />
+        <div className="field-stack">
+          <Segmented<PackAs>
+            label="Pack as"
+            value={o.packAs}
+            disabled={locked}
+            options={[
+              { value: 'chapters', label: 'Chapters' },
+              { value: 'volumes', label: 'Volumes' },
+              { value: 'bundle', label: 'One file' },
+            ]}
+            onChange={(packAs) => set({ packAs })}
+          />
+          <p className="hint">{PACK_HINTS[o.packAs]}</p>
+        </div>
       </section>
 
       <section className="opt-group" aria-labelledby="opt-pages">
@@ -120,8 +133,9 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
             disabled={locked}
             hint={
               <>
-                Uses <code>{'{{.Series}}'}</code>, <code>{'{{.Number}}'}</code>, <code>{'{{.Title}}'}</code> and{' '}
-                <code>{'{{.Version}}'}</code>.
+                Uses <code>{'{{.Series}}'}</code>, <code>{'{{.Number}}'}</code>, <code>{'{{.Title}}'}</code>,{' '}
+                <code>{'{{.Volume}}'}</code> and <code>{'{{.Version}}'}</code>. Left as is, volumes are named{' '}
+                <code>Series Vol. 01</code>.
               </>
             }
             onCommit={(filenameTemplate) => onOptions({ filenameTemplate })}

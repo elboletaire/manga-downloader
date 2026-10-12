@@ -619,6 +619,119 @@ code {
   transform: rotate(45deg);
 }
 
+.box.some {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+/* some of a volume's chapters are picked: a dash, as a native mixed checkbox */
+.box.some::after {
+  content: '';
+  position: absolute;
+  left: 2.5px;
+  top: 5.5px;
+  width: 8px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--on-accent);
+}
+
+/* ---------- volumes: the box above the list and its group headers ---------- */
+
+.volumes-bar {
+  display: grid;
+  gap: 4px;
+  padding: 8px 12px 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.volumes-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.volumes-form label {
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.volumes-form .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.volumes-form .btn {
+  white-space: nowrap;
+}
+
+.volumes-note {
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.volumes-note.bad {
+  color: var(--danger);
+}
+
+.row.group-row {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.row.group-row:hover {
+  background: var(--hover);
+}
+
+.row.group-row.on {
+  background: var(--accent-soft);
+}
+
+.fold {
+  display: grid;
+  place-items: center;
+  justify-self: end;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+}
+
+.fold:hover {
+  background: var(--sunken);
+  color: var(--text);
+}
+
+.fold svg {
+  transition: transform 0.15s var(--ease);
+}
+
+.fold.open svg {
+  transform: rotate(90deg);
+}
+
+.group-count {
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.row.on .group-count {
+  color: var(--accent-text);
+}
+
+.field-stack {
+  display: grid;
+  gap: 6px;
+}
+
 .num {
   color: var(--text-3);
   text-align: right;

@@ -5,10 +5,13 @@ export type JobState = 'downloading' | 'archiving' | 'done' | 'failed' | 'skippe
 
 export type LogLevel = 'info' | 'warn' | 'error';
 
+/** How the chapters are packed: one file each, one per volume, or one for everything */
+export type PackAs = 'chapters' | 'volumes' | 'bundle';
+
 export interface Options {
   outputDir: string;
   format: 'cbz' | 'raw';
-  bundle: boolean;
+  packAs: PackAs;
   language: string;
   scanlator: string;
   /** Comma-separated: "avif", "avif,webp", "webp" or "none". See convertImages.ts. */
@@ -21,6 +24,10 @@ export interface Options {
 export interface Run {
   chapters: number;
   bundle: boolean;
+  /** The run packs one file per volume */
+  volumes: boolean;
+  /** How many progress rows the run ends up with: chapters, volumes plus the chapters outside them, or 1 bundle */
+  rows: number;
 }
 
 export interface Job {
@@ -31,14 +38,18 @@ export interface Job {
   done: number;
   state: JobState;
   reason: string;
-  /** The bundle's current phase; empty for single chapters */
+  /** The bundle's or volume's current phase; empty for single chapters */
   status: string;
+  /** The row of a volume rather than a chapter */
+  volume: boolean;
 }
 
 export interface Summary {
   dir: string;
   cancelled: boolean;
   saved: number;
+  /** Volume files written */
+  volumes: number;
   bundled: boolean;
   bundle: string;
   skipped: number;
@@ -81,6 +92,7 @@ export interface State {
   jobs: Job[];
   summary: Summary | null;
   options: Options;
+  volumes: Volumes;
   /** null when the site doesn't list languages (or nothing is identified yet) */
   languages: FilterChoice | null;
   /** null when the site doesn't list scanlation groups */
@@ -94,6 +106,14 @@ export interface State {
   browserVisibleAuto: boolean;
   /** What to tell the user while the browser window waits for them; "" when it isn't */
   browserAlert: string;
+}
+
+/** The Volumes box, used when the options pack as volumes */
+export interface Volumes {
+  /** The volumes a run packs, as chapter ranges per volume ("1-7; 8-16"); "" for the site's own */
+  text: string;
+  /** The site's volumes in the same syntax; "" when the site doesn't say */
+  site: string;
 }
 
 /** A release newer than the running build, from the update check */
@@ -110,6 +130,8 @@ export interface Chapter {
   title: string;
   /** Only set when hasDuplicates: the copies of one number differ by language */
   language: string;
+  /** The volume the site files it under; 0 when the site doesn't say */
+  volume: number;
 }
 
 export interface LogLine {

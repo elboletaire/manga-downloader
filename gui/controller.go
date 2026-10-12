@@ -1312,9 +1312,10 @@ func (e events) Started(ch *grabber.Chapter) {
 	if c.bundle != nil {
 		c.bundle.Status = "Downloading " + ch.GetTitle()
 	} else if j := c.chapVol[ch]; j != nil {
-		// a volume's total is only known as its chapters start
+		// a volume's total is only known as its chapters start. Its row is
+		// too narrow for the chapter's title: the phase and count say enough
 		j.Total += ch.PagesCount * 2
-		j.Status = "Downloading " + ch.GetTitle()
+		j.Status = ""
 	} else {
 		// the CLI's bar: pages to download plus pages to archive
 		j := &Job{Title: ch.GetTitle(), Number: ch.GetNumber(), Total: ch.PagesCount * 2, State: JobDownloading}

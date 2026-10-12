@@ -5,7 +5,7 @@ import type { Options } from './types';
 const base: Options = {
   outputDir: '/out',
   format: 'cbz',
-  bundle: false,
+  packAs: 'chapters',
   language: '',
   scanlator: '',
   convertImages: 'avif',
@@ -48,13 +48,13 @@ describe('createOptionsWriter', () => {
 
     // the blur commits the text, then the click lands before the backend answers
     const text = writer.patch({ skipPages: '2' });
-    const click = writer.patch({ bundle: true });
+    const click = writer.patch({ packAs: 'bundle' });
     await answer(0);
     await answer(1);
     await Promise.all([text, click]);
 
     expect(sent).toHaveLength(2);
-    expect(sent[1]).toEqual({ ...base, skipPages: '2', bundle: true });
+    expect(sent[1]).toEqual({ ...base, skipPages: '2', packAs: 'bundle' });
   });
 
   it('builds each write on the one before it, however many are queued', async () => {
@@ -81,11 +81,11 @@ describe('createOptionsWriter', () => {
     writer.pushed(base);
     writer.pushed({ ...base, outputDir: '/picked' });
 
-    const write = writer.patch({ bundle: true });
+    const write = writer.patch({ packAs: 'bundle' });
     await answer(0);
     await write;
 
-    expect(sent[0]).toEqual({ ...base, outputDir: '/picked', bundle: true });
+    expect(sent[0]).toEqual({ ...base, outputDir: '/picked', packAs: 'bundle' });
   });
 
   it('resets to the last pushed options when a write is refused', async () => {
@@ -97,11 +97,11 @@ describe('createOptionsWriter', () => {
     await answer(0, 'bad pages');
     await refused;
 
-    const next = writer.patch({ bundle: true });
+    const next = writer.patch({ packAs: 'bundle' });
     await answer(1);
     await next;
 
-    expect(sent[1]).toEqual({ ...base, bundle: true });
+    expect(sent[1]).toEqual({ ...base, packAs: 'bundle' });
   });
 
   it('keeps writing after a refusal, and the next write carries none of the refused patch', async () => {
@@ -110,13 +110,13 @@ describe('createOptionsWriter', () => {
     writer.pushed(base);
 
     const refused = expect(writer.patch({ skipPages: 'nope' })).rejects.toBe('bad pages');
-    const after = writer.patch({ bundle: true });
+    const after = writer.patch({ packAs: 'bundle' });
     await answer(0, 'bad pages');
     await answer(1);
 
     await refused;
     await expect(after).resolves.toBeUndefined();
-    expect(sent[1]).toEqual({ ...base, bundle: true });
+    expect(sent[1]).toEqual({ ...base, packAs: 'bundle' });
     expect(sent[1].skipPages).toBe(base.skipPages);
   });
 });
