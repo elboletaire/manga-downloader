@@ -57,6 +57,11 @@ var manganeloHostRe = regexp.MustCompile(`(?i)(^|\.)(mangabats\.com|mangakakalot
 // would never fire.
 const manganeloSeriesWait = ".chapter-list a"
 
+// manganeloChapterPathRe matches chapter reader URLs that have extra path
+// after /manga/{slug} (e.g. /manga/apotheosis/chapter-1297). The capturing
+// group is the series URL prefix.
+var manganeloChapterPathRe = regexp.MustCompile(`(?i)^(https?://[^/?#]+/manga/[^/?#]+)/[^/?#]`)
+
 // manganeloChaptersLimit is the per-request page size asked of the chapters
 // API. The API defaults to 50 (what the series page shows) but honors much
 // bigger limits, so even the longest series comes back in a single call; the
@@ -72,17 +77,6 @@ const manganeloChaptersLimit = 9999
 // that appends the same page forever.
 const manganeloMaxChapterPages = 100
 
-// manganeloChapterSuffixRe matches the /chapter-N suffix of chapter reader
-// URLs (e.g. /manga/apotheosis/chapter-1297) to strip it to the series URL.
-var manganeloChapterSuffixRe = regexp.MustCompile(`(?i)/chapter-[\d.]+/?$`)
-
-// resolveSeriesURL strips the /chapter-N suffix from chapter reader URLs so
-// that FetchTitle always operates on the series page.
-// For series URLs it is a no-op.
-func (m *Manganelo) resolveSeriesURL() {
-	m.URL = manganeloChapterSuffixRe.ReplaceAllString(m.URL, "")
-}
-
 // Test returns true if the URL hostname is one of the manganelo family
 // domains. It only checks the hostname (no fetch) so it can be tried early
 // without extra requests.
@@ -95,15 +89,22 @@ func (m *Manganelo) Test() (bool, error) {
 	return manganeloHostRe.MatchString(u.Hostname()), nil
 }
 
+// resolveSeriesURL rewrites m.URL to the series URL when it is a chapter
+// reader URL (/manga/{slug}/{chapter-slug}). Series URLs are unchanged.
+func (m *Manganelo) resolveSeriesURL() {
+	if match := manganeloChapterPathRe.FindStringSubmatch(m.URL); match != nil {
+		m.URL = match[1]
+	}
+}
+
 // FetchTitle fetches and returns the manga title. This is the only request
 // in the grabber that may need a browser, so it is also what warms up the
 // Cloudflare clearance for the plain HTTP requests that follow.
 func (m *Manganelo) FetchTitle() (string, error) {
+	m.resolveSeriesURL()
 	if m.title != "" {
 		return m.title, nil
 	}
-
-	m.resolveSeriesURL()
 
 	// plain HTTP first: it's a single fast request, and it's all that's
 	// needed whenever the challenge happens to be off (always, on mangabats)

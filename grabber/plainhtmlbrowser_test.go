@@ -53,3 +53,40 @@ func TestBrowserSelectorsAreComplete(t *testing.T) {
 		}
 	}
 }
+
+func TestBrowserPathSeriesURL(t *testing.T) {
+	cases := []struct {
+		name  string
+		url   string
+		depth int
+		want  string
+	}{
+		// chapter URL resolved to series URL
+		{"toonily chapter", "https://toonily.com/serie/the-beginning-after-the-end-ea2130e6/chapter-244/", 2, "https://toonily.com/serie/the-beginning-after-the-end-ea2130e6"},
+		// series URL with trailing slash — already at depth, no change
+		{"toonily series trailing slash", "https://toonily.com/serie/the-beginning-after-the-end-ea2130e6/", 2, ""},
+		// series URL without trailing slash — already at depth, no change
+		{"toonily series", "https://toonily.com/serie/the-beginning-after-the-end-ea2130e6", 2, ""},
+		// www. prefix is preserved in the result
+		{"toongod www chapter", "https://www.toongod.org/webtoon/solo-leveling/chapter-200/", 2, "https://www.toongod.org/webtoon/solo-leveling"},
+		// kappabeast reader adds two extra segments
+		{"kappabeast chapter", "https://kappabeast.com/series/tekkarian/reader/chapter-2", 2, "https://kappabeast.com/series/tekkarian"},
+		// depth 0 disables reconstruction
+		{"depth 0 disabled", "https://toonily.com/serie/slug/chapter-1/", 0, ""},
+		// query and fragment are stripped
+		{"query stripped", "https://sushiscan.net/catalogue/mushoku-tensei/chapter-17/?style=list", 2, "https://sushiscan.net/catalogue/mushoku-tensei"},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			m := &PlainHTMLBrowser{
+				PlainHTML: NewPlainHTML(&Grabber{URL: c.url}),
+				selector:  BrowserSiteSelector{SeriesPathDepth: c.depth},
+			}
+			got := m.pathSeriesURL()
+			if got != c.want {
+				t.Errorf("pathSeriesURL() = %q, want %q", got, c.want)
+			}
+		})
+	}
+}
