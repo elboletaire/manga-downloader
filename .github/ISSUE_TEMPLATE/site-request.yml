@@ -23,8 +23,9 @@ body:
       label: Series link
       description: >-
         A **direct link to a series page** (the page listing the chapters of a
-        single manga), not the site's homepage. This is what gets passed to
-        `manga-downloader` and what development is tested against.
+        single manga), not the site's homepage. This is what you paste into the
+        app or pass to the command line, and what development is tested
+        against.
       placeholder: e.g. https://mangadex.org/title/a96676e5-8ae2-425e-b549-7f15dd34a6d8/komi-san-wa-komyushou-desu
     validations:
       required: true
