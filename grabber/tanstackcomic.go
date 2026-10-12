@@ -50,14 +50,28 @@ type tanstackChapter struct {
 }
 
 var (
-	tanstackChaptersRe = regexp.MustCompile(`initialChapters:\$R\[\d+\]=`)
-	tanstackTitleRe    = regexp.MustCompile(`^postTitle:"((?:[^"\\]|\\.)*)"`)
-	tanstackTotalRe    = regexp.MustCompile(`^,totalChapterCount:(\d+)`)
-	serovalDefRe       = regexp.MustCompile(`^\$R\[\d+\]=`)
+	tanstackChaptersRe   = regexp.MustCompile(`initialChapters:\$R\[\d+\]=`)
+	tanstackTitleRe      = regexp.MustCompile(`^postTitle:"((?:[^"\\]|\\.)*)"`)
+	tanstackTotalRe      = regexp.MustCompile(`^,totalChapterCount:(\d+)`)
+	serovalDefRe         = regexp.MustCompile(`^\$R\[\d+\]=`)
+	tanstackChapterURLRe = regexp.MustCompile(`/series/([^/?#]+)/chapter-`)
 )
+
+// resolveSeriesURL converts a chapter URL to a series URL if needed.
+func (t *tanstackComic) resolveSeriesURL() {
+	if !tanstackChapterURLRe.MatchString(t.URL) {
+		return
+	}
+	matches := tanstackChapterURLRe.FindStringSubmatch(t.URL)
+	if len(matches) >= 2 {
+		slug := matches[1]
+		t.URL = fmt.Sprintf("%s/series/%s", t.BaseUrl(), slug)
+	}
+}
 
 // FetchTitle fetches and returns the manga title
 func (t *tanstackComic) FetchTitle() (string, error) {
+	t.resolveSeriesURL()
 	series, err := t.fetchSeries()
 	if err != nil {
 		return "", err
@@ -68,6 +82,7 @@ func (t *tanstackComic) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (t *tanstackComic) FetchChapters() (chapters Filterables, errs []error) {
+	t.resolveSeriesURL()
 	series, err := t.fetchSeries()
 	if err != nil {
 		return nil, []error{err}

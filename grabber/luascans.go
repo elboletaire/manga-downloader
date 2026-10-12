@@ -42,10 +42,33 @@ func (l *Luascans) Test() (bool, error) {
 	return re.MatchString(l.URL), nil
 }
 
+// resolveSeriesURL converts chapter URLs (/series/{slug}/chapter-{n}...) to series URLs (/series/{slug}).
+func (l *Luascans) resolveSeriesURL() error {
+	parsed, err := url.Parse(l.URL)
+	if err != nil {
+		return err
+	}
+
+	// Chapter URLs have /chapter- in the path; strip everything from /chapter- onward
+	if strings.Contains(parsed.Path, "/chapter-") {
+		idx := strings.Index(parsed.Path, "/chapter-")
+		parsed.Path = parsed.Path[:idx]
+		parsed.RawQuery = ""
+		parsed.Fragment = ""
+		l.URL = parsed.String()
+	}
+
+	return nil
+}
+
 // FetchTitle fetches and returns the manga title
 func (l *Luascans) FetchTitle() (string, error) {
 	if l.title != "" {
 		return l.title, nil
+	}
+
+	if err := l.resolveSeriesURL(); err != nil {
+		return "", err
 	}
 
 	doc, _, err := l.fetchSeriesPage()
@@ -62,6 +85,10 @@ func (l *Luascans) FetchTitle() (string, error) {
 // meta.last_page since a single perPage=200 call would silently truncate
 // series with 200+ chapters.
 func (l *Luascans) FetchChapters() (Filterables, []error) {
+	if err := l.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
+
 	seriesID, err := l.fetchSeriesID()
 	if err != nil {
 		return nil, []error{err}
@@ -155,7 +182,7 @@ func parseLuascansChaptersPage(body string) (chapters []*LuascansChapter, feed l
 }
 
 // FetchChapter fetches a chapter and its pages
-func (l Luascans) FetchChapter(f Filterable) (*Chapter, error) {
+func (l *Luascans) FetchChapter(f Filterable) (*Chapter, error) {
 	lchap := f.(*LuascansChapter)
 	slug, err := l.seriesSlug()
 	if err != nil {
@@ -211,7 +238,7 @@ func (l Luascans) FetchChapter(f Filterable) (*Chapter, error) {
 
 // seriesSlug returns the series slug from the URL (i.e. "one-piece" for
 // https://luacomic.org/series/one-piece)
-func (l Luascans) seriesSlug() (string, error) {
+func (l *Luascans) seriesSlug() (string, error) {
 	re := regexp.MustCompile(`/series/([^/]+)`)
 	matches := re.FindStringSubmatch(l.URL)
 	if len(matches) != 2 {

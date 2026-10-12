@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -40,10 +41,54 @@ func (m *Mgeko) Test() (bool, error) {
 	return re.MatchString(m.URL), nil
 }
 
+// mgekoExtractSeriesURL extracts the series URL from a reader page document,
+// resolved against base. Tries h1 a[href*="/manga/"] first, then og:url.
+// Returns "" when neither matches.
+func mgekoExtractSeriesURL(doc *goquery.Document, base string) string {
+	if link := doc.Find(`h1 a[href*="/manga/"]`).First(); link.Length() > 0 {
+		if href, ok := link.Attr("href"); ok && href != "" {
+			resolved, _ := url.JoinPath(base, href)
+			return resolved
+		}
+	}
+	if ogURL, ok := doc.Find(`meta[property="og:url"]`).First().Attr("content"); ok && ogURL != "" {
+		return ogURL
+	}
+	return ""
+}
+
+// resolveSeriesURL rewrites m.URL when it is a reader URL (/reader/en/.../),
+// fetching the page to extract the series URL via mgekoExtractSeriesURL.
+func (m *Mgeko) resolveSeriesURL() error {
+	if !mgekoChapterURLRe.MatchString(m.URL) {
+		return nil
+	}
+
+	body, err := http.Get(http.RequestParams{URL: m.URL})
+	if err != nil {
+		return err
+	}
+	defer body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(body)
+	if err != nil {
+		return err
+	}
+
+	if u := mgekoExtractSeriesURL(doc, m.BaseUrl()); u != "" {
+		m.URL = u
+	}
+	return nil
+}
+
 // FetchTitle fetches and returns the manga title
 func (m *Mgeko) FetchTitle() (string, error) {
 	if m.title != "" {
 		return m.title, nil
+	}
+
+	if err := m.resolveSeriesURL(); err != nil {
+		return "", err
 	}
 
 	body, err := http.Get(http.RequestParams{
@@ -69,6 +114,11 @@ func (m *Mgeko) FetchTitle() (string, error) {
 // no leading number ("announcement-eng-li", "side-story-1-eng-li") are site
 // announcements/extras rather than real chapters, and are skipped.
 var mgekoChapterNumberRe = regexp.MustCompile(`^(\d+(?:\.\d+)?)`)
+
+// mgekoChapterURLRe matches reader URLs (/reader/en/.../) to detect chapter pages.
+// Reader URLs lack the version suffix present in series URLs, so they're fetched
+// to extract the real series URL from h1 a[href*="/manga/"] or og:url.
+var mgekoChapterURLRe = regexp.MustCompile(`/reader/en/.+-eng-li/?$`)
 
 // parseMgekoChapterNumber extracts the chapter number from a chapter row's
 // text
@@ -103,7 +153,10 @@ func chapterTitleOrDefault(title string, number float64) string {
 // FetchChapters returns the chapters of the manga. The series page only
 // lists the most recent ~50 chapters, so the full list is fetched from the
 // site's own "all-chapters" page instead.
-func (m Mgeko) FetchChapters() (chapters Filterables, errs []error) {
+func (m *Mgeko) FetchChapters() (chapters Filterables, errs []error) {
+	if err := m.resolveSeriesURL(); err != nil {
+		return nil, []error{err}
+	}
 	uri := strings.TrimRight(m.URL, "/") + "/all-chapters/"
 	body, err := http.Get(http.RequestParams{
 		URL:     uri,
@@ -144,7 +197,7 @@ func (m Mgeko) FetchChapters() (chapters Filterables, errs []error) {
 }
 
 // FetchChapter fetches a chapter and its pages
-func (m Mgeko) FetchChapter(f Filterable) (*Chapter, error) {
+func (m *Mgeko) FetchChapter(f Filterable) (*Chapter, error) {
 	mchap := f.(*MgekoChapter)
 	body, err := http.Get(http.RequestParams{
 		URL:     mchap.URL,

@@ -35,6 +35,7 @@ type RSCComicChapter struct {
 
 // FetchTitle fetches and returns the manga title
 func (r *rscComic) FetchTitle() (string, error) {
+	r.resolveSeriesURL()
 	page, err := r.fetchSeriesPage(1)
 	if err != nil {
 		return "", err
@@ -45,6 +46,7 @@ func (r *rscComic) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga
 func (r *rscComic) FetchChapters() (chapters Filterables, errs []error) {
+	r.resolveSeriesURL()
 	first, err := r.fetchSeriesPage(1)
 	if err != nil {
 		return nil, []error{err}
@@ -245,7 +247,22 @@ func parseRSCComicSeriesPage(html string) (*rscComicSeriesPage, error) {
 	return page, nil
 }
 
-var rscComicTotalPagesRe = regexp.MustCompile(`"totalPages":(\d+)`)
+var (
+	rscComicTotalPagesRe   = regexp.MustCompile(`"totalPages":(\d+)`)
+	rscComicChapterURLRe   = regexp.MustCompile(`/series/comic/([^/?#]+)/chapter/`)
+)
+
+// resolveSeriesURL converts a chapter URL to a series URL if needed.
+func (r *rscComic) resolveSeriesURL() {
+	if !rscComicChapterURLRe.MatchString(r.URL) {
+		return
+	}
+	matches := rscComicChapterURLRe.FindStringSubmatch(r.URL)
+	if len(matches) >= 2 {
+		slug := matches[1]
+		r.URL = fmt.Sprintf("%s/series/comic/%s", r.BaseUrl(), slug)
+	}
+}
 
 // rscComicSeriesPage is one page of a series' chapter list
 type rscComicSeriesPage struct {

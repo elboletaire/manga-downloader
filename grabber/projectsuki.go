@@ -52,10 +52,25 @@ var projectsukiChapterNumRe = regexp.MustCompile(`Chapter\s+([\d.]+)`)
 // book 159270, hash "5b1dd2d9...", page 16
 var projectsukiImageRe = regexp.MustCompile(`/images/gallery/(\d+)/([0-9a-f]+)/00(\d+)`)
 
+// projectsukiChapterURLRe matches the book and chapter ids out of a reader link
+var projectsukiChapterURLRe = regexp.MustCompile(`/read/(\d+)/\d+/`)
+
 // Test returns true if the URL is a projectsuki.com URL
 func (p *Projectsuki) Test() (bool, error) {
 	re := regexp.MustCompile(`projectsuki\.com`)
 	return re.MatchString(p.URL), nil
+}
+
+// resolveSeriesURL converts chapter URLs (/read/{bookId}/{chapterId}/{page}) to series URLs (/book/{bookId}).
+func (p *Projectsuki) resolveSeriesURL() {
+	if !projectsukiChapterURLRe.MatchString(p.URL) {
+		return
+	}
+	matches := projectsukiChapterURLRe.FindStringSubmatch(p.URL)
+	if len(matches) >= 2 {
+		bookID := matches[1]
+		p.URL = fmt.Sprintf("%s/book/%s", p.BaseUrl(), bookID)
+	}
 }
 
 // FetchTitle fetches and returns the manga title
@@ -63,6 +78,8 @@ func (p *Projectsuki) FetchTitle() (string, error) {
 	if p.title != "" {
 		return p.title, nil
 	}
+
+	p.resolveSeriesURL()
 
 	body, err := http.Get(http.RequestParams{
 		URL: p.URL,
@@ -83,7 +100,8 @@ func (p *Projectsuki) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (p Projectsuki) FetchChapters() (Filterables, []error) {
+func (p *Projectsuki) FetchChapters() (Filterables, []error) {
+	p.resolveSeriesURL()
 	bookID, err := p.bookID()
 	if err != nil {
 		return nil, []error{err}
@@ -151,7 +169,7 @@ func (p Projectsuki) FetchChapters() (Filterables, []error) {
 }
 
 // FetchChapter fetches a chapter and its pages
-func (p Projectsuki) FetchChapter(f Filterable) (*Chapter, error) {
+func (p *Projectsuki) FetchChapter(f Filterable) (*Chapter, error) {
 	pchap := f.(*ProjectsukiChapter)
 
 	// requesting a page number past the chapter's last page redirects to the
@@ -206,7 +224,7 @@ func (p Projectsuki) FetchChapter(f Filterable) (*Chapter, error) {
 
 // bookID returns the book id from the URL (i.e. 159270 for
 // https://projectsuki.com/book/159270)
-func (p Projectsuki) bookID() (int, error) {
+func (p *Projectsuki) bookID() (int, error) {
 	re := regexp.MustCompile(`/book/(\d+)`)
 	matches := re.FindStringSubmatch(p.URL)
 	if len(matches) != 2 {
