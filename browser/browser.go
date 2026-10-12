@@ -106,9 +106,9 @@ type Scroll struct {
 	Done string
 	// Pause is the wait after each step
 	Pause time.Duration
-	// Init, if set, is JS run in every document before the page's own
-	// scripts, e.g. to seed localStorage settings that make the page mount
-	// everything up front
+	// Init, if set, is JS run in every frame and document of the
+	// navigation, before the page's own scripts, e.g. to seed localStorage
+	// settings that make the page mount everything up front
 	Init string
 }
 
@@ -546,11 +546,14 @@ func getHTML(url, waitSelector string, timeout time.Duration, init string, after
 	var html string
 	err := runPage(abort, url, timeout, true, func(ctx context.Context, h hooks) error {
 		var err error
-		html, err = render(ctx, h, url, waitSelector, init, afterWait)
+		html, err = renderPage(ctx, h, url, waitSelector, init, afterWait)
 		return err
 	})
 	return html, err
 }
+
+// renderPage is render, replaced in tests
+var renderPage = render
 
 // render performs a single navigation in the shared browser, reusing its
 // initial tab (a new tab would spawn in the background, leaving the blank
@@ -575,7 +578,8 @@ func render(ctx context.Context, h hooks, url, waitSelector, init string, afterW
 		})); err != nil {
 			return "", err
 		}
-		// the tab is reused, so the script mustn't outlive this page
+		// the tab is reused, so the script mustn't outlive this page. A
+		// failed removal is fine: after any failure the browser is discarded.
 		defer chromedp.Run(ctx, page.RemoveScriptToEvaluateOnNewDocument(id))
 	}
 

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/notice"
 )
 
@@ -487,5 +488,31 @@ func TestHeldBrowserIsNotIdleClosed(t *testing.T) {
 			t.Fatal("the released browser was never idle-closed")
 		}
 		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func TestVisibleRetryRunsTheInitScriptAgain(t *testing.T) {
+	f, _ := withFake(t)
+	prev := renderPage
+	t.Cleanup(func() { renderPage = prev })
+
+	var inits []string
+	renderPage = func(ctx context.Context, h hooks, url, waitSelector, init string, _ []chromedp.Action) (string, error) {
+		inits = append(inits, init)
+		if len(inits) == 1 {
+			return "", challenge(ctx, h)
+		}
+		return "<html></html>", nil
+	}
+
+	s := Scroll{Init: "window.seeded = true"}
+	if _, err := GetHTMLWithScroll("https://www.example.com/series/1", "#list", s, time.Second); err != nil {
+		t.Fatal(err)
+	}
+	if got := f.launched; len(got) != 2 || got[0] || !got[1] {
+		t.Fatalf("launches (headed) = %v, want headless then visible", got)
+	}
+	if len(inits) != 2 || inits[0] != s.Init || inits[1] != s.Init {
+		t.Errorf("init scripts per render = %q, want it on both the headless and the visible one", inits)
 	}
 }

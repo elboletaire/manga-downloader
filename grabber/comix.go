@@ -31,15 +31,9 @@ import (
 // per scanlation group upload), so FetchChapters dedupes by number, keeping
 // the first (highest-ranked) row seen for each.
 //
-// The reader lazily mounts its page images via an IntersectionObserver, in
-// an inner scroll container (.rpage-main: window.scrollTo does nothing
-// there). Its "Preload images: all" setting (persisted in localStorage)
-// mounts every page at once instead, so an init script turns it on before
-// the reader loads. The snapshot is taken as soon as every slot has its img
-// mounted, without waiting for the images to download (a slot keeps its
-// loader until then). If the setting doesn't take,
-// browser.GetHTMLWithScroll steps the container a viewport at a time until
-// they're all mounted.
+// The reader lazily mounts its pages; an init script turns on its "Preload
+// images: all" setting so they all mount at once, and the snapshot is taken
+// once every slot has its img (scrolling the reader's container if not).
 //
 // The images live on rotating hosts that refuse any request with a Referer
 // (403; the reader sets referrerpolicy="no-referrer"), so pages are
@@ -254,6 +248,9 @@ func (c *Comix) FetchChapter(f Filterable) (*Chapter, error) {
 // comixPages reads the page images off a rendered reader. A slot without
 // its img never mounted, which would silently drop the page, so it's an
 // error instead.
+//
+// The srcs are read as soon as the imgs mount, before they load, so a dead
+// first host isn't retried on the reader's fallback hosts.
 func comixPages(doc *goquery.Document) ([]Page, error) {
 	slots := doc.Find(comixSlotSelector)
 	if slots.Length() == 0 {
