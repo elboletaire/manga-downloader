@@ -10,6 +10,42 @@ import (
 	"github.com/elboletaire/manga-downloader/grabber"
 )
 
+// TestCalculateTitleLengthsBarMinimum checks that the rendered title row
+// leaves at least minBarWidth columns for the bar filler on common terminal
+// widths.  The rendered label is "manga - chapter:" whose width is
+// mangaLen + titleSeparatorWidth + chapterLen.
+func TestCalculateTitleLengthsBarMinimum(t *testing.T) {
+	for _, termWidth := range []int{50, 80, 120, 200} {
+		mangaLen, chapterLen := calculateTitleLengths(termWidth)
+		// Full label width including the " - " and ":" separator.
+		labelWidth := mangaLen + titleSeparatorWidth + chapterLen
+		remaining := termWidth - labelWidth - fixedDecorWidth
+		if remaining < minBarWidth {
+			t.Errorf("termWidth=%d: remaining bar space %d < minBarWidth %d (mangaLen=%d chapterLen=%d)",
+				termWidth, remaining, minBarWidth, mangaLen, chapterLen)
+		}
+	}
+}
+
+// TestCalculateTitleLengthsWideTerm verifies that very wide terminals are
+// capped so the title does not consume the whole row.
+func TestCalculateTitleLengthsWideTerm(t *testing.T) {
+	mangaLen, chapterLen := calculateTitleLengths(300)
+	parts := mangaLen + chapterLen
+	if parts > 60 {
+		t.Errorf("title parts sum to %d on a 300-col terminal, want ≤60", parts)
+	}
+}
+
+// TestCalculateTitleLengthsNarrowTerm verifies that very narrow terminals
+// still get a non-zero title (mpb will truncate with "…" if it still doesn't fit).
+func TestCalculateTitleLengthsNarrowTerm(t *testing.T) {
+	mangaLen, chapterLen := calculateTitleLengths(30)
+	if mangaLen < 1 || chapterLen < 1 {
+		t.Errorf("narrow terminal gave zero-length title part: mangaLen=%d chapterLen=%d", mangaLen, chapterLen)
+	}
+}
+
 func TestTruncateStringCountsRunesNotBytes(t *testing.T) {
 	// 16 runes but 22 bytes: must not be truncated at a 20 rune limit
 	input := "Wǒ Kě'ài Dào Bào"

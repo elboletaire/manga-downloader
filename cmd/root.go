@@ -162,7 +162,9 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	p := mpb.New(
-		mpb.WithWidth(40),
+		// No WithWidth: on a terminal mpb reads the real size each render and
+		// the bar filler takes whatever space is left after the decorators.
+		// On non-terminal output (piped/redirected) mpb defaults to 80 columns.
 		mpb.WithOutput(color.Output),
 		mpb.WithAutoRefresh(),
 	)
@@ -384,26 +386,48 @@ func getTerminalWidth() int {
 	return width
 }
 
-// calculateTitleLengths calculates how much space to allocate for manga and chapter titles
+// fixedDecorWidth is the approximate total width consumed by the non-title
+// decorators on every bar row:
+//   - counter  "9999/9999 " ≈ 10
+//   - percentage " 100%"     ≈  5
+//   - status   " downloading" ≈ 12
+//   - two spaces mpb inserts around the bar filler  = 2
+const fixedDecorWidth = 29
+
+// minBarWidth is the minimum filler width we want to leave for the bar.
+// The title is pre-capped so that on most terminal sizes the bar is at least
+// this wide; on narrower terminals mpb shrinks and eventually truncates the
+// title itself rather than letting the bar disappear entirely.
+const minBarWidth = 15
+
+// titleSeparatorWidth is the number of characters added around the two title
+// parts in the formatted label "manga - chapter:" (space, dash, space, colon).
+const titleSeparatorWidth = 4
+
+// calculateTitleLengths returns how many runes the manga-title and
+// chapter-title portions of a bar label may each occupy before being
+// truncated.  The remaining terminal width (after the full title row,
+// the fixed decorators, and the minimum bar) is given to the bar filler.
+//
+// On terminals that are wide enough the invariant
+//
+//	termWidth - (mangaLen + titleSeparatorWidth + chapterLen) - fixedDecorWidth >= minBarWidth
+//
+// holds exactly.  On very narrow terminals (below about 64 columns) the
+// parts are set to 1 each so the bar still has some room; mpb will then
+// truncate or elide the title further if required.
 func calculateTitleLengths(termWidth int) (mangaLen, chapterLen int) {
-	// Reserve space for other elements in the progress bar:
-	// - status (e.g. "downloading", "archiving", etc.): ~15 chars
-	// - progress counter (e.g. "123/456"): ~10 chars
-	// - percentage: ~5 chars
-	// - decorators (spaces, colons, etc.): ~5 chars
-	reservedSpace := 35
-	availableSpace := termWidth - reservedSpace
-
-	// Allocate 60% to manga title and 40% to chapter title if there's enough space
-	if availableSpace > 20 {
-		mangaLen = (availableSpace * 60) / 100
-		chapterLen = (availableSpace * 40) / 100
-	} else {
-		// If space is very limited, use minimal lengths
-		mangaLen = 10
-		chapterLen = 10
+	// Available runes for mangaLen + chapterLen combined.  The rendered title
+	// also uses titleSeparatorWidth characters (" - " and ":") so we subtract
+	// that too, leaving at least minBarWidth columns for the filler.
+	maxParts := termWidth - fixedDecorWidth - minBarWidth - titleSeparatorWidth
+	if maxParts > 60 {
+		// Cap on very wide terminals: a 60-rune parts budget is already generous.
+		maxParts = 60
 	}
-
+	// Always show at least 1 rune per part; mpb will truncate further if needed.
+	mangaLen = max(1, maxParts*6/10)
+	chapterLen = max(1, maxParts*4/10)
 	return
 }
 

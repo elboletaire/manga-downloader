@@ -177,7 +177,9 @@ func (pr *progress) Started(c *grabber.Chapter) {
 	bar := pr.p.AddBar(total,
 		mpb.PrependDecorators(
 			decor.Name(barTitle, decor.WCSyncWidthR),
-			decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DextraSpace}),
+			// DSyncSpace = DSyncWidth|DextraSpace: counter columns stay
+			// aligned when concurrent chapters have different page counts.
+			decor.CountersNoUnit("%d/%d", decor.WC{C: decor.DSyncSpace}),
 		),
 		mpb.AppendDecorators(
 			decor.Percentage(decor.WC{W: 4}), // W: 4 to remove space before %
