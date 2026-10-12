@@ -39,6 +39,11 @@ type Settings struct {
 	ConvertImages string
 	// Range is the range to be downloaded (in string, i.e. "1-10,23,45-50")
 	Range string
+	// Volumes packs one file per volume instead of one per chapter: either
+	// "auto" (the volumes the site files chapters under) or chapter ranges
+	// separated by slashes, one group per volume ("1-7/8-16"). Empty packs
+	// per chapter, and it can't be combined with Bundle.
+	Volumes string
 	// SkipPages is the range of pages to exclude from every downloaded
 	// chapter (i.e. "2,-1"), in the same syntax as Range but additionally
 	// accepting negative positions, which count from the end of each

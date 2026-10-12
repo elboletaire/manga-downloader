@@ -115,6 +115,7 @@ export function App({ api }: { api: Api }) {
           onToggleMany={(indices, on) => api.setSelectedMany(indices, on)}
           onSetAll={(on) => api.setAll(on)}
           onRange={(text) => api.selectRange(text)}
+          onVolumes={(text) => api.setVolumes(text)}
           onReload={() => load(state.url)}
           onError={setActionError}
         />

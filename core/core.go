@@ -15,7 +15,8 @@ import (
 )
 
 // SettingError reports a setting that failed validation. Setting is the flag
-// name ("format", "convert-images" or "skip-pages") and Value the raw input.
+// name ("format", "convert-images", "volumes", "skip-pages" or, for a volume
+// file's name, "filename-template") and Value the raw input.
 type SettingError struct {
 	Setting string
 	Value   string
@@ -42,6 +43,13 @@ func Validate(s *grabber.Settings) ([]ranges.Range, error) {
 
 	if _, err := grabber.ParseConvertFormats(s.ConvertImages); err != nil {
 		return nil, &SettingError{Setting: "convert-images", Value: s.ConvertImages, Err: err}
+	}
+
+	if _, err := ParseVolumes(s.Volumes); err != nil {
+		return nil, &SettingError{Setting: "volumes", Value: s.Volumes, Err: err}
+	}
+	if strings.TrimSpace(s.Volumes) != "" && s.Bundle {
+		return nil, &SettingError{Setting: "volumes", Value: s.Volumes, Err: errVolumesBundle}
 	}
 
 	if s.SkipPages == "" {

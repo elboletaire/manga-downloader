@@ -131,3 +131,5 @@ export function Spinner({ size = 14 }: { size?: number }) {
     </svg>
   );
 }
+
+export const ChevronIcon = icon(<path d="m9 6 6 6-6 6" />);

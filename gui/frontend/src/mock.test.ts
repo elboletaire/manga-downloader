@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createMockApi, mockSetupFrom, scenarioFrom } from './mock';
 
 describe('scenarioFrom', () => {
@@ -75,7 +75,7 @@ describe('createMockApi', () => {
   it('keeps the bundle flag a run started with', async () => {
     const api = createMockApi('done');
     expect((await api.state()).run.bundle).toBe(false);
-    await api.setOptions({ ...(await api.state()).options, bundle: true });
+    await api.setOptions({ ...(await api.state()).options, packAs: 'bundle' });
     expect((await api.state()).run.bundle).toBe(false);
   });
 
@@ -170,6 +170,66 @@ describe('createMockApi', () => {
   });
 });
 
+describe('mock volumes', () => {
+  it("prefills the Volumes box with the site's volumes on load", async () => {
+    const api = createMockApi({ chapters: 30 });
+    await api.load('https://example.com/series/a');
+    const { volumes } = await api.state();
+    expect(volumes.site).toBe('1-9/10-18');
+    expect(volumes.text).toBe(volumes.site);
+    expect((await api.chapters())[0].volume).toBe(1);
+  });
+
+  it('takes a Volumes box that parses, and refuses one that does not', async () => {
+    const api = createMockApi({ scenario: 'loaded', chapters: 30 });
+    await api.setVolumes(' 1-5/6-10 ');
+    expect((await api.state()).volumes.text).toBe('1-5/6-10');
+    await expect(api.setVolumes('1-5/5-9')).rejects.toBe('volumes 1 and 2 overlap (1-5 and 5-9)');
+    expect((await api.state()).volumes.text).toBe('1-5/6-10');
+  });
+
+  it('has no site volumes with novolumes, and refuses to start without any', async () => {
+    const api = createMockApi({ scenario: 'loaded', novolumes: true });
+    expect((await api.state()).volumes).toEqual({ text: '', site: '' });
+    await api.setOptions({ ...(await api.state()).options, packAs: 'volumes' });
+    await expect(api.start()).rejects.toMatch(/give the volumes as chapter ranges/);
+    await api.setVolumes('1-5');
+    await api.start();
+    expect((await api.state()).run.volumes).toBe(true);
+  });
+
+  it('runs one row per volume, plus the chapters outside them', async () => {
+    const state = await createMockApi({ scenario: 'volumes-running', freeze: true }).state();
+    expect(state.options.packAs).toBe('volumes');
+    expect(state.run).toMatchObject({ volumes: true, chapters: 31, rows: 4 });
+    expect(state.jobs.map((j) => j.title)).toEqual([
+      'Vol. 01 · chapters 1–9',
+      'Vol. 02 · chapters 10–18',
+      'Vol. 03 · chapters 19–27',
+      'Vol. 04 · chapters 28–31',
+    ]);
+    expect(state.jobs.every((j) => j.volume)).toBe(true);
+  });
+
+  it('counts the chapters of saved volumes when the run ends', async () => {
+    vi.useFakeTimers();
+    try {
+      const api = createMockApi({ scenario: 'volumes', chapters: 40 });
+      await api.setVolumes('1-3/4-5');
+      await api.setAll(false);
+      await api.selectRange('1-5,7');
+      await api.start();
+      await vi.advanceTimersByTimeAsync(60_000);
+      const { summary, running } = await api.state();
+      expect(running).toBe(false);
+      // two volumes of 3 and 2 chapters, and chapter 7 on its own (the mock skips 6)
+      expect(summary).toMatchObject({ volumes: 2, saved: 6 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('mockSetupFrom', () => {
   it('reads the flags and the chapter count', () => {
     expect(mockSetupFrom('?scenario=bundle&freeze&dupes&chapters=50')).toEqual({
@@ -178,7 +238,9 @@ describe('mockSetupFrom', () => {
       dupes: true,
       chapters: 50,
       site: 'multi',
+      novolumes: false,
     });
+    expect(mockSetupFrom('?novolumes').novolumes).toBe(true);
     expect(mockSetupFrom('?chapters=nope').chapters).toBeGreaterThan(100);
   });
 

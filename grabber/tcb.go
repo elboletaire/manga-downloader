@@ -112,6 +112,7 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Title:  title,
 				Number: num,
+				Volume: tcbVolume(s),
 			},
 			s.Find("a").AttrOr("href", ""),
 		}
@@ -120,6 +121,21 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 	})
 
 	return
+}
+
+// tcbVolume returns the volume of a chapter row from the "Volume N" wrapper
+// some Madara themes group the list under, 0 for a flat list
+func tcbVolume(row *goquery.Selection) int {
+	header := row.Closest("li.parent.has-child").ChildrenFiltered("a.has-child")
+	if header.Length() == 0 {
+		return 0
+	}
+	// the header may carry a title after the number ("Volume 2: Arc name")
+	m := volumeNumberRe.FindStringSubmatch(header.First().Text())
+	if m == nil {
+		return 0
+	}
+	return parseVolume(m[1])
 }
 
 // FetchChapter fetches a chapter and its pages

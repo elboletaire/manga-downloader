@@ -4,13 +4,17 @@
 //
 // Add ?mock to the URL to use it inside the app too. ?scenario= starts it in
 // a given state, so screenshots need no clicking: empty, loading, error,
-// loaded, stale, running, bundle, cancelling, done, update or check. update is
-// loaded too, as a release build (v1.12.0) with a newer release (v1.13.0): the
-// status bar shows the yellow "!". check is loading a site that needs the
-// browser window, with the alert asking the user to look at it; loading a URL
-// with "check" in it does the same until the load ends. &freeze stops the
-// simulated run from moving (stable screenshots), &dupes lists some numbers
-// twice, once per language, and &chapters=N sets the list's length.
+// loaded, stale, running, bundle, cancelling, done, update, check, volumes
+// (loaded, packing by volume, with three volumes and a half selected) or
+// volumes-running (a run by volume in progress). update is loaded too, as a
+// release build (v1.12.0) with a newer release (v1.13.0): the status bar shows
+// the yellow "!". check is loading a site that needs the browser window, with
+// the alert asking the user to look at it; loading a URL with "check" in it
+// does the same until the load ends. &freeze stops the simulated run from
+// moving (stable screenshots), &dupes lists some numbers twice, once per
+// language, &chapters=N sets the list's length, and &novolumes lists no
+// volumes (the series otherwise files its chapters in volumes of 9, the newest
+// 12 in none).
 //
 // &site= picks what the series lists for the two filters: multi (the default:
 // languages en, es, ja with All, no groups), plus (Manga Plus: languages
@@ -24,6 +28,7 @@
 
 import type { Api, Unsubscribe } from './api';
 import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary, Update } from './types';
+import { groupChapters, parseVolumes, siteVolumes } from './volumes';
 
 const CHAPTERS = 312;
 const PAGES = 12;
@@ -41,6 +46,8 @@ const SCENARIOS = [
   'done',
   'update',
   'check',
+  'volumes',
+  'volumes-running',
 ] as const;
 
 export type Scenario = (typeof SCENARIOS)[number];
@@ -57,6 +64,8 @@ export interface MockSetup {
   dupes: boolean;
   chapters: number;
   site: MockSite;
+  /** The series lists no volumes */
+  novolumes: boolean;
 }
 
 /** What the mock series offers for each filter; null when the site lists none */
@@ -110,6 +119,7 @@ export function mockSetupFrom(search: string): MockSetup {
     dupes: params.has('dupes'),
     chapters: Number.isInteger(n) && n > 0 ? n : CHAPTERS,
     site: siteFrom(search),
+    novolumes: params.has('novolumes'),
   };
 }
 
@@ -117,7 +127,7 @@ function defaultOptions(): Options {
   return {
     outputDir: '/home/reader/Downloads',
     format: 'cbz',
-    bundle: false,
+    packAs: 'chapters',
     language: '',
     scanlator: '',
     convertImages: 'avif',
@@ -143,10 +153,15 @@ const NAMES = [
   'Ashfall',
 ];
 
-function mockChapters(count: number, withLanguages: boolean): Chapter[] {
+/** Chapters per volume of the mock series; its newest 12 aren't in one yet */
+const PER_VOLUME = 9;
+
+function mockChapters(count: number, withLanguages: boolean, withVolumes = true): Chapter[] {
   const list: Chapter[] = [];
-  const add = (number: number, title: string, language: string) =>
-    list.push({ index: list.length, number, title, language });
+  const add = (number: number, title: string, language: string) => {
+    const volume = withVolumes && number <= count - 12 ? Math.ceil(Math.floor(number) / PER_VOLUME) : 0;
+    list.push({ index: list.length, number, title, language, volume });
+  };
 
   for (let i = 1; i <= count; i++) {
     // every seventh chapter has a name, as sites often only name some
@@ -186,12 +201,14 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     dupes,
     chapters: chapterCount,
     site,
+    novolumes,
   } = {
     scenario: 'empty' as Scenario,
     freeze: false,
     dupes: false,
     chapters: CHAPTERS,
     site: 'multi' as MockSite,
+    novolumes: false,
     ...(typeof setup === 'string' ? { scenario: setup } : setup),
   };
   const offers = OFFERS[site];
@@ -203,6 +220,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   let title = '';
   let chapters: Chapter[] = [];
   let selected = new Set<number>();
+  // the Volumes box and the site's volumes, as the backend keeps them per load
+  let volumesText = '';
+  let volumesSite = '';
   let applied = { language: '', scanlator: '' };
   // whether a load has been attempted, so the filters are the series' own choices
   let identified = false;
@@ -211,6 +231,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   let runChapters = 0;
   // the bundle option as the run started with it, as the backend's RunInfo
   let runBundle = false;
+  let runVolumes = false;
+  let runRows = 0;
   let jobs: Job[] = [];
   let summary: Summary | null = null;
   let log: LogLine[] = [];
@@ -278,10 +300,11 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     selectedCount: selected.size,
     running,
     cancelling,
-    run: { chapters: runChapters, bundle: runBundle },
+    run: { chapters: runChapters, bundle: runBundle, volumes: runVolumes, rows: runRows },
     jobs: jobs.map((j) => ({ ...j })),
     summary: summary ? { ...summary, failures: [...summary.failures] } : null,
     options: { ...options },
+    volumes: { text: volumesText, site: volumesSite },
     version: UPDATES[scenario] ? RELEASE_VERSION : 'v0.0.0-mock',
     releaseURL: UPDATES[scenario] ? `${REPO}/releases/tag/${RELEASE_VERSION}` : '',
     update: UPDATES[scenario] ?? null,
@@ -297,7 +320,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     fallbackFor('language', 'language');
     fallbackFor('scanlator', 'scanlation group');
     title = 'The Cartographer of Lost Harbours';
-    chapters = mockChapters(chapterCount, dupes || url.includes('dupes') || options.language === 'all');
+    chapters = mockChapters(chapterCount, dupes || url.includes('dupes') || options.language === 'all', !novolumes);
+    volumesSite = siteVolumes(chapters);
+    volumesText = volumesSite;
     applied = { language: options.language, scanlator: options.scanlator };
     selected = new Set<number>();
     jobs = [];
@@ -326,7 +351,11 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     clearInterval(timer);
     timer = undefined;
     running = false;
-    const saved = jobs.filter((j) => j.state === 'done').length;
+    // a volume's chapters count as saved with it, as the backend counts them
+    const saved = jobs
+      .filter((j) => j.state === 'done')
+      .reduce((n, j) => n + (j.volume ? (volumeChapters.get(j.title) ?? 0) : 1), 0);
+    const volumes = jobs.filter((j) => j.volume && j.state === 'done').length;
     const failures = jobs.filter((j) => j.state === 'failed').map((j) => `${j.title}: ${j.reason}`);
     const skipped = jobs.filter((j) => j.state === 'skipped').length;
     const bundled = runBundle;
@@ -334,6 +363,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       dir: options.outputDir,
       cancelled: cancelling,
       saved: bundled && failures.length === 0 && !cancelling ? runChapters : saved,
+      volumes,
       bundled,
       bundle: bundled && !cancelling ? `${title} 1-${runChapters}.cbz` : '',
       skipped,
@@ -350,6 +380,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   // the chapters of the run that haven't started; the backend only creates a
   // job when a chapter starts, so the mock does too
   let pending: Chapter[] = [];
+  // how many chapters each volume row of the run holds, by title
+  let volumeChapters = new Map<string, number>();
 
   /** One step of the simulated run. Returns false once it's over. */
   function step(): boolean {
@@ -373,8 +405,29 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       return done < j.total;
     }
 
+    // the volumes all have rows from the start; two move at a time, as the
+    // backend downloads chapters in order
+    let movingVolumes = 0;
     jobs = jobs.map((j) => {
-      if (j.state !== 'downloading' && j.state !== 'archiving') {
+      if (!j.volume || (j.state !== 'downloading' && j.state !== 'archiving') || movingVolumes >= 2) {
+        return j;
+      }
+      movingVolumes++;
+      const done = Math.min(j.total, j.done + 5);
+      if (done >= j.total) {
+        return { ...j, done, state: 'done', status: '' };
+      }
+      const packing = done >= j.total / 2;
+      return {
+        ...j,
+        done,
+        state: packing ? 'archiving' : 'downloading',
+        status: packing ? 'Packing...' : '',
+      };
+    });
+
+    jobs = jobs.map((j) => {
+      if (j.volume || (j.state !== 'downloading' && j.state !== 'archiving')) {
         return j;
       }
       if (j.number === 4 && j.done >= PAGES / 2) {
@@ -386,7 +439,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       return { ...j, done, state };
     });
 
-    const active = jobs.filter((j) => j.state === 'downloading' || j.state === 'archiving').length;
+    const active = jobs.filter((j) => !j.volume && (j.state === 'downloading' || j.state === 'archiving')).length;
     if (!cancelling && active < 3 && pending.length > 0) {
       const c = pending.shift()!;
       if (c.number === 6) {
@@ -400,12 +453,22 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
             state: 'skipped',
             reason: 'every page was skipped',
             status: '',
+            volume: false,
           },
         ];
       } else {
         jobs = [
           ...jobs,
-          { title: c.title, number: c.number, total: PAGES * 2, done: 0, state: 'downloading', reason: '', status: '' },
+          {
+            title: c.title,
+            number: c.number,
+            total: PAGES * 2,
+            done: 0,
+            state: 'downloading',
+            reason: '',
+            status: '',
+            volume: false,
+          },
         ];
       }
     }
@@ -419,9 +482,37 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     running = true;
     cancelling = false;
     runChapters = list.length;
-    runBundle = options.bundle;
+    runBundle = options.packAs === 'bundle';
+    runVolumes = options.packAs === 'volumes';
     summary = null;
     pending = [...list];
+    volumeChapters = new Map();
+    runRows = runBundle ? 1 : list.length;
+    if (runVolumes) {
+      // the backend makes a row per volume up front, and runs the chapters
+      // outside them one by one
+      const grouping = groupChapters(list, parseVolumes(volumesText));
+      pending = grouping.loose;
+      runRows = grouping.volumes.length + grouping.loose.length;
+      jobs = grouping.volumes.map((v) => {
+        const first = v.chapters[0].number;
+        const last = v.chapters[v.chapters.length - 1].number;
+        const vol = `Vol. ${String(v.number).padStart(2, '0')}`;
+        const title = first === last ? `${vol} · chapter ${first}` : `${vol} · chapters ${first}–${last}`;
+        volumeChapters.set(title, v.chapters.length);
+        return {
+          title,
+          number: first,
+          total: v.chapters.length * PAGES * 2,
+          done: 0,
+          state: 'downloading' as const,
+          reason: '',
+          status: 'Waiting...',
+          volume: true,
+        };
+      });
+      return;
+    }
     jobs = runBundle
       ? [
           {
@@ -432,6 +523,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
             state: 'downloading',
             reason: '',
             status: 'Gathering info...',
+            volume: false,
           },
         ]
       : [];
@@ -499,8 +591,25 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       'site check: timed out waiting for "li.list-group-item, img.PB0mN" at https://example.com/manga/the-cartographer-of-lost-harbours-collected-edition',
     );
   }
+  if (scenario === 'volumes' || scenario === 'volumes-running') {
+    options.packAs = 'volumes';
+    // the first three volumes, and half of the fourth
+    selected = new Set(chapters.filter((c) => c.number <= PER_VOLUME * 3 + 4).map((c) => c.index));
+    selectionBus.emit(selectionOf());
+  }
+  if (scenario === 'volumes-running') {
+    const picked = chapters.filter((c) => selected.has(c.index));
+    pushLog('info', `Downloading ${picked.length} chapter(s) of ${title}`);
+    beginRun(picked);
+    for (let i = 0; i < 12 && step(); i++) {
+      // advancing
+    }
+    if (!freeze) {
+      timer = setInterval(tick, TICK_MS);
+    }
+  }
   if (scenario === 'running' || scenario === 'cancelling' || scenario === 'bundle' || scenario === 'done') {
-    options.bundle = scenario === 'bundle';
+    options.packAs = scenario === 'bundle' ? 'bundle' : 'chapters';
     const picked = chapters.filter((c) => selected.has(c.index)).slice(0, 12);
     pushLog('info', `Downloading ${picked.length} chapter(s) of ${title}`);
     beginRun(picked);
@@ -572,6 +681,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       title = '';
       chapters = [];
       selected = new Set<number>();
+      volumesText = '';
+      volumesSite = '';
       jobs = [];
       summary = null;
       chaptersBus.emit([]);
@@ -652,6 +763,18 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       Object.assign(options, next);
       push();
     },
+    async setVolumes(text) {
+      if (loading || running) {
+        throw 'a series is loading or a download is running';
+      }
+      try {
+        parseVolumes(text);
+      } catch (e) {
+        throw (e as Error).message;
+      }
+      volumesText = text.trim();
+      push();
+    },
     async chooseFolder() {
       if (loading || running) {
         throw 'a series is loading or a download is running';
@@ -682,6 +805,14 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       const picked = chapters.filter((c) => selected.has(c.index));
       if (picked.length === 0) {
         throw 'select at least one chapter';
+      }
+      if (
+        options.packAs === 'volumes' &&
+        groupChapters(picked, parseVolumes(volumesText)).volumes.length === 0 &&
+        volumesSite === '' &&
+        volumesText === ''
+      ) {
+        throw `the site doesn't say which volume these chapters are in; give the volumes as chapter ranges instead, e.g. "1-7/8-16"`;
       }
       pushLog('info', `Downloading ${picked.length} chapter(s) of ${title}`);
       simulateRun(picked);

@@ -1,0 +1,35 @@
+{
+  "comment": "Volumes box cases shared by ranges.ParseVolumes, core.SiteVolumes and gui/frontend/src/volumes.ts, so Go and the app agree. volumes maps each volume number to its [begin, end] ranges; error is a substring of the message.",
+  "parse": [
+    { "in": "1-7/8-16", "volumes": { "1": [[1, 7]], "2": [[8, 16]] } },
+    { "in": " 1-7 / 8-16 /", "volumes": { "1": [[1, 7]], "2": [[8, 16]] } },
+    { "in": "1-7//20", "volumes": { "1": [[1, 7]], "3": [[20, 20]] } },
+    { "in": "16: 112-114", "volumes": { "16": [[112, 114]] } },
+    { "in": "1-7/5: 30-34/35-40", "volumes": { "1": [[1, 7]], "5": [[30, 34]], "6": [[35, 40]] } },
+    { "in": "3: 10/1: 1-2", "volumes": { "1": [[1, 2]], "3": [[10, 10]] } },
+    { "in": "2: 5//9", "volumes": { "2": [[5, 5]], "4": [[9, 9]] } },
+    { "in": " 4 :  1-3 /5", "volumes": { "4": [[1, 3]], "5": [[5, 5]] } },
+    { "in": "2:10.5-12,14", "volumes": { "2": [[10.5, 12], [14, 14]] } },
+    { "in": "1-7/1: 8-9", "error": "volume 1 is given twice" },
+    { "in": "5: 1/4: 2/3", "error": "volume 5 is given twice" },
+    { "in": "4.5: 1-3", "error": "volume 1: invalid volume number \"4.5\"" },
+    { "in": "1/0: 3", "error": "volume 2: invalid volume number \"0\", volumes start at 1" },
+    { "in": "-2: 3", "error": "invalid volume number \"-2\"" },
+    { "in": ": 3", "error": "invalid volume number \"\"" },
+    { "in": "1: 2: 3", "error": "volume 1: invalid range \"2: 3\"" },
+    { "in": "1-3/4:", "error": "volume 4: no chapters given" },
+    { "in": "100000: 1", "error": "volume numbers go up to 9999" },
+    { "in": "1-7/9: 5", "error": "volumes 1 and 9 overlap (1-7 and 5)" },
+    { "in": "1-7/7-16", "error": "volumes 1 and 2 overlap (1-7 and 7-16)" },
+    { "in": "3: abc", "error": "volume 3: invalid range \"abc\"" },
+    { "in": " / /", "error": "no volumes given" },
+    { "in": "1-7;8-16", "error": "volume 1: invalid range \"1-7;8-16\"" }
+  ],
+  "site": [
+    { "name": "contiguous", "chapters": [[1, 1], [2, 1], [3, 2], [4, 2]], "want": "1-2/3-4" },
+    { "name": "missing volume is named", "chapters": [[1, 1], [2, 3], [3, 4]], "want": "1/3:2/3" },
+    { "name": "first volume isn't 1", "chapters": [[112, 16], [113, 16], [114, 16]], "want": "16:112-114" },
+    { "name": "late start and a gap", "chapters": [[1, 2], [2, 3], [3, 6]], "want": "2:1/2/6:3" },
+    { "name": "loose chapters", "chapters": [[1, 1], [1.5, 0], [2, 1], [3, 0]], "want": "1,2" }
+  ]
+}

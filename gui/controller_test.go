@@ -24,15 +24,19 @@ type fakeChapter struct {
 	number float64
 	pages  int
 	fail   map[int]bool
+	// volume is the volume the site lists the chapter under, 0 for none
+	volume int
 }
 
 // listing is a chapter as listed by the fake site
 type listing struct {
 	number float64
 	title  string
+	volume int
 }
 
 func (l listing) GetNumber() float64 { return l.number }
+func (l listing) GetVolume() int     { return l.volume }
 func (l listing) GetTitle() string   { return l.title }
 
 // fakeSite serves fakeChapters from an httptest server. When gate is set,
@@ -58,7 +62,7 @@ func (f *fakeSite) FetchTitle() (string, error) {
 func (f *fakeSite) FetchChapters() (grabber.Filterables, []error) {
 	out := grabber.Filterables{}
 	for _, c := range f.chapters {
-		out = append(out, listing{number: c.number, title: fmt.Sprintf("Chapter %g", c.number)})
+		out = append(out, listing{number: c.number, title: fmt.Sprintf("Chapter %g", c.number), volume: c.volume})
 	}
 	return out, nil
 }

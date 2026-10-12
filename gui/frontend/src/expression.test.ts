@@ -6,6 +6,7 @@ const clean = (over: Partial<Summary> = {}): Summary => ({
   dir: '/books',
   cancelled: false,
   saved: 3,
+  volumes: 0,
   bundled: false,
   bundle: '',
   skipped: 0,

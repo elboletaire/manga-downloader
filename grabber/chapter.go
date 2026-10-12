@@ -41,6 +41,9 @@ type Chapter struct {
 	Pages []Page
 	// Language is the chapter language
 	Language string
+	// Volume is the volume the site files the chapter under, 0 when it
+	// doesn't say (or says something that isn't a whole number)
+	Volume int
 }
 
 // Page represents a chapter page
@@ -67,6 +70,11 @@ type Page struct {
 // GetNumber returns the chapter number
 func (c Chapter) GetNumber() float64 {
 	return c.Number
+}
+
+// GetVolume returns the chapter's volume, 0 when unknown
+func (c Chapter) GetVolume() int {
+	return c.Volume
 }
 
 // GetLanguage returns the chapter language

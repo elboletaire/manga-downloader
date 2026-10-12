@@ -5,6 +5,7 @@ export namespace main {
 	    number: number;
 	    title: string;
 	    language: string;
+	    volume: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new ChapterDTO(source);
@@ -16,6 +17,7 @@ export namespace main {
 	        this.number = source["number"];
 	        this.title = source["title"];
 	        this.language = source["language"];
+	        this.volume = source["volume"];
 	    }
 	}
 	export class FilterDTO {
@@ -42,6 +44,7 @@ export namespace main {
 	    state: string;
 	    reason: string;
 	    status: string;
+	    volume: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new JobDTO(source);
@@ -56,6 +59,7 @@ export namespace main {
 	        this.state = source["state"];
 	        this.reason = source["reason"];
 	        this.status = source["status"];
+	        this.volume = source["volume"];
 	    }
 	}
 	export class LogDTO {
@@ -75,7 +79,7 @@ export namespace main {
 	export class OptionsDTO {
 	    outputDir: string;
 	    format: string;
-	    bundle: boolean;
+	    packAs: string;
 	    language: string;
 	    scanlator: string;
 	    convertImages: string;
@@ -91,7 +95,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.outputDir = source["outputDir"];
 	        this.format = source["format"];
-	        this.bundle = source["bundle"];
+	        this.packAs = source["packAs"];
 	        this.language = source["language"];
 	        this.scanlator = source["scanlator"];
 	        this.convertImages = source["convertImages"];
@@ -103,6 +107,8 @@ export namespace main {
 	export class RunDTO {
 	    chapters: number;
 	    bundle: boolean;
+	    volumes: boolean;
+	    rows: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new RunDTO(source);
@@ -112,12 +118,43 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.chapters = source["chapters"];
 	        this.bundle = source["bundle"];
+	        this.volumes = source["volumes"];
+	        this.rows = source["rows"];
+	    }
+	}
+	export class UpdateDTO {
+	    latest: string;
+	    url: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateDTO(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.latest = source["latest"];
+	        this.url = source["url"];
+	    }
+	}
+	export class VolumesDTO {
+	    text: string;
+	    site: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new VolumesDTO(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.text = source["text"];
+	        this.site = source["site"];
 	    }
 	}
 	export class SummaryDTO {
 	    dir: string;
 	    cancelled: boolean;
 	    saved: number;
+	    volumes: number;
 	    bundled: boolean;
 	    bundle: string;
 	    skipped: number;
@@ -133,25 +170,12 @@ export namespace main {
 	        this.dir = source["dir"];
 	        this.cancelled = source["cancelled"];
 	        this.saved = source["saved"];
+	        this.volumes = source["volumes"];
 	        this.bundled = source["bundled"];
 	        this.bundle = source["bundle"];
 	        this.skipped = source["skipped"];
 	        this.failures = source["failures"];
 	        this.error = source["error"];
-	    }
-	}
-	export class UpdateDTO {
-	    latest: string;
-	    url: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateDTO(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.latest = source["latest"];
-	        this.url = source["url"];
 	    }
 	}
 	export class State {
@@ -172,6 +196,7 @@ export namespace main {
 	    jobs: JobDTO[];
 	    summary?: SummaryDTO;
 	    options: OptionsDTO;
+	    volumes: VolumesDTO;
 	    languages?: FilterDTO;
 	    scanlators?: FilterDTO;
 	    version: string;
@@ -203,6 +228,7 @@ export namespace main {
 	        this.jobs = this.convertValues(source["jobs"], JobDTO);
 	        this.summary = this.convertValues(source["summary"], SummaryDTO);
 	        this.options = this.convertValues(source["options"], OptionsDTO);
+	        this.volumes = this.convertValues(source["volumes"], VolumesDTO);
 	        this.languages = this.convertValues(source["languages"], FilterDTO);
 	        this.scanlators = this.convertValues(source["scanlators"], FilterDTO);
 	        this.version = source["version"];
@@ -230,6 +256,8 @@ export namespace main {
 		    return a;
 		}
 	}
+	
+	
 
 }
 

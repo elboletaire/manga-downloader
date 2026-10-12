@@ -4,7 +4,9 @@ package grabber
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/elboletaire/manga-downloader/ranges"
@@ -24,6 +26,39 @@ type Titleable interface {
 type Filterable interface {
 	Enumerable
 	Titleable
+}
+
+// Volumed is a chapter that knows its volume. It isn't part of Filterable:
+// most sites never say, so VolumeOf is how callers ask.
+type Volumed interface {
+	GetVolume() int
+}
+
+// VolumeOf returns the volume of a listed chapter, 0 when it has none
+func VolumeOf(f Filterable) int {
+	if v, ok := f.(Volumed); ok {
+		return v.GetVolume()
+	}
+	return 0
+}
+
+// volumeRe matches a whole volume number: a bare "3", or one behind a
+// "Volume"/"Vol."/"v" label ("Volume 3", "Vol. 03", "v98")
+var volumeRe = regexp.MustCompile(`(?i)^(?:vol(?:ume|umen)?\.?|v)?\s*0*(\d+)$`)
+
+// parseVolume reads a volume number out of what a site gives ("3", "03",
+// "Volume 3", "v98"). Anything else ("none", "TBD", "", "10.5") is 0, unknown:
+// a volume has to be a whole number to name a file after it.
+func parseVolume(s string) int {
+	m := volumeRe.FindStringSubmatch(strings.TrimSpace(s))
+	if m == nil {
+		return 0
+	}
+	n, err := strconv.Atoi(m[1])
+	if err != nil {
+		return 0
+	}
+	return n
 }
 
 // Filterables represents a slice of Filterable

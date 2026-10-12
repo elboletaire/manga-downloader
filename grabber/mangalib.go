@@ -39,12 +39,12 @@ func NewMangalib(g *Grabber) *Mangalib {
 // MangalibChapter represents a Mangalib Chapter
 type MangalibChapter struct {
 	Chapter
-	// Volume and Num are the raw "volume"/"number" fields as returned by the
+	// VolumeRaw and Num are the raw "volume"/"number" fields as returned by the
 	// chapters list api, needed verbatim to requery the single chapter (the
 	// parsed Number float64 isn't precise/safe enough to rebuild them, e.g.
 	// leading zeros or non-numeric suffixes some series use for extras).
-	Volume string
-	Num    string
+	VolumeRaw string
+	Num       string
 }
 
 // Test returns true if the URL is a mangalib.me URL
@@ -122,6 +122,7 @@ func (m Mangalib) FetchChapters() (chapters Filterables, errs []error) {
 				Number:   num,
 				Title:    c.Name,
 				Language: "ru",
+				Volume:   parseVolume(c.Volume),
 			},
 			c.Volume,
 			c.Number,
@@ -146,7 +147,7 @@ func (m Mangalib) FetchChapter(f Filterable) (*Chapter, error) {
 	// don't need to resolve/pass a branch_id ourselves.
 	params := url.Values{}
 	params.Add("number", mchap.Num)
-	params.Add("volume", mchap.Volume)
+	params.Add("volume", mchap.VolumeRaw)
 
 	body, err := http.GetText(http.RequestParams{
 		URL:     fmt.Sprintf("%s/manga/%s/chapter?%s", mangalibApi, slug, params.Encode()),

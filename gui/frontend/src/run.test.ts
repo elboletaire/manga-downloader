@@ -20,6 +20,7 @@ const job = (over: Partial<Job>): Job => ({
   state: 'downloading',
   reason: '',
   status: '',
+  volume: false,
   ...over,
 });
 
@@ -27,6 +28,7 @@ const summary: Summary = {
   dir: '/out',
   cancelled: false,
   saved: 0,
+  volumes: 0,
   bundled: false,
   bundle: '',
   skipped: 0,
@@ -41,15 +43,40 @@ async function loadedState(over: Partial<State> = {}): Promise<State> {
 describe('overallProgress', () => {
   it('counts chapters that have no job yet as queued', () => {
     const o = overallProgress({
-      run: { chapters: 4, bundle: false },
+      run: { chapters: 4, bundle: false, volumes: false, rows: 0 },
       jobs: [job({ state: 'done', done: 20 }), job({ done: 10 })],
     });
     expect(o).toEqual({ finished: 1, total: 4, queued: 2, fraction: 1.5 / 4 });
   });
 
+  it('never moves back through a run by volumes', () => {
+    // the rows the backend reports along a run of two volumes and one loose
+    // chapter: a volume's row counts out of a fixed total, the loose
+    // chapter's row only appears once it starts
+    const run = { chapters: 5, bundle: false, volumes: true, rows: 3 };
+    const vol = (n: number, over: Partial<Job>) =>
+      job({ title: `Vol. 0${n}`, number: n, total: 10000, volume: true, status: 'Waiting...', ...over });
+    const loose = (over: Partial<Job>) => job({ title: 'Chapter 5', number: 5, total: 6, ...over });
+    const steps: Job[][] = [
+      [vol(1, {}), vol(2, {})],
+      [vol(1, { status: '', done: 1250 }), vol(2, {})],
+      [vol(1, { status: '', done: 2500 }), vol(2, { status: '', done: 500 })],
+      [vol(1, { status: '', done: 2500 }), vol(2, { status: '', done: 500 }), loose({ done: 1 })],
+      [vol(1, { state: 'archiving', status: 'Packing...', done: 5000 }), vol(2, { done: 2500 }), loose({ done: 3 })],
+      [vol(1, { state: 'archiving', status: 'Packing...', done: 8333 }), vol(2, { done: 5000 }), loose({ done: 5 })],
+      [vol(1, { state: 'done', done: 10000 }), vol(2, { state: 'failed', done: 5000 }), loose({ done: 5 })],
+      [vol(1, { state: 'done', done: 10000 }), vol(2, { state: 'failed', done: 5000 }), loose({ state: 'done', done: 6 })],
+    ];
+    const fractions = steps.map((jobs) => overallProgress({ run, jobs }).fraction);
+    for (let i = 1; i < fractions.length; i++) {
+      expect(fractions[i]).toBeGreaterThanOrEqual(fractions[i - 1]);
+    }
+    expect(fractions.at(-1)).toBe(1);
+  });
+
   it('counts a failed or skipped chapter as finished', () => {
     const o = overallProgress({
-      run: { chapters: 2, bundle: false },
+      run: { chapters: 2, bundle: false, volumes: false, rows: 0 },
       jobs: [job({ state: 'failed', done: 3 }), job({ state: 'skipped', total: 0 })],
     });
     expect(o.finished).toBe(2);
@@ -57,12 +84,25 @@ describe('overallProgress', () => {
   });
 
   it("follows the bundle's single job", () => {
-    const o = overallProgress({ run: { chapters: 9, bundle: true }, jobs: [job({ done: 5 })] });
+    const o = overallProgress({
+      run: { chapters: 9, bundle: true, volumes: false, rows: 0 },
+      jobs: [job({ done: 5 })],
+    });
     expect(o).toEqual({ finished: 0, total: 1, queued: 0, fraction: 0.25 });
   });
 
+  it('counts the rows of a volume run, not its chapters', () => {
+    const o = overallProgress({
+      run: { chapters: 12, bundle: false, volumes: true, rows: 3 },
+      jobs: [job({ state: 'done', volume: true }), job({ volume: true, done: 5 })],
+    });
+    expect(o).toEqual({ finished: 1, total: 3, queued: 1, fraction: 1.25 / 3 });
+  });
+
   it('is empty before any run', () => {
-    expect(overallProgress({ run: { chapters: 0, bundle: false }, jobs: [] }).fraction).toBe(0);
+    expect(overallProgress({ run: { chapters: 0, bundle: false, volumes: false, rows: 0 }, jobs: [] }).fraction).toBe(
+      0,
+    );
   });
 });
 
@@ -86,6 +126,17 @@ describe('downloadBlocker', () => {
     expect(downloadBlocker(await loadedState({ stale: true }))).toMatch(/reload/);
     expect(downloadBlocker(await loadedState({ selectedCount: 0 }))).toMatch(/Select at least one/);
   });
+
+  it('asks for volumes when the site lists none', async () => {
+    const s = await loadedState();
+    const volumes = { ...s.options, packAs: 'volumes' as const };
+    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '' } })).toMatch(
+      /enter them as chapter ranges/,
+    );
+    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '1-7', site: '' } })).toBe('');
+    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '1-7' } })).toBe('');
+    expect(downloadBlocker({ ...s, volumes: { text: '', site: '' } })).toBe('');
+  });
 });
 
 describe('downloadLabel', () => {
@@ -94,8 +145,11 @@ describe('downloadLabel', () => {
     expect(downloadLabel({ ...s, selectedCount: 0 })).toBe('Download');
     expect(downloadLabel({ ...s, selectedCount: 1 })).toBe('Download 1 chapter');
     expect(downloadLabel({ ...s, selectedCount: 5 })).toBe('Download 5 chapters');
-    expect(downloadLabel({ ...s, selectedCount: 5, options: { ...s.options, bundle: true } })).toBe(
+    expect(downloadLabel({ ...s, selectedCount: 5, options: { ...s.options, packAs: 'bundle' } })).toBe(
       'Download 5 chapters as one file',
+    );
+    expect(downloadLabel({ ...s, selectedCount: 5, options: { ...s.options, packAs: 'volumes' } })).toBe(
+      'Download 5 chapters by volume',
     );
   });
 });
@@ -109,6 +163,7 @@ describe('summaryTone', () => {
     expect(summaryTone({ ...summary, cancelled: true, saved: 2 })).toBe('neutral');
     expect(summaryTone(summary)).toBe('neutral');
     expect(summaryTone({ ...summary, bundled: true, bundle: 'a.cbz', saved: 3 })).toBe('success');
+    expect(summaryTone({ ...summary, volumes: 1, failures: ['a'] })).toBe('warning');
   });
 });
 

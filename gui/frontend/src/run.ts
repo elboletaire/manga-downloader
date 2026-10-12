@@ -21,9 +21,9 @@ export function tally(jobs: Job[]): Tally {
 }
 
 export interface Overall {
-  /** Chapters (or the one bundle) that reached an end state */
+  /** Rows (chapters, volumes or the one bundle) that reached an end state */
   finished: number;
-  /** What the run covers: its chapters, or 1 for a bundle */
+  /** What the run covers: its chapters, its volumes plus the chapters outside them, or 1 for a bundle */
   total: number;
   /** Chapters the backend hasn't started yet; they have no job until they do */
   queued: number;
@@ -43,7 +43,7 @@ export function overallProgress(state: Pick<State, 'jobs' | 'run'>): Overall {
     return { finished, total: 1, queued: 0, fraction: job ? jobFraction(job) : 0 };
   }
 
-  const total = Math.max(run.chapters, jobs.length);
+  const total = Math.max(run.rows > 0 ? run.rows : run.chapters, jobs.length);
   if (total === 0) {
     return { finished: 0, total: 0, queued: 0, fraction: 0 };
   }
@@ -82,8 +82,17 @@ export function downloadBlocker(state: State): string {
   if (state.selectedCount === 0) {
     return 'Select at least one chapter.';
   }
+  if (state.options.packAs === 'volumes' && isSiteVolumes(state.volumes.text) && state.volumes.site === '') {
+    return 'The site lists no volumes: enter them as chapter ranges, e.g. 1-7/8-16.';
+  }
 
   return '';
+}
+
+/** Whether the Volumes box stands for the site's own volumes */
+function isSiteVolumes(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  return t === '' || t === 'auto';
 }
 
 /** The Download button's label */
@@ -92,8 +101,11 @@ export function downloadLabel(state: Pick<State, 'selectedCount' | 'options'>): 
   if (n === 0) {
     return 'Download';
   }
-  if (state.options.bundle && n > 1) {
+  if (state.options.packAs === 'bundle' && n > 1) {
     return `Download ${n} chapters as one file`;
+  }
+  if (state.options.packAs === 'volumes') {
+    return `Download ${plural(n, 'chapter', 'chapters')} by volume`;
   }
 
   return `Download ${plural(n, 'chapter', 'chapters')}`;
@@ -110,9 +122,9 @@ export function summaryTone(s: Summary): Tone {
     return 'neutral';
   }
   if (s.failures.length > 0) {
-    return s.saved > 0 || (s.bundled && s.bundle !== '') ? 'warning' : 'danger';
+    return s.saved > 0 || s.volumes > 0 || (s.bundled && s.bundle !== '') ? 'warning' : 'danger';
   }
-  if (s.saved === 0 && !(s.bundled && s.bundle !== '')) {
+  if (s.saved === 0 && s.volumes === 0 && !(s.bundled && s.bundle !== '')) {
     return 'neutral';
   }
 
