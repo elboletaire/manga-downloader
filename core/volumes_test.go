@@ -12,7 +12,9 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/packer"
@@ -458,4 +460,76 @@ func TestSiteVolumesShared(t *testing.T) {
 			t.Errorf("%s: SiteVolumes = %q, want %q", tt.Name, got, tt.Want)
 		}
 	}
+}
+
+// pacedFakeSite is a fakeSite that paces its pages, like a site whose image
+// servers limit the request rate
+type pacedFakeSite struct {
+	*fakeSite
+	waits atomic.Int32
+}
+
+func (p *pacedFakeSite) WaitPage() { p.waits.Add(1) }
+
+// Volume runs download through the same page path as the others: a
+// PagePacer site paces every page of every volume
+func TestDownloadVolumesPacesPages(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 2},
+		fakeChapter{number: 2, pages: 1},
+		fakeChapter{number: 3, pages: 3},
+	)
+	_, dir := newSeries(t, site, false)
+	site.Settings.Volumes = "1-2/3"
+	paced := &pacedFakeSite{fakeSite: site}
+	series := &Series{Site: paced, Title: "Test Series", settings: site.Settings}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", &recorder{}); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+	if got := paced.waits.Load(); got != 6 {
+		t.Errorf("WaitPage called %d times, want once per page (6)", got)
+	}
+	if n := len(cbzFiles(t, dir)); n != 2 {
+		t.Errorf("wrote %d volumes, want 2", n)
+	}
+}
+
+// A volume chapter waiting out a 429's Retry-After stops waiting when the
+// run is cancelled, instead of holding Download for a minute
+func TestDownloadVolumesCancelDuringRateLimit(t *testing.T) {
+	site := newFakeSite(t, fakeChapter{number: 1, pages: 1, limited: map[int]bool{0: true}})
+	_, dir := newSeries(t, site, false)
+	site.Settings.Volumes = "1"
+	site.Settings.Retry = 1
+	series := &Series{Site: site, Title: "Test Series", settings: site.Settings}
+
+	rec := &failureRecorder{recorder: &recorder{}}
+	ctx, cancel := context.WithCancel(context.Background())
+	time.AfterFunc(200*time.Millisecond, cancel)
+	start := time.Now()
+	if _, err := series.Download(ctx, listed(site), nil, "", rec); !errors.Is(err, context.Canceled) {
+		t.Fatalf("got %v, want context.Canceled", err)
+	}
+	if elapsed := time.Since(start); elapsed > 10*time.Second {
+		t.Errorf("Download returned after %v, want right after the cancel", elapsed)
+	}
+	// the chapter failed in the wait, not on a second 429 after a short one
+	if !errors.Is(rec.err, context.Canceled) {
+		t.Errorf("chapter failed with %v, want context.Canceled", rec.err)
+	}
+	if len(cbzFiles(t, dir)) != 0 {
+		t.Error("a cancelled volume was written")
+	}
+}
+
+// failureRecorder keeps the error a chapter's download failed with
+type failureRecorder struct {
+	*recorder
+	err error
+}
+
+func (r *failureRecorder) DownloadFailed(c *grabber.Chapter, err error) {
+	r.err = err
+	r.recorder.DownloadFailed(c, err)
 }

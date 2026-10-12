@@ -94,6 +94,8 @@ type fakeChapter struct {
 	number float64
 	pages  int
 	fail   map[int]bool
+	// limited pages answer 429 with a 60s Retry-After
+	limited map[int]bool
 	// volume is the volume the listing gives the chapter, 0 for none
 	volume int
 }
@@ -135,6 +137,11 @@ func (f *fakeSite) FetchChapter(l grabber.Filterable) (*grabber.Chapter, error) 
 				URL:    fmt.Sprintf("%s/%g/%d", f.server.URL, c.number, i),
 			})
 		}
+		for i := range chapter.Pages {
+			if c.limited[i] {
+				chapter.Pages[i].URL += "/429"
+			}
+		}
 		if len(c.fail) > 0 {
 			// the server decides by the page's path, see newFakeSite
 			for i := range chapter.Pages {
@@ -164,6 +171,11 @@ func newFakeSite(t *testing.T, chapters ...fakeChapter) *fakeSite {
 		chapters: chapters,
 	}
 	site.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/429") {
+			w.Header().Set("Retry-After", "60")
+			http.Error(w, "slow down", http.StatusTooManyRequests)
+			return
+		}
 		if strings.HasSuffix(r.URL.Path, "/fail") {
 			http.Error(w, "gone", http.StatusInternalServerError)
 			return
