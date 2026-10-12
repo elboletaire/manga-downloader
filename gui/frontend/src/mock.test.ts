@@ -114,6 +114,41 @@ describe('createMockApi', () => {
     expect(state.jobs[0].status).not.toBe('');
   });
 
+  it('forgets the loaded series on clear, keeping the options and the log', async () => {
+    const api = createMockApi({ chapters: 30 });
+    await api.load('https://example.com/series/a');
+    await api.selectRange('1-3');
+    await api.setOptions({ ...(await api.state()).options, format: 'raw' });
+    const log = await api.log();
+
+    await api.clear();
+    const state = await api.state();
+    expect(state).toMatchObject({ url: '', loaded: false, title: '', chapterCount: 0, selectedCount: 0, loadError: '' });
+    expect(state.languages).toBeNull();
+    expect(await api.chapters()).toEqual([]);
+    expect(await api.selection()).toEqual([]);
+    expect(state.options.format).toBe('raw');
+    expect(await api.log()).toEqual(log);
+  });
+
+  it('drops the last run\'s results on clear', async () => {
+    const api = createMockApi('done');
+    expect((await api.state()).summary).not.toBeNull();
+
+    await api.clear();
+    const state = await api.state();
+    expect(state.summary).toBeNull();
+    expect(state.jobs).toEqual([]);
+  });
+
+  it('refuses to clear while a series loads', async () => {
+    const api = createMockApi({ chapters: 30 });
+    const loading = api.load('https://example.com/series/a');
+    await expect(api.clear()).rejects.toBe('a series is loading or a download is running');
+    await loading;
+    expect((await api.state()).loaded).toBe(true);
+  });
+
   it('has a load error and nothing listed for the error scenario', async () => {
     const state = await createMockApi('error').state();
     expect(state.loaded).toBe(false);

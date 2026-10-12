@@ -17,6 +17,8 @@ export interface Api {
 
   // Actions. A rejected promise carries the reason as a string (or Error).
   load(url: string): Promise<void>;
+  /** Forgets the loaded series (URL, chapters, selection, load error); refused while one loads or a download runs */
+  clear(): Promise<void>;
   setSelected(index: number, on: boolean): Promise<void>;
   /** Selects or deselects every index at once; rejects, changing nothing, if one is out of range */
   setSelectedMany(indices: number[], on: boolean): Promise<void>;
@@ -78,6 +80,7 @@ export function createWailsApi(): Api {
     log: () => app.Log() as unknown as Promise<LogLine[]>,
 
     load: (url) => app.Load(url),
+    clear: () => app.Clear(),
     setSelected: (index, on) => app.SetSelected(index, on),
     setSelectedMany: (indices, on) => app.SetSelectedMany(indices, on),
     setAll: (on) => app.SetAll(on),

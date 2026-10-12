@@ -16,6 +16,7 @@ function render(state: State): string {
     createElement(SourceBar, {
       state,
       onLoad: () => undefined,
+      onClear: () => undefined,
       onOptions: () => Promise.resolve(),
       onError: () => undefined,
       loadRefusal: '',
