@@ -534,7 +534,8 @@ func (m *PlainHTML) resolveSeriesURL() bool {
 // the selectors. Returns true if a selector matches readable chapter rows.
 func (m *PlainHTML) testCandidateSeriesURL(candidateURL string) bool {
 	body, err := http.Get(http.RequestParams{
-		URL: candidateURL,
+		URL:          candidateURL,
+		DisableRetry: true, // identification probe: a 5xx means "not this site"
 	})
 	if err != nil {
 		return false

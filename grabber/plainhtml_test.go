@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
@@ -762,5 +763,26 @@ func TestFollowSeriesLinkRitharscans(t *testing.T) {
 	}
 	if title != "My Series" {
 		t.Errorf("FetchTitle() = %q, want %q", title, "My Series")
+	}
+}
+
+// TestCandidateFetch503NotRetried verifies that testCandidateSeriesURL
+// (used by both resolveSeriesURL and the FollowSeriesLink path in Test)
+// hits a 503-returning server only once. Without DisableRetry: true the
+// retry loop would issue up to 4 requests before giving up, and identifying
+// an unknown site would burn seconds per candidate.
+func TestCandidateFetch503NotRetried(t *testing.T) {
+	var calls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&calls, 1)
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer srv.Close()
+
+	m := NewPlainHTML(&Grabber{URL: srv.URL + "/chapter-1/", Settings: &Settings{}})
+	m.testCandidateSeriesURL(srv.URL + "/series/test/")
+
+	if n := atomic.LoadInt32(&calls); n != 1 {
+		t.Errorf("server saw %d requests, want 1 (DisableRetry must be set on identification probes)", n)
 	}
 }
