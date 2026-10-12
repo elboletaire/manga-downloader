@@ -13,6 +13,8 @@ import type { FilterChoice, Options, State } from './types';
 interface Props {
   state: State;
   onLoad: (url: string) => void;
+  /** The URL box's clear button: empties the field and forgets the loaded series */
+  onClear: () => void;
   onOptions: (patch: Partial<Options>) => Promise<void>;
   onError: (message: string) => void;
   /** A refusal of the last Load, shown with the load error */
@@ -21,7 +23,7 @@ interface Props {
   optionError: string;
 }
 
-export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, optionError }: Props) {
+export function SourceBar({ state, onLoad, onClear, onOptions, onError, loadRefusal, optionError }: Props) {
   // null until the user types: the field shows the backend's URL until then
   const [typed, setTyped] = useState<string | null>(null);
   const url = typed ?? state.url;
@@ -100,7 +102,12 @@ export function SourceBar({ state, onLoad, onOptions, onError, loadRefusal, opti
                 className="url-clear"
                 aria-label="Clear the URL"
                 title="Clear"
-                onClick={() => changeUrl('')}
+                onClick={() => {
+                  // the pending automatic load must not fire on the emptied field
+                  clearTimeout(timer.current);
+                  setTyped('');
+                  onClear();
+                }}
               >
                 ×
               </button>

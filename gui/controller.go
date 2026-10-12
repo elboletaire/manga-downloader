@@ -355,13 +355,18 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	c.selGen++
 	c.selected = make([]bool, len(series.Chapters))
 	c.hasDuplicates = core.HasDuplicateChapterNumbers(series.Chapters)
-	// the previous series' results would otherwise show next to this title
+	c.resetResultsLocked()
+	c.appendLogLocked(LogInfo, fmt.Sprintf("Loaded %s: %d chapters", series.Title, len(series.Chapters)))
+	return nil
+}
+
+// resetResultsLocked forgets the last run's jobs and summary, so the previous
+// series' results don't show next to a new title. The caller holds c.mu.
+func (c *Controller) resetResultsLocked() {
 	c.jobs, c.bundle, c.byChap, c.failedC = nil, nil, nil, nil
 	c.summary = nil
 	c.runinfo = RunInfo{}
 	c.stats = runStats{}
-	c.appendLogLocked(LogInfo, fmt.Sprintf("Loaded %s: %d chapters", series.Title, len(series.Chapters)))
-	return nil
 }
 
 // dropUnmatchedFilters handles a load that found nothing for a filter the
@@ -569,6 +574,30 @@ func commonLanguage(chapters grabber.Filterables) string {
 	}
 
 	return lang
+}
+
+// Clear forgets the loaded series: its URL, title, chapters, selection, the
+// outcome of its load and the last run's results (the Activity tab), so the
+// window starts from nothing. The options and the log stay. It's refused while a
+// series loads or a download runs.
+func (c *Controller) Clear() error {
+	c.mu.Lock()
+	if c.loading || c.running {
+		c.mu.Unlock()
+		return errBusy
+	}
+	c.url = ""
+	c.series = nil
+	c.selected = nil
+	c.selGen++
+	c.hasDuplicates = false
+	c.languages, c.scanlators = nil, nil
+	c.loadedLanguage, c.loadedScanlator = "", ""
+	c.loadErr = nil
+	c.resetResultsLocked()
+	c.mu.Unlock()
+	c.emit()
+	return nil
 }
 
 // Stale reports whether the language or scanlator filter changed since the
