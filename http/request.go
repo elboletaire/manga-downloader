@@ -5,6 +5,7 @@ package http
 import (
 	"fmt"
 	"io"
+	"math"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -104,10 +105,10 @@ func retryDelay(attempt int) time.Duration {
 	return d + time.Duration(rand.Int63n(int64(d/2)+1))
 }
 
-// parseRetryAfter parses a Retry-After header value (seconds integer or HTTP
+// ParseRetryAfter parses a Retry-After header value (seconds integer or HTTP
 // date) and returns the indicated delay, capped at MaxRetryAfter. Returns 0
 // if the header is absent or unparseable.
-func parseRetryAfter(header string) time.Duration {
+func ParseRetryAfter(header string) time.Duration {
 	header = strings.TrimSpace(header)
 	if header == "" {
 		return 0
@@ -115,6 +116,9 @@ func parseRetryAfter(header string) time.Duration {
 	var d time.Duration
 	if secs, err := strconv.ParseFloat(header, 64); err == nil {
 		// compared as seconds first: a huge value would overflow Duration
+		if math.IsNaN(secs) {
+			return 0
+		}
 		if secs > MaxRetryAfter.Seconds() {
 			return MaxRetryAfter
 		}
@@ -247,7 +251,7 @@ func doRequest(t string, params Params) (body io.ReadCloser, retryAfter time.Dur
 		io.Copy(io.Discard, io.LimitReader(resp.Body, 4<<10))
 		resp.Body.Close()
 
-		ra := parseRetryAfter(resp.Header.Get("Retry-After"))
+		ra := ParseRetryAfter(resp.Header.Get("Retry-After"))
 		return nil, ra, isRetryableStatus(resp.StatusCode), &StatusError{Code: resp.StatusCode, RetryAfter: ra}
 	}
 

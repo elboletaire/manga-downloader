@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -520,5 +521,45 @@ func TestComixCachesChaptersPerURL(t *testing.T) {
 		if !strings.Contains(ch.GetTitle(), "[") {
 			t.Errorf("chapter %d missing group tag in %q", i, ch.GetTitle())
 		}
+	}
+}
+
+func TestComixLoadPacing(t *testing.T) {
+	var slept []time.Duration
+	old := comixSleep
+	comixSleep = func(d time.Duration) { slept = append(slept, d) }
+	defer func() { comixSleep = old }()
+
+	c := NewComix(&Grabber{})
+	for i := 0; i < comixLoadBurst+2; i++ {
+		if _, err := c.load(func() (string, error) { return "", nil }); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// only the loads past the burst wait, and only for what's left of the gap
+	if len(slept) != 2 {
+		t.Fatalf("slept %d times (%v), want 2", len(slept), slept)
+	}
+	for _, d := range slept {
+		if d <= 0 || d > comixLoadGap {
+			t.Errorf("slept %s, want within (0, %s]", d, comixLoadGap)
+		}
+	}
+}
+
+func TestComixDoesNotCacheATruncatedWalk(t *testing.T) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(
+		`<div class="mchap-foot__hint">Showing 0 to 1 of 2 items</div>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// a URL that can't take a page param makes the walk fail on page 2
+	c := &Comix{Grabber: &Grabber{URL: "https://comix.to/title/x\x7f", Settings: &Settings{}}, doc: doc}
+
+	if _, errs := c.FetchChapters(); len(errs) == 0 {
+		t.Fatal("expected the walk to fail on page 2")
+	}
+	if c.cachedChapters != nil {
+		t.Error("a walk that hit an error must not be cached")
 	}
 }

@@ -22,8 +22,10 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
+	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/cdproto/input"
 	"github.com/chromedp/cdproto/network"
@@ -69,6 +71,44 @@ const (
 // visibleTimeout bounds a load in a visible window, where a challenge may
 // need solving by hand. A var for the tests, guarded by mu.
 var visibleTimeout = 5 * time.Minute
+
+// StatusError is returned when the page itself answers 429 or 5xx, which a
+// rate-limiting front can do mid-walk. RetryAfter is the server's capped
+// Retry-After, zero when it sent none.
+type StatusError struct {
+	URL        string
+	Code       int
+	RetryAfter time.Duration
+}
+
+func (e *StatusError) Error() string {
+	return fmt.Sprintf("%s answered HTTP %d", e.URL, e.Code)
+}
+
+// statusFromResponse returns a StatusError when resp is the document of the
+// main frame (a page target's main frame id is its target id)
+// answered with a rate-limit style error, nil otherwise. Cloudflare challenges
+// (cf-mitigated, often a 503) are left to the challenge escalation, and a 503
+// with no Retry-After is an outage or a challenge, not a rate limit.
+func statusFromResponse(resp *network.EventResponseReceived, main cdp.FrameID) *StatusError {
+	code := int(resp.Response.Status)
+	if resp.Type != network.ResourceTypeDocument || resp.FrameID != main || (code != 429 && code < 500) {
+		return nil
+	}
+	var retryAfter time.Duration
+	for k, v := range resp.Response.Headers {
+		switch {
+		case strings.EqualFold(k, "cf-mitigated"):
+			return nil
+		case strings.EqualFold(k, "retry-after"):
+			retryAfter = http.ParseRetryAfter(fmt.Sprint(v))
+		}
+	}
+	if code == 503 && retryAfter == 0 {
+		return nil
+	}
+	return &StatusError{URL: resp.Response.URL, Code: code, RetryAfter: retryAfter}
+}
 
 // challengeError is returned when the wait selector never shows up, which
 // almost always means the page sits behind a challenge (e.g. cloudflare) that
@@ -561,13 +601,27 @@ var renderPage = render
 // document before its own scripts, for this navigation only. afterWait, if
 // any, runs once waitSelector matches, before the snapshot.
 func render(ctx context.Context, h hooks, url, waitSelector, init string, afterWait []chromedp.Action) (string, error) {
-	if NetLog != nil {
-		chromedp.ListenTarget(ctx, func(ev interface{}) {
-			if resp, ok := ev.(*network.EventResponseReceived); ok {
-				NetLog(resp.Response.URL, int(resp.Response.Status), resp.Response.MimeType)
-			}
-		})
+	// a 429/5xx document would otherwise sit there until the wait selector
+	// times out and pass for a challenge, so it cancels the run at once
+	rctx, stop := context.WithCancel(ctx)
+	defer stop()
+	var bad atomic.Pointer[StatusError]
+	var main cdp.FrameID
+	if c := chromedp.FromContext(ctx); c != nil && c.Target != nil {
+		main = cdp.FrameID(c.Target.TargetID)
 	}
+	chromedp.ListenTarget(ctx, func(ev interface{}) {
+		resp, ok := ev.(*network.EventResponseReceived)
+		if !ok {
+			return
+		}
+		if NetLog != nil {
+			NetLog(resp.Response.URL, int(resp.Response.Status), resp.Response.MimeType)
+		}
+		if e := statusFromResponse(resp, main); e != nil && bad.CompareAndSwap(nil, e) {
+			stop()
+		}
+	})
 
 	if init != "" {
 		var id page.ScriptIdentifier
@@ -615,7 +669,10 @@ func render(ctx context.Context, h hooks, url, waitSelector, init string, afterW
 		chromedp.ActionFunc(harvestSession),
 	)
 
-	if err := chromedp.Run(ctx, actions...); err != nil {
+	if err := chromedp.Run(rctx, actions...); err != nil {
+		if e := bad.Load(); e != nil {
+			return "", e
+		}
 		return "", renderError(ctx, err, url, waitSelector, matched)
 	}
 

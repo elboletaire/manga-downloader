@@ -229,13 +229,13 @@ type hooks struct {
 func runPage(abort context.Context, pageURL string, timeout time.Duration, escalate bool, op pageOp) error {
 	host := hostOf(pageURL)
 
-	err := attempt(host, pageURL, timeout, abort, op)
+	err := retryStatus(abort, host, func() error { return attempt(host, pageURL, timeout, abort, op) })
 	var ce *challengeError
 	if errors.As(err, &ce) && escalate && inst != nil && !inst.headed {
 		notice.Warn("%s didn't load in a headless browser (probably a Cloudflare check).", host)
 		notice.Warn("Opening a visible browser window to pass the check: solve it there if asked...")
 		if err = goVisible(abort, host); err == nil {
-			err = attempt(host, pageURL, visibleTimeout, abort, op)
+			err = retryStatus(abort, host, func() error { return attempt(host, pageURL, visibleTimeout, abort, op) })
 		}
 	}
 	if err != nil {
@@ -250,6 +250,47 @@ func runPage(abort context.Context, pageURL string, timeout time.Duration, escal
 		return err
 	}
 	return nil
+}
+
+// Retry policy for a page answered with 429 or 5xx, which a rate-limiting
+// front does mid-walk. Each wait is the server's Retry-After clamped to
+// [statusMinDelay, statusMaxDelay]: the cap matches the plain HTTP loop's
+// retryMaxDelay, since the wait holds the browser and recovery takes 5-8s in
+// practice. Vars so tests can shrink them.
+var (
+	statusRetries  = 3
+	statusMinDelay = 5 * time.Second
+	statusMaxDelay = 8 * time.Second
+	// waitFor sleeps d, returning false if abort ended first
+	waitFor = func(abort context.Context, d time.Duration) bool {
+		t := time.NewTimer(d)
+		defer t.Stop()
+		select {
+		case <-t.C:
+			return true
+		case <-abort.Done():
+			return false
+		}
+	}
+)
+
+// retryStatus runs do, waiting out and retrying a *StatusError up to
+// statusRetries times. The browser stays up meanwhile: it isn't what failed.
+func retryStatus(abort context.Context, host string, do func() error) error {
+	err := do()
+	for range statusRetries {
+		var se *StatusError
+		if !errors.As(err, &se) {
+			break
+		}
+		wait := max(min(se.RetryAfter, statusMaxDelay), statusMinDelay)
+		notice.Warn("%s answered HTTP %d: waiting %s before trying again", host, se.Code, wait.Round(time.Second))
+		if !waitFor(abort, wait) {
+			return ErrClosed
+		}
+		err = do()
+	}
+	return err
 }
 
 // attempt is a single run of op, bounded by timeout (zero picks the default
