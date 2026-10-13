@@ -15,8 +15,9 @@
 // screenshots), &dupes lists some numbers twice in two languages, &chapters=N
 // shows the newest N chapters, &novolumes lists no volumes (the series
 // otherwise files its chapters by their real One Piece volume), &fail makes
-// the fourth chapter fail halfway (off by default; every run succeeds without
-// it), &shot uses production release versions and a macOS output path (for
+// the fourth chapter fail halfway and &skip makes the sixth one come out
+// skipped, every page excluded by --skip-pages (both off by default; every run
+// saves every chapter without them), &shot uses production release versions and a macOS output path (for
 // screenshots), and VITE_MOCK=1 at build time includes the mock in production
 // builds (e.g. for the screenshot capture build; set via Wails frontend env).
 //
@@ -74,6 +75,8 @@ export interface MockSetup {
   novolumes: boolean;
   /** The fourth chapter fails halfway through download */
   fail: boolean;
+  /** The sixth chapter comes out skipped (every page excluded by --skip-pages) */
+  skip: boolean;
   /** Use production release versions and a macOS output path (for screenshots) */
   shot: boolean;
 }
@@ -129,6 +132,7 @@ export function mockSetupFrom(search: string): MockSetup {
     site: siteFrom(search),
     novolumes: params.has('novolumes'),
     fail: params.has('fail'),
+    skip: params.has('skip'),
     shot: params.has('shot'),
   };
 }
@@ -193,6 +197,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     site,
     novolumes,
     fail,
+    skip,
     shot,
   } = {
     scenario: 'empty' as Scenario,
@@ -202,6 +207,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     site: 'multi' as MockSite,
     novolumes: false,
     fail: false,
+    skip: false,
     shot: false,
     ...(typeof setup === 'string' ? { scenario: setup } : setup),
   };
@@ -280,7 +286,10 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   };
 
   const releaseVersion = shot ? RELEASE_VERSION_SHOT : RELEASE_VERSION_DEV;
+  // update stands for a release build, and so does every scenario with &shot,
+  // which reports a release version: the status bar links it to its release
   const isReleaseBuild = (sc: Scenario) => sc === 'update';
+  const reportsRelease = shot || isReleaseBuild(scenario);
 
   const snapshot = (): State => ({
     url,
@@ -303,8 +312,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     summary: summary ? { ...summary, failures: [...summary.failures] } : null,
     options: { ...options },
     volumes: { text: volumesText, site: volumesSite },
-    version: shot || isReleaseBuild(scenario) ? releaseVersion : 'v0.0.0-mock',
-    releaseURL: isReleaseBuild(scenario) ? `${REPO}/releases/tag/${releaseVersion}` : '',
+    version: reportsRelease ? releaseVersion : 'v0.0.0-mock',
+    releaseURL: reportsRelease ? `${REPO}/releases/tag/${releaseVersion}` : '',
     update: isReleaseBuild(scenario)
       ? { latest: shot ? UPDATE_VERSION_SHOT : UPDATE_VERSION_DEV, url: `${REPO}/releases/latest` }
       : null,
@@ -442,6 +451,24 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     const active = jobs.filter((j) => !j.volume && (j.state === 'downloading' || j.state === 'archiving')).length;
     if (!cancelling && active < 3 && pending.length > 0) {
       const c = pending.shift()!;
+      if (skip && jobs.filter((j) => !j.volume).length === 5) {
+        // as the backend's Skipped event: a row with nothing to download
+        jobs = [
+          ...jobs,
+          {
+            title: c.title,
+            number: c.number,
+            total: 0,
+            done: 0,
+            state: 'skipped',
+            reason: 'every page excluded by --skip-pages',
+            status: '',
+            volume: false,
+          },
+        ];
+        pushLog('warn', `skipping ${c.title}: every page is excluded by --skip-pages`);
+        return true;
+      }
       jobs = [
         ...jobs,
         {
@@ -578,7 +605,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   }
   if (scenario === 'volumes' || scenario === 'volumes-running') {
     options.packAs = 'volumes';
-    // three volumes and a half: the first 32 chapters span approximately 3 volumes
+    // three volumes and a half: the first 32 chapters (598-629) span volumes 61-64
     selected = new Set(chapters.slice(0, Math.min(32, chapters.length)).map((c) => c.index));
     selectionBus.emit(selectionOf());
   }
@@ -608,7 +635,11 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       pushLog('info', 'Cancelling: chapters already downloading will finish, no new ones start');
     }
     if (scenario === 'done') {
-      pushLog('warn', 'Chapter 2: page 7 is AVIF but could not be converted; kept as is');
+      // a conversion warning on a chapter of the run (the second, 599 by default)
+      const warned = picked[1] ?? picked[0];
+      if (warned !== undefined) {
+        pushLog('warn', `Chapter ${warned.number}: page 7 is AVIF but could not be converted; kept as is`);
+      }
       finishRun();
     } else if (!freeze) {
       timer = setInterval(tick, TICK_MS);

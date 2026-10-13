@@ -21,10 +21,24 @@ async function chooseApi(): Promise<Api> {
   return createWailsApi();
 }
 
-chooseApi().then((api) => {
+function render(api: Api): void {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <App api={api} />
     </StrictMode>,
   );
-});
+}
+
+// If the mock fails to load (or the Wails bindings throw), fall back to the
+// real backend rather than leaving the window blank; if that throws too, show
+// the error instead.
+chooseApi()
+  .catch((err: unknown) => {
+    console.error('could not set up the API, falling back to the Go backend:', err);
+    return createWailsApi();
+  })
+  .then(render)
+  .catch((err: unknown) => {
+    console.error('could not start the app:', err);
+    document.getElementById('root')!.textContent = `Could not start the app: ${String(err)}`;
+  });

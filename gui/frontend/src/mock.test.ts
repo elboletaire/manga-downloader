@@ -116,6 +116,28 @@ describe('createMockApi', () => {
     expect(state.jobs.every((j) => j.state !== 'failed')).toBe(true);
   });
 
+  it('skips the sixth chapter with skip, and counts it in the summary', async () => {
+    const state = await createMockApi({ scenario: 'done', skip: true }).state();
+    expect(state.summary!.skipped).toBe(1);
+    expect(state.summary!.failures).toHaveLength(0);
+    const skipped = state.jobs.filter((j) => j.state === 'skipped');
+    expect(skipped).toHaveLength(1);
+    expect(skipped[0].number).toBe(603); // the sixth chapter run, 598 being the first
+    expect(skipped[0].reason).not.toBe('');
+    // the chapter that came out skipped is not saved
+    expect(state.summary!.saved).toBe(state.run.chapters - 1);
+  });
+
+  it('has no skipped chapter without the skip flag', async () => {
+    const state = await createMockApi('done').state();
+    expect(state.jobs.some((j) => j.state === 'skipped')).toBe(false);
+  });
+
+  it('names a real chapter of the run in the done warning', async () => {
+    const log = await createMockApi('done').log();
+    expect(log.map((l) => l.text)).toContain('Chapter 599: page 7 is AVIF but could not be converted; kept as is');
+  });
+
   it('runs a bundle as a single job', async () => {
     const state = await createMockApi({ scenario: 'bundle', freeze: true }).state();
     expect(state.run.bundle).toBe(true);
@@ -205,6 +227,14 @@ describe('createMockApi', () => {
     const loaded = await createMockApi({ scenario: 'loaded', shot: true }).state();
     expect(loaded.version).toBe('v1.15.0');
     expect(loaded.update).toBeNull();
+  });
+
+  it('links the version to its release whenever it reports a release', async () => {
+    const tag = (v: string) => `https://github.com/elboletaire/manga-downloader/releases/tag/${v}`;
+    expect((await createMockApi({ scenario: 'loaded', shot: true }).state()).releaseURL).toBe(tag('v1.15.0'));
+    expect((await createMockApi({ scenario: 'update', shot: true }).state()).releaseURL).toBe(tag('v1.15.0'));
+    expect((await createMockApi('update').state()).releaseURL).toBe(tag('v1.12.0'));
+    expect((await createMockApi('loaded').state()).releaseURL).toBe('');
   });
 
   it('uses the macOS output path with shot and the Linux path without', async () => {
@@ -300,6 +330,7 @@ describe('mock volumes', () => {
     expect(state.options.packAs).toBe('volumes');
     // First 32 chapters (ch 598–629) span volumes 61 (6), 62 (11), 63 (12) and 64 (3)
     expect(state.run).toMatchObject({ volumes: true, chapters: 32, rows: 4 });
+    expect(state.jobs.every((j) => j.volume)).toBe(true);
     expect(state.jobs.map((j) => j.title)).toEqual([
       'Vol. 61 · chapters 598–603',
       'Vol. 62 · chapters 604–614',
@@ -341,11 +372,13 @@ describe('mockSetupFrom', () => {
       site: 'multi',
       novolumes: false,
       fail: false,
+      skip: false,
       shot: false,
     });
     expect(mockSetupFrom('?novolumes').novolumes).toBe(true);
     expect(mockSetupFrom('?chapters=nope').chapters).toBeGreaterThan(100);
     expect(mockSetupFrom('?fail').fail).toBe(true);
+    expect(mockSetupFrom('?skip').skip).toBe(true);
     expect(mockSetupFrom('?shot').shot).toBe(true);
   });
 
