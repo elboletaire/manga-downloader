@@ -410,6 +410,8 @@ manga-downloader --volumes 16:112-114/115-118 [url] 112-118
 That's volumes 16 and 17. An empty group also skips a number (`1-7//20-30` has
 no volume 2), and `--volumes` can't be combined with `--bundle`.
 
+![volumes img]
+
 ### Image conversion
 
 Most e-readers can't display AVIF, so a chapter with AVIF pages looks empty on
@@ -548,8 +550,6 @@ Some sites cap the concurrency lower, because their image servers refuse
 requests that come too fast; a lower value still applies there. Pages refused
 for coming too fast (a 429) are retried after the wait the server asks for, up
 to a minute.
-
-![help img]
 
 ## Supported sites
 
@@ -792,5 +792,5 @@ make build/gui/windows # cross-build manga-downloader-gui.exe, no cgo needed
 [docker hub]: https://hub.docker.com/r/elboletaire/manga-downloader
 [download img]: assets/demos/download.gif
 [bundle img]: assets/demos/bundle.gif
-[help img]: assets/demos/help.gif
 [prompt img]: assets/demos/prompt.gif
+[volumes img]: assets/demos/volumes.gif

@@ -84,13 +84,16 @@
     "goText": "With Go installed, build it from source in one go:",
     "useTitle": "Use it",
     "example1": "Point it at a manga's index page and say which chapters you want:",
-    "example2": "Only the Spanish chapters, bundled into a single CBZ:",
+    "example2": "Only the English chapters, bundled into a single CBZ:",
+    "example2Language": "en",
     "example3": "A strict e-ink setup, converting both AVIF and WebP pages to JPEG:",
     "example4": "Drop the credits page and the last page of every chapter:",
     "downloadGifAlt": "Terminal recording: manga-downloader downloads eight One Piece chapters at once, each with its own progress bar.",
     "downloadGifCaption": "Eight chapters, downloaded side by side.",
     "bundleGifAlt": "Terminal recording: the same chapters downloaded with --bundle, packed into a single CBZ file.",
     "bundleGifCaption": "Add <code>--bundle</code> and they end up in a single file.",
+    "volumesGifAlt": "Terminal recording: manga-downloader downloads thirteen Horimiya chapters with --volumes auto, packed into one CBZ file per volume.",
+    "volumesGifCaption": "Or <code>--volumes auto</code> for one file per volume.",
     "more": "Every flag is in the <a href=\"{{repo}}#using-the-command-line\">usage guide</a>, or run <code>manga-downloader help</code>."
   },
   "features": {

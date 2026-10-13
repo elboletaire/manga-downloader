@@ -1,12 +1,14 @@
 # Recreates assets/demos/volumes.gif — run from the repo root: vhs assets/demos/volumes.tape
 # Requires the manga-downloader binary built at the repo root (make build).
-# Uses a series with well-defined volumes on the site, downloaded with --volumes auto.
+# Uses a series whose volumes MangaDex lists (1-13 is exactly volumes 1 and 2),
+# downloaded with --volumes auto. Filtered to English, as several translations
+# would otherwise all be packed into the same volume.
 Output assets/demos/volumes.gif
 
 Set Shell "bash"
 Set FontSize 14
-Set Width 960
-Set Height 420
+Set Width 1104
+Set Height 210
 Set Padding 16
 Set WindowBar Colorful
 Set WindowBarSize 32
@@ -20,7 +22,7 @@ Type 'export PATH="$PWD:$PATH" && mkdir -p /tmp/manga-downloader-demo/volumes &&
 Enter
 Show
 
-Type "manga-downloader https://mangadex.org/title/a96676e5-8ae2-425e-b9d9-4d5385acea48/wind-breaker 1-8 --volumes auto"
+Type "manga-downloader https://mangadex.org/title/a25e46ec-30f7-4db6-89df-cacbc1d9a900 1-13 --volumes auto --language en"
 Sleep 500ms
 Enter
 Wait

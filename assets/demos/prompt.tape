@@ -8,8 +8,8 @@ Output assets/demos/prompt.gif
 
 Set Shell "bash"
 Set FontSize 14
-Set Width 960
-Set Height 420
+Set Width 1104
+Set Height 230
 Set Padding 16
 Set WindowBar Colorful
 Set WindowBarSize 32
@@ -23,7 +23,7 @@ Type 'export PATH="$PWD:$PATH" && mkdir -p /tmp/manga-downloader-demo/prompt && 
 Enter
 Show
 
-Type "manga-downloader https://mangadex.org/title/851f6d0a-49ae-4912-9939-2aeb865d13cd/i-m-so-cute-i-might-explode --language es-la"
+Type "manga-downloader https://mangadex.org/title/851f6d0a-49ae-4912-9939-2aeb865d13cd --language es-la"
 Sleep 500ms
 Enter
 Wait+Screen@60s /y\/N/

@@ -85,12 +85,15 @@
     "useTitle": "Úsalo",
     "example1": "Pásale la página principal de un manga e indica qué capítulos quieres:",
     "example2": "Solo los capítulos en español, agrupados en un único CBZ:",
+    "example2Language": "es",
     "example3": "Para un lector de tinta electrónica exigente, convierte a JPEG tanto las páginas AVIF como las WebP:",
     "example4": "Quita la página de créditos y la última página de cada capítulo:",
     "downloadGifAlt": "Grabación de terminal: manga-downloader descarga ocho capítulos de One Piece a la vez, cada uno con su propia barra de progreso.",
     "downloadGifCaption": "Ocho capítulos, descargados en paralelo.",
     "bundleGifAlt": "Grabación de terminal: los mismos capítulos descargados con --bundle, empaquetados en un único archivo CBZ.",
     "bundleGifCaption": "Añade <code>--bundle</code> y acaban todos en un solo archivo.",
+    "volumesGifAlt": "Grabación de terminal: manga-downloader descarga trece capítulos de Horimiya con --volumes auto, empaquetados en un archivo CBZ por tomo.",
+    "volumesGifCaption": "O <code>--volumes auto</code> para un archivo por tomo.",
     "more": "Tienes todas las opciones en la <a href=\"{{repo}}#using-the-command-line\">guía de uso</a> (en inglés), o ejecuta <code>manga-downloader help</code>."
   },
   "features": {
