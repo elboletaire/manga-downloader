@@ -5,7 +5,7 @@ Manga Downloader is installed with Homebrew from a tap of its own,
 
 ```sh
 brew install elboletaire/tap/manga-downloader              # the command line tool
-brew install --cask elboletaire/tap/manga-downloader       # the desktop app and the CLI (macOS)
+brew install --cask elboletaire/tap/manga-downloader       # the desktop app (macOS)
 ```
 
 `tap/` here is that repository's content and the source of truth for the
