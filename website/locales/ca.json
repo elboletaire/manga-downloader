@@ -37,7 +37,7 @@
     "chips": {
       "sites_one": "{{count}} lloc",
       "sites_other": "{{count}} llocs",
-      "formats": "CBZ o imatges soltes",
+      "formats": "CBZ, EPUB o imatges soltes",
       "ereader": "A punt per al lector electrònic",
       "apps": "Aplicació d'escriptori + CLI",
       "free": "Gratuït i de codi obert"
@@ -104,8 +104,8 @@
     "title": "Fet per llegir, no per barallar-te amb la configuració",
     "ereaderTitle": "Pensat per a lectors electrònics",
     "ereaderText": "Les pàgines AVIF es converteixen a JPEG automàticament, perquè no surtin en blanc a Kobo, KOReader o Calibre. I les WebP també, si ho demanes.",
-    "cbzTitle": "CBZ o imatges soltes",
-    "cbzText": "Un CBZ per capítol, o carpetes d'imatges amb <code>--format raw</code> si t'estimes més empaquetar-les tu.",
+    "cbzTitle": "CBZ, EPUB o imatges soltes",
+    "cbzText": "Un CBZ o EPUB per capítol, o carpetes d'imatges amb <code>--format raw</code> si t'estimes més empaquetar-les tu.",
     "bundlesTitle": "Paquets",
     "bundlesText": "<code>--bundle</code> empaqueta un arc sencer en un sol fitxer, amb una carpeta per capítol a dins.",
     "rangesTitle": "Intervals de capítols",

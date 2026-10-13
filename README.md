@@ -53,8 +53,8 @@ and as a **command line tool** for scripts, servers and Docker.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
   show up blank on Kobo, KOReader or Calibre (WebP too, if you ask).
 - **Flexible output**: one CBZ per chapter, one per volume (`--volumes`), a
-  single bundled CBZ (`--bundle`), or plain image folders (`--format raw`),
-  named from a template.
+  single bundled CBZ (`--bundle`), EPUB e-books (`--format epub`), or plain
+  image folders (`--format raw`), named from a template.
 - **Language and scanlation group filters** for sites that host several versions
   of a chapter, and **skipping pages** such as credits or ads.
 - **Concurrent downloads** with retries.
@@ -391,6 +391,9 @@ manga-downloader --bundle [url] 1-8
 
 # plain image folders instead of CBZ files
 manga-downloader --format raw [url] 1-8
+
+# EPUB e-books, read left to right (webtoons and western comics)
+manga-downloader --format epub --reading-direction ltr [url] 1-8
 ~~~
 
 ![bundle img]
@@ -540,7 +543,8 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--output-dir`        | `-o`  | Folder to write the downloaded files to                  | current folder |
 | `--bundle`            | `-b`  | Bundle all chapters into a single file                   | off            |
 | `--volumes`           |       | One file per volume: `auto`, `1-7/8-16`, `16:112-114`    | off            |
-| `--format`            | `-f`  | Output format: `cbz` or `raw`                            | `cbz`          |
+| `--format`            | `-f`  | Output format: `cbz`, `raw` or `epub`                    | `cbz`          |
+| `--reading-direction` |       | Page turn direction for EPUB: `rtl` (manga) or `ltr`     | `rtl`          |
 | `--filename-template` | `-t`  | Template for the file names                              | see above      |
 | `--language`          | `-l`  | Only download the specified language                     | site default   |
 | `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)  | site default   |

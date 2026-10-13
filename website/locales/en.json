@@ -37,7 +37,7 @@
     "chips": {
       "sites_one": "{{count}} site",
       "sites_other": "{{count}} sites",
-      "formats": "CBZ or raw images",
+      "formats": "CBZ, EPUB or raw images",
       "ereader": "E-reader ready",
       "apps": "Desktop app + CLI",
       "free": "Free and open source"
@@ -104,8 +104,8 @@
     "title": "Made for reading, not fiddling",
     "ereaderTitle": "E-reader friendly",
     "ereaderText": "AVIF pages become JPEG automatically, so they don't show up blank on Kobo, KOReader or Calibre. WebP too, if you ask.",
-    "cbzTitle": "CBZ or raw",
-    "cbzText": "One CBZ per chapter, or plain image folders with <code>--format raw</code> when you'd rather do the packing yourself.",
+    "cbzTitle": "CBZ, EPUB or raw",
+    "cbzText": "One CBZ or EPUB per chapter, or plain image folders with <code>--format raw</code> when you'd rather do the packing yourself.",
     "bundlesTitle": "Bundles",
     "bundlesText": "<code>--bundle</code> packs a whole arc into one file, with a folder per chapter inside it.",
     "rangesTitle": "Chapter ranges",

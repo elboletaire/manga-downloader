@@ -37,7 +37,7 @@
     "chips": {
       "sites_one": "{{count}} sitio",
       "sites_other": "{{count}} sitios",
-      "formats": "CBZ o imágenes sueltas",
+      "formats": "CBZ, EPUB o imágenes sueltas",
       "ereader": "Listo para tu e-reader",
       "apps": "App de escritorio + CLI",
       "free": "Gratis y de código abierto"
@@ -104,8 +104,8 @@
     "title": "Hecho para leer, no para pelearte con ajustes",
     "ereaderTitle": "Pensado para e-readers",
     "ereaderText": "Las páginas AVIF se convierten a JPEG automáticamente, para que no salgan en blanco en Kobo, KOReader o Calibre. Y las WebP también, si se lo pides.",
-    "cbzTitle": "CBZ o imágenes sueltas",
-    "cbzText": "Un CBZ por capítulo, o carpetas de imágenes con <code>--format raw</code> si prefieres empaquetarlas tú.",
+    "cbzTitle": "CBZ, EPUB o imágenes sueltas",
+    "cbzText": "Un CBZ o EPUB por capítulo, o carpetas de imágenes con <code>--format raw</code> si prefieres empaquetarlas tú.",
     "bundlesTitle": "Paquetes",
     "bundlesText": "<code>--bundle</code> empaqueta un arco entero en un solo archivo, con una carpeta por capítulo dentro.",
     "rangesTitle": "Rangos de capítulos",
