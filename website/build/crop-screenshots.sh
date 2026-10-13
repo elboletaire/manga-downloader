@@ -39,4 +39,5 @@ for theme in light dark; do
   crop language-selector "$theme" "03-language-selector-$theme.png" 740x960+85+56
   crop chapter-list "$theme" "04-downloading-$theme.png" 1150x885+100+390
   crop finished-run "$theme" "05-done-$theme.png" 670x830+1245+390
+  crop volumes "$theme" "07-volumes-$theme.png" 1150x885+100+390
 done
