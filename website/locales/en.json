@@ -127,8 +127,8 @@
     "filterLabel": "Filter sites",
     "filterPlaceholder": "Search sites, e.g. mangadex or scans",
     "browserOnly": "Only sites that need a browser",
-    "legend_one": "The site tagged <span class=\"site-badge\">browser</span> ({{count}} in total) needs Chrome, Chromium, Brave or Edge installed. manga downloader opens it for you and only shows a window when a challenge needs solving.",
-    "legend_other": "Sites tagged <span class=\"site-badge\">browser</span> ({{count}} of them) need Chrome, Chromium, Brave or Edge installed. manga downloader opens it for you and only shows a window when a challenge needs solving.",
+    "legend_one": "The site tagged <span class=\"site-badge\">browser</span> ({{count}} in total) needs Chrome, Chromium, Brave or Edge installed. manga downloader opens it for you and only shows a window when a site needs one.",
+    "legend_other": "Sites tagged <span class=\"site-badge\">browser</span> ({{count}} of them) need Chrome, Chromium, Brave or Edge installed. manga downloader opens it for you and only shows a window when a site needs one.",
     "emptyText": "<strong>Not on the list yet.</strong> Give it a try anyway: sites built on the same platforms often just work. If it doesn't, <a href=\"{{repo}}/issues/new\">ask for it</a>.",
     "badge": {
       "label": "browser",

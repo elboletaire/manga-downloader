@@ -50,8 +50,8 @@ and as a **command line tool** for scripts, servers and Docker.
 - **[115 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
-- **E-reader friendly output**: AVIF and WebP pages are converted to JPEG, so
-  they don't show up blank on Kobo, KOReader or Calibre.
+- **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
+  show up blank on Kobo, KOReader or Calibre (WebP too, if you ask).
 - **Flexible output**: one CBZ per chapter, one per volume (`--volumes`), a
   single bundled CBZ (`--bundle`), or plain image folders (`--format raw`),
   named from a template.
@@ -59,7 +59,7 @@ and as a **command line tool** for scripts, servers and Docker.
   of a chapter, and **skipping pages** such as credits or ads.
 - **Concurrent downloads** with retries.
 - **JavaScript and Cloudflare-protected sites** are handled by driving a local
-  Chromium browser, which clicks "Verify you are human" checkboxes for you.
+  Chromium-based browser, which clicks "Verify you are human" checkboxes for you.
 
 **Command line**
 
@@ -251,12 +251,12 @@ docker run --rm -it -v "$PWD:/downloads" elboletaire/manga-downloader:browser [u
 <br>
 
 The `:browser` image passes Cloudflare challenges on its own. If a challenge
-needs a real person, forward the window to your Linux desktop. You may need to
-run `xhost +local:` first:
+needs a real person, its window opens by itself, so forward your display to see
+it on your Linux desktop. You may need to run `xhost +local:` first:
 
 ~~~bash
 docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v "$PWD:/downloads" elboletaire/manga-downloader:browser --browser-visible [url] [chapters]
+    -v "$PWD:/downloads" elboletaire/manga-downloader:browser [url] [chapters]
 ~~~
 
 </details>
@@ -281,7 +281,7 @@ Open the app and follow these steps:
    *Add range*, Shift+click to select a span, or use *All* and *None*. The
    arrow keys and Space work too.
 3. **Choose a language and a scanlation group** when the site offers them. The
-   selectors only appear for series that list them, and picking one reloads the
+   selectors tell you when a series has none, and picking one reloads the
    chapter list. Sites that support it also offer *All*.
 
    <picture>
@@ -291,8 +291,9 @@ Open the app and follow these steps:
 
 4. **Set the options** in the *Options* tab: where the files go, the format
    (CBZ archive or image folder), *Pack as* (a file per chapter, per volume, or
-   one for everything), *Convert to JPEG* for AVIF and WebP pages, pages to
-   skip, the file name template, and whether to *Show the browser window*.
+   one for everything), *Convert to JPEG* for AVIF and WebP pages, and pages to
+   skip. Under *Advanced* are the file name template and *Show the browser
+   window*, which you rarely need: a site that needs the window opens it by itself.
    Packing by volume adds a *Volumes* box above the chapter list, filled with
    the site's volumes when it lists them, and groups the list by volume.
 
@@ -348,7 +349,7 @@ manga-downloader [flags] [url] [chapters]
 ~~~
 
 - `url` is the manga's **index page**, the page that lists all its chapters.
-  Don't use the URL of a single chapter.
+  The URL of a single chapter works too: it resolves to the whole series.
 - `chapters` is a comma-separated list of numbers and ranges, such as
   `1,3,5-10`. If you leave it out, the tool asks whether to download every
   chapter. The answer defaults to "no".
@@ -370,10 +371,11 @@ manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-936
 
 On sites that list several languages, `--language all` downloads every one of them.
 
-Sites that host several scanlation groups' versions of the same chapter download
-the group with the most chapters, and list the other groups. Use
-`--scanlator <name>` to pick a group, or `--scanlator all` to download every
-version. With `all`, the group name is added to each file name.
+Some sites host several scanlation groups' versions of the same chapter. Without
+`--scanlator`, those pick one version of each chapter (Atsumaru takes the group
+with the most chapters). Use `--scanlator <name>` to pick a group, or
+`--scanlator all` to download every version. With `all`, the group name is added
+to each file name.
 
 ### Bundling and output format
 
@@ -535,7 +537,7 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--format`            | `-f`  | Output format: `cbz` or `raw`                            | `cbz`          |
 | `--filename-template` | `-t`  | Template for the file names                              | see above      |
 | `--language`          | `-l`  | Only download the specified language                     | site default   |
-| `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)  | most chapters  |
+| `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)  | site default   |
 | `--convert-images`    |       | Formats to convert to JPEG: `avif`, `webp` or `none`     | `avif`         |
 | `--skip-pages`        |       | Pages to exclude from every chapter (`-1` is the last)   | none           |
 | `--concurrency`       | `-c`  | Number of chapters downloaded at once (max 5)            | 5              |
@@ -618,7 +620,7 @@ to a minute.
 - [mangakatana.com](https://mangakatana.com)
 - [mangalib.me (MangaLib)](https://mangalib.me)
 - [mangalivre.to (Manga Livre, former mangalivre.tv/mangalivre.net)](https://mangalivre.to)
-- [manganato.gg (MangaNato)](https://www.manganato.gg)
+- [manganato.gg (MangaNato)](https://www.manganato.gg) \*
 - [mangapark.cc (MangaPark)](https://mangapark.cc)
 - [mangapill.com](https://mangapill.com)
 - [mangaplus.shueisha.co.jp (Manga Plus, Shueisha's official reader)](https://mangaplus.shueisha.co.jp)
@@ -679,7 +681,7 @@ to a minute.
 > **Sites marked with `*` need a Chromium-based browser** (Google Chrome,
 > Chromium, Brave or Edge). They either render with JavaScript or sit behind a
 > Cloudflare challenge. Manga Downloader launches the browser itself and only
-> shows a window when a challenge needs solving, remembering the sites that
+> shows a window when a site needs one, remembering the sites that
 > needed one until it exits. `--browser-visible` shows it for every site, which
 > is rarely needed.
 
@@ -713,13 +715,15 @@ site still lists.
 This is expected for sites marked with `*`. The window opens when the site shows
 a Cloudflare challenge or a captcha of its own, and the terminal (or the app)
 tells you when it may need you. Checkboxes are clicked automatically, but some
-challenges need you to solve them yourself; the download carries on once the
-page loads. You rarely need to show the window from the start, but you can with
-`--browser-visible` or *Show the browser window* in the app.
+challenges need you to solve them yourself; the download carries on by itself
+afterwards. In the app, an alert says the browser needs you, with *Show the
+browser window* to bring the window back to the front and *Dismiss* to hide the
+alert. To open the window from the start instead, use `--browser-visible`, or
+*Show the browser window* under *Advanced* in the app's Options.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/08-browser-alert-dark.png">
-  <img alt="The app's alert asking you to look at the browser window, with Dismiss and Show the browser window buttons" src="assets/screenshots/08-browser-alert-light.png">
+  <img alt="The app's alert saying the browser needs you, with Dismiss and Show the browser window buttons" src="assets/screenshots/08-browser-alert-light.png">
 </picture>
 
 </details>
@@ -747,7 +751,7 @@ The site probably serves WebP images. Download the chapters again with
 
 ## Building from source
 
-The command line tool needs Go 1.19 or newer:
+The command line tool needs Go 1.26 or newer (`go.mod`):
 
 ~~~bash
 make install   # download dependencies
