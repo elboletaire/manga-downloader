@@ -127,8 +127,8 @@
     "filterLabel": "Filtra els llocs",
     "filterPlaceholder": "Cerca llocs, p. ex. mangadex o scans",
     "browserOnly": "Només llocs que necessiten navegador",
-    "legend_one": "El lloc marcat com a <span class=\"site-badge\">navegador</span> ({{count}} en total) necessita Chrome, Chromium, Brave o Edge instal·lat. manga downloader l'obre per tu i només mostra una finestra quan cal resoldre un repte.",
-    "legend_other": "Els llocs marcats com a <span class=\"site-badge\">navegador</span> ({{count}} en total) necessiten Chrome, Chromium, Brave o Edge instal·lat. manga downloader l'obre per tu i només mostra una finestra quan cal resoldre un repte.",
+    "legend_one": "El lloc marcat com a <span class=\"site-badge\">navegador</span> ({{count}} en total) necessita Chrome, Chromium, Brave o Edge instal·lat. manga downloader l'obre per tu i només mostra una finestra quan un lloc la necessita.",
+    "legend_other": "Els llocs marcats com a <span class=\"site-badge\">navegador</span> ({{count}} en total) necessiten Chrome, Chromium, Brave o Edge instal·lat. manga downloader l'obre per tu i només mostra una finestra quan un lloc la necessita.",
     "emptyText": "<strong>Encara no és a la llista.</strong> Prova-ho igualment: els llocs fets amb les mateixes plataformes sovint funcionen sense més. Si no va, <a href=\"{{repo}}/issues/new\">demana'l</a>.",
     "badge": {
       "label": "navegador",

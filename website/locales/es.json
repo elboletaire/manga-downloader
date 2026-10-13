@@ -127,8 +127,8 @@
     "filterLabel": "Filtrar sitios",
     "filterPlaceholder": "Busca sitios, p. ej. mangadex o scans",
     "browserOnly": "Solo sitios que necesitan navegador",
-    "legend_one": "El sitio marcado como <span class=\"site-badge\">navegador</span> ({{count}} en total) necesita Chrome, Chromium, Brave o Edge instalado. manga downloader lo abre por ti y solo muestra una ventana cuando hay que resolver un desafío.",
-    "legend_other": "Los sitios marcados como <span class=\"site-badge\">navegador</span> ({{count}} en total) necesitan Chrome, Chromium, Brave o Edge instalado. manga downloader lo abre por ti y solo muestra una ventana cuando hay que resolver un desafío.",
+    "legend_one": "El sitio marcado como <span class=\"site-badge\">navegador</span> ({{count}} en total) necesita Chrome, Chromium, Brave o Edge instalado. manga downloader lo abre por ti y solo muestra una ventana cuando un sitio la necesita.",
+    "legend_other": "Los sitios marcados como <span class=\"site-badge\">navegador</span> ({{count}} en total) necesitan Chrome, Chromium, Brave o Edge instalado. manga downloader lo abre por ti y solo muestra una ventana cuando un sitio la necesita.",
     "emptyText": "<strong>Aún no está en la lista.</strong> Pruébalo de todos modos: los sitios hechos con las mismas plataformas suelen funcionar sin más. Si no va, <a href=\"{{repo}}/issues/new\">pídelo</a>.",
     "badge": {
       "label": "navegador",
