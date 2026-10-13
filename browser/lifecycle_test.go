@@ -533,3 +533,81 @@ func TestVisibleRetryRunsTheInitScriptAgain(t *testing.T) {
 		t.Errorf("init scripts per render = %q, want it on both the headless and the visible one", inits)
 	}
 }
+
+func TestRetryStatus(t *testing.T) {
+	var waits []time.Duration
+	old := waitFor
+	waitFor = func(_ context.Context, d time.Duration) bool { waits = append(waits, d); return true }
+	defer func() { waitFor = old }()
+
+	closed := 0
+	kept := &instance{close: func() { closed++ }}
+	inst = kept
+	defer func() { inst = nil }()
+
+	calls := 0
+	err := retryStatus(context.Background(), "x.test", func() error {
+		calls++
+		switch calls {
+		case 1:
+			return &StatusError{Code: 502, RetryAfter: 7 * time.Second}
+		case 2:
+			return &StatusError{Code: 429}
+		}
+		return nil
+	})
+	if err != nil || calls != 3 {
+		t.Fatalf("retryStatus = %v after %d calls, want success after 3", err, calls)
+	}
+	if len(waits) != 2 || waits[0] != 7*time.Second || waits[1] != statusMinDelay {
+		t.Errorf("waits = %v, want Retry-After then the minimum", waits)
+	}
+	// a restart would drop the session's cookies, a solved check too
+	if closed != 0 || inst != kept {
+		t.Errorf("closed the browser %d times, want it kept for an undeclared host", closed)
+	}
+
+	// a host that rate-limits per session gets a fresh browser for each retry
+	RestartOnRateLimit("restart.test")
+	defer func() { hostsMu.Lock(); delete(restart, "restart.test"); hostsMu.Unlock() }()
+	waits, calls = nil, 0
+	err = retryStatus(context.Background(), "cdn.restart.test", func() error {
+		calls++
+		inst = &instance{close: func() { closed++ }}
+		if calls < 3 {
+			return &StatusError{Code: 502}
+		}
+		return nil
+	})
+	if err != nil || calls != 3 || len(waits) != 2 {
+		t.Fatalf("retryStatus = %v after %d calls and %d waits, want success after 3 and 2", err, calls, len(waits))
+	}
+	if closed != 2 {
+		t.Errorf("closed the browser %d times, want before each of the 2 retries", closed)
+	}
+	inst = nil
+
+	waits = nil
+	retryStatus(context.Background(), "x.test", func() error { return &StatusError{Code: 502, RetryAfter: time.Minute} })
+	if len(waits) != statusRetries || waits[0] != statusMaxDelay {
+		t.Errorf("a long Retry-After waited %v, want %d waits capped at %s", waits, statusRetries, statusMaxDelay)
+	}
+
+	calls = 0
+	err = retryStatus(context.Background(), "x.test", func() error { calls++; return &StatusError{Code: 503} })
+	var se *StatusError
+	if !errors.As(err, &se) || calls != statusRetries+1 {
+		t.Errorf("persistent 503: %v after %d calls, want a StatusError after %d", err, calls, statusRetries+1)
+	}
+
+	calls = 0
+	boom := errors.New("boom")
+	if err := retryStatus(context.Background(), "x.test", func() error { calls++; return boom }); err != boom || calls != 1 {
+		t.Errorf("other errors must not retry: %v after %d calls", err, calls)
+	}
+
+	waitFor = func(context.Context, time.Duration) bool { return false }
+	if err := retryStatus(context.Background(), "x.test", func() error { return &StatusError{Code: 502} }); !errors.Is(err, ErrClosed) {
+		t.Errorf("an aborted wait = %v, want ErrClosed", err)
+	}
+}

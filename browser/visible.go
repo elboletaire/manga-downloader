@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	// hostsMu guards required and needed
+	// hostsMu guards required, needed and restart
 	hostsMu sync.Mutex
 	// required holds the hosts grabbers declared never pass a headless
 	// browser (RequireVisible)
@@ -25,6 +25,8 @@ var (
 	// rest of the process: closing the browser doesn't make them pass
 	// headless any better
 	needed = map[string]bool{}
+	// restart holds the hosts declared with RestartOnRateLimit
+	restart = map[string]bool{}
 )
 
 // RequireVisible declares that host (and its subdomains) never passes a
@@ -35,6 +37,22 @@ func RequireVisible(host string) {
 	hostsMu.Lock()
 	defer hostsMu.Unlock()
 	required[normalHost(host)] = true
+}
+
+// RestartOnRateLimit declares that host (and its subdomains) rate-limits per
+// browser session: 429/5xx pages are retried in a fresh browser, which drops
+// the cookies. Declare it only where waiting in the same browser fails.
+func RestartOnRateLimit(host string) {
+	hostsMu.Lock()
+	defer hostsMu.Unlock()
+	restart[normalHost(host)] = true
+}
+
+// restartsOnRateLimit reports whether host was declared with RestartOnRateLimit
+func restartsOnRateLimit(host string) bool {
+	hostsMu.Lock()
+	defer hostsMu.Unlock()
+	return matchHost(restart, normalHost(host))
 }
 
 // NeedsVisible reports whether pages of rawURL's site (a URL or a bare host)

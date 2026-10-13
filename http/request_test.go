@@ -210,9 +210,9 @@ func TestParseRetryAfterSeconds(t *testing.T) {
 		{"garbage", 0},
 	}
 	for _, tc := range cases {
-		got := parseRetryAfter(tc.header)
+		got := ParseRetryAfter(tc.header)
 		if got != tc.want {
-			t.Errorf("parseRetryAfter(%q) = %v, want %v", tc.header, got, tc.want)
+			t.Errorf("ParseRetryAfter(%q) = %v, want %v", tc.header, got, tc.want)
 		}
 	}
 }
@@ -221,16 +221,16 @@ func TestParseRetryAfterCapsAtMax(t *testing.T) {
 	// a very large value must be capped at MaxRetryAfter, including one
 	// that would overflow a time.Duration
 	for _, header := range []string{"3600", "1e300", time.Now().Add(time.Hour).UTC().Format(http.TimeFormat)} {
-		if got := parseRetryAfter(header); got != MaxRetryAfter {
-			t.Errorf("parseRetryAfter(%q) = %v, want %v (cap)", header, got, MaxRetryAfter)
+		if got := ParseRetryAfter(header); got != MaxRetryAfter {
+			t.Errorf("ParseRetryAfter(%q) = %v, want %v (cap)", header, got, MaxRetryAfter)
 		}
 	}
 }
 
 // A past HTTP date means "now", not a negative wait
 func TestParseRetryAfterPastDate(t *testing.T) {
-	if got := parseRetryAfter(time.Now().Add(-time.Minute).UTC().Format(http.TimeFormat)); got != 0 {
-		t.Errorf("parseRetryAfter(past date) = %v, want 0", got)
+	if got := ParseRetryAfter(time.Now().Add(-time.Minute).UTC().Format(http.TimeFormat)); got != 0 {
+		t.Errorf("ParseRetryAfter(past date) = %v, want 0", got)
 	}
 }
 
@@ -257,10 +257,10 @@ func TestParseRetryAfterHTTPDate(t *testing.T) {
 	// use a date 1 second in the future
 	future := time.Now().Add(time.Second).UTC()
 	header := future.Format(http.TimeFormat)
-	got := parseRetryAfter(header)
+	got := ParseRetryAfter(header)
 	// should be ~1s; allow some slop
 	if got <= 0 || got > 2*time.Second {
-		t.Errorf("parseRetryAfter(HTTP date) = %v, want ~1s", got)
+		t.Errorf("ParseRetryAfter(HTTP date) = %v, want ~1s", got)
 	}
 }
 

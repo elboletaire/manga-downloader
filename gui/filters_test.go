@@ -603,3 +603,54 @@ func TestFilterOnlyReloadReusesRefilterable(t *testing.T) {
 		t.Errorf("different URL: identify %d times, want 1", identifyCalls)
 	}
 }
+
+// walkingSite is a Refilterable site that walks once, like comix, and fails
+// an unlisted scanlator with an error of its own
+type walkingSite struct {
+	*scanlatorSite
+	walks int
+}
+
+func (*walkingSite) Refilterable() {}
+
+func (w *walkingSite) FetchChapters() (grabber.Filterables, []error) {
+	if w.walks == 0 {
+		w.walks++
+	}
+	scanlator := w.Settings.Scanlator
+	if scanlator != "" && scanlator != grabber.FilterAll && !listsValue(&w.options, scanlator) {
+		return nil, []error{errors.New("no scanlation group " + scanlator)}
+	}
+
+	return w.scanlatorSite.FetchChapters()
+}
+
+func TestUnmatchedScanlatorReusesRefilterableSite(t *testing.T) {
+	options := grabber.FilterOptions{Values: []string{"Alpha", "Beta"}, All: true}
+	c, base := newScanlatorController(t, options)
+	identified := 0
+	c.identify = func(_ string, s *grabber.Settings) (grabber.Site, []error) {
+		identified++
+		site := &walkingSite{scanlatorSite: &scanlatorSite{fakeSite: base.fakeSite, options: options}}
+		site.Settings = s
+		return site, nil
+	}
+	if err := c.Configure(func(s *grabber.Settings) { s.Scanlator = "Gone" }); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatalf("Load = %v, want the fallback to load", err)
+	}
+	// a second site would walk the whole list again, which comix.to rate-limits
+	if identified != 1 || c.series.Site.(*walkingSite).walks != 1 {
+		t.Errorf("identified %d sites, walked %d times; want the one site, walked once",
+			identified, c.series.Site.(*walkingSite).walks)
+	}
+	if _, scanlator := c.LoadedFilters(); scanlator != grabber.FilterAll {
+		t.Errorf("loaded scanlator %q, want %q", scanlator, grabber.FilterAll)
+	}
+	if len(c.series.Chapters) != 3 {
+		t.Errorf("listed %d chapters, want 3", len(c.series.Chapters))
+	}
+}

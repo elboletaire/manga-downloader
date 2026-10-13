@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -36,6 +37,10 @@ import (
 // The reader lazily mounts its pages; an init script turns on its "Preload
 // images: all" setting so they all mount at once, and the snapshot is taken
 // once every slot has its img (scrolling the reader's container if not).
+//
+// Cloudflare answers loads faster than about 0.7 a second (six in a burst)
+// with 502 and Retry-After: 60, so loads are paced (comixLoadGap) across
+// every Comix instance.
 //
 // The images live on rotating hosts that refuse any request with a Referer
 // (403; the reader sets referrerpolicy="no-referrer"), so pages are
@@ -71,8 +76,12 @@ type ComixChapter struct {
 // comixHostRe matches comix.to and its subdomains
 var comixHostRe = regexp.MustCompile(`(?i)(^|\.)comix\.to$`)
 
-// its chapter API serves headless browsers a captcha of its own, every time
-func init() { browser.RequireVisible("comix.to") }
+// its chapter API serves headless browsers a captcha of its own, every time,
+// and rate-limits per browser session, so a 429 is retried in a new one
+func init() {
+	browser.RequireVisible("comix.to")
+	browser.RestartOnRateLimit("comix.to")
+}
 
 // comixChapterRe matches chapter reader URLs whose path is
 // /title/{slug}/{chapter-id}: the series URL is the first two path segments.
@@ -88,7 +97,24 @@ const (
 	comixSlotSelector       = ".rpage-page"
 	comixImageSelector      = `img.rpage-page__img[src]:not([src=""])`
 	comixReaderScrollPause  = 150 * time.Millisecond
+	// comixLoadBurst loads go out unpaced, then comixLoadGap separates them
+	comixLoadBurst = 3
+	comixLoadGap   = 2 * time.Second
 )
+
+// comixSleep and comixNow are time.Sleep and time.Now, replaced in tests
+var (
+	comixSleep = time.Sleep
+	comixNow   = time.Now
+)
+
+// comixPace is shared by every Comix: used is the burst spent (idle time earns
+// it back, a load per gap), last is when the previous load finished
+var comixPace struct {
+	sync.Mutex
+	used int
+	last time.Time
+}
 
 // comixPreloadJS sets the reader's "Preload images" to "all" in both of its
 // persisted settings (paged and webtoon), keeping whatever else is there
@@ -127,6 +153,26 @@ func (c *Comix) resolveSeriesURL() {
 	}
 }
 
+// load runs get, spaced comixLoadGap after the previous load once the burst
+// is spent. The browser package retries a 429/5xx.
+func (c *Comix) load(get func() (string, error)) (string, error) {
+	comixPace.Lock()
+	defer comixPace.Unlock()
+
+	idle := comixNow().Sub(comixPace.last)
+	// capped before the int conversion, which would overflow on 32-bit
+	earned := int(min(idle/comixLoadGap, comixLoadBurst))
+	comixPace.used = max(0, comixPace.used-earned)
+	if comixPace.used >= comixLoadBurst {
+		comixSleep(comixLoadGap - idle)
+	}
+	html, err := get()
+	comixPace.used = min(comixPace.used+1, comixLoadBurst)
+	comixPace.last = comixNow()
+
+	return html, err
+}
+
 // fetchPage1 renders (and caches) the first page of the series' chapter list
 func (c *Comix) fetchPage1() (*goquery.Document, error) {
 	if c.doc != nil {
@@ -134,7 +180,9 @@ func (c *Comix) fetchPage1() (*goquery.Document, error) {
 	}
 	c.resolveSeriesURL()
 
-	html, err := browser.GetHTML(c.URL, comixFooterSelector, 0)
+	html, err := c.load(func() (string, error) {
+		return browser.GetHTML(c.URL, comixFooterSelector, 0)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +248,9 @@ func (c *Comix) FetchChapters() (chapters Filterables, errs []error) {
 				break
 			}
 			var html string
-			html, err = browser.GetHTML(pageURL, comixFooterSelector, 0)
+			html, err = c.load(func() (string, error) {
+				return browser.GetHTML(pageURL, comixFooterSelector, 0)
+			})
 			if err == nil {
 				doc, err = goquery.NewDocumentFromReader(strings.NewReader(html))
 			}
@@ -240,10 +290,12 @@ func (c *Comix) FetchChapters() (chapters Filterables, errs []error) {
 		page++
 	}
 
-	// Cache for future filter-only changes
-	c.cachedURL = c.URL
-	c.cachedChapters = allChapters
-	c.cachedGroups = seenGroups
+	// Cache for filter-only changes, unless errors cut the walk short
+	if len(errs) == 0 {
+		c.cachedURL = c.URL
+		c.cachedChapters = allChapters
+		c.cachedGroups = seenGroups
+	}
 
 	// Update filter options
 	var uniqueGroups []string
@@ -254,7 +306,9 @@ func (c *Comix) FetchChapters() (chapters Filterables, errs []error) {
 	}
 	c.groups = uniqueGroups
 
-	return c.applyScanlatorFilter(allChapters, seenGroups)
+	// the walk's own errors (a page that never loaded) come along
+	chapters, filterErrs := c.applyScanlatorFilter(allChapters, seenGroups)
+	return chapters, append(errs, filterErrs...)
 }
 
 // applyScanlatorFilter applies the scanlator selection to cached chapters,
@@ -303,7 +357,9 @@ func (c *Comix) applyScanlatorFilter(allChapters map[string][]*ComixChapter, see
 func (c *Comix) FetchChapter(f Filterable) (*Chapter, error) {
 	chap := f.(*ComixChapter)
 
-	html, err := browser.GetHTMLWithScroll(chap.URL, comixImageSelector, comixReaderScroll, 0)
+	html, err := c.load(func() (string, error) {
+		return browser.GetHTMLWithScroll(chap.URL, comixImageSelector, comixReaderScroll, 0)
+	})
 	if err != nil {
 		return nil, err
 	}
