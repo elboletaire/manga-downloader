@@ -40,7 +40,8 @@ import (
 //
 // Cloudflare rate-limits page loads: about 0.7 a second sustained (or six in
 // a burst) get a 502 with Retry-After: 60 on every page until it lapses. So
-// loads are spaced out (comixLoadGap) once past a short burst.
+// loads are spaced out (comixLoadGap) once past a short burst, across every
+// Comix instance: the limit is per host, and a load may follow another's walk.
 //
 // The images live on rotating hosts that refuse any request with a Referer
 // (403; the reader sets referrerpolicy="no-referrer"), so pages are
@@ -58,11 +59,6 @@ type Comix struct {
 	cachedURL      string
 	cachedChapters map[string][]*ComixChapter
 	cachedGroups   []string
-	// loadMu guards loads and lastLoad: how many browser loads were made,
-	// and when the previous one finished
-	loadMu   sync.Mutex
-	loads    int
-	lastLoad time.Time
 }
 
 func NewComix(g *Grabber) *Comix {
@@ -103,8 +99,20 @@ const (
 	comixLoadGap   = 2 * time.Second
 )
 
-// comixSleep is time.Sleep, replaced in tests
-var comixSleep = time.Sleep
+// comixSleep and comixNow are time.Sleep and time.Now, replaced in tests
+var (
+	comixSleep = time.Sleep
+	comixNow   = time.Now
+)
+
+// comixPace is the pacing state of comix.to, shared by every Comix instance:
+// used is the burst spent, which idle time earns back one per comixLoadGap,
+// and last is when the previous load finished
+var comixPace struct {
+	sync.Mutex
+	used int
+	last time.Time
+}
 
 // comixPreloadJS sets the reader's "Preload images" to "all" in both of its
 // persisted settings (paged and webtoon), keeping whatever else is there
@@ -143,19 +151,23 @@ func (c *Comix) resolveSeriesURL() {
 	}
 }
 
-// load runs get (a browser load), spacing it from the previous one once
-// the first comixLoadBurst loads are out of the way. A 429/5xx is waited out
-// and retried by the browser package.
+// load runs get (a browser load), spacing it comixLoadGap from the previous
+// one once the burst is spent, whichever instance made it. A 429/5xx is
+// waited out and retried by the browser package.
 func (c *Comix) load(get func() (string, error)) (string, error) {
-	c.loadMu.Lock()
-	defer c.loadMu.Unlock()
+	comixPace.Lock()
+	defer comixPace.Unlock()
 
-	if c.loads >= comixLoadBurst {
-		comixSleep(comixLoadGap - time.Since(c.lastLoad))
+	idle := comixNow().Sub(comixPace.last)
+	// capped before the int conversion, which would overflow on 32-bit
+	earned := int(min(idle/comixLoadGap, comixLoadBurst))
+	comixPace.used = max(0, comixPace.used-earned)
+	if comixPace.used >= comixLoadBurst {
+		comixSleep(comixLoadGap - idle)
 	}
 	html, err := get()
-	c.loads++
-	c.lastLoad = time.Now()
+	comixPace.used = min(comixPace.used+1, comixLoadBurst)
+	comixPace.last = comixNow()
 
 	return html, err
 }

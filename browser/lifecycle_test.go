@@ -540,9 +540,17 @@ func TestRetryStatus(t *testing.T) {
 	waitFor = func(_ context.Context, d time.Duration) bool { waits = append(waits, d); return true }
 	defer func() { waitFor = old }()
 
+	// the rate limit can be per session, so each retry gets a fresh browser
+	closed := 0
+	inst = &instance{close: func() { closed++ }}
+	defer func() { inst = nil }()
+
 	calls := 0
 	err := retryStatus(context.Background(), "x.test", func() error {
 		calls++
+		if calls == 2 {
+			inst = &instance{close: func() { closed++ }}
+		}
 		switch calls {
 		case 1:
 			return &StatusError{Code: 502, RetryAfter: 7 * time.Second}
@@ -556,6 +564,9 @@ func TestRetryStatus(t *testing.T) {
 	}
 	if len(waits) != 2 || waits[0] != 7*time.Second || waits[1] != statusMinDelay {
 		t.Errorf("waits = %v, want Retry-After then the minimum", waits)
+	}
+	if closed != 2 || inst != nil {
+		t.Errorf("closed the browser %d times, want before each of the 2 retries", closed)
 	}
 
 	waits = nil

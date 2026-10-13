@@ -255,8 +255,7 @@ func runPage(abort context.Context, pageURL string, timeout time.Duration, escal
 // Retry policy for a page answered with 429 or 5xx, which a rate-limiting
 // front does mid-walk. Each wait is the server's Retry-After clamped to
 // [statusMinDelay, statusMaxDelay]: the cap matches the plain HTTP loop's
-// retryMaxDelay, since the wait holds the browser and recovery takes 5-8s in
-// practice. Vars so tests can shrink them.
+// retryMaxDelay, since the wait holds the browser. Vars so tests can shrink them.
 var (
 	statusRetries  = 3
 	statusMinDelay = 5 * time.Second
@@ -275,7 +274,9 @@ var (
 )
 
 // retryStatus runs do, waiting out and retrying a *StatusError up to
-// statusRetries times. The browser stays up meanwhile: it isn't what failed.
+// statusRetries times, each in a fresh browser: comix.to keeps blocking the
+// same session for a minute or more, but lets a new one in at once.
+// Callers must hold mu.
 func retryStatus(abort context.Context, host string, do func() error) error {
 	err := do()
 	for range statusRetries {
@@ -283,8 +284,9 @@ func retryStatus(abort context.Context, host string, do func() error) error {
 		if !errors.As(err, &se) {
 			break
 		}
+		teardown()
 		wait := max(min(se.RetryAfter, statusMaxDelay), statusMinDelay)
-		notice.Warn("%s answered HTTP %d: waiting %s before trying again", host, se.Code, wait.Round(time.Second))
+		notice.Warn("%s answered HTTP %d: waiting %s, then trying again in a new browser", host, se.Code, wait.Round(time.Second))
 		if !waitFor(abort, wait) {
 			return ErrClosed
 		}

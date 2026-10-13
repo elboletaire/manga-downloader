@@ -524,26 +524,70 @@ func TestComixCachesChaptersPerURL(t *testing.T) {
 	}
 }
 
-func TestComixLoadPacing(t *testing.T) {
-	var slept []time.Duration
-	old := comixSleep
-	comixSleep = func(d time.Duration) { slept = append(slept, d) }
-	defer func() { comixSleep = old }()
+// fakeComixClock replaces comixNow and comixSleep with a clock that only
+// moves when slept or advanced, resetting the shared pacing state
+func fakeComixClock(t *testing.T) (advance func(time.Duration), slept *[]time.Duration) {
+	t.Helper()
+	now := time.Unix(1e9, 0)
+	slept = new([]time.Duration)
+	oldNow, oldSleep := comixNow, comixSleep
+	comixNow = func() time.Time { return now }
+	comixSleep = func(d time.Duration) {
+		*slept = append(*slept, d)
+		if d > 0 {
+			now = now.Add(d)
+		}
+	}
+	comixPace.used, comixPace.last = 0, time.Time{}
+	t.Cleanup(func() {
+		comixNow, comixSleep = oldNow, oldSleep
+		comixPace.used, comixPace.last = 0, time.Time{}
+	})
 
-	c := NewComix(&Grabber{})
-	for i := 0; i < comixLoadBurst+2; i++ {
+	return func(d time.Duration) { now = now.Add(d) }, slept
+}
+
+func comixLoads(t *testing.T, c *Comix, n int) {
+	t.Helper()
+	for range n {
 		if _, err := c.load(func() (string, error) { return "", nil }); err != nil {
 			t.Fatal(err)
 		}
 	}
-	// only the loads past the burst wait, and only for what's left of the gap
-	if len(slept) != 2 {
-		t.Fatalf("slept %d times (%v), want 2", len(slept), slept)
+}
+
+func TestComixLoadPacing(t *testing.T) {
+	_, slept := fakeComixClock(t)
+
+	comixLoads(t, NewComix(&Grabber{}), comixLoadBurst+2)
+	// only the loads past the burst wait, a whole gap each
+	if len(*slept) != 2 || (*slept)[0] != comixLoadGap || (*slept)[1] != comixLoadGap {
+		t.Errorf("slept %v, want 2 waits of %s", *slept, comixLoadGap)
 	}
-	for _, d := range slept {
-		if d <= 0 || d > comixLoadGap {
-			t.Errorf("slept %s, want within (0, %s]", d, comixLoadGap)
-		}
+}
+
+func TestComixLoadPacingIsSharedByInstances(t *testing.T) {
+	advance, slept := fakeComixClock(t)
+
+	// a new instance right after another's walk (the app's reload) must not
+	// burst again: the rate limit is per host
+	comixLoads(t, NewComix(&Grabber{}), comixLoadBurst)
+	comixLoads(t, NewComix(&Grabber{}), 1)
+	if len(*slept) != 1 || (*slept)[0] != comixLoadGap {
+		t.Errorf("slept %v, want the second instance's load to wait %s", *slept, comixLoadGap)
+	}
+
+	// idle time earns the burst back, one load per gap
+	*slept = nil
+	advance(comixLoadGap * comixLoadBurst)
+	comixLoads(t, NewComix(&Grabber{}), comixLoadBurst)
+	if len(*slept) != 0 {
+		t.Errorf("slept %v after a long idle, want a fresh burst", *slept)
+	}
+	advance(comixLoadGap + comixLoadGap/2)
+	comixLoads(t, NewComix(&Grabber{}), 2)
+	if len(*slept) != 1 || (*slept)[0] != comixLoadGap {
+		t.Errorf("slept %v after one gap idle, want one unpaced load, then a wait of %s", *slept, comixLoadGap)
 	}
 }
 

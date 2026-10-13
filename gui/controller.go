@@ -448,7 +448,13 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 				s.Language = ""
 				c.mu.Unlock()
 			}
-			if retry, _ := c.identify(url, s); retry != nil {
+			// a Refilterable site re-applies the filters to what it already
+			// fetched: a fresh one would walk the whole list again
+			retry := site
+			if _, ok := site.(grabber.Refilterable); !ok {
+				retry, _ = c.identify(url, s)
+			}
+			if retry != nil {
 				site = retry
 				series, err = core.Open(site, s)
 			}
