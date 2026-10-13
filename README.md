@@ -227,6 +227,9 @@ Files are written to the mounted `/downloads` folder. They're owned by
 different ID, pass it with
 `-e USER_ID=$(id -u) -e GROUP_ID=$(id -g)`.
 
+`:latest` and `:browser` follow releases. The current development version is
+`:master` (and `:master-browser`).
+
 The default image has no browser. For sites marked with `*`, use the `:browser`
 image, which ships Chromium and a virtual display:
 

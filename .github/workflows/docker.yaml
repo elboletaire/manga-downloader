@@ -41,9 +41,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: elboletaire/manga-downloader
-          # set latest tag for master branch
+          # :latest follows releases only; master publishes :master
+          flavor: |
+            latest=false
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
             type=ref,event=branch
             type=semver,pattern={{version}}
 
@@ -52,13 +54,13 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: elboletaire/manga-downloader
-          # every tag gets a -browser suffix; master additionally gets the
-          # plain :browser tag (the browser counterpart of :latest)
+          # every tag gets a -browser suffix; releases also get the plain
+          # :browser tag (the browser counterpart of :latest)
           flavor: |
             latest=false
             suffix=-browser
           tags: |
-            type=raw,value=browser,suffix=,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+            type=raw,value=browser,suffix=,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
             type=ref,event=branch
             type=semver,pattern={{version}}
 
