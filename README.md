@@ -14,7 +14,7 @@
 
 ⭐ If you like this project, star it on GitHub!
 
-[Features](#features) • [Installation](#installation) • [Desktop app](#using-the-desktop-app) • [Command line](#using-the-command-line) • [Supported sites](#supported-sites) • [Troubleshooting](#troubleshooting)
+[Website][website] • [Features](#features) • [Installation](#installation) • [Desktop app](#using-the-desktop-app) • [Command line](#using-the-command-line) • [Supported sites](#supported-sites) • [Troubleshooting](#troubleshooting)
 
 </div>
 
@@ -70,8 +70,9 @@ and as a **command line tool** for scripts, servers and Docker.
 
 ### Desktop app
 
-Download the `manga-downloader-gui` asset for your system from the
-[releases page][releases]:
+The easiest way is the [website][website], which picks the right download for
+your system. Or download the `manga-downloader-gui` asset for your system from
+the [releases page][releases]:
 
 - **Windows**: `manga-downloader-gui-<tag>-windows-amd64.zip`, or
   `-windows-arm64.zip` for ARM devices such as Snapdragon laptops. Unzip it and
@@ -756,6 +757,7 @@ make build/gui/windows # cross-build manga-downloader-gui.exe, no cgo needed
 
 [license]: ./LICENSE
 [releases]: https://github.com/elboletaire/manga-downloader/releases
+[website]: https://mangadownloader.cat
 [homebrew]: https://brew.sh
 [issues]: https://github.com/elboletaire/manga-downloader/issues
 [stargazers]: https://github.com/elboletaire/manga-downloader/stargazers
