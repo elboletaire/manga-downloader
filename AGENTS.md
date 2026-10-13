@@ -22,7 +22,7 @@ make build/all        # unix + windows binaries
 GOOS=windows GOARCH=386 make build/release   # one release binary, built as release.yaml does
 make test             # go test -v ./... (uses richgo if installed)
 go test ./ranges -run TestParse   # run a single test
-make clean            # remove built binaries and *.cbz files
+make clean            # remove built binaries and *.cbz and *.epub files
 ```
 
 Unit test coverage is thin; real verification is the makefile smoke targets, which download from live sites — run them selectively. `make grabber` runs everything, `make grabber/html` all `PlainHTML` sites, `make grabber/<site>` just one; check the archives with `tools/verify-cbz`, since a run can succeed with empty or junk CBZs.

@@ -439,6 +439,11 @@ manga-downloader --convert-images none [url] 1-10        # keep pages untouched
 JPEG, PNG and GIF pages are never re-encoded. If a page fails to convert, it's
 kept as it was and a warning is shown, so the rest of the chapter isn't lost.
 
+EPUB is the exception, since readers can't show AVIF at all: AVIF pages are
+always converted for it, even with `--convert-images none`. A page an EPUB can't
+show (anything but JPEG, PNG, GIF or WebP, such as an AVIF that failed to convert)
+is left out with a warning instead of being kept.
+
 > [!NOTE]
 > The AVIF decoder is embedded as WebAssembly, so you don't need to install any
 > system library. It's slower on the 32-bit builds (`linux-386` and
