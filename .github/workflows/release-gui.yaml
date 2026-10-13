@@ -210,11 +210,14 @@ jobs:
         mkdir -p "$assets"
         gh release download "$TAG" -p "manga-downloader-gui-$TAG-darwin-universal.zip" -D "$assets"
         mkdir -p tap/Casks
-        cp manga-downloader/packaging/homebrew/tap/Casks/manga-downloader.rb tap/Casks/manga-downloader.rb
-        manga-downloader/scripts/update-homebrew.sh "$version" tap/Casks/manga-downloader.rb "$assets"
-        ruby -c tap/Casks/manga-downloader.rb
+        # the old name stays a deprecated alias, so its installs get updates too
+        for cask in manga-downloader-app manga-downloader; do
+          cp "manga-downloader/packaging/homebrew/tap/Casks/$cask.rb" "tap/Casks/$cask.rb"
+          manga-downloader/scripts/update-homebrew.sh "$version" "tap/Casks/$cask.rb" "$assets"
+          ruby -c "tap/Casks/$cask.rb"
+        done
         cd tap
-        git add Casks/manga-downloader.rb
+        git add Casks/manga-downloader-app.rb Casks/manga-downloader.rb
         if git diff --cached --quiet; then echo "The tap already has the Manga Downloader app $version"; exit 0; fi
         git config user.name 'github-actions[bot]'
         git config user.email '41898282+github-actions[bot]@users.noreply.github.com'

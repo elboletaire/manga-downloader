@@ -82,7 +82,7 @@
     "binaryText": "Grab the archive for your system from <a href=\"#downloads\">the downloads</a>, extract it and run it:",
     "binaryFoot": "Move it to a folder in your <code>PATH</code>, like <code>/usr/local/bin</code>, to run it from anywhere.",
     "brewText": "On macOS and Linux, from the <code>elboletaire/tap</code> tap. <code>brew upgrade</code> keeps it current.",
-    "brewFoot": "That's the command line tool only. On macOS, add <code>--cask</code> to get the desktop app instead.",
+    "brewFoot": "That's the command line tool only. On macOS, get the desktop app with <code>brew install --cask elboletaire/tap/manga-downloader-app</code>.",
     "dockerText": "Files land in the mounted folder. Use the <code>:browser</code> image for sites tagged <span class=\"site-badge\">browser</span>.",
     "goText": "With Go installed, build it from source in one go:",
     "useTitle": "Use it",

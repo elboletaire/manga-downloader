@@ -82,7 +82,7 @@
     "binaryText": "Descarga el archivo comprimido para tu sistema desde <a href=\"#downloads\">las descargas</a>, descomprímelo y ejecuta el programa:",
     "binaryFoot": "Muévelo a una carpeta de tu <code>PATH</code>, como <code>/usr/local/bin</code>, para ejecutarlo desde cualquier sitio.",
     "brewText": "En macOS y Linux, desde el tap <code>elboletaire/tap</code>. <code>brew upgrade</code> lo mantiene al día.",
-    "brewFoot": "Esto instala solo la herramienta de línea de comandos. En macOS, añade <code>--cask</code> para instalar la app de escritorio.",
+    "brewFoot": "Esto instala solo la herramienta de línea de comandos. En macOS, instala la app de escritorio con <code>brew install --cask elboletaire/tap/manga-downloader-app</code>.",
     "dockerText": "Los archivos se guardan en la carpeta montada. Usa la imagen <code>:browser</code> para los sitios marcados como <span class=\"site-badge\">navegador</span>.",
     "goText": "Si tienes Go instalado, compílalo desde el código fuente con un solo comando:",
     "useTitle": "Úsalo",
