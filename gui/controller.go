@@ -435,8 +435,9 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 
 	series, err := core.Open(site, s)
 	if err != nil {
-		// the reload gets a site of its own, with the settings dropUnmatchedFilters
-		// chose: the failed one may already have read the filters it was given
+		// the reload runs with the settings dropUnmatchedFilters chose, on a
+		// site of its own (the failed one may already have read the filters it
+		// was given), except a Refilterable one, which is reused
 		if reload, dropLanguage := c.dropUnmatchedFilters(site, s, err); reload {
 			// the site keeps the pointer it's identified with, and Configure
 			// changes c.settings: a copy would leave the download ignoring

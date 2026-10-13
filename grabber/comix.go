@@ -77,8 +77,13 @@ type ComixChapter struct {
 // comixHostRe matches comix.to and its subdomains
 var comixHostRe = regexp.MustCompile(`(?i)(^|\.)comix\.to$`)
 
-// its chapter API serves headless browsers a captcha of its own, every time
-func init() { browser.RequireVisible("comix.to") }
+// its chapter API serves headless browsers a captcha of its own, every time,
+// and its rate limit is per browser session: the same one stays blocked for
+// a minute or more, a new one gets in at once
+func init() {
+	browser.RequireVisible("comix.to")
+	browser.RestartOnRateLimit("comix.to")
+}
 
 // comixChapterRe matches chapter reader URLs whose path is
 // /title/{slug}/{chapter-id}: the series URL is the first two path segments.

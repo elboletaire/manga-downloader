@@ -540,17 +540,14 @@ func TestRetryStatus(t *testing.T) {
 	waitFor = func(_ context.Context, d time.Duration) bool { waits = append(waits, d); return true }
 	defer func() { waitFor = old }()
 
-	// the rate limit can be per session, so each retry gets a fresh browser
 	closed := 0
-	inst = &instance{close: func() { closed++ }}
+	kept := &instance{close: func() { closed++ }}
+	inst = kept
 	defer func() { inst = nil }()
 
 	calls := 0
 	err := retryStatus(context.Background(), "x.test", func() error {
 		calls++
-		if calls == 2 {
-			inst = &instance{close: func() { closed++ }}
-		}
 		switch calls {
 		case 1:
 			return &StatusError{Code: 502, RetryAfter: 7 * time.Second}
@@ -565,9 +562,30 @@ func TestRetryStatus(t *testing.T) {
 	if len(waits) != 2 || waits[0] != 7*time.Second || waits[1] != statusMinDelay {
 		t.Errorf("waits = %v, want Retry-After then the minimum", waits)
 	}
-	if closed != 2 || inst != nil {
+	// a restart would drop the session's cookies, a solved check too
+	if closed != 0 || inst != kept {
+		t.Errorf("closed the browser %d times, want it kept for an undeclared host", closed)
+	}
+
+	// a host that rate-limits per session gets a fresh browser for each retry
+	RestartOnRateLimit("restart.test")
+	defer func() { hostsMu.Lock(); delete(restart, "restart.test"); hostsMu.Unlock() }()
+	waits, calls = nil, 0
+	err = retryStatus(context.Background(), "cdn.restart.test", func() error {
+		calls++
+		inst = &instance{close: func() { closed++ }}
+		if calls < 3 {
+			return &StatusError{Code: 502}
+		}
+		return nil
+	})
+	if err != nil || calls != 3 || len(waits) != 2 {
+		t.Fatalf("retryStatus = %v after %d calls and %d waits, want success after 3 and 2", err, calls, len(waits))
+	}
+	if closed != 2 {
 		t.Errorf("closed the browser %d times, want before each of the 2 retries", closed)
 	}
+	inst = nil
 
 	waits = nil
 	retryStatus(context.Background(), "x.test", func() error { return &StatusError{Code: 502, RetryAfter: time.Minute} })

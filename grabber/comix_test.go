@@ -452,6 +452,7 @@ func TestComixParseRow(t *testing.T) {
 }
 
 func TestComixCachesChaptersPerURL(t *testing.T) {
+	resetComixPace(t)
 	// Verify that FetchChapters caches chapters and reuses them when
 	// the same URL is queried again with a different scanlator selection
 
@@ -524,13 +525,27 @@ func TestComixCachesChaptersPerURL(t *testing.T) {
 	}
 }
 
+// resetComixPace clears the pacing state shared by every Comix and makes
+// comixSleep a no-op, putting both back when the test ends, so no test that
+// reaches Comix.load can really sleep
+func resetComixPace(t *testing.T) {
+	t.Helper()
+	oldNow, oldSleep := comixNow, comixSleep
+	comixSleep = func(time.Duration) {}
+	comixPace.used, comixPace.last = 0, time.Time{}
+	t.Cleanup(func() {
+		comixNow, comixSleep = oldNow, oldSleep
+		comixPace.used, comixPace.last = 0, time.Time{}
+	})
+}
+
 // fakeComixClock replaces comixNow and comixSleep with a clock that only
 // moves when slept or advanced, resetting the shared pacing state
 func fakeComixClock(t *testing.T) (advance func(time.Duration), slept *[]time.Duration) {
 	t.Helper()
+	resetComixPace(t)
 	now := time.Unix(1e9, 0)
 	slept = new([]time.Duration)
-	oldNow, oldSleep := comixNow, comixSleep
 	comixNow = func() time.Time { return now }
 	comixSleep = func(d time.Duration) {
 		*slept = append(*slept, d)
@@ -538,11 +553,6 @@ func fakeComixClock(t *testing.T) (advance func(time.Duration), slept *[]time.Du
 			now = now.Add(d)
 		}
 	}
-	comixPace.used, comixPace.last = 0, time.Time{}
-	t.Cleanup(func() {
-		comixNow, comixSleep = oldNow, oldSleep
-		comixPace.used, comixPace.last = 0, time.Time{}
-	})
 
 	return func(d time.Duration) { now = now.Add(d) }, slept
 }
@@ -592,6 +602,7 @@ func TestComixLoadPacingIsSharedByInstances(t *testing.T) {
 }
 
 func TestComixDoesNotCacheATruncatedWalk(t *testing.T) {
+	resetComixPace(t)
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(
 		`<div class="mchap-foot__hint">Showing 0 to 1 of 2 items</div>`))
 	if err != nil {

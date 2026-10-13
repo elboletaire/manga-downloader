@@ -274,19 +274,24 @@ var (
 )
 
 // retryStatus runs do, waiting out and retrying a *StatusError up to
-// statusRetries times, each in a fresh browser: comix.to keeps blocking the
-// same session for a minute or more, but lets a new one in at once.
+// statusRetries times. The browser stays up, unless host rate-limits per
+// session (RestartOnRateLimit): then each retry gets a fresh one.
 // Callers must hold mu.
 func retryStatus(abort context.Context, host string, do func() error) error {
 	err := do()
+	restart := restartsOnRateLimit(host)
 	for range statusRetries {
 		var se *StatusError
 		if !errors.As(err, &se) {
 			break
 		}
-		teardown()
 		wait := max(min(se.RetryAfter, statusMaxDelay), statusMinDelay)
-		notice.Warn("%s answered HTTP %d: waiting %s, then trying again in a new browser", host, se.Code, wait.Round(time.Second))
+		if restart {
+			teardown()
+			notice.Warn("%s answered HTTP %d: waiting %s, then trying again in a new browser", host, se.Code, wait.Round(time.Second))
+		} else {
+			notice.Warn("%s answered HTTP %d: waiting %s before trying again", host, se.Code, wait.Round(time.Second))
+		}
 		if !waitFor(abort, wait) {
 			return ErrClosed
 		}
