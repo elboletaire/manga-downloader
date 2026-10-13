@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -34,6 +35,7 @@ func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, pr
 	info := EPUBInfo{
 		Series:           title,
 		Position:         formatChapterNumber(chapter.GetNumber()),
+		Identity:         "chapter " + chapterKey(chapter.Chapter),
 		ReadingDirection: s.GetReadingDirection(),
 		Labels:           map[string]string{epubSingleFolder: chapterLabel(chapter.Chapter)},
 	}
@@ -47,7 +49,7 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()
 	files, labels := chapterFolders(chapters, pageFormats(format, s.GetConvertImages()))
-	info := EPUBInfo{Series: title, ReadingDirection: s.GetReadingDirection(), Labels: labels}
+	info := EPUBInfo{Series: title, Identity: "bundle " + memberKeys(chapters), ReadingDirection: s.GetReadingDirection(), Labels: labels}
 	return pack(outputdir, format, s.GetFilenameTemplate(), title, FilenameTemplateParts{
 		Series: title,
 		Number: rng,
@@ -66,7 +68,13 @@ func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*Downlo
 	}
 	format := s.GetFormat()
 	files, labels := chapterFolders(chapters, pageFormats(format, s.GetConvertImages()))
-	info := EPUBInfo{Series: title, Position: strconv.Itoa(volume), ReadingDirection: s.GetReadingDirection(), Labels: labels}
+	info := EPUBInfo{
+		Series:           title,
+		Position:         strconv.Itoa(volume),
+		Identity:         "volume " + strconv.Itoa(volume) + " " + memberKeys(chapters),
+		ReadingDirection: s.GetReadingDirection(),
+		Labels:           labels,
+	}
 	return pack(outputdir, format, VolumeTemplate(s.GetFilenameTemplate()), title,
 		NewVolumeFileTemplateParts(title, volume, listed), files, info, progress)
 }
@@ -83,6 +91,41 @@ func pageFormats(format string, formats grabber.ConvertFormats) grabber.ConvertF
 		forced[f] = true
 	}
 	return forced
+}
+
+// chapterKey tells a chapter's release apart from the others of its number:
+// number, language and the source's chapter ID, or the title when the source
+// gave none. The title isn't stable across --scanlator choices, so the ID wins.
+func chapterKey(chapter *grabber.Chapter) string {
+	release := chapter.ID
+	if release == "" {
+		release = chapter.GetTitle()
+	}
+	return formatChapterNumber(chapter.GetNumber()) + "\x00" + chapter.Language + "\x00" + release
+}
+
+// memberKeys returns the chapterKeys of chapters, sorted by number and then by
+// key, joined by \x01, so the same chapters give the same keys in any order
+func memberKeys(chapters []*DownloadedChapter) string {
+	type member struct {
+		number float64
+		key    string
+	}
+	members := make([]member, len(chapters))
+	for i, c := range chapters {
+		members[i] = member{c.GetNumber(), chapterKey(c.Chapter)}
+	}
+	sort.Slice(members, func(i, j int) bool {
+		if members[i].number != members[j].number {
+			return members[i].number < members[j].number
+		}
+		return members[i].key < members[j].key
+	})
+	keys := make([]string, len(members))
+	for i, m := range members {
+		keys[i] = m.key
+	}
+	return strings.Join(keys, "\x01")
 }
 
 // chapterFolders names the pages of several chapters for one archive, each

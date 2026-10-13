@@ -292,6 +292,7 @@ func (m *Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 					Language:   c.Attributes.TranslatedLanguage,
 					PagesCount: c.Attributes.Pages,
 					Volume:     parseVolume(c.Attributes.Volume),
+					ID:         c.Id,
 				},
 				c.Id,
 			})
@@ -332,6 +333,7 @@ func (m *Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(pcount),
 		Language:   chap.Language,
+		ID:         chap.ID,
 	}
 
 	// create pages

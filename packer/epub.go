@@ -11,9 +11,10 @@ import (
 	"fmt"
 	"hash/crc32"
 	"image"
-	// registers the GIF and PNG decoders with image.DecodeConfig (the JPEG and
-	// WebP ones come with convert.go's imports)
+	// registers the decoders image.DecodeConfig needs for the formats EPUB
+	// shows, so they don't depend on the imports of other files
 	_ "image/gif"
+	_ "image/jpeg"
 	_ "image/png"
 	"os"
 	"path"
@@ -22,6 +23,7 @@ import (
 	"time"
 
 	"github.com/elboletaire/manga-downloader/notice"
+	_ "golang.org/x/image/webp"
 )
 
 // epubSingleFolder is the folder of a single chapter's pages: they have none
@@ -39,6 +41,9 @@ type EPUBInfo struct {
 	Title string
 	// Series is the series' title, for belongs-to-collection
 	Series string
+	// Identity says what the book holds ("chapter", "volume N" or "bundle" plus
+	// chapterKeys), keyed with Series into the identifier; empty falls back to Title
+	Identity string
 	// Position is the book's number in the series: the volume's, or a single
 	// chapter's. Empty leaves group-position out, as bundles have none
 	Position string
@@ -299,9 +304,13 @@ func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped []sk
 	if info.ReadingDirection == "" {
 		info.ReadingDirection = ReadingDirectionRTL
 	}
+	identity := info.Identity
+	if identity == "" {
+		identity = info.Title
+	}
 	book := epubBook{
 		EPUBInfo: info,
-		UUID:     bookUUID(info.Series + "\x00" + info.Title),
+		UUID:     bookUUID(info.Series + "\x00" + identity),
 		Modified: time.Now().UTC().Format("2006-01-02T15:04:05Z"),
 	}
 

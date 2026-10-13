@@ -680,3 +680,415 @@ func TestPackBundleEPUBLabelsRepeatedNumbers(t *testing.T) {
 		t.Errorf("nav = %+v, want the repeated chapter labelled like its folder", nav.Items)
 	}
 }
+
+// readOPF returns the package document of an EPUB's contents
+func readOPF(t *testing.T, contents map[string][]byte) opfPackage {
+	t.Helper()
+	var opf opfPackage
+	mustUnmarshal(t, "content.opf", contents["OEBPS/content.opf"], &opf)
+	return opf
+}
+
+// navEntries returns the table of contents as "label|href" strings
+func navEntries(t *testing.T, contents map[string][]byte) []string {
+	t.Helper()
+	var nav struct {
+		Items []struct {
+			Href string `xml:"href,attr"`
+			Text string `xml:",chardata"`
+		} `xml:"body>nav>ol>li>a"`
+	}
+	mustUnmarshal(t, "nav.xhtml", contents["OEBPS/nav.xhtml"], &nav)
+	var entries []string
+	for _, item := range nav.Items {
+		entries = append(entries, item.Text+"|"+item.Href)
+	}
+	return entries
+}
+
+// bookIdentifier returns the dc:identifier of the EPUB at path
+func bookIdentifier(t *testing.T, dir, name string) string {
+	t.Helper()
+	_, contents := readEPUB(t, filepath.Join(dir, name))
+	return readOPF(t, contents).Metadata.Identifier
+}
+
+func TestEPUBIdentifierDiffersForSameTitle(t *testing.T) {
+	// a template without the chapter's number gives two books the same file
+	// name, which the identifier must still tell apart
+	site := &fakeSite{title: "Test Series", template: "{{.Series}}", format: FormatEPUB}
+	chapter := func(number float64) *DownloadedChapter {
+		return &DownloadedChapter{
+			Chapter: &grabber.Chapter{Number: number, Title: "Start"},
+			Files:   []*downloader.File{{Data: pngBytes(t, gradientImage(4, 4))}},
+		}
+	}
+
+	first, second := t.TempDir(), t.TempDir()
+	name1, err := PackSingle(first, site, chapter(1), func(page, progress int) {})
+	if err != nil {
+		t.Fatalf("PackSingle: %v", err)
+	}
+	name2, err := PackSingle(second, site, chapter(2), func(page, progress int) {})
+	if err != nil {
+		t.Fatalf("PackSingle: %v", err)
+	}
+	if name1 != name2 {
+		t.Fatalf("file names %q and %q differ, the test needs them to match", name1, name2)
+	}
+	if bookIdentifier(t, first, name1) == bookIdentifier(t, second, name2) {
+		t.Error("two different chapters with the same file name share an identifier")
+	}
+}
+
+func TestEPUBIdentifierStableAcrossRepacks(t *testing.T) {
+	site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault, format: FormatEPUB}
+	chapter := &DownloadedChapter{
+		Chapter: &grabber.Chapter{Number: 5, Title: "Start"},
+		Files:   []*downloader.File{{Data: pngBytes(t, gradientImage(4, 4))}},
+	}
+
+	// packed twice into the same folder, the second copy is named with a
+	// version suffix: the names differ, the books don't
+	dir := t.TempDir()
+	name1, err := PackSingle(dir, site, chapter, func(page, progress int) {})
+	if err != nil {
+		t.Fatalf("PackSingle: %v", err)
+	}
+	name2, err := PackSingle(dir, site, chapter, func(page, progress int) {})
+	if err != nil {
+		t.Fatalf("PackSingle: %v", err)
+	}
+	if name1 == name2 {
+		t.Fatalf("both copies are named %q, the test needs the second to get a suffix", name1)
+	}
+	if got, want := bookIdentifier(t, dir, name2), bookIdentifier(t, dir, name1); got != want {
+		t.Errorf("repacking the same chapter changed its identifier: %q, want %q", got, want)
+	}
+}
+
+func TestArchiveEPUBIdentifierFallsBackToTitle(t *testing.T) {
+	// without an Identity the identifier is the series and title, as before
+	// Identity existed, so direct callers of a series don't share one
+	first, second, third := t.TempDir(), t.TempDir(), t.TempDir()
+	packEPUB := func(dir string, title string) string {
+		path := filepath.Join(dir, "book.epub")
+		if err := ArchiveEPUB(path, EPUBInfo{Series: "Series", Title: title}, epubBundleFiles(t), func(page, progress int) {}); err != nil {
+			t.Fatalf("ArchiveEPUB: %v", err)
+		}
+		return bookIdentifier(t, dir, "book.epub")
+	}
+	a := packEPUB(first, "Book A")
+	if again := packEPUB(second, "Book A"); again != a {
+		t.Errorf("the same title gave %q and %q", a, again)
+	}
+	if b := packEPUB(third, "Book B"); b == a {
+		t.Errorf("different titles in one series share the identifier %q", a)
+	}
+}
+
+func TestEPUBIdentifierTellsKindsApart(t *testing.T) {
+	// chapter 5, volume 5 and the bundle of chapter 5 are three books
+	site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault, format: FormatEPUB}
+	chapters := []*DownloadedChapter{{
+		Chapter: &grabber.Chapter{Number: 5, Title: "Start"},
+		Files:   []*downloader.File{{Data: pngBytes(t, gradientImage(4, 4))}},
+	}}
+	progress := func(page, progress int) {}
+
+	dirs := map[string]string{"chapter": t.TempDir(), "volume": t.TempDir(), "bundle": t.TempDir()}
+	chapterName, err := PackSingle(dirs["chapter"], site, chapters[0], progress)
+	if err != nil {
+		t.Fatalf("PackSingle: %v", err)
+	}
+	volumeName, err := PackVolume(dirs["volume"], site, 5, chapters, progress)
+	if err != nil {
+		t.Fatalf("PackVolume: %v", err)
+	}
+	bundleName, err := PackBundle(dirs["bundle"], site, chapters, "5", progress)
+	if err != nil {
+		t.Fatalf("PackBundle: %v", err)
+	}
+
+	ids := map[string]string{
+		"chapter": bookIdentifier(t, dirs["chapter"], chapterName),
+		"volume":  bookIdentifier(t, dirs["volume"], volumeName),
+		"bundle":  bookIdentifier(t, dirs["bundle"], bundleName),
+	}
+	if ids["chapter"] == ids["volume"] {
+		t.Errorf("chapter 5 and volume 5 share the identifier %q", ids["chapter"])
+	}
+	if ids["chapter"] == ids["bundle"] {
+		t.Errorf("chapter 5 and its bundle share the identifier %q", ids["chapter"])
+	}
+	if ids["volume"] == ids["bundle"] {
+		t.Errorf("volume 5 and its bundle share the identifier %q", ids["volume"])
+	}
+}
+
+func TestPackVolumeEPUB(t *testing.T) {
+	site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault, format: FormatEPUB, direction: ReadingDirectionLTR}
+	chapters := []*DownloadedChapter{
+		{
+			Chapter: &grabber.Chapter{Number: 1, Title: "Start"},
+			Files: []*downloader.File{
+				{Data: pngBytes(t, gradientImage(8, 12))},
+				{Data: jpegBytes(t, gradientImage(6, 10))},
+			},
+		},
+		{
+			Chapter: &grabber.Chapter{Number: 2, Title: "2"},
+			Files:   []*downloader.File{{Data: pngBytes(t, gradientImage(6, 10))}},
+		},
+	}
+
+	dir := t.TempDir()
+	name, err := PackVolume(dir, site, 2, chapters, func(page, progress int) {})
+	if err != nil {
+		t.Fatalf("PackVolume: %v", err)
+	}
+	if name != "Test Series Vol. 02.epub" {
+		t.Errorf("name = %q, want the volume's name", name)
+	}
+
+	_, contents := readEPUB(t, filepath.Join(dir, name))
+	opf := readOPF(t, contents)
+	if opf.Metadata.Title != "Test Series Vol. 02" {
+		t.Errorf("title = %q, want the file name", opf.Metadata.Title)
+	}
+	if got := metaValue(opf.Metadata.Metas, "belongs-to-collection"); got != "Test Series" {
+		t.Errorf("belongs-to-collection = %q, want the series", got)
+	}
+	if got := metaValue(opf.Metadata.Metas, "group-position"); got != "2" {
+		t.Errorf("group-position = %q, want the volume number 2", got)
+	}
+	if opf.Spine.Direction != ReadingDirectionLTR {
+		t.Errorf("page-progression-direction = %q, want ltr", opf.Spine.Direction)
+	}
+
+	// one table of contents entry per chapter, each at its first page
+	wantNav := []string{"Chapter 1 - Start|xhtml/0001.xhtml", "Chapter 2|xhtml/0003.xhtml"}
+	if got := navEntries(t, contents); !reflect.DeepEqual(got, wantNav) {
+		t.Errorf("nav = %v, want %v", got, wantNav)
+	}
+}
+
+func TestPackSingleEPUB(t *testing.T) {
+	// no reading direction set means right to left
+	site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault, format: FormatEPUB}
+	chapter := &DownloadedChapter{
+		Chapter: &grabber.Chapter{Number: 10.5, Title: "Final Choice"},
+		Files: []*downloader.File{
+			{Data: pngBytes(t, gradientImage(8, 12))},
+			{Data: jpegBytes(t, gradientImage(6, 10))},
+		},
+	}
+
+	dir := t.TempDir()
+	name, err := PackSingle(dir, site, chapter, func(page, progress int) {})
+	if err != nil {
+		t.Fatalf("PackSingle: %v", err)
+	}
+	if name != "Test Series 10.5 - Final Choice.epub" {
+		t.Errorf("name = %q", name)
+	}
+
+	_, contents := readEPUB(t, filepath.Join(dir, name))
+	opf := readOPF(t, contents)
+	if got := metaValue(opf.Metadata.Metas, "group-position"); got != "10.5" {
+		t.Errorf("group-position = %q, want 10.5", got)
+	}
+	if opf.Spine.Direction != ReadingDirectionRTL {
+		t.Errorf("page-progression-direction = %q, want rtl", opf.Spine.Direction)
+	}
+
+	// a single chapter's pages have no folder, so its one entry is the chapter's label
+	wantNav := []string{"Chapter 10.5 - Final Choice|xhtml/0001.xhtml"}
+	if got := navEntries(t, contents); !reflect.DeepEqual(got, wantNav) {
+		t.Errorf("nav = %v, want %v", got, wantNav)
+	}
+	for _, want := range []string{"OEBPS/images/0001.png", "OEBPS/images/0002.jpg"} {
+		if _, ok := contents[want]; !ok {
+			t.Errorf("the archive has no %s", want)
+		}
+	}
+}
+
+// editionChapter is a downloaded chapter with a page, for identity tests
+func editionChapter(t *testing.T, number float64, title string) *DownloadedChapter {
+	t.Helper()
+	return &DownloadedChapter{
+		Chapter: &grabber.Chapter{Number: number, Title: title},
+		Files:   []*downloader.File{{Data: pngBytes(t, gradientImage(4, 4))}},
+	}
+}
+
+// identityOf packs with a template that ignores the chapters, so every book gets
+// the same file name, and returns the book's identifier.
+func identityOf(t *testing.T, pack func(dir string, site *fakeSite) (string, error)) string {
+	t.Helper()
+	dir := t.TempDir()
+	site := &fakeSite{title: "Test Series", template: "{{.Series}}", format: FormatEPUB}
+	name, err := pack(dir, site)
+	if err != nil {
+		t.Fatalf("packing: %v", err)
+	}
+	return bookIdentifier(t, dir, name)
+}
+
+func TestEPUBIdentifierBundlePermutation(t *testing.T) {
+	a, b := editionChapter(t, 1, "Start"), editionChapter(t, 2, "Next")
+	forward := identityOf(t, func(dir string, site *fakeSite) (string, error) {
+		return PackBundle(dir, site, []*DownloadedChapter{a, b}, "1-2", func(page, progress int) {})
+	})
+	backward := identityOf(t, func(dir string, site *fakeSite) (string, error) {
+		return PackBundle(dir, site, []*DownloadedChapter{b, a}, "1-2", func(page, progress int) {})
+	})
+	if forward != backward {
+		t.Errorf("the same chapters in another order gave %q, want %q", backward, forward)
+	}
+}
+
+func TestEPUBIdentifierBundleMembership(t *testing.T) {
+	a, b := editionChapter(t, 1, "Start"), editionChapter(t, 2, "Next")
+	both := identityOf(t, func(dir string, site *fakeSite) (string, error) {
+		return PackBundle(dir, site, []*DownloadedChapter{a, b}, "1-2", func(page, progress int) {})
+	})
+	only := identityOf(t, func(dir string, site *fakeSite) (string, error) {
+		return PackBundle(dir, site, []*DownloadedChapter{a}, "1", func(page, progress int) {})
+	})
+	if both == only {
+		t.Error("a bundle of two chapters and a bundle of one share the identifier")
+	}
+}
+
+func TestEPUBIdentifierEditionsDiffer(t *testing.T) {
+	// the same number with another title is another release of it
+	plain := editionChapter(t, 1, "Start")
+	group := editionChapter(t, 1, "Start [Other Group]")
+
+	single := func(c *DownloadedChapter) string {
+		return identityOf(t, func(dir string, site *fakeSite) (string, error) {
+			return PackSingle(dir, site, c, func(page, progress int) {})
+		})
+	}
+	if single(plain) == single(group) {
+		t.Error("two releases of chapter 1 share an identifier as singles")
+	}
+
+	bundle := func(c *DownloadedChapter) string {
+		return identityOf(t, func(dir string, site *fakeSite) (string, error) {
+			return PackBundle(dir, site, []*DownloadedChapter{c}, "1", func(page, progress int) {})
+		})
+	}
+	if bundle(plain) == bundle(group) {
+		t.Error("two releases of chapter 1 share an identifier in a bundle")
+	}
+
+	volume := func(c *DownloadedChapter) string {
+		return identityOf(t, func(dir string, site *fakeSite) (string, error) {
+			return PackVolume(dir, site, 1, []*DownloadedChapter{c}, func(page, progress int) {})
+		})
+	}
+	if volume(plain) == volume(group) {
+		t.Error("two releases of chapter 1 share an identifier in a volume")
+	}
+}
+
+func TestEPUBIdentifierVolumeMembers(t *testing.T) {
+	// the same volume number with other chapters is another volume
+	first := []*DownloadedChapter{editionChapter(t, 1, "A"), editionChapter(t, 2, "B")}
+	second := []*DownloadedChapter{editionChapter(t, 3, "C"), editionChapter(t, 4, "D")}
+	idOf := func(chapters []*DownloadedChapter) string {
+		return identityOf(t, func(dir string, site *fakeSite) (string, error) {
+			return PackVolume(dir, site, 2, chapters, func(page, progress int) {})
+		})
+	}
+	if idOf(first) == idOf(second) {
+		t.Error("volume 2 with other chapters shares the identifier")
+	}
+}
+
+// releaseChapter is chapter 1 with the given source ID and display title
+func releaseChapter(t *testing.T, id, title string) *DownloadedChapter {
+	c := editionChapter(t, 1, title)
+	c.ID = id
+	return c
+}
+
+// identifiersOf packs c as a single, a bundle and a volume
+func identifiersOf(t *testing.T, c *DownloadedChapter) [3]string {
+	t.Helper()
+	progress := func(page, progress int) {}
+	return [3]string{
+		identityOf(t, func(dir string, site *fakeSite) (string, error) { return PackSingle(dir, site, c, progress) }),
+		identityOf(t, func(dir string, site *fakeSite) (string, error) {
+			return PackBundle(dir, site, []*DownloadedChapter{c}, "1", progress)
+		}),
+		identityOf(t, func(dir string, site *fakeSite) (string, error) {
+			return PackVolume(dir, site, 1, []*DownloadedChapter{c}, progress)
+		}),
+	}
+}
+
+func TestEPUBIdentifierSourceID(t *testing.T) {
+	kinds := []string{"single", "bundle", "volume"}
+	a := identifiersOf(t, releaseChapter(t, "id-a", "Same"))
+	b := identifiersOf(t, releaseChapter(t, "id-b", "Same"))
+	tagged := identifiersOf(t, releaseChapter(t, "id-a", "Same [Group]"))
+	for i, kind := range kinds {
+		if a[i] == b[i] {
+			t.Errorf("%s: releases with other IDs and the same title share an identifier", kind)
+		}
+		if a[i] != tagged[i] {
+			t.Errorf("%s: the same ID with another display title changed the identifier", kind)
+		}
+	}
+}
+
+func TestEPUBIdentifierWithoutIDUsesTitle(t *testing.T) {
+	plain := identifiersOf(t, releaseChapter(t, "", "Same"))
+	group := identifiersOf(t, releaseChapter(t, "", "Same [Group]"))
+	again := identifiersOf(t, releaseChapter(t, "", "Same"))
+	for i := range plain {
+		if plain[i] == group[i] {
+			t.Errorf("kind %d: other titles without an ID share an identifier", i)
+		}
+		if plain[i] != again[i] {
+			t.Errorf("kind %d: the same title without an ID changed the identifier", i)
+		}
+	}
+}
+
+func TestChapterKeys(t *testing.T) {
+	ch := func(n float64, lang, id, title string) *DownloadedChapter {
+		return &DownloadedChapter{Chapter: &grabber.Chapter{Number: n, Language: lang, ID: id, Title: title}}
+	}
+	cases := []struct {
+		name     string
+		a, b     []*DownloadedChapter
+		wantSame bool
+	}{
+		{"decimal differs from whole", []*DownloadedChapter{ch(1, "en", "", "T")}, []*DownloadedChapter{ch(1.5, "en", "", "T")}, false},
+		{"decimals 10.5 and 10.50 are one number", []*DownloadedChapter{ch(10.5, "en", "x", "")}, []*DownloadedChapter{ch(10.50, "en", "x", "")}, true},
+		{"duplicates count", []*DownloadedChapter{ch(1, "en", "x", "")}, []*DownloadedChapter{ch(1, "en", "x", ""), ch(1, "en", "x", "")}, false},
+		{"language only", []*DownloadedChapter{ch(1, "en", "x", "")}, []*DownloadedChapter{ch(1, "es", "x", "")}, false},
+		{
+			"same-number permutation",
+			[]*DownloadedChapter{ch(2, "en", "b", ""), ch(1, "en", "z", ""), ch(1, "en", "a", "")},
+			[]*DownloadedChapter{ch(1, "en", "a", ""), ch(1, "en", "z", ""), ch(2, "en", "b", "")},
+			true,
+		},
+		{"ID wins over title", []*DownloadedChapter{ch(1, "en", "x", "A")}, []*DownloadedChapter{ch(1, "en", "x", "B")}, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := memberKeys(c.a) == memberKeys(c.b); got != c.wantSame {
+				t.Errorf("same keys = %v, want %v", got, c.wantSame)
+			}
+		})
+	}
+	if chapterKey(ch(1, "en", "", "T").Chapter) == chapterKey(ch(1, "en", "id", "T").Chapter) {
+		t.Error("a key from the title equals one from an ID")
+	}
+}

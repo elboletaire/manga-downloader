@@ -217,6 +217,13 @@ func TestAtsumaruFetchChaptersAllKeepsDuplicateNumbers(t *testing.T) {
 	if len(ones) != 2 {
 		t.Fatalf("expected chapter 1 from both groups, got %d", len(ones))
 	}
+	// FetchChapter copies the chapter's ID onto what it returns
+	for i, want := range []string{"alpha-id-1", "delta-id-1"} {
+		ac := ones[i].(*AtsumaruChapter)
+		if ac.ID != want || ac.Id != want {
+			t.Errorf("chapter 1 #%d ID = %q, Id = %q, want %q", i, ac.ID, ac.Id, want)
+		}
+	}
 	if ones[0].GetTitle() == ones[1].GetTitle() {
 		t.Errorf("both chapter 1s share the title %q, they'd collide when packed", ones[0].GetTitle())
 	}
