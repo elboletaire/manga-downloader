@@ -163,10 +163,11 @@ type progressModel struct {
 
 	// bundle
 	bundleStatus  string
+	bundleStarted bool // set on BundleStart; until then the counter is blank
 	bundleCurrent int64
 	bundleTotal   int64
-	bundleBar     *progress.Model
-	bundleFailBar *progress.Model
+	bundleBar     *progress.Model // created with the model, empty until BundleStart
+	bundleFailBar *progress.Model // danger-coloured bar, created when Download fails
 }
 
 var _ tea.Model = progressModel{}
@@ -184,8 +185,11 @@ func newProgressModel(seriesTitle, bundleRange string, bundle, showLang, hasDark
 		chapterVolume: make(map[*grabber.Chapter]*core.Volume),
 	}
 	if bundle {
-		// core fetches every chapter to total the pages before BundleStart
+		// core fetches every chapter to total the pages before BundleStart;
+		// the bar is drawn empty meanwhile, so it's made once here
 		m.bundleStatus = "gathering"
+		_, barW, _ := btLayout(m.width)
+		m.bundleBar = m.makeBar(barW)
 	}
 	return m
 }
@@ -285,8 +289,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case bundleStartMsg:
 		m.bundleTotal = msg.total * 2
-		_, barW, _ := btLayout(m.width)
-		m.bundleBar = m.makeBar(barW)
+		m.bundleStarted = true
 		m.bundleStatus = "downloading"
 
 	case chapterStartedMsg:
@@ -440,6 +443,8 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.bundleStatus = "done"
 			if msg.err != nil {
 				m.bundleStatus = "failed"
+				_, barW, _ := btLayout(m.width)
+				m.bundleFailBar = makeDangerBar(barW)
 			}
 		}
 		return m, tea.Quit
@@ -643,36 +648,45 @@ func (m progressModel) bundleTitle() string {
 // "current/total" pages (blank until BundleStart gives the total) and status
 func (m progressModel) renderBundleRow() string {
 	titleW, barW, narrow := btLayout(m.width)
-	if m.bundleBar != nil && m.bundleBar.Width() != barW {
+
+	counter := strings.Repeat(" ", btCounterW)
+	if m.bundleStarted {
+		counter = fmt.Sprintf("%9s", fmt.Sprintf("%d/%d", m.bundleCurrent, m.bundleTotal))
+	}
+	if extra := len(counter) - btCounterW; !narrow && extra > 0 {
+		// a total of 5000+ pages outgrows the column: take the room from the
+		// bar, then the title, so clipRow never cuts the status off
+		take := min(extra, barW-1)
+		barW -= take
+		titleW = max(1, titleW-(extra-take))
+	}
+
+	if m.bundleBar.Width() != barW {
 		m.bundleBar.SetWidth(barW)
 	}
 	title := fixedW(m.bundleTitle(), titleW)
 
 	var barStr string
 	switch {
-	case m.bundleStatus == "failed":
+	case m.bundleFailBar != nil:
 		// Danger-coloured bar at actual progress reached, never 100%.
-		if m.bundleFailBar == nil {
-			m.bundleFailBar = makeDangerBar(barW)
-		} else if m.bundleFailBar.Width() != barW {
+		if m.bundleFailBar.Width() != barW {
 			m.bundleFailBar.SetWidth(barW)
 		}
 		barStr = m.bundleFailBar.ViewAs(safePercent(m.bundleCurrent, m.bundleTotal))
-	case m.bundleBar == nil:
-		// an empty bar like the real one, until BundleStart creates it
-		barStr = m.makeBar(barW).ViewAs(0)
+	case m.done && m.bundleCurrent < m.bundleTotal:
+		// core packs the bundle without the chapters that failed, so it's
+		// done but short of the total: show how far it got, not a full bar
+		barStr = m.bundleBar.ViewAs(safePercent(m.bundleCurrent, m.bundleTotal))
 	case m.done:
 		barStr = m.bundleBar.ViewAs(1.0)
 	default:
+		// empty until BundleStart, as nothing sets its percent before
 		barStr = m.bundleBar.View()
 	}
 
 	if narrow {
 		return clipRow(title+" "+barStr, m.width)
-	}
-	counter := strings.Repeat(" ", btCounterW)
-	if m.bundleTotal > 0 {
-		counter = fmt.Sprintf("%9s", fmt.Sprintf("%d/%d", m.bundleCurrent, m.bundleTotal))
 	}
 	row := title + " " + barStr + " " + counter + " " + m.statusStyle(m.bundleStatus)
 	return clipRow(row, m.width)

@@ -265,6 +265,10 @@ func Run(cmd *cobra.Command, args []string) {
 		red(res.err.Error())
 		exit(1)
 	}
+	if runErr != nil {
+		// unless the bars never showed: then say it like the non-TTY path
+		fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(res.file))
+	}
 }
 
 // exitSettingError prints a setting that failed validation in the words each

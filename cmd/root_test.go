@@ -146,6 +146,68 @@ func TestBundleRowEndsWithStatus(t *testing.T) {
 	}
 }
 
+// core drops a chapter that fails to download and still packs the bundle, so
+// it ends done but short of its total: the bar shows how far it got, not full.
+func TestBundleRowDoneShortOfTotal(t *testing.T) {
+	m := newProgressModel("Series", "", true, false, true)
+	m.width = 80
+	msgs := []tea.Msg{bundleStartMsg{total: 10}}
+	for range 5 {
+		msgs = append(msgs, pageSuccessMsg{})
+	}
+	msgs = append(msgs, bundlePackingMsg{}, bundleArchivedMsg{n: 5}, downloadDoneMsg{})
+	for _, msg := range msgs {
+		next, _ := m.Update(msg)
+		m = next.(progressModel)
+	}
+	row := m.renderBundleRow()
+	if !strings.Contains(row, m.bundleBar.ViewAs(0.5)) {
+		t.Errorf("row %q doesn't draw the bar at 10/20", row)
+	}
+	if strings.Contains(row, m.bundleBar.ViewAs(1.0)) {
+		t.Errorf("row %q draws a full bar for a bundle short of its total", row)
+	}
+	if plain := ansi.Strip(row); !strings.Contains(plain, "10/20") || !strings.HasSuffix(strings.TrimSpace(plain), "done") {
+		t.Errorf("row %q, want 10/20 and done", plain)
+	}
+}
+
+// A failed bundle keeps its danger bar on the model, so a resize reaches it,
+// instead of making a new one every frame.
+func TestBundleFailBarPersists(t *testing.T) {
+	m := newProgressModel("Series", "", true, false, true)
+	m.width = 80
+	for _, msg := range []tea.Msg{bundleStartMsg{total: 10}, pageSuccessMsg{}, downloadDoneMsg{err: fmt.Errorf("disk full")}} {
+		next, _ := m.Update(msg)
+		m = next.(progressModel)
+	}
+	if m.bundleFailBar == nil {
+		t.Fatal("bundleFailBar is nil after a failed download")
+	}
+	failBar := m.bundleFailBar
+	next, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
+	m = next.(progressModel)
+	_, barW, _ := btLayout(120)
+	if m.bundleFailBar != failBar || failBar.Width() != barW {
+		t.Errorf("fail bar not resized in place: width %d, want %d", failBar.Width(), barW)
+	}
+	if row := m.renderBundleRow(); !strings.Contains(row, failBar.ViewAs(0.05)) {
+		t.Errorf("row %q doesn't draw the fail bar at 1/20", row)
+	}
+}
+
+// BundleStart(0), when every chapter failed to fetch, still shows its 0/0:
+// only the gathering row leaves the counter blank.
+func TestBundleCounterAfterEmptyStart(t *testing.T) {
+	m := newProgressModel("Series", "", true, false, true)
+	m.width = 80
+	next, _ := m.Update(bundleStartMsg{total: 0})
+	m = next.(progressModel)
+	if row := ansi.Strip(m.renderBundleRow()); !strings.Contains(row, "0/0") {
+		t.Errorf("row %q has no 0/0 counter after BundleStart(0)", row)
+	}
+}
+
 // A bundle run ends its counter exactly at the total: each page counts once as
 // it downloads and once as it's archived. Downloaded used to add the chapter's
 // pages a third time, ending at 150/100.
@@ -368,6 +430,39 @@ func TestViewWidths(t *testing.T) {
 			}
 			row := m.renderBundleRow()
 			checkRowWidth(t, row, w, "bundle")
+		})
+
+		t.Run("bundle_gathering", func(t *testing.T) {
+			m := newProgressModel("Series", "1-5", true, false, true)
+			m.width = w
+			checkRowWidth(t, m.renderBundleRow(), w, "bundle_gathering")
+		})
+
+		t.Run("bundle_failed", func(t *testing.T) {
+			m := newProgressModel("Series", "1-5", true, false, true)
+			m.width = w
+			for _, msg := range []tea.Msg{bundleStartMsg{total: 50}, pageSuccessMsg{}, downloadDoneMsg{err: fmt.Errorf("disk full")}} {
+				next, _ := m.Update(msg)
+				m = next.(progressModel)
+			}
+			checkRowWidth(t, m.renderBundleRow(), w, "bundle_failed")
+		})
+
+		// "12345/24690" outgrows the 9-cell counter; the status must survive
+		t.Run("bundle_large", func(t *testing.T) {
+			m := newProgressModel(longTitle, "1-500", true, false, true)
+			m.width = w
+			next, _ := m.Update(bundleStartMsg{total: 12345})
+			m = next.(progressModel)
+			m.bundleCurrent = 12345
+			row := m.renderBundleRow()
+			checkRowWidth(t, row, w, "bundle_large")
+			if _, _, narrow := btLayout(w); !narrow {
+				plain := ansi.Strip(row)
+				if !strings.Contains(plain, "12345/24690") || !strings.HasSuffix(strings.TrimSpace(plain), "downloading") {
+					t.Errorf("bundle_large at width=%d: row %q lost its counter or status", w, plain)
+				}
+			}
 		})
 	}
 }
