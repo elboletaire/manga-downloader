@@ -82,7 +82,7 @@
     "binaryText": "Descarrega l'arxiu comprimit per al teu sistema des de <a href=\"#downloads\">les descàrregues</a>, descomprimeix-lo i executa el programa:",
     "binaryFoot": "Mou-lo a una carpeta del teu <code>PATH</code>, com ara <code>/usr/local/bin</code>, per executar-lo des de qualsevol lloc.",
     "brewText": "A macOS i Linux, des del tap <code>elboletaire/tap</code>. <code>brew upgrade</code> el manté al dia.",
-    "brewFoot": "Això només instal·la l'eina de línia d'ordres. A macOS, afegeix <code>--cask</code> per instal·lar l'aplicació d'escriptori.",
+    "brewFoot": "Això només instal·la l'eina de línia d'ordres. A macOS, instal·la l'aplicació d'escriptori amb <code>brew install --cask elboletaire/tap/manga-downloader-app</code>.",
     "dockerText": "Els fitxers es desen a la carpeta muntada. Fes servir la imatge <code>:browser</code> per als llocs marcats com a <span class=\"site-badge\">navegador</span>.",
     "goText": "Si tens Go instal·lat, compila'l des del codi font amb una sola ordre:",
     "useTitle": "Fes-lo servir",

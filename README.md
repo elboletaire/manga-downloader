@@ -82,12 +82,18 @@ the [releases page][releases]:
   [Homebrew][homebrew], which also puts `manga-downloader-gui` on your `PATH`:
 
   ~~~bash
-  brew install --cask elboletaire/tap/manga-downloader
+  brew install --cask elboletaire/tap/manga-downloader-app
   ~~~
 
-  Mind the `--cask`: without it, Homebrew installs the
-  [command line tool](#homebrew) instead, which shares the name. Each installs on
-  its own; install both if you want `manga-downloader ui` too.
+  This installs only the app. For `manga-downloader ui` too, install it together
+  with the [command line tool](#homebrew):
+
+  ~~~bash
+  brew install elboletaire/tap/manga-downloader elboletaire/tap/manga-downloader-app
+  ~~~
+
+  If you installed the app under its old name, `manga-downloader`, run
+  `brew uninstall --cask manga-downloader` first.
 
 - **Linux**: `manga-downloader-gui-<tag>-linux-amd64.tar.gz`, or
   `-linux-arm64.tar.gz`. Extract it and run `manga-downloader-gui`. It needs
@@ -130,11 +136,11 @@ Homebrew doesn't quarantine the command line tool, so there's no Gatekeeper
 step on macOS. `brew upgrade manga-downloader` updates it.
 
 This installs only the command line tool. On macOS, the
-[desktop app](#desktop-app) is a cask with the same name. Install it as well to
-get `manga-downloader ui` working:
+[desktop app](#desktop-app) is a separate cask, `manga-downloader-app`. Install
+it as well to get `manga-downloader ui` working, or both at once:
 
 ~~~bash
-brew install --cask elboletaire/tap/manga-downloader
+brew install elboletaire/tap/manga-downloader elboletaire/tap/manga-downloader-app
 ~~~
 
 #### Prebuilt binary

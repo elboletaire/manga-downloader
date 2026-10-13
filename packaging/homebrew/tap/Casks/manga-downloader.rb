@@ -12,6 +12,15 @@ cask "manga-downloader" do
     strategy :github_latest
   end
 
+  # The old name of manga-downloader-app, kept so that installs of it hear about
+  # the rename. Delete it after a few releases.
+  deprecate! date:             "2026-10-14",
+             because:          "is now called manga-downloader-app",
+             replacement_cask: "manga-downloader-app"
+
+  conflicts_with cask: "elboletaire/tap/manga-downloader-app"
+  depends_on :macos
+
   app "Manga Downloader.app"
   # `manga-downloader ui` looks for manga-downloader-gui next to the CLI or on
   # PATH, so link the app's executable there.
@@ -29,6 +38,9 @@ cask "manga-downloader" do
   ]
 
   caveats <<~EOS
+    This cask is now called manga-downloader-app. To switch, run:
+      brew uninstall --cask manga-downloader && brew install --cask elboletaire/tap/manga-downloader-app
+
     Manga Downloader is not notarized yet, so macOS blocks it the first time it opens.
     Go to System Settings > Privacy & Security and click "Open Anyway".
   EOS
