@@ -19,7 +19,7 @@ read -r id _ X Y _ _ < <("$HERE/bin/winall" $pid | awk '$2==0')
 # the Language select, in points from the window's top-left (title bar
 # included): its centre in the 2x capture, less crop.py's 85/56 px margin, /2
 focus $pid
-cliclick "c:$((X + 444)),$((Y + 114))"
+cliclick "c:$((X + 265)),$((Y + 114))"
 sleep 1.2
 screencapture -x -l "$id" "$1"
 stop $pid

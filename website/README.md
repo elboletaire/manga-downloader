@@ -64,14 +64,15 @@ every browser the site cares about reads, so there are no PNG fallbacks.
 The files are converted offline and committed, so the build needs no image tools.
 The crop script is [`build/crop-screenshots.sh`](build/crop-screenshots.sh). The
 geometry is `WxH+X+Y` on the 2000x1390 original, with the window's top-left at
-(85,56), so `03-language-selector-*.png` crops to `820x960+1095+56`, the
-right-hand part of the window with the group dropdown open. The
+(85,56), so `03-language-selector-*.png` crops to `740x960+85+56`, the
+left-hand part of the window with the Language dropdown open, stopping short of
+the range box. The
 `finished-run` crop starts at x=1245, between the chapter list and the Activity
 panel, so no edge of the list shows in it:
 
 | Crop                | Original                                | Geometry            |
 | ------------------- | --------------------------------------- | ------------------- |
-| `language-selector` | `03-language-selector-{light,dark}.png` | `820x960+1095+56`   |
+| `language-selector` | `03-language-selector-{light,dark}.png` | `740x960+85+56`     |
 | `chapter-list`      | `04-downloading-{light,dark}.png`       | `1150x885+100+390`  |
 | `finished-run`      | `05-done-{light,dark}.png`              | `670x830+1245+390`  |
 
