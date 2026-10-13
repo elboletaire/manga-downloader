@@ -365,7 +365,7 @@ Some sites, such as MangaDex, list each chapter once per language. Use
 `--language` to download only one of them:
 
 ~~~bash
-manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece 1-10
+manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f 1-10
 ~~~
 
 On sites that list several languages, `--language all` downloads every one of them.
