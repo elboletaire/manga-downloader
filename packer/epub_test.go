@@ -618,3 +618,62 @@ func TestPackBundleEPUBLabelsChapters(t *testing.T) {
 		t.Errorf("nav = %+v, want the labels of both chapters", nav.Items)
 	}
 }
+
+func TestPackBundleEPUBRetryReportsOnce(t *testing.T) {
+	warnings := captureWarnings(t)
+	site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault, format: FormatEPUB}
+	chapters := []*DownloadedChapter{
+		{
+			Chapter: &grabber.Chapter{Number: 1},
+			Files: []*downloader.File{
+				{Data: pngBytes(t, gradientImage(4, 4))},
+				{Data: []byte("not an image")},
+			},
+		},
+	}
+
+	// the first name is taken, so pack retries with a version suffix
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "Test Series 1 - bundle.epub"), []byte("taken"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	pages := 0
+	filename, err := PackBundle(dir, site, chapters, "1", func(page, _ int) { pages += page })
+	if err != nil {
+		t.Fatalf("PackBundle: %v", err)
+	}
+	if filename != "Test Series 1 - bundle v2.epub" {
+		t.Errorf("filename = %q, want the retried name", filename)
+	}
+	if pages != 2 {
+		t.Errorf("progress reported %d pages, want the 2 files", pages)
+	}
+	if len(*warnings) != 1 {
+		t.Errorf("got %d warnings across the retry, want 1: %q", len(*warnings), *warnings)
+	}
+}
+
+func TestPackBundleEPUBLabelsRepeatedNumbers(t *testing.T) {
+	site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault, format: FormatEPUB}
+	chapters := []*DownloadedChapter{
+		{Chapter: &grabber.Chapter{Number: 1, Title: "Start"}, Files: []*downloader.File{{Data: pngBytes(t, gradientImage(4, 4))}}},
+		{Chapter: &grabber.Chapter{Number: 1, Title: "Start"}, Files: []*downloader.File{{Data: pngBytes(t, gradientImage(4, 4))}}},
+	}
+
+	dir := t.TempDir()
+	filename, err := PackBundle(dir, site, chapters, "1", func(page, progress int) {})
+	if err != nil {
+		t.Fatalf("PackBundle: %v", err)
+	}
+	_, contents := readEPUB(t, filepath.Join(dir, filename))
+
+	var nav struct {
+		Items []struct {
+			Text string `xml:",chardata"`
+		} `xml:"body>nav>ol>li>a"`
+	}
+	mustUnmarshal(t, "nav.xhtml", contents["OEBPS/nav.xhtml"], &nav)
+	if len(nav.Items) != 2 || nav.Items[0].Text != "Chapter 1 - Start" || nav.Items[1].Text != "Chapter 1 - Start (2)" {
+		t.Errorf("nav = %+v, want the repeated chapter labelled like its folder", nav.Items)
+	}
+}

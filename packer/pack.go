@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/elboletaire/manga-downloader/downloader"
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -104,7 +105,8 @@ func chapterFolders(chapters []*DownloadedChapter, formats grabber.ConvertFormat
 			folder = fmt.Sprintf("%s (%d)", base, n+1)
 		}
 		usedFolders[base]++
-		labels[folder] = chapterLabel(chapter.Chapter)
+		// a repeated number gets the folder's suffix too, so the labels match the folders
+		labels[folder] = chapterLabel(chapter.Chapter) + strings.TrimPrefix(folder, base)
 
 		for _, page := range namePages(chapter.Files, formats) {
 			files = append(files, File{

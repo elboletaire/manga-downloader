@@ -211,19 +211,26 @@ func ArchiveEPUB(filename string, info EPUBInfo, files []File, progress func(pag
 	// can't show leaves no half written book behind
 	entries, skipped, err := epubEntries(info, files)
 	if err != nil {
+		warnSkipped(skipped)
 		return err
-	}
-	// a skipped page still counts towards the archive's progress, which is
-	// set from the pages downloaded, not the pages that made it into the book
-	for range skipped {
-		progress(1, 0)
 	}
 
 	buff, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
+		// pack retries an existing name, which would repeat the warnings
+		if !os.IsExist(err) {
+			warnSkipped(skipped)
+		}
 		return err
 	}
 	defer buff.Close()
+	// reported once the book is ours, not on every retry of an existing name.
+	// A skipped page still counts towards the archive's progress, which is set
+	// from the pages downloaded, not the pages that made it into the book
+	warnSkipped(skipped)
+	for range skipped {
+		progress(1, 0)
+	}
 	w := zip.NewWriter(buff)
 
 	// the mimetype entry has to come first, and stored uncompressed
@@ -259,10 +266,23 @@ type epubEntry struct {
 	Image bool
 }
 
+// skippedPage is a page left out of an EPUB, and why
+type skippedPage struct {
+	name   string
+	reason string
+}
+
+// warnSkipped warns about each page left out of an EPUB
+func warnSkipped(skipped []skippedPage) {
+	for _, p := range skipped {
+		notice.Warn("- warning: page %s: %s, leaving it out", p.name, p.reason)
+	}
+}
+
 // epubEntries renders the entries of the EPUB after mimetype: the container,
 // the package and navigation files, and each page's XHTML and image. Pages
 // the reader can't show are left out with a warning, and counted in skipped.
-func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped int, err error) {
+func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped []skippedPage, err error) {
 	if info.ReadingDirection == "" {
 		info.ReadingDirection = ReadingDirectionRTL
 	}
@@ -278,14 +298,12 @@ func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped int,
 		ext := strings.TrimPrefix(path.Ext(file.Name), ".")
 		mediaType, ok := epubMediaTypes[ext]
 		if !ok {
-			notice.Warn("- warning: page %s: EPUB readers can't show %s, leaving it out", file.Name, ext)
-			skipped++
+			skipped = append(skipped, skippedPage{file.Name, fmt.Sprintf("EPUB readers can't show %s", ext)})
 			continue
 		}
 		cfg, _, err := image.DecodeConfig(bytes.NewReader(file.Data))
 		if err != nil {
-			notice.Warn("- warning: page %s: reading its size: %s, leaving it out", file.Name, err)
-			skipped++
+			skipped = append(skipped, skippedPage{file.Name, fmt.Sprintf("reading its size: %s", err)})
 			continue
 		}
 
@@ -316,7 +334,7 @@ func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped int,
 
 		xhtml, err := render(epubPageTemplate, page)
 		if err != nil {
-			return nil, 0, err
+			return nil, skipped, err
 		}
 		pageEntries = append(pageEntries,
 			epubEntry{Name: "OEBPS/xhtml/" + page.Num + ".xhtml", Data: xhtml},
@@ -338,7 +356,7 @@ func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped int,
 	} {
 		data, err := render(t.tmpl, book)
 		if err != nil {
-			return nil, 0, err
+			return nil, skipped, err
 		}
 		entries = append(entries, epubEntry{Name: t.name, Data: data})
 	}
