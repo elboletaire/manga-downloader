@@ -15,7 +15,7 @@ README is shared with Fastlight and is edited in the tap by hand.
 | Path | What |
 |---|---|
 | `tap/Formula/manga-downloader.rb` | The CLI formula. `version`, `url` and `sha256` name the last release this copy was checked against; the release workflow sets them in the tap. |
-| `tap/Casks/manga-downloader.rb` | The desktop app cask, same idea. Its `binary` stanza puts `manga-downloader-gui` on `PATH`, where `manga-downloader ui` looks for it, and it depends on the formula, since `ui` is the CLI's. |
+| `tap/Casks/manga-downloader.rb` | The desktop app cask, same idea. Its `binary` stanza puts `manga-downloader-gui` on `PATH`, where `manga-downloader ui` looks for it. It doesn't depend on the formula: Homebrew 7 trusts only the cask being installed, so the formula's build would fail, and the app runs without the CLI anyway. |
 | `../../scripts/update-homebrew.sh` | Sets `version` and every `sha256` in a formula or cask, from the release assets in a directory. |
 
 ## Why a tap, not homebrew-core or homebrew/cask
