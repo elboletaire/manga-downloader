@@ -286,7 +286,7 @@ Open the app and follow these steps:
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/03-language-selector-dark.png">
-     <img alt="The scanlation group selector open, listing the groups the series offers" src="assets/screenshots/03-language-selector-light.png">
+     <img alt="The language selector open, with Catalan selected" src="assets/screenshots/03-language-selector-light.png">
    </picture>
 
 4. **Set the options** in the *Options* tab: where the files go, the format

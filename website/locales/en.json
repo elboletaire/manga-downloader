@@ -55,7 +55,7 @@
     "chapterListAlt": "The chapter list during a run: the selected chapters, locked while they download.",
     "languageTitle": "Your language, your group",
     "languageText": "When a series comes in several languages or from several scanlation groups, the app lists the ones it actually offers, so you pick from real options instead of guessing codes.",
-    "languageAlt": "The scanlation group dropdown open, with the group the series lists the most chapters from selected.",
+    "languageAlt": "The language dropdown open, with Catalan selected.",
     "watchTitle": "Watch it happen",
     "watchText": "Live progress for every chapter, with the files landing in the folder you picked through your system's own folder dialog. When the last one's done, so are you.",
     "themeTitle": "Light or dark",

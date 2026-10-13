@@ -55,7 +55,7 @@
     "chapterListAlt": "La llista de capítols durant una descàrrega: els capítols seleccionats, bloquejats mentre es descarreguen.",
     "languageTitle": "La teva llengua, el teu grup",
     "languageText": "Quan una sèrie està en diverses llengües o la tradueixen diversos grups de scanlation, l'aplicació mostra només les opcions que ofereix realment, i així tries entre opcions reals en comptes d'endevinar codis.",
-    "languageAlt": "El desplegable de grup de scanlation obert, amb el grup del qual la sèrie té més capítols seleccionat.",
+    "languageAlt": "El desplegable d'idioma obert, amb català seleccionat.",
     "watchTitle": "Mira-ho en directe",
     "watchText": "Progrés en directe de cada capítol, mentre els fitxers van arribant a la carpeta que has triat amb el selector de carpetes del sistema. Quan acaba l'últim, ja ho tens tot.",
     "themeTitle": "Clar o fosc",
