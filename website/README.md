@@ -42,7 +42,7 @@ pnpm preview   # serve dist/
   release if one was published since the build.
 - **Brand assets**: copied from the approved brand kit into `src/assets/brand/`
   and `public/` (favicons, `opengraph.png`). Don't redraw them.
-- **Terminal GIFs**: referenced from `demos/` on `master` via raw GitHub URLs,
+- **Terminal GIFs**: referenced from `assets/demos/` on `master` via raw GitHub URLs,
   lazy-loaded.
 
 ## Screenshots

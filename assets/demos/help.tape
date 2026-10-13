@@ -1,6 +1,6 @@
-# Recreates demos/help.gif — run from the repo root: vhs demos/help.tape
+# Recreates assets/demos/help.gif — run from the repo root: vhs assets/demos/help.tape
 # Requires the manga-downloader binary built at the repo root (make build).
-Output demos/help.gif
+Output assets/demos/help.gif
 
 Set Shell "bash"
 Set FontSize 14

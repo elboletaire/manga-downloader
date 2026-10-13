@@ -1,7 +1,7 @@
 manga-downloader
 manga-downloader.exe
 *.cbz
-demos/*.yml
+assets/demos/*.yml
 .worktrees
 .DS_Store
 # agent scratch dirs (never commit)

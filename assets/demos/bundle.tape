@@ -1,9 +1,9 @@
-# Recreates demos/bundle.gif — run from the repo root: vhs demos/bundle.tape
+# Recreates assets/demos/bundle.gif — run from the repo root: vhs assets/demos/bundle.tape
 # Requires the manga-downloader binary built at the repo root (make build).
 # The old gif used MangaDex + --language es, but all Spanish One Piece chapters
 # there are external stubs now (0 pages), so this uses inmanga like the README's
 # bundling example, with a recent range (early chapters 404 on inmanga's CDN).
-Output demos/bundle.gif
+Output assets/demos/bundle.gif
 
 Set Shell "bash"
 Set FontSize 14
