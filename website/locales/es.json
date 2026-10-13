@@ -60,7 +60,7 @@
     "watchText": "Progreso en directo de cada capítulo, mientras los archivos van llegando a la carpeta que elegiste con el selector de carpetas de tu sistema. Cuando acaba el último, ya lo tienes todo.",
     "themeTitle": "Claro u oscuro",
     "themeText": "La app sigue el tema de tu sistema, así que tus sesiones de lectura nocturnas no te cansan la vista.",
-    "finishedAlt": "Una descarga terminada en el panel Activity: diez capítulos guardados en la carpeta de destino, uno fallido con su error y uno omitido."
+    "finishedAlt": "Una descarga terminada en el panel Activity: los doce capítulos guardados en la carpeta de destino, con un botón para abrirla."
   },
   "downloads": {
     "title": "Todas las descargas",

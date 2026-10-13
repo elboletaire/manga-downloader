@@ -60,7 +60,7 @@
     "watchText": "Live progress for every chapter, with the files landing in the folder you picked through your system's own folder dialog. When the last one's done, so are you.",
     "themeTitle": "Light or dark",
     "themeText": "The app follows your system theme, so late-night reading sessions stay easy on the eyes.",
-    "finishedAlt": "A finished run in the Activity panel: ten chapters saved to the output folder, one failed with its error, and one skipped."
+    "finishedAlt": "A finished run in the Activity panel: all twelve chapters saved to the output folder, with a button to open it."
   },
   "downloads": {
     "title": "All downloads",

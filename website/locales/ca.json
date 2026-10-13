@@ -60,7 +60,7 @@
     "watchText": "Progrés en directe de cada capítol, mentre els fitxers van arribant a la carpeta que has triat amb el selector de carpetes del sistema. Quan acaba l'últim, ja ho tens tot.",
     "themeTitle": "Clar o fosc",
     "themeText": "L'aplicació segueix el tema del sistema, perquè les sessions de lectura de matinada no et cansin la vista.",
-    "finishedAlt": "Una descàrrega acabada al tauler Activity: deu capítols desats a la carpeta de destinació, un de fallit amb el seu error i un d'omès."
+    "finishedAlt": "Una descàrrega acabada al tauler Activity: els dotze capítols desats a la carpeta de destinació, amb un botó per obrir-la."
   },
   "downloads": {
     "title": "Totes les descàrregues",
