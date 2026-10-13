@@ -9,6 +9,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"hash/crc32"
 	"image"
 	// registers the GIF and PNG decoders with image.DecodeConfig (the JPEG and
 	// WebP ones come with convert.go's imports)
@@ -202,43 +203,55 @@ const epubContainer = `<?xml version="1.0" encoding="UTF-8"?>
 // ArchiveEPUB archives the named files into a fixed layout EPUB 3, one page per
 // image. Each folder of entry names is a chapter with its own table of contents
 // entry; files without a folder are a single chapter, titled as the book is.
-func ArchiveEPUB(filename string, info EPUBInfo, files []File, progress func(page, progress int)) error {
+func ArchiveEPUB(filename string, info EPUBInfo, files []File, progress func(page, progress int)) (err error) {
 	if len(files) == 0 {
 		return errors.New("no files to pack")
 	}
 
-	// everything is rendered before the file is created, so a page the reader
-	// can't show leaves no half written book behind
-	entries, skipped, err := epubEntries(info, files)
-	if err != nil {
-		warnSkipped(skipped)
-		return err
-	}
-
+	// the name is claimed before anything is rendered, so pack's retries of an
+	// existing name neither render the book again nor repeat the warnings
 	buff, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
 	if err != nil {
-		// pack retries an existing name, which would repeat the warnings
-		if !os.IsExist(err) {
-			warnSkipped(skipped)
-		}
 		return err
 	}
-	defer buff.Close()
-	// reported once the book is ours, not on every retry of an existing name.
-	// A skipped page still counts towards the archive's progress, which is set
-	// from the pages downloaded, not the pages that made it into the book
+	// a book that fails, a page the reader can't show included, leaves no half
+	// written file behind
+	defer func() {
+		if cerr := buff.Close(); err == nil {
+			err = cerr
+		}
+		if err != nil {
+			os.Remove(filename)
+		}
+	}()
+
+	entries, skipped, err := epubEntries(info, files)
 	warnSkipped(skipped)
+	if err != nil {
+		return err
+	}
+	// a skipped page still counts towards the archive's progress, which is set
+	// from the pages downloaded, not the pages that made it into the book
 	for range skipped {
 		progress(1, 0)
 	}
 	w := zip.NewWriter(buff)
 
-	// the mimetype entry has to come first, and stored uncompressed
-	mimetype, err := w.CreateHeader(&zip.FileHeader{Name: "mimetype", Method: zip.Store})
+	// the mimetype entry has to come first, stored uncompressed and with its
+	// sizes in the local header: CreateHeader would add a data descriptor,
+	// which readers built on streaming zip parsers refuse on a stored entry
+	mimetype := []byte("application/epub+zip")
+	mw, err := w.CreateRaw(&zip.FileHeader{
+		Name:               "mimetype",
+		Method:             zip.Store,
+		CRC32:              crc32.ChecksumIEEE(mimetype),
+		CompressedSize64:   uint64(len(mimetype)),
+		UncompressedSize64: uint64(len(mimetype)),
+	})
 	if err != nil {
 		return err
 	}
-	if _, err := mimetype.Write([]byte("application/epub+zip")); err != nil {
+	if _, err := mw.Write(mimetype); err != nil {
 		return err
 	}
 
