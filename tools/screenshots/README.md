@@ -40,7 +40,7 @@ moves on, update the `&shot` constants near `RELEASE_VERSION` in `mock.ts`.
 ## Files
 
 - `shot.sh OUT light|dark QUERY [WAIT] [JS]`: one capture.
-- `shot-select.sh OUT light|dark`: 03, the scanlation group `<select>` open.
+- `shot-select.sh OUT light|dark`: 03, the Language `<select>` open on Catalan.
   A native popup can't be opened from JS, so it clicks it with `cliclick`;
   WebKit draws the popup inside the window, and `screencapture -l` leaves the
   cursor out.
