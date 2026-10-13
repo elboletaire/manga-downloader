@@ -6,22 +6,43 @@ on:
       - 'master'
     tags:
       - 'v*'
-    # nothing that ends up in the images (path filters don't apply to tag pushes)
-    paths-ignore:
-      - '**.md'
-      - 'assets/**'
-      - 'website/**'
-      - '.github/workflows/pages.yaml'
-      - '.github/workflows/website-test.yaml'
+    # allowlist of what goes into the images: a new top-level package the CLI
+    # imports must be added here (path filters don't apply to tag pushes)
+    paths:
+      - 'browser/**'
+      - 'cmd/**'
+      - 'core/**'
+      - 'docker/**'
+      - 'downloader/**'
+      - 'grabber/**'
+      - 'http/**'
+      - 'notice/**'
+      - 'packer/**'
+      - 'ranges/**'
+      - 'main.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'makefile'
+      - '.github/workflows/docker.yaml'
   pull_request:
     branches:
       - 'master'
-    paths-ignore:
-      - '**.md'
-      - 'assets/**'
-      - 'website/**'
-      - '.github/workflows/pages.yaml'
-      - '.github/workflows/website-test.yaml'
+    paths:
+      - 'browser/**'
+      - 'cmd/**'
+      - 'core/**'
+      - 'docker/**'
+      - 'downloader/**'
+      - 'grabber/**'
+      - 'http/**'
+      - 'notice/**'
+      - 'packer/**'
+      - 'ranges/**'
+      - 'main.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'makefile'
+      - '.github/workflows/docker.yaml'
 jobs:
   publish:
     name: Push docker image to docker hub
