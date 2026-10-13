@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/elboletaire/manga-downloader/downloader"
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -14,8 +15,9 @@ import (
 
 // Supported output formats (see grabber.Settings.Format)
 const (
-	FormatCBZ = "cbz"
-	FormatRaw = "raw"
+	FormatCBZ  = "cbz"
+	FormatRaw  = "raw"
+	FormatEPUB = "epub"
 )
 
 // DownloadedChapter represents a downloaded chapter (a Chapter + Files)
@@ -27,7 +29,9 @@ type DownloadedChapter struct {
 // PackSingle packs a single downloaded chapter
 func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
-	return pack(outputdir, s.GetFormat(), s.GetFilenameTemplate(), title, NewChapterFileTemplateParts(title, chapter.Chapter), namePages(chapter.Files, s.GetConvertImages()), progress)
+	format := s.GetFormat()
+	info := EPUBInfo{Series: title, Position: formatChapterNumber(chapter.GetNumber()), ReadingDirection: s.GetReadingDirection()}
+	return pack(outputdir, format, s.GetFilenameTemplate(), title, NewChapterFileTemplateParts(title, chapter.Chapter), namePages(chapter.Files, pageFormats(format, s.GetConvertImages())), info, progress)
 }
 
 // PackBundle packs a bundle of downloaded chapters, grouping each chapter's
@@ -35,11 +39,13 @@ func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, pr
 // so chapter boundaries survive bundling instead of a single flat renumbering.
 func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter, rng string, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
-	return pack(outputdir, s.GetFormat(), s.GetFilenameTemplate(), title, FilenameTemplateParts{
+	format := s.GetFormat()
+	info := EPUBInfo{Series: title, ReadingDirection: s.GetReadingDirection()}
+	return pack(outputdir, format, s.GetFilenameTemplate(), title, FilenameTemplateParts{
 		Series: title,
 		Number: rng,
 		Title:  "bundle",
-	}, chapterFolders(chapters, s.GetConvertImages()), progress)
+	}, chapterFolders(chapters, pageFormats(format, s.GetConvertImages())), info, progress)
 }
 
 // PackVolume packs the downloaded chapters of a volume into one file, laid
@@ -51,8 +57,24 @@ func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*Downlo
 	for i, c := range chapters {
 		listed[i] = c.Chapter
 	}
-	return pack(outputdir, s.GetFormat(), VolumeTemplate(s.GetFilenameTemplate()), title,
-		NewVolumeFileTemplateParts(title, volume, listed), chapterFolders(chapters, s.GetConvertImages()), progress)
+	format := s.GetFormat()
+	info := EPUBInfo{Series: title, Position: strconv.Itoa(volume), ReadingDirection: s.GetReadingDirection()}
+	return pack(outputdir, format, VolumeTemplate(s.GetFilenameTemplate()), title,
+		NewVolumeFileTemplateParts(title, volume, listed), chapterFolders(chapters, pageFormats(format, s.GetConvertImages())), info, progress)
+}
+
+// pageFormats returns the source formats to convert pages from for the output
+// format. EPUB readers can't show AVIF, so it's always converted for EPUB,
+// whatever --convert-images says; the other formats use it as given.
+func pageFormats(format string, formats grabber.ConvertFormats) grabber.ConvertFormats {
+	if format != FormatEPUB || formats.Has(grabber.ConvertAVIF) {
+		return formats
+	}
+	forced := grabber.ConvertFormats{grabber.ConvertAVIF: true}
+	for f := range formats {
+		forced[f] = true
+	}
+	return forced
 }
 
 // chapterFolders names the pages of several chapters for one archive, each
@@ -115,7 +137,7 @@ func namePages(pages []*downloader.File, formats grabber.ConvertFormats) []File 
 	return named
 }
 
-func pack(outputdir, format, template, title string, parts FilenameTemplateParts, files []File, progress func(page, progress int)) (string, error) {
+func pack(outputdir, format, template, title string, parts FilenameTemplateParts, files []File, info EPUBInfo, progress func(page, progress int)) (string, error) {
 	parts.Version = 1
 
 	for {
@@ -128,6 +150,10 @@ func pack(outputdir, format, template, title string, parts FilenameTemplateParts
 		if format == FormatRaw {
 			name = filename
 			err = SaveRaw(filepath.Join(outputdir, name), files, progress)
+		} else if format == FormatEPUB {
+			name = filename + ".epub"
+			info.Title = filename
+			err = ArchiveEPUB(filepath.Join(outputdir, name), info, files, progress)
 		} else {
 			name = filename + ".cbz"
 			err = ArchiveCBZ(filepath.Join(outputdir, name), files, progress)

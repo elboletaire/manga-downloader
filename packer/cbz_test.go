@@ -96,9 +96,11 @@ func TestPaddedChapterNumber(t *testing.T) {
 // fakeSite is a minimal grabber.Site implementation for testing PackBundle's
 // entry-naming behavior without hitting a real site.
 type fakeSite struct {
-	title    string
-	template string
-	convert  grabber.ConvertFormats
+	title     string
+	template  string
+	convert   grabber.ConvertFormats
+	format    string
+	direction string
 }
 
 func (f *fakeSite) Test() (bool, error)                           { return true, nil }
@@ -109,7 +111,13 @@ func (f *fakeSite) FetchChapter(grabber.Filterable) (*grabber.Chapter, error) {
 func (f *fakeSite) FetchTitle() (string, error) { return f.title, nil }
 func (f *fakeSite) BaseUrl() string             { return "https://example.com" }
 func (f *fakeSite) GetFilenameTemplate() string { return f.template }
-func (f *fakeSite) GetFormat() string           { return FormatCBZ }
+func (f *fakeSite) GetFormat() string {
+	if f.format == "" {
+		return FormatCBZ
+	}
+	return f.format
+}
+func (f *fakeSite) GetReadingDirection() string { return f.direction }
 func (f *fakeSite) GetConvertImages() grabber.ConvertFormats {
 	return f.convert
 }

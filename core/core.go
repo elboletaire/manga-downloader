@@ -15,8 +15,9 @@ import (
 )
 
 // SettingError reports a setting that failed validation. Setting is the flag
-// name ("format", "convert-images", "volumes", "skip-pages" or, for a volume
-// file's name, "filename-template") and Value the raw input.
+// name ("format", "reading-direction", "convert-images", "volumes",
+// "skip-pages" or, for a volume file's name, "filename-template") and Value
+// the raw input.
 type SettingError struct {
 	Setting string
 	Value   string
@@ -33,11 +34,21 @@ func (e *SettingError) Unwrap() error { return e.Err }
 // the order they're reported, and returns the parsed --skip-pages ranges (nil
 // when none were given).
 func Validate(s *grabber.Settings) ([]ranges.Range, error) {
-	if s.Format != packer.FormatCBZ && s.Format != packer.FormatRaw {
+	if s.Format != packer.FormatCBZ && s.Format != packer.FormatRaw && s.Format != packer.FormatEPUB {
 		return nil, &SettingError{
 			Setting: "format",
 			Value:   s.Format,
-			Err:     fmt.Errorf("must be %q or %q", packer.FormatCBZ, packer.FormatRaw),
+			Err:     fmt.Errorf("must be %q, %q or %q", packer.FormatCBZ, packer.FormatRaw, packer.FormatEPUB),
+		}
+	}
+
+	// empty means the default, as the settings of a caller that never set it
+	// (or a saved file from before it existed) mean
+	if d := s.ReadingDirection; d != "" && d != packer.ReadingDirectionRTL && d != packer.ReadingDirectionLTR {
+		return nil, &SettingError{
+			Setting: "reading-direction",
+			Value:   d,
+			Err:     fmt.Errorf("must be %q or %q", packer.ReadingDirectionRTL, packer.ReadingDirectionLTR),
 		}
 	}
 
