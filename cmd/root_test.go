@@ -105,6 +105,75 @@ func TestProgressModelBundleMode(t *testing.T) {
 	}
 }
 
+// While core totals the pages, before BundleStart, the bundle row says so and
+// draws an empty bar with the real bars' glyph, not a "0/0" over shading.
+func TestBundleRowBeforeBundleStart(t *testing.T) {
+	m := newProgressModel("Series", "1-5", true, false, true)
+	m.width = 80
+
+	row := ansi.Strip(m.renderBundleRow())
+	if !strings.HasPrefix(row, "Series - chapters 1-5") || !strings.Contains(row, "gathering") {
+		t.Errorf("row %q doesn't name the bundle or say it's gathering", row)
+	}
+	if strings.Contains(row, "░") || strings.Contains(row, "0/0") {
+		t.Errorf("row %q has the placeholder bar or a 0/0 counter", row)
+	}
+	if !strings.Contains(row, "▇") {
+		t.Errorf("row %q doesn't draw an empty bar", row)
+	}
+}
+
+// The bundle row ends like a chapter row, saying done (or failed) in its own
+// status column, instead of a "saved file" line printed below the bars.
+func TestBundleRowEndsWithStatus(t *testing.T) {
+	for _, tc := range []struct {
+		err  error
+		want string
+	}{
+		{nil, "done"},
+		{fmt.Errorf("disk full"), "failed"},
+	} {
+		m := newProgressModel("Series", "", true, false, true)
+		m.width = 80
+		for _, msg := range []tea.Msg{bundleStartMsg{total: 5}, bundlePackingMsg{}, downloadDoneMsg{err: tc.err}} {
+			next, _ := m.Update(msg)
+			m = next.(progressModel)
+		}
+		row := ansi.Strip(m.renderBundleRow())
+		if !strings.HasPrefix(row, "Series - all chapters") || !strings.HasSuffix(strings.TrimSpace(row), tc.want) {
+			t.Errorf("err %v: row %q, want it titled and ending in %q", tc.err, row, tc.want)
+		}
+	}
+}
+
+// A bundle run ends its counter exactly at the total: each page counts once as
+// it downloads and once as it's archived. Downloaded used to add the chapter's
+// pages a third time, ending at 150/100.
+func TestProgressModelBundleCountsEachPageOnce(t *testing.T) {
+	chapter := &grabber.Chapter{Title: "Chapter 0001", PagesCount: 50}
+
+	// Downloaded sends nothing: a nil program would panic on Send
+	(&bubbleEvents{}).Downloaded(chapter)
+
+	m := newProgressModel("Series", "1", true, false, true)
+	m.width = 80
+	msgs := []tea.Msg{bundleStartMsg{total: 50}, chapterStartedMsg{chapter: chapter, total: 100}}
+	for range 50 {
+		msgs = append(msgs, pageSuccessMsg{chapter: chapter})
+	}
+	msgs = append(msgs, bundlePackingMsg{})
+	for range 50 {
+		msgs = append(msgs, bundleArchivedMsg{n: 1})
+	}
+	for _, msg := range msgs {
+		next, _ := m.Update(msg)
+		m = next.(progressModel)
+	}
+	if m.bundleCurrent != m.bundleTotal {
+		t.Errorf("bundle ended at %d/%d", m.bundleCurrent, m.bundleTotal)
+	}
+}
+
 func TestFailedBarNotFull(t *testing.T) {
 	chapter := &grabber.Chapter{
 		Title:      "Chapter 0001",
@@ -207,52 +276,6 @@ func TestBtLayout(t *testing.T) {
 		if total != tc.width {
 			t.Errorf("btLayout(%d): total row width %d ≠ %d (titleW=%d barW=%d narrow=%v)",
 				tc.width, total, tc.width, titleW, barW, narrow)
-		}
-	}
-}
-
-func TestBtBundleLayout(t *testing.T) {
-	tests := []struct {
-		width             int
-		wantPhasePositive bool
-		wantCounterW      int
-	}{
-		{120, true, 9}, // full
-		{80, true, 9},  // full
-		{56, true, 9},  // exactly full threshold
-		{50, true, 9},  // medium (shrunk phase)
-		{27, true, 9},  // minimum width for phaseW ≥ 1 (26-26=0, 27-26=1)
-		{26, false, 9}, // phaseW=0 at the boundary of medium mode
-		{25, false, 9}, // no phase, keep counter
-		{16, false, 9}, // bar + counter only
-		{15, false, 0}, // bar only
-		{10, false, 0}, // tiny
-	}
-	for _, tc := range tests {
-		phaseW, barW, counterW := btBundleLayout(tc.width)
-		hasPhase := phaseW > 0
-		if hasPhase != tc.wantPhasePositive {
-			t.Errorf("btBundleLayout(%d): phaseW=%d (positive=%v), want positive=%v",
-				tc.width, phaseW, hasPhase, tc.wantPhasePositive)
-		}
-		if counterW != tc.wantCounterW {
-			t.Errorf("btBundleLayout(%d): counterW=%d, want %d", tc.width, counterW, tc.wantCounterW)
-		}
-		// Verify no overflow: total visible width ≤ terminal width.
-		var total int
-		switch {
-		case phaseW > 0 && counterW > 0:
-			total = phaseW + 1 + barW + 1 + counterW
-		case counterW > 0:
-			total = barW + 1 + counterW
-		default:
-			total = barW
-		}
-		if total > tc.width {
-			t.Errorf("btBundleLayout(%d): total=%d overflows terminal", tc.width, total)
-		}
-		if barW < 1 {
-			t.Errorf("btBundleLayout(%d): barW=%d < 1", tc.width, barW)
 		}
 	}
 }

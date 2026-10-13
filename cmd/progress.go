@@ -35,10 +35,11 @@ type packedMsg struct {
 	chapter *grabber.Chapter
 	failed  bool
 }
-type bundleDownloadedMsg struct{ pages int }
 type bundlePackingMsg struct{}
 type bundleArchivedMsg struct{ n int }
-type downloadDoneMsg struct{}
+
+// downloadDoneMsg ends the program once Download returns, with its error
+type downloadDoneMsg struct{ err error }
 
 // Volume messages
 type volumeStartMsg struct {
@@ -93,11 +94,6 @@ const (
 	btFixedW    = btCounterW + btStatusW + btGapsW // 24
 	btMinBarW   = 15
 	btMaxTitleW = 40
-
-	// Bundle bar row (full): phase(30) + " " + bar(barW) + " " + counter(9)
-	btPhaseW       = 30
-	btBundleGapsW  = 2
-	btBundleFixedW = btPhaseW + btCounterW + btBundleGapsW // 41
 )
 
 // btLayout returns titleW, barW, and narrow for a chapter row.
@@ -126,29 +122,6 @@ func btLayout(width int) (titleW, barW int, narrow bool) {
 	}
 	barW = avail - titleW
 	return
-}
-
-// btBundleLayout returns phaseW, barW, and counterW for a bundle row.
-// It degrades gracefully as the terminal narrows:
-//   - Full  (width ≥ 56): phase(30) + " " + bar(width-41) + " " + counter(9)
-//   - Shrunk (width ≥ 26): phase(width-26) + " " + bar(15) + " " + counter(9)
-//   - No-phase (width ≥ 11): bar(width-10) + " " + counter(9)
-//   - Tiny (width < 11): bar(width) only
-func btBundleLayout(width int) (phaseW, barW, counterW int) {
-	if width <= 0 {
-		width = 80
-	}
-	switch {
-	case width >= btBundleFixedW+btMinBarW: // ≥ 56
-		return btPhaseW, width - btBundleFixedW, btCounterW
-	case width >= btMinBarW+1+btCounterW+1: // ≥ 26: shrink phase
-		phaseW = width - btMinBarW - 1 - btCounterW - 1
-		return phaseW, btMinBarW, btCounterW
-	case width >= btMinBarW+1: // ≥ 16: drop phase, keep counter
-		return 0, width - btCounterW - 1, btCounterW
-	default: // < 16: bar only
-		return 0, max(1, width), 0
-	}
 }
 
 // fixedW renders s in exactly w visible cells: truncates with "…" or pads with spaces.
@@ -189,16 +162,17 @@ type progressModel struct {
 	chapterVolume map[*grabber.Chapter]*core.Volume // which volume each chapter belongs to
 
 	// bundle
-	bundlePhase   string
+	bundleStatus  string
 	bundleCurrent int64
 	bundleTotal   int64
 	bundleBar     *progress.Model
+	bundleFailBar *progress.Model
 }
 
 var _ tea.Model = progressModel{}
 
 func newProgressModel(seriesTitle, bundleRange string, bundle, showLang, hasDarkBg bool) progressModel {
-	return progressModel{
+	m := progressModel{
 		seriesTitle:   seriesTitle,
 		bundle:        bundle,
 		bundleRange:   bundleRange,
@@ -209,6 +183,11 @@ func newProgressModel(seriesTitle, bundleRange string, bundle, showLang, hasDark
 		volStates:     make(map[*core.Volume]*volumeBarState),
 		chapterVolume: make(map[*grabber.Chapter]*core.Volume),
 	}
+	if bundle {
+		// core fetches every chapter to total the pages before BundleStart
+		m.bundleStatus = "gathering"
+	}
+	return m
 }
 
 // makeBar creates a progress.Model with brand gradient colours.
@@ -269,11 +248,10 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			*vs.bar = *newBar
 		}
-		_, bBarW, _ := btBundleLayout(m.width)
 		if m.bundleBar != nil {
 			newBar := m.makeBar(m.bundleBar.Width())
 			if m.bundleBar.Width() == 0 {
-				newBar = m.makeBar(bBarW)
+				newBar = m.makeBar(barW)
 			}
 			*m.bundleBar = *newBar
 		}
@@ -298,21 +276,21 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				vs.failBar.SetWidth(barW)
 			}
 		}
-		_, bBarW, _ := btBundleLayout(m.width)
 		if m.bundleBar != nil {
-			m.bundleBar.SetWidth(bBarW)
+			m.bundleBar.SetWidth(barW)
+		}
+		if m.bundleFailBar != nil {
+			m.bundleFailBar.SetWidth(barW)
 		}
 
 	case bundleStartMsg:
 		m.bundleTotal = msg.total * 2
-		_, bBarW, _ := btBundleLayout(m.width)
-		bar := m.makeBar(bBarW)
-		m.bundleBar = bar
-		m.bundlePhase = "Gathering info..."
+		_, barW, _ := btLayout(m.width)
+		m.bundleBar = m.makeBar(barW)
+		m.bundleStatus = "downloading"
 
 	case chapterStartedMsg:
 		if m.bundle {
-			m.bundlePhase = "Downloading " + truncateString(msg.chapter.GetTitle(), btPhaseW-12)
 			return m, nil
 		}
 		// Skip chapters that belong to a volume; volumes have their own bars.
@@ -399,17 +377,8 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		s.status = "done"
 		return m, s.bar.SetPercent(1.0)
 
-	case bundleDownloadedMsg:
-		m.bundleCurrent += int64(msg.pages)
-		if m.bundleBar != nil {
-			return m, m.bundleBar.SetPercent(safePercent(m.bundleCurrent, m.bundleTotal))
-		}
-
 	case bundlePackingMsg:
-		// "Bundling chapters X-Y" instead of "Creating bundle for chapters X-Y"
-		// to keep the range within the 30-char phase field.
-		m.bundlePhase = truncateString(
-			fmt.Sprintf("Bundling chapters %s", m.bundleRange), btPhaseW)
+		m.bundleStatus = "archiving"
 
 	case bundleArchivedMsg:
 		m.bundleCurrent += int64(msg.n)
@@ -467,6 +436,12 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Mark done so View() renders all non-failed bars at 100% in the final
 		// frame, bypassing the spring animation that would freeze mid-flight on Quit.
 		m.done = true
+		if m.bundle {
+			m.bundleStatus = "done"
+			if msg.err != nil {
+				m.bundleStatus = "failed"
+			}
+		}
 		return m, tea.Quit
 
 	case progress.FrameMsg:
@@ -655,35 +630,51 @@ func (m progressModel) renderVolumeRow(vs *volumeBarState) string {
 	return clipRow(row, m.width)
 }
 
-func (m progressModel) renderBundleRow() string {
-	phaseW, barW, counterW := btBundleLayout(m.width)
+// bundleTitle is the bundle row's title: the series and the range it packs,
+// like the chapter and volume rows' "Series - Chapter 1"
+func (m progressModel) bundleTitle() string {
+	if m.bundleRange == "" {
+		return m.seriesTitle + " - all chapters"
+	}
+	return m.seriesTitle + " - chapters " + m.bundleRange
+}
 
+// renderBundleRow lays the bundle out like a chapter row: title, bar, the
+// "current/total" pages (blank until BundleStart gives the total) and status
+func (m progressModel) renderBundleRow() string {
+	titleW, barW, narrow := btLayout(m.width)
 	if m.bundleBar != nil && m.bundleBar.Width() != barW {
 		m.bundleBar.SetWidth(barW)
 	}
+	title := fixedW(m.bundleTitle(), titleW)
 
 	var barStr string
 	switch {
+	case m.bundleStatus == "failed":
+		// Danger-coloured bar at actual progress reached, never 100%.
+		if m.bundleFailBar == nil {
+			m.bundleFailBar = makeDangerBar(barW)
+		} else if m.bundleFailBar.Width() != barW {
+			m.bundleFailBar.SetWidth(barW)
+		}
+		barStr = m.bundleFailBar.ViewAs(safePercent(m.bundleCurrent, m.bundleTotal))
 	case m.bundleBar == nil:
-		barStr = strings.Repeat("░", barW)
+		// an empty bar like the real one, until BundleStart creates it
+		barStr = m.makeBar(barW).ViewAs(0)
 	case m.done:
 		barStr = m.bundleBar.ViewAs(1.0)
 	default:
 		barStr = m.bundleBar.View()
 	}
 
-	var row string
-	switch {
-	case phaseW > 0 && counterW > 0:
-		phase := fixedW(m.bundlePhase, phaseW)
-		counter := fmt.Sprintf("%9s", fmt.Sprintf("%d/%d", m.bundleCurrent, m.bundleTotal))
-		row = phase + " " + barStr + " " + counter
-	case counterW > 0:
-		counter := fmt.Sprintf("%9s", fmt.Sprintf("%d/%d", m.bundleCurrent, m.bundleTotal))
-		row = barStr + " " + counter
-	default:
-		row = barStr
+	if narrow {
+		return clipRow(title+" "+barStr, m.width)
 	}
+	counter := strings.Repeat(" ", btCounterW)
+	if m.bundleTotal > 0 {
+		counter = fmt.Sprintf("%9s", fmt.Sprintf("%d/%d", m.bundleCurrent, m.bundleTotal))
+	}
+	row := title + " " + barStr + " " + counter + " " + m.statusStyle(m.bundleStatus)
 	return clipRow(row, m.width)
 }
 
@@ -758,9 +749,9 @@ func (e *bubbleEvents) Packed(c *grabber.Chapter, _ string, err error) {
 	e.prog.Send(packedMsg{chapter: c, failed: err != nil})
 }
 
-func (e *bubbleEvents) Downloaded(c *grabber.Chapter) {
-	e.prog.Send(bundleDownloadedMsg{pages: int(c.PagesCount)})
-}
+// Downloaded sends nothing: the pages were counted as they came in, and
+// adding them again here overshot the bundle's total by half
+func (e *bubbleEvents) Downloaded(*grabber.Chapter) {}
 
 func (e *bubbleEvents) BundlePacking() {
 	e.prog.Send(bundlePackingMsg{})

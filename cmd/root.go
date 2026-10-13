@@ -222,7 +222,7 @@ func Run(cmd *cobra.Command, args []string) {
 		}()
 		defer releaseDl()
 		file, dlErr := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
-		prog.Send(downloadDoneMsg{})
+		prog.Send(downloadDoneMsg{err: dlErr})
 		resultCh <- downloadResult{file: file, err: dlErr}
 	}()
 
@@ -260,12 +260,11 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(0)
 	}
 
+	// a saved bundle's row already says done, like the chapters'
 	if res.err != nil {
 		red(res.err.Error())
 		exit(1)
 	}
-
-	fmt.Printf("- %s %s\n", color.GreenString("saved file"), color.HiBlackString(res.file))
 }
 
 // exitSettingError prints a setting that failed validation in the words each
