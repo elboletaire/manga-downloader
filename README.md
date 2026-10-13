@@ -296,9 +296,9 @@ Open the app and follow these steps:
    </picture>
 
 4. **Set the options** in the *Options* tab: where the files go, the format
-   (CBZ archive or image folder), *Pack as* (a file per chapter, per volume, or
-   one for everything), *Convert to JPEG* for AVIF and WebP pages, and pages to
-   skip. Under *Advanced* are the file name template and *Show the browser
+   (CBZ archive, EPUB or image folder; EPUB adds a *Reading direction*), *Pack
+   as* (a file per chapter, per volume, or one for everything), *Convert to
+   JPEG* for AVIF and WebP pages, and pages to skip. Under *Advanced* are the file name template and *Show the browser
    window*, which you rarely need: a site that needs the window opens it by itself.
    Packing by volume adds a *Volumes* box above the chapter list, filled with
    the site's volumes when it lists them, and groups the list by volume.
