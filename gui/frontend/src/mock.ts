@@ -146,6 +146,7 @@ function defaultOptions(shot: boolean): Options {
   return {
     outputDir: shot ? '/Users/reader/Downloads/Manga' : '/home/reader/Downloads',
     format: 'cbz',
+    readingDirection: 'rtl',
     packAs: 'chapters',
     language: '',
     scanlator: '',

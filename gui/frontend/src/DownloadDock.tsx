@@ -137,11 +137,12 @@ export function DownloadDock({ state, error, chapters, selected, onStart, onCanc
 /** What the run writes, as the dock's first words */
 function destination(o: Options): string {
   const cbz = o.format === 'cbz';
+  const epub = o.format === 'epub';
   switch (o.packAs) {
     case 'bundle':
-      return cbz ? 'One CBZ' : 'One image folder';
+      return epub ? 'One EPUB' : cbz ? 'One CBZ' : 'One image folder';
     case 'volumes':
-      return cbz ? 'A CBZ per volume' : 'A folder per volume';
+      return epub ? 'An EPUB per volume' : cbz ? 'A CBZ per volume' : 'A folder per volume';
   }
-  return cbz ? 'CBZ files' : 'Image folders';
+  return epub ? 'EPUB files' : cbz ? 'CBZ files' : 'Image folders';
 }

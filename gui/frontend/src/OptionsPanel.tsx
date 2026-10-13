@@ -74,9 +74,26 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
           options={[
             { value: 'cbz', label: 'CBZ archive' },
             { value: 'raw', label: 'Image folder' },
+            { value: 'epub', label: 'EPUB' },
           ]}
           onChange={(format) => set({ format })}
         />
+
+        {o.format === 'epub' && (
+          <div className="field-stack">
+            <Segmented<Options['readingDirection']>
+              label="Reading direction"
+              value={o.readingDirection}
+              disabled={locked}
+              options={[
+                { value: 'rtl', label: 'Right to left' },
+                { value: 'ltr', label: 'Left to right' },
+              ]}
+              onChange={(readingDirection) => set({ readingDirection })}
+            />
+            <p className="hint">Which way the pages turn: manga reads right to left, webtoons and western comics left to right.</p>
+          </div>
+        )}
 
         <div className="field-stack">
           <Segmented<PackAs>

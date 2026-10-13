@@ -20,6 +20,7 @@ import (
 type OptionsDTO struct {
 	OutputDir        string `json:"outputDir"`
 	Format           string `json:"format"`
+	ReadingDirection string `json:"readingDirection"`
 	PackAs           string `json:"packAs"`
 	Language         string `json:"language"`
 	Scanlator        string `json:"scanlator"`
@@ -74,6 +75,7 @@ func defaultSettings() *grabber.Settings {
 		MaxConcurrency:   grabber.MaxConcurrency{Chapters: 5, Pages: 10},
 		Retry:            1,
 		Format:           packer.FormatCBZ,
+		ReadingDirection: packer.ReadingDirectionRTL,
 		ConvertImages:    grabber.ConvertImagesDefault,
 		FilenameTemplate: packer.FilenameTemplateDefault,
 		OutputDir:        defaultOutputDir(),
@@ -99,6 +101,7 @@ func optionsOf(s grabber.Settings) OptionsDTO {
 	return OptionsDTO{
 		OutputDir:        s.OutputDir,
 		Format:           s.Format,
+		ReadingDirection: s.ReadingDirection,
 		PackAs:           packAsOf(s),
 		Language:         s.Language,
 		Scanlator:        s.Scanlator,
@@ -114,6 +117,7 @@ func optionsOf(s grabber.Settings) OptionsDTO {
 func applyOptions(s *grabber.Settings, o OptionsDTO) {
 	s.OutputDir = o.OutputDir
 	s.Format = o.Format
+	s.ReadingDirection = o.ReadingDirection
 	applyPackAs(s, o.PackAs)
 	s.Language = o.Language
 	s.Scanlator = o.Scanlator
@@ -166,6 +170,12 @@ func loadOptions(path string, s *grabber.Settings) error {
 	default:
 		notice.Warn("ignoring the saved pack-as %q, using %q", o.PackAs, PackChapters)
 		o.PackAs = PackChapters
+	}
+	switch o.ReadingDirection {
+	case packer.ReadingDirectionRTL, packer.ReadingDirectionLTR:
+	default:
+		notice.Warn("ignoring the saved reading-direction %q, using %q", o.ReadingDirection, packer.ReadingDirectionRTL)
+		o.ReadingDirection = packer.ReadingDirectionRTL
 	}
 	// a value the parser rejects would only fail at Start, once a series is
 	// loaded, so fall back to the default now and say so

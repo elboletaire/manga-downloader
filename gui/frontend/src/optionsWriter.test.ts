@@ -5,6 +5,7 @@ import type { Options } from './types';
 const base: Options = {
   outputDir: '/out',
   format: 'cbz',
+  readingDirection: 'rtl',
   packAs: 'chapters',
   language: '',
   scanlator: '',

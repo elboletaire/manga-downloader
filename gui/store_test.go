@@ -15,7 +15,8 @@ func TestOptionsSaveAndLoadRoundTrip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "gui.json")
 	want := OptionsDTO{
 		OutputDir:        "/books",
-		Format:           "raw",
+		Format:           "epub",
+		ReadingDirection: "ltr",
 		PackAs:           PackBundle,
 		Language:         "es",
 		Scanlator:        "group",
@@ -146,6 +147,34 @@ func TestLoadOptionsRejectsConvertImagesFallsBackToDefault(t *testing.T) {
 	}
 	if _, err := grabber.ParseConvertFormats(s.ConvertImages); err != nil {
 		t.Errorf("the fallback is rejected by the parser: %v", err)
+	}
+}
+
+func TestLoadOptionsRejectsReadingDirectionFallsBackToDefault(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	if err := os.WriteFile(path, []byte(`{"readingDirection":"ttb","format":"epub"}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var warnings []string
+	notice.SetHandler(func(level notice.Level, msg string) {
+		if level == notice.LevelWarn {
+			warnings = append(warnings, msg)
+		}
+	})
+	defer notice.SetHandler(nil)
+
+	s := defaultSettings()
+	if err := loadOptions(path, s); err != nil {
+		t.Fatalf("an invalid reading-direction is not a load error: %v", err)
+	}
+	if s.ReadingDirection != "rtl" {
+		t.Errorf("reading-direction %q, want the default rtl", s.ReadingDirection)
+	}
+	if s.Format != "epub" {
+		t.Errorf("the other keys were not loaded: format %q", s.Format)
+	}
+	if len(warnings) != 1 {
+		t.Errorf("got %d warnings, want 1: %q", len(warnings), warnings)
 	}
 }
 

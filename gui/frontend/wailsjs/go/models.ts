@@ -79,6 +79,7 @@ export namespace main {
 	export class OptionsDTO {
 	    outputDir: string;
 	    format: string;
+	    readingDirection: string;
 	    packAs: string;
 	    language: string;
 	    scanlator: string;
@@ -95,6 +96,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.outputDir = source["outputDir"];
 	        this.format = source["format"];
+	        this.readingDirection = source["readingDirection"];
 	        this.packAs = source["packAs"];
 	        this.language = source["language"];
 	        this.scanlator = source["scanlator"];
