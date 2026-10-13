@@ -1,13 +1,13 @@
-# Recreates demos/download.gif — run from the repo root: vhs demos/download.tape
+# Recreates assets/demos/download.gif — run from the repo root: vhs assets/demos/download.tape
 # Requires the manga-downloader binary built at the repo root (make build).
 # Note: inmanga prunes early One Piece chapters from its CDN, so the demo uses
 # a recent range instead of the README's illustrative 1-50.
-Output demos/download.gif
+Output assets/demos/download.gif
 
 Set Shell "bash"
 Set FontSize 14
-Set Width 960
-Set Height 420
+Set Width 1104
+Set Height 270
 Set Padding 16
 Set WindowBar Colorful
 Set WindowBarSize 32

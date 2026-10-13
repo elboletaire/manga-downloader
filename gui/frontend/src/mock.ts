@@ -7,30 +7,37 @@
 // loaded, stale, running, bundle, cancelling, done, update, check, volumes
 // (loaded, packing by volume, with three volumes and a half selected) or
 // volumes-running (a run by volume in progress). update is loaded too, as a
-// release build (v1.12.0) with a newer release (v1.13.0): the status bar shows
-// the yellow "!". check is loading a site that needs the browser window, with
-// the alert asking the user to look at it; loading a URL with "check" in it
-// does the same until the load ends. &freeze stops the simulated run from
-// moving (stable screenshots), &dupes lists some numbers twice, once per
-// language, &chapters=N sets the list's length, and &novolumes lists no
-// volumes (the series otherwise files its chapters in volumes of 9, the newest
-// 12 in none).
+// release build (v1.15.0 with &shot, v1.12.0 without) with a newer release
+// (v1.16.0 with &shot, v1.13.0 without): the status bar shows the yellow "!".
+// check is loading a site that needs the browser window, with the alert asking
+// the user to look at it; loading a URL with "check" in it does the same until
+// the load ends. &freeze stops the simulated run from moving (stable
+// screenshots), &dupes lists some numbers twice in two languages, &chapters=N
+// shows the newest N chapters, &novolumes lists no volumes (the series
+// otherwise files its chapters by their real One Piece volume), &fail makes
+// the fourth chapter fail halfway and &skip makes the sixth one come out
+// skipped, every page excluded by --skip-pages (both off by default; every run
+// saves every chapter without them), &shot uses production release versions and a macOS output path (for
+// screenshots), and VITE_MOCK=1 at build time includes the mock in production
+// builds (e.g. for the screenshot capture build; set via Wails frontend env).
 //
 // &site= picks what the series lists for the two filters: multi (the default:
-// languages en, es, ja with All, no groups), plus (Manga Plus: languages
-// without All, the URL's edition shown by default), groups (Atsumaru: groups
-// with All, the largest shown by default, no languages), or none (both fields
-// disabled: a typed value shows cleared, as the site ignores it, and is kept
-// for the sites that take it). A language or group the series doesn't list
-// falls back on load, as the backend does: typed "xx" under multi loads "all",
-// under plus the edition the URL points at. Typed values match ignoring case,
-// and take the spelling the series lists.
+// languages ca, en, es with All, Catalan shown by default, no groups), plus
+// (Manga Plus: languages without All, the URL edition shown by default),
+// groups (Atsumaru: groups with All, the largest shown by default, no
+// languages), or none (both fields disabled: a typed value shows cleared, as
+// the site ignores it, and is kept for the sites that take it). A language or
+// group the series doesn't list falls back on load, as the backend does: typed
+// "xx" under multi loads "all", under plus the edition the URL points at.
+// Typed values match ignoring case, and take the spelling the series lists.
 
 import type { Api, Unsubscribe } from './api';
 import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary, Update } from './types';
 import { groupChapters, parseVolumes, siteVolumes } from './volumes';
+import { OP_CHAPTERS } from './mock-onepiece';
 
-const CHAPTERS = 312;
+/** Total chapters in the Catalan One Piece feed (MangaDex, ch 598-1194) */
+const CHAPTERS = OP_CHAPTERS.length; // 597
 const PAGES = 12;
 const TICK_MS = 160;
 
@@ -66,6 +73,12 @@ export interface MockSetup {
   site: MockSite;
   /** The series lists no volumes */
   novolumes: boolean;
+  /** The fourth chapter fails halfway through download */
+  fail: boolean;
+  /** The sixth chapter comes out skipped (every page excluded by --skip-pages) */
+  skip: boolean;
+  /** Use production release versions and a macOS output path (for screenshots) */
+  shot: boolean;
 }
 
 /** What the mock series offers for each filter; null when the site lists none */
@@ -82,7 +95,7 @@ interface MockOffers {
 }
 
 const OFFERS: Record<MockSite, MockOffers> = {
-  multi: { language: { values: ['en', 'es', 'ja'], all: true, current: '' }, scanlator: null },
+  multi: { language: { values: ['ca', 'en', 'es'], all: true, current: 'ca' }, scanlator: null },
   plus: { language: { values: ['en', 'es'], all: false, current: 'en' }, scanlator: null },
   groups: { language: null, scanlator: { values: ['Alpha', 'Delta'], all: true, current: 'Delta' } },
   none: { language: null, scanlator: null },
@@ -92,12 +105,10 @@ const MOCK_ALERT =
   "Brave opened a window to pass a check on check.example.com. There may be a captcha or puzzle to solve there; the download continues by itself once it's done.";
 
 const REPO = 'https://github.com/elboletaire/manga-downloader';
-const RELEASE_VERSION = 'v1.12.0';
-
-/** The newer release the update scenario reports; the others are dev builds */
-const UPDATES: Partial<Record<Scenario, Update>> = {
-  update: { latest: 'v1.13.0', url: `${REPO}/releases/latest` },
-};
+const RELEASE_VERSION_DEV = 'v1.12.0';
+const RELEASE_VERSION_SHOT = 'v1.15.0';
+const UPDATE_VERSION_DEV = 'v1.13.0';
+const UPDATE_VERSION_SHOT = 'v1.16.0';
 
 function siteFrom(search: string): MockSite {
   const value = new URLSearchParams(search).get('site');
@@ -120,12 +131,15 @@ export function mockSetupFrom(search: string): MockSetup {
     chapters: Number.isInteger(n) && n > 0 ? n : CHAPTERS,
     site: siteFrom(search),
     novolumes: params.has('novolumes'),
+    fail: params.has('fail'),
+    skip: params.has('skip'),
+    shot: params.has('shot'),
   };
 }
 
-function defaultOptions(): Options {
+function defaultOptions(shot: boolean): Options {
   return {
-    outputDir: '/home/reader/Downloads',
+    outputDir: shot ? '/Users/reader/Downloads/Manga' : '/home/reader/Downloads',
     format: 'cbz',
     packAs: 'chapters',
     language: '',
@@ -137,41 +151,21 @@ function defaultOptions(): Options {
   };
 }
 
-// Chapter names, so the list looks like a real series rather than a counter
-const NAMES = [
-  'The Lighthouse Keeper',
-  'Salt and Ink',
-  'A Door in the Tide',
-  'Paper Lanterns',
-  'The Long Way Round',
-  'Inheritance',
-  'What the River Took',
-  'Night Market',
-  'Second Wind',
-  'Cartographers',
-  'The Quiet Hour',
-  'Ashfall',
-];
-
-/** Chapters per volume of the mock series; its newest 12 aren't in one yet */
-const PER_VOLUME = 9;
-
+/**
+ * Returns the newest `count` chapters from the One Piece Catalan dataset.
+ * Volume 0 means not yet collected. With withLanguages, some chapters also
+ * appear in English to simulate a multi-language listing.
+ */
 function mockChapters(count: number, withLanguages: boolean, withVolumes = true): Chapter[] {
   const list: Chapter[] = [];
-  const add = (number: number, title: string, language: string) => {
-    const volume = withVolumes && number <= count - 12 ? Math.ceil(Math.floor(number) / PER_VOLUME) : 0;
-    list.push({ index: list.length, number, title, language, volume });
-  };
+  const source =
+    count >= OP_CHAPTERS.length ? OP_CHAPTERS : OP_CHAPTERS.slice(OP_CHAPTERS.length - count);
 
-  for (let i = 1; i <= count; i++) {
-    // every seventh chapter has a name, as sites often only name some
-    const title = i % 7 === 1 ? `Chapter ${i}: ${NAMES[Math.floor(i / 7) % NAMES.length]}` : `Chapter ${i}`;
-    add(i, title, withLanguages ? 'en' : '');
-    if (withLanguages && i % 5 === 0) {
-      add(i, `Capítulo ${i}`, 'es');
-    }
-    if (i % 40 === 0) {
-      add(i + 0.5, `Chapter ${i}.5: Extra`, withLanguages ? 'en' : '');
+  for (const [number, catTitle, vol] of source) {
+    const volume = withVolumes ? vol : 0;
+    list.push({ index: list.length, number, title: catTitle, language: withLanguages ? 'ca' : '', volume });
+    if (withLanguages && number % 5 === 0) {
+      list.push({ index: list.length, number, title: catTitle, language: 'en', volume });
     }
   }
   return list;
@@ -202,6 +196,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     chapters: chapterCount,
     site,
     novolumes,
+    fail,
+    skip,
+    shot,
   } = {
     scenario: 'empty' as Scenario,
     freeze: false,
@@ -209,10 +206,13 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     chapters: CHAPTERS,
     site: 'multi' as MockSite,
     novolumes: false,
+    fail: false,
+    skip: false,
+    shot: false,
     ...(typeof setup === 'string' ? { scenario: setup } : setup),
   };
   const offers = OFFERS[site];
-  const options = defaultOptions();
+  const options = defaultOptions(shot);
   let url = '';
   let loading = false;
   let loadError = '';
@@ -284,6 +284,13 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     const shown = fallback === 'all' ? 'all of them' : fallback === '' ? 'no filter' : `"${fallback}"`;
     pushLog('info', `${label} "${typed}" isn't in this series, loading ${shown} instead`);
   };
+
+  const releaseVersion = shot ? RELEASE_VERSION_SHOT : RELEASE_VERSION_DEV;
+  // update stands for a release build, and so does every scenario with &shot,
+  // which reports a release version: the status bar links it to its release
+  const isReleaseBuild = (sc: Scenario) => sc === 'update';
+  const reportsRelease = shot || isReleaseBuild(scenario);
+
   const snapshot = (): State => ({
     url,
     loading,
@@ -305,9 +312,11 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     summary: summary ? { ...summary, failures: [...summary.failures] } : null,
     options: { ...options },
     volumes: { text: volumesText, site: volumesSite },
-    version: UPDATES[scenario] ? RELEASE_VERSION : 'v0.0.0-mock',
-    releaseURL: UPDATES[scenario] ? `${REPO}/releases/tag/${RELEASE_VERSION}` : '',
-    update: UPDATES[scenario] ?? null,
+    version: reportsRelease ? releaseVersion : 'v0.0.0-mock',
+    releaseURL: reportsRelease ? `${REPO}/releases/tag/${releaseVersion}` : '',
+    update: isReleaseBuild(scenario)
+      ? { latest: shot ? UPDATE_VERSION_SHOT : UPDATE_VERSION_DEV, url: `${REPO}/releases/latest` }
+      : null,
     browserVisibleAuto: browserAuto,
     browserAlert,
   });
@@ -319,7 +328,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     identified = true;
     fallbackFor('language', 'language');
     fallbackFor('scanlator', 'scanlation group');
-    title = 'The Cartographer of Lost Harbours';
+    title = 'One Piece';
     chapters = mockChapters(chapterCount, dupes || url.includes('dupes') || options.language === 'all', !novolumes);
     volumesSite = siteVolumes(chapters);
     volumesText = volumesSite;
@@ -426,11 +435,11 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       };
     });
 
-    jobs = jobs.map((j) => {
+    jobs = jobs.map((j, idx) => {
       if (j.volume || (j.state !== 'downloading' && j.state !== 'archiving')) {
         return j;
       }
-      if (j.number === 4 && j.done >= PAGES / 2) {
+      if (fail && idx === 3 && j.done >= PAGES / 2) {
         return { ...j, state: 'failed', reason: 'download: page 5 returned 404 Not Found' };
       }
       // uneven speeds, so the rows don't move in lockstep
@@ -442,7 +451,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     const active = jobs.filter((j) => !j.volume && (j.state === 'downloading' || j.state === 'archiving')).length;
     if (!cancelling && active < 3 && pending.length > 0) {
       const c = pending.shift()!;
-      if (c.number === 6) {
+      if (skip && jobs.filter((j) => !j.volume).length === 5) {
+        // as the backend's Skipped event: a row with nothing to download
         jobs = [
           ...jobs,
           {
@@ -451,26 +461,27 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
             total: 0,
             done: 0,
             state: 'skipped',
-            reason: 'every page was skipped',
+            reason: 'every page excluded by --skip-pages',
             status: '',
             volume: false,
           },
         ];
-      } else {
-        jobs = [
-          ...jobs,
-          {
-            title: c.title,
-            number: c.number,
-            total: PAGES * 2,
-            done: 0,
-            state: 'downloading',
-            reason: '',
-            status: '',
-            volume: false,
-          },
-        ];
+        pushLog('warn', `skipping ${c.title}: every page is excluded by --skip-pages`);
+        return true;
       }
+      jobs = [
+        ...jobs,
+        {
+          title: c.title,
+          number: c.number,
+          total: PAGES * 2,
+          done: 0,
+          state: 'downloading',
+          reason: '',
+          status: '',
+          volume: false,
+        },
+      ];
     }
 
     return (
@@ -498,7 +509,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         const first = v.chapters[0].number;
         const last = v.chapters[v.chapters.length - 1].number;
         const vol = `Vol. ${String(v.number).padStart(2, '0')}`;
-        const title = first === last ? `${vol} · chapter ${first}` : `${vol} · chapters ${first}–${last}`;
+        const title = first === last ? `${vol} · chapter ${first}` : `${vol} · chapters ${first}\u2013${last}`;
         volumeChapters.set(title, v.chapters.length);
         return {
           title,
@@ -546,7 +557,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   }
 
   if (scenario === 'check') {
-    url = 'https://check.example.com/series/the-cartographer';
+    url = 'https://check.example.com/manga/one-piece';
     loading = true;
     browserAuto = true;
     browserAlert = MOCK_ALERT;
@@ -557,7 +568,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       }, 4000);
     }
   } else if (scenario === 'loading') {
-    url = 'https://example.com/series/the-cartographer';
+    url = 'https://example.com/manga/one-piece';
     loading = true;
     if (!freeze) {
       setTimeout(finishLoad, 2500);
@@ -569,9 +580,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     pushLog('info', `Loading ${url}`);
     pushLog('error', loadError);
   } else if (scenario !== 'empty') {
-    url = 'https://example.com/series/the-cartographer';
+    url = 'https://example.com/manga/one-piece';
     finishLoad();
-    pushLog('info', 'Using the saved options from gui.json');
     for (const c of chapters.slice(0, 12)) {
       selected.add(c.index);
     }
@@ -586,15 +596,17 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   if (scenario === 'update') {
     // A realistic site-check failure: selector timeout including the full series URL.
     // The URL is long enough to overflow the status bar without the CSS fix.
-    pushLog(
-      'warn',
-      'site check: timed out waiting for "li.list-group-item, img.PB0mN" at https://example.com/manga/the-cartographer-of-lost-harbours-collected-edition',
-    );
+    if (!shot) {
+      pushLog(
+        'warn',
+        'site check: timed out waiting for "li.list-group-item, img.PB0mN" at https://example.com/manga/the-cartographer-of-lost-harbours-collected-edition',
+      );
+    }
   }
   if (scenario === 'volumes' || scenario === 'volumes-running') {
     options.packAs = 'volumes';
-    // the first three volumes, and half of the fourth
-    selected = new Set(chapters.filter((c) => c.number <= PER_VOLUME * 3 + 4).map((c) => c.index));
+    // three volumes and a half: the first 32 chapters (598-629) span volumes 61-64
+    selected = new Set(chapters.slice(0, Math.min(32, chapters.length)).map((c) => c.index));
     selectionBus.emit(selectionOf());
   }
   if (scenario === 'volumes-running') {
@@ -623,7 +635,11 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       pushLog('info', 'Cancelling: chapters already downloading will finish, no new ones start');
     }
     if (scenario === 'done') {
-      pushLog('warn', 'Chapter 2: page 7 is AVIF but could not be converted; kept as is');
+      // a conversion warning on a chapter of the run (the second, 599 by default)
+      const warned = picked[1] ?? picked[0];
+      if (warned !== undefined) {
+        pushLog('warn', `Chapter ${warned.number}: page 7 is AVIF but could not be converted; kept as is`);
+      }
       finishRun();
     } else if (!freeze) {
       timer = setInterval(tick, TICK_MS);

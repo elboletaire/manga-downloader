@@ -108,6 +108,14 @@ If the desktop app sits next to the command line tool or is on your `PATH` (the
 Homebrew cask puts it there), `manga-downloader ui` opens it. On Windows,
 double-clicking `manga-downloader.exe` does the same.
 
+When a newer release is out, a yellow *!* next to the version in the status bar
+links to it.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/09-update-dark.png">
+  <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/09-update-light.png">
+</picture>
+
 ### Command line
 
 #### Homebrew
@@ -278,7 +286,7 @@ Open the app and follow these steps:
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/03-language-selector-dark.png">
-     <img alt="The language and scanlation group selectors" src="assets/screenshots/03-language-selector-light.png">
+     <img alt="The scanlation group selector open, listing the groups the series offers" src="assets/screenshots/03-language-selector-light.png">
    </picture>
 
 4. **Set the options** in the *Options* tab: where the files go, the format
@@ -290,7 +298,12 @@ Open the app and follow these steps:
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.png">
-     <img alt="The Options tab" src="assets/screenshots/06-options-light.png">
+     <img alt="The Options tab, with the format, Pack as and Convert to JPEG options" src="assets/screenshots/06-options-light.png">
+   </picture>
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/07-volumes-dark.png">
+     <img alt="Packing by volume: the Volumes box above the chapter list, the list grouped by volume, and the Download button naming the volumes" src="assets/screenshots/07-volumes-light.png">
    </picture>
 
 5. **Press Download.** The *Activity* tab shows each chapter as it's fetched and
@@ -308,6 +321,14 @@ Open the app and follow these steps:
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/05-done-dark.png">
      <img alt="The finished download summary" src="assets/screenshots/05-done-light.png">
+   </picture>
+
+   If a chapter fails, the summary names it and says why; the other chapters
+   are still saved.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/10-failed-dark.png">
+     <img alt="A finished download where one chapter failed, with the reason" src="assets/screenshots/10-failed-light.png">
    </picture>
 
 The app saves your options to `gui.json` in the `manga-downloader` folder of
@@ -344,7 +365,7 @@ Some sites, such as MangaDex, list each chapter once per language. Use
 `--language` to download only one of them:
 
 ~~~bash
-manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece 1-10
+manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f 1-10
 ~~~
 
 On sites that list several languages, `--language all` downloads every one of them.
@@ -388,6 +409,8 @@ manga-downloader --volumes 16:112-114/115-118 [url] 112-118
 
 That's volumes 16 and 17. An empty group also skips a number (`1-7//20-30` has
 no volume 2), and `--volumes` can't be combined with `--bundle`.
+
+![volumes img]
 
 ### Image conversion
 
@@ -527,8 +550,6 @@ Some sites cap the concurrency lower, because their image servers refuse
 requests that come too fast; a lower value still applies there. Pages refused
 for coming too fast (a 429) are retried after the wait the server asks for, up
 to a minute.
-
-![help img]
 
 ## Supported sites
 
@@ -696,6 +717,11 @@ challenges need you to solve them yourself; the download carries on once the
 page loads. You rarely need to show the window from the start, but you can with
 `--browser-visible` or *Show the browser window* in the app.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/08-browser-alert-dark.png">
+  <img alt="The app's alert asking you to look at the browser window, with Dismiss and Show the browser window buttons" src="assets/screenshots/08-browser-alert-light.png">
+</picture>
+
 </details>
 
 <details>
@@ -764,7 +790,7 @@ make build/gui/windows # cross-build manga-downloader-gui.exe, no cgo needed
 [star history]: https://raw.githubusercontent.com/elboletaire/manga-downloader/star-tracker-data/charts/star-history.svg
 [go template]: https://pkg.go.dev/text/template
 [docker hub]: https://hub.docker.com/r/elboletaire/manga-downloader
-[download img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/download.gif
-[bundle img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/bundle.gif
-[help img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/help.gif
-[prompt img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/demos/prompt.gif
+[download img]: assets/demos/download.gif
+[bundle img]: assets/demos/bundle.gif
+[prompt img]: assets/demos/prompt.gif
+[volumes img]: assets/demos/volumes.gif

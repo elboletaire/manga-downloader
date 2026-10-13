@@ -1,0 +1,69 @@
+diff --git a/gui/main.go b/gui/main.go
+index 7f5edcc..b4046d5 100644
+--- a/gui/main.go
++++ b/gui/main.go
+@@ -16,6 +16,10 @@ import (
+ 	"github.com/wailsapp/wails/v2/pkg/options"
+ 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+ 	"github.com/wailsapp/wails/v2/pkg/options/linux"
++	"github.com/wailsapp/wails/v2/pkg/options/mac"
++	wrt "github.com/wailsapp/wails/v2/pkg/runtime"
++	"os"
++	"strconv"
+ )
+ 
+ // Version and Tag are set at link time by the release workflow (-X), the same
+@@ -54,11 +58,17 @@ func main() {
+ 
+ 	err := wails.Run(&options.App{
+ 		Title:            "Manga Downloader",
+-		Width:            1100,
+-		Height:           760,
+-		MinWidth:         900,
+-		MinHeight:        600,
+-		BackgroundColour: startupBackground(),
++		Width:            shotInt("SHOT_W", 1100),
++		Height:           shotInt("SHOT_H", 760),
++		MinWidth:         600,
++		MinHeight:        400,
++		BackgroundColour: shotBg(),
++		Mac:              shotMac(),
++		OnDomReady: func(ctx context.Context) {
++			if q := os.Getenv("SHOT_Q"); q != "" {
++				wrt.WindowExecJS(ctx, "if(!location.search){location.search='"+q+"'}else{setTimeout(()=>{"+os.Getenv("SHOT_JS")+"},1200)}")
++			}
++		},
+ 		AssetServer:      &assetserver.Options{Assets: assets},
+ 		OnStartup: func(ctx context.Context) {
+ 			app.startup(ctx, rt)
+@@ -104,3 +114,30 @@ func versionString() string {
+ 
+ 	return Version
+ }
++
++func shotInt(k string, d int) int {
++	if v, err := strconv.Atoi(os.Getenv(k)); err == nil {
++		return v
++	}
++	return d
++}
++
++func shotBg() *options.RGBA {
++	switch os.Getenv("SHOT_THEME") {
++	case "dark":
++		return &darkBackground
++	case "light":
++		return &lightBackground
++	}
++	return startupBackground()
++}
++
++func shotMac() *mac.Options {
++	switch os.Getenv("SHOT_THEME") {
++	case "dark":
++		return &mac.Options{Appearance: mac.NSAppearanceNameDarkAqua}
++	case "light":
++		return &mac.Options{Appearance: mac.NSAppearanceNameAqua}
++	}
++	return nil
++}

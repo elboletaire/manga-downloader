@@ -42,7 +42,7 @@ pnpm preview   # serve dist/
   release if one was published since the build.
 - **Brand assets**: copied from the approved brand kit into `src/assets/brand/`
   and `public/` (favicons, `opengraph.png`). Don't redraw them.
-- **Terminal GIFs**: referenced from `demos/` on `master` via raw GitHub URLs,
+- **Terminal GIFs**: referenced from `assets/demos/` on `master` via raw GitHub URLs,
   lazy-loaded.
 
 ## Screenshots
@@ -64,15 +64,16 @@ every browser the site cares about reads, so there are no PNG fallbacks.
 The files are converted offline and committed, so the build needs no image tools.
 The crop script is [`build/crop-screenshots.sh`](build/crop-screenshots.sh). The
 geometry is `WxH+X+Y` on the 2000x1390 original, with the window's top-left at
-(85,58), so `03-language-selector-*.png` crops to `900x1000+85+58`. The
-`finished-run` crop starts at x=1362, between the chapter list and the Activity
+(85,56), so `03-language-selector-*.png` crops to `820x960+1095+56`, the
+right-hand part of the window with the group dropdown open. The
+`finished-run` crop starts at x=1245, between the chapter list and the Activity
 panel, so no edge of the list shows in it:
 
 | Crop                | Original                                | Geometry            |
 | ------------------- | --------------------------------------- | ------------------- |
-| `language-selector` | `03-language-selector-{light,dark}.png` | `900x1000+85+58`    |
-| `chapter-list`      | `04-downloading-{light,dark}.png`       | `1265x1000+100+278` |
-| `finished-run`      | `05-done-{light,dark}.png`              | `553x760+1362+248`  |
+| `language-selector` | `03-language-selector-{light,dark}.png` | `820x960+1095+56`   |
+| `chapter-list`      | `04-downloading-{light,dark}.png`       | `1150x885+100+390`  |
+| `finished-run`      | `05-done-{light,dark}.png`              | `670x830+1245+390`  |
 
 To regenerate from the originals, run it with the repo's originals folder and an
 output folder, from `website/`:

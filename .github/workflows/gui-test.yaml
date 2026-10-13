@@ -8,13 +8,11 @@ on:
       - '**.md'
       - 'assets/**'
       - 'website/**'
-      - 'demos/**'
   pull_request:
     paths-ignore:
       - '**.md'
       - 'assets/**'
       - 'website/**'
-      - 'demos/**'
 
 permissions:
   contents: read

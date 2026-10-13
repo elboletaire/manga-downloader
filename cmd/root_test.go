@@ -105,6 +105,137 @@ func TestProgressModelBundleMode(t *testing.T) {
 	}
 }
 
+// While core totals the pages, before BundleStart, the bundle row says so and
+// draws an empty bar with the real bars' glyph, not a "0/0" over shading.
+func TestBundleRowBeforeBundleStart(t *testing.T) {
+	m := newProgressModel("Series", "1-5", true, false, true)
+	m.width = 80
+
+	row := ansi.Strip(m.renderBundleRow())
+	if !strings.HasPrefix(row, "Series - chapters 1-5") || !strings.Contains(row, "gathering") {
+		t.Errorf("row %q doesn't name the bundle or say it's gathering", row)
+	}
+	if strings.Contains(row, "░") || strings.Contains(row, "0/0") {
+		t.Errorf("row %q has the placeholder bar or a 0/0 counter", row)
+	}
+	if !strings.Contains(row, "▇") {
+		t.Errorf("row %q doesn't draw an empty bar", row)
+	}
+}
+
+// The bundle row ends like a chapter row, saying done (or failed) in its own
+// status column, instead of a "saved file" line printed below the bars.
+func TestBundleRowEndsWithStatus(t *testing.T) {
+	for _, tc := range []struct {
+		err  error
+		want string
+	}{
+		{nil, "done"},
+		{fmt.Errorf("disk full"), "failed"},
+	} {
+		m := newProgressModel("Series", "", true, false, true)
+		m.width = 80
+		for _, msg := range []tea.Msg{bundleStartMsg{total: 5}, bundlePackingMsg{}, downloadDoneMsg{err: tc.err}} {
+			next, _ := m.Update(msg)
+			m = next.(progressModel)
+		}
+		row := ansi.Strip(m.renderBundleRow())
+		if !strings.HasPrefix(row, "Series - all chapters") || !strings.HasSuffix(strings.TrimSpace(row), tc.want) {
+			t.Errorf("err %v: row %q, want it titled and ending in %q", tc.err, row, tc.want)
+		}
+	}
+}
+
+// core drops a chapter that fails to download and still packs the bundle, so
+// it ends done but short of its total: the bar shows how far it got, not full.
+func TestBundleRowDoneShortOfTotal(t *testing.T) {
+	m := newProgressModel("Series", "", true, false, true)
+	m.width = 80
+	msgs := []tea.Msg{bundleStartMsg{total: 10}}
+	for range 5 {
+		msgs = append(msgs, pageSuccessMsg{})
+	}
+	msgs = append(msgs, bundlePackingMsg{}, bundleArchivedMsg{n: 5}, downloadDoneMsg{})
+	for _, msg := range msgs {
+		next, _ := m.Update(msg)
+		m = next.(progressModel)
+	}
+	row := m.renderBundleRow()
+	if !strings.Contains(row, m.bundleBar.ViewAs(0.5)) {
+		t.Errorf("row %q doesn't draw the bar at 10/20", row)
+	}
+	if strings.Contains(row, m.bundleBar.ViewAs(1.0)) {
+		t.Errorf("row %q draws a full bar for a bundle short of its total", row)
+	}
+	if plain := ansi.Strip(row); !strings.Contains(plain, "10/20") || !strings.HasSuffix(strings.TrimSpace(plain), "done") {
+		t.Errorf("row %q, want 10/20 and done", plain)
+	}
+}
+
+// A failed bundle keeps its danger bar on the model, so a resize reaches it,
+// instead of making a new one every frame.
+func TestBundleFailBarPersists(t *testing.T) {
+	m := newProgressModel("Series", "", true, false, true)
+	m.width = 80
+	for _, msg := range []tea.Msg{bundleStartMsg{total: 10}, pageSuccessMsg{}, downloadDoneMsg{err: fmt.Errorf("disk full")}} {
+		next, _ := m.Update(msg)
+		m = next.(progressModel)
+	}
+	if m.bundleFailBar == nil {
+		t.Fatal("bundleFailBar is nil after a failed download")
+	}
+	failBar := m.bundleFailBar
+	next, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
+	m = next.(progressModel)
+	_, barW, _ := btLayout(120)
+	if m.bundleFailBar != failBar || failBar.Width() != barW {
+		t.Errorf("fail bar not resized in place: width %d, want %d", failBar.Width(), barW)
+	}
+	if row := m.renderBundleRow(); !strings.Contains(row, failBar.ViewAs(0.05)) {
+		t.Errorf("row %q doesn't draw the fail bar at 1/20", row)
+	}
+}
+
+// BundleStart(0), when every chapter failed to fetch, still shows its 0/0:
+// only the gathering row leaves the counter blank.
+func TestBundleCounterAfterEmptyStart(t *testing.T) {
+	m := newProgressModel("Series", "", true, false, true)
+	m.width = 80
+	next, _ := m.Update(bundleStartMsg{total: 0})
+	m = next.(progressModel)
+	if row := ansi.Strip(m.renderBundleRow()); !strings.Contains(row, "0/0") {
+		t.Errorf("row %q has no 0/0 counter after BundleStart(0)", row)
+	}
+}
+
+// A bundle run ends its counter exactly at the total: each page counts once as
+// it downloads and once as it's archived. Downloaded used to add the chapter's
+// pages a third time, ending at 150/100.
+func TestProgressModelBundleCountsEachPageOnce(t *testing.T) {
+	chapter := &grabber.Chapter{Title: "Chapter 0001", PagesCount: 50}
+
+	// Downloaded sends nothing: a nil program would panic on Send
+	(&bubbleEvents{}).Downloaded(chapter)
+
+	m := newProgressModel("Series", "1", true, false, true)
+	m.width = 80
+	msgs := []tea.Msg{bundleStartMsg{total: 50}, chapterStartedMsg{chapter: chapter, total: 100}}
+	for range 50 {
+		msgs = append(msgs, pageSuccessMsg{chapter: chapter})
+	}
+	msgs = append(msgs, bundlePackingMsg{})
+	for range 50 {
+		msgs = append(msgs, bundleArchivedMsg{n: 1})
+	}
+	for _, msg := range msgs {
+		next, _ := m.Update(msg)
+		m = next.(progressModel)
+	}
+	if m.bundleCurrent != m.bundleTotal {
+		t.Errorf("bundle ended at %d/%d", m.bundleCurrent, m.bundleTotal)
+	}
+}
+
 func TestFailedBarNotFull(t *testing.T) {
 	chapter := &grabber.Chapter{
 		Title:      "Chapter 0001",
@@ -211,52 +342,6 @@ func TestBtLayout(t *testing.T) {
 	}
 }
 
-func TestBtBundleLayout(t *testing.T) {
-	tests := []struct {
-		width             int
-		wantPhasePositive bool
-		wantCounterW      int
-	}{
-		{120, true, 9}, // full
-		{80, true, 9},  // full
-		{56, true, 9},  // exactly full threshold
-		{50, true, 9},  // medium (shrunk phase)
-		{27, true, 9},  // minimum width for phaseW ≥ 1 (26-26=0, 27-26=1)
-		{26, false, 9}, // phaseW=0 at the boundary of medium mode
-		{25, false, 9}, // no phase, keep counter
-		{16, false, 9}, // bar + counter only
-		{15, false, 0}, // bar only
-		{10, false, 0}, // tiny
-	}
-	for _, tc := range tests {
-		phaseW, barW, counterW := btBundleLayout(tc.width)
-		hasPhase := phaseW > 0
-		if hasPhase != tc.wantPhasePositive {
-			t.Errorf("btBundleLayout(%d): phaseW=%d (positive=%v), want positive=%v",
-				tc.width, phaseW, hasPhase, tc.wantPhasePositive)
-		}
-		if counterW != tc.wantCounterW {
-			t.Errorf("btBundleLayout(%d): counterW=%d, want %d", tc.width, counterW, tc.wantCounterW)
-		}
-		// Verify no overflow: total visible width ≤ terminal width.
-		var total int
-		switch {
-		case phaseW > 0 && counterW > 0:
-			total = phaseW + 1 + barW + 1 + counterW
-		case counterW > 0:
-			total = barW + 1 + counterW
-		default:
-			total = barW
-		}
-		if total > tc.width {
-			t.Errorf("btBundleLayout(%d): total=%d overflows terminal", tc.width, total)
-		}
-		if barW < 1 {
-			t.Errorf("btBundleLayout(%d): barW=%d < 1", tc.width, barW)
-		}
-	}
-}
-
 // TestViewWidths renders chapter and bundle rows at various terminal widths and
 // asserts that every row's visible width (ANSI-stripped) does not exceed the
 // terminal width.
@@ -345,6 +430,39 @@ func TestViewWidths(t *testing.T) {
 			}
 			row := m.renderBundleRow()
 			checkRowWidth(t, row, w, "bundle")
+		})
+
+		t.Run("bundle_gathering", func(t *testing.T) {
+			m := newProgressModel("Series", "1-5", true, false, true)
+			m.width = w
+			checkRowWidth(t, m.renderBundleRow(), w, "bundle_gathering")
+		})
+
+		t.Run("bundle_failed", func(t *testing.T) {
+			m := newProgressModel("Series", "1-5", true, false, true)
+			m.width = w
+			for _, msg := range []tea.Msg{bundleStartMsg{total: 50}, pageSuccessMsg{}, downloadDoneMsg{err: fmt.Errorf("disk full")}} {
+				next, _ := m.Update(msg)
+				m = next.(progressModel)
+			}
+			checkRowWidth(t, m.renderBundleRow(), w, "bundle_failed")
+		})
+
+		// "12345/24690" outgrows the 9-cell counter; the status must survive
+		t.Run("bundle_large", func(t *testing.T) {
+			m := newProgressModel(longTitle, "1-500", true, false, true)
+			m.width = w
+			next, _ := m.Update(bundleStartMsg{total: 12345})
+			m = next.(progressModel)
+			m.bundleCurrent = 12345
+			row := m.renderBundleRow()
+			checkRowWidth(t, row, w, "bundle_large")
+			if _, _, narrow := btLayout(w); !narrow {
+				plain := ansi.Strip(row)
+				if !strings.Contains(plain, "12345/24690") || !strings.HasSuffix(strings.TrimSpace(plain), "downloading") {
+					t.Errorf("bundle_large at width=%d: row %q lost its counter or status", w, plain)
+				}
+			}
 		})
 	}
 }
