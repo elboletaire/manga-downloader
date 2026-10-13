@@ -115,9 +115,12 @@ func TestArchiveEPUBPackage(t *testing.T) {
 	path := packEPUB(t, EPUBInfo{Series: epubTitle, Position: "", ReadingDirection: ReadingDirectionLTR}, epubBundleFiles(t))
 	entries, contents := readEPUB(t, path)
 
-	// mimetype first, stored uncompressed
+	// mimetype first, stored uncompressed, with no data descriptor
 	if entries[0].Name != "mimetype" || entries[0].Method != zip.Store {
 		t.Errorf("first entry = %q (method %d), want mimetype stored", entries[0].Name, entries[0].Method)
+	}
+	if entries[0].Flags&0x8 != 0 {
+		t.Errorf("mimetype has the data descriptor flag set (flags %#x)", entries[0].Flags)
 	}
 	if got := string(contents["mimetype"]); got != "application/epub+zip" {
 		t.Errorf("mimetype = %q", got)
