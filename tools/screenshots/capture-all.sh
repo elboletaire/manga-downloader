@@ -26,7 +26,7 @@ swiftc -O winall.swift -o bin/winall
 # build the app with the capture hooks, and take them out again whatever happens
 git -C "$ROOT" apply "$HERE/capture.patch"
 trap 'git -C "$ROOT" apply -R "$HERE/capture.patch"' EXIT
-make -C "$ROOT" build/gui
+VITE_MOCK=1 make -C "$ROOT" build/gui
 git -C "$ROOT" apply -R "$HERE/capture.patch"
 trap - EXIT
 
@@ -34,17 +34,20 @@ rm -rf "$WORK/raw" out
 mkdir -p "$WORK/raw"
 # the Options panel scrolled to Format / Pack as / Convert to JPEG
 SCROLL='const o=document.querySelector(".options");let e=o;while(e&&e.scrollHeight<=e.clientHeight)e=e.parentElement;if(e)e.scrollTop=105;'
+# two volumes folded, to show the groups collapse
+FOLD='document.querySelector(".fold.open")?.click();document.querySelector(".fold.open")?.click();'
 
 for theme in light dark; do
   shot() { ./shot.sh "$WORK/raw/$1-$theme.png" $theme "$2" 4 "${3:-}"; }
-  shot 02-loaded '?mock&scenario=loaded&freeze'
+  shot 02-loaded '?mock&scenario=loaded&freeze&shot'
   ./shot-select.sh "$WORK/raw/03-language-selector-$theme.png" $theme
-  shot 04-downloading '?mock&scenario=running&freeze'
-  shot 05-done '?mock&scenario=done&freeze'
-  shot 06-options '?mock&scenario=loaded&freeze' "$SCROLL"
-  shot 07-volumes '?mock&scenario=volumes&freeze'
-  shot 08-browser-alert '?mock&scenario=check&freeze'
-  shot 09-update '?mock&scenario=update&freeze'
+  shot 04-downloading '?mock&scenario=running&freeze&shot'
+  shot 05-done '?mock&scenario=done&freeze&shot'
+  shot 06-options '?mock&scenario=loaded&freeze&shot' "$SCROLL"
+  shot 07-volumes '?mock&scenario=volumes&freeze&shot' "$FOLD"
+  shot 08-browser-alert '?mock&scenario=check&freeze&shot'
+  shot 09-update '?mock&scenario=update&freeze&shot'
+  shot 10-failed '?mock&scenario=done&freeze&fail&shot'
 done
 
 # 2054x1444 -> 2000x1390, then 8-bit palette PNGs (~190-230 KB)

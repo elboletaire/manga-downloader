@@ -9,7 +9,7 @@ set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 BIN=${BIN:-$HERE/../../manga-downloader-gui}
 
-SHOT_W=915 SHOT_H=578 SHOT_THEME=$2 SHOT_Q='?mock&scenario=loaded&freeze&site=groups' "$BIN" >/dev/null 2>&1 &
+SHOT_W=915 SHOT_H=578 SHOT_THEME=$2 SHOT_Q='?mock&scenario=loaded&freeze&site=groups&shot' "$BIN" >/dev/null 2>&1 &
 pid=$!
 sleep 1.5
 osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $pid) to true" >/dev/null

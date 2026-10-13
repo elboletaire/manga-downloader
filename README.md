@@ -323,6 +323,14 @@ Open the app and follow these steps:
      <img alt="The finished download summary" src="assets/screenshots/05-done-light.png">
    </picture>
 
+   If a chapter fails, the summary names it and says why; the other chapters
+   are still saved.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/10-failed-dark.png">
+     <img alt="A finished download where one chapter failed, with the reason" src="assets/screenshots/10-failed-light.png">
+   </picture>
+
 The app saves your options to `gui.json` in the `manga-downloader` folder of
 your user config folder (the same place as the Manga Plus secret, see
 [below](#environment-variables)), so they're still there the next time you open

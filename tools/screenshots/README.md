@@ -31,12 +31,11 @@ binary:
 - `gui/main.go`: `SHOT_W`/`SHOT_H` (window size), `SHOT_THEME` (appearance),
   `SHOT_Q` (the mock query, set on the first load) and `SHOT_JS` (run 1.2s
   after the mock page loads, e.g. to scroll the Options panel).
-- `gui/frontend/src/mock.ts`: v1.15.0 as the version instead of
-  `v0.0.0-mock` (v1.15.0 → v1.16.0 for `update`), a macOS folder path, and no
-  status-bar warning in `update` (it's there to test overflow, and looks like
-  debug output in a screenshot).
 
-It was made against `e341a95`; if `mock.ts` has moved on, it may need a refresh.
+The mock is built in with `VITE_MOCK=1` (production builds leave it out), and
+every query adds `&shot`: the release version, a macOS folder path and no debug
+line in `update`. `&fail` is only used for `10-failed`. When the app's version
+moves on, update the `&shot` constants near `RELEASE_VERSION` in `mock.ts`.
 
 ## Files
 
