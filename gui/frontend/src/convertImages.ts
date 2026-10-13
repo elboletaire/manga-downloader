@@ -31,3 +31,23 @@ export function convertValueOf(flags: ConvertFlags): string {
 
   return 'none';
 }
+
+/** Shown under the AVIF box while the format is EPUB, which always converts it */
+export const AVIF_EPUB_HINT = "Always on for EPUB: readers can't show AVIF.";
+
+export interface AvifSwitch {
+  checked: boolean;
+  disabled: boolean;
+}
+
+/**
+ * The AVIF box for a format. EPUB always converts AVIF whatever the saved
+ * setting says, so the box shows checked and locked then; the saved value
+ * itself is left alone.
+ */
+export function avifSwitchOf(flags: ConvertFlags, format: string): AvifSwitch {
+  if (format === 'epub') {
+    return { checked: true, disabled: true };
+  }
+  return { checked: flags.avif, disabled: false };
+}

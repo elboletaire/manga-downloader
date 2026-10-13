@@ -295,13 +295,14 @@ Open the app and follow these steps:
      <img alt="The language selector open, with Catalan selected" src="assets/screenshots/03-language-selector-light.png">
    </picture>
 
-4. **Set the options** in the *Options* tab: where the files go, the format
-   (CBZ archive, EPUB or image folder; EPUB adds a *Reading direction*), *Pack
-   as* (a file per chapter, per volume, or one for everything), *Convert to
-   JPEG* for AVIF and WebP pages, and pages to skip. Under *Advanced* are the file name template and *Show the browser
-   window*, which you rarely need: a site that needs the window opens it by itself.
-   Packing by volume adds a *Volumes* box above the chapter list, filled with
-   the site's volumes when it lists them, and groups the list by volume.
+4. **Set the options** in the *Options* tab: where the files go, the format (CBZ
+   archive, image folder or EPUB; EPUB adds a *Reading direction*), *Pack as* (a
+   file per chapter, per volume, or one for everything), *Convert to JPEG* for
+   AVIF and WebP pages, and pages to skip. Under *Advanced* are the file name
+   template and *Show the browser window*, which you rarely need: a site that
+   needs the window opens it by itself. Packing by volume adds a *Volumes* box
+   above the chapter list, filled with the site's volumes when it lists them,
+   and groups the list by volume.
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.png">

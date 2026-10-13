@@ -3,7 +3,7 @@
 // controls can't overwrite each other's edits.
 
 import { browserSwitchOf } from './browserVisible';
-import { convertFlagsOf, convertValueOf } from './convertImages';
+import { AVIF_EPUB_HINT, avifSwitchOf, convertFlagsOf, convertValueOf } from './convertImages';
 import { Check, Segmented, Switch, TextField } from './fields';
 import { errorMessage } from './format';
 import { FolderIcon } from './icons';
@@ -30,6 +30,7 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
   const o = state.options;
   const locked = state.loading || state.running;
   const flags = convertFlagsOf(o.convertImages);
+  const avif = avifSwitchOf(flags, o.format);
   const browser = browserSwitchOf(state);
   const set = (patch: Partial<Options>) => {
     onOptions(patch).catch(() => undefined);
@@ -120,8 +121,9 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
           <div className="check-row">
             <Check
               label="AVIF"
-              checked={flags.avif}
-              onChange={(avif) => set({ convertImages: convertValueOf({ ...flags, avif }) })}
+              checked={avif.checked}
+              disabled={avif.disabled}
+              onChange={(checked) => set({ convertImages: convertValueOf({ ...flags, avif: checked }) })}
             />
             <Check
               label="WebP"
@@ -129,7 +131,9 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
               onChange={(webp) => set({ convertImages: convertValueOf({ ...flags, webp }) })}
             />
           </div>
-          <p className="hint">Most e-readers can't open AVIF; WebP is unreliable on e-ink.</p>
+          <p className="hint">
+            {o.format === 'epub' ? AVIF_EPUB_HINT : "Most e-readers can't open AVIF; WebP is unreliable on e-ink."}
+          </p>
         </fieldset>
 
         <TextField
