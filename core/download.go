@@ -13,6 +13,15 @@ import (
 	"github.com/elboletaire/manga-downloader/ranges"
 )
 
+// The progress bars split each page's step in two: DownloadWeight once the
+// page is fetched and ArchiveWeight once it's written to the archive. A bar
+// fills 80% while downloading and 20% while archiving, which is why archiving
+// is the small share even when it's slow (AVIF conversion).
+const (
+	DownloadWeight = 4
+	ArchiveWeight  = 1
+)
+
 // Events receives the progress of Download, in the order it happens. Calls
 // come from several goroutines at once (chapters download concurrently), so
 // implementations must be safe for concurrent use. A chapter is identified by
@@ -65,9 +74,9 @@ type Events interface {
 	// failed) and its archive is about to be written
 	VolumePacking(v *Volume)
 	// VolumeProgress reports how far along v is, from 0 to 1: each of its
-	// chapters weighs the same in the download half (by its pages once it
+	// chapters weighs the same in the download share (by its pages once it
 	// starts, in full once it's done or failed), and the archive's pages make
-	// up the other half. It never decreases, and the calls for one volume
+	// up the rest. It never decreases, and the calls for one volume
 	// arrive in order, so renderers can show it as is. It doesn't reach 1 for
 	// a volume that fails; VolumePacked says how it ended.
 	VolumeProgress(v *Volume, fraction float64)
@@ -108,6 +117,13 @@ var ErrEmptyVolume = errors.New("none of its chapters could be downloaded")
 // all skipped by --skip-pages: there's nothing to pack, and nothing failed
 var ErrSkippedVolume = errors.New("--skip-pages excludes every page of its chapters")
 
+// downloadShare and archiveShare are the parts of a volume's fraction that
+// its downloads and its archive fill: 0.8 and 0.2 with the weights above
+const (
+	downloadShare = float64(DownloadWeight) / (DownloadWeight + ArchiveWeight)
+	archiveShare  = float64(ArchiveWeight) / (DownloadWeight + ArchiveWeight)
+)
+
 // volumeRun tracks a volume through the download: it's packed by whichever
 // of its chapters finishes last
 type volumeRun struct {
@@ -130,7 +146,7 @@ type volumeRun struct {
 	reported     float64
 }
 
-// chapterProgress is a volume chapter's share of the download half
+// chapterProgress is a volume chapter's share of the download share
 type chapterProgress struct {
 	done, total int
 	finished    bool
@@ -168,9 +184,9 @@ func (r *volumeRun) report() {
 	for _, p := range r.chapters {
 		sum += p.fraction()
 	}
-	f := sum / float64(len(r.v.Chapters)) / 2
+	f := sum / float64(len(r.v.Chapters)) * downloadShare
 	if r.archiveTotal > 0 {
-		f += float64(r.archived) / float64(r.archiveTotal) / 2
+		f += float64(r.archived) / float64(r.archiveTotal) * archiveShare
 	}
 	// the map's order is random, so the same progress can sum to a value a
 	// rounding error above the last one: that isn't a step forward

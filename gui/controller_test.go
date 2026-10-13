@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
 )
 
@@ -382,13 +383,31 @@ func TestDownloadNonBundle(t *testing.T) {
 		t.Fatalf("summary = %+v", s)
 	}
 	for _, j := range c.Jobs() {
-		if j.State != JobDone || j.Done != j.Total || j.Total != 4 {
-			t.Errorf("job %q = %+v, want done 4/4", j.Title, j)
+		if j.State != JobDone || j.Done != j.Total || j.Total != 2*(core.DownloadWeight+core.ArchiveWeight) {
+			t.Errorf("job %q = %+v, want done with 2 pages' steps", j.Title, j)
 		}
 	}
 	files, _ := filepath.Glob(filepath.Join(dir, "*.cbz"))
 	if len(files) != 3 {
 		t.Errorf("wrote %d cbz files, want 3 (in %s)", len(files), dir)
+	}
+}
+
+// advance keeps a row downloading until its first archived step, the CLI's
+// switch point: the downloads fill it to 80% and no further
+func TestAdvanceSwitchesToArchivingAtDownloadShare(t *testing.T) {
+	const pages = 10
+	j := &Job{Total: pages * (core.DownloadWeight + core.ArchiveWeight), State: JobDownloading}
+
+	j.Done = pages * core.DownloadWeight
+	advance(j)
+	if j.State != JobDownloading {
+		t.Errorf("state with every page downloaded = %v, want downloading", j.State)
+	}
+	j.Done += core.ArchiveWeight
+	advance(j)
+	if j.State != JobArchiving {
+		t.Errorf("state after the first archived page = %v, want archiving", j.State)
 	}
 }
 

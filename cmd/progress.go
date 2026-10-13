@@ -166,8 +166,13 @@ type progressModel struct {
 	bundleStarted bool // set on BundleStart; until then the counter is blank
 	bundleCurrent int64
 	bundleTotal   int64
-	bundleBar     *progress.Model // created with the model, empty until BundleStart
-	bundleFailBar *progress.Model // danger-coloured bar, created when Download fails
+	// bundleDownloaded and bundleArchived are the pages the counter shows;
+	// bundlePacking is set once the archive starts (bundlePackingMsg)
+	bundleDownloaded int64
+	bundleArchived   int64
+	bundlePacking    bool
+	bundleBar        *progress.Model // created with the model, empty until BundleStart
+	bundleFailBar    *progress.Model // danger-coloured bar, created when Download fails
 }
 
 var _ tea.Model = progressModel{}
@@ -288,7 +293,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case bundleStartMsg:
-		m.bundleTotal = msg.total * 2
+		m.bundleTotal = msg.total * (core.DownloadWeight + core.ArchiveWeight)
 		m.bundleStarted = true
 		m.bundleStatus = "downloading"
 
@@ -316,7 +321,8 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case pageSuccessMsg:
 		if m.bundle {
-			m.bundleCurrent++
+			m.bundleCurrent += core.DownloadWeight
+			m.bundleDownloaded++
 			if m.bundleBar != nil {
 				return m, m.bundleBar.SetPercent(safePercent(m.bundleCurrent, m.bundleTotal))
 			}
@@ -330,10 +336,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if s == nil {
 			return m, nil
 		}
-		s.current++
-		if s.current > s.total/2 {
-			s.status = "archiving"
-		}
+		s.current += core.DownloadWeight
 		return m, s.bar.SetPercent(safePercent(s.current, s.total))
 
 	case downloadFailedMsg:
@@ -357,7 +360,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if s == nil {
 			return m, nil
 		}
-		s.current++
+		s.current += core.ArchiveWeight
 		s.status = "archiving"
 		return m, s.bar.SetPercent(safePercent(s.current, s.total))
 
@@ -382,9 +385,11 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case bundlePackingMsg:
 		m.bundleStatus = "archiving"
+		m.bundlePacking = true
 
 	case bundleArchivedMsg:
-		m.bundleCurrent += int64(msg.n)
+		m.bundleCurrent += int64(msg.n) * core.ArchiveWeight
+		m.bundleArchived += int64(msg.n)
 		if m.bundleBar != nil {
 			return m, m.bundleBar.SetPercent(safePercent(m.bundleCurrent, m.bundleTotal))
 		}
@@ -569,6 +574,28 @@ func (m progressModel) statusStyle(status string) string {
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(fgHex)).Render(text)
 }
 
+// pageCounter shows a chapter's steps as pages out of its page count: the
+// downloaded pages up to the download share (so 30/30 once they're all in),
+// then the archived ones
+func pageCounter(current, total int64) string {
+	pages := total / (core.DownloadWeight + core.ArchiveWeight)
+	downloadEnd := pages * core.DownloadWeight
+	if current <= downloadEnd {
+		return fmt.Sprintf("%d/%d", current/core.DownloadWeight, pages)
+	}
+	return fmt.Sprintf("%d/%d", (current-downloadEnd)/core.ArchiveWeight, pages)
+}
+
+// bundleCounter is the bundle's pages: the downloaded ones until its archive
+// starts, then the archived ones, out of its page count
+func (m progressModel) bundleCounter() string {
+	done := m.bundleDownloaded
+	if m.bundlePacking {
+		done = m.bundleArchived
+	}
+	return fmt.Sprintf("%d/%d", done, m.bundleTotal/(core.DownloadWeight+core.ArchiveWeight))
+}
+
 func (m progressModel) renderChapterRow(s *barState) string {
 	titleW, barW, narrow := btLayout(m.width)
 	if s.bar.Width() != barW {
@@ -597,7 +624,7 @@ func (m progressModel) renderChapterRow(s *barState) string {
 	if narrow {
 		row = title + " " + barStr
 	} else {
-		counter := fmt.Sprintf("%9s", fmt.Sprintf("%d/%d", s.current, s.total))
+		counter := fmt.Sprintf("%9s", pageCounter(s.current, s.total))
 		row = title + " " + barStr + " " + counter + " " + m.statusStyle(s.status)
 	}
 	return clipRow(row, m.width)
@@ -651,7 +678,7 @@ func (m progressModel) renderBundleRow() string {
 
 	counter := strings.Repeat(" ", btCounterW)
 	if m.bundleStarted {
-		counter = fmt.Sprintf("%9s", fmt.Sprintf("%d/%d", m.bundleCurrent, m.bundleTotal))
+		counter = fmt.Sprintf("%9s", m.bundleCounter())
 	}
 	if extra := len(counter) - btCounterW; !narrow && extra > 0 {
 		// a total of 5000+ pages outgrows the column: take the room from the
@@ -735,7 +762,7 @@ func (e *bubbleEvents) FilenameFailed(c *grabber.Chapter, err error) {
 }
 
 func (e *bubbleEvents) Started(c *grabber.Chapter) {
-	e.prog.Send(chapterStartedMsg{chapter: c, total: int64(c.PagesCount) * 2})
+	e.prog.Send(chapterStartedMsg{chapter: c, total: int64(c.PagesCount) * (core.DownloadWeight + core.ArchiveWeight)})
 }
 
 func (e *bubbleEvents) Page(c *grabber.Chapter, idx int, err error) {
@@ -764,7 +791,7 @@ func (e *bubbleEvents) Packed(c *grabber.Chapter, _ string, err error) {
 }
 
 // Downloaded sends nothing: the pages were counted as they came in, and
-// adding them again here overshot the bundle's total by half
+// adding them again here overshot the bundle's total
 func (e *bubbleEvents) Downloaded(*grabber.Chapter) {}
 
 func (e *bubbleEvents) BundlePacking() {
