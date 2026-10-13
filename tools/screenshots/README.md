@@ -45,6 +45,9 @@ moves on, update the `&shot` constants near `RELEASE_VERSION` in `mock.ts`.
   WebKit draws the popup inside the window, and `screencapture -l` leaves the
   cursor out.
 - `winid.swift`, `winall.swift`: window id and bounds for a pid.
+- `lib.sh`: `focus` (waits until the app really is frontmost; an inactive
+  window comes out greyed, with a smaller shadow) and `stop` (Esc first, as an
+  open native popup keeps the app from quitting, then SIGKILL if needed).
 - `crop.py`: 2054x1444 → 2000x1390.
 - `capture-all.sh [--install]`: all of the above for every shot and both
   themes, then the export; `--install` copies the PNGs into

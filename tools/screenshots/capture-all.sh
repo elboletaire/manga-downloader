@@ -34,8 +34,10 @@ rm -rf "$WORK/raw" out
 mkdir -p "$WORK/raw"
 # the Options panel scrolled to Format / Pack as / Convert to JPEG
 SCROLL='const o=document.querySelector(".options");let e=o;while(e&&e.scrollHeight<=e.clientHeight)e=e.parentElement;if(e)e.scrollTop=105;'
-# two volumes folded, to show the groups collapse
-FOLD='document.querySelector(".fold.open")?.click();document.querySelector(".fold.open")?.click();'
+# two volumes folded, to show the groups collapse. One at a time: React
+# re-renders between them, and the list is virtual, so the second header only
+# exists once the first volume has folded.
+FOLD='const f=()=>document.querySelector(".fold.open")?.click();f();setTimeout(f,400);'
 
 for theme in light dark; do
   shot() { ./shot.sh "$WORK/raw/$1-$theme.png" $theme "$2" 4 "${3:-}"; }

@@ -10,6 +10,7 @@
 # 915x610 pt; screencapture at 2x with the system shadow gives 2054x1444.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
+. "$HERE/lib.sh"
 BIN=${BIN:-$HERE/../../manga-downloader-gui}
 
 SHOT_W=${SHOT_W:-915} SHOT_H=${SHOT_H:-578} SHOT_THEME=$2 SHOT_Q="$3" SHOT_JS="${5:-}" \
@@ -22,8 +23,8 @@ for _ in $(seq 1 40); do
   sleep 0.25
 done
 # a focused window gets the coloured traffic lights and the larger shadow
-osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $pid) to true" >/dev/null
+focus $pid
 sleep "${4:-3}"
+focus $pid
 screencapture -x -l "$id" "$1"
-kill $pid
-wait $pid 2>/dev/null || true
+stop $pid
