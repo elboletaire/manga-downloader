@@ -145,6 +145,28 @@ describe('createMockApi', () => {
     expect(state.jobs[0].status).not.toBe('');
   });
 
+  it('names the bundle after the format it packs as', async () => {
+    const cases = [
+      ['cbz', 'One Piece 1-3.cbz'],
+      ['epub', 'One Piece 1-3.epub'],
+      ['raw', 'One Piece 1-3'],
+    ] as const;
+    for (const [format, name] of cases) {
+      const api = createMockApi({ chapters: 40 });
+      await api.load('https://example.com/series/a');
+      await api.selectRange('1165-1167');
+      await api.setOptions({ ...(await api.state()).options, format, packAs: 'bundle' });
+      vi.useFakeTimers();
+      try {
+        await api.start();
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect((await api.state()).summary?.bundle).toBe(name);
+      } finally {
+        vi.useRealTimers();
+      }
+    }
+  });
+
   it('forgets the loaded series on clear, keeping the options and the log', async () => {
     const api = createMockApi({ chapters: 30 });
     await api.load('https://example.com/series/a');

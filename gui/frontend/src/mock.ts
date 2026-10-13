@@ -142,6 +142,9 @@ export function mockSetupFrom(search: string): MockSetup {
   };
 }
 
+// the extension each format's output carries; raw writes a folder without one
+const EXTENSIONS: Record<Options['format'], string> = { cbz: '.cbz', epub: '.epub', raw: '' };
+
 function defaultOptions(shot: boolean): Options {
   return {
     outputDir: shot ? '/Users/reader/Downloads/Manga' : '/home/reader/Downloads',
@@ -380,7 +383,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       saved: bundled && failures.length === 0 && !cancelling ? runChapters : saved,
       volumes,
       bundled,
-      bundle: bundled && !cancelling ? `${title} 1-${runChapters}.cbz` : '',
+      bundle: bundled && !cancelling ? `${title} 1-${runChapters}${EXTENSIONS[options.format]}` : '',
       skipped,
       failures,
       error: '',
