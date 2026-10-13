@@ -39,6 +39,11 @@ import { OP_CHAPTERS } from './mock-onepiece';
 /** Total chapters in the Catalan One Piece feed (MangaDex, ch 598-1194) */
 const CHAPTERS = OP_CHAPTERS.length; // 597
 const PAGES = 12;
+// a page's steps while downloading and while archiving, as core's
+// DownloadWeight and ArchiveWeight: a bar fills 80% in the download
+const DOWNLOAD_WEIGHT = 4;
+const ARCHIVE_WEIGHT = 1;
+const STEPS_PER_PAGE = DOWNLOAD_WEIGHT + ARCHIVE_WEIGHT;
 const TICK_MS = 160;
 
 const SCENARIOS = [
@@ -392,12 +397,22 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   // how many chapters each volume row of the run holds, by title
   let volumeChapters = new Map<string, number>();
 
+  /** A tick's steps: the pace it had when a page was two steps, scaled to STEPS_PER_PAGE. */
+  function ticks(n: number): number {
+    return Math.round((n * STEPS_PER_PAGE) / 2);
+  }
+
+  /** The step at which a bar of total steps switches from downloading to archiving. */
+  function downloadEnd(total: number): number {
+    return (total * DOWNLOAD_WEIGHT) / STEPS_PER_PAGE;
+  }
+
   /** One step of the simulated run. Returns false once it's over. */
   function step(): boolean {
     if (runBundle) {
       const j = jobs[0];
-      const done = Math.min(j.total, j.done + 4);
-      const fetched = done < j.total / 2;
+      const done = Math.min(j.total, j.done + ticks(4));
+      const fetched = done < downloadEnd(j.total);
       jobs = [
         {
           ...j,
@@ -407,7 +422,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
             done >= j.total
               ? ''
               : fetched
-                ? `Downloading chapter ${Math.floor((done / j.total) * 2 * runChapters) + 1}...`
+                ? `Downloading chapter ${Math.floor((done / downloadEnd(j.total)) * runChapters) + 1}...`
                 : 'Creating the bundle...',
         },
       ];
@@ -422,11 +437,11 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         return j;
       }
       movingVolumes++;
-      const done = Math.min(j.total, j.done + 5);
+      const done = Math.min(j.total, j.done + ticks(5));
       if (done >= j.total) {
         return { ...j, done, state: 'done', status: '' };
       }
-      const packing = done >= j.total / 2;
+      const packing = done >= downloadEnd(j.total);
       return {
         ...j,
         done,
@@ -439,12 +454,12 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       if (j.volume || (j.state !== 'downloading' && j.state !== 'archiving')) {
         return j;
       }
-      if (fail && idx === 3 && j.done >= PAGES / 2) {
+      if (fail && idx === 3 && j.done >= downloadEnd(j.total) / 2) {
         return { ...j, state: 'failed', reason: 'download: page 5 returned 404 Not Found' };
       }
       // uneven speeds, so the rows don't move in lockstep
-      const done = Math.min(j.total, j.done + 1 + ((j.number * 7) % 4));
-      const state = done >= j.total ? 'done' : done >= j.total / 2 ? 'archiving' : 'downloading';
+      const done = Math.min(j.total, j.done + ticks(1 + ((j.number * 7) % 4)));
+      const state = done >= j.total ? 'done' : done >= downloadEnd(j.total) ? 'archiving' : 'downloading';
       return { ...j, done, state };
     });
 
@@ -474,7 +489,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         {
           title: c.title,
           number: c.number,
-          total: PAGES * 2,
+          total: PAGES * STEPS_PER_PAGE,
           done: 0,
           state: 'downloading',
           reason: '',
@@ -514,7 +529,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         return {
           title,
           number: first,
-          total: v.chapters.length * PAGES * 2,
+          total: v.chapters.length * PAGES * STEPS_PER_PAGE,
           done: 0,
           state: 'downloading' as const,
           reason: '',
@@ -529,7 +544,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
           {
             title: `Bundle: chapters 1-${list.length}`,
             number: 0,
-            total: list.length * PAGES * 2,
+            total: list.length * PAGES * STEPS_PER_PAGE,
             done: 0,
             state: 'downloading',
             reason: '',

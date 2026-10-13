@@ -210,13 +210,13 @@ func TestDownloadVolumes(t *testing.T) {
 	}
 	want := []string{
 		"volume-start 1", "volume-start 2",
-		// each chapter is half of its volume's download half, whatever its pages
-		"volume-chapter 1 1", "started 1", "page 1 0", "volume-progress 1 0.125", "page 1 1", "volume-progress 1 0.250", "downloaded 1",
-		"volume-chapter 1 2", "started 2", "page 2 0", "volume-progress 1 0.500", "downloaded 2",
-		"volume-packing 1", "volume-progress 1 0.667", "volume-progress 1 0.833", "volume-progress 1 1.000", "volume-packed 1 Test Series Vol. 01.cbz",
-		"volume-chapter 2 3", "started 3", "page 3 0", "volume-progress 2 0.250", "downloaded 3",
-		"volume-chapter 2 4", "started 4", "page 4 0", "volume-progress 2 0.500", "downloaded 4",
-		"volume-packing 2", "volume-progress 2 0.750", "volume-progress 2 1.000", "volume-packed 2 Test Series Vol. 02.cbz",
+		// each chapter is half of its volume's download share (0.8), whatever its pages
+		"volume-chapter 1 1", "started 1", "page 1 0", "volume-progress 1 0.200", "page 1 1", "volume-progress 1 0.400", "downloaded 1",
+		"volume-chapter 1 2", "started 2", "page 2 0", "volume-progress 1 0.800", "downloaded 2",
+		"volume-packing 1", "volume-progress 1 0.867", "volume-progress 1 0.933", "volume-progress 1 1.000", "volume-packed 1 Test Series Vol. 01.cbz",
+		"volume-chapter 2 3", "started 3", "page 3 0", "volume-progress 2 0.400", "downloaded 3",
+		"volume-chapter 2 4", "started 4", "page 4 0", "volume-progress 2 0.800", "downloaded 4",
+		"volume-packing 2", "volume-progress 2 0.900", "volume-progress 2 1.000", "volume-packed 2 Test Series Vol. 02.cbz",
 		"started 5", "page 5 0", "archived 5", "packed 5",
 	}
 	if strings.Join(rec.events, "|") != strings.Join(want, "|") {

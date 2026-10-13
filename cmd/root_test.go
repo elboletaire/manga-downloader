@@ -15,6 +15,9 @@ import (
 	"github.com/elboletaire/manga-downloader/grabber"
 )
 
+// steps is a page's total on a chapter's bar: its download and archive steps
+const steps = core.DownloadWeight + core.ArchiveWeight
+
 func TestTruncateStringCountsRunesNotBytes(t *testing.T) {
 	// 16 runes but 22 bytes: must not be truncated at a 20 rune limit
 	input := "Wǒ Kě'ài Dào Bào"
@@ -45,7 +48,7 @@ func TestProgressModelBubbleTea(t *testing.T) {
 	m := newProgressModel("My Hero Academia", "", false, false, true)
 	m.width = 80
 
-	next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: int64(chapter.PagesCount) * 2})
+	next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: int64(chapter.PagesCount) * steps})
 	m = next.(progressModel)
 
 	if len(m.states) != 1 {
@@ -59,12 +62,12 @@ func TestProgressModelBubbleTea(t *testing.T) {
 		t.Error("rawTitle should not be empty after chapterStartedMsg")
 	}
 
-	// pageSuccessMsg should increment current.
+	// pageSuccessMsg should add the page's download steps to current.
 	next, _ = m.Update(pageSuccessMsg{chapter: chapter})
 	m = next.(progressModel)
 	s = m.states[chapter]
-	if s.current != 1 {
-		t.Errorf("current after 1 page = %d, want 1", s.current)
+	if s.current != core.DownloadWeight {
+		t.Errorf("current after 1 page = %d, want %d", s.current, core.DownloadWeight)
 	}
 
 	// WindowSizeMsg should update width (title truncates at render time, not here).
@@ -95,13 +98,83 @@ func TestProgressModelBundleMode(t *testing.T) {
 	m.width = 80
 
 	// BundleStart should create the bundle bar.
-	next, _ := m.Update(bundleStartMsg{total: 50}) // 50 pages → total=100
+	next, _ := m.Update(bundleStartMsg{total: 50}) // 50 pages → total=250
 	m = next.(progressModel)
 	if m.bundleBar == nil {
 		t.Fatal("bundleBar is nil after bundleStartMsg")
 	}
-	if m.bundleTotal != 100 {
-		t.Errorf("bundleTotal = %d, want 100", m.bundleTotal)
+	if m.bundleTotal != 50*steps {
+		t.Errorf("bundleTotal = %d, want %d", m.bundleTotal, 50*steps)
+	}
+}
+
+// A chapter's bar stays downloading until its first archived page, at 80% of
+// its steps, and ends at 100% as the pages are archived.
+func TestChapterBarSwitchesToArchivingAtDownloadShare(t *testing.T) {
+	const pages = 10
+	chapter := &grabber.Chapter{Title: "Chapter 0001", PagesCount: pages}
+	m := newProgressModel("Series", "", false, false, true)
+	m.width = 80
+	next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: pages * steps})
+	m = next.(progressModel)
+
+	for range pages {
+		next, _ := m.Update(pageSuccessMsg{chapter: chapter})
+		m = next.(progressModel)
+	}
+	if s := m.states[chapter]; s.status != "downloading" || s.current != s.total*core.DownloadWeight/steps {
+		t.Errorf("after all downloads: status %q, current %d; want downloading at 80%% of %d", s.status, s.current, s.total)
+	}
+
+	next, _ = m.Update(archivedMsg{chapter: chapter})
+	m = next.(progressModel)
+	if s := m.states[chapter]; s.status != "archiving" {
+		t.Errorf("status after the first archived page = %q, want archiving", s.status)
+	}
+	for range pages - 1 {
+		next, _ := m.Update(archivedMsg{chapter: chapter})
+		m = next.(progressModel)
+	}
+	if s := m.states[chapter]; s.current != s.total {
+		t.Errorf("current after the archive = %d, want %d", s.current, s.total)
+	}
+}
+
+// The counter shows pages, not steps: 30/30 downloading at the switch, then
+// the archived pages once the archive starts.
+func TestChapterCounterShowsPages(t *testing.T) {
+	const pages = 30
+	chapter := &grabber.Chapter{Title: "Chapter 0001", PagesCount: pages}
+	m := newProgressModel("Series", "", false, false, true)
+	m.width = 80
+	next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: pages * steps})
+	m = next.(progressModel)
+	row := func() string { return ansi.Strip(m.renderChapterRow(m.states[chapter])) }
+
+	for range 7 {
+		next, _ := m.Update(pageSuccessMsg{chapter: chapter})
+		m = next.(progressModel)
+	}
+	if r := row(); !strings.Contains(r, " 7/30 ") {
+		t.Errorf("row after 7 downloads %q, want 7/30", r)
+	}
+	for range pages - 7 {
+		next, _ := m.Update(pageSuccessMsg{chapter: chapter})
+		m = next.(progressModel)
+	}
+	if r := row(); !strings.Contains(r, " 30/30 ") || !strings.Contains(r, "downloading") {
+		t.Errorf("row at the switch %q, want 30/30 downloading", r)
+	}
+
+	next, _ = m.Update(archivedMsg{chapter: chapter})
+	m = next.(progressModel)
+	if r := row(); !strings.Contains(r, " 1/30 ") || !strings.Contains(r, "archiving") {
+		t.Errorf("row after one archived page %q, want 1/30 archiving", r)
+	}
+	next, _ = m.Update(archivedMsg{chapter: chapter})
+	m = next.(progressModel)
+	if r := row(); !strings.Contains(r, " 2/30 ") {
+		t.Errorf("row after two archived pages %q, want 2/30", r)
 	}
 }
 
@@ -151,7 +224,7 @@ func TestBundleRowEndsWithStatus(t *testing.T) {
 func TestBundleRowDoneShortOfTotal(t *testing.T) {
 	m := newProgressModel("Series", "", true, false, true)
 	m.width = 80
-	msgs := []tea.Msg{bundleStartMsg{total: 10}}
+	msgs := []tea.Msg{bundleStartMsg{total: 10}} // 10 pages → total=50
 	for range 5 {
 		msgs = append(msgs, pageSuccessMsg{})
 	}
@@ -162,13 +235,13 @@ func TestBundleRowDoneShortOfTotal(t *testing.T) {
 	}
 	row := m.renderBundleRow()
 	if !strings.Contains(row, m.bundleBar.ViewAs(0.5)) {
-		t.Errorf("row %q doesn't draw the bar at 10/20", row)
+		t.Errorf("row %q doesn't draw the bar at 25/50 steps", row)
 	}
 	if strings.Contains(row, m.bundleBar.ViewAs(1.0)) {
 		t.Errorf("row %q draws a full bar for a bundle short of its total", row)
 	}
-	if plain := ansi.Strip(row); !strings.Contains(plain, "10/20") || !strings.HasSuffix(strings.TrimSpace(plain), "done") {
-		t.Errorf("row %q, want 10/20 and done", plain)
+	if plain := ansi.Strip(row); !strings.Contains(plain, " 5/10 ") || !strings.HasSuffix(strings.TrimSpace(plain), "done") {
+		t.Errorf("row %q, want 5/10 archived and done", plain)
 	}
 }
 
@@ -177,7 +250,7 @@ func TestBundleRowDoneShortOfTotal(t *testing.T) {
 func TestBundleFailBarPersists(t *testing.T) {
 	m := newProgressModel("Series", "", true, false, true)
 	m.width = 80
-	for _, msg := range []tea.Msg{bundleStartMsg{total: 10}, pageSuccessMsg{}, downloadDoneMsg{err: fmt.Errorf("disk full")}} {
+	for _, msg := range []tea.Msg{bundleStartMsg{total: 10}, pageSuccessMsg{}, downloadDoneMsg{err: fmt.Errorf("disk full")}} { // 1 of 10 pages → 4/50
 		next, _ := m.Update(msg)
 		m = next.(progressModel)
 	}
@@ -191,8 +264,8 @@ func TestBundleFailBarPersists(t *testing.T) {
 	if m.bundleFailBar != failBar || failBar.Width() != barW {
 		t.Errorf("fail bar not resized in place: width %d, want %d", failBar.Width(), barW)
 	}
-	if row := m.renderBundleRow(); !strings.Contains(row, failBar.ViewAs(0.05)) {
-		t.Errorf("row %q doesn't draw the fail bar at 1/20", row)
+	if row := m.renderBundleRow(); !strings.Contains(row, failBar.ViewAs(0.08)) {
+		t.Errorf("row %q doesn't draw the fail bar at 4/50", row)
 	}
 }
 
@@ -245,10 +318,10 @@ func TestFailedBarNotFull(t *testing.T) {
 	m.width = 80
 
 	{
-		next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: 40})
+		next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: 20 * steps})
 		m = next.(progressModel)
 	}
-	// simulate 10 of 40 steps done
+	// simulate 10 of 20 pages downloaded: 40 of 100 steps
 	for i := 0; i < 10; i++ {
 		{
 			next, _ := m.Update(pageSuccessMsg{chapter: chapter})
@@ -272,21 +345,21 @@ func TestFailedBarNotFull(t *testing.T) {
 		t.Error("failBar should be non-nil after rendering a failed chapter")
 	}
 
-	// The failed bar renders at actual progress (10/40 = 25%), not full (100%).
-	// Compare the rendered width against ViewAs(0.25) and ViewAs(1.0).
-	failView25 := s.failBar.ViewAs(0.25)
+	// The failed bar renders at actual progress (40/100 = 40%), not full (100%).
+	// Compare the rendered width against ViewAs(0.4) and ViewAs(1.0).
+	failView40 := s.failBar.ViewAs(0.4)
 	failView100 := s.failBar.ViewAs(1.0)
-	if !strings.Contains(row, failView25) {
-		t.Errorf("failed bar row does not contain 25%% bar\nrow:      %q\nexpected: %q", row, failView25)
+	if !strings.Contains(row, failView40) {
+		t.Errorf("failed bar row does not contain 40%% bar\nrow:      %q\nexpected: %q", row, failView40)
 	}
-	if strings.Contains(row, failView100) && failView25 != failView100 {
+	if strings.Contains(row, failView100) && failView40 != failView100 {
 		t.Errorf("failed bar row contains 100%% bar (should be at 25%%)\nrow: %q", row)
 	}
 
 	// A done chapter should use ViewAs(1.0) via the brand bar, not the failBar.
 	chapter2 := &grabber.Chapter{Title: "Chapter 0002", PagesCount: 10}
 	{
-		next, _ := m.Update(chapterStartedMsg{chapter: chapter2, total: 20})
+		next, _ := m.Update(chapterStartedMsg{chapter: chapter2, total: 10 * steps})
 		m = next.(progressModel)
 	}
 	{
@@ -448,18 +521,18 @@ func TestViewWidths(t *testing.T) {
 			checkRowWidth(t, m.renderBundleRow(), w, "bundle_failed")
 		})
 
-		// "12345/24690" outgrows the 9-cell counter; the status must survive
+		// "12345/12345" outgrows the 9-cell counter; the status must survive
 		t.Run("bundle_large", func(t *testing.T) {
 			m := newProgressModel(longTitle, "1-500", true, false, true)
 			m.width = w
 			next, _ := m.Update(bundleStartMsg{total: 12345})
 			m = next.(progressModel)
-			m.bundleCurrent = 12345
+			m.bundleDownloaded = 12345
 			row := m.renderBundleRow()
 			checkRowWidth(t, row, w, "bundle_large")
 			if _, _, narrow := btLayout(w); !narrow {
 				plain := ansi.Strip(row)
-				if !strings.Contains(plain, "12345/24690") || !strings.HasSuffix(strings.TrimSpace(plain), "downloading") {
+				if !strings.Contains(plain, "12345/12345") || !strings.HasSuffix(strings.TrimSpace(plain), "downloading") {
 					t.Errorf("bundle_large at width=%d: row %q lost its counter or status", w, plain)
 				}
 			}

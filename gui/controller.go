@@ -57,11 +57,10 @@ const (
 )
 
 // Job is the progress of one chapter. In bundle mode there's a single Job for
-// the whole bundle, whose Total counts every page twice (download + archive),
-// and with volumes one per volume, whose Done is core.VolumeProgress out of a
-// fixed Total of volumeScale (its pages aren't known until it's packed).
-// The CLI's bar also adds each kept chapter's pages a second time, so it runs
-// past its total; the GUI counts each page once per phase.
+// the whole bundle, whose Total counts each page's download and archive steps
+// (core.DownloadWeight and core.ArchiveWeight, as the CLI's bar does), and with
+// volumes one per volume, whose Done is core.VolumeProgress out of a fixed
+// Total of volumeScale (its pages aren't known until it's packed).
 type Job struct {
 	Title  string
 	Number float64
@@ -1281,10 +1280,11 @@ func (c *Controller) live(ch *grabber.Chapter) bool {
 	return !c.failedC[ch]
 }
 
-// advance moves a row into the archiving phase once every page is in, the
-// same point the CLI's bar switches its label. Callers hold mu.
+// advance moves a row into the archiving phase at its first archived step,
+// the point the CLI's bar switches its label: the downloads fill the bar up
+// to the download share and no further. Callers hold mu.
 func advance(j *Job) {
-	if j.State == JobDownloading && j.Done >= j.Total/2 {
+	if j.State == JobDownloading && j.Done > j.Total*core.DownloadWeight/(core.DownloadWeight+core.ArchiveWeight) {
 		j.State = JobArchiving
 	}
 }
@@ -1293,7 +1293,7 @@ func (e events) BundleStart(pages int64) {
 	c := e.c
 	c.mu.Lock()
 	if c.bundle != nil {
-		c.bundle.Total = pages * 2
+		c.bundle.Total = pages * (core.DownloadWeight + core.ArchiveWeight)
 		c.bundle.Status = "Downloading..."
 	}
 	c.mu.Unlock()
@@ -1349,8 +1349,8 @@ func (e events) Started(ch *grabber.Chapter) {
 		// percentage say enough. The bar moves with VolumeProgress.
 		j.Status = ""
 	} else {
-		// the CLI's bar: pages to download plus pages to archive
-		j := &Job{Title: ch.GetTitle(), Number: ch.GetNumber(), Total: ch.PagesCount * 2, State: JobDownloading}
+		// the CLI's bar: each page's download and archive steps
+		j := &Job{Title: ch.GetTitle(), Number: ch.GetNumber(), Total: ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight), State: JobDownloading}
 		c.jobs = append(c.jobs, j)
 		c.byChap[ch] = j
 	}
@@ -1365,7 +1365,7 @@ func (e events) Page(ch *grabber.Chapter, idx int, err error) {
 		c.appendLogLocked(LogError, fmt.Sprintf("error downloading page %d of %s: %s", idx+1, ch.GetTitle(), err))
 	} else if j := c.jobFor(ch); j != nil && !j.Volume && c.live(ch) {
 		// a volume's row moves with VolumeProgress instead
-		j.Done++
+		j.Done += core.DownloadWeight
 		advance(j)
 	}
 	c.mu.Unlock()
@@ -1392,7 +1392,7 @@ func (e events) Archived(ch *grabber.Chapter) {
 	c := e.c
 	c.mu.Lock()
 	if j := c.byChap[ch]; j != nil && c.bundle == nil && j.State != JobFailed {
-		j.Done++
+		j.Done += core.ArchiveWeight
 		advance(j)
 	}
 	c.mu.Unlock()
@@ -1447,7 +1447,7 @@ func (e events) BundleArchived(n int) {
 	c := e.c
 	c.mu.Lock()
 	if c.bundle != nil {
-		c.bundle.Done += int64(n)
+		c.bundle.Done += int64(n) * core.ArchiveWeight
 	}
 	c.mu.Unlock()
 	c.emit()

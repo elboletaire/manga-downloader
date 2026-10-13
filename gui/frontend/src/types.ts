@@ -33,7 +33,7 @@ export interface Run {
 export interface Job {
   title: string;
   number: number;
-  /** Pages counted twice: once downloaded, once archived; a volume's row is a fixed scale instead */
+  /** Each page's download and archive steps are counted (core's DownloadWeight and ArchiveWeight, 4 + 1); a volume's row is a fixed scale instead */
   total: number;
   done: number;
   state: JobState;
