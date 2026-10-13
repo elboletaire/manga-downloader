@@ -19,7 +19,12 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/elboletaire/manga-downloader/notice"
 )
+
+// epubSingleFolder is the folder of a single chapter's pages: they have none
+const epubSingleFolder = "."
 
 // Reading directions of EPUB output (--reading-direction): the way pages turn
 const (
@@ -39,6 +44,10 @@ type EPUBInfo struct {
 	// ReadingDirection is ReadingDirectionRTL or ReadingDirectionLTR; empty
 	// means RTL
 	ReadingDirection string
+	// Labels names the table of contents entries by folder ("Chapter 265 - Title").
+	// A folder without a label is named after the folder, and a single chapter
+	// (no folder) is keyed by epubSingleFolder
+	Labels map[string]string
 }
 
 // epubMediaTypes are the image types EPUB 3 readers show, by file extension.
@@ -57,6 +66,8 @@ var epubUUIDNamespace = []byte{0x6b, 0xa7, 0xb8, 0x11, 0x9d, 0xad, 0x11, 0xd1, 0
 
 // epubPage is one page of an EPUB, with its XHTML wrapper
 type epubPage struct {
+	// Title is the book's title, for the XHTML wrapper
+	Title string
 	// Num is the 1-based index of the page in the book, zero-padded to four digits
 	Num       string
 	Ext       string
@@ -167,11 +178,11 @@ var epubNCXTemplate = template.Must(template.New("ncx").Funcs(epubFuncs).Parse(`
 </ncx>
 `))
 
-var epubPageTemplate = template.Must(template.New("page").Parse(`<?xml version="1.0" encoding="UTF-8"?>
+var epubPageTemplate = template.Must(template.New("page").Funcs(epubFuncs).Parse(`<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8"/>
-  <title>{{.Num}}</title>
+  <title>{{esc .Title}}</title>
   <meta name="viewport" content="width={{.Width}}, height={{.Height}}"/>
 </head>
 <body style="margin: 0; padding: 0;">
@@ -198,9 +209,14 @@ func ArchiveEPUB(filename string, info EPUBInfo, files []File, progress func(pag
 
 	// everything is rendered before the file is created, so a page the reader
 	// can't show leaves no half written book behind
-	entries, err := epubEntries(info, files)
+	entries, skipped, err := epubEntries(info, files)
 	if err != nil {
 		return err
+	}
+	// a skipped page still counts towards the archive's progress, which is
+	// set from the pages downloaded, not the pages that made it into the book
+	for range skipped {
+		progress(1, 0)
 	}
 
 	buff, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
@@ -244,8 +260,9 @@ type epubEntry struct {
 }
 
 // epubEntries renders the entries of the EPUB after mimetype: the container,
-// the package and navigation files, and each page's XHTML and image
-func epubEntries(info EPUBInfo, files []File) ([]epubEntry, error) {
+// the package and navigation files, and each page's XHTML and image. Pages
+// the reader can't show are left out with a warning, and counted in skipped.
+func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped int, err error) {
 	if info.ReadingDirection == "" {
 		info.ReadingDirection = ReadingDirectionRTL
 	}
@@ -257,33 +274,41 @@ func epubEntries(info EPUBInfo, files []File) ([]epubEntry, error) {
 
 	var pageEntries []epubEntry
 	lastFolder := ""
-	for i, file := range files {
+	for _, file := range files {
 		ext := strings.TrimPrefix(path.Ext(file.Name), ".")
 		mediaType, ok := epubMediaTypes[ext]
 		if !ok {
-			return nil, fmt.Errorf("page %s is %s, which EPUB readers can't show", file.Name, ext)
+			notice.Warn("- warning: page %s: EPUB readers can't show %s, leaving it out", file.Name, ext)
+			skipped++
+			continue
 		}
 		cfg, _, err := image.DecodeConfig(bytes.NewReader(file.Data))
 		if err != nil {
-			return nil, fmt.Errorf("reading the size of page %s: %w", file.Name, err)
+			notice.Warn("- warning: page %s: reading its size: %s, leaving it out", file.Name, err)
+			skipped++
+			continue
 		}
 
 		page := epubPage{
-			Num:       fmt.Sprintf("%04d", i+1),
+			Title:     info.Title,
+			Num:       fmt.Sprintf("%04d", len(book.Pages)+1),
 			Ext:       ext,
 			MediaType: mediaType,
 			Width:     cfg.Width,
 			Height:    cfg.Height,
-			Cover:     i == 0,
+			Cover:     len(book.Pages) == 0,
 		}
 		book.Pages = append(book.Pages, page)
 
 		// a folder is a chapter, and its first page is where its entry points
 		folder := path.Dir(file.Name)
-		if i == 0 || folder != lastFolder {
-			label := info.Title
-			if folder != "." {
-				label = folder
+		if folder != lastFolder {
+			label := folder
+			if folder == epubSingleFolder {
+				label = info.Title
+			}
+			if l := info.Labels[folder]; l != "" {
+				label = l
 			}
 			book.Chapters = append(book.Chapters, epubChapter{Label: label, Page: page.Num, Order: len(book.Chapters) + 1})
 			lastFolder = folder
@@ -291,15 +316,18 @@ func epubEntries(info EPUBInfo, files []File) ([]epubEntry, error) {
 
 		xhtml, err := render(epubPageTemplate, page)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		pageEntries = append(pageEntries,
 			epubEntry{Name: "OEBPS/xhtml/" + page.Num + ".xhtml", Data: xhtml},
 			epubEntry{Name: "OEBPS/images/" + page.Num + "." + ext, Data: file.Data, Image: true},
 		)
 	}
+	if len(book.Pages) == 0 {
+		return nil, skipped, errors.New("none of the pages can be shown in an EPUB")
+	}
 
-	entries := []epubEntry{{Name: "META-INF/container.xml", Data: []byte(epubContainer)}}
+	entries = []epubEntry{{Name: "META-INF/container.xml", Data: []byte(epubContainer)}}
 	for _, t := range []struct {
 		name string
 		tmpl *template.Template
@@ -310,12 +338,12 @@ func epubEntries(info EPUBInfo, files []File) ([]epubEntry, error) {
 	} {
 		data, err := render(t.tmpl, book)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		entries = append(entries, epubEntry{Name: t.name, Data: data})
 	}
 
-	return append(entries, pageEntries...), nil
+	return append(entries, pageEntries...), skipped, nil
 }
 
 // render executes tmpl with data

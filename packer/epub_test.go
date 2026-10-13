@@ -16,6 +16,7 @@ import (
 
 	"github.com/elboletaire/manga-downloader/downloader"
 	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/elboletaire/manga-downloader/notice"
 )
 
 // epubTitle has every character XML needs escaped, so a missing escape fails
@@ -458,4 +459,162 @@ func keys(m map[string][]byte) []string {
 		out = append(out, k)
 	}
 	return out
+}
+
+// captureWarnings collects the warnings notice emits while the test runs
+func captureWarnings(t *testing.T) *[]string {
+	t.Helper()
+	var warnings []string
+	notice.SetHandler(func(level notice.Level, msg string) {
+		if level == notice.LevelWarn {
+			warnings = append(warnings, msg)
+		}
+	})
+	t.Cleanup(func() { notice.SetHandler(nil) })
+	return &warnings
+}
+
+func TestArchiveEPUBSkipsUnshowablePages(t *testing.T) {
+	warnings := captureWarnings(t)
+	files := []File{
+		{Name: "Chapter 0001/000.png", Data: pngBytes(t, gradientImage(8, 12))},
+		// AVIF that didn't convert, and bytes that don't decode
+		{Name: "Chapter 0001/001.avif", Data: []byte("not really avif")},
+		{Name: "Chapter 0002/000.jpg", Data: []byte("not an image")},
+		{Name: "Chapter 0002/001.jpg", Data: jpegBytes(t, gradientImage(6, 10))},
+	}
+
+	pages := 0
+	path := filepath.Join(t.TempDir(), "book.epub")
+	if err := ArchiveEPUB(path, EPUBInfo{Title: epubTitle}, files, func(page, _ int) { pages += page }); err != nil {
+		t.Fatalf("ArchiveEPUB: %v", err)
+	}
+	// the skipped pages still count, so the archive's progress reaches its total
+	if pages != len(files) {
+		t.Errorf("progress reported %d pages, want %d", pages, len(files))
+	}
+	if len(*warnings) != 2 {
+		t.Errorf("got %d warnings, want 2: %q", len(*warnings), *warnings)
+	}
+
+	_, contents := readEPUB(t, path)
+	if _, ok := contents["OEBPS/xhtml/0003.xhtml"]; ok {
+		t.Error("the book has more pages than the showable ones")
+	}
+	if _, ok := contents["OEBPS/xhtml/0002.xhtml"]; !ok {
+		t.Error("the showable page of the second chapter is missing")
+	}
+
+	var nav struct {
+		Items []struct {
+			Href string `xml:"href,attr"`
+		} `xml:"body>nav>ol>li>a"`
+	}
+	mustUnmarshal(t, "nav.xhtml", contents["OEBPS/nav.xhtml"], &nav)
+	if len(nav.Items) != 2 || nav.Items[1].Href != "xhtml/0002.xhtml" {
+		t.Errorf("nav = %+v, want both chapters, the second starting at its first shown page", nav.Items)
+	}
+}
+
+func TestArchiveEPUBFailsWithoutShowablePages(t *testing.T) {
+	warnings := captureWarnings(t)
+	path := filepath.Join(t.TempDir(), "book.epub")
+	files := []File{{Name: "000.avif", Data: []byte("x")}, {Name: "001.jpg", Data: []byte("y")}}
+	if err := ArchiveEPUB(path, EPUBInfo{Title: epubTitle}, files, func(page, progress int) {}); err == nil {
+		t.Fatal("expected an error when no page can be shown")
+	}
+	if len(*warnings) != 2 {
+		t.Errorf("got %d warnings, want 2: %q", len(*warnings), *warnings)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Errorf("a book with no pages left a file behind: %v", err)
+	}
+}
+
+func TestArchiveEPUBLabelsAndPageTitles(t *testing.T) {
+	info := EPUBInfo{
+		Title:  epubTitle,
+		Labels: map[string]string{"Chapter 0001": "Chapter 1 - Start", "Chapter 0002": "Chapter 2"},
+	}
+	path := packEPUB(t, info, epubBundleFiles(t))
+	_, contents := readEPUB(t, path)
+
+	var nav struct {
+		Items []struct {
+			Text string `xml:",chardata"`
+		} `xml:"body>nav>ol>li>a"`
+	}
+	mustUnmarshal(t, "nav.xhtml", contents["OEBPS/nav.xhtml"], &nav)
+	if len(nav.Items) != 2 || nav.Items[0].Text != "Chapter 1 - Start" || nav.Items[1].Text != "Chapter 2" {
+		t.Errorf("nav labels = %+v, want the chapter labels", nav.Items)
+	}
+
+	var page struct {
+		Title string `xml:"head>title"`
+	}
+	mustUnmarshal(t, "page", contents["OEBPS/xhtml/0002.xhtml"], &page)
+	if page.Title != epubTitle {
+		t.Errorf("page title = %q, want the book title %q", page.Title, epubTitle)
+	}
+}
+
+func TestArchiveEPUBSingleChapterLabel(t *testing.T) {
+	files := []File{{Name: "000.jpg", Data: jpegBytes(t, gradientImage(4, 4))}}
+	path := packEPUB(t, EPUBInfo{Series: "Series", Labels: map[string]string{epubSingleFolder: "Chapter 266 - Final Choice"}}, files)
+	_, contents := readEPUB(t, path)
+
+	var nav struct {
+		Items []struct {
+			Text string `xml:",chardata"`
+		} `xml:"body>nav>ol>li>a"`
+	}
+	mustUnmarshal(t, "nav.xhtml", contents["OEBPS/nav.xhtml"], &nav)
+	if len(nav.Items) != 1 || nav.Items[0].Text != "Chapter 266 - Final Choice" {
+		t.Errorf("nav = %+v, want the one chapter label", nav.Items)
+	}
+}
+
+func TestChapterLabel(t *testing.T) {
+	tests := []struct {
+		number float64
+		title  string
+		want   string
+	}{
+		{265, "Final Choice", "Chapter 265 - Final Choice"},
+		{10.5, "", "Chapter 10.5"},
+		{1, "Chapter 1", "Chapter 1"},
+		{2, "2", "Chapter 2"},
+		{3, "  Trimmed\nTitle ", "Chapter 3 - Trimmed Title"},
+	}
+	for _, tt := range tests {
+		got := chapterLabel(&grabber.Chapter{Number: tt.number, Title: tt.title})
+		if got != tt.want {
+			t.Errorf("chapterLabel(%v, %q) = %q, want %q", tt.number, tt.title, got, tt.want)
+		}
+	}
+}
+
+func TestPackBundleEPUBLabelsChapters(t *testing.T) {
+	site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault, format: FormatEPUB}
+	chapters := []*DownloadedChapter{
+		{Chapter: &grabber.Chapter{Number: 265, Title: "Final Choice"}, Files: []*downloader.File{{Data: pngBytes(t, gradientImage(4, 4))}}},
+		{Chapter: &grabber.Chapter{Number: 266, Title: "266"}, Files: []*downloader.File{{Data: pngBytes(t, gradientImage(4, 4))}}},
+	}
+
+	dir := t.TempDir()
+	filename, err := PackBundle(dir, site, chapters, "265-266", func(page, progress int) {})
+	if err != nil {
+		t.Fatalf("PackBundle: %v", err)
+	}
+	_, contents := readEPUB(t, filepath.Join(dir, filename))
+
+	var nav struct {
+		Items []struct {
+			Text string `xml:",chardata"`
+		} `xml:"body>nav>ol>li>a"`
+	}
+	mustUnmarshal(t, "nav.xhtml", contents["OEBPS/nav.xhtml"], &nav)
+	if len(nav.Items) != 2 || nav.Items[0].Text != "Chapter 265 - Final Choice" || nav.Items[1].Text != "Chapter 266" {
+		t.Errorf("nav = %+v, want the labels of both chapters", nav.Items)
+	}
 }
