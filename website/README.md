@@ -47,14 +47,14 @@ pnpm preview   # serve dist/
 
 ## Screenshots
 
-The desktop app section shows four captures from `src/assets/screenshots/`,
+The desktop app section shows five captures from `src/assets/screenshots/`,
 each in a light and a dark version. A `<picture>` swaps the dark ones in with
 `prefers-color-scheme`, and Vite fingerprints them into `dist`. WebP only, which
 every browser the site cares about reads, so there are no PNG fallbacks.
 
 - `app-overview` is the full window (`02-loaded-{light,dark}.png`), at 1000 and
   1600 px wide: the hero.
-- `language-selector`, `chapter-list` and `finished-run` are crops of the
+- `language-selector`, `chapter-list`, `volumes` and `finished-run` are crops of the
   2000 px originals in the repo's [`assets/screenshots/`](../assets/screenshots/),
   at 600 and 1000 px wide.
   They are cut to the part that matters, so they stay readable at the
@@ -74,6 +74,7 @@ panel, so no edge of the list shows in it:
 | ------------------- | --------------------------------------- | ------------------- |
 | `language-selector` | `03-language-selector-{light,dark}.png` | `740x960+85+56`     |
 | `chapter-list`      | `04-downloading-{light,dark}.png`       | `1150x885+100+390`  |
+| `volumes`           | `07-volumes-{light,dark}.png`           | `1150x885+100+390`  |
 | `finished-run`      | `05-done-{light,dark}.png`              | `670x830+1245+390`  |
 
 To regenerate from the originals, run it with the repo's originals folder and an
