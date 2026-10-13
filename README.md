@@ -790,7 +790,7 @@ make build/gui/windows # cross-build manga-downloader-gui.exe, no cgo needed
 [star history]: https://raw.githubusercontent.com/elboletaire/manga-downloader/star-tracker-data/charts/star-history.svg
 [go template]: https://pkg.go.dev/text/template
 [docker hub]: https://hub.docker.com/r/elboletaire/manga-downloader
-[download img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/assets/demos/download.gif
-[bundle img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/assets/demos/bundle.gif
-[help img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/assets/demos/help.gif
-[prompt img]: https://raw.githubusercontent.com/elboletaire/manga-downloader/master/assets/demos/prompt.gif
+[download img]: assets/demos/download.gif
+[bundle img]: assets/demos/bundle.gif
+[help img]: assets/demos/help.gif
+[prompt img]: assets/demos/prompt.gif
