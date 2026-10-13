@@ -525,9 +525,8 @@ func TestComixCachesChaptersPerURL(t *testing.T) {
 	}
 }
 
-// resetComixPace clears the pacing state shared by every Comix and makes
-// comixSleep a no-op, putting both back when the test ends, so no test that
-// reaches Comix.load can really sleep
+// resetComixPace clears the shared pacing state and makes comixSleep a no-op
+// until the test ends.
 func resetComixPace(t *testing.T) {
 	t.Helper()
 	oldNow, oldSleep := comixNow, comixSleep
@@ -539,8 +538,7 @@ func resetComixPace(t *testing.T) {
 	})
 }
 
-// fakeComixClock replaces comixNow and comixSleep with a clock that only
-// moves when slept or advanced, resetting the shared pacing state
+// fakeComixClock replaces comixNow and comixSleep with a manually moved clock.
 func fakeComixClock(t *testing.T) (advance func(time.Duration), slept *[]time.Duration) {
 	t.Helper()
 	resetComixPace(t)
@@ -579,8 +577,7 @@ func TestComixLoadPacing(t *testing.T) {
 func TestComixLoadPacingIsSharedByInstances(t *testing.T) {
 	advance, slept := fakeComixClock(t)
 
-	// a new instance right after another's walk (the app's reload) must not
-	// burst again: the rate limit is per host
+	// a new instance must not burst again: the rate limit is per host
 	comixLoads(t, NewComix(&Grabber{}), comixLoadBurst)
 	comixLoads(t, NewComix(&Grabber{}), 1)
 	if len(*slept) != 1 || (*slept)[0] != comixLoadGap {

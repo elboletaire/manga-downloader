@@ -25,8 +25,7 @@ var (
 	// rest of the process: closing the browser doesn't make them pass
 	// headless any better
 	needed = map[string]bool{}
-	// restart holds the hosts whose rate limit is per browser session
-	// (RestartOnRateLimit)
+	// restart holds the hosts declared with RestartOnRateLimit
 	restart = map[string]bool{}
 )
 
@@ -41,9 +40,8 @@ func RequireVisible(host string) {
 }
 
 // RestartOnRateLimit declares that host (and its subdomains) rate-limits per
-// browser session, so a 429/5xx page is retried in a fresh browser. That
-// drops every cookie (a solved check too), so only declare it when a wait in
-// the same browser doesn't recover. Grabbers call it from an init function.
+// browser session: 429/5xx pages are retried in a fresh browser, which drops
+// the cookies. Declare it only where waiting in the same browser fails.
 func RestartOnRateLimit(host string) {
 	hostsMu.Lock()
 	defer hostsMu.Unlock()

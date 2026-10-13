@@ -72,9 +72,8 @@ const (
 // need solving by hand. A var for the tests, guarded by mu.
 var visibleTimeout = 5 * time.Minute
 
-// StatusError is returned when the page itself answers 429 or 5xx, which a
-// rate-limiting front can do mid-walk. RetryAfter is the server's capped
-// Retry-After, zero when it sent none.
+// StatusError is a page answered with 429 or 5xx, as rate limiters send.
+// RetryAfter is the server's Retry-After, capped; zero if it sent none.
 type StatusError struct {
 	URL        string
 	Code       int
@@ -85,11 +84,9 @@ func (e *StatusError) Error() string {
 	return fmt.Sprintf("%s answered HTTP %d", e.URL, e.Code)
 }
 
-// statusFromResponse returns a StatusError when resp is the document of the
-// main frame (a page target's main frame id is its target id)
-// answered with a rate-limit style error, nil otherwise. Cloudflare challenges
-// (cf-mitigated, often a 503) are left to the challenge escalation, and a 503
-// with no Retry-After is an outage or a challenge, not a rate limit.
+// statusFromResponse returns a StatusError for a rate-limit style answer to
+// the main document, nil otherwise. Challenges (cf-mitigated, a bare 503) are
+// left to the challenge escalation.
 func statusFromResponse(resp *network.EventResponseReceived, main cdp.FrameID) *StatusError {
 	code := int(resp.Response.Status)
 	if resp.Type != network.ResourceTypeDocument || resp.FrameID != main || (code != 429 && code < 500) {
@@ -601,8 +598,7 @@ var renderPage = render
 // document before its own scripts, for this navigation only. afterWait, if
 // any, runs once waitSelector matches, before the snapshot.
 func render(ctx context.Context, h hooks, url, waitSelector, init string, afterWait []chromedp.Action) (string, error) {
-	// a 429/5xx document would otherwise sit there until the wait selector
-	// times out and pass for a challenge, so it cancels the run at once
+	// cancel at once on a 429/5xx document, not after the selector times out
 	rctx, stop := context.WithCancel(ctx)
 	defer stop()
 	var bad atomic.Pointer[StatusError]

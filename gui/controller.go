@@ -435,9 +435,8 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 
 	series, err := core.Open(site, s)
 	if err != nil {
-		// the reload runs with the settings dropUnmatchedFilters chose, on a
-		// site of its own (the failed one may already have read the filters it
-		// was given), except a Refilterable one, which is reused
+		// the reload gets a site of its own with dropUnmatchedFilters' settings
+		// (the failed one may have read its filters), unless it's Refilterable
 		if reload, dropLanguage := c.dropUnmatchedFilters(site, s, err); reload {
 			// the site keeps the pointer it's identified with, and Configure
 			// changes c.settings: a copy would leave the download ignoring
@@ -449,8 +448,7 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 				s.Language = ""
 				c.mu.Unlock()
 			}
-			// a Refilterable site re-applies the filters to what it already
-			// fetched: a fresh one would walk the whole list again
+			// a Refilterable site filters what it already fetched, no new walk
 			retry := site
 			if _, ok := site.(grabber.Refilterable); !ok {
 				retry, _ = c.identify(url, s)

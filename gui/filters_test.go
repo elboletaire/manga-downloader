@@ -604,8 +604,8 @@ func TestFilterOnlyReloadReusesRefilterable(t *testing.T) {
 	}
 }
 
-// walkingSite is a Refilterable site that, like comix, walks its list once
-// and fails a scanlator it doesn't list with an error of its own
+// walkingSite is a Refilterable site that walks once, like comix, and fails
+// an unlisted scanlator with an error of its own
 type walkingSite struct {
 	*scanlatorSite
 	walks int

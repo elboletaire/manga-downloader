@@ -38,10 +38,9 @@ import (
 // images: all" setting so they all mount at once, and the snapshot is taken
 // once every slot has its img (scrolling the reader's container if not).
 //
-// Cloudflare rate-limits page loads: about 0.7 a second sustained (or six in
-// a burst) get a 502 with Retry-After: 60 on every page until it lapses. So
-// loads are spaced out (comixLoadGap) once past a short burst, across every
-// Comix instance: the limit is per host, and a load may follow another's walk.
+// Cloudflare answers loads faster than about 0.7 a second (six in a burst)
+// with 502 and Retry-After: 60, so loads are paced (comixLoadGap) across
+// every Comix instance.
 //
 // The images live on rotating hosts that refuse any request with a Referer
 // (403; the reader sets referrerpolicy="no-referrer"), so pages are
@@ -78,8 +77,7 @@ type ComixChapter struct {
 var comixHostRe = regexp.MustCompile(`(?i)(^|\.)comix\.to$`)
 
 // its chapter API serves headless browsers a captcha of its own, every time,
-// and its rate limit is per browser session: the same one stays blocked for
-// a minute or more, a new one gets in at once
+// and rate-limits per browser session, so a 429 is retried in a new one
 func init() {
 	browser.RequireVisible("comix.to")
 	browser.RestartOnRateLimit("comix.to")
@@ -110,9 +108,8 @@ var (
 	comixNow   = time.Now
 )
 
-// comixPace is the pacing state of comix.to, shared by every Comix instance:
-// used is the burst spent, which idle time earns back one per comixLoadGap,
-// and last is when the previous load finished
+// comixPace is shared by every Comix: used is the burst spent (idle time earns
+// it back, a load per gap), last is when the previous load finished
 var comixPace struct {
 	sync.Mutex
 	used int
@@ -156,9 +153,8 @@ func (c *Comix) resolveSeriesURL() {
 	}
 }
 
-// load runs get (a browser load), spacing it comixLoadGap from the previous
-// one once the burst is spent, whichever instance made it. A 429/5xx is
-// waited out and retried by the browser package.
+// load runs get, spaced comixLoadGap after the previous load once the burst
+// is spent. The browser package retries a 429/5xx.
 func (c *Comix) load(get func() (string, error)) (string, error) {
 	comixPace.Lock()
 	defer comixPace.Unlock()
@@ -294,8 +290,7 @@ func (c *Comix) FetchChapters() (chapters Filterables, errs []error) {
 		page++
 	}
 
-	// Cache for future filter-only changes, unless the walk was cut short:
-	// a later call must try again rather than serve a truncated list
+	// Cache for filter-only changes, unless errors cut the walk short
 	if len(errs) == 0 {
 		c.cachedURL = c.URL
 		c.cachedChapters = allChapters
