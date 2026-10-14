@@ -81,6 +81,8 @@ export interface State {
   title: string;
   chapterCount: number;
   hasDuplicates: boolean;
+  /** One number is listed more than once in a language, and the groups tell the copies apart */
+  hasGroupDuplicates: boolean;
   /** The language or scanlator changed since the list was fetched */
   stale: boolean;
   /** The language the list was fetched with (what the filter applies to) */
@@ -132,6 +134,8 @@ export interface Chapter {
   title: string;
   /** Only set when hasDuplicates: the copies of one number differ by language */
   language: string;
+  /** Only set when hasGroupDuplicates: the scanlation group that made the release */
+  group: string;
   /** The volume the site files it under; 0 when the site doesn't say */
   volume: number;
 }

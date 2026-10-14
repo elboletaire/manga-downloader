@@ -105,7 +105,7 @@ interface MockOffers {
 const OFFERS: Record<MockSite, MockOffers> = {
   multi: { language: { values: ['ca', 'en', 'es'], all: true, current: 'ca' }, scanlator: null },
   plus: { language: { values: ['en', 'es'], all: false, current: 'en' }, scanlator: null },
-  groups: { language: null, scanlator: { values: ['Alpha', 'Delta'], all: true, current: 'Delta' } },
+  groups: { language: null, scanlator: { values: ['Alpha', 'Delta'], all: true, current: '' } },
   none: { language: null, scanlator: null },
 };
 
@@ -176,9 +176,9 @@ function mockChapters(count: number, withLanguages: boolean, withVolumes = true)
 
   for (const [number, catTitle, vol] of source) {
     const volume = withVolumes ? vol : 0;
-    list.push({ index: list.length, number, title: catTitle, language: withLanguages ? 'ca' : '', volume });
+    list.push({ index: list.length, number, title: catTitle, language: withLanguages ? 'ca' : '', group: '', volume });
     if (withLanguages && number % 5 === 0) {
-      list.push({ index: list.length, number, title: catTitle, language: 'en', volume });
+      list.push({ index: list.length, number, title: catTitle, language: 'en', group: '', volume });
     }
   }
   return list;
@@ -314,6 +314,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     title,
     chapterCount: chapters.length,
     hasDuplicates: chapters.some((c) => c.language !== ''),
+    hasGroupDuplicates: chapters.some(
+      (c) => c.group !== '' && chapters.some((d) => d !== c && d.number === c.number && d.language === c.language),
+    ),
     stale: loaded && !loading && (options.language !== applied.language || options.scanlator !== applied.scanlator),
     loadedLanguage: applied.language,
     loadedScanlator: applied.scanlator,

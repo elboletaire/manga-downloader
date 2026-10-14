@@ -169,6 +169,7 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	showLanguage := core.HasDuplicateChapterNumbers(chapters)
+	showGroup := core.HasGroupDuplicates(chapters)
 
 	if !term.IsTerminal(int(os.Stdout.Fd())) {
 		// Non-TTY (piped, CI, docker without -t): plain line-based output.
@@ -192,7 +193,7 @@ func Run(cmd *cobra.Command, args []string) {
 	// TTY mode: Bubble Tea interactive progress bars.
 	// Background detection happens inside the model via tea.RequestBackgroundColor.
 	// Default to dark until the BackgroundColorMsg arrives.
-	model := newProgressModel(series.Title, settings.Range, settings.Bundle, showLanguage, true)
+	model := newProgressModel(series.Title, settings.Range, settings.Bundle, showLanguage, showGroup, true)
 	prog := tea.NewProgram(model)
 
 	// evDone is closed when prog.Run() returns so that bubbleEvents methods
@@ -351,8 +352,8 @@ func init() {
 	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Chapters, "concurrency", "c", 5, "number of concurrent chapter downloads, hard-limited to 5")
 	rootCmd.Flags().Uint8VarP(&settings.MaxConcurrency.Pages, "concurrency-pages", "C", 10, "number of concurrent page downloads, hard-limited to 10")
 	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", `only download the specified language ("all" downloads every language, on sites listing several)`)
-	rootCmd.Flags().StringVarP(&settings.Scanlator, "scanlator", "s", "", `only download the specified scanlation group, for sites hosting several versions of the same chapters ("all" downloads every group's)`)
-	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
+	rootCmd.Flags().StringVarP(&settings.Scanlator, "scanlator", "s", "", `only download the releases of the specified scanlation group, for sites hosting several groups' versions of the same chapters (the default, and "all", keep every group's)`)
+	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename: {{.Series}}, {{.Number}}, {{.Title}}, {{.Group}}, {{.Volume}} and {{.Version}}")
 	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz, raw (a folder with the images) or epub")
 	rootCmd.Flags().StringVar(&settings.ReadingDirection, "reading-direction", packer.ReadingDirectionRTL, `direction pages turn in epub files: "rtl" for manga, "ltr" for webtoons and western comics`)
 	rootCmd.Flags().StringVar(&settings.ConvertImages, "convert-images", grabber.ConvertImagesDefault, `comma-separated source image formats to convert to jpeg for e-reader compatibility: "avif", "webp" or "none"`)

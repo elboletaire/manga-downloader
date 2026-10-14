@@ -18,7 +18,8 @@ type FilterOptions struct {
 	// Current is the one value the loaded list shows when no filter is set, for
 	// the sites whose default is a single value rather than every value: sites
 	// that list one edition at a time (Manga Plus) show the edition the URL
-	// points at, and Atsumaru its largest group. It's empty otherwise.
+	// points at. It's empty otherwise, scanlation groups included: their default
+	// is every group's releases.
 	Current string
 }
 
@@ -28,16 +29,24 @@ type LanguageLister interface {
 	LanguageOptions() FilterOptions
 }
 
-// ScanlatorLister is implemented by the sites hosting several scanlation
-// groups' versions of the same chapters
+// ScanlatorLister is for the sites that can only list one scanlation group's
+// releases per request, so the group is a request option the grabber reads from
+// Settings.Scanlator itself. It lists the groups the series has, and its
+// FetchChapters keeps the selected one (through SelectGroup, so the match and
+// the unknown-group error are the ones every other site gives).
+//
+// Sites whose one listing already holds every group's releases don't implement
+// it: they set Chapter.Group, and core filters the listing by it (SelectGroup,
+// see GroupOptions).
 type ScanlatorLister interface {
 	ScanlatorOptions() FilterOptions
 }
 
-// Refilterable is implemented by grabbers whose FetchChapters re-applies the
-// current filter from Settings to already-fetched data, without a network
-// round-trip. The controller reuses such a site on a filter-only reload.
-// Grabbers that must fetch to apply their filter (mangadex, mangafire,
+// Refilterable is implemented by grabbers whose FetchChapters serves cached data
+// on a filter change, without a browser or network access, so the controller
+// reuses such a site on a filter-only reload. For the generic group filter that
+// means the listing already holds every group's releases, and core does the
+// rest. Grabbers that must fetch to apply their filter (mangadex, mangafire,
 // mangaplus) must not implement this.
 type Refilterable interface {
 	// Refilterable marks that FetchChapters serves cached data on a filter

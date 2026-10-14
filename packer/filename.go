@@ -20,6 +20,10 @@ type FilenameTemplateParts struct {
 	Number string
 	// Title represents the chapter title (e.g. "The Beginning")
 	Title string
+	// Group is the scanlation group that made the release (e.g. "Alpha"). For a
+	// volume or a bundle, the group its chapters share, empty when they differ
+	// or name none. Several groups of one release are joined with ", "
+	Group string
 	// Volume is the volume number: the chapter's own (0 when the site doesn't
 	// say) or, for a volume file, the volume's (e.g. 3). It's an int, so
 	// {{printf "%02d" .Volume}} pads it.
@@ -65,6 +69,7 @@ func NewChapterFileTemplateParts(title string, chapter *grabber.Chapter) Filenam
 		Series: SanitizeFilename(title),
 		Number: strings.Replace(fmt.Sprintf("%.1f", chapter.GetNumber()), ".0", "", 1),
 		Title:  SanitizeFilename(chapter.GetTitle()),
+		Group:  SanitizeFilename(chapter.Group),
 		Volume: chapter.Volume,
 	}
 }
@@ -85,8 +90,25 @@ func NewVolumeFileTemplateParts(title string, volume int, chapters []*grabber.Ch
 		Series: SanitizeFilename(title),
 		Number: number,
 		Title:  fmt.Sprintf("Vol. %02d", volume),
+		Group:  sharedGroup(chapters),
 		Volume: volume,
 	}
+}
+
+// sharedGroup returns the scanlation group every chapter was made by, sanitized
+// for a filename, and "" when they differ or none names one
+func sharedGroup(chapters []*grabber.Chapter) string {
+	if len(chapters) == 0 {
+		return ""
+	}
+	group := chapters[0].Group
+	for _, c := range chapters[1:] {
+		if c.Group != group {
+			return ""
+		}
+	}
+
+	return SanitizeFilename(group)
 }
 
 // formatChapterNumber formats a chapter number as filenames show it: 1, 10.5

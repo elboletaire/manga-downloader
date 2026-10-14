@@ -57,10 +57,15 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 	if format == FormatEPUB {
 		info = EPUBInfo{Series: title, Identity: "bundle " + memberKeys(chapters), ReadingDirection: s.GetReadingDirection(), Labels: labels}
 	}
+	listed := make([]*grabber.Chapter, len(chapters))
+	for i, c := range chapters {
+		listed[i] = c.Chapter
+	}
 	return pack(outputdir, format, s.GetFilenameTemplate(), title, FilenameTemplateParts{
 		Series: title,
 		Number: rng,
 		Title:  "bundle",
+		Group:  sharedGroup(listed),
 	}, files, info, progress)
 }
 
@@ -104,12 +109,13 @@ func pageFormats(format string, formats grabber.ConvertFormats) grabber.ConvertF
 }
 
 // chapterKey tells a chapter's release apart from the others of its number:
-// number, language and the source's chapter ID, or the title when the source
-// gave none. The title isn't stable across --scanlator choices, so the ID wins.
+// number, language and the source's chapter ID, or else its group and title
+// when the source gave no ID. The title isn't stable across grabbers' listings,
+// and the group is what tells two releases with the same title apart.
 func chapterKey(chapter *grabber.Chapter) string {
 	release := chapter.ID
 	if release == "" {
-		release = chapter.GetTitle()
+		release = chapter.Group + "\x00" + chapter.GetTitle()
 	}
 	return formatChapterNumber(chapter.GetNumber()) + "\x00" + chapter.Language + "\x00" + release
 }

@@ -749,7 +749,8 @@ code {
   text-overflow: ellipsis;
 }
 
-.lang {
+.lang,
+.group {
   padding: 1px 7px;
   border-radius: 999px;
   background: var(--sunken);
@@ -759,6 +760,12 @@ code {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+/* a group's name is a name, not a code: it keeps its own casing */
+.group {
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .list-foot {

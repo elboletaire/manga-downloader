@@ -57,6 +57,48 @@ func TestChapterFilenameVolume(t *testing.T) {
 	}
 }
 
+// {{.Group}} names the chapter's group, sanitized, and a volume's or bundle's
+// group only when all its chapters share one
+func TestGroupInFilenameTemplates(t *testing.T) {
+	chapter := &grabber.Chapter{Number: 3, Title: "Chapter 3", Group: "Alpha/Delta"}
+	got, err := NewFilenameFromTemplate("{{.Series}} {{.Number}} [{{.Group}}]", NewChapterFileTemplateParts("Series", chapter))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "Series 3 [Alpha_Delta]" {
+		t.Errorf("chapter: got %q", got)
+	}
+
+	shared := []*grabber.Chapter{
+		{Number: 1, Group: "Alpha"},
+		{Number: 2, Group: "Alpha"},
+	}
+	mixed := []*grabber.Chapter{
+		{Number: 1, Group: "Alpha"},
+		{Number: 2, Group: "Delta"},
+	}
+	ungrouped := []*grabber.Chapter{{Number: 1}, {Number: 2}}
+	cases := []struct {
+		name     string
+		chapters []*grabber.Chapter
+		want     string
+	}{
+		{"shared group", shared, "Series [Alpha]"},
+		{"mixed groups", mixed, "Series []"},
+		{"no group", ungrouped, "Series []"},
+	}
+	for _, c := range cases {
+		parts := NewVolumeFileTemplateParts("Series", 1, c.chapters)
+		got, err := NewFilenameFromTemplate("{{.Series}} [{{.Group}}]", parts)
+		if err != nil {
+			t.Fatalf("%s: %v", c.name, err)
+		}
+		if got != c.want {
+			t.Errorf("%s: got %q, want %q", c.name, got, c.want)
+		}
+	}
+}
+
 func TestPackVolume(t *testing.T) {
 	site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault}
 	chapters := []*DownloadedChapter{

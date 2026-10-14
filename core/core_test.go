@@ -103,6 +103,44 @@ func TestHasDuplicateChapterNumbers(t *testing.T) {
 	}
 }
 
+// a same-language copy of a chapter naming its group is what the group tag tells
+// apart; copies with no group at all have nothing to tell them by
+func TestHasGroupDuplicates(t *testing.T) {
+	grouped := grabber.Filterables{
+		&grabber.Chapter{Number: 1, Language: "en", Group: "Alpha"},
+		&grabber.Chapter{Number: 1, Language: "en", Group: "Delta"},
+	}
+	if !HasGroupDuplicates(grouped) {
+		t.Error("expected same-language copies naming groups to be detected")
+	}
+
+	// one copy grouped is enough: the list still shows which copy is which
+	oneGrouped := grabber.Filterables{
+		&grabber.Chapter{Number: 1, Language: "en", Group: "Alpha"},
+		&grabber.Chapter{Number: 1, Language: "en"},
+	}
+	if !HasGroupDuplicates(oneGrouped) {
+		t.Error("expected a copy naming a group to be detected")
+	}
+
+	ungrouped := grabber.Filterables{
+		&grabber.Chapter{Number: 1, Language: "en"},
+		&grabber.Chapter{Number: 1, Language: "en"},
+	}
+	if HasGroupDuplicates(ungrouped) {
+		t.Error("copies with no group must not trigger the group tag")
+	}
+
+	// the same number in two languages is the language tag's business
+	otherLang := grabber.Filterables{
+		&grabber.Chapter{Number: 1, Language: "en", Group: "Alpha"},
+		&grabber.Chapter{Number: 1, Language: "es", Group: "Delta"},
+	}
+	if HasGroupDuplicates(otherLang) {
+		t.Error("copies in different languages must not trigger the group tag")
+	}
+}
+
 func TestAllChaptersRangeIncludesChapterZero(t *testing.T) {
 	// a hardcoded Begin: 1 silently dropped chapter 0 and any 0.x prologue
 	// from the "download all" prompt path (#176); the range must instead
@@ -181,6 +219,101 @@ func TestOpenFillsFilterOptions(t *testing.T) {
 	}
 }
 
+// groupedSite lists chapters carrying their groups, and no group options of its
+// own: core filters the listing by --scanlator
+type groupedSite struct {
+	listSite
+}
+
+func newGroupedSite() groupedSite {
+	return groupedSite{listSite{chapters: grabber.Filterables{
+		&grabber.Chapter{Number: 1, Title: "One", Group: "Alpha"},
+		&grabber.Chapter{Number: 1, Title: "One", Group: "Delta"},
+		&grabber.Chapter{Number: 2, Title: "Two", Group: "Delta"},
+		&grabber.Chapter{Number: 3, Title: "Three"},
+	}}}
+}
+
+func TestOpenFiltersTheListingByGroup(t *testing.T) {
+	cases := []struct {
+		name      string
+		scanlator string
+		want      int
+	}{
+		{"default keeps every release", "", 4},
+		{"all keeps every release", "all", 4},
+		{"a group, ignoring case", "delta", 2},
+		{"a group, with spaces", "  ALPHA ", 1},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			series, err := Open(newGroupedSite(), &grabber.Settings{Scanlator: c.scanlator})
+			if err != nil {
+				t.Fatalf("Open() error = %v", err)
+			}
+			if len(series.Chapters) != c.want {
+				t.Errorf("Open(%q) kept %d chapters, want %d", c.scanlator, len(series.Chapters), c.want)
+			}
+		})
+	}
+}
+
+// the groups offered are the listing's, whatever is selected
+func TestOpenListsEveryGroupWhateverIsSelected(t *testing.T) {
+	for _, scanlator := range []string{"", "Alpha"} {
+		series, err := Open(newGroupedSite(), &grabber.Settings{Scanlator: scanlator})
+		if err != nil {
+			t.Fatalf("Open(%q) error = %v", scanlator, err)
+		}
+		want := &grabber.FilterOptions{Values: []string{"Delta", "Alpha"}, All: true}
+		if !reflect.DeepEqual(series.Scanlators, want) {
+			t.Errorf("Open(%q) Scanlators = %+v, want %+v", scanlator, series.Scanlators, want)
+		}
+	}
+}
+
+func TestOpenUnknownGroupListsTheAvailableOnes(t *testing.T) {
+	_, err := Open(newGroupedSite(), &grabber.Settings{Scanlator: "Omega"})
+
+	var unavailable *grabber.UnavailableFilterError
+	if !errors.As(err, &unavailable) {
+		t.Fatalf("Open() error = %v, want an UnavailableFilterError", err)
+	}
+	if unavailable.Filter != "scanlator" || unavailable.Value != "Omega" {
+		t.Errorf("error = %+v", unavailable)
+	}
+	// the load's error still names the groups, for the window's selector
+	languages, scanlators := FilterOptionsOf(newGroupedSite(), err)
+	if languages != nil || scanlators == nil || !reflect.DeepEqual(scanlators.Values, []string{"Delta", "Alpha"}) || !scanlators.All {
+		t.Errorf("FilterOptionsOf after the error = %+v, %+v", languages, scanlators)
+	}
+}
+
+// a site that lists its groups itself gets --scanlator passed through to its
+// own listing: core doesn't filter it again, and its options are its own
+func TestOpenLeavesAScanlatorListerToItsOwnFilter(t *testing.T) {
+	site := scanlatorLister{groupedSite: newGroupedSite()}
+	series, err := Open(site, &grabber.Settings{Scanlator: "Omega"})
+	if err != nil {
+		t.Fatalf("Open() error = %v, want the site's own listing (it filters nothing here)", err)
+	}
+	if len(series.Chapters) != 4 {
+		t.Errorf("Open kept %d chapters, want the site's 4", len(series.Chapters))
+	}
+	if series.Scanlators == nil || !reflect.DeepEqual(series.Scanlators.Values, []string{"Site Group"}) {
+		t.Errorf("Scanlators = %+v, want the site's own options", series.Scanlators)
+	}
+}
+
+// scanlatorLister lists the groups its site chose, ignoring what's listed
+type scanlatorLister struct {
+	groupedSite
+}
+
+func (scanlatorLister) ScanlatorOptions() grabber.FilterOptions {
+	return grabber.FilterOptions{Values: []string{"Site Group"}, All: true}
+}
+
 func TestOpenWithoutListersHasNoFilterOptions(t *testing.T) {
 	site := listSite{chapters: grabber.Filterables{grabber.Chapter{Number: 1}}}
 
@@ -202,7 +335,7 @@ func TestFilterOptionsOfSurvivesNoChapters(t *testing.T) {
 		t.Fatalf("Open() error = %v, want a NoChaptersError", err)
 	}
 
-	languages, scanlators := FilterOptionsOf(site)
+	languages, scanlators := FilterOptionsOf(site, nerr)
 	if languages == nil || !reflect.DeepEqual(languages.Values, []string{"en", "es"}) {
 		t.Errorf("languages = %+v", languages)
 	}

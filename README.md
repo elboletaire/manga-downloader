@@ -378,11 +378,12 @@ manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-936
 
 On sites that list several languages, `--language all` downloads every one of them.
 
-Some sites host several scanlation groups' versions of the same chapter. Without
-`--scanlator`, those pick one version of each chapter (Atsumaru takes the group
-with the most chapters). Use `--scanlator <name>` to pick a group, or
-`--scanlator all` to download every version. With `all`, the group name is added
-to each file name.
+Some sites host several scanlation groups' versions of the same chapter. By
+default every release is kept, and each one is told apart by its group: the
+chapter list shows the group, and `{{.Group}}` in `--filename-template` names
+it. Use `--scanlator <name>` to keep only one group's releases (the name is
+matched ignoring case; an unknown one lists the groups the series has), or
+`--scanlator all` for every group, which is the same as the default.
 
 ### Bundling and output format
 
@@ -507,6 +508,10 @@ left as is:
 A custom template names them too, with `{{.Number}}` being the volume's
 chapters (`1-7`) and `{{.Title}}` `Vol. 01`.
 
+`{{.Group}}` is the scanlation group that made the release (empty when the site
+doesn't say). A volume or a bundle gets its group only when all of its chapters
+were made by the same one, so mixed groups leave it empty.
+
 ### Environment variables
 
 | Variable           | Description                                    |
@@ -554,7 +559,7 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--reading-direction` |       | Page turn direction for EPUB: `rtl` (manga) or `ltr`     | `rtl`          |
 | `--filename-template` | `-t`  | Template for the file names                              | see above      |
 | `--language`          | `-l`  | Only download the specified language                     | site default   |
-| `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)  | site default   |
+| `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)  | `all`          |
 | `--convert-images`    |       | Formats to convert to JPEG: `avif`, `webp` or `none`     | `avif`         |
 | `--skip-pages`        |       | Pages to exclude from every chapter (`-1` is the last)   | none           |
 | `--concurrency`       | `-c`  | Number of chapters downloaded at once (max 5)            | 5              |

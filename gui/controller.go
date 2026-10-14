@@ -154,8 +154,10 @@ type Controller struct {
 	// cancels log once
 	cancelling bool
 	selected   []bool
-	// hasDuplicates is core.HasDuplicateChapterNumbers for the loaded list
-	hasDuplicates bool
+	// hasDuplicates is core.HasDuplicateChapterNumbers for the loaded list, and
+	// hasGroupDuplicates is core.HasGroupDuplicates
+	hasDuplicates      bool
+	hasGroupDuplicates bool
 	// loadedLanguage and loadedScanlator are the filters the list was fetched
 	// with, which Configure can make stale
 	loadedLanguage  string
@@ -471,7 +473,7 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	if series != nil {
 		languages, scanlators = series.Languages, series.Scanlators
 	} else {
-		languages, scanlators = core.FilterOptionsOf(site)
+		languages, scanlators = core.FilterOptionsOf(site, err)
 	}
 
 	c.mu.Lock()
@@ -492,6 +494,7 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	c.selGen++
 	c.selected = make([]bool, len(series.Chapters))
 	c.hasDuplicates = core.HasDuplicateChapterNumbers(series.Chapters)
+	c.hasGroupDuplicates = core.HasGroupDuplicates(series.Chapters)
 	c.siteVolumes = core.SiteVolumes(series.Chapters)
 	c.volumesText = c.siteVolumes
 	c.resetResultsLocked()
@@ -533,7 +536,7 @@ func (c *Controller) dropUnmatchedFilters(site grabber.Site, s *grabber.Settings
 		return false, false
 	}
 
-	languages, scanlators := core.FilterOptionsOf(site)
+	languages, scanlators := core.FilterOptionsOf(site, err)
 	// s is the settings the controller holds, so the typed values are read
 	// before they're overwritten
 	typedLanguage, typedScanlator := s.Language, s.Scanlator
@@ -731,6 +734,7 @@ func (c *Controller) Clear() error {
 	c.selected = nil
 	c.selGen++
 	c.hasDuplicates = false
+	c.hasGroupDuplicates = false
 	c.volumesText, c.siteVolumes = "", ""
 	c.languages, c.scanlators = nil, nil
 	c.loadedLanguage, c.loadedScanlator = "", ""
@@ -851,6 +855,15 @@ func (c *Controller) HasDuplicates() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.hasDuplicates
+}
+
+// HasGroupDuplicates reports whether the list repeats a chapter number in one
+// language with the groups naming the copies, so the view should show each
+// chapter's group
+func (c *Controller) HasGroupDuplicates() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.hasGroupDuplicates
 }
 
 // SelectedIndices returns the indices of the selected chapters, in list order,

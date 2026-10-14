@@ -167,7 +167,10 @@ type State struct {
 	Title         string `json:"title"`
 	ChapterCount  int    `json:"chapterCount"`
 	HasDuplicates bool   `json:"hasDuplicates"`
-	Stale         bool   `json:"stale"`
+	// HasGroupDuplicates is set when the list repeats a chapter number in one
+	// language with the groups telling the copies apart (see ChapterDTO.Group)
+	HasGroupDuplicates bool `json:"hasGroupDuplicates"`
+	Stale              bool `json:"stale"`
 	// LoadedLanguage and LoadedScanlator are the filters the list was fetched
 	// with, so the window can tell which of the two went stale
 	LoadedLanguage  string      `json:"loadedLanguage"`
@@ -267,6 +270,9 @@ type ChapterDTO struct {
 	Number   float64 `json:"number"`
 	Title    string  `json:"title"`
 	Language string  `json:"language"`
+	// Group is the scanlation group that made the release. It's only sent when
+	// the list has copies of one number in a language (see State.HasGroupDuplicates)
+	Group string `json:"group"`
 	// Volume is the volume the site files the chapter under, 0 when it doesn't say
 	Volume int `json:"volume"`
 }
@@ -281,23 +287,24 @@ type LogDTO struct {
 func (a *App) State() State {
 	c := a.ctrl
 	st := State{
-		URL:           c.URL(),
-		Loading:       c.Loading(),
-		Loaded:        c.Loaded(),
-		Title:         c.Title(),
-		ChapterCount:  len(c.Chapters()),
-		HasDuplicates: c.HasDuplicates(),
-		Stale:         c.Stale(),
-		SelectedCount: c.SelectedCount(),
-		Running:       c.Running(),
-		Cancelling:    c.Cancelling(),
-		Run:           runDTO(c.Run()),
-		Jobs:          []JobDTO{},
-		Summary:       summaryDTO(c.Summary()),
-		Options:       optionsOf(c.Settings()),
-		Version:       a.version,
-		ReleaseURL:    releaseURL(a.tag),
-		Update:        updateDTO(c.Update()),
+		URL:                c.URL(),
+		Loading:            c.Loading(),
+		Loaded:             c.Loaded(),
+		Title:              c.Title(),
+		ChapterCount:       len(c.Chapters()),
+		HasDuplicates:      c.HasDuplicates(),
+		HasGroupDuplicates: c.HasGroupDuplicates(),
+		Stale:              c.Stale(),
+		SelectedCount:      c.SelectedCount(),
+		Running:            c.Running(),
+		Cancelling:         c.Cancelling(),
+		Run:                runDTO(c.Run()),
+		Jobs:               []JobDTO{},
+		Summary:            summaryDTO(c.Summary()),
+		Options:            optionsOf(c.Settings()),
+		Version:            a.version,
+		ReleaseURL:         releaseURL(a.tag),
+		Update:             updateDTO(c.Update()),
 
 		BrowserVisibleAuto: c.BrowserVisibleAuto(),
 		BrowserAlert:       c.BrowserAlert(),
@@ -330,12 +337,16 @@ func (a *App) Chapters() []ChapterDTO {
 	list := a.ctrl.Chapters()
 	out := make([]ChapterDTO, 0, len(list))
 	dupes := a.ctrl.HasDuplicates()
+	groupDupes := a.ctrl.HasGroupDuplicates()
 	for i, ch := range list {
 		row := ChapterDTO{Index: i, Number: ch.GetNumber(), Title: ch.GetTitle(), Volume: grabber.VolumeOf(ch)}
 		// the language only tells copies of the same number apart, so it's
 		// only sent when the list has such copies (as the CLI shows it)
 		if l, ok := ch.(interface{ GetLanguage() string }); ok && dupes {
 			row.Language = l.GetLanguage()
+		}
+		if g, ok := ch.(interface{ GetGroup() string }); ok && groupDupes {
+			row.Group = g.GetGroup()
 		}
 		out = append(out, row)
 	}

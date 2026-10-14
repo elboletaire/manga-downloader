@@ -156,6 +156,7 @@ describe('downloadLabel', () => {
       number: i + 1,
       title: '',
       language: '',
+      group: '',
       volume: 0,
     }));
     const from = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, i) => first - 1 + i);

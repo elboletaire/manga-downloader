@@ -221,19 +221,6 @@ func TestFmteamLanguageOptions(t *testing.T) {
 	assertFilterOptions(t, "fmteam", f.LanguageOptions(), []string{"fr", "en"}, true, "")
 }
 
-func TestAtsumaruScanlatorOptions(t *testing.T) {
-	a := newTestAtsumaru("", atsumaruScanlator{Id: "alpha-id", Name: "Alpha"}, atsumaruScanlator{Id: "delta-id", Name: "Delta"})
-	a.info = testInfo()
-
-	// the groups are listed by the names --scanlator takes, and without a
-	// --scanlator the list is the largest group (Delta) alone
-	assertFilterOptions(t, "atsumaru", a.ScanlatorOptions(), []string{"Alpha", "Delta"}, true, "Delta")
-
-	picked := newTestAtsumaru("alpha", atsumaruScanlator{Id: "alpha-id", Name: "Alpha"}, atsumaruScanlator{Id: "delta-id", Name: "Delta"})
-	picked.info = testInfo()
-	assertFilterOptions(t, "atsumaru picked", picked.ScanlatorOptions(), []string{"Alpha", "Delta"}, true, "")
-}
-
 func TestMangaplusLanguageOptions(t *testing.T) {
 	const englishTitleID = 100020
 

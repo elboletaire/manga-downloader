@@ -315,7 +315,8 @@ grabber/atsumaru:
 # per site; run them by hand when touching the scanlator selection.
 grabber/atsumaru/scanlator:
 	go run . --scanlator alpha https://atsu.moe/manga/2VgNt 97
-# expect one file per group, each tagged with the group name in its filename
+# expect one file per group: their names only differ by a version suffix
+# (v2, v3), as the group isn't in the default file name
 grabber/atsumaru/all:
 	go run . --scanlator all https://atsu.moe/manga/2VgNt 97
 # use a chapter that's not one of the newest few (those can be paywalled

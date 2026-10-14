@@ -41,6 +41,9 @@ type Chapter struct {
 	Pages []Page
 	// Language is the chapter language
 	Language string
+	// Group is the scanlation group (team) that made this release, empty when
+	// the site doesn't say. Several groups are joined with ", "
+	Group string
 	// ID is the source's own stable identifier for this release of the
 	// chapter, empty when the grabber has none
 	ID string
@@ -73,6 +76,11 @@ type Page struct {
 // GetNumber returns the chapter number
 func (c Chapter) GetNumber() float64 {
 	return c.Number
+}
+
+// GetGroup returns the scanlation group that made the chapter, "" when unknown
+func (c Chapter) GetGroup() string {
+	return c.Group
 }
 
 // GetVolume returns the chapter's volume, 0 when unknown

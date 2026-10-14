@@ -148,6 +148,7 @@ type progressModel struct {
 	bundle      bool
 	bundleRange string
 	showLang    bool
+	showGroup   bool
 	hasDarkBg   bool
 	width       int
 	done        bool // set true on downloadDoneMsg; View renders full bars immediately
@@ -177,12 +178,13 @@ type progressModel struct {
 
 var _ tea.Model = progressModel{}
 
-func newProgressModel(seriesTitle, bundleRange string, bundle, showLang, hasDarkBg bool) progressModel {
+func newProgressModel(seriesTitle, bundleRange string, bundle, showLang, showGroup, hasDarkBg bool) progressModel {
 	m := progressModel{
 		seriesTitle:   seriesTitle,
 		bundle:        bundle,
 		bundleRange:   bundleRange,
 		showLang:      showLang,
+		showGroup:     showGroup,
 		hasDarkBg:     hasDarkBg,
 		width:         80,
 		states:        make(map[*grabber.Chapter]*barState),
@@ -310,7 +312,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.chapters = append(m.chapters, msg.chapter)
 		// Compute the raw (untruncated) title here so it adapts when the terminal
 		// is resized; renderChapterRow truncates it to titleW at render time.
-		rawTitle := chapterRawTitle(m.seriesTitle, msg.chapter, m.showLang)
+		rawTitle := chapterRawTitle(m.seriesTitle, msg.chapter, m.showLang, m.showGroup)
 		m.states[msg.chapter] = &barState{
 			rawTitle: rawTitle,
 			total:    msg.total,
@@ -895,14 +897,19 @@ func (plainEvents) VolumePacked(v *core.Volume, _ string, err error) {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-// chapterRawTitle builds an untruncated "Series - Chapter [lang]" title for a
-// chapter. The caller passes showLanguage (true when the series has chapters in
-// more than one language). The result is stored in barState.rawTitle and
-// truncated to titleW at render time so resizing the terminal shows more text.
-func chapterRawTitle(seriesTitle string, c *grabber.Chapter, showLanguage bool) string {
+// chapterRawTitle builds an untruncated "Series - Chapter [lang] [group]" title
+// for a chapter. The caller passes showLanguage (true when the series has
+// chapters in more than one language) and showGroup (true when one number is
+// listed more than once in a language, see core.HasGroupDuplicates). The result
+// is stored in barState.rawTitle and truncated to titleW at render time so
+// resizing the terminal shows more text.
+func chapterRawTitle(seriesTitle string, c *grabber.Chapter, showLanguage, showGroup bool) string {
 	chapTitle := c.GetTitle()
 	if showLanguage && c.Language != "" {
 		chapTitle += " [" + c.Language + "]"
+	}
+	if showGroup && c.Group != "" {
+		chapTitle += " [" + c.Group + "]"
 	}
 	if seriesTitle == "" {
 		return chapTitle

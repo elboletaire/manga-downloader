@@ -45,7 +45,7 @@ func TestProgressModelBubbleTea(t *testing.T) {
 	}
 
 	// chapterStartedMsg should add a bar to the model.
-	m := newProgressModel("My Hero Academia", "", false, false, true)
+	m := newProgressModel("My Hero Academia", "", false, false, false, true)
 	m.width = 80
 
 	next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: int64(chapter.PagesCount) * steps})
@@ -94,7 +94,7 @@ func TestProgressModelBubbleTea(t *testing.T) {
 }
 
 func TestProgressModelBundleMode(t *testing.T) {
-	m := newProgressModel("Series", "1-5", true, false, true)
+	m := newProgressModel("Series", "1-5", true, false, false, true)
 	m.width = 80
 
 	// BundleStart should create the bundle bar.
@@ -113,7 +113,7 @@ func TestProgressModelBundleMode(t *testing.T) {
 func TestChapterBarSwitchesToArchivingAtDownloadShare(t *testing.T) {
 	const pages = 10
 	chapter := &grabber.Chapter{Title: "Chapter 0001", PagesCount: pages}
-	m := newProgressModel("Series", "", false, false, true)
+	m := newProgressModel("Series", "", false, false, false, true)
 	m.width = 80
 	next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: pages * steps})
 	m = next.(progressModel)
@@ -145,7 +145,7 @@ func TestChapterBarSwitchesToArchivingAtDownloadShare(t *testing.T) {
 func TestChapterCounterShowsPages(t *testing.T) {
 	const pages = 30
 	chapter := &grabber.Chapter{Title: "Chapter 0001", PagesCount: pages}
-	m := newProgressModel("Series", "", false, false, true)
+	m := newProgressModel("Series", "", false, false, false, true)
 	m.width = 80
 	next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: pages * steps})
 	m = next.(progressModel)
@@ -181,7 +181,7 @@ func TestChapterCounterShowsPages(t *testing.T) {
 // While core totals the pages, before BundleStart, the bundle row says so and
 // draws an empty bar with the real bars' glyph, not a "0/0" over shading.
 func TestBundleRowBeforeBundleStart(t *testing.T) {
-	m := newProgressModel("Series", "1-5", true, false, true)
+	m := newProgressModel("Series", "1-5", true, false, false, true)
 	m.width = 80
 
 	row := ansi.Strip(m.renderBundleRow())
@@ -206,7 +206,7 @@ func TestBundleRowEndsWithStatus(t *testing.T) {
 		{nil, "done"},
 		{fmt.Errorf("disk full"), "failed"},
 	} {
-		m := newProgressModel("Series", "", true, false, true)
+		m := newProgressModel("Series", "", true, false, false, true)
 		m.width = 80
 		for _, msg := range []tea.Msg{bundleStartMsg{total: 5}, bundlePackingMsg{}, downloadDoneMsg{err: tc.err}} {
 			next, _ := m.Update(msg)
@@ -222,7 +222,7 @@ func TestBundleRowEndsWithStatus(t *testing.T) {
 // core drops a chapter that fails to download and still packs the bundle, so
 // it ends done but short of its total: the bar shows how far it got, not full.
 func TestBundleRowDoneShortOfTotal(t *testing.T) {
-	m := newProgressModel("Series", "", true, false, true)
+	m := newProgressModel("Series", "", true, false, false, true)
 	m.width = 80
 	msgs := []tea.Msg{bundleStartMsg{total: 10}} // 10 pages → total=50
 	for range 5 {
@@ -248,7 +248,7 @@ func TestBundleRowDoneShortOfTotal(t *testing.T) {
 // A failed bundle keeps its danger bar on the model, so a resize reaches it,
 // instead of making a new one every frame.
 func TestBundleFailBarPersists(t *testing.T) {
-	m := newProgressModel("Series", "", true, false, true)
+	m := newProgressModel("Series", "", true, false, false, true)
 	m.width = 80
 	for _, msg := range []tea.Msg{bundleStartMsg{total: 10}, pageSuccessMsg{}, downloadDoneMsg{err: fmt.Errorf("disk full")}} { // 1 of 10 pages → 4/50
 		next, _ := m.Update(msg)
@@ -272,7 +272,7 @@ func TestBundleFailBarPersists(t *testing.T) {
 // BundleStart(0), when every chapter failed to fetch, still shows its 0/0:
 // only the gathering row leaves the counter blank.
 func TestBundleCounterAfterEmptyStart(t *testing.T) {
-	m := newProgressModel("Series", "", true, false, true)
+	m := newProgressModel("Series", "", true, false, false, true)
 	m.width = 80
 	next, _ := m.Update(bundleStartMsg{total: 0})
 	m = next.(progressModel)
@@ -290,7 +290,7 @@ func TestProgressModelBundleCountsEachPageOnce(t *testing.T) {
 	// Downloaded sends nothing: a nil program would panic on Send
 	(&bubbleEvents{}).Downloaded(chapter)
 
-	m := newProgressModel("Series", "1", true, false, true)
+	m := newProgressModel("Series", "1", true, false, false, true)
 	m.width = 80
 	msgs := []tea.Msg{bundleStartMsg{total: 50}, chapterStartedMsg{chapter: chapter, total: 100}}
 	for range 50 {
@@ -314,7 +314,7 @@ func TestFailedBarNotFull(t *testing.T) {
 		Title:      "Chapter 0001",
 		PagesCount: 20, // total progress steps = 40
 	}
-	m := newProgressModel("Series", "", false, false, true)
+	m := newProgressModel("Series", "", false, false, false, true)
 	m.width = 80
 
 	{
@@ -433,7 +433,7 @@ func TestViewWidths(t *testing.T) {
 
 	for _, w := range widths {
 		t.Run("chapter", func(t *testing.T) {
-			m := newProgressModel("My Hero Academia", "", false, false, true)
+			m := newProgressModel("My Hero Academia", "", false, false, false, true)
 			m.width = w
 			{
 				next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: 40})
@@ -445,7 +445,7 @@ func TestViewWidths(t *testing.T) {
 		})
 
 		t.Run("chapter_cjk", func(t *testing.T) {
-			m := newProgressModel(longTitle, "", false, false, true)
+			m := newProgressModel(longTitle, "", false, false, false, true)
 			m.width = w
 			{
 				next, _ := m.Update(chapterStartedMsg{chapter: cjkChapter, total: 40})
@@ -457,7 +457,7 @@ func TestViewWidths(t *testing.T) {
 		})
 
 		t.Run("chapter_done", func(t *testing.T) {
-			m := newProgressModel("Series", "", false, false, true)
+			m := newProgressModel("Series", "", false, false, false, true)
 			m.width = w
 			{
 				next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: 40})
@@ -473,7 +473,7 @@ func TestViewWidths(t *testing.T) {
 		})
 
 		t.Run("chapter_failed", func(t *testing.T) {
-			m := newProgressModel("Series", "", false, false, true)
+			m := newProgressModel("Series", "", false, false, false, true)
 			m.width = w
 			{
 				next, _ := m.Update(chapterStartedMsg{chapter: chapter, total: 40})
@@ -495,7 +495,7 @@ func TestViewWidths(t *testing.T) {
 		})
 
 		t.Run("bundle", func(t *testing.T) {
-			m := newProgressModel("Series", "1-5", true, false, true)
+			m := newProgressModel("Series", "1-5", true, false, false, true)
 			m.width = w
 			{
 				next, _ := m.Update(bundleStartMsg{total: 50})
@@ -506,13 +506,13 @@ func TestViewWidths(t *testing.T) {
 		})
 
 		t.Run("bundle_gathering", func(t *testing.T) {
-			m := newProgressModel("Series", "1-5", true, false, true)
+			m := newProgressModel("Series", "1-5", true, false, false, true)
 			m.width = w
 			checkRowWidth(t, m.renderBundleRow(), w, "bundle_gathering")
 		})
 
 		t.Run("bundle_failed", func(t *testing.T) {
-			m := newProgressModel("Series", "1-5", true, false, true)
+			m := newProgressModel("Series", "1-5", true, false, false, true)
 			m.width = w
 			for _, msg := range []tea.Msg{bundleStartMsg{total: 50}, pageSuccessMsg{}, downloadDoneMsg{err: fmt.Errorf("disk full")}} {
 				next, _ := m.Update(msg)
@@ -523,7 +523,7 @@ func TestViewWidths(t *testing.T) {
 
 		// "12345/12345" outgrows the 9-cell counter; the status must survive
 		t.Run("bundle_large", func(t *testing.T) {
-			m := newProgressModel(longTitle, "1-500", true, false, true)
+			m := newProgressModel(longTitle, "1-500", true, false, false, true)
 			m.width = w
 			next, _ := m.Update(bundleStartMsg{total: 12345})
 			m = next.(progressModel)

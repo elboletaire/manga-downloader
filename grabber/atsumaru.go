@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/elboletaire/manga-downloader/http"
 	"github.com/elboletaire/manga-downloader/notice"
@@ -89,33 +88,9 @@ func (a *Atsumaru) FetchTitle() (string, error) {
 	return a.title, nil
 }
 
-// ScanlatorOptions lists the scanlation groups that uploaded chapters for the
-// series, by the names --scanlator takes. Without --scanlator the list is the
-// largest group alone, which Current names.
-func (a *Atsumaru) ScanlatorOptions() FilterOptions {
-	info, err := a.mangaInfo()
-	if err != nil {
-		return FilterOptions{}
-	}
-
-	groups := a.groups(info)
-	var names []string
-	for _, g := range groups {
-		names = append(names, g.displayName())
-	}
-
-	options := FilterOptions{
-		Values: uniqueValues(names),
-		All:    true,
-	}
-	if strings.TrimSpace(a.Settings.Scanlator) == "" && len(groups) > 0 {
-		options.Current = largestGroup(groups).displayName()
-	}
-
-	return options
-}
-
-// FetchChapters returns the chapters of the manga
+// FetchChapters returns the chapters of the manga: every group's release of
+// each chapter, the group in Chapter.Group, so --scanlator picks among them
+// (see grabber.SelectGroup)
 func (a *Atsumaru) FetchChapters() (chapters Filterables, errs []error) {
 	a.resolveSeriesURL()
 	info, err := a.mangaInfo()
@@ -123,36 +98,21 @@ func (a *Atsumaru) FetchChapters() (chapters Filterables, errs []error) {
 		return nil, []error{err}
 	}
 
-	selected, err := a.selectGroups(a.groups(info))
-	if err != nil {
-		return nil, []error{err}
-	}
-
 	names := map[string]string{}
-	for _, g := range selected {
-		names[g.Id] = g.Name
+	for _, g := range a.groups(info) {
+		names[g.Id] = g.displayName()
 	}
-	// with more than one group in play the same chapter number appears once
-	// per group, so tag the titles to keep them apart in the progress bars
-	// and, more importantly, in the resulting filenames
-	tag := len(selected) > 1
 
 	for _, c := range info.Chapters {
-		name, ok := names[c.ScanId]
-		if !ok {
-			continue
-		}
 		title := c.Title
 		if title == "" {
 			title = "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64)
-		}
-		if tag && name != "" {
-			title += " [" + name + "]"
 		}
 		chapters = append(chapters, &AtsumaruChapter{
 			Chapter{
 				Number: c.Number,
 				Title:  title,
+				Group:  names[c.ScanId],
 				ID:     c.Id,
 			},
 			c.Id,
@@ -161,6 +121,10 @@ func (a *Atsumaru) FetchChapters() (chapters Filterables, errs []error) {
 
 	return chapters, errs
 }
+
+// Refilterable implements grabber.Refilterable: the listing holds every group's
+// releases and is cached on the site, so a group change is a filter on it
+func (*Atsumaru) Refilterable() {}
 
 // atsumaruGroup is a scanlation group together with the number of chapters it
 // uploaded for the series being fetched
@@ -171,8 +135,7 @@ type atsumaruGroup struct {
 
 // groups returns the scanlation groups that uploaded chapters for this series,
 // named where the series page could be read, in the order the site lists them
-// (falling back to first-seen order for ids the page didn't name, so the
-// default pick stays deterministic either way)
+// (falling back to first-seen order for ids the page didn't name)
 func (a *Atsumaru) groups(info *atsumaruMangaInfo) []atsumaruGroup {
 	counts := map[string]int{}
 	order := []string{}
@@ -200,58 +163,6 @@ func (a *Atsumaru) groups(info *atsumaruMangaInfo) []atsumaruGroup {
 	}
 
 	return groups
-}
-
-// selectGroups narrows the available groups down to the ones to download,
-// honouring --scanlator ("all" keeps every group). Without the flag it keeps
-// the group with the most chapters, i.e. the most complete translation, and
-// says so when there was actually a choice to make: the pick is otherwise
-// invisible, and "most chapters" is no indication of quality (see #164).
-func (a *Atsumaru) selectGroups(groups []atsumaruGroup) ([]atsumaruGroup, error) {
-	if len(groups) == 0 {
-		return nil, nil
-	}
-
-	pref := strings.TrimSpace(a.Settings.Scanlator)
-
-	if strings.EqualFold(pref, "all") {
-		return groups, nil
-	}
-
-	if pref != "" {
-		for _, g := range groups {
-			if strings.EqualFold(g.Name, pref) || g.Id == pref {
-				return []atsumaruGroup{g}, nil
-			}
-		}
-		return nil, fmt.Errorf(
-			"no scanlation group %q for this series, available: %s",
-			pref, strings.Join(groupNames(groups), ", "),
-		)
-	}
-
-	best := largestGroup(groups)
-	if len(groups) > 1 {
-		notice.Warn(
-			"this series has %d scanlation groups (%s); downloading %q (%d chapters) — pick another with --scanlator, or all of them with --scanlator all",
-			len(groups), strings.Join(groupNames(groups), ", "), best.displayName(), best.Count,
-		)
-	}
-
-	return []atsumaruGroup{best}, nil
-}
-
-// largestGroup returns the group with the most chapters, the first one listed
-// on a tie. groups must not be empty.
-func largestGroup(groups []atsumaruGroup) atsumaruGroup {
-	best := groups[0]
-	for _, g := range groups[1:] {
-		if g.Count > best.Count {
-			best = g
-		}
-	}
-
-	return best
 }
 
 // fetchScanlators returns the series' scanlation groups with their names. They
@@ -302,16 +213,6 @@ func (g atsumaruGroup) displayName() string {
 		return g.Name
 	}
 	return g.Id
-}
-
-// groupNames returns the display names of the passed groups
-func groupNames(groups []atsumaruGroup) []string {
-	names := make([]string, 0, len(groups))
-	for _, g := range groups {
-		names = append(names, g.displayName())
-	}
-
-	return names
 }
 
 // FetchChapter fetches a chapter and its pages

@@ -429,12 +429,12 @@ describe('mock filters', () => {
     expect((await none.state()).scanlators).toBeNull();
   });
 
-  it('shows the default edition of a site with no All, and the largest group of an Atsumaru-like one', async () => {
+  it('shows the default edition of a site with no All, and every group of a site that lists groups', async () => {
     const plus = createMockApi({ scenario: 'loaded', site: 'plus' });
     expect((await plus.state()).languages).toEqual({ values: ['en', 'es'], all: false, selected: 'en' });
 
     const groups = createMockApi({ scenario: 'loaded', site: 'groups' });
-    expect((await groups.state()).scanlators).toEqual({ values: ['Alpha', 'Delta'], all: true, selected: 'Delta' });
+    expect((await groups.state()).scanlators).toEqual({ values: ['Alpha', 'Delta'], all: true, selected: 'all' });
   });
 
   it('lists no filters before a load', async () => {

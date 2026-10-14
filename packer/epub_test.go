@@ -1194,3 +1194,22 @@ func TestChapterKeys(t *testing.T) {
 		t.Error("a key from the title equals one from an ID")
 	}
 }
+
+// without an ID, the group tells two releases of one chapter apart, even when
+// they carry the same title
+func TestChapterKeyWithoutIDUsesTheGroup(t *testing.T) {
+	release := func(group, id string) *grabber.Chapter {
+		return &grabber.Chapter{Number: 1, Language: "en", Title: "Chapter 1", Group: group, ID: id}
+	}
+	alpha, delta := chapterKey(release("Alpha", "")), chapterKey(release("Delta", ""))
+	if alpha == delta {
+		t.Error("two groups' releases with the same title share a key")
+	}
+	if alpha != chapterKey(release("Alpha", "")) {
+		t.Error("the key isn't deterministic")
+	}
+	// an ID still wins over the group
+	if chapterKey(release("Alpha", "x")) != chapterKey(release("Delta", "x")) {
+		t.Error("releases with the same ID must share a key, whatever their group")
+	}
+}

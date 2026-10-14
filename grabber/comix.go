@@ -29,10 +29,8 @@ import (
 //
 // The chapter list is classic page-based pagination (?page=N, not infinite
 // scroll) and often lists the same chapter number multiple times (one row
-// per scanlation group upload). When no scanlator is selected, FetchChapters
-// dedupes by number keeping the first (highest-ranked) row per group, in a
-// deterministic order. With a scanlator selected, only that group's uploads
-// are returned.
+// per scanlation group upload). FetchChapters returns every row, with its
+// group, and --scanlator is applied to them by core (see grabber.SelectGroup).
 //
 // The reader lazily mounts its pages; an init script turns on its "Preload
 // images: all" setting so they all mount at once, and the snapshot is taken
@@ -51,13 +49,10 @@ type Comix struct {
 	// doc caches the first (page 1) chapter-list render, reused by both
 	// FetchTitle and FetchChapters
 	doc *goquery.Document
-	// groups lists unique scanlation groups found in FetchChapters
-	groups []string
-	// cachedURL and cachedChapters cache parsed chapters per series URL,
-	// so changing the scanlator filter doesn't re-fetch the whole page list
+	// cachedURL and cachedChapters cache the parsed chapter rows per series
+	// URL, so changing the scanlator filter doesn't re-fetch the whole page list
 	cachedURL      string
-	cachedChapters map[string][]*ComixChapter
-	cachedGroups   []string
+	cachedChapters []*ComixChapter
 }
 
 func NewComix(g *Grabber) *Comix {
@@ -69,8 +64,6 @@ type ComixChapter struct {
 	Chapter
 	// URL is the chapter reader page URL
 	URL string
-	// ScanlatorGroup is the scanlation group that uploaded this chapter
-	ScanlatorGroup string
 }
 
 // comixHostRe matches comix.to and its subdomains
@@ -214,26 +207,18 @@ func (c *Comix) FetchTitle() (string, error) {
 
 // FetchChapters returns the chapters of the manga, walking the series'
 // paginated chapter list (?page=N) until the footer reports every item has
-// been seen. Groups are parsed from each chapter row. Without a --scanlator
-// selection, duplicate chapter numbers are collapsed keeping the first one
-// seen (deterministically, per group and order). With --scanlator set, only
-// that group's uploads are returned.
+// been seen. Each row is one release, with its scanlation group in Chapter.Group.
 //
-// Results are cached per series URL so a scanlator change in the app only
-// re-filters cached chapters instead of re-walking the browser.
+// Results are cached per series URL, so a scanlator change in the app is a
+// filter on the cached rows instead of a new walk of the browser.
 func (c *Comix) FetchChapters() (chapters Filterables, errs []error) {
 	c.resolveSeriesURL()
 
-	// Check cache: if same URL, reuse parsed chapters and only re-filter
 	if c.cachedURL == c.URL && c.cachedChapters != nil {
-		return c.applyScanlatorFilter(c.cachedChapters, c.cachedGroups)
+		return comixListing(c.cachedChapters), nil
 	}
 
-	// Fresh fetch: walk the chapter list
-	// allChapters holds every chapter found per group
-	allChapters := map[string][]*ComixChapter{}
-	// seenGroups tracks groups found, in order
-	var seenGroups []string
+	var rows []*ComixChapter
 	page := 1
 
 	for {
@@ -265,22 +250,7 @@ func (c *Comix) FetchChapters() (chapters Filterables, errs []error) {
 			if err != nil {
 				return
 			}
-
-			group := ch.ScanlatorGroup
-
-			// Track unique groups in order seen
-			var found bool
-			for _, g := range seenGroups {
-				if g == group {
-					found = true
-					break
-				}
-			}
-			if !found {
-				seenGroups = append(seenGroups, group)
-			}
-
-			allChapters[group] = append(allChapters[group], ch)
+			rows = append(rows, ch)
 		})
 
 		shown, total, ok := comixParsePaging(doc.Find(comixFooterSelector).Text())
@@ -293,62 +263,20 @@ func (c *Comix) FetchChapters() (chapters Filterables, errs []error) {
 	// Cache for filter-only changes, unless errors cut the walk short
 	if len(errs) == 0 {
 		c.cachedURL = c.URL
-		c.cachedChapters = allChapters
-		c.cachedGroups = seenGroups
+		c.cachedChapters = rows
 	}
 
-	// Update filter options
-	var uniqueGroups []string
-	for _, g := range seenGroups {
-		if g != "-" {
-			uniqueGroups = append(uniqueGroups, g)
-		}
-	}
-	c.groups = uniqueGroups
-
-	// the walk's own errors (a page that never loaded) come along
-	chapters, filterErrs := c.applyScanlatorFilter(allChapters, seenGroups)
-	return chapters, append(errs, filterErrs...)
+	return comixListing(rows), errs
 }
 
-// applyScanlatorFilter applies the scanlator selection to cached chapters,
-// returning filtered chapters with appropriate deduplication and tagging.
-func (c *Comix) applyScanlatorFilter(allChapters map[string][]*ComixChapter, seenGroups []string) (chapters Filterables, errs []error) {
-	selection := strings.TrimSpace(c.Settings.Scanlator)
-
-	// Apply scanlator filter, or return error if invalid
-	selectedGroups, selectErr := selectScanlators(selection, seenGroups, allChapters)
-	if selectErr != nil {
-		errs = append(errs, selectErr)
-		return chapters, errs
+// comixListing returns the rows as the listing core filters
+func comixListing(rows []*ComixChapter) Filterables {
+	chapters := make(Filterables, 0, len(rows))
+	for _, ch := range rows {
+		chapters = append(chapters, ch)
 	}
 
-	// Only tag group names when explicitly selecting "all", not for default
-	// no-filter behavior which should dedupe to the first group
-	tagGroups := strings.EqualFold(selection, "all")
-	seen := map[float64]bool{}
-
-	for _, group := range selectedGroups {
-		for _, ch := range allChapters[group] {
-			// Clone the chapter to avoid modifying cached copies
-			chCopy := *ch
-			if tagGroups {
-				// Keep all chapters, with group name appended to avoid collisions
-				if chCopy.ScanlatorGroup != "-" {
-					chCopy.Title += " [" + chCopy.ScanlatorGroup + "]"
-				}
-				chapters = append(chapters, &chCopy)
-			} else {
-				// Single group or no filter or ungrouped-only: dedupe by chapter number
-				if !seen[chCopy.Number] {
-					chapters = append(chapters, &chCopy)
-					seen[chCopy.Number] = true
-				}
-			}
-		}
-	}
-
-	return chapters, errs
+	return chapters
 }
 
 // FetchChapter renders the chapter reader page in a real browser, with
@@ -384,64 +312,12 @@ func (c *Comix) FetchChapter(f Filterable) (*Chapter, error) {
 	}, nil
 }
 
-// ScanlatorOptions returns the available scanlation groups for this series
-func (c *Comix) ScanlatorOptions() FilterOptions {
-	return FilterOptions{
-		Values: c.groups,
-		All:    true,
-	}
-}
-
-// Refilterable implements grabber.Refilterable: FetchChapters re-applies the
-// scanlator filter to its cached chapter map without any browser fetch.
+// Refilterable implements grabber.Refilterable: FetchChapters serves the cached
+// rows, every group's, so a scanlator change is a filter on them.
 func (*Comix) Refilterable() {}
 
-// selectScanlators applies the --scanlator filter to the available groups,
-// returning the ordered list of groups to download, or an error if the
-// selection doesn't match any group.
-func selectScanlators(selection string, allGroups []string, allChapters map[string][]*ComixChapter) ([]string, error) {
-	selection = strings.TrimSpace(selection)
-
-	if selection == "" {
-		// No filter: return all groups in order, but ungrouped chapters ("-")
-		// are returned first for determinism and to match the user's expectation
-		// of "first come first served"
-		var result []string
-		if _, ok := allChapters["-"]; ok {
-			result = append(result, "-")
-		}
-		for _, g := range allGroups {
-			if g != "-" {
-				result = append(result, g)
-			}
-		}
-		return result, nil
-	}
-
-	if strings.EqualFold(selection, "all") {
-		return allGroups, nil
-	}
-
-	// Exact match on group name or "-" for ungrouped
-	for _, g := range allGroups {
-		if strings.EqualFold(g, selection) || g == selection {
-			return []string{g}, nil
-		}
-	}
-
-	// Not found: build error with available groups
-	available := make([]string, len(allGroups))
-	for i, g := range allGroups {
-		available[i] = g
-	}
-	return nil, fmt.Errorf(
-		"no scanlation group %q for this series, available: %s",
-		selection, strings.Join(available, ", "),
-	)
-}
-
 // comixParseRow extracts a chapter entry from a rendered chapter list row.
-// The scanlation group (`.mchap-row__secondary a.mchap-row__group span`) defaults to "-" if empty.
+// The scanlation group (`.mchap-row__secondary a.mchap-row__group span`) is left empty if none.
 func comixParseRow(row *goquery.Selection, baseURL string) (*ComixChapter, error) {
 	text := row.Find(".mchap-row__ch").Text()
 	number, ok := parseChapterNumber(text)
@@ -457,20 +333,17 @@ func comixParseRow(row *goquery.Selection, baseURL string) (*ComixChapter, error
 		href = baseURL + href
 	}
 
-	// Extract scanlation group from the row; empty means ungrouped
+	// the group is empty when the row names none
 	group := strings.TrimSpace(row.Find(".mchap-row__secondary a.mchap-row__group span").Text())
-	if group == "" {
-		group = "-"
-	}
 
 	return &ComixChapter{
 		Chapter{
 			Number: number,
 			Title:  "Chapter " + strconv.FormatFloat(number, 'f', -1, 64),
+			Group:  group,
 			ID:     href,
 		},
 		href,
-		group,
 	}, nil
 }
 

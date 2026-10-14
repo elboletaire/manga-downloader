@@ -59,6 +59,10 @@ One file per volume, between the per-chapter default and `--bundle`. `core/volum
 - **Naming**: `packer.VolumeTemplate` swaps in `FilenameVolumeTemplateDefault` only while `--filename-template` is the chapter default; a custom template names volumes too. It's checked before anything is fetched, since a volume failing to name would waste every chapter in it.
 - **App**: "Pack as" (`packAs` in `gui.json`, migrated from the old `bundle` key) maps onto `Bundle`/`Volumes`; the Volumes box is per load (prefilled from `core.SiteVolumes`), not an option, and replaces `Settings.Volumes` at `Start`. `frontend/src/volumes.ts` mirrors the parsing and grouping for the list; keep it in step with `ranges.ParseVolumes`/`core.GroupVolumes`/`core.SiteVolumes`.
 
+### Scanlation groups (`--scanlator`)
+
+A release's group is `Chapter.Group`, a field of the chapter, never part of its title. `core.Open` keeps every release by default (and with `all`), and `--scanlator <name>` keeps the group's releases, matched ignoring case; the listing's own groups are what it picks from (`grabber.GroupOptions`, `grabber.SelectGroup`), so every site that sets `Chapter.Group` gets the same behaviour. A site that can only list one group per request implements `ScanlatorLister` and does its own filtering through `SelectGroup`, so the unknown-group error and the match are the same either way. `grabber.Refilterable` marks a site whose listing is cached, so a group change re-filters it without a request. The group reaches the CLI and app chapter lists (`core.HasGroupDuplicates`), `{{.Group}}` in file names (empty for a volume or bundle whose chapters name different groups), and the EPUB identity key (`chapterKey`, which falls back to the group and title without an ID).
+
 ### Page conversion (`--convert-images`, #155)
 
 Some sites serve pages e-readers can't render — AVIF (atsu.moe, mistscans, mangalib) and WebP (unreliable on e-ink). `packer/convert.go` re-encodes to JPEG q90: AVIF by default, WebP opt-in (`avif,webp`), `none` disables both.

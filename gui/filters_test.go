@@ -654,3 +654,140 @@ func TestUnmatchedScanlatorReusesRefilterableSite(t *testing.T) {
 		t.Errorf("listed %d chapters, want 3", len(c.series.Chapters))
 	}
 }
+
+// groupSite lists every group's releases in one listing, as the sites that
+// name their groups do, and serves them whatever --scanlator is: core picks the
+// group. It's Refilterable, as such a site's listing is cached.
+type groupSite struct {
+	*fakeSite
+}
+
+func (groupSite) Refilterable() {}
+
+func (g groupSite) FetchChapters() (grabber.Filterables, []error) {
+	return grabber.Filterables{
+		&grabber.Chapter{Number: 1, Title: "One", Language: "en", Group: "Alpha"},
+		&grabber.Chapter{Number: 1, Title: "One", Language: "en", Group: "Delta"},
+		&grabber.Chapter{Number: 2, Title: "Two", Language: "en", Group: "Delta"},
+	}, nil
+}
+
+// newGroupController returns a controller whose site lists groups, and counts
+// the times it's identified
+func newGroupController(t *testing.T) (*Controller, *int) {
+	t.Helper()
+	c, base, _ := newTestController(t, false, nil, chapters(1, 1)...)
+	site := groupSite{fakeSite: base}
+	identified := new(int)
+	c.identify = func(_ string, s *grabber.Settings) (grabber.Site, []error) {
+		*identified++
+		site.Settings = s
+		return site, nil
+	}
+
+	return c, identified
+}
+
+func TestGroupSelectorOffersEveryGroupAndDefaultsToAll(t *testing.T) {
+	c, _ := newGroupController(t)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(c.Chapters()) != 3 {
+		t.Errorf("%d chapters, want every release (3)", len(c.Chapters()))
+	}
+	if _, scanlator := c.Filters(); scanlator == nil || !slices.Equal(scanlator.Values, []string{"Delta", "Alpha"}) || !scanlator.All || scanlator.Selected != grabber.FilterAll {
+		t.Errorf("scanlator selector = %+v, want Delta and Alpha, all groups, shown as all", scanlator)
+	}
+}
+
+func TestLoadFiltersByGroupIgnoringCase(t *testing.T) {
+	c, _ := newGroupController(t)
+	if err := c.Configure(func(s *grabber.Settings) { s.Scanlator = "alpha" }); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if len(c.Chapters()) != 1 {
+		t.Errorf("%d chapters for Alpha, want its 1", len(c.Chapters()))
+	}
+	if _, scanlator := c.LoadedFilters(); scanlator != "Alpha" {
+		t.Errorf("loaded scanlator %q, want the listed spelling Alpha", scanlator)
+	}
+	if c.Stale() {
+		t.Error("the case-only difference left the list stale")
+	}
+}
+
+// a group change on a site that lists every group re-filters the listing it
+// has, without asking the site for it again
+func TestGroupChangeIsAFilterOnAReusedSite(t *testing.T) {
+	c, identified := newGroupController(t)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Configure(func(s *grabber.Settings) { s.Scanlator = "Delta" }); err != nil {
+		t.Fatal(err)
+	}
+	if !c.Stale() {
+		t.Fatal("a changed group should make the list stale")
+	}
+
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if *identified != 1 {
+		t.Errorf("the site was identified %d times, want 1: the group change reuses it", *identified)
+	}
+	if len(c.Chapters()) != 2 {
+		t.Errorf("%d chapters for Delta, want its 2", len(c.Chapters()))
+	}
+}
+
+func TestUnknownGroupFallsBackToAll(t *testing.T) {
+	c, _ := newGroupController(t)
+	if err := c.Configure(func(s *grabber.Settings) { s.Scanlator = "Omega" }); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatalf("Load = %v, want the fallback to load", err)
+	}
+	if len(c.Chapters()) != 3 {
+		t.Errorf("%d chapters after the fallback, want all 3", len(c.Chapters()))
+	}
+	if _, scanlator := c.LoadedFilters(); scanlator != grabber.FilterAll {
+		t.Errorf("loaded scanlator %q, want %q", scanlator, grabber.FilterAll)
+	}
+	if !logHas(c, `scanlation group "Omega" isn't in this series, loading all of them instead`) {
+		t.Errorf("no fallback line in the log: %v", c.Log())
+	}
+}
+
+// the group tag is sent only with the copies it tells apart
+func TestChaptersCarryTheGroupWhenCopiesShareANumber(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	site := groupSite{fakeSite: &fakeSite{Grabber: &grabber.Grabber{URL: "https://example.com/manga/test"}}}
+	a.ctrl.identify = func(_ string, s *grabber.Settings) (grabber.Site, []error) {
+		site.Settings = s
+		return site, nil
+	}
+	if err := a.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	waitUntil(t, "the load", func() bool { return !a.State().Loading })
+
+	if !a.State().HasGroupDuplicates {
+		t.Error("state doesn't report the group copies")
+	}
+	rows := a.Chapters()
+	want := []string{"Alpha", "Delta", "Delta"}
+	for i, row := range rows {
+		if row.Group != want[i] {
+			t.Errorf("row %d group = %q, want %q", i, row.Group, want[i])
+		}
+	}
+}

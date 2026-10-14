@@ -501,14 +501,18 @@ function ChapterList({
                 <span className="num">{formatNumber(ch.number)}</span>
                 <span className="title">{ch.title}</span>
                 {ch.language !== '' && <span className="lang">{ch.language}</span>}
+                {ch.group !== '' && <span className="group">{ch.group}</span>}
               </div>
             );
           })}
         </div>
       </div>
       <p className="list-foot">
-        {state.hasDuplicates ? (
-          <>Some numbers are listed once per language; the language tag tells them apart.</>
+        {state.hasDuplicates || state.hasGroupDuplicates ? (
+          <>
+            {state.hasDuplicates && <>Some numbers are listed once per language; the language tag tells them apart. </>}
+            {state.hasGroupDuplicates && <>Some numbers are listed once per group; the group tag tells them apart.</>}
+          </>
         ) : grouping !== null ? (
           <>
             Click a volume to pick all of its chapters · <kbd>←</kbd>

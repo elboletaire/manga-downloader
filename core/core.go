@@ -6,6 +6,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -111,6 +112,10 @@ func (e *ChaptersError) Error() string {
 	return "error fetching chapters: " + strings.Join(msgs, "; ")
 }
 
+// Unwrap returns the errors the chapter list reported, so a filter error one of
+// them is (an unknown --scanlator, say) is still found with errors.As
+func (e *ChaptersError) Unwrap() []error { return e.Errs }
+
 // NoChaptersError is returned when the chapter list is empty, which usually
 // means the language or scanlator filter matched nothing.
 type NoChaptersError struct {
@@ -140,13 +145,19 @@ type Series struct {
 // FilterOptionsOf returns the language and scanlation group options of a site,
 // nil for each one it doesn't list. They're valid once the chapters have been
 // fetched, and stay valid when a filter matched nothing, so a front end can
-// offer the values that do exist after a NoChaptersError.
-func FilterOptionsOf(site grabber.Site) (languages, scanlators *grabber.FilterOptions) {
+// offer the values that do exist after the load's error: err is that error, and
+// an unknown scanlation group carries the groups the series has. The options of
+// a site that lists its groups itself (ScanlatorLister) come from the site.
+func FilterOptionsOf(site grabber.Site, err error) (languages, scanlators *grabber.FilterOptions) {
 	if l, ok := site.(grabber.LanguageLister); ok {
 		options := l.LanguageOptions()
 		languages = &options
 	}
-	if s, ok := site.(grabber.ScanlatorLister); ok {
+
+	var unavailable *grabber.UnavailableFilterError
+	if errors.As(err, &unavailable) && unavailable.Filter == "scanlator" {
+		scanlators = &grabber.FilterOptions{Values: unavailable.Available, All: true}
+	} else if s, ok := site.(grabber.ScanlatorLister); ok {
 		options := s.ScanlatorOptions()
 		scanlators = &options
 	}
@@ -175,7 +186,15 @@ func Open(site grabber.Site, s *grabber.Settings) (*Series, error) {
 		return nil, &NoChaptersError{Language: s.Language, Scanlator: s.Scanlator}
 	}
 
-	languages, scanlators := FilterOptionsOf(site)
+	languages, scanlators := FilterOptionsOf(site, nil)
+	// a site that lists its groups itself (ScanlatorLister) filters them itself;
+	// otherwise the groups its listing carries are what --scanlator picks from
+	if _, ok := site.(grabber.ScanlatorLister); !ok {
+		scanlators = grabber.GroupOptions(chapters)
+		if chapters, err = grabber.SelectGroup(chapters, s.Scanlator); err != nil {
+			return nil, err
+		}
+	}
 
 	return &Series{
 		Site:       site,
@@ -236,9 +255,7 @@ func NoChaptersMessage(language, scanlator string) string {
 // HasDuplicateChapterNumbers reports whether the same chapter number appears
 // more than once in *different* languages, which happens when a site returns
 // one entry per translated language for the same chapter. Duplicates sharing
-// a language (e.g. one entry per scanlation group, under --scanlator all) are
-// already told apart by their titles, so tagging them all with the same
-// language code would only eat into the width the title has to do it.
+// a language are HasGroupDuplicates' business.
 func HasDuplicateChapterNumbers(chapters grabber.Filterables) bool {
 	seen := map[float64]string{}
 	for _, c := range chapters {
@@ -252,6 +269,38 @@ func HasDuplicateChapterNumbers(chapters grabber.Filterables) bool {
 			return true
 		}
 		seen[c.GetNumber()] = lang
+	}
+
+	return false
+}
+
+// HasGroupDuplicates reports whether a chapter number is listed more than once
+// in the same language, with at least one of those releases naming its
+// scanlation group: the group is then what tells the copies apart, and the
+// listing shows it (the CLI and the app both key off this).
+func HasGroupDuplicates(chapters grabber.Filterables) bool {
+	type key struct {
+		number float64
+		lang   string
+	}
+	count := map[key]int{}
+	grouped := map[key]bool{}
+	for _, c := range chapters {
+		var lang, group string
+		if l, ok := c.(interface{ GetLanguage() string }); ok {
+			lang = l.GetLanguage()
+		}
+		if g, ok := c.(interface{ GetGroup() string }); ok {
+			group = g.GetGroup()
+		}
+		k := key{c.GetNumber(), lang}
+		count[k]++
+		if group != "" {
+			grouped[k] = true
+		}
+		if count[k] > 1 && grouped[k] {
+			return true
+		}
 	}
 
 	return false

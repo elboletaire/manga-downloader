@@ -8,6 +8,7 @@ const ch = (number: number, volume = 0, index = number): Chapter => ({
   number,
   title: `Chapter ${number}`,
   language: '',
+  group: '',
   volume,
 });
 
