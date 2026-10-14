@@ -178,7 +178,6 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewChainsawManOnline(g),
 		NewHeavenlyDelusion(g),
 		NewToivoLite(g),
-		plainHTML,
 		NewInmanga(g),
 		NewMangadex(g),
 		NewMangafire(g),
@@ -188,6 +187,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewBluesolo(g),
 		NewLuascans(g),
 		NewProjectsuki(g),
+		plainHTML,
 		NewTcb(g),
 		NewJestful(g),
 	}
