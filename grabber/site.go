@@ -188,6 +188,8 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewProjectsuki(g),
 		NewTcb(g),
 		NewJestful(g),
+		// matched by markup (WordPress category), so it goes last and can't shadow a site above
+		NewWordPressCategory(g),
 	}
 	var errs []error
 

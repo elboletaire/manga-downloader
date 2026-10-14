@@ -93,6 +93,7 @@ test/gui: build/gui/frontend
 # last), so parallel site-support branches never edit the same line
 grabber: \
 	grabber/3asq \
+	grabber/animeallstar \
 	grabber/apothecary \
 	grabber/atsumaru \
 	grabber/aurorascans \
@@ -271,6 +272,11 @@ grabber/tritinia:
 # generic Tcb grabber with no code changes
 grabber/3asq:
 	go run . https://3asq.online/manga/berserk/ 6
+
+# WordPress category of chapter posts (plain HTTP), matched by markup and read
+# through the REST API; 1195 rather than the newest chapter, which may still be a teaser
+grabber/animeallstar:
+	go run . https://animeallstar30.com/category/one-piece-espanol/ 1195
 
 # Madara wordpress site whose series URLs live under /gl/ instead of /manga/;
 # the generic Tcb grabber matches them through the same ajax/chapters endpoint.

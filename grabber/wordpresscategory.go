@@ -1,0 +1,281 @@
+// Copyright (C) 2023-2026 Òscar Casajuana Alonso
+
+package grabber
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"html"
+	"regexp"
+	"strconv"
+	"strings"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/elboletaire/manga-downloader/http"
+)
+
+// WordPressCategory is a grabber for WordPress sites that publish each chapter
+// as a post in one category (animeallstar30.com). It matches by markup, not
+// domain, and reads the whole category from the REST API, not the archive pages.
+type WordPressCategory struct {
+	*Grabber
+	categoryID int
+	title      string
+}
+
+// NewWordPressCategory returns a new WordPressCategory grabber.
+func NewWordPressCategory(g *Grabber) *WordPressCategory {
+	return &WordPressCategory{Grabber: g}
+}
+
+// WordPressCategoryChapter is a post of a WordPressCategory site.
+type WordPressCategoryChapter struct {
+	Chapter
+	URL string
+}
+
+// wpPost is the part of a WordPress REST post the grabber reads.
+type wpPost struct {
+	Link  string `json:"link"`
+	Title struct {
+		Rendered string `json:"rendered"`
+	} `json:"title"`
+}
+
+// wpPerPage is the REST page size, the largest WordPress allows.
+const wpPerPage = 100
+
+// wpCategoryLinkRe and wpPostLinkRe match the REST links WordPress puts in
+// the head of a category archive and of a single post.
+var (
+	wpCategoryLinkRe = regexp.MustCompile(`/wp-json/wp/v2/categories/(\d+)/?$`)
+	wpPostLinkRe     = regexp.MustCompile(`/wp-json/wp/v2/posts/(\d+)/?$`)
+)
+
+// Test returns true if the URL is a WordPress category archive, or a post in
+// one, and remembers the category its chapters come from. The page is
+// fetched without retries so an unrelated site fails fast.
+func (w *WordPressCategory) Test() (bool, error) {
+	rbody, err := http.Get(http.RequestParams{
+		URL:          w.URL,
+		DisableRetry: true, // identification probe: a 5xx means "not this site"
+	})
+	if err != nil {
+		return false, err
+	}
+	defer rbody.Close()
+
+	doc, err := goquery.NewDocumentFromReader(rbody)
+	if err != nil {
+		return false, err
+	}
+
+	id, err := w.categoryFromPage(doc)
+	if err != nil || id == 0 {
+		return false, err
+	}
+	w.categoryID = id
+
+	return true, nil
+}
+
+// categoryFromPage returns the category whose chapters a page belongs to, or
+// 0 when it's neither a category archive nor a post. A post doesn't name its
+// category in the markup, so its REST resource gives the first one.
+func (w *WordPressCategory) categoryFromPage(doc *goquery.Document) (int, error) {
+	var categoryID, postID int
+	doc.Find("link[href]").Each(func(_ int, s *goquery.Selection) {
+		href := s.AttrOr("href", "")
+		if m := wpCategoryLinkRe.FindStringSubmatch(href); m != nil {
+			categoryID, _ = strconv.Atoi(m[1])
+		}
+		if m := wpPostLinkRe.FindStringSubmatch(href); m != nil {
+			postID, _ = strconv.Atoi(m[1])
+		}
+	})
+
+	if categoryID != 0 && doc.Find("body").HasClass("category") {
+		return categoryID, nil
+	}
+	if postID == 0 {
+		return 0, nil
+	}
+
+	body, err := http.GetText(http.RequestParams{
+		URL:          w.apiURL(fmt.Sprintf("posts/%d?_fields=categories", postID)),
+		Referer:      w.URL,
+		DisableRetry: true,
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	var post struct {
+		Categories []int `json:"categories"`
+	}
+	if err := json.Unmarshal([]byte(body), &post); err != nil {
+		return 0, err
+	}
+	if len(post.Categories) == 0 {
+		return 0, nil
+	}
+
+	return post.Categories[0], nil
+}
+
+// apiURL returns the WordPress REST URL for path (i.e. "posts?categories=3") on
+// the site's own host.
+func (w *WordPressCategory) apiURL(path string) string {
+	return w.BaseUrl() + "/wp-json/wp/v2/" + path
+}
+
+// FetchTitle returns the category name, which is the series title.
+func (w *WordPressCategory) FetchTitle() (string, error) {
+	if w.title != "" {
+		return w.title, nil
+	}
+
+	body, err := http.GetText(http.RequestParams{
+		URL:     w.apiURL(fmt.Sprintf("categories/%d?_fields=name", w.categoryID)),
+		Referer: w.URL,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	var category struct {
+		Name string `json:"name"`
+	}
+	if err := json.Unmarshal([]byte(body), &category); err != nil {
+		return "", err
+	}
+
+	w.title = sanitizeTitle(html.UnescapeString(category.Name))
+
+	return w.title, nil
+}
+
+// FetchChapters returns the category's posts, paging through the REST API
+// until a page comes back short.
+func (w *WordPressCategory) FetchChapters() (Filterables, []error) {
+	var posts []wpPost
+	for page := 1; ; page++ {
+		body, err := http.GetText(http.RequestParams{
+			URL: w.apiURL(fmt.Sprintf(
+				"posts?categories=%d&per_page=%d&_fields=link,title&page=%d",
+				w.categoryID, wpPerPage, page,
+			)),
+			Referer: w.URL,
+		})
+		if err != nil {
+			// WordPress answers 400 for a page past the last one, which is
+			// reached when the total is an exact multiple of wpPerPage
+			var statusErr *http.StatusError
+			if page > 1 && errors.As(err, &statusErr) && statusErr.Code == 400 {
+				break
+			}
+			return nil, []error{err}
+		}
+
+		var pagePosts []wpPost
+		if err := json.Unmarshal([]byte(body), &pagePosts); err != nil {
+			return nil, []error{err}
+		}
+		posts = append(posts, pagePosts...)
+
+		if len(pagePosts) < wpPerPage {
+			break
+		}
+	}
+
+	return wpChapters(posts), nil
+}
+
+// wpTitleNumberRe matches the last number of a title, for posts that name the
+// chapter by its bare number ("One Piece Manga 1196 Español").
+var wpTitleNumberRe = regexp.MustCompile(`(\d+(?:\.\d+)?)\D*$`)
+
+// wpChapters turns the category's posts into chapters, skipping posts without
+// a chapter number (site announcements).
+func wpChapters(posts []wpPost) Filterables {
+	var chapters Filterables
+	for _, p := range posts {
+		title := sanitizeTitle(html.UnescapeString(p.Title.Rendered))
+		num, ok := parseChapterNumber(title)
+		if !ok {
+			m := wpTitleNumberRe.FindStringSubmatch(title)
+			if m == nil {
+				continue
+			}
+			num, _ = strconv.ParseFloat(m[1], 64)
+		}
+		chapters = append(chapters, &WordPressCategoryChapter{
+			Chapter: Chapter{
+				// the post title repeats the series name, which the filename already has
+				Title:    "Chapter " + strconv.FormatFloat(num, 'f', -1, 64),
+				Number:   num,
+				Language: "es",
+			},
+			URL: p.Link,
+		})
+	}
+
+	return chapters
+}
+
+// FetchChapter fetches a post's pages.
+func (w *WordPressCategory) FetchChapter(f Filterable) (*Chapter, error) {
+	wchap := f.(*WordPressCategoryChapter)
+
+	rbody, err := http.Get(http.RequestParams{
+		URL:     wchap.URL,
+		Referer: w.BaseUrl(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer rbody.Close()
+
+	doc, err := goquery.NewDocumentFromReader(rbody)
+	if err != nil {
+		return nil, err
+	}
+
+	pages := wpPageImages(doc)
+	if len(pages) == 0 {
+		return nil, fmt.Errorf("no pages found for %s", f.GetTitle())
+	}
+
+	return &Chapter{
+		Title:      f.GetTitle(),
+		Number:     f.GetNumber(),
+		PagesCount: int64(len(pages)),
+		Language:   "es",
+		Pages:      pages,
+	}, nil
+}
+
+// wpPageImages returns the post body's images in document order, once each.
+// Lazy-loaded images hold a placeholder data: URI in src and the real image
+// in data-src.
+func wpPageImages(doc *goquery.Document) []Page {
+	var pages []Page
+	seen := map[string]bool{}
+	doc.Find(".entry-content img").Each(func(_ int, s *goquery.Selection) {
+		src := strings.TrimSpace(s.AttrOr("src", ""))
+		if strings.HasPrefix(src, "data:") {
+			src = strings.TrimSpace(s.AttrOr("data-src", ""))
+		}
+		if src == "" || seen[src] {
+			return
+		}
+		seen[src] = true
+		pages = append(pages, Page{
+			Number: int64(len(pages) + 1),
+			URL:    src,
+		})
+	})
+
+	return pages
+}

@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[117 supported sites](#supported-sites)**, from big aggregators to small
+- **[118 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -587,10 +587,11 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 117 supported sites</b></summary>
+<summary><b>Show all 118 supported sites</b></summary>
 <br>
 
 - [3asq.online (Arabic, former 3asq.org)](https://3asq.online)
+- [animeallstar30.com (One Piece Manga, Spanish)](https://animeallstar30.com)
 - [arenascan.com](https://arenascan.com)
 - [asmotoon.com (Asmodeus Scans)](https://asmotoon.com) \*
 - [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)

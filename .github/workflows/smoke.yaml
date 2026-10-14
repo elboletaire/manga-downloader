@@ -69,6 +69,7 @@ jobs:
           - tritinia
           - 3asq
           - webtoons
+          - animeallstar
           # Plain-HTML (goquery) scrapers
           - tcbscans
           - arenascan
