@@ -167,6 +167,9 @@ var epubNCXTemplate = template.Must(template.New("ncx").Funcs(epubFuncs).Parse(`
 <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
   <head>
     <meta name="dtb:uid" content="urn:uuid:{{.UUID}}"/>
+    <meta name="dtb:depth" content="1"/>
+    <meta name="dtb:totalPageCount" content="0"/>
+    <meta name="dtb:maxPageNumber" content="0"/>
   </head>
   <docTitle>
     <text>{{esc .Title}}</text>
@@ -297,9 +300,29 @@ func warnSkipped(skipped []skippedPage) {
 	}
 }
 
+// NormalizeReadingDirection trims and lowercases a reading direction, so "RTL"
+// is "rtl" as it is everywhere else
+func NormalizeReadingDirection(direction string) string {
+	return strings.ToLower(strings.TrimSpace(direction))
+}
+
+// tocLabel is the table of contents label of a folder: its label from info, or
+// the folder's name, or the book's title for a single chapter
+func tocLabel(info EPUBInfo, folder string) string {
+	if l := info.Labels[folder]; l != "" {
+		return l
+	}
+	if folder == epubSingleFolder {
+		return info.Title
+	}
+	return folder
+}
+
 // epubEntries renders the entries of the EPUB after mimetype: the container,
 // the package and navigation files, and each page's XHTML and image. Pages
 // the reader can't show are left out with a warning, and counted in skipped.
+// A chapter left with none of its pages gets a warning of its own, as it has
+// no table of contents entry.
 func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped []skippedPage, err error) {
 	if info.ReadingDirection == "" {
 		info.ReadingDirection = ReadingDirectionRTL
@@ -316,7 +339,16 @@ func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped []sk
 
 	var pageEntries []epubEntry
 	lastFolder := ""
+	// every folder in order, and whether it has a page in the book
+	var folders []string
+	hasPages := map[string]bool{}
 	for _, file := range files {
+		folder := path.Dir(file.Name)
+		if _, seen := hasPages[folder]; !seen {
+			folders = append(folders, folder)
+			hasPages[folder] = false
+		}
+
 		ext := strings.TrimPrefix(path.Ext(file.Name), ".")
 		mediaType, ok := epubMediaTypes[ext]
 		if !ok {
@@ -339,18 +371,11 @@ func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped []sk
 			Cover:     len(book.Pages) == 0,
 		}
 		book.Pages = append(book.Pages, page)
+		hasPages[folder] = true
 
-		// a folder is a chapter, and its first page is where its entry points
-		folder := path.Dir(file.Name)
+		// a folder is a chapter, and its first page kept is where its entry points
 		if folder != lastFolder {
-			label := folder
-			if folder == epubSingleFolder {
-				label = info.Title
-			}
-			if l := info.Labels[folder]; l != "" {
-				label = l
-			}
-			book.Chapters = append(book.Chapters, epubChapter{Label: label, Page: page.Num, Order: len(book.Chapters) + 1})
+			book.Chapters = append(book.Chapters, epubChapter{Label: tocLabel(info, folder), Page: page.Num, Order: len(book.Chapters) + 1})
 			lastFolder = folder
 		}
 
@@ -362,6 +387,11 @@ func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped []sk
 			epubEntry{Name: "OEBPS/xhtml/" + page.Num + ".xhtml", Data: xhtml},
 			epubEntry{Name: "OEBPS/images/" + page.Num + "." + ext, Data: file.Data, Image: true},
 		)
+	}
+	for _, folder := range folders {
+		if !hasPages[folder] {
+			notice.Warn("- warning: chapter %s has no pages EPUB readers can show, leaving it out", tocLabel(info, folder))
+		}
 	}
 	if len(book.Pages) == 0 {
 		return nil, skipped, errors.New("none of the pages can be shown in an EPUB")

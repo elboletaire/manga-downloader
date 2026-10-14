@@ -519,6 +519,89 @@ func TestArchiveEPUBSkipsUnshowablePages(t *testing.T) {
 	}
 }
 
+func TestArchiveEPUBChapterWithoutShowablePagesIsWarned(t *testing.T) {
+	warnings := captureWarnings(t)
+	files := []File{
+		{Name: "Chapter 0001/000.png", Data: pngBytes(t, gradientImage(8, 12))},
+		{Name: "Chapter 0002/000.avif", Data: []byte("not really avif")},
+		{Name: "Chapter 0002/001.avif", Data: []byte("not really avif")},
+	}
+	info := EPUBInfo{Title: epubTitle, Labels: map[string]string{"Chapter 0001": "Chapter 1", "Chapter 0002": "Chapter 2"}}
+	path := packEPUB(t, info, files)
+	_, contents := readEPUB(t, path)
+
+	var nav struct {
+		Items []struct {
+			Text string `xml:",chardata"`
+		} `xml:"body>nav>ol>li>a"`
+	}
+	mustUnmarshal(t, "nav.xhtml", contents["OEBPS/nav.xhtml"], &nav)
+	if len(nav.Items) != 1 || nav.Items[0].Text != "Chapter 1" {
+		t.Errorf("nav = %+v, want only the chapter with pages", nav.Items)
+	}
+
+	// the two pages, and the chapter that has none left
+	if len(*warnings) != 3 {
+		t.Fatalf("got %d warnings, want 3: %q", len(*warnings), *warnings)
+	}
+	chapterWarnings := 0
+	for _, w := range *warnings {
+		if strings.Contains(w, "no pages") {
+			chapterWarnings++
+			if !strings.Contains(w, "Chapter 2") {
+				t.Errorf("chapter warning = %q, want it to name Chapter 2", w)
+			}
+		}
+	}
+	if chapterWarnings != 1 {
+		t.Errorf("got %d chapter warnings, want 1: %q", chapterWarnings, *warnings)
+	}
+}
+
+func TestArchiveEPUBNCXHead(t *testing.T) {
+	path := packEPUB(t, EPUBInfo{Series: "Series"}, epubBundleFiles(t))
+	_, contents := readEPUB(t, path)
+
+	var ncx struct {
+		Metas []struct {
+			Name    string `xml:"name,attr"`
+			Content string `xml:"content,attr"`
+		} `xml:"head>meta"`
+	}
+	mustUnmarshal(t, "toc.ncx", contents["OEBPS/toc.ncx"], &ncx)
+	got := map[string]string{}
+	for _, m := range ncx.Metas {
+		got[m.Name] = m.Content
+	}
+	// the metas NCX readers require, for a flat table of contents
+	want := map[string]string{"dtb:depth": "1", "dtb:totalPageCount": "0", "dtb:maxPageNumber": "0"}
+	for name, content := range want {
+		if got[name] != content {
+			t.Errorf("ncx %s = %q, want %q", name, got[name], content)
+		}
+	}
+}
+
+func TestNamePagesEPUBWarnsOncePerFailedPage(t *testing.T) {
+	warnings := captureWarnings(t)
+	formats := grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}
+
+	// an AVIF that won't convert is left out by ArchiveEPUB, which warns about
+	// it: namePages stays quiet rather than warning twice
+	avif := append([]byte{0x00, 0x00, 0x00, 0x1c, 'f', 't', 'y', 'p', 'a', 'v', 'i', 'f'}, []byte("truncated")...)
+	namePages([]*downloader.File{{Data: avif}}, formats, FormatEPUB)
+	if len(*warnings) != 0 {
+		t.Errorf("an AVIF failure warned %d times for EPUB, want none: %q", len(*warnings), *warnings)
+	}
+
+	// a WebP EPUB can show keeps its original, which is still a warning
+	webp := append([]byte("RIFF\x00\x00\x00\x00WEBPVP8 "), []byte("truncated")...)
+	named := namePages([]*downloader.File{{Data: webp}}, formats, FormatEPUB)
+	if len(*warnings) != 1 || named[0].Name != "000.webp" {
+		t.Errorf("a WebP failure: %d warnings, named %q; want one warning and 000.webp", len(*warnings), named[0].Name)
+	}
+}
+
 func TestArchiveEPUBFailsWithoutShowablePages(t *testing.T) {
 	warnings := captureWarnings(t)
 	path := filepath.Join(t.TempDir(), "book.epub")
@@ -526,8 +609,9 @@ func TestArchiveEPUBFailsWithoutShowablePages(t *testing.T) {
 	if err := ArchiveEPUB(path, EPUBInfo{Title: epubTitle}, files, func(page, progress int) {}); err == nil {
 		t.Fatal("expected an error when no page can be shown")
 	}
-	if len(*warnings) != 2 {
-		t.Errorf("got %d warnings, want 2: %q", len(*warnings), *warnings)
+	// the two pages, and the one chapter they belong to
+	if len(*warnings) != 3 {
+		t.Errorf("got %d warnings, want 3: %q", len(*warnings), *warnings)
 	}
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		t.Errorf("a book with no pages left a file behind: %v", err)
@@ -588,6 +672,22 @@ func TestChapterLabel(t *testing.T) {
 		{1, "Chapter 1", "Chapter 1"},
 		{2, "2", "Chapter 2"},
 		{3, "  Trimmed\nTitle ", "Chapter 3 - Trimmed Title"},
+		// MangaDex titles come as "Chapter %04d <title>", and a title that's
+		// only the number leaves nothing behind
+		{5, "Chapter 0005 Foo", "Chapter 5 - Foo"},
+		{5, "Chapter 0005 ", "Chapter 5"},
+		{5, "Chapter 0005", "Chapter 5"},
+		{5, "Chapter 5: Foo", "Chapter 5 - Foo"},
+		{5, "Ch. 5", "Chapter 5"},
+		{5, "Ch.5 - Foo", "Chapter 5 - Foo"},
+		{5, "Chapter 005", "Chapter 5"},
+		{5, "Episode 5 - Foo", "Chapter 5 - Foo"},
+		{10.5, "Chapter 10.50: Foo", "Chapter 10.5 - Foo"},
+		{10.5, "Chapter 0010.5 Foo", "Chapter 10.5 - Foo"},
+		// a number that isn't the chapter's stays in the title
+		{5, "Chapter 50", "Chapter 5 - Chapter 50"},
+		{5, "Chapter 5.5", "Chapter 5 - Chapter 5.5"},
+		{0, "Chapter 0: Prologue", "Chapter 0 - Prologue"},
 	}
 	for _, tt := range tests {
 		got := chapterLabel(&grabber.Chapter{Number: tt.number, Title: tt.title})

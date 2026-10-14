@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -32,14 +33,17 @@ type DownloadedChapter struct {
 func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()
-	info := EPUBInfo{
-		Series:           title,
-		Position:         formatChapterNumber(chapter.GetNumber()),
-		Identity:         "chapter " + chapterKey(chapter.Chapter),
-		ReadingDirection: s.GetReadingDirection(),
-		Labels:           map[string]string{epubSingleFolder: chapterLabel(chapter.Chapter)},
+	var info EPUBInfo
+	if format == FormatEPUB {
+		info = EPUBInfo{
+			Series:           title,
+			Position:         formatChapterNumber(chapter.GetNumber()),
+			Identity:         "chapter " + chapterKey(chapter.Chapter),
+			ReadingDirection: s.GetReadingDirection(),
+			Labels:           map[string]string{epubSingleFolder: chapterLabel(chapter.Chapter)},
+		}
 	}
-	return pack(outputdir, format, s.GetFilenameTemplate(), title, NewChapterFileTemplateParts(title, chapter.Chapter), namePages(chapter.Files, pageFormats(format, s.GetConvertImages())), info, progress)
+	return pack(outputdir, format, s.GetFilenameTemplate(), title, NewChapterFileTemplateParts(title, chapter.Chapter), namePages(chapter.Files, pageFormats(format, s.GetConvertImages()), format), info, progress)
 }
 
 // PackBundle packs a bundle of downloaded chapters, grouping each chapter's
@@ -48,8 +52,11 @@ func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, pr
 func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter, rng string, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()
-	files, labels := chapterFolders(chapters, pageFormats(format, s.GetConvertImages()))
-	info := EPUBInfo{Series: title, Identity: "bundle " + memberKeys(chapters), ReadingDirection: s.GetReadingDirection(), Labels: labels}
+	files, labels := chapterFolders(chapters, format, s.GetConvertImages())
+	var info EPUBInfo
+	if format == FormatEPUB {
+		info = EPUBInfo{Series: title, Identity: "bundle " + memberKeys(chapters), ReadingDirection: s.GetReadingDirection(), Labels: labels}
+	}
 	return pack(outputdir, format, s.GetFilenameTemplate(), title, FilenameTemplateParts{
 		Series: title,
 		Number: rng,
@@ -67,13 +74,16 @@ func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*Downlo
 		listed[i] = c.Chapter
 	}
 	format := s.GetFormat()
-	files, labels := chapterFolders(chapters, pageFormats(format, s.GetConvertImages()))
-	info := EPUBInfo{
-		Series:           title,
-		Position:         strconv.Itoa(volume),
-		Identity:         "volume " + strconv.Itoa(volume) + " " + memberKeys(chapters),
-		ReadingDirection: s.GetReadingDirection(),
-		Labels:           labels,
+	files, labels := chapterFolders(chapters, format, s.GetConvertImages())
+	var info EPUBInfo
+	if format == FormatEPUB {
+		info = EPUBInfo{
+			Series:           title,
+			Position:         strconv.Itoa(volume),
+			Identity:         "volume " + strconv.Itoa(volume) + " " + memberKeys(chapters),
+			ReadingDirection: s.GetReadingDirection(),
+			Labels:           labels,
+		}
 	}
 	return pack(outputdir, format, VolumeTemplate(s.GetFilenameTemplate()), title,
 		NewVolumeFileTemplateParts(title, volume, listed), files, info, progress)
@@ -131,9 +141,10 @@ func memberKeys(chapters []*DownloadedChapter) string {
 // chapterFolders names the pages of several chapters for one archive, each
 // chapter in its own folder (Chapter 0001/000.jpg, ...). It also returns the
 // chapters' labels by folder, for the EPUB table of contents.
-func chapterFolders(chapters []*DownloadedChapter, formats grabber.ConvertFormats) ([]File, map[string]string) {
+func chapterFolders(chapters []*DownloadedChapter, format string, convert grabber.ConvertFormats) ([]File, map[string]string) {
 	files := []File{}
 	labels := map[string]string{}
+	formats := pageFormats(format, convert)
 	// Several chapters can share a number (a site re-releasing the same chapter,
 	// or two genuinely distinct chapters both numbered, e.g. a pair of
 	// season-finale entries). Each chapter gets its own "Chapter 0001/" folder
@@ -151,7 +162,7 @@ func chapterFolders(chapters []*DownloadedChapter, formats grabber.ConvertFormat
 		// a repeated number gets the folder's suffix too, so the labels match the folders
 		labels[folder] = chapterLabel(chapter.Chapter) + strings.TrimPrefix(folder, base)
 
-		for _, page := range namePages(chapter.Files, formats) {
+		for _, page := range namePages(chapter.Files, formats, format) {
 			files = append(files, File{
 				Name: fmt.Sprintf("%s/%s", folder, page.Name),
 				Data: page.Data,
@@ -162,22 +173,44 @@ func chapterFolders(chapters []*DownloadedChapter, formats grabber.ConvertFormat
 	return files, labels
 }
 
+// chapterTitlePrefix matches the chapter word and number a title may open with
+// ("Chapter 0005: ", "Ch. 5 - ", "Episode 5 "), and the separator after them
+var chapterTitlePrefix = regexp.MustCompile(`(?i)^(?:episode|chapter|chap|ch|ep)\.?\s*0*(\d+(?:\.\d+)?)(?:\s*[:.\-–—]+)?\s*`)
+
 // chapterLabel names a chapter the way the filename template does (no padding,
 // decimals kept), with its title when the title says more than the number
 func chapterLabel(chapter *grabber.Chapter) string {
-	number := formatChapterNumber(chapter.GetNumber())
-	label := "Chapter " + number
-	if title := chapter.GetTitle(); title != "" && title != number && title != label {
+	number := chapter.GetNumber()
+	label := "Chapter " + formatChapterNumber(number)
+	if title := titleBeyondNumber(chapter.GetTitle(), number); title != "" {
 		label += " - " + title
 	}
 	return label
+}
+
+// titleBeyondNumber returns title without the chapter number it opens with,
+// which the label already gives ("Chapter 0005: Foo" is "Foo"). It's empty when
+// nothing else is left, as for "Ch. 5" or a title that's only the number.
+func titleBeyondNumber(title string, number float64) string {
+	if m := chapterTitlePrefix.FindStringSubmatch(title); m != nil {
+		if n, err := strconv.ParseFloat(m[1], 64); err == nil && n == number {
+			title = title[len(m[0]):]
+		}
+	}
+	title = strings.TrimSpace(title)
+	if title == formatChapterNumber(number) {
+		return ""
+	}
+	return title
 }
 
 // namePages names a chapter's pages sequentially (000.jpg, 001.png, ...),
 // restarting at 000 for each call, with extensions detected from the image
 // bytes. Pages whose format is listed in formats are transcoded to JPEG first,
 // so e-readers that can't render AVIF (or WebP) still get a readable archive.
-func namePages(pages []*downloader.File, formats grabber.ConvertFormats) []File {
+// format is the output format: an EPUB leaves out the pages it can't show,
+// and ArchiveEPUB warns about each of them.
+func namePages(pages []*downloader.File, formats grabber.ConvertFormats, format string) []File {
 	named := make([]File, len(pages))
 	for i, page := range pages {
 		data, ext := page.Data, extFromContent(page.Data)
@@ -189,7 +222,10 @@ func namePages(pages []*downloader.File, formats grabber.ConvertFormats) []File 
 				// aborting would lose the whole chapter (the whole bundle, when
 				// bundling) over a single bad page, and naming undecodable
 				// bytes .jpg would only make the failure more confusing
-				notice.Warn("- warning: page %03d: converting %s to jpeg: %s (keeping the original)", i, ext, err)
+				_, shown := epubMediaTypes[ext]
+				if format != FormatEPUB || shown {
+					notice.Warn("- warning: page %03d: converting %s to jpeg: %s (keeping the original)", i, ext, err)
+				}
 			} else {
 				data, ext = converted, "jpg"
 			}
