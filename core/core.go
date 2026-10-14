@@ -32,8 +32,10 @@ func (e *SettingError) Unwrap() error { return e.Err }
 
 // Validate checks the settings that can fail before anything is fetched, in
 // the order they're reported, and returns the parsed --skip-pages ranges (nil
-// when none were given). It also normalises the reading direction in s.
+// when none were given). It also normalises the format and the reading
+// direction in s.
 func Validate(s *grabber.Settings) ([]ranges.Range, error) {
+	s.Format = strings.ToLower(strings.TrimSpace(s.Format))
 	if s.Format != packer.FormatCBZ && s.Format != packer.FormatRaw && s.Format != packer.FormatEPUB {
 		return nil, &SettingError{
 			Setting: "format",
