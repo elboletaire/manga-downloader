@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 
 	"github.com/elboletaire/manga-downloader/http"
@@ -59,22 +60,19 @@ func (g *Guya) FetchTitle() (string, error) {
 	return g.title, nil
 }
 
-// FetchChapters returns the chapters of the manga
+// FetchChapters returns the chapters of the manga: one per group that
+// scanlated each chapter, the group in Chapter.Group, so --scanlator picks
+// among them (see grabber.SelectGroup)
 func (g Guya) FetchChapters() (Filterables, []error) {
 	feed, err := g.seriesData()
 	if err != nil {
 		return nil, []error{err}
 	}
 
-	chapters := make(Filterables, 0, len(feed.Chapters))
+	chapters := Filterables{}
 	for key, c := range feed.Chapters {
 		number, err := strconv.ParseFloat(key, 64)
 		if err != nil {
-			continue
-		}
-
-		groupId := preferredGroup(c.Groups, feed.PreferredSort)
-		if groupId == "" {
 			continue
 		}
 
@@ -83,16 +81,20 @@ func (g Guya) FetchChapters() (Filterables, []error) {
 			title = "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
 		}
 
-		chapters = append(chapters, &GuyaChapter{
-			Chapter{
-				Number: number,
-				Title:  title,
-			},
-			feed.Slug,
-			c.Folder,
-			groupId,
-			c.Groups[groupId],
-		})
+		for _, groupId := range orderedGroups(c.Groups, feed.PreferredSort) {
+			chapters = append(chapters, &GuyaChapter{
+				Chapter{
+					Number: number,
+					Title:  title,
+					Group:  feed.Groups[groupId],
+					ID:     c.Folder + "/" + groupId,
+				},
+				feed.Slug,
+				c.Folder,
+				groupId,
+				c.Groups[groupId],
+			})
+		}
 	}
 
 	return chapters, nil
@@ -110,6 +112,8 @@ func (g Guya) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(gchap.Files)),
 		Language:   "en",
+		Group:      gchap.Group,
+		ID:         gchap.ID,
 	}
 
 	for i, file := range gchap.Files {
@@ -161,26 +165,45 @@ func (g Guya) slug() (string, error) {
 	return matches[1], nil
 }
 
-// preferredGroup returns the first group id (out of the ones that scanlated
-// this chapter) found in the series' preferred_sort list, falling back to
-// any available group if none of the preferred ones scanlated this chapter
-func preferredGroup(groups map[string][]string, preferredSort []string) string {
-	for _, id := range preferredSort {
-		if _, ok := groups[id]; ok {
-			return id
-		}
+// orderedGroups returns the ids of the groups that scanlated a chapter: the
+// ones in the series' preferred_sort list first, in that order, then the rest
+// by numeric id
+func orderedGroups(groups map[string][]string, preferredSort []string) []string {
+	rank := make(map[string]int, len(preferredSort))
+	for i, id := range preferredSort {
+		rank[id] = i
 	}
+
+	ids := make([]string, 0, len(groups))
 	for id := range groups {
-		return id
+		ids = append(ids, id)
 	}
-	return ""
+	sort.Slice(ids, func(i, j int) bool {
+		ri, preferredI := rank[ids[i]]
+		rj, preferredJ := rank[ids[j]]
+		if preferredI != preferredJ {
+			return preferredI
+		}
+		if preferredI && ri != rj {
+			return ri < rj
+		}
+		ni, errI := strconv.Atoi(ids[i])
+		nj, errJ := strconv.Atoi(ids[j])
+		if errI == nil && errJ == nil && ni != nj {
+			return ni < nj
+		}
+		return ids[i] < ids[j]
+	})
+
+	return ids
 }
 
 // guyaSeriesFeed is the JSON feed for a guya series (`/api/series/{slug}/`)
 type guyaSeriesFeed struct {
-	Slug          string   `json:"slug"`
-	Title         string   `json:"title"`
-	PreferredSort []string `json:"preferred_sort"`
+	Slug          string            `json:"slug"`
+	Title         string            `json:"title"`
+	Groups        map[string]string `json:"groups"`
+	PreferredSort []string          `json:"preferred_sort"`
 	Chapters      map[string]struct {
 		Title  string              `json:"title"`
 		Folder string              `json:"folder"`
