@@ -96,12 +96,187 @@ func TestIdentifySiteOrder(t *testing.T) {
 			want: (*PlainHTML)(nil),
 		},
 		{
+			name:   "mangaread series page",
+			origin: "https://www.mangaread.org",
+			path:   "/manga/all-hail-the-sect-leader/",
+			routes: map[string]string{
+				"/manga/all-hail-the-sect-leader/": "mangaread_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "mangaread chapter page",
+			origin: "https://www.mangaread.org",
+			path:   "/manga/all-hail-the-sect-leader/chapter-560/",
+			routes: map[string]string{
+				"/manga/all-hail-the-sect-leader/chapter-560/": "mangaread_chapter.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "manhuaplus series page",
+			origin: "https://manhuaplus.com",
+			path:   "/manga/apotheosis/",
+			routes: map[string]string{
+				"/manga/apotheosis/": "manhuaplus_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "rawkuma series page",
+			origin: "https://rawkuma.net",
+			path:   "/manga/5-ji-kara-heroine/",
+			routes: map[string]string{
+				"/manga/5-ji-kara-heroine/": "rawkuma_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "rawkuma chapter page",
+			origin: "https://rawkuma.net",
+			path:   "/manga/5-ji-kara-heroine/chapter-13.1.410817/",
+			routes: map[string]string{
+				"/manga/5-ji-kara-heroine/chapter-13.1.410817/": "rawkuma_chapter.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "madarascans series page",
+			origin: "https://madarascans.net",
+			path:   "/comics/arcane-sniper/",
+			routes: map[string]string{
+				"/comics/arcane-sniper/": "madarascans_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			// The reader's back-link to the series is what identifies it.
+			name:   "madarascans chapter page",
+			origin: "https://madarascans.net",
+			path:   "/arcane-sniper-chapter-218/",
+			routes: map[string]string{
+				"/arcane-sniper-chapter-218/": "madarascans_chapter.html",
+				"/series/arcane-sniper/":      "madarascans_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "rizzfables series page",
+			origin: "https://rizzfables.com",
+			path:   "/series/r2311170-all-hail-the-sect-leader",
+			routes: map[string]string{
+				"/series/r2311170-all-hail-the-sect-leader": "rizzfables_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "rizzfables chapter page",
+			origin: "https://rizzfables.com",
+			path:   "/chapter/r2311170-all-hail-the-sect-leader-chapter-440",
+			routes: map[string]string{
+				"/chapter/r2311170-all-hail-the-sect-leader-chapter-440": "rizzfables_chapter.html",
+				"/series/r2311170-all-hail-the-sect-leader":              "rizzfables_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		// matched by the earlier mangareader entry, which shares its li[data-num] rows
+		{
+			name:   "en-thunderscans series page",
+			origin: "https://en-thunderscans.com",
+			path:   "/comics/a-night-at-the-crossroads/",
+			routes: map[string]string{
+				"/comics/a-night-at-the-crossroads/": "en_thunderscans_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "en-thunderscans chapter page",
+			origin: "https://en-thunderscans.com",
+			path:   "/a-night-at-the-crossroads-chapter-12/",
+			routes: map[string]string{
+				"/a-night-at-the-crossroads-chapter-12/": "en_thunderscans_chapter.html",
+				"/comics/a-night-at-the-crossroads/":     "en_thunderscans_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "manhwaonline series page",
+			origin: "https://manhwaonline.org",
+			path:   "/manga/all-hail-the-sect-leader/",
+			routes: map[string]string{
+				"/manga/all-hail-the-sect-leader/": "manhwaonline_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "manhwaonline chapter page",
+			origin: "https://manhwaonline.org",
+			path:   "/manga/all-hail-the-sect-leader/chapter-560/",
+			routes: map[string]string{
+				"/manga/all-hail-the-sect-leader/chapter-560/": "manhwaonline_chapter.html",
+				"/manga/all-hail-the-sect-leader/":             "manhwaonline_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "komikindo series page",
+			origin: "https://komikindo.ch",
+			path:   "/komik/990492-a-disaster-class-hero-has-returned/",
+			routes: map[string]string{
+				"/komik/990492-a-disaster-class-hero-has-returned/": "komikindo_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			// The reader's short chapter list is only a dropdown, so the
+			// series link is followed to the full list.
+			name:   "komikindo chapter page",
+			origin: "https://komikindo.ch",
+			path:   "/a-disaster-class-hero-has-returned-chapter-190/",
+			routes: map[string]string{
+				"/a-disaster-class-hero-has-returned-chapter-190/":  "komikindo_chapter.html",
+				"/komik/990492-a-disaster-class-hero-has-returned/": "komikindo_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "maid series page",
+			origin: "https://www.maid.my.id",
+			path:   "/manga/hana-wa-saku-shura-no-gotoku/",
+			routes: map[string]string{
+				"/manga/hana-wa-saku-shura-no-gotoku/": "maid_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "maid chapter page",
+			origin: "https://www.maid.my.id",
+			path:   "/hana-wa-saku-shura-no-gotoku-chapter-35-bahasa-indonesia/",
+			routes: map[string]string{
+				"/hana-wa-saku-shura-no-gotoku-chapter-35-bahasa-indonesia/": "maid_chapter.html",
+				"/manga/hana-wa-saku-shura-no-gotoku/":                       "maid_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
 			name:   "madara series page",
 			origin: "https://mangasushi.org",
 			path:   "/manga/lonely-attack-on-the-different-world/",
 			routes: map[string]string{
 				"/manga/lonely-attack-on-the-different-world/":              "madara_series.html",
 				"/manga/lonely-attack-on-the-different-world/ajax/chapters": "madara_chapters.html",
+			},
+			want: (*Tcb)(nil),
+		},
+		{
+			// The reader has no chapter list, so PlainHTML declines and the
+			// Madara ajax list makes it Tcb.
+			name:   "madara chapter page",
+			origin: "https://manhuaplus.com",
+			path:   "/manga/apotheosis/chapter-1300/",
+			routes: map[string]string{
+				"/manga/apotheosis/chapter-1300/": "manhuaplus_chapter.html",
+				"/manga/apotheosis/ajax/chapters": "manhuaplus_chapters.html",
 			},
 			want: (*Tcb)(nil),
 		},

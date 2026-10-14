@@ -38,7 +38,7 @@ const maidSeriesHTML = `<html><head><title>Watashi no Oshi wa Akuyaku Reijou. Ba
 </body></html>`
 
 // maidReaderHTML is a trimmed copy of a reader page: the pages are lazy-loaded
-// from imgbox.com, each one also repeated as a plain <img> without the
+// from an external host, each one also repeated as a plain <img> without the
 // data-lazy-src attribute, while the community banner is hosted on the site
 const maidReaderHTML = `<html><head><title>Watashi no Oshi wa Akuyaku Reijou. Chapter 50 Bahasa Indonesia - Maid - Manga Indonesia</title></head><body>
 <div class="reader-area">
@@ -97,9 +97,13 @@ func TestMaid(t *testing.T) {
 }
 
 func TestMaidReaderPages(t *testing.T) {
-	m := PlainHTML{
-		site: SiteSelector{Image: `.reader-area img[data-lazy-src*="imgbox.com"]`},
+	var site SiteSelector
+	for _, s := range plainHTMLSelectors {
+		if s.Title == ".series-titlex h2" {
+			site = s
+		}
 	}
+	m := PlainHTML{site: site}
 	chapter := m.chapterFromDoc(&PlainHTMLChapter{Chapter: Chapter{Number: 50, Title: "Chapter 50"}}, docFromHTML(t, maidReaderHTML))
 
 	if len(chapter.Pages) != 2 {
