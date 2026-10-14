@@ -40,7 +40,7 @@ The download flow lives in `core` (`core/download.go`, `Series.Download`), UI-ag
 
 The steps:
 
-1. `grabber.NewSite(url, settings)` → `IdentifySite()` calls `Test()` on each registered grabber (`grabber/site.go`), matching by domain or by fetching the URL. **Order matters**: domain-matching grabbers first, then `PlainHTML`, then the remaining fetch-testing ones. After all grabbers decline, `PlainHTML` gets a final chance via `resolveSeriesURL()`.
+1. `grabber.NewSite(url, settings)` → `IdentifySite()` calls `Test()` on each registered grabber (`grabber/site.go`), matching by domain or by fetching the URL. **Order matters**: domain-matching grabbers first, then `PlainHTML`, then the remaining fetch-testing ones. After all grabbers decline, `PlainHTML` gets a final chance via `resolveSeriesURL()`, and only then `WordPressCategory` and `Blogger` are tried by markup (themesia chapter pages are WordPress posts too).
 2. The matched `Site` fetches title and chapters; the range argument (`ranges.Parse`, `1-10,12,15-20`) filters them.
 3. Each fetched chapter is passed through `Chapter.SkipPages` (`--skip-pages`, see below) before anything is downloaded, inside `core.Download`.
 4. Chapters download concurrently (`downloader.FetchChapter`), bounded by `--concurrency` (max 5) and `--concurrency-pages` (max 10). Pages are plain GETs with a Referer.

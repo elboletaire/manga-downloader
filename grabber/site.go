@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 // Grabber is the base struct for all grabbers/sites
@@ -219,12 +221,21 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 			markupErrs = append(markupErrs, err)
 			continue
 		}
+		// a match makes the errors of the grabbers that declined noise
 		if ok {
-			return s, errs
+			return s, nil
 		}
 	}
 
 	return nil, append(errs, markupErrs...)
+}
+
+// pageLanguage returns the primary subtag of the page's <html lang>, lowercased
+// ("es-ES" is "es"), or "" when the page doesn't say.
+func pageLanguage(doc *goquery.Document) string {
+	lang := strings.ToLower(strings.TrimSpace(doc.Find("html").AttrOr("lang", "")))
+	primary, _, _ := strings.Cut(lang, "-")
+	return primary
 }
 
 // BaseUrl returns the base url of the site

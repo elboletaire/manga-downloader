@@ -22,6 +22,8 @@ type Blogger struct {
 	*Grabber
 	// doc is the page Test fetched, kept for resolving a chapter post.
 	doc *goquery.Document
+	// language is the page's <html lang>, see pageLanguage.
+	language string
 	// query is the series search, as typed or read off the post title.
 	query    string
 	title    string
@@ -87,6 +89,7 @@ func (b *Blogger) Test() (bool, error) {
 	}
 
 	b.doc = doc
+	b.language = pageLanguage(doc)
 	b.query = query
 
 	return true, nil
@@ -159,7 +162,7 @@ func (b *Blogger) list() error {
 		}
 	}
 
-	b.chapters, b.title = bloggerChapters(entries, b.query)
+	b.chapters, b.title = bloggerChapters(entries, b.query, b.language)
 	if b.title == "" {
 		b.title = b.query
 	}
@@ -232,7 +235,7 @@ type bloggerEntry struct {
 
 // bloggerChapters keeps the posts whose titles name the series, numbered by
 // their titles, and returns them with the series name as written in them.
-func bloggerChapters(entries []bloggerEntry, query string) (Filterables, string) {
+func bloggerChapters(entries []bloggerEntry, query, lang string) (Filterables, string) {
 	key := bloggerKey(query)
 	var title string
 	chapters := Filterables{}
@@ -255,7 +258,7 @@ func bloggerChapters(entries []bloggerEntry, query string) (Filterables, string)
 			Chapter{
 				Title:    chapterTitle,
 				Number:   post.Number,
-				Language: "es",
+				Language: lang,
 			},
 			e.URL,
 		})

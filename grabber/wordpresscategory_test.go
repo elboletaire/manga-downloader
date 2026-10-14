@@ -25,7 +25,7 @@ func TestWordPressCategoryChapters(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	chapters := wpChapters(posts)
+	chapters := wpChapters(posts, "es")
 	if len(chapters) != 2 {
 		t.Fatalf("got %d chapters, want 2 (the announcement has no number)", len(chapters))
 	}
@@ -43,6 +43,85 @@ func TestWordPressCategoryChapters(t *testing.T) {
 		if c.Title != w.title || c.Number != w.num || c.URL != w.url || c.Language != "es" {
 			t.Errorf("chapter %d = %+v, want %+v", i, c, w)
 		}
+	}
+}
+
+func TestWordPressChapterNumber(t *testing.T) {
+	cases := []struct {
+		title string
+		num   float64
+		part  string
+		ok    bool
+	}{
+		{"Gachiakuta 172 parte 2", 172, "2", true},
+		{"Gachiakuta 172", 172, "", true},
+		{"Gachiakuta 140.5", 140.5, "", true},
+		{"One Piece Manga 1196 Español", 1196, "", true},
+		{"Jujutsu Kaisen Chapter 200", 200, "", true},
+		{"BLACK CLOVER, CHAPTER 388", 388, "", true},
+		{"Aviso a los lectores", 0, "", false},
+	}
+	for _, c := range cases {
+		num, part, ok := wpChapterNumber(c.title)
+		if num != c.num || part != c.part || ok != c.ok {
+			t.Errorf("wpChapterNumber(%q) = %v, %q, %v; want %v, %q, %v", c.title, num, part, ok, c.num, c.part, c.ok)
+		}
+	}
+}
+
+func TestWordPressCategoryPartChapters(t *testing.T) {
+	var posts []wpPost
+	err := json.Unmarshal([]byte(`[
+		{"link":"https://site.test/gachiakuta-172-parte-2/","title":{"rendered":"Gachiakuta 172 parte 2"}},
+		{"link":"https://site.test/gachiakuta-172/","title":{"rendered":"Gachiakuta 172"}}
+	]`), &posts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chapters := wpChapters(posts, "")
+	want := []string{"Chapter 172 Part 2", "Chapter 172"}
+	if len(chapters) != len(want) {
+		t.Fatalf("got %d chapters, want %d", len(chapters), len(want))
+	}
+	for i, w := range want {
+		if c := chapters[i].GetTitle(); c != w {
+			t.Errorf("chapter %d title = %q, want %q", i, c, w)
+		}
+	}
+}
+
+func TestWordPressCategoryHiddenImages(t *testing.T) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(`
+		<div class="entry-content">
+			<img class="alignleft" alt="" src="https://cdn.test/cover.jpeg" width="0" height="0">
+			<img src="https://cdn.test/hidden.jpg" width="0px" height="5">
+			<img src="https://cdn.test/01.jpg" width="727" height="1062">
+		</div>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pages := wpPageImages(doc)
+	if len(pages) != 1 || pages[0].URL != "https://cdn.test/01.jpg" {
+		t.Fatalf("got %+v, want only 01.jpg", pages)
+	}
+}
+
+func TestWordPressCategoryTestKeepsLanguage(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `<html lang="en-US"><head><link rel="alternate" href="/wp-json/wp/v2/categories/3" /></head>
+			<body class="archive category category-3"></body></html>`)
+	}))
+	defer srv.Close()
+
+	w := NewWordPressCategory(&Grabber{URL: srv.URL + "/category/x/"})
+	ok, err := w.Test()
+	if err != nil || !ok {
+		t.Fatalf("Test() = %v, %v; want true, nil", ok, err)
+	}
+	if w.language != "en" {
+		t.Errorf("language = %q, want %q", w.language, "en")
 	}
 }
 
@@ -163,6 +242,7 @@ func TestWordPressPostsSeries(t *testing.T) {
 		{"entities and case", []string{"BLACK CLOVER, CHAPTER 393", "BLACK CLOVER, TABATA&#8217;S AUTOBIOGRAPHY", "Black Clover Manga 392"}, "BLACK CLOVER", true},
 		{"majority wins over a stray post", []string{"One Piece Manga 1196 Español", "One Piece 1184", "Kenichi 2 Manga 27"}, "One Piece", true},
 		{"no majority", []string{"One Piece 1196", "Kenichi 2 Manga 27", "Bleach 700"}, "", false},
+		{"most common spelling wins", []string{"BLACK CLOVER, CHAPTER 388", "Black Clover 387", "Black Clover 386"}, "Black Clover", true},
 		{"no numbered posts", []string{"Aviso a los lectores"}, "", false},
 	}
 	for _, c := range cases {

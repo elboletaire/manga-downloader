@@ -64,7 +64,7 @@ func TestBloggerChapters(t *testing.T) {
 		{"JAP JAP RAW", "https://example.com/2026/10/raw.html"},
 	}
 
-	chapters, title := bloggerChapters(entries, "one piece")
+	chapters, title := bloggerChapters(entries, "one piece", "es")
 	if title != "One Piece" {
 		t.Errorf("title = %q, want %q", title, "One Piece")
 	}
@@ -76,7 +76,7 @@ func TestBloggerChapters(t *testing.T) {
 		t.Errorf("chapter = %+v (%s), want number 1196 in es", c.Chapter, c.URL)
 	}
 
-	chapters, _ = bloggerChapters(entries, "Blue Lock")
+	chapters, _ = bloggerChapters(entries, "Blue Lock", "es")
 	if len(chapters) != 2 {
 		t.Fatalf("got %d Blue Lock chapters, want 2", len(chapters))
 	}

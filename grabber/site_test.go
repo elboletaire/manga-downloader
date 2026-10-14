@@ -3,8 +3,29 @@
 package grabber
 
 import (
+	"strings"
 	"testing"
+
+	"github.com/PuerkitoBio/goquery"
 )
+
+func TestPageLanguage(t *testing.T) {
+	cases := map[string]string{
+		`<html lang="es-ES">`: "es",
+		`<html lang="en-US">`: "en",
+		`<html lang="CA">`:    "ca",
+		`<html>`:              "",
+	}
+	for page, want := range cases {
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader(page))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := pageLanguage(doc); got != want {
+			t.Errorf("pageLanguage(%s) = %q, want %q", page, got, want)
+		}
+	}
+}
 
 func TestHostMatchesDomain(t *testing.T) {
 	tests := []struct {

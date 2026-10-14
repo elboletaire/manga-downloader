@@ -22,9 +22,11 @@ import (
 type WordPressCategory struct {
 	*Grabber
 	categoryID int
-	title      string
-	chapters   Filterables
-	listed     bool
+	// language is the page's <html lang>, see pageLanguage.
+	language string
+	title    string
+	chapters Filterables
+	listed   bool
 }
 
 // NewWordPressCategory returns a new WordPressCategory grabber.
@@ -73,6 +75,7 @@ func (w *WordPressCategory) Test() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	w.language = pageLanguage(doc)
 
 	id, err := w.categoryFromPage(doc)
 	if err != nil || id == 0 {
@@ -165,7 +168,7 @@ func (w *WordPressCategory) list() error {
 	if err != nil {
 		return err
 	}
-	w.chapters = wpChapters(posts)
+	w.chapters = wpChapters(posts, w.language)
 
 	if w.title, err = w.seriesTitle(posts); err != nil {
 		return err
@@ -242,7 +245,7 @@ func (w *WordPressCategory) seriesTitle(posts []wpPost) (string, error) {
 // written in them.
 func wpPostsSeries(posts []wpPost) (string, bool) {
 	counts := map[string]int{}
-	names := map[string]string{}
+	spellings := map[string]map[string]int{}
 	numbered := 0
 	for _, p := range posts {
 		post, ok := parseBloggerTitle(sanitizeTitle(html.UnescapeString(p.Title.Rendered)))
@@ -251,18 +254,31 @@ func wpPostsSeries(posts []wpPost) (string, bool) {
 		}
 		numbered++
 		key := bloggerKey(post.Series)
-		if _, seen := names[key]; !seen {
-			names[key] = post.Series
-		}
 		counts[key]++
+		if spellings[key] == nil {
+			spellings[key] = map[string]int{}
+		}
+		spellings[key][post.Series]++
 	}
 
 	for key, n := range counts {
 		if 2*n > numbered {
-			return names[key], true
+			return wpCommonSpelling(spellings[key]), true
 		}
 	}
 	return "", false
+}
+
+// wpCommonSpelling returns the spelling most posts use, a tie going to the
+// smaller one so the result doesn't depend on map order.
+func wpCommonSpelling(counts map[string]int) string {
+	var best string
+	for s, n := range counts {
+		if n > counts[best] || (n == counts[best] && s < best) {
+			best = s
+		}
+	}
+	return best
 }
 
 // wpTitleNumberRe matches the last number of a title, for posts that name the
@@ -270,31 +286,52 @@ func wpPostsSeries(posts []wpPost) (string, bool) {
 var wpTitleNumberRe = regexp.MustCompile(`(\d+(?:\.\d+)?)\D*$`)
 
 // wpChapters turns the category's posts into chapters, skipping posts without
-// a chapter number (site announcements).
-func wpChapters(posts []wpPost) Filterables {
+// a chapter number (site announcements). A part of a split chapter is named
+// after its part, as Blogger names them.
+func wpChapters(posts []wpPost, lang string) Filterables {
 	var chapters Filterables
 	for _, p := range posts {
 		title := sanitizeTitle(html.UnescapeString(p.Title.Rendered))
-		num, ok := parseChapterNumber(title)
+		num, part, ok := wpChapterNumber(title)
 		if !ok {
-			m := wpTitleNumberRe.FindStringSubmatch(title)
-			if m == nil {
-				continue
-			}
-			num, _ = strconv.ParseFloat(m[1], 64)
+			continue
+		}
+
+		chapterTitle := "Chapter " + strconv.FormatFloat(num, 'f', -1, 64)
+		if part != "" {
+			chapterTitle += " Part " + part
 		}
 		chapters = append(chapters, &WordPressCategoryChapter{
 			Chapter: Chapter{
 				// the post title repeats the series name, which the filename already has
-				Title:    "Chapter " + strconv.FormatFloat(num, 'f', -1, 64),
+				Title:    chapterTitle,
 				Number:   num,
-				Language: "es",
+				Language: lang,
 			},
 			URL: p.Link,
 		})
 	}
 
 	return chapters
+}
+
+// wpChapterNumber reads a post title's chapter number and part. It tries the
+// series-and-number shape first, as "Gachiakuta 172 parte 2" needs it, then a
+// bare chapter number, then the last number.
+func wpChapterNumber(title string) (num float64, part string, ok bool) {
+	if post, ok := parseBloggerTitle(title); ok {
+		return post.Number, post.Part, true
+	}
+	if num, ok := parseChapterNumber(title); ok {
+		return num, "", true
+	}
+
+	m := wpTitleNumberRe.FindStringSubmatch(title)
+	if m == nil {
+		return 0, "", false
+	}
+	num, _ = strconv.ParseFloat(m[1], 64)
+	return num, "", true
 }
 
 // FetchChapter fetches a post's pages.
@@ -324,7 +361,7 @@ func (w *WordPressCategory) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
-		Language:   "es",
+		Language:   w.language,
 		Pages:      pages,
 	}, nil
 }
@@ -339,6 +376,9 @@ func wpPageImages(doc *goquery.Document) []Page {
 	var pages []Page
 	seen := map[string]bool{}
 	doc.Find(".entry-content img").Each(func(_ int, s *goquery.Selection) {
+		if wpHiddenImage(s) {
+			return
+		}
 		src := strings.TrimSpace(s.AttrOr("src", ""))
 		if strings.HasPrefix(src, "data:") {
 			src = wpLazyURL(s)
@@ -354,6 +394,17 @@ func wpPageImages(doc *goquery.Document) []Page {
 	})
 
 	return pages
+}
+
+// wpHiddenImage reports whether an image is sized to nothing (a cover or a
+// tracker the theme hides), which a reader never shows as a page.
+func wpHiddenImage(s *goquery.Selection) bool {
+	for _, attr := range []string{"width", "height"} {
+		if strings.TrimSuffix(strings.TrimSpace(s.AttrOr(attr, "")), "px") == "0" {
+			return true
+		}
+	}
+	return false
 }
 
 // wpLazyURL returns the real image behind a placeholder: a lazy-load attribute
