@@ -4,6 +4,9 @@ package grabber
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -107,6 +110,33 @@ func TestWordPressCategoryFromPage(t *testing.T) {
 		}
 		if got != c.want {
 			t.Errorf("%s: categoryFromPage() = %d, want %d", c.name, got, c.want)
+		}
+	}
+}
+
+func TestWordPressCategoryRESTFailureIsNotThisSite(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/wp-json/wp/v2/posts/404") {
+			http.NotFound(w, r)
+			return
+		}
+		fmt.Fprint(w, "<html>not json</html>")
+	}))
+	defer srv.Close()
+
+	cases := map[string]string{
+		"404 from the REST route": `<html><head><link rel="alternate" href="` + srv.URL + `/wp-json/wp/v2/posts/404" /></head><body class="single"></body></html>`,
+		"body isn't JSON":         `<html><head><link rel="alternate" href="` + srv.URL + `/wp-json/wp/v2/posts/5" /></head><body class="single"></body></html>`,
+	}
+	for name, page := range cases {
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader(page))
+		if err != nil {
+			t.Fatal(err)
+		}
+		w := NewWordPressCategory(&Grabber{URL: srv.URL + "/post/"})
+		got, err := w.categoryFromPage(doc)
+		if err != nil || got != 0 {
+			t.Errorf("%s: categoryFromPage() = %d, %v; want 0, nil", name, got, err)
 		}
 	}
 }

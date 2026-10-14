@@ -188,9 +188,6 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewProjectsuki(g),
 		NewTcb(g),
 		NewJestful(g),
-		// matched by markup (WordPress category, Blogger), so they go last and can't shadow a site above
-		NewWordPressCategory(g),
-		NewBlogger(g),
 	}
 	var errs []error
 
@@ -212,7 +209,22 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		return plainHTML, errs
 	}
 
-	return nil, errs
+	// Matched by markup, so they run after the fallback: themesia chapter pages
+	// are WordPress posts too, and the fallback resolves those to their series.
+	// Their errors surface only when nothing matches.
+	var markupErrs []error
+	for _, s := range []Site{NewWordPressCategory(g), NewBlogger(g)} {
+		ok, err := s.Test()
+		if err != nil {
+			markupErrs = append(markupErrs, err)
+			continue
+		}
+		if ok {
+			return s, errs
+		}
+	}
+
+	return nil, append(errs, markupErrs...)
 }
 
 // BaseUrl returns the base url of the site

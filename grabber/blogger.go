@@ -20,9 +20,9 @@ import (
 // label per series), and a pasted chapter post resolves to it through its title.
 type Blogger struct {
 	*Grabber
-	// doc is the page Test fetched, kept for resolving a chapter post
+	// doc is the page Test fetched, kept for resolving a chapter post.
 	doc *goquery.Document
-	// query is the series search, as typed or read off the post title
+	// query is the series search, as typed or read off the post title.
 	query    string
 	title    string
 	chapters Filterables
@@ -34,16 +34,16 @@ func NewBlogger(g *Grabber) *Blogger {
 	return &Blogger{Grabber: g}
 }
 
-// BloggerChapter is a chapter post of a Blogger series
+// BloggerChapter is a chapter post of a Blogger series.
 type BloggerChapter struct {
 	Chapter
 	URL string
 }
 
-// bloggerPostRe matches the default permalink of a post: /YYYY/MM/slug.html
+// bloggerPostRe matches the default permalink of a post: /YYYY/MM/slug.html.
 var bloggerPostRe = regexp.MustCompile(`^/\d{4}/\d{2}/[^/]+\.html$`)
 
-// bloggerFingerprint matches the widget bundle every Blogger page loads
+// bloggerFingerprint matches the widget bundle every Blogger page loads.
 const bloggerFingerprint = `link[href*="blogger.com/static/v1/widgets/"], script[src*="blogger.com/static/v1/widgets/"]`
 
 // bloggerURLShape reports whether rawURL is a series search (returning its
@@ -111,7 +111,7 @@ func (b *Blogger) resolveSeriesURL() error {
 	return nil
 }
 
-// list fetches the series' posts from the blog's search feed, once
+// list fetches the series' posts from the blog's search feed, once.
 func (b *Blogger) list() error {
 	if b.listed {
 		return nil
@@ -147,7 +147,7 @@ func (b *Blogger) list() error {
 	return nil
 }
 
-// bloggerFeed is the part of a Blogger JSON feed the grabber reads
+// bloggerFeed is the part of a Blogger JSON feed the grabber reads.
 type bloggerFeed struct {
 	Feed struct {
 		Total struct {
@@ -157,7 +157,7 @@ type bloggerFeed struct {
 	} `json:"feed"`
 }
 
-// bloggerFeedEntry is one post in a Blogger JSON feed
+// bloggerFeedEntry is one post in a Blogger JSON feed.
 type bloggerFeedEntry struct {
 	Title struct {
 		Value string `json:"$t"`
@@ -168,7 +168,7 @@ type bloggerFeedEntry struct {
 	} `json:"link"`
 }
 
-// alternateURL returns the post's own URL
+// alternateURL returns the post's own URL.
 func (e bloggerFeedEntry) alternateURL() string {
 	for _, l := range e.Links {
 		if l.Rel == "alternate" {
@@ -179,7 +179,7 @@ func (e bloggerFeedEntry) alternateURL() string {
 }
 
 // fetchFeed fetches one page of the series search feed, 150 posts at a time
-// (the most Blogger serves per request), starting at start-index
+// (the most Blogger serves per request), starting at start-index.
 func (b *Blogger) fetchFeed(start int) (bloggerFeed, error) {
 	var feed bloggerFeed
 
@@ -203,14 +203,14 @@ func (b *Blogger) fetchFeed(start int) (bloggerFeed, error) {
 	return feed, err
 }
 
-// bloggerEntry is a post of the series search feed
+// bloggerEntry is a post of the series search feed.
 type bloggerEntry struct {
 	Title string
 	URL   string
 }
 
 // bloggerChapters keeps the posts whose titles name the series, numbered by
-// their titles, and returns them with the series name as written in them
+// their titles, and returns them with the series name as written in them.
 func bloggerChapters(entries []bloggerEntry, query string) (Filterables, string) {
 	key := bloggerKey(query)
 	var title string
@@ -244,7 +244,7 @@ func bloggerChapters(entries []bloggerEntry, query string) (Filterables, string)
 }
 
 // bloggerPost is what a post title says: the series, the chapter number and
-// the part of a chapter split over several posts ("Parte 2"), if any
+// the part of a chapter split over several posts ("Parte 2"), if any.
 type bloggerPost struct {
 	Series string
 	Number float64
@@ -255,9 +255,15 @@ var (
 	bloggerBracketRe = regexp.MustCompile(`\[[^\]]*\]|\([^)]*\)`)
 	bloggerPartRe    = regexp.MustCompile(`(?i)\b(?:parte|part)\s+(\d+)\b`)
 	bloggerNumberRe  = regexp.MustCompile(`\b\d+(?:\.\d+)?\b`)
-	// the "| Manga" (or ": Webcomic") that sits between a series and its number
+	// the "| Manga" (or ": Webcomic") that sits between a series and its number.
 	bloggerKindRe = regexp.MustCompile(`(?i)\s*[|:]?\s*\b(?:manga|webcomic|manhwa)?\s*$`)
 )
+
+// stripKindWord trims a series name and drops the kind word after it ("One
+// Piece Manga" is "One Piece"), shared with WordPressCategory's category names.
+func stripKindWord(name string) string {
+	return strings.TrimSpace(bloggerKindRe.ReplaceAllString(strings.TrimSpace(name), ""))
+}
 
 // parseBloggerTitle reads "Blue Lock Manga 364 Parte 2 [Español]" or "Kenichi 2
 // | Manga 27". The chapter number is the last one, so "Kenichi 2" stays a name.
@@ -281,7 +287,7 @@ func parseBloggerTitle(title string) (bloggerPost, bool) {
 	}
 
 	post.Number = num
-	post.Series = strings.TrimSpace(bloggerKindRe.ReplaceAllString(strings.TrimSpace(title[:last[0]]), ""))
+	post.Series = stripKindWord(title[:last[0]])
 	if post.Series == "" {
 		return post, false
 	}
@@ -289,11 +295,11 @@ func parseBloggerTitle(title string) (bloggerPost, bool) {
 	return post, true
 }
 
-// bloggerAccents folds the Spanish accents, so "Módulo" and "Modulo" match
+// bloggerAccents folds the Spanish accents, so "Módulo" and "Modulo" match.
 var bloggerAccents = strings.NewReplacer("á", "a", "é", "e", "í", "i", "ó", "o", "ú", "u", "ü", "u", "ñ", "n")
 
 // bloggerKey normalises a series name for comparison: lowercase, accents
-// folded, and punctuation and spacing reduced to single spaces
+// folded, and punctuation and spacing reduced to single spaces.
 func bloggerKey(name string) string {
 	name = bloggerAccents.Replace(strings.ToLower(name))
 	return strings.Join(strings.FieldsFunc(name, func(r rune) bool {
@@ -325,7 +331,7 @@ func bloggerPages(doc *goquery.Document, postURL *url.URL) []Page {
 	return pages
 }
 
-// FetchTitle returns the series name
+// FetchTitle returns the series name.
 func (b *Blogger) FetchTitle() (string, error) {
 	if err := b.list(); err != nil {
 		return "", err
@@ -333,7 +339,7 @@ func (b *Blogger) FetchTitle() (string, error) {
 	return b.title, nil
 }
 
-// FetchChapters returns the series' chapter posts
+// FetchChapters returns the series' chapter posts.
 func (b *Blogger) FetchChapters() (Filterables, []error) {
 	if err := b.list(); err != nil {
 		return nil, []error{err}
@@ -341,7 +347,7 @@ func (b *Blogger) FetchChapters() (Filterables, []error) {
 	return b.chapters, nil
 }
 
-// FetchChapter fetches a chapter post and returns its pages
+// FetchChapter fetches a chapter post and returns its pages.
 func (b *Blogger) FetchChapter(f Filterable) (*Chapter, error) {
 	bchap := f.(*BloggerChapter)
 

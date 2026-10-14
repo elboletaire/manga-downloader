@@ -171,3 +171,18 @@ func TestBloggerURLShape(t *testing.T) {
 		}
 	}
 }
+
+func TestStripKindWord(t *testing.T) {
+	cases := map[string]string{
+		"One Piece Manga":   "One Piece",
+		"One Piece | Manga": "One Piece",
+		"Kenichi 2: Manhwa": "Kenichi 2",
+		"One Piece":         "One Piece",
+		"Manga":             "",
+	}
+	for in, want := range cases {
+		if got := stripKindWord(in); got != want {
+			t.Errorf("stripKindWord(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

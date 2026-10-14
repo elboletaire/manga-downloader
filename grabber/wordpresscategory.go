@@ -107,6 +107,11 @@ func (w *WordPressCategory) categoryFromPage(doc *goquery.Document) (int, error)
 		Referer:      w.URL,
 		DisableRetry: true,
 	})
+	// a REST route that doesn't answer (404) or a body that isn't JSON means another site
+	var statusErr *http.StatusError
+	if errors.As(err, &statusErr) {
+		return 0, nil
+	}
 	if err != nil {
 		return 0, err
 	}
@@ -115,7 +120,7 @@ func (w *WordPressCategory) categoryFromPage(doc *goquery.Document) (int, error)
 		Categories []int `json:"categories"`
 	}
 	if err := json.Unmarshal([]byte(body), &post); err != nil {
-		return 0, err
+		return 0, nil
 	}
 	if len(post.Categories) == 0 {
 		return 0, nil
@@ -151,7 +156,8 @@ func (w *WordPressCategory) FetchTitle() (string, error) {
 		return "", err
 	}
 
-	w.title = sanitizeTitle(html.UnescapeString(category.Name))
+	// the kind word goes like Blogger's ("One Piece Manga" is "One Piece")
+	w.title = stripKindWord(sanitizeTitle(html.UnescapeString(category.Name)))
 
 	return w.title, nil
 }
