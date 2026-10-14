@@ -459,3 +459,27 @@ func TestRequestClampsRetryAfter(t *testing.T) {
 		t.Errorf("took %v, want the 60s Retry-After clamped to retryMaxDelay", elapsed)
 	}
 }
+
+// Documents and API responses keep the browser's document-first Accept; only
+// page images override it (RequestParams.Accept)
+func TestRequestDefaultAccept(t *testing.T) {
+	var accept string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		accept = r.Header.Get("Accept")
+		io.WriteString(w, "ok")
+	}))
+	defer srv.Close()
+
+	if _, err := GetText(RequestParams{URL: srv.URL}); err != nil {
+		t.Fatalf("GetText: %v", err)
+	}
+	if want := defaultAccept; accept != want {
+		t.Errorf("Accept = %q, want %q", accept, want)
+	}
+	if _, err := GetText(RequestParams{URL: srv.URL, Accept: ImageAccept}); err != nil {
+		t.Fatalf("GetText: %v", err)
+	}
+	if accept != ImageAccept {
+		t.Errorf("Accept = %q, want %q", accept, ImageAccept)
+	}
+}

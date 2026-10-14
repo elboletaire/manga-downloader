@@ -419,3 +419,32 @@ func TestFetchChapter_PacesPages(t *testing.T) {
 		t.Errorf("WaitPage called %d times for %d requests, want 4 each", got, want)
 	}
 }
+
+// Page images get an image Accept: imgur answers a document-first one with an
+// HTML viewer page instead of the image
+func TestFetchChapter_ImageAccept(t *testing.T) {
+	var accept string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		accept = r.Header.Get("Accept")
+		_, _ = w.Write([]byte("page"))
+	}))
+	defer server.Close()
+
+	site := &fetchChapterTestSite{Grabber: &grabber.Grabber{
+		URL: server.URL,
+		Settings: &grabber.Settings{
+			MaxConcurrency: grabber.MaxConcurrency{Chapters: 1, Pages: 1},
+		},
+	}}
+	chapter := &grabber.Chapter{
+		Number: 1,
+		Pages:  []grabber.Page{{Number: 1, URL: server.URL + "/page"}},
+	}
+
+	if _, err := FetchChapter(context.Background(), site, chapter, func(page, progress int, err error) {}); err != nil {
+		t.Fatalf("FetchChapter: %v", err)
+	}
+	if accept != mangahttp.ImageAccept {
+		t.Errorf("Accept = %q, want the image Accept %q", accept, mangahttp.ImageAccept)
+	}
+}

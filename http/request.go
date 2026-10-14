@@ -40,6 +40,9 @@ type RequestParams struct {
 	// its own retry loop so the two mechanisms don't multiply into absurd
 	// wait times for page downloads.
 	DisableRetry bool
+	// Accept overrides the default Accept header. Page images set ImageAccept:
+	// some image hosts answer a document-first Accept with an HTML page
+	Accept string
 }
 
 // GetURL returns the request URL
@@ -55,6 +58,12 @@ func (r RequestParams) GetReferer() string {
 // userAgent is sent with every request: some sites block Go's default
 // "Go-http-client" user agent with a 403/500
 const userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+
+// defaultAccept is sent unless RequestParams.Accept overrides it
+const defaultAccept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+
+// ImageAccept is the Accept header Chrome sends for an <img> request
+const ImageAccept = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
 
 // StatusError is returned for a response whose status isn't 200
 type StatusError struct {
@@ -207,7 +216,11 @@ func doRequest(t string, params Params) (body io.ReadCloser, retryAfter time.Dur
 		req.Header.Set("Cookie", cookies)
 	}
 	// some WAFs (e.g. ddos-guard) reject requests missing these browser headers
-	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+	accept := rp.Accept
+	if accept == "" {
+		accept = defaultAccept
+	}
+	req.Header.Set("Accept", accept)
 	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
 	if ref := params.GetReferer(); ref != "" {
 		// browsers always send at least the root path in the referer; some

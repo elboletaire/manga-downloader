@@ -68,6 +68,7 @@ func FetchChapter(ctx context.Context, site grabber.Site, chapter *grabber.Chapt
 				URL:     page.URL,
 				Referer: referer,
 				Headers: page.Headers,
+				Accept:  http.ImageAccept,
 			}, uint(page.Number), site.GetRetries(), page.Transform, pace)
 
 			if err != nil {
