@@ -60,3 +60,21 @@ func TestMigrateFilenameTemplate(t *testing.T) {
 		t.Errorf("custom template: got %q, want it unchanged", got)
 	}
 }
+
+// a volume or bundle keeps a group only when all its chapters share it
+func TestVolumeGroupIsShared(t *testing.T) {
+	tests := []struct {
+		name     string
+		chapters []*grabber.Chapter
+		want     string
+	}{
+		{"shared", []*grabber.Chapter{{Number: 1, Group: "Alpha"}, {Number: 2, Group: "Alpha"}}, "Alpha"},
+		{"mixed", []*grabber.Chapter{{Number: 1, Group: "Alpha"}, {Number: 2, Group: "Delta"}}, ""},
+	}
+	for _, tt := range tests {
+		parts := NewVolumeFileTemplateParts("Series", 1, tt.chapters)
+		if parts.Group != tt.want {
+			t.Errorf("%s: Group %q, want %q", tt.name, parts.Group, tt.want)
+		}
+	}
+}
