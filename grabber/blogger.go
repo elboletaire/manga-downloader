@@ -102,13 +102,34 @@ func (b *Blogger) resolveSeriesURL() error {
 		return errSeriesNotFound(b.URL)
 	}
 
-	post, ok := parseBloggerTitle(b.doc.Find("h3.post-title").First().Text())
+	post, ok := bloggerPostTitle(b.doc)
 	if !ok {
 		return errSeriesNotFound(b.URL)
 	}
 	b.query = post.Series
 
 	return nil
+}
+
+// bloggerPostTitle reads a chapter post's title from the first place that
+// parses: the post heading (h3, or h1/h2 in templates without it), then the
+// og:title and <title>, which may carry a " - Blog Name" suffix.
+func bloggerPostTitle(doc *goquery.Document) (bloggerPost, bool) {
+	candidates := []string{
+		doc.Find("h3.post-title").First().Text(),
+		doc.Find("h1.post-title, h2.post-title").First().Text(),
+		stripBlogName(doc.Find(`meta[property="og:title"]`).AttrOr("content", "")),
+	}
+	doc.Find("title").Each(func(_ int, s *goquery.Selection) {
+		candidates = append(candidates, stripBlogName(s.Text()))
+	})
+
+	for _, c := range candidates {
+		if post, ok := parseBloggerTitle(c); ok {
+			return post, true
+		}
+	}
+	return bloggerPost{}, false
 }
 
 // list fetches the series' posts from the blog's search feed, once.
@@ -255,9 +276,24 @@ var (
 	bloggerBracketRe = regexp.MustCompile(`\[[^\]]*\]|\([^)]*\)`)
 	bloggerPartRe    = regexp.MustCompile(`(?i)\b(?:parte|part)\s+(\d+)\b`)
 	bloggerNumberRe  = regexp.MustCompile(`\b\d+(?:\.\d+)?\b`)
-	// the "| Manga" (or ": Webcomic") that sits between a series and its number.
-	bloggerKindRe = regexp.MustCompile(`(?i)\s*[|:]?\s*\b(?:manga|webcomic|manhwa)?\s*$`)
+	// the "Leer " (read) some posts prefix to their title
+	bloggerLeerRe = regexp.MustCompile(`(?i)^\s*leer\s+`)
+	// the "| Manga" (or ": Webcomic", ", Chapter") between a series and its number,
+	// possibly repeated ("Dragon Ball Super Manga Chapter").
+	bloggerKindRe = regexp.MustCompile(`(?i)(?:\s*[|:,]?\s*\b(?:manga|webcomic|manhwa|cap[ií]tulo|chapter)\b)*\s*[|:,]?\s*$`)
+	// the " - Blog Name" suffix of a page title, as the last separated part
+	bloggerSuffixRe = regexp.MustCompile(`\s+[|–-]\s+([^|–-]*)$`)
 )
+
+// stripBlogName drops a trailing " - Blog Name" from a page title. A part with a
+// number is kept, as it's a title and not a blog name ("Kenichi 2 | Manga 27").
+func stripBlogName(title string) string {
+	m := bloggerSuffixRe.FindStringSubmatchIndex(title)
+	if m == nil || bloggerNumberRe.MatchString(title[m[2]:m[3]]) {
+		return title
+	}
+	return title[:m[0]]
+}
 
 // stripKindWord trims a series name and drops the kind word after it ("One
 // Piece Manga" is "One Piece"), shared with WordPressCategory's category names.
@@ -270,6 +306,7 @@ func stripKindWord(name string) string {
 func parseBloggerTitle(title string) (bloggerPost, bool) {
 	var post bloggerPost
 
+	title = bloggerLeerRe.ReplaceAllString(title, "")
 	title = bloggerBracketRe.ReplaceAllString(title, " ")
 	if m := bloggerPartRe.FindStringSubmatch(title); m != nil {
 		post.Part = m[1]

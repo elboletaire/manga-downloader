@@ -3,6 +3,7 @@
 package grabber
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +23,8 @@ type WordPressCategory struct {
 	*Grabber
 	categoryID int
 	title      string
+	chapters   Filterables
+	listed     bool
 }
 
 // NewWordPressCategory returns a new WordPressCategory grabber.
@@ -135,10 +138,84 @@ func (w *WordPressCategory) apiURL(path string) string {
 	return w.BaseUrl() + "/wp-json/wp/v2/" + path
 }
 
-// FetchTitle returns the category name, which is the series title.
+// FetchTitle returns the series title, see list.
 func (w *WordPressCategory) FetchTitle() (string, error) {
-	if w.title != "" {
-		return w.title, nil
+	if err := w.list(); err != nil {
+		return "", err
+	}
+	return w.title, nil
+}
+
+// FetchChapters returns the category's chapters, see list.
+func (w *WordPressCategory) FetchChapters() (Filterables, []error) {
+	if err := w.list(); err != nil {
+		return nil, []error{err}
+	}
+	return w.chapters, nil
+}
+
+// list reads the category's posts once, and sets the chapters and the series
+// title from them.
+func (w *WordPressCategory) list() error {
+	if w.listed {
+		return nil
+	}
+
+	posts, err := w.fetchPosts()
+	if err != nil {
+		return err
+	}
+	w.chapters = wpChapters(posts)
+
+	if w.title, err = w.seriesTitle(posts); err != nil {
+		return err
+	}
+	w.listed = true
+
+	return nil
+}
+
+// fetchPosts pages through the category's posts in the REST API until a page
+// comes back short.
+func (w *WordPressCategory) fetchPosts() ([]wpPost, error) {
+	var posts []wpPost
+	for page := 1; ; page++ {
+		body, err := http.GetText(http.RequestParams{
+			URL: w.apiURL(fmt.Sprintf(
+				"posts?categories=%d&per_page=%d&_fields=link,title&page=%d",
+				w.categoryID, wpPerPage, page,
+			)),
+			Referer: w.URL,
+		})
+		if err != nil {
+			// WordPress answers 400 for a page past the last one, which is
+			// reached when the total is an exact multiple of wpPerPage
+			var statusErr *http.StatusError
+			if page > 1 && errors.As(err, &statusErr) && statusErr.Code == 400 {
+				break
+			}
+			return nil, err
+		}
+
+		var pagePosts []wpPost
+		if err := json.Unmarshal([]byte(body), &pagePosts); err != nil {
+			return nil, err
+		}
+		posts = append(posts, pagePosts...)
+
+		if len(pagePosts) < wpPerPage {
+			break
+		}
+	}
+
+	return posts, nil
+}
+
+// seriesTitle names the series after its posts when most of the numbered ones
+// agree (categories like "Chapters" say nothing), and after the category otherwise.
+func (w *WordPressCategory) seriesTitle(posts []wpPost) (string, error) {
+	if name, ok := wpPostsSeries(posts); ok {
+		return name, nil
 	}
 
 	body, err := http.GetText(http.RequestParams{
@@ -157,45 +234,35 @@ func (w *WordPressCategory) FetchTitle() (string, error) {
 	}
 
 	// the kind word goes like Blogger's ("One Piece Manga" is "One Piece")
-	w.title = stripKindWord(sanitizeTitle(html.UnescapeString(category.Name)))
-
-	return w.title, nil
+	return stripKindWord(sanitizeTitle(html.UnescapeString(category.Name))), nil
 }
 
-// FetchChapters returns the category's posts, paging through the REST API
-// until a page comes back short.
-func (w *WordPressCategory) FetchChapters() (Filterables, []error) {
-	var posts []wpPost
-	for page := 1; ; page++ {
-		body, err := http.GetText(http.RequestParams{
-			URL: w.apiURL(fmt.Sprintf(
-				"posts?categories=%d&per_page=%d&_fields=link,title&page=%d",
-				w.categoryID, wpPerPage, page,
-			)),
-			Referer: w.URL,
-		})
-		if err != nil {
-			// WordPress answers 400 for a page past the last one, which is
-			// reached when the total is an exact multiple of wpPerPage
-			var statusErr *http.StatusError
-			if page > 1 && errors.As(err, &statusErr) && statusErr.Code == 400 {
-				break
-			}
-			return nil, []error{err}
+// wpPostsSeries returns the series that more than half of the numbered posts
+// name in their titles ("Jujutsu Kaisen" in "Jujutsu Kaisen, Chapter 260"), as
+// written in them.
+func wpPostsSeries(posts []wpPost) (string, bool) {
+	counts := map[string]int{}
+	names := map[string]string{}
+	numbered := 0
+	for _, p := range posts {
+		post, ok := parseBloggerTitle(sanitizeTitle(html.UnescapeString(p.Title.Rendered)))
+		if !ok {
+			continue
 		}
-
-		var pagePosts []wpPost
-		if err := json.Unmarshal([]byte(body), &pagePosts); err != nil {
-			return nil, []error{err}
+		numbered++
+		key := bloggerKey(post.Series)
+		if _, seen := names[key]; !seen {
+			names[key] = post.Series
 		}
-		posts = append(posts, pagePosts...)
-
-		if len(pagePosts) < wpPerPage {
-			break
-		}
+		counts[key]++
 	}
 
-	return wpChapters(posts), nil
+	for key, n := range counts {
+		if 2*n > numbered {
+			return names[key], true
+		}
+	}
+	return "", false
 }
 
 // wpTitleNumberRe matches the last number of a title, for posts that name the
@@ -262,18 +329,21 @@ func (w *WordPressCategory) FetchChapter(f Filterable) (*Chapter, error) {
 	}, nil
 }
 
+// wpBvURLRe reads the real image URL out of a Bv lazy-loader placeholder.
+var wpBvURLRe = regexp.MustCompile(`bv-img-url="([^"]+)"`)
+
 // wpPageImages returns the post body's images in document order, once each.
 // Lazy-loaded images hold a placeholder data: URI in src and the real image
-// in data-src.
+// elsewhere, see wpLazyURL.
 func wpPageImages(doc *goquery.Document) []Page {
 	var pages []Page
 	seen := map[string]bool{}
 	doc.Find(".entry-content img").Each(func(_ int, s *goquery.Selection) {
 		src := strings.TrimSpace(s.AttrOr("src", ""))
 		if strings.HasPrefix(src, "data:") {
-			src = strings.TrimSpace(s.AttrOr("data-src", ""))
+			src = wpLazyURL(s)
 		}
-		if src == "" || seen[src] {
+		if src == "" || strings.HasPrefix(src, "data:") || seen[src] {
 			return
 		}
 		seen[src] = true
@@ -284,4 +354,28 @@ func wpPageImages(doc *goquery.Document) []Page {
 	})
 
 	return pages
+}
+
+// wpLazyURL returns the real image behind a placeholder: a lazy-load attribute
+// if the theme sets one, else the bv-img-url the Bv loader keeps inside its
+// base64 SVG placeholder (the placeholder's src is the only copy of it).
+func wpLazyURL(s *goquery.Selection) string {
+	for _, attr := range []string{"data-src", "data-lazy-src", "bv-img-url", "data-bv-img-url"} {
+		if v := strings.TrimSpace(s.AttrOr(attr, "")); v != "" {
+			return v
+		}
+	}
+
+	payload, ok := strings.CutPrefix(strings.TrimSpace(s.AttrOr("src", "")), "data:image/svg+xml;base64,")
+	if !ok {
+		return ""
+	}
+	svg, err := base64.StdEncoding.DecodeString(payload)
+	if err != nil {
+		return ""
+	}
+	if m := wpBvURLRe.FindSubmatch(svg); m != nil {
+		return string(m[1])
+	}
+	return ""
 }

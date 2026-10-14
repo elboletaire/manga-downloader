@@ -3,6 +3,7 @@
 package grabber
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -137,6 +138,80 @@ func TestWordPressCategoryRESTFailureIsNotThisSite(t *testing.T) {
 		got, err := w.categoryFromPage(doc)
 		if err != nil || got != 0 {
 			t.Errorf("%s: categoryFromPage() = %d, %v; want 0, nil", name, got, err)
+		}
+	}
+}
+
+func TestWordPressPostsSeries(t *testing.T) {
+	posts := func(titles ...string) []wpPost {
+		var ps []wpPost
+		for _, t := range titles {
+			ps = append(ps, wpPost{Title: struct {
+				Rendered string `json:"rendered"`
+			}{t}})
+		}
+		return ps
+	}
+
+	cases := []struct {
+		name   string
+		titles []string
+		want   string
+		ok     bool
+	}{
+		{"generic category", []string{"Jujutsu Kaisen, Chapter 260", "Jujutsu Kaisen, Chapter 259", "Garry K. Johnson in Jujutsu Kaisen"}, "Jujutsu Kaisen", true},
+		{"entities and case", []string{"BLACK CLOVER, CHAPTER 393", "BLACK CLOVER, TABATA&#8217;S AUTOBIOGRAPHY", "Black Clover Manga 392"}, "BLACK CLOVER", true},
+		{"majority wins over a stray post", []string{"One Piece Manga 1196 Español", "One Piece 1184", "Kenichi 2 Manga 27"}, "One Piece", true},
+		{"no majority", []string{"One Piece 1196", "Kenichi 2 Manga 27", "Bleach 700"}, "", false},
+		{"no numbered posts", []string{"Aviso a los lectores"}, "", false},
+	}
+	for _, c := range cases {
+		got, ok := wpPostsSeries(posts(c.titles...))
+		if got != c.want || ok != c.ok {
+			t.Errorf("%s: wpPostsSeries() = %q, %v; want %q, %v", c.name, got, ok, c.want, c.ok)
+		}
+	}
+}
+
+func TestWordPressCategorySeriesTitleFallback(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"name":"Manga Series"}`)
+	}))
+	defer srv.Close()
+
+	w := NewWordPressCategory(&Grabber{URL: srv.URL + "/category/manga/"})
+	w.categoryID = 2
+	title, err := w.seriesTitle([]wpPost{{Link: "https://site.test/about/"}})
+	if err != nil || title != "Manga Series" {
+		t.Errorf("seriesTitle() = %q, %v; want %q", title, err, "Manga Series")
+	}
+}
+
+func TestWordPressCategoryLazyPlaceholders(t *testing.T) {
+	// the Bv loader's placeholder: an SVG whose bv-img-url is the real page
+	svg := func(url string) string {
+		return "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString(
+			[]byte(`<svg xmlns="http://www.w3.org/2000/svg" width="727" height="1062" bv-img-url="`+url+`"></svg>`))
+	}
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(`
+		<div class="entry-content">
+			<img src="https://cdn.test/01.jpg" class="bv-image-preloaded">
+			<img src="` + svg("https://cdn.test/02.jpg") + `" class="bv-image-lazyload">
+			<img src="data:image/gif;base64,R0lGOD" data-lazy-src="https://cdn.test/03.jpg">
+			<img src="data:image/gif;base64,R0lGOD">
+		</div>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pages := wpPageImages(doc)
+	want := []string{"https://cdn.test/01.jpg", "https://cdn.test/02.jpg", "https://cdn.test/03.jpg"}
+	if len(pages) != len(want) {
+		t.Fatalf("got %d pages, want %d: %+v", len(pages), len(want), pages)
+	}
+	for i, p := range pages {
+		if p.URL != want[i] {
+			t.Errorf("page %d = %q, want %q", i, p.URL, want[i])
 		}
 	}
 }

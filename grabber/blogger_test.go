@@ -27,6 +27,11 @@ func TestParseBloggerTitle(t *testing.T) {
 		{"Blue Lock  (Capítulo Especial de Nagi y Reo", bloggerPost{}, false},
 		{"JUJUTSU KAISEN × JJK MODULO", bloggerPost{}, false},
 		{"JAP JAP RAW", bloggerPost{}, false},
+		{"Leer Blue Lock Manga 361 Español Online", bloggerPost{Series: "Blue Lock", Number: 361}, true},
+		{"Blue Lock Capitulo 356 En Español", bloggerPost{Series: "Blue Lock", Number: 356}, true},
+		{"Jujutsu Kaisen, Chapter 260", bloggerPost{Series: "Jujutsu Kaisen", Number: 260}, true},
+		{"BLACK CLOVER, CHAPTER 393", bloggerPost{Series: "BLACK CLOVER", Number: 393}, true},
+		{"Dragon Ball Super Manga Chapter 92", bloggerPost{Series: "Dragon Ball Super", Number: 92}, true},
 	}
 
 	for _, c := range cases {
@@ -174,15 +179,54 @@ func TestBloggerURLShape(t *testing.T) {
 
 func TestStripKindWord(t *testing.T) {
 	cases := map[string]string{
-		"One Piece Manga":   "One Piece",
-		"One Piece | Manga": "One Piece",
-		"Kenichi 2: Manhwa": "Kenichi 2",
-		"One Piece":         "One Piece",
-		"Manga":             "",
+		"One Piece Manga":            "One Piece",
+		"One Piece | Manga":          "One Piece",
+		"Kenichi 2: Manhwa":          "Kenichi 2",
+		"One Piece":                  "One Piece",
+		"Manga":                      "",
+		"Chainsaw Man Manga Chapter": "Chainsaw Man",
+		"Jujutsu Kaisen, Chapter":    "Jujutsu Kaisen",
 	}
 	for in, want := range cases {
 		if got := stripKindWord(in); got != want {
 			t.Errorf("stripKindWord(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestBloggerPostTitle(t *testing.T) {
+	cases := map[string]string{
+		// the h3 heading of most templates
+		`<h3 class='post-title'>Blue Lock Manga 364</h3>`: "Blue Lock",
+		// a template with an h1 heading and no h3
+		`<h1 class='post-title'>Blue Lock Manga 365 Español Online</h1>`: "Blue Lock",
+		// no heading: the og:title, whose blog name suffix is dropped
+		`<meta content='Blue Lock Manga 366 - mangadelsiglot' property='og:title'/>`: "Blue Lock",
+		// no heading or og:title: the <title>, after a blog title that has no number
+		`<title>mangadelsiglot</title><title>Blue Lock Manga 367 | Blog</title>`: "Blue Lock",
+	}
+	for markup, want := range cases {
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader("<html><head>" + markup + "</head><body></body></html>"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		post, ok := bloggerPostTitle(doc)
+		if !ok || post.Series != want {
+			t.Errorf("bloggerPostTitle(%s) = %+v, %v; want series %q", markup, post, ok, want)
+		}
+	}
+}
+
+func TestStripBlogName(t *testing.T) {
+	cases := map[string]string{
+		"Blue Lock Manga 366 - mangadelsiglot": "Blue Lock Manga 366",
+		"Blue Lock Manga 366 | Blog Name":      "Blue Lock Manga 366",
+		"Kenichi 2 | Manga 27 Español":         "Kenichi 2 | Manga 27 Español",
+		"Blue Lock Manga 366":                  "Blue Lock Manga 366",
+	}
+	for in, want := range cases {
+		if got := stripBlogName(in); got != want {
+			t.Errorf("stripBlogName(%q) = %q, want %q", in, got, want)
 		}
 	}
 }
