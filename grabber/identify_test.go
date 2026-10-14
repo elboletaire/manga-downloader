@@ -249,17 +249,14 @@ func TestIdentifySiteOrder(t *testing.T) {
 			want: (*PlainHTML)(nil),
 		},
 		{
-			// Documents current behaviour: the reader has no series list and its
-			// back-link is gated on imgbox images, so no series is resolved and
-			// the WordPress post falls through to WordPressCategory.
 			name:   "maid chapter page",
 			origin: "https://www.maid.my.id",
 			path:   "/hana-wa-saku-shura-no-gotoku-chapter-35-bahasa-indonesia/",
 			routes: map[string]string{
 				"/hana-wa-saku-shura-no-gotoku-chapter-35-bahasa-indonesia/": "maid_chapter.html",
-				"/wp-json/wp/v2/posts/48654":                                 "maid_chapter_rest.json",
+				"/manga/hana-wa-saku-shura-no-gotoku/":                       "maid_series.html",
 			},
-			want: (*WordPressCategory)(nil),
+			want: (*PlainHTML)(nil),
 		},
 		{
 			name:   "madara series page",

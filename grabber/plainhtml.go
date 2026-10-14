@@ -388,11 +388,11 @@ var plainHTMLSelectors = []SiteSelector{
 		SeriesLink:       `div.nextprev a[href*="/komik/"]`,
 		FollowSeriesLink: true,
 	},
-	// maid.my.id: Indonesian WordPress theme. The reader lazy-loads its
-	// pages from imgbox.com through data-lazy-src (src is a placeholder),
-	// and the same pages come again as plain <img>s without that attribute,
-	// so only the lazy ones are taken. The reader's community banner is
-	// hosted on the site itself and is left out by the host filter.
+	// maid.my.id: Indonesian WordPress theme. The reader lazy-loads its pages
+	// from any host (imgbox.com, imgchest.com) through data-lazy-src (src is a
+	// placeholder), and the same pages come again as plain <img>s without that
+	// attribute, so only the lazy ones are taken. The reader's community banner
+	// is hosted on the site itself and is left out by the host filter.
 	// The reader also renders a short chapter list (.series-chapterlist);
 	// #chapnav holds the link back to the full series page.
 	{
@@ -401,7 +401,7 @@ var plainHTMLSelectors = []SiteSelector{
 		Link:             "a",
 		Chapter:          "a",
 		ChapterTitle:     "a",
-		Image:            `.reader-area img[data-lazy-src*="imgbox.com"]`,
+		Image:            `.reader-area img[data-lazy-src]:not([data-lazy-src*="maid.my.id"])`,
 		SeriesLink:       `#chapnav a[href*="/manga/"]`,
 		FollowSeriesLink: true,
 	},
