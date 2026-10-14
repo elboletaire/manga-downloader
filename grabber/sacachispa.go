@@ -187,6 +187,8 @@ func (s *Sacachispa) releasesByChapter(mangaID string) (map[string][]sacachispaR
 // preferredReleases returns the releases of a chapter to list: the ones in the
 // requested language, or, when none is, the first one (the release FetchChapter
 // has always fallen back to). Every release when no language is requested.
+// Sacachispa has no language filter of its own, so the language is a soft
+// preference here, unlike the sites that drop chapters in other languages.
 func (s *Sacachispa) preferredReleases(rels []sacachispaRelease) []sacachispaRelease {
 	lang := s.GetPreferredLanguage()
 	if lang == "" || lang == FilterAll || len(rels) == 0 {

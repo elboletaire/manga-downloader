@@ -47,7 +47,9 @@ type MangalibChapter struct {
 	VolumeRaw string
 	Num       string
 	// BranchID is the translation branch (the api's branch_id) this release's
-	// pages come from, 0 when the chapter lists no branch
+	// pages come from, 0 when the chapter lists no branch. Without it the api
+	// returns the oldest branch, so two null-branch releases of one chapter
+	// would download the same pages.
 	BranchID int
 }
 
