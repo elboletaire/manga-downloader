@@ -980,24 +980,16 @@ func (m PlainHTML) uploadGroup(s *goquery.Selection) string {
 }
 
 // releaseID returns a release's ID: the first capture of idRe in its URL when
-// there's one, otherwise the URL's path and query. The host and fragment are
-// left out, and the query is kept because it can be what tells chapters apart
-// (/reader?chapter=1). Callers pass the URL before ChapterQuery is appended, so
-// that never ends up in the ID.
+// there's one, otherwise chapterURLID (path and sorted query, no host or
+// fragment). Callers pass the URL before ChapterQuery is appended, so that
+// never ends up in the ID.
 func releaseID(u string, idRe *regexp.Regexp) string {
 	if idRe != nil {
 		if match := idRe.FindStringSubmatch(u); len(match) > 1 {
 			return match[1]
 		}
 	}
-	parsed, err := url.Parse(u)
-	if err != nil {
-		return ""
-	}
-	if parsed.RawQuery != "" {
-		return parsed.Path + "?" + parsed.RawQuery
-	}
-	return parsed.Path
+	return chapterURLID(u)
 }
 
 // chapterOnlyTitleRe matches a chapter title that is just its number ("12",
