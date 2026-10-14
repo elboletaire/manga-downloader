@@ -144,11 +144,8 @@ type Series struct {
 }
 
 // FilterOptionsOf returns the language and scanlation group options of a site,
-// nil for each one it doesn't list. They're valid once the chapters have been
-// fetched, and stay valid when a filter matched nothing, so a front end can
-// offer the values that do exist after the load's error: err is that error, and
-// an unknown scanlation group carries the groups the series has. The options of
-// a site that lists its groups itself (ScanlatorLister) come from the site.
+// nil for each one it doesn't list. They stay valid when a filter matched nothing
+// (err is the load's error), so a front end can still offer the values that exist.
 func FilterOptionsOf(site grabber.Site, err error) (languages, scanlators *grabber.FilterOptions) {
 	if l, ok := site.(grabber.LanguageLister); ok {
 		options := l.LanguageOptions()
@@ -166,10 +163,8 @@ func FilterOptionsOf(site grabber.Site, err error) (languages, scanlators *grabb
 	return languages, scanlators
 }
 
-// Listing is the title and chapter list of an identified site as the site
-// lists them, before the scanlation group filter. Series filters it again
-// without a request, so a front end can keep one listing and apply each group
-// to it (see Series).
+// Listing is the title and chapter list of an identified site, before the
+// scanlation group filter. Series applies that filter without a new request.
 type Listing struct {
 	Site grabber.Site
 	// Title is the series title, used in the filenames
@@ -207,10 +202,8 @@ func Open(site grabber.Site, s *grabber.Settings) (*Series, error) {
 	return listing.Series(s)
 }
 
-// Series applies the settings' filters to the listing, the rest of Open. It
-// makes no request, so the same listing can be filtered again with other
-// settings, and gives what Open gives for them. s must be the settings pointer
-// the series is downloaded with, as with Open.
+// Series applies the settings' filters to a listing, the second half of Open.
+// It makes no request, so the same listing can be filtered again. s is as in Open.
 func (l *Listing) Series(s *grabber.Settings) (*Series, error) {
 	// an empty list would make the callers' prompt path index an empty slice
 	if len(l.Chapters) == 0 {
@@ -307,10 +300,8 @@ func HasDuplicateChapterNumbers(chapters grabber.Filterables) bool {
 	return false
 }
 
-// HasGroupDuplicates reports whether a chapter number is listed more than once
-// in the same language, with at least one of those releases naming its
-// scanlation group: the group is then what tells the copies apart, and the
-// listing shows it (the CLI and the app both key off this).
+// HasGroupDuplicates reports whether a chapter number is listed more than once in
+// one language with a group named, so the group tells the copies apart.
 func HasGroupDuplicates(chapters grabber.Filterables) bool {
 	type key struct {
 		number float64

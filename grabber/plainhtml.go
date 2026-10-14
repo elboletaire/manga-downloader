@@ -446,19 +446,15 @@ type SiteSelector struct {
 	// reader pages contain a partial chapter list: the link leads to the
 	// series page with the full list.
 	FollowSeriesLink bool
-	// Uploads, when set, is a CSS selector for one sub-row per upload of a
-	// chapter row, for sites that list several scanlation groups' releases
-	// of a chapter under one row. Each upload becomes its own chapter, with
-	// the link, group and ID found in its sub-row. A row with no sub-rows
-	// falls back to its own link.
+	// Uploads, when set, selects one sub-row per upload in a chapter row, for sites that
+	// list several groups' releases under one row. A row with no sub-rows falls back to
+	// its own link.
 	Uploads string
 	// UploadLink is the link to an upload's reader, searched inside its
 	// sub-row (Uploads), where Link isn't
 	UploadLink string
-	// UploadGroup is a CSS selector for the scanlation group(s) that made a
-	// single upload: it's searched inside one sub-row (or inside the row when
-	// it has no sub-rows), so it must not also match another upload's group.
-	// Several groups matched in that one upload are joined with ", ".
+	// UploadGroup selects the group(s) of one upload, searched inside its sub-row, so it
+	// must not match another upload's group. Several matches join with ", ".
 	UploadGroup string
 	// IDRe is a regexp whose first group captures a release's ID from its
 	// URL. Without it, or when it doesn't match, the ID is the URL's path.
@@ -979,10 +975,8 @@ func (m PlainHTML) uploadGroups(s *goquery.Selection) []string {
 	return names
 }
 
-// releaseID returns a release's ID: the first capture of idRe in its URL when
-// there's one, otherwise chapterURLID (path and sorted query, no host or
-// fragment). Callers pass the URL before ChapterQuery is appended, so that
-// never ends up in the ID.
+// releaseID returns the first capture of idRe in the URL, else chapterURLID. Pass the
+// URL before ChapterQuery is appended, so it never lands in the ID.
 func releaseID(u string, idRe *regexp.Regexp) string {
 	if idRe != nil {
 		if match := idRe.FindStringSubmatch(u); len(match) > 1 {

@@ -144,10 +144,8 @@ func (m *Roliascan) FetchChapters() (Filterables, []error) {
 	return chapters, nil
 }
 
-// roliascanReleases turns the chapters feed into one chapter per release, the
-// language kept as --language asks (every one for "all", and a release that
-// names no language is kept too). The site lists each release of a chapter
-// separately, with its own id and group.
+// roliascanReleases turns the chapters feed into one chapter per release, filtered by
+// --language (a release naming no language is kept).
 func roliascanReleases(items []roliascanChapterItem, language string) Filterables {
 	var chapters Filterables
 	for _, c := range items {

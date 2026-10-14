@@ -184,10 +184,7 @@ function mockChapters(count: number, withLanguages: boolean, withVolumes = true)
   return list;
 }
 
-/**
- * The releases of a site that lists groups: every chapter by Alpha, and every
- * fifth one again by Delta, so a number is listed twice in the same language.
- */
+/** Every chapter by Alpha, and every fifth again by Delta, so a number repeats in one language. */
 function groupedChapters(list: Chapter[]): Chapter[] {
   const out: Chapter[] = [];
   for (const c of list) {

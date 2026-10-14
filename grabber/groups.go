@@ -83,16 +83,9 @@ func GroupOptions(chapters Filterables) *FilterOptions {
 	return &FilterOptions{Values: values, All: true}
 }
 
-// SelectGroup applies --scanlator to a listing of releases: the ones of the
-// selected group, matched ignoring case. An empty selection, "all", and a
-// listing that names no group keep every chapter (the last one because there's
-// no group to select by). Chapters naming no group are kept only when no group
-// is selected. A group the listing doesn't have is an UnavailableFilterError
-// listing the ones it does.
-//
-// Sites that list every group's releases in one listing get this from core;
-// the ones that list one group per request (see ScanlatorLister) call it on
-// their own listing, so both behave the same.
+// SelectGroup applies --scanlator to a listing, matched ignoring case. "", "all" and
+// a listing naming no group keep everything; releases naming no group are kept only
+// when none is selected. A group the listing lacks is an UnavailableFilterError.
 func SelectGroup(chapters Filterables, selection string) (Filterables, error) {
 	selection = strings.TrimSpace(selection)
 	options := GroupOptions(chapters)

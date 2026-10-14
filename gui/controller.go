@@ -348,10 +348,8 @@ func (c *Controller) BeginLoad(url string) error {
 	return nil
 }
 
-// ConfigureLoad applies fn to the settings and starts the load of url, as
-// Configure and then BeginLoad would, in one step: the window never sees the
-// new filters before the load they're for has started, so a filter picked from
-// a selector is never shown as not applied.
+// ConfigureLoad is Configure then BeginLoad in one step, so the window never shows a
+// picked filter as not applied.
 func (c *Controller) ConfigureLoad(fn func(*grabber.Settings), url string) error {
 	c.mu.Lock()
 	if c.loading || c.running {
@@ -520,13 +518,9 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	return nil
 }
 
-// listingFor returns the unfiltered listing of url for the settings, and the
-// site that holds it. A nil site means no site matches the URL. When useCache
-// is set, a listing cached for the URL and language (and scanlator, for a
-// ScanlatorLister) is served without a request; otherwise the URL is fetched,
-// the site being reuse when given and identified afresh when not, and the
-// listing cached. The site comes back with a fetch error too, so the caller
-// can read its filter options.
+// listingFor returns the unfiltered listing of url and its site, nil when no site
+// matches. With useCache, a listing cached for the URL, language (and group for a
+// ScanlatorLister) is reused. The site comes back even on a fetch error.
 func (c *Controller) listingFor(url string, s *grabber.Settings, reuse grabber.Site, useCache bool) (*core.Listing, grabber.Site, error) {
 	c.mu.Lock()
 	if useCache {

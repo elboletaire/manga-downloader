@@ -402,10 +402,8 @@ func (a *App) Load(url string) error {
 	return nil
 }
 
-// SetOptionsAndLoad applies the options and reloads url with them, as a filter
-// picked from a selector does: SetOptions then Load, in one step, so the window
-// never shows the picked filter as not applied. It's refused as SetOptions and
-// Load are.
+// SetOptionsAndLoad applies the options and reloads url in one step, so a filter picked
+// from a selector is never shown as not applied. It's refused as SetOptions and Load are.
 func (a *App) SetOptionsAndLoad(o OptionsDTO, url string) error {
 	url = strings.TrimSpace(url)
 	if url == "" {

@@ -10,10 +10,8 @@ import (
 // listingCacheSize bounds the listings a session keeps for filter changes
 const listingCacheSize = 8
 
-// cachedListing is the unfiltered listing of a URL in one language. A
-// ScanlatorLister's listing depends on the group too, as the site filters it;
-// any other listing holds every group's releases, and the group is applied to
-// it (core.Listing.Series), so its entry serves every group.
+// cachedListing is the unfiltered listing of a URL in one language. A ScanlatorLister's
+// entry also depends on the group, since the site filters it.
 type cachedListing struct {
 	url, language string
 	// scanlator is part of the key only for a ScanlatorLister (lister)

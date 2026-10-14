@@ -98,11 +98,8 @@ const (
 	btMaxTitleW = 70
 )
 
-// btLayout returns titleW, barW, and narrow for a chapter row.
-// When narrow is false the full row is: title(titleW) + " " + bar(barW) + " " + counter(9) + " " + status(12)
-// totalling exactly width. The title takes two thirds of the room (at least btMinTitleW, at most
-// btMaxTitleW), and the bar keeps at least btMinBarW. When narrow is true the counter and status are
-// omitted: title(titleW) + " " + bar(barW) totalling exactly width.
+// btLayout splits a chapter row between title and bar. The counter and status
+// are dropped when narrow is set.
 func btLayout(width int) (titleW, barW int, narrow bool) {
 	if width <= 0 {
 		width = 80
@@ -925,12 +922,8 @@ func (plainEvents) VolumePacked(v *core.Volume, _ string, err error) {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-// chapterTitle builds an untruncated "Series - Chapter" title for a chapter and
-// its release tags " [lang] [group]" apart. The caller passes showLanguage (true
-// when the series has chapters in more than one language) and showGroup (true
-// when one number is listed more than once in a language, see
-// core.HasGroupDuplicates). Both are stored in barState and fitted to titleW at
-// render time so resizing the terminal shows more text.
+// chapterTitle builds an untruncated "Series - Chapter" title, with the release
+// tags " [lang] [group]" kept apart so they can stay whole.
 func chapterTitle(seriesTitle string, c *grabber.Chapter, showLanguage, showGroup bool) (title, tags string) {
 	title = c.GetTitle()
 	if seriesTitle != "" {

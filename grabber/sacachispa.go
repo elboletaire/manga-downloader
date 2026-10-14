@@ -75,11 +75,9 @@ func (s *Sacachispa) FetchTitle() (string, error) {
 	return sanitizeTitle(res.Data.Title), nil
 }
 
-// FetchChapters returns the chapters of the manga: one per release, so a
-// chapter several groups released is listed once for each, the group in
-// Chapter.Group (see grabber.SelectGroup). A chapter with no release is listed
-// once anyway, so FetchChapter can say why it has no pages. Their pages are
-// fetched later, in FetchChapter, so only the requested chapters cost API calls.
+// FetchChapters returns one chapter per release, its group in Chapter.Group, and one
+// for a chapter with no release, so FetchChapter can say why it has no pages. Pages
+// are fetched later, in FetchChapter, so only the requested chapters cost API calls.
 func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 	id, err := s.resolveMangaID()
 	if err != nil {
@@ -185,11 +183,9 @@ func (s *Sacachispa) releasesByChapter(mangaID string) (map[string][]sacachispaR
 	return byChapter, nil
 }
 
-// preferredReleases returns the releases of a chapter to list: the ones in the
-// requested language, or, when none is, the first one (the release FetchChapter
-// has always fallen back to). Every release when no language is requested.
-// Sacachispa has no language filter of its own, so the language is a soft
-// preference here, unlike the sites that drop chapters in other languages.
+// preferredReleases returns a chapter's releases in the requested language, or its
+// first one when there are none: the site has no language filter of its own, so the
+// language is a soft preference here, not a filter. With none requested, all of them.
 func (s *Sacachispa) preferredReleases(rels []sacachispaRelease) []sacachispaRelease {
 	lang := s.GetPreferredLanguage()
 	if lang == "" || lang == FilterAll || len(rels) == 0 {

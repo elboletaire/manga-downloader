@@ -15,11 +15,8 @@ type FilterOptions struct {
 	Values []string
 	// All is set when the site accepts FilterAll, which keeps every value
 	All bool
-	// Current is the one value the loaded list shows when no filter is set, for
-	// the sites whose default is a single value rather than every value: sites
-	// that list one edition at a time (Manga Plus) show the edition the URL
-	// points at. It's empty otherwise, scanlation groups included: their default
-	// is every group's releases.
+	// Current is the value shown when no filter is set, for sites that show one
+	// edition at a time (Manga Plus: the URL's). Empty when every value is shown.
 	Current string
 }
 
@@ -29,25 +26,16 @@ type LanguageLister interface {
 	LanguageOptions() FilterOptions
 }
 
-// ScanlatorLister is for the sites that can only list one scanlation group's
-// releases per request, so the group is a request option the grabber reads from
-// Settings.Scanlator itself. It lists the groups the series has, and its
-// FetchChapters keeps the selected one (through SelectGroup, so the match and
-// the unknown-group error are the ones every other site gives).
-//
-// Sites whose one listing already holds every group's releases don't implement
-// it: they set Chapter.Group, and core filters the listing by it (SelectGroup,
-// see GroupOptions).
+// ScanlatorLister is for sites that list one scanlation group's releases per
+// request, so the grabber reads Settings.Scanlator and filters with SelectGroup.
+// Sites whose listing holds every group's releases set Chapter.Group instead.
 type ScanlatorLister interface {
 	ScanlatorOptions() FilterOptions
 }
 
-// Refilterable is implemented by grabbers whose FetchChapters serves cached data
-// on a filter change, without a browser or network access, so the controller
-// reuses such a site on a filter change its own listing cache doesn't hold (a
-// language not loaded yet). A group change never needs the site: the listing
-// holds every group's releases, and core does the rest. Grabbers that must fetch
-// to apply their filter (mangadex, mangafire, mangaplus) must not implement this.
+// Refilterable is for grabbers whose FetchChapters serves a filter change from cache,
+// without a browser or request, so the app can reuse the site. Grabbers that must
+// fetch to apply a filter (mangadex, mangafire, mangaplus) mustn't implement it.
 type Refilterable interface {
 	// Refilterable marks that FetchChapters serves cached data on a filter
 	// change: no browser or network access is needed.

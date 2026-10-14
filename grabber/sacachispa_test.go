@@ -15,10 +15,9 @@ const (
 	sacachispaTestRelease = "011b647a-fc27-5696-b823-986a3f5a98d4"
 )
 
-// sacachispaTestServer mimics the slice of api.sacachispa.site the grabber uses:
-// a 2-page chapter list and a 2-page release list (so pagination gets exercised).
-// c1 has two releases (Spanish by Alpha, English by Gamma), c2 one, c3 a
-// Patreon one whose pages 403, and c4 a Patreon one with no release at all
+// sacachispaTestServer mimics the api.sacachispa.site slice the grabber uses, with
+// two-page chapter and release lists. c1 has two releases (es by Alpha, en by Gamma),
+// c2 one, c3 a Patreon one whose pages 403, and c4 has none.
 func sacachispaTestServer(t *testing.T) {
 	t.Helper()
 

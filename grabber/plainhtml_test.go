@@ -801,10 +801,8 @@ func zonatmoSelector(t *testing.T) SiteSelector {
 	return SiteSelector{}
 }
 
-// TestFetchChaptersZonatmoUploads covers a chapter row that lists several
-// uploads: each upload is its own release, with the group from its sub-row
-// (empty when it names none, never inherited from a sibling) and the ID from
-// its view_uploads URL.
+// TestFetchChaptersZonatmoUploads covers a row listing several uploads: each is its
+// own release, with its sub-row's group (never a sibling's) and ID.
 func TestFetchChaptersZonatmoUploads(t *testing.T) {
 	html := `<html><body>
 		<h1 class="element-title">Gachiakuta</h1>

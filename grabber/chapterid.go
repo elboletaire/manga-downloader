@@ -4,11 +4,8 @@ package grabber
 
 import "net/url"
 
-// chapterURLID returns the ID of a chapter URL for the grabbers whose chapters
-// are only addressed by their URL: its path, plus its query with the
-// parameters sorted, so the same chapter keeps its ID when the site moves to
-// another host or reorders its links. The host and fragment are dropped.
-// Returns "" when rawURL is empty or doesn't parse. Relative hrefs work too.
+// chapterURLID returns the ID of a chapter URL: its path and sorted query, so the
+// ID survives a host change or reordered links. "" when rawURL doesn't parse.
 func chapterURLID(rawURL string) string {
 	u, err := url.Parse(rawURL)
 	if err != nil {
