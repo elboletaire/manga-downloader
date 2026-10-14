@@ -612,8 +612,11 @@ func TestReleaseLabelInMessages(t *testing.T) {
 			buf.Reset()
 			ev := plainEvents{showLang: tt.showLang, showGroup: tt.showGroup}
 			ev.Started(chapter)
+			ev.Page(chapter, 2, errBoom)
 			ev.DownloadFailed(chapter, errBoom)
-			want := "downloading " + tt.want + "...\n- error downloading chapter " + tt.want + ": boom\n"
+			want := "downloading " + tt.want + "...\n" +
+				"- error downloading page 3 of " + tt.want + ": boom\n" +
+				"- error downloading chapter " + tt.want + ": boom\n"
 			if got := buf.String(); got != want {
 				t.Errorf("output = %q, want %q", got, want)
 			}
@@ -633,11 +636,13 @@ func TestReleaseLabelInMessages(t *testing.T) {
 			ev := &bubbleEvents{done: done, showLang: tt.showLang, showGroup: tt.showGroup}
 			ev.FetchFailed(chapter, errBoom)
 			ev.Skipped(chapter)
+			ev.Page(chapter, 2, errBoom)
 			w.Close()
 			os.Stderr = prevErr
 			out, _ := io.ReadAll(r)
 			want := "- error fetching chapter " + tt.want + ": boom\n" +
-				"- skipping chapter " + tt.want + ": --skip-pages excludes all of its pages\n"
+				"- skipping chapter " + tt.want + ": --skip-pages excludes all of its pages\n" +
+				"- error downloading page 3 of " + tt.want + ": boom\n"
 			if got := string(out); got != want {
 				t.Errorf("output = %q, want %q", got, want)
 			}

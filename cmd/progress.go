@@ -772,7 +772,8 @@ func (e *bubbleEvents) Started(c *grabber.Chapter) {
 
 func (e *bubbleEvents) Page(c *grabber.Chapter, idx int, err error) {
 	if err != nil {
-		e.println(color.RedString("- error downloading page %d: %s", idx+1, err.Error()))
+		e.println(color.RedString("- error downloading page %d of %s: %s",
+			idx+1, chapterLabel(c, e.showLang, e.showGroup), err.Error()))
 		return
 	}
 	e.prog.Send(pageSuccessMsg{chapter: c})
@@ -862,9 +863,10 @@ func (p plainEvents) Started(c *grabber.Chapter) {
 	fmt.Fprintf(color.Output, "downloading %s...\n", chapterLabel(c, p.showLang, p.showGroup))
 }
 
-func (plainEvents) Page(c *grabber.Chapter, idx int, err error) {
+func (p plainEvents) Page(c *grabber.Chapter, idx int, err error) {
 	if err != nil {
-		red("- error downloading page %d: %s", idx+1, err.Error())
+		red("- error downloading page %d of %s: %s",
+			idx+1, chapterLabel(c, p.showLang, p.showGroup), err.Error())
 	}
 }
 
