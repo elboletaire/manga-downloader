@@ -96,9 +96,20 @@ the [releases page][releases]:
   `brew uninstall --cask manga-downloader` first.
 
 - **Linux**: `manga-downloader-gui-<tag>-linux-amd64.tar.gz`, or
-  `-linux-arm64.tar.gz`. Extract it and run `manga-downloader-gui`. It needs
-  WebKitGTK 4.1 (`libwebkit2gtk-4.1-0` on Debian and Ubuntu), which most desktops
-  already have.
+  `-linux-arm64.tar.gz`. Extract it and run `install.sh` to add the app to
+  your applications menu. It installs for your user only, into `~/.local`,
+  with no root needed. Run it again to update, or with `--uninstall` to
+  remove it (with the same `XDG_DATA_HOME`, if you set one):
+
+  ~~~bash
+  tar -xzf manga-downloader-gui-<tag>-linux-amd64.tar.gz
+  ./manga-downloader-gui-<tag>-linux-amd64/install.sh
+  ~~~
+
+  Or just run `manga-downloader-gui` from the extracted folder. It needs
+  WebKitGTK 4.1 (`libwebkit2gtk-4.1-0` on Debian and Ubuntu), which most
+  desktops already have; `install.sh` tells you how to get it if it's
+  missing.
 
 > [!NOTE]
 > **macOS** doesn't sign the app, so Gatekeeper blocks its first launch. Allow it
@@ -111,8 +122,8 @@ the [releases page][releases]:
 > **Run anyway**: the file is only flagged because it isn't signed.
 
 If the desktop app sits next to the command line tool or is on your `PATH` (the
-Homebrew cask puts it there), `manga-downloader ui` opens it. On Windows,
-double-clicking `manga-downloader.exe` does the same.
+Homebrew cask and the Linux `install.sh` put it there), `manga-downloader ui`
+opens it. On Windows, double-clicking `manga-downloader.exe` does the same.
 
 When a newer release is out, a yellow *!* next to the version in the status bar
 links to it.
