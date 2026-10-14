@@ -83,12 +83,13 @@ Scanlation groups reserve pages for credits/ads (tcbscans: always page 2, often 
 
 ### EPUB output (`--format epub`)
 
-EPUB is another archive next to CBZ, grouped the same way (per chapter, `--volumes`, `--bundle`). `packer/epub.go` writes it with the standard library only.
+EPUB is another archive next to CBZ, grouped the same way (per chapter, `--volumes`, `--bundle`). `packer/epub.go` writes it with no new dependency.
 
 - **`ArchiveEPUB` takes an `EPUBInfo`, not just the files.** The series, the volume or chapter number (`group-position`), the reading direction and the table of contents labels can't be recovered from the entry names, so the `Pack*` functions pass them in. Labels are keyed by folder (`chapterLabel`: "Chapter 265 - Title"), and a folder without one is named after the folder.
 - **AVIF is always converted for EPUB**, whatever `--convert-images` says, since readers can't show it: `pageFormats` adds it for `epub`, and every Pack function goes through it.
 - **A page EPUB can't show is left out with a warning**, rather than failing the book: anything but JPEG, PNG, GIF or WebP, or a page whose size can't be read. It still counts towards progress, since the archive's total is the pages downloaded. The book fails only when no page is left.
 - **Reading direction** is `--reading-direction rtl|ltr` (default `rtl`) and a control in the app, shown only for EPUB. It sets the spine's `page-progression-direction`. Deriving it from the series' language is deferred.
 - **`dc:language` is `und` on purpose.** `Settings.Language` is the site's filter (`en`, `es`, `all`, or a site's own code), not a BCP 47 tag, so it can't be written as the book's language.
+- **The identifier is a UUID v5 of the series and what the book holds** (`chapter`, `volume N` or `bundle` plus each chapter's number, language and `Chapter.ID`, or its title without one), so a repack keeps it and two releases of one chapter don't share it. A grabber listing several releases per number sets `Chapter.ID` (mangadex, atsumaru, comix) and keeps it on what `FetchChapter` returns.
 - **Pages are fixed layout**: one XHTML per image, with a viewport at the image's size, and the first page is the cover.
 - **epubcheck isn't in CI yet**: check a change by running epubcheck on a real download, the way `tools/verify-cbz` checks CBZs.
