@@ -5,6 +5,7 @@ export namespace main {
 	    number: number;
 	    title: string;
 	    language: string;
+	    group: string;
 	    volume: number;
 	
 	    static createFrom(source: any = {}) {
@@ -17,6 +18,7 @@ export namespace main {
 	        this.number = source["number"];
 	        this.title = source["title"];
 	        this.language = source["language"];
+	        this.group = source["group"];
 	        this.volume = source["volume"];
 	    }
 	}
@@ -188,6 +190,7 @@ export namespace main {
 	    title: string;
 	    chapterCount: number;
 	    hasDuplicates: boolean;
+	    hasGroupDuplicates: boolean;
 	    stale: boolean;
 	    loadedLanguage: string;
 	    loadedScanlator: string;
@@ -220,6 +223,7 @@ export namespace main {
 	        this.title = source["title"];
 	        this.chapterCount = source["chapterCount"];
 	        this.hasDuplicates = source["hasDuplicates"];
+	        this.hasGroupDuplicates = source["hasGroupDuplicates"];
 	        this.stale = source["stale"];
 	        this.loadedLanguage = source["loadedLanguage"];
 	        this.loadedScanlator = source["loadedScanlator"];
