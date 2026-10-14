@@ -154,3 +154,63 @@ func TestMangadexChapterIDs(t *testing.T) {
 		}
 	}
 }
+
+// A release names its scanlation groups from the feed's relationships, several
+// joined with ", "; an upload by a user alone names none. FetchChapter keeps
+// the group with the release it downloads.
+func TestMangadexChapterGroups(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/feed"):
+			if r.URL.Query().Get("offset") != "0" {
+				_, _ = w.Write([]byte(`{"data":[]}`))
+				return
+			}
+			if !slices.Contains(r.URL.Query()["includes[]"], "scanlation_group") {
+				http.Error(w, "groups not included", http.StatusBadRequest)
+				return
+			}
+			_, _ = w.Write([]byte(`{"data":[
+				{"id":"rel-a","attributes":{"chapter":"1","title":"","translatedLanguage":"en","pages":2},
+					"relationships":[{"id":"g1","type":"scanlation_group","attributes":{"name":"A"}},
+						{"id":"g2","type":"scanlation_group","attributes":{"name":"B"}},
+						{"id":"m","type":"manga"},{"id":"u","type":"user","attributes":{"username":"up"}}]},
+				{"id":"rel-b","attributes":{"chapter":"2","title":"","translatedLanguage":"en","pages":2},
+					"relationships":[{"id":"u","type":"user","attributes":{"username":"up"}},{"id":"m","type":"manga"}]},
+				{"id":"rel-c","attributes":{"chapter":"3","title":"","translatedLanguage":"en","pages":2},
+					"relationships":[{"id":"g1","type":"scanlation_group","attributes":{"name":"A"}}]}]}`))
+		case strings.HasPrefix(r.URL.Path, "/at-home/server/"):
+			_, _ = w.Write([]byte(`{"baseUrl":"https://cdn.test","chapter":{"hash":"h","data":["1.png","2.png"]}}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+	old := mangadexAPI
+	mangadexAPI = srv.URL
+	defer func() { mangadexAPI = old }()
+
+	m := NewMangadex(&Grabber{URL: "https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f", Settings: &Settings{Language: "en"}})
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 || len(chapters) != 3 {
+		t.Fatalf("FetchChapters = %d chapters, errs %v", len(chapters), errs)
+	}
+	wantGroups := []string{"A, B", "", "A"}
+	for i, want := range wantGroups {
+		c := chapters[i].(*MangadexChapter)
+		if c.Group != want {
+			t.Errorf("chapter %d Group = %q, want %q", i, c.Group, want)
+		}
+	}
+	if c := chapters[0].(*MangadexChapter); c.ID != "rel-a" {
+		t.Errorf("chapter 0 ID = %q, want rel-a", c.ID)
+	}
+
+	got, err := m.FetchChapter(chapters[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != "rel-a" || got.Group != "A, B" {
+		t.Errorf("FetchChapter ID, Group = %q, %q, want rel-a, \"A, B\"", got.ID, got.Group)
+	}
+}

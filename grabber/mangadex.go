@@ -258,6 +258,8 @@ func (m *Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 		params.Add("order[volume]", "asc")
 		params.Add("order[chapter]", "asc")
 		params.Add("offset", fmt.Sprint(offset))
+		// the groups come with the chapters, as relationships
+		params.Add("includes[]", "scanlation_group")
 		if lang := m.Settings.Language; lang != "" && lang != FilterAll {
 			params.Add("translatedLanguage[]", lang)
 		}
@@ -293,6 +295,7 @@ func (m *Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 					PagesCount: c.Attributes.Pages,
 					Volume:     parseVolume(c.Attributes.Volume),
 					ID:         c.Id,
+					Group:      mangadexGroup(c.Relationships),
 				},
 				c.Id,
 			})
@@ -334,6 +337,7 @@ func (m *Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 		PagesCount: int64(pcount),
 		Language:   chap.Language,
 		ID:         chap.ID,
+		Group:      chap.Group,
 	}
 
 	// create pages
@@ -386,7 +390,31 @@ type mangadexFeed struct {
 			Pages              int64
 			ExternalUrl        string
 		}
+		Relationships []mangadexRelationship
 	}
+}
+
+// mangadexRelationship is a linked resource of a chapter; the feed includes
+// the scanlation groups (includes[]=scanlation_group) and the uploader
+type mangadexRelationship struct {
+	Type       string
+	Attributes struct {
+		Name string
+	}
+}
+
+// mangadexGroup names the scanlation groups of a release, from its
+// relationships. An upload by a user alone names none, so it stays "" rather
+// than the uploader.
+func mangadexGroup(relationships []mangadexRelationship) string {
+	var names []string
+	for _, rel := range relationships {
+		if rel.Type == "scanlation_group" {
+			names = append(names, rel.Attributes.Name)
+		}
+	}
+
+	return strings.Join(uniqueValues(names), groupSeparator)
 }
 
 // mangadexPagesFeed represents the json object returned by the pages endpoint
