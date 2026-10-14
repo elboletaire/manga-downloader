@@ -24,7 +24,9 @@ func TestValidateFormatAndReadingDirection(t *testing.T) {
 		{"epub without a direction", packer.FormatEPUB, "", ""},
 		{"unknown format", "pdf", packer.ReadingDirectionRTL, "format"},
 		{"unknown direction", packer.FormatEPUB, "ttb", "reading-direction"},
-		{"direction case matters", packer.FormatEPUB, "RTL", "reading-direction"},
+		{"direction case is ignored", packer.FormatEPUB, "RTL", ""},
+		{"direction spaces are ignored", packer.FormatEPUB, " ltr ", ""},
+		{"direction is only read by epub", packer.FormatCBZ, "ttb", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -41,5 +43,15 @@ func TestValidateFormatAndReadingDirection(t *testing.T) {
 				t.Fatalf("Validate() = %v, want a %s SettingError", err, tt.setting)
 			}
 		})
+	}
+}
+
+func TestValidateNormalizesReadingDirection(t *testing.T) {
+	s := &grabber.Settings{Format: packer.FormatEPUB, ReadingDirection: " LTR ", ConvertImages: grabber.ConvertImagesDefault}
+	if _, err := Validate(s); err != nil {
+		t.Fatalf("Validate() = %v, want ok", err)
+	}
+	if s.ReadingDirection != packer.ReadingDirectionLTR {
+		t.Errorf("reading direction %q, want the normalised %q the packer reads", s.ReadingDirection, packer.ReadingDirectionLTR)
 	}
 }

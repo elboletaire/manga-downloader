@@ -171,6 +171,8 @@ func loadOptions(path string, s *grabber.Settings) error {
 		notice.Warn("ignoring the saved pack-as %q, using %q", o.PackAs, PackChapters)
 		o.PackAs = PackChapters
 	}
+	// the same normalisation core.Validate applies at Start, so a saved "RTL" is kept
+	o.ReadingDirection = packer.NormalizeReadingDirection(o.ReadingDirection)
 	switch o.ReadingDirection {
 	case packer.ReadingDirectionRTL, packer.ReadingDirectionLTR:
 	default:

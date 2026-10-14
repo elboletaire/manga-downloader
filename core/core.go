@@ -32,7 +32,7 @@ func (e *SettingError) Unwrap() error { return e.Err }
 
 // Validate checks the settings that can fail before anything is fetched, in
 // the order they're reported, and returns the parsed --skip-pages ranges (nil
-// when none were given).
+// when none were given). It also normalises the reading direction in s.
 func Validate(s *grabber.Settings) ([]ranges.Range, error) {
 	if s.Format != packer.FormatCBZ && s.Format != packer.FormatRaw && s.Format != packer.FormatEPUB {
 		return nil, &SettingError{
@@ -42,9 +42,11 @@ func Validate(s *grabber.Settings) ([]ranges.Range, error) {
 		}
 	}
 
-	// empty means the default, as the settings of a caller that never set it
+	s.ReadingDirection = packer.NormalizeReadingDirection(s.ReadingDirection)
+	// only EPUB output reads the direction, so only an EPUB is refused over it.
+	// Empty means the default, as the settings of a caller that never set it
 	// (or a saved file from before it existed) mean
-	if d := s.ReadingDirection; d != "" && d != packer.ReadingDirectionRTL && d != packer.ReadingDirectionLTR {
+	if d := s.ReadingDirection; s.Format == packer.FormatEPUB && d != "" && d != packer.ReadingDirectionRTL && d != packer.ReadingDirectionLTR {
 		return nil, &SettingError{
 			Setting: "reading-direction",
 			Value:   d,
