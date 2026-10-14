@@ -154,7 +154,7 @@ func TestParseMangafireChapters(t *testing.T) {
 		name      string
 		responses []browser.APIResponse
 		wantNums  []float64
-		wantTypes map[float64]string
+		wantIDs   []int64
 	}{
 		{
 			// the #169 regression: chapters spread over several pager pages
@@ -167,12 +167,14 @@ func TestParseMangafireChapters(t *testing.T) {
 			wantNums: []float64{3, 2, 1},
 		},
 		{
-			name: "official preferred over unofficial regardless of order",
+			// official and unofficial uploads of one number are separate
+			// releases: every item is kept, in the site's order
+			name: "every release of a number kept",
 			responses: []browser.APIResponse{
-				page(1, `{"items":[{"id":10,"number":1,"type":"unofficial"},{"id":11,"number":1,"type":"official"},{"id":21,"number":2,"type":"official"},{"id":20,"number":2,"type":"unofficial"}]}`),
+				page(1, `{"items":[{"id":9455278,"number":1194,"type":"official"},{"id":9451857,"number":1194,"type":"unofficial"},{"id":9426668,"number":1193,"type":"official"},{"id":9422044,"number":1193,"type":"unofficial"}]}`),
 			},
-			wantNums:  []float64{1, 2},
-			wantTypes: map[float64]string{1: "official", 2: "official"},
+			wantNums: []float64{1194, 1194, 1193, 1193},
+			wantIDs:  []int64{9455278, 9451857, 9426668, 9422044},
 		},
 		{
 			name: "non-matching and malformed responses are skipped",
@@ -200,11 +202,24 @@ func TestParseMangafireChapters(t *testing.T) {
 				if item.Number != c.wantNums[i] {
 					t.Errorf("chapter[%d].Number = %v, want %v", i, item.Number, c.wantNums[i])
 				}
-				if want, ok := c.wantTypes[item.Number]; ok && item.Type != want {
-					t.Errorf("chapter %v type = %q, want %q", item.Number, item.Type, want)
+				if c.wantIDs != nil && item.Id != c.wantIDs[i] {
+					t.Errorf("chapter[%d].Id = %v, want %v", i, item.Id, c.wantIDs[i])
 				}
 			}
 		})
+	}
+}
+
+func TestMangafireGroup(t *testing.T) {
+	cases := map[string]string{
+		"official":   "Official",
+		"unofficial": "Unofficial",
+		"":           "",
+	}
+	for in, want := range cases {
+		if got := mangafireGroup(in); got != want {
+			t.Errorf("mangafireGroup(%q) = %q, want %q", in, got, want)
+		}
 	}
 }
 

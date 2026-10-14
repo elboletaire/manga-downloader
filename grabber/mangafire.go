@@ -148,6 +148,8 @@ func (m *Mangafire) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		Language:   mchap.Language,
+		Group:      mchap.Group,
+		ID:         mchap.ID,
 		PagesCount: int64(len(pages)),
 	}
 	for i, p := range pages {
@@ -255,6 +257,8 @@ func (m *Mangafire) load() error {
 				Number:   c.Number,
 				Title:    title,
 				Language: c.Language,
+				Group:    mangafireGroup(c.Type),
+				ID:       strconv.FormatInt(c.Id, 10),
 			},
 			URL: fmt.Sprintf("%s/chapter/%d", m.readerBase, c.Id),
 			Id:  c.Id,
@@ -289,12 +293,11 @@ func (m *Mangafire) hid() (string, error) {
 
 // parseMangafireChapters collects the chapter items out of the captured API
 // responses whose URL matches chaptersPrefix (one response per chapter-list
-// page), deduping by chapter number and preferring the official scanlation
-// (the api returns both official and unofficial uploads for the same number).
-// Items keep their first-seen order, which is the site's own list order.
+// page). The api returns official and unofficial uploads of the same number as
+// separate items, and every one is kept: each is a release of its own. Items
+// keep their first-seen order, which is the site's own list order.
 func parseMangafireChapters(responses []browser.APIResponse, chaptersPrefix string) []mangafireChapterItem {
-	best := map[float64]mangafireChapterItem{}
-	var order []float64
+	var out []mangafireChapterItem
 	for _, r := range responses {
 		if !strings.Contains(r.URL, chaptersPrefix) {
 			continue
@@ -305,24 +308,22 @@ func parseMangafireChapters(responses []browser.APIResponse, chaptersPrefix stri
 		if err := json.Unmarshal([]byte(r.Body), &feed); err != nil {
 			continue
 		}
-		for _, c := range feed.Items {
-			cur, ok := best[c.Number]
-			if !ok {
-				best[c.Number] = c
-				order = append(order, c.Number)
-				continue
-			}
-			if cur.Type != "official" && c.Type == "official" {
-				best[c.Number] = c
-			}
-		}
-	}
-
-	out := make([]mangafireChapterItem, 0, len(order))
-	for _, num := range order {
-		out = append(out, best[num])
+		out = append(out, feed.Items...)
 	}
 	return out
+}
+
+// mangafireGroup returns the group a chapter item names for its upload type.
+// The listing has no group of its own, so the two kinds of release are the
+// groups --scanlator picks between.
+func mangafireGroup(uploadType string) string {
+	switch uploadType {
+	case "official":
+		return "Official"
+	case "unofficial":
+		return "Unofficial"
+	}
+	return ""
 }
 
 // mangafireChapterItem is one entry of the chapters-list JSON feed
