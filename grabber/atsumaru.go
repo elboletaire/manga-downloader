@@ -153,6 +153,7 @@ func (a *Atsumaru) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: c.Number,
 				Title:  title,
+				ID:     c.Id,
 			},
 			c.Id,
 		})
@@ -346,6 +347,7 @@ func (a *Atsumaru) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		Language:   "en",
+		ID:         achap.ID,
 		PagesCount: int64(len(feed.ReadChapter.Pages)),
 	}
 	for i, p := range feed.ReadChapter.Pages {

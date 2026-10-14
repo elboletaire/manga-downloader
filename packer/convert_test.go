@@ -162,7 +162,7 @@ func TestNamePagesConvertsListedFormats(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		named := namePages([]*downloader.File{{Data: c.page}}, c.formats)
+		named := namePages([]*downloader.File{{Data: c.page}}, c.formats, FormatCBZ)
 
 		if len(named) != 1 {
 			t.Fatalf("%s: namePages returned %d files, want 1", c.name, len(named))
@@ -221,7 +221,7 @@ func TestNamePagesConvertsWebP(t *testing.T) {
 		t.Fatalf("fixture sniffs as %q, want %q", got, "webp")
 	}
 
-	named := namePages([]*downloader.File{{Data: tinyWebP}}, grabber.ConvertFormats{grabber.ConvertWebP: true})
+	named := namePages([]*downloader.File{{Data: tinyWebP}}, grabber.ConvertFormats{grabber.ConvertWebP: true}, FormatCBZ)
 
 	if named[0].Name != "000.jpg" {
 		t.Errorf("page named %q, want %q", named[0].Name, "000.jpg")
@@ -240,7 +240,7 @@ func TestNamePagesKeepsOriginalOnConversionFailure(t *testing.T) {
 	// sniffs as avif, but there's nothing decodable behind the header
 	page := append([]byte{0x00, 0x00, 0x00, 0x1c, 'f', 't', 'y', 'p', 'a', 'v', 'i', 'f'}, []byte("truncated")...)
 
-	named := namePages([]*downloader.File{{Data: page}}, grabber.ConvertFormats{grabber.ConvertAVIF: true})
+	named := namePages([]*downloader.File{{Data: page}}, grabber.ConvertFormats{grabber.ConvertAVIF: true}, FormatCBZ)
 
 	if named[0].Name != "000.avif" {
 		t.Errorf("page named %q, want %q", named[0].Name, "000.avif")

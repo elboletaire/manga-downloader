@@ -30,9 +30,9 @@ var settings grabber.Settings
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "manga-downloader [flags] [url] [ranges]",
-	Short: "Helps you download mangas from websites to CBZ files",
+	Short: "Helps you download mangas from websites to CBZ or EPUB files",
 
-	Long: `With manga-downloader you can easily convert/download web based mangas to CBZ files.
+	Long: `With manga-downloader you can easily convert/download web based mangas to CBZ or EPUB files.
 
 You only need to specify the URL of the manga and the chapters you want to download as a range.
 
@@ -279,7 +279,9 @@ func exitSettingError(err error) {
 
 	switch se.Setting {
 	case "format":
-		red("Error: invalid format %q, must be %q or %q", se.Value, packer.FormatCBZ, packer.FormatRaw)
+		red("Error: invalid format %q, must be %q, %q or %q", se.Value, packer.FormatCBZ, packer.FormatRaw, packer.FormatEPUB)
+	case "reading-direction":
+		red("Error: invalid --reading-direction value %q, must be %q or %q", se.Value, packer.ReadingDirectionRTL, packer.ReadingDirectionLTR)
 	case "convert-images":
 		red("Error: invalid --convert-images value: %s", se.Err)
 	case "volumes":
@@ -351,7 +353,8 @@ func init() {
 	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", `only download the specified language ("all" downloads every language, on sites listing several)`)
 	rootCmd.Flags().StringVarP(&settings.Scanlator, "scanlator", "s", "", `only download the specified scanlation group, for sites hosting several versions of the same chapters ("all" downloads every group's)`)
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename")
-	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz or raw (a folder with the images)")
+	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz, raw (a folder with the images) or epub")
+	rootCmd.Flags().StringVar(&settings.ReadingDirection, "reading-direction", packer.ReadingDirectionRTL, `direction pages turn in epub files: "rtl" for manga, "ltr" for webtoons and western comics`)
 	rootCmd.Flags().StringVar(&settings.ConvertImages, "convert-images", grabber.ConvertImagesDefault, `comma-separated source image formats to convert to jpeg for e-reader compatibility: "avif", "webp" or "none"`)
 	rootCmd.Flags().StringVar(&settings.Volumes, "volumes", "", `pack one file per volume: "auto" uses the site's volumes, or give chapter ranges, one group per volume ("1-7/8-16"), "N:" giving a group's number ("16:112-114"); chapters outside every volume are packed on their own`)
 	rootCmd.Flags().BoolVar(&settings.BrowserVisible, "browser-visible", false, "always show the browser window; rarely needed, as it opens on its own for sites that need it")

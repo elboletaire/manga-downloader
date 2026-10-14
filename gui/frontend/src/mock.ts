@@ -7,7 +7,7 @@
 // loaded, stale, running, bundle, cancelling, done, update, check, volumes
 // (loaded, packing by volume, with three volumes and a half selected) or
 // volumes-running (a run by volume in progress). update is loaded too, as a
-// release build (v1.15.0 with &shot, v1.12.0 without) with a newer release
+// release build (v1.15.1 with &shot, v1.12.0 without) with a newer release
 // (v1.16.0 with &shot, v1.13.0 without): the status bar shows the yellow "!".
 // check is loading a site that needs the browser window, with the alert asking
 // the user to look at it; loading a URL with "check" in it does the same until
@@ -17,9 +17,10 @@
 // otherwise files its chapters by their real One Piece volume), &fail makes
 // the fourth chapter fail halfway and &skip makes the sixth one come out
 // skipped, every page excluded by --skip-pages (both off by default; every run
-// saves every chapter without them), &shot uses production release versions and a macOS output path (for
-// screenshots), and VITE_MOCK=1 at build time includes the mock in production
-// builds (e.g. for the screenshot capture build; set via Wails frontend env).
+// saves every chapter without them), &epub starts the output as EPUB, &shot
+// uses production release versions and a macOS output path (for screenshots),
+// and VITE_MOCK=1 at build time includes the mock in production builds (e.g.
+// for the screenshot capture build; set via Wails frontend env).
 //
 // &site= picks what the series lists for the two filters: multi (the default:
 // languages ca, en, es with All, Catalan shown by default, no groups), plus
@@ -84,6 +85,8 @@ export interface MockSetup {
   skip: boolean;
   /** Use production release versions and a macOS output path (for screenshots) */
   shot: boolean;
+  /** Start with EPUB as the output format */
+  epub: boolean;
 }
 
 /** What the mock series offers for each filter; null when the site lists none */
@@ -111,7 +114,7 @@ const MOCK_ALERT =
 
 const REPO = 'https://github.com/elboletaire/manga-downloader';
 const RELEASE_VERSION_DEV = 'v1.12.0';
-const RELEASE_VERSION_SHOT = 'v1.15.0';
+const RELEASE_VERSION_SHOT = 'v1.15.1';
 const UPDATE_VERSION_DEV = 'v1.13.0';
 const UPDATE_VERSION_SHOT = 'v1.16.0';
 
@@ -139,13 +142,18 @@ export function mockSetupFrom(search: string): MockSetup {
     fail: params.has('fail'),
     skip: params.has('skip'),
     shot: params.has('shot'),
+    epub: params.has('epub'),
   };
 }
 
-function defaultOptions(shot: boolean): Options {
+// the extension each format's output carries; raw writes a folder without one
+const EXTENSIONS: Record<Options['format'], string> = { cbz: '.cbz', epub: '.epub', raw: '' };
+
+function defaultOptions(shot: boolean, epub: boolean): Options {
   return {
     outputDir: shot ? '/Users/reader/Downloads/Manga' : '/home/reader/Downloads',
-    format: 'cbz',
+    format: epub ? 'epub' : 'cbz',
+    readingDirection: 'rtl',
     packAs: 'chapters',
     language: '',
     scanlator: '',
@@ -204,6 +212,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     fail,
     skip,
     shot,
+    epub,
   } = {
     scenario: 'empty' as Scenario,
     freeze: false,
@@ -214,10 +223,11 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     fail: false,
     skip: false,
     shot: false,
+    epub: false,
     ...(typeof setup === 'string' ? { scenario: setup } : setup),
   };
   const offers = OFFERS[site];
-  const options = defaultOptions(shot);
+  const options = defaultOptions(shot, epub);
   let url = '';
   let loading = false;
   let loadError = '';
@@ -379,7 +389,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       saved: bundled && failures.length === 0 && !cancelling ? runChapters : saved,
       volumes,
       bundled,
-      bundle: bundled && !cancelling ? `${title} 1-${runChapters}.cbz` : '',
+      bundle: bundled && !cancelling ? `${title} 1-${runChapters}${EXTENSIONS[options.format]}` : '',
       skipped,
       failures,
       error: '',

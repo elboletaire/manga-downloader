@@ -145,6 +145,28 @@ describe('createMockApi', () => {
     expect(state.jobs[0].status).not.toBe('');
   });
 
+  it('names the bundle after the format it packs as', async () => {
+    const cases = [
+      ['cbz', 'One Piece 1-3.cbz'],
+      ['epub', 'One Piece 1-3.epub'],
+      ['raw', 'One Piece 1-3'],
+    ] as const;
+    for (const [format, name] of cases) {
+      const api = createMockApi({ chapters: 40 });
+      await api.load('https://example.com/series/a');
+      await api.selectRange('1165-1167');
+      await api.setOptions({ ...(await api.state()).options, format, packAs: 'bundle' });
+      vi.useFakeTimers();
+      try {
+        await api.start();
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect((await api.state()).summary?.bundle).toBe(name);
+      } finally {
+        vi.useRealTimers();
+      }
+    }
+  });
+
   it('forgets the loaded series on clear, keeping the options and the log', async () => {
     const api = createMockApi({ chapters: 30 });
     await api.load('https://example.com/series/a');
@@ -219,20 +241,20 @@ describe('createMockApi', () => {
     expect((await createMockApi('done').state()).version).toBe('v0.0.0-mock');
   });
 
-  it('shows v1.15.0 for all scenarios with shot, v1.16.0 as the update', async () => {
+  it('shows v1.15.1 for all scenarios with shot, v1.16.0 as the update', async () => {
     const update = await createMockApi({ scenario: 'update', shot: true }).state();
-    expect(update.version).toBe('v1.15.0');
+    expect(update.version).toBe('v1.15.1');
     expect(update.update?.latest).toBe('v1.16.0');
 
     const loaded = await createMockApi({ scenario: 'loaded', shot: true }).state();
-    expect(loaded.version).toBe('v1.15.0');
+    expect(loaded.version).toBe('v1.15.1');
     expect(loaded.update).toBeNull();
   });
 
   it('links the version to its release whenever it reports a release', async () => {
     const tag = (v: string) => `https://github.com/elboletaire/manga-downloader/releases/tag/${v}`;
-    expect((await createMockApi({ scenario: 'loaded', shot: true }).state()).releaseURL).toBe(tag('v1.15.0'));
-    expect((await createMockApi({ scenario: 'update', shot: true }).state()).releaseURL).toBe(tag('v1.15.0'));
+    expect((await createMockApi({ scenario: 'loaded', shot: true }).state()).releaseURL).toBe(tag('v1.15.1'));
+    expect((await createMockApi({ scenario: 'update', shot: true }).state()).releaseURL).toBe(tag('v1.15.1'));
     expect((await createMockApi('update').state()).releaseURL).toBe(tag('v1.12.0'));
     expect((await createMockApi('loaded').state()).releaseURL).toBe('');
   });
@@ -374,12 +396,19 @@ describe('mockSetupFrom', () => {
       fail: false,
       skip: false,
       shot: false,
+      epub: false,
     });
     expect(mockSetupFrom('?novolumes').novolumes).toBe(true);
     expect(mockSetupFrom('?chapters=nope').chapters).toBeGreaterThan(100);
     expect(mockSetupFrom('?fail').fail).toBe(true);
     expect(mockSetupFrom('?skip').skip).toBe(true);
     expect(mockSetupFrom('?shot').shot).toBe(true);
+    expect(mockSetupFrom('?epub').epub).toBe(true);
+  });
+
+  it('starts with EPUB as the format when epub is set', async () => {
+    expect((await createMockApi({ scenario: 'loaded', epub: true }).state()).options.format).toBe('epub');
+    expect((await createMockApi('loaded').state()).options.format).toBe('cbz');
   });
 
   it('reads the site, defaulting to multi', () => {

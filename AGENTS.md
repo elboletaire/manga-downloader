@@ -4,7 +4,7 @@ Guidance for coding agents working in this repository.
 
 ## Project
 
-Go CLI (cobra) that downloads manga chapters from supported websites and packs them into CBZ files, plus a Wails desktop app in `gui/` (see the `gui` skill). Module: `github.com/elboletaire/manga-downloader`, targeting Go 1.26.0 (the `go` directive in `go.mod` and `gui/go.mod`, pinned by CI's test and smoke workflows).
+Go CLI (cobra) that downloads manga chapters from supported websites and packs them into CBZ or EPUB files, plus a Wails desktop app in `gui/` (see the `gui` skill). Module: `github.com/elboletaire/manga-downloader`, targeting Go 1.26.0 (the `go` directive in `go.mod` and `gui/go.mod`, pinned by CI's test and smoke workflows).
 
 ## On-demand guides
 
@@ -22,7 +22,7 @@ make build/all        # unix + windows binaries
 GOOS=windows GOARCH=386 make build/release   # one release binary, built as release.yaml does
 make test             # go test -v ./... (uses richgo if installed)
 go test ./ranges -run TestParse   # run a single test
-make clean            # remove built binaries and *.cbz files
+make clean            # remove built binaries and *.cbz and *.epub files
 ```
 
 Unit test coverage is thin; real verification is the makefile smoke targets, which download from live sites — run them selectively. `make grabber` runs everything, `make grabber/html` all `PlainHTML` sites, `make grabber/<site>` just one; check the archives with `tools/verify-cbz`, since a run can succeed with empty or junk CBZs.
@@ -44,7 +44,7 @@ The steps:
 2. The matched `Site` fetches title and chapters; the range argument (`ranges.Parse`, `1-10,12,15-20`) filters them.
 3. Each fetched chapter is passed through `Chapter.SkipPages` (`--skip-pages`, see below) before anything is downloaded, inside `core.Download`.
 4. Chapters download concurrently (`downloader.FetchChapter`), bounded by `--concurrency` (max 5) and `--concurrency-pages` (max 10). Pages are plain GETs with a Referer.
-5. `packer` writes CBZ files (`PackSingle`, or `PackBundle` with `--bundle`), named via a text/template (`--filename-template`, `packer/filename.go`); duplicate names get a `v{{.Version}}` suffix. Both paths go through `namePages` (`packer/pack.go`), which sniffs each page's format to name it `000.jpg`, `001.png`, … and transcodes per `--convert-images`.
+5. `packer` writes CBZ, EPUB or raw output (`PackSingle`, or `PackBundle` with `--bundle`), named via a text/template (`--filename-template`, `packer/filename.go`); duplicate names get a `v{{.Version}}` suffix. Both paths go through `namePages` (`packer/pack.go`), which sniffs each page's format to name it `000.jpg`, `001.png`, … and transcodes per `--convert-images`.
 
 **Chapter URL resolution**: both series and chapter links are accepted; see the grabbers skill for the full pattern.
 
@@ -80,3 +80,16 @@ Scanlation groups reserve pages for credits/ads (tcbscans: always page 2, often 
 - **`ranges.Parse` rejects negatives; `ranges.ParseRelative` accepts them.** Two entry points rather than one, because counting from the end is meaningless for chapter *numbers* (and chapter 0 exists), so the chapter-range caller should fail loudly on a negative instead of filtering nothing. `ranges.Resolve(rngs, total)` is what turns `-1` into a position, per chapter.
 - The parser is regex-based now: it used to `strings.Split(part, "-")`, which can't tell `-3--1` apart from anything. Reversed ranges still clamp to their first bound (`10-5` → just 10) as they always have, but only when both bounds share a sign — `2--1` ("page 2 to the last") is ordered, just not comparably so until `Resolve` knows the total.
 - **pflag takes the argument after a long flag verbatim, dash and all**, so `--skip-pages -1` works and the `=` form isn't actually required (`parseLongArg` never inspects the value for a leading `-`). A *shorthand* would be a different story, which is why this flag has none. The README documents both forms.
+
+### EPUB output (`--format epub`)
+
+EPUB is another archive next to CBZ, grouped the same way (per chapter, `--volumes`, `--bundle`). `packer/epub.go` writes it with no new dependency.
+
+- **`ArchiveEPUB` takes an `EPUBInfo`, not just the files.** The series, the volume or chapter number (`group-position`), the reading direction and the table of contents labels can't be recovered from the entry names, so the `Pack*` functions pass them in. Labels are keyed by folder (`chapterLabel`: "Chapter 265 - Title"), and a folder without one is named after the folder.
+- **AVIF is always converted for EPUB**, whatever `--convert-images` says, since readers can't show it: `pageFormats` adds it for `epub`, and every Pack function goes through it.
+- **A page EPUB can't show is left out with a warning**, rather than failing the book: anything but JPEG, PNG, GIF or WebP, or a page whose size can't be read. It still counts towards progress, since the archive's total is the pages downloaded. The book fails only when no page is left.
+- **Reading direction** is `--reading-direction rtl|ltr` (default `rtl`) and a control in the app, shown only for EPUB. It sets the spine's `page-progression-direction`. Deriving it from the series' language is deferred.
+- **`dc:language` is `und` on purpose.** `Settings.Language` is the site's filter (`en`, `es`, `all`, or a site's own code), not a BCP 47 tag, so it can't be written as the book's language.
+- **The identifier is a UUID v5 of the series and what the book holds** (`chapter`, `volume N` or `bundle` plus each chapter's number, language and `Chapter.ID`, or its title without one), so a repack keeps it and two releases of one chapter don't share it. A grabber listing several releases per number sets `Chapter.ID` (mangadex, atsumaru, comix) and keeps it on what `FetchChapter` returns.
+- **Pages are fixed layout**: one XHTML per image, with a viewport at the image's size, and the first page is the cover.
+- **epubcheck isn't in CI yet**: check a change by running epubcheck on a real download, the way `tools/verify-cbz` checks CBZs.

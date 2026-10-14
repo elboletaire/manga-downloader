@@ -19,9 +19,9 @@
 </div>
 
 Manga Downloader downloads manga chapters from MangaDex and more than 100 other
-sites and packs them into CBZ files, ready to read on your e-reader or in your
-favorite comic app. It comes as a **desktop app** for Windows, macOS and Linux,
-and as a **command line tool** for scripts, servers and Docker.
+sites and packs them into CBZ or EPUB files, ready to read on your e-reader or
+in your favorite comic app. It comes as a **desktop app** for Windows, macOS and
+Linux, and as a **command line tool** for scripts, servers and Docker.
 
 <div align="center">
 
@@ -53,8 +53,8 @@ and as a **command line tool** for scripts, servers and Docker.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
   show up blank on Kobo, KOReader or Calibre (WebP too, if you ask).
 - **Flexible output**: one CBZ per chapter, one per volume (`--volumes`), a
-  single bundled CBZ (`--bundle`), or plain image folders (`--format raw`),
-  named from a template.
+  single bundled CBZ (`--bundle`), EPUB e-books (`--format epub`), or plain
+  image folders (`--format raw`), named from a template.
 - **Language and scanlation group filters** for sites that host several versions
   of a chapter, and **skipping pages** such as credits or ads.
 - **Concurrent downloads** with retries.
@@ -295,17 +295,18 @@ Open the app and follow these steps:
      <img alt="The language selector open, with Catalan selected" src="assets/screenshots/03-language-selector-light.png">
    </picture>
 
-4. **Set the options** in the *Options* tab: where the files go, the format
-   (CBZ archive or image folder), *Pack as* (a file per chapter, per volume, or
-   one for everything), *Convert to JPEG* for AVIF and WebP pages, and pages to
-   skip. Under *Advanced* are the file name template and *Show the browser
-   window*, which you rarely need: a site that needs the window opens it by itself.
-   Packing by volume adds a *Volumes* box above the chapter list, filled with
-   the site's volumes when it lists them, and groups the list by volume.
+4. **Set the options** in the *Options* tab: where the files go, the format (CBZ
+   archive, image folder or EPUB; EPUB adds a *Reading direction*), *Pack as* (a
+   file per chapter, per volume, or one for everything), *Convert to JPEG* for
+   AVIF and WebP pages, and pages to skip. Under *Advanced* are the file name
+   template and *Show the browser window*, which you rarely need: a site that
+   needs the window opens it by itself. Packing by volume adds a *Volumes* box
+   above the chapter list, filled with the site's volumes when it lists them,
+   and groups the list by volume.
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.png">
-     <img alt="The Options tab, with the format, Pack as and Convert to JPEG options" src="assets/screenshots/06-options-light.png">
+     <img alt="The Options tab with EPUB chosen, showing the format, reading direction and Pack as options" src="assets/screenshots/06-options-light.png">
    </picture>
 
    <picture>
@@ -391,6 +392,9 @@ manga-downloader --bundle [url] 1-8
 
 # plain image folders instead of CBZ files
 manga-downloader --format raw [url] 1-8
+
+# EPUB e-books, read left to right (webtoons and western comics)
+manga-downloader --format epub --reading-direction ltr [url] 1-8
 ~~~
 
 ![bundle img]
@@ -405,11 +409,11 @@ volume, separated by slashes, in the chapter range syntax:
 manga-downloader --volumes 1-7/8-16 [url] 1-20
 ~~~
 
-That writes `Series Vol. 01.cbz` and `Series Vol. 02.cbz`, with a folder per
-chapter inside, and chapters 17 to 20, outside every volume, one file each.
-The chapters argument still picks what's downloaded: a volume packs the
-chapters of it you asked for. A group can give its volume number with `N:`,
-and the groups after it count on from there:
+That writes `Series Vol. 01.cbz` and `Series Vol. 02.cbz` (`.epub` with
+`--format epub`), with a folder per chapter inside, and chapters 17 to 20,
+outside every volume, one file each. The chapters argument still picks what's
+downloaded: a volume packs the chapters of it you asked for. A group can give
+its volume number with `N:`, and the groups after it count on from there:
 
 ~~~bash
 manga-downloader --volumes 16:112-114/115-118 [url] 112-118
@@ -435,6 +439,11 @@ manga-downloader --convert-images none [url] 1-10        # keep pages untouched
 JPEG, PNG and GIF pages are never re-encoded. If a page fails to convert, it's
 kept as it was and a warning is shown, so the rest of the chapter isn't lost.
 
+EPUB is the exception, since readers can't show AVIF at all: AVIF pages are
+always converted for it, even with `--convert-images none`. A page an EPUB can't
+show (anything but JPEG, PNG, GIF or WebP, such as an AVIF that failed to convert)
+is left out with a warning instead of being kept.
+
 > [!NOTE]
 > The AVIF decoder is embedded as WebAssembly, so you don't need to install any
 > system library. It's slower on the 32-bit builds (`linux-386` and
@@ -442,6 +451,7 @@ kept as it was and a warning is shown, so the rest of the chapter isn't lost.
 > matters.
 
 The desktop app offers the same choice as two checkboxes, *AVIF* and *WebP*.
+With EPUB, AVIF is always converted, so its box is ticked and can't be changed.
 
 ### Skipping pages
 
@@ -540,7 +550,8 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--output-dir`        | `-o`  | Folder to write the downloaded files to                  | current folder |
 | `--bundle`            | `-b`  | Bundle all chapters into a single file                   | off            |
 | `--volumes`           |       | One file per volume: `auto`, `1-7/8-16`, `16:112-114`    | off            |
-| `--format`            | `-f`  | Output format: `cbz` or `raw`                            | `cbz`          |
+| `--format`            | `-f`  | Output format: `cbz`, `raw` or `epub`                    | `cbz`          |
+| `--reading-direction` |       | Page turn direction for EPUB: `rtl` (manga) or `ltr`     | `rtl`          |
 | `--filename-template` | `-t`  | Template for the file names                              | see above      |
 | `--language`          | `-l`  | Only download the specified language                     | site default   |
 | `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)  | site default   |

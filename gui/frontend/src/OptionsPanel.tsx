@@ -3,7 +3,7 @@
 // controls can't overwrite each other's edits.
 
 import { browserSwitchOf } from './browserVisible';
-import { convertFlagsOf, convertValueOf } from './convertImages';
+import { AVIF_EPUB_HINT, avifSwitchOf, convertFlagsOf, convertValueOf } from './convertImages';
 import { Check, Segmented, Switch, TextField } from './fields';
 import { errorMessage } from './format';
 import { FolderIcon } from './icons';
@@ -30,6 +30,7 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
   const o = state.options;
   const locked = state.loading || state.running;
   const flags = convertFlagsOf(o.convertImages);
+  const avif = avifSwitchOf(flags, o.format);
   const browser = browserSwitchOf(state);
   const set = (patch: Partial<Options>) => {
     onOptions(patch).catch(() => undefined);
@@ -74,9 +75,26 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
           options={[
             { value: 'cbz', label: 'CBZ archive' },
             { value: 'raw', label: 'Image folder' },
+            { value: 'epub', label: 'EPUB' },
           ]}
           onChange={(format) => set({ format })}
         />
+
+        {o.format === 'epub' && (
+          <div className="field-stack">
+            <Segmented<Options['readingDirection']>
+              label="Reading direction"
+              value={o.readingDirection}
+              disabled={locked}
+              options={[
+                { value: 'rtl', label: 'Right to left' },
+                { value: 'ltr', label: 'Left to right' },
+              ]}
+              onChange={(readingDirection) => set({ readingDirection })}
+            />
+            <p className="hint">Which way the pages turn: manga reads right to left, webtoons and western comics left to right.</p>
+          </div>
+        )}
 
         <div className="field-stack">
           <Segmented<PackAs>
@@ -103,8 +121,9 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
           <div className="check-row">
             <Check
               label="AVIF"
-              checked={flags.avif}
-              onChange={(avif) => set({ convertImages: convertValueOf({ ...flags, avif }) })}
+              checked={avif.checked}
+              disabled={avif.disabled}
+              onChange={(checked) => set({ convertImages: convertValueOf({ ...flags, avif: checked }) })}
             />
             <Check
               label="WebP"
@@ -112,7 +131,9 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
               onChange={(webp) => set({ convertImages: convertValueOf({ ...flags, webp }) })}
             />
           </div>
-          <p className="hint">Most e-readers can't open AVIF; WebP is unreliable on e-ink.</p>
+          <p className="hint">
+            {o.format === 'epub' ? AVIF_EPUB_HINT : "Most e-readers can't open AVIF; WebP is unreliable on e-ink."}
+          </p>
         </fieldset>
 
         <TextField

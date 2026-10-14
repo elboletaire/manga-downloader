@@ -447,6 +447,9 @@ func TestComixParseRow(t *testing.T) {
 			if ch.ScanlatorGroup != c.wantGrp {
 				t.Errorf("group = %q, want %q", ch.ScanlatorGroup, c.wantGrp)
 			}
+			if ch.ID == "" || ch.ID != ch.URL {
+				t.Errorf("ID = %q, want the reader URL %q", ch.ID, ch.URL)
+			}
 		})
 	}
 }

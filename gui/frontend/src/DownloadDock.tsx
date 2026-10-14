@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { DownloadIcon, Spinner, XIcon } from './icons';
 import { downloadBlocker, downloadLabel, overallProgress } from './run';
-import type { Chapter, Options, State } from './types';
+import type { Chapter, Options, PackAs, State } from './types';
 
 interface Props {
   state: State;
@@ -134,14 +134,15 @@ export function DownloadDock({ state, error, chapters, selected, onStart, onCanc
   );
 }
 
+/** What the run writes, by format and Pack as, as the dock's first words */
+const DESTINATIONS: Record<Options['format'], Record<PackAs, string>> = {
+  cbz: { chapters: 'CBZ files', volumes: 'A CBZ per volume', bundle: 'One CBZ' },
+  epub: { chapters: 'EPUB files', volumes: 'An EPUB per volume', bundle: 'One EPUB' },
+  raw: { chapters: 'Image folders', volumes: 'A folder per volume', bundle: 'One image folder' },
+};
+
 /** What the run writes, as the dock's first words */
 function destination(o: Options): string {
-  const cbz = o.format === 'cbz';
-  switch (o.packAs) {
-    case 'bundle':
-      return cbz ? 'One CBZ' : 'One image folder';
-    case 'volumes':
-      return cbz ? 'A CBZ per volume' : 'A folder per volume';
-  }
-  return cbz ? 'CBZ files' : 'Image folders';
+  const byPack = DESTINATIONS[o.format];
+  return byPack?.[o.packAs] ?? byPack?.chapters ?? 'Files';
 }

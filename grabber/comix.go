@@ -378,6 +378,7 @@ func (c *Comix) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		Language:   "en",
+		ID:         chap.ID,
 		Pages:      pages,
 		PagesCount: int64(len(pages)),
 	}, nil
@@ -466,6 +467,7 @@ func comixParseRow(row *goquery.Selection, baseURL string) (*ComixChapter, error
 		Chapter{
 			Number: number,
 			Title:  "Chapter " + strconv.FormatFloat(number, 'f', -1, 64),
+			ID:     href,
 		},
 		href,
 		group,

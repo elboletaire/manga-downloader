@@ -41,6 +41,9 @@ type Chapter struct {
 	Pages []Page
 	// Language is the chapter language
 	Language string
+	// ID is the source's own stable identifier for this release of the
+	// chapter, empty when the grabber has none
+	ID string
 	// Volume is the volume the site files the chapter under, 0 when it
 	// doesn't say (or says something that isn't a whole number)
 	Volume int

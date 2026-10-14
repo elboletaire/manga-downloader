@@ -31,8 +31,11 @@ type Settings struct {
 	Scanlator string
 	// FilenameTemplate is the template for the filename
 	FilenameTemplate string
-	// Format is the desired output format ("cbz" or "raw")
+	// Format is the desired output format ("cbz", "raw" or "epub")
 	Format string
+	// ReadingDirection is the way an EPUB's pages turn: "rtl" (manga) or "ltr".
+	// Only EPUB output reads it
+	ReadingDirection string
 	// ConvertImages is the comma separated list of source image formats to
 	// transcode to JPEG when packing ("avif", "avif,webp" or "none"), so pages
 	// served in formats e-readers can't display end up readable
@@ -95,8 +98,10 @@ type Site interface {
 	BaseUrl() string
 	// GetFilenameTemplate returns the filename template
 	GetFilenameTemplate() string
-	// GetFormat returns the desired output format ("cbz" or "raw")
+	// GetFormat returns the desired output format ("cbz", "raw" or "epub")
 	GetFormat() string
+	// GetReadingDirection returns the way an EPUB's pages turn ("rtl" or "ltr")
+	GetReadingDirection() string
 	// GetConvertImages returns the set of source image formats to transcode to
 	// JPEG when packing
 	GetConvertImages() ConvertFormats
@@ -247,9 +252,14 @@ func (g Grabber) GetRetries() uint8 {
 	return g.Settings.Retry
 }
 
-// GetFormat returns the desired output format ("cbz" or "raw")
+// GetFormat returns the desired output format ("cbz", "raw" or "epub")
 func (g Grabber) GetFormat() string {
 	return g.Settings.Format
+}
+
+// GetReadingDirection returns the way an EPUB's pages turn ("rtl" or "ltr")
+func (g Grabber) GetReadingDirection() string {
+	return g.Settings.ReadingDirection
 }
 
 // GetConvertImages returns the set of source image formats to transcode to

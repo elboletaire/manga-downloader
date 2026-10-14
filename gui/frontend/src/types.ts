@@ -10,7 +10,9 @@ export type PackAs = 'chapters' | 'volumes' | 'bundle';
 
 export interface Options {
   outputDir: string;
-  format: 'cbz' | 'raw';
+  format: 'cbz' | 'raw' | 'epub';
+  /** The way an EPUB's pages turn: manga reads right to left. Only EPUB output reads it */
+  readingDirection: 'rtl' | 'ltr';
   packAs: PackAs;
   language: string;
   scanlator: string;

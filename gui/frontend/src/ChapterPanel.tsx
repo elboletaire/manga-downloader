@@ -55,7 +55,7 @@ function EmptyState() {
       <p>
         Paste the link to a series in the bar above. A link to any of its chapters works too.
       </p>
-      <p className="muted">Its chapters will be listed here, ready to pick and save as CBZ files for your reader.</p>
+      <p className="muted">Its chapters will be listed here, ready to pick and save for your reader.</p>
     </section>
   );
 }

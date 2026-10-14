@@ -53,8 +53,8 @@ moves on, update the `&shot` constants near `RELEASE_VERSION` in `mock.ts`.
   themes, then the export; `--install` copies the PNGs into
   `assets/screenshots/` and regenerates the website's WebPs.
 
-The individual steps are the ones used for #248, but `capture-all.sh` puts them
-together afterwards and **hasn't been run end to end yet**.
+The individual steps are the ones used for #248; `capture-all.sh` puts them
+together, and retook every shot end to end for #245.
 
 Needs macOS, Xcode command line tools (`swiftc`), `cliclick`, `pngquant`,
 ImageMagick and python3, and Accessibility and Screen Recording permissions

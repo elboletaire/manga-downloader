@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { convertFlagsOf, convertValueOf } from './convertImages';
+import { avifSwitchOf, convertFlagsOf, convertValueOf } from './convertImages';
 
 describe('convertFlagsOf and convertValueOf', () => {
   it('maps the four valid settings to the checkboxes and back', () => {
@@ -24,5 +24,17 @@ describe('convertFlagsOf and convertValueOf', () => {
     expect(convertFlagsOf('')).toEqual({ avif: false, webp: false });
     expect(convertFlagsOf('jpeg')).toEqual({ avif: false, webp: false });
     expect(convertValueOf({ avif: false, webp: false })).toBe('none');
+  });
+});
+
+describe('avifSwitchOf', () => {
+  it('follows the saved value for the other formats', () => {
+    expect(avifSwitchOf({ avif: true, webp: false }, 'cbz')).toEqual({ checked: true, disabled: false });
+    expect(avifSwitchOf({ avif: false, webp: true }, 'raw')).toEqual({ checked: false, disabled: false });
+  });
+
+  it('shows AVIF checked and locked for EPUB, whatever the saved value', () => {
+    expect(avifSwitchOf({ avif: false, webp: false }, 'epub')).toEqual({ checked: true, disabled: true });
+    expect(avifSwitchOf({ avif: false, webp: true }, 'epub')).toEqual({ checked: true, disabled: true });
   });
 });

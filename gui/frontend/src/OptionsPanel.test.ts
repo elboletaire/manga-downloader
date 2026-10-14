@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { createMockApi } from './mock';
+import { AVIF_EPUB_HINT } from './convertImages';
 import { OptionsPanel, PACK_HINTS, VOLUMES_HINT_NOT_LOADED } from './OptionsPanel';
 import type { State } from './types';
 
@@ -49,5 +50,31 @@ describe('Pack as volumes hint', () => {
     const markup = options(state);
     expect(markup).toContain(PACK_HINTS.bundle);
     expect(markup).not.toContain('(when loaded)');
+  });
+});
+
+describe('AVIF under Convert to JPEG', () => {
+  // the AVIF checkbox's input, as rendered
+  function avifInput(markup: string): string {
+    const match = markup.match(/<input[^>]*type="checkbox"[^>]*\/>\s*<span>AVIF<\/span>/);
+    return match ? match[0] : '';
+  }
+
+  it('is checked and locked, with the EPUB hint, when the format is EPUB', async () => {
+    const base = await createMockApi({ scenario: 'loaded', freeze: true }).state();
+    const state: State = { ...base, options: { ...base.options, format: 'epub', convertImages: 'none' } };
+    const markup = options(state);
+    expect(avifInput(markup)).toMatch(/checked=""/);
+    expect(avifInput(markup)).toMatch(/disabled=""/);
+    expect(markup).toContain(AVIF_EPUB_HINT.replace("'", '&#x27;'));
+  });
+
+  it('follows the saved value for the other formats', async () => {
+    const base = await createMockApi({ scenario: 'loaded', freeze: true }).state();
+    const state: State = { ...base, options: { ...base.options, format: 'cbz', convertImages: 'none' } };
+    const markup = options(state);
+    expect(avifInput(markup)).not.toMatch(/checked=""/);
+    expect(avifInput(markup)).not.toMatch(/disabled=""/);
+    expect(markup).not.toContain(AVIF_EPUB_HINT.replace("'", '&#x27;'));
   });
 });

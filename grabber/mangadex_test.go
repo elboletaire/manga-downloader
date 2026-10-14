@@ -3,7 +3,10 @@
 package grabber
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -109,5 +112,45 @@ func TestPacerSpacesSlots(t *testing.T) {
 	// n slots take (n-1) intervals; allow a little scheduling slack
 	if span := at[n-1].Sub(at[0]); span < (n-1)*p.interval-5*time.Millisecond {
 		t.Errorf("%d slots spanned %v, want at least %v", n, span, (n-1)*p.interval)
+	}
+}
+
+// Each group's release of a chapter keeps its own id, from the listing to the
+// chapter FetchChapter returns
+func TestMangadexChapterIDs(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/feed"):
+			if r.URL.Query().Get("offset") != "0" {
+				_, _ = w.Write([]byte(`{"data":[]}`))
+				return
+			}
+			_, _ = w.Write([]byte(`{"data":[
+				{"id":"rel-a","attributes":{"chapter":"1","title":"Same","translatedLanguage":"en","pages":2}},
+				{"id":"rel-b","attributes":{"chapter":"1","title":"Same","translatedLanguage":"en","pages":2}}]}`))
+		case strings.HasPrefix(r.URL.Path, "/at-home/server/"):
+			_, _ = w.Write([]byte(`{"baseUrl":"https://cdn.test","chapter":{"hash":"h","data":["1.png","2.png"]}}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+	old := mangadexAPI
+	mangadexAPI = srv.URL
+	defer func() { mangadexAPI = old }()
+
+	m := NewMangadex(&Grabber{URL: "https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f", Settings: &Settings{Language: "en"}})
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 || len(chapters) != 2 {
+		t.Fatalf("FetchChapters = %d chapters, errs %v", len(chapters), errs)
+	}
+	for i, want := range []string{"rel-a", "rel-b"} {
+		got, err := m.FetchChapter(chapters[i])
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.ID != want {
+			t.Errorf("chapter %d ID = %q, want %q", i, got.ID, want)
+		}
 	}
 }
