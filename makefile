@@ -93,7 +93,8 @@ test/gui: build/gui/frontend
 # last), so parallel site-support branches never edit the same line
 grabber: \
 	grabber/3asq \
-	grabber/animeallstar \
+	grabber/animeallstar1 \
+	grabber/animeallstar30 \
 	grabber/apothecary \
 	grabber/atsumaru \
 	grabber/aurorascans \
@@ -275,8 +276,13 @@ grabber/3asq:
 
 # WordPress category of chapter posts (plain HTTP), matched by markup and read
 # through the REST API; 1195 rather than the newest chapter, which may still be a teaser
-grabber/animeallstar:
+grabber/animeallstar30:
 	go run . https://animeallstar30.com/category/one-piece-espanol/ 1195
+
+# Blogger, matched by its markup: a series is the blog's search for its title
+# (the posts carry no label per series). Two chapters a few behind the newest.
+grabber/animeallstar1:
+	go run . "https://www.animeallstar1.com/search?q=One+Piece" 1188-1189
 
 # Madara wordpress site whose series URLs live under /gl/ instead of /manga/;
 # the generic Tcb grabber matches them through the same ajax/chapters endpoint.
