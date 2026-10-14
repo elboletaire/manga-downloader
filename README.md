@@ -383,7 +383,13 @@ default every release is kept, and each one is told apart by its group: the
 chapter list shows the group, and `{{.Group}}` in `--filename-template` names
 it. Use `--scanlator <name>` to keep only one group's releases (the name is
 matched ignoring case; an unknown one lists the groups the series has), or
-`--scanlator all` for every group, which is the same as the default.
+`--scanlator all` for every group, which is the same as the default. Releases
+that name no group are left out whenever a group is selected.
+
+With the default file name, the releases of one chapter only differ by a
+version suffix (`v2`, `v3`…), in no particular group order. Put `{{.Group}}` in
+`--filename-template` to tell them apart, for example
+`{{.Series}} {{.Number}} [{{.Group}}]`.
 
 ### Bundling and output format
 

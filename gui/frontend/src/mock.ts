@@ -25,8 +25,8 @@
 // &site= picks what the series lists for the two filters: multi (the default:
 // languages ca, en, es with All, Catalan shown by default, no groups), plus
 // (Manga Plus: languages without All, the URL edition shown by default),
-// groups (Atsumaru: groups with All, the largest shown by default, no
-// languages), or none (both fields disabled: a typed value shows cleared, as
+// groups (groups with All, every group shown by default, each chapter listed
+// once per group, no languages), or none (both fields disabled: a typed value shows cleared, as
 // the site ignores it, and is kept for the sites that take it). A language or
 // group the series doesn't list falls back on load, as the backend does: typed
 // "xx" under multi loads "all", under plus the edition the URL points at.
@@ -182,6 +182,22 @@ function mockChapters(count: number, withLanguages: boolean, withVolumes = true)
     }
   }
   return list;
+}
+
+/**
+ * The releases of a site that lists groups: every chapter by Alpha, and every
+ * fifth one again by Delta, so a number is listed twice in the same language.
+ */
+function groupedChapters(list: Chapter[]): Chapter[] {
+  const out: Chapter[] = [];
+  for (const c of list) {
+    out.push({ ...c, group: 'Alpha' });
+    if (c.number % 5 === 0) {
+      out.push({ ...c, group: 'Delta' });
+    }
+  }
+
+  return out.map((c, index) => ({ ...c, index }));
 }
 
 type Listener<T> = (v: T) => void;
@@ -348,6 +364,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     fallbackFor('scanlator', 'scanlation group');
     title = 'One Piece';
     chapters = mockChapters(chapterCount, dupes || url.includes('dupes') || options.language === 'all', !novolumes);
+    if (offers.scanlator !== null) {
+      chapters = groupedChapters(chapters);
+    }
     volumesSite = siteVolumes(chapters);
     volumesText = volumesSite;
     applied = { language: options.language, scanlator: options.scanlator };

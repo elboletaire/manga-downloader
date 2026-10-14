@@ -1195,6 +1195,15 @@ func TestChapterKeys(t *testing.T) {
 	}
 }
 
+// a chapter with neither an ID nor a group keeps the key master gave it, so the
+// identifiers of books from sites that name no groups don't change
+func TestChapterKeyUnchangedWithoutIDOrGroup(t *testing.T) {
+	c := &grabber.Chapter{Number: 1, Language: "en", Title: "Chapter 1"}
+	if got, want := chapterKey(c), "1\x00en\x00Chapter 1"; got != want {
+		t.Errorf("chapterKey() = %q, want %q", got, want)
+	}
+}
+
 // without an ID, the group tells two releases of one chapter apart, even when
 // they carry the same title
 func TestChapterKeyWithoutIDUsesTheGroup(t *testing.T) {

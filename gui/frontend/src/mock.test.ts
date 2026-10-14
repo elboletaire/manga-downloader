@@ -214,6 +214,31 @@ describe('createMockApi', () => {
     expect(state.selectedCount).toBeGreaterThan(0);
   });
 
+  it('lists a site with groups once per group, and tags the copies', async () => {
+    const api = createMockApi({ scenario: 'loaded', site: 'groups', chapters: 15 });
+    const state = await api.state();
+    expect(state.hasGroupDuplicates).toBe(true);
+    expect(state.hasDuplicates).toBe(false);
+
+    const chapters = await api.chapters();
+    const first = chapters.find((c) => chapters.filter((d) => d.number === c.number).length > 1);
+    expect(first).toBeDefined();
+    const copies = chapters.filter((c) => c.number === first!.number);
+    expect(copies.map((c) => c.group)).toEqual(['Alpha', 'Delta']);
+    expect(copies.every((c) => c.language === '')).toBe(true);
+    // a release listed once is Alpha's alone, with no copy to tell it apart from
+    const single = chapters.filter((c) => chapters.filter((d) => d.number === c.number).length === 1);
+    expect(single.length).toBeGreaterThan(0);
+    expect(single.every((c) => c.group === 'Alpha')).toBe(true);
+  });
+
+  it('does not flag group copies on a site that lists no groups', async () => {
+    const api = createMockApi({ scenario: 'loaded', site: 'multi', chapters: 15 });
+    const state = await api.state();
+    expect(state.hasGroupDuplicates).toBe(false);
+    expect((await api.chapters()).every((c) => c.group === '')).toBe(true);
+  });
+
   it('lists some numbers once per language with dupes', async () => {
     const api = createMockApi({ scenario: 'loaded', dupes: true, chapters: 15 });
     const state = await api.state();

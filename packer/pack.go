@@ -109,13 +109,18 @@ func pageFormats(format string, formats grabber.ConvertFormats) grabber.ConvertF
 }
 
 // chapterKey tells a chapter's release apart from the others of its number:
-// number, language and the source's chapter ID, or else its group and title
-// when the source gave no ID. The title isn't stable across grabbers' listings,
-// and the group is what tells two releases with the same title apart.
+// number, language and the source's chapter ID, or else its title when the
+// source gave no ID. A release that names its group has the group in front of
+// the title, which is what tells two releases with the same title apart. Keys
+// of sites that name neither are the title ones they've always been, so the
+// EPUB identifiers of their books don't change.
 func chapterKey(chapter *grabber.Chapter) string {
 	release := chapter.ID
 	if release == "" {
-		release = chapter.Group + "\x00" + chapter.GetTitle()
+		release = chapter.GetTitle()
+		if chapter.Group != "" {
+			release = chapter.Group + "\x00" + release
+		}
 	}
 	return formatChapterNumber(chapter.GetNumber()) + "\x00" + chapter.Language + "\x00" + release
 }
