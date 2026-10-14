@@ -1,16 +1,15 @@
 name: Website
 
 on:
-  push:
-    branches: [master]
-    paths:
-      - "website/**"
-      # the supported sites list is generated from it
-      - "README.md"
-      - ".github/workflows/pages.yaml"
+  # after each release's build succeeds, so the assets exist (the environment only deploys from master)
+  # both workflows finishing deploys twice; the pages concurrency group serializes them
+  workflow_run:
+    workflows: [Release, Release GUI]
+    types: [completed]
+  # manual deploy, dispatched from master for urgent fixes
   workflow_dispatch:
   schedule:
-    # Refresh the download stats daily
+    # Refresh the download stats daily, from the latest release
     - cron: "17 5 * * *"
 
 permissions:
@@ -25,12 +24,28 @@ concurrency:
 
 jobs:
   build:
+    # only successful runs of release-triggered builds deploy
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'release')
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: website
     steps:
+      # scheduled and release runs build the latest release, not master; an empty
+      # ref would make checkout fall back to master, so a failed lookup stops the run
+      - id: latest
+        if: github.event_name != 'workflow_dispatch'
+        working-directory: .
+        run: |
+          tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)
+          test -n "$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.latest.outputs.tag }}
 
       - uses: pnpm/action-setup@v4
         with:
