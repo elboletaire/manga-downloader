@@ -148,10 +148,10 @@ func (m *Mangafire) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		Language:   mchap.Language,
-		Group:      mchap.Group,
 		ID:         mchap.ID,
 		PagesCount: int64(len(pages)),
 	}
+	chapter.SetGroups(mchap.GetGroups()...)
 	for i, p := range pages {
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),
@@ -252,17 +252,18 @@ func (m *Mangafire) load() error {
 		if title == "" {
 			title = "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64)
 		}
-		m.chapters = append(m.chapters, &MangafireChapter{
+		listed := &MangafireChapter{
 			Chapter: Chapter{
 				Number:   c.Number,
 				Title:    title,
 				Language: c.Language,
-				Group:    mangafireGroup(c.Type),
 				ID:       strconv.FormatInt(c.Id, 10),
 			},
 			URL: fmt.Sprintf("%s/chapter/%d", m.readerBase, c.Id),
 			Id:  c.Id,
-		})
+		}
+		listed.SetGroups(mangafireGroup(c.Type))
+		m.chapters = append(m.chapters, listed)
 	}
 
 	if len(m.chapters) == 0 {

@@ -127,3 +127,42 @@ func TestSelectGroupIgnoresAListingWithoutGroups(t *testing.T) {
 		t.Errorf("SelectGroup kept %d chapters, want all 2", len(got))
 	}
 }
+
+// a group whose name holds ", " is one group, both as an option and to select
+func TestGroupsKeepASeparatorInOneName(t *testing.T) {
+	big := &Chapter{Number: 1}
+	big.SetGroups("Ah, my next job is to exterminate monsters project", "Delta")
+	listing := Filterables{big, groupedChapter(2, "Delta")}
+
+	got := GroupOptions(listing)
+	if got == nil || !reflect.DeepEqual(got.Values, []string{"Delta", "Ah, my next job is to exterminate monsters project"}) {
+		t.Fatalf("GroupOptions() = %+v, want the whole name next to Delta", got)
+	}
+	selected, err := SelectGroup(listing, "ah, my next job is to exterminate monsters project")
+	if err != nil {
+		t.Fatalf("SelectGroup error = %v", err)
+	}
+	if len(selected) != 1 || selected[0].GetNumber() != 1 {
+		t.Errorf("SelectGroup = %d chapters, want the release of 1", len(selected))
+	}
+}
+
+// SetGroups trims the names and drops the blank and repeated ones, and Group
+// is their join; a Chapter that only has Group gets its groups split from it
+func TestChapterGroups(t *testing.T) {
+	c := &Chapter{}
+	c.SetGroups(" Alpha ", "", "Alpha", "Delta")
+	if c.Group != "Alpha, Delta" || !reflect.DeepEqual(c.GetGroups(), []string{"Alpha", "Delta"}) {
+		t.Errorf("SetGroups: Group %q, GetGroups %v", c.Group, c.GetGroups())
+	}
+
+	c.SetGroups()
+	if c.Group != "" || c.GetGroups() != nil {
+		t.Errorf("SetGroups() without names: Group %q, GetGroups %v, want none", c.Group, c.GetGroups())
+	}
+
+	split := &Chapter{Group: "Alpha, Delta"}
+	if !reflect.DeepEqual(split.GetGroups(), []string{"Alpha", "Delta"}) {
+		t.Errorf("GetGroups() without Groups = %v, want the split Group", split.GetGroups())
+	}
+}

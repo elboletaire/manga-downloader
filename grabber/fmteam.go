@@ -96,16 +96,17 @@ func (f *Fmteam) FetchChapters() (chapters Filterables, errs []error) {
 			title = "Chapitre " + strconv.FormatFloat(number, 'f', -1, 64)
 		}
 
-		chapters = append(chapters, &FmteamChapter{
+		fchap := &FmteamChapter{
 			Chapter{
 				Number:   number,
 				Title:    title,
 				Language: c.Language,
-				Group:    fmteamGroup(c.Teams),
 				ID:       c.Url,
 			},
 			c.Url,
-		})
+		}
+		fchap.SetGroups(teamNames(c.Teams)...)
+		chapters = append(chapters, fchap)
 	}
 
 	return
@@ -133,10 +134,10 @@ func (f Fmteam) FetchChapter(fl Filterable) (*Chapter, error) {
 		Title:      fl.GetTitle(),
 		Number:     fl.GetNumber(),
 		Language:   fchap.Language,
-		Group:      fchap.Group,
 		ID:         fchap.ID,
 		PagesCount: int64(len(page.Chapter.Pages)),
 	}
+	chapter.SetGroups(fchap.GetGroups()...)
 	for i, url := range page.Chapter.Pages {
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),
@@ -228,24 +229,7 @@ type fmteamChapterJson struct {
 	Language   string  `json:"language"`
 	Url        string  `json:"url"`
 	// Teams are the groups that made the chapter; the list can hold nulls
-	Teams []*fmteamTeam `json:"teams"`
-}
-
-// fmteamGroup joins the names of the teams that made a chapter, skipping the
-// null entries the feed can hold
-func fmteamGroup(teams []*fmteamTeam) string {
-	var names []string
-	for _, t := range teams {
-		if t != nil {
-			names = append(names, t.Name)
-		}
-	}
-	return strings.Join(uniqueValues(names), groupSeparator)
-}
-
-// fmteamTeam is a group the feed names for a chapter
-type fmteamTeam struct {
-	Name string `json:"name"`
+	Teams []*feedTeam `json:"teams"`
 }
 
 // fmteamReadPage is the relevant subset of the /api/read/{slug}/{lang}/ch/{n}

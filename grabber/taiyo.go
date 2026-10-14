@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
-	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
@@ -167,15 +166,16 @@ func taiyoReleases(items []taiyoChapterItem) Filterables {
 		for _, s := range c.Scans {
 			scans = append(scans, s.Name)
 		}
-		chapters = append(chapters, &TaiyoChapter{
+		listed := &TaiyoChapter{
 			Chapter{
 				Number: c.Number,
 				Title:  c.Title,
-				Group:  strings.Join(uniqueValues(scans), groupSeparator),
 				ID:     c.ID,
 			},
 			c.ID,
-		})
+		}
+		listed.SetGroups(scans...)
+		chapters = append(chapters, listed)
 	}
 
 	return chapters
@@ -211,9 +211,9 @@ func (t *Taiyo) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
 		Language:   "pt",
-		Group:      tchap.Group,
 		ID:         tchap.ID,
 	}
+	chapter.SetGroups(tchap.GetGroups()...)
 
 	for i, p := range pages {
 		imgUrl, _ := url.JoinPath("https://cdn.taiyo.moe", "medias", mediaId, "chapters", tchap.ChapterID, p.ID+"."+p.Extension)

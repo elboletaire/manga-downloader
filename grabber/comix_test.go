@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -266,8 +267,8 @@ func TestComixParseRow(t *testing.T) {
 			if ch.Group != c.wantGrp {
 				t.Errorf("group = %q, want %q", ch.Group, c.wantGrp)
 			}
-			if ch.ID == "" || ch.ID != ch.URL {
-				t.Errorf("ID = %q, want the reader URL %q", ch.ID, ch.URL)
+			if want := chapterURLID(ch.URL); ch.ID != want {
+				t.Errorf("ID = %q, want the reader's path %q", ch.ID, want)
 			}
 		})
 	}
@@ -400,5 +401,35 @@ func TestComixDoesNotCacheATruncatedWalk(t *testing.T) {
 	}
 	if c.cachedChapters != nil {
 		t.Error("a walk that hit an error must not be cached")
+	}
+}
+
+// FetchChapter keeps the group the chapter list named, with the release's ID
+// and title, next to the pages it read off the reader
+func TestComixChapterKeepsGroup(t *testing.T) {
+	row := `<li class="mchap-item"><span class="mchap-row__ch">Chapter 4</span><a class="mchap-row__primary" href="https://comix.to/title/abc/4-release"></a><div class="mchap-row__secondary"><a class="mchap-row__group"><span>Ah, my next job</span></a></div></li>`
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(row))
+	if err != nil {
+		t.Fatal(err)
+	}
+	listed, err := comixParseRow(doc.Find(".mchap-item").First(), "https://comix.to")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	reader := `<main class="rpage-main"><div class="rpage-page" data-page="1"><img class="rpage-page__img" referrerpolicy="no-referrer" src="https://rxn.example.site/hi/p1"></div></main>`
+	chapter, err := comixChapter(listed, reader)
+	if err != nil {
+		t.Fatalf("comixChapter() error = %v", err)
+	}
+	// the group is one name, a comma and all
+	if chapter.Group != "Ah, my next job" || !reflect.DeepEqual(chapter.GetGroups(), []string{"Ah, my next job"}) {
+		t.Errorf("group = %q (%v), want the one name Ah, my next job", chapter.Group, chapter.GetGroups())
+	}
+	if want := chapterURLID(listed.URL); chapter.ID != want {
+		t.Errorf("ID = %q, want %q", chapter.ID, want)
+	}
+	if len(chapter.Pages) != 1 {
+		t.Errorf("got %d pages, want 1", len(chapter.Pages))
 	}
 }

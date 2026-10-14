@@ -292,6 +292,11 @@ func (c *Comix) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
+	return comixChapter(chap, html)
+}
+
+// comixChapter builds the chapter of one release from its rendered reader
+func comixChapter(chap *ComixChapter, html string) (*Chapter, error) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 	if err != nil {
 		return nil, err
@@ -299,17 +304,20 @@ func (c *Comix) FetchChapter(f Filterable) (*Chapter, error) {
 
 	pages, err := comixPages(doc)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", f.GetTitle(), err)
+		return nil, fmt.Errorf("%s: %w", chap.GetTitle(), err)
 	}
 
-	return &Chapter{
-		Title:      f.GetTitle(),
-		Number:     f.GetNumber(),
+	chapter := &Chapter{
+		Title:      chap.GetTitle(),
+		Number:     chap.GetNumber(),
 		Language:   "en",
 		ID:         chap.ID,
 		Pages:      pages,
 		PagesCount: int64(len(pages)),
-	}, nil
+	}
+	chapter.SetGroups(chap.GetGroups()...)
+
+	return chapter, nil
 }
 
 // Refilterable implements grabber.Refilterable: FetchChapters serves the cached
@@ -336,15 +344,17 @@ func comixParseRow(row *goquery.Selection, baseURL string) (*ComixChapter, error
 	// the group is empty when the row names none
 	group := strings.TrimSpace(row.Find(".mchap-row__secondary a.mchap-row__group span").Text())
 
-	return &ComixChapter{
+	chapter := &ComixChapter{
 		Chapter{
 			Number: number,
 			Title:  "Chapter " + strconv.FormatFloat(number, 'f', -1, 64),
-			Group:  group,
-			ID:     href,
+			ID:     chapterURLID(href),
 		},
 		href,
-	}, nil
+	}
+	chapter.SetGroups(group)
+
+	return chapter, nil
 }
 
 // comixPages reads the page images off a rendered reader. A slot without

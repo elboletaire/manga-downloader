@@ -165,16 +165,17 @@ func roliascanReleases(items []roliascanChapterItem, language string) Filterable
 			title = "Chapter " + c.Chapter
 		}
 
-		chapters = append(chapters, &RoliascanChapter{
+		listed := &RoliascanChapter{
 			Chapter{
 				Number:   num,
 				Title:    title,
 				Language: c.Language,
-				Group:    c.GroupName,
 				ID:       c.Id,
 			},
 			c.Id,
-		})
+		}
+		listed.SetGroups(c.GroupName)
+		chapters = append(chapters, listed)
 	}
 
 	return chapters
@@ -208,10 +209,10 @@ func (m *Roliascan) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		Language:   rchap.Language,
-		Group:      rchap.Group,
 		ID:         rchap.ID,
 		PagesCount: int64(len(feed.Images)),
 	}
+	chapter.SetGroups(rchap.GetGroups()...)
 	for i, img := range feed.Images {
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),

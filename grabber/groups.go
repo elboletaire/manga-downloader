@@ -10,19 +10,45 @@ import (
 // groupSeparator joins the groups of a release that several groups made
 const groupSeparator = ", "
 
-// groupGetter is a listed chapter that says which scanlation group made it
-type groupGetter interface {
-	GetGroup() string
+// groupsGetter is a listed chapter that says which scanlation groups made it
+type groupsGetter interface {
+	GetGroups() []string
 }
 
-// groupNames returns the distinct groups a release's Group names, in order
-func groupNames(group string) []string {
-	parts := strings.Split(group, groupSeparator)
-	for i, p := range parts {
-		parts[i] = strings.TrimSpace(p)
+// feedTeam is a group a feed names as having made a chapter (bluesolo and
+// fmteam share the shape). The list can hold nulls, see teamNames
+type feedTeam struct {
+	Name string `json:"name"`
+}
+
+// teamNames returns the names of the teams that made a chapter, skipping the
+// null entries the feed can hold
+func teamNames(teams []*feedTeam) []string {
+	var names []string
+	for _, t := range teams {
+		if t != nil {
+			names = append(names, t.Name)
+		}
 	}
 
-	return uniqueValues(parts)
+	return names
+}
+
+// cleanGroups trims the group names, drops the empty ones and the repeated
+// ones, keeping the order
+func cleanGroups(names []string) []string {
+	trimmed := make([]string, len(names))
+	for i, name := range names {
+		trimmed[i] = strings.TrimSpace(name)
+	}
+
+	return uniqueValues(trimmed)
+}
+
+// joinGroups returns the display string of a release's groups: their cleaned
+// names joined with groupSeparator
+func joinGroups(names []string) string {
+	return strings.Join(cleanGroups(names), groupSeparator)
 }
 
 // GroupOptions lists the scanlation groups of a listing, by the names
@@ -31,11 +57,11 @@ func groupNames(group string) []string {
 func GroupOptions(chapters Filterables) *FilterOptions {
 	counts := map[string]int{}
 	for _, c := range chapters {
-		g, ok := c.(groupGetter)
+		g, ok := c.(groupsGetter)
 		if !ok {
 			continue
 		}
-		for _, name := range groupNames(g.GetGroup()) {
+		for _, name := range g.GetGroups() {
 			counts[name]++
 		}
 	}
@@ -87,17 +113,14 @@ func SelectGroup(chapters Filterables, selection string) (Filterables, error) {
 	return kept, nil
 }
 
-// groupMatches reports whether a chapter's group is selection, or one of the
-// groups it names, ignoring case
+// groupMatches reports whether one of the groups that made a chapter is
+// selection, ignoring case
 func groupMatches(c Filterable, selection string) bool {
-	g, ok := c.(groupGetter)
+	g, ok := c.(groupsGetter)
 	if !ok {
 		return false
 	}
-	if strings.EqualFold(g.GetGroup(), selection) {
-		return true
-	}
-	for _, name := range groupNames(g.GetGroup()) {
+	for _, name := range g.GetGroups() {
 		if strings.EqualFold(name, selection) {
 			return true
 		}

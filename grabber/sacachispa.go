@@ -131,16 +131,17 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 				continue
 			}
 			for _, r := range rels {
-				chapters = append(chapters, &SacachispaChapter{
+				listed := &SacachispaChapter{
 					Chapter: Chapter{
 						Number:   number,
 						Title:    title,
 						Language: r.Language,
-						Group:    r.Group.Name,
 						ID:       r.ID,
 					},
 					PatreonOnly: c.PatreonOnly,
-				})
+				}
+				listed.SetGroups(r.Group.Name)
+				chapters = append(chapters, listed)
 			}
 		}
 	}

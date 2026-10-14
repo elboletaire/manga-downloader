@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/elboletaire/manga-downloader/http"
 )
@@ -134,12 +133,12 @@ func (m Mangalib) FetchChapters() (chapters Filterables, errs []error) {
 					Number:   num,
 					Title:    c.Name,
 					Language: "ru",
-					Group:    mangalibGroup(b.Teams),
 					Volume:   parseVolume(c.Volume),
 				},
 				VolumeRaw: c.Volume,
 				Num:       c.Number,
 			}
+			chapter.SetGroups(mangalibGroups(b.Teams)...)
 			if b.ID != 0 {
 				chapter.ID = strconv.Itoa(b.ID)
 			}
@@ -193,10 +192,10 @@ func (m Mangalib) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		Language:   "ru",
-		Group:      mchap.Group,
 		ID:         mchap.ID,
 		PagesCount: int64(len(feed.Data.Pages)),
 	}
+	chapter.SetGroups(mchap.GetGroups()...)
 	for i, p := range feed.Data.Pages {
 		// p.Url is a server-relative path starting with "//" (e.g.
 		// "//manga/one-piece/chapters/123/abc.jpg"); it is *not* a
@@ -224,10 +223,10 @@ func (m Mangalib) seriesSlug() (string, error) {
 	return matches[1], nil
 }
 
-// mangalibGroup returns the names of a branch's teams, joined. The api's
-// placeholder team (id 0, "Неизвестный") is no group, so it's left out.
-func mangalibGroup(teams []mangalibTeam) string {
-	names := []string{}
+// mangalibGroups returns the names of a branch's teams. The api's placeholder
+// team (id 0, "Неизвестный") is no group, so it's left out.
+func mangalibGroups(teams []mangalibTeam) []string {
+	var names []string
 	for _, t := range teams {
 		if t.ID == 0 {
 			continue
@@ -235,7 +234,7 @@ func mangalibGroup(teams []mangalibTeam) string {
 		names = append(names, t.Name)
 	}
 
-	return strings.Join(names, groupSeparator)
+	return names
 }
 
 // mangalibChaptersFeed is the JSON feed for the chapters list. Each entry is

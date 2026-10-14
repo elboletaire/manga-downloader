@@ -919,11 +919,11 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 				Chapter{
 					Number: number,
 					Title:  title,
-					Group:  upload.group,
 					ID:     id,
 				},
 				u,
 			}
+			chapter.SetGroups(upload.groups...)
 
 			chapters = append(chapters, chapter)
 		}
@@ -933,10 +933,10 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 }
 
 // plainHTMLUpload is one release a chapter row lists: the link it's read
-// from (as written in the markup) and the group that made it
+// from (as written in the markup) and the groups that made it
 type plainHTMLUpload struct {
-	href  string
-	group string
+	href   string
+	groups []string
 }
 
 // rowUploads returns the releases a chapter row lists. With Uploads set, that's
@@ -950,7 +950,7 @@ func (m PlainHTML) rowUploads(s *goquery.Selection) []plainHTMLUpload {
 			if href == "" {
 				return
 			}
-			uploads = append(uploads, plainHTMLUpload{href, m.uploadGroup(sub)})
+			uploads = append(uploads, plainHTMLUpload{href, m.uploadGroups(sub)})
 		})
 		if len(uploads) > 0 {
 			return uploads
@@ -961,14 +961,14 @@ func (m PlainHTML) rowUploads(s *goquery.Selection) []plainHTMLUpload {
 	if m.site.Link != "" {
 		href = s.Find(m.site.Link).AttrOr("href", "")
 	}
-	return []plainHTMLUpload{{href, m.uploadGroup(s)}}
+	return []plainHTMLUpload{{href, m.uploadGroups(s)}}
 }
 
-// uploadGroup returns the group(s) named inside an upload's markup (or a row's,
-// when it has no sub-rows), joined with ", ", or "" when it names none
-func (m PlainHTML) uploadGroup(s *goquery.Selection) string {
+// uploadGroups returns the group(s) named inside an upload's markup (or a
+// row's, when it has no sub-rows), none when it names none
+func (m PlainHTML) uploadGroups(s *goquery.Selection) []string {
 	if m.site.UploadGroup == "" {
-		return ""
+		return nil
 	}
 	var names []string
 	s.Find(m.site.UploadGroup).Each(func(_ int, g *goquery.Selection) {
@@ -976,7 +976,7 @@ func (m PlainHTML) uploadGroup(s *goquery.Selection) string {
 			names = append(names, name)
 		}
 	})
-	return strings.Join(names, groupSeparator)
+	return names
 }
 
 // releaseID returns a release's ID: the first capture of idRe in its URL when
@@ -1056,7 +1056,7 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 	// the release's own identity comes from the listing, which is where
 	// FetchChapters read it; the page doesn't carry it
 	if listed, ok := f.(*PlainHTMLChapter); ok {
-		chapter.Group = listed.Group
+		chapter.SetGroups(listed.GetGroups()...)
 		chapter.ID = listed.ID
 	}
 

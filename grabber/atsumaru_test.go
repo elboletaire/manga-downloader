@@ -40,52 +40,17 @@ func testInfo() *atsumaruMangaInfo {
 	return info
 }
 
-func TestAtsumaruGroupsAreNamedAndCounted(t *testing.T) {
-	a := newTestAtsumaru(
-		atsumaruScanlator{Id: "alpha-id", Name: "Alpha"},
-		atsumaruScanlator{Id: "delta-id", Name: "Delta"},
-	)
-
-	groups := a.groups(testInfo())
-	if len(groups) != 2 {
-		t.Fatalf("expected 2 groups, got %d", len(groups))
-	}
-	// site order, not chapter-count order
-	if groups[0].Name != "Alpha" || groups[0].Count != 3 {
-		t.Errorf("expected Alpha with 3 chapters, got %q with %d", groups[0].Name, groups[0].Count)
-	}
-	if groups[1].Name != "Delta" || groups[1].Count != 4 {
-		t.Errorf("expected Delta with 4 chapters, got %q with %d", groups[1].Name, groups[1].Count)
-	}
-}
-
-// a group listed on the series page with nothing uploaded yet must not show up
-// as a selectable option
-func TestAtsumaruGroupsSkipsEmptyOnes(t *testing.T) {
-	a := newTestAtsumaru(
-		atsumaruScanlator{Id: "alpha-id", Name: "Alpha"},
-		atsumaruScanlator{Id: "delta-id", Name: "Delta"},
-		atsumaruScanlator{Id: "gamma-id", Name: "Gamma"},
-	)
-
-	for _, g := range a.groups(testInfo()) {
-		if g.Name == "Gamma" {
-			t.Error("a group with no chapters must not be listed")
-		}
-	}
-}
-
-// when the series page can't be read the ids still work as selectors, in
-// first-seen order so the default pick stays deterministic
-func TestAtsumaruGroupsFallBackToIds(t *testing.T) {
+// when the series page can't be read the ids still work as the group names
+func TestAtsumaruFetchChaptersFallsBackToIds(t *testing.T) {
 	a := newTestAtsumaru()
+	a.info = testInfo()
 
-	groups := a.groups(testInfo())
-	if len(groups) != 2 {
-		t.Fatalf("expected 2 groups, got %d", len(groups))
+	chapters, errs := a.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
 	}
-	if groups[0].Id != "alpha-id" || groups[0].displayName() != "alpha-id" {
-		t.Errorf("expected the id as display name, got %q", groups[0].displayName())
+	if got := chapters[0].(*AtsumaruChapter).GetGroup(); got != "alpha-id" {
+		t.Errorf("group = %q, want the id alpha-id", got)
 	}
 }
 
@@ -169,6 +134,36 @@ func TestAtsumaruResolveSeriesURL(t *testing.T) {
 		a.resolveSeriesURL()
 		if a.URL != c.want {
 			t.Errorf("resolveSeriesURL(%q) = %q, want %q", c.input, a.URL, c.want)
+		}
+	}
+}
+
+// FetchChapter keeps the group the listing named, the chapter's own ID and its
+// title, so the EPUB identity and {{.Group}} come out the same either way
+func TestAtsumaruChapterKeepsGroup(t *testing.T) {
+	a := newTestAtsumaru(
+		atsumaruScanlator{Id: "alpha-id", Name: "Alpha"},
+		atsumaruScanlator{Id: "delta-id", Name: "Delta"},
+	)
+	a.info = testInfo()
+
+	chapters, errs := a.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	ones := chapters.Filter(func(f Filterable) bool { return f.GetNumber() == 1 })
+	body := `{"readChapter":{"pages":[{"image":"/p1.jpg"}]}}`
+	for _, want := range []struct{ id, group string }{{"alpha-id-1", "Alpha"}, {"delta-id-1", "Delta"}} {
+		listed := ones[0]
+		if listed.(*AtsumaruChapter).ID != want.id {
+			listed = ones[1]
+		}
+		chapter, err := atsumaruChapter(listed.(*AtsumaruChapter), body)
+		if err != nil {
+			t.Fatalf("atsumaruChapter() error = %v", err)
+		}
+		if chapter.Group != want.group || chapter.GetGroups()[0] != want.group || chapter.ID != want.id {
+			t.Errorf("chapter = group %q, ID %q, want %q, %q", chapter.Group, chapter.ID, want.group, want.id)
 		}
 	}
 }

@@ -99,8 +99,8 @@ func (a *Atsumaru) FetchChapters() (chapters Filterables, errs []error) {
 	}
 
 	names := map[string]string{}
-	for _, g := range a.groups(info) {
-		names[g.Id] = g.displayName()
+	for _, s := range a.fetchScanlators() {
+		names[s.Id] = s.displayName()
 	}
 
 	for _, c := range info.Chapters {
@@ -108,15 +108,21 @@ func (a *Atsumaru) FetchChapters() (chapters Filterables, errs []error) {
 		if title == "" {
 			title = "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64)
 		}
-		chapters = append(chapters, &AtsumaruChapter{
+		// a group the series page doesn't name is listed by its id
+		group := names[c.ScanId]
+		if group == "" {
+			group = c.ScanId
+		}
+		listed := &AtsumaruChapter{
 			Chapter{
 				Number: c.Number,
 				Title:  title,
-				Group:  names[c.ScanId],
 				ID:     c.Id,
 			},
 			c.Id,
-		})
+		}
+		listed.SetGroups(group)
+		chapters = append(chapters, listed)
 	}
 
 	return chapters, errs
@@ -125,45 +131,6 @@ func (a *Atsumaru) FetchChapters() (chapters Filterables, errs []error) {
 // Refilterable implements grabber.Refilterable: the listing holds every group's
 // releases and is cached on the site, so a group change is a filter on it
 func (*Atsumaru) Refilterable() {}
-
-// atsumaruGroup is a scanlation group together with the number of chapters it
-// uploaded for the series being fetched
-type atsumaruGroup struct {
-	atsumaruScanlator
-	Count int
-}
-
-// groups returns the scanlation groups that uploaded chapters for this series,
-// named where the series page could be read, in the order the site lists them
-// (falling back to first-seen order for ids the page didn't name)
-func (a *Atsumaru) groups(info *atsumaruMangaInfo) []atsumaruGroup {
-	counts := map[string]int{}
-	order := []string{}
-	for _, c := range info.Chapters {
-		if counts[c.ScanId] == 0 {
-			order = append(order, c.ScanId)
-		}
-		counts[c.ScanId]++
-	}
-
-	groups := []atsumaruGroup{}
-	seen := map[string]bool{}
-	for _, s := range a.fetchScanlators() {
-		if counts[s.Id] == 0 {
-			// listed for the series but with nothing uploaded (yet)
-			continue
-		}
-		seen[s.Id] = true
-		groups = append(groups, atsumaruGroup{s, counts[s.Id]})
-	}
-	for _, id := range order {
-		if !seen[id] {
-			groups = append(groups, atsumaruGroup{atsumaruScanlator{Id: id}, counts[id]})
-		}
-	}
-
-	return groups
-}
 
 // fetchScanlators returns the series' scanlation groups with their names. They
 // aren't exposed by any api endpoint (the chapter list only carries opaque
@@ -207,8 +174,8 @@ func (a *Atsumaru) fetchScanlators() []atsumaruScanlator {
 }
 
 // displayName returns the group name, falling back to its id when the series
-// page couldn't be read
-func (g atsumaruGroup) displayName() string {
+// page didn't name it
+func (g atsumaruScanlator) displayName() string {
 	if g.Name != "" {
 		return g.Name
 	}
@@ -233,6 +200,11 @@ func (a *Atsumaru) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
+	return atsumaruChapter(achap, body)
+}
+
+// atsumaruChapter builds the chapter of one release from its reader feed
+func atsumaruChapter(achap *AtsumaruChapter, body string) (*Chapter, error) {
 	feed := struct {
 		ReadChapter struct {
 			Pages []struct {
@@ -240,17 +212,18 @@ func (a *Atsumaru) FetchChapter(f Filterable) (*Chapter, error) {
 			} `json:"pages"`
 		} `json:"readChapter"`
 	}{}
-	if err = json.Unmarshal([]byte(body), &feed); err != nil {
+	if err := json.Unmarshal([]byte(body), &feed); err != nil {
 		return nil, err
 	}
 
 	chapter := &Chapter{
-		Title:      f.GetTitle(),
-		Number:     f.GetNumber(),
+		Title:      achap.GetTitle(),
+		Number:     achap.GetNumber(),
 		Language:   "en",
 		ID:         achap.ID,
 		PagesCount: int64(len(feed.ReadChapter.Pages)),
 	}
+	chapter.SetGroups(achap.GetGroups()...)
 	for i, p := range feed.ReadChapter.Pages {
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),

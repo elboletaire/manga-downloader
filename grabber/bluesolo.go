@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/elboletaire/manga-downloader/http"
 )
@@ -131,16 +130,17 @@ func (b *Bluesolo) FetchChapters() (chapters Filterables, errs []error) {
 			title = c.FullTitle
 		}
 
-		chapters = append(chapters, &BluesoloChapter{
+		bchap := &BluesoloChapter{
 			Chapter{
 				Number:   number,
 				Title:    title,
 				Language: c.Language,
-				Group:    bluesoloGroup(c.Teams),
 				ID:       c.Url,
 			},
 			b.apiUrl(c.Url),
-		})
+		}
+		bchap.SetGroups(teamNames(c.Teams)...)
+		chapters = append(chapters, bchap)
 	}
 
 	return
@@ -167,10 +167,10 @@ func (b *Bluesolo) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		Language:   bchap.Language,
-		Group:      bchap.Group,
 		ID:         bchap.ID,
 		PagesCount: int64(len(feed.Chapter.Pages)),
 	}
+	chapter.SetGroups(bchap.GetGroups()...)
 	for i, url := range feed.Chapter.Pages {
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),
@@ -243,26 +243,9 @@ type bluesoloComicFeed struct {
 			Url        string `json:"url"`
 			Licensed   int    `json:"licensed"`
 			// Teams are the groups that made the chapter; the list can hold nulls
-			Teams []*bluesoloTeam `json:"teams"`
+			Teams []*feedTeam `json:"teams"`
 		} `json:"chapters"`
 	} `json:"comic"`
-}
-
-// bluesoloTeam is a group the feed names for a chapter
-type bluesoloTeam struct {
-	Name string `json:"name"`
-}
-
-// bluesoloGroup joins the names of the teams that made a chapter, skipping the
-// null entries the feed can hold
-func bluesoloGroup(teams []*bluesoloTeam) string {
-	var names []string
-	for _, t := range teams {
-		if t != nil {
-			names = append(names, t.Name)
-		}
-	}
-	return strings.Join(uniqueValues(names), groupSeparator)
 }
 
 // bluesoloReaderFeed is the JSON feed for a chapter's pages

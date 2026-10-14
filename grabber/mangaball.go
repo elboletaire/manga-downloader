@@ -175,16 +175,17 @@ func (m *Mangaball) FetchChapters() (chapters Filterables, errs []error) {
 		if language != FilterAll && c.Lang != language {
 			continue
 		}
-		chapters = append(chapters, &MangaballChapter{
+		listed := &MangaballChapter{
 			Chapter{
 				Number:   c.Number,
 				Title:    c.Name,
 				Language: c.Lang,
-				Group:    c.GroupName,
 				ID:       c.ID,
 			},
 			mangaballSite + "/chapter-detail/" + c.ID,
-		})
+		}
+		listed.SetGroups(c.GroupName)
+		chapters = append(chapters, listed)
 	}
 
 	return
@@ -211,10 +212,10 @@ func (m Mangaball) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		Language:   mchap.Language,
-		Group:      mchap.Group,
 		ID:         mchap.ID,
 		PagesCount: int64(len(images)),
 	}
+	chapter.SetGroups(mchap.GetGroups()...)
 	for i, img := range images {
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),

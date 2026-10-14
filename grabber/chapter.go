@@ -42,8 +42,13 @@ type Chapter struct {
 	// Language is the chapter language
 	Language string
 	// Group is the scanlation group (team) that made this release, empty when
-	// the site doesn't say. Several groups are joined with ", "
+	// the site doesn't say. Several groups are joined with ", ". Set it with
+	// SetGroups, which keeps Groups in step
 	Group string
+	// Groups are the scanlation groups that made this release, one name each,
+	// so a name that holds ", " stays whole. GetGroups falls back to splitting
+	// Group when a grabber didn't set them
+	Groups []string
 	// ID is the source's own stable identifier for this release of the
 	// chapter, empty when the grabber has none
 	ID string
@@ -81,6 +86,24 @@ func (c Chapter) GetNumber() float64 {
 // GetGroup returns the scanlation group that made the chapter, "" when unknown
 func (c Chapter) GetGroup() string {
 	return c.Group
+}
+
+// GetGroups returns the scanlation groups that made the chapter, one name
+// each: Groups when a grabber set them, else Group split on groupSeparator
+func (c Chapter) GetGroups() []string {
+	if len(c.Groups) > 0 {
+		return c.Groups
+	}
+
+	return cleanGroups(strings.Split(c.Group, groupSeparator))
+}
+
+// SetGroups names the scanlation groups that made the release. Groups keeps
+// the names apart, and Group is their display join. Blank and repeated names
+// are dropped.
+func (c *Chapter) SetGroups(names ...string) {
+	c.Groups = cleanGroups(names)
+	c.Group = joinGroups(names)
 }
 
 // GetVolume returns the chapter's volume, 0 when unknown

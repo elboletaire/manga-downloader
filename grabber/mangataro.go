@@ -169,16 +169,17 @@ func mangataroReleases(items []mangataroChapterItem, language string) Filterable
 		if title == "" {
 			title = "Chapter " + c.Chapter
 		}
-		chapters = append(chapters, &MangataroChapter{
+		listed := &MangataroChapter{
 			Chapter{
 				Number:   num,
 				Title:    title,
 				Language: c.Language,
-				Group:    c.GroupName,
 				ID:       c.Id,
 			},
 			c.Id,
-		})
+		}
+		listed.SetGroups(c.GroupName)
+		chapters = append(chapters, listed)
 	}
 
 	return chapters
@@ -218,10 +219,10 @@ func (m *Mangataro) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		Language:   mchap.Language,
-		Group:      mchap.Group,
 		ID:         mchap.ID,
 		PagesCount: int64(len(feed.Images)),
 	}
+	chapter.SetGroups(mchap.GetGroups()...)
 	for i, img := range feed.Images {
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),

@@ -26,8 +26,9 @@ type Settings struct {
 	MaxConcurrency MaxConcurrency
 	// Language is the preferred language for downloading chapters
 	Language string
-	// Scanlator is the preferred scanlation group for sites that host several
-	// groups' versions of the same chapters ("all" keeps every group's)
+	// Scanlator keeps only the releases of this scanlation group, for sites
+	// that host several groups' versions of the same chapters. Empty or "all"
+	// keeps every group's releases
 	Scanlator string
 	// FilenameTemplate is the template for the filename
 	FilenameTemplate string

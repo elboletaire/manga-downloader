@@ -82,18 +82,19 @@ func (g Guya) FetchChapters() (Filterables, []error) {
 		}
 
 		for _, groupId := range orderedGroups(c.Groups, feed.PreferredSort) {
-			chapters = append(chapters, &GuyaChapter{
+			listed := &GuyaChapter{
 				Chapter{
 					Number: number,
 					Title:  title,
-					Group:  feed.Groups[groupId],
 					ID:     c.Folder + "/" + groupId,
 				},
 				feed.Slug,
 				c.Folder,
 				groupId,
 				c.Groups[groupId],
-			})
+			}
+			listed.SetGroups(feed.Groups[groupId])
+			chapters = append(chapters, listed)
 		}
 	}
 
@@ -112,9 +113,9 @@ func (g Guya) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(gchap.Files)),
 		Language:   "en",
-		Group:      gchap.Group,
 		ID:         gchap.ID,
 	}
+	chapter.SetGroups(gchap.GetGroups()...)
 
 	for i, file := range gchap.Files {
 		chapter.Pages = append(chapter.Pages, Page{
