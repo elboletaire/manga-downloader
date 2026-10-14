@@ -502,7 +502,10 @@ Use `--filename-template` to change file names. It takes a
 
 `{{.Version}}` is a counter that's added when two files would have the same
 name, and `{{.Volume}}` is the volume number (0 when the site doesn't say);
-`{{printf "%02d" .Volume}}` pads it.
+`{{printf "%02d" .Volume}}` pads it. A template that leaves `{{.Version}}` out
+still gets the suffix when names collide: the second file is `X v2`, the third
+`X v3`, and so on, so `{{.Series}} {{.Number}} [{{.Group}}]` never overwrites a
+release.
 
 Volume files (`--volumes`) get their own default name while the template is
 left as is:

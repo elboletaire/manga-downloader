@@ -250,13 +250,28 @@ func namePages(pages []*downloader.File, formats grabber.ConvertFormats, format 
 	return named
 }
 
-func pack(outputdir, format, template, title string, parts FilenameTemplateParts, files []File, info EPUBInfo, progress func(page, progress int)) (string, error) {
-	parts.Version = 1
+// maxPackAttempts caps the names pack tries for one file, so a name that
+// keeps colliding fails instead of looping forever holding a download slot
+const maxPackAttempts = 1000
 
-	for {
+func pack(outputdir, format, template, title string, parts FilenameTemplateParts, files []File, info EPUBInfo, progress func(page, progress int)) (string, error) {
+	// base is the name the template gives the first try. A template that
+	// doesn't use {{.Version}} gives that same name every time, so the later
+	// tries get the " v2"-style suffix here, as the default template would
+	var base string
+	for attempt := 1; ; attempt++ {
+		if attempt > maxPackAttempts {
+			return "", fmt.Errorf("- error saving file for chapter %s: no free name after %d tries", title, maxPackAttempts)
+		}
+		parts.Version = attempt
 		filename, err := NewFilenameFromTemplate(template, parts)
 		if err != nil {
 			return "", fmt.Errorf("- error creating filename for chapter %s: %s", title, err.Error())
+		}
+		if attempt == 1 {
+			base = filename
+		} else if filename == base {
+			filename = fmt.Sprintf("%s v%d", base, attempt)
 		}
 
 		var name string
@@ -273,7 +288,6 @@ func pack(outputdir, format, template, title string, parts FilenameTemplateParts
 		}
 
 		if os.IsExist(err) {
-			parts.Version++
 			continue
 		}
 		if err != nil {
