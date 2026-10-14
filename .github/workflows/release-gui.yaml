@@ -64,16 +64,10 @@ jobs:
         rm -rf "stage/$name" && mkdir -p "stage/$name"
         cp build/bin/manga-downloader-gui ../LICENSE "stage/$name/"
         cp build/linux/icon.png "stage/$name/manga-downloader-gui.png"
-        cat > "stage/$name/manga-downloader-gui.desktop" <<'DESKTOP'
-        [Desktop Entry]
-        Type=Application
-        Name=Manga Downloader
-        Comment=Download manga chapters to CBZ or EPUB files
-        Exec=manga-downloader-gui
-        Icon=manga-downloader-gui
-        Categories=Network;
-        Terminal=false
-        DESKTOP
+        cp ../packaging/linux/manga-downloader-gui.desktop ../packaging/linux/install.sh "stage/$name/"
+        chmod 0755 "stage/$name/install.sh"
+        # installs the staged files into a throwaway HOME, so a broken installer never ships
+        sh ../packaging/linux/test-install.sh "stage/$name"
         tar -C stage -czf "$name.tar.gz" "$name"
         gh release upload "$TAG" "$name.tar.gz" --clobber
 

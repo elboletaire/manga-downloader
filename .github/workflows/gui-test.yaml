@@ -19,6 +19,7 @@ permissions:
 
 # The GUI's Go module embeds the frontend's build output, so the frontend is
 # built first. Linux needs the WebKitGTK headers, as in release-gui.yaml.
+# The linux-install job checks packaging/linux/install.sh against a stub binary.
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -50,3 +51,15 @@ jobs:
         tags="$(make -s -C .. --no-print-directory print-GUI_GO_TAGS)"
         go vet -tags "$tags" ./...
         go test -race -tags "$tags" ./...
+
+  linux-install:
+    name: Linux install script
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install ShellCheck and desktop-file-utils
+      run: sudo apt-get update && sudo apt-get install -y shellcheck desktop-file-utils
+    - name: Lint
+      run: shellcheck packaging/linux/install.sh packaging/linux/test-install.sh
+    - name: Install, upgrade and uninstall in a throwaway HOME
+      run: sh packaging/linux/test-install.sh
