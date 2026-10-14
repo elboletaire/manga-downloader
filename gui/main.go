@@ -16,6 +16,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 )
 
 // Version and Tag are set at link time by the release workflow (-X), the same
@@ -66,6 +67,7 @@ func main() {
 		OnShutdown: app.shutdown,
 		Bind:       []interface{}{app},
 		Linux:      &linux.Options{Icon: appIcon},
+		Mac:        &mac.Options{}, // without it Wails disables the zoom button
 	})
 	// OnShutdown already closed it; this covers a Run that failed or returned
 	// without calling it
