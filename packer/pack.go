@@ -175,7 +175,7 @@ func chapterFolders(chapters []*DownloadedChapter, format string, convert grabbe
 
 // chapterTitlePrefix matches the chapter word and number a title may open with
 // ("Chapter 0005: ", "Ch. 5 - ", "Episode 5 "), and the separator after them
-var chapterTitlePrefix = regexp.MustCompile(`(?i)^(?:episode|chapter|chap|ch|ep)\.?\s*0*(\d+(?:\.\d+)?)(?:\s*[:.\-–—]+)?\s*`)
+var chapterTitlePrefix = regexp.MustCompile(`(?i)^(?:episode|chapter|chap|ch|ep)\.?\s*0*(\d+(?:\.\d+)?)\b(?:\s*[:.\-‐‒–—―−]+)?\s*`)
 
 // chapterLabel names a chapter the way the filename template does (no padding,
 // decimals kept), with its title when the title says more than the number

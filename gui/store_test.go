@@ -178,7 +178,6 @@ func TestLoadOptionsRejectsReadingDirectionFallsBackToDefault(t *testing.T) {
 	}
 }
 
-// files saved before "Pack as" only had the bundle switch
 func TestLoadOptionsReadingDirectionIgnoresCase(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "gui.json")
 	if err := os.WriteFile(path, []byte(`{"readingDirection":" LTR ","format":"epub"}`), 0600); err != nil {
@@ -204,6 +203,7 @@ func TestLoadOptionsReadingDirectionIgnoresCase(t *testing.T) {
 	}
 }
 
+// files saved before "Pack as" only had the bundle switch
 func TestLoadOptionsMigratesBundle(t *testing.T) {
 	tests := []struct {
 		file string

@@ -680,6 +680,8 @@ func TestChapterLabel(t *testing.T) {
 		{5, "Chapter 5: Foo", "Chapter 5 - Foo"},
 		{5, "Ch. 5", "Chapter 5"},
 		{5, "Ch.5 - Foo", "Chapter 5 - Foo"},
+		{5, "Chapter 5th Child", "Chapter 5 - Chapter 5th Child"},
+		{5, "Chapter 5 − Foo", "Chapter 5 - Foo"},
 		{5, "Chapter 005", "Chapter 5"},
 		{5, "Episode 5 - Foo", "Chapter 5 - Foo"},
 		{10.5, "Chapter 10.50: Foo", "Chapter 10.5 - Foo"},
