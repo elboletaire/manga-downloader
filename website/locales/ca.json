@@ -1,14 +1,14 @@
 {
   "meta": {
-    "title": "manga downloader: descarrega manga en CBZ per al teu lector electrònic",
-    "description_one": "Aplicació d'escriptori i CLI gratuïtes que descarreguen manga de MangaDex i {{count}} lloc més en fitxers CBZ per a Kobo, KOReader i aplicacions de còmics. Windows, macOS i Linux.",
-    "description_other": "Aplicació d'escriptori i CLI gratuïtes que descarreguen manga de MangaDex i {{count}} llocs més en fitxers CBZ per a Kobo, KOReader i aplicacions de còmics. Windows, macOS i Linux.",
-    "socialTitle": "manga downloader: capítols de manga → CBZ a punt per llegir",
-    "socialDescription_one": "Descarrega manga de MangaDex i {{count}} lloc més en fitxers CBZ per al teu lector electrònic o la teva aplicació de còmics. Aplicació d'escriptori i CLI, gratuïtes i de codi obert.",
-    "socialDescription_other": "Descarrega manga de MangaDex i {{count}} llocs més en fitxers CBZ per al teu lector electrònic o la teva aplicació de còmics. Aplicació d'escriptori i CLI, gratuïtes i de codi obert.",
+    "title": "manga downloader: descarrega manga en CBZ o EPUB per al teu lector electrònic",
+    "description_one": "Aplicació d'escriptori i CLI gratuïtes que descarreguen manga de MangaDex i {{count}} lloc més en fitxers CBZ o EPUB per a Kobo, KOReader i aplicacions de còmics. Windows, macOS i Linux.",
+    "description_other": "Aplicació d'escriptori i CLI gratuïtes que descarreguen manga de MangaDex i {{count}} llocs més en fitxers CBZ o EPUB per a Kobo, KOReader i aplicacions de còmics. Windows, macOS i Linux.",
+    "socialTitle": "manga downloader: capítols de manga → CBZ i EPUB a punt per llegir",
+    "socialDescription_one": "Descarrega manga de MangaDex i {{count}} lloc més en fitxers CBZ o EPUB per al teu lector electrònic o la teva aplicació de còmics. Aplicació d'escriptori i CLI, gratuïtes i de codi obert.",
+    "socialDescription_other": "Descarrega manga de MangaDex i {{count}} llocs més en fitxers CBZ o EPUB per al teu lector electrònic o la teva aplicació de còmics. Aplicació d'escriptori i CLI, gratuïtes i de codi obert.",
     "imageAlt": "La mascota de manga downloader, un llibre obert en forma de gat, al costat del lema «Manga chapters → reader-ready CBZ».",
-    "jsonLdDescription_one": "Aplicació d'escriptori i eina de línia d'ordres que descarrega capítols de manga de MangaDex i {{count}} lloc més i els empaqueta en fitxers CBZ per a lectors electrònics i aplicacions de còmics.",
-    "jsonLdDescription_other": "Aplicació d'escriptori i eina de línia d'ordres que descarrega capítols de manga de MangaDex i {{count}} llocs més i els empaqueta en fitxers CBZ per a lectors electrònics i aplicacions de còmics."
+    "jsonLdDescription_one": "Aplicació d'escriptori i eina de línia d'ordres que descarrega capítols de manga de MangaDex i {{count}} lloc més i els empaqueta en fitxers CBZ o EPUB per a lectors electrònics i aplicacions de còmics.",
+    "jsonLdDescription_other": "Aplicació d'escriptori i eina de línia d'ordres que descarrega capítols de manga de MangaDex i {{count}} llocs més i els empaqueta en fitxers CBZ o EPUB per a lectors electrònics i aplicacions de còmics."
   },
   "common": {
     "desktopApp": "Aplicació d'escriptori",
@@ -26,9 +26,9 @@
   },
   "hero": {
     "eyebrow": "Des de la v1.11: aplicació d'escriptori per a Windows, macOS i Linux",
-    "title": "Capítols de manga <span class=\"arrow\">→</span> <span class=\"accent\">CBZ a punt per llegir</span>",
-    "lede_one": "Enganxa un enllaç de MangaDex o de {{count}} lloc compatible més, tria els capítols i aconsegueix fitxers CBZ nets que s'obren al teu lector electrònic o a la teva aplicació de còmics preferida.",
-    "lede_other": "Enganxa un enllaç de MangaDex o de qualsevol dels altres {{count}} llocs compatibles, tria els capítols i aconsegueix fitxers CBZ nets que s'obren al teu lector electrònic o a la teva aplicació de còmics preferida.",
+    "title": "Capítols de manga <span class=\"arrow\">→</span> <span class=\"accent\">CBZ i EPUB a&nbsp;punt per llegir</span>",
+    "lede_one": "Enganxa un enllaç de MangaDex o de {{count}} lloc compatible més, tria els capítols i aconsegueix fitxers CBZ o EPUB nets que s'obren al teu lector electrònic o a la teva aplicació de còmics preferida.",
+    "lede_other": "Enganxa un enllaç de MangaDex o de qualsevol dels altres {{count}} llocs compatibles, tria els capítols i aconsegueix fitxers CBZ o EPUB nets que s'obren al teu lector electrònic o a la teva aplicació de còmics preferida.",
     "downloadLabel": "Descarrega l'aplicació d'escriptori",
     "downloadDetail": "Per a Windows, macOS i Linux",
     "otherPlatforms": "Altres plataformes",
@@ -111,7 +111,7 @@
     "rangesTitle": "Intervals de capítols",
     "rangesText": "Demana <code>1,3,5-10</code> i descarrega només aquests: posar-te al dia vol dir baixar només el que et falta. Salta't les pàgines de crèdits amb <code>--skip-pages</code>.",
     "cloudflareTitle": "Cloudflare, resolt",
-    "cloudflareText": "Els llocs que necessiten JavaScript o són darrere de Cloudflare s'obren amb el teu propi Chrome, Edge o Brave, que fins i tot marca per tu la casella de verificació.",
+    "cloudflareText": "Els llocs que necessiten JavaScript o són darrere de Cloudflare s'obren amb el teu propi Chrome, Chromium, Brave o Edge, que fins i tot marca per tu la casella de verificació.",
     "dockerTitle": "Imatges de Docker",
     "dockerText": "Una imatge mínima per als llocs senzills i una altra <code>:browser</code> amb Chromium i una pantalla virtual per a la resta.",
     "languagesTitle": "Llengües i grups",

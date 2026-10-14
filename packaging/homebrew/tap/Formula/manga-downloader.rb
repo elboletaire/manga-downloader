@@ -1,5 +1,5 @@
 class MangaDownloader < Formula
-  desc "Download manga chapters from supported sites into CBZ files"
+  desc "Download manga chapters from supported sites into CBZ or EPUB files"
   homepage "https://mangadownloader.cat/"
   version "1.11.1"
   license "AGPL-3.0-only"

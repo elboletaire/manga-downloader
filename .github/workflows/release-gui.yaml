@@ -68,7 +68,7 @@ jobs:
         [Desktop Entry]
         Type=Application
         Name=Manga Downloader
-        Comment=Download manga chapters to CBZ files
+        Comment=Download manga chapters to CBZ or EPUB files
         Exec=manga-downloader-gui
         Icon=manga-downloader-gui
         Categories=Network;

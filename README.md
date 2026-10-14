@@ -19,9 +19,9 @@
 </div>
 
 Manga Downloader downloads manga chapters from MangaDex and more than 100 other
-sites and packs them into CBZ files, ready to read on your e-reader or in your
-favorite comic app. It comes as a **desktop app** for Windows, macOS and Linux,
-and as a **command line tool** for scripts, servers and Docker.
+sites and packs them into CBZ or EPUB files, ready to read on your e-reader or
+in your favorite comic app. It comes as a **desktop app** for Windows, macOS and
+Linux, and as a **command line tool** for scripts, servers and Docker.
 
 <div align="center">
 
@@ -409,11 +409,11 @@ volume, separated by slashes, in the chapter range syntax:
 manga-downloader --volumes 1-7/8-16 [url] 1-20
 ~~~
 
-That writes `Series Vol. 01.cbz` and `Series Vol. 02.cbz`, with a folder per
-chapter inside, and chapters 17 to 20, outside every volume, one file each.
-The chapters argument still picks what's downloaded: a volume packs the
-chapters of it you asked for. A group can give its volume number with `N:`,
-and the groups after it count on from there:
+That writes `Series Vol. 01.cbz` and `Series Vol. 02.cbz` (`.epub` with
+`--format epub`), with a folder per chapter inside, and chapters 17 to 20,
+outside every volume, one file each. The chapters argument still picks what's
+downloaded: a volume packs the chapters of it you asked for. A group can give
+its volume number with `N:`, and the groups after it count on from there:
 
 ~~~bash
 manga-downloader --volumes 16:112-114/115-118 [url] 112-118
@@ -451,6 +451,7 @@ is left out with a warning instead of being kept.
 > matters.
 
 The desktop app offers the same choice as two checkboxes, *AVIF* and *WebP*.
+With EPUB, AVIF is always converted, so its box is ticked and can't be changed.
 
 ### Skipping pages
 

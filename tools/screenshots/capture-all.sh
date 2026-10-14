@@ -45,7 +45,7 @@ for theme in light dark; do
   ./shot-select.sh "$WORK/raw/03-language-selector-$theme.png" $theme
   shot 04-downloading '?mock&scenario=running&freeze&shot'
   shot 05-done '?mock&scenario=done&freeze&shot'
-  shot 06-options '?mock&scenario=loaded&freeze&shot' "$SCROLL"
+  shot 06-options '?mock&scenario=loaded&freeze&shot&epub' "$SCROLL"
   shot 07-volumes '?mock&scenario=volumes&freeze&shot' "$FOLD"
   shot 08-browser-alert '?mock&scenario=check&freeze&shot'
   shot 09-update '?mock&scenario=update&freeze&shot'

@@ -16,9 +16,10 @@ body:
     attributes:
       label: What did you pick?
       description: >-
-        The chapters you selected, and any option you changed (language,
-        scanlation group, image conversion, "Show the browser window"…). Write
-        "defaults" if you didn't change anything.
+        The chapters you selected, and any option you changed (format, "Pack
+        as", reading direction, language, scanlation group, image conversion,
+        skipped pages, "Show the browser window"…). Write "defaults" if you
+        didn't change anything.
       placeholder: e.g. chapters 10 to 20, language Spanish, everything else default
     validations:
       required: true

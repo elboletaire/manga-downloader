@@ -1,14 +1,14 @@
 {
   "meta": {
-    "title": "manga downloader: download manga as CBZ for e-readers",
-    "description_one": "Free desktop app and CLI that downloads manga from MangaDex and {{count}} other site into CBZ files for Kobo, KOReader and comic apps. Windows, macOS and Linux.",
-    "description_other": "Free desktop app and CLI that downloads manga from MangaDex and {{count}} other sites into CBZ files for Kobo, KOReader and comic apps. Windows, macOS and Linux.",
-    "socialTitle": "manga downloader: manga chapters → reader-ready CBZ",
-    "socialDescription_one": "Download manga from MangaDex and {{count}} other site as CBZ files for your e-reader or comic app. A desktop app and a CLI, free and open source.",
-    "socialDescription_other": "Download manga from MangaDex and {{count}} other sites as CBZ files for your e-reader or comic app. A desktop app and a CLI, free and open source.",
+    "title": "manga downloader: download manga as CBZ or EPUB for e-readers",
+    "description_one": "Free desktop app and CLI that downloads manga from MangaDex and {{count}} other site into CBZ or EPUB files for Kobo, KOReader and comic apps. Windows, macOS and Linux.",
+    "description_other": "Free desktop app and CLI that downloads manga from MangaDex and {{count}} other sites into CBZ or EPUB files for Kobo, KOReader and comic apps. Windows, macOS and Linux.",
+    "socialTitle": "manga downloader: manga chapters → reader-ready CBZ & EPUB",
+    "socialDescription_one": "Download manga from MangaDex and {{count}} other site as CBZ or EPUB files for your e-reader or comic app. A desktop app and a CLI, free and open source.",
+    "socialDescription_other": "Download manga from MangaDex and {{count}} other sites as CBZ or EPUB files for your e-reader or comic app. A desktop app and a CLI, free and open source.",
     "imageAlt": "The manga downloader mascot, a cat-shaped open book, next to the tagline: Manga chapters → reader-ready CBZ.",
-    "jsonLdDescription_one": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other site and packs them into CBZ files for e-readers and comic apps.",
-    "jsonLdDescription_other": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other sites and packs them into CBZ files for e-readers and comic apps."
+    "jsonLdDescription_one": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other site and packs them into CBZ or EPUB files for e-readers and comic apps.",
+    "jsonLdDescription_other": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other sites and packs them into CBZ or EPUB files for e-readers and comic apps."
   },
   "common": {
     "desktopApp": "Desktop app",
@@ -26,9 +26,9 @@
   },
   "hero": {
     "eyebrow": "Since v1.11: a desktop app for Windows, macOS and Linux",
-    "title": "Manga chapters <span class=\"arrow\">→</span> <span class=\"accent\">reader&#8209;ready CBZ</span>",
-    "lede_one": "Paste a link from MangaDex or {{count}} other supported site, pick your chapters, and get clean CBZ files that open on your e-reader or in your favourite comic app.",
-    "lede_other": "Paste a link from MangaDex or any of {{count}} other supported sites, pick your chapters, and get clean CBZ files that open on your e-reader or in your favourite comic app.",
+    "title": "Manga chapters <span class=\"arrow\">→</span> <span class=\"accent\">reader&#8209;ready CBZ &amp; EPUB</span>",
+    "lede_one": "Paste a link from MangaDex or {{count}} other supported site, pick your chapters, and get clean CBZ or EPUB files that open on your e-reader or in your favourite comic app.",
+    "lede_other": "Paste a link from MangaDex or any of {{count}} other supported sites, pick your chapters, and get clean CBZ or EPUB files that open on your e-reader or in your favourite comic app.",
     "downloadLabel": "Download the desktop app",
     "downloadDetail": "For Windows, macOS and Linux",
     "otherPlatforms": "Other platforms",
@@ -111,7 +111,7 @@
     "rangesTitle": "Chapter ranges",
     "rangesText": "Ask for <code>1,3,5-10</code> and get just those, so catching up means downloading only what's missing. Skip credit pages with <code>--skip-pages</code>.",
     "cloudflareTitle": "Cloudflare, handled",
-    "cloudflareText": "Sites that need JavaScript or sit behind Cloudflare run through your own Chrome, Edge or Brave, which even ticks \"Verify you are human\" for you.",
+    "cloudflareText": "Sites that need JavaScript or sit behind Cloudflare run through your own Chrome, Chromium, Brave or Edge, which even ticks \"Verify you are human\" for you.",
     "dockerTitle": "Docker images",
     "dockerText": "A tiny image for plain sites, and a <code>:browser</code> one with Chromium and a virtual display for the rest.",
     "languagesTitle": "Languages and groups",

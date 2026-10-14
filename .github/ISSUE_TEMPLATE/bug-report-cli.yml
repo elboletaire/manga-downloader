@@ -43,7 +43,7 @@ body:
       description: >-
         What did you expect, and what happened instead? Paste the program's
         output or error here. Note a run can "succeed" but produce empty or
-        broken CBZ files; if that's your case, say so.
+        broken CBZ or EPUB files; if that's your case, say so.
       render: shell
     validations:
       required: true
