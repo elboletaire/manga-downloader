@@ -455,9 +455,10 @@ type SiteSelector struct {
 	// UploadLink is the link to an upload's reader, searched inside its
 	// sub-row (Uploads), where Link isn't
 	UploadLink string
-	// UploadGroup is a CSS selector for the scanlation group(s) that made an
-	// upload, searched inside its sub-row, or inside the row when it has no
-	// sub-rows. Several groups are joined with ", ".
+	// UploadGroup is a CSS selector for the scanlation group(s) that made a
+	// single upload: it's searched inside one sub-row (or inside the row when
+	// it has no sub-rows), so it must not also match another upload's group.
+	// Several groups matched in that one upload are joined with ", ".
 	UploadGroup string
 	// IDRe is a regexp whose first group captures a release's ID from its
 	// URL. Without it, or when it doesn't match, the ID is the URL's path.
@@ -939,19 +940,19 @@ type plainHTMLUpload struct {
 }
 
 // rowUploads returns the releases a chapter row lists. With Uploads set, that's
-// one per upload sub-row that has a link; a row with no sub-rows lists its own
-// link, as the single release it is.
+// one per upload sub-row that has a link. A row with no sub-rows, or none with
+// a link, lists its own link instead, as the single release it is.
 func (m PlainHTML) rowUploads(s *goquery.Selection) []plainHTMLUpload {
 	if m.site.Uploads != "" {
-		if subs := s.Find(m.site.Uploads); subs.Length() > 0 {
-			var uploads []plainHTMLUpload
-			subs.Each(func(_ int, sub *goquery.Selection) {
-				href := sub.Find(m.site.UploadLink).AttrOr("href", "")
-				if href == "" {
-					return
-				}
-				uploads = append(uploads, plainHTMLUpload{href, m.uploadGroup(sub)})
-			})
+		var uploads []plainHTMLUpload
+		s.Find(m.site.Uploads).Each(func(_ int, sub *goquery.Selection) {
+			href := sub.Find(m.site.UploadLink).AttrOr("href", "")
+			if href == "" {
+				return
+			}
+			uploads = append(uploads, plainHTMLUpload{href, m.uploadGroup(sub)})
+		})
+		if len(uploads) > 0 {
 			return uploads
 		}
 	}
@@ -979,16 +980,24 @@ func (m PlainHTML) uploadGroup(s *goquery.Selection) string {
 }
 
 // releaseID returns a release's ID: the first capture of idRe in its URL when
-// there's one, otherwise the URL's path. The path drops the query and fragment,
-// so a query (ChapterQuery, tracking parameters) doesn't split one release in two.
+// there's one, otherwise the URL's path and query. The host and fragment are
+// left out, and the query is kept because it can be what tells chapters apart
+// (/reader?chapter=1). Callers pass the URL before ChapterQuery is appended, so
+// that never ends up in the ID.
 func releaseID(u string, idRe *regexp.Regexp) string {
 	if idRe != nil {
 		if match := idRe.FindStringSubmatch(u); len(match) > 1 {
 			return match[1]
 		}
 	}
-	_, path, _ := chapterPath(u)
-	return path
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return ""
+	}
+	if parsed.RawQuery != "" {
+		return parsed.Path + "?" + parsed.RawQuery
+	}
+	return parsed.Path
 }
 
 // chapterOnlyTitleRe matches a chapter title that is just its number ("12",

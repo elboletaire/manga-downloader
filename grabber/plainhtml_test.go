@@ -907,9 +907,10 @@ func TestReleaseIDDefaultsToURLPath(t *testing.T) {
 		re   *regexp.Regexp
 		want string
 	}{
-		{"path with query", "https://example.com/manga/one/chapter-1/?lang=es", nil, "/manga/one/chapter-1/"},
+		{"path with query", "https://example.com/manga/one/chapter-1/?lang=es", nil, "/manga/one/chapter-1/?lang=es"},
 		{"other host", "https://mirror.example.net/manga/one/chapter-1/", nil, "/manga/one/chapter-1/"},
-		{"query chapter parameter", "https://example.com/reader?chapter=1", nil, "/reader"},
+		{"query chapter parameter", "https://example.com/reader?chapter=1", nil, "/reader?chapter=1"},
+		{"fragment dropped", "https://example.com/reader?chapter=1#top", nil, "/reader?chapter=1"},
 		{"IDRe capture", "https://zonatmo.org/view_uploads/732986", idRe, "732986"},
 		{"IDRe miss falls back to path", "https://zonatmo.org/other/1", idRe, "/other/1"},
 	}
@@ -951,5 +952,36 @@ func TestFetchChaptersDefaultsIDToPath(t *testing.T) {
 	}
 	if chap.ID != "/manga/one/chapter-1/" {
 		t.Errorf("chapter ID = %q, want the URL path", chap.ID)
+	}
+}
+
+// TestRowUploadsFallsBackToRowLink checks that a row whose upload sub-rows carry
+// no link still yields its own link, as a row with no sub-rows does.
+func TestRowUploadsFallsBackToRowLink(t *testing.T) {
+	html := `<ul id="chapterlist">
+		<li class="upload-link"><a href="https://example.com/read/7">Chapter 7</a>
+			<div class="uploads"><div class="upload"><span>no link here</span></div></div>
+		</li>
+	</ul>`
+	m := PlainHTML{
+		doc: docFromHTML(t, html),
+		site: SiteSelector{
+			Rows:        "#chapterlist li.upload-link",
+			Chapter:     "a",
+			Link:        "a",
+			Uploads:     ".uploads > div.upload",
+			UploadLink:  "a",
+			UploadGroup: `a[href*="/groups/"]`,
+		},
+	}
+	m.rows = m.doc.Find(m.site.Rows)
+
+	chapters, _ := m.FetchChapters()
+	if len(chapters) != 1 {
+		t.Fatalf("expected the row's own link to give 1 chapter, got %d", len(chapters))
+	}
+	chap := chapters[0].(*PlainHTMLChapter)
+	if chap.URL != "https://example.com/read/7" || chap.Number != 7 {
+		t.Errorf("chapter = %v %q, want 7 %q", chap.Number, chap.URL, "https://example.com/read/7")
 	}
 }
