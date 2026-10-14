@@ -1,8 +1,11 @@
 # manga downloader website
 
 The project site, published to GitHub Pages at <https://mangadownloader.cat/> by
-[`.github/workflows/pages.yaml`](../.github/workflows/pages.yaml) on every push
-to `master` that touches `website/` or `README.md`.
+[`.github/workflows/pages.yaml`](../.github/workflows/pages.yaml) once a
+release's build workflows succeed, so the site only shows what's released. A
+manual run (dispatched from `master`, the only branch the Pages environment
+deploys from) covers urgent fixes, and the daily stats refresh rebuilds the
+latest release.
 
 One static page per language (English at `/`, Spanish at `/es/`, Catalan at `/ca/`): Vite and TypeScript, no UI framework. Everything is in
 the built HTML, so it works and indexes without JavaScript; the script only
