@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
@@ -46,10 +47,11 @@ func NewTaiyo(g *Grabber) *Taiyo {
 	return &Taiyo{Grabber: g}
 }
 
-// TaiyoChapter represents a Taiyo Chapter
+// TaiyoChapter represents a Taiyo Chapter. ChapterID is the site's id for the
+// chapter's reader pages, Chapter.ID is the same value under the shared name.
 type TaiyoChapter struct {
 	Chapter
-	ID string
+	ChapterID string
 }
 
 // Test returns true if the URL is a taiyo.moe URL
@@ -148,20 +150,35 @@ func (t *Taiyo) FetchChapters() (chapters Filterables, errs []error) {
 		}
 
 		result := feed[0].Result.Data.Json
-		for _, c := range result.Chapters {
-			chapters = append(chapters, &TaiyoChapter{
-				Chapter{
-					Number: c.Number,
-					Title:  c.Title,
-				},
-				c.ID,
-			})
-		}
+		chapters = append(chapters, taiyoReleases(result.Chapters)...)
 
 		if page >= result.TotalPages {
 			return
 		}
 	}
+}
+
+// taiyoReleases turns the chapters list into one chapter each. The group is
+// the scans (scanlators) the chapter names; the uploader isn't a group.
+func taiyoReleases(items []taiyoChapterItem) Filterables {
+	var chapters Filterables
+	for _, c := range items {
+		var scans []string
+		for _, s := range c.Scans {
+			scans = append(scans, s.Name)
+		}
+		chapters = append(chapters, &TaiyoChapter{
+			Chapter{
+				Number: c.Number,
+				Title:  c.Title,
+				Group:  strings.Join(uniqueValues(scans), groupSeparator),
+				ID:     c.ID,
+			},
+			c.ID,
+		})
+	}
+
+	return chapters
 }
 
 // FetchChapter fetches a chapter and its pages
@@ -172,7 +189,7 @@ func (t *Taiyo) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
-	uri, _ := url.JoinPath(t.BaseUrl(), "chapter", tchap.ID, "1")
+	uri, _ := url.JoinPath(t.BaseUrl(), "chapter", tchap.ChapterID, "1")
 	body, err := http.GetText(http.RequestParams{
 		URL:     uri,
 		Referer: t.URL,
@@ -194,10 +211,12 @@ func (t *Taiyo) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
 		Language:   "pt",
+		Group:      tchap.Group,
+		ID:         tchap.ID,
 	}
 
 	for i, p := range pages {
-		imgUrl, _ := url.JoinPath("https://cdn.taiyo.moe", "medias", mediaId, "chapters", tchap.ID, p.ID+"."+p.Extension)
+		imgUrl, _ := url.JoinPath("https://cdn.taiyo.moe", "medias", mediaId, "chapters", tchap.ChapterID, p.ID+"."+p.Extension)
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),
 			URL:    imgUrl,
@@ -291,13 +310,21 @@ type taiyoChaptersFeed []struct {
 	Result struct {
 		Data struct {
 			Json struct {
-				Chapters []struct {
-					ID     string  `json:"id"`
-					Title  string  `json:"title"`
-					Number float64 `json:"number"`
-				} `json:"chapters"`
-				TotalPages int `json:"totalPages"`
+				Chapters   []taiyoChapterItem `json:"chapters"`
+				TotalPages int                `json:"totalPages"`
 			} `json:"json"`
 		} `json:"data"`
 	} `json:"result"`
+}
+
+// taiyoChapterItem is one chapter of the chapters list. scans are the groups
+// that translated it; the uploader is left out, as it's not the group.
+type taiyoChapterItem struct {
+	ID     string  `json:"id"`
+	Title  string  `json:"title"`
+	Number float64 `json:"number"`
+	Scans  []struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	} `json:"scans"`
 }

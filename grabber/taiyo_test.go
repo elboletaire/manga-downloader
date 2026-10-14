@@ -2,7 +2,10 @@
 
 package grabber
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestTaiyoChapterURL(t *testing.T) {
 	cases := []struct {
@@ -88,5 +91,37 @@ func TestTaiyoMediaIDRe(t *testing.T) {
 	}
 	if want := "000bdf97-407f-4ca8-95a1-ee2a3114e73a"; m[1] != want {
 		t.Errorf("taiyoMediaIDRe: got %q, want %q", m[1], want)
+	}
+}
+
+// a chapter translated by two scans, one by a scan and an uploader only, and
+// one with no scans: the uploader is never the group
+func TestTaiyoReleasesGroups(t *testing.T) {
+	const feedJSON = `[{"result":{"data":{"json":{"totalPages":1,"chapters":[
+		{"id":"c1","title":"","number":1,"uploader":{"name":"Someone"},"scans":[{"id":"s1","name":"Alpha"},{"id":"s2","name":"Beta"}]},
+		{"id":"c2","title":"Two","number":2,"uploader":{"name":"Gamma"},"scans":[{"id":"s3","name":"Gamma"}]},
+		{"id":"c3","title":"","number":3,"uploader":{"name":"Delta"},"scans":null}
+	]}}}}]`
+
+	var feed taiyoChaptersFeed
+	if err := json.Unmarshal([]byte(feedJSON), &feed); err != nil {
+		t.Fatalf("decoding feed: %v", err)
+	}
+
+	got := taiyoReleases(feed[0].Result.Data.Json.Chapters)
+	wants := []struct{ id, group string }{
+		{"c1", "Alpha, Beta"},
+		{"c2", "Gamma"},
+		{"c3", ""},
+	}
+	if len(got) != len(wants) {
+		t.Fatalf("got %d chapters, want %d", len(got), len(wants))
+	}
+	for i, w := range wants {
+		c := got[i].(*TaiyoChapter)
+		if c.ID != w.id || c.ChapterID != w.id || c.Group != w.group {
+			t.Errorf("chapter[%d] = {ID %q, ChapterID %q, Group %q}, want {%q, %q, %q}",
+				i, c.ID, c.ChapterID, c.Group, w.id, w.id, w.group)
+		}
 	}
 }
