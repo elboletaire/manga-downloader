@@ -6,7 +6,7 @@
     "socialTitle": "manga downloader: capítols de manga → CBZ i EPUB a punt per llegir",
     "socialDescription_one": "Descarrega manga de MangaDex i {{count}} lloc més en fitxers CBZ o EPUB per al teu lector electrònic o la teva aplicació de còmics. Aplicació d'escriptori i CLI, gratuïtes i de codi obert.",
     "socialDescription_other": "Descarrega manga de MangaDex i {{count}} llocs més en fitxers CBZ o EPUB per al teu lector electrònic o la teva aplicació de còmics. Aplicació d'escriptori i CLI, gratuïtes i de codi obert.",
-    "imageAlt": "La mascota de manga downloader, un llibre obert en forma de gat, al costat del lema «Manga chapters → reader-ready CBZ».",
+    "imageAlt": "La mascota de manga downloader, un llibre obert en forma de gat, al costat del lema «Manga chapters → reader-ready CBZ & EPUB».",
     "jsonLdDescription_one": "Aplicació d'escriptori i eina de línia d'ordres que descarrega capítols de manga de MangaDex i {{count}} lloc més i els empaqueta en fitxers CBZ o EPUB per a lectors electrònics i aplicacions de còmics.",
     "jsonLdDescription_other": "Aplicació d'escriptori i eina de línia d'ordres que descarrega capítols de manga de MangaDex i {{count}} llocs més i els empaqueta en fitxers CBZ o EPUB per a lectors electrònics i aplicacions de còmics."
   },
