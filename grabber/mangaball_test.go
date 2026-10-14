@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 )
@@ -107,5 +108,44 @@ func TestMangaballChapterImages(t *testing.T) {
 	want := []string{"https://cdn.example/x-001.png", "https://cdn.example/x-002.png"}
 	if !reflect.DeepEqual(images, want) {
 		t.Errorf("mangaballChapterImages() = %v, want %v", images, want)
+	}
+}
+
+// one release per id: two English releases of chapter 1 by different groups
+// (the same number can come from several groups), and a Russian one
+func TestMangaballFetchChaptersListsEveryRelease(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"status":"success","data":[
+			{"id":"6a600241febf35d143d23185","lang":"en","name":"","number":1,"group_name":"Raikou"},
+			{"id":"6a601952dc0a87f39f960c90","lang":"en","name":"","number":1,"group_name":"Articuno"},
+			{"id":"6abb5fc522b5c96c42102004","lang":"ru","name":"","number":3,"group_name":"Raikou"}
+		]}`))
+	}))
+	defer srv.Close()
+
+	old := mangaballAPI
+	mangaballAPI = srv.URL
+	defer func() { mangaballAPI = old }()
+
+	m := NewMangaball(&Grabber{
+		URL:      "https://mangaball.com/title-detail/baki-6a5ffe5d90273b5b995225d2/",
+		Settings: &Settings{Language: "en"},
+	})
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	if len(chapters) != 2 {
+		t.Fatalf("got %d chapters, want the 2 English releases", len(chapters))
+	}
+	wants := []struct{ id, group string }{
+		{"6a600241febf35d143d23185", "Raikou"},
+		{"6a601952dc0a87f39f960c90", "Articuno"},
+	}
+	for i, w := range wants {
+		c := chapters[i].(*MangaballChapter)
+		if c.ID != w.id || c.Group != w.group {
+			t.Errorf("chapter[%d] ID = %q, Group = %q, want %q, %q", i, c.ID, c.Group, w.id, w.group)
+		}
 	}
 }
