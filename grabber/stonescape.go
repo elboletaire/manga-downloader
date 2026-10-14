@@ -126,6 +126,7 @@ func (s Stonescape) FetchChapters() (chapters Filterables, errs []error) {
 				Number:   number,
 				Title:    title,
 				Language: "en",
+				ID:       c.ChapterId,
 			},
 			c.ChapterId,
 		})
@@ -162,6 +163,7 @@ func (s Stonescape) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		Language:   "en",
 		PagesCount: int64(len(feed.Pages)),
+		ID:         schap.Id,
 	}
 	for _, p := range feed.Pages {
 		pageUrl := p.Url

@@ -161,6 +161,7 @@ func (p *Projectsuki) FetchChapters() (Filterables, []error) {
 			Chapter: Chapter{
 				Number: number,
 				Title:  text,
+				ID:     strconv.Itoa(chapterID),
 			},
 			BookID:    bookID,
 			ChapterID: chapterID,
@@ -212,6 +213,7 @@ func (p *Projectsuki) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(lastPage),
 		Language:   "en",
+		ID:         strconv.Itoa(pchap.ChapterID),
 	}
 
 	for i := 1; i <= lastPage; i++ {

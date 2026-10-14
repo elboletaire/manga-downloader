@@ -235,6 +235,7 @@ func parseMangaparkChaptersBatch(body string) (Filterables, int, bool, error) {
 				Number:   number,
 				Title:    title,
 				Language: lang,
+				ID:       href,
 			},
 			href,
 		})
@@ -266,6 +267,7 @@ func (m *Mangapark) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: mchap.Language,
+		ID:       mchap.Link,
 	}
 
 	doc.Find("section.chapter-reader img").Each(func(i int, s *goquery.Selection) {

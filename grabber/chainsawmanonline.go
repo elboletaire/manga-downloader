@@ -101,6 +101,7 @@ func chainsawManOnlineParseRoot(doc *goquery.Document) (string, Filterables) {
 			Chapter{
 				Title:  fmt.Sprintf("Chapter %s", numStr),
 				Number: num,
+				ID:     chapterURLID(href),
 			},
 			href,
 		})
@@ -169,5 +170,6 @@ func (c *ChainsawManOnline) FetchChapter(f Filterable) (*Chapter, error) {
 		PagesCount: int64(len(pages)),
 		Language:   "en",
 		Pages:      pages,
+		ID:         chapterURLID(cchap.URL),
 	}, nil
 }

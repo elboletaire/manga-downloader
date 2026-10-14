@@ -105,6 +105,7 @@ func (f *Flamecomics) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: number,
 				Title:  title,
+				ID:     c.Token,
 			},
 			c.SeriesId,
 			c.Token,
@@ -160,6 +161,7 @@ func (f Flamecomics) FetchChapter(fl Filterable) (*Chapter, error) {
 		Number:     fl.GetNumber(),
 		Language:   "en",
 		PagesCount: int64(len(indexes)),
+		ID:         fchap.Token,
 	}
 	for i, idx := range indexes {
 		img := cp.Images[strconv.Itoa(idx)]

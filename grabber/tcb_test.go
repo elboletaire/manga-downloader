@@ -82,6 +82,9 @@ func TestTcbFetchChaptersSkipsVolumeWrappers(t *testing.T) {
 		if _, ok := wantNumbers[c.GetNumber()]; !ok {
 			t.Fatalf("unexpected chapter number %v", c.GetNumber())
 		}
+		if id := c.(*TcbChapter).ID; !strings.HasPrefix(id, "/manga/example/") {
+			t.Fatalf("chapter %v ID = %q, want its URL path", c.GetNumber(), id)
+		}
 		wantNumbers[c.GetNumber()] = true
 	}
 	for num, seen := range wantNumbers {

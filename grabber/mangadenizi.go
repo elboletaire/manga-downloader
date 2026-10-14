@@ -89,6 +89,7 @@ func (m *Mangadenizi) FetchChapters() (chapters Filterables, errs []error) {
 				Number:   c.Number,
 				Title:    title,
 				Language: "tr",
+				ID:       c.Slug,
 			},
 			c.Slug,
 		})
@@ -125,6 +126,7 @@ func (m *Mangadenizi) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(feed.Pages)),
 		Language:   "tr",
+		ID:         mchap.Slug,
 	}
 
 	for _, p := range feed.Pages {

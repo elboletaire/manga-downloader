@@ -108,13 +108,15 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 		if err != nil {
 			errs = append(errs, err)
 		}
+		href := link.AttrOr("href", "")
 		chapter := &TcbChapter{
 			Chapter{
 				Title:  title,
 				Number: num,
 				Volume: tcbVolume(s),
+				ID:     chapterURLID(href),
 			},
-			s.Find("a").AttrOr("href", ""),
+			href,
 		}
 
 		chapters = append(chapters, chapter)
@@ -211,6 +213,7 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 		PagesCount: int64(len(pages)), // Use actual number of found pages
 		Language:   "en",
 		Pages:      pages,
+		ID:         chapterURLID(tchap.URL),
 	}
 
 	return chapter, nil

@@ -116,6 +116,7 @@ func (m *Fanfox) FetchChapters() (Filterables, []error) {
 				Number: number,
 				Title:  text,
 				Volume: urlVolume(u),
+				ID:     chapterURLID(u),
 			},
 			u,
 		})
@@ -154,6 +155,7 @@ func (m *Fanfox) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(pageCount),
 		Language:   "en",
+		ID:         chapterURLID(fchap.URL),
 	}
 
 	for page := 1; page <= pageCount; page++ {

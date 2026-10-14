@@ -2028,6 +2028,13 @@ func TestMangaplusRequestParams(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FetchChapter: %v", err)
 	}
+	// the ID is the site's chapter id, the same from the listing and the reader
+	if id := list[0].(*MangaplusChapter).ID; id != "101" {
+		t.Errorf("FetchChapters() chapter ID = %q, want \"101\"", id)
+	}
+	if chapter.ID != "101" {
+		t.Errorf("FetchChapter() chapter ID = %q, want \"101\"", chapter.ID)
+	}
 
 	if chapter.PagesCount != 1 {
 		t.Fatalf("got %d pages, want 1", chapter.PagesCount)

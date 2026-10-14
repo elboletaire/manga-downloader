@@ -174,6 +174,7 @@ func (g *GenzToon) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: number,
 				Title:  title,
+				ID:     chapterURLID(href),
 			},
 			href,
 		})
@@ -211,6 +212,7 @@ func (g GenzToon) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: "en",
+		ID:       chapterURLID(gchap.URL),
 	}
 
 	doc.Find("img.myImage[uid]").Each(func(i int, s *goquery.Selection) {

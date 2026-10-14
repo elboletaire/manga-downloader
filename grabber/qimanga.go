@@ -127,6 +127,7 @@ func (q *Qimanga) FetchChapters() (chapters Filterables, errs []error) {
 				Chapter{
 					Number: c.Number,
 					Title:  title,
+					ID:     c.Slug,
 				},
 				c.Slug,
 			})
@@ -166,6 +167,7 @@ func (q Qimanga) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: "en",
+		ID:       qchap.Slug,
 	}
 
 	doc.Find("img.r-page-img").Each(func(i int, s *goquery.Selection) {

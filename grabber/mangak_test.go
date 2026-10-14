@@ -206,6 +206,11 @@ func TestMangakFetchChaptersAPIFailureShortSeries(t *testing.T) {
 	if len(chapters) != 38 {
 		t.Fatalf("FetchChapters() got %d chapters, want 38", len(chapters))
 	}
+	for _, c := range chapters {
+		if id := c.(*MangakChapter).ID; !strings.HasPrefix(id, "/nano-machine/chapter-") {
+			t.Fatalf("chapter %v ID = %q, want its URL path", c.GetNumber(), id)
+		}
+	}
 }
 
 func TestMangakResolveSeriesURL(t *testing.T) {

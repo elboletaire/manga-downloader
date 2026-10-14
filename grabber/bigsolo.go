@@ -79,6 +79,7 @@ func (b *Bigsolo) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: number,
 				Title:  title,
+				ID:     c.Source.Id,
 			},
 			c.Source.Id,
 		})
@@ -123,6 +124,7 @@ func (b Bigsolo) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(files)),
 		Language:   "fr",
+		ID:         bchap.ImgchestID,
 	}
 	for i, file := range files {
 		chapter.Pages = append(chapter.Pages, Page{

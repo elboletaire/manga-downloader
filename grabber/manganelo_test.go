@@ -90,6 +90,9 @@ func TestManganeloFetchChaptersWalksAllPages(t *testing.T) {
 	if last.Number != 1 || last.Slug != "chapter-1" {
 		t.Errorf("last chapter = %v (%q), want 1 (chapter-1)", last.Number, last.Slug)
 	}
+	if last.ID != last.Slug {
+		t.Errorf("last chapter ID = %q, want its slug %q", last.ID, last.Slug)
+	}
 }
 
 // TestManganeloFetchChaptersMidWalkFailure makes sure a failure partway

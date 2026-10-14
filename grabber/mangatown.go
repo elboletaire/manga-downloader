@@ -200,6 +200,7 @@ func (m Mangatown) FetchChapters() (chapters Filterables, errs []error) {
 				Number: number,
 				Title:  mangatownChapterTitle(seriesTitle, s.Text(), number),
 				Volume: urlVolume(href),
+				ID:     chapterURLID(href),
 			},
 			href,
 		})
@@ -238,6 +239,7 @@ func (m Mangatown) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(count),
 		Language:   "en",
+		ID:         chapterURLID(mchap.URL),
 	}
 
 	first, err := mangatownPageImage(body)

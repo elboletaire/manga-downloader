@@ -118,6 +118,7 @@ func (m *Mangahere) FetchChapters() (chapters Filterables, errs []error) {
 				Number: number,
 				Title:  title,
 				Volume: urlVolume(href),
+				ID:     chapterURLID(href),
 			},
 			href,
 		})
@@ -173,6 +174,7 @@ func (m *Mangahere) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(count),
 		Language:   "en",
+		ID:         chapterURLID(mchap.URL),
 	}
 
 	for page := 1; page <= count; page++ {

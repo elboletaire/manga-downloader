@@ -286,6 +286,7 @@ func (m *Mangaplus) FetchChapters() (chapters Filterables, errs []error) {
 				Number:   number,
 				Title:    mangaplusChapterTitle(chapter.subTitle, chapter.name, number),
 				Language: m.language,
+				ID:       strconv.FormatUint(uint64(chapter.chapterID), 10),
 			},
 			Id:       chapter.chapterID,
 			SubTitle: chapter.subTitle,
@@ -349,6 +350,7 @@ func (m *Mangaplus) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     chap.Number,
 		PagesCount: int64(len(viewer.pages)),
 		Language:   m.language,
+		ID:         strconv.FormatUint(uint64(chap.Id), 10),
 	}
 
 	for i, pageURL := range viewer.pages {

@@ -88,6 +88,7 @@ func (r *rscComic) FetchChapters() (chapters Filterables, errs []error) {
 				Chapter{
 					Number: c.Number,
 					Title:  chapterTitleOrDefault(c.Title, c.Number),
+					ID:     chapterURLID(uri),
 				},
 				uri,
 			})
@@ -118,6 +119,7 @@ func (r *rscComic) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: "en",
+		ID:       chapterURLID(rchap.URL),
 	}
 
 	for _, p := range pages {

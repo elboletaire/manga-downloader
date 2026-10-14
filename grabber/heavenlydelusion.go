@@ -108,6 +108,7 @@ func (h *HeavenlyDelusion) chaptersFromLocs(locs []string) Filterables {
 			Chapter{
 				Title:  fmt.Sprintf("Chapter %s", numStr),
 				Number: num,
+				ID:     chapterURLID(loc),
 			},
 			loc,
 		})
@@ -180,5 +181,6 @@ func (h *HeavenlyDelusion) FetchChapter(f Filterable) (*Chapter, error) {
 		PagesCount: int64(len(pages)),
 		Language:   "en",
 		Pages:      pages,
+		ID:         chapterURLID(hchap.URL),
 	}, nil
 }

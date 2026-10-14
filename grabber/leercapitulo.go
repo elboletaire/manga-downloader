@@ -137,6 +137,7 @@ func (m *LeerCapitulo) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: number,
 				Title:  sanitizeTitle(text),
+				ID:     chapterURLID(href),
 			},
 			href,
 		})
@@ -171,6 +172,7 @@ func (m *LeerCapitulo) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: "es",
+		ID:       chapterURLID(chap.URL),
 	}
 
 	doc.Find(leerCapituloImageSelector).Each(func(i int, s *goquery.Selection) {

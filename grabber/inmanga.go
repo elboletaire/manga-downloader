@@ -187,6 +187,7 @@ func (i *Inmanga) FetchChapter(chap Filterable) (*Chapter, error) {
 		PagesCount: int64(ichap.PagesCount),
 		// Inmanga only hosts spanish mangas
 		Language: "es",
+		ID:       ichap.Id,
 	}
 
 	// get pages from select, deduplicating by page id (the select is
@@ -216,6 +217,7 @@ func newInmangaChapter(c inmangaChapterFeedResult) *InmangaChapter {
 			Number:     c.Number,
 			PagesCount: int64(c.PagesCount),
 			Title:      fmt.Sprintf("Capítulo %04d", int64(c.Number)),
+			ID:         c.Id,
 		},
 		c.Id,
 	}

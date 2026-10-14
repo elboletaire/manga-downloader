@@ -84,6 +84,7 @@ func (t *ToivoLite) fetchRoot() error {
 			Chapter{
 				Title:  e.Title,
 				Number: e.Number,
+				ID:     chapterURLID(e.URL),
 			},
 			e.URL,
 		})
@@ -138,6 +139,7 @@ func (t *ToivoLite) FetchChapter(f Filterable) (*Chapter, error) {
 		PagesCount: int64(len(pages)),
 		Language:   "en",
 		Pages:      pages,
+		ID:         chapterURLID(tchap.URL),
 	}, nil
 }
 

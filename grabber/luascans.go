@@ -173,6 +173,7 @@ func parseLuascansChaptersPage(body string) (chapters []*LuascansChapter, feed l
 			Chapter{
 				Number: number,
 				Title:  c.Name,
+				ID:     c.Slug,
 			},
 			c.Slug,
 		})
@@ -208,6 +209,7 @@ func (l *Luascans) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: "en",
+		ID:       lchap.Slug,
 	}
 
 	// scoped under the reader's own div.container (the only element in the

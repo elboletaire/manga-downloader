@@ -195,6 +195,7 @@ func (m *Mgeko) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: number,
 				Title:  fmt.Sprintf("Chapter %s", formatChapterNumber(number)),
+				ID:     chapterURLID(u),
 			},
 			u,
 		})
@@ -224,6 +225,7 @@ func (m *Mgeko) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: "en",
+		ID:       chapterURLID(mchap.URL),
 	}
 
 	// the reader embeds every real page as <img id="image-N" src="...">,

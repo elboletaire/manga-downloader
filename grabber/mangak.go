@@ -107,6 +107,7 @@ func (m *Mangak) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: number,
 				Title:  sanitizeTitle(c.Name),
+				ID:     chapterURLID(c.URL),
 			},
 			c.URL,
 		})
@@ -145,6 +146,7 @@ func (m Mangak) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(images)),
 		Language:   "en",
+		ID:         chapterURLID(mchap.URL),
 	}
 
 	for i, img := range images {

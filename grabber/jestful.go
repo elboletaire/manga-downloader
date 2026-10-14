@@ -157,6 +157,7 @@ func (m *Jestful) FetchChapters() (Filterables, []error) {
 			Chapter{
 				Number: number,
 				Title:  title,
+				ID:     c.ID,
 			},
 			c.ID,
 			c.Chapter,
@@ -199,6 +200,7 @@ func (m *Jestful) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: "en",
+		ID:       jchap.ID,
 	}
 
 	doc.Find("img.chapter-img").Each(func(i int, s *goquery.Selection) {

@@ -110,6 +110,7 @@ func (w *Webtoons) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Title:  ep.title,
 				Number: ep.number,
+				ID:     chapterURLID(ep.url),
 			},
 			ep.url,
 		})
@@ -148,6 +149,7 @@ func (w *Webtoons) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
 		Pages:      pages,
+		ID:         chapterURLID(wchap.URL),
 	}, nil
 }
 

@@ -243,6 +243,7 @@ func (m *Manganelo) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(images)),
 		Language:   "en",
+		ID:         mchap.Slug,
 	}
 
 	for i, img := range images {
@@ -307,6 +308,7 @@ func parseManganeloChaptersPage(body string) (chapters Filterables, hasMore bool
 			Chapter{
 				Number: c.Number,
 				Title:  title,
+				ID:     c.Slug,
 			},
 			c.Slug,
 		})

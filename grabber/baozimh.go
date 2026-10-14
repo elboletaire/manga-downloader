@@ -223,6 +223,7 @@ func (m *Baozimh) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: number,
 				Title:  title,
+				ID:     chapterURLID(u),
 			},
 			u,
 		})
@@ -316,6 +317,7 @@ func (m *Baozimh) FetchChapter(f Filterable) (*Chapter, error) {
 		PagesCount: int64(len(pages)),
 		Language:   "zh",
 		Pages:      pages,
+		ID:         chapterURLID(mchap.URL),
 	}, nil
 }
 

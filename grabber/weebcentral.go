@@ -5,6 +5,7 @@ package grabber
 import (
 	"fmt"
 	"net/url"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -196,6 +197,7 @@ func (w *WeebCentral) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: number,
 				Title:  "Chapter " + strconv.FormatFloat(number, 'f', -1, 64),
+				ID:     path.Base(href),
 			},
 			href,
 		})
@@ -227,6 +229,7 @@ func (w *WeebCentral) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: "en",
+		ID:       path.Base(wchap.URL),
 	}
 
 	doc.Find("img").Each(func(i int, s *goquery.Selection) {

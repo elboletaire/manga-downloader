@@ -157,7 +157,7 @@ func (u *Utoon) FetchChapters() (chapters Filterables, errs []error) {
 			}
 			seen[href] = true
 			chapters = append(chapters, &UtoonChapter{
-				Chapter{Title: title, Number: number},
+				Chapter{Title: title, Number: number, ID: chapterURLID(href)},
 				href,
 			})
 		})
@@ -225,6 +225,7 @@ func (u *Utoon) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: "en",
+		ID:       chapterURLID(uchap.URL),
 	}
 
 	pimages := getPlainHTMLImageURL(".entry-content img", doc)

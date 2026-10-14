@@ -177,6 +177,7 @@ func (h *Hijala) FetchChapters() (chapters Filterables, errs []error) {
 				Chapter{
 					Number: float64(c.Number),
 					Title:  title,
+					ID:     c.Slug,
 				},
 				c.Slug,
 			})
@@ -211,6 +212,7 @@ func (h *Hijala) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: "en",
+		ID:       hchap.Slug,
 	}
 
 	seen := map[string]bool{}

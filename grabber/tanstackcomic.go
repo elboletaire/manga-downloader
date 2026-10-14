@@ -106,6 +106,7 @@ func (t *tanstackComic) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: c.Number,
 				Title:  chapterTitleOrDefault(c.Title, c.Number),
+				ID:     c.Slug,
 			},
 			c.Slug,
 		})
@@ -145,6 +146,7 @@ func (t *tanstackComic) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: "en",
+		ID:       tchap.Slug,
 	}
 
 	doc.Find("img[data-reader-page-image]").Each(func(i int, s *goquery.Selection) {
