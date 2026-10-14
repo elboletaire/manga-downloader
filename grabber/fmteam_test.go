@@ -2,7 +2,11 @@
 
 package grabber
 
-import "testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
 
 func TestFmteamSeriesSlug(t *testing.T) {
 	cases := []struct {
@@ -95,6 +99,40 @@ func TestFmteamResolveSeriesURL(t *testing.T) {
 		f.resolveSeriesURL()
 		if f.URL != c.wanted {
 			t.Errorf("%s: got %q, want %q", c.name, f.URL, c.wanted)
+		}
+	}
+}
+
+// a chapter two teams made, one with a null entry among its teams, and one
+// with only a null
+func TestFmteamFetchChaptersGroups(t *testing.T) {
+	const body = `{"comic":{"title":"Batuque","chapters":[
+		{"chapter":157,"title":"","language":"fr","url":"/read/batuque/fr/ch/157","id":null,"teams":[{"name":"Alpha","url":"https://a"},{"name":"Beta","url":"https://b"}]},
+		{"chapter":158,"title":"","language":"fr","url":"/read/batuque/fr/ch/158","id":null,"teams":[{"name":"Gamma","url":"https://g"},null]},
+		{"chapter":159,"title":"","language":"fr","url":"/read/batuque/fr/ch/159","id":null,"teams":[null]}
+	]}}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(body))
+	}))
+	defer srv.Close()
+
+	f := &Fmteam{Grabber: &Grabber{URL: srv.URL + "/comics/batuque", Settings: &Settings{}}}
+	chapters, errs := f.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	wants := []struct{ id, group string }{
+		{"/read/batuque/fr/ch/157", "Alpha, Beta"},
+		{"/read/batuque/fr/ch/158", "Gamma"},
+		{"/read/batuque/fr/ch/159", ""},
+	}
+	if len(chapters) != len(wants) {
+		t.Fatalf("got %d chapters, want %d", len(chapters), len(wants))
+	}
+	for i, w := range wants {
+		c := chapters[i].(*FmteamChapter)
+		if c.ID != w.id || c.Group != w.group {
+			t.Errorf("chapter[%d] ID = %q, Group = %q, want %q, %q", i, c.ID, c.Group, w.id, w.group)
 		}
 	}
 }
