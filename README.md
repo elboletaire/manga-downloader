@@ -306,7 +306,7 @@ Open the app and follow these steps:
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.png">
-     <img alt="The Options tab, with the format, Pack as and Convert to JPEG options" src="assets/screenshots/06-options-light.png">
+     <img alt="The Options tab with EPUB chosen, showing the format, reading direction and Pack as options" src="assets/screenshots/06-options-light.png">
    </picture>
 
    <picture>
