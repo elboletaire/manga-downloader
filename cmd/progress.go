@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"charm.land/bubbles/v2/progress"
@@ -30,6 +31,11 @@ type chapterStartedMsg struct {
 }
 type pageSuccessMsg struct{ chapter *grabber.Chapter }
 type downloadFailedMsg struct{ chapter *grabber.Chapter }
+
+// chapterEndedMsg reports a chapter that is no longer pending: downloaded,
+// skipped by --skip-pages, or failed to fetch (then it's the listing entry)
+type chapterEndedMsg struct{ chapter grabber.Filterable }
+
 type archivedMsg struct{ chapter *grabber.Chapter }
 type packedMsg struct {
 	chapter *grabber.Chapter
@@ -44,7 +50,7 @@ type downloadDoneMsg struct{ err error }
 // Volume messages
 type volumeStartMsg struct {
 	volume  *core.Volume
-	chCount int // len(v.Chapters), shown in the counter column as "N ch."
+	chCount int // len(v.Chapters), shown in the counter column as "x/N ch."
 }
 type volumeChapterMsg struct {
 	volume  *core.Volume
@@ -77,12 +83,13 @@ type barState struct {
 // ── Per-volume bar state ────────────────────────────────────────────────────
 
 type volumeBarState struct {
-	rawTitle string          // "Series - Vol. 01", untruncated
-	chCount  int             // number of chapters shown in counter column as "N ch."
-	fraction float64         // 0→1, set from VolumeProgress (never decreasing)
-	status   string          // "downloading" | "archiving" | "done" | "failed" | "skipped"
-	bar      *progress.Model // brand-coloured bar
-	failBar  *progress.Model // danger-coloured bar, created lazily on failure
+	rawTitle string                      // "Series - Vol. 01", untruncated
+	chCount  int                         // number of chapters, the N in the counter's "x/N ch."
+	finished map[grabber.Filterable]bool // chapters no longer pending, the x; keyed once per chapter
+	fraction float64                     // 0→1, set from VolumeProgress (never decreasing)
+	status   string                      // "downloading" | "archiving" | "done" | "failed" | "skipped"
+	bar      *progress.Model             // brand-coloured bar
+	failBar  *progress.Model             // danger-coloured bar, created lazily on failure
 }
 
 // ── Layout constants ────────────────────────────────────────────────────────
@@ -359,7 +366,11 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		s.current += core.DownloadWeight
 		return m, s.bar.SetPercent(safePercent(s.current, s.total))
 
+	case chapterEndedMsg:
+		m.countVolumeChapter(msg.chapter)
+
 	case downloadFailedMsg:
+		m.countVolumeChapter(msg.chapter)
 		if !m.bundle {
 			if _, inVolume := m.chapterVolume[msg.chapter]; inVolume {
 				return m, nil
@@ -424,6 +435,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.volStates[msg.volume] = &volumeBarState{
 			rawTitle: m.seriesTitle + " - " + core.VolumeLabel(msg.volume.Number),
 			chCount:  msg.chCount,
+			finished: make(map[grabber.Filterable]bool),
 			status:   "downloading",
 			bar:      bar,
 		}
@@ -676,10 +688,35 @@ func (m progressModel) renderVolumeRow(vs *volumeBarState) string {
 	if narrow {
 		return clipRow(title+" "+barStr, m.width)
 	}
-	// Counter column shows "N ch." instead of "current/total".
-	counter := fmt.Sprintf("%9s", fmt.Sprintf("%d ch.", vs.chCount))
+	// Counter column shows "finished/N ch." instead of "current/total".
+	counter := fmt.Sprintf("%9s", fmt.Sprintf("%d/%d ch.", len(vs.finished), vs.chCount))
 	row := title + " " + barStr + " " + counter + " " + m.statusStyle(vs.status)
 	return clipRow(row, m.width)
+}
+
+// countVolumeChapter counts a chapter that's no longer pending towards its
+// volume's counter. c is the fetched chapter, or its listing entry when the
+// fetch failed; a map keyed by it counts a chapter reported twice once.
+func (m progressModel) countVolumeChapter(c grabber.Filterable) {
+	if vs := m.volStates[m.volumeOf(c)]; vs != nil {
+		vs.finished[c] = true
+	}
+}
+
+// volumeOf returns the volume c belongs to, nil outside every volume. A
+// failed fetch has no VolumeChapter, so its listing entry is looked up instead.
+func (m progressModel) volumeOf(c grabber.Filterable) *core.Volume {
+	if ch, ok := c.(*grabber.Chapter); ok {
+		if v := m.chapterVolume[ch]; v != nil {
+			return v
+		}
+	}
+	for _, v := range m.volumes {
+		if slices.Contains(v.Chapters, c) {
+			return v
+		}
+	}
+	return nil
 }
 
 // bundleTitle is the bundle row's title: the series and the range it packs,
@@ -772,11 +809,13 @@ func (e *bubbleEvents) BundleStart(pages int64) {
 func (e *bubbleEvents) FetchFailed(listed grabber.Filterable, err error) {
 	e.println(color.RedString("- error fetching chapter %s: %s",
 		core.ReleaseLabel(listed, e.showLang, e.showGroup), err.Error()))
+	e.prog.Send(chapterEndedMsg{chapter: listed})
 }
 
 func (e *bubbleEvents) Skipped(c *grabber.Chapter) {
 	e.println(color.YellowString(
 		"- skipping chapter %s: --skip-pages excludes all of its pages", core.ReleaseLabel(c, e.showLang, e.showGroup)))
+	e.prog.Send(chapterEndedMsg{chapter: c})
 }
 
 func (e *bubbleEvents) FilenameFailed(c *grabber.Chapter, err error) {
@@ -814,9 +853,11 @@ func (e *bubbleEvents) Packed(c *grabber.Chapter, _ string, err error) {
 	e.prog.Send(packedMsg{chapter: c, failed: err != nil})
 }
 
-// Downloaded sends nothing: the pages were counted as they came in, and
+// Downloaded sends no page events: the pages were counted as they came in, and
 // adding them again here overshot the bundle's total
-func (e *bubbleEvents) Downloaded(*grabber.Chapter) {}
+func (e *bubbleEvents) Downloaded(c *grabber.Chapter) {
+	e.prog.Send(chapterEndedMsg{chapter: c})
+}
 
 func (e *bubbleEvents) BundlePacking() {
 	e.prog.Send(bundlePackingMsg{})

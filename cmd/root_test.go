@@ -184,6 +184,56 @@ func TestChapterCounterShowsPages(t *testing.T) {
 	}
 }
 
+// A volume's counter is "finished/N ch.": its chapters no longer pending, each
+// counted once, whether downloaded, failed to download or failed to fetch.
+func TestVolumeCounterCountsFinishedChapters(t *testing.T) {
+	listed := grabber.Filterables{
+		&grabber.Chapter{Title: "Chapter 0001"},
+		&grabber.Chapter{Title: "Chapter 0002"},
+		&grabber.Chapter{Title: "Chapter 0003"},
+	}
+	v := &core.Volume{Number: 1, Chapters: listed}
+	first := &grabber.Chapter{Title: "Chapter 0001", PagesCount: 1}
+	second := &grabber.Chapter{Title: "Chapter 0002", PagesCount: 1}
+
+	m := newProgressModel("Series", "", false, false, false, true)
+	m.width = 80
+	send := func(msg tea.Msg) {
+		next, _ := m.Update(msg)
+		m = next.(progressModel)
+	}
+	counter := func(want string) {
+		t.Helper()
+		if r := ansi.Strip(m.renderVolumeRow(m.volStates[v])); !strings.Contains(r, want) {
+			t.Errorf("volume row %q, want counter %q", r, want)
+		}
+	}
+
+	send(volumeStartMsg{volume: v, chCount: len(listed)})
+	counter("0/3 ch.")
+	send(volumeChapterMsg{volume: v, chapter: first})
+	send(volumeChapterMsg{volume: v, chapter: second})
+
+	send(chapterEndedMsg{chapter: first})
+	counter("1/3 ch.")
+	send(chapterEndedMsg{chapter: first}) // reported twice: still one
+	counter("1/3 ch.")
+
+	send(downloadFailedMsg{chapter: second})
+	counter("2/3 ch.")
+
+	// the third chapter's fetch failed, so it never got VolumeChapter
+	send(chapterEndedMsg{chapter: listed[2]})
+	counter("3/3 ch.")
+
+	send(volumePackingMsg{volume: v})
+	send(volumePackedMsg{volume: v})
+	counter("3/3 ch.")
+	if vs := m.volStates[v]; vs.status != "done" {
+		t.Errorf("volume status = %q, want \"done\"", vs.status)
+	}
+}
+
 // While core totals the pages, before BundleStart, the bundle row says so and
 // draws an empty bar with the real bars' glyph, not a "0/0" over shading.
 func TestBundleRowBeforeBundleStart(t *testing.T) {
@@ -293,16 +343,14 @@ func TestBundleCounterAfterEmptyStart(t *testing.T) {
 func TestProgressModelBundleCountsEachPageOnce(t *testing.T) {
 	chapter := &grabber.Chapter{Title: "Chapter 0001", PagesCount: 50}
 
-	// Downloaded sends nothing: a nil program would panic on Send
-	(&bubbleEvents{}).Downloaded(chapter)
-
 	m := newProgressModel("Series", "1", true, false, false, true)
 	m.width = 80
 	msgs := []tea.Msg{bundleStartMsg{total: 50}, chapterStartedMsg{chapter: chapter, total: 100}}
 	for range 50 {
 		msgs = append(msgs, pageSuccessMsg{chapter: chapter})
 	}
-	msgs = append(msgs, bundlePackingMsg{})
+	// what Downloaded sends for a bundled chapter: it adds no pages
+	msgs = append(msgs, chapterEndedMsg{chapter: chapter}, bundlePackingMsg{})
 	for range 50 {
 		msgs = append(msgs, bundleArchivedMsg{n: 1})
 	}
@@ -595,6 +643,15 @@ func TestViewWidths(t *testing.T) {
 	}
 }
 
+// exitedProgram returns a program that has run and exited, on which Send is a
+// no-op: the events can be called without a live TUI.
+func exitedProgram() *tea.Program {
+	prog := tea.NewProgram(newProgressModel("", "", false, false, false, true))
+	go prog.Send(downloadDoneMsg{})
+	prog.Run()
+	return prog
+}
+
 // TestPrintlnNoBlockAfterQuit verifies that bubbleEvents.println does not
 // block after the Bubble Tea program has quit (i.e., after done is closed).
 // It is primarily a hang-detector: if println blocks, the test times out.
@@ -683,7 +740,7 @@ func TestReleaseLabelInMessages(t *testing.T) {
 			os.Stderr = w
 			t.Cleanup(func() { os.Stderr = prevErr })
 
-			ev := &bubbleEvents{done: done, showLang: tt.showLang, showGroup: tt.showGroup}
+			ev := &bubbleEvents{prog: exitedProgram(), done: done, showLang: tt.showLang, showGroup: tt.showGroup}
 			ev.FetchFailed(chapter, errBoom)
 			ev.Skipped(chapter)
 			ev.Page(chapter, 2, errBoom)
