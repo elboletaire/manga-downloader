@@ -162,7 +162,7 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
               <>
                 Uses <code>{'{{.Series}}'}</code>, <code>{'{{.Number}}'}</code>, <code>{'{{.Title}}'}</code>,{' '}
                 <code>{'{{.Group}}'}</code>, <code>{'{{.Volume}}'}</code> and <code>{'{{.Version}}'}</code>. Left as is, volumes are named{' '}
-                <code>Series Vol. 01</code>.
+                <code>Series Vol. 01</code>, or <code>Series Vol. 01 [Group]</code> when their chapters share a group.
               </>
             }
             onCommit={(filenameTemplate) => onOptions({ filenameTemplate })}

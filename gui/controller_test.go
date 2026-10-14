@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -674,5 +675,41 @@ func TestSetSelectedManyRefusedWhileBusy(t *testing.T) {
 	c.mu.Unlock()
 	if c.SelectedCount() != 0 {
 		t.Errorf("refused calls changed the selection: %d selected", c.SelectedCount())
+	}
+}
+
+// TestEventsNameTheReleaseWhenCopiesNeedAGroup checks that the job row and the
+// log name the group only when the loaded list has copies that need it
+func TestEventsNameTheReleaseWhenCopiesNeedAGroup(t *testing.T) {
+	failed := errors.New("boom")
+	tests := []struct {
+		name       string
+		groupDupes bool
+		want       string
+	}{
+		{"no copies", false, "Chapter 5"},
+		{"group copies", true, "Chapter 5 [Alpha]"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewController(&grabber.Settings{}, nil)
+			c.hasGroupDuplicates = tt.groupDupes
+			// the maps a run starts with, which the events write into
+			c.byChap = map[*grabber.Chapter]*Job{}
+			c.failedC = map[*grabber.Chapter]bool{}
+			ch := &grabber.Chapter{Title: "Chapter 5", Number: 5, Language: "en", Group: "Alpha", PagesCount: 1}
+			e := events{c}
+			e.Started(ch)
+			e.DownloadFailed(ch, failed)
+
+			jobs := c.Jobs()
+			if len(jobs) != 1 || jobs[0].Title != tt.want {
+				t.Fatalf("jobs = %+v, want one titled %q", jobs, tt.want)
+			}
+			log := c.Log()
+			if got, want := log[len(log)-1].Text, "error downloading chapter "+tt.want+": boom"; got != want {
+				t.Errorf("log = %q, want %q", got, want)
+			}
+		})
 	}
 }

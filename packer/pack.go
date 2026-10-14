@@ -43,7 +43,7 @@ func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, pr
 			Labels:           map[string]string{epubSingleFolder: chapterLabel(chapter.Chapter)},
 		}
 	}
-	return pack(outputdir, format, s.GetFilenameTemplate(), title, NewChapterFileTemplateParts(title, chapter.Chapter), namePages(chapter.Files, pageFormats(format, s.GetConvertImages()), format), info, progress)
+	return pack(outputdir, format, s.GetFilenameTemplate(), releaseName(chapter.Chapter), NewChapterFileTemplateParts(title, chapter.Chapter), namePages(chapter.Files, pageFormats(format, s.GetConvertImages()), format), info, progress)
 }
 
 // PackBundle packs a bundle of downloaded chapters, grouping each chapter's
@@ -61,7 +61,7 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 	for i, c := range chapters {
 		listed[i] = c.Chapter
 	}
-	return pack(outputdir, format, s.GetFilenameTemplate(), title, FilenameTemplateParts{
+	return pack(outputdir, format, s.GetFilenameTemplate(), "the bundle", FilenameTemplateParts{
 		Series: title,
 		Number: rng,
 		Title:  "bundle",
@@ -90,8 +90,17 @@ func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*Downlo
 			Labels:           labels,
 		}
 	}
-	return pack(outputdir, format, VolumeTemplate(s.GetFilenameTemplate()), title,
+	return pack(outputdir, format, VolumeTemplate(s.GetFilenameTemplate()), "volume "+strconv.Itoa(volume),
 		NewVolumeFileTemplateParts(title, volume, listed), files, info, progress)
+}
+
+// releaseName names a chapter's release for messages: its title, then its
+// group in brackets when it has one, so two releases of a number can be told apart.
+func releaseName(c *grabber.Chapter) string {
+	if c.Group == "" {
+		return c.Title
+	}
+	return c.Title + " [" + c.Group + "]"
 }
 
 // pageFormats returns the source formats to convert pages from for the output
@@ -254,19 +263,19 @@ func namePages(pages []*downloader.File, formats grabber.ConvertFormats, format 
 // keeps colliding fails instead of looping forever holding a download slot
 const maxPackAttempts = 1000
 
-func pack(outputdir, format, template, title string, parts FilenameTemplateParts, files []File, info EPUBInfo, progress func(page, progress int)) (string, error) {
+func pack(outputdir, format, template, label string, parts FilenameTemplateParts, files []File, info EPUBInfo, progress func(page, progress int)) (string, error) {
 	// base is the name the template gives the first try. A template that
 	// doesn't use {{.Version}} gives that same name every time, so the later
 	// tries get the " v2"-style suffix here, as the default template would
 	var base string
 	for attempt := 1; ; attempt++ {
 		if attempt > maxPackAttempts {
-			return "", fmt.Errorf("- error saving file for chapter %s: no free name after %d tries", title, maxPackAttempts)
+			return "", fmt.Errorf("- error saving file for %s: no free name after %d tries", label, maxPackAttempts)
 		}
 		parts.Version = attempt
 		filename, err := NewFilenameFromTemplate(template, parts)
 		if err != nil {
-			return "", fmt.Errorf("- error creating filename for chapter %s: %s", title, err.Error())
+			return "", fmt.Errorf("- error creating filename for %s: %s", label, err.Error())
 		}
 		if attempt == 1 {
 			base = filename

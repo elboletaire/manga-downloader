@@ -141,6 +141,32 @@ func TestHasGroupDuplicates(t *testing.T) {
 	}
 }
 
+func TestReleaseLabel(t *testing.T) {
+	chapter := &grabber.Chapter{Title: "Chapter 5", Number: 5, Language: "en", Group: "Group A"}
+	tests := []struct {
+		name                string
+		showLang, showGroup bool
+		want                string
+	}{
+		{"neither", false, false, "Chapter 5"},
+		{"group", false, true, "Chapter 5 [Group A]"},
+		{"language and group", true, true, "Chapter 5 [en] [Group A]"},
+		{"language only", true, false, "Chapter 5 [en]"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ReleaseLabel(chapter, tt.showLang, tt.showGroup); got != tt.want {
+				t.Errorf("ReleaseLabel() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+
+	ungrouped := &grabber.Chapter{Title: "Chapter 5", Language: "en"}
+	if got := ReleaseLabel(ungrouped, false, true); got != "Chapter 5" {
+		t.Errorf("ungrouped ReleaseLabel() = %q, want %q", got, "Chapter 5")
+	}
+}
+
 func TestAllChaptersRangeIncludesChapterZero(t *testing.T) {
 	// a hardcoded Begin: 1 silently dropped chapter 0 and any 0.x prologue
 	// from the "download all" prompt path (#176); the range must instead

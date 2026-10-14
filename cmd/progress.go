@@ -753,17 +753,17 @@ func (e *bubbleEvents) BundleStart(pages int64) {
 
 func (e *bubbleEvents) FetchFailed(listed grabber.Filterable, err error) {
 	e.println(color.RedString("- error fetching chapter %s: %s",
-		chapterLabel(listed, e.showLang, e.showGroup), err.Error()))
+		core.ReleaseLabel(listed, e.showLang, e.showGroup), err.Error()))
 }
 
 func (e *bubbleEvents) Skipped(c *grabber.Chapter) {
 	e.println(color.YellowString(
-		"- skipping chapter %s: --skip-pages excludes all of its pages", chapterLabel(c, e.showLang, e.showGroup)))
+		"- skipping chapter %s: --skip-pages excludes all of its pages", core.ReleaseLabel(c, e.showLang, e.showGroup)))
 }
 
 func (e *bubbleEvents) FilenameFailed(c *grabber.Chapter, err error) {
 	e.println(color.RedString(
-		"- error creating filename for chapter %s: %s", chapterLabel(c, e.showLang, e.showGroup), err.Error()))
+		"- error creating filename for chapter %s: %s", core.ReleaseLabel(c, e.showLang, e.showGroup), err.Error()))
 }
 
 func (e *bubbleEvents) Started(c *grabber.Chapter) {
@@ -773,7 +773,7 @@ func (e *bubbleEvents) Started(c *grabber.Chapter) {
 func (e *bubbleEvents) Page(c *grabber.Chapter, idx int, err error) {
 	if err != nil {
 		e.println(color.RedString("- error downloading page %d of %s: %s",
-			idx+1, chapterLabel(c, e.showLang, e.showGroup), err.Error()))
+			idx+1, core.ReleaseLabel(c, e.showLang, e.showGroup), err.Error()))
 		return
 	}
 	e.prog.Send(pageSuccessMsg{chapter: c})
@@ -781,7 +781,7 @@ func (e *bubbleEvents) Page(c *grabber.Chapter, idx int, err error) {
 
 func (e *bubbleEvents) DownloadFailed(c *grabber.Chapter, err error) {
 	e.println(color.RedString(
-		"- error downloading chapter %s: %s", chapterLabel(c, e.showLang, e.showGroup), err.Error()))
+		"- error downloading chapter %s: %s", core.ReleaseLabel(c, e.showLang, e.showGroup), err.Error()))
 	e.prog.Send(downloadFailedMsg{chapter: c})
 }
 
@@ -848,30 +848,30 @@ func (plainEvents) BundleArchived(int)          {}
 func (plainEvents) Archived(*grabber.Chapter)   {}
 
 func (p plainEvents) FetchFailed(listed grabber.Filterable, err error) {
-	red("- error fetching chapter %s: %s", chapterLabel(listed, p.showLang, p.showGroup), err.Error())
+	red("- error fetching chapter %s: %s", core.ReleaseLabel(listed, p.showLang, p.showGroup), err.Error())
 }
 
 func (p plainEvents) Skipped(c *grabber.Chapter) {
-	yellow("- skipping chapter %s: --skip-pages excludes all of its pages", chapterLabel(c, p.showLang, p.showGroup))
+	yellow("- skipping chapter %s: --skip-pages excludes all of its pages", core.ReleaseLabel(c, p.showLang, p.showGroup))
 }
 
 func (p plainEvents) FilenameFailed(c *grabber.Chapter, err error) {
-	red("- error creating filename for chapter %s: %s", chapterLabel(c, p.showLang, p.showGroup), err.Error())
+	red("- error creating filename for chapter %s: %s", core.ReleaseLabel(c, p.showLang, p.showGroup), err.Error())
 }
 
 func (p plainEvents) Started(c *grabber.Chapter) {
-	fmt.Fprintf(color.Output, "downloading %s...\n", chapterLabel(c, p.showLang, p.showGroup))
+	fmt.Fprintf(color.Output, "downloading %s...\n", core.ReleaseLabel(c, p.showLang, p.showGroup))
 }
 
 func (p plainEvents) Page(c *grabber.Chapter, idx int, err error) {
 	if err != nil {
 		red("- error downloading page %d of %s: %s",
-			idx+1, chapterLabel(c, p.showLang, p.showGroup), err.Error())
+			idx+1, core.ReleaseLabel(c, p.showLang, p.showGroup), err.Error())
 	}
 }
 
 func (p plainEvents) DownloadFailed(c *grabber.Chapter, err error) {
-	red("- error downloading chapter %s: %s", chapterLabel(c, p.showLang, p.showGroup), err.Error())
+	red("- error downloading chapter %s: %s", core.ReleaseLabel(c, p.showLang, p.showGroup), err.Error())
 }
 
 func (plainEvents) Packed(_ *grabber.Chapter, _ string, err error) {
@@ -911,25 +911,11 @@ func (plainEvents) VolumePacked(v *core.Volume, _ string, err error) {
 // is stored in barState.rawTitle and truncated to titleW at render time so
 // resizing the terminal shows more text.
 func chapterRawTitle(seriesTitle string, c *grabber.Chapter, showLanguage, showGroup bool) string {
-	chapTitle := chapterLabel(c, showLanguage, showGroup)
+	chapTitle := core.ReleaseLabel(c, showLanguage, showGroup)
 	if seriesTitle == "" {
 		return chapTitle
 	}
 	return seriesTitle + " - " + chapTitle
-}
-
-// chapterLabel names a release: its title, then its language and group in
-// brackets when showLang and showGroup ask for them and it has them. Messages
-// use it too, so a line says which release it means.
-func chapterLabel(f grabber.Filterable, showLang, showGroup bool) string {
-	label := f.GetTitle()
-	if l, ok := f.(interface{ GetLanguage() string }); ok && showLang && l.GetLanguage() != "" {
-		label += " [" + l.GetLanguage() + "]"
-	}
-	if g, ok := f.(interface{ GetGroup() string }); ok && showGroup && g.GetGroup() != "" {
-		label += " [" + g.GetGroup() + "]"
-	}
-	return label
 }
 
 // teaNoticeHandler returns a notice handler that routes output through the TUI.

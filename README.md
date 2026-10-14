@@ -386,10 +386,10 @@ matched ignoring case; an unknown one lists the groups the series has), or
 `--scanlator all` for every group, which is the same as the default. Releases
 that name no group are left out whenever a group is selected.
 
-The default file name ends with the group in brackets (`One Piece 5 - Chapter 5
-[Alpha]`), so each release keeps its own file. A template without `{{.Group}}`
-only tells the releases apart by a version suffix (`v2`, `v3`…), in no
-particular group order.
+The default file name adds the release's group in brackets when it names one
+(`One Piece 5 - Chapter 5 [Alpha]`), so each release keeps its own file. A
+template without `{{.Group}}` only tells the releases apart by a version
+suffix (`v2`, `v3`…), in no particular group order.
 
 ### Bundling and output format
 

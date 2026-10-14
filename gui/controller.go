@@ -1363,6 +1363,12 @@ func (c *Controller) jobFor(ch *grabber.Chapter) *Job {
 	return c.byChap[ch]
 }
 
+// releaseLabel names a release the way the chapter list does: the language and
+// group only when the loaded list has copies that need them. Callers hold mu.
+func (c *Controller) releaseLabel(f grabber.Filterable) string {
+	return core.ReleaseLabel(f, c.hasDuplicates, c.hasGroupDuplicates)
+}
+
 // live reports whether a chapter still accepts page progress: once it failed,
 // pages still in flight finish but must not move its bar. Callers hold mu.
 func (c *Controller) live(ch *grabber.Chapter) bool {
@@ -1392,10 +1398,10 @@ func (e events) BundleStart(pages int64) {
 func (e events) FetchFailed(listed grabber.Filterable, err error) {
 	c := e.c
 	c.mu.Lock()
-	msg := fmt.Sprintf("%s: %s", listed.GetTitle(), err)
+	msg := fmt.Sprintf("%s: %s", c.releaseLabel(listed), err)
 	c.stats.failures = append(c.stats.failures, msg)
 	if c.bundle == nil && c.listedVol[listed] == nil {
-		c.jobs = append(c.jobs, &Job{Title: listed.GetTitle(), Number: listed.GetNumber(), State: JobFailed, Reason: err.Error()})
+		c.jobs = append(c.jobs, &Job{Title: c.releaseLabel(listed), Number: listed.GetNumber(), State: JobFailed, Reason: err.Error()})
 	}
 	c.appendLogLocked(LogError, "error fetching chapter "+msg)
 	c.mu.Unlock()
@@ -1407,9 +1413,9 @@ func (e events) Skipped(ch *grabber.Chapter) {
 	c.mu.Lock()
 	c.stats.skipped++
 	if c.bundle == nil && c.chapVol[ch] == nil {
-		c.jobs = append(c.jobs, &Job{Title: ch.GetTitle(), Number: ch.GetNumber(), State: JobSkipped, Reason: "every page excluded by --skip-pages"})
+		c.jobs = append(c.jobs, &Job{Title: c.releaseLabel(ch), Number: ch.GetNumber(), State: JobSkipped, Reason: "every page excluded by --skip-pages"})
 	}
-	c.appendLogLocked(LogWarn, fmt.Sprintf("skipping %s: every page is excluded by --skip-pages", ch.GetTitle()))
+	c.appendLogLocked(LogWarn, fmt.Sprintf("skipping %s: every page is excluded by --skip-pages", c.releaseLabel(ch)))
 	c.mu.Unlock()
 	c.emit()
 }
@@ -1417,10 +1423,10 @@ func (e events) Skipped(ch *grabber.Chapter) {
 func (e events) FilenameFailed(ch *grabber.Chapter, err error) {
 	c := e.c
 	c.mu.Lock()
-	msg := fmt.Sprintf("%s: filename: %s", ch.GetTitle(), err)
+	msg := fmt.Sprintf("%s: filename: %s", c.releaseLabel(ch), err)
 	c.stats.failures = append(c.stats.failures, msg)
 	if c.bundle == nil {
-		j := &Job{Title: ch.GetTitle(), Number: ch.GetNumber(), State: JobFailed, Reason: "filename: " + err.Error()}
+		j := &Job{Title: c.releaseLabel(ch), Number: ch.GetNumber(), State: JobFailed, Reason: "filename: " + err.Error()}
 		c.jobs = append(c.jobs, j)
 	}
 	c.appendLogLocked(LogError, "error creating filename for "+msg)
@@ -1432,14 +1438,14 @@ func (e events) Started(ch *grabber.Chapter) {
 	c := e.c
 	c.mu.Lock()
 	if c.bundle != nil {
-		c.bundle.Status = "Downloading " + ch.GetTitle()
+		c.bundle.Status = "Downloading " + c.releaseLabel(ch)
 	} else if j := c.chapVol[ch]; j != nil {
 		// its row is too narrow for the chapter's title: the phase and
 		// percentage say enough. The bar moves with VolumeProgress.
 		j.Status = ""
 	} else {
 		// the CLI's bar: each page's download and archive steps
-		j := &Job{Title: ch.GetTitle(), Number: ch.GetNumber(), Total: ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight), State: JobDownloading}
+		j := &Job{Title: c.releaseLabel(ch), Number: ch.GetNumber(), Total: ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight), State: JobDownloading}
 		c.jobs = append(c.jobs, j)
 		c.byChap[ch] = j
 	}
@@ -1451,7 +1457,7 @@ func (e events) Page(ch *grabber.Chapter, idx int, err error) {
 	c := e.c
 	c.mu.Lock()
 	if err != nil {
-		c.appendLogLocked(LogError, fmt.Sprintf("error downloading page %d of %s: %s", idx+1, ch.GetTitle(), err))
+		c.appendLogLocked(LogError, fmt.Sprintf("error downloading page %d of %s: %s", idx+1, c.releaseLabel(ch), err))
 	} else if j := c.jobFor(ch); j != nil && !j.Volume && c.live(ch) {
 		// a volume's row moves with VolumeProgress instead
 		j.Done += core.DownloadWeight
@@ -1465,7 +1471,7 @@ func (e events) DownloadFailed(ch *grabber.Chapter, err error) {
 	c := e.c
 	c.mu.Lock()
 	c.failedC[ch] = true
-	msg := fmt.Sprintf("%s: %s", ch.GetTitle(), err)
+	msg := fmt.Sprintf("%s: %s", c.releaseLabel(ch), err)
 	c.stats.failures = append(c.stats.failures, msg)
 	// a volume goes on with its other chapters
 	if j := c.byChap[ch]; j != nil && c.bundle == nil {
@@ -1493,7 +1499,7 @@ func (e events) Packed(ch *grabber.Chapter, name string, err error) {
 	c.mu.Lock()
 	j := c.byChap[ch]
 	if err != nil {
-		msg := fmt.Sprintf("%s: packing: %s", ch.GetTitle(), err)
+		msg := fmt.Sprintf("%s: packing: %s", c.releaseLabel(ch), err)
 		c.stats.failures = append(c.stats.failures, msg)
 		if j != nil {
 			j.State = JobFailed
