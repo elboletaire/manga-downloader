@@ -1471,6 +1471,16 @@ fieldset:disabled .check {
   font-weight: 550;
 }
 
+/* the release's language and group: the title truncates, these stay whole */
+.job-tags {
+  flex: none;
+  max-width: 50%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-3);
+}
+
 .job-status {
   flex: none;
   color: var(--text-3);

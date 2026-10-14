@@ -685,10 +685,11 @@ func TestEventsNameTheReleaseWhenCopiesNeedAGroup(t *testing.T) {
 	tests := []struct {
 		name       string
 		groupDupes bool
-		want       string
+		wantTags   string
+		wantLabel  string
 	}{
-		{"no copies", false, "Chapter 5"},
-		{"group copies", true, "Chapter 5 [Alpha]"},
+		{"no copies", false, "", "Chapter 5"},
+		{"group copies", true, " [Alpha]", "Chapter 5 [Alpha]"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -703,11 +704,12 @@ func TestEventsNameTheReleaseWhenCopiesNeedAGroup(t *testing.T) {
 			e.DownloadFailed(ch, failed)
 
 			jobs := c.Jobs()
-			if len(jobs) != 1 || jobs[0].Title != tt.want {
-				t.Fatalf("jobs = %+v, want one titled %q", jobs, tt.want)
+			if len(jobs) != 1 || jobs[0].Title != "Chapter 5" || jobs[0].Tags != tt.wantTags {
+				t.Fatalf("jobs = %+v, want one titled \"Chapter 5\" with tags %q", jobs, tt.wantTags)
 			}
+			// the log keeps the whole label
 			log := c.Log()
-			if got, want := log[len(log)-1].Text, "error downloading chapter "+tt.want+": boom"; got != want {
+			if got, want := log[len(log)-1].Text, "error downloading chapter "+tt.wantLabel+": boom"; got != want {
 				t.Errorf("log = %q, want %q", got, want)
 			}
 		})

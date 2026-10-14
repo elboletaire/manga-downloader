@@ -18,6 +18,7 @@ import (
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/fatih/color"
+	"github.com/mattn/go-runewidth"
 )
 
 // steps is a page's total on a chapter's bar: its download and archive steps
@@ -387,6 +388,7 @@ func TestBtLayout(t *testing.T) {
 	}{
 		{80, false},
 		{120, false},
+		{200, false},
 		{50, false},
 		// btFixedW=24, btMinBarW=15: full layout requires width >= 24+15+1=40
 		{40, false},
@@ -417,6 +419,54 @@ func TestBtLayout(t *testing.T) {
 			t.Errorf("btLayout(%d): total row width %d ≠ %d (titleW=%d barW=%d narrow=%v)",
 				tc.width, total, tc.width, titleW, barW, narrow)
 		}
+	}
+}
+
+// TestBtLayoutTitleShare pins the split on wide terminals: the title takes two
+// thirds of the room, between btMinTitleW and btMaxTitleW, and the bar gets the rest.
+func TestBtLayoutTitleShare(t *testing.T) {
+	tests := []struct {
+		width, wantTitleW, wantBarW int
+	}{
+		{80, btMinTitleW, 80 - btFixedW - btMinTitleW},
+		{120, 64, 32},
+		{200, btMaxTitleW, 200 - btFixedW - btMaxTitleW},
+	}
+	for _, tc := range tests {
+		titleW, barW, narrow := btLayout(tc.width)
+		if narrow || titleW != tc.wantTitleW || barW != tc.wantBarW {
+			t.Errorf("btLayout(%d) = (%d, %d, narrow=%v), want (%d, %d, false)",
+				tc.width, titleW, barW, narrow, tc.wantTitleW, tc.wantBarW)
+		}
+	}
+}
+
+func TestFitTitle(t *testing.T) {
+	const title = "One Piece - Chapter 1135 - Shining Gold"
+	tests := []struct {
+		name, title, tags string
+		w                 int
+		want              string
+	}{
+		// the whole row is too long: the title gives way, the tags stay whole
+		{"tags kept", title, " [TCB Scans]", 40, "One Piece - Chapter 1135 - … [TCB Scans]"},
+		// short titles are padded as fixedW always did
+		{"short title", "Chapter 5", " [TCB Scans]", 40, fixedW("Chapter 5 [TCB Scans]", 40)},
+		// no tags: identical to fixedW
+		{"no tags", title, "", 40, fixedW(title, 40)},
+		// the tags alone don't fit: they are truncated
+		{"tags too long", title, " [en] [Very Long Group Name]", 10, " [en] [Ve…"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := fitTitle(tc.title, tc.tags, tc.w)
+			if got != tc.want {
+				t.Errorf("fitTitle() = %q, want %q", got, tc.want)
+			}
+			if w := runewidth.StringWidth(got); w != tc.w {
+				t.Errorf("fitTitle() width = %d, want %d", w, tc.w)
+			}
+		})
 	}
 }
 

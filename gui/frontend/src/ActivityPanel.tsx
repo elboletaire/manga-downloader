@@ -162,6 +162,7 @@ function JobRow({ job, style }: { job: Job; style: React.CSSProperties }) {
       <div className="job-body">
         <div className="job-line">
           <span className="job-title">{job.title}</span>
+          {job.tags && <span className="job-tags">{job.tags}</span>}
           <span className="job-status">{jobShortStatus(job)}</span>
         </div>
         {job.state === 'failed' || job.state === 'skipped' ? (
@@ -170,7 +171,7 @@ function JobRow({ job, style }: { job: Job; style: React.CSSProperties }) {
           <div
             className="bar"
             role="progressbar"
-            aria-label={`Progress of ${job.title}`}
+            aria-label={`Progress of ${job.title}${job.tags}`}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(fraction * 100)}

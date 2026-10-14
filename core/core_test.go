@@ -161,6 +161,25 @@ func TestReleaseLabel(t *testing.T) {
 		})
 	}
 
+	tagsTests := []struct {
+		name                string
+		chapter             *grabber.Chapter
+		showLang, showGroup bool
+		want                string
+	}{
+		{"both", chapter, true, true, " [en] [Group A]"},
+		{"neither", chapter, false, false, ""},
+		{"language only", chapter, true, false, " [en]"},
+		{"nothing to show", &grabber.Chapter{Title: "Chapter 5"}, true, true, ""},
+	}
+	for _, tt := range tagsTests {
+		t.Run("tags "+tt.name, func(t *testing.T) {
+			if got := ReleaseTags(tt.chapter, tt.showLang, tt.showGroup); got != tt.want {
+				t.Errorf("ReleaseTags() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+
 	ungrouped := &grabber.Chapter{Title: "Chapter 5", Language: "en"}
 	if got := ReleaseLabel(ungrouped, false, true); got != "Chapter 5" {
 		t.Errorf("ungrouped ReleaseLabel() = %q, want %q", got, "Chapter 5")

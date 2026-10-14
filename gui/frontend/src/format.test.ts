@@ -53,6 +53,7 @@ describe('summaryHeadline', () => {
 describe('job helpers', () => {
   const job = (over: Partial<Job>): Job => ({
     title: 'Ch 1',
+    tags: '',
     number: 1,
     total: 24,
     done: 6,
@@ -94,6 +95,7 @@ describe('summarySentence', () => {
 describe('jobShortStatus', () => {
   const job = (over: Partial<Job>): Job => ({
     title: 'Ch 1',
+    tags: '',
     number: 1,
     total: 24,
     done: 6,

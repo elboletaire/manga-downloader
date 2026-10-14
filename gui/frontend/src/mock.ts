@@ -504,6 +504,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
           ...jobs,
           {
             title: c.title,
+            tags: '',
             number: c.number,
             total: 0,
             done: 0,
@@ -520,6 +521,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         ...jobs,
         {
           title: c.title,
+          tags: '',
           number: c.number,
           total: PAGES * STEPS_PER_PAGE,
           done: 0,
@@ -560,6 +562,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         volumeChapters.set(title, v.chapters.length);
         return {
           title,
+          tags: '',
           number: first,
           total: v.chapters.length * PAGES * STEPS_PER_PAGE,
           done: 0,
@@ -575,6 +578,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       ? [
           {
             title: `Bundle: chapters 1-${list.length}`,
+            tags: '',
             number: 0,
             total: list.length * PAGES * STEPS_PER_PAGE,
             done: 0,

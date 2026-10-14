@@ -40,6 +40,7 @@ export namespace main {
 	}
 	export class JobDTO {
 	    title: string;
+	    tags: string;
 	    number: number;
 	    total: number;
 	    done: number;
@@ -55,6 +56,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.title = source["title"];
+	        this.tags = source["tags"];
 	        this.number = source["number"];
 	        this.total = source["total"];
 	        this.done = source["done"];

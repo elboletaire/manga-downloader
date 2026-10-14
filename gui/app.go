@@ -234,7 +234,9 @@ type RunDTO struct {
 
 // JobDTO is the progress of one chapter (or of the whole bundle)
 type JobDTO struct {
-	Title  string  `json:"title"`
+	Title string `json:"title"`
+	// Tags is the release's language and group, shown apart from the title
+	Tags   string  `json:"tags"`
 	Number float64 `json:"number"`
 	// Total and Done count pages: each page is downloaded and then archived,
 	// so Total is twice the page count. A volume's row, whose pages aren't
@@ -319,6 +321,7 @@ func (a *App) State() State {
 	for _, j := range c.Jobs() {
 		st.Jobs = append(st.Jobs, JobDTO{
 			Title:  j.Title,
+			Tags:   j.Tags,
 			Number: j.Number,
 			Total:  j.Total,
 			Done:   j.Done,

@@ -62,7 +62,10 @@ const (
 // volumes one per volume, whose Done is core.VolumeProgress out of a fixed
 // Total of volumeScale (its pages aren't known until it's packed).
 type Job struct {
-	Title  string
+	Title string
+	// Tags is the release's language and group (" [en] [Alpha]"), kept apart
+	// from Title so a narrow row truncates the title and keeps them
+	Tags   string
 	Number float64
 	Total  int64
 	Done   int64
@@ -1369,6 +1372,12 @@ func (c *Controller) releaseLabel(f grabber.Filterable) string {
 	return core.ReleaseLabel(f, c.hasDuplicates, c.hasGroupDuplicates)
 }
 
+// releaseTags is the bracketed part of releaseLabel, which a job row shows
+// apart from its title. Callers hold mu.
+func (c *Controller) releaseTags(f grabber.Filterable) string {
+	return core.ReleaseTags(f, c.hasDuplicates, c.hasGroupDuplicates)
+}
+
 // live reports whether a chapter still accepts page progress: once it failed,
 // pages still in flight finish but must not move its bar. Callers hold mu.
 func (c *Controller) live(ch *grabber.Chapter) bool {
@@ -1401,7 +1410,7 @@ func (e events) FetchFailed(listed grabber.Filterable, err error) {
 	msg := fmt.Sprintf("%s: %s", c.releaseLabel(listed), err)
 	c.stats.failures = append(c.stats.failures, msg)
 	if c.bundle == nil && c.listedVol[listed] == nil {
-		c.jobs = append(c.jobs, &Job{Title: c.releaseLabel(listed), Number: listed.GetNumber(), State: JobFailed, Reason: err.Error()})
+		c.jobs = append(c.jobs, &Job{Title: listed.GetTitle(), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFailed, Reason: err.Error()})
 	}
 	c.appendLogLocked(LogError, "error fetching chapter "+msg)
 	c.mu.Unlock()
@@ -1413,7 +1422,7 @@ func (e events) Skipped(ch *grabber.Chapter) {
 	c.mu.Lock()
 	c.stats.skipped++
 	if c.bundle == nil && c.chapVol[ch] == nil {
-		c.jobs = append(c.jobs, &Job{Title: c.releaseLabel(ch), Number: ch.GetNumber(), State: JobSkipped, Reason: "every page excluded by --skip-pages"})
+		c.jobs = append(c.jobs, &Job{Title: ch.GetTitle(), Tags: c.releaseTags(ch), Number: ch.GetNumber(), State: JobSkipped, Reason: "every page excluded by --skip-pages"})
 	}
 	c.appendLogLocked(LogWarn, fmt.Sprintf("skipping %s: every page is excluded by --skip-pages", c.releaseLabel(ch)))
 	c.mu.Unlock()
@@ -1426,7 +1435,7 @@ func (e events) FilenameFailed(ch *grabber.Chapter, err error) {
 	msg := fmt.Sprintf("%s: filename: %s", c.releaseLabel(ch), err)
 	c.stats.failures = append(c.stats.failures, msg)
 	if c.bundle == nil {
-		j := &Job{Title: c.releaseLabel(ch), Number: ch.GetNumber(), State: JobFailed, Reason: "filename: " + err.Error()}
+		j := &Job{Title: ch.GetTitle(), Tags: c.releaseTags(ch), Number: ch.GetNumber(), State: JobFailed, Reason: "filename: " + err.Error()}
 		c.jobs = append(c.jobs, j)
 	}
 	c.appendLogLocked(LogError, "error creating filename for "+msg)
@@ -1445,7 +1454,7 @@ func (e events) Started(ch *grabber.Chapter) {
 		j.Status = ""
 	} else {
 		// the CLI's bar: each page's download and archive steps
-		j := &Job{Title: c.releaseLabel(ch), Number: ch.GetNumber(), Total: ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight), State: JobDownloading}
+		j := &Job{Title: ch.GetTitle(), Tags: c.releaseTags(ch), Number: ch.GetNumber(), Total: ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight), State: JobDownloading}
 		c.jobs = append(c.jobs, j)
 		c.byChap[ch] = j
 	}

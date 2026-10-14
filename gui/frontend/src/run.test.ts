@@ -13,6 +13,7 @@ import type { Job, State, Summary } from './types';
 
 const job = (over: Partial<Job>): Job => ({
   title: 'Ch',
+  tags: '',
   number: 1,
   total: 20,
   done: 0,

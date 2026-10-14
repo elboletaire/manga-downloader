@@ -66,6 +66,7 @@ type volumePackedMsg struct {
 
 type barState struct {
 	rawTitle string // untruncated title; truncated to titleW at render time
+	tags     string // release tags (" [en] [Group]"), kept whole while the row fits
 	current  int64
 	total    int64
 	status   string          // "downloading" | "archiving" | "done" | "failed"
@@ -93,13 +94,15 @@ const (
 	btGapsW     = 3                                // spaces between title, bar, counter, status
 	btFixedW    = btCounterW + btStatusW + btGapsW // 24
 	btMinBarW   = 15
-	btMaxTitleW = 40
+	btMinTitleW = 40 // so an 80-column row keeps a readable title
+	btMaxTitleW = 70
 )
 
 // btLayout returns titleW, barW, and narrow for a chapter row.
 // When narrow is false the full row is: title(titleW) + " " + bar(barW) + " " + counter(9) + " " + status(12)
-// totalling exactly width. When narrow is true the counter and status are omitted:
-// title(titleW) + " " + bar(barW) totalling exactly width.
+// totalling exactly width. The title takes two thirds of the room (at least btMinTitleW, at most
+// btMaxTitleW), and the bar keeps at least btMinBarW. When narrow is true the counter and status are
+// omitted: title(titleW) + " " + bar(barW) totalling exactly width.
 func btLayout(width int) (titleW, barW int, narrow bool) {
 	if width <= 0 {
 		width = 80
@@ -116,7 +119,7 @@ func btLayout(width int) (titleW, barW int, narrow bool) {
 		}
 		return
 	}
-	titleW = min(btMaxTitleW, avail-btMinBarW)
+	titleW = min(btMaxTitleW, max(btMinTitleW, avail*2/3), avail-btMinBarW)
 	if titleW < 1 {
 		titleW = 1
 	}
@@ -130,6 +133,23 @@ func fixedW(s string, w int) string {
 		return ""
 	}
 	return runewidth.FillRight(runewidth.Truncate(s, w, "…"), w)
+}
+
+// fitTitle renders title and tags in exactly w visible cells. The tags stay whole
+// while they fit, so two releases of one chapter still differ when the row is
+// narrow; only the title is truncated. When the tags alone don't fit, they are truncated.
+func fitTitle(title, tags string, w int) string {
+	if w <= 0 || tags == "" {
+		return fixedW(title, w)
+	}
+	tagsW := runewidth.StringWidth(tags)
+	if runewidth.StringWidth(title)+tagsW <= w {
+		return fixedW(title+tags, w)
+	}
+	if tagsW >= w {
+		return fixedW(tags, w)
+	}
+	return fixedW(title, w-tagsW) + tags
 }
 
 // clipRow clips a rendered row (which may contain ANSI codes) to width visible cells.
@@ -312,9 +332,10 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.chapters = append(m.chapters, msg.chapter)
 		// Compute the raw (untruncated) title here so it adapts when the terminal
 		// is resized; renderChapterRow truncates it to titleW at render time.
-		rawTitle := chapterRawTitle(m.seriesTitle, msg.chapter, m.showLang, m.showGroup)
+		rawTitle, tags := chapterTitle(m.seriesTitle, msg.chapter, m.showLang, m.showGroup)
 		m.states[msg.chapter] = &barState{
 			rawTitle: rawTitle,
+			tags:     tags,
 			total:    msg.total,
 			status:   "downloading",
 			bar:      bar,
@@ -603,7 +624,7 @@ func (m progressModel) renderChapterRow(s *barState) string {
 	if s.bar.Width() != barW {
 		s.bar.SetWidth(barW)
 	}
-	title := fixedW(s.rawTitle, titleW)
+	title := fitTitle(s.rawTitle, s.tags, titleW)
 
 	var barStr string
 	switch {
@@ -904,18 +925,18 @@ func (plainEvents) VolumePacked(v *core.Volume, _ string, err error) {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-// chapterRawTitle builds an untruncated "Series - Chapter [lang] [group]" title
-// for a chapter. The caller passes showLanguage (true when the series has
-// chapters in more than one language) and showGroup (true when one number is
-// listed more than once in a language, see core.HasGroupDuplicates). The result
-// is stored in barState.rawTitle and truncated to titleW at render time so
-// resizing the terminal shows more text.
-func chapterRawTitle(seriesTitle string, c *grabber.Chapter, showLanguage, showGroup bool) string {
-	chapTitle := core.ReleaseLabel(c, showLanguage, showGroup)
-	if seriesTitle == "" {
-		return chapTitle
+// chapterTitle builds an untruncated "Series - Chapter" title for a chapter and
+// its release tags " [lang] [group]" apart. The caller passes showLanguage (true
+// when the series has chapters in more than one language) and showGroup (true
+// when one number is listed more than once in a language, see
+// core.HasGroupDuplicates). Both are stored in barState and fitted to titleW at
+// render time so resizing the terminal shows more text.
+func chapterTitle(seriesTitle string, c *grabber.Chapter, showLanguage, showGroup bool) (title, tags string) {
+	title = c.GetTitle()
+	if seriesTitle != "" {
+		title = seriesTitle + " - " + title
 	}
-	return seriesTitle + " - " + chapTitle
+	return title, core.ReleaseTags(c, showLanguage, showGroup)
 }
 
 // teaNoticeHandler returns a notice handler that routes output through the TUI.

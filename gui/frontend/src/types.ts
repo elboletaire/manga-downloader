@@ -34,6 +34,8 @@ export interface Run {
 
 export interface Job {
   title: string;
+  /** The release's language and group (" [en] [Alpha]"), shown apart from the title; empty when none */
+  tags: string;
   number: number;
   /** Each page's download and archive steps are counted (core's DownloadWeight and ArchiveWeight, 4 + 1); a volume's row is a fixed scale instead */
   total: number;
