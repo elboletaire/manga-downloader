@@ -31,11 +31,10 @@ func NewSacachispa(g *Grabber) *Sacachispa {
 	return &Sacachispa{Grabber: g}
 }
 
-// SacachispaChapter represents a sacachispa.site chapter
+// SacachispaChapter represents a sacachispa.site chapter. Its Chapter.ID is
+// the release's id, which holds the pages; empty when the listing has none.
 type SacachispaChapter struct {
 	Chapter
-	// ID is the API's chapter id, whose releases hold the pages
-	ID string
 	// PatreonOnly marks chapters the API refuses to serve (403) until they
 	// become free
 	PatreonOnly bool
@@ -76,10 +75,18 @@ func (s *Sacachispa) FetchTitle() (string, error) {
 	return sanitizeTitle(res.Data.Title), nil
 }
 
-// FetchChapters returns the chapters of the manga. Their pages are fetched
-// later, in FetchChapter, so only the requested chapters cost API calls.
+// FetchChapters returns the chapters of the manga: one per release, so a
+// chapter several groups released is listed once for each, the group in
+// Chapter.Group (see grabber.SelectGroup). A chapter with no release is listed
+// once anyway, so FetchChapter can say why it has no pages. Their pages are
+// fetched later, in FetchChapter, so only the requested chapters cost API calls.
 func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 	id, err := s.resolveMangaID()
+	if err != nil {
+		return nil, []error{err}
+	}
+
+	releases, err := s.releasesByChapter(id)
 	if err != nil {
 		return nil, []error{err}
 	}
@@ -109,20 +116,94 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 			if err != nil {
 				continue
 			}
+			title := chapterTitleOrDefault(c.Title, number)
 
-			chapters = append(chapters, &SacachispaChapter{
-				Chapter: Chapter{
-					Number:   number,
-					Title:    chapterTitleOrDefault(c.Title, number),
-					Language: "en",
-				},
-				ID:          c.ID,
-				PatreonOnly: c.PatreonOnly,
-			})
+			rels := s.preferredReleases(releases[c.ID])
+			if len(rels) == 0 {
+				chapters = append(chapters, &SacachispaChapter{
+					Chapter: Chapter{
+						Number:   number,
+						Title:    title,
+						Language: "en",
+					},
+					PatreonOnly: c.PatreonOnly,
+				})
+				continue
+			}
+			for _, r := range rels {
+				chapters = append(chapters, &SacachispaChapter{
+					Chapter: Chapter{
+						Number:   number,
+						Title:    title,
+						Language: r.Language,
+						Group:    r.Group.Name,
+						ID:       r.ID,
+					},
+					PatreonOnly: c.PatreonOnly,
+				})
+			}
 		}
 	}
 
 	return chapters, nil
+}
+
+// sacachispaRelease is one group's release of a chapter, the one that holds
+// its pages
+type sacachispaRelease struct {
+	ID        string `json:"id"`
+	ChapterID string `json:"chapterId"`
+	Language  string `json:"language"`
+	Group     struct {
+		Name string `json:"name"`
+	} `json:"group"`
+}
+
+// releasesByChapter lists every release of the manga, keyed by the id of the
+// chapter each one releases, in the order the API lists them
+func (s *Sacachispa) releasesByChapter(mangaID string) (map[string][]sacachispaRelease, error) {
+	byChapter := map[string][]sacachispaRelease{}
+	for page, pages := 1, 1; page <= pages; page++ {
+		var res struct {
+			Data       []sacachispaRelease `json:"data"`
+			Pagination struct {
+				Pages int `json:"pages"`
+			} `json:"pagination"`
+		}
+		path := fmt.Sprintf("/releases?mangaId=%s&limit=100&page=%d", mangaID, page)
+		if err := sacachispaGet(path, &res); err != nil {
+			return nil, err
+		}
+		pages = res.Pagination.Pages
+
+		for _, r := range res.Data {
+			byChapter[r.ChapterID] = append(byChapter[r.ChapterID], r)
+		}
+	}
+
+	return byChapter, nil
+}
+
+// preferredReleases returns the releases of a chapter to list: the ones in the
+// requested language, or, when none is, the first one (the release FetchChapter
+// has always fallen back to). Every release when no language is requested.
+func (s *Sacachispa) preferredReleases(rels []sacachispaRelease) []sacachispaRelease {
+	lang := s.GetPreferredLanguage()
+	if lang == "" || lang == FilterAll || len(rels) == 0 {
+		return rels
+	}
+
+	matching := []sacachispaRelease{}
+	for _, r := range rels {
+		if r.Language == lang {
+			matching = append(matching, r)
+		}
+	}
+	if len(matching) == 0 {
+		return rels[:1]
+	}
+
+	return matching
 }
 
 // FetchChapter returns the chapter and its pages
@@ -132,28 +213,13 @@ func (s Sacachispa) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, errors.New("invalid chapter type")
 	}
 
-	var rels struct {
-		Data []struct {
-			ID       string `json:"id"`
-			Language string `json:"language"`
-		} `json:"data"`
-	}
-	if err := sacachispaGet("/chapters/"+schap.ID+"/releases", &rels); err != nil {
-		return nil, err
-	}
-	if len(rels.Data) == 0 {
-		return nil, fmt.Errorf("no releases found for chapter %s", formatChapterNumber(f.GetNumber()))
-	}
-
-	// a chapter may have several releases; prefer the requested language
-	release := rels.Data[0]
-	if lang := s.GetPreferredLanguage(); lang != "" && lang != FilterAll {
-		for _, r := range rels.Data {
-			if r.Language == lang {
-				release = r
-				break
-			}
+	// FetchChapters picked the release (Chapter.ID); a chapter it found none
+	// for has no pages to fetch
+	if schap.ID == "" {
+		if schap.PatreonOnly {
+			return nil, fmt.Errorf("chapter %s is Patreon-exclusive and not available yet", formatChapterNumber(f.GetNumber()))
 		}
+		return nil, fmt.Errorf("no releases found for chapter %s", formatChapterNumber(f.GetNumber()))
 	}
 
 	var res struct {
@@ -164,7 +230,7 @@ func (s Sacachispa) FetchChapter(f Filterable) (*Chapter, error) {
 			} `json:"items"`
 		} `json:"data"`
 	}
-	if err := sacachispaGet("/releases/"+release.ID+"/pages", &res); err != nil {
+	if err := sacachispaGet("/releases/"+schap.ID+"/pages", &res); err != nil {
 		if schap.PatreonOnly {
 			return nil, fmt.Errorf(
 				"chapter %s is Patreon-exclusive and not available yet: %w",
