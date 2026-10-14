@@ -100,6 +100,9 @@ func TestLuascansParseChaptersPage(t *testing.T) {
 				if got := chapters[i].GetNumber(); got != want {
 					t.Errorf("chapter %d number = %v, want %v", i, got, want)
 				}
+				if chapters[i].ID != chapters[i].Slug {
+					t.Errorf("chapter %d ID = %q, want its slug %q", i, chapters[i].ID, chapters[i].Slug)
+				}
 			}
 			if feed.Meta.LastPage != c.wantLastPage {
 				t.Errorf("last_page = %d, want %d", feed.Meta.LastPage, c.wantLastPage)

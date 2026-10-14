@@ -141,6 +141,12 @@ func TestTanstackComicFetchChaptersGuards(t *testing.T) {
 		if len(chapters) != c.wantChaps {
 			t.Errorf("%s: FetchChapters() got %d chapters, want %d", c.name, len(chapters), c.wantChaps)
 		}
+		for _, ch := range chapters {
+			tch := ch.(*TanstackChapter)
+			if tch.ID != tch.Slug {
+				t.Errorf("%s: chapter ID = %q, want its slug %q", c.name, tch.ID, tch.Slug)
+			}
+		}
 	}
 }
 

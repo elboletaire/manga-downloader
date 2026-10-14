@@ -5,7 +5,6 @@ package grabber
 import (
 	"fmt"
 	"net/url"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -52,6 +51,17 @@ var weebCentralSeriesLinkRe = regexp.MustCompile(`/series/[0-9A-Za-z]{26}(?:/|$)
 // weebCentralChapterRe matches chapter URLs like
 // https://weebcentral.com/chapters/01M20S9HSSGNNMVT849MH5V86R (www. included)
 var weebCentralChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?weebcentral\.com/chapters/([A-Za-z0-9]+)`)
+
+// weebCentralChapterID returns the chapter's ULID, the ID weebcentral gives
+// each chapter, or "" when the URL isn't a chapter URL
+func weebCentralChapterID(rawURL string) string {
+	m := weebCentralChapterRe.FindStringSubmatch(rawURL)
+	if m == nil {
+		return ""
+	}
+
+	return m[1]
+}
 
 // weebCentralChapterURL checks if the URL is a chapter URL.
 func weebCentralChapterURL(url string) bool {
@@ -197,7 +207,7 @@ func (w *WeebCentral) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Number: number,
 				Title:  "Chapter " + strconv.FormatFloat(number, 'f', -1, 64),
-				ID:     path.Base(href),
+				ID:     weebCentralChapterID(href),
 			},
 			href,
 		})
@@ -229,7 +239,7 @@ func (w *WeebCentral) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:    f.GetTitle(),
 		Number:   f.GetNumber(),
 		Language: "en",
-		ID:       path.Base(wchap.URL),
+		ID:       weebCentralChapterID(wchap.URL),
 	}
 
 	doc.Find("img").Each(func(i int, s *goquery.Selection) {

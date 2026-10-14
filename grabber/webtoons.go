@@ -98,6 +98,20 @@ func (w *Webtoons) FetchTitle() (string, error) {
 	return series.title, nil
 }
 
+// webtoonsEpisodeID returns the ID of an episode from its viewer URL: the
+// episode_no the site numbers it with. The API and HTML builds of the same
+// episode's URL can differ in other params (readingLanguageCode), so the whole
+// URL isn't the ID. Falls back to chapterURLID when there is no episode_no.
+func webtoonsEpisodeID(rawURL string) string {
+	if u, err := url.Parse(rawURL); err == nil {
+		if no := u.Query().Get("episode_no"); no != "" {
+			return no
+		}
+	}
+
+	return chapterURLID(rawURL)
+}
+
 // FetchChapters returns every episode of the series
 func (w *Webtoons) FetchChapters() (chapters Filterables, errs []error) {
 	series, err := w.fetchSeries()
@@ -110,7 +124,7 @@ func (w *Webtoons) FetchChapters() (chapters Filterables, errs []error) {
 			Chapter{
 				Title:  ep.title,
 				Number: ep.number,
-				ID:     chapterURLID(ep.url),
+				ID:     webtoonsEpisodeID(ep.url),
 			},
 			ep.url,
 		})
@@ -149,7 +163,7 @@ func (w *Webtoons) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
 		Pages:      pages,
-		ID:         chapterURLID(wchap.URL),
+		ID:         webtoonsEpisodeID(wchap.URL),
 	}, nil
 }
 

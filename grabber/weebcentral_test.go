@@ -46,3 +46,25 @@ func TestWeebCentralChapterURL(t *testing.T) {
 		})
 	}
 }
+
+func TestWeebCentralChapterID(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+		want string
+	}{
+		{"chapter URL", "https://weebcentral.com/chapters/01M20S9HSSGNNMVT849MH5V86R", "01M20S9HSSGNNMVT849MH5V86R"},
+		{"chapter URL with query", "https://weebcentral.com/chapters/01M20S9HSSGNNMVT849MH5V86R?page=1", "01M20S9HSSGNNMVT849MH5V86R"},
+		{"www. prefix", "https://www.weebcentral.com/chapters/01M20S9HSSGNNMVT849MH5V86R", "01M20S9HSSGNNMVT849MH5V86R"},
+		{"series URL", "https://weebcentral.com/series/01J76XYDXH7KT6AABVG3JAT3ZP/Shangri-La-Frontier", ""},
+		{"empty", "", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := weebCentralChapterID(tt.url); got != tt.want {
+				t.Errorf("weebCentralChapterID(%q) = %q, want %q", tt.url, got, tt.want)
+			}
+		})
+	}
+}

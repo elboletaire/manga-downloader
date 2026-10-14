@@ -284,3 +284,25 @@ func TestWebtoonsWalkAPI(t *testing.T) {
 		t.Errorf("webtoonsWalkAPI() past the page cap made %d calls, want %d", calls, webtoonsAPIMaxPages)
 	}
 }
+
+func TestWebtoonsEpisodeID(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+		want string
+	}{
+		{"viewer URL from the HTML list", "https://www.webtoons.com/en/fantasy/tower-of-god/season-3-ep-234/viewer?title_no=95&episode_no=652", "652"},
+		{"viewer URL from the API adds the reading language", "https://www.webtoons.com/en/fantasy/tower-of-god/season-3-ep-234/viewer?title_no=95&episode_no=652&readingLanguageCode=en", "652"},
+		{"canvas viewer URL", "https://www.webtoons.com/en/canvas/dark-tales/trapped-in-the-house-of-flies-pt10/viewer?title_no=440824&episode_no=80&readingLanguageCode=en", "80"},
+		{"no episode_no falls back to the URL path and query", "https://www.webtoons.com/en/fantasy/tower-of-god/list?title_no=95", "/en/fantasy/tower-of-god/list?title_no=95"},
+		{"empty", "", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := webtoonsEpisodeID(tt.url); got != tt.want {
+				t.Errorf("webtoonsEpisodeID(%q) = %q, want %q", tt.url, got, tt.want)
+			}
+		})
+	}
+}

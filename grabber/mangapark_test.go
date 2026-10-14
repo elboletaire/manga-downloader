@@ -134,6 +134,9 @@ func TestParseMangaparkChaptersBatch(t *testing.T) {
 	if len(chapters) != 3 {
 		t.Fatalf("got %d chapters, want 3", len(chapters))
 	}
+	if id := chapters[0].(*MangaparkChapter).ID; id != "/read/shonan-junai-gumi/en/chapter-268" {
+		t.Errorf("chapters[0] ID = %q, want its reader path", id)
+	}
 	if !hasMore {
 		t.Error("hasMore should be true")
 	}
