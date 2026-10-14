@@ -187,6 +187,7 @@ var epubNCXTemplate = template.Must(template.New("ncx").Funcs(epubFuncs).Parse(`
 </ncx>
 `))
 
+// object-fit keeps the aspect ratio in Calibre, which stretches the image box to the screen.
 var epubPageTemplate = template.Must(template.New("page").Funcs(epubFuncs).Parse(`<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -195,7 +196,7 @@ var epubPageTemplate = template.Must(template.New("page").Funcs(epubFuncs).Parse
   <meta name="viewport" content="width={{.Width}}, height={{.Height}}"/>
 </head>
 <body style="margin: 0; padding: 0; width: {{.Width}}px; height: {{.Height}}px;">
-  <img src="../images/{{.Num}}.{{.Ext}}" alt="" width="{{.Width}}" height="{{.Height}}" style="display: block;"/>
+  <img src="../images/{{.Num}}.{{.Ext}}" alt="" width="{{.Width}}" height="{{.Height}}" style="display: block; object-fit: scale-down;"/>
 </body>
 </html>
 `))
