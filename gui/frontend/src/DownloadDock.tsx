@@ -143,6 +143,6 @@ const DESTINATIONS: Record<Options['format'], Record<PackAs, string>> = {
 
 /** What the run writes, as the dock's first words */
 function destination(o: Options): string {
-  const byPack = DESTINATIONS[o.format] ?? DESTINATIONS.raw;
-  return byPack[o.packAs] ?? byPack.chapters;
+  const byPack = DESTINATIONS[o.format];
+  return byPack?.[o.packAs] ?? byPack?.chapters ?? 'Files';
 }
