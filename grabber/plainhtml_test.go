@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -784,5 +785,171 @@ func TestCandidateFetch503NotRetried(t *testing.T) {
 
 	if n := atomic.LoadInt32(&calls); n != 1 {
 		t.Errorf("server saw %d requests, want 1 (DisableRetry must be set on identification probes)", n)
+	}
+}
+
+// zonatmoSelector returns zonatmo.org's entry from plainHTMLSelectors, so the
+// test reads the shipped selectors rather than a copy of them
+func zonatmoSelector(t *testing.T) SiteSelector {
+	t.Helper()
+	for _, s := range plainHTMLSelectors {
+		if s.Rows == "li.upload-link" {
+			return s
+		}
+	}
+	t.Fatal("no zonatmo.org selector in plainHTMLSelectors")
+	return SiteSelector{}
+}
+
+// TestFetchChaptersZonatmoUploads covers a chapter row that lists several
+// uploads: each upload is its own release, with the group from its sub-row
+// (empty when it names none, never inherited from a sibling) and the ID from
+// its view_uploads URL.
+func TestFetchChaptersZonatmoUploads(t *testing.T) {
+	html := `<html><body>
+		<h1 class="element-title">Gachiakuta</h1>
+		<ul>
+			<li class="list-group-item upload-link" data-chapter-number="149">
+				<h4><a class="btn chapter-link"><span class="chapter-number">Capítulo 149</span></a></h4>
+				<div class="chapter-detail"><div class="d-flex flex-column">
+					<div class="d-flex align-items-center flex-wrap">
+						<a href="https://zonatmo.org/view_uploads/732990" class="btn btn-sm btn-primary">Leer online</a>
+						<div class="badge"><span class="subido-por-label">Subido por:</span><a href="https://zonatmo.org/groups/7/equipo-uno" class="text-dark">Equipo Uno</a></div>
+					</div>
+				</div></div>
+			</li>
+			<li class="list-group-item upload-link" data-chapter-number="148">
+				<h4><a class="btn chapter-link"><span class="chapter-number">Capítulo 148</span></a></h4>
+				<div class="chapter-detail"><div class="d-flex flex-column">
+					<div class="d-flex align-items-center flex-wrap">
+						<a href="https://zonatmo.org/view_uploads/732986" class="btn btn-sm btn-primary">Leer online</a>
+					</div>
+					<div class="d-flex align-items-center flex-wrap">
+						<a href="https://zonatmo.org/view_uploads/953633" class="btn btn-sm btn-primary">Leer online</a>
+						<div class="badge"><span class="subido-por-label">Subido por:</span><a href="https://zonatmo.org/groups/12/tmo-bot" class="text-dark">TMO Bot</a></div>
+					</div>
+				</div></div>
+			</li>
+			<li class="list-group-item upload-link" data-chapter-number="147">
+				<h4><a class="btn chapter-link"><span class="chapter-number">Capítulo 147</span></a></h4>
+				<div class="chapter-detail"><div class="d-flex flex-column">
+					<div class="d-flex align-items-center flex-wrap">
+						<a href="https://zonatmo.org/view_uploads/732970" class="btn btn-sm btn-primary">Leer online</a>
+					</div>
+				</div></div>
+			</li>
+		</ul></body></html>`
+
+	m := PlainHTML{doc: docFromHTML(t, html), site: zonatmoSelector(t)}
+	m.rows = m.doc.Find(m.site.Rows)
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) != 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+
+	want := []struct {
+		number float64
+		url    string
+		id     string
+		group  string
+	}{
+		{149, "https://zonatmo.org/view_uploads/732990", "732990", "Equipo Uno"},
+		{148, "https://zonatmo.org/view_uploads/732986", "732986", ""},
+		{148, "https://zonatmo.org/view_uploads/953633", "953633", "TMO Bot"},
+		{147, "https://zonatmo.org/view_uploads/732970", "732970", ""},
+	}
+	if len(chapters) != len(want) {
+		t.Fatalf("expected %d chapters (one per upload), got %d", len(want), len(chapters))
+	}
+	var groups []string
+	for i, c := range chapters {
+		chap := c.(*PlainHTMLChapter)
+		if chap.GetNumber() != want[i].number || chap.URL != want[i].url {
+			t.Errorf("chapter %d = %v %q, want %v %q", i, chap.GetNumber(), chap.URL, want[i].number, want[i].url)
+		}
+		if chap.ID != want[i].id {
+			t.Errorf("chapter %d ID = %q, want %q", i, chap.ID, want[i].id)
+		}
+		if chap.Group != want[i].group {
+			t.Errorf("chapter %d group = %q, want %q", i, chap.Group, want[i].group)
+		}
+		groups = append(groups, chap.Group)
+	}
+	if wantGroups := []string{"Equipo Uno", "", "TMO Bot", ""}; !reflect.DeepEqual(groups, wantGroups) {
+		t.Errorf("groups = %q, want %q", groups, wantGroups)
+	}
+}
+
+// TestChapterFromDocKeepsListedRelease checks that the chapter a reader page
+// builds carries the group and ID its listing row gave it.
+func TestChapterFromDocKeepsListedRelease(t *testing.T) {
+	listed := &PlainHTMLChapter{
+		Chapter{Number: 148, Title: "Capítulo 148", Group: "TMO Bot", ID: "953633"},
+		"https://zonatmo.org/view_uploads/953633",
+	}
+	reader := `<html><body><img class="reader-image" src="https://img.example.com/1.jpg"></body></html>`
+	m := PlainHTML{site: SiteSelector{Image: "img.reader-image"}}
+
+	chapter := m.chapterFromDoc(listed, docFromHTML(t, reader))
+	if chapter.Group != "TMO Bot" || chapter.ID != "953633" {
+		t.Errorf("chapter group %q ID %q, want %q and %q", chapter.Group, chapter.ID, "TMO Bot", "953633")
+	}
+}
+
+// TestReleaseIDDefaultsToURLPath covers the ID of a release whose site has no
+// IDRe: its URL's path, with the host, query and fragment left out.
+func TestReleaseIDDefaultsToURLPath(t *testing.T) {
+	idRe := regexp.MustCompile(`/view_uploads/(\d+)`)
+	cases := []struct {
+		name string
+		url  string
+		re   *regexp.Regexp
+		want string
+	}{
+		{"path with query", "https://example.com/manga/one/chapter-1/?lang=es", nil, "/manga/one/chapter-1/"},
+		{"other host", "https://mirror.example.net/manga/one/chapter-1/", nil, "/manga/one/chapter-1/"},
+		{"query chapter parameter", "https://example.com/reader?chapter=1", nil, "/reader"},
+		{"IDRe capture", "https://zonatmo.org/view_uploads/732986", idRe, "732986"},
+		{"IDRe miss falls back to path", "https://zonatmo.org/other/1", idRe, "/other/1"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := releaseID(c.url, c.re); got != c.want {
+				t.Errorf("releaseID(%q) = %q, want %q", c.url, got, c.want)
+			}
+		})
+	}
+}
+
+// TestFetchChaptersDefaultsIDToPath checks, through FetchChapters, that a
+// chapter's ID is its URL's path even when ChapterQuery appends a query to the
+// URL it fetches.
+func TestFetchChaptersDefaultsIDToPath(t *testing.T) {
+	html := `<ul id="chapterlist">
+		<li><a href="https://example.com/manga/one/chapter-1/">Chapter 1</a></li>
+	</ul>`
+	m := PlainHTML{
+		doc: docFromHTML(t, html),
+		site: SiteSelector{
+			Rows:         "#chapterlist li",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			ChapterQuery: "style=list",
+		},
+	}
+	m.rows = m.doc.Find(m.site.Rows)
+
+	chapters, _ := m.FetchChapters()
+	if len(chapters) != 1 {
+		t.Fatalf("expected 1 chapter, got %d", len(chapters))
+	}
+	chap := chapters[0].(*PlainHTMLChapter)
+	if chap.URL != "https://example.com/manga/one/chapter-1/?style=list" {
+		t.Errorf("chapter URL = %q", chap.URL)
+	}
+	if chap.ID != "/manga/one/chapter-1/" {
+		t.Errorf("chapter ID = %q, want the URL path", chap.ID)
 	}
 }

@@ -67,7 +67,9 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitle: "span.font-medium",
 		Image:        "img[data-reader-page-image]",
 	},
-	// zonatmo.org (TuMangaOnline, former zonatmo.com)
+	// zonatmo.org (TuMangaOnline, former zonatmo.com). A chapter row lists
+	// each upload in its own sub-row, with the uploader's group in a badge
+	// (none on some uploads), so every upload is its own release.
 	{
 		Title:        "h1.element-title",
 		Rows:         "li.upload-link",
@@ -76,6 +78,10 @@ var plainHTMLSelectors = []SiteSelector{
 		Link:         ".chapter-detail a.btn-primary",
 		Image:        "img.reader-image",
 		SeriesLink:   `a[href*="/library/manga/"]`,
+		Uploads:      ".chapter-detail > div > div",
+		UploadLink:   "a.btn-primary",
+		UploadGroup:  `a[href*="/groups/"]`,
+		IDRe:         `/view_uploads/(\d+)`,
 	},
 	// mangapill.com: each chapter row is a plain <a> with the chapter
 	// number as its own text (no dedicated child selector), hence the
@@ -440,6 +446,22 @@ type SiteSelector struct {
 	// reader pages contain a partial chapter list: the link leads to the
 	// series page with the full list.
 	FollowSeriesLink bool
+	// Uploads, when set, is a CSS selector for one sub-row per upload of a
+	// chapter row, for sites that list several scanlation groups' releases
+	// of a chapter under one row. Each upload becomes its own chapter, with
+	// the link, group and ID found in its sub-row. A row with no sub-rows
+	// falls back to its own link.
+	Uploads string
+	// UploadLink is the link to an upload's reader, searched inside its
+	// sub-row (Uploads), where Link isn't
+	UploadLink string
+	// UploadGroup is a CSS selector for the scanlation group(s) that made an
+	// upload, searched inside its sub-row, or inside the row when it has no
+	// sub-rows. Several groups are joined with ", ".
+	UploadGroup string
+	// IDRe is a regexp whose first group captures a release's ID from its
+	// URL. Without it, or when it doesn't match, the ID is the URL's path.
+	IDRe string
 }
 
 // PlainHTMLChapter represents a PlainHTML Chapter
@@ -837,12 +859,17 @@ func parseChapterNumber(text string) (float64, bool) {
 	return number, true
 }
 
-// FetchChapters returns a slice of chapters
+// FetchChapters returns a slice of chapters, one per release: a row whose
+// upload sub-rows are set (Uploads) gives one chapter for each of them
 func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	seriesTitle, _ := m.FetchTitle()
 	var strip *regexp.Regexp
 	if m.site.ChapterTitleStrip != "" {
 		strip = regexp.MustCompile(m.site.ChapterTitleStrip)
+	}
+	var idRe *regexp.Regexp
+	if m.site.IDRe != "" {
+		idRe = regexp.MustCompile(m.site.IDRe)
 	}
 	m.rows.Each(func(i int, s *goquery.Selection) {
 		// an empty Chapter/ChapterTitle selector means the row itself carries
@@ -853,27 +880,11 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 			chapterText = textWithoutNoise(s.Find(m.site.Chapter))
 		}
 
-		u := s.AttrOr("href", "")
-		if m.site.Link != "" {
-			u = s.Find(m.site.Link).AttrOr("href", "")
-		}
-		u = m.resolveURL(u)
-
 		number, ok := m.rowChapterNumber(s)
 		if !ok {
 			return
 		}
 
-		if !strings.HasPrefix(u, "http") {
-			u = m.BaseUrl() + u
-		}
-		if m.site.ChapterQuery != "" {
-			sep := "?"
-			if strings.Contains(u, "?") {
-				sep = "&"
-			}
-			u += sep + m.site.ChapterQuery
-		}
 		title := chapterText
 		if m.site.ChapterTitle != "" {
 			title = textWithoutNoise(s.Find(m.site.ChapterTitle))
@@ -887,18 +898,97 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 			// nothing left but the number, so the filename gets a real label
 			title = "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
 		}
-		chapter := &PlainHTMLChapter{
-			Chapter{
-				Number: number,
-				Title:  title,
-			},
-			u,
-		}
 
-		chapters = append(chapters, chapter)
+		for _, upload := range m.rowUploads(s) {
+			u := m.resolveURL(upload.href)
+			if !strings.HasPrefix(u, "http") {
+				u = m.BaseUrl() + u
+			}
+			// the ID is read before ChapterQuery is appended, so it never
+			// carries the query
+			id := releaseID(u, idRe)
+			if m.site.ChapterQuery != "" {
+				sep := "?"
+				if strings.Contains(u, "?") {
+					sep = "&"
+				}
+				u += sep + m.site.ChapterQuery
+			}
+			chapter := &PlainHTMLChapter{
+				Chapter{
+					Number: number,
+					Title:  title,
+					Group:  upload.group,
+					ID:     id,
+				},
+				u,
+			}
+
+			chapters = append(chapters, chapter)
+		}
 	})
 
 	return
+}
+
+// plainHTMLUpload is one release a chapter row lists: the link it's read
+// from (as written in the markup) and the group that made it
+type plainHTMLUpload struct {
+	href  string
+	group string
+}
+
+// rowUploads returns the releases a chapter row lists. With Uploads set, that's
+// one per upload sub-row that has a link; a row with no sub-rows lists its own
+// link, as the single release it is.
+func (m PlainHTML) rowUploads(s *goquery.Selection) []plainHTMLUpload {
+	if m.site.Uploads != "" {
+		if subs := s.Find(m.site.Uploads); subs.Length() > 0 {
+			var uploads []plainHTMLUpload
+			subs.Each(func(_ int, sub *goquery.Selection) {
+				href := sub.Find(m.site.UploadLink).AttrOr("href", "")
+				if href == "" {
+					return
+				}
+				uploads = append(uploads, plainHTMLUpload{href, m.uploadGroup(sub)})
+			})
+			return uploads
+		}
+	}
+
+	href := s.AttrOr("href", "")
+	if m.site.Link != "" {
+		href = s.Find(m.site.Link).AttrOr("href", "")
+	}
+	return []plainHTMLUpload{{href, m.uploadGroup(s)}}
+}
+
+// uploadGroup returns the group(s) named inside an upload's markup (or a row's,
+// when it has no sub-rows), joined with ", ", or "" when it names none
+func (m PlainHTML) uploadGroup(s *goquery.Selection) string {
+	if m.site.UploadGroup == "" {
+		return ""
+	}
+	var names []string
+	s.Find(m.site.UploadGroup).Each(func(_ int, g *goquery.Selection) {
+		if name := sanitizeTitle(g.Text()); name != "" {
+			names = append(names, name)
+		}
+	})
+	return strings.Join(names, groupSeparator)
+}
+
+// releaseID returns a release's ID: the first capture of idRe in its URL when
+// there's one, otherwise the URL's path. The path drops the query and fragment,
+// so a query (ChapterQuery, tracking parameters) doesn't split one release in two.
+func releaseID(u string, idRe *regexp.Regexp) string {
+	if idRe != nil {
+		if match := idRe.FindStringSubmatch(u); len(match) > 1 {
+			return match[1]
+		}
+	}
+	_, path, _ := chapterPath(u)
+	return path
 }
 
 // chapterOnlyTitleRe matches a chapter title that is just its number ("12",
@@ -961,6 +1051,12 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 		Number:     f.GetNumber(),
 		PagesCount: int64(pcount),
 		Language:   "en",
+	}
+	// the release's own identity comes from the listing, which is where
+	// FetchChapters read it; the page doesn't carry it
+	if listed, ok := f.(*PlainHTMLChapter); ok {
+		chapter.Group = listed.Group
+		chapter.ID = listed.ID
 	}
 
 	for i, img := range pimages {
