@@ -191,8 +191,8 @@ var epubPageTemplate = template.Must(template.New("page").Funcs(epubFuncs).Parse
   <title>{{esc .Title}}</title>
   <meta name="viewport" content="width={{.Width}}, height={{.Height}}"/>
 </head>
-<body style="margin: 0; padding: 0;">
-  <img src="../images/{{.Num}}.{{.Ext}}" alt="" style="display: block; width: 100%; height: 100%;"/>
+<body style="margin: 0; padding: 0; width: {{.Width}}px; height: {{.Height}}px;">
+  <img src="../images/{{.Num}}.{{.Ext}}" alt="" width="{{.Width}}" height="{{.Height}}" style="display: block;"/>
 </body>
 </html>
 `))
