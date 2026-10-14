@@ -132,29 +132,8 @@ func (m *Roliascan) FetchChapters() (Filterables, []error) {
 
 		for _, c := range feed.Chapters {
 			m.languages = append(m.languages, c.Language)
-			if language != FilterAll && c.Language != "" && c.Language != language {
-				continue
-			}
-
-			num, err := strconv.ParseFloat(c.Chapter, 64)
-			if err != nil {
-				continue
-			}
-
-			title := c.Title
-			if title == "" {
-				title = "Chapter " + c.Chapter
-			}
-
-			chapters = append(chapters, &RoliascanChapter{
-				Chapter{
-					Number:   num,
-					Title:    title,
-					Language: c.Language,
-				},
-				c.Id,
-			})
 		}
+		chapters = append(chapters, roliascanReleases(feed.Chapters, language)...)
 
 		offset += len(feed.Chapters)
 		if !feed.HasMore || len(feed.Chapters) == 0 {
@@ -163,6 +142,42 @@ func (m *Roliascan) FetchChapters() (Filterables, []error) {
 	}
 
 	return chapters, nil
+}
+
+// roliascanReleases turns the chapters feed into one chapter per release, the
+// language kept as --language asks (every one for "all", and a release that
+// names no language is kept too). The site lists each release of a chapter
+// separately, with its own id and group.
+func roliascanReleases(items []roliascanChapterItem, language string) Filterables {
+	var chapters Filterables
+	for _, c := range items {
+		if language != FilterAll && c.Language != "" && c.Language != language {
+			continue
+		}
+
+		num, err := strconv.ParseFloat(c.Chapter, 64)
+		if err != nil {
+			continue
+		}
+
+		title := c.Title
+		if title == "" {
+			title = "Chapter " + c.Chapter
+		}
+
+		chapters = append(chapters, &RoliascanChapter{
+			Chapter{
+				Number:   num,
+				Title:    title,
+				Language: c.Language,
+				Group:    c.GroupName,
+				ID:       c.Id,
+			},
+			c.Id,
+		})
+	}
+
+	return chapters
 }
 
 // FetchChapter fetches a chapter and its pages
@@ -193,6 +208,8 @@ func (m *Roliascan) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		Language:   rchap.Language,
+		Group:      rchap.Group,
+		ID:         rchap.ID,
 		PagesCount: int64(len(feed.Images)),
 	}
 	for i, img := range feed.Images {
@@ -247,14 +264,19 @@ func roliascanToken() (token string, timestamp int64) {
 
 // roliascanChaptersFeed is the JSON feed for the chapters list
 type roliascanChaptersFeed struct {
-	Success  bool `json:"success"`
-	HasMore  bool `json:"has_more"`
-	Chapters []struct {
-		Id       string `json:"id"`
-		Chapter  string `json:"chapter"`
-		Title    string `json:"title"`
-		Language string `json:"language"`
-	} `json:"chapters"`
+	Success  bool                   `json:"success"`
+	HasMore  bool                   `json:"has_more"`
+	Chapters []roliascanChapterItem `json:"chapters"`
+}
+
+// roliascanChapterItem is one release in the chapters list. group_name is null
+// when the release names no group.
+type roliascanChapterItem struct {
+	Id        string `json:"id"`
+	Chapter   string `json:"chapter"`
+	Title     string `json:"title"`
+	Language  string `json:"language"`
+	GroupName string `json:"group_name"`
 }
 
 // roliascanChapterContentFeed is the JSON feed for a chapter's page images

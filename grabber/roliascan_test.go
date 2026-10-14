@@ -2,7 +2,10 @@
 
 package grabber
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestRoliascanResolveSeriesURL(t *testing.T) {
 	cases := []struct {
@@ -27,6 +30,38 @@ func TestRoliascanResolveSeriesURL(t *testing.T) {
 		m.resolveSeriesURL()
 		if m.URL != c.want {
 			t.Errorf("resolveSeriesURL(%q) = %q, want %q", c.input, m.URL, c.want)
+		}
+	}
+}
+
+// the same release shape as mangataro: chapter 26 is released twice, with
+// different ids and groups, and chapter 27's release names no group
+const roliascanReleasesFeed = `{"success":true,"has_more":false,"chapters":[
+{"id":"328453","chapter":"26","title":"","language":"en","group_name":"Demonic Scans (Low Quality)"},
+{"id":"330651","chapter":"26","title":"","language":"en","group_name":"qiscans"},
+{"id":"330700","chapter":"27","title":"","language":"","group_name":null}
+]}`
+
+func TestRoliascanReleases(t *testing.T) {
+	var feed roliascanChaptersFeed
+	if err := json.Unmarshal([]byte(roliascanReleasesFeed), &feed); err != nil {
+		t.Fatalf("decoding feed: %v", err)
+	}
+
+	got := roliascanReleases(feed.Chapters, "en")
+	if len(got) != 3 {
+		t.Fatalf("got %d chapters, want 3 (one per release)", len(got))
+	}
+	wants := []struct{ id, group string }{
+		{"328453", "Demonic Scans (Low Quality)"},
+		{"330651", "qiscans"},
+		{"330700", ""},
+	}
+	for i, w := range wants {
+		c := got[i].(*RoliascanChapter)
+		if c.ID != w.id || c.Id != w.id || c.Group != w.group {
+			t.Errorf("chapter[%d] = {ID %q, Id %q, Group %q}, want {%q, %q, %q}",
+				i, c.ID, c.Id, c.Group, w.id, w.id, w.group)
 		}
 	}
 }
