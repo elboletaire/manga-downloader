@@ -32,7 +32,11 @@ export function App({ api }: { api: Api }) {
   const [actionError, setActionError] = useState('');
   const [optionError, setOptionError] = useState('');
   // options are written one at a time, each patch over the last set sent
-  const [optionsWriter] = useState(() => createOptionsWriter((options) => api.setOptions(options)));
+  const [optionsWriter] = useState(() =>
+    createOptionsWriter((options, load) =>
+      load === undefined ? api.setOptions(options) : api.setOptionsAndLoad(options, load),
+    ),
+  );
 
   useEffect(() => {
     if (state !== null) {
@@ -90,6 +94,14 @@ export function App({ api }: { api: Api }) {
       throw e;
     });
   };
+  // a filter picked from a selector applies at once: it's written with the
+  // reload of the loaded series, so it's never shown as not applied
+  const pickFilter = (patch: Partial<Options>) => {
+    setOptionError('');
+    return optionsWriter.patch(patch, state.url).catch((e: unknown) => {
+      setOptionError(errorMessage(e));
+    });
+  };
   const counts = tally(state.jobs);
   const failed = state.summary && !state.running ? state.summary.failures.length : counts.failed;
 
@@ -100,6 +112,7 @@ export function App({ api }: { api: Api }) {
         onLoad={load}
         onClear={clear}
         onOptions={setOptions}
+        onPick={pickFilter}
         onError={setOptionError}
         loadRefusal={loadRefusal}
         optionError={optionError}

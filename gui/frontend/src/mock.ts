@@ -694,6 +694,30 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   }
   push();
 
+  // a load of next's URL: the body of the load action, shared with setOptionsAndLoad
+  async function startLoad(next: string): Promise<void> {
+    const trimmed = next.trim();
+    if (trimmed === '') {
+      throw 'enter the URL of a series first';
+    }
+    if (loading || running) {
+      throw 'a series is loading or a download is running';
+    }
+    url = trimmed;
+    loadError = '';
+    loading = true;
+    browserAuto = trimmed.includes('check');
+    browserAlert = browserAuto ? MOCK_ALERT : '';
+    push();
+    await new Promise((resolve) => setTimeout(resolve, browserAuto ? 3000 : 400));
+    browserAlert = '';
+    if (trimmed.includes('unknown')) {
+      failLoad();
+      return;
+    }
+    finishLoad();
+  }
+
   const api: Api = {
     async state() {
       return snapshot();
@@ -709,26 +733,14 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     },
 
     async load(next) {
-      const trimmed = next.trim();
-      if (trimmed === '') {
-        throw 'enter the URL of a series first';
-      }
+      await startLoad(next);
+    },
+    async setOptionsAndLoad(next, target) {
       if (loading || running) {
         throw 'a series is loading or a download is running';
       }
-      url = trimmed;
-      loadError = '';
-      loading = true;
-      browserAuto = trimmed.includes('check');
-      browserAlert = browserAuto ? MOCK_ALERT : '';
-      push();
-      await new Promise((resolve) => setTimeout(resolve, browserAuto ? 3000 : 400));
-      browserAlert = '';
-      if (trimmed.includes('unknown')) {
-        failLoad();
-        return;
-      }
-      finishLoad();
+      Object.assign(options, next);
+      await startLoad(target);
     },
     async clear() {
       if (loading || running) {

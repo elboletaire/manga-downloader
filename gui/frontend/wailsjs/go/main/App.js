@@ -54,6 +54,10 @@ export function SetOptions(arg1) {
   return window['go']['main']['App']['SetOptions'](arg1);
 }
 
+export function SetOptionsAndLoad(arg1, arg2) {
+  return window['go']['main']['App']['SetOptionsAndLoad'](arg1, arg2);
+}
+
 export function SetSelected(arg1, arg2) {
   return window['go']['main']['App']['SetSelected'](arg1, arg2);
 }

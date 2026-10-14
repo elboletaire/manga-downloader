@@ -343,3 +343,58 @@ func TestFilterOptionsOfSurvivesNoChapters(t *testing.T) {
 		t.Errorf("scanlators = %+v", scanlators)
 	}
 }
+
+// countingSite counts the times its chapter list is fetched
+type countingSite struct {
+	listSite
+	fetches int
+}
+
+func (c *countingSite) FetchChapters() (grabber.Filterables, []error) {
+	c.fetches++
+	return c.listSite.FetchChapters()
+}
+
+// a listing filters again without a request, and gives what Open gives
+func TestListingSeriesFiltersTheListingAgain(t *testing.T) {
+	site := &countingSite{listSite: newGroupedSite().listSite}
+	listing, err := Fetch(site)
+	if err != nil {
+		t.Fatalf("Fetch() error = %v", err)
+	}
+
+	for _, scanlator := range []string{"", "Delta", "Alpha", "Omega"} {
+		settings := &grabber.Settings{Scanlator: scanlator}
+		got, gotErr := listing.Series(settings)
+		want, wantErr := Open(newGroupedSite(), &grabber.Settings{Scanlator: scanlator})
+		if (gotErr == nil) != (wantErr == nil) {
+			t.Fatalf("Series(%q) error = %v, Open error = %v", scanlator, gotErr, wantErr)
+		}
+		if gotErr != nil {
+			continue
+		}
+		if len(got.Chapters) != len(want.Chapters) || !reflect.DeepEqual(got.Scanlators, want.Scanlators) {
+			t.Errorf("Series(%q) = %d chapters, %+v; Open gives %d, %+v",
+				scanlator, len(got.Chapters), got.Scanlators, len(want.Chapters), want.Scanlators)
+		}
+	}
+	if site.fetches != 1 {
+		t.Errorf("the chapter list was fetched %d times, want 1", site.fetches)
+	}
+	if len(listing.Chapters) != 4 {
+		t.Errorf("filtering changed the listing: %d chapters, want its 4", len(listing.Chapters))
+	}
+}
+
+func TestListingSeriesUnknownGroupIsAnUnavailableFilterError(t *testing.T) {
+	listing, err := Fetch(newGroupedSite())
+	if err != nil {
+		t.Fatalf("Fetch() error = %v", err)
+	}
+	_, err = listing.Series(&grabber.Settings{Scanlator: "Omega"})
+
+	var unavailable *grabber.UnavailableFilterError
+	if !errors.As(err, &unavailable) || unavailable.Filter != "scanlator" {
+		t.Errorf("Series() error = %v, want the scanlator's UnavailableFilterError", err)
+	}
+}

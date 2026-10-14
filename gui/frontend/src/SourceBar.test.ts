@@ -18,6 +18,7 @@ function render(state: State): string {
       onLoad: () => undefined,
       onClear: () => undefined,
       onOptions: () => Promise.resolve(),
+      onPick: () => Promise.resolve(),
       onError: () => undefined,
       loadRefusal: '',
       optionError: '',
@@ -32,5 +33,20 @@ describe('SourceBar filters for a site that lists no languages', () => {
     expect(markup).toContain('This site has no language choice');
     expect(markup).not.toContain('value="ca"');
     expect(markup).toMatch(/<input[^>]*disabled[^>]*\/>/);
+  });
+});
+
+describe('SourceBar filter notes', () => {
+  it('says a pick applies at once once the series is loaded', async () => {
+    const base = await createMockApi({ scenario: 'loaded', freeze: true }).state();
+
+    expect(render({ ...base, stale: false })).toContain('Picking one applies it at once');
+    expect(render({ ...base, stale: false })).not.toContain('Not applied yet');
+  });
+
+  it('shows the not-applied note when the loaded list is stale', async () => {
+    const base = await createMockApi({ scenario: 'loaded', freeze: true }).state();
+
+    expect(render({ ...base, stale: true })).toContain('Not applied yet');
   });
 });

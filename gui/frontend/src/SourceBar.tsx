@@ -16,6 +16,8 @@ interface Props {
   /** The URL box's clear button: empties the field and forgets the loaded series */
   onClear: () => void;
   onOptions: (patch: Partial<Options>) => Promise<void>;
+  /** A filter picked from a selector: applied at once, with the series' reload. Its refusal is shown by the caller. */
+  onPick: (patch: Partial<Options>) => Promise<void>;
   onError: (message: string) => void;
   /** A refusal of the last Load, shown with the load error */
   loadRefusal: string;
@@ -23,7 +25,7 @@ interface Props {
   optionError: string;
 }
 
-export function SourceBar({ state, onLoad, onClear, onOptions, onError, loadRefusal, optionError }: Props) {
+export function SourceBar({ state, onLoad, onClear, onOptions, onPick, onError, loadRefusal, optionError }: Props) {
   // null until the user types: the field shows the backend's URL until then
   const [typed, setTyped] = useState<string | null>(null);
   const url = typed ?? state.url;
@@ -55,11 +57,9 @@ export function SourceBar({ state, onLoad, onClear, onOptions, onError, loadRefu
   const identified = filtersIdentified(state);
   const languageStale = state.loaded && state.options.language !== state.loadedLanguage;
   const scanlatorStale = state.loaded && state.options.scanlator !== state.loadedScanlator;
+  // a pick is applied with the reload of the series, in one step (see onPick)
   const pick = (patch: Partial<Options>) => {
-    onOptions(patch)
-      .then(() => onLoad(state.url))
-      // the refusal is already shown by onOptions' caller
-      .catch(() => undefined);
+    void onPick(patch);
   };
   // a failed load with nothing listed is told in the chapter area instead
   const problem = loadRefusal !== '' ? loadRefusal : state.loaded ? state.loadError : '';
@@ -171,7 +171,7 @@ export function SourceBar({ state, onLoad, onClear, onOptions, onError, loadRefu
           </div>
         ) : (
           <span className="filter-hint">
-            {identified ? 'Picking one reloads the series' : 'Applied when the series loads'}
+            {identified ? 'Picking one applies it at once' : 'Applied when the series loads'}
           </span>
         )}
       </div>

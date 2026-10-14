@@ -121,3 +121,31 @@ describe('createOptionsWriter', () => {
     expect(sent[1].skipPages).toBe(base.skipPages);
   });
 });
+
+describe('createOptionsWriter with a reload', () => {
+  it('sends a pick with the URL to reload, in the one write', async () => {
+    const calls: Array<[Options, string | undefined]> = [];
+    const writer = createOptionsWriter((options, load) => {
+      calls.push([options, load]);
+      return Promise.resolve();
+    });
+    writer.pushed(base);
+
+    await writer.patch({ scanlator: 'Delta' }, 'https://example.com/manga/one');
+
+    expect(calls).toEqual([[{ ...base, scanlator: 'Delta' }, 'https://example.com/manga/one']]);
+  });
+
+  it('sends a plain patch without a URL', async () => {
+    const calls: Array<[Options, string | undefined]> = [];
+    const writer = createOptionsWriter((options, load) => {
+      calls.push([options, load]);
+      return Promise.resolve();
+    });
+    writer.pushed(base);
+
+    await writer.patch({ language: 'en' });
+
+    expect(calls).toEqual([[{ ...base, language: 'en' }, undefined]]);
+  });
+});

@@ -394,6 +394,32 @@ func (a *App) Load(url string) error {
 	if err := a.ctrl.BeginLoad(url); err != nil {
 		return err
 	}
+	a.finishLoad(url)
+
+	return nil
+}
+
+// SetOptionsAndLoad applies the options and reloads url with them, as a filter
+// picked from a selector does: SetOptions then Load, in one step, so the window
+// never shows the picked filter as not applied. It's refused as SetOptions and
+// Load are.
+func (a *App) SetOptionsAndLoad(o OptionsDTO, url string) error {
+	url = strings.TrimSpace(url)
+	if url == "" {
+		return errors.New("enter the URL of a series first")
+	}
+	if err := a.ctrl.ConfigureLoad(func(s *grabber.Settings) { applyOptions(s, o) }, url); err != nil {
+		return err
+	}
+	a.save()
+	a.finishLoad(url)
+
+	return nil
+}
+
+// finishLoad does the load BeginLoad or ConfigureLoad started, on its own
+// goroutine, and reports its chapters when it's done
+func (a *App) finishLoad(url string) {
 	go func() {
 		// a panic in a site's parser must not take the window down with it,
 		// and must not leave the controls locked behind a load that never ends
@@ -412,8 +438,6 @@ func (a *App) Load(url string) error {
 			a.save()
 		}
 	}()
-
-	return nil
 }
 
 // SetSelected selects or deselects the chapter at index. It's refused while a

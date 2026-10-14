@@ -28,6 +28,8 @@ export function SetAll(arg1:boolean):Promise<void>;
 
 export function SetOptions(arg1:main.OptionsDTO):Promise<void>;
 
+export function SetOptionsAndLoad(arg1:main.OptionsDTO,arg2:string):Promise<void>;
+
 export function SetSelected(arg1:number,arg2:boolean):Promise<void>;
 
 export function SetSelectedMany(arg1:Array<number>,arg2:boolean):Promise<void>;

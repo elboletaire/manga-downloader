@@ -136,9 +136,9 @@ type Controller struct {
 	// closing tracks a browser close running in the background (see Clear),
 	// which loads wait for rather than meet a browser going away
 	closing sync.WaitGroup
-	// reuseOnLoad is set by BeginLoad when a filter-only reload can skip
-	// re-identifying the site; load() reads and clears it
-	reuseOnLoad grabber.Site
+	// filterChange is set by BeginLoad when a load changes only the filters of
+	// the URL loaded last; load() reads and clears it (see listingFor)
+	filterChange bool
 
 	mu sync.Mutex
 	// settings is the one pointer the site and core read their settings
@@ -162,6 +162,9 @@ type Controller struct {
 	// with, which Configure can make stale
 	loadedLanguage  string
 	loadedScanlator string
+	// listings are the unfiltered listings of the session's loads, which a
+	// filter change is served from (see listingFor)
+	listings listingCache
 	// languages and scanlators are the filter options of the site of the last
 	// load, nil for each one it doesn't list. They outlive a failed load, so
 	// its filters can still be changed.
@@ -336,6 +339,32 @@ func (c *Controller) BeginLoad(url string) error {
 		c.mu.Unlock()
 		return errBusy
 	}
+	c.beginLoadLocked(url)
+	c.mu.Unlock()
+	c.emit()
+	return nil
+}
+
+// ConfigureLoad applies fn to the settings and starts the load of url, as
+// Configure and then BeginLoad would, in one step: the window never sees the
+// new filters before the load they're for has started, so a filter picked from
+// a selector is never shown as not applied.
+func (c *Controller) ConfigureLoad(fn func(*grabber.Settings), url string) error {
+	c.mu.Lock()
+	if c.loading || c.running {
+		c.mu.Unlock()
+		return errBusy
+	}
+	fn(c.settings)
+	c.beginLoadLocked(url)
+	c.mu.Unlock()
+	c.emit()
+	return nil
+}
+
+// beginLoadLocked starts a load of url with the settings as they are now. The
+// caller holds mu and has checked that nothing is loading or running.
+func (c *Controller) beginLoadLocked(url string) {
 	c.loading = true
 	c.loadErr = nil
 	// a fresh settings pointer: the previous series keeps its own, and no
@@ -343,24 +372,11 @@ func (c *Controller) BeginLoad(url string) error {
 	s := new(grabber.Settings)
 	*s = *c.settings
 	c.settings = s
-	// Reuse the existing site for a filter-only reload only when the grabber
-	// explicitly opts in via grabber.Refilterable (same URL, series loaded,
-	// filter changed). Grabbers that must re-fetch to apply their filter
-	// (mangadex, mangafire, mangaplus) are always re-identified.
-	if c.series != nil && url == c.url &&
-		(s.Language != c.loadedLanguage || s.Scanlator != c.loadedScanlator) {
-		if _, ok := c.series.Site.(grabber.Refilterable); ok {
-			c.reuseOnLoad = c.series.Site
-		} else {
-			c.reuseOnLoad = nil
-		}
-	} else {
-		c.reuseOnLoad = nil
-	}
+	// a load of the URL of the last one with other filters is a filter change:
+	// it's served from the listings it can be (see listingFor). Any other load
+	// is an explicit reload, which fetches.
+	c.filterChange = url == c.url && (s.Language != c.loadedLanguage || s.Scanlator != c.loadedScanlator)
 	c.url = url
-	c.mu.Unlock()
-	c.emit()
-	return nil
 }
 
 // abortLoad ends a load that panicked, so the window isn't left locked
@@ -406,39 +422,36 @@ func (c *Controller) FinishLoad(url string) error {
 }
 
 func (c *Controller) load(url string, s *grabber.Settings) error {
-	// Take and clear the reuse-site set by BeginLoad so it never bleeds
-	// into a later load, then skip re-identifying when it's available.
+	// the filter change BeginLoad recorded is taken here, so it never bleeds
+	// into a later load. A Refilterable site of the loaded series is reused on a
+	// filter change that isn't cached, as it filters what it already fetched.
 	c.mu.Lock()
-	reuse := c.reuseOnLoad
-	c.reuseOnLoad = nil
-	c.mu.Unlock()
-
-	var site grabber.Site
-	if reuse != nil {
-		// Update the site's settings pointer to the new one so any options
-		// configured between loads are visible to FetchChapter and helpers.
-		if su, ok := reuse.(interface{ SetSettings(*grabber.Settings) }); ok {
-			su.SetSettings(s)
-		}
-		site = reuse
-	} else {
-		var siteErrs []error
-		site, siteErrs = c.identify(url, s)
-		for _, err := range siteErrs {
-			c.addLog(LogWarn, "site check: "+err.Error())
-		}
-		if site == nil {
-			c.mu.Lock()
-			c.languages, c.scanlators = nil, nil
-			c.mu.Unlock()
-			return errors.New("site not recognised")
+	filterChange := c.filterChange
+	c.filterChange = false
+	var reuse grabber.Site
+	if filterChange && c.series != nil {
+		if _, ok := c.series.Site.(grabber.Refilterable); ok {
+			reuse = c.series.Site
 		}
 	}
+	c.mu.Unlock()
 
-	series, err := core.Open(site, s)
+	listing, site, err := c.listingFor(url, s, reuse, filterChange)
+	if site == nil {
+		c.mu.Lock()
+		c.languages, c.scanlators = nil, nil
+		c.mu.Unlock()
+		return err
+	}
+
+	var series *core.Series
+	if err == nil {
+		series, err = listing.Series(s)
+	}
 	if err != nil {
-		// the reload gets a site of its own with dropUnmatchedFilters' settings
-		// (the failed one may have read its filters), unless it's Refilterable
+		// the reload gets the listing of its own filters (dropUnmatchedFilters'
+		// settings): cached when the listing of the URL is, else fetched again
+		// (the failed site may have read its filters), unless it's Refilterable
 		if reload, dropLanguage := c.dropUnmatchedFilters(site, s, err); reload {
 			// the site keeps the pointer it's identified with, and Configure
 			// changes c.settings: a copy would leave the download ignoring
@@ -450,14 +463,16 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 				s.Language = ""
 				c.mu.Unlock()
 			}
-			// a Refilterable site filters what it already fetched, no new walk
-			retry := site
-			if _, ok := site.(grabber.Refilterable); !ok {
-				retry, _ = c.identify(url, s)
+			var retryReuse grabber.Site
+			if _, ok := site.(grabber.Refilterable); ok {
+				retryReuse = site
 			}
-			if retry != nil {
-				site = retry
-				series, err = core.Open(site, s)
+			retry, retrySite, retryErr := c.listingFor(url, s, retryReuse, true)
+			if retrySite != nil {
+				site, err, series = retrySite, retryErr, nil
+				if err == nil {
+					series, err = retry.Series(s)
+				}
 			}
 			if dropLanguage {
 				c.mu.Lock()
@@ -500,6 +515,60 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	c.resetResultsLocked()
 	c.appendLogLocked(LogInfo, fmt.Sprintf("Loaded %s: %d chapters", series.Title, len(series.Chapters)))
 	return nil
+}
+
+// listingFor returns the unfiltered listing of url for the settings, and the
+// site that holds it. A nil site means no site matches the URL. When useCache
+// is set, a listing cached for the URL and language (and scanlator, for a
+// ScanlatorLister) is served without a request; otherwise the URL is fetched,
+// the site being reuse when given and identified afresh when not, and the
+// listing cached. The site comes back with a fetch error too, so the caller
+// can read its filter options.
+func (c *Controller) listingFor(url string, s *grabber.Settings, reuse grabber.Site, useCache bool) (*core.Listing, grabber.Site, error) {
+	c.mu.Lock()
+	if useCache {
+		if listing := c.listings.get(url, s); listing != nil {
+			c.mu.Unlock()
+			setSiteSettings(listing.Site, s)
+			return listing, listing.Site, nil
+		}
+	} else {
+		// an explicit reload replaces what the URL had cached, even when it fails
+		c.listings.drop(url, s)
+	}
+	c.mu.Unlock()
+
+	site := reuse
+	if site != nil {
+		setSiteSettings(site, s)
+	} else {
+		var siteErrs []error
+		site, siteErrs = c.identify(url, s)
+		for _, err := range siteErrs {
+			c.addLog(LogWarn, "site check: "+err.Error())
+		}
+		if site == nil {
+			return nil, nil, errors.New("site not recognised")
+		}
+	}
+
+	listing, err := core.Fetch(site)
+	if err != nil {
+		return nil, site, err
+	}
+	c.mu.Lock()
+	c.listings.put(url, s, listing)
+	c.mu.Unlock()
+
+	return listing, site, nil
+}
+
+// setSiteSettings points a site at the settings it reads from, as the
+// settings pointer changes on each load
+func setSiteSettings(site grabber.Site, s *grabber.Settings) {
+	if su, ok := site.(interface{ SetSettings(*grabber.Settings) }); ok {
+		su.SetSettings(s)
+	}
 }
 
 // resetResultsLocked forgets the last run's jobs and summary, so the previous
@@ -738,6 +807,8 @@ func (c *Controller) Clear() error {
 	c.volumesText, c.siteVolumes = "", ""
 	c.languages, c.scanlators = nil, nil
 	c.loadedLanguage, c.loadedScanlator = "", ""
+	// the sites of the cached listings may hold a browser: they go with the series
+	c.listings = nil
 	c.loadErr = nil
 	c.attention = nil
 	c.resetResultsLocked()

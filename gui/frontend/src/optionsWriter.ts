@@ -8,20 +8,23 @@
 import type { Options } from './types';
 
 export interface OptionsWriter {
-  /** Queues a patch over the last options the backend took */
-  patch(patch: Partial<Options>): Promise<void>;
+  /**
+   * Queues a patch over the last options the backend took. With load, the write
+   * also reloads that URL in the same step (a pick from a selector).
+   */
+  patch(patch: Partial<Options>, load?: string): Promise<void>;
   /** The backend's latest pushed options. They become the base once no write is in flight */
   pushed(options: Options): void;
 }
 
-export function createOptionsWriter(send: (options: Options) => Promise<void>): OptionsWriter {
+export function createOptionsWriter(send: (options: Options, load?: string) => Promise<void>): OptionsWriter {
   // the last options the backend took, or pushed while nothing was in flight
   let committed: Options | null = null;
   let inFlight = 0;
   let queue: Promise<void> = Promise.resolve();
 
   return {
-    patch(patch) {
+    patch(patch, load) {
       if (committed === null) {
         return Promise.reject(new Error('options patched before the window had them'));
       }
@@ -32,7 +35,7 @@ export function createOptionsWriter(send: (options: Options) => Promise<void>): 
         }
         const next = { ...committed, ...patch };
 
-        return send(next).then(() => {
+        return send(next, load).then(() => {
           committed = next;
         });
       });

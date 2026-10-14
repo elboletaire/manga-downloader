@@ -8,6 +8,7 @@ package core
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -165,11 +166,21 @@ func FilterOptionsOf(site grabber.Site, err error) (languages, scanlators *grabb
 	return languages, scanlators
 }
 
-// Open fetches the title and the chapter list of an identified site. s must
-// be the same settings pointer Identify was given: the site reads its
-// concurrency and format from it, and Download reads the bundle and output
-// settings from it.
-func Open(site grabber.Site, s *grabber.Settings) (*Series, error) {
+// Listing is the title and chapter list of an identified site as the site
+// lists them, before the scanlation group filter. Series filters it again
+// without a request, so a front end can keep one listing and apply each group
+// to it (see Series).
+type Listing struct {
+	Site grabber.Site
+	// Title is the series title, used in the filenames
+	Title string
+	// Chapters are every group's releases, SortByNumber()-sorted
+	Chapters grabber.Filterables
+}
+
+// Fetch fetches the title and the chapter list of an identified site: the part
+// of Open that needs the site. Its errors are Open's.
+func Fetch(site grabber.Site) (*Listing, error) {
 	title, err := site.FetchTitle()
 	if err != nil {
 		return nil, &TitleError{Err: err}
@@ -180,16 +191,38 @@ func Open(site grabber.Site, s *grabber.Settings) (*Series, error) {
 		return nil, &ChaptersError{Errs: errs}
 	}
 
-	chapters = chapters.SortByNumber()
+	return &Listing{Site: site, Title: title, Chapters: chapters.SortByNumber()}, nil
+}
+
+// Open fetches the title and the chapter list of an identified site. s must
+// be the same settings pointer Identify was given: the site reads its
+// concurrency and format from it, and Download reads the bundle and output
+// settings from it.
+func Open(site grabber.Site, s *grabber.Settings) (*Series, error) {
+	listing, err := Fetch(site)
+	if err != nil {
+		return nil, err
+	}
+
+	return listing.Series(s)
+}
+
+// Series applies the settings' filters to the listing, the rest of Open. It
+// makes no request, so the same listing can be filtered again with other
+// settings, and gives what Open gives for them. s must be the settings pointer
+// the series is downloaded with, as with Open.
+func (l *Listing) Series(s *grabber.Settings) (*Series, error) {
 	// an empty list would make the callers' prompt path index an empty slice
-	if len(chapters) == 0 {
+	if len(l.Chapters) == 0 {
 		return nil, &NoChaptersError{Language: s.Language, Scanlator: s.Scanlator}
 	}
 
-	languages, scanlators := FilterOptionsOf(site, nil)
+	languages, scanlators := FilterOptionsOf(l.Site, nil)
+	chapters := slices.Clone(l.Chapters)
 	// a site that lists its groups itself (ScanlatorLister) filters them itself;
 	// otherwise the groups its listing carries are what --scanlator picks from
-	if _, ok := site.(grabber.ScanlatorLister); !ok {
+	if _, ok := l.Site.(grabber.ScanlatorLister); !ok {
+		var err error
 		scanlators = grabber.GroupOptions(chapters)
 		if chapters, err = grabber.SelectGroup(chapters, s.Scanlator); err != nil {
 			return nil, err
@@ -197,8 +230,8 @@ func Open(site grabber.Site, s *grabber.Settings) (*Series, error) {
 	}
 
 	return &Series{
-		Site:       site,
-		Title:      title,
+		Site:       l.Site,
+		Title:      l.Title,
 		Chapters:   chapters,
 		Languages:  languages,
 		Scanlators: scanlators,

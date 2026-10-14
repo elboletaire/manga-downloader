@@ -44,10 +44,10 @@ type ScanlatorLister interface {
 
 // Refilterable is implemented by grabbers whose FetchChapters serves cached data
 // on a filter change, without a browser or network access, so the controller
-// reuses such a site on a filter-only reload. For the generic group filter that
-// means the listing already holds every group's releases, and core does the
-// rest. Grabbers that must fetch to apply their filter (mangadex, mangafire,
-// mangaplus) must not implement this.
+// reuses such a site on a filter change its own listing cache doesn't hold (a
+// language not loaded yet). A group change never needs the site: the listing
+// holds every group's releases, and core does the rest. Grabbers that must fetch
+// to apply their filter (mangadex, mangafire, mangaplus) must not implement this.
 type Refilterable interface {
 	// Refilterable marks that FetchChapters serves cached data on a filter
 	// change: no browser or network access is needed.
