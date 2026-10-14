@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/elboletaire/manga-downloader/http"
 )
@@ -16,8 +17,8 @@ import (
 // (mangalib.me) is a Vue/Nuxt SPA sitting behind a passive DDoS-Guard (it
 // just sets cookies, it doesn't challenge plain GETs), but both the chapters
 // list and the chapter pages are served anonymously by this separate api
-// host, no cloudflare/browser needed.
-const mangalibApi = "https://api2.mangalib.me/api"
+// host, no cloudflare/browser needed. A var so tests can point it at a server.
+var mangalibApi = "https://api2.mangalib.me/api"
 
 // mangalibImageServer is the CDN base url for page images (mangalib.me is
 // site id 1 on the api's /constants?fields[]=imageServers endpoint, whose
@@ -45,6 +46,9 @@ type MangalibChapter struct {
 	// leading zeros or non-numeric suffixes some series use for extras).
 	VolumeRaw string
 	Num       string
+	// BranchID is the translation branch (the api's branch_id) this release's
+	// pages come from, 0 when the chapter lists no branch
+	BranchID int
 }
 
 // Test returns true if the URL is a mangalib.me URL
@@ -117,16 +121,31 @@ func (m Mangalib) FetchChapters() (chapters Filterables, errs []error) {
 			errs = append(errs, err)
 			continue
 		}
-		chapters = append(chapters, &MangalibChapter{
-			Chapter{
-				Number:   num,
-				Title:    c.Name,
-				Language: "ru",
-				Volume:   parseVolume(c.Volume),
-			},
-			c.Volume,
-			c.Number,
-		})
+		// one chapter per translation branch, a branch being one group's release
+		branches := c.Branches
+		if len(branches) == 0 {
+			branches = append(branches, mangalibBranch{})
+		}
+		for _, b := range branches {
+			chapter := &MangalibChapter{
+				Chapter: Chapter{
+					Number:   num,
+					Title:    c.Name,
+					Language: "ru",
+					Group:    mangalibGroup(b.Teams),
+					Volume:   parseVolume(c.Volume),
+				},
+				VolumeRaw: c.Volume,
+				Num:       c.Number,
+			}
+			if b.ID != 0 {
+				chapter.ID = strconv.Itoa(b.ID)
+			}
+			if b.BranchID != nil {
+				chapter.BranchID = *b.BranchID
+			}
+			chapters = append(chapters, chapter)
+		}
 	}
 
 	return chapters, errs
@@ -140,14 +159,14 @@ func (m Mangalib) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
-	// The api resolves a bare number+volume query to a specific
-	// translation team's chapter (its "branch") when a chapter has more than
-	// one; it picks the same one (the earliest/first-listed team) that the
-	// site itself opens by default when a reader doesn't pick a group, so we
-	// don't need to resolve/pass a branch_id ourselves.
+	// A chapter with several translation branches needs its branch_id: without
+	// it the api answers with the oldest branch, not the first one listed.
 	params := url.Values{}
 	params.Add("number", mchap.Num)
 	params.Add("volume", mchap.VolumeRaw)
+	if mchap.BranchID != 0 {
+		params.Add("branch_id", strconv.Itoa(mchap.BranchID))
+	}
 
 	body, err := http.GetText(http.RequestParams{
 		URL:     fmt.Sprintf("%s/manga/%s/chapter?%s", mangalibApi, slug, params.Encode()),
@@ -172,6 +191,8 @@ func (m Mangalib) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Number:     f.GetNumber(),
 		Language:   "ru",
+		Group:      mchap.Group,
+		ID:         mchap.ID,
 		PagesCount: int64(len(feed.Data.Pages)),
 	}
 	for i, p := range feed.Data.Pages {
@@ -201,14 +222,43 @@ func (m Mangalib) seriesSlug() (string, error) {
 	return matches[1], nil
 }
 
+// mangalibGroup returns the names of a branch's teams, joined. The api's
+// placeholder team (id 0, "Неизвестный") is no group, so it's left out.
+func mangalibGroup(teams []mangalibTeam) string {
+	names := []string{}
+	for _, t := range teams {
+		if t.ID == 0 {
+			continue
+		}
+		names = append(names, t.Name)
+	}
+
+	return strings.Join(names, groupSeparator)
+}
+
 // mangalibChaptersFeed is the JSON feed for the chapters list. Each entry is
-// one unique (volume, number) chapter - translation-team alternatives are
-// nested under "branches" and not exposed here, since the plain chapter
-// endpoint already resolves to a sensible default (see FetchChapter).
+// one unique (volume, number) chapter, and its "branches" are the translation
+// teams' releases of it.
 type mangalibChaptersFeed struct {
 	Data []struct {
-		Volume string `json:"volume"`
-		Number string `json:"number"`
-		Name   string `json:"name"`
+		Volume   string           `json:"volume"`
+		Number   string           `json:"number"`
+		Name     string           `json:"name"`
+		Branches []mangalibBranch `json:"branches"`
 	} `json:"data"`
+}
+
+// mangalibBranch is one translation branch of a chapter. ID identifies the
+// release; BranchID is what the chapter endpoint takes to return its pages,
+// null for a release that has none.
+type mangalibBranch struct {
+	ID       int            `json:"id"`
+	BranchID *int           `json:"branch_id"`
+	Teams    []mangalibTeam `json:"teams"`
+}
+
+// mangalibTeam is a translation team of a branch
+type mangalibTeam struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
