@@ -3,7 +3,11 @@
 package cmd
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -13,6 +17,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/fatih/color"
 )
 
 // steps is a page's total on a chapter's bar: its download and archive steps
@@ -578,5 +583,64 @@ func checkRowWidth(t *testing.T, row string, maxWidth int, label string) {
 	if visible > maxWidth {
 		t.Errorf("%s at width=%d: visible width %d > %d (row=%q)",
 			label, maxWidth, visible, maxWidth, row)
+	}
+}
+
+// TestReleaseLabelInMessages checks that the plain and TTY messages name the
+// release the way the bars do: group and language only when asked for.
+func TestReleaseLabelInMessages(t *testing.T) {
+	stubExit(t)
+	var buf bytes.Buffer
+	prevOut, prevNoColor := color.Output, color.NoColor
+	color.Output, color.NoColor = &buf, true
+	t.Cleanup(func() { color.Output, color.NoColor = prevOut, prevNoColor })
+
+	chapter := &grabber.Chapter{Title: "Chapter 5", Number: 5, Language: "en", Group: "Group A"}
+	errBoom := errors.New("boom")
+
+	tests := []struct {
+		name                string
+		showLang, showGroup bool
+		want                string
+	}{
+		{"group off", false, false, "Chapter 5"},
+		{"group on", false, true, "Chapter 5 [Group A]"},
+		{"language and group on", true, true, "Chapter 5 [en] [Group A]"},
+	}
+	for _, tt := range tests {
+		t.Run("plain "+tt.name, func(t *testing.T) {
+			buf.Reset()
+			ev := plainEvents{showLang: tt.showLang, showGroup: tt.showGroup}
+			ev.Started(chapter)
+			ev.DownloadFailed(chapter, errBoom)
+			want := "downloading " + tt.want + "...\n- error downloading chapter " + tt.want + ": boom\n"
+			if got := buf.String(); got != want {
+				t.Errorf("output = %q, want %q", got, want)
+			}
+		})
+		t.Run("tty "+tt.name, func(t *testing.T) {
+			// with done closed, println writes to stderr, which is captured here
+			done := make(chan struct{})
+			close(done)
+			r, w, err := os.Pipe()
+			if err != nil {
+				t.Fatal(err)
+			}
+			prevErr := os.Stderr
+			os.Stderr = w
+			t.Cleanup(func() { os.Stderr = prevErr })
+
+			ev := &bubbleEvents{done: done, showLang: tt.showLang, showGroup: tt.showGroup}
+			ev.FetchFailed(chapter, errBoom)
+			ev.Skipped(chapter)
+			w.Close()
+			os.Stderr = prevErr
+			out, _ := io.ReadAll(r)
+			want := "- error fetching chapter " + tt.want + ": boom\n" +
+				"- skipping chapter " + tt.want + ": --skip-pages excludes all of its pages\n"
+			if got := string(out); got != want {
+				t.Errorf("output = %q, want %q", got, want)
+			}
+		})
 	}
 }

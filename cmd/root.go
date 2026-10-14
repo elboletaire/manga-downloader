@@ -177,7 +177,7 @@ func Run(cmd *cobra.Command, args []string) {
 		// Non-terminal output defaults to 80-column-equivalent logging.
 		releaseDl := browser.Hold()
 		defer releaseDl()
-		ev := plainEvents{}
+		ev := plainEvents{showLang: showLanguage, showGroup: showGroup}
 		bundleFile, err := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
 		if !settings.Bundle {
 			exit(0)
@@ -199,7 +199,7 @@ func Run(cmd *cobra.Command, args []string) {
 	// evDone is closed when prog.Run() returns so that bubbleEvents methods
 	// that call prog.Println can fall back to stderr instead of deadlocking.
 	evDone := make(chan struct{})
-	ev := &bubbleEvents{prog: prog, done: evDone}
+	ev := &bubbleEvents{prog: prog, done: evDone, showLang: showLanguage, showGroup: showGroup}
 
 	// Override the notice and attention handlers with TUI-aware versions that
 	// route through prog.Send (safe after quit) instead of printing directly.
