@@ -3,12 +3,14 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/notice"
+	"github.com/elboletaire/manga-downloader/packer"
 )
 
 func TestOptionsSaveAndLoadRoundTrip(t *testing.T) {
@@ -232,6 +234,36 @@ func TestLoadOptionsMigratesBundle(t *testing.T) {
 		}
 		if s.Bundle != (tt.want == PackBundle) || (s.Volumes != "") != (tt.want == PackVolumes) {
 			t.Errorf("%s: settings bundle %v volumes %q", tt.file, s.Bundle, s.Volumes)
+		}
+	}
+}
+
+// a saved filename template is migrated when it's the default from before
+// {{.Group}}, and kept otherwise
+func TestLoadOptionsMigratesFilenameTemplate(t *testing.T) {
+	legacy := `{{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}`
+	tests := []struct {
+		templ string
+		want  string
+	}{
+		{legacy, packer.FilenameTemplateDefault},
+		{"{{.Series}} {{.Number}}", "{{.Series}} {{.Number}}"},
+	}
+	for _, tt := range tests {
+		path := filepath.Join(t.TempDir(), "gui.json")
+		data, err := json.Marshal(map[string]string{"filenameTemplate": tt.templ})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, data, 0600); err != nil {
+			t.Fatal(err)
+		}
+		s := defaultSettings()
+		if err := loadOptions(path, s); err != nil {
+			t.Fatal(err)
+		}
+		if s.FilenameTemplate != tt.want {
+			t.Errorf("%q: got %q, want %q", tt.templ, s.FilenameTemplate, tt.want)
 		}
 	}
 }

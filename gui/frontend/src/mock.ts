@@ -159,7 +159,7 @@ function defaultOptions(shot: boolean, epub: boolean): Options {
     scanlator: '',
     convertImages: 'avif',
     skipPages: '',
-    filenameTemplate: '{{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}',
+    filenameTemplate: '{{.Series}} {{.Number}} - {{.Title}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}',
     browserVisible: false,
   };
 }

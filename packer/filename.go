@@ -33,18 +33,31 @@ type FilenameTemplateParts struct {
 }
 
 // FilenameTemplateDefault is the default filename template
-const FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}"
+const FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}"
+
+// filenameTemplateLegacyDefault is the default before {{.Group}} was added. It's
+// still saved in gui.json files, so it's still treated as the default
+const filenameTemplateLegacyDefault = "{{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}"
 
 // FilenameVolumeTemplateDefault is the template volume files (--volumes) are
 // named with while --filename-template is left at its default, which names
 // chapters and would read oddly on a volume
-const FilenameVolumeTemplateDefault = `{{.Series}} Vol. {{printf "%02d" .Volume}}{{if gt .Version 1}} v{{.Version}}{{end}}`
+const FilenameVolumeTemplateDefault = `{{.Series}} Vol. {{printf "%02d" .Volume}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}`
+
+// MigrateFilenameTemplate returns FilenameTemplateDefault in place of the legacy
+// default a saved template may still hold, and templ otherwise
+func MigrateFilenameTemplate(templ string) string {
+	if templ == filenameTemplateLegacyDefault {
+		return FilenameTemplateDefault
+	}
+	return templ
+}
 
 // VolumeTemplate returns the template volume files are named with: the
-// volume default when the filename template is the chapter default (or
+// volume default when the filename template is a chapter default (or
 // unset), the user's own template otherwise
 func VolumeTemplate(templ string) string {
-	if templ == "" || templ == FilenameTemplateDefault {
+	if templ == "" || templ == FilenameTemplateDefault || templ == filenameTemplateLegacyDefault {
 		return FilenameVolumeTemplateDefault
 	}
 	return templ

@@ -386,10 +386,10 @@ matched ignoring case; an unknown one lists the groups the series has), or
 `--scanlator all` for every group, which is the same as the default. Releases
 that name no group are left out whenever a group is selected.
 
-With the default file name, the releases of one chapter only differ by a
-version suffix (`v2`, `v3`…), in no particular group order. Put `{{.Group}}` in
-`--filename-template` to tell them apart, for example
-`{{.Series}} {{.Number}} [{{.Group}}]`.
+The default file name ends with the group in brackets (`One Piece 5 - Chapter 5
+[Alpha]`), so each release keeps its own file. A template without `{{.Group}}`
+only tells the releases apart by a version suffix (`v2`, `v3`…), in no
+particular group order.
 
 ### Bundling and output format
 
@@ -497,7 +497,7 @@ Use `--filename-template` to change file names. It takes a
 [Go text/template][go template] string, and the default is:
 
 ~~~
-{{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}
+{{.Series}} {{.Number}} - {{.Title}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
 ~~~
 
 `{{.Version}}` is a counter that's added when two files would have the same
@@ -511,7 +511,7 @@ Volume files (`--volumes`) get their own default name while the template is
 left as is:
 
 ~~~
-{{.Series}} Vol. {{printf "%02d" .Volume}}{{if gt .Version 1}} v{{.Version}}{{end}}
+{{.Series}} Vol. {{printf "%02d" .Volume}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
 ~~~
 
 A custom template names them too, with `{{.Number}}` being the volume's
