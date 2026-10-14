@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[119 supported sites](#supported-sites)**, from big aggregators to small
+- **[125 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -587,7 +587,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 119 supported sites</b></summary>
+<summary><b>Show all 125 supported sites</b></summary>
 <br>
 
 - [3asq.online (Arabic, former 3asq.org)](https://3asq.online)
@@ -600,12 +600,15 @@ to a minute.
 - [aurorascans.com (redirects to qimanga.com)](https://aurorascans.com)
 - [azorafly.com (Azorafly, Arabic)](https://azorafly.com)
 - [bigsolo.org](https://bigsolo.org)
+- [blackcloveronline.com (Black Clover)](https://blackcloveronline.com)
 - [bluesolo.org (Blue Solo, French scantrad)](https://bluesolo.org)
 - [chainsawman-chapter.online (Chainsaw Man)](https://chainsawman-chapter.online)
+- [chainsawmannmanga.com (Chainsaw Man)](https://chainsawmannmanga.com)
 - [comix.to](https://comix.to) \*
 - [danke.moe (Danke fürs Lesen)](https://danke.moe)
 - [deathtollscans.net](https://reader.deathtollscans.net)
 - [demonicscans.org (MangaDemon / Demonic Scans)](https://demonicscans.org)
+- [dragonballmangaa.com (Dragon Ball Super)](https://dragonballmangaa.com)
 - [dragontea.ink](https://dragontea.ink) \*
 - [drakecomic.net (Drake Scans, former drakecomic.org)](https://drakecomic.net)
 - [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
@@ -627,6 +630,7 @@ to a minute.
 - [inmanga.com](https://inmanga.com)
 - [jestful.net](https://jestful.net)
 - [jojolandsmanga.com (The JoJoLands)](https://jojolandsmanga.com)
+- [jujutsukaisenmanga.pro (Jujutsu Kaisen)](https://jujutsukaisenmanga.pro)
 - [kappabeast.com](https://kappabeast.com) \*
 - [kaynscans.com (Kayn Scans, former kaynscan.org)](https://kaynscans.com)
 - [kingofshojo.com](https://kingofshojo.com)
@@ -644,6 +648,7 @@ to a minute.
 - [mangaball.com (former mangaball.net)](https://mangaball.com)
 - [mangabats.com (former mangabat.com)](https://www.mangabats.com)
 - [mangaberri.com](https://mangaberri.com)
+- [mangadelsiglotvmanga.com.mx (Manga del Siglo TV Manga, Spanish)](https://www.mangadelsiglotvmanga.com.mx)
 - [mangadenizi.net](https://www.mangadenizi.net)
 - [mangadex.org (MangaDex)](https://mangadex.org)
 - [mangafire.to](https://mangafire.to) \*
@@ -699,6 +704,7 @@ to a minute.
 - [tortugaceviri.com (Tortuga Çeviri)](https://tortugaceviri.com)
 - [tritinia.org (Tritinia Scans)](https://tritinia.org)
 - [trmanga.com](https://trmanga.com)
+- [tvymanga3.com (Tv y Manga, Spanish)](https://tvymanga3.com)
 - [twmanga.com (包子漫画, baozimh.com mirror)](https://www.twmanga.com)
 - [utoon.us (UToon, home of reset-scans' content)](https://www.utoon.us)
 - [uzaymanga.com](https://uzaymanga.com)
