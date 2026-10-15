@@ -162,6 +162,12 @@
     "unsupportedQ": "My site isn't supported",
     "unsupportedA": "Try it anyway: sites built on the same platforms as listed ones often work. If it doesn't, <a href=\"{{repo}}/issues\">open an issue</a> or send a pull request."
   },
+  "theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
   "footer": {
     "license": "Free and open source, under the <a href=\"{{repo}}/blob/master/LICENSE\">AGPL-3.0 licence</a>.",
     "madeBy": "Made by <a href=\"{{author}}\">elboletaire</a>.",

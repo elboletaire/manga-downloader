@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import i18next from 'i18next'
 import { defineConfig, type Plugin } from 'vite'
 import { parseSites, renderSites } from './build/sites.ts'
+import { themeScript } from './src/theme.ts'
 import { LANG_INFO, LANG_KEY, LANGS, redirectTarget, type Lang } from './src/lang.ts'
 import { fetchStats, renderStats, downloadsBadgeEndpoint, dockerPullsBadgeEndpoint, type Stats } from './build/stats.ts'
 
@@ -126,6 +127,7 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
 
   // Function replacers, so a "$" in the inserted text is never a replacement pattern.
   return html
+    .replace('<!-- theme:init -->', () => themeScript())
     .replace('<!-- i18n:detect -->', () => (lang === 'en' ? detectScript() : ''))
     .replace('<!-- i18n:alternates -->', () => alternates())
     .replace('<!-- i18n:og-alternates -->', () => ogAlternates(lang))
