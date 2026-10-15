@@ -513,21 +513,24 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     if (!cancelling && active < 3 && pending.length > 0) {
       const c = pending.shift()!;
       if (c.locked) {
-        // as the backend's FetchFailed: a listed lock fails before any fetch
-        jobs = [
-          ...jobs,
-          {
-            title: c.title,
-            tags: '',
-            number: c.number,
-            total: 0,
-            done: 0,
-            state: 'failed',
-            reason: LOCKED_REASON,
-            status: '',
-            volume: false,
-          },
-        ];
+        // as the backend's FetchFailed: a listed lock fails before any fetch,
+        // with a row unless the run is a bundle
+        if (!runBundle) {
+          jobs = [
+            ...jobs,
+            {
+              title: c.title,
+              tags: '',
+              number: c.number,
+              total: 0,
+              done: 0,
+              state: 'failed',
+              reason: LOCKED_REASON,
+              status: '',
+              volume: false,
+            },
+          ];
+        }
         pushLog('error', `error fetching chapter ${c.title}: ${LOCKED_REASON}`);
         return true;
       }
