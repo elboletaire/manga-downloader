@@ -167,3 +167,24 @@ func TestGuyaFetchChaptersPerGroup(t *testing.T) {
 		}
 	}
 }
+
+func TestGuyaTestByAPI(t *testing.T) {
+	server := guyaServer(t)
+
+	cases := []struct {
+		path string
+		want bool
+	}{
+		{"/read/manga/Series/", true},
+		{"/read/manga/Series/1/3/", true},
+		{"/read/manga/Missing/", false},
+		{"/manga/Series/", false},
+	}
+	for _, c := range cases {
+		g := Guya{Grabber: &Grabber{URL: server.URL + c.path, Settings: &Settings{}}}
+		got, err := g.Test()
+		if err != nil || got != c.want {
+			t.Errorf("Test(%q) = %v, %v, want %v", c.path, got, err, c.want)
+		}
+	}
+}
