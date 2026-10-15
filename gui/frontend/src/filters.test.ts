@@ -1,14 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  filterControl,
-  filterPlaceholder,
-  filtersIdentified,
-  filterOptions,
-  languageName,
-  sameFilter,
-  shownSelection,
-  typedValue,
-} from './filters';
+import { sameScanlator, typedValue, filterControl, filtersIdentified, filterOptions, languageName, shownSelection } from './filters';
 import type { FilterChoice } from './types';
 
 const choice = (over: Partial<FilterChoice>): FilterChoice => ({
@@ -44,22 +35,22 @@ describe('languageName', () => {
 });
 
 describe('filterOptions', () => {
-  it('offers All after the language default, labelled for the kind', () => {
+  it('puts All first, labelled for the kind', () => {
     const langs = filterOptions(choice({ values: ['en'], all: true, selected: 'all' }), 'language');
-    expect(langs[1]).toEqual({ value: 'all', label: 'All' });
+    expect(langs[0]).toEqual({ value: 'all', label: 'All' });
 
     const groups = filterOptions(choice({ values: ['Alpha'], all: true, selected: 'all' }), 'scanlator');
-    expect(groups[0]).toEqual({ value: 'all', label: 'Any' });
+    expect(groups[0]).toEqual({ value: 'all', label: 'All groups' });
   });
 
   it('has no All option where the site has none', () => {
     const options = filterOptions(choice({ values: ['en', 'es'], selected: 'en' }), 'language');
-    expect(options.map((o) => o.value)).toEqual(['', 'en', 'es']);
+    expect(options.map((o) => o.value)).toEqual(['en', 'es']);
   });
 
   it('labels languages with the code and their name, groups by name', () => {
     const langs = filterOptions(choice({ values: ['es-la'], selected: 'es-la' }), 'language');
-    expect(langs[1].label).toBe('es-la · Latin American Spanish');
+    expect(langs[0].label).toBe('es-la · Latin American Spanish');
 
     const groups = filterOptions(choice({ values: ['Alpha'], selected: 'Alpha' }), 'scanlator');
     expect(groups[0].label).toBe('Alpha');
@@ -67,21 +58,21 @@ describe('filterOptions', () => {
 
   it('keeps the selected value even when the site does not list it', () => {
     const options = filterOptions(choice({ values: ['en'], selected: 'fr' }), 'language');
-    expect(options.map((o) => o.value)).toEqual(['', 'en', 'fr']);
+    expect(options.map((o) => o.value)).toEqual(['en', 'fr']);
   });
 
   it('does not offer the typed value of a failed load', () => {
     const failed = choice({ values: ['en'], selected: 'ca' });
-    expect(shownSelection(failed, false, 'language', 'ca')).toBe('');
-    const options = filterOptions(failed, 'language', 'en', false, 'ca');
+    expect(shownSelection(failed, false)).toBe('');
+    const options = filterOptions(failed, 'language', 'en', false);
     expect(options.map((o) => o.value)).toEqual(['', 'en']);
     expect(options[0].disabled).toBe(true);
-    expect(shownSelection(choice({ values: ['en'], selected: 'en' }), false, 'language', 'en')).toBe('en');
+    expect(shownSelection(choice({ values: ['en'], selected: 'en' }), false)).toBe('en');
   });
 
   it('does not repeat a listed selected value', () => {
     const options = filterOptions(choice({ values: ['en', 'es'], selected: 'es' }), 'language');
-    expect(options.map((o) => o.value)).toEqual(['', 'en', 'es']);
+    expect(options.map((o) => o.value)).toEqual(['en', 'es']);
   });
 
   it('leads with a disabled placeholder when the site shows no single value', () => {
@@ -89,34 +80,16 @@ describe('filterOptions', () => {
     expect(groups[0]).toEqual({ value: '', label: 'Choose a group…', disabled: true });
     expect(groups.slice(1).map((o) => o.value)).toEqual(['Alpha', 'Delta']);
 
-    const languages = filterOptions(choice({ values: ['en', 'es'], selected: 'ca' }), 'language', 'en', false, 'ca');
+    const languages = filterOptions(choice({ values: ['en', 'es'], selected: '' }), 'language');
     expect(languages[0]).toEqual({ value: '', label: 'Choose a language…', disabled: true });
-  });
-
-  it('shows what is stored: Site default for a language "", All for "all"', () => {
-    // the backend reports the site's default as selected ("all" here) for a stored ""
-    const lang = choice({ values: ['en', 'es'], all: true, selected: 'all' });
-    expect(shownSelection(lang, true, 'language', '')).toBe('');
-    expect(filterOptions(lang, 'language', 'en', true, '')[0]).toEqual({ value: '', label: 'Site default' });
-    expect(shownSelection(lang, true, 'language', 'all')).toBe('all');
-    // the stored value only decides the "" case: otherwise the loaded one shows
-    expect(shownSelection(lang, true, 'language', 'es')).toBe('all');
-    expect(shownSelection(choice({ values: ['en'], selected: 'en' }), true, 'language', 'en')).toBe('en');
-  });
-
-  it('shows a scanlator "" or "all" as the Any option', () => {
-    const groups = choice({ values: ['Alpha'], all: true, selected: 'all' });
-    expect(shownSelection(groups, true, 'scanlator', '')).toBe('all');
-    expect(shownSelection(groups, true, 'scanlator', 'all')).toBe('all');
-    expect(filterOptions(groups, 'scanlator', 'en', true, '')[0]).toEqual({ value: 'all', label: 'Any' });
   });
 
   it('shows no placeholder when a value or all is selected', () => {
     const picked = filterOptions(choice({ values: ['en', 'es'], selected: 'es' }), 'language');
-    expect(picked.some((o) => o.disabled)).toBe(false);
+    expect(picked.some((o) => o.value === '' || o.disabled)).toBe(false);
 
     const all = filterOptions(choice({ values: ['en', 'es'], all: true, selected: 'all' }), 'language');
-    expect(all.some((o) => o.disabled)).toBe(false);
+    expect(all.some((o) => o.value === '' || o.disabled)).toBe(false);
   });
 });
 
@@ -141,20 +114,16 @@ describe('filterControl', () => {
   });
 });
 
-describe('typedValue and sameFilter', () => {
-  it('shows an "all" scanlator as the empty field, and keeps a language\'s', () => {
-    expect(typedValue('scanlator', 'all')).toBe('');
-    expect(typedValue('scanlator', 'Delta')).toBe('Delta');
-    expect(typedValue('language', 'all')).toBe('all');
+describe('typedValue and sameScanlator', () => {
+  it('shows "all" in any case as empty, and other values as they are', () => {
+    expect(typedValue('all')).toBe('');
+    expect(typedValue('ALL')).toBe('');
+    expect(typedValue('es')).toBe('es');
+    expect(typedValue('')).toBe('');
   });
 
-  it('treats "" and "all" as one scanlator filter, not one language', () => {
-    expect(sameFilter('scanlator', '', 'all')).toBe(true);
-    expect(sameFilter('language', '', 'all')).toBe(false);
-  });
-
-  it('has a placeholder that matches what empty means', () => {
-    expect(filterPlaceholder('scanlator')).toBe('any');
-    expect(filterPlaceholder('language')).toBe('site default');
+  it('treats "" and "all" as one scanlator filter', () => {
+    expect(sameScanlator('', 'all')).toBe(true);
+    expect(sameScanlator('Delta', 'all')).toBe(false);
   });
 });

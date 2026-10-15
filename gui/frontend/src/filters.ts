@@ -28,19 +28,14 @@ export function filtersIdentified(state: Pick<State, 'loaded' | 'loadError'>): b
 // which BCP 47 writes "es-419" (read as is, "la" is the region of Laos)
 const LANGUAGE_TAGS: Record<string, string> = { 'es-la': 'es-419' };
 
-/** A filter value as the text field shows it: "all" is empty for a scanlator, but not for a language */
-export function typedValue(kind: FilterKind, value: string): string {
-  return kind === 'scanlator' && value.toLowerCase() === FILTER_ALL ? '' : value;
+/** A stored "all" shows as the empty field, whose placeholder says "any"; the stored value stays */
+export function typedValue(value: string): string {
+  return value.toLowerCase() === FILTER_ALL ? '' : value;
 }
 
-/** Whether two values of one filter select the same thing */
-export function sameFilter(kind: FilterKind, a: string, b: string): boolean {
-  return typedValue(kind, a) === typedValue(kind, b);
-}
-
-/** The free-text placeholder: empty means no scanlator filter, or the site's default language */
-export function filterPlaceholder(kind: FilterKind): string {
-  return kind === 'scanlator' ? 'any' : 'site default';
+/** Whether two scanlator values select the same thing: "" and "all" both keep every group */
+export function sameScanlator(a: string, b: string): boolean {
+  return typedValue(a) === typedValue(b);
 }
 
 /** How a filter is shown: free text, a selector of the series' values, or disabled */
@@ -84,19 +79,12 @@ export function languageName(code: string, locale = 'en'): string {
   return code;
 }
 
-/** Whether the language selector stands on the site's own default: a stored "" */
-function onSiteDefault(kind: FilterKind, stored: string): boolean {
-  return kind === 'language' && stored === '';
-}
-
 /**
- * The value a selector shows: follows what is stored, so what shows is what is
- * sent. Otherwise the loaded `filter.selected`, unless a failed load typed a value the site doesn't list.
+ * The value a selector shows as picked. After a failed load the selected value
+ * is only what was typed, so one the site doesn't list is not shown as if it
+ * were an option: the placeholder stands in.
  */
-export function shownSelection(filter: FilterChoice, loaded: boolean, kind: FilterKind, stored: string): string {
-  if (onSiteDefault(kind, stored)) {
-    return '';
-  }
+export function shownSelection(filter: FilterChoice, loaded: boolean): string {
   if (!loaded && filter.selected !== FILTER_ALL && !filter.values.includes(filter.selected)) {
     return '';
   }
@@ -105,30 +93,21 @@ export function shownSelection(filter: FilterChoice, loaded: boolean, kind: Filt
 }
 
 /**
- * The options of one selector: "Site default" for a language, "All"/"Any" where
- * the site takes it, then its values, plus the selected one if unlisted.
+ * The options of one selector, in the order shown: "All" first where the site
+ * takes it, then the values as the site lists them. The selected value is
+ * always among them, even when the site doesn't list it (a value the series
+ * was loaded with), so the select never shows the wrong one.
  */
-export function filterOptions(
-  filter: FilterChoice,
-  kind: FilterKind,
-  locale = 'en',
-  loaded = true,
-  stored = filter.selected,
-): FilterOption[] {
+export function filterOptions(filter: FilterChoice, kind: FilterKind, locale = 'en', loaded = true): FilterOption[] {
   const options: FilterOption[] = [];
-  const selected = shownSelection(filter, loaded, kind, stored);
-  if (kind === 'language' && onSiteDefault(kind, stored)) {
-    // "" is the site's own default, which is not the same as every language
-    options.push({ value: '', label: 'Site default' });
-  } else if (selected === '') {
+  const selected = shownSelection(filter, loaded);
+  if (selected === '') {
     // no value is shown: a disabled placeholder, so the select doesn't show the
     // first value as if it were the one the list is filtered by
     options.push({ value: '', label: kind === 'language' ? 'Choose a language…' : 'Choose a group…', disabled: true });
-  } else if (kind === 'language') {
-    options.push({ value: '', label: 'Site default' });
   }
   if (filter.all) {
-    options.push({ value: FILTER_ALL, label: kind === 'language' ? 'All' : 'Any' });
+    options.push({ value: FILTER_ALL, label: kind === 'language' ? 'All' : 'All groups' });
   }
 
   const values = [...filter.values];

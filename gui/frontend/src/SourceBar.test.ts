@@ -37,6 +37,24 @@ describe('SourceBar filters for a site that lists no languages', () => {
   });
 });
 
+describe('SourceBar free-text filters', () => {
+  it('shows a stored "all" as the empty field with the "any" placeholder', async () => {
+    const base = await createMockApi({ scenario: 'loaded', freeze: true }).state();
+    const state: State = { ...base, loaded: false, loadError: '', options: { ...base.options, language: 'all', scanlator: 'All' } };
+    const markup = render(state);
+
+    expect(markup).not.toMatch(/value="[Aa]ll"/);
+    expect(markup.match(/placeholder="any"/g)?.length).toBe(2);
+  });
+
+  it('keeps a typed value as text', async () => {
+    const base = await createMockApi({ scenario: 'loaded', freeze: true }).state();
+    const markup = render({ ...base, loaded: false, loadError: '', options: { ...base.options, language: 'es' } });
+
+    expect(markup).toContain('value="es"');
+  });
+});
+
 describe('pasteValue', () => {
   it('trims the clipboard text', () => {
     expect(pasteValue('  https://example.com/manga/one-piece\n')).toBe('https://example.com/manga/one-piece');
