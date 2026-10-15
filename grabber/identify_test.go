@@ -259,6 +259,25 @@ func TestIdentifySiteOrder(t *testing.T) {
 			want: (*PlainHTML)(nil),
 		},
 		{
+			name:   "oremanga series page",
+			origin: "https://www.oremanga.net",
+			path:   "/series/blue-lock/",
+			routes: map[string]string{
+				"/series/blue-lock/": "oremanga_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "oremanga chapter page",
+			origin: "https://www.oremanga.net",
+			path:   "/blue-lock/362-blue-lock/",
+			routes: map[string]string{
+				"/blue-lock/362-blue-lock/": "oremanga_chapter.html",
+				"/series/blue-lock/":        "oremanga_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
 			name:   "madara series page",
 			origin: "https://mangasushi.org",
 			path:   "/manga/lonely-attack-on-the-different-world/",

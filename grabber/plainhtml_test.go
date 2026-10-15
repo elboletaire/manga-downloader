@@ -39,7 +39,9 @@ func TestParseChapterNumber(t *testing.T) {
 		{"375.1. Bölüm", 375.1, true}, // turkish decimal
 		{"#124 .Bölüm", 124, true},    // turkish, number first (trmanga)
 		{"İlk Bölüm", 0, false},       // turkish, no number
-		{"Notice", 0, false},          // announcements have no number
+		{"ตอนที่ 362", 362, true},     // thai (oremanga)
+		{"ตอน 12.5", 12.5, true},
+		{"Notice", 0, false}, // announcements have no number
 		{"", 0, false},
 	}
 

@@ -432,14 +432,16 @@ var plainHTMLSelectors = []SiteSelector{
 	// is hosted on the site itself and is left out by the host filter.
 	// The reader also renders a short chapter list (.series-chapterlist);
 	// #chapnav holds the link back to the full series page.
+	// oremanga.net (Thai) runs the same series theme: its reader keeps the
+	// pages in .reader-area-main and links the series from the side menu.
 	{
 		Title:            ".series-titlex h2",
 		Rows:             ".series-chapterlist li",
 		Link:             "a",
 		Chapter:          "a",
 		ChapterTitle:     "a",
-		Image:            `.reader-area img[data-lazy-src]:not([data-lazy-src*="maid.my.id"])`,
-		SeriesLink:       `#chapnav a[href*="/manga/"]`,
+		Image:            `.reader-area img[data-lazy-src]:not([data-lazy-src*="maid.my.id"]), .reader-area-main img`,
+		SeriesLink:       `#chapnav a[href*="/manga/"], .coverz a[href*="/series/"]`,
 		FollowSeriesLink: true,
 	},
 }
@@ -886,6 +888,9 @@ var urlChapterNumberRe = regexp.MustCompile(`(?i)chap(?:ter|itre)[-_](\d+\.?\d*)
 var turkishChapterNumberRe = regexp.MustCompile(`(?i)b[öo]l[üu]m\.?\s*(\d+\.?\d*)`)
 var turkishSuffixChapterNumberRe = regexp.MustCompile(`(?i)#?(\d+\.?\d*)\s*\.?\s*b[öo]l[üu]m`)
 
+// thaiChapterNumberRe matches the Thai "ตอนที่ 12" ("ตอน 12" too).
+var thaiChapterNumberRe = regexp.MustCompile(`ตอน(?:ที่)?\s*(\d+\.?\d*)`)
+
 // parseChapterNumber extracts the chapter number from a chapter title, falling
 // back to a volume number. Returns false if no number could be found (these
 // are usually site announcements rather than actual chapters).
@@ -896,6 +901,9 @@ func parseChapterNumber(text string) (float64, bool) {
 	}
 	if len(match) == 0 {
 		match = turkishSuffixChapterNumberRe.FindStringSubmatch(text)
+	}
+	if len(match) == 0 {
+		match = thaiChapterNumberRe.FindStringSubmatch(text)
 	}
 	if len(match) == 0 {
 		// only checked as fallback so "Vol.2 Chapter 15" still prefers the chapter
