@@ -1,0 +1,13 @@
+{
+ "urls": ["https://mangadex.org/title/851f6d0a-49ae-4912-9939-2aeb865d13cd"],
+ "title": "Wǒ Kě'ài Dào Bào",
+ "languages": ["id", "en", "es-la"],
+ "nameFormat": "Chapter %04d %s",
+ "chapters": [
+  {"number": 1, "title": "", "language": "es-la", "id": "fcc44183-5316-47c9-a188-870ee78146a3", "pages": 9, "groups": ["Einherjar Scan"]},
+  {"number": 2, "title": "", "language": "es-la", "id": "ab0ab9fc-978d-49a2-b2be-6d3a8473886e", "pages": 10, "groups": ["Einherjar Scan"]},
+  {"number": 3, "title": "", "language": "es-la", "id": "536e2150-72ef-4f40-b11f-e24ce537eba5", "pages": 8, "groups": ["Einherjar Scan"]},
+  {"number": 4, "title": "", "language": "es-la", "id": "b578aa83-dfc3-46ab-9abb-b357f852e443", "pages": 12, "groups": ["Einherjar Scan"]},
+  {"number": 5, "title": "", "language": "es-la", "id": "79ff0018-2d97-469e-b813-a9fa3545eaca", "pages": 8, "groups": ["Einherjar Scan"]}
+ ]
+}

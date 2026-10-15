@@ -1,0 +1,21 @@
+{
+ "urls": ["https://mangadex.org/title/a25e46ec-30f7-4db6-89df-cacbc1d9a900"],
+ "title": "Horimiya",
+ "languages": ["hu", "id", "es", "pt-br", "ru", "fr", "tr", "en", "es-la", "ar"],
+ "nameFormat": "Chapter %04d %s",
+ "chapters": [
+  {"number": 1, "title": "(Page 1)", "language": "en", "id": "09a007d3-2faa-4b89-8449-cf51cbba65d7", "pages": 41, "volume": 1, "groups": ["Village Idiot Scanlations"]},
+  {"number": 2, "title": "(Page 2)", "language": "en", "id": "2140c24a-cc73-4c01-90a7-7ac0117b28b9", "pages": 28, "volume": 1, "groups": ["Village Idiot Scanlations"]},
+  {"number": 3, "title": "(Page 3)", "language": "en", "id": "468e8dff-c194-446f-9d39-38697b9c02d6", "pages": 26, "volume": 1, "groups": ["Village Idiot Scanlations"]},
+  {"number": 4, "title": "(Page 4)", "language": "en", "id": "677155fc-f1b9-4794-861d-68f4bc059218", "pages": 29, "volume": 1, "groups": ["Village Idiot Scanlations"]},
+  {"number": 5, "title": "(Page 5)", "language": "en", "id": "22fd4c93-5d97-4719-a718-e96414cbcd3d", "pages": 26, "volume": 1, "groups": ["Village Idiot Scanlations"]},
+  {"number": 6, "title": "(Page 6)", "language": "en", "id": "ee191649-c9ed-436a-b64a-1f0f7679135b", "pages": 33, "volume": 1, "groups": ["Village Idiot Scanlations"]},
+  {"number": 7, "title": "Student Council", "language": "en", "id": "62184857-015b-495b-af8e-ffefa54a83de", "pages": 31, "volume": 2, "groups": ["Village Idiot Scanlations"]},
+  {"number": 8, "title": "Stress and De-stress ", "language": "en", "id": "d076634a-9c17-407d-a15d-d343b9db40d4", "pages": 29, "volume": 2, "groups": ["Village Idiot Scanlations"]},
+  {"number": 9, "title": "Happy March Birthday", "language": "en", "id": "f194923a-7f2a-4d10-9b5f-235208bc945d", "pages": 25, "volume": 2, "groups": ["Village Idiot Scanlations"]},
+  {"number": 10, "title": "Young Izumi", "language": "en", "id": "f57e506d-6b96-48b7-8fca-b0f1da3079a7", "pages": 28, "volume": 2, "groups": ["Village Idiot Scanlations"]},
+  {"number": 11, "title": "A Sudden Shower ", "language": "en", "id": "f4f31622-b735-4a22-86b8-bba3ebf62311", "pages": 32, "volume": 2, "groups": ["Village Idiot Scanlations"]},
+  {"number": 12, "title": "So Stubborn", "language": "en", "id": "ad9e9040-b02d-4fb2-b078-75a3629ce5be", "pages": 20, "volume": 2, "groups": ["Village Idiot Scanlations"]},
+  {"number": 13, "title": "I Like", "language": "en", "id": "718ef75d-0c26-4d69-99ec-eb1c1bc187e6", "pages": 17, "volume": 2, "groups": ["Dragon&Fly Scans"]}
+ ]
+}

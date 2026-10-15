@@ -1,0 +1,14 @@
+{
+ "urls": ["https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935"],
+ "title": "One Piece",
+ "chapters": [
+  {"number": 1140, "title": "Capítulo 1140", "language": "es", "id": "23726229-AC65-4B23-886B-A20B7CC5496B", "pages": 15},
+  {"number": 1141, "title": "Capítulo 1141", "language": "es", "id": "5534A33E-D817-4981-93CC-7C815EB84026", "pages": 15},
+  {"number": 1142, "title": "Capítulo 1142", "language": "es", "id": "C8D8BDE4-5A2D-4C7A-85A1-4E8429AB0D57", "pages": 16},
+  {"number": 1143, "title": "Capítulo 1143", "language": "es", "id": "818BA9C3-1753-4EA9-BB62-BF733DC1322B", "pages": 18},
+  {"number": 1144, "title": "Capítulo 1144", "language": "es", "id": "06E40FC5-E644-4F50-B548-7376D9BA3DF3", "pages": 15},
+  {"number": 1145, "title": "Capítulo 1145", "language": "es", "id": "1AE3ECCB-16B9-44DA-A1D4-189C33A971DD", "pages": 17},
+  {"number": 1146, "title": "Capítulo 1146", "language": "es", "id": "E8A6E6F1-A5AE-4046-9B24-55CECD37FEE5", "pages": 16},
+  {"number": 1147, "title": "Capítulo 1147", "language": "es", "id": "131BB494-B5DD-4BF8-9106-96FABF16FD0D", "pages": 18}
+ ]
+}

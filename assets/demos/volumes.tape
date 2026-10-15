@@ -1,5 +1,6 @@
 # Recreates assets/demos/volumes.gif — run from the repo root: vhs assets/demos/volumes.tape
-# Requires the manga-downloader binary built at the repo root (make build).
+# Requires the demo binary built at the repo root (make build/demo): it serves the
+# series from demo/series, so the run needs no network (see demo/README.md).
 # Uses a series whose volumes MangaDex lists (1-13 is exactly volumes 1 and 2),
 # downloaded with --volumes auto. Filtered to English, as several translations
 # would otherwise all be packed into the same volume.
@@ -18,7 +19,7 @@ Set PlaybackSpeed 3
 Set WaitTimeout 600s
 
 Hide
-Type 'export PATH="$PWD:$PATH" && mkdir -p /tmp/manga-downloader-demo/volumes && cd /tmp/manga-downloader-demo/volumes && rm -rf ./* && clear'
+Type 'export MANGA_DOWNLOADER_DEMO_DELAY=1.25 && export PATH="$PWD:$PATH" && mkdir -p /tmp/manga-downloader-demo/volumes && cd /tmp/manga-downloader-demo/volumes && rm -rf ./* && clear'
 Enter
 Show
 

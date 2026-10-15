@@ -1,0 +1,14 @@
+{
+ "urls": ["https://mangadex.org/title/3f9b2c7e-5a41-4d86-9c0e-7b1d2a6e48f5"],
+ "title": "Lantern Street",
+ "nameFormat": "Chapter %04d %s",
+ "chapters": [
+  {"number": 1, "title": "Market", "language": "en", "id": "a1d5c3f0-1b52-4e0a-8f31-6c7d9e2b4a10", "pages": 6, "groups": ["Moonlit Scans"]},
+  {"number": 1, "title": "Market", "language": "en", "id": "a1d5c3f0-1b52-4e0a-8f31-6c7d9e2b4a11", "pages": 7, "groups": ["Paper Lantern"]},
+  {"number": 1, "title": "Market", "language": "en", "id": "a1d5c3f0-1b52-4e0a-8f31-6c7d9e2b4a12", "pages": 6, "groups": ["Quiet Ink", "Teahouse Team"]},
+  {"number": 2, "title": "The Lantern Maker's Apprentice Learns Why Nobody Ever Lights the Last Lamp on the Street", "language": "en", "id": "b2e6d4a1-2c63-4f1b-9a42-7d8e0f3c5b20", "pages": 7, "groups": ["Moonlit Scans"]},
+  {"number": 2, "title": "The Lantern Maker's Apprentice Learns Why Nobody Ever Lights the Last Lamp on the Street", "language": "en", "id": "b2e6d4a1-2c63-4f1b-9a42-7d8e0f3c5b21", "pages": 6, "groups": ["Paper Lantern"]},
+  {"number": 3, "title": "Rain on the Rooftops", "language": "en", "id": "c3f7e5b2-3d74-402c-8b53-8e9f1a4d6c30", "pages": 6, "groups": ["Moonlit Scans"]},
+  {"number": 3, "title": "Rain on the Rooftops", "language": "en", "id": "c3f7e5b2-3d74-402c-8b53-8e9f1a4d6c31", "pages": 7, "groups": ["Quiet Ink"]}
+ ]
+}

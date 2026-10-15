@@ -36,6 +36,14 @@ build/unix:
 build/win:
 	GOOS=windows $(GOBUILD) -o manga-downloader.exe .
 
+# the binary the VHS tapes in assets/demos run: it serves their series from the
+# fake data in demo/series (see demo/README.md), so release builds never carry
+# them. Named like build/unix, which is where the tapes look for it.
+build/demo: GOTAGS = -tags $(BUILD_TAGS),demo
+build/demo:
+	$(GOBUILD) -o manga-downloader .
+	@echo "demo build: serves demo/series and never touches the network"
+
 # what the release builds for each GOOS/GOARCH (from the environment, the host's
 # by default): manga-downloader, or manga-downloader.exe for windows
 build/release:
@@ -88,6 +96,10 @@ endif
 test/gui: build/gui/frontend
 	cd gui && $(GUI_CGO) go test -tags $(GUI_GO_TAGS) ./...
 	cd gui/frontend && pnpm test
+
+# the demo build's fake grabber is only built with the demo tag (see demo/README.md)
+test/demo:
+	go test -tags $(BUILD_TAGS),demo -count=1 ./demo/
 
 # one dependency per line, alphabetically sorted (grabber/html deliberately
 # last), so parallel site-support branches never edit the same line

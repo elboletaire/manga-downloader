@@ -19,6 +19,8 @@ These guides are not loaded with every session. Open the file when the task matc
 make install          # go mod download
 make build            # clean + test + build unix binary (injects version via ldflags)
 make build/all        # unix + windows binaries
+make build/demo       # the VHS tapes' binary, served from demo/series (demo tag, see demo/README.md)
+make test/demo        # the demo build's tests
 GOOS=windows GOARCH=386 make build/release   # one release binary, built as release.yaml does
 make test             # go test -v ./... (uses richgo if installed)
 go test ./ranges -run TestParse   # run a single test
