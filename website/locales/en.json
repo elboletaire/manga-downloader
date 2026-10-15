@@ -84,7 +84,6 @@
     "brewText": "On macOS and Linux, from the <code>elboletaire/tap</code> tap. <code>brew upgrade</code> keeps it current.",
     "brewFoot": "That's the command line tool only. On macOS, get the desktop app with <code>brew install --cask elboletaire/tap/manga-downloader-app</code>.",
     "dockerText": "Files land in the mounted folder. Use the <code>:browser</code> image for sites tagged <span class=\"site-badge\">browser</span>.",
-    "goText": "With Go installed, build it from source in one go:",
     "useTitle": "Use it",
     "example1": "Point it at a manga's index page and say which chapters you want:",
     "example2": "Only the English chapters, bundled into a single file (a CBZ by default):",

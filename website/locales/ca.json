@@ -84,7 +84,6 @@
     "brewText": "A macOS i Linux, des del tap <code>elboletaire/tap</code>. <code>brew upgrade</code> el manté al dia.",
     "brewFoot": "Això només instal·la l'eina de línia d'ordres. A macOS, instal·la l'aplicació d'escriptori amb <code>brew install --cask elboletaire/tap/manga-downloader-app</code>.",
     "dockerText": "Els fitxers es desen a la carpeta muntada. Fes servir la imatge <code>:browser</code> per als llocs marcats com a <span class=\"site-badge\">navegador</span>.",
-    "goText": "Si tens Go instal·lat, compila'l des del codi font amb una sola ordre:",
     "useTitle": "Fes-lo servir",
     "example1": "Passa-li la pàgina principal d'un manga i indica quins capítols vols:",
     "example2": "Només els capítols en català, agrupats en un sol fitxer (CBZ per defecte):",
