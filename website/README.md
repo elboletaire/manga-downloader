@@ -80,9 +80,10 @@ every browser the site cares about reads, so there are no PNG fallbacks.
   2000 px originals in the repo's [`assets/screenshots/`](../assets/screenshots/),
   at 600 and 1000 px wide.
   They are cut to the part that matters, so they stay readable at the
-  ~500 px they are shown at. `language-selector` keeps the window's rounded corners; the others are cut to
-  the panel's own 1 px border box and radius (24 px on the original), so no window
-  background shows around them. Each gets a soft shadow on a transparent margin of 56 px.
+  ~500 px they are shown at. `language-selector` keeps the window's rounded
+  corners; the others are cut to the panel's own 1 px border box and radius
+  (24 px on the original), so no window background shows around them. Each
+  gets a soft shadow on a transparent margin of 56 px.
 
 The files are converted offline and committed, so the build needs no image tools.
 The crop script is [`build/crop-screenshots.sh`](build/crop-screenshots.sh). The
