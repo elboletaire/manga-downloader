@@ -23,7 +23,7 @@ Type 'export MANGA_DOWNLOADER_DEMO_DELAY=1.2 && export PATH="$PWD:$PATH" && mkdi
 Enter
 Show
 
-Type "manga-downloader https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1140-1147"
+Type "manga-downloader 1140-1147 https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935"
 Sleep 500ms
 Enter
 Wait

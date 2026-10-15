@@ -32,6 +32,7 @@ rebuild with `make build/unix` before using it for real.
   recording is needed, and the data can be made up. Use the URL as the tape types it.
 - A new language: give the chapters that `language` and list it in `languages`.
 - Volumes: set `volume` on the chapters, for `--volumes auto`.
+- Scanlation groups: list a chapter once per release, each with its `groups` (`groups` tape).
 
 Then `make build/demo`, run the tape's command, and check the archives with
 `go run ./tools/verify-cbz` before re-recording the GIFs. Run the demo build's

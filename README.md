@@ -378,13 +378,15 @@ manga-downloader [flags] [url] [chapters]
 Arguments aren't positional, so `manga-downloader 1-50 [url]` works too.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/prompt.gif">
-  <img alt="The command line asking whether to download every chapter of a series, then downloading them" src="assets/demos/prompt-light.gif">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/download.gif">
+  <img alt="The command line downloading eight chapters at once, with the range typed before the URL, each chapter with its own progress bar" src="assets/demos/download-light.gif">
 </picture>
 
+Leave the range out and it asks before downloading the whole series:
+
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/download.gif">
-  <img alt="The command line downloading eight chapters at once, each with its own progress bar" src="assets/demos/download-light.gif">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/prompt.gif">
+  <img alt="The command line asking whether to download every chapter of a series, then downloading them" src="assets/demos/prompt-light.gif">
 </picture>
 
 ### Language and scanlation group
@@ -410,6 +412,11 @@ The default file name adds the release's group in brackets when it names one
 (`One Piece 5 - Chapter 5 [Alpha]`), so each release keeps its own file. A
 template without `{{.Group}}` only tells the releases apart by a version
 suffix (`v2`, `v3`…), in no particular group order.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/groups.gif">
+  <img alt="The command line downloading a series with several scanlation groups per chapter, with the group in brackets after each title and a long title cut with an ellipsis, then again with --scanlator keeping one group's releases" src="assets/demos/groups-light.gif">
+</picture>
 
 ### Bundling and output format
 

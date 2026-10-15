@@ -49,8 +49,8 @@ func identify(t *testing.T, url string, settings *grabber.Settings) grabber.Site
 
 func TestClaimsOnlyTheTapesURLs(t *testing.T) {
 	all := loaded(t)
-	if len(all) != 3 {
-		t.Fatalf("got %d series, want the 3 the tapes use", len(all))
+	if len(all) != 4 {
+		t.Fatalf("got %d series, want the 4 the tapes use", len(all))
 	}
 	g := &grabber.Grabber{URL: "https://inmanga.com/ver/manga/Other/0000", Settings: &grabber.Settings{}}
 	for _, data := range all {
