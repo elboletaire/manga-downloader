@@ -829,7 +829,22 @@ func (c *Controller) Clear() error {
 func (c *Controller) Stale() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.series != nil && !c.loading && (c.settings.Language != c.loadedLanguage || c.settings.Scanlator != c.loadedScanlator)
+	return c.series != nil && !c.loading && c.filtersChanged()
+}
+
+// filtersChanged reports whether the filters differ from the loaded list's. For
+// a scanlator "" and "all" are the same filter; for a language they aren't.
+// The caller holds c.mu.
+func (c *Controller) filtersChanged() bool {
+	scanlator := func(v string) string {
+		if strings.EqualFold(v, grabber.FilterAll) {
+			return ""
+		}
+
+		return v
+	}
+
+	return c.settings.Language != c.loadedLanguage || scanlator(c.settings.Scanlator) != scanlator(c.loadedScanlator)
 }
 
 // URL is the last URL passed to Load
@@ -1166,7 +1181,7 @@ func (c *Controller) Start() error {
 		c.mu.Unlock()
 		return errors.New("load a series first")
 	}
-	if c.settings.Language != c.loadedLanguage || c.settings.Scanlator != c.loadedScanlator {
+	if c.filtersChanged() {
 		c.mu.Unlock()
 		return errors.New("the language or scanlator changed: reload the series first")
 	}

@@ -28,6 +28,16 @@ export function filtersIdentified(state: Pick<State, 'loaded' | 'loadError'>): b
 // which BCP 47 writes "es-419" (read as is, "la" is the region of Laos)
 const LANGUAGE_TAGS: Record<string, string> = { 'es-la': 'es-419' };
 
+/** A stored "all" shows as the empty field, whose placeholder says "any"; the stored value stays */
+export function typedValue(value: string): string {
+  return value.toLowerCase() === FILTER_ALL ? '' : value;
+}
+
+/** Whether two scanlator values select the same thing: "" and "all" both keep every group */
+export function sameScanlator(a: string, b: string): boolean {
+  return typedValue(a) === typedValue(b);
+}
+
 /** How a filter is shown: free text, a selector of the series' values, or disabled */
 export type FilterControl = 'text' | 'select' | 'disabled';
 

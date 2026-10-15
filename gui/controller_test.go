@@ -750,3 +750,22 @@ func TestLockedChaptersCannotBeSelected(t *testing.T) {
 		t.Errorf("SelectRange = %d, %v; want 3 without the locked ones", n, err)
 	}
 }
+
+func TestStaleTreatsScanlatorAllAsEmpty(t *testing.T) {
+	c, _, _ := newTestController(t, false, nil, chapters(1, 1)...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Configure(func(s *grabber.Settings) { s.Scanlator = "all" }); err != nil {
+		t.Fatal(err)
+	}
+	if c.Stale() {
+		t.Error(`scanlator "all" over a loaded "" reported as stale`)
+	}
+	if err := c.Configure(func(s *grabber.Settings) { s.Language = "all" }); err != nil {
+		t.Fatal(err)
+	}
+	if !c.Stale() {
+		t.Error(`language "all" over a loaded "" must stay stale`)
+	}
+}

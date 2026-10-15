@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterControl, filtersIdentified, filterOptions, languageName, shownSelection } from './filters';
+import { sameScanlator, typedValue, filterControl, filtersIdentified, filterOptions, languageName, shownSelection } from './filters';
 import type { FilterChoice } from './types';
 
 const choice = (over: Partial<FilterChoice>): FilterChoice => ({
@@ -111,5 +111,19 @@ describe('filterControl', () => {
   it('is a selector whenever the site listed values, loaded or not', () => {
     expect(filterControl({ loaded: true, loadError: '' }, listed)).toBe('select');
     expect(filterControl({ loaded: false, loadError: 'network down' }, listed)).toBe('select');
+  });
+});
+
+describe('typedValue and sameScanlator', () => {
+  it('shows "all" in any case as empty, and other values as they are', () => {
+    expect(typedValue('all')).toBe('');
+    expect(typedValue('ALL')).toBe('');
+    expect(typedValue('es')).toBe('es');
+    expect(typedValue('')).toBe('');
+  });
+
+  it('treats "" and "all" as one scanlator filter', () => {
+    expect(sameScanlator('', 'all')).toBe(true);
+    expect(sameScanlator('Delta', 'all')).toBe(false);
   });
 });
