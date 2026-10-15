@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -189,10 +188,6 @@ func chapterFolders(chapters []*DownloadedChapter, format string, convert grabbe
 	return files, labels
 }
 
-// chapterTitlePrefix matches the chapter word and number a title may open with
-// ("Chapter 0005: ", "Ch. 5 - ", "Episode 5 "), and the separator after them
-var chapterTitlePrefix = regexp.MustCompile(`(?i)^(?:episode|chapter|chap|ch|ep)\.?\s*0*(\d+(?:\.\d+)?)\b(?:\s*[:.\-‐‒–—―−]+)?\s*`)
-
 // chapterLabel names a chapter the way the filename template does (no padding,
 // decimals kept), with its title when the title says more than the number
 func chapterLabel(chapter *grabber.Chapter) string {
@@ -208,7 +203,7 @@ func chapterLabel(chapter *grabber.Chapter) string {
 // which the label already gives ("Chapter 0005: Foo" is "Foo"). It's empty when
 // nothing else is left, as for "Ch. 5" or a title that's only the number.
 func titleBeyondNumber(title string, number float64) string {
-	if m := chapterTitlePrefix.FindStringSubmatch(title); m != nil {
+	if m := grabber.ChapterTitlePrefix.FindStringSubmatch(title); m != nil {
 		if n, err := strconv.ParseFloat(m[1], 64); err == nil && n == number {
 			title = title[len(m[0]):]
 		}

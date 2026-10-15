@@ -42,25 +42,29 @@ func VolumeOf(f Filterable) int {
 	return 0
 }
 
-// leadingNumber matches the chapter number a title may open with, with or
-// without its chapter word ("Chapter 0186 - Foo", "Ch. 5: Foo", "186. Foo")
-var leadingNumber = regexp.MustCompile(`(?i)^(?:(?:episode|chapter|chap|ch|ep)\.?\s*)?0*(\d+(?:\.\d+)?)\b`)
+// ChapterTitlePrefix matches the chapter word and number a title may open with
+// ("Chapter 0005: ", "Capítulo 5 - ", "Vol. 3 Ch. 5 "), and the separator after them
+var ChapterTitlePrefix = regexp.MustCompile(`(?i)^(?:vol(?:ume|umen)?\.?\s*\d+\s*)?(?:episode|chapter|chapitre|chap|cap[ií]tulo|capitolo|cap|ch|ep|c|b[öo]l[üu]m|глава)\.?\s*0*(\d+(?:\.\d+)?)\b(?:\s*[:.\-‐‒–—―−]+)?\s*`)
 
-// ChapterName names a chapter in messages: its title, or "chapter N (title)"
+// bareNumber matches a number a title opens with and no chapter word ("186. Foo")
+var bareNumber = regexp.MustCompile(`^0*(\d+(?:\.\d+)?)\b`)
+
+// ChapterName names a chapter in messages: its title, or "Chapter N (title)"
 // when the title doesn't open with its number, as sites often number their
-// own seasons in titles ("111. Dong-a-jul" is chapter 186). Chapter 0 is
-// left to the title, as 0 may just be a number the grabber couldn't read.
+// own seasons in titles. Chapter 0 is left to the title (it may be unread).
 func ChapterName(f Filterable) string {
 	title, number := f.GetTitle(), f.GetNumber()
 	if number <= 0 {
 		return title
 	}
-	if m := leadingNumber.FindStringSubmatch(title); m != nil {
-		if n, err := strconv.ParseFloat(m[1], 64); err == nil && n == number {
-			return title
+	for _, re := range []*regexp.Regexp{ChapterTitlePrefix, bareNumber} {
+		if m := re.FindStringSubmatch(title); m != nil {
+			if n, err := strconv.ParseFloat(m[1], 64); err == nil && n == number {
+				return title
+			}
 		}
 	}
-	name := "chapter " + strconv.FormatFloat(number, 'f', -1, 64)
+	name := "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
 	if title == "" {
 		return name
 	}

@@ -391,7 +391,7 @@ func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped []sk
 	}
 	for _, folder := range folders {
 		if !hasPages[folder] {
-			notice.Warn("- warning: chapter %s has no pages EPUB readers can show, leaving it out", tocLabel(info, folder))
+			notice.Warn("- warning: %s has no pages EPUB readers can show, leaving it out", tocLabel(info, folder))
 		}
 	}
 	if len(book.Pages) == 0 {

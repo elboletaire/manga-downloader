@@ -187,7 +187,7 @@ func TestReleaseLabel(t *testing.T) {
 
 	// a title that numbers its own chapters gets the real number named too
 	ownNumbering := &grabber.Chapter{Title: "111. Dong-a-jul", Number: 186, Group: "Group A"}
-	if got, want := ReleaseLabel(ownNumbering, false, true), "chapter 186 (111. Dong-a-jul) [Group A]"; got != want {
+	if got, want := ReleaseLabel(ownNumbering, false, true), "Chapter 186 (111. Dong-a-jul) [Group A]"; got != want {
 		t.Errorf("own numbering ReleaseLabel() = %q, want %q", got, want)
 	}
 }
