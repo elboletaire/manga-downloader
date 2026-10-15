@@ -259,6 +259,15 @@ func makeDangerBar(width int) *progress.Model {
 	return &b
 }
 
+// setPercent animates bar towards p through a copy: the frame tick SetPercent
+// schedules reads the bar's tag later, from another goroutine.
+func setPercent(bar *progress.Model, p float64) tea.Cmd {
+	b := *bar
+	cmd := b.SetPercent(p)
+	*bar = b
+	return cmd
+}
+
 func (m progressModel) Init() tea.Cmd { return tea.RequestBackgroundColor }
 
 func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -351,7 +360,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.bundleCurrent += core.DownloadWeight
 			m.bundleDownloaded++
 			if m.bundleBar != nil {
-				return m, m.bundleBar.SetPercent(safePercent(m.bundleCurrent, m.bundleTotal))
+				return m, setPercent(m.bundleBar, safePercent(m.bundleCurrent, m.bundleTotal))
 			}
 			return m, nil
 		}
@@ -364,7 +373,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		s.current += core.DownloadWeight
-		return m, s.bar.SetPercent(safePercent(s.current, s.total))
+		return m, setPercent(s.bar, safePercent(s.current, s.total))
 
 	case chapterEndedMsg:
 		m.countVolumeChapter(msg.chapter)
@@ -393,7 +402,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		s.current += core.ArchiveWeight
 		s.status = "archiving"
-		return m, s.bar.SetPercent(safePercent(s.current, s.total))
+		return m, setPercent(s.bar, safePercent(s.current, s.total))
 
 	case packedMsg:
 		if m.bundle {
@@ -412,7 +421,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		s.status = "done"
-		return m, s.bar.SetPercent(1.0)
+		return m, setPercent(s.bar, 1.0)
 
 	case bundlePackingMsg:
 		m.bundleStatus = "archiving"
@@ -422,7 +431,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.bundleCurrent += int64(msg.n) * core.ArchiveWeight
 		m.bundleArchived += int64(msg.n)
 		if m.bundleBar != nil {
-			return m, m.bundleBar.SetPercent(safePercent(m.bundleCurrent, m.bundleTotal))
+			return m, setPercent(m.bundleBar, safePercent(m.bundleCurrent, m.bundleTotal))
 		}
 
 	case volumeStartMsg:
@@ -449,7 +458,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		vs.fraction = msg.fraction
-		return m, vs.bar.SetPercent(msg.fraction)
+		return m, setPercent(vs.bar, msg.fraction)
 
 	case volumePackingMsg:
 		if vs := m.volStates[msg.volume]; vs != nil {
@@ -470,7 +479,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		vs.status = "done"
-		return m, vs.bar.SetPercent(1.0)
+		return m, setPercent(vs.bar, 1.0)
 
 	case downloadDoneMsg:
 		// Mark done so View() renders all non-failed bars at 100% in the final
