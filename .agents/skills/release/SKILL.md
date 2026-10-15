@@ -7,7 +7,7 @@ Read this before a release to refresh the images that show the UI. It covers onl
 
 ## Step 0: macOS only
 
-Run `uname -s` first. If it isn't `Darwin`, **stop and tell the maintainer this must run on his Mac; don't capture, record or commit anything.** The screenshots are the real Wails window grabbed with `screencapture`, and the GIFs and crops depend on the Mac's fonts, display scale and tools; images made on Linux or WSL look wrong (other fonts, no macOS window frame, wrong size).
+Run `uname -s` first. If it isn't `Darwin`, **stop and tell the maintainer this must run on the maintainer's Mac; don't capture, record or commit anything.** The screenshots are the real Wails window grabbed with `screencapture`, and the GIFs and crops depend on the Mac's fonts, display scale and tools; images made on Linux or WSL look wrong (other fonts, no macOS window frame, wrong size).
 
 ## What gets regenerated
 
