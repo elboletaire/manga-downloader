@@ -101,10 +101,13 @@ grabber: \
 	grabber/azorafly \
 	grabber/baozimh \
 	grabber/bigsolo \
+	grabber/blackcloveronline \
 	grabber/bluesolo \
 	grabber/chainsawman \
+	grabber/chainsawmannmanga \
 	grabber/comix \
 	grabber/danke \
+	grabber/dragonballmangaa \
 	grabber/drakecomic \
 	grabber/elftoon \
 	grabber/fanfox \
@@ -120,6 +123,7 @@ grabber: \
 	grabber/inmanga \
 	grabber/jestful \
 	grabber/jojolands \
+	grabber/jujutsukaisenmanga \
 	grabber/kaynscan \
 	grabber/leercapitulo \
 	grabber/lelscans \
@@ -129,6 +133,7 @@ grabber: \
 	grabber/mangabats \
 	grabber/mangadenizi \
 	grabber/mangadex \
+	grabber/mangadelsiglotvmanga \
 	grabber/mangafire \
 	grabber/mangahere \
 	grabber/mangak \
@@ -153,6 +158,7 @@ grabber: \
 	grabber/teamshadowi \
 	grabber/templetoons \
 	grabber/tortugaceviri \
+	grabber/tvymanga3 \
 	grabber/tritinia \
 	grabber/utoon \
 	grabber/vortexscans \
@@ -285,6 +291,27 @@ grabber/animeallstar30:
 # (the posts carry no label per series). Two chapters a few behind the newest.
 grabber/animeallstar1:
 	go run . "https://www.animeallstar1.com/search?q=One+Piece" 1188-1189
+
+# WordPress category clones of animeallstar30 (plain HTTP): a chapter post
+# resolves to its series, so the URL is a post a few behind the newest.
+grabber/blackcloveronline:
+	go run . https://blackcloveronline.com/manga/black-clover-chapter-100/ 100
+
+grabber/chainsawmannmanga:
+	go run . https://chainsawmannmanga.com/chainsaw-man-manga-chapter-100/ 100
+
+grabber/dragonballmangaa:
+	go run . https://dragonballmangaa.com/category/all-chapters/ 10
+
+grabber/jujutsukaisenmanga:
+	go run . https://jujutsukaisenmanga.pro/jujutsu-kaisen-chapter-100/ 100
+
+grabber/tvymanga3:
+	go run . https://tvymanga3.com/chainsaw-man-100/ 100
+
+# Blogger blog, series search by title as for animeallstar1
+grabber/mangadelsiglotvmanga:
+	go run . "https://www.mangadelsiglotvmanga.com.mx/search?q=Kagurabachi" 130
 
 # Madara wordpress site whose series URLs live under /gl/ instead of /manga/;
 # the generic Tcb grabber matches them through the same ajax/chapters endpoint.
@@ -482,6 +509,8 @@ grabber/html: \
 	grabber/deathtollscans \
 	grabber/demonicscans \
 	grabber/dynastyscans \
+	grabber/eldermanga \
+	grabber/eskimangalar \
 	grabber/evascans \
 	grabber/furyosociety \
 	grabber/kingofshojo \
@@ -490,6 +519,7 @@ grabber/html: \
 	grabber/lagoonscans \
 	grabber/lelmanga \
 	grabber/lelscanfr \
+	grabber/limonmanga \
 	grabber/madarascans \
 	grabber/maid \
 	grabber/mangaberri \
@@ -539,6 +569,16 @@ grabber/trmanga:
 
 grabber/uzaymanga:
 	go run . https://uzaymanga.com/manga/kunlun-daginin-seytani-ustasi 10
+
+# eldermanga, eskimangalar and limonmanga share uzaymanga's platform
+grabber/eldermanga:
+	go run . https://eldermanga.com/manga/agac-olarak-yeniden-dogdum 10
+
+grabber/eskimangalar:
+	go run . https://eskimangalar.com/manga/alemlerin-otesindeki-olumsuz 10
+
+grabber/limonmanga:
+	go run . https://limonmanga.com/manga/en-guclu-suikastci-baska-dunyada 10
 
 grabber/manhwaonline:
 	go run . https://manhwaonline.org/manga/a-wonderful-new-world/ 150
@@ -634,13 +674,14 @@ grabber/mistscans:
 # runs the given smoke targets (names without "grabber/") and records their
 # results in the README's "Last verified" column, e.g.
 #   make site-status TARGETS="toonily toongod"
-# A target passes when it exits 0 and tools/verify-cbz accepts the new archives.
+# A target passes when it exits 0 and tools/verify-cbz accepts the new archives
+# (found with -print0, as their names hold spaces).
 site-status:
 	@test -n "$(TARGETS)" || { echo "usage: make site-status TARGETS=\"toonily toongod\""; exit 2; }
 	@results=$$(mktemp); stamp=$$(mktemp); \
 	for t in $(TARGETS); do \
 		touch $$stamp; sleep 1; \
-		if $(MAKE) grabber/$$t && go run ./tools/verify-cbz $$(find . -maxdepth 1 -name '*.cbz' -newer $$stamp); then \
+		if $(MAKE) grabber/$$t && find . -maxdepth 1 -name '*.cbz' -newer $$stamp -print0 | xargs -0 go run ./tools/verify-cbz; then \
 			echo "$$t pass" >> $$results; \
 		else \
 			echo "$$t fail" >> $$results; \

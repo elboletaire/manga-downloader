@@ -74,6 +74,12 @@ jobs:
           - webtoons
           - animeallstar1
           - animeallstar30
+          - blackcloveronline
+          - chainsawmannmanga
+          - dragonballmangaa
+          - jujutsukaisenmanga
+          - mangadelsiglotvmanga
+          - tvymanga3
           # Plain-HTML (goquery) scrapers
           - tcbscans
           - arenascan
@@ -117,6 +123,9 @@ jobs:
           - writerscans
           - mistscans
           - mangapark
+          - eldermanga
+          - eskimangalar
+          - limonmanga
           # These sites block GitHub's datacenter IPs (403) but work fine
           # from residential connections — verified locally 2026-07-23.
           # Kept out of the matrix rather than hammering sites that don't
