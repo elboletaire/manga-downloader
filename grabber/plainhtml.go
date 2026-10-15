@@ -492,9 +492,8 @@ type SiteSelector struct {
 	// (?page=N) until one has no rows, for series listings split over pages.
 	Paginated bool
 	// LockedIsland is for Astro sites that state the lock only in the series
-	// page's island props, not in the row. It is called for each object there
-	// that has a "number" and a "slug" (a chapter) and reports whether it is
-	// paid; rows with the same number become Locked.
+	// page's island props: it reports whether a chapter object there (one with
+	// a "number" and a "slug") is paid; rows with that number become Locked.
 	LockedIsland func(chapter map[string]any) bool
 }
 

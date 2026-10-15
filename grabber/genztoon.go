@@ -12,8 +12,8 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// GenzToon is a grabber for genztoons.org (Genz Toon, formerly genzupdates.com). The chapters list is
-// plain, static HTML (all chapters are rendered server-side in a
+// GenzToon is a grabber for genztoons.org (Genz Toon, formerly
+// genzupdates.com). The chapters list is plain, static HTML (all chapters are rendered server-side in a
 // `#chapters` container, no pagination/ajax), but the reader page's page
 // images are lazy-loaded: each `<img class="myImage">` only carries a `uid`
 // attribute and a placeholder `src`, and the site's own inline JS builds the

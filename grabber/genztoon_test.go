@@ -63,9 +63,12 @@ func TestGenzToonResolveSeriesURL(t *testing.T) {
 
 func TestGenzToonTestHost(t *testing.T) {
 	for url, want := range map[string]bool{
-		"https://genztoons.org/series/x/":   true,
-		"https://genzupdates.com/series/x/": true,
-		"https://example.com/series/x/":     false,
+		"https://genztoons.org/series/x/":          true,
+		"https://genzupdates.com/series/x/":        true,
+		"https://example.com/series/x/":            false,
+		"https://www.genztoons.org/series/x/":      true,
+		"https://notgenztoons.org/series/x/":       false,
+		"https://genztoons.org.evil.com/series/x/": false,
 	} {
 		got, _ := NewGenzToon(&Grabber{URL: url}).Test()
 		if got != want {
