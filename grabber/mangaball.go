@@ -7,14 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"time"
 
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Mangaball is a grabber for mangaball.com (mangaball.net redirects to it): the
-// title comes from the series page's Next.js payload, the chapters list from a
-// JSON API, and the chapter images are a "pages" array in the reader page's
-// RSC payload
+// Mangaball reads everything from mangaball.com's JSON API, as its HTML pages
+// sit behind a Turnstile challenge. Series URLs stay on .com: the image CDN
+// wants a mangaball.com Referer, which is the downloader's default one.
 type Mangaball struct {
 	*Grabber
 	title string
@@ -36,23 +36,34 @@ var mangaballSite = "https://mangaball.com"
 // hex case handled inline via (?:www\.)? / (?i))
 var mangaballChapterRe = regexp.MustCompile(`(?i)^https?://(?:www\.)?mangaball\.(com|net)/chapter-detail/([a-f0-9]+)`)
 
-// mangaballSeriesURLRe extracts the series URL from JSON-LD isPartOf field.
-// The actual format is {"@type":"ComicSeries","name":"...","url":"..."} so
-// we match any fields between @type and url.
-var mangaballSeriesURLRe = regexp.MustCompile(`"isPartOf":\{"@type":"ComicSeries"[^}]*?"url":"(https://mangaball\.com/title-detail/[^"]+)"`)
+// mangaballNetRe matches the host of mangaball.net URLs
+var mangaballNetRe = regexp.MustCompile(`(?i)//(?:www\.)?mangaball\.net`)
 
 // mangaballChapterURL checks if the URL is a chapter URL.
 func mangaballChapterURL(url string) bool {
 	return mangaballChapterRe.MatchString(url)
 }
 
-// mangaballSeriesURL extracts the series URL from a chapter page.
-func mangaballSeriesURL(html string) (string, bool) {
-	matches := mangaballSeriesURLRe.FindStringSubmatch(html)
-	if len(matches) < 2 {
-		return "", false
-	}
-	return matches[1], true
+// mangaballMaxConcurrency caps the user's concurrency: the image CDN answers
+// 429 to bursts, and these values downloaded whole series cleanly.
+var mangaballMaxConcurrency = MaxConcurrency{Chapters: 1, Pages: 2}
+
+// mangaballPagePacer spaces page requests evenly. It's shared by every
+// Mangaball instance because the limit is per IP, not per download.
+var mangaballPagePacer = &pacer{interval: time.Second / 4}
+
+// GetMaxConcurrency caps the configured concurrency at what the image CDN
+// tolerates; lower settings are kept.
+func (m *Mangaball) GetMaxConcurrency() MaxConcurrency {
+	mc := m.Grabber.GetMaxConcurrency()
+	mc.Chapters = min(mc.Chapters, mangaballMaxConcurrency.Chapters)
+	mc.Pages = min(mc.Pages, mangaballMaxConcurrency.Pages)
+	return mc
+}
+
+// WaitPage paces page downloads to the image CDN's rate limit (PagePacer)
+func (m *Mangaball) WaitPage() {
+	mangaballPagePacer.wait()
 }
 
 func NewMangaball(g *Grabber) *Mangaball {
@@ -82,26 +93,64 @@ func (m *Mangaball) Test() (bool, error) {
 	return re.MatchString(m.URL), nil
 }
 
-// resolveSeriesURL resolves a chapter URL to the series URL if needed.
+// resolveSeriesURL resolves a chapter URL to the series URL if needed, and
+// moves mangaball.net URLs to mangaball.com, whose Referer the image CDN wants.
 func (m *Mangaball) resolveSeriesURL() error {
-	if !mangaballChapterURL(m.URL) {
+	if match := mangaballChapterRe.FindStringSubmatch(m.URL); match != nil {
+		detail, err := m.chapterDetail(match[2])
+		if err != nil {
+			return err
+		}
+		if detail.TitleID == "" {
+			return errSeriesNotFound(m.URL)
+		}
+		m.URL = mangaballSite + "/title-detail/" + detail.TitleID
 		return nil
 	}
 
-	body, err := http.GetText(http.RequestParams{
-		URL: m.URL,
+	m.URL = mangaballNetRe.ReplaceAllString(m.URL, "//mangaball.com")
+	return nil
+}
+
+// mangaballChapterDetail is the part of the chapter detail API we use
+type mangaballChapterDetail struct {
+	TitleID string   `json:"title_id"`
+	Pages   []string `json:"pages"`
+}
+
+// chapterDetail asks the API for a chapter, which lists its title's id and
+// its page image URLs
+func (m *Mangaball) chapterDetail(id string) (*mangaballChapterDetail, error) {
+	body, err := json.Marshal(map[string]string{"chapter_id": id})
+	if err != nil {
+		return nil, err
+	}
+
+	rbody, err := http.Post(http.RequestParams{
+		URL:     mangaballAPI + "/chapter/detail",
+		Referer: mangaballSite + "/",
+		Headers: map[string]string{"Content-Type": "application/json"},
+		Body:    string(body),
 	})
 	if err != nil {
-		return err
+		return nil, err
+	}
+	defer rbody.Close()
+
+	res := struct {
+		Status string `json:"status"`
+		Data   struct {
+			Chapter mangaballChapterDetail `json:"chapter"`
+		} `json:"data"`
+	}{}
+	if err = json.NewDecoder(rbody).Decode(&res); err != nil {
+		return nil, err
+	}
+	if res.Status != "success" {
+		return nil, fmt.Errorf("mangaball api returned status %q", res.Status)
 	}
 
-	seriesURL, ok := mangaballSeriesURL(body)
-	if !ok {
-		return errSeriesNotFound(m.URL)
-	}
-
-	m.URL = seriesURL
-	return nil
+	return &res.Data.Chapter, nil
 }
 
 // FetchTitle fetches and returns the manga title
@@ -195,17 +244,13 @@ func (m *Mangaball) FetchChapters() (chapters Filterables, errs []error) {
 func (m Mangaball) FetchChapter(f Filterable) (*Chapter, error) {
 	mchap := f.(*MangaballChapter)
 
-	body, err := http.GetText(http.RequestParams{
-		URL:     mchap.URL,
-		Referer: m.URL,
-	})
+	detail, err := m.chapterDetail(mchap.ID)
 	if err != nil {
 		return nil, err
 	}
-
-	images, err := mangaballChapterImages(body)
-	if err != nil {
-		return nil, err
+	images := detail.Pages
+	if len(images) == 0 {
+		return nil, fmt.Errorf("no pages found for chapter %s", mchap.ID)
 	}
 
 	chapter := &Chapter{
@@ -238,58 +283,38 @@ func (m Mangaball) titleID() (string, error) {
 	return matches[len(matches)-1], nil
 }
 
-// fetchTitle fetches the series page and caches the manga title, read off the
-// `initialTitleData` object of its RSC payload
+// fetchTitle fetches the title from the API (the series page is challenged)
+// and caches it
 func (m *Mangaball) fetchTitle() error {
-	body, err := http.GetText(http.RequestParams{
-		URL: m.URL,
+	tid, err := m.titleID()
+	if err != nil {
+		return err
+	}
+
+	rbody, err := http.Get(http.RequestParams{
+		URL:     mangaballAPI + "/title/" + tid,
+		Referer: m.URL,
 	})
 	if err != nil {
 		return err
 	}
-
-	stream, err := nextFlightStream(body)
-	if err != nil {
-		return err
-	}
-
-	raw, err := extractBalancedJSON(stream, `"initialTitleData":`)
-	if err != nil {
-		return err
-	}
+	defer rbody.Close()
 
 	data := struct {
-		Name string `json:"name"`
+		Status string `json:"status"`
+		Data   struct {
+			Name string `json:"name"`
+		} `json:"data"`
 	}{}
-	if err = json.Unmarshal([]byte(raw), &data); err != nil {
+	if err = json.NewDecoder(rbody).Decode(&data); err != nil {
 		return err
 	}
-	if data.Name == "" {
-		return errors.New("could not find the title on the series page")
+	if data.Data.Name == "" {
+		return errors.New("could not find the title in the API response")
 	}
-	m.title = sanitizeTitle(data.Name)
+	m.title = sanitizeTitle(data.Data.Name)
 
 	return nil
-}
-
-// mangaballChapterImages extracts the page image URLs from a reader page: they
-// sit in the `pages` array of the chapter in the page's RSC payload
-func mangaballChapterImages(html string) (images []string, err error) {
-	stream, err := nextFlightStream(html)
-	if err != nil {
-		return nil, err
-	}
-
-	raw, err := extractBalancedJSON(stream, `"pages":`)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = json.Unmarshal([]byte(raw), &images); err != nil {
-		return nil, err
-	}
-
-	return
 }
 
 // mangaballChaptersFeed is the JSON feed returned by the chapter listing API
