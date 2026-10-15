@@ -114,6 +114,10 @@ func (NoEvents) VolumePacked(*Volume, string, error)     {}
 // could be downloaded, which leaves nothing to pack
 var ErrEmptyVolume = errors.New("none of its chapters could be downloaded")
 
+// ErrLocked is the FetchFailed error of a chapter the listing marks as paid.
+// It's reported without fetching the chapter, as a reader of it gets no pages
+var ErrLocked = errors.New("locked: paid chapter")
+
 // ErrSkippedVolume is the VolumePacked error of a volume whose chapters were
 // all skipped by --skip-pages: there's nothing to pack, and nothing failed
 var ErrSkippedVolume = errors.New("--skip-pages excludes every page of its chapters")
@@ -319,6 +323,9 @@ func (s *Series) Download(ctx context.Context, chapters grabber.Filterables, ski
 			if err := ctx.Err(); err != nil {
 				return "", err
 			}
+			if grabber.LockedOf(chap) {
+				continue
+			}
 			chapter, err := s.Site.FetchChapter(chap)
 			if err == nil && chapter != nil {
 				chapter.SkipPages(skip)
@@ -383,6 +390,11 @@ loop:
 				}()
 			}
 
+			// a listed lock is failed here, before the reader page is fetched
+			if grabber.LockedOf(chap) {
+				ev.FetchFailed(chap, ErrLocked)
+				return
+			}
 			chapter, err := s.Site.FetchChapter(chap)
 			if err != nil {
 				ev.FetchFailed(chap, err)

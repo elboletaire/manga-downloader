@@ -762,6 +762,14 @@ code {
   letter-spacing: 0.04em;
 }
 
+/* a paid chapter's mark, inline before its title */
+.lock {
+  display: inline-flex;
+  vertical-align: -2px;
+  margin-right: 5px;
+  color: var(--warning);
+}
+
 /* a group's name is a name, not a code: it keeps its own casing */
 .group {
   text-transform: none;

@@ -420,6 +420,7 @@ describe('mockSetupFrom', () => {
       novolumes: false,
       fail: false,
       skip: false,
+      locked: false,
       shot: false,
       epub: false,
     });
@@ -427,6 +428,7 @@ describe('mockSetupFrom', () => {
     expect(mockSetupFrom('?chapters=nope').chapters).toBeGreaterThan(100);
     expect(mockSetupFrom('?fail').fail).toBe(true);
     expect(mockSetupFrom('?skip').skip).toBe(true);
+    expect(mockSetupFrom('?locked').locked).toBe(true);
     expect(mockSetupFrom('?shot').shot).toBe(true);
     expect(mockSetupFrom('?epub').epub).toBe(true);
   });
@@ -513,5 +515,16 @@ describe('mock filters', () => {
     expect((await api.state()).stale).toBe(false);
     await reload;
     expect((await api.state()).stale).toBe(false);
+  });
+});
+
+describe('mock locked chapters', () => {
+  it('lists none by default, and every 50th chapter with &locked', async () => {
+    const plain = await createMockApi({ scenario: 'loaded' }).chapters();
+    expect(plain.some((c) => c.locked)).toBe(false);
+
+    const locked = (await createMockApi({ scenario: 'loaded', locked: true }).chapters()).filter((c) => c.locked);
+    expect(locked.length).toBeGreaterThan(0);
+    expect(locked.every((c) => c.number % 50 === 0)).toBe(true);
   });
 });

@@ -796,3 +796,17 @@ func TestReleaseLabelInMessages(t *testing.T) {
 		})
 	}
 }
+
+// the download-all prompt counts the chapters the listing marks as locked
+func TestAllChaptersLabel(t *testing.T) {
+	free := &grabber.Chapter{Number: 1}
+	paid := &grabber.Chapter{Number: 2, Locked: true}
+
+	if got, want := allChaptersLabel(grabber.Filterables{free}), "Do you want to download all 1 chapters"; got != want {
+		t.Errorf("no locked chapters: got %q, want %q", got, want)
+	}
+	want := "Do you want to download all 2 chapters (1 paid and locked)"
+	if got := allChaptersLabel(grabber.Filterables{free, paid}); got != want {
+		t.Errorf("one locked chapter: got %q, want %q", got, want)
+	}
+}

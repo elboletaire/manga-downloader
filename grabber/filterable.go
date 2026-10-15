@@ -71,6 +71,20 @@ func ChapterName(f Filterable) string {
 	return name + " (" + title + ")"
 }
 
+// Lockable is a chapter the listing may mark as paid. Like Volumed, it isn't
+// part of Filterable: most sites never say, so LockedOf is how callers ask.
+type Lockable interface {
+	GetLocked() bool
+}
+
+// LockedOf reports whether the listing marks a chapter as paid
+func LockedOf(f Filterable) bool {
+	if l, ok := f.(Lockable); ok {
+		return l.GetLocked()
+	}
+	return false
+}
+
 // volumeRe matches a whole volume number: a bare "3", or one behind a
 // "Volume"/"Vol."/"v" label ("Volume 3", "Vol. 03", "v98")
 var volumeRe = regexp.MustCompile(`(?i)^(?:vol(?:ume|umen)?\.?|v)?\s*0*(\d+)$`)

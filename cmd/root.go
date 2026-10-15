@@ -131,7 +131,7 @@ func Run(cmd *cobra.Command, args []string) {
 	// ranges argument is not provided
 	if len(args) == 1 {
 		prompt := promptui.Prompt{
-			Label:     fmt.Sprintf("Do you want to download all %d chapters", len(chapters)),
+			Label:     allChaptersLabel(chapters),
 			IsConfirm: true,
 		}
 
@@ -463,4 +463,20 @@ func toMetaFunc(c *color.Color) func(string) string {
 	return func(s string) string {
 		return c.Sprint(s)
 	}
+}
+
+// allChaptersLabel is the prompt for downloading every listed chapter, which
+// says how many of them the listing marks as paid and locked
+func allChaptersLabel(chapters grabber.Filterables) string {
+	label := fmt.Sprintf("Do you want to download all %d chapters", len(chapters))
+	locked := 0
+	for _, c := range chapters {
+		if grabber.LockedOf(c) {
+			locked++
+		}
+	}
+	if locked > 0 {
+		label += fmt.Sprintf(" (%d paid and locked)", locked)
+	}
+	return label
 }

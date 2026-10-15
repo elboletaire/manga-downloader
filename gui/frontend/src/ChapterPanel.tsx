@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { errorMessage, formatNumber, plural } from './format';
-import { AlertIcon, ChevronIcon, LinkIcon, RefreshIcon } from './icons';
+import { AlertIcon, ChevronIcon, LinkIcon, LockIcon, RefreshIcon } from './icons';
 import { Mascot } from './Mascot';
 import { extendsSpan, moveActive, spanIndices } from './listKeys';
 import { hostOf } from './run';
@@ -499,7 +499,7 @@ function ChapterList({
               >
                 <span className={`box${on ? ' on' : ''}`} aria-hidden="true" />
                 <span className="num">{formatNumber(ch.number)}</span>
-                <span className="title">{ch.title}</span>
+                <ChapterTitle title={ch.title} locked={ch.locked} />
                 {ch.language !== '' && <span className="lang">{ch.language}</span>}
                 {ch.group !== '' && <span className="group">{ch.group}</span>}
               </div>
@@ -526,6 +526,23 @@ function ChapterList({
         )}
       </p>
     </section>
+  );
+}
+
+/** The tooltip and label of a locked chapter's mark */
+export const LOCKED_HINT = 'Paid and locked, so it cannot be downloaded';
+
+/** A chapter's title, marked with a lock when the listing says it's paid */
+export function ChapterTitle({ title, locked }: { title: string; locked: boolean }) {
+  return (
+    <span className="title">
+      {locked && (
+        <span className="lock" role="img" title={LOCKED_HINT} aria-label={LOCKED_HINT}>
+          <LockIcon size={12} />
+        </span>
+      )}
+      {title}
+    </span>
   );
 }
 
