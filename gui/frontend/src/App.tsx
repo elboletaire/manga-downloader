@@ -110,6 +110,7 @@ export function App({ api }: { api: Api }) {
       <SourceBar
         state={state}
         onLoad={load}
+        readClipboard={() => api.readClipboard()}
         onClear={clear}
         onOptions={setOptions}
         onPick={pickFilter}

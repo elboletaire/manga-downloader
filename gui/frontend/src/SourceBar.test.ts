@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { createMockApi } from './mock';
-import { SourceBar } from './SourceBar';
+import { pasteValue, SourceBar } from './SourceBar';
 import type { State } from './types';
 
 async function noneSite(language: string): Promise<State> {
@@ -16,6 +16,7 @@ function render(state: State): string {
     createElement(SourceBar, {
       state,
       onLoad: () => undefined,
+      readClipboard: () => Promise.resolve(''),
       onClear: () => undefined,
       onOptions: () => Promise.resolve(),
       onPick: () => Promise.resolve(),
@@ -33,6 +34,37 @@ describe('SourceBar filters for a site that lists no languages', () => {
     expect(markup).toContain('This site has no language choice');
     expect(markup).not.toContain('value="ca"');
     expect(markup).toMatch(/<input[^>]*disabled[^>]*\/>/);
+  });
+});
+
+describe('pasteValue', () => {
+  it('trims the clipboard text', () => {
+    expect(pasteValue('  https://example.com/manga/one-piece\n')).toBe('https://example.com/manga/one-piece');
+  });
+
+  it('gives nothing for an empty or blank clipboard', () => {
+    expect(pasteValue('')).toBe('');
+    expect(pasteValue(' \t\n')).toBe('');
+  });
+
+  it('passes text that is not a URL through, as typing would', () => {
+    expect(pasteValue(' one piece ')).toBe('one piece');
+  });
+});
+
+describe('SourceBar paste button', () => {
+  it('shows in an empty box', async () => {
+    const markup = render(await createMockApi({ scenario: 'empty', freeze: true }).state());
+
+    expect(markup).toContain('aria-label="Paste link from clipboard"');
+    expect(markup).not.toContain('class="url-clear"');
+  });
+
+  it('is replaced by the clear button once the box has text', async () => {
+    const markup = render(await createMockApi({ scenario: 'loaded', freeze: true }).state());
+
+    expect(markup).not.toContain('aria-label="Paste link from clipboard"');
+    expect(markup).toContain('class="url-clear"');
   });
 });
 

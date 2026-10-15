@@ -10,9 +10,16 @@ import { AlertIcon, LinkIcon, RefreshIcon, Spinner } from './icons';
 import { Mascot, useExpression } from './Mascot';
 import type { FilterChoice, Options, State } from './types';
 
+/** What the clipboard's text means for the URL box: trimmed, or '' when there is nothing to paste */
+export function pasteValue(clipboard: string): string {
+  return clipboard.trim();
+}
+
 interface Props {
   state: State;
   onLoad: (url: string) => void;
+  /** The clipboard's text, read by the Paste button */
+  readClipboard: () => Promise<string>;
   /** The URL box's clear button: empties the field and forgets the loaded series */
   onClear: () => void;
   onOptions: (patch: Partial<Options>) => Promise<void>;
@@ -25,7 +32,17 @@ interface Props {
   optionError: string;
 }
 
-export function SourceBar({ state, onLoad, onClear, onOptions, onPick, onError, loadRefusal, optionError }: Props) {
+export function SourceBar({
+  state,
+  onLoad,
+  readClipboard,
+  onClear,
+  onOptions,
+  onPick,
+  onError,
+  loadRefusal,
+  optionError,
+}: Props) {
   // null until the user types: the field shows the backend's URL until then
   const [typed, setTyped] = useState<string | null>(null);
   const url = typed ?? state.url;
@@ -48,6 +65,21 @@ export function SourceBar({ state, onLoad, onClear, onOptions, onPick, onError, 
         onLoad(value.trim());
       }
     }, AUTO_LOAD_DELAY_MS);
+  };
+  const input = useRef<HTMLInputElement>(null);
+  // the pasted text goes through changeUrl like typed text, so it loads the same
+  // way; the field keeps the focus whether or not there was anything to paste
+  const paste = () => {
+    readClipboard()
+      .then((text) => {
+        const value = pasteValue(text);
+        // text typed while the clipboard was read wins over the paste
+        if (value !== '' && input.current?.value === '') {
+          changeUrl(value);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => input.current?.focus());
   };
   // each filter is stale on its own: only the one whose value differs from the
   // loaded list is flagged
@@ -83,6 +115,7 @@ export function SourceBar({ state, onLoad, onClear, onOptions, onPick, onError, 
           <div className={`url-box${problem !== '' ? ' invalid' : ''}`}>
             <LinkIcon className="url-icon" />
             <input
+              ref={input}
               type="url"
               className="url-input"
               aria-label="Series URL"
@@ -110,6 +143,17 @@ export function SourceBar({ state, onLoad, onClear, onOptions, onPick, onError, 
                 }}
               >
                 ×
+              </button>
+            )}
+            {url === '' && !busy && (
+              <button
+                type="button"
+                className="btn small ghost url-paste"
+                aria-label="Paste link from clipboard"
+                title="Paste link from clipboard"
+                onClick={paste}
+              >
+                Paste
               </button>
             )}
           </div>
