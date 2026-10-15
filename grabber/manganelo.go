@@ -85,8 +85,8 @@ const manganeloChaptersLimit = 9999
 // that appends the same page forever.
 const manganeloMaxChapterPages = 100
 
-// manganeloMaxConcurrency caps the user's concurrency: the image host answers
-// 429 to bursts. The family shares one platform and its cdns, so it's all domains.
+// manganeloMaxConcurrency caps the user's concurrency, as natomanga's image
+// host answers 429 to bursts; every family domain runs the same platform.
 var manganeloMaxConcurrency = MaxConcurrency{Chapters: 1, Pages: 2}
 
 // manganeloPagePacer spaces page requests evenly. It's shared by every
