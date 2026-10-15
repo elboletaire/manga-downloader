@@ -80,8 +80,9 @@ every browser the site cares about reads, so there are no PNG fallbacks.
   2000 px originals in the repo's [`assets/screenshots/`](../assets/screenshots/),
   at 600 and 1000 px wide.
   They are cut to the part that matters, so they stay readable at the
-  ~500 px they are shown at. Each gets the window's rounded corners and a soft
-  shadow on a transparent margin of 56 px.
+  ~500 px they are shown at. `language-selector` keeps the window's rounded corners; the others are cut to
+  the panel's own 1 px border box and radius (24 px on the original), so no window
+  background shows around them. Each gets a soft shadow on a transparent margin of 56 px.
 
 The files are converted offline and committed, so the build needs no image tools.
 The crop script is [`build/crop-screenshots.sh`](build/crop-screenshots.sh). The
@@ -89,15 +90,15 @@ geometry is `WxH+X+Y` on the 2000x1390 original, with the window's top-left at
 (85,56), so `03-language-selector-*.png` crops to `740x960+85+56`, the
 left-hand part of the window with the Language dropdown open, stopping short of
 the range box. The
-`finished-run` crop starts at x=1245, between the chapter list and the Activity
-panel, so no edge of the list shows in it:
+panel crops start on the panel's border (`finished-run` at x=1259, the Activity
+panel's left edge, so no edge of the list shows in it):
 
 | Crop                | Original                                | Geometry            |
 | ------------------- | --------------------------------------- | ------------------- |
 | `language-selector` | `03-language-selector-{light,dark}.png` | `740x960+85+56`     |
-| `chapter-list`      | `04-downloading-{light,dark}.png`       | `1150x885+100+390`  |
-| `volumes`           | `07-volumes-{light,dark}.png`           | `1150x885+100+390`  |
-| `finished-run`      | `05-done-{light,dark}.png`              | `670x830+1245+390`  |
+| `chapter-list`      | `04-downloading-{light,dark}.png`       | `1118x787+117+405`  |
+| `volumes`           | `07-volumes-{light,dark}.png`           | `1118x787+117+405`  |
+| `finished-run`      | `05-done-{light,dark}.png`              | `624x787+1259+405`  |
 
 To regenerate from the originals, run it with the repo's originals folder and an
 output folder, from `website/`:
