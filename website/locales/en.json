@@ -154,9 +154,11 @@
     "oldQ": "Old chapters are missing, or a warning says the range starts before the first chapter",
     "oldA": "Sites often delete old chapters. manga downloader can only download chapters that the site still lists.",
     "browserQ": "A browser window pops up",
-    "browserA": "That's expected for sites tagged <span class=\"site-badge\">browser</span> in the <a href=\"#sites\">list</a>. The window opens when the site shows a Cloudflare challenge or a captcha of its own, and you're told when it may need you. Checkboxes are clicked automatically, but some challenges need you to solve them yourself; the download carries on by itself afterwards.",
+    "browserA": "That's expected for sites tagged <span class=\"site-badge\">browser</span> in the <a href=\"#sites\">list</a>. The window opens when the site shows a Cloudflare challenge or a captcha of its own, and you're told when it may need you. Checkboxes are clicked automatically, but some challenges need you to solve them yourself; the download carries on by itself afterwards. In the app, an alert says the browser needs you, with <em>Show the browser window</em> to bring the window to the front. To open the window from the start instead, use <code>--browser-visible</code>, or <em>Show the browser window</em> under <em>Advanced</em> in the app's Options.",
+    "nobrowserQ": "No browser found",
+    "nobrowserA": "Sites tagged <span class=\"site-badge\">browser</span> need Google Chrome, Chromium, Brave or Edge installed in one of its usual places. To use another Chromium-based browser, set <code>MANGA_DOWNLOADER_BROWSER</code> to the full path of its executable (or a command on your <code>PATH</code>), for example <code>MANGA_DOWNLOADER_BROWSER=/usr/bin/brave-browser</code>. It works for the command line and the app alike; for the app, set it in the environment that starts it.",
     "ereaderQ": "Pages don't show up on my e-reader",
-    "ereaderA": "The site probably serves WebP images. Download the chapters again with <code>--convert-images avif,webp</code>.",
+    "ereaderA": "The site probably serves WebP images. Download the chapters again with <code>--convert-images avif,webp</code>. In the app, tick <em>WebP</em> under <em>Convert to JPEG</em>.",
     "unsupportedQ": "My site isn't supported",
     "unsupportedA": "Try it anyway: sites built on the same platforms as listed ones often work. If it doesn't, <a href=\"{{repo}}/issues\">open an issue</a> or send a pull request."
   },
