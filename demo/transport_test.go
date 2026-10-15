@@ -26,7 +26,7 @@ func loadFixtures(t *testing.T) *fixtures {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f, err := newFixtures(files)
+	f, err := newFixtures(files, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,11 +82,78 @@ func TestPagesArePlaceholderImages(t *testing.T) {
 
 	start := time.Now()
 	resp, body := get(t, f, page)
-	if elapsed := time.Since(start); elapsed < pageDelay {
-		t.Errorf("page answered after %v, want at least %v", elapsed, pageDelay)
+	if elapsed, want := time.Since(start), pageDelay(page); elapsed < want {
+		t.Errorf("page answered after %v, want at least %v", elapsed, want)
 	}
 	if resp.Header.Get("Content-Type") != "image/jpeg" || !bytes.HasPrefix(body, []byte{0xff, 0xd8, 0xff}) {
 		t.Errorf("page is not a JPEG: %s, %d bytes", resp.Header.Get("Content-Type"), len(body))
+	}
+}
+
+func TestPageDelayIsStableAndVaried(t *testing.T) {
+	urls := []string{
+		"https://inmanga.com/page/1.jpg",
+		"https://inmanga.com/page/2.jpg",
+		"https://inmanga.com/page/3.jpg",
+		"https://inmanga.com/page/4.jpg",
+		"https://inmanga.com/page/5.jpg",
+	}
+	seen := make(map[time.Duration]bool)
+	for _, u := range urls {
+		d := pageDelay(u)
+		if d != pageDelay(u) {
+			t.Errorf("pageDelay(%q) changed between calls", u)
+		}
+		if d < minPageDelay || d >= maxPageDelay {
+			t.Errorf("pageDelay(%q) = %v, want within [%v, %v)", u, d, minPageDelay, maxPageDelay)
+		}
+		seen[d] = true
+	}
+	if len(seen) < 2 {
+		t.Errorf("pageDelay gives %d distinct delays for %d URLs, want them to vary", len(seen), len(urls))
+	}
+}
+
+func TestParseDelayScale(t *testing.T) {
+	scale, err := parseDelayScale("")
+	if err != nil || scale != 1 {
+		t.Errorf("unset: got %v, %v, want 1", scale, err)
+	}
+	scale, err = parseDelayScale("0.4")
+	if err != nil || scale != 0.4 {
+		t.Errorf("0.4: got %v, %v, want 0.4", scale, err)
+	}
+
+	for _, raw := range []string{"abc", "0", "-1", "NaN", "Inf"} {
+		if _, err := parseDelayScale(raw); err == nil || !strings.Contains(err.Error(), delayEnv) {
+			t.Errorf("%q: got %v, want an error naming %s", raw, err, delayEnv)
+		}
+	}
+}
+
+func TestScaledPageDelay(t *testing.T) {
+	files, err := fs.Sub(fixtureFiles, "fixtures")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// well under minPageDelay, so the wait can only be the scaled one
+	f, err := newFixtures(files, 0.01)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var page string
+	for _, e := range f.entries {
+		if e.Image {
+			page = e.URL
+			break
+		}
+	}
+
+	want := time.Duration(float64(pageDelay(page)) * 0.01)
+	start := time.Now()
+	get(t, f, page)
+	if elapsed := time.Since(start); elapsed < want || elapsed >= minPageDelay {
+		t.Errorf("scaled page answered after %v, want at least %v and under %v", elapsed, want, minPageDelay)
 	}
 }
 
@@ -144,7 +211,7 @@ func TestRecordThenReplay(t *testing.T) {
 		t.Fatalf("manifest is not JSON: %s", raw)
 	}
 
-	replay, err := newFixtures(os.DirFS(dir))
+	replay, err := newFixtures(os.DirFS(dir), 1)
 	if err != nil {
 		t.Fatal(err)
 	}

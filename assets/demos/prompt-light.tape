@@ -21,7 +21,7 @@ Set PlaybackSpeed 3
 Set WaitTimeout 600s
 
 Hide
-Type 'export PATH="$PWD:$PATH" && mkdir -p /tmp/manga-downloader-demo/prompt && cd /tmp/manga-downloader-demo/prompt && rm -rf ./* && clear'
+Type 'export MANGA_DOWNLOADER_DEMO_DELAY=0.1 && export PATH="$PWD:$PATH" && mkdir -p /tmp/manga-downloader-demo/prompt && cd /tmp/manga-downloader-demo/prompt && rm -rf ./* && clear'
 Enter
 Show
 

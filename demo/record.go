@@ -73,7 +73,7 @@ func (r *recorder) RoundTrip(req *stdhttp.Request) (*stdhttp.Response, error) {
 		if err := r.save(e, nil); err != nil {
 			return nil, err
 		}
-		return placeholder(req)
+		return placeholder(req, 1)
 	}
 
 	// a redirect or an empty answer has no body worth a file

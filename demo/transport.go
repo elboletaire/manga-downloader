@@ -10,12 +10,15 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"image"
 	"image/jpeg"
 	"io"
 	"io/fs"
+	"math"
 	stdhttp "net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -25,9 +28,39 @@ import (
 //go:embed fixtures
 var fixtureFiles embed.FS
 
-// pageDelay is how long every page image takes to arrive. A fixed delay keeps
-// the progress bars moving without letting the runs drift apart.
-const pageDelay = 300 * time.Millisecond
+// Page delays fall in [minPageDelay, maxPageDelay). They're fixed per URL so
+// runs and the light/dark GIF twins stay identical, and varied so pages arrive
+// one by one instead of in lockstep.
+const (
+	minPageDelay = 1200 * time.Millisecond
+	maxPageDelay = 4800 * time.Millisecond
+)
+
+// delayEnv scales every page delay by a positive factor, so a tape can shorten
+// or stretch its downloads. Unset means 1
+const delayEnv = "MANGA_DOWNLOADER_DEMO_DELAY"
+
+// pageDelay is how long the page at url takes to arrive: the same URL always
+// gets the same delay
+func pageDelay(url string) time.Duration {
+	h := fnv.New64a()
+	h.Write([]byte(url))
+	span := uint64(maxPageDelay - minPageDelay)
+	return minPageDelay + time.Duration(h.Sum64()%span)
+}
+
+// parseDelayScale reads delayEnv's value: empty means 1, anything else must be
+// a finite positive number
+func parseDelayScale(raw string) (float64, error) {
+	if raw == "" {
+		return 1, nil
+	}
+	scale, err := strconv.ParseFloat(raw, 64)
+	if err != nil || math.IsNaN(scale) || math.IsInf(scale, 0) || scale <= 0 {
+		return 0, fmt.Errorf("demo: %s=%q, want a positive number such as 0.4", delayEnv, raw)
+	}
+	return scale, nil
+}
 
 // Install routes the CLI's requests through the fixtures, or through the live
 // sites while recording (see record.go). It's called from cmd's init.
@@ -45,7 +78,11 @@ func Install() {
 	if err != nil {
 		panic(err)
 	}
-	fixtures, err := newFixtures(files)
+	scale, err := parseDelayScale(os.Getenv(delayEnv))
+	if err != nil {
+		panic(err)
+	}
+	fixtures, err := newFixtures(files, scale)
 	if err != nil {
 		panic(err)
 	}
@@ -77,10 +114,13 @@ func key(method, url string) string {
 type fixtures struct {
 	files   fs.FS
 	entries map[string]entry
+	// scale multiplies every page delay, see delayEnv
+	scale float64
 }
 
-// newFixtures reads the manifest at the root of files
-func newFixtures(files fs.FS) (*fixtures, error) {
+// newFixtures reads the manifest at the root of files; scale multiplies the
+// page delays
+func newFixtures(files fs.FS, scale float64) (*fixtures, error) {
 	raw, err := fs.ReadFile(files, manifestName)
 	if err != nil {
 		return nil, err
@@ -90,7 +130,7 @@ func newFixtures(files fs.FS) (*fixtures, error) {
 		return nil, fmt.Errorf("demo: reading %s: %w", manifestName, err)
 	}
 
-	f := &fixtures{files: files, entries: make(map[string]entry, len(list))}
+	f := &fixtures{files: files, entries: make(map[string]entry, len(list)), scale: scale}
 	for _, e := range list {
 		f.entries[key(e.Method, e.URL)] = e
 	}
@@ -106,7 +146,7 @@ func (f *fixtures) RoundTrip(req *stdhttp.Request) (*stdhttp.Response, error) {
 		return nil, fmt.Errorf("demo: no fixture for %s %s (record it, see demo/README.md)", req.Method, req.URL)
 	}
 	if e.Image {
-		return placeholder(req)
+		return placeholder(req, f.scale)
 	}
 	var body []byte
 	if e.File != "" {
@@ -138,12 +178,14 @@ func response(req *stdhttp.Request, status int, location string, body []byte) *s
 	return resp
 }
 
-// placeholder answers a page image after pageDelay with the placeholder JPEG
-func placeholder(req *stdhttp.Request) (*stdhttp.Response, error) {
+// placeholder answers a page image after its pageDelay, scaled by scale, with
+// the placeholder JPEG
+func placeholder(req *stdhttp.Request, scale float64) (*stdhttp.Response, error) {
+	delay := time.Duration(float64(pageDelay(req.URL.String())) * scale)
 	select {
 	case <-req.Context().Done():
 		return nil, req.Context().Err()
-	case <-time.After(pageDelay):
+	case <-time.After(delay):
 	}
 	resp := response(req, stdhttp.StatusOK, "", placeholderJPEG())
 	resp.Header.Set("Content-Type", "image/jpeg")
