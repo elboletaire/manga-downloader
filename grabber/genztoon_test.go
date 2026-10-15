@@ -60,3 +60,37 @@ func TestGenzToonResolveSeriesURL(t *testing.T) {
 		}
 	})
 }
+
+func TestGenzToonTestHost(t *testing.T) {
+	for url, want := range map[string]bool{
+		"https://genztoons.org/series/x/":          true,
+		"https://genzupdates.com/series/x/":        true,
+		"https://example.com/series/x/":            false,
+		"https://www.genztoons.org/series/x/":      true,
+		"https://notgenztoons.org/series/x/":       false,
+		"https://genztoons.org.evil.com/series/x/": false,
+	} {
+		got, _ := NewGenzToon(&Grabber{URL: url}).Test()
+		if got != want {
+			t.Errorf("Test(%q) = %v, want %v", url, got, want)
+		}
+	}
+}
+
+func TestGenzToonFetchChaptersLocked(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `<html><body><h1>My Manga</h1><div id="chapters">
+			<a href="/chapter/b/" title="Chapter 12" c="50"><div><img src="https://api.iconify.design/material-symbols:lock.svg?color=white" class="w-6"></div>Chapter 12</a>
+			<a href="/chapter/a/" title="Chapter 11" c="1"><div></div>Chapter 11</a>
+		</div></body></html>`)
+	}))
+	defer srv.Close()
+
+	chapters, errs := NewGenzToon(&Grabber{URL: srv.URL + "/series/my-manga/"}).FetchChapters()
+	if len(errs) != 0 || len(chapters) != 2 {
+		t.Fatalf("chapters = %d, errs = %v", len(chapters), errs)
+	}
+	if !LockedOf(chapters[0]) || LockedOf(chapters[1]) {
+		t.Errorf("locked = [%v %v], want [true false]", LockedOf(chapters[0]), LockedOf(chapters[1]))
+	}
+}

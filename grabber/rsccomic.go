@@ -89,6 +89,7 @@ func (r *rscComic) FetchChapters() (chapters Filterables, errs []error) {
 					Number: c.Number,
 					Title:  chapterTitleOrDefault(c.Title, c.Number),
 					ID:     chapterURLID(uri),
+					Locked: c.IsLocked,
 				},
 				uri,
 			})
@@ -277,6 +278,8 @@ type rscComicSeriesPage struct {
 		Number float64 `json:"number"`
 		// null for most chapters, in which case the site renders "Chapter N"
 		Title string `json:"title"`
+		// coin-priced chapter a logged-out reader can't open
+		IsLocked bool `json:"isLocked"`
 	}
 	TotalPages int
 }

@@ -146,3 +146,17 @@ func TestRSCComicResolveSeriesURL(t *testing.T) {
 		}
 	}
 }
+
+func TestParseRSCComicSeriesPageLocked(t *testing.T) {
+	html := `<script>self.__next_f.push([1,"3:[\"$\",\"$L6c\",null,{\"series\":{\"id\":\"abc\",\"title\":\"S\",\"slug\":\"s\",\"chapterCount\":2},\"chapters\":[` +
+		`{\"id\":\"c146\",\"number\":146,\"title\":\"146\",\"isLocked\":true,\"coinPrice\":50,\"hasAccess\":false},` +
+		`{\"id\":\"c145\",\"number\":145,\"title\":\"145\",\"isLocked\":false,\"coinPrice\":0,\"earlyAccessUntil\":\"2020-01-01T00:00:00.000Z\"}],\"currentPage\":1,\"totalPages\":1}]\n"])</script>`
+
+	page, err := parseRSCComicSeriesPage(html)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(page.Chapters) != 2 || !page.Chapters[0].IsLocked || page.Chapters[1].IsLocked {
+		t.Errorf("chapters = %+v, want [locked free]", page.Chapters)
+	}
+}

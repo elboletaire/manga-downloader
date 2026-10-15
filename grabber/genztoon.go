@@ -12,8 +12,8 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// GenzToon is a grabber for genzupdates.com (Genz Toon). The chapters list is
-// plain, static HTML (all chapters are rendered server-side in a
+// GenzToon is a grabber for genztoons.org (Genz Toon, formerly
+// genzupdates.com). The chapters list is plain, static HTML (all chapters are rendered server-side in a
 // `#chapters` container, no pagination/ajax), but the reader page's page
 // images are lazy-loaded: each `<img class="myImage">` only carries a `uid`
 // attribute and a placeholder `src`, and the site's own inline JS builds the
@@ -39,8 +39,14 @@ type GenzToonChapter struct {
 	URL string
 }
 
-// genzToonHostRe matches genzupdates.com and its subdomains
-var genzToonHostRe = regexp.MustCompile(`(?i)(^|\.)genzupdates\.com$`)
+// genzToonHostRe matches genztoons.org and its former domain genzupdates.com
+// (which redirects there), subdomains included
+var genzToonHostRe = regexp.MustCompile(`(?i)(^|\.)(genztoons\.org|genzupdates\.com)$`)
+
+// genzToonLockSelector matches the lock icon a paid row overlays on its
+// thumbnail. The `c` attribute isn't a reliable price, and the lock-open
+// icon is a different file.
+const genzToonLockSelector = `img[src*="material-symbols:lock.svg"]`
 
 // genzToonChapterPathRe matches the /chapter/ path prefix of reader pages.
 var genzToonChapterPathRe = regexp.MustCompile(`(?i)^/chapter/`)
@@ -52,7 +58,7 @@ var genzToonSeriesPathRe = regexp.MustCompile(`(?i)^/series/`)
 // inline reader script, i.e. `https://cdn.meowing.org/uploads/${uid}`
 var genzToonImageBaseRe = regexp.MustCompile(`https://([\w.-]+)/uploads/\$\{uid\}`)
 
-// Test returns true if the URL is a genzupdates.com URL. It only checks the
+// Test returns true if the URL is a genztoons.org URL. It only checks the
 // hostname (no fetch) so it can be tried early without extra requests.
 func (g *GenzToon) Test() (bool, error) {
 	u, err := url.Parse(g.URL)
@@ -175,6 +181,7 @@ func (g *GenzToon) FetchChapters() (chapters Filterables, errs []error) {
 				Number: number,
 				Title:  title,
 				ID:     chapterURLID(href),
+				Locked: s.Find(genzToonLockSelector).Length() > 0,
 			},
 			href,
 		})
