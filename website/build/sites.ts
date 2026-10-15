@@ -54,12 +54,17 @@ export function parseSites(readme: string): Site[] {
 const escapeHTML = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 
-/** Title templates for the verified date; `{{date}}` is replaced. */
-export interface VerifiedLabels { on: string; failing: string }
-export const EN_VERIFIED: VerifiedLabels = { on: 'Last verified {{date}}', failing: 'Failing since {{date}}' }
+/** Labels for the verified line; `{{date}}` is replaced. */
+export interface VerifiedLabels { on: string; failing: string; unknown: string }
+export const EN_VERIFIED: VerifiedLabels = { on: 'Verified {{date}}', failing: 'Failing since {{date}}', unknown: 'Not checked' }
+
+/** Formats a README date (YYYY-MM-DD) for a locale, at build time so the page needs no JS and never goes stale. */
+export function formatDate(iso: string, locale = 'en'): string {
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`))
+}
 
 /** Renders the sites as `<li>`s; `data-search` is what the filter matches. */
-export function renderSites(sites: Site[], badge: BadgeLabels = EN_BADGE, verified: VerifiedLabels = EN_VERIFIED): string {
+export function renderSites(sites: Site[], badge: BadgeLabels = EN_BADGE, verified: VerifiedLabels = EN_VERIFIED, locale = 'en'): string {
   return sites
     .map((s) => {
       const search = `${s.domain} ${s.note}`.toLowerCase()
@@ -68,14 +73,18 @@ export function renderSites(sites: Site[], badge: BadgeLabels = EN_BADGE, verifi
         : ''
       const note = s.note ? `<span class="site-note">${escapeHTML(s.note)}</span>` : ''
       const v = s.verified
-      const title =
-        v.status === 'unknown'
-          ? ''
-          : ` title="${escapeHTML((v.status === 'ok' ? verified.on : verified.failing).replace('{{date}}', v.date))}"`
+      // The visible line is the accessible name too; the mark is decorative.
+      const date = v.status === 'unknown' ? '' : `<time datetime="${v.date}">${escapeHTML(formatDate(v.date, locale))}</time>`
+      const text = (v.status === 'ok' ? verified.on : v.status === 'failing' ? verified.failing : verified.unknown).replace('{{date}}', '\u0000')
+      const [before, after] = escapeHTML(text).split('\u0000')
+      const mark = { ok: '\u2713', failing: '\u2715', unknown: '' }[v.status]
+      const verifiedHtml =
+        `<span class="site-verified" data-verified="${v.status}">` +
+        `${mark ? `<span aria-hidden="true">${mark}</span> ` : ''}${before}${date}${after ?? ''}</span>`
       return (
-        `<li class="site" data-search="${escapeHTML(search)}"${s.browser ? ' data-browser' : ''}${title}>` +
+        `<li class="site" data-search="${escapeHTML(search)}"${s.browser ? ' data-browser' : ''}>` +
         `<a href="${escapeHTML(s.url)}" rel="nofollow noopener" target="_blank">` +
-        `<span class="site-domain">${escapeHTML(s.domain)}</span>${badgeHtml}</a>${note}</li>`
+        `<span class="site-domain">${escapeHTML(s.domain)}</span>${badgeHtml}</a>${note}${verifiedHtml}</li>`
       )
     })
     .join('\n')

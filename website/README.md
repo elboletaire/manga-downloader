@@ -28,8 +28,9 @@ pnpm preview   # serve dist/
   section of the repo's [`README.md`](../README.md) (`build/sites.ts`, wired in
   by the `site-data` plugin in `vite.config.ts`), so the list never drifts.
   The section is a table (`Site | Notes | Last verified`); rows marked `\*` get
-  the "browser" tag, and the last-verified date becomes the item's tooltip
-  (`sites.verified.*` in the locales; unchecked `—` rows get none). Its test
+  the "browser" tag, and the last-verified state becomes a small line under each item
+  (`sites.verified.*` in the locales; the date is formatted per language at build
+  time, and `—` rows read "not checked"). Its test
   checks the parsed count against the README's "Show all N supported sites" line.
 - **Download button**: `src/release.ts` (pure, tested) detects the OS and
   matches it against the assets of the latest GitHub release. If the API fails

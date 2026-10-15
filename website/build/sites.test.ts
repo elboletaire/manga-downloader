@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { parseSites, parseVerified, renderSites, EN_BADGE, EN_VERIFIED } from './sites'
+import { type Site, parseSites, parseVerified, renderSites, EN_BADGE, EN_VERIFIED } from './sites'
 
 const sample = `
 ## Features
@@ -76,10 +76,23 @@ describe('parseVerified', () => {
 
 describe('renderSites verified', () => {
   const base = { domain: 'a.com', note: '', url: 'https://a.com', browser: false }
-  it('titles the item with the date, and nothing when unknown', () => {
-    expect(renderSites([{ ...base, verified: { status: 'ok', date: '2026-10-15' } }])).toContain('title="Last verified 2026-10-15"')
-    expect(renderSites([{ ...base, verified: { status: 'failing', date: '2026-10-15' } }])).toContain('title="Failing since 2026-10-15"')
-    expect(renderSites([{ ...base, verified: { status: 'unknown' } }])).not.toContain('title=')
+  const line = (verified: Site['verified'], locale?: string) => renderSites([{ ...base, verified }], undefined, undefined, locale)
+  it('shows a visible, dated line with a machine-readable time', () => {
+    const ok = line({ status: 'ok', date: '2026-10-15' })
+    expect(ok).toContain('data-verified="ok"')
+    expect(ok).toContain('Verified <time datetime="2026-10-15">Oct 15, 2026</time>')
+    expect(ok).not.toContain('title=')
+    expect(line({ status: 'failing', date: '2026-10-01' })).toContain('Failing since <time datetime="2026-10-01">Oct 1, 2026</time>')
+  })
+  it('says "not checked" without a date for unknown', () => {
+    const html = line({ status: 'unknown' })
+    expect(html).toContain('data-verified="unknown"')
+    expect(html).toContain('Not checked')
+    expect(html).not.toContain('<time')
+  })
+  it('localizes the date and keeps it out of the filter text', () => {
+    expect(line({ status: 'ok', date: '2026-10-15' }, 'es')).toContain('15 oct 2026')
+    expect(line({ status: 'ok', date: '2026-10-15' })).toContain('data-search="a.com "')
   })
 })
 

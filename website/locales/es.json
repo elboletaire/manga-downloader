@@ -136,8 +136,9 @@
       "title": "Necesita Chrome, Chromium, Brave o Edge"
     },
     "verified": {
-      "on": "Última verificación: {{date}}",
-      "failing": "Falla desde {{date}}"
+      "on": "Verificado el {{date}}",
+      "failing": "Falla desde el {{date}}",
+      "unknown": "Sin comprobar"
     }
   },
   "faq": {
