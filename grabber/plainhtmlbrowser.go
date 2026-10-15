@@ -3,6 +3,7 @@
 package grabber
 
 import (
+	"errors"
 	"net/url"
 	"strings"
 	"time"
@@ -44,6 +45,9 @@ type BrowserSiteSelector struct {
 	// /serie/{slug}/chapter-N are resolved without a wasted browser render.
 	// 0 disables reconstruction.
 	SeriesPathDepth int
+	// Novel is a CSS selector for a marker that the series page is a novel,
+	// which has no images to download; Test refuses such a series.
+	Novel string
 }
 
 // browserSelectors is the list of sites that need browser rendering. Their
@@ -187,23 +191,25 @@ var browserSelectors = []BrowserSiteSelector{
 	},
 	// asmotoon.com (Asmodeus Scans): the whole domain sits behind a
 	// cloudflare challenge that headless doesn't pass, usually needs
-	// --browser-visible. Chapter rows are plain <a> children of #chapters.
-	// The reader lazy-loads pages, so most <img> keep a shared placeholder
-	// src until scrolled into view; the real per-page id is in the uid
-	// attribute (see getPlainHTMLImageURL), so src/data-src are only a
-	// fallback.
+	// --browser-visible. Series and chapters are both one path segment
+	// (/{slug}, /{slug}-chapter-N), so a chapter URL finds its series
+	// through the reader's "Back to series" link. Paid rows carry a coin chip
+	// (their reader serves no images logged out). Novels share the site; their
+	// "Type" box says NOVEL and their reader is text, so Novel refuses them.
 	{
 		SiteSelector: SiteSelector{
 			Title:        "h1",
-			Rows:         "#chapters > a",
-			Chapter:      ".text-sm.truncate",
-			ChapterTitle: ".text-sm.truncate",
-			Image:        "img.myImage",
+			Rows:         "a.chapter-row",
+			Chapter:      ".ch-title-full",
+			ChapterTitle: ".ch-title-full",
+			Image:        "#strip-reader img.reader-page",
+			SeriesLink:   `a[title="Back to series"]`,
+			Locked:       "[data-lock-chip]",
 		},
-		Domains:         []string{"asmotoon.com"},
-		ChaptersWait:    "#chapters > a",
-		ImageWait:       "img.myImage",
-		SeriesPathDepth: 2,
+		Domains:      []string{"asmotoon.com"},
+		ChaptersWait: "a.chapter-row",
+		ImageWait:    "#strip-reader",
+		Novel:        `span.text-violet-400:contains("NOVEL")`,
 	},
 	// templetoons.com (Temple Scan): Next.js RSC site behind a cloudflare
 	// Turnstile challenge (plain HTTP is redirected to /challenge), which a
@@ -329,6 +335,9 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 	m.rows = m.doc.Find(m.site.Rows)
 
 	if m.rows.Length() > 0 {
+		if m.selector.Novel != "" && m.doc.Find(m.selector.Novel).Length() > 0 {
+			return false, errors.New("this is a novel, which manga-downloader can't download")
+		}
 		m.URL = renderURL
 		return true, nil
 	}
@@ -351,6 +360,9 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 						if serr == nil {
 							seriesRows := seriesDoc.Find(m.site.Rows)
 							if seriesRows.Length() > 0 {
+								if m.selector.Novel != "" && seriesDoc.Find(m.selector.Novel).Length() > 0 {
+									return false, errors.New("this is a novel, which manga-downloader can't download")
+								}
 								m.URL = seriesURL
 								m.doc = seriesDoc
 								m.rows = seriesRows
