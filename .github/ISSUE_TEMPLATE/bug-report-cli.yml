@@ -10,7 +10,6 @@ body:
       options:
         - Binary from the releases page
         - Homebrew
-        - go install
         - Docker (elboletaire/manga-downloader)
         - Docker with the browser (elboletaire/manga-downloader:browser)
     validations:

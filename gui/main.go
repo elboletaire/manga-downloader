@@ -2,7 +2,7 @@
 
 // Command manga-downloader-gui is the desktop front end of the CLI. It lives
 // in its own module so the webview's cgo and its platform libraries never
-// reach `go install` of the CLI; see AGENTS.md.
+// reach the CLI's module; see the gui skill.
 package main
 
 import (

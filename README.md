@@ -278,16 +278,6 @@ docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
 
 </details>
 
-#### Go
-
-~~~bash
-go install github.com/elboletaire/manga-downloader@latest
-~~~
-
-> [!TIP]
-> Binaries installed this way don't report a version number, because the
-> version is only added to release builds.
-
 ## Using the desktop app
 
 Open the app and follow these steps:
