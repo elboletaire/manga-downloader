@@ -93,6 +93,7 @@ test/gui: build/gui/frontend
 # last), so parallel site-support branches never edit the same line
 grabber: \
 	grabber/3asq \
+	grabber/anikiga \
 	grabber/animeallstar1 \
 	grabber/animeallstar30 \
 	grabber/apothecary \
@@ -116,6 +117,7 @@ grabber: \
 	grabber/gdscans \
 	grabber/genztoon \
 	grabber/guya \
+	grabber/hachirumi \
 	grabber/heavenlydelusion \
 	grabber/heavenmanga \
 	grabber/hijala \
@@ -262,6 +264,9 @@ grabber/mangasushi:
 # scoping fix)
 grabber/gdscans:
 	go run . https://gdscans.com/manga/a-rank-boukensha-no-slow-life/ 50
+# another Madara site, handled by the Tcb grabber; its one-shots have no number
+grabber/anikiga:
+	go run . https://anikiga.com/manga/alma/ 5
 
 # another Madara wordpress site (Turkish). Its series page lists every row
 # under "<title> N" titles, which the PlainHTML li.wp-manga-chapter entry
@@ -379,6 +384,9 @@ grabber/vortexscans:
 # same guyamoe platform as guya.moe, different instance/domain
 grabber/danke:
 	go run . https://danke.moe/read/manga/100-girlfriends/ 251
+# recognised by its series API, not its domain
+grabber/hachirumi:
+	go run . https://hachirumi.com/read/manga/a-boy-and-his-crossdressing-older-brother/ 1
 # chapter pages are hosted on imgchest.com, not bigsolo.org itself
 grabber/bigsolo:
 	go run . https://bigsolo.org/wind-breaker 222
@@ -546,6 +554,7 @@ grabber/smuglo:
 
 grabber/html: \
 	grabber/adonisfansub \
+	grabber/anzmanga25 \
 	grabber/arenascan \
 	grabber/asura \
 	grabber/deathtollscans \
@@ -579,6 +588,8 @@ grabber/html: \
 	grabber/natsuone \
 	grabber/noranofansub \
 	grabber/nyraxmanga \
+	grabber/onma \
+	grabber/oremanga \
 	grabber/rackusreads \
 	grabber/ravenscans \
 	grabber/rawkuma \
@@ -701,6 +712,13 @@ grabber/sanascans:
 	go run . https://sanascans.com/series/my-beloved-daughter-is-a-villainess 11
 grabber/scanvf:
 	go run . https://www.scan-vf.net/jujutsu-kaisen-modulo 10
+# same CMS as scan-vf.net, with plain-number chapter URLs
+grabber/anzmanga25:
+	go run . https://www.anzmanga25.com/manga/1cfg7v-kagurabachi 100
+grabber/onma:
+	go run . https://onma.top/manga/black-clover 300
+grabber/oremanga:
+	go run . https://www.oremanga.net/series/blue-lock/ 300
 grabber/thunderscans:
 	go run . https://en-thunderscans.com/comics/full-time-awakening/ 108
 grabber/violetscans:
