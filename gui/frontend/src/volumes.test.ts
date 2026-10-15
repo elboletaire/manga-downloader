@@ -10,6 +10,7 @@ const ch = (number: number, volume = 0, index = number): Chapter => ({
   language: '',
   group: '',
   volume,
+  locked: false,
 });
 
 // chapters 1, 2 (vol 1), 2.5 (none), 3, 4 (vol 2), 5 (none), 6 (vol 4)

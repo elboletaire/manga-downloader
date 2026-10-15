@@ -28,6 +28,8 @@ type fakeChapter struct {
 	fail   map[int]bool
 	// volume is the volume the site lists the chapter under, 0 for none
 	volume int
+	// locked lists the chapter as paid
+	locked bool
 }
 
 // listing is a chapter as listed by the fake site
@@ -35,8 +37,10 @@ type listing struct {
 	number float64
 	title  string
 	volume int
+	locked bool
 }
 
+func (l listing) GetLocked() bool    { return l.locked }
 func (l listing) GetNumber() float64 { return l.number }
 func (l listing) GetVolume() int     { return l.volume }
 func (l listing) GetTitle() string   { return l.title }
@@ -64,7 +68,7 @@ func (f *fakeSite) FetchTitle() (string, error) {
 func (f *fakeSite) FetchChapters() (grabber.Filterables, []error) {
 	out := grabber.Filterables{}
 	for _, c := range f.chapters {
-		out = append(out, listing{number: c.number, title: fmt.Sprintf("Chapter %g", c.number), volume: c.volume})
+		out = append(out, listing{number: c.number, title: fmt.Sprintf("Chapter %g", c.number), volume: c.volume, locked: c.locked})
 	}
 	return out, nil
 }
@@ -713,5 +717,36 @@ func TestEventsNameTheReleaseWhenCopiesNeedAGroup(t *testing.T) {
 				t.Errorf("log = %q, want %q", got, want)
 			}
 		})
+	}
+}
+
+// a chapter the listing marks as paid is never selected, by any path
+func TestLockedChaptersCannotBeSelected(t *testing.T) {
+	list := chapters(5, 1)
+	list[1].locked = true
+	list[3].locked = true
+	c, _, _ := newTestController(t, false, nil, list...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.SetSelected(1, true); err != nil || c.IsSelected(1) {
+		t.Errorf("SetSelected selected a locked chapter (err %v)", err)
+	}
+	if err := c.SetSelectedMany([]int{0, 1, 2, 3}, true); err != nil {
+		t.Fatal(err)
+	}
+	if got := c.SelectedIndices(); len(got) != 2 || got[0] != 0 || got[1] != 2 {
+		t.Errorf("SetSelectedMany selected %v, want [0 2]", got)
+	}
+	c.SetAll(false)
+	c.SetAll(true)
+	if got := c.SelectedCount(); got != 3 {
+		t.Errorf("SetAll(true) selected %d, want 3", got)
+	}
+	c.SetAll(false)
+	n, err := c.SelectRange("1-5")
+	if err != nil || n != 3 || c.IsSelected(1) || c.IsSelected(3) {
+		t.Errorf("SelectRange = %d, %v; want 3 without the locked ones", n, err)
 	}
 }

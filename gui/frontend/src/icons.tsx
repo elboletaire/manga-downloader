@@ -91,6 +91,13 @@ export const PackageIcon = icon(
   </>,
 );
 
+export const LockIcon = icon(
+  <>
+    <rect x="5" y="11" width="14" height="9" rx="2" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </>,
+);
+
 export const LogIcon = icon(
   <>
     <path d="M4 6h16" />

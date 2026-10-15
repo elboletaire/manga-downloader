@@ -48,6 +48,9 @@ type tanstackChapter struct {
 	Number float64 `json:"number"`
 	Slug   string  `json:"slug"`
 	Title  string  `json:"title"`
+	// IsLocked is the site's own lock summary (coins, early access, short link)
+	IsLocked          bool `json:"isLocked"`
+	IsShortLinkLocked bool `json:"isShortLinkLocked"`
 }
 
 var (
@@ -108,6 +111,9 @@ func (t *tanstackComic) FetchChapters() (chapters Filterables, errs []error) {
 				Number: c.Number,
 				Title:  chapterTitleOrDefault(c.Title, c.Number),
 				ID:     c.Slug,
+				// a short-link lock may still open to a reader (none is live to
+				// check), so only the other locks fail a chapter unfetched
+				Locked: c.IsLocked && !c.IsShortLinkLocked,
 			},
 			c.Slug,
 		})
@@ -148,6 +154,7 @@ func (t *tanstackComic) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:   f.GetNumber(),
 		Language: "en",
 		ID:       tchap.Slug,
+		Locked:   tchap.Locked,
 	}
 
 	doc.Find("img[data-reader-page-image]").Each(func(i int, s *goquery.Selection) {

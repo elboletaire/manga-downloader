@@ -131,7 +131,7 @@ func Run(cmd *cobra.Command, args []string) {
 	// ranges argument is not provided
 	if len(args) == 1 {
 		prompt := promptui.Prompt{
-			Label:     fmt.Sprintf("Do you want to download all %d chapters", len(chapters)),
+			Label:     allChaptersLabel(chapters),
 			IsConfirm: true,
 		}
 
@@ -165,6 +165,16 @@ func Run(cmd *cobra.Command, args []string) {
 
 	if len(chapters) == 0 {
 		yellow("No chapters found for the specified ranges")
+		exit(1)
+	}
+
+	// paid chapters can't be read logged out: leave them out instead of failing each
+	chapters, lockedNote := skipLocked(chapters)
+	if lockedNote != "" {
+		yellow("%s", lockedNote)
+	}
+	if len(chapters) == 0 {
+		yellow("Every chapter matched by the specified ranges is paid and locked")
 		exit(1)
 	}
 
@@ -463,4 +473,30 @@ func toMetaFunc(c *color.Color) func(string) string {
 	return func(s string) string {
 		return c.Sprint(s)
 	}
+}
+
+// allChaptersLabel is the prompt for downloading every listed chapter, which
+// says how many of them the listing marks as paid and locked
+func allChaptersLabel(chapters grabber.Filterables) string {
+	label := fmt.Sprintf("Do you want to download all %d chapters", len(chapters))
+	locked := 0
+	for _, c := range chapters {
+		if grabber.LockedOf(c) {
+			locked++
+		}
+	}
+	if locked > 0 {
+		label += fmt.Sprintf(" (%d paid and locked, skipped)", locked)
+	}
+	return label
+}
+
+// skipLocked drops the chapters the listing marks as paid, returning the rest
+// and the line that says which were left out ("" when none were)
+func skipLocked(chapters grabber.Filterables) (grabber.Filterables, string) {
+	open, locked := core.SplitLocked(chapters)
+	if len(locked) == 0 {
+		return chapters, ""
+	}
+	return open, core.LockedMessage(locked)
 }

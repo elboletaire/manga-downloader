@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { extendsSpan, moveActive, spanIndices } from './listKeys';
+import { extendsSpan, moveActive, pickable, spanIndices } from './listKeys';
+import type { Chapter } from './types';
 
 describe('moveActive', () => {
   it('steps with the arrows, clamped to the list', () => {
@@ -43,5 +44,21 @@ describe('extendsSpan', () => {
     expect(extendsSpan('ArrowDown', false)).toBe(false);
     expect(extendsSpan('PageDown', true)).toBe(false);
     expect(extendsSpan(' ', true)).toBe(false);
+  });
+});
+
+describe('pickable', () => {
+  it('leaves out the locked chapters, keeping the order', () => {
+    const ch = (index: number, locked: boolean): Chapter => ({
+      index,
+      number: index,
+      title: '',
+      language: '',
+      group: '',
+      volume: 0,
+      locked,
+    });
+    expect(pickable([ch(0, false), ch(1, true), ch(2, false)]).map((c) => c.index)).toEqual([0, 2]);
+    expect(pickable([ch(0, true)])).toEqual([]);
   });
 });

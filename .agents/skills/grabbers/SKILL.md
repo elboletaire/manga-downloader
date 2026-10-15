@@ -12,7 +12,8 @@ Read this for any site or grabber work: adding, fixing, debugging, investigating
 3. If the site lists several scanlation groups' releases of a chapter, follow the "Scanlation groups" bullet under "The grabber package" below.
 4. Keep `Test()` markup-based, per the rule at the end of "Investigating a new site".
 5. Add the smoke target, the README "Supported sites" line (and bump both counts: the features-list bullet and "Show all N") and, for plain-HTTP grabbers, the CI matrix entry in `.github/workflows/smoke.yaml`.
-6. Verify with `tools/verify-cbz` on the downloaded archives, not just the smoke target's exit code.
+6. Check whether the listing marks paid, premium or early-access chapters and, if so, set `Chapter.Locked` (see "Locked (paid) chapters" below).
+7. Verify with `tools/verify-cbz` on the downloaded archives, not just the smoke target's exit code.
 
 ### Investigating a new site
 
@@ -41,6 +42,7 @@ Then:
   - **Cached listings**: add `Refilterable` when the chapter list is served from a cache on a second call, so another language doesn't re-walk the site (the app caches the listing per language itself, so a group change never refetches).
   - **`PlainHTML` multi-upload rows**: a `SiteSelector` whose chapter row lists several uploads sets `Uploads` (a selector for each upload's sub-row), `UploadLink` and `UploadGroup` (both searched inside the sub-row; `UploadGroup` must match a single upload's group) and optionally `IDRe` (its first capture of the upload URL becomes `Chapter.ID`). Each sub-row becomes its own chapter, and a row with no link in any sub-row falls back to its own link (zonatmo).
   - **Default `ID`**: without `IDRe`, every `PlainHTML`/`PlainHTMLBrowser` chapter's `ID` is its URL's path and query (`ChapterQuery` excluded).
+- **Locked (paid) chapters**: when the listing says a chapter is paid (coins, premium, early access), `FetchChapters` sets `Chapter.Locked` on it. The CLI and app leave locked chapters out before downloading (`core.SplitLocked`; the app won't select them), and `core.Download` still fails one with `core.ErrLocked` unfetched as a safety net. Set it only for chapters a logged-out reader can't open, from a flag the listing states, as `tanstackComic` does from `isLocked` (a short-link lock is left out: no live example to check): an early-access chapter whose timer ran out and is free now must not be flagged. A reader with no images proves nothing, and `mangaplus`'s `locked()` is a guess, so neither sets it. Adding a site includes checking whether its listing marks paid chapters.
 - **`Test()` should decide from the URL alone, not fetch.** When a fetch is genuinely needed (as in `PlainHTML` and `tcb`), set `DisableRetry: true` on that request so an unrecognised or unreachable site fails immediately instead of burning retry attempts.
 - **Rate-limited image servers**: a grabber can override `GetMaxConcurrency()` to cap (never raise) the user's concurrency, and implement `PagePacer` (`WaitPage()`, called by `downloader.FetchChapter` before every page request, retries included) to space requests out. Concurrency alone doesn't bound the rate: cached images come back in ~50ms. `mangadex` does both, after its MD@Home Cloudflare front started answering 429 (error 1015, `Retry-After` up to 60s) at about 1000 requests a minute. 429s on pages are retried after the server's `Retry-After` (`downloader.retryWait`).
 - **The two selector lists are the source of truth for which sites are covered** — they drift constantly, so read them rather than any list in these guides.

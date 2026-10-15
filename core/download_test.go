@@ -616,3 +616,92 @@ func TestDownloadNilEventsAreIgnored(t *testing.T) {
 		t.Fatalf("Download with nil events: %v", err)
 	}
 }
+
+// failures records the errors FetchFailed reports, by chapter number
+type failures struct {
+	NoEvents
+	errs map[float64]error
+}
+
+func (f *failures) FetchFailed(l grabber.Filterable, err error) {
+	f.errs[l.GetNumber()] = err
+}
+
+// a chapter the listing marks as locked fails before its reader page is
+// fetched, in both modes (bundle mode also counts pages before downloading),
+// and the rest of the run goes on
+func TestDownloadLockedChapterFailsUnfetched(t *testing.T) {
+	for _, bundle := range []bool{false, true} {
+		site := newFakeSite(t,
+			fakeChapter{number: 1, pages: 1},
+			fakeChapter{number: 2, pages: 1},
+		)
+		series, dir := newSeries(t, site, bundle)
+		ev := &failures{errs: map[float64]error{}}
+		chapters := listed(site)
+		chapters[0].(*grabber.Chapter).Locked = true
+
+		if _, err := series.Download(context.Background(), chapters, nil, "", ev); err != nil {
+			t.Fatalf("bundle=%v: Download: %v", bundle, err)
+		}
+
+		if got := site.served[1]; got != 0 {
+			t.Errorf("bundle=%v: locked chapter was fetched %d times, want 0", bundle, got)
+		}
+		if err := ev.errs[1]; !errors.Is(err, ErrLocked) {
+			t.Errorf("bundle=%v: chapter 1 failed with %v, want ErrLocked", bundle, err)
+		}
+		if _, ok := ev.errs[2]; ok {
+			t.Errorf("bundle=%v: chapter 2 failed: %v", bundle, ev.errs[2])
+		}
+		if !bundle {
+			if got := cbzFiles(t, dir); len(got) != 1 {
+				t.Errorf("bundle=%v: wrote %q, want chapter 2's archive alone", bundle, got)
+			}
+		}
+	}
+}
+
+// a locked chapter inside a volume is never fetched, yet the volume is packed
+// from the others and its progress still reaches 1
+func TestDownloadLockedChapterInVolume(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 1},
+		fakeChapter{number: 2, pages: 2},
+	)
+	series, dir := newSeries(t, site, false)
+	site.Settings.Volumes = "1-2"
+	rec := &recorder{}
+	chapters := listed(site)
+	chapters[0].(*grabber.Chapter).Locked = true
+
+	if _, err := series.Download(context.Background(), chapters, nil, "", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	if got := site.served[1]; got != 0 {
+		t.Errorf("locked chapter was fetched %d times, want 0", got)
+	}
+	if got := rec.count("fetch-failed 1"); got != 1 {
+		t.Errorf("want fetch-failed for chapter 1: %q", rec.events)
+	}
+	if got := rec.count("volume-packed 1 "); got != 1 {
+		t.Errorf("want volume 1 packed: %q", rec.events)
+	}
+	var last string
+	for _, e := range rec.events {
+		if strings.HasPrefix(e, "volume-progress 1 ") {
+			last = e
+		}
+	}
+	if last != "volume-progress 1 1.000" {
+		t.Errorf("last volume progress %q, want 1.000", last)
+	}
+	files := cbzFiles(t, dir)
+	if len(files) != 1 {
+		t.Fatalf("wrote %q, want the volume alone", files)
+	}
+	if entries := zipEntries(t, files[0]); len(entries) != 2 {
+		t.Errorf("volume holds %q, want chapter 2's 2 pages", entries)
+	}
+}

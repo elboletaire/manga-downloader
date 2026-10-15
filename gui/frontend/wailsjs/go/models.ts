@@ -7,6 +7,7 @@ export namespace main {
 	    language: string;
 	    group: string;
 	    volume: number;
+	    locked: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new ChapterDTO(source);
@@ -20,6 +21,7 @@ export namespace main {
 	        this.language = source["language"];
 	        this.group = source["group"];
 	        this.volume = source["volume"];
+	        this.locked = source["locked"];
 	    }
 	}
 	export class FilterDTO {

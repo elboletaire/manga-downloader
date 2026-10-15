@@ -222,3 +222,38 @@ func TestTanstackComicResolveSeriesURL(t *testing.T) {
 		}
 	}
 }
+
+// a series page with free chapters, a coin-locked one, a permanently locked
+// one and one only a short link locks
+const tanstackLockedFixture = `$R[1]={id:1,slug:"series",postTitle:"Winning Shot"},` +
+	`initialChapters:$R[2]=[` +
+	`$R[3]={id:2,slug:"chapter-2",number:2,title:"2",price:0,isPermanentlyLocked:!1,isLockedByCoins:!1,isShortLinkLocked:!1,isLocked:!1},` +
+	`$R[4]={id:3,slug:"chapter-1",number:1,title:"1",price:0,isPermanentlyLocked:!1,isLockedByCoins:!1,isShortLinkLocked:!1,isLocked:!1},` +
+	`$R[5]={id:4,slug:"chapter-3",number:3,title:"3",price:100,isPermanentlyLocked:!0,isLockedByCoins:!0,isShortLinkLocked:!1,isLocked:!0},` +
+	`$R[6]={id:5,slug:"chapter-4",number:4,title:"4",price:0,isPermanentlyLocked:!1,isLockedByCoins:!1,isShortLinkLocked:!0,isLocked:!0}` +
+	`],totalChapterCount:4`
+
+func TestTanstackListingLocks(t *testing.T) {
+	series, err := parseTanstackSeries(tanstackLockedFixture)
+	if err != nil {
+		t.Fatalf("parseTanstackSeries: %v", err)
+	}
+	// the series is cached, so no request is made
+	g := &tanstackComic{Grabber: &Grabber{URL: "https://en-hijala.com/series/winning-shot!"}, series: series}
+
+	chapters, errs := g.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("FetchChapters: %v", errs)
+	}
+
+	want := map[string]bool{"chapter-1": false, "chapter-2": false, "chapter-3": true, "chapter-4": false}
+	if len(chapters) != len(want) {
+		t.Fatalf("got %d chapters, want %d", len(chapters), len(want))
+	}
+	for _, c := range chapters {
+		slug := c.(*TanstackChapter).Slug
+		if got := LockedOf(c); got != want[slug] {
+			t.Errorf("LockedOf(%s) = %v, want %v", slug, got, want[slug])
+		}
+	}
+}

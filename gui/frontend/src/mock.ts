@@ -14,7 +14,8 @@
 // the load ends. &freeze stops the simulated run from moving (stable
 // screenshots), &dupes lists some numbers twice in two languages, &chapters=N
 // shows the newest N chapters, &novolumes lists no volumes (the series
-// otherwise files its chapters by their real One Piece volume), &fail makes
+// otherwise files its chapters by their real One Piece volume), &locked marks
+// some chapters paid and locked (see below), &fail makes
 // the fourth chapter fail halfway and &skip makes the sixth one come out
 // skipped, every page excluded by --skip-pages (both off by default; every run
 // saves every chapter without them), &epub starts the output as EPUB, &shot
@@ -31,6 +32,8 @@
 // group the series doesn't list falls back on load, as the backend does: typed
 // "xx" under multi loads "all", under plus the edition the URL points at.
 // Typed values match ignoring case, and take the spelling the series lists.
+// &locked lists every 50th chapter as paid and locked: the list shows its lock
+// and never selects it, as the backend does.
 
 import type { Api, Unsubscribe } from './api';
 import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary, Update } from './types';
@@ -83,6 +86,8 @@ export interface MockSetup {
   fail: boolean;
   /** The sixth chapter comes out skipped (every page excluded by --skip-pages) */
   skip: boolean;
+  /** Every 50th chapter is listed as paid and locked */
+  locked: boolean;
   /** Use production release versions and a macOS output path (for screenshots) */
   shot: boolean;
   /** Start with EPUB as the output format */
@@ -141,6 +146,7 @@ export function mockSetupFrom(search: string): MockSetup {
     novolumes: params.has('novolumes'),
     fail: params.has('fail'),
     skip: params.has('skip'),
+    locked: params.has('locked'),
     shot: params.has('shot'),
     epub: params.has('epub'),
   };
@@ -169,19 +175,28 @@ function defaultOptions(shot: boolean, epub: boolean): Options {
  * Volume 0 means not yet collected. With withLanguages, some chapters also
  * appear in English to simulate a multi-language listing.
  */
-function mockChapters(count: number, withLanguages: boolean, withVolumes = true): Chapter[] {
+function mockChapters(count: number, withLanguages: boolean, withVolumes = true, withLocked = false): Chapter[] {
   const list: Chapter[] = [];
   const source =
     count >= OP_CHAPTERS.length ? OP_CHAPTERS : OP_CHAPTERS.slice(OP_CHAPTERS.length - count);
 
   for (const [number, catTitle, vol] of source) {
     const volume = withVolumes ? vol : 0;
-    list.push({ index: list.length, number, title: catTitle, language: withLanguages ? 'ca' : '', group: '', volume });
+    const locked = withLocked && isMockLocked(number);
+    list.push({ index: list.length, number, title: catTitle, language: withLanguages ? 'ca' : '', group: '', volume, locked });
     if (withLanguages && number % 5 === 0) {
-      list.push({ index: list.length, number, title: catTitle, language: 'en', group: '', volume });
+      list.push({ index: list.length, number, title: catTitle, language: 'en', group: '', volume, locked });
     }
   }
   return list;
+}
+
+/** The error a locked chapter fails with, as core.ErrLocked says it */
+const LOCKED_REASON = 'locked: paid chapter';
+
+/** Every 50th chapter is paid and locked (a listing's coin lock), so a few show in dev. */
+function isMockLocked(number: number): boolean {
+  return number % 50 === 0;
 }
 
 /** Every chapter by Alpha, and every fifth again by Delta, so a number repeats in one language. */
@@ -224,6 +239,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     novolumes,
     fail,
     skip,
+    locked,
     shot,
     epub,
   } = {
@@ -235,6 +251,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     novolumes: false,
     fail: false,
     skip: false,
+    locked: false,
     shot: false,
     epub: false,
     ...(typeof setup === 'string' ? { scenario: setup } : setup),
@@ -360,7 +377,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     fallbackFor('language', 'language');
     fallbackFor('scanlator', 'scanlation group');
     title = 'One Piece';
-    chapters = mockChapters(chapterCount, dupes || url.includes('dupes') || options.language === 'all', !novolumes);
+    chapters = mockChapters(chapterCount, dupes || url.includes('dupes') || options.language === 'all', !novolumes, locked);
     if (offers.scanlator !== null) {
       chapters = groupedChapters(chapters);
     }
@@ -495,6 +512,28 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     const active = jobs.filter((j) => !j.volume && (j.state === 'downloading' || j.state === 'archiving')).length;
     if (!cancelling && active < 3 && pending.length > 0) {
       const c = pending.shift()!;
+      if (c.locked) {
+        // as the backend's FetchFailed: a listed lock fails before any fetch,
+        // with a row unless the run is a bundle
+        if (!runBundle) {
+          jobs = [
+            ...jobs,
+            {
+              title: c.title,
+              tags: '',
+              number: c.number,
+              total: 0,
+              done: 0,
+              state: 'failed',
+              reason: LOCKED_REASON,
+              status: '',
+              volume: false,
+            },
+          ];
+        }
+        pushLog('error', `error fetching ${c.title}: ${LOCKED_REASON}`);
+        return true;
+      }
       if (skip && jobs.filter((j) => !j.volume).length === 5) {
         // as the backend's Skipped event: a row with nothing to download
         jobs = [
@@ -630,11 +669,10 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   } else if (scenario !== 'empty') {
     url = 'https://example.com/manga/one-piece';
     finishLoad();
-    for (const c of chapters.slice(0, 12)) {
-      selected.add(c.index);
-    }
-    for (const c of chapters.slice(40, 52)) {
-      selected.add(c.index);
+    for (const c of [...chapters.slice(0, 12), ...chapters.slice(40, 52)]) {
+      if (!c.locked) {
+        selected.add(c.index);
+      }
     }
     selectionBus.emit(selectionOf());
   }
@@ -654,7 +692,12 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   if (scenario === 'volumes' || scenario === 'volumes-running') {
     options.packAs = 'volumes';
     // three volumes and a half: the first 32 chapters (598-629) span volumes 61-64
-    selected = new Set(chapters.slice(0, Math.min(32, chapters.length)).map((c) => c.index));
+    selected = new Set(
+      chapters
+        .slice(0, Math.min(32, chapters.length))
+        .filter((c) => !c.locked)
+        .map((c) => c.index),
+    );
     selectionBus.emit(selectionOf());
   }
   if (scenario === 'volumes-running') {
@@ -772,9 +815,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       if (index < 0 || index >= chapters.length) {
         return;
       }
-      if (on) {
+      if (on && !chapters[index].locked) {
         selected.add(index);
-      } else {
+      } else if (!on) {
         selected.delete(index);
       }
       selectionBus.emit(selectionOf());
@@ -789,7 +832,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       }
       for (const index of indices) {
         if (on) {
-          selected.add(index);
+          if (!chapters[index].locked) {
+            selected.add(index);
+          }
         } else {
           selected.delete(index);
         }
@@ -801,7 +846,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       if (loading || running) {
         throw 'a series is loading or a download is running';
       }
-      selected = new Set(on ? chapters.map((c) => c.index) : []);
+      selected = new Set(on ? chapters.filter((c) => !c.locked).map((c) => c.index) : []);
       selectionBus.emit(selectionOf());
       push();
     },
@@ -820,7 +865,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         }
         const hi = b ?? a;
         for (const c of chapters) {
-          if (c.number >= a && c.number <= hi) {
+          if (c.number >= a && c.number <= hi && !c.locked) {
             matched.push(c.index);
           }
         }

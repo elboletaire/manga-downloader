@@ -296,7 +296,8 @@ Open the app and follow these steps:
    button). The app loads the series on its own, without a button.
 2. **Pick chapters** in the list. Type a range such as `1-10,12` and press
    *Add range*, Shift+click to select a span, or use *All* and *None*. The
-   arrow keys and Space work too.
+   arrow keys and Space work too. Paid chapters the site
+   locks (coins or early access) show a lock and can't be selected.
 3. **Choose a language and a scanlation group** when the site offers them. The
    selectors tell you when a series has none, and picking one reloads the
    chapter list. Sites that support it also offer *All*.
@@ -371,6 +372,8 @@ manga-downloader [flags] [url] [chapters]
 - `chapters` is a comma-separated list of numbers and ranges, such as
   `1,3,5-10`. If you leave it out, the tool asks whether to download every
   chapter. The answer defaults to "no".
+  Paid chapters the site marks as locked (coins or early access) are skipped,
+  with a line saying which.
 
 Arguments aren't positional, so `manga-downloader 1-50 [url]` works too.
 

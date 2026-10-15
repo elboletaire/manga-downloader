@@ -420,6 +420,7 @@ describe('mockSetupFrom', () => {
       novolumes: false,
       fail: false,
       skip: false,
+      locked: false,
       shot: false,
       epub: false,
     });
@@ -427,6 +428,7 @@ describe('mockSetupFrom', () => {
     expect(mockSetupFrom('?chapters=nope').chapters).toBeGreaterThan(100);
     expect(mockSetupFrom('?fail').fail).toBe(true);
     expect(mockSetupFrom('?skip').skip).toBe(true);
+    expect(mockSetupFrom('?locked').locked).toBe(true);
     expect(mockSetupFrom('?shot').shot).toBe(true);
     expect(mockSetupFrom('?epub').epub).toBe(true);
   });
@@ -513,5 +515,37 @@ describe('mock filters', () => {
     expect((await api.state()).stale).toBe(false);
     await reload;
     expect((await api.state()).stale).toBe(false);
+  });
+});
+
+describe('mock locked chapters', () => {
+  it('lists none by default, and every 50th chapter with &locked', async () => {
+    const plain = await createMockApi({ scenario: 'loaded' }).chapters();
+    expect(plain.some((c) => c.locked)).toBe(false);
+
+    const locked = (await createMockApi({ scenario: 'loaded', locked: true }).chapters()).filter((c) => c.locked);
+    expect(locked.length).toBeGreaterThan(0);
+    expect(locked.every((c) => c.number % 50 === 0)).toBe(true);
+  });
+
+  it('never selects a locked chapter, by click, span, All or range', async () => {
+    const api = createMockApi({ scenario: 'empty', locked: true });
+    await api.load('https://example.com/manga/one-piece');
+    const list = await api.chapters();
+    const paid = list.filter((c) => c.locked).map((c) => c.index);
+    expect(paid.length).toBeGreaterThan(0);
+
+    await api.setSelected(paid[0], true);
+    await api.setSelectedMany(paid, true);
+    expect(await api.selection()).toEqual([]);
+
+    await api.setAll(true);
+    expect((await api.selection()).length).toBe(list.length - paid.length);
+    expect((await api.selection()).some((i) => paid.includes(i))).toBe(false);
+
+    await api.setAll(false);
+    const first = list[0].number;
+    const n = await api.selectRange(`${first}-${list[list.length - 1].number}`);
+    expect(n).toBe(list.length - paid.length);
   });
 });

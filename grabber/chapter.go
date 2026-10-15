@@ -55,6 +55,10 @@ type Chapter struct {
 	// Volume is the volume the site files the chapter under, 0 when it
 	// doesn't say (or says something that isn't a whole number)
 	Volume int
+	// Locked is set when the listing marks the chapter as paid (coins, early
+	// access): a logged-out reader gets no pages, so it's failed unfetched.
+	// Only grabbers whose listing says so set it
+	Locked bool
 }
 
 // Page represents a chapter page
@@ -109,6 +113,11 @@ func (c *Chapter) SetGroups(names ...string) {
 // GetVolume returns the chapter's volume, 0 when unknown
 func (c Chapter) GetVolume() int {
 	return c.Volume
+}
+
+// GetLocked reports whether the listing marks the chapter as paid
+func (c Chapter) GetLocked() bool {
+	return c.Locked
 }
 
 // GetLanguage returns the chapter language

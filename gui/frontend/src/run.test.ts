@@ -159,6 +159,7 @@ describe('downloadLabel', () => {
       language: '',
       group: '',
       volume: 0,
+      locked: false,
     }));
     const from = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, i) => first - 1 + i);
 
