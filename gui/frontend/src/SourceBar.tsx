@@ -5,7 +5,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { AUTO_LOAD_DELAY_MS, shouldAutoLoad } from './autoLoad';
 import { SelectField, TextField } from './fields';
-import { filterControl, filtersIdentified, filterOptions, shownSelection, type FilterControl, type FilterKind } from './filters';
+import {
+  filterControl,
+  filterPlaceholder,
+  filtersIdentified,
+  filterOptions,
+  sameFilter,
+  shownSelection,
+  typedValue,
+  type FilterControl,
+  type FilterKind,
+} from './filters';
 import { AlertIcon, LinkIcon, RefreshIcon, Spinner } from './icons';
 import { Mascot, useExpression } from './Mascot';
 import type { FilterChoice, Options, State } from './types';
@@ -87,8 +97,8 @@ export function SourceBar({
   // selector, and a picked value reloads at once, so the filters are never
   // left unapplied
   const identified = filtersIdentified(state);
-  const languageStale = state.loaded && state.options.language !== state.loadedLanguage;
-  const scanlatorStale = state.loaded && state.options.scanlator !== state.loadedScanlator;
+  const languageStale = state.loaded && !sameFilter('language', state.options.language, state.loadedLanguage);
+  const scanlatorStale = state.loaded && !sameFilter('scanlator', state.options.scanlator, state.loadedScanlator);
   // a pick is applied with the reload of the series, in one step (see onPick)
   const pick = (patch: Partial<Options>) => {
     void onPick(patch);
@@ -272,8 +282,8 @@ function FilterField({
       <TextField
         className="inline-field"
         label={label}
-        value={typed}
-        placeholder="any"
+        value={typedValue(kind, typed)}
+        placeholder={filterPlaceholder(kind)}
         disabled={busy}
         flagged={flagged}
         onCommit={(value) => onOptions(kind === 'language' ? { language: value } : { scanlator: value })}
@@ -289,7 +299,7 @@ function FilterField({
         className="inline-field"
         label={label}
         value=""
-        placeholder="any"
+        placeholder={filterPlaceholder(kind)}
         disabled
         hint={kind === 'language' ? 'This site has no language choice' : 'This site has no scanlation groups to choose from'}
         onCommit={() => Promise.resolve()}

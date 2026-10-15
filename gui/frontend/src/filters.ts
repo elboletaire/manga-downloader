@@ -28,6 +28,25 @@ export function filtersIdentified(state: Pick<State, 'loaded' | 'loadError'>): b
 // which BCP 47 writes "es-419" (read as is, "la" is the region of Laos)
 const LANGUAGE_TAGS: Record<string, string> = { 'es-la': 'es-419' };
 
+/**
+ * A filter value as the free-text field shows it. "all" and empty are the same
+ * scanlator filter, so the field stays empty (placeholder) for both; a language
+ * keeps "all", as empty there is the site's own default.
+ */
+export function typedValue(kind: FilterKind, value: string): string {
+  return kind === 'scanlator' && value.toLowerCase() === FILTER_ALL ? '' : value;
+}
+
+/** Whether two values of one filter select the same thing */
+export function sameFilter(kind: FilterKind, a: string, b: string): boolean {
+  return typedValue(kind, a) === typedValue(kind, b);
+}
+
+/** The free-text placeholder: empty means no scanlator filter, or the site's default language */
+export function filterPlaceholder(kind: FilterKind): string {
+  return kind === 'scanlator' ? 'any' : 'site default';
+}
+
 /** How a filter is shown: free text, a selector of the series' values, or disabled */
 export type FilterControl = 'text' | 'select' | 'disabled';
 
@@ -97,7 +116,7 @@ export function filterOptions(filter: FilterChoice, kind: FilterKind, locale = '
     options.push({ value: '', label: kind === 'language' ? 'Choose a language…' : 'Choose a group…', disabled: true });
   }
   if (filter.all) {
-    options.push({ value: FILTER_ALL, label: kind === 'language' ? 'All' : 'All groups' });
+    options.push({ value: FILTER_ALL, label: kind === 'language' ? 'All' : 'Any' });
   }
 
   const values = [...filter.values];

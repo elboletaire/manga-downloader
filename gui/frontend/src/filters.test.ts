@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { filterControl, filtersIdentified, filterOptions, languageName, shownSelection } from './filters';
+import {
+  filterControl,
+  filterPlaceholder,
+  filtersIdentified,
+  filterOptions,
+  languageName,
+  sameFilter,
+  shownSelection,
+  typedValue,
+} from './filters';
 import type { FilterChoice } from './types';
 
 const choice = (over: Partial<FilterChoice>): FilterChoice => ({
@@ -40,7 +49,7 @@ describe('filterOptions', () => {
     expect(langs[0]).toEqual({ value: 'all', label: 'All' });
 
     const groups = filterOptions(choice({ values: ['Alpha'], all: true, selected: 'all' }), 'scanlator');
-    expect(groups[0]).toEqual({ value: 'all', label: 'All groups' });
+    expect(groups[0]).toEqual({ value: 'all', label: 'Any' });
   });
 
   it('has no All option where the site has none', () => {
@@ -111,5 +120,23 @@ describe('filterControl', () => {
   it('is a selector whenever the site listed values, loaded or not', () => {
     expect(filterControl({ loaded: true, loadError: '' }, listed)).toBe('select');
     expect(filterControl({ loaded: false, loadError: 'network down' }, listed)).toBe('select');
+  });
+});
+
+describe('typedValue and sameFilter', () => {
+  it('shows an "all" scanlator as the empty field, and keeps a language\'s', () => {
+    expect(typedValue('scanlator', 'all')).toBe('');
+    expect(typedValue('scanlator', 'Delta')).toBe('Delta');
+    expect(typedValue('language', 'all')).toBe('all');
+  });
+
+  it('treats "" and "all" as one scanlator filter, not one language', () => {
+    expect(sameFilter('scanlator', '', 'all')).toBe(true);
+    expect(sameFilter('language', '', 'all')).toBe(false);
+  });
+
+  it('has a placeholder that matches what empty means', () => {
+    expect(filterPlaceholder('scanlator')).toBe('any');
+    expect(filterPlaceholder('language')).toBe('site default');
   });
 });
