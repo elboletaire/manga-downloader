@@ -239,7 +239,19 @@ function rememberLanguage(): void {
   }
 }
 
+/** Opens the FAQ entry a link or the URL points at; the browser only expands ancestors. */
+function openTargetedDetails(): void {
+  const id = decodeURIComponent(location.hash.slice(1))
+  const el = id ? document.getElementById(id) : null
+  if (el instanceof HTMLDetailsElement) {
+    el.open = true
+    el.scrollIntoView()
+  }
+}
+
 enhanceCopy()
 enhanceSites()
+openTargetedDetails()
+window.addEventListener('hashchange', openTargetedDetails)
 rememberLanguage()
 void enhanceDownload()

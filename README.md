@@ -311,6 +311,14 @@ Open the app and follow these steps:
      <img alt="The Options tab with EPUB chosen, showing the format, reading direction and Pack as options" src="assets/screenshots/06-options-light.png">
    </picture>
 
+   When a site needs you at its browser window, an alert says so, with *Show the
+   browser window* to bring it to the front and *Dismiss* to hide the alert.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/08-browser-alert-dark.png">
+     <img alt="The app's alert saying the browser needs you, with Dismiss and Show the browser window buttons" src="assets/screenshots/08-browser-alert-light.png">
+   </picture>
+
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/07-volumes-dark.png">
      <img alt="Packing by volume: the Volumes box above the chapter list, the list grouped by volume, and the Download button naming the volumes" src="assets/screenshots/07-volumes-light.png">
@@ -779,64 +787,17 @@ listed. If one doesn't, [open an issue][issues] or send a pull request.
 
 ## Troubleshooting
 
-<details>
-<summary><b>The newest chapter downloads empty or is missing</b></summary>
-<br>
+The [FAQ on the website][faq] has the answers (also in Spanish and Catalan):
 
-Many sites keep their latest chapters behind a paywall, and the page often looks
-normal. Try a slightly older chapter to confirm that the site works.
-
-</details>
-
-<details>
-<summary><b>Old chapters are missing, or a warning says the range starts before the first chapter</b></summary>
-<br>
-
-Sites often delete old chapters. The tool can only download chapters that the
-site still lists.
-
-</details>
-
-<details>
-<summary><b>A browser window pops up</b></summary>
-<br>
-
-This is expected for sites marked with `*`. The window opens when the site shows
-a Cloudflare challenge or a captcha of its own, and the terminal (or the app)
-tells you when it may need you. Checkboxes are clicked automatically, but some
-challenges need you to solve them yourself; the download carries on by itself
-afterwards. In the app, an alert says the browser needs you, with *Show the
-browser window* to bring the window back to the front and *Dismiss* to hide the
-alert. To open the window from the start instead, use `--browser-visible`, or
-*Show the browser window* under *Advanced* in the app's Options.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/08-browser-alert-dark.png">
-  <img alt="The app's alert saying the browser needs you, with Dismiss and Show the browser window buttons" src="assets/screenshots/08-browser-alert-light.png">
-</picture>
-
-</details>
-
-<details>
-<summary><b>No browser found</b></summary>
-<br>
-
-Sites marked with `*` need Google Chrome, Chromium, Brave or Edge installed in
-one of its usual places. To use another Chromium-based browser, set
-`MANGA_DOWNLOADER_BROWSER` to the full path of its executable (or a command on your `PATH`), for example
-`MANGA_DOWNLOADER_BROWSER=/usr/bin/brave-browser`. It works for the command line
-and the app alike (for the app, set it in the environment that starts it).
-
-</details>
-
-<details>
-<summary><b>Pages don't show up on my e-reader</b></summary>
-<br>
-
-The site probably serves WebP images. Download the chapters again with
-`--convert-images avif,webp`, or tick *WebP* under *Convert to JPEG* in the app.
-
-</details>
+- [Windows says "Windows protected your PC"][faq-smartscreen]
+- [macOS won't open it][faq-gatekeeper]
+- [Double-clicking `manga-downloader.exe` just flashes a window][faq-exe]
+- [The newest chapter downloads empty or is missing][faq-paywall]
+- [Old chapters are missing, or a warning says the range starts before the first chapter][faq-old]
+- [A browser window pops up][faq-browser]
+- [No browser found][faq-nobrowser]
+- [Pages don't show up on my e-reader][faq-ereader]
+- [My site isn't supported][faq-unsupported]
 
 ## Building from source
 
@@ -895,6 +856,16 @@ conventions.
 [license]: ./LICENSE
 [releases]: https://github.com/elboletaire/manga-downloader/releases
 [website]: https://mangadownloader.cat
+[faq]: https://mangadownloader.cat/#faq
+[faq-smartscreen]: https://mangadownloader.cat/#faq-smartscreen
+[faq-gatekeeper]: https://mangadownloader.cat/#faq-gatekeeper
+[faq-exe]: https://mangadownloader.cat/#faq-exe
+[faq-paywall]: https://mangadownloader.cat/#faq-paywall
+[faq-old]: https://mangadownloader.cat/#faq-old
+[faq-browser]: https://mangadownloader.cat/#faq-browser
+[faq-nobrowser]: https://mangadownloader.cat/#faq-nobrowser
+[faq-ereader]: https://mangadownloader.cat/#faq-ereader
+[faq-unsupported]: https://mangadownloader.cat/#faq-unsupported
 [homebrew]: https://brew.sh
 [issues]: https://github.com/elboletaire/manga-downloader/issues
 [stargazers]: https://github.com/elboletaire/manga-downloader/stargazers
