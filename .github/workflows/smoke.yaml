@@ -57,6 +57,7 @@ jobs:
           - azorafly
           - genztoon
           - heavenlydelusion
+          - heavenmanga
           - kaynscan
           - elftoon
           - hijala
@@ -98,6 +99,8 @@ jobs:
           - mangaworld
           - lagoonscans
           - lelmanga
+          - lelscanfr
+          - lelscans
           - mangasusuku
           - rizzfables
           - rokaricomics

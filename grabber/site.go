@@ -187,6 +187,8 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewBluesolo(g),
 		NewLuascans(g),
 		NewProjectsuki(g),
+		NewHeavenManga(g),
+		NewLelScans(g),
 		plainHTML,
 		NewTcb(g),
 		NewJestful(g),
