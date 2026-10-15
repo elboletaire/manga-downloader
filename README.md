@@ -374,9 +374,15 @@ manga-downloader [flags] [url] [chapters]
 
 Arguments aren't positional, so `manga-downloader 1-50 [url]` works too.
 
-![prompt img]
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/prompt.gif">
+  <img alt="The command line asking whether to download every chapter of a series, then downloading them" src="assets/demos/prompt-light.gif">
+</picture>
 
-![download img]
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/download.gif">
+  <img alt="The command line downloading eight chapters at once, each with its own progress bar" src="assets/demos/download-light.gif">
+</picture>
 
 ### Language and scanlation group
 
@@ -415,7 +421,10 @@ manga-downloader --format raw [url] 1-8
 manga-downloader --format epub --reading-direction ltr [url] 1-8
 ~~~
 
-![bundle img]
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/bundle.gif">
+  <img alt="The same chapters downloaded with --bundle, packed into a single CBZ file" src="assets/demos/bundle-light.gif">
+</picture>
 
 ### Volumes
 
@@ -440,7 +449,10 @@ manga-downloader --volumes 16:112-114/115-118 [url] 112-118
 That's volumes 16 and 17. An empty group also skips a number (`1-7//20-30` has
 no volume 2), and `--volumes` can't be combined with `--bundle`.
 
-![volumes img]
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/volumes.gif">
+  <img alt="The command line downloading thirteen chapters with --volumes auto, packed into one CBZ file per volume" src="assets/demos/volumes-light.gif">
+</picture>
 
 ### Image conversion
 
@@ -846,7 +858,3 @@ make build/gui/windows # cross-build manga-downloader-gui.exe, no cgo needed
 [star history]: https://raw.githubusercontent.com/elboletaire/manga-downloader/star-tracker-data/charts/star-history.svg
 [go template]: https://pkg.go.dev/text/template
 [docker hub]: https://hub.docker.com/r/elboletaire/manga-downloader
-[download img]: assets/demos/download.gif
-[bundle img]: assets/demos/bundle.gif
-[prompt img]: assets/demos/prompt.gif
-[volumes img]: assets/demos/volumes.gif

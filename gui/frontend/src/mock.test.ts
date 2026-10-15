@@ -266,20 +266,20 @@ describe('createMockApi', () => {
     expect((await createMockApi('done').state()).version).toBe('v0.0.0-mock');
   });
 
-  it('shows v1.15.1 for all scenarios with shot, v1.16.0 as the update', async () => {
+  it('shows v1.16.1 for all scenarios with shot, v1.17.0 as the update', async () => {
     const update = await createMockApi({ scenario: 'update', shot: true }).state();
-    expect(update.version).toBe('v1.15.1');
-    expect(update.update?.latest).toBe('v1.16.0');
+    expect(update.version).toBe('v1.16.1');
+    expect(update.update?.latest).toBe('v1.17.0');
 
     const loaded = await createMockApi({ scenario: 'loaded', shot: true }).state();
-    expect(loaded.version).toBe('v1.15.1');
+    expect(loaded.version).toBe('v1.16.1');
     expect(loaded.update).toBeNull();
   });
 
   it('links the version to its release whenever it reports a release', async () => {
     const tag = (v: string) => `https://github.com/elboletaire/manga-downloader/releases/tag/${v}`;
-    expect((await createMockApi({ scenario: 'loaded', shot: true }).state()).releaseURL).toBe(tag('v1.15.1'));
-    expect((await createMockApi({ scenario: 'update', shot: true }).state()).releaseURL).toBe(tag('v1.15.1'));
+    expect((await createMockApi({ scenario: 'loaded', shot: true }).state()).releaseURL).toBe(tag('v1.16.1'));
+    expect((await createMockApi({ scenario: 'update', shot: true }).state()).releaseURL).toBe(tag('v1.16.1'));
     expect((await createMockApi('update').state()).releaseURL).toBe(tag('v1.12.0'));
     expect((await createMockApi('loaded').state()).releaseURL).toBe('');
   });
