@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[128 supported sites](#supported-sites)**, from big aggregators to small
+- **[141 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -603,7 +603,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 128 supported sites</b></summary>
+<summary><b>Show all 141 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -655,6 +655,7 @@ to a minute.
 | [kingofshojo.com](https://kingofshojo.com) |  | 2026-10-15 |
 | [komikindo.ch](https://komikindo.ch) |  | 2026-10-15 |
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-15 |
+| [ksgroupscans.com](https://ksgroupscans.com) | KSGroupScans | 2026-10-16 |
 | [lagoonscans.com](https://lagoonscans.com) |  | 2026-10-15 |
 | [leercapitulo.co](https://www.leercapitulo.co) |  | 2026-10-15 |
 | [lelmanga.com](https://www.lelmanga.com) | French | 2026-10-15 |
@@ -666,12 +667,15 @@ to a minute.
 | [luacomic.org](https://luacomic.org) | LuaScans | 2026-10-15 |
 | [madarascans.net](https://madarascans.net) | former madarascans.org/.com | 2026-10-15 |
 | [maid.my.id](https://www.maid.my.id) |  | 2026-10-15 |
+| [manga.adonisfansub.com](https://manga.adonisfansub.com) | Adonis Fansub, Turkish | 2026-10-16 |
+| [manga.smuglo.li](https://manga.smuglo.li) | Lilyreader, yuri | 2026-10-16 |
 | [mangaball.com](https://mangaball.com) | former mangaball.net | 2026-10-15 |
 | [mangabats.com](https://www.mangabats.com) | former mangabat.com | 2026-10-15 |
 | [mangaberri.com](https://mangaberri.com) |  | 2026-10-15 |
 | [mangadelsiglotvmanga.com.mx](https://www.mangadelsiglotvmanga.com.mx) | Manga del Siglo TV Manga, Spanish | 2026-10-15 |
 | [mangadenizi.net](https://www.mangadenizi.net) |  | 2026-10-15 |
 | [mangadex.org](https://mangadex.org) | MangaDex | 2026-10-15 |
+| [mangaeclipse.com](https://mangaeclipse.com) | Manga Eclipse | 2026-10-16 |
 | [mangafire.to](https://mangafire.to) \* |  | 2026-10-15 |
 | [mangahere.cc](https://www.mangahere.cc) | MangaHere | 2026-10-15 |
 | [mangahub.io](https://mangahub.io) \* |  | 2026-10-15 |
@@ -691,23 +695,30 @@ to a minute.
 | [mangatown.com](https://www.mangatown.com) |  | 2026-10-15 |
 | [mangavault.lat](https://mangavault.lat) | MangaVault | 2026-10-15 |
 | [mangaworld.mx](https://www.mangaworld.mx) | MangaWorld, Italian | 2026-10-15 |
+| [mangawow.org](https://mangawow.org) | MangaWOW, Turkish | 2026-10-16 |
 | [mangtto.com](https://mangtto.com) | Mangitto | 2026-10-15 |
 | [manhuaplus.com](https://manhuaplus.com) |  | 2026-10-15 |
 | [manhuatop.org](https://manhuatop.org) \* |  | 2026-10-15 |
 | [manhuaus.com](https://manhuaus.com) \* |  | 2026-10-15 |
 | [manhwaonline.org](https://manhwaonline.org) |  | 2026-10-15 |
+| [manhwatop.com](https://manhwatop.com) | MANHWATOP | 2026-10-16 |
 | [mgeko.cc](https://www.mgeko.cc) |  | 2026-10-15 |
 | [mistscans.com](https://mistscans.com) |  | 2026-10-15 |
 | [mkissa.to](https://mkissa.to) \* |  | 2026-10-15 |
 | [natomanga.com](https://www.natomanga.com) \* | MangaNato, former manganato.com/manganelo.com | 2026-10-15 |
+| [natsu.one](https://natsu.one) | NatsuID, Indonesian, some adult titles, former natsu.id | 2026-10-16 |
+| [noranofansub.com](https://www.noranofansub.com) | NoraNoFansub, Spanish | 2026-10-16 |
+| [nyraxmanga.com](https://nyraxmanga.com) | Nyrax, some adult titles | 2026-10-16 |
 | [projectsuki.com](https://projectsuki.com) |  | 2026-10-15 |
 | [qimanga.com](https://qimanga.com) |  | 2026-10-15 |
+| [rackusreads.com](https://rackusreads.com) | Rackus | 2026-10-16 |
 | [ravenscans.org](https://ravenscans.org) |  | 2026-10-15 |
 | [rawkuma.net](https://rawkuma.net) |  | 2026-10-15 |
 | [ritharscans.com](https://ritharscans.com) |  | 2026-10-15 |
 | [rizzfables.com](https://rizzfables.com) |  | 2026-10-15 |
 | [rokaricomics.com](https://rokaricomics.com) |  | 2026-10-15 |
 | [roliascan.com](https://roliascan.com) |  | 2026-10-15 |
+| [ruyamanga2.com](https://www.ruyamanga2.com) | Rüya Manga, Turkish | 2026-10-16 |
 | [sacachispa.site](https://sacachispa.site) |  | 2026-10-15 |
 | [sanascans.com](https://sanascans.com) | Sana Scans | 2026-10-15 |
 | [scan-vf.net](https://www.scan-vf.net) | ScanVF | 2026-10-15 |
@@ -725,6 +736,7 @@ to a minute.
 | [tortugaceviri.com](https://tortugaceviri.com) | Tortuga Çeviri | 2026-10-15 |
 | [tritinia.org](https://tritinia.org) | Tritinia Scans | 2026-10-15 |
 | [trmanga.com](https://trmanga.com) |  | 2026-10-15 |
+| [turkcemanga.com](https://turkcemanga.com) | Turkce Manga, Turkish | 2026-10-16 |
 | [tvymanga3.com](https://tvymanga3.com) | Tv y Manga, Spanish | 2026-10-15 |
 | [twmanga.com](https://www.twmanga.com) | 包子漫画, baozimh.com mirror | 2026-10-15 |
 | [utoon.us](https://www.utoon.us) | UToon, home of reset-scans' content | 2026-10-15 |
@@ -735,6 +747,7 @@ to a minute.
 | [weebcentral.com](https://weebcentral.com) |  | 2026-10-15 |
 | [witchtoons.net](https://witchtoons.net) | WitchToons, former witchscans.com | 2026-10-15 |
 | [writerscans.com](https://writerscans.com) |  | 2026-10-15 |
+| [yurionair.top](https://yurionair.top) | Yuri Verso, Portuguese, yuri, some adult titles | 2026-10-16 |
 | [zonatmo.org](https://zonatmo.org) | TuMangaOnline, former zonatmo.com | 2026-10-15 |
 
 Verified weekly by CI. Sites marked `*` open a browser window, so they are checked by hand and their dates are older. `—` means not checked yet.

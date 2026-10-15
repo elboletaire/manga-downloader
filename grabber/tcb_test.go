@@ -166,3 +166,19 @@ func TestTcbChapterURLUsesSeries(t *testing.T) {
 		t.Errorf("requested paths = %v, want %v", requested, want)
 	}
 }
+
+// Madara's h1 can hold a rank badge and tab-indented text; neither belongs in
+// the title.
+func TestTcbFetchTitleDropsBadges(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("<h1>\n\t\t<span class=\"manga-title-badges custom top-3\">Top 3</span>\n\t\tGreat Heaven\n\t\tSovereign</h1>"))
+	}))
+	t.Cleanup(srv.Close)
+
+	tcb := NewTcb(&Grabber{URL: srv.URL, Settings: &Settings{}})
+	tcb.series = srv.URL + "/manga/x/"
+	title, err := tcb.FetchTitle()
+	if err != nil || title != "Great Heaven Sovereign" {
+		t.Errorf("FetchTitle() = %q, %v; want %q", title, err, "Great Heaven Sovereign")
+	}
+}

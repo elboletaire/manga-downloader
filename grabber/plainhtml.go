@@ -167,11 +167,24 @@ var plainHTMLSelectors = []SiteSelector{
 	// downloadable, so nothing to work around here.
 	{
 		Title:        "h1",
+		TitleNoise:   ".manga-title-badges",
 		Rows:         "li.wp-manga-chapter",
 		Chapter:      "a",
 		ChapterTitle: "a",
 		Link:         "a",
 		Image:        "div.reading-content img",
+	},
+	// nyraxmanga.com: themesia markup (below) whose paid rows carry a "PLUS"
+	// badge and no images logged out. Rows are scoped to the site's own
+	// links so Locked can't flag another themesia site.
+	{
+		Title:        `h1[itemprop="name"]`,
+		Rows:         `#chapterlist li:has(.chapternum):has(a[href*="nyraxmanga.com/"])`,
+		Chapter:      ".chapternum",
+		ChapterTitle: ".chapternum",
+		Link:         "a",
+		Image:        "#readerarea img",
+		Locked:       ".plus-badge",
 	},
 	// mangastream/themesia WordPress themes reachable over plain HTTP
 	// (same markup as the cloudflare-gated sushiscan.net in
@@ -217,14 +230,15 @@ var plainHTMLSelectors = []SiteSelector{
 	// renders the current page's <img class="open">, but embeds every
 	// page's URL in a `var pages = [...]` JSON blob (see
 	// getPlainHTMLImageURL), so the Image selector below is just a
-	// fallback/documentation of what a single rendered page looks like.
+	// fallback/documentation of what a single rendered page looks like
+	// (noranofansub.com renders empty img.page-N placeholders instead).
 	{
 		Title:        "h1.title",
 		Rows:         ".list .element",
 		Chapter:      ".title a",
 		ChapterTitle: ".title a",
 		Link:         ".title a",
-		Image:        "img.open",
+		Image:        `img.open, img[class^="page-"]`,
 		SeriesLink:   "h1.tbtitle a",
 	},
 	// madarascans.net (formerly .com/.org, which now 301-redirect to .net):

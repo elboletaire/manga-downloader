@@ -126,6 +126,19 @@ jobs:
           - eldermanga
           - eskimangalar
           - limonmanga
+          - ksgroupscans
+          - manhwatop
+          - turkcemanga
+          - yurionair
+          - adonisfansub
+          - nyraxmanga
+          - rackusreads
+          - mangaeclipse
+          - mangawow
+          - ruyamanga2
+          - natsuone
+          - noranofansub
+          - smuglo
           # These sites block GitHub's datacenter IPs (403) but work fine
           # from residential connections — verified locally 2026-07-23.
           # Kept out of the matrix rather than hammering sites that don't

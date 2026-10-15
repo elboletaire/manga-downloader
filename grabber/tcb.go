@@ -88,7 +88,10 @@ func (t *Tcb) FetchTitle() (string, error) {
 		return "", err
 	}
 
-	t.title = strings.TrimSpace(body.Find("h1").Text())
+	// Madara prints rank badges inside the h1 and indents its text
+	h1 := body.Find("h1").Clone()
+	h1.Find(".manga-title-badges").Remove()
+	t.title = sanitizeTitle(h1.Text())
 
 	return t.title, nil
 }

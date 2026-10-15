@@ -311,6 +311,45 @@ func TestFetchChaptersSkipsLockedRowsAndSanitizesTitles(t *testing.T) {
 	}
 }
 
+// TestNyraxFlagsPlusRowsLocked checks that only nyraxmanga.com's PLUS rows are
+// flagged, and that the same markup on another host isn't claimed by the entry.
+func TestNyraxFlagsPlusRowsLocked(t *testing.T) {
+	var entry SiteSelector
+	for _, sel := range plainHTMLSelectors {
+		if strings.Contains(sel.Rows, "nyraxmanga.com") {
+			entry = sel
+		}
+	}
+	if entry.Rows == "" {
+		t.Fatal("no nyraxmanga.com entry")
+	}
+
+	row := func(host, class, num, badge string) string {
+		return `<li class="` + class + `" data-num="` + num + `"><div class="chbox"><div class="eph-num">` +
+			`<a href="https://` + host + `/series-chapter-` + num + `/"><span class="chapternum">Chapter ` + num + `</span>` +
+			`<span class="` + badge + `-badge">X</span></a></div></div></li>`
+	}
+	page := func(host string) string {
+		return `<html><body><div id="chapterlist"><ul>` +
+			row(host, "chapter-is-locked", "2", "plus") + row(host, "", "1", "free") +
+			`</ul></div></body></html>`
+	}
+
+	m := PlainHTML{Grabber: &Grabber{URL: "https://nyraxmanga.com/manga/series/"}, doc: docFromHTML(t, page("nyraxmanga.com")), site: entry}
+	m.rows = m.doc.Find(m.site.Rows)
+	chapters, errs := m.FetchChapters()
+	if len(errs) != 0 || len(chapters) != 2 {
+		t.Fatalf("chapters = %d, errs = %v", len(chapters), errs)
+	}
+	if !LockedOf(chapters[0]) || LockedOf(chapters[1]) {
+		t.Errorf("locked = [%v %v], want [true false]", LockedOf(chapters[0]), LockedOf(chapters[1]))
+	}
+
+	if n := docFromHTML(t, page("example.com")).Find(entry.Rows).Length(); n != 0 {
+		t.Errorf("entry matches %d rows of another host", n)
+	}
+}
+
 // TestFetchTitleStripsNoise covers mangahub.io-style h1 headings that nest a
 // "Hot" badge and a huge <small> block of alternate-script/language titles,
 // which must not end up in the fetched title (it would blow past filesystem
@@ -478,6 +517,16 @@ func TestSeriesURLCandidates(t *testing.T) {
 			},
 			check: func(candidates []string) bool {
 				return len(candidates) > 0 && strings.Contains(candidates[0], "/series/slug/")
+			},
+		},
+		{
+			name:    "FoOlSlide reader with placeholder pages finds its series",
+			pageURL: "https://example.com/lector/read/slug/es/1/3/",
+			html: `<html><body><h1 class="tbtitle"><a href="https://example.com/lector/series/slug/">Slug</a></h1>` +
+				`<a href="https://example.com/lector/">Home</a><img class="page-0" src=""></body></html>`,
+			selectors: plainHTMLSelectors,
+			check: func(candidates []string) bool {
+				return len(candidates) > 0 && candidates[0] == "https://example.com/lector/series/slug/"
 			},
 		},
 		{
