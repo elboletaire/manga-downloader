@@ -622,7 +622,7 @@ to a minute.
 | [animeallstar1.com](https://www.animeallstar1.com) | AnimeAllStar, Spanish | 2026-10-15 |
 | [animeallstar30.com](https://animeallstar30.com) | AnimeAllStar, Spanish | 2026-10-15 |
 | [arenascan.com](https://arenascan.com) |  | 2026-10-15 |
-| [asmotoon.com](https://asmotoon.com) \* | Asmodeus Scans | — |
+| [asmotoon.com](https://asmotoon.com) \* | Asmodeus Scans | 2026-10-15 |
 | [asurascans.com](https://asurascans.com) | Asura Scans, former asuratoon.com | 2026-10-15 |
 | [atsu.moe](https://atsu.moe) | Atsumaru | 2026-10-15 |
 | [aurorascans.com](https://aurorascans.com) | redirects to qimanga.com | 2026-10-15 |
