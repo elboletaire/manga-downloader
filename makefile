@@ -630,3 +630,23 @@ grabber/writerscans:
 # release; pick a chapter a few behind the latest one to keep it free
 grabber/mistscans:
 	go run . https://mistscans.com/series/i-was-thrown-into-an-unfamiliar-manga/ 33
+
+# runs the given smoke targets (names without "grabber/") and records their
+# results in the README's "Last verified" column, e.g.
+#   make site-status TARGETS="toonily toongod"
+# A target passes when it exits 0 and tools/verify-cbz accepts the new archives.
+site-status:
+	@test -n "$(TARGETS)" || { echo "usage: make site-status TARGETS=\"toonily toongod\""; exit 2; }
+	@results=$$(mktemp); stamp=$$(mktemp); \
+	for t in $(TARGETS); do \
+		touch $$stamp; sleep 1; \
+		if $(MAKE) grabber/$$t && go run ./tools/verify-cbz $$(find . -maxdepth 1 -name '*.cbz' -newer $$stamp); then \
+			echo "$$t pass" >> $$results; \
+		else \
+			echo "$$t fail" >> $$results; \
+		fi; \
+		find . -maxdepth 1 -name '*.cbz' -newer $$stamp -delete; \
+	done; \
+	cat $$results; \
+	go run ./tools/site-status -results $$results -date $$(date -u +%F); \
+	rm -f $$results $$stamp
