@@ -999,9 +999,8 @@ func (c *Controller) SetSelected(i int, on bool) error {
 }
 
 // SetSelectedMany selects or deselects the chapters at indices in one step,
-// with one change and one push; locked chapters are left unselected. Every
-// index is checked before any is set: one out of range rejects the whole call. It's refused while a series loads or a
-// download runs, as Configure is.
+// leaving locked ones unselected; one index out of range rejects the whole
+// call. It's refused while a series loads or a download runs, as Configure is.
 func (c *Controller) SetSelectedMany(indices []int, on bool) error {
 	c.mu.Lock()
 	if c.loading || c.running {
@@ -1023,8 +1022,8 @@ func (c *Controller) SetSelectedMany(indices []int, on bool) error {
 	return nil
 }
 
-// SetAll selects or deselects every chapter but the locked ones. It's refused while a series
-// loads or a download runs.
+// SetAll selects or deselects every chapter but the locked ones. It's refused
+// while a series loads or a download runs.
 func (c *Controller) SetAll(on bool) error {
 	c.mu.Lock()
 	if c.loading || c.running {
@@ -1040,10 +1039,9 @@ func (c *Controller) SetAll(on bool) error {
 	return nil
 }
 
-// SelectRange selects the chapters whose number falls in the range text
-// (e.g. "1-10,12"), leaving the rest of the selection as it is. It returns how
-// many chapters it selected: locked ones are never matched. It's refused while a series loads or a
-// download runs.
+// SelectRange adds the unlocked chapters whose number falls in the range text
+// (e.g. "1-10,12") to the selection and returns how many it selected. It's
+// refused while a series loads or a download runs.
 func (c *Controller) SelectRange(text string) (int, error) {
 	c.mu.Lock()
 	if c.loading || c.running {
