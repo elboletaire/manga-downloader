@@ -50,6 +50,9 @@ type BrowserSiteSelector struct {
 	Novel string
 }
 
+// errNovel refuses a series whose Novel selector matches: its chapters are text
+var errNovel = errors.New("this is a novel, which manga-downloader can't download")
+
 // browserSelectors is the list of sites that need browser rendering. Their
 // series & reader pages are rendered in Chrome, but images are downloaded
 // via plain HTTP reusing the browser cookies & user agent.
@@ -189,13 +192,9 @@ var browserSelectors = []BrowserSiteSelector{
 		ImageWait:       `div.reading-content img[id^="image-"]`,
 		SeriesPathDepth: 2,
 	},
-	// asmotoon.com (Asmodeus Scans): the whole domain sits behind a
-	// cloudflare challenge that headless doesn't pass, usually needs
-	// --browser-visible. Series and chapters are both one path segment
-	// (/{slug}, /{slug}-chapter-N), so a chapter URL finds its series
-	// through the reader's "Back to series" link. Paid rows carry a coin chip
-	// (their reader serves no images logged out). Novels share the site; their
-	// "Type" box says NOVEL and their reader is text, so Novel refuses them.
+	// asmotoon.com (Asmodeus Scans): Cloudflare needs a visible window. Series
+	// and chapters are both one path segment, so a chapter URL finds its series
+	// through SeriesLink; novels share the site and Novel refuses them.
 	{
 		SiteSelector: SiteSelector{
 			Title:        "h1",
@@ -336,7 +335,7 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 
 	if m.rows.Length() > 0 {
 		if m.selector.Novel != "" && m.doc.Find(m.selector.Novel).Length() > 0 {
-			return false, errors.New("this is a novel, which manga-downloader can't download")
+			return false, errNovel
 		}
 		m.URL = renderURL
 		return true, nil
@@ -361,7 +360,7 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 							seriesRows := seriesDoc.Find(m.site.Rows)
 							if seriesRows.Length() > 0 {
 								if m.selector.Novel != "" && seriesDoc.Find(m.selector.Novel).Length() > 0 {
-									return false, errors.New("this is a novel, which manga-downloader can't download")
+									return false, errNovel
 								}
 								m.URL = seriesURL
 								m.doc = seriesDoc
