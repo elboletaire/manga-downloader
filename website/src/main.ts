@@ -254,13 +254,18 @@ function openTargetedDetails(): void {
 
 /** Points light/dark <picture> sources and theme-color metas at the chosen theme. */
 function applyMedia(forced: 'light' | 'dark' | null): void {
+  // A rewritten media stops matching the first two selectors, so `data-media` keeps those nodes found.
   const nodes = document.querySelectorAll<HTMLElement>(
-    'source[media*="prefers-color-scheme"], meta[name="theme-color"][media*="prefers-color-scheme"]',
+    'source[media*="prefers-color-scheme"], meta[name="theme-color"][media*="prefers-color-scheme"], [data-media]',
   )
   for (const node of nodes) {
     const original = (node.dataset.media ??= node.getAttribute('media') ?? '')
     const scheme = original.includes('dark') ? 'dark' : 'light'
     node.setAttribute('media', schemeMedia(original, scheme, forced))
+  }
+  // Browsers may skip re-selecting a <picture> source when its media changes; re-inserting the <img> forces it.
+  for (const img of document.querySelectorAll<HTMLImageElement>('picture > img')) {
+    img.parentNode!.insertBefore(img, img.nextSibling)
   }
 }
 
