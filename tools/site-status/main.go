@@ -72,8 +72,12 @@ func run(resultsPath, date, readmePath, makefilePath string) error {
 	if err != nil {
 		return err
 	}
+	prefix := "unmapped: "
+	if os.Getenv("GITHUB_ACTIONS") == "true" {
+		prefix = "::warning::unmapped: "
+	}
 	for _, m := range unmapped {
-		fmt.Fprintln(os.Stderr, "unmapped:", m)
+		fmt.Fprintln(os.Stderr, prefix+m)
 	}
 	if out == string(rd) {
 		return nil

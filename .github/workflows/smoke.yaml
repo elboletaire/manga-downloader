@@ -182,7 +182,7 @@ jobs:
   # default branch's runs do, so a manual run from a branch leaves it alone.
   status:
     needs: grabber
-    if: always() && github.ref_name == github.event.repository.default_branch
+    if: ${{ !cancelled() && github.ref_name == github.event.repository.default_branch }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -201,17 +201,38 @@ jobs:
           path: results
           merge-multiple: true
 
-      - name: Update the README
+      # master requires signed commits and linear history, which a pushed
+      # bot commit can't meet; createCommitOnBranch makes GitHub sign it.
+      - name: Update the README and commit it
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          cat results/*.txt > results.all
-          go run ./tools/site-status -results results.all -date "$(date -u +%F)"
-
-      # The branch may have moved during the run: rebase, and retry once.
-      - name: Commit
-        run: |
+          update() {
+            cat results/*.txt > results.all
+            go run ./tools/site-status -results results.all -date "$(date -u +%F)"
+          }
+          commit() {
+            base64 -w0 README.md > readme.b64
+            jq -n --arg repo "$GITHUB_REPOSITORY" --arg branch "$GITHUB_REF_NAME" \
+              --arg oid "$(git rev-parse HEAD)" --rawfile contents readme.b64 '{
+                query: "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid } } }",
+                variables: { input: {
+                  branch: { repositoryNameWithOwner: $repo, branchName: $branch },
+                  message: { headline: "docs(readme): update sites'"'"' last verified dates [skip ci]" },
+                  expectedHeadOid: $oid,
+                  fileChanges: { additions: [{ path: "README.md", contents: $contents }] }
+                } }
+              }' > body.json
+            gh api graphql --input body.json
+          }
+          update
           git diff --quiet README.md && exit 0
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git commit -m "docs(readme): update sites' last verified dates [skip ci]" README.md
-          git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME" \
-            || { git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME"; }
+          # A stale head means the branch moved: redo the update on the new head, once.
+          commit || {
+            git checkout -- README.md
+            git fetch origin "$GITHUB_REF_NAME"
+            git reset --hard "origin/$GITHUB_REF_NAME"
+            update
+            git diff --quiet README.md && exit 0
+            commit
+          }
