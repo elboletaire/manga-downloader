@@ -1409,7 +1409,7 @@ func (e events) FetchFailed(listed grabber.Filterable, err error) {
 	if c.bundle == nil && c.listedVol[listed] == nil {
 		c.jobs = append(c.jobs, &Job{Title: listed.GetTitle(), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFailed, Reason: err.Error()})
 	}
-	c.appendLogLocked(LogError, "error fetching chapter "+msg)
+	c.appendLogLocked(LogError, "error fetching "+msg)
 	c.mu.Unlock()
 	c.emit()
 }
@@ -1484,7 +1484,7 @@ func (e events) DownloadFailed(ch *grabber.Chapter, err error) {
 		j.State = JobFailed
 		j.Reason = "download: " + err.Error()
 	}
-	c.appendLogLocked(LogError, "error downloading chapter "+msg)
+	c.appendLogLocked(LogError, "error downloading "+msg)
 	c.mu.Unlock()
 	c.emit()
 }

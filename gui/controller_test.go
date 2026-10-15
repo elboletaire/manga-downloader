@@ -709,7 +709,7 @@ func TestEventsNameTheReleaseWhenCopiesNeedAGroup(t *testing.T) {
 			}
 			// the log keeps the whole label
 			log := c.Log()
-			if got, want := log[len(log)-1].Text, "error downloading chapter "+tt.wantLabel+": boom"; got != want {
+			if got, want := log[len(log)-1].Text, "error downloading "+tt.wantLabel+": boom"; got != want {
 				t.Errorf("log = %q, want %q", got, want)
 			}
 		})

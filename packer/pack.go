@@ -94,13 +94,13 @@ func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*Downlo
 		NewVolumeFileTemplateParts(title, volume, listed), files, info, progress)
 }
 
-// releaseName names a chapter's release for messages: its title, then its
-// group in brackets when it has one, so two releases of a number can be told apart.
+// releaseName names a chapter's release for messages: its chapter name, then
+// its group in brackets when it has one, so two releases of a number can be told apart.
 func releaseName(c *grabber.Chapter) string {
 	if c.Group == "" {
-		return c.Title
+		return grabber.ChapterName(c)
 	}
-	return c.Title + " [" + c.Group + "]"
+	return grabber.ChapterName(c) + " [" + c.Group + "]"
 }
 
 // pageFormats returns the source formats to convert pages from for the output
