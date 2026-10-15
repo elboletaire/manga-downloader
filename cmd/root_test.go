@@ -685,7 +685,8 @@ func TestViewWidths(t *testing.T) {
 // exitedProgram returns a program that has run and exited, on which Send is a
 // no-op: the events can be called without a live TUI.
 func exitedProgram() *tea.Program {
-	prog := tea.NewProgram(newProgressModel("", "", false, false, false, true))
+	prog := tea.NewProgram(newProgressModel("", "", false, false, false, true),
+		tea.WithInput(nil), tea.WithOutput(io.Discard), tea.WithoutRenderer())
 	go prog.Send(downloadDoneMsg{})
 	prog.Run()
 	return prog
