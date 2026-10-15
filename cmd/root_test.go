@@ -537,8 +537,11 @@ func TestFitTitle(t *testing.T) {
 	}{
 		// the whole row is too long: the title gives way, the tags stay whole
 		{"tags kept", title, " [TCB Scans]", 40, "One Piece - Chapter 1135 - … [TCB Scans]"},
-		// short titles are padded as fixedW always did
-		{"short title", "Chapter 5", " [TCB Scans]", 40, fixedW("Chapter 5 [TCB Scans]", 40)},
+		// a title that fits is padded so the tags sit against the right edge
+		{"short title", "Chapter 5", " [TCB Scans]", 40, "Chapter 5" + strings.Repeat(" ", 19) + " [TCB Scans]"},
+		// wide runes count two cells
+		{"cjk", "第一話の題名", " [en]", 19, "第一話の題名   [en]"},
+		{"cjk truncated", "第一話の題名第一話", " [en]", 12, "第一話… [en]"},
 		// no tags: identical to fixedW
 		{"no tags", title, "", 40, fixedW(title, 40)},
 		// the tags alone don't fit: they are truncated

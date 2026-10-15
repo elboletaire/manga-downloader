@@ -139,17 +139,14 @@ func fixedW(s string, w int) string {
 	return runewidth.FillRight(runewidth.Truncate(s, w, "…"), w)
 }
 
-// fitTitle renders title and tags in exactly w visible cells. The tags stay whole
-// while they fit, so two releases of one chapter still differ when the row is
-// narrow; only the title is truncated. When the tags alone don't fit, they are truncated.
+// fitTitle renders title and tags in exactly w visible cells. The tags stay whole and
+// pinned to the right edge, so releases of one chapter differ even when the row is
+// narrow; only the title is padded or truncated. Tags wider than w are truncated.
 func fitTitle(title, tags string, w int) string {
 	if w <= 0 || tags == "" {
 		return fixedW(title, w)
 	}
 	tagsW := runewidth.StringWidth(tags)
-	if runewidth.StringWidth(title)+tagsW <= w {
-		return fixedW(title+tags, w)
-	}
 	if tagsW >= w {
 		return fixedW(tags, w)
 	}
