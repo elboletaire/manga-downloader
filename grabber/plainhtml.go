@@ -61,6 +61,9 @@ var plainHTMLSelectors = []SiteSelector{
 		Chapter:      "span.font-medium",
 		ChapterTitle: "span.font-medium",
 		Image:        "img[data-page-index]",
+		// early_access_until can be a past date on a free chapter, so only
+		// is_premium counts
+		LockedIsland: func(c map[string]any) bool { return c["is_premium"] == true },
 	},
 	// sanascans.com: same Astro-based reader template family as
 	// asurascans.com, but chapter URLs use "/chapter-N" (hyphen) instead
@@ -77,6 +80,9 @@ var plainHTMLSelectors = []SiteSelector{
 		Chapter:      "span.font-medium",
 		ChapterTitle: "span.font-medium",
 		Image:        "img[data-reader-page-image]",
+		LockedIsland: func(c map[string]any) bool {
+			return c["isLocked"] == true && c["isShortLinkLocked"] != true
+		},
 	},
 	// zonatmo.org (TuMangaOnline, former zonatmo.com). A chapter row lists
 	// each upload in its own sub-row, with the uploader's group in a badge
@@ -189,6 +195,9 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitle: ".chapternum",
 		Link:         "a",
 		Image:        "#readerarea img",
+		// the coin icon rokaricomics.com draws on its paid rows; the svg keeps
+		// a bare text-gold colour class on another theme from flagging a row
+		Locked: "span.text-gold svg",
 	},
 	// furyosociety.com: French scanlation site on the FoOlSlide engine.
 	// Each chapter is listed twice (a desktop <div> and a mobile <a>);
@@ -259,6 +268,7 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:            `[x-data*="immersiveReader"]`,
 		SeriesLink:       `a.group[href*="/series/"]`,
 		FollowSeriesLink: true,
+		Locked:           ".chapter-lock-badge",
 	},
 	// writerscans.com & mistscans.com (meowing.org platform): each chapter
 	// row is a plain <a> direct child of #chapters (the number in a child
@@ -278,6 +288,8 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:            "img.myImage, #pages img",
 		SeriesLink:       `h1 a[href^="/series/"]`,
 		FollowSeriesLink: true,
+		// paid rows overlay a lock icon (lock-open is a different icon)
+		Locked: `img[src*="material-symbols:lock.svg"]`,
 	},
 	// en-thunderscans.com: mangastream/themesia theme (reader page uses
 	// ts_reader.run, already handled generically). Some recent chapters
@@ -479,6 +491,11 @@ type SiteSelector struct {
 	// Paginated, when set, reads the chapter list's pages after the first
 	// (?page=N) until one has no rows, for series listings split over pages.
 	Paginated bool
+	// LockedIsland is for Astro sites that state the lock only in the series
+	// page's island props, not in the row. It is called for each object there
+	// that has a "number" and a "slug" (a chapter) and reports whether it is
+	// paid; rows with the same number become Locked.
+	LockedIsland func(chapter map[string]any) bool
 }
 
 // PlainHTMLChapter represents a PlainHTML Chapter
@@ -893,6 +910,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	if m.site.IDRe != "" {
 		idRe = regexp.MustCompile(m.site.IDRe)
 	}
+	lockedNumbers := m.islandLockedNumbers()
 	lists := []*goquery.Selection{m.rows}
 	if m.site.Paginated {
 		more, listErrs := m.listingPages()
@@ -928,7 +946,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 				title = "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
 			}
 
-			locked := m.site.Locked != "" && s.Find(m.site.Locked).Length() > 0
+			locked := lockedNumbers[number] || (m.site.Locked != "" && s.Find(m.site.Locked).Length() > 0)
 			for _, upload := range m.rowUploads(s) {
 				u := m.resolveURL(upload.href)
 				if !strings.HasPrefix(u, "http") {
@@ -996,6 +1014,71 @@ func (m PlainHTML) listingPages() (pages []*goquery.Selection, errs []error) {
 	}
 
 	return pages, errs
+}
+
+// islandLockedNumbers returns the numbers of the chapters LockedIsland marks
+// as paid in the page's Astro islands (nil without the hook)
+func (m PlainHTML) islandLockedNumbers() map[float64]bool {
+	if m.site.LockedIsland == nil || m.doc == nil {
+		return nil
+	}
+	locked := map[float64]bool{}
+	m.doc.Find("astro-island[props]").Each(func(_ int, s *goquery.Selection) {
+		var props any
+		if json.Unmarshal([]byte(s.AttrOr("props", "")), &props) != nil {
+			return
+		}
+		walkAstroProps(astroUnwrap(props), func(obj map[string]any) {
+			number, ok := obj["number"].(float64)
+			if _, hasSlug := obj["slug"]; ok && hasSlug && m.site.LockedIsland(obj) {
+				locked[number] = true
+			}
+		})
+	})
+	return locked
+}
+
+// astroUnwrap drops Astro's props encoding: every value is a [type, payload]
+// pair, with type 0 a plain value and 1 a list of such pairs
+func astroUnwrap(v any) any {
+	switch t := v.(type) {
+	case []any:
+		if len(t) == 2 {
+			if kind, ok := t[0].(float64); ok {
+				if kind == 1 {
+					list, _ := t[1].([]any)
+					out := make([]any, len(list))
+					for i, e := range list {
+						out[i] = astroUnwrap(e)
+					}
+					return out
+				}
+				return astroUnwrap(t[1])
+			}
+		}
+	case map[string]any:
+		out := make(map[string]any, len(t))
+		for k, e := range t {
+			out[k] = astroUnwrap(e)
+		}
+		return out
+	}
+	return v
+}
+
+// walkAstroProps calls fn for every object nested in v
+func walkAstroProps(v any, fn func(map[string]any)) {
+	switch t := v.(type) {
+	case map[string]any:
+		fn(t)
+		for _, e := range t {
+			walkAstroProps(e, fn)
+		}
+	case []any:
+		for _, e := range t {
+			walkAstroProps(e, fn)
+		}
+	}
 }
 
 // plainHTMLUpload is one release a chapter row lists: the link it's read

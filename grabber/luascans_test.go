@@ -318,3 +318,16 @@ func TestLuascansResolveSeriesURL(t *testing.T) {
 		})
 	}
 }
+
+func TestParseLuascansChaptersPageLocked(t *testing.T) {
+	body := `{"meta":{"last_page":1},"data":[` +
+		`{"chapter_name":"Chapter 11","chapter_slug":"chapter-11","price":10},` +
+		`{"chapter_name":"Chapter 10","chapter_slug":"chapter-10","price":0}]}`
+	chapters, _, err := parseLuascansChaptersPage(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(chapters) != 2 || !LockedOf(chapters[0]) || LockedOf(chapters[1]) {
+		t.Errorf("chapters = %+v, want [locked free]", chapters)
+	}
+}

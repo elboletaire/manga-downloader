@@ -641,7 +641,7 @@ to a minute.
 | [fmteam.fr](https://fmteam.fr) |  | 2026-10-15 |
 | [furyosociety.com](https://furyosociety.com) |  | 2026-10-15 |
 | [gdscans.com](https://gdscans.com) | GalaxyDegenScans | 2026-10-15 |
-| [genzupdates.com](https://genzupdates.com) | Genz Toon | 2026-10-15 |
+| [genztoons.org](https://genztoons.org) | Genz Toon, former genzupdates.com | 2026-10-15 |
 | [guya.moe](https://guya.moe) | Guya, Kaguya-sama | 2026-10-15 |
 | [heavenly-delusion.com](https://heavenly-delusion.com) | Heavenly Delusion | 2026-10-15 |
 | [heavenmanga.com](https://heavenmanga.com) | Spanish, some adult titles | 2026-10-15 |

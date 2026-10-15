@@ -383,7 +383,7 @@ grabber/fmteam:
 # note: the newest 1-2 chapters can be "early access" (locked behind coins),
 # pick a chapter a bit behind the tip if this starts 404ing on pages
 grabber/genztoon:
-	go run . https://genzupdates.com/series/the-return-of-the-legendary-genius-ranker/ 33
+	go run . https://genztoons.org/series/the-return-of-the-legendary-genius-ranker/ 33
 # drakecomic.org moved wholesale to drakecomic.net (same RSC platform as
 # witchtoons.net/kaynscans.com); the old domain still 301s /manga/{slug}/
 # here and the grabber remaps old URLs in code. No browser needed anymore.

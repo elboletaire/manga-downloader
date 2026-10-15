@@ -2,7 +2,10 @@
 
 package grabber
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestQimangaTest(t *testing.T) {
 	cases := []struct {
@@ -53,5 +56,18 @@ func TestQimangaResolveSeriesURL(t *testing.T) {
 		if q.URL != c.want {
 			t.Errorf("resolveSeriesURL(%q) = %q, want %q", c.input, q.URL, c.want)
 		}
+	}
+}
+
+func TestQimangaFeedLocked(t *testing.T) {
+	feed := qimangaChaptersFeed{}
+	body := `{"data":[{"slug":"chapter-226","number":226,"title":"","price":50,"isFree":false,"becameFreeAt":null,"requiresPurchase":true},` +
+		`{"slug":"chapter-225","number":225,"title":null,"price":0,"isFree":true,"becameFreeAt":"2026-10-09T16:17:17.159Z","requiresPurchase":false}],"totalPages":1}`
+	if err := json.Unmarshal([]byte(body), &feed); err != nil {
+		t.Fatal(err)
+	}
+	chs := feed.chapters()
+	if len(chs) != 2 || !LockedOf(chs[0]) || LockedOf(chs[1]) {
+		t.Errorf("locked = %v, want [true false]", chs)
 	}
 }

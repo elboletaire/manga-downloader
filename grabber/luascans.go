@@ -174,6 +174,7 @@ func parseLuascansChaptersPage(body string) (chapters []*LuascansChapter, feed l
 				Number: number,
 				Title:  c.Name,
 				ID:     c.Slug,
+				Locked: c.Price > 0,
 			},
 			c.Slug,
 		})
@@ -308,5 +309,7 @@ type luascansChaptersFeed struct {
 	Data []struct {
 		Name string `json:"chapter_name"`
 		Slug string `json:"chapter_slug"`
+		// coin price, 0 once the chapter is free
+		Price float64 `json:"price"`
 	} `json:"data"`
 }
