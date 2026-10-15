@@ -1081,14 +1081,14 @@ code {
   margin: 0;
   overflow: hidden;
   border-radius: var(--radius);
-  background: #292c34;
+  background: var(--surface);
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-strong);
 }
 
 .terminal img {
   width: 100%;
-  background: #292c34;
+  background: var(--surface);
 }
 
 .terminal figcaption {

@@ -46,7 +46,8 @@ pnpm preview   # serve dist/
 - **Brand assets**: copied from the approved brand kit into `src/assets/brand/`
   and `public/` (favicons, `opengraph.png`). Don't redraw them.
 - **Terminal GIFs**: referenced from `assets/demos/` on `master` via raw GitHub URLs,
-  lazy-loaded.
+  lazy-loaded. Each GIF has a `-light` twin (`download-light.gif`), shown in light
+  mode; the plain GIF is the dark one, shown when the system is in dark mode.
 
 ## Screenshots
 
