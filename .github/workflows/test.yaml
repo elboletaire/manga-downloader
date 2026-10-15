@@ -19,3 +19,7 @@ jobs:
 
       - name: Test
         run: make test
+
+      # the demo transport and fixtures only build with the demo tag
+      - name: Test the demo tapes' transport
+        run: make test/demo

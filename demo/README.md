@@ -4,7 +4,8 @@ The VHS tapes in `assets/demos/` run the real commands, but against recorded
 responses instead of the live sites, so a run needs no network and comes out
 the same every time. The fixtures are only built in with the `demo` tag:
 `make build/demo` writes `manga-downloader` at the repo root, which is where the
-tapes look for it. Release builds don't include them.
+tapes look for it. Release builds don't include them. That binary never touches
+the network, so rebuild with `make build/unix` before using it for real.
 
 - `transport.go`: answers each request from `fixtures/manifest.json` (keyed by
   method and URL) and fails with the URL when there's no entry. Page images are

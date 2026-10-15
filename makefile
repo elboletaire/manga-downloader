@@ -42,6 +42,7 @@ build/win:
 build/demo: GOTAGS = -tags $(BUILD_TAGS),demo
 build/demo:
 	$(GOBUILD) -o manga-downloader .
+	@echo "demo build: answers from demo/fixtures and never touches the network"
 
 # what the release builds for each GOOS/GOARCH (from the environment, the host's
 # by default): manga-downloader, or manga-downloader.exe for windows
