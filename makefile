@@ -125,6 +125,7 @@ grabber: \
 	grabber/jojolands \
 	grabber/jujutsukaisenmanga \
 	grabber/kaynscan \
+	grabber/ksgroupscans \
 	grabber/leercapitulo \
 	grabber/lelscans \
 	grabber/lilymanga \
@@ -146,6 +147,7 @@ grabber: \
 	grabber/mangataro \
 	grabber/mangatown \
 	grabber/mangitto \
+	grabber/manhwatop \
 	grabber/mgeko \
 	grabber/mkissa \
 	grabber/projectsuki \
@@ -158,6 +160,7 @@ grabber: \
 	grabber/teamshadowi \
 	grabber/templetoons \
 	grabber/tortugaceviri \
+	grabber/turkcemanga \
 	grabber/tvymanga3 \
 	grabber/tritinia \
 	grabber/utoon \
@@ -165,6 +168,7 @@ grabber: \
 	grabber/weebcentral \
 	grabber/webtoons \
 	grabber/witchtoons \
+	grabber/yurionair \
 	grabber/html
 
 grabber/inmanga:
@@ -503,7 +507,45 @@ grabber/setsuscans:
 grabber/mangapark:
 	go run . https://mangapark.cc/manga/shonan-junai-gumi 266-267
 
+# ksgroupscans, manhwatop, turkcemanga and yurionair are Madara sites matched
+# by the generic Tcb grabber (same ajax/chapters endpoint)
+grabber/ksgroupscans:
+	go run . https://ksgroupscans.com/manga/buta-kizoku-wa-mirai-wo-kiri-hiraku-you-desu/ 20
+grabber/manhwatop:
+	go run . https://manhwatop.com/manga/defense-breaker/ 60
+grabber/turkcemanga:
+	go run . https://turkcemanga.com/manga/the-lady-with-a-mask/ 50
+grabber/yurionair:
+	go run . https://yurionair.top/manga/adachi-to-shimamura/ 46
+
+# adonisfansub, nyraxmanga and rackusreads run the themesia theme. nyraxmanga
+# marks paid chapters with a PLUS badge: chapters 116-122 of this series are
+# (the CLI leaves them out), so 110 is a free one
+grabber/adonisfansub:
+	go run . https://manga.adonisfansub.com/manga/tensei-shitara-ken-deshita/ 26
+grabber/nyraxmanga:
+	go run . https://nyraxmanga.com/manga/for-my-lost-love/ 110
+grabber/rackusreads:
+	go run . https://rackusreads.com/manga/vs-hankeunbit/ 21
+# mangaeclipse, mangawow and ruyamanga2 are Madara sites with the chapter list
+# in the series page. ruyamanga2 skips chapters 41-61 of this series
+grabber/mangaeclipse:
+	go run . https://mangaeclipse.com/manga/great-heaven-sovereign/ 54
+grabber/mangawow:
+	go run . https://mangawow.org/manga/eleceed/ 220
+grabber/ruyamanga2:
+	go run . https://www.ruyamanga2.com/manga/felaket-buyucusu/ 70
+grabber/natsuone:
+	go run . https://natsu.one/manga/ao-ashi/ 400
+# FoOlSlide readers. Lilyreader restarts the chapter numbers in every volume
+# of the long series, so this smaller one has unique numbers
+grabber/noranofansub:
+	go run . https://www.noranofansub.com/lector/series/your-royal-highness-is-happy/ 38
+grabber/smuglo:
+	go run . https://manga.smuglo.li/series/aikatsu-secret-story/ 4
+
 grabber/html: \
+	grabber/adonisfansub \
 	grabber/arenascan \
 	grabber/asura \
 	grabber/deathtollscans \
@@ -523,23 +565,31 @@ grabber/html: \
 	grabber/madarascans \
 	grabber/maid \
 	grabber/mangaberri \
+	grabber/mangaeclipse \
 	grabber/mangakatana \
 	grabber/mangapill \
 	grabber/mangaread \
 	grabber/mangasusuku \
 	grabber/mangavault \
 	grabber/mangaworld \
+	grabber/mangawow \
 	grabber/manhuaplus \
 	grabber/manhwaonline \
 	grabber/mistscans \
+	grabber/natsuone \
+	grabber/noranofansub \
+	grabber/nyraxmanga \
+	grabber/rackusreads \
 	grabber/ravenscans \
 	grabber/rawkuma \
 	grabber/ritharscans \
 	grabber/rizzfables \
 	grabber/rokaricomics \
+	grabber/ruyamanga2 \
 	grabber/sanascans \
 	grabber/scanvf \
 	grabber/silentquill \
+	grabber/smuglo \
 	grabber/tcbscans \
 	grabber/thunderscans \
 	grabber/trmanga \
