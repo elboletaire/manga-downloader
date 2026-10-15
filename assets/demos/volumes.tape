@@ -1,6 +1,6 @@
 # Recreates assets/demos/volumes.gif — run from the repo root: vhs assets/demos/volumes.tape
-# Requires the demo binary built at the repo root (make build/demo): it answers the
-# sites from demo/fixtures, so the run needs no network (see demo/README.md).
+# Requires the demo binary built at the repo root (make build/demo): it serves the
+# series from demo/series, so the run needs no network (see demo/README.md).
 # Uses a series whose volumes MangaDex lists (1-13 is exactly volumes 1 and 2),
 # downloaded with --volumes auto. Filtered to English, as several translations
 # would otherwise all be packed into the same volume.

@@ -20,6 +20,6 @@ jobs:
       - name: Test
         run: make test
 
-      # the demo transport and fixtures only build with the demo tag
-      - name: Test the demo tapes' transport
+      # the demo build's fake grabber only builds with the demo tag
+      - name: Test the demo tapes' fake grabber
         run: make test/demo

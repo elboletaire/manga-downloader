@@ -142,7 +142,7 @@ func ParseRetryAfter(header string) time.Duration {
 }
 
 // roundTripper, when set by SetRoundTripper, answers every request instead of
-// the network. The demo build uses it to serve recorded fixtures (see demo/).
+// the network. The demo build uses it to serve the fake pages (see demo/).
 var roundTripper http.RoundTripper
 
 // SetRoundTripper routes every request through rt instead of the network

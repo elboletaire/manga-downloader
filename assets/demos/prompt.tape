@@ -1,6 +1,6 @@
 # Recreates assets/demos/prompt.gif — run from the repo root: vhs assets/demos/prompt.tape
-# Requires the demo binary built at the repo root (make build/demo): it answers the
-# sites from demo/fixtures, so the run needs no network (see demo/README.md).
+# Requires the demo binary built at the repo root (make build/demo): it serves the
+# series from demo/series, so the run needs no network (see demo/README.md).
 # Uses a short (5 chapter) series so answering "y" downloads everything quickly.
 # Filtered to a single language ("es-la", Latin American Spanish) because the
 # series is translated into several languages nowadays and the unfiltered
