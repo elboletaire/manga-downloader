@@ -28,11 +28,7 @@ export function filtersIdentified(state: Pick<State, 'loaded' | 'loadError'>): b
 // which BCP 47 writes "es-419" (read as is, "la" is the region of Laos)
 const LANGUAGE_TAGS: Record<string, string> = { 'es-la': 'es-419' };
 
-/**
- * A filter value as the free-text field shows it. "all" and empty are the same
- * scanlator filter, so the field stays empty (placeholder) for both; a language
- * keeps "all", as empty there is the site's own default.
- */
+/** A filter value as the text field shows it: "all" is empty for a scanlator, but not for a language */
 export function typedValue(kind: FilterKind, value: string): string {
   return kind === 'scanlator' && value.toLowerCase() === FILTER_ALL ? '' : value;
 }
@@ -94,13 +90,10 @@ function onSiteDefault(kind: FilterKind, stored: string): boolean {
 }
 
 /**
- * The value a selector shows as picked. It follows what is stored, so what
- * shows is what is sent: a language stored as "" is the site's default (not
- * "All"), and a scanlator "" or "all" is the same "Any". After a failed load
- * the selected value is only what was typed, so one the site doesn't list is
- * not shown as if it were an option: the placeholder stands in.
+ * The value a selector shows: follows what is stored, so what shows is what is
+ * sent. Otherwise the loaded `filter.selected`, unless a failed load typed a value the site doesn't list.
  */
-export function shownSelection(filter: FilterChoice, loaded: boolean, kind: FilterKind = 'scanlator', stored = filter.selected): string {
+export function shownSelection(filter: FilterChoice, loaded: boolean, kind: FilterKind, stored: string): string {
   if (onSiteDefault(kind, stored)) {
     return '';
   }
@@ -112,11 +105,8 @@ export function shownSelection(filter: FilterChoice, loaded: boolean, kind: Filt
 }
 
 /**
- * The options of one selector, in the order shown: the site's default for a
- * language, "All"/"Any" where the site takes it, then the values as the site
- * lists them. The selected value is always among them, even when the site
- * doesn't list it (a value the series was loaded with), so the select never
- * shows the wrong one.
+ * The options of one selector: "Site default" for a language, "All"/"Any" where
+ * the site takes it, then its values, plus the selected one if unlisted.
  */
 export function filterOptions(
   filter: FilterChoice,
@@ -127,16 +117,15 @@ export function filterOptions(
 ): FilterOption[] {
   const options: FilterOption[] = [];
   const selected = shownSelection(filter, loaded, kind, stored);
-  if (kind === 'language') {
+  if (kind === 'language' && onSiteDefault(kind, stored)) {
     // "" is the site's own default, which is not the same as every language
     options.push({ value: '', label: 'Site default' });
   } else if (selected === '') {
     // no value is shown: a disabled placeholder, so the select doesn't show the
     // first value as if it were the one the list is filtered by
-    options.push({ value: '', label: 'Choose a group…', disabled: true });
-  }
-  if (kind === 'language' && selected === '' && !onSiteDefault(kind, stored)) {
-    options[0] = { value: '', label: 'Choose a language…', disabled: true };
+    options.push({ value: '', label: kind === 'language' ? 'Choose a language…' : 'Choose a group…', disabled: true });
+  } else if (kind === 'language') {
+    options.push({ value: '', label: 'Site default' });
   }
   if (filter.all) {
     options.push({ value: FILTER_ALL, label: kind === 'language' ? 'All' : 'Any' });

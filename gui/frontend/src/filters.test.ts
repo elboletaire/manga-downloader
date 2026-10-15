@@ -44,7 +44,7 @@ describe('languageName', () => {
 });
 
 describe('filterOptions', () => {
-  it('puts All first, labelled for the kind', () => {
+  it('offers All after the language default, labelled for the kind', () => {
     const langs = filterOptions(choice({ values: ['en'], all: true, selected: 'all' }), 'language');
     expect(langs[1]).toEqual({ value: 'all', label: 'All' });
 
@@ -76,7 +76,7 @@ describe('filterOptions', () => {
     const options = filterOptions(failed, 'language', 'en', false, 'ca');
     expect(options.map((o) => o.value)).toEqual(['', 'en']);
     expect(options[0].disabled).toBe(true);
-    expect(shownSelection(choice({ values: ['en'], selected: 'en' }), false)).toBe('en');
+    expect(shownSelection(choice({ values: ['en'], selected: 'en' }), false, 'language', 'en')).toBe('en');
   });
 
   it('does not repeat a listed selected value', () => {
@@ -99,6 +99,8 @@ describe('filterOptions', () => {
     expect(shownSelection(lang, true, 'language', '')).toBe('');
     expect(filterOptions(lang, 'language', 'en', true, '')[0]).toEqual({ value: '', label: 'Site default' });
     expect(shownSelection(lang, true, 'language', 'all')).toBe('all');
+    // the stored value only decides the "" case: otherwise the loaded one shows
+    expect(shownSelection(lang, true, 'language', 'es')).toBe('all');
     expect(shownSelection(choice({ values: ['en'], selected: 'en' }), true, 'language', 'en')).toBe('en');
   });
 
