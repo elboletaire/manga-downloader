@@ -868,6 +868,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     openURL(url) {
       window.open(url, '_blank', 'noopener');
     },
+    async readClipboard() {
+      return 'https://example.com/manga/one-piece';
+    },
     async start() {
       if (loading || running) {
         throw 'a series is loading or a download is running';

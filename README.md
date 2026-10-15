@@ -292,8 +292,8 @@ go install github.com/elboletaire/manga-downloader@latest
 
 Open the app and follow these steps:
 
-1. **Paste the series' URL** into the box at the top. The app loads the series
-   on its own, without a button.
+1. **Paste the series' URL** into the box at the top (or use its *Paste*
+   button). The app loads the series on its own, without a button.
 2. **Pick chapters** in the list. Type a range such as `1-10,12` and press
    *Add range*, Shift+click to select a span, or use *All* and *None*. The
    arrow keys and Space work too.

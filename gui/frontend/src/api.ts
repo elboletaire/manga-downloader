@@ -3,7 +3,7 @@
 // them in a plain browser, so the UI can be worked on without the Go app.
 
 import * as app from '../wailsjs/go/main/App';
-import { BrowserOpenURL, EventsOn } from '../wailsjs/runtime/runtime';
+import { BrowserOpenURL, ClipboardGetText, EventsOn } from '../wailsjs/runtime/runtime';
 import type { Chapter, LogLine, Options, State } from './types';
 
 export type Unsubscribe = () => void;
@@ -35,6 +35,8 @@ export interface Api {
   openFolder(): Promise<void>;
   /** Opens the URL in the system's browser, never in the window */
   openURL(url: string): void;
+  /** The clipboard's text, for the Paste button; rejects when the runtime isn't there */
+  readClipboard(): Promise<string>;
   start(): Promise<void>;
   cancel(): Promise<void>;
   /** Brings the browser window to the front again */
@@ -100,6 +102,8 @@ export function createWailsApi(): Api {
     chooseFolder: () => app.ChooseFolder(),
     openFolder: () => app.OpenFolder(),
     openURL: (url) => BrowserOpenURL(url),
+    // async, so a missing runtime rejects rather than throwing into the click
+    readClipboard: async () => ClipboardGetText(),
     start: () => app.Start(),
     cancel: () => app.Cancel(),
     showBrowser: () => app.ShowBrowser(),
