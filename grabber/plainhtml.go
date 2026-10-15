@@ -24,11 +24,12 @@ var plainHTMLSelectors = []SiteSelector{
 	// #chapters-list, split over ?page=N (One Piece: six pages). The reader
 	// renders every page in #chapter-container, lazy ones in data-src.
 	{
-		Title:     "h2.text-2xl",
-		Rows:      "#chapters-list a[href*=\"/manga/\"]",
-		Chapter:   "div.flex.gap-2 span",
-		Image:     "#chapter-container img.chapter-image",
-		Paginated: true,
+		Title:      "h2.text-2xl",
+		TitleNoise: "span",
+		Rows:       "#chapters-list a[href*=\"/manga/\"]",
+		Chapter:    "div.flex.gap-2 span",
+		Image:      "#chapter-container img.chapter-image",
+		Paginated:  true,
 	},
 	// rizzfables.com: its #chapterlist markup is shared with several themes
 	// (en-thunderscans below, and the #readerarea one), which would match
@@ -444,6 +445,9 @@ type SiteSelector struct {
 	// fetched (e.g. "style=list" for readers that render one page at a time
 	// unless asked for the whole list)
 	ChapterQuery string
+	// TitleNoise is a selector for elements inside Title to leave out, such as
+	// a "[Manga]" type badge nested in the heading
+	TitleNoise string
 	// ChapterTitleStrip is a regexp removing site-specific noise from a
 	// sanitized chapter title (e.g. "^#?\d+\s*\.?\s*Bölüm$" for a bare number)
 	ChapterTitleStrip string
@@ -639,7 +643,12 @@ func (m PlainHTML) rowChapterNumber(s *goquery.Selection) (float64, bool) {
 
 // Ttitle returns the manga title
 func (m PlainHTML) FetchTitle() (string, error) {
-	return sanitizeTitle(textWithoutNoise(m.doc.Find(m.site.Title))), nil
+	title := m.doc.Find(m.site.Title)
+	if m.site.TitleNoise != "" {
+		title = title.Clone()
+		title.Find(m.site.TitleNoise).Remove()
+	}
+	return sanitizeTitle(textWithoutNoise(title)), nil
 }
 
 // textWithoutNoise returns a selection's text with common non-title noise

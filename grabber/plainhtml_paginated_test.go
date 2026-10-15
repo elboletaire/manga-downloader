@@ -69,3 +69,19 @@ func TestPlainHTMLPaginated(t *testing.T) {
 		t.Errorf("unpaginated FetchChapters() = %d chapters, want 2", len(chapters))
 	}
 }
+
+// TestPlainHTMLTitleNoise checks that TitleNoise leaves a badge nested in the
+// title out, as lelscanfr's "[Manga]"
+func TestPlainHTMLTitleNoise(t *testing.T) {
+	html := `<h2 class="text-2xl">One Piece <span class="text-sm"> [Manga] </span></h2>`
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for noise, want := range map[string]string{"span": "One Piece", "": "One Piece [Manga]"} {
+		m := PlainHTML{site: SiteSelector{Title: "h2.text-2xl", TitleNoise: noise}, doc: doc}
+		if got, _ := m.FetchTitle(); got != want {
+			t.Errorf("FetchTitle() with TitleNoise %q = %q, want %q", noise, got, want)
+		}
+	}
+}
