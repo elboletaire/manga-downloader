@@ -105,13 +105,8 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 			link.Children().Remove()
 		}
 		title := strings.TrimSpace(link.Text())
-		re := regexp.MustCompile(`(\d+\.?\d*)`)
-		ns := re.FindString(title)
-		num, err := strconv.ParseFloat(ns, 64)
-		if err != nil {
-			errs = append(errs, err)
-		}
 		href := link.AttrOr("href", "")
+		num := tcbChapterNumber(title, href)
 		chapter := &TcbChapter{
 			Chapter{
 				Title:  title,
@@ -126,6 +121,21 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 	})
 
 	return
+}
+
+var tcbNumberRe = regexp.MustCompile(`\d+\.?\d*`)
+
+// tcbChapterNumber reads a row's number from its title, then from the last
+// segment of its URL. Unnumbered rows ("One-shot") get 0 instead of failing.
+func tcbChapterNumber(title, href string) float64 {
+	last := strings.TrimRight(href, "/")
+	last = last[strings.LastIndex(last, "/")+1:]
+	for _, s := range []string{title, last} {
+		if num, err := strconv.ParseFloat(tcbNumberRe.FindString(s), 64); err == nil {
+			return num
+		}
+	}
+	return 0
 }
 
 // tcbVolume returns the volume of a chapter row from the "Volume N" wrapper
