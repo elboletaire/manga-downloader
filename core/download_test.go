@@ -79,6 +79,8 @@ func (r *recorder) VolumePacked(v *Volume, name string, err error) {
 
 // count returns how many recorded events start with prefix
 func (r *recorder) count(prefix string) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	n := 0
 	for _, e := range r.events {
 		if strings.HasPrefix(e, prefix) {
@@ -88,12 +90,35 @@ func (r *recorder) count(prefix string) int {
 	return n
 }
 
+// lastBundleStart returns the page total of the last bundle-start event
+func (r *recorder) lastBundleStart(t *testing.T) int64 {
+	t.Helper()
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	last := ""
+	for _, e := range r.events {
+		if strings.HasPrefix(e, "bundle-start ") {
+			last = e
+		}
+	}
+	var pages int64
+	if _, err := fmt.Sscanf(last, "bundle-start %d", &pages); err != nil {
+		t.Fatalf("no bundle-start event in %q", r.events)
+	}
+	return pages
+}
+
 // fakeChapter is a chapter the fake site serves: its pages are PNGs, and a
 // page path listed in fail answers 500
 type fakeChapter struct {
 	number float64
 	pages  int
 	fail   map[int]bool
+	// failFetch lists the FetchChapter calls for the chapter (1-based, in
+	// order) that answer an error
+	failFetch map[int]bool
+	// laterPages, when set, is the page count of every fetch after the first
+	laterPages int
 	// limited pages answer 429 with a 60s Retry-After
 	limited map[int]bool
 	// volume is the volume the listing gives the chapter, 0 for none
@@ -105,9 +130,11 @@ type fakeSite struct {
 	*grabber.Grabber
 	chapters []fakeChapter
 	server   *httptest.Server
-	// fetches counts FetchChapter calls, bundle mode fetches each one twice
+	// fetches counts FetchChapter calls, bundle mode fetches each one twice;
+	// served counts them per chapter
 	mu      sync.Mutex
 	fetches int
+	served  map[float64]int
 }
 
 func (f *fakeSite) Test() (bool, error)                           { return true, nil }
@@ -126,12 +153,24 @@ func (f *fakeSite) FetchChapter(l grabber.Filterable) (*grabber.Chapter, error) 
 		if c.number != l.GetNumber() {
 			continue
 		}
+		f.mu.Lock()
+		f.served[c.number]++
+		n := f.served[c.number]
+		f.mu.Unlock()
+		if c.failFetch[n] {
+			return nil, errors.New("fetch failed")
+		}
+
+		pages := c.pages
+		if n > 1 && c.laterPages > 0 {
+			pages = c.laterPages
+		}
 		chapter := &grabber.Chapter{
 			Title:      fmt.Sprintf("Chapter %g", c.number),
 			Number:     c.number,
-			PagesCount: int64(c.pages),
+			PagesCount: int64(pages),
 		}
-		for i := 0; i < c.pages; i++ {
+		for i := 0; i < pages; i++ {
 			chapter.Pages = append(chapter.Pages, grabber.Page{
 				Number: int64(i + 1),
 				URL:    fmt.Sprintf("%s/%g/%d", f.server.URL, c.number, i),
@@ -169,6 +208,7 @@ func newFakeSite(t *testing.T, chapters ...fakeChapter) *fakeSite {
 			},
 		},
 		chapters: chapters,
+		served:   map[float64]int{},
 	}
 	site.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/429") {
@@ -389,6 +429,142 @@ func TestDownloadFailingPage(t *testing.T) {
 	// only chapter 2 is archived: the failed one must not leave a file behind
 	if got := cbzFiles(t, dir); len(got) != 1 {
 		t.Errorf("wrote %q, want chapter 2's archive alone", got)
+	}
+}
+
+// checkBundleTotal asserts that the last bundle total is the number of pages
+// the bundle's events count: one page event and one archive tick per page
+func checkBundleTotal(t *testing.T, rec *recorder) {
+	t.Helper()
+	total := rec.lastBundleStart(t)
+	if got := int64(rec.count("page ")); got != total {
+		t.Errorf("got %d page events, want the bundle total %d: %q", got, total, rec.events)
+	}
+	if got := int64(rec.count("bundle-archived ")); got != total {
+		t.Errorf("got %d bundle-archived ticks, want the bundle total %d: %q", got, total, rec.events)
+	}
+}
+
+func TestDownloadBundleTotalWhenPrepassFails(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 2, failFetch: map[int]bool{1: true}},
+		fakeChapter{number: 2, pages: 2},
+	)
+	series, dir := newSeries(t, site, true)
+	rec := &recorder{}
+
+	name, err := series.Download(context.Background(), listed(site), nil, "1-2", rec)
+	if err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	// the totals fetch of chapter 1 failed, so it's counted from its download
+	if rec.events[0] != "bundle-start 2" {
+		t.Errorf("first event %q, want bundle-start 2 without chapter 1", rec.events[0])
+	}
+	if got := rec.count("downloaded"); got != 2 {
+		t.Errorf("got %d downloaded events, want both chapters", got)
+	}
+	if got := rec.lastBundleStart(t); got != 4 {
+		t.Errorf("last bundle total %d, want 4", got)
+	}
+	checkBundleTotal(t, rec)
+	if entries := zipEntries(t, filepath.Join(dir, name)); len(entries) != 4 {
+		t.Errorf("bundle holds %d entries, want 4: %q", len(entries), entries)
+	}
+}
+
+func TestDownloadBundleTotalWhenDownloadFindsMorePages(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 2, laterPages: 3},
+		fakeChapter{number: 2, pages: 2},
+	)
+	series, _ := newSeries(t, site, true)
+	rec := &recorder{}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "1-2", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	if got := rec.lastBundleStart(t); got != 5 {
+		t.Errorf("last bundle total %d, want 5 (chapter 1 now has 3 pages)", got)
+	}
+	checkBundleTotal(t, rec)
+}
+
+func TestDownloadBundleTotalWhenDownloadFindsFewerPages(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 3, laterPages: 1},
+		fakeChapter{number: 2, pages: 2},
+	)
+	series, _ := newSeries(t, site, true)
+	rec := &recorder{}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "1-2", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	if got := rec.lastBundleStart(t); got != 3 {
+		t.Errorf("last bundle total %d, want 3 (chapter 1 now has 1 page)", got)
+	}
+	checkBundleTotal(t, rec)
+}
+
+func TestDownloadBundleSkipPagesLastStillDropsOnePerChapter(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 3},
+		fakeChapter{number: 2, pages: 3},
+	)
+	series, _ := newSeries(t, site, true)
+	rec := &recorder{}
+
+	skip, err := ranges.ParseRelative("-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := series.Download(context.Background(), listed(site), skip, "1-2", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	// both fetches drop the same page, so the total is never corrected
+	if got := rec.count("bundle-start"); got != 1 {
+		t.Errorf("got %d bundle-start events, want 1: %q", got, rec.events)
+	}
+	if got := rec.lastBundleStart(t); got != 4 {
+		t.Errorf("bundle total %d, want 4 (two pages per chapter)", got)
+	}
+	checkBundleTotal(t, rec)
+}
+
+func TestDownloadBundleTotalWhenDownloadFetchFails(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 2, failFetch: map[int]bool{2: true}},
+		fakeChapter{number: 2, pages: 2},
+	)
+	series, dir := newSeries(t, site, true)
+	rec := &recorder{}
+
+	name, err := series.Download(context.Background(), listed(site), nil, "1-2", rec)
+	if err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	// the totals fetch counted chapter 1, its failed download keeps that
+	// count (the bar shows the failure), and the bundle is packed without it
+	if got := rec.count("bundle-start"); got != 1 {
+		t.Errorf("got %d bundle-start events, want 1: %q", got, rec.events)
+	}
+	if got := rec.lastBundleStart(t); got != 4 {
+		t.Errorf("last bundle total %d, want 4", got)
+	}
+	if got := rec.count("fetch-failed 1"); got != 1 {
+		t.Errorf("want fetch-failed for chapter 1: %q", rec.events)
+	}
+	if got := int64(rec.count("bundle-archived ")); got != 2 {
+		t.Errorf("got %d bundle-archived ticks, want chapter 2's 2 pages: %q", got, rec.events)
+	}
+	if entries := zipEntries(t, filepath.Join(dir, name)); len(entries) != 2 {
+		t.Errorf("bundle holds %d entries, want chapter 2's 2 pages: %q", len(entries), entries)
 	}
 }
 

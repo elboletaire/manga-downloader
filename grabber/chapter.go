@@ -153,8 +153,8 @@ func (c *Chapter) SkipPages(rngs []ranges.Range) int {
 
 	skipped := len(c.Pages) - len(kept)
 	c.Pages = kept
-	// PagesCount drives the progress bar totals and the bundle's page budget;
-	// left at the pre-skip count, every bar would end short of its total
+	// PagesCount drives the chapter progress bars; left at the pre-skip count,
+	// they would end short of their total
 	c.PagesCount = int64(len(kept))
 
 	return skipped

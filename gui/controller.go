@@ -1392,7 +1392,10 @@ func (e events) BundleStart(pages int64) {
 	c.mu.Lock()
 	if c.bundle != nil {
 		c.bundle.Total = pages * (core.DownloadWeight + core.ArchiveWeight)
-		c.bundle.Status = "Downloading..."
+		// a corrected total comes again mid-download, so keep the status a chapter set
+		if c.bundle.Status == "Gathering info..." {
+			c.bundle.Status = "Downloading..."
+		}
 	}
 	c.mu.Unlock()
 	c.emit()

@@ -29,8 +29,9 @@ const (
 // identified by its listing entry instead. Page events may arrive after
 // DownloadFailed for the same chapter, since pages still in flight finish.
 type Events interface {
-	// BundleStart is called once in bundle mode, before any chapter is
-	// downloaded, with the page total the bundle will go through
+	// BundleStart is called in bundle mode, before any chapter is downloaded,
+	// with the page total the bundle will go through; it's called again when
+	// a chapter's download finds other pages, with the corrected total
 	BundleStart(pages int64)
 	// FetchFailed reports a chapter that couldn't be fetched; it's skipped
 	FetchFailed(listed grabber.Filterable, err error)
@@ -304,11 +305,16 @@ func (s *Series) Download(ctx context.Context, chapters grabber.Filterables, ski
 		}
 	}
 
+	// the bundle's page total and each chapter's share of it: a chapter's
+	// download may find other pages, or fail, and recount corrects the share
+	// under bundleMu, which keeps the BundleStart totals in order
+	var bundleMu sync.Mutex
+	var totalPages int64
+	counted := map[grabber.Filterable]int64{}
 	if bundle {
 		// same skipping the download below applies, so the total matches
-		// what actually gets downloaded. Errors are ignored here: the
-		// chapter is fetched again below, where they're reported
-		totalPages := int64(0)
+		// what actually gets downloaded. A failed fetch counts 0 here; it's
+		// fetched again below, where the failure is reported
 		for _, chap := range chapters {
 			if err := ctx.Err(); err != nil {
 				return "", err
@@ -316,9 +322,24 @@ func (s *Series) Download(ctx context.Context, chapters grabber.Filterables, ski
 			chapter, err := s.Site.FetchChapter(chap)
 			if err == nil && chapter != nil {
 				chapter.SkipPages(skip)
-				totalPages += chapter.PagesCount
+				counted[chap] = int64(len(chapter.Pages))
+				totalPages += counted[chap]
 			}
 		}
+		ev.BundleStart(totalPages)
+	}
+
+	// recount sets chap's pages in the bundle total to pages, the count its
+	// own download found. A failed chapter keeps its count: its share stays
+	// in the total, which is how the bar shows the failure.
+	recount := func(chap grabber.Filterable, pages int64) {
+		bundleMu.Lock()
+		defer bundleMu.Unlock()
+		if pages == counted[chap] {
+			return
+		}
+		totalPages += pages - counted[chap]
+		counted[chap] = pages
 		ev.BundleStart(totalPages)
 	}
 
@@ -375,7 +396,11 @@ loop:
 			// drop the excluded pages before anything is downloaded, so a page
 			// that's only ads (or one that 404s) costs nothing and can't fail
 			// the chapter
-			if skipped := chapter.SkipPages(skip); skipped > 0 && len(chapter.Pages) == 0 {
+			skipped := chapter.SkipPages(skip)
+			if bundle {
+				recount(chap, int64(len(chapter.Pages)))
+			}
+			if skipped > 0 && len(chapter.Pages) == 0 {
 				ev.Skipped(chapter)
 				skippedAll = true
 				return
