@@ -100,8 +100,10 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
   await i18n.init({ lng: lang, fallbackLng: false, resources, interpolation: { escapeValue: false } })
   const translate = i18n.t.bind(i18n) as unknown as (key: string, options?: object) => string
 
-  const t = (key: string, countName?: string): string => {
+  // `keepDate` leaves "{{date}}" for renderSites to fill in per site.
+  const t = (key: string, countName?: string, keepDate = false): string => {
     const options: Record<string, string | number> = { ...GLOBALS, ...counts }
+    if (keepDate) options.date = '{{date}}'
     if (countName) {
       if (!(countName in counts)) throw new Error(`site-data: unknown count "${countName}" in ${key}`)
       options.count = counts[countName]
@@ -111,6 +113,7 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
   }
 
   const badge = { label: t('sites.badge.label'), srPrefix: t('sites.badge.srPrefix'), title: t('sites.badge.title') }
+  const verified = { on: t('sites.verified.on', undefined, true), failing: t('sites.verified.failing', undefined, true), unknown: t('sites.verified.unknown') }
   const runtime = JSON.stringify(readLocale(lang).runtime).replace(/</g, '\\u003c')
   statsPromise ??= fetchStats()
   const statsObj = await statsPromise
@@ -129,7 +132,7 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
     .replace('<!-- i18n:switcher -->', () => switcher(lang))
     .replace('<!-- i18n:runtime -->', () => `<script type="application/json" id="i18n-runtime">${runtime}</script>`)
     .replace('<!-- release:data -->', () => (releaseData ? `<script type="application/json" id="latest-release">${releaseData}</script>` : ''))
-    .replace('<!-- sites:list -->', () => renderSites(sites, badge))
+    .replace('<!-- sites:list -->', () => renderSites(sites, badge, verified, lang))
     .replace(/<!-- (stats:\w+) -->/g, (_m, key: string) => stats[key] ?? '')
     .replace(/\{\{(t|a|j):([\w.]+)(?::(\w+))?\}\}/g, (_m, kind: string, key: string, countName?: string) => {
       const text = t(key, countName)

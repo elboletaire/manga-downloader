@@ -29,6 +29,7 @@
   --on-accent: #ffffff;
   --accent-soft: #eee9fd;
   --success-text: var(--mint-deep);
+  --danger-text: #b3261e;
   --ring: color-mix(in srgb, var(--violet) 55%, transparent);
   --disc: #ebe4fe;
   --glow-mint: rgb(79 216 176 / 30%);
@@ -66,6 +67,7 @@
     --on-accent: var(--night);
     --accent-soft: rgb(169 147 255 / 15%);
     --success-text: #5ee0b8;
+    --danger-text: #ff9a94;
     --disc: rgb(169 147 255 / 13%);
     --glow-mint: rgb(79 216 176 / 14%);
     --glow-pink: rgb(255 143 179 / 12%);
@@ -1279,7 +1281,7 @@ code {
 .site {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1px;
   min-height: 60px;
   padding: 10px 16px;
@@ -1313,6 +1315,31 @@ code {
   color: var(--muted);
   font-size: 0.82rem;
   line-height: 1.4;
+}
+
+.site-verified {
+  margin-top: auto;
+  padding-top: 2px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.site-mark {
+  font-weight: 700;
+}
+
+.site-verified[data-verified='ok'] .site-mark {
+  color: var(--success-text);
+}
+
+.site-verified[data-verified='failing'] {
+  color: var(--danger-text);
+  font-weight: 600;
+}
+
+.site-verified[data-verified='unknown'] {
+  opacity: 0.8;
 }
 
 .site-badge {

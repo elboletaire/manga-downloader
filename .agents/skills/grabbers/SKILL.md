@@ -11,7 +11,7 @@ Read this for any site or grabber work: adding, fixing, debugging, investigating
 2. Pick the grabber kind from the "Then:" list there: a `PlainHTML` `SiteSelector`, a `BrowserSiteSelector`, or a dedicated grabber.
 3. If the site lists several scanlation groups' releases of a chapter, follow the "Scanlation groups" bullet under "The grabber package" below.
 4. Keep `Test()` markup-based, per the rule at the end of "Investigating a new site".
-5. Add the smoke target, the README "Supported sites" line (and bump both counts: the features-list bullet and "Show all N") and, for plain-HTTP grabbers, the CI matrix entry in `.github/workflows/smoke.yaml`.
+5. Add the smoke target, the README "Supported sites" table row (`| [domain](url) \* | notes | — |`, the `\*` only for browser sites; start it at `—`, or the date of your verified download; CI and `make site-status` keep the column current (a row with no smoke target stays `—` until one exists; the website shows new dates at the next daily Pages run); and bump both counts: the features-list bullet and "Show all N") and, for plain-HTTP grabbers, the CI matrix entry in `.github/workflows/smoke.yaml`.
 6. Check whether the listing marks paid, premium or early-access chapters and, if so, set `Chapter.Locked` (see "Locked (paid) chapters" below).
 7. Verify with `tools/verify-cbz` on the downloaded archives, not just the smoke target's exit code.
 
@@ -21,7 +21,7 @@ Triage with curl first: fetch with a browser UA and check the `<title>`. "Just a
 
 Then:
 
-- Plain HTML → add a `SiteSelector` to `PlainHTML.Test()`, plus a `grabber/html` smoke target and a README line.
+- Plain HTML → add a `SiteSelector` to `PlainHTML.Test()`, plus a `grabber/html` smoke target and a README table row.
 - Needs a browser but selector-friendly → add a `BrowserSiteSelector` to `browserSelectors`.
 - Otherwise → new grabber implementing `Site` (embed `*Grabber`), registered in `IdentifySite()`, with its own smoke target in the top-level `grabber:` aggregate (not `grabber/html`).
 

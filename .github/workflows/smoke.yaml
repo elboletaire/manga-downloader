@@ -8,6 +8,8 @@ name: Site smoke tests
 # plus the headless-Chrome comix/mkissa/templetoons) need a real Chrome and
 # often an interactive Cloudflare challenge, which cannot work on a headless
 # datacenter runner, so they are intentionally excluded.
+#
+# A final job writes the results into the README's "Last verified" column.
 on:
   schedule:
     - cron: "17 6 * * 1"
@@ -72,6 +74,12 @@ jobs:
           - webtoons
           - animeallstar1
           - animeallstar30
+          - blackcloveronline
+          - chainsawmannmanga
+          - dragonballmangaa
+          - jujutsukaisenmanga
+          - mangadelsiglotvmanga
+          - tvymanga3
           # Plain-HTML (goquery) scrapers
           - tcbscans
           - arenascan
@@ -115,6 +123,9 @@ jobs:
           - writerscans
           - mistscans
           - mangapark
+          - eldermanga
+          - eskimangalar
+          - limonmanga
           # These sites block GitHub's datacenter IPs (403) but work fine
           # from residential connections — verified locally 2026-07-23.
           # Kept out of the matrix rather than hammering sites that don't
@@ -160,3 +171,77 @@ jobs:
         run: |
           ls -la *.cbz
           go run ./tools/verify-cbz *.cbz
+
+      # One line per target for the status job below; skipped when cancelled.
+      - name: Record result
+        if: always() && job.status != 'cancelled'
+        run: |
+          mkdir -p result
+          if [ "${{ job.status }}" = success ]; then r=pass; else r=fail; fi
+          echo "${{ matrix.target }} $r" > result/${{ matrix.target }}.txt
+
+      - name: Upload result
+        if: always() && job.status != 'cancelled'
+        uses: actions/upload-artifact@v4
+        with:
+          name: result-${{ matrix.target }}
+          path: result/${{ matrix.target }}.txt
+
+  # Writes the results into the README's "Last verified" column. Only the
+  # default branch's runs do, so a manual run from a branch leaves it alone.
+  status:
+    needs: grabber
+    if: ${{ !cancelled() && github.ref_name == github.event.repository.default_branch }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: result-*
+          path: results
+          merge-multiple: true
+
+      # master requires signed commits and linear history, which a pushed
+      # bot commit can't meet; createCommitOnBranch makes GitHub sign it.
+      - name: Update the README and commit it
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          update() {
+            cat results/*.txt > results.all
+            go run ./tools/site-status -results results.all -date "$(date -u +%F)"
+          }
+          commit() {
+            base64 -w0 README.md > readme.b64
+            jq -n --arg repo "$GITHUB_REPOSITORY" --arg branch "$GITHUB_REF_NAME" \
+              --arg oid "$(git rev-parse HEAD)" --rawfile contents readme.b64 '{
+                query: "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid } } }",
+                variables: { input: {
+                  branch: { repositoryNameWithOwner: $repo, branchName: $branch },
+                  message: { headline: "docs(readme): update sites'"'"' last verified dates [skip ci]" },
+                  expectedHeadOid: $oid,
+                  fileChanges: { additions: [{ path: "README.md", contents: $contents }] }
+                } }
+              }' > body.json
+            gh api graphql --input body.json
+          }
+          update
+          git diff --quiet README.md && exit 0
+          # A stale head means the branch moved: redo the update on the new head, once.
+          commit || {
+            git checkout -- README.md
+            git fetch origin "$GITHUB_REF_NAME"
+            git reset --hard "origin/$GITHUB_REF_NAME"
+            update
+            git diff --quiet README.md && exit 0
+            commit
+          }

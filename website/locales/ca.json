@@ -134,6 +134,11 @@
       "label": "navegador",
       "srPrefix": "necessita un",
       "title": "Necessita Chrome, Chromium, Brave o Edge"
+    },
+    "verified": {
+      "on": "Verificat el {{date}}",
+      "failing": "Falla des del {{date}}",
+      "unknown": "Sense comprovar"
     }
   },
   "faq": {
