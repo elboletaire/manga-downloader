@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/PuerkitoBio/goquery"
@@ -376,13 +377,17 @@ var plainHTMLSelectors = []SiteSelector{
 	// so the number comes from the "chapitre-25" URL. The reader keeps the
 	// real page in data-src, padded with spaces, behind a placeholder src
 	// (getPlainHTMLImageURL trims it).
+	// The same CMS runs anzmanga25.com, kangaryu-team.fr and onma.top: their
+	// URLs are /manga/{slug}/{number} and each theme puts the series title in
+	// its own element. The rows' download links go through an ad shortener.
 	{
-		Title:        `h2[style*="inline-block"]`,
+		Title:        `h2[style*="inline-block"], .titre-projets, .panel-heading`,
 		Rows:         "h5.chapter-title-rtl",
 		Link:         "a",
 		Chapter:      "a",
 		ChapterTitle: "em",
 		Image:        "img.img-responsive",
+		NumberRe:     `/manga/[^/]+/(\d+(?:\.\d+)?)/?$`,
 	},
 	// uzaymanga.com, eldermanga.com, eskimangalar.com and limonmanga.com:
 	// one Turkish manga platform, chapter URLs are /manga/{slug}/{n}-bolum-oku.
@@ -432,14 +437,16 @@ var plainHTMLSelectors = []SiteSelector{
 	// is hosted on the site itself and is left out by the host filter.
 	// The reader also renders a short chapter list (.series-chapterlist);
 	// #chapnav holds the link back to the full series page.
+	// oremanga.net (Thai) runs the same series theme: its reader keeps the
+	// pages in .reader-area-main and links the series from the side menu.
 	{
 		Title:            ".series-titlex h2",
 		Rows:             ".series-chapterlist li",
 		Link:             "a",
 		Chapter:          "a",
 		ChapterTitle:     "a",
-		Image:            `.reader-area img[data-lazy-src]:not([data-lazy-src*="maid.my.id"])`,
-		SeriesLink:       `#chapnav a[href*="/manga/"]`,
+		Image:            `.reader-area img[data-lazy-src]:not([data-lazy-src*="maid.my.id"]), .reader-area-main img`,
+		SeriesLink:       `#chapnav a[href*="/manga/"], .coverz a[href*="/series/"]`,
 		FollowSeriesLink: true,
 	},
 }
@@ -499,6 +506,9 @@ type SiteSelector struct {
 	// IDRe is a regexp whose first group captures a release's ID from its
 	// URL. Without it, or when it doesn't match, the ID is the URL's path.
 	IDRe string
+	// NumberRe is a regexp whose first group captures the chapter number from
+	// a row's link, tried before the row's text, for URLs that carry it.
+	NumberRe string
 	// Locked is a CSS selector searched inside each row: a match means the
 	// listing marks the chapter as paid (Chapter.Locked)
 	Locked string
@@ -641,10 +651,35 @@ func (m *PlainHTML) testCandidateSeriesURL(candidateURL string) bool {
 	return false
 }
 
+// numberRegexps caches the compiled SiteSelector.NumberRe patterns, which are
+// checked once per row.
+var numberRegexps sync.Map
+
+func numberRe(pattern string) *regexp.Regexp {
+	if re, ok := numberRegexps.Load(pattern); ok {
+		return re.(*regexp.Regexp)
+	}
+	re := regexp.MustCompile(pattern)
+	numberRegexps.Store(pattern, re)
+	return re
+}
+
 // checkRowChapterNumber is a helper that reads chapter numbers from a row,
 // given an explicit selector (rather than relying on m.site).
 // This is used by testCandidateSeriesURL to avoid relying on m.site being set.
 func checkRowChapterNumber(s *goquery.Selection, selector SiteSelector) (float64, bool) {
+	if selector.NumberRe != "" {
+		u := s.AttrOr("href", "")
+		if selector.Link != "" {
+			u = s.Find(selector.Link).AttrOr("href", "")
+		}
+		if m := numberRe(selector.NumberRe).FindStringSubmatch(u); m != nil {
+			if n, err := strconv.ParseFloat(m[1], 64); err == nil {
+				return n, true
+			}
+		}
+	}
+
 	chapterText := textWithoutNoise(s)
 	if selector.Chapter != "" {
 		chapterText = textWithoutNoise(s.Find(selector.Chapter))
@@ -886,6 +921,9 @@ var urlChapterNumberRe = regexp.MustCompile(`(?i)chap(?:ter|itre)[-_](\d+\.?\d*)
 var turkishChapterNumberRe = regexp.MustCompile(`(?i)b[öo]l[üu]m\.?\s*(\d+\.?\d*)`)
 var turkishSuffixChapterNumberRe = regexp.MustCompile(`(?i)#?(\d+\.?\d*)\s*\.?\s*b[öo]l[üu]m`)
 
+// thaiChapterNumberRe matches the Thai "ตอนที่ 12" ("ตอน 12" too).
+var thaiChapterNumberRe = regexp.MustCompile(`ตอน(?:ที่)?\s*(\d+\.?\d*)`)
+
 // parseChapterNumber extracts the chapter number from a chapter title, falling
 // back to a volume number. Returns false if no number could be found (these
 // are usually site announcements rather than actual chapters).
@@ -896,6 +934,9 @@ func parseChapterNumber(text string) (float64, bool) {
 	}
 	if len(match) == 0 {
 		match = turkishSuffixChapterNumberRe.FindStringSubmatch(text)
+	}
+	if len(match) == 0 {
+		match = thaiChapterNumberRe.FindStringSubmatch(text)
 	}
 	if len(match) == 0 {
 		// only checked as fallback so "Vol.2 Chapter 15" still prefers the chapter

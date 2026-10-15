@@ -182,3 +182,19 @@ func TestTcbFetchTitleDropsBadges(t *testing.T) {
 		t.Errorf("FetchTitle() = %q, %v; want %q", title, err, "Great Heaven Sovereign")
 	}
 }
+
+func TestTcbChapterNumber(t *testing.T) {
+	tests := []struct {
+		title, href string
+		want        float64
+	}{
+		{"Chapter 12.5", "https://x.com/manga/s/chapter-12-5/", 12.5},
+		{"Bölüm", "https://x.com/manga/s/cilt-2/bolum-16/", 16},
+		{"One-shot", "https://x.com/manga/s/one-shot/", 0},
+	}
+	for _, tt := range tests {
+		if got := tcbChapterNumber(tt.title, tt.href); got != tt.want {
+			t.Errorf("tcbChapterNumber(%q, %q) = %v, want %v", tt.title, tt.href, got, tt.want)
+		}
+	}
+}

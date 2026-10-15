@@ -259,6 +259,44 @@ func TestIdentifySiteOrder(t *testing.T) {
 			want: (*PlainHTML)(nil),
 		},
 		{
+			name:   "oremanga series page",
+			origin: "https://www.oremanga.net",
+			path:   "/series/blue-lock/",
+			routes: map[string]string{
+				"/series/blue-lock/": "oremanga_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "oremanga chapter page",
+			origin: "https://www.oremanga.net",
+			path:   "/blue-lock/362-blue-lock/",
+			routes: map[string]string{
+				"/blue-lock/362-blue-lock/": "oremanga_chapter.html",
+				"/series/blue-lock/":        "oremanga_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "mangareadercms series page",
+			origin: "https://onma.top",
+			path:   "/manga/black-clover",
+			routes: map[string]string{
+				"/manga/black-clover": "mangareadercms_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "mangareadercms chapter page",
+			origin: "https://onma.top",
+			path:   "/manga/black-clover/391",
+			routes: map[string]string{
+				"/manga/black-clover/391": "mangareadercms_chapter.html",
+				"/manga/black-clover":     "mangareadercms_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
 			name:   "madara series page",
 			origin: "https://mangasushi.org",
 			path:   "/manga/lonely-attack-on-the-different-world/",

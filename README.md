@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[141 supported sites](#supported-sites)**, from big aggregators to small
+- **[146 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -610,14 +610,16 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 141 supported sites</b></summary>
+<summary><b>Show all 146 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
 | --- | --- | --- |
 | [3asq.online](https://3asq.online) | Arabic, former 3asq.org | 2026-10-15 |
+| [anikiga.com](https://anikiga.com) | Turkish | 2026-10-16 |
 | [animeallstar1.com](https://www.animeallstar1.com) | AnimeAllStar, Spanish | 2026-10-15 |
 | [animeallstar30.com](https://animeallstar30.com) | AnimeAllStar, Spanish | 2026-10-15 |
+| [anzmanga25.com](https://www.anzmanga25.com) | AnzManga, Spanish | 2026-10-16 |
 | [arenascan.com](https://arenascan.com) |  | 2026-10-15 |
 | [asmotoon.com](https://asmotoon.com) \* | Asmodeus Scans | 2026-10-15 |
 | [asurascans.com](https://asurascans.com) | Asura Scans, former asuratoon.com | 2026-10-15 |
@@ -650,6 +652,7 @@ to a minute.
 | [gdscans.com](https://gdscans.com) | GalaxyDegenScans | 2026-10-15 |
 | [genztoons.org](https://genztoons.org) | Genz Toon, former genzupdates.com | 2026-10-15 |
 | [guya.moe](https://guya.moe) | Guya, Kaguya-sama | 2026-10-15 |
+| [hachirumi.com](https://hachirumi.com) | Hachirumi, Guya instance, has an NSFW section | 2026-10-16 |
 | [heavenly-delusion.com](https://heavenly-delusion.com) | Heavenly Delusion | 2026-10-15 |
 | [heavenmanga.com](https://heavenmanga.com) | Spanish, some adult titles | 2026-10-15 |
 | [hivetoons.org](https://hivetoons.org) | HiveToons, VoidScans | 2026-10-15 |
@@ -716,6 +719,8 @@ to a minute.
 | [natsu.one](https://natsu.one) | NatsuID, Indonesian, some adult titles, former natsu.id | 2026-10-16 |
 | [noranofansub.com](https://www.noranofansub.com) | NoraNoFansub, Spanish | 2026-10-16 |
 | [nyraxmanga.com](https://nyraxmanga.com) | Nyrax, some adult titles | 2026-10-16 |
+| [onma.top](https://onma.top) | Arabic | 2026-10-16 |
+| [oremanga.net](https://www.oremanga.net) | Oremanga, Thai | 2026-10-16 |
 | [projectsuki.com](https://projectsuki.com) |  | 2026-10-15 |
 | [qimanga.com](https://qimanga.com) |  | 2026-10-15 |
 | [rackusreads.com](https://rackusreads.com) | Rackus | 2026-10-16 |

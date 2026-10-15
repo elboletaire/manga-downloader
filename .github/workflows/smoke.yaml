@@ -41,6 +41,7 @@ jobs:
           - weebcentral
           - leercapitulo
           - guya
+          - hachirumi
           - danke
           - atsumaru
           - bluesolo
@@ -67,6 +68,7 @@ jobs:
           - tcb
           - mangasushi
           - gdscans
+          - anikiga
           - tortugaceviri
           - mangalivre
           - tritinia
@@ -100,6 +102,9 @@ jobs:
           - komikindo
           - madarascans
           - maid
+          - anzmanga25
+          - onma
+          - oremanga
           - mangaberri
           - kingofshojo
           - komikstation

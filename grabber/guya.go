@@ -38,10 +38,25 @@ type GuyaChapter struct {
 	Files   []string
 }
 
-// Test returns true if the URL is a guya.moe/guya.cubari.moe or danke.moe URL
+var (
+	guyaHostRe = regexp.MustCompile(`(guya\.(moe|cubari\.moe)|danke\.moe)`)
+	// guyaReadRe is the reader path every Guya instance shares
+	guyaReadRe = regexp.MustCompile(`/read/manga/[^/]+`)
+)
+
+// Test returns true if the URL is a guya.moe/guya.cubari.moe or danke.moe URL,
+// or a /read/manga/{slug} one of another instance, told by its series API.
 func (g *Guya) Test() (bool, error) {
-	re := regexp.MustCompile(`(guya\.(moe|cubari\.moe)|danke\.moe)`)
-	return re.MatchString(g.URL), nil
+	if guyaHostRe.MatchString(g.URL) {
+		return true, nil
+	}
+	if !guyaReadRe.MatchString(g.URL) {
+		return false, nil
+	}
+
+	// an unreachable or non-Guya site just declines
+	feed, err := g.seriesData(true)
+	return err == nil && feed.Slug != "" && feed.Chapters != nil, nil
 }
 
 // FetchTitle fetches and returns the manga title
@@ -50,7 +65,7 @@ func (g *Guya) FetchTitle() (string, error) {
 		return g.title, nil
 	}
 
-	feed, err := g.seriesData()
+	feed, err := g.seriesData(false)
 	if err != nil {
 		return "", err
 	}
@@ -64,7 +79,7 @@ func (g *Guya) FetchTitle() (string, error) {
 // scanlated each chapter, the group in Chapter.Group, so --scanlator picks
 // among them (see grabber.SelectGroup)
 func (g Guya) FetchChapters() (Filterables, []error) {
-	feed, err := g.seriesData()
+	feed, err := g.seriesData(false)
 	if err != nil {
 		return nil, []error{err}
 	}
@@ -130,8 +145,9 @@ func (g Guya) FetchChapter(f Filterable) (*Chapter, error) {
 	return chapter, nil
 }
 
-// seriesData fetches and unmarshals the series API feed
-func (g Guya) seriesData() (*guyaSeriesFeed, error) {
+// seriesData fetches and unmarshals the series API feed; probe skips the
+// retries, for identifying a site.
+func (g Guya) seriesData(probe bool) (*guyaSeriesFeed, error) {
 	slug, err := g.slug()
 	if err != nil {
 		return nil, err
@@ -139,8 +155,9 @@ func (g Guya) seriesData() (*guyaSeriesFeed, error) {
 
 	uri := g.BaseUrl() + "/api/series/" + slug + "/"
 	body, err := http.GetText(http.RequestParams{
-		URL:     uri,
-		Referer: g.URL,
+		URL:          uri,
+		Referer:      g.URL,
+		DisableRetry: probe,
 	})
 	if err != nil {
 		return nil, err

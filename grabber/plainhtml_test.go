@@ -39,7 +39,9 @@ func TestParseChapterNumber(t *testing.T) {
 		{"375.1. Bölüm", 375.1, true}, // turkish decimal
 		{"#124 .Bölüm", 124, true},    // turkish, number first (trmanga)
 		{"İlk Bölüm", 0, false},       // turkish, no number
-		{"Notice", 0, false},          // announcements have no number
+		{"ตอนที่ 362", 362, true},     // thai (oremanga)
+		{"ตอน 12.5", 12.5, true},
+		{"Notice", 0, false}, // announcements have no number
 		{"", 0, false},
 	}
 
@@ -1099,5 +1101,20 @@ func TestPlainHTMLLockedIsland(t *testing.T) {
 	flags = fetchLockedFlags(t, sana, `a[data-astro-prefetch][href*="/chapter-"]`)
 	if len(flags) != 3 || !flags[11] || flags[7] || flags[6] {
 		t.Errorf("sana locked = %v, want 11 only", flags)
+	}
+}
+
+// the selectors' regexps compile with MustCompile at run time, so a typo
+// would panic on the first site that reaches it
+func TestPlainHTMLSelectorRegexps(t *testing.T) {
+	for _, s := range plainHTMLSelectors {
+		for _, pattern := range []string{s.NumberRe, s.IDRe, s.ChapterTitleStrip} {
+			if pattern == "" {
+				continue
+			}
+			if _, err := regexp.Compile(pattern); err != nil {
+				t.Errorf("selector %q: %v", s.Rows, err)
+			}
+		}
 	}
 }
