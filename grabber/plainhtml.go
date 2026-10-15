@@ -473,6 +473,9 @@ type SiteSelector struct {
 	// IDRe is a regexp whose first group captures a release's ID from its
 	// URL. Without it, or when it doesn't match, the ID is the URL's path.
 	IDRe string
+	// Locked is a CSS selector searched inside each row: a match means the
+	// listing marks the chapter as paid (Chapter.Locked)
+	Locked string
 	// Paginated, when set, reads the chapter list's pages after the first
 	// (?page=N) until one has no rows, for series listings split over pages.
 	Paginated bool
@@ -925,6 +928,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 				title = "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
 			}
 
+			locked := m.site.Locked != "" && s.Find(m.site.Locked).Length() > 0
 			for _, upload := range m.rowUploads(s) {
 				u := m.resolveURL(upload.href)
 				if !strings.HasPrefix(u, "http") {
@@ -945,6 +949,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 						Number: number,
 						Title:  title,
 						ID:     id,
+						Locked: locked,
 					},
 					u,
 				}

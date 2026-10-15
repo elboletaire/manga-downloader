@@ -438,7 +438,7 @@ grabber/toongod:
 	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
 
 grabber/asmotoon:
-	go run . --browser-visible https://asmotoon.com/series/official-adultery/ 1
+	go run . --browser-visible https://asmotoon.com/tadaima-taikichuu-nitsuki 1-2
 
 grabber/dragontea:
 	go run . --browser-visible https://dragontea.ink/novel/it-all-starts-with-trillions-of-nether-currency/ 290

@@ -2,7 +2,11 @@
 
 package grabber
 
-import "testing"
+import (
+	"reflect"
+	"strings"
+	"testing"
+)
 
 func TestMatchBrowserSelector(t *testing.T) {
 	cases := []struct {
@@ -88,5 +92,73 @@ func TestBrowserPathSeriesURL(t *testing.T) {
 				t.Errorf("pathSeriesURL() = %q, want %q", got, c.want)
 			}
 		})
+	}
+}
+
+func asmotoonEntry(t *testing.T) BrowserSiteSelector {
+	t.Helper()
+	sel, ok := matchBrowserSelector("asmotoon.com")
+	if !ok {
+		t.Fatal("no asmotoon.com entry")
+	}
+	return sel
+}
+
+const asmotoonSeriesHTML = `<html><body><h1>My Son's Ex-Girlfriend Became My Subordinate</h1>
+<div class="flex-1"><div class="text-xs">Type</div><div><span class="w-2"></span><span class="text-sm font-bold text-violet-400">%s</span></div></div>
+<div id="chapters-list">
+<a href="/my-son-chapter-5" class="chapter-row flex" data-ch-label="Chapter 5" data-ch-locked="1">
+  <div class="ch-info"><div class="ch-title ch-title-full text-sm">Chapter 5                </div></div>
+  <div class="ch-meta"><span data-lock-chip=""><img alt="Coins"><span>100</span></span></div></a>
+<a href="/my-son-chapter-4" class="chapter-row flex" data-ch-label="Chapter 4" data-ch-locked="0">
+  <div class="ch-info"><div class="ch-title ch-title-full text-sm">Chapter 4                </div></div>
+  <div class="ch-meta"></div></a>
+</div></body></html>`
+
+func TestAsmotoonChapters(t *testing.T) {
+	sel := asmotoonEntry(t)
+	m := PlainHTML{Grabber: &Grabber{URL: "https://asmotoon.com/my-son"}, site: sel.SiteSelector}
+	m.doc = docFromHTML(t, strings.Replace(asmotoonSeriesHTML, "%s", "MANGA", 1))
+	m.rows = m.doc.Find(m.site.Rows)
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) != 0 || len(chapters) != 2 {
+		t.Fatalf("chapters = %d, errs = %v", len(chapters), errs)
+	}
+	if chapters[0].GetNumber() != 5 || chapters[1].GetNumber() != 4 {
+		t.Errorf("numbers = %v, %v", chapters[0].GetNumber(), chapters[1].GetNumber())
+	}
+	if !LockedOf(chapters[0]) || LockedOf(chapters[1]) {
+		t.Errorf("locked = [%v %v], want [true false]", LockedOf(chapters[0]), LockedOf(chapters[1]))
+	}
+	if got := chapters[1].(*PlainHTMLChapter).URL; got != "https://asmotoon.com/my-son-chapter-4" {
+		t.Errorf("url = %q", got)
+	}
+}
+
+func TestAsmotoonNovelMarker(t *testing.T) {
+	sel := asmotoonEntry(t)
+	for typ, want := range map[string]bool{"NOVEL": true, "MANGA": false} {
+		doc := docFromHTML(t, strings.Replace(asmotoonSeriesHTML, "%s", typ, 1))
+		if got := doc.Find(sel.Novel).Length() > 0; got != want {
+			t.Errorf("Novel marker on a %s series = %v, want %v", typ, got, want)
+		}
+	}
+}
+
+func TestAsmotoonReaderImages(t *testing.T) {
+	sel := asmotoonEntry(t)
+	doc := docFromHTML(t, `<html><body><a href="/my-son" title="Back to series">x</a>
+<div id="strip-reader">
+<div class="reader-page reader-note" data-page="1"><div class="prose-note">credits</div></div>
+<div class="reader-page-ph"><img class="reader-page w-full" data-page="1" src="https://cdn.meowing.org/uploads/a.avif"></div>
+<div class="reader-page-ph"><img class="reader-page w-full" data-page="2" src="https://cdn.meowing.org/uploads/b.avif"></div>
+</div></body></html>`)
+	want := []string{"https://cdn.meowing.org/uploads/a.avif", "https://cdn.meowing.org/uploads/b.avif"}
+	if got := getPlainHTMLImageURL(sel.Image, doc); !reflect.DeepEqual(got, want) {
+		t.Errorf("images = %v, want %v", got, want)
+	}
+	if doc.Find(sel.SeriesLink).AttrOr("href", "") != "/my-son" {
+		t.Error("SeriesLink does not find the back link")
 	}
 }
