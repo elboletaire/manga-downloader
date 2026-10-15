@@ -805,8 +805,35 @@ func TestAllChaptersLabel(t *testing.T) {
 	if got, want := allChaptersLabel(grabber.Filterables{free}), "Do you want to download all 1 chapters"; got != want {
 		t.Errorf("no locked chapters: got %q, want %q", got, want)
 	}
-	want := "Do you want to download all 2 chapters (1 paid and locked)"
+	want := "Do you want to download all 2 chapters (1 paid and locked, skipped)"
 	if got := allChaptersLabel(grabber.Filterables{free, paid}); got != want {
 		t.Errorf("one locked chapter: got %q, want %q", got, want)
+	}
+}
+
+// paid chapters are dropped before downloading, with one line naming them
+func TestSkipLocked(t *testing.T) {
+	chapters := grabber.Filterables{
+		&grabber.Chapter{Number: 133},
+		&grabber.Chapter{Number: 134, Locked: true},
+		&grabber.Chapter{Number: 135, Locked: true},
+	}
+
+	open, note := skipLocked(chapters)
+	if len(open) != 1 || open[0].GetNumber() != 133 {
+		t.Errorf("open = %v, want only chapter 133", open)
+	}
+	if want := "skipping 2 paid chapters: 134-135"; note != want {
+		t.Errorf("note = %q, want %q", note, want)
+	}
+
+	open, note = skipLocked(chapters[:1])
+	if len(open) != 1 || note != "" {
+		t.Errorf("no locked chapters: open = %v, note = %q", open, note)
+	}
+
+	open, note = skipLocked(chapters[1:])
+	if len(open) != 0 || note == "" {
+		t.Errorf("all locked: open = %v, note = %q", open, note)
 	}
 }

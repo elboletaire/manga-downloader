@@ -168,6 +168,16 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(1)
 	}
 
+	// paid chapters can't be read logged out: leave them out instead of failing each
+	chapters, lockedNote := skipLocked(chapters)
+	if lockedNote != "" {
+		yellow("%s", lockedNote)
+	}
+	if len(chapters) == 0 {
+		yellow("Every chapter matched by the specified ranges is paid and locked")
+		exit(1)
+	}
+
 	showLanguage := core.HasDuplicateChapterNumbers(chapters)
 	showGroup := core.HasGroupDuplicates(chapters)
 
@@ -476,7 +486,17 @@ func allChaptersLabel(chapters grabber.Filterables) string {
 		}
 	}
 	if locked > 0 {
-		label += fmt.Sprintf(" (%d paid and locked)", locked)
+		label += fmt.Sprintf(" (%d paid and locked, skipped)", locked)
 	}
 	return label
+}
+
+// skipLocked drops the chapters the listing marks as paid, returning the rest
+// and the line that says which were left out ("" when none were)
+func skipLocked(chapters grabber.Filterables) (grabber.Filterables, string) {
+	open, locked := core.SplitLocked(chapters)
+	if len(locked) == 0 {
+		return chapters, ""
+	}
+	return open, core.LockedMessage(locked)
 }

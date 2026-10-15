@@ -2,6 +2,13 @@
 // with the arrows moving an "active" row, the way native list boxes work.
 // Tabbing through thousands of checkboxes would be useless.
 
+import type { Chapter } from './types';
+
+/** The chapters that can be picked: the ones the listing marks paid and locked can't */
+export function pickable(chapters: Chapter[]): Chapter[] {
+  return chapters.filter((c) => !c.locked);
+}
+
 /**
  * The row the key moves to, or null when the key doesn't move. page is how
  * many rows fit in the view.

@@ -32,8 +32,8 @@
 // group the series doesn't list falls back on load, as the backend does: typed
 // "xx" under multi loads "all", under plus the edition the URL points at.
 // Typed values match ignoring case, and take the spelling the series lists.
-// &locked lists every 50th chapter as paid and locked: a run fails it at once,
-// as the backend does, without fetching it.
+// &locked lists every 50th chapter as paid and locked: the list shows its lock
+// and never selects it, as the backend does.
 
 import type { Api, Unsubscribe } from './api';
 import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary, Update } from './types';
@@ -669,11 +669,10 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   } else if (scenario !== 'empty') {
     url = 'https://example.com/manga/one-piece';
     finishLoad();
-    for (const c of chapters.slice(0, 12)) {
-      selected.add(c.index);
-    }
-    for (const c of chapters.slice(40, 52)) {
-      selected.add(c.index);
+    for (const c of [...chapters.slice(0, 12), ...chapters.slice(40, 52)]) {
+      if (!c.locked) {
+        selected.add(c.index);
+      }
     }
     selectionBus.emit(selectionOf());
   }
@@ -693,7 +692,12 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   if (scenario === 'volumes' || scenario === 'volumes-running') {
     options.packAs = 'volumes';
     // three volumes and a half: the first 32 chapters (598-629) span volumes 61-64
-    selected = new Set(chapters.slice(0, Math.min(32, chapters.length)).map((c) => c.index));
+    selected = new Set(
+      chapters
+        .slice(0, Math.min(32, chapters.length))
+        .filter((c) => !c.locked)
+        .map((c) => c.index),
+    );
     selectionBus.emit(selectionOf());
   }
   if (scenario === 'volumes-running') {
@@ -811,9 +815,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       if (index < 0 || index >= chapters.length) {
         return;
       }
-      if (on) {
+      if (on && !chapters[index].locked) {
         selected.add(index);
-      } else {
+      } else if (!on) {
         selected.delete(index);
       }
       selectionBus.emit(selectionOf());
@@ -828,7 +832,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       }
       for (const index of indices) {
         if (on) {
-          selected.add(index);
+          if (!chapters[index].locked) {
+            selected.add(index);
+          }
         } else {
           selected.delete(index);
         }
@@ -840,7 +846,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       if (loading || running) {
         throw 'a series is loading or a download is running';
       }
-      selected = new Set(on ? chapters.map((c) => c.index) : []);
+      selected = new Set(on ? chapters.filter((c) => !c.locked).map((c) => c.index) : []);
       selectionBus.emit(selectionOf());
       push();
     },
@@ -859,7 +865,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         }
         const hi = b ?? a;
         for (const c of chapters) {
-          if (c.number >= a && c.number <= hi) {
+          if (c.number >= a && c.number <= hi && !c.locked) {
             matched.push(c.index);
           }
         }

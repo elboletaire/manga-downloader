@@ -140,7 +140,7 @@ export interface Chapter {
   group: string;
   /** The volume the site files it under; 0 when the site doesn't say */
   volume: number;
-  /** The listing marks it paid: it can't be downloaded, so a run fails it unfetched */
+  /** The listing marks it paid: it can't be selected, so no run takes it */
   locked: boolean;
 }
 

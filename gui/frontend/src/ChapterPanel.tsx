@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEve
 import { errorMessage, formatNumber, plural } from './format';
 import { AlertIcon, ChevronIcon, LinkIcon, LockIcon, RefreshIcon } from './icons';
 import { Mascot } from './Mascot';
-import { extendsSpan, moveActive, spanIndices } from './listKeys';
+import { extendsSpan, moveActive, pickable, spanIndices } from './listKeys';
 import { hostOf } from './run';
 import type { Chapter, State } from './types';
 import { useVirtualList } from './virtual';
@@ -170,23 +170,27 @@ function ChapterList({
   const fail = (e: unknown) => onError(errorMessage(e));
 
   // the chapters a span of rows covers: a header stands for its chapters
-  // only while folded, as unfolded they're rows of the span already
+  // only while folded, as unfolded they're rows of the span already.
+  // Paid chapters can't be picked, so no span covers them.
   const chaptersOf = (positions: number[]) => {
     const out: number[] = [];
     for (const p of positions) {
       const row = rows[p];
       if (row.kind === 'chapter') {
-        out.push(row.chapter.index);
+        if (!row.chapter.locked) {
+          out.push(row.chapter.index);
+        }
       } else if (row.collapsed) {
-        out.push(...row.chapters.map((c) => c.index));
+        out.push(...pickable(row.chapters).map((c) => c.index));
       }
     }
     return out;
   };
 
   const toggleGroup = (row: Extract<GroupedRow, { kind: 'group' }>) => {
-    const on = selectedIn(row.chapters, chosen) < row.chapters.length;
-    const changing = row.chapters.map((c) => c.index).filter((i) => chosen.has(i) !== on);
+    const open = pickable(row.chapters);
+    const on = selectedIn(open, chosen) < open.length;
+    const changing = open.map((c) => c.index).filter((i) => chosen.has(i) !== on);
     if (changing.length > 0) {
       onToggleMany(changing, on).catch(fail);
     }
@@ -215,8 +219,15 @@ function ChapterList({
       setActive(pos);
       return;
     }
+    if (row.kind === 'chapter' && row.chapter.locked) {
+      // a paid chapter takes the focus but is never picked, nor does it anchor a span
+      setActive(pos);
+      return;
+    }
     const on =
-      row.kind === 'chapter' ? !chosen.has(row.chapter.index) : selectedIn(row.chapters, chosen) < row.chapters.length;
+      row.kind === 'chapter'
+        ? !chosen.has(row.chapter.index)
+        : selectedIn(pickable(row.chapters), chosen) < pickable(row.chapters).length;
     if (extend && anchor.current >= 0) {
       // Shift: the whole span takes the state the clicked row is switching to
       const changing = chaptersOf(spanIndices(anchor.current, pos)).filter((i) => chosen.has(i) !== on);
@@ -293,7 +304,7 @@ function ChapterList({
     if (e.key.toLowerCase() === 'a' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       if (!disabled) {
-        onSetAll(selected.length !== chapters.length).catch(fail);
+        onSetAll(selected.length !== selectable).catch(fail);
       }
     }
   };
@@ -311,7 +322,9 @@ function ChapterList({
     }
   };
 
-  const all = state.chapterCount > 0 && state.selectedCount === state.chapterCount;
+  // paid chapters can't be picked, so "all" and the count are of the others
+  const selectable = useMemo(() => pickable(chapters).length, [chapters]);
+  const all = selectable > 0 && state.selectedCount === selectable;
   const some = state.selectedCount > 0 && !all;
   const { first, last } = list.span;
   const activeRow = active >= first && active < last ? rows[active] : undefined;
@@ -348,19 +361,19 @@ function ChapterList({
                 el.indeterminate = some;
               }
             }}
-            disabled={disabled}
+            disabled={disabled || selectable === 0}
             aria-label={all ? 'Select none' : 'Select all'}
             onChange={() => onSetAll(!all).catch(fail)}
           />
         </label>
         <p className="count" aria-live="polite">
-          <strong>{state.selectedCount}</strong> of {state.chapterCount} selected
+          <strong>{state.selectedCount}</strong> of {selectable} selected
         </p>
         <div className="toolbar-buttons">
           <button
             type="button"
             className="btn ghost small"
-            disabled={disabled || all}
+            disabled={disabled || all || selectable === 0}
             onClick={() => onSetAll(true).catch(fail)}
           >
             All
@@ -445,8 +458,9 @@ function ChapterList({
               list.ref.current?.focus({ preventScroll: true });
             };
             if (row.kind === 'group') {
-              const n = selectedIn(row.chapters, chosen);
-              const on = n === row.chapters.length;
+              const open = pickable(row.chapters);
+              const n = selectedIn(open, chosen);
+              const on = open.length > 0 && n === open.length;
               const label = `${row.label} · ${row.key === 0 ? plural(row.chapters.length, 'chapter', 'chapters') : chapterSpan(row.chapters)}`;
               return (
                 <div
@@ -456,7 +470,8 @@ function ChapterList({
                   aria-setsize={rows.length}
                   aria-posinset={pos + 1}
                   aria-selected={on}
-                  aria-label={`${label}, ${n} of ${row.chapters.length} selected${row.collapsed ? ', folded' : ''}`}
+                  aria-disabled={open.length === 0 || undefined}
+                  aria-label={`${label}, ${n} of ${open.length} selected${row.collapsed ? ', folded' : ''}`}
                   className={`row group-row${on ? ' on' : ''}${pos === active ? ' active' : ''}`}
                   style={style}
                   onMouseDown={keepFocus}
@@ -492,12 +507,13 @@ function ChapterList({
                 aria-setsize={rows.length}
                 aria-posinset={pos + 1}
                 aria-selected={on}
-                className={`row${grouping !== null ? ' in-group' : ''}${on ? ' on' : ''}${pos === active ? ' active' : ''}`}
+                aria-disabled={ch.locked || undefined}
+                className={`row${grouping !== null ? ' in-group' : ''}${on ? ' on' : ''}${ch.locked ? ' paid' : ''}${pos === active ? ' active' : ''}`}
                 style={style}
                 onMouseDown={keepFocus}
                 onClick={(e) => toggleRow(pos, e.shiftKey)}
               >
-                <span className={`box${on ? ' on' : ''}`} aria-hidden="true" />
+                <ChapterBox on={on} locked={ch.locked} />
                 <span className="num">{formatNumber(ch.number)}</span>
                 <ChapterTitle title={ch.title} locked={ch.locked} />
                 {ch.language !== '' && <span className="lang">{ch.language}</span>}
@@ -529,8 +545,13 @@ function ChapterList({
   );
 }
 
+/** A chapter's checkbox: greyed out for a paid chapter, which can't be picked */
+export function ChapterBox({ on, locked }: { on: boolean; locked: boolean }) {
+  return <span className={`box${on ? ' on' : ''}${locked ? ' disabled' : ''}`} aria-hidden="true" />;
+}
+
 /** The tooltip and label of a locked chapter's mark */
-export const LOCKED_HINT = 'Paid and locked, so it cannot be downloaded';
+export const LOCKED_HINT = 'Paid and locked, so it cannot be selected';
 
 /** A chapter's title, marked with a lock when the listing says it's paid */
 export function ChapterTitle({ title, locked }: { title: string; locked: boolean }) {

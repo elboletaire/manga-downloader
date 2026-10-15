@@ -968,8 +968,15 @@ func (c *Controller) SelectedCount() int {
 	return n
 }
 
-// SetSelected selects or deselects chapter i. It's refused while a series
-// loads or a download runs, as SetSelectedMany is.
+// selectable reports whether chapter i may be selected: the ones the
+// listing marks as paid can't be, as a run could only fail them. Needs c.mu.
+func (c *Controller) selectable(i int) bool {
+	return !grabber.LockedOf(c.series.Chapters[i])
+}
+
+// SetSelected selects or deselects chapter i; a locked chapter is never
+// selected. It's refused while a series loads or a download runs, as
+// SetSelectedMany is.
 func (c *Controller) SetSelected(i int, on bool) error {
 	c.mu.Lock()
 	if c.loading || c.running {
@@ -977,6 +984,10 @@ func (c *Controller) SetSelected(i int, on bool) error {
 		return errBusy
 	}
 	if i < 0 || i >= len(c.selected) {
+		c.mu.Unlock()
+		return nil
+	}
+	if on && !c.selectable(i) {
 		c.mu.Unlock()
 		return nil
 	}
@@ -988,8 +999,8 @@ func (c *Controller) SetSelected(i int, on bool) error {
 }
 
 // SetSelectedMany selects or deselects the chapters at indices in one step,
-// with one change and one push. Every index is checked before any is set: one
-// out of range rejects the whole call. It's refused while a series loads or a
+// with one change and one push; locked chapters are left unselected. Every
+// index is checked before any is set: one out of range rejects the whole call. It's refused while a series loads or a
 // download runs, as Configure is.
 func (c *Controller) SetSelectedMany(indices []int, on bool) error {
 	c.mu.Lock()
@@ -1004,7 +1015,7 @@ func (c *Controller) SetSelectedMany(indices []int, on bool) error {
 		}
 	}
 	for _, i := range indices {
-		c.selected[i] = on
+		c.selected[i] = on && c.selectable(i)
 	}
 	c.selGen++
 	c.mu.Unlock()
@@ -1012,7 +1023,7 @@ func (c *Controller) SetSelectedMany(indices []int, on bool) error {
 	return nil
 }
 
-// SetAll selects or deselects every chapter. It's refused while a series
+// SetAll selects or deselects every chapter but the locked ones. It's refused while a series
 // loads or a download runs.
 func (c *Controller) SetAll(on bool) error {
 	c.mu.Lock()
@@ -1021,7 +1032,7 @@ func (c *Controller) SetAll(on bool) error {
 		return errBusy
 	}
 	for i := range c.selected {
-		c.selected[i] = on
+		c.selected[i] = on && c.selectable(i)
 	}
 	c.selGen++
 	c.mu.Unlock()
@@ -1031,7 +1042,7 @@ func (c *Controller) SetAll(on bool) error {
 
 // SelectRange selects the chapters whose number falls in the range text
 // (e.g. "1-10,12"), leaving the rest of the selection as it is. It returns how
-// many chapters the range matched. It's refused while a series loads or a
+// many chapters it selected: locked ones are never matched. It's refused while a series loads or a
 // download runs.
 func (c *Controller) SelectRange(text string) (int, error) {
 	c.mu.Lock()
@@ -1048,7 +1059,7 @@ func (c *Controller) SelectRange(text string) (int, error) {
 	n := 0
 	if c.series != nil {
 		for i, chap := range c.series.Chapters {
-			if inRanges(chap.GetNumber(), rngs) {
+			if inRanges(chap.GetNumber(), rngs) && c.selectable(i) {
 				c.selected[i] = true
 				n++
 			}

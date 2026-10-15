@@ -278,7 +278,7 @@ type ChapterDTO struct {
 	// Volume is the volume the site files the chapter under, 0 when it doesn't say
 	Volume int `json:"volume"`
 	// Locked is set when the listing marks the chapter as paid: it can't be
-	// downloaded, and is failed without fetching (see core.ErrLocked)
+	// selected (see Controller.SetSelected) nor downloaded
 	Locked bool `json:"locked"`
 }
 

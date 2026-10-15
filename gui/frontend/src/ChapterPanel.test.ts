@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { ChapterTitle, LOCKED_HINT } from './ChapterPanel';
+import { ChapterBox, ChapterTitle, LOCKED_HINT } from './ChapterPanel';
 
 function title(locked: boolean): string {
   return renderToStaticMarkup(createElement(ChapterTitle, { title: 'Chapter 186', locked }));
@@ -19,5 +19,18 @@ describe('ChapterTitle', () => {
     const html = title(false);
     expect(html).not.toContain('lock');
     expect(html).toBe('<span class="title">Chapter 186</span>');
+  });
+});
+
+describe('ChapterBox', () => {
+  const box = (on: boolean, locked: boolean) => renderToStaticMarkup(createElement(ChapterBox, { on, locked }));
+
+  it('greys out the box of a locked chapter', () => {
+    expect(box(false, true)).toBe('<span class="box disabled" aria-hidden="true"></span>');
+  });
+
+  it('leaves a free chapter\'s box as it was', () => {
+    expect(box(false, false)).toBe('<span class="box" aria-hidden="true"></span>');
+    expect(box(true, false)).toBe('<span class="box on" aria-hidden="true"></span>');
   });
 });
