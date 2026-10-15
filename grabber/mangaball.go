@@ -12,11 +12,9 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Mangaball is a grabber for mangaball.com (mangaball.net redirects to it):
-// the title, the chapters and each chapter's page list all come from a JSON
-// API. The HTML pages sit behind a Turnstile challenge, and the image CDN
-// refuses requests without a mangaball.com Referer (the downloader's default
-// one, so the series URL is kept on mangaball.com).
+// Mangaball reads everything from mangaball.com's JSON API, as its HTML pages
+// sit behind a Turnstile challenge. Series URLs stay on .com: the image CDN
+// wants a mangaball.com Referer, which is the downloader's default one.
 type Mangaball struct {
 	*Grabber
 	title string
