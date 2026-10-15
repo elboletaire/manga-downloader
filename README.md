@@ -832,6 +832,24 @@ make build/gui         # build ./manga-downloader-gui (frontend first)
 make build/gui/windows # cross-build manga-downloader-gui.exe, no cgo needed
 ~~~
 
+## A note on AI
+
+AI tools have changed what this project can be. For years, manga-downloader
+gained maybe one site a year. With AI, it grew a desktop app and went from 10
+supported sites to over 125 in a matter of days.
+
+It isn't "vibe coded", though. Its foundations, the way sites are plugged in
+and how chapters are fetched and packed, are the ones I wrote by hand long
+before AI was involved, and the architecture is still my call. I review every
+change before it lands. Each change also has to pass the tests, and a site has
+to pass a real download checked with `verify-cbz`. Contributions go through the
+same review: pull requests are judged on design, correctness and evidence,
+whoever or whatever wrote them.
+
+Responsible use of AI is welcome. The repository ships an `AGENTS.md` and
+skills for coding agents, so an agent working on it starts from the project's
+conventions.
+
 ## Star history
 
 <div align="center">
