@@ -363,6 +363,45 @@ func TestProgressModelBundleCountsEachPageOnce(t *testing.T) {
 	}
 }
 
+// TestBubbleEventsBundleCountsEachPageOnce runs the same bundle through
+// bubbleEvents into a real program, so a Downloaded that sends page events fails it.
+func TestBubbleEventsBundleCountsEachPageOnce(t *testing.T) {
+	chapter := &grabber.Chapter{Title: "Chapter 0001", PagesCount: 50}
+
+	model := newProgressModel("Series", "1", true, false, false, true)
+	prog := tea.NewProgram(model, tea.WithInput(nil), tea.WithOutput(io.Discard), tea.WithoutRenderer())
+	done := make(chan struct{})
+	ev := &bubbleEvents{prog: prog, done: done}
+
+	go func() {
+		ev.BundleStart(50)
+		ev.Started(chapter)
+		for i := range 50 {
+			ev.Page(chapter, i, nil)
+		}
+		ev.Downloaded(chapter)
+		ev.BundlePacking()
+		for range 50 {
+			ev.BundleArchived(1)
+		}
+		// messages are handled in order, so the model is final once quit is handled
+		prog.Send(downloadDoneMsg{})
+	}()
+	final, err := prog.Run()
+	close(done)
+	if err != nil {
+		t.Fatalf("program failed: %v", err)
+	}
+
+	m := final.(progressModel)
+	if m.bundleDownloaded != 50 || m.bundleArchived != 50 {
+		t.Errorf("counted %d downloaded and %d archived, want 50 each", m.bundleDownloaded, m.bundleArchived)
+	}
+	if m.bundleCurrent != m.bundleTotal {
+		t.Errorf("bundle ended at %d/%d", m.bundleCurrent, m.bundleTotal)
+	}
+}
+
 func TestFailedBarNotFull(t *testing.T) {
 	chapter := &grabber.Chapter{
 		Title:      "Chapter 0001",
