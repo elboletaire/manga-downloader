@@ -690,6 +690,10 @@ func TestChapterLabel(t *testing.T) {
 		{5, "Chapter 50", "Chapter 5 - Chapter 50"},
 		{5, "Chapter 5.5", "Chapter 5 - Chapter 5.5"},
 		{0, "Chapter 0: Prologue", "Chapter 0 - Prologue"},
+		// localized and volume-led prefixes are the number too
+		{12, "Capítulo 12: Foo", "Chapter 12 - Foo"},
+		{7, "Chapitre 7 : Foo", "Chapter 7 - Foo"},
+		{12, "Vol. 3 Chapter 12: Foo", "Chapter 12 - Foo"},
 	}
 	for _, tt := range tests {
 		got := chapterLabel(&grabber.Chapter{Number: tt.number, Title: tt.title})
