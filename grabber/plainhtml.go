@@ -20,6 +20,17 @@ import (
 // This list is used by both Test() (to identify sites on series pages) and
 // resolveSeriesURL() (to test chapter URLs and find working series pages).
 var plainHTMLSelectors = []SiteSelector{
+	// lelscanfr.com (French): the series page lists its chapters in
+	// #chapters-list, split over ?page=N (One Piece: six pages). The reader
+	// renders every page in #chapter-container, lazy ones in data-src.
+	{
+		Title:      "h2.text-2xl",
+		TitleNoise: "span",
+		Rows:       "#chapters-list a[href*=\"/manga/\"]",
+		Chapter:    "div.flex.gap-2 span",
+		Image:      "#chapter-container img.chapter-image",
+		Paginated:  true,
+	},
 	// rizzfables.com: its #chapterlist markup is shared with several themes
 	// (en-thunderscans below, and the #readerarea one), which would match
 	// first and read the reader's avatar and banner <img>s. Rows are
@@ -434,6 +445,9 @@ type SiteSelector struct {
 	// fetched (e.g. "style=list" for readers that render one page at a time
 	// unless asked for the whole list)
 	ChapterQuery string
+	// TitleNoise is a selector for elements inside Title to leave out, such as
+	// a "[Manga]" type badge nested in the heading
+	TitleNoise string
 	// ChapterTitleStrip is a regexp removing site-specific noise from a
 	// sanitized chapter title (e.g. "^#?\d+\s*\.?\s*Bölüm$" for a bare number)
 	ChapterTitleStrip string
@@ -459,6 +473,9 @@ type SiteSelector struct {
 	// IDRe is a regexp whose first group captures a release's ID from its
 	// URL. Without it, or when it doesn't match, the ID is the URL's path.
 	IDRe string
+	// Paginated, when set, reads the chapter list's pages after the first
+	// (?page=N) until one has no rows, for series listings split over pages.
+	Paginated bool
 }
 
 // PlainHTMLChapter represents a PlainHTML Chapter
@@ -626,7 +643,12 @@ func (m PlainHTML) rowChapterNumber(s *goquery.Selection) (float64, bool) {
 
 // Ttitle returns the manga title
 func (m PlainHTML) FetchTitle() (string, error) {
-	return sanitizeTitle(textWithoutNoise(m.doc.Find(m.site.Title))), nil
+	title := m.doc.Find(m.site.Title)
+	if m.site.TitleNoise != "" {
+		title = title.Clone()
+		title.Find(m.site.TitleNoise).Remove()
+	}
+	return sanitizeTitle(textWithoutNoise(title)), nil
 }
 
 // textWithoutNoise returns a selection's text with common non-title noise
@@ -868,64 +890,107 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 	if m.site.IDRe != "" {
 		idRe = regexp.MustCompile(m.site.IDRe)
 	}
-	m.rows.Each(func(i int, s *goquery.Selection) {
-		// an empty Chapter/ChapterTitle selector means the row itself carries
-		// the text (i.e. mangapill, where each chapter row is a plain <a>
-		// with no dedicated child element for the chapter number)
-		chapterText := textWithoutNoise(s)
-		if m.site.Chapter != "" {
-			chapterText = textWithoutNoise(s.Find(m.site.Chapter))
-		}
-
-		number, ok := m.rowChapterNumber(s)
-		if !ok {
-			return
-		}
-
-		title := chapterText
-		if m.site.ChapterTitle != "" {
-			title = textWithoutNoise(s.Find(m.site.ChapterTitle))
-		}
-		title = sanitizeTitle(title)
-		title = stripSeriesTitle(title, seriesTitle)
-		if strip != nil {
-			title = sanitizeTitle(strip.ReplaceAllString(title, ""))
-		}
-		if title == "" || chapterOnlyTitleRe.MatchString(title) {
-			// nothing left but the number, so the filename gets a real label
-			title = "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
-		}
-
-		for _, upload := range m.rowUploads(s) {
-			u := m.resolveURL(upload.href)
-			if !strings.HasPrefix(u, "http") {
-				u = m.BaseUrl() + u
+	lists := []*goquery.Selection{m.rows}
+	if m.site.Paginated {
+		more, listErrs := m.listingPages()
+		lists = append(lists, more...)
+		errs = append(errs, listErrs...)
+	}
+	for _, rows := range lists {
+		rows.Each(func(i int, s *goquery.Selection) {
+			// an empty Chapter/ChapterTitle selector means the row itself carries
+			// the text (i.e. mangapill, where each chapter row is a plain <a>
+			// with no dedicated child element for the chapter number)
+			chapterText := textWithoutNoise(s)
+			if m.site.Chapter != "" {
+				chapterText = textWithoutNoise(s.Find(m.site.Chapter))
 			}
-			// the ID is read before ChapterQuery is appended, so it never
-			// carries the query
-			id := releaseID(u, idRe)
-			if m.site.ChapterQuery != "" {
-				sep := "?"
-				if strings.Contains(u, "?") {
-					sep = "&"
+
+			number, ok := m.rowChapterNumber(s)
+			if !ok {
+				return
+			}
+
+			title := chapterText
+			if m.site.ChapterTitle != "" {
+				title = textWithoutNoise(s.Find(m.site.ChapterTitle))
+			}
+			title = sanitizeTitle(title)
+			title = stripSeriesTitle(title, seriesTitle)
+			if strip != nil {
+				title = sanitizeTitle(strip.ReplaceAllString(title, ""))
+			}
+			if title == "" || chapterOnlyTitleRe.MatchString(title) {
+				// nothing left but the number, so the filename gets a real label
+				title = "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
+			}
+
+			for _, upload := range m.rowUploads(s) {
+				u := m.resolveURL(upload.href)
+				if !strings.HasPrefix(u, "http") {
+					u = m.BaseUrl() + u
 				}
-				u += sep + m.site.ChapterQuery
-			}
-			chapter := &PlainHTMLChapter{
-				Chapter{
-					Number: number,
-					Title:  title,
-					ID:     id,
-				},
-				u,
-			}
-			chapter.SetGroups(upload.groups...)
+				// the ID is read before ChapterQuery is appended, so it never
+				// carries the query
+				id := releaseID(u, idRe)
+				if m.site.ChapterQuery != "" {
+					sep := "?"
+					if strings.Contains(u, "?") {
+						sep = "&"
+					}
+					u += sep + m.site.ChapterQuery
+				}
+				chapter := &PlainHTMLChapter{
+					Chapter{
+						Number: number,
+						Title:  title,
+						ID:     id,
+					},
+					u,
+				}
+				chapter.SetGroups(upload.groups...)
 
-			chapters = append(chapters, chapter)
-		}
-	})
+				chapters = append(chapters, chapter)
+			}
+		})
+	}
 
 	return
+}
+
+// maxListingPages caps the ?page=N walk of a Paginated chapter list
+const maxListingPages = 100
+
+// listingPages fetches the chapter list's pages after the first, as ?page=N,
+// until one has no rows. It returns each page's rows.
+func (m PlainHTML) listingPages() (pages []*goquery.Selection, errs []error) {
+	base, err := url.Parse(m.URL)
+	if err != nil {
+		return nil, []error{err}
+	}
+	for page := 2; page <= maxListingPages; page++ {
+		u := *base
+		query := u.Query()
+		query.Set("page", strconv.Itoa(page))
+		u.RawQuery = query.Encode()
+
+		body, err := http.Get(http.RequestParams{URL: u.String()})
+		if err != nil {
+			return pages, append(errs, err)
+		}
+		doc, err := goquery.NewDocumentFromReader(body)
+		body.Close()
+		if err != nil {
+			return pages, append(errs, err)
+		}
+		rows := doc.Find(m.site.Rows)
+		if rows.Length() == 0 {
+			break
+		}
+		pages = append(pages, rows)
+	}
+
+	return pages, errs
 }
 
 // plainHTMLUpload is one release a chapter row lists: the link it's read

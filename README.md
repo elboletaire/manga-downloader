@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[125 supported sites](#supported-sites)**, from big aggregators to small
+- **[128 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -613,7 +613,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 125 supported sites</b></summary>
+<summary><b>Show all 128 supported sites</b></summary>
 <br>
 
 - [3asq.online (Arabic, former 3asq.org)](https://3asq.online)
@@ -652,6 +652,7 @@ to a minute.
 - [genzupdates.com (Genz Toon)](https://genzupdates.com)
 - [guya.moe (Guya, Kaguya-sama)](https://guya.moe)
 - [heavenly-delusion.com (Heavenly Delusion)](https://heavenly-delusion.com)
+- [heavenmanga.com (Spanish, some adult titles)](https://heavenmanga.com)
 - [hivetoons.org (HiveToons, VoidScans)](https://hivetoons.org)
 - [inmanga.com](https://inmanga.com)
 - [jestful.net](https://jestful.net)
@@ -665,6 +666,8 @@ to a minute.
 - [lagoonscans.com](https://lagoonscans.com)
 - [leercapitulo.co](https://www.leercapitulo.co)
 - [lelmanga.com (French)](https://www.lelmanga.com)
+- [lelscanfr.com (French)](https://www.lelscanfr.com)
+- [lelscans.net (French)](https://lelscans.net)
 - [lhtranslation.net (LHTranslation)](https://lhtranslation.net)
 - [lilymanga.net (yuri, some NSFW)](https://lilymanga.net)
 - [limonmanga.com](https://limonmanga.com)

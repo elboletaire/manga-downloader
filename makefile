@@ -114,6 +114,7 @@ grabber: \
 	grabber/genztoon \
 	grabber/guya \
 	grabber/heavenlydelusion \
+	grabber/heavenmanga \
 	grabber/hijala \
 	grabber/hivetoons \
 	grabber/inmanga \
@@ -121,6 +122,7 @@ grabber: \
 	grabber/jojolands \
 	grabber/kaynscan \
 	grabber/leercapitulo \
+	grabber/lelscans \
 	grabber/lilymanga \
 	grabber/luascans \
 	grabber/mangaball \
@@ -309,12 +311,18 @@ grabber/jojolands:
 grabber/heavenlydelusion:
 	go run . https://heavenly-delusion.com 83
 
+grabber/heavenmanga:
+	go run . https://heavenmanga.com/manga/black-clover 388
+
 grabber/weebcentral:
 	go run . https://weebcentral.com/series/01J76XYDXH7KT6AABVG3JAT3ZP/Shangri-La-Frontier 274
 
 # plain HTTP only, the reader renders every page in the markup (no browser)
 grabber/leercapitulo:
 	go run . https://www.leercapitulo.co/manga/0cj9hhn6di/kingdom/ 883
+
+grabber/lelscans:
+	go run . https://lelscans.net/lecture-en-ligne-one-piece 1100
 
 grabber/guya:
 	go run . https://guya.moe/read/manga/Kaguya-Wants-To-Be-Confessed-To/ 281
@@ -481,6 +489,7 @@ grabber/html: \
 	grabber/komikstation \
 	grabber/lagoonscans \
 	grabber/lelmanga \
+	grabber/lelscanfr \
 	grabber/madarascans \
 	grabber/maid \
 	grabber/mangaberri \
@@ -587,6 +596,8 @@ grabber/lagoonscans:
 	go run . https://lagoonscans.com/manga/crimson-reset/ 52
 grabber/lelmanga:
 	go run . https://www.lelmanga.com/manga/one-piece 1100
+grabber/lelscanfr:
+	go run . https://www.lelscanfr.com/manga/one-piece 700
 grabber/mangasusuku:
 	go run . https://mangasusuku.com/komik/get-out/ 10
 grabber/rizzfables:
