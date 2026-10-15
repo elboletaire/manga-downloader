@@ -54,7 +54,18 @@ pnpm preview   # serve dist/
 
 ## Theme
 
-The page follows the OS (`prefers-color-scheme`) unless a visitor picks Light or Dark in the switch, shown in the desktop app section and the footer (hidden without JavaScript). The choice is in `localStorage` (`md:theme`) and sets `data-theme` on `<html>`, which the colour tokens in `src/styles.css` honour both ways. An inline script in `<head>` (`themeScript` in `src/theme.ts`) applies it before first paint, and `main.ts` rewrites the `media` of the light/dark `<picture>` sources and `theme-color` metas so images follow the choice too.
+The page follows the OS (`prefers-color-scheme`) unless a visitor picks Light
+or Dark in the switch, shown in the desktop app section and the footer (hidden
+without JavaScript). The choice is kept in `localStorage` (`md:theme`) and sets
+`data-theme` on `<html>`, which the colour tokens in `src/styles.css` honour
+both ways. An inline script in `<head>` (`themeScript` in `src/theme.ts`)
+applies it before first paint, and `main.ts` rewrites the `media` of the
+light/dark `<picture>` sources and `theme-color` metas so images follow the
+choice too.
+
+Known limitation: with a forced theme opposite to the OS, the browser's preload
+scanner may fetch the OS variant of the header logo and hero mark too (two small
+extra requests, no visible flash measured).
 
 ## Screenshots
 

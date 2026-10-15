@@ -4,7 +4,7 @@ import '@fontsource-variable/fredoka/wght.css'
 import './styles.css'
 import { EN_RUNTIME, plural, type RuntimeStrings } from './i18n'
 import { LANG_KEY } from './lang'
-import { forcedTheme, schemeMedia, THEME_KEY, type Theme } from './theme'
+import { forcedTheme, parseTheme, schemeMedia, THEME_KEY, type Theme } from './theme'
 import {
   LATEST_RELEASE_API,
   chooseDownload,
@@ -285,7 +285,8 @@ function enhanceTheme(): void {
   for (const group of groups) {
     group.hidden = false
     group.addEventListener('change', (e) => {
-      const choice = (e.target as HTMLInputElement).value as Theme
+      const choice = parseTheme((e.target as HTMLInputElement).value)
+      if (!choice) return
       apply(choice)
       try {
         if (choice === 'system') localStorage.removeItem(THEME_KEY)

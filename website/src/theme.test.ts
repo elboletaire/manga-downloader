@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { forcedTheme, schemeMedia, themeScript, THEME_KEY } from './theme'
+import { forcedTheme, parseTheme, schemeMedia, themeScript, THEME_KEY } from './theme'
 
 describe('forcedTheme', () => {
   it.each([
@@ -11,6 +11,14 @@ describe('forcedTheme', () => {
     ['Dark', null],
   ])('%s -> %s', (stored, want) => {
     expect(forcedTheme(stored)).toBe(want)
+  })
+})
+
+describe('parseTheme', () => {
+  it('accepts the three themes only', () => {
+    expect(parseTheme('system')).toBe('system')
+    expect(parseTheme('dark')).toBe('dark')
+    expect(parseTheme('sepia')).toBeNull()
   })
 })
 

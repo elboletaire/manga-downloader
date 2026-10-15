@@ -1540,16 +1540,6 @@ code {
   display: none;
 }
 
-.theme-switch legend {
-  /* Names the group for assistive tech; the segments say the rest. */
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 .theme-switch label {
   position: relative;
   display: block;
@@ -1589,8 +1579,9 @@ code {
 }
 
 .site-footer .theme-switch {
-  margin-top: 0;
-  align-self: center;
+  /* Lines the pill's centre up with the logo row of the top-aligned nav. */
+  margin-top: -7px;
+  align-self: flex-start;
 }
 
 @media (max-width: 400px) {
