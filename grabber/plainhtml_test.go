@@ -1103,3 +1103,18 @@ func TestPlainHTMLLockedIsland(t *testing.T) {
 		t.Errorf("sana locked = %v, want 11 only", flags)
 	}
 }
+
+// the selectors' regexps compile with MustCompile at run time, so a typo
+// would panic on the first site that reaches it
+func TestPlainHTMLSelectorRegexps(t *testing.T) {
+	for _, s := range plainHTMLSelectors {
+		for _, pattern := range []string{s.NumberRe, s.IDRe, s.ChapterTitleStrip} {
+			if pattern == "" {
+				continue
+			}
+			if _, err := regexp.Compile(pattern); err != nil {
+				t.Errorf("selector %q: %v", s.Rows, err)
+			}
+		}
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/PuerkitoBio/goquery"
@@ -650,6 +651,19 @@ func (m *PlainHTML) testCandidateSeriesURL(candidateURL string) bool {
 	return false
 }
 
+// numberRegexps caches the compiled SiteSelector.NumberRe patterns, which are
+// checked once per row.
+var numberRegexps sync.Map
+
+func numberRe(pattern string) *regexp.Regexp {
+	if re, ok := numberRegexps.Load(pattern); ok {
+		return re.(*regexp.Regexp)
+	}
+	re := regexp.MustCompile(pattern)
+	numberRegexps.Store(pattern, re)
+	return re
+}
+
 // checkRowChapterNumber is a helper that reads chapter numbers from a row,
 // given an explicit selector (rather than relying on m.site).
 // This is used by testCandidateSeriesURL to avoid relying on m.site being set.
@@ -659,7 +673,7 @@ func checkRowChapterNumber(s *goquery.Selection, selector SiteSelector) (float64
 		if selector.Link != "" {
 			u = s.Find(selector.Link).AttrOr("href", "")
 		}
-		if m := regexp.MustCompile(selector.NumberRe).FindStringSubmatch(u); m != nil {
+		if m := numberRe(selector.NumberRe).FindStringSubmatch(u); m != nil {
 			if n, err := strconv.ParseFloat(m[1], 64); err == nil {
 				return n, true
 			}
