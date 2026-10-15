@@ -3,9 +3,10 @@
 package grabber
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -70,13 +71,15 @@ func TestMangaballChapterURL(t *testing.T) {
 }
 
 func TestMangaballFetchTitle(t *testing.T) {
-	const series = "/title-detail/baki-6a5ffe5d90273b5b995225d2/"
-
 	mux := http.NewServeMux()
-	respond(mux, series, `<html><body><script>self.__next_f.push([1,"1a:[[\"$\",\"$L24\",null,{\"initialTitleData\":{\"id\":\"6a5ffe5d90273b5b995225d2\",\"name\":\"Baki Gaiden: Shin Chiharu\",\"slug\":\"baki-gaiden-shin-chiharu\"}}]]\n"])</script></body></html>`)
+	respond(mux, "/title/6a5ffe5d90273b5b995225d2", `{"code":200,"status":"success","data":{"id":"6a5ffe5d90273b5b995225d2","name":"Baki Gaiden: Shin Chiharu","slug":"baki-gaiden-shin-chiharu"}}`)
 	srv := serve(t, mux)
 
-	title, err := NewMangaball(&Grabber{URL: srv.URL + series}).FetchTitle()
+	old := mangaballAPI
+	mangaballAPI = srv.URL
+	defer func() { mangaballAPI = old }()
+
+	title, err := NewMangaball(&Grabber{URL: "https://mangaball.com/title-detail/baki-gaiden-shin-chiharu-6a5ffe5d90273b5b995225d2/"}).FetchTitle()
 	if err != nil {
 		t.Fatalf("FetchTitle() error = %v", err)
 	}
@@ -85,29 +88,46 @@ func TestMangaballFetchTitle(t *testing.T) {
 	}
 }
 
-func TestMangaballSeriesURL(t *testing.T) {
-	// Actual JSON-LD from the chapter page: name comes before url
-	html := `<script type="application/ld+json">{"@type":"ComicStory","isPartOf":{"@type":"ComicSeries","name":"Baki Gaiden: Shin Chiharu","url":"https://mangaball.com/title-detail/6a5ffe5d90273b5b995225d2"}}</script>`
+func TestMangaballChapterDetail(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		if r.URL.Path != "/chapter/detail" || !strings.Contains(string(b), `"chapter_id":"6a1dcd629a5e1d32a8460eaa"`) {
+			http.Error(w, "bad request", 400)
+			return
+		}
+		w.Write([]byte(`{"status":"success","code":200,"data":{"chapter":{"id":"6a1dcd629a5e1d32a8460eaa","title_id":"685155e3702284f834178602","pages":["https://cdn.example/a-001.webp","https://cdn.example/a-002.webp"]}}}`))
+	}))
+	defer srv.Close()
 
-	got, ok := mangaballSeriesURL(html)
-	if !ok {
-		t.Fatal("mangaballSeriesURL: no match")
+	old := mangaballAPI
+	mangaballAPI = srv.URL
+	defer func() { mangaballAPI = old }()
+
+	// a chapter URL resolves to its series through title_id
+	m := NewMangaball(&Grabber{URL: "https://mangaball.net/chapter-detail/6a1dcd629a5e1d32a8460eaa"})
+	if err := m.resolveSeriesURL(); err != nil {
+		t.Fatalf("resolveSeriesURL() error = %v", err)
 	}
-	if want := "https://mangaball.com/title-detail/6a5ffe5d90273b5b995225d2"; got != want {
-		t.Errorf("mangaballSeriesURL() = %q, want %q", got, want)
+	if want := "https://mangaball.com/title-detail/685155e3702284f834178602"; m.URL != want {
+		t.Errorf("series URL = %q, want %q", m.URL, want)
+	}
+
+	ch, err := m.FetchChapter(&MangaballChapter{Chapter: Chapter{ID: "6a1dcd629a5e1d32a8460eaa", Number: 8}})
+	if err != nil {
+		t.Fatalf("FetchChapter() error = %v", err)
+	}
+	if len(ch.Pages) != 2 || ch.Pages[1].URL != "https://cdn.example/a-002.webp" || ch.Pages[1].Number != 2 {
+		t.Errorf("pages = %+v", ch.Pages)
 	}
 }
 
-func TestMangaballChapterImages(t *testing.T) {
-	page := `<html><body><script>self.__next_f.push([1,"1a:[[\"$\",\"$L24\",null,{\"initialChapter\":{\"id\":\"x\",\"pages\":[\"https://cdn.example/x-001.png\",\"https://cdn.example/x-002.png\"]}}]]\n"])</script></body></html>`
-
-	images, err := mangaballChapterImages(page)
-	if err != nil {
-		t.Fatalf("mangaballChapterImages() error = %v", err)
+func TestMangaballResolveNetSeries(t *testing.T) {
+	m := NewMangaball(&Grabber{URL: "https://www.mangaball.net/title-detail/x-685155e3702284f834178602/"})
+	if err := m.resolveSeriesURL(); err != nil {
+		t.Fatal(err)
 	}
-	want := []string{"https://cdn.example/x-001.png", "https://cdn.example/x-002.png"}
-	if !reflect.DeepEqual(images, want) {
-		t.Errorf("mangaballChapterImages() = %v, want %v", images, want)
+	if want := "https://mangaball.com/title-detail/x-685155e3702284f834178602/"; m.URL != want {
+		t.Errorf("URL = %q, want %q", m.URL, want)
 	}
 }
 
@@ -147,5 +167,79 @@ func TestMangaballFetchChaptersListsEveryRelease(t *testing.T) {
 		if c.ID != w.id || c.Group != w.group {
 			t.Errorf("chapter[%d] ID = %q, Group = %q, want %q, %q", i, c.ID, c.Group, w.id, w.group)
 		}
+	}
+}
+
+func TestMangaballTitleID(t *testing.T) {
+	for _, c := range []struct{ url, want string }{
+		{"https://mangaball.com/title-detail/6a5ffe5d90273b5b995225d2", "6a5ffe5d90273b5b995225d2"},
+		{"https://mangaball.com/title-detail/baki-6a5ffe5d90273b5b995225d2/", "6a5ffe5d90273b5b995225d2"},
+	} {
+		got, err := NewMangaball(&Grabber{URL: c.url}).titleID()
+		if err != nil || got != c.want {
+			t.Errorf("titleID(%q) = %q, %v, want %q", c.url, got, err, c.want)
+		}
+	}
+	if _, err := NewMangaball(&Grabber{URL: "https://mangaball.com/"}).titleID(); err == nil {
+		t.Error("titleID without an id: want an error")
+	}
+}
+
+func TestMangaballBareTitleURLFetchTitle(t *testing.T) {
+	mux := http.NewServeMux()
+	respond(mux, "/title/6a5ffe5d90273b5b995225d2", `{"status":"success","data":{"name":"Baki"}}`)
+	srv := serve(t, mux)
+
+	old := mangaballAPI
+	mangaballAPI = srv.URL
+	defer func() { mangaballAPI = old }()
+
+	title, err := NewMangaball(&Grabber{URL: "https://mangaball.com/title-detail/6a5ffe5d90273b5b995225d2"}).FetchTitle()
+	if err != nil || title != "Baki" {
+		t.Errorf("FetchTitle() = %q, %v, want Baki", title, err)
+	}
+}
+
+func TestMangaballChapterDetailErrors(t *testing.T) {
+	for name, body := range map[string]string{
+		"status not success": `{"status":"error","code":500}`,
+		"empty title_id":     `{"status":"success","data":{"chapter":{"id":"6a1dcd629a5e1d32a8460eaa","pages":[]}}}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte(body))
+			}))
+			defer srv.Close()
+			old := mangaballAPI
+			mangaballAPI = srv.URL
+			defer func() { mangaballAPI = old }()
+
+			m := NewMangaball(&Grabber{URL: "https://mangaball.com/chapter-detail/6a1dcd629a5e1d32a8460eaa"})
+			if err := m.resolveSeriesURL(); err == nil {
+				t.Errorf("resolveSeriesURL() = nil error, URL %q", m.URL)
+			}
+		})
+	}
+}
+
+func TestMangaballGetMaxConcurrency(t *testing.T) {
+	for _, c := range []struct{ set, want MaxConcurrency }{
+		{MaxConcurrency{Chapters: 5, Pages: 10}, mangaballMaxConcurrency},
+		{MaxConcurrency{Chapters: 1, Pages: 1}, MaxConcurrency{Chapters: 1, Pages: 1}},
+	} {
+		m := NewMangaball(&Grabber{Settings: &Settings{MaxConcurrency: c.set}})
+		if got := m.GetMaxConcurrency(); got != c.want {
+			t.Errorf("GetMaxConcurrency() with %+v = %+v, want %+v", c.set, got, c.want)
+		}
+		if m.Settings.MaxConcurrency != c.set {
+			t.Errorf("settings changed to %+v", m.Settings.MaxConcurrency)
+		}
+	}
+}
+
+func TestMangaballIsPagePacer(t *testing.T) {
+	var site Site = NewMangaball(&Grabber{})
+	if _, ok := site.(PagePacer); !ok {
+		t.Fatal("*Mangaball doesn't implement PagePacer")
 	}
 }
