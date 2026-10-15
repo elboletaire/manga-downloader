@@ -162,6 +162,12 @@
     "unsupportedQ": "El meu lloc no és compatible",
     "unsupportedA": "Prova-ho igualment: els llocs fets amb les mateixes plataformes que els de la llista solen funcionar. Si no va, <a href=\"{{repo}}/issues\">obre una incidència</a> o envia una pull request."
   },
+  "theme": {
+    "label": "Tema",
+    "system": "Sistema",
+    "light": "Clar",
+    "dark": "Fosc"
+  },
   "footer": {
     "license": "Lliure i de codi obert, amb la <a href=\"{{repo}}/blob/master/LICENSE\">llicència AGPL-3.0</a>.",
     "madeBy": "Fet per <a href=\"{{author}}\">elboletaire</a>.",

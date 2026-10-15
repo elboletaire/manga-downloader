@@ -8,9 +8,10 @@
     <meta name="description" content="{{a:meta.description:others}}" />
     <link rel="canonical" href="%PAGE_URL%" />
     <!-- i18n:alternates -->
+    <!-- theme:init -->
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#F6F2FF" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#16132A" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F6F2FF" media="(prefers-color-scheme: light)" data-scheme="light" />
+    <meta name="theme-color" content="#16132A" media="(prefers-color-scheme: dark)" data-scheme="dark" />
 
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -237,6 +238,12 @@
                 <p>{{t:desktop.watchText}}</p>
                 <h3>{{t:desktop.themeTitle}}</h3>
                 <p>{{t:desktop.themeText}}</p>
+                <fieldset class="theme-switch" data-theme-switch hidden>
+                  <legend>{{t:theme.label}}</legend>
+                  <label><input type="radio" name="theme-section" value="system" /><span>{{t:theme.system}}</span></label>
+                  <label><input type="radio" name="theme-section" value="light" /><span>{{t:theme.light}}</span></label>
+                  <label><input type="radio" name="theme-section" value="dark" /><span>{{t:theme.dark}}</span></label>
+                </fieldset>
               </div>
               <figure class="shot">
                 <picture>
@@ -552,6 +559,12 @@
           <p>{{t:footer.license}}</p>
           <p>{{t:footer.madeBy}}</p>
         </div>
+        <fieldset class="theme-switch" data-theme-switch hidden>
+          <legend>{{t:theme.label}}</legend>
+          <label><input type="radio" name="theme-footer" value="system" /><span>{{t:theme.system}}</span></label>
+          <label><input type="radio" name="theme-footer" value="light" /><span>{{t:theme.light}}</span></label>
+          <label><input type="radio" name="theme-footer" value="dark" /><span>{{t:theme.dark}}</span></label>
+        </fieldset>
         <nav class="footer-nav" aria-label="{{a:footer.nav}}">
           <ul>
             <li><a href="https://github.com/elboletaire/manga-downloader">GitHub</a></li>

@@ -4,6 +4,7 @@ import '@fontsource-variable/fredoka/wght.css'
 import './styles.css'
 import { EN_RUNTIME, plural, type RuntimeStrings } from './i18n'
 import { LANG_KEY } from './lang'
+import { forcedTheme, schemeMedia, THEME_KEY, type Theme } from './theme'
 import {
   LATEST_RELEASE_API,
   chooseDownload,
@@ -249,6 +250,54 @@ function openTargetedDetails(): void {
   }
 }
 
+// Theme switch ---------------------------------------------------------------
+
+/** Points light/dark <picture> sources and theme-color metas at the chosen theme. */
+function applyMedia(forced: 'light' | 'dark' | null): void {
+  const nodes = document.querySelectorAll<HTMLElement>(
+    'source[media*="prefers-color-scheme"], meta[name="theme-color"][media*="prefers-color-scheme"]',
+  )
+  for (const node of nodes) {
+    const original = (node.dataset.media ??= node.getAttribute('media') ?? '')
+    const scheme = original.includes('dark') ? 'dark' : 'light'
+    node.setAttribute('media', schemeMedia(original, scheme, forced))
+  }
+}
+
+function enhanceTheme(): void {
+  const groups = [...document.querySelectorAll<HTMLFieldSetElement>('[data-theme-switch]')]
+  let stored: string | null = null
+  try {
+    stored = localStorage.getItem(THEME_KEY)
+  } catch {
+    // Storage disabled: the choice lasts until the page closes.
+  }
+  const apply = (choice: Theme) => {
+    const forced = forcedTheme(choice)
+    if (forced) document.documentElement.setAttribute('data-theme', forced)
+    else document.documentElement.removeAttribute('data-theme')
+    applyMedia(forced)
+    for (const input of document.querySelectorAll<HTMLInputElement>('[data-theme-switch] input')) {
+      input.checked = input.value === choice
+    }
+  }
+  apply((forcedTheme(stored) ?? 'system') as Theme)
+  for (const group of groups) {
+    group.hidden = false
+    group.addEventListener('change', (e) => {
+      const choice = (e.target as HTMLInputElement).value as Theme
+      apply(choice)
+      try {
+        if (choice === 'system') localStorage.removeItem(THEME_KEY)
+        else localStorage.setItem(THEME_KEY, choice)
+      } catch {
+        // Storage disabled: the switch still works for this visit.
+      }
+    })
+  }
+}
+
+enhanceTheme()
 enhanceCopy()
 enhanceSites()
 openTargetedDetails()

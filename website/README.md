@@ -50,13 +50,17 @@ pnpm preview   # serve dist/
   and `public/` (favicons, `opengraph.png`). Don't redraw them.
 - **Terminal GIFs**: referenced from `assets/demos/` on `master` via raw GitHub URLs,
   lazy-loaded. Each GIF has a `-light` twin (`download-light.gif`), shown in light
-  mode; the plain GIF is the dark one, shown when the system is in dark mode.
+  mode; the plain GIF is the dark one, shown when the theme is dark.
+
+## Theme
+
+The page follows the OS (`prefers-color-scheme`) unless a visitor picks Light or Dark in the switch, shown in the desktop app section and the footer (hidden without JavaScript). The choice is in `localStorage` (`md:theme`) and sets `data-theme` on `<html>`, which the colour tokens in `src/styles.css` honour both ways. An inline script in `<head>` (`themeScript` in `src/theme.ts`) applies it before first paint, and `main.ts` rewrites the `media` of the light/dark `<picture>` sources and `theme-color` metas so images follow the choice too.
 
 ## Screenshots
 
 The desktop app section shows five captures from `src/assets/screenshots/`,
 each in a light and a dark version. A `<picture>` swaps the dark ones in with
-`prefers-color-scheme`, and Vite fingerprints them into `dist`. WebP only, which
+`prefers-color-scheme` (or the theme switch), and Vite fingerprints them into `dist`. WebP only, which
 every browser the site cares about reads, so there are no PNG fallbacks.
 
 - `app-overview` is the full window (`02-loaded-{light,dark}.png`), at 1000 and
