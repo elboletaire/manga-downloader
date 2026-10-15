@@ -27,8 +27,10 @@ pnpm preview   # serve dist/
 - **Supported sites**: parsed at build time from the `## Supported sites`
   section of the repo's [`README.md`](../README.md) (`build/sites.ts`, wired in
   by the `site-data` plugin in `vite.config.ts`), so the list never drifts.
-  Items marked `\*` get the "browser" tag. Its test checks the parsed count
-  against the README's "Show all N supported sites" line.
+  The section is a table (`Site | Notes | Last verified`); rows marked `\*` get
+  the "browser" tag, and the last-verified date becomes the item's tooltip
+  (`sites.verified.*` in the locales; unchecked `—` rows get none). Its test
+  checks the parsed count against the README's "Show all N supported sites" line.
 - **Download button**: `src/release.ts` (pure, tested) detects the OS and
   matches it against the assets of the latest GitHub release. If the API fails
   or the release has no matching desktop app file, it links to the releases

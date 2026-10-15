@@ -616,134 +616,138 @@ to a minute.
 <summary><b>Show all 128 supported sites</b></summary>
 <br>
 
-- [3asq.online (Arabic, former 3asq.org)](https://3asq.online)
-- [animeallstar1.com (AnimeAllStar, Spanish)](https://www.animeallstar1.com)
-- [animeallstar30.com (AnimeAllStar, Spanish)](https://animeallstar30.com)
-- [arenascan.com](https://arenascan.com)
-- [asmotoon.com (Asmodeus Scans)](https://asmotoon.com) \*
-- [asurascans.com (Asura Scans, former asuratoon.com)](https://asurascans.com)
-- [atsu.moe (Atsumaru)](https://atsu.moe)
-- [aurorascans.com (redirects to qimanga.com)](https://aurorascans.com)
-- [azorafly.com (Azorafly, Arabic)](https://azorafly.com)
-- [bigsolo.org](https://bigsolo.org)
-- [blackcloveronline.com (Black Clover)](https://blackcloveronline.com)
-- [bluesolo.org (Blue Solo, French scantrad)](https://bluesolo.org)
-- [chainsawman-chapter.online (Chainsaw Man)](https://chainsawman-chapter.online)
-- [chainsawmannmanga.com (Chainsaw Man)](https://chainsawmannmanga.com)
-- [comix.to](https://comix.to) \*
-- [danke.moe (Danke fürs Lesen)](https://danke.moe)
-- [deathtollscans.net](https://reader.deathtollscans.net)
-- [demonicscans.org (MangaDemon / Demonic Scans)](https://demonicscans.org)
-- [dragonballmangaa.com (Dragon Ball Super)](https://dragonballmangaa.com)
-- [dragontea.ink](https://dragontea.ink) \*
-- [drakecomic.net (Drake Scans, former drakecomic.org)](https://drakecomic.net)
-- [dynasty-scans.com (Dynasty Reader)](https://dynasty-scans.com)
-- [eldermanga.com](https://eldermanga.com)
-- [elftoon.net (Elf Toon, former elftoon.com)](https://elftoon.net)
-- [en-hijala.com (Hijala Translations)](https://en-hijala.com)
-- [en-thunderscans.com (Thunderscans)](https://en-thunderscans.com)
-- [eskimangalar.com](https://eskimangalar.com)
-- [evascans.net (former evascans.org)](https://evascans.net)
-- [fanfox.net (Manga Fox)](https://fanfox.net)
-- [flamecomics.xyz (Flame Comics, former Flame Scans)](https://flamecomics.xyz)
-- [fmteam.fr](https://fmteam.fr)
-- [furyosociety.com](https://furyosociety.com)
-- [gdscans.com (GalaxyDegenScans)](https://gdscans.com)
-- [genzupdates.com (Genz Toon)](https://genzupdates.com)
-- [guya.moe (Guya, Kaguya-sama)](https://guya.moe)
-- [heavenly-delusion.com (Heavenly Delusion)](https://heavenly-delusion.com)
-- [heavenmanga.com (Spanish, some adult titles)](https://heavenmanga.com)
-- [hivetoons.org (HiveToons, VoidScans)](https://hivetoons.org)
-- [inmanga.com](https://inmanga.com)
-- [jestful.net](https://jestful.net)
-- [jojolandsmanga.com (The JoJoLands)](https://jojolandsmanga.com)
-- [jujutsukaisenmanga.pro (Jujutsu Kaisen)](https://jujutsukaisenmanga.pro)
-- [kappabeast.com](https://kappabeast.com) \*
-- [kaynscans.com (Kayn Scans, former kaynscan.org)](https://kaynscans.com)
-- [kingofshojo.com](https://kingofshojo.com)
-- [komikindo.ch](https://komikindo.ch)
-- [komikstation.org (Indonesian)](https://komikstation.org)
-- [lagoonscans.com](https://lagoonscans.com)
-- [leercapitulo.co](https://www.leercapitulo.co)
-- [lelmanga.com (French)](https://www.lelmanga.com)
-- [lelscanfr.com (French)](https://www.lelscanfr.com)
-- [lelscans.net (French)](https://lelscans.net)
-- [lhtranslation.net (LHTranslation)](https://lhtranslation.net)
-- [lilymanga.net (yuri, some NSFW)](https://lilymanga.net)
-- [limonmanga.com](https://limonmanga.com)
-- [luacomic.org (LuaScans)](https://luacomic.org)
-- [madarascans.net (former madarascans.org/.com)](https://madarascans.net)
-- [maid.my.id](https://www.maid.my.id)
-- [mangaball.com (former mangaball.net)](https://mangaball.com)
-- [mangabats.com (former mangabat.com)](https://www.mangabats.com)
-- [mangaberri.com](https://mangaberri.com)
-- [mangadelsiglotvmanga.com.mx (Manga del Siglo TV Manga, Spanish)](https://www.mangadelsiglotvmanga.com.mx)
-- [mangadenizi.net](https://www.mangadenizi.net)
-- [mangadex.org (MangaDex)](https://mangadex.org)
-- [mangafire.to](https://mangafire.to) \*
-- [mangahere.cc (MangaHere)](https://www.mangahere.cc)
-- [mangahub.io](https://mangahub.io) \*
-- [mangak.io (MangaK, former mangabuddy.com)](https://mangak.io)
-- [mangakakalot.gg (MangaKakalot)](https://www.mangakakalot.gg) \*
-- [mangakatana.com](https://mangakatana.com)
-- [mangalib.me (MangaLib)](https://mangalib.me)
-- [mangalivre.to (Manga Livre, former mangalivre.tv/mangalivre.net)](https://mangalivre.to)
-- [manganato.gg (MangaNato)](https://www.manganato.gg) \*
-- [mangapark.cc (MangaPark)](https://mangapark.cc)
-- [mangapill.com](https://mangapill.com)
-- [mangaplus.shueisha.co.jp (Manga Plus, Shueisha's official reader)](https://mangaplus.shueisha.co.jp)
-- [mangaread.org](https://www.mangaread.org)
-- [mangasushi.org](https://mangasushi.org)
-- [mangasusuku.com (Indonesian, mostly NSFW)](https://mangasusuku.com)
-- [mangataro.org](https://mangataro.org)
-- [mangatown.com](https://www.mangatown.com)
-- [mangavault.lat (MangaVault)](https://mangavault.lat)
-- [mangaworld.mx (MangaWorld, Italian)](https://www.mangaworld.mx)
-- [mangtto.com (Mangitto)](https://mangtto.com)
-- [manhuaplus.com](https://manhuaplus.com)
-- [manhuatop.org](https://manhuatop.org) \*
-- [manhuaus.com](https://manhuaus.com) \*
-- [manhwaonline.org](https://manhwaonline.org)
-- [mgeko.cc](https://www.mgeko.cc)
-- [mistscans.com](https://mistscans.com)
-- [mkissa.to](https://mkissa.to) \*
-- [natomanga.com (MangaNato, former manganato.com/manganelo.com)](https://www.natomanga.com) \*
-- [projectsuki.com](https://projectsuki.com)
-- [qimanga.com](https://qimanga.com)
-- [ravenscans.org](https://ravenscans.org)
-- [rawkuma.net](https://rawkuma.net)
-- [ritharscans.com](https://ritharscans.com)
-- [rizzfables.com](https://rizzfables.com)
-- [rokaricomics.com](https://rokaricomics.com)
-- [roliascan.com](https://roliascan.com)
-- [sacachispa.site](https://sacachispa.site)
-- [sanascans.com (Sana Scans)](https://sanascans.com)
-- [scan-vf.net (ScanVF)](https://www.scan-vf.net)
-- [setsuscans.com](https://setsuscans.com) \*
-- [silentquill.net (Armageddon Scanlation)](https://silentquill.net)
-- [stonescape.xyz](https://stonescape.xyz)
-- [sushiscan.net](https://sushiscan.net) \*
-- [taiyo.moe](https://taiyo.moe)
-- [tcbonepiecechapters.com (TCB Scans, former tcbscans.com)](https://tcbonepiecechapters.com)
-- [team-shadowi.com](https://www.team-shadowi.com)
-- [templetoons.com (Temple Scan)](https://templetoons.com) \*
-- [the-apothecary-diaries.com (The Apothecary Diaries)](https://the-apothecary-diaries.com)
-- [toongod.org](https://www.toongod.org) \*
-- [toonily.com](https://toonily.com) \*
-- [tortugaceviri.com (Tortuga Çeviri)](https://tortugaceviri.com)
-- [tritinia.org (Tritinia Scans)](https://tritinia.org)
-- [trmanga.com](https://trmanga.com)
-- [tvymanga3.com (Tv y Manga, Spanish)](https://tvymanga3.com)
-- [twmanga.com (包子漫画, baozimh.com mirror)](https://www.twmanga.com)
-- [utoon.us (UToon, home of reset-scans' content)](https://www.utoon.us)
-- [uzaymanga.com](https://uzaymanga.com)
-- [violetscans.org](https://violetscans.org)
-- [vortexscans.org](https://vortexscans.org)
-- [webtoons.com (WEBTOON, free episodes only)](https://www.webtoons.com)
-- [weebcentral.com](https://weebcentral.com)
-- [witchtoons.net (WitchToons, former witchscans.com)](https://witchtoons.net)
-- [writerscans.com](https://writerscans.com)
-- [zonatmo.org (TuMangaOnline, former zonatmo.com)](https://zonatmo.org)
+| Site | Notes | Last verified |
+| --- | --- | --- |
+| [3asq.online](https://3asq.online) | Arabic, former 3asq.org | — |
+| [animeallstar1.com](https://www.animeallstar1.com) | AnimeAllStar, Spanish | — |
+| [animeallstar30.com](https://animeallstar30.com) | AnimeAllStar, Spanish | — |
+| [arenascan.com](https://arenascan.com) |  | — |
+| [asmotoon.com](https://asmotoon.com) \* | Asmodeus Scans | — |
+| [asurascans.com](https://asurascans.com) | Asura Scans, former asuratoon.com | — |
+| [atsu.moe](https://atsu.moe) | Atsumaru | — |
+| [aurorascans.com](https://aurorascans.com) | redirects to qimanga.com | — |
+| [azorafly.com](https://azorafly.com) | Azorafly, Arabic | — |
+| [bigsolo.org](https://bigsolo.org) |  | — |
+| [blackcloveronline.com](https://blackcloveronline.com) | Black Clover | — |
+| [bluesolo.org](https://bluesolo.org) | Blue Solo, French scantrad | — |
+| [chainsawman-chapter.online](https://chainsawman-chapter.online) | Chainsaw Man | — |
+| [chainsawmannmanga.com](https://chainsawmannmanga.com) | Chainsaw Man | — |
+| [comix.to](https://comix.to) \* |  | — |
+| [danke.moe](https://danke.moe) | Danke fürs Lesen | — |
+| [deathtollscans.net](https://reader.deathtollscans.net) |  | — |
+| [demonicscans.org](https://demonicscans.org) | MangaDemon / Demonic Scans | — |
+| [dragonballmangaa.com](https://dragonballmangaa.com) | Dragon Ball Super | — |
+| [dragontea.ink](https://dragontea.ink) \* |  | — |
+| [drakecomic.net](https://drakecomic.net) | Drake Scans, former drakecomic.org | — |
+| [dynasty-scans.com](https://dynasty-scans.com) | Dynasty Reader | — |
+| [eldermanga.com](https://eldermanga.com) |  | — |
+| [elftoon.net](https://elftoon.net) | Elf Toon, former elftoon.com | — |
+| [en-hijala.com](https://en-hijala.com) | Hijala Translations | — |
+| [en-thunderscans.com](https://en-thunderscans.com) | Thunderscans | — |
+| [eskimangalar.com](https://eskimangalar.com) |  | — |
+| [evascans.net](https://evascans.net) | former evascans.org | — |
+| [fanfox.net](https://fanfox.net) | Manga Fox | — |
+| [flamecomics.xyz](https://flamecomics.xyz) | Flame Comics, former Flame Scans | — |
+| [fmteam.fr](https://fmteam.fr) |  | — |
+| [furyosociety.com](https://furyosociety.com) |  | — |
+| [gdscans.com](https://gdscans.com) | GalaxyDegenScans | — |
+| [genzupdates.com](https://genzupdates.com) | Genz Toon | — |
+| [guya.moe](https://guya.moe) | Guya, Kaguya-sama | — |
+| [heavenly-delusion.com](https://heavenly-delusion.com) | Heavenly Delusion | — |
+| [heavenmanga.com](https://heavenmanga.com) | Spanish, some adult titles | — |
+| [hivetoons.org](https://hivetoons.org) | HiveToons, VoidScans | — |
+| [inmanga.com](https://inmanga.com) |  | — |
+| [jestful.net](https://jestful.net) |  | — |
+| [jojolandsmanga.com](https://jojolandsmanga.com) | The JoJoLands | — |
+| [jujutsukaisenmanga.pro](https://jujutsukaisenmanga.pro) | Jujutsu Kaisen | — |
+| [kappabeast.com](https://kappabeast.com) \* |  | — |
+| [kaynscans.com](https://kaynscans.com) | Kayn Scans, former kaynscan.org | — |
+| [kingofshojo.com](https://kingofshojo.com) |  | — |
+| [komikindo.ch](https://komikindo.ch) |  | — |
+| [komikstation.org](https://komikstation.org) | Indonesian | — |
+| [lagoonscans.com](https://lagoonscans.com) |  | — |
+| [leercapitulo.co](https://www.leercapitulo.co) |  | — |
+| [lelmanga.com](https://www.lelmanga.com) | French | — |
+| [lelscanfr.com](https://www.lelscanfr.com) | French | — |
+| [lelscans.net](https://lelscans.net) | French | — |
+| [lhtranslation.net](https://lhtranslation.net) | LHTranslation | — |
+| [lilymanga.net](https://lilymanga.net) | yuri, some NSFW | — |
+| [limonmanga.com](https://limonmanga.com) |  | — |
+| [luacomic.org](https://luacomic.org) | LuaScans | — |
+| [madarascans.net](https://madarascans.net) | former madarascans.org/.com | — |
+| [maid.my.id](https://www.maid.my.id) |  | — |
+| [mangaball.com](https://mangaball.com) | former mangaball.net | — |
+| [mangabats.com](https://www.mangabats.com) | former mangabat.com | — |
+| [mangaberri.com](https://mangaberri.com) |  | — |
+| [mangadelsiglotvmanga.com.mx](https://www.mangadelsiglotvmanga.com.mx) | Manga del Siglo TV Manga, Spanish | — |
+| [mangadenizi.net](https://www.mangadenizi.net) |  | — |
+| [mangadex.org](https://mangadex.org) | MangaDex | — |
+| [mangafire.to](https://mangafire.to) \* |  | — |
+| [mangahere.cc](https://www.mangahere.cc) | MangaHere | — |
+| [mangahub.io](https://mangahub.io) \* |  | — |
+| [mangak.io](https://mangak.io) | MangaK, former mangabuddy.com | — |
+| [mangakakalot.gg](https://www.mangakakalot.gg) \* | MangaKakalot | — |
+| [mangakatana.com](https://mangakatana.com) |  | — |
+| [mangalib.me](https://mangalib.me) | MangaLib | — |
+| [mangalivre.to](https://mangalivre.to) | Manga Livre, former mangalivre.tv/mangalivre.net | — |
+| [manganato.gg](https://www.manganato.gg) \* | MangaNato | — |
+| [mangapark.cc](https://mangapark.cc) | MangaPark | — |
+| [mangapill.com](https://mangapill.com) |  | — |
+| [mangaplus.shueisha.co.jp](https://mangaplus.shueisha.co.jp) | Manga Plus, Shueisha's official reader | — |
+| [mangaread.org](https://www.mangaread.org) |  | — |
+| [mangasushi.org](https://mangasushi.org) |  | — |
+| [mangasusuku.com](https://mangasusuku.com) | Indonesian, mostly NSFW | — |
+| [mangataro.org](https://mangataro.org) |  | — |
+| [mangatown.com](https://www.mangatown.com) |  | — |
+| [mangavault.lat](https://mangavault.lat) | MangaVault | — |
+| [mangaworld.mx](https://www.mangaworld.mx) | MangaWorld, Italian | — |
+| [mangtto.com](https://mangtto.com) | Mangitto | — |
+| [manhuaplus.com](https://manhuaplus.com) |  | — |
+| [manhuatop.org](https://manhuatop.org) \* |  | — |
+| [manhuaus.com](https://manhuaus.com) \* |  | — |
+| [manhwaonline.org](https://manhwaonline.org) |  | — |
+| [mgeko.cc](https://www.mgeko.cc) |  | — |
+| [mistscans.com](https://mistscans.com) |  | — |
+| [mkissa.to](https://mkissa.to) \* |  | — |
+| [natomanga.com](https://www.natomanga.com) \* | MangaNato, former manganato.com/manganelo.com | — |
+| [projectsuki.com](https://projectsuki.com) |  | — |
+| [qimanga.com](https://qimanga.com) |  | — |
+| [ravenscans.org](https://ravenscans.org) |  | — |
+| [rawkuma.net](https://rawkuma.net) |  | — |
+| [ritharscans.com](https://ritharscans.com) |  | — |
+| [rizzfables.com](https://rizzfables.com) |  | — |
+| [rokaricomics.com](https://rokaricomics.com) |  | — |
+| [roliascan.com](https://roliascan.com) |  | — |
+| [sacachispa.site](https://sacachispa.site) |  | — |
+| [sanascans.com](https://sanascans.com) | Sana Scans | — |
+| [scan-vf.net](https://www.scan-vf.net) | ScanVF | — |
+| [setsuscans.com](https://setsuscans.com) \* |  | — |
+| [silentquill.net](https://silentquill.net) | Armageddon Scanlation | — |
+| [stonescape.xyz](https://stonescape.xyz) |  | — |
+| [sushiscan.net](https://sushiscan.net) \* |  | — |
+| [taiyo.moe](https://taiyo.moe) |  | — |
+| [tcbonepiecechapters.com](https://tcbonepiecechapters.com) | TCB Scans, former tcbscans.com | — |
+| [team-shadowi.com](https://www.team-shadowi.com) |  | — |
+| [templetoons.com](https://templetoons.com) \* | Temple Scan | — |
+| [the-apothecary-diaries.com](https://the-apothecary-diaries.com) | The Apothecary Diaries | — |
+| [toongod.org](https://www.toongod.org) \* |  | — |
+| [toonily.com](https://toonily.com) \* |  | — |
+| [tortugaceviri.com](https://tortugaceviri.com) | Tortuga Çeviri | — |
+| [tritinia.org](https://tritinia.org) | Tritinia Scans | — |
+| [trmanga.com](https://trmanga.com) |  | — |
+| [tvymanga3.com](https://tvymanga3.com) | Tv y Manga, Spanish | — |
+| [twmanga.com](https://www.twmanga.com) | 包子漫画, baozimh.com mirror | — |
+| [utoon.us](https://www.utoon.us) | UToon, home of reset-scans' content | — |
+| [uzaymanga.com](https://uzaymanga.com) |  | — |
+| [violetscans.org](https://violetscans.org) |  | — |
+| [vortexscans.org](https://vortexscans.org) |  | — |
+| [webtoons.com](https://www.webtoons.com) | WEBTOON, free episodes only | — |
+| [weebcentral.com](https://weebcentral.com) |  | — |
+| [witchtoons.net](https://witchtoons.net) | WitchToons, former witchscans.com | — |
+| [writerscans.com](https://writerscans.com) |  | — |
+| [zonatmo.org](https://zonatmo.org) | TuMangaOnline, former zonatmo.com | — |
+
+Verified weekly by CI. Sites marked `*` open a browser window, so they are checked by hand and their dates are older. `—` means not checked yet.
 
 </details>
 
