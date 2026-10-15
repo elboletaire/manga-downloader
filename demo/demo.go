@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -30,7 +31,7 @@ type series struct {
 	// site filter by --language and list them; unset, the site is single-language
 	Languages []string `json:"languages"`
 	// NameFormat, if set, is the title a fetched chapter gets, formatted with
-	// its whole number and listed title ("Chapter %04d %s")
+	// its number truncated to a whole one, as MangaDex does ("Chapter %04d %s")
 	NameFormat string    `json:"nameFormat"`
 	Chapters   []chapter `json:"chapters"`
 }
@@ -127,10 +128,14 @@ func (s *site) FetchTitle() (string, error) {
 }
 
 // FetchChapters lists the series' chapters, only those of --language when the
-// series is translated into several
+// series is translated into several. A language the series doesn't list is an
+// UnavailableFilterError, as on the real sites that list their languages.
 func (s *site) FetchChapters() (grabber.Filterables, []error) {
 	lang := s.Settings.Language
 	filter := len(s.data.Languages) > 0 && lang != "" && lang != grabber.FilterAll
+	if filter && !slices.Contains(s.data.Languages, lang) {
+		return nil, []error{&grabber.UnavailableFilterError{Filter: "language", Value: lang, Available: s.data.Languages}}
+	}
 
 	var chapters grabber.Filterables
 	for _, c := range s.data.Chapters {

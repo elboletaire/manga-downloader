@@ -4,11 +4,15 @@ package demo
 
 import (
 	"bytes"
+	"errors"
 	"io"
+	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/http"
 )
@@ -17,6 +21,8 @@ const (
 	inmangaURL  = "https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935"
 	horimiyaURL = "https://mangadex.org/title/a25e46ec-30f7-4db6-89df-cacbc1d9a900"
 )
+
+var registerOnce sync.Once
 
 func loaded(t *testing.T) []*series {
 	t.Helper()
@@ -31,9 +37,12 @@ func loaded(t *testing.T) []*series {
 // registered
 func identify(t *testing.T, url string, settings *grabber.Settings) grabber.Site {
 	t.Helper()
-	for _, data := range loaded(t) {
-		grabber.RegisterEarly(func(g *grabber.Grabber) grabber.Site { return newSite(g, data) })
-	}
+	// the registered list can't be reset, so register once
+	registerOnce.Do(func() {
+		for _, data := range loaded(t) {
+			grabber.RegisterEarly(func(g *grabber.Grabber) grabber.Site { return newSite(g, data) })
+		}
+	})
 	site, _ := grabber.NewSite(url, settings)
 	return site
 }
@@ -165,5 +174,59 @@ func TestPagesAreScaledPlaceholdersAndOtherHostsFail(t *testing.T) {
 	_, err = http.GetText(http.RequestParams{URL: other, DisableRetry: true})
 	if err == nil || !strings.Contains(err.Error(), other) {
 		t.Errorf("other host: got %v, want an error naming it", err)
+	}
+}
+
+func TestUnknownLanguageIsUnavailable(t *testing.T) {
+	site := identify(t, horimiyaURL, &grabber.Settings{Language: "xx"})
+	chapters, errs := site.FetchChapters()
+	if len(chapters) != 0 || len(errs) != 1 {
+		t.Fatalf("got %d chapters, %v", len(chapters), errs)
+	}
+	var unavailable *grabber.UnavailableFilterError
+	if !errors.As(errs[0], &unavailable) || unavailable.Filter != "language" || !slices.Contains(unavailable.Available, "en") {
+		t.Errorf("error = %v, want an UnavailableFilterError listing the series' languages", errs[0])
+	}
+
+	// "all" keeps every language
+	site = identify(t, horimiyaURL, &grabber.Settings{Language: "all"})
+	if chapters, errs := site.FetchChapters(); len(errs) > 0 || len(chapters) != 13 {
+		t.Errorf("all: got %d chapters, %v", len(chapters), errs)
+	}
+}
+
+func TestNameFormatTruncatesDecimals(t *testing.T) {
+	data := &series{
+		NameFormat: "Chapter %04d %s",
+		Chapters:   []chapter{{Number: 10.5, Title: "Extra", Language: "en", ID: "x", Pages: 1}},
+	}
+	site := newSite(&grabber.Grabber{Settings: &grabber.Settings{}}, data)
+	chapters, _ := site.FetchChapters()
+	chapter, err := site.FetchChapter(chapters[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	// MangaDex truncates the number the same way
+	if chapter.Title != "Chapter 0010 Extra" || chapter.Number != 10.5 {
+		t.Errorf("title = %q, number = %v", chapter.Title, chapter.Number)
+	}
+}
+
+func TestLockedChaptersAreSkippedLikeOnARealSite(t *testing.T) {
+	data := &series{Chapters: []chapter{
+		{Number: 1, Title: "One", ID: "a", Pages: 1},
+		{Number: 2, Title: "Two", ID: "b", Pages: 1, Locked: true},
+		{Number: 3, Title: "Three", ID: "c", Pages: 1, Locked: true},
+		{Number: 4, Title: "Four", ID: "d", Pages: 1},
+	}}
+	site := newSite(&grabber.Grabber{Settings: &grabber.Settings{}}, data)
+	chapters, _ := site.FetchChapters()
+
+	open, locked := core.SplitLocked(chapters)
+	if len(open) != 2 || len(locked) != 2 {
+		t.Fatalf("got %d open and %d locked chapters, want 2 and 2", len(open), len(locked))
+	}
+	if got, want := core.LockedMessage(locked), "skipping 2 paid chapters: 2-3"; got != want {
+		t.Errorf("message = %q, want %q", got, want)
 	}
 }
