@@ -141,6 +141,15 @@ func ParseRetryAfter(header string) time.Duration {
 	return min(d, MaxRetryAfter)
 }
 
+// roundTripper, when set by SetRoundTripper, answers every request instead of
+// the network. The demo build uses it to serve recorded fixtures (see demo/).
+var roundTripper http.RoundTripper
+
+// SetRoundTripper routes every request through rt instead of the network
+func SetRoundTripper(rt http.RoundTripper) {
+	roundTripper = rt
+}
+
 // request sends a request to the given URL, retrying transient failures with
 // exponential backoff. Both GET and POST are retried safely: POST bodies are
 // rebuilt from params on each attempt so the body reader is never exhausted.
@@ -192,8 +201,9 @@ func request(t string, params Params) (io.ReadCloser, error) {
 // server-requested delay (Retry-After). The request is built fresh on every
 // call so the body reader is never exhausted across retries.
 func doRequest(t string, params Params) (body io.ReadCloser, retryAfter time.Duration, retryable bool, err error) {
-	tr := &http.Transport{
-		DisableCompression: true,
+	tr := roundTripper
+	if tr == nil {
+		tr = &http.Transport{DisableCompression: true}
 	}
 	client := &http.Client{Transport: tr}
 

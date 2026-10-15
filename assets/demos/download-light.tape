@@ -1,6 +1,7 @@
 # Recreates assets/demos/download-light.gif, the light twin of download.tape (keep the two in step)
 # — run from the repo root: vhs assets/demos/download-light.tape
-# Requires the manga-downloader binary built at the repo root (make build).
+# Requires the demo binary built at the repo root (make build/demo): it answers the
+# sites from demo/fixtures, so the run needs no network (see demo/README.md).
 # Note: inmanga prunes early One Piece chapters from its CDN, so the demo uses
 # a recent range instead of the README's illustrative 1-50.
 Output assets/demos/download-light.gif

@@ -1,0 +1,16 @@
+<html><body><select class="form-control PageListClass" data-prev-page="" id="PageList" name="PagList" onchange="pageController.managePagesSourceChange(this)"><option value="27887563-fcb7-4335-abea-c6b34bd98a3a">1</option>
+<option value="0afd0cb7-354f-48a6-8e4c-9e541326397d">2</option>
+<option value="9b750f37-d3dc-4078-8edb-a9fdbed09d20">3</option>
+<option value="6c3d58b6-3bba-4320-a05d-e99014d7cdfe">4</option>
+<option value="62da1efb-0d88-4081-9b05-dc2362d4df51">5</option>
+<option value="467f8dcc-80d4-42c4-a52e-5d0b46eb29e4">6</option>
+<option value="d08cc3fe-1eb2-4d20-a893-67f62c9ce839">7</option>
+<option value="d77502eb-8455-44ce-b5e7-b2b2d3db6fe5">8</option>
+<option value="5a215e08-5806-4cc6-a943-13e35dd37591">9</option>
+<option value="de5327a9-e055-432e-a3aa-e47e03c69cdd">10</option>
+<option value="05ad8458-a6ab-4b45-9dd7-a10ccb201908">11</option>
+<option value="8c5285b7-84ba-485b-9b30-04a514857575">12</option>
+<option value="b3bacfda-60d7-4fc1-a8e1-5cd9af7ccbc7">13</option>
+<option value="a17969b4-8be1-4e3b-a5f6-677c756a9447">14</option>
+<option value="14b53d68-3ba6-4f4a-81b1-042a8edb204a">15</option>
+</select></body></html>

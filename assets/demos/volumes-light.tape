@@ -1,6 +1,7 @@
 # Recreates assets/demos/volumes-light.gif, the light twin of volumes.tape (keep the two in step)
 # — run from the repo root: vhs assets/demos/volumes-light.tape
-# Requires the manga-downloader binary built at the repo root (make build).
+# Requires the demo binary built at the repo root (make build/demo): it answers the
+# sites from demo/fixtures, so the run needs no network (see demo/README.md).
 # Uses a series whose volumes MangaDex lists (1-13 is exactly volumes 1 and 2),
 # downloaded with --volumes auto. Filtered to English, as several translations
 # would otherwise all be packed into the same volume.

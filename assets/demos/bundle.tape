@@ -1,5 +1,6 @@
 # Recreates assets/demos/bundle.gif — run from the repo root: vhs assets/demos/bundle.tape
-# Requires the manga-downloader binary built at the repo root (make build).
+# Requires the demo binary built at the repo root (make build/demo): it answers the
+# sites from demo/fixtures, so the run needs no network (see demo/README.md).
 # The old gif used MangaDex + --language es, but all Spanish One Piece chapters
 # there are external stubs now (0 pages), so this uses inmanga like the README's
 # bundling example, with a recent range (early chapters 404 on inmanga's CDN).
