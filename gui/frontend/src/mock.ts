@@ -531,7 +531,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
             },
           ];
         }
-        pushLog('error', `error fetching chapter ${c.title}: ${LOCKED_REASON}`);
+        pushLog('error', `error fetching ${c.title}: ${LOCKED_REASON}`);
         return true;
       }
       if (skip && jobs.filter((j) => !j.volume).length === 5) {
