@@ -405,3 +405,22 @@ func TestManganeloResolveSeriesURL(t *testing.T) {
 		})
 	}
 }
+
+func TestManganeloGetMaxConcurrency(t *testing.T) {
+	for _, c := range []struct{ set, want MaxConcurrency }{
+		{MaxConcurrency{Chapters: 5, Pages: 10}, manganeloMaxConcurrency},
+		{MaxConcurrency{Chapters: 1, Pages: 1}, MaxConcurrency{Chapters: 1, Pages: 1}},
+	} {
+		m := NewManganelo(&Grabber{Settings: &Settings{MaxConcurrency: c.set}})
+		if got := m.GetMaxConcurrency(); got != c.want {
+			t.Errorf("GetMaxConcurrency() with %+v = %+v, want %+v", c.set, got, c.want)
+		}
+	}
+}
+
+func TestManganeloIsPagePacer(t *testing.T) {
+	var site Site = NewManganelo(&Grabber{})
+	if _, ok := site.(PagePacer); !ok {
+		t.Fatal("*Manganelo doesn't implement PagePacer")
+	}
+}
