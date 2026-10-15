@@ -330,11 +330,10 @@ func HasGroupDuplicates(chapters grabber.Filterables) bool {
 	return false
 }
 
-// ReleaseLabel names a release: its title, then its language and group in
-// brackets when showLang and showGroup ask for them and it has them. Messages
-// and the app's activity use it too, so a line says which release it means.
+// ReleaseLabel names a release: its chapter name (grabber.ChapterName), then its
+// language and group in brackets when showLang and showGroup ask for them.
 func ReleaseLabel(f grabber.Filterable, showLang, showGroup bool) string {
-	return f.GetTitle() + ReleaseTags(f, showLang, showGroup)
+	return grabber.ChapterName(f) + ReleaseTags(f, showLang, showGroup)
 }
 
 // ReleaseTags is the bracketed part of ReleaseLabel: " [en] [Group A]", or ""

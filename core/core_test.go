@@ -184,6 +184,12 @@ func TestReleaseLabel(t *testing.T) {
 	if got := ReleaseLabel(ungrouped, false, true); got != "Chapter 5" {
 		t.Errorf("ungrouped ReleaseLabel() = %q, want %q", got, "Chapter 5")
 	}
+
+	// a title that numbers its own chapters gets the real number named too
+	ownNumbering := &grabber.Chapter{Title: "111. Dong-a-jul", Number: 186, Group: "Group A"}
+	if got, want := ReleaseLabel(ownNumbering, false, true), "Chapter 186 (111. Dong-a-jul) [Group A]"; got != want {
+		t.Errorf("own numbering ReleaseLabel() = %q, want %q", got, want)
+	}
 }
 
 func TestAllChaptersRangeIncludesChapterZero(t *testing.T) {

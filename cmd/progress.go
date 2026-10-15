@@ -816,20 +816,20 @@ func (e *bubbleEvents) BundleStart(pages int64) {
 }
 
 func (e *bubbleEvents) FetchFailed(listed grabber.Filterable, err error) {
-	e.println(color.RedString("- error fetching chapter %s: %s",
+	e.println(color.RedString("- error fetching %s: %s",
 		core.ReleaseLabel(listed, e.showLang, e.showGroup), err.Error()))
 	e.prog.Send(chapterEndedMsg{chapter: listed})
 }
 
 func (e *bubbleEvents) Skipped(c *grabber.Chapter) {
 	e.println(color.YellowString(
-		"- skipping chapter %s: --skip-pages excludes all of its pages", core.ReleaseLabel(c, e.showLang, e.showGroup)))
+		"- skipping %s: --skip-pages excludes all of its pages", core.ReleaseLabel(c, e.showLang, e.showGroup)))
 	e.prog.Send(chapterEndedMsg{chapter: c})
 }
 
 func (e *bubbleEvents) FilenameFailed(c *grabber.Chapter, err error) {
 	e.println(color.RedString(
-		"- error creating filename for chapter %s: %s", core.ReleaseLabel(c, e.showLang, e.showGroup), err.Error()))
+		"- error creating filename for %s: %s", core.ReleaseLabel(c, e.showLang, e.showGroup), err.Error()))
 }
 
 func (e *bubbleEvents) Started(c *grabber.Chapter) {
@@ -847,7 +847,7 @@ func (e *bubbleEvents) Page(c *grabber.Chapter, idx int, err error) {
 
 func (e *bubbleEvents) DownloadFailed(c *grabber.Chapter, err error) {
 	e.println(color.RedString(
-		"- error downloading chapter %s: %s", core.ReleaseLabel(c, e.showLang, e.showGroup), err.Error()))
+		"- error downloading %s: %s", core.ReleaseLabel(c, e.showLang, e.showGroup), err.Error()))
 	e.prog.Send(downloadFailedMsg{chapter: c})
 }
 
@@ -916,15 +916,15 @@ func (plainEvents) BundleArchived(int)          {}
 func (plainEvents) Archived(*grabber.Chapter)   {}
 
 func (p plainEvents) FetchFailed(listed grabber.Filterable, err error) {
-	red("- error fetching chapter %s: %s", core.ReleaseLabel(listed, p.showLang, p.showGroup), err.Error())
+	red("- error fetching %s: %s", core.ReleaseLabel(listed, p.showLang, p.showGroup), err.Error())
 }
 
 func (p plainEvents) Skipped(c *grabber.Chapter) {
-	yellow("- skipping chapter %s: --skip-pages excludes all of its pages", core.ReleaseLabel(c, p.showLang, p.showGroup))
+	yellow("- skipping %s: --skip-pages excludes all of its pages", core.ReleaseLabel(c, p.showLang, p.showGroup))
 }
 
 func (p plainEvents) FilenameFailed(c *grabber.Chapter, err error) {
-	red("- error creating filename for chapter %s: %s", core.ReleaseLabel(c, p.showLang, p.showGroup), err.Error())
+	red("- error creating filename for %s: %s", core.ReleaseLabel(c, p.showLang, p.showGroup), err.Error())
 }
 
 func (p plainEvents) Started(c *grabber.Chapter) {
@@ -939,7 +939,7 @@ func (p plainEvents) Page(c *grabber.Chapter, idx int, err error) {
 }
 
 func (p plainEvents) DownloadFailed(c *grabber.Chapter, err error) {
-	red("- error downloading chapter %s: %s", core.ReleaseLabel(c, p.showLang, p.showGroup), err.Error())
+	red("- error downloading %s: %s", core.ReleaseLabel(c, p.showLang, p.showGroup), err.Error())
 }
 
 func (plainEvents) Packed(_ *grabber.Chapter, _ string, err error) {

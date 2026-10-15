@@ -42,6 +42,35 @@ func VolumeOf(f Filterable) int {
 	return 0
 }
 
+// ChapterTitlePrefix matches the chapter word and number a title may open with
+// ("Chapter 0005: ", "Capítulo 5 - ", "Vol. 3 Ch. 5 "), and the separator after them
+var ChapterTitlePrefix = regexp.MustCompile(`(?i)^(?:vol(?:ume|umen)?\.?\s*\d+\s*)?(?:episode|chapter|chapitre|chap|cap[ií]tulo|capitolo|cap|ch|ep|c|b[öo]l[üu]m|глава)\.?\s*0*(\d+(?:\.\d+)?)\b(?:\s*[:.\-‐‒–—―−]+)?\s*`)
+
+// bareNumber matches a number a title opens with and no chapter word ("186. Foo")
+var bareNumber = regexp.MustCompile(`^0*(\d+(?:\.\d+)?)\b`)
+
+// ChapterName names a chapter in messages: its title, or "Chapter N (title)"
+// when the title doesn't open with its number, as sites often number their
+// own seasons in titles. Chapter 0 is left to the title (it may be unread).
+func ChapterName(f Filterable) string {
+	title, number := f.GetTitle(), f.GetNumber()
+	if number <= 0 {
+		return title
+	}
+	for _, re := range []*regexp.Regexp{ChapterTitlePrefix, bareNumber} {
+		if m := re.FindStringSubmatch(title); m != nil {
+			if n, err := strconv.ParseFloat(m[1], 64); err == nil && n == number {
+				return title
+			}
+		}
+	}
+	name := "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
+	if title == "" {
+		return name
+	}
+	return name + " (" + title + ")"
+}
+
 // volumeRe matches a whole volume number: a bare "3", or one behind a
 // "Volume"/"Vol."/"v" label ("Volume 3", "Vol. 03", "v98")
 var volumeRe = regexp.MustCompile(`(?i)^(?:vol(?:ume|umen)?\.?|v)?\s*0*(\d+)$`)

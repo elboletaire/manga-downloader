@@ -763,7 +763,7 @@ func TestReleaseLabelInMessages(t *testing.T) {
 			ev.DownloadFailed(chapter, errBoom)
 			want := "downloading " + tt.want + "...\n" +
 				"- error downloading page 3 of " + tt.want + ": boom\n" +
-				"- error downloading chapter " + tt.want + ": boom\n"
+				"- error downloading " + tt.want + ": boom\n"
 			if got := buf.String(); got != want {
 				t.Errorf("output = %q, want %q", got, want)
 			}
@@ -787,8 +787,8 @@ func TestReleaseLabelInMessages(t *testing.T) {
 			w.Close()
 			os.Stderr = prevErr
 			out, _ := io.ReadAll(r)
-			want := "- error fetching chapter " + tt.want + ": boom\n" +
-				"- skipping chapter " + tt.want + ": --skip-pages excludes all of its pages\n" +
+			want := "- error fetching " + tt.want + ": boom\n" +
+				"- skipping " + tt.want + ": --skip-pages excludes all of its pages\n" +
 				"- error downloading page 3 of " + tt.want + ": boom\n"
 			if got := string(out); got != want {
 				t.Errorf("output = %q, want %q", got, want)
