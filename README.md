@@ -628,23 +628,23 @@ to a minute.
 | [aurorascans.com](https://aurorascans.com) | redirects to qimanga.com | 2026-10-15 |
 | [azorafly.com](https://azorafly.com) | Azorafly, Arabic | 2026-10-15 |
 | [bigsolo.org](https://bigsolo.org) |  | 2026-10-15 |
-| [blackcloveronline.com](https://blackcloveronline.com) | Black Clover | — |
+| [blackcloveronline.com](https://blackcloveronline.com) | Black Clover | 2026-10-15 |
 | [bluesolo.org](https://bluesolo.org) | Blue Solo, French scantrad | 2026-10-15 |
 | [chainsawman-chapter.online](https://chainsawman-chapter.online) | Chainsaw Man | 2026-10-15 |
-| [chainsawmannmanga.com](https://chainsawmannmanga.com) | Chainsaw Man | — |
+| [chainsawmannmanga.com](https://chainsawmannmanga.com) | Chainsaw Man | 2026-10-15 |
 | [comix.to](https://comix.to) \* |  | — |
 | [danke.moe](https://danke.moe) | Danke fürs Lesen | 2026-10-15 |
 | [deathtollscans.net](https://reader.deathtollscans.net) |  | 2026-10-15 |
 | [demonicscans.org](https://demonicscans.org) | MangaDemon / Demonic Scans | 2026-10-15 |
-| [dragonballmangaa.com](https://dragonballmangaa.com) | Dragon Ball Super | — |
+| [dragonballmangaa.com](https://dragonballmangaa.com) | Dragon Ball Super | 2026-10-15 |
 | [dragontea.ink](https://dragontea.ink) \* |  | — |
 | [drakecomic.net](https://drakecomic.net) | Drake Scans, former drakecomic.org | 2026-10-15 |
 | [dynasty-scans.com](https://dynasty-scans.com) | Dynasty Reader | 2026-10-15 |
-| [eldermanga.com](https://eldermanga.com) |  | — |
+| [eldermanga.com](https://eldermanga.com) |  | 2026-10-15 |
 | [elftoon.net](https://elftoon.net) | Elf Toon, former elftoon.com | 2026-10-15 |
 | [en-hijala.com](https://en-hijala.com) | Hijala Translations | 2026-10-15 |
 | [en-thunderscans.com](https://en-thunderscans.com) | Thunderscans | 2026-10-15 |
-| [eskimangalar.com](https://eskimangalar.com) |  | — |
+| [eskimangalar.com](https://eskimangalar.com) |  | 2026-10-15 |
 | [evascans.net](https://evascans.net) | former evascans.org | 2026-10-15 |
 | [fanfox.net](https://fanfox.net) | Manga Fox | 2026-10-15 |
 | [flamecomics.xyz](https://flamecomics.xyz) | Flame Comics, former Flame Scans | 2026-10-15 |
@@ -659,7 +659,7 @@ to a minute.
 | [inmanga.com](https://inmanga.com) |  | 2026-10-15 |
 | [jestful.net](https://jestful.net) |  | 2026-10-15 |
 | [jojolandsmanga.com](https://jojolandsmanga.com) | The JoJoLands | 2026-10-15 |
-| [jujutsukaisenmanga.pro](https://jujutsukaisenmanga.pro) | Jujutsu Kaisen | — |
+| [jujutsukaisenmanga.pro](https://jujutsukaisenmanga.pro) | Jujutsu Kaisen | 2026-10-15 |
 | [kappabeast.com](https://kappabeast.com) \* |  | — |
 | [kaynscans.com](https://kaynscans.com) | Kayn Scans, former kaynscan.org | 2026-10-15 |
 | [kingofshojo.com](https://kingofshojo.com) |  | 2026-10-15 |
@@ -672,17 +672,17 @@ to a minute.
 | [lelscans.net](https://lelscans.net) | French | 2026-10-15 |
 | [lhtranslation.net](https://lhtranslation.net) | LHTranslation | 2026-10-15 |
 | [lilymanga.net](https://lilymanga.net) | yuri, some NSFW | 2026-10-15 |
-| [limonmanga.com](https://limonmanga.com) |  | — |
+| [limonmanga.com](https://limonmanga.com) |  | 2026-10-15 |
 | [luacomic.org](https://luacomic.org) | LuaScans | 2026-10-15 |
 | [madarascans.net](https://madarascans.net) | former madarascans.org/.com | 2026-10-15 |
 | [maid.my.id](https://www.maid.my.id) |  | 2026-10-15 |
 | [mangaball.com](https://mangaball.com) | former mangaball.net | ❌ failing since 2026-10-15 |
 | [mangabats.com](https://www.mangabats.com) | former mangabat.com | 2026-10-15 |
 | [mangaberri.com](https://mangaberri.com) |  | 2026-10-15 |
-| [mangadelsiglotvmanga.com.mx](https://www.mangadelsiglotvmanga.com.mx) | Manga del Siglo TV Manga, Spanish | — |
+| [mangadelsiglotvmanga.com.mx](https://www.mangadelsiglotvmanga.com.mx) | Manga del Siglo TV Manga, Spanish | 2026-10-15 |
 | [mangadenizi.net](https://www.mangadenizi.net) |  | 2026-10-15 |
 | [mangadex.org](https://mangadex.org) | MangaDex | 2026-10-15 |
-| [mangafire.to](https://mangafire.to) \* |  | — |
+| [mangafire.to](https://mangafire.to) \* |  | 2026-10-15 |
 | [mangahere.cc](https://www.mangahere.cc) | MangaHere | 2026-10-15 |
 | [mangahub.io](https://mangahub.io) \* |  | — |
 | [mangak.io](https://mangak.io) | MangaK, former mangabuddy.com | 2026-10-15 |
@@ -708,7 +708,7 @@ to a minute.
 | [manhwaonline.org](https://manhwaonline.org) |  | 2026-10-15 |
 | [mgeko.cc](https://www.mgeko.cc) |  | 2026-10-15 |
 | [mistscans.com](https://mistscans.com) |  | 2026-10-15 |
-| [mkissa.to](https://mkissa.to) \* |  | — |
+| [mkissa.to](https://mkissa.to) \* |  | 2026-10-15 |
 | [natomanga.com](https://www.natomanga.com) \* | MangaNato, former manganato.com/manganelo.com | — |
 | [projectsuki.com](https://projectsuki.com) |  | 2026-10-15 |
 | [qimanga.com](https://qimanga.com) |  | 2026-10-15 |
@@ -728,14 +728,14 @@ to a minute.
 | [taiyo.moe](https://taiyo.moe) |  | 2026-10-15 |
 | [tcbonepiecechapters.com](https://tcbonepiecechapters.com) | TCB Scans, former tcbscans.com | 2026-10-15 |
 | [team-shadowi.com](https://www.team-shadowi.com) |  | 2026-10-15 |
-| [templetoons.com](https://templetoons.com) \* | Temple Scan | — |
+| [templetoons.com](https://templetoons.com) \* | Temple Scan | 2026-10-15 |
 | [the-apothecary-diaries.com](https://the-apothecary-diaries.com) | The Apothecary Diaries | 2026-10-15 |
 | [toongod.org](https://www.toongod.org) \* |  | — |
-| [toonily.com](https://toonily.com) \* |  | ❌ failing since 2026-10-15 |
+| [toonily.com](https://toonily.com) \* |  | — |
 | [tortugaceviri.com](https://tortugaceviri.com) | Tortuga Çeviri | 2026-10-15 |
 | [tritinia.org](https://tritinia.org) | Tritinia Scans | 2026-10-15 |
 | [trmanga.com](https://trmanga.com) |  | 2026-10-15 |
-| [tvymanga3.com](https://tvymanga3.com) | Tv y Manga, Spanish | — |
+| [tvymanga3.com](https://tvymanga3.com) | Tv y Manga, Spanish | 2026-10-15 |
 | [twmanga.com](https://www.twmanga.com) | 包子漫画, baozimh.com mirror | 2026-10-15 |
 | [utoon.us](https://www.utoon.us) | UToon, home of reset-scans' content | 2026-10-15 |
 | [uzaymanga.com](https://uzaymanga.com) |  | 2026-10-15 |
