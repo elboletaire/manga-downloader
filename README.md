@@ -311,6 +311,14 @@ Open the app and follow these steps:
      <img alt="The Options tab with EPUB chosen, showing the format, reading direction and Pack as options" src="assets/screenshots/06-options-light.png">
    </picture>
 
+   When a site needs you at its browser window, an alert says so, with *Show the
+   browser window* to bring it to the front and *Dismiss* to hide the alert.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/08-browser-alert-dark.png">
+     <img alt="The app's alert saying the browser needs you, with Dismiss and Show the browser window buttons" src="assets/screenshots/08-browser-alert-light.png">
+   </picture>
+
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/07-volumes-dark.png">
      <img alt="Packing by volume: the Volumes box above the chapter list, the list grouped by volume, and the Download button naming the volumes" src="assets/screenshots/07-volumes-light.png">
