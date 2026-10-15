@@ -125,6 +125,15 @@ type PagePacer interface {
 	WaitPage()
 }
 
+// earlySites are grabbers tried before every built-in one. Only the demo build
+// registers any (see demo/), so they're empty in release builds.
+var earlySites []func(*Grabber) Site
+
+// RegisterEarly adds a grabber that IdentifySite tries ahead of the built-in ones
+func RegisterEarly(newSite func(*Grabber) Site) {
+	earlySites = append(earlySites, newSite)
+}
+
 // IdentifySite returns the site passing the Test() for the specified url
 func (g *Grabber) IdentifySite() (Site, []error) {
 	// PlainHTML is pre-created so IdentifySite can call its chapter-URL
@@ -193,6 +202,11 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewTcb(g),
 		NewJestful(g),
 	}
+	var early []Site
+	for _, newSite := range earlySites {
+		early = append(early, newSite(g))
+	}
+	sites = append(early, sites...)
 	var errs []error
 
 	for _, s := range sites {
