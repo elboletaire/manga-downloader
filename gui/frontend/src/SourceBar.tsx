@@ -312,8 +312,8 @@ function FilterField({
     <SelectField
       className="inline-field"
       label={label}
-      value={shownSelection(choice, loaded)}
-      options={filterOptions(choice, kind, 'en', loaded)}
+      value={shownSelection(choice, loaded, kind, typed)}
+      options={filterOptions(choice, kind, 'en', loaded, typed)}
       disabled={busy}
       onChange={onPick}
     />

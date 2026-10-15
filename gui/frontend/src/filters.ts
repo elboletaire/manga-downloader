@@ -88,12 +88,22 @@ export function languageName(code: string, locale = 'en'): string {
   return code;
 }
 
+/** Whether the language selector stands on the site's own default: a stored "" */
+function onSiteDefault(kind: FilterKind, stored: string): boolean {
+  return kind === 'language' && stored === '';
+}
+
 /**
- * The value a selector shows as picked. After a failed load the selected value
- * is only what was typed, so one the site doesn't list is not shown as if it
- * were an option: the placeholder stands in.
+ * The value a selector shows as picked. It follows what is stored, so what
+ * shows is what is sent: a language stored as "" is the site's default (not
+ * "All"), and a scanlator "" or "all" is the same "Any". After a failed load
+ * the selected value is only what was typed, so one the site doesn't list is
+ * not shown as if it were an option: the placeholder stands in.
  */
-export function shownSelection(filter: FilterChoice, loaded: boolean): string {
+export function shownSelection(filter: FilterChoice, loaded: boolean, kind: FilterKind = 'scanlator', stored = filter.selected): string {
+  if (onSiteDefault(kind, stored)) {
+    return '';
+  }
   if (!loaded && filter.selected !== FILTER_ALL && !filter.values.includes(filter.selected)) {
     return '';
   }
@@ -102,18 +112,31 @@ export function shownSelection(filter: FilterChoice, loaded: boolean): string {
 }
 
 /**
- * The options of one selector, in the order shown: "All" first where the site
- * takes it, then the values as the site lists them. The selected value is
- * always among them, even when the site doesn't list it (a value the series
- * was loaded with), so the select never shows the wrong one.
+ * The options of one selector, in the order shown: the site's default for a
+ * language, "All"/"Any" where the site takes it, then the values as the site
+ * lists them. The selected value is always among them, even when the site
+ * doesn't list it (a value the series was loaded with), so the select never
+ * shows the wrong one.
  */
-export function filterOptions(filter: FilterChoice, kind: FilterKind, locale = 'en', loaded = true): FilterOption[] {
+export function filterOptions(
+  filter: FilterChoice,
+  kind: FilterKind,
+  locale = 'en',
+  loaded = true,
+  stored = filter.selected,
+): FilterOption[] {
   const options: FilterOption[] = [];
-  const selected = shownSelection(filter, loaded);
-  if (selected === '') {
+  const selected = shownSelection(filter, loaded, kind, stored);
+  if (kind === 'language') {
+    // "" is the site's own default, which is not the same as every language
+    options.push({ value: '', label: 'Site default' });
+  } else if (selected === '') {
     // no value is shown: a disabled placeholder, so the select doesn't show the
     // first value as if it were the one the list is filtered by
-    options.push({ value: '', label: kind === 'language' ? 'Choose a language…' : 'Choose a group…', disabled: true });
+    options.push({ value: '', label: 'Choose a group…', disabled: true });
+  }
+  if (kind === 'language' && selected === '' && !onSiteDefault(kind, stored)) {
+    options[0] = { value: '', label: 'Choose a language…', disabled: true };
   }
   if (filter.all) {
     options.push({ value: FILTER_ALL, label: kind === 'language' ? 'All' : 'Any' });
