@@ -7,8 +7,8 @@
 // loaded, stale, running, bundle, cancelling, done, update, check, volumes
 // (loaded, packing by volume, with three volumes and a half selected) or
 // volumes-running (a run by volume in progress). update is loaded too, as a
-// release build (v1.15.1 with &shot, v1.12.0 without) with a newer release
-// (v1.16.0 with &shot, v1.13.0 without): the status bar shows the yellow "!".
+// release build (v1.16.1 with &shot, v1.12.0 without) with a newer release
+// (v1.17.0 with &shot, v1.13.0 without): the status bar shows the yellow "!".
 // check is loading a site that needs the browser window, with the alert asking
 // the user to look at it; loading a URL with "check" in it does the same until
 // the load ends. &freeze stops the simulated run from moving (stable
@@ -114,9 +114,9 @@ const MOCK_ALERT =
 
 const REPO = 'https://github.com/elboletaire/manga-downloader';
 const RELEASE_VERSION_DEV = 'v1.12.0';
-const RELEASE_VERSION_SHOT = 'v1.15.1';
+const RELEASE_VERSION_SHOT = 'v1.16.1';
 const UPDATE_VERSION_DEV = 'v1.13.0';
-const UPDATE_VERSION_SHOT = 'v1.16.0';
+const UPDATE_VERSION_SHOT = 'v1.17.0';
 
 function siteFrom(search: string): MockSite {
   const value = new URLSearchParams(search).get('site');
