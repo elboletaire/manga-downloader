@@ -1281,7 +1281,7 @@ code {
 .site {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1px;
   min-height: 60px;
   padding: 10px 16px;
@@ -1318,13 +1318,18 @@ code {
 }
 
 .site-verified {
-  margin-top: 2px;
+  margin-top: auto;
+  padding-top: 2px;
   color: var(--muted);
   font-size: 0.75rem;
   line-height: 1.4;
 }
 
-.site-verified[data-verified='ok'] > [aria-hidden] {
+.site-mark {
+  font-weight: 700;
+}
+
+.site-verified[data-verified='ok'] .site-mark {
   color: var(--success-text);
 }
 

@@ -90,6 +90,10 @@ describe('renderSites verified', () => {
     expect(html).toContain('Not checked')
     expect(html).not.toContain('<time')
   })
+  it('refuses a label without {{date}}', () => {
+    const bad = { on: 'Verified', failing: 'Failing', unknown: 'Not checked' }
+    expect(() => renderSites([{ ...base, verified: { status: 'ok', date: '2026-10-15' } }], undefined, bad)).toThrow(/\{\{date\}\}/)
+  })
   it('localizes the date and keeps it out of the filter text', () => {
     expect(line({ status: 'ok', date: '2026-10-15' }, 'es')).toContain('15 oct 2026')
     expect(line({ status: 'ok', date: '2026-10-15' })).toContain('data-search="a.com "')

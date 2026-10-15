@@ -75,12 +75,13 @@ export function renderSites(sites: Site[], badge: BadgeLabels = EN_BADGE, verifi
       const v = s.verified
       // The visible line is the accessible name too; the mark is decorative.
       const date = v.status === 'unknown' ? '' : `<time datetime="${v.date}">${escapeHTML(formatDate(v.date, locale))}</time>`
-      const text = (v.status === 'ok' ? verified.on : v.status === 'failing' ? verified.failing : verified.unknown).replace('{{date}}', '\u0000')
-      const [before, after] = escapeHTML(text).split('\u0000')
-      const mark = { ok: '\u2713', failing: '\u2715', unknown: '' }[v.status]
+      const template = (v.status === 'ok' ? verified.on : v.status === 'failing' ? verified.failing : verified.unknown)
+      if (v.status !== 'unknown' && !template.includes('{{date}}')) throw new Error(`verified label lacks {{date}}: ${template}`)
+      const [before, after] = escapeHTML(template.replace('{{date}}', '\u0000')).split('\u0000')
+      const mark = { ok: '\u2713', failing: '\u2715', unknown: '\u2013' }[v.status]
       const verifiedHtml =
         `<span class="site-verified" data-verified="${v.status}">` +
-        `${mark ? `<span aria-hidden="true">${mark}</span> ` : ''}${before}${date}${after ?? ''}</span>`
+        `<span class="site-mark" aria-hidden="true">${mark}</span> ${before}${date}${after ?? ''}</span>`
       return (
         `<li class="site" data-search="${escapeHTML(search)}"${s.browser ? ' data-browser' : ''}>` +
         `<a href="${escapeHTML(s.url)}" rel="nofollow noopener" target="_blank">` +
