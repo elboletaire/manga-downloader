@@ -278,6 +278,25 @@ func TestIdentifySiteOrder(t *testing.T) {
 			want: (*PlainHTML)(nil),
 		},
 		{
+			name:   "mangareadercms series page",
+			origin: "https://onma.top",
+			path:   "/manga/black-clover",
+			routes: map[string]string{
+				"/manga/black-clover": "mangareadercms_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "mangareadercms chapter page",
+			origin: "https://onma.top",
+			path:   "/manga/black-clover/391",
+			routes: map[string]string{
+				"/manga/black-clover/391": "mangareadercms_chapter.html",
+				"/manga/black-clover":     "mangareadercms_series.html",
+			},
+			want: (*PlainHTML)(nil),
+		},
+		{
 			name:   "madara series page",
 			origin: "https://mangasushi.org",
 			path:   "/manga/lonely-attack-on-the-different-world/",

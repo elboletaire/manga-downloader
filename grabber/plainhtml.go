@@ -376,13 +376,17 @@ var plainHTMLSelectors = []SiteSelector{
 	// so the number comes from the "chapitre-25" URL. The reader keeps the
 	// real page in data-src, padded with spaces, behind a placeholder src
 	// (getPlainHTMLImageURL trims it).
+	// The same CMS runs anzmanga25.com, kangaryu-team.fr and onma.top: their
+	// URLs are /manga/{slug}/{number} and each theme puts the series title in
+	// its own element. The rows' download links go through an ad shortener.
 	{
-		Title:        `h2[style*="inline-block"]`,
+		Title:        `h2[style*="inline-block"], .titre-projets, .panel-heading`,
 		Rows:         "h5.chapter-title-rtl",
 		Link:         "a",
 		Chapter:      "a",
 		ChapterTitle: "em",
 		Image:        "img.img-responsive",
+		NumberRe:     `/manga/[^/]+/(\d+(?:\.\d+)?)/?$`,
 	},
 	// uzaymanga.com, eldermanga.com, eskimangalar.com and limonmanga.com:
 	// one Turkish manga platform, chapter URLs are /manga/{slug}/{n}-bolum-oku.
@@ -501,6 +505,9 @@ type SiteSelector struct {
 	// IDRe is a regexp whose first group captures a release's ID from its
 	// URL. Without it, or when it doesn't match, the ID is the URL's path.
 	IDRe string
+	// NumberRe is a regexp whose first group captures the chapter number from
+	// a row's link, tried before the row's text, for URLs that carry it.
+	NumberRe string
 	// Locked is a CSS selector searched inside each row: a match means the
 	// listing marks the chapter as paid (Chapter.Locked)
 	Locked string
@@ -647,6 +654,18 @@ func (m *PlainHTML) testCandidateSeriesURL(candidateURL string) bool {
 // given an explicit selector (rather than relying on m.site).
 // This is used by testCandidateSeriesURL to avoid relying on m.site being set.
 func checkRowChapterNumber(s *goquery.Selection, selector SiteSelector) (float64, bool) {
+	if selector.NumberRe != "" {
+		u := s.AttrOr("href", "")
+		if selector.Link != "" {
+			u = s.Find(selector.Link).AttrOr("href", "")
+		}
+		if m := regexp.MustCompile(selector.NumberRe).FindStringSubmatch(u); m != nil {
+			if n, err := strconv.ParseFloat(m[1], 64); err == nil {
+				return n, true
+			}
+		}
+	}
+
 	chapterText := textWithoutNoise(s)
 	if selector.Chapter != "" {
 		chapterText = textWithoutNoise(s.Find(selector.Chapter))
