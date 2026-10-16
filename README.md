@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[162 supported sites](#supported-sites)**, from big aggregators to small
+- **[179 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -644,7 +644,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 162 supported sites</b></summary>
+<summary><b>Show all 179 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -666,6 +666,15 @@ to a minute.
 | [bluesolo.org](https://bluesolo.org) | Blue Solo, French scantrad | 2026-10-15 |
 | [chainsawman-chapter.online](https://chainsawman-chapter.online) | Chainsaw Man | 2026-10-15 |
 | [chainsawmannmanga.com](https://chainsawmannmanga.com) | Chainsaw Man | 2026-10-15 |
+| [comic-action.com](https://comic-action.com) | Japanese, Web Action (GigaViewer) | — |
+| [comic-days.com](https://comic-days.com) | Japanese, Comic DAYS (GigaViewer) | — |
+| [comic-earthstar.com](https://comic-earthstar.com) | Japanese, Comic Earth Star (GigaViewer) | — |
+| [comic-gardo.com](https://comic-gardo.com) | Japanese, Comic Gardo (GigaViewer) | — |
+| [comic-ogyaaa.com](https://comic-ogyaaa.com) | Japanese, Comic Ogyaaa (GigaViewer) | — |
+| [comic-seasons.com](https://comic-seasons.com) | Japanese, Seasons (GigaViewer) | — |
+| [comic-trail.com](https://comic-trail.com) | Japanese, Comic Trail (GigaViewer) | — |
+| [comic-y-ours.com](https://comic-y-ours.com) | Japanese, Comic Y-Ours (GigaViewer) | — |
+| [comic-zenon.com](https://comic-zenon.com) | Japanese, Comic Zenon (GigaViewer) | — |
 | [comix.to](https://comix.to) \* |  | 2026-10-15 |
 | [danke.moe](https://danke.moe) | Danke fürs Lesen | 2026-10-15 |
 | [decadencescans.com](https://reader.decadencescans.com) | Decadence Scans, slow image host | 2026-10-16 |
@@ -683,6 +692,7 @@ to a minute.
 | [evascans.net](https://evascans.net) | former evascans.org | 2026-10-15 |
 | [fanfox.net](https://fanfox.net) | Manga Fox | 2026-10-15 |
 | [fbsquadx.com](https://fbsquadx.com) | Fleur Blanche Scan, Spanish | 2026-10-16 |
+| [feelweb.jp](https://feelweb.jp) | Japanese, Feel Web (GigaViewer) | — |
 | [flamecomics.xyz](https://flamecomics.xyz) | Flame Comics, former Flame Scans | 2026-10-15 |
 | [fmteam.fr](https://fmteam.fr) |  | 2026-10-15 |
 | [furyosociety.com](https://furyosociety.com) |  | 2026-10-15 |
@@ -695,6 +705,7 @@ to a minute.
 | [heavenly-delusion.com](https://heavenly-delusion.com) | Heavenly Delusion | 2026-10-15 |
 | [heavenmanga.com](https://heavenmanga.com) | Spanish | 2026-10-15 |
 | [hivetoons.org](https://hivetoons.org) | HiveToons, VoidScans | 2026-10-15 |
+| [ichicomi.com](https://ichicomi.com) | Japanese, Ichi Comic (GigaViewer) | — |
 | [inmanga.com](https://inmanga.com) |  | 2026-10-15 |
 | [jestful.net](https://jestful.net) |  | 2026-10-15 |
 | [jojolandsmanga.com](https://jojolandsmanga.com) | The JoJoLands | 2026-10-15 |
@@ -707,6 +718,7 @@ to a minute.
 | [komikmanga.com](https://komikmanga.com) | MangaReader, English | 2026-10-16 |
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-15 |
 | [ksgroupscans.com](https://ksgroupscans.com) | KSGroupScans | 2026-10-16 |
+| [kuragebunch.com](https://kuragebunch.com) | Japanese, Kurage Bunch (GigaViewer) | — |
 | [lagoonscans.com](https://lagoonscans.com) |  | 2026-10-15 |
 | [leercapitulo.co](https://www.leercapitulo.co) |  | 2026-10-15 |
 | [lelmanga.com](https://www.lelmanga.com) | French | 2026-10-15 |
@@ -718,6 +730,7 @@ to a minute.
 | [luacomic.org](https://luacomic.org) | LuaScans | 2026-10-15 |
 | [madaradex.org](https://madaradex.org) | some adult titles | 2026-10-16 |
 | [madarascans.net](https://madarascans.net) | former madarascans.org/.com | 2026-10-15 |
+| [magcomi.com](https://magcomi.com) | Japanese, Mag Garden (GigaViewer) | — |
 | [maid.my.id](https://www.maid.my.id) |  | 2026-10-15 |
 | [manga.adonisfansub.com](https://manga.adonisfansub.com) | Adonis Fansub, Turkish | 2026-10-16 |
 | [manga.smuglo.li](https://manga.smuglo.li) | Lilyreader, yuri | 2026-10-16 |
@@ -746,6 +759,7 @@ to a minute.
 | [mangasushi.org](https://mangasushi.org) |  | 2026-10-15 |
 | [mangasusuku.com](https://mangasusuku.com) | Indonesian, mostly NSFW | 2026-10-15 |
 | [mangataro.org](https://mangataro.org) |  | 2026-10-15 |
+| [mangatime-square.com](https://mangatime-square.com) | Japanese, Mangatime Square (GigaViewer) | — |
 | [mangatown.com](https://www.mangatown.com) |  | 2026-10-15 |
 | [mangavault.lat](https://mangavault.lat) | MangaVault | 2026-10-15 |
 | [mangaworld.mx](https://www.mangaworld.mx) | MangaWorld, Italian | 2026-10-15 |
@@ -768,6 +782,7 @@ to a minute.
 | [nyraxmanga.com](https://nyraxmanga.com) | Nyrax, some adult titles | 2026-10-16 |
 | [onma.top](https://onma.top) | Arabic | 2026-10-16 |
 | [oremanga.net](https://www.oremanga.net) | Oremanga, Thai | 2026-10-16 |
+| [ourfeel.jp](https://ourfeel.jp) | Japanese, Our Feel (GigaViewer) | — |
 | [projectsuki.com](https://projectsuki.com) |  | 2026-10-15 |
 | [qimanga.com](https://qimanga.com) |  | 2026-10-15 |
 | [rackusreads.com](https://rackusreads.com) | Rackus | 2026-10-16 |
@@ -786,12 +801,14 @@ to a minute.
 | [shonenjumpplus.com](https://shonenjumpplus.com) | Japanese, Jump+ (GigaViewer) | — |
 | [silentquill.net](https://silentquill.net) | Armageddon Scanlation | 2026-10-15 |
 | [stonescape.xyz](https://stonescape.xyz) |  | 2026-10-15 |
+| [sunday-webry.com](https://www.sunday-webry.com) | Japanese, Sunday Webry (GigaViewer) | — |
 | [sushiscan.net](https://sushiscan.net) \* |  | 2026-10-15 |
 | [taiyo.moe](https://taiyo.moe) |  | 2026-10-15 |
 | [tcbonepiecechapters.com](https://tcbonepiecechapters.com) | TCB Scans, former tcbscans.com | 2026-10-15 |
 | [team-shadowi.com](https://www.team-shadowi.com) |  | 2026-10-15 |
 | [templetoons.com](https://templetoons.com) \* | Temple Scan | 2026-10-15 |
 | [the-apothecary-diaries.com](https://the-apothecary-diaries.com) | The Apothecary Diaries | 2026-10-15 |
+| [tonarinoyj.jp](https://tonarinoyj.jp) | Japanese, Young Jump (GigaViewer) | — |
 | [toongod.org](https://www.toongod.org) \* |  | 2026-10-15 |
 | [toonily.com](https://toonily.com) \* |  | 2026-10-15 |
 | [tortugaceviri.com](https://tortugaceviri.com) | Tortuga Çeviri | 2026-10-15 |
