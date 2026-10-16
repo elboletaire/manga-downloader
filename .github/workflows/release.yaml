@@ -45,6 +45,41 @@ jobs:
         # and packs ./manga-downloader(.exe), which build/release writes.
         build_command: make build/release VERSION=${{ env.sha_short }} TAG=${{ env.tag }}
 
+  checksums:
+    name: Checksums
+    needs: releases-matrix
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+    - name: Publish the checksums of the CLI archives
+      run: |
+        set -euo pipefail
+        # the names the matrix produces; the GUI assets share the prefix, so they're listed out, not globbed
+        archives=(
+          "manga-downloader-$TAG-linux-386.tar.gz"
+          "manga-downloader-$TAG-linux-amd64.tar.gz"
+          "manga-downloader-$TAG-linux-arm64.tar.gz"
+          "manga-downloader-$TAG-darwin-amd64.tar.gz"
+          "manga-downloader-$TAG-darwin-arm64.tar.gz"
+          "manga-downloader-$TAG-windows-32bit-legacy.zip"
+          "manga-downloader-$TAG-windows-amd64.zip"
+          "manga-downloader-$TAG-windows-arm64.zip"
+        )
+        mkdir assets
+        for a in "${archives[@]}"; do
+          gh release download "$TAG" -p "$a" -D assets || { echo "::error::missing CLI archive $a"; exit 1; }
+          [ -f "assets/$a" ] || { echo "::error::missing CLI archive $a"; exit 1; }
+        done
+        sums="manga-downloader-$TAG-SHA256SUMS.txt"
+        # a re-run starts from the archives only, never from an earlier sums file
+        rm -f "assets/$sums"
+        (cd assets && sha256sum -- "${archives[@]}" > "../$sums")
+        cat "$sums"
+        gh release upload "$TAG" "$sums" --clobber
+
   homebrew:
     name: Update the Homebrew formula
     needs: releases-matrix

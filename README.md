@@ -169,6 +169,9 @@ it and run the binary:
 ./manga-downloader --help
 ~~~
 
+To verify the download, check it against `manga-downloader-<tag>-SHA256SUMS.txt`
+from the same release: `sha256sum -c --ignore-missing manga-downloader-<tag>-SHA256SUMS.txt`.
+
 Builds are published for Linux, macOS and Windows on amd64 and arm64 (Windows
 arm64 included), plus 32-bit builds for Linux and Windows. The Windows 32-bit
 build is named `windows-32bit-legacy`.
