@@ -839,3 +839,29 @@ func TestFetchingRowEndsBeforeStarted(t *testing.T) {
 		}
 	})
 }
+
+// Cancelling while a chapter's page list is being fetched can't stop the fetch,
+// so the chapter's row must still leave "fetching".
+func TestCancelWhileFetchingEndsTheRow(t *testing.T) {
+	gate := make(chan struct{})
+	c, site, _ := newTestController(t, false, gate, chapters(1, 1)...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	c.SetAll(true)
+	if err := c.Start(); err != nil {
+		t.Fatal(err)
+	}
+	<-site.entered
+	if jobs := c.Jobs(); len(jobs) != 1 || jobs[0].State != JobFetching {
+		t.Fatalf("jobs while fetching = %+v, want one fetching row", jobs)
+	}
+	c.Cancel()
+	close(gate)
+	waitFinished(t, c)
+
+	jobs := c.Jobs()
+	if len(jobs) != 1 || (jobs[0].State != JobDone && jobs[0].State != JobFailed) || jobs[0].Status != "" {
+		t.Errorf("jobs after the cancel = %+v, want one finished row", jobs)
+	}
+}

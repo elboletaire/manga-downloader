@@ -795,6 +795,55 @@ func TestDownloadVolumeFetchingBeforeVolumeChapter(t *testing.T) {
 	}
 }
 
+// blockedSite holds FetchChapter until release is closed, as a slow grabber
+// that takes no context does.
+type blockedSite struct {
+	*fakeSite
+	entered chan struct{}
+	release chan struct{}
+}
+
+func (b *blockedSite) FetchChapter(l grabber.Filterable) (*grabber.Chapter, error) {
+	b.entered <- struct{}{}
+	<-b.release
+	return b.fakeSite.FetchChapter(l)
+}
+
+// A run cancelled while a chapter's page list is being fetched can't stop the
+// fetch, so the chapter must still end instead of staying in "fetching".
+func TestDownloadCancelledWhileFetching(t *testing.T) {
+	site := &blockedSite{
+		fakeSite: newFakeSite(t, fakeChapter{number: 1, pages: 1}),
+		entered:  make(chan struct{}, 1),
+		release:  make(chan struct{}),
+	}
+	series, _ := newSeries(t, site.fakeSite, false)
+	series.Site = site
+	rec := &recorder{withFetch: true}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		_, err := series.Download(ctx, listed(site.fakeSite), nil, "", rec)
+		done <- err
+	}()
+	<-site.entered
+	cancel()
+	close(site.release)
+	<-done
+
+	ended := false
+	for _, e := range rec.events {
+		switch e {
+		case "download-failed 1", "packed 1", "fetch-failed 1":
+			ended = true
+		}
+	}
+	if rec.events[0] != "fetching 1" || !ended {
+		t.Errorf("events %q, want fetching followed by the chapter ending", rec.events)
+	}
+}
+
 func indexOf(events []string, e string) int {
 	for i, got := range events {
 		if got == e {

@@ -887,6 +887,27 @@ func TestChapterRowFetchingEnds(t *testing.T) {
 	}
 }
 
+// A cancelled run still ends the chapter whose fetch was in flight, so its row
+// doesn't stay on "fetching".
+func TestChapterRowLeavesFetchingWhenCancelled(t *testing.T) {
+	listed := &grabber.Chapter{Title: "Chapter 0001"}
+	fetched := &grabber.Chapter{Title: "Chapter 0001", PagesCount: 10}
+	m := newProgressModel("Series", "", false, false, false, true)
+	m.width = 80
+	send := func(msg tea.Msg) {
+		next, _ := m.Update(msg)
+		m = next.(progressModel)
+	}
+
+	send(chapterFetchingMsg{listed: listed})
+	send(chapterFetchedMsg{listed: listed, chapter: fetched})
+	send(chapterStartedMsg{chapter: fetched, total: 10 * steps})
+	send(downloadFailedMsg{chapter: fetched})
+	if s := m.states[fetched]; s == nil || s.status == "fetching" || s.status != "failed" {
+		t.Errorf("row after the cancelled download = %+v, want failed", s)
+	}
+}
+
 // Bundle and volume chapters add no row of their own while fetching.
 func TestFetchingAddsNoRowInBundleOrVolume(t *testing.T) {
 	listed := &grabber.Chapter{Title: "Chapter 0001"}
