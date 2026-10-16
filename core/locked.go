@@ -10,7 +10,7 @@ import (
 	"github.com/elboletaire/manga-downloader/grabber"
 )
 
-// SplitLocked separates the chapters the listing marks as paid from the rest,
+// SplitLocked separates the chapters the listing marks as locked from the rest,
 // keeping their order. Both the CLI and the app leave the locked ones out
 // before downloading, as a logged-out reader can't open them.
 func SplitLocked(chapters grabber.Filterables) (open, locked grabber.Filterables) {

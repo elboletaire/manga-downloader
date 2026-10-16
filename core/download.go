@@ -114,7 +114,7 @@ func (NoEvents) VolumePacked(*Volume, string, error)     {}
 // could be downloaded, which leaves nothing to pack
 var ErrEmptyVolume = errors.New("none of its chapters could be downloaded")
 
-// ErrLocked is the FetchFailed error of a chapter the listing marks as paid.
+// ErrLocked is the FetchFailed error of a chapter the listing marks as locked.
 // It's reported without fetching the chapter, as a reader of it gets no pages
 var ErrLocked = errors.New("locked chapter")
 

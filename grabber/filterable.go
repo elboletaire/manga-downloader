@@ -71,13 +71,13 @@ func ChapterName(f Filterable) string {
 	return name + " (" + title + ")"
 }
 
-// Lockable is a chapter the listing may mark as paid. Like Volumed, it isn't
+// Lockable is a chapter the listing may mark as locked. Like Volumed, it isn't
 // part of Filterable: most sites never say, so LockedOf is how callers ask.
 type Lockable interface {
 	GetLocked() bool
 }
 
-// LockedOf reports whether the listing marks a chapter as paid
+// LockedOf reports whether the listing marks a chapter as locked
 func LockedOf(f Filterable) bool {
 	if l, ok := f.(Lockable); ok {
 		return l.GetLocked()

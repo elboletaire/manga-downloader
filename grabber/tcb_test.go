@@ -412,4 +412,11 @@ func TestTcbFetchChaptersLockedMarker(t *testing.T) {
 	if got := chapters[0].GetTitle(); got != "Bölüm 6" || chapters[0].GetNumber() != 6 {
 		t.Errorf("got %q (%v), want \"Bölüm 6\" (6)", got, chapters[0].GetNumber())
 	}
+
+	// another host keeps the marker in the title and the chapter unlocked
+	tcb.URL = "https://example.com/manga/x/"
+	chapters, _ = tcb.FetchChapters()
+	if LockedOf(chapters[0]) || chapters[0].GetTitle() != "Bölüm 6 - 💦" {
+		t.Errorf("other host: locked %v, title %q", LockedOf(chapters[0]), chapters[0].GetTitle())
+	}
 }

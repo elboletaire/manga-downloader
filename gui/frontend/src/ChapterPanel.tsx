@@ -171,7 +171,7 @@ function ChapterList({
 
   // the chapters a span of rows covers: a header stands for its chapters
   // only while folded, as unfolded they're rows of the span already.
-  // Paid chapters can't be picked, so no span covers them.
+  // Locked chapters can't be picked, so no span covers them.
   const chaptersOf = (positions: number[]) => {
     const out: number[] = [];
     for (const p of positions) {
@@ -220,7 +220,7 @@ function ChapterList({
       return;
     }
     if (row.kind === 'chapter' && row.chapter.locked) {
-      // a paid chapter takes the focus but is never picked, nor does it anchor a span
+      // a locked chapter takes the focus but is never picked, nor does it anchor a span
       setActive(pos);
       return;
     }
@@ -322,7 +322,7 @@ function ChapterList({
     }
   };
 
-  // paid chapters can't be picked, so "all" and the count are of the others
+  // locked chapters can't be picked, so "all" and the count are of the others
   const selectable = useMemo(() => pickable(chapters).length, [chapters]);
   const all = selectable > 0 && state.selectedCount === selectable;
   const some = state.selectedCount > 0 && !all;
@@ -545,7 +545,7 @@ function ChapterList({
   );
 }
 
-/** A chapter's checkbox: greyed out for a paid chapter, which can't be picked */
+/** A chapter's checkbox: greyed out for a locked chapter, which can't be picked */
 export function ChapterBox({ on, locked }: { on: boolean; locked: boolean }) {
   return <span className={`box${on ? ' on' : ''}${locked ? ' disabled' : ''}`} aria-hidden="true" />;
 }
@@ -553,7 +553,7 @@ export function ChapterBox({ on, locked }: { on: boolean; locked: boolean }) {
 /** The tooltip and label of a locked chapter's mark */
 export const LOCKED_HINT = 'Locked, so it cannot be selected';
 
-/** A chapter's title, marked with a lock when the listing says it's paid */
+/** A chapter's title, marked with a lock when the listing says it's locked */
 export function ChapterTitle({ title, locked }: { title: string; locked: boolean }) {
   return (
     <span className="title">

@@ -155,8 +155,11 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 			link.Children().Remove()
 		}
 		title := strings.TrimSpace(link.Text())
-		// webtoonia.fun tags its members-only chapters with a trailing " - 💦"
-		title, locked := strings.CutSuffix(title, tcbLockedSuffix)
+		// webtoonia.fun tags members-only chapters with a trailing " - 💦" (other sites may mean something else by it)
+		locked := false
+		if strings.Contains(t.URL, "://webtoonia.fun/") {
+			title, locked = strings.CutSuffix(title, tcbLockedSuffix)
+		}
 		href := link.AttrOr("href", "")
 		num := tcbChapterNumber(title, href)
 		title, group := t.splitTitleGroup(title)
