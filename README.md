@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[151 supported sites](#supported-sites)**, from big aggregators to small
+- **[152 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -629,7 +629,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 151 supported sites</b></summary>
+<summary><b>Show all 152 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -750,6 +750,7 @@ to a minute.
 | [rackusreads.com](https://rackusreads.com) | Rackus | 2026-10-16 |
 | [ravenscans.org](https://ravenscans.org) |  | 2026-10-15 |
 | [rawkuma.net](https://rawkuma.net) |  | 2026-10-15 |
+| [re-yume.my.id](https://www.re-yume.my.id) | Re-Yume, Indonesian | 2026-10-16 |
 | [ritharscans.com](https://ritharscans.com) |  | 2026-10-15 |
 | [rizzfables.com](https://rizzfables.com) |  | 2026-10-15 |
 | [rokaricomics.com](https://rokaricomics.com) |  | 2026-10-15 |

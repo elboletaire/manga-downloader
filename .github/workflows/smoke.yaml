@@ -82,6 +82,7 @@ jobs:
           - dragonballmangaa
           - jujutsukaisenmanga
           - mangadelsiglotvmanga
+          - re-yume
           - tvymanga3
           # Plain-HTML (goquery) scrapers
           - tcbscans
