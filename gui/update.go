@@ -32,8 +32,8 @@ type Update struct {
 	// Latest is the newest release's tag, as GitHub names it
 	Latest string
 	// Installer is the package that updates this build in place (the Windows
-	// installer, the Linux tarball), nil when the release has none or has no
-	// checksums for it
+	// installer, the Linux tarball, the macOS zip), nil when the release has
+	// none or has no checksums for it
 	Installer *Asset
 	// Sums is the release's checksums asset, which Installer is verified against
 	Sums *Asset

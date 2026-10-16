@@ -92,13 +92,3 @@ func relaunch(bin string) error {
 
 	return cmd.Process.Release()
 }
-
-// lastLine is the last non-empty line of a command's output
-func lastLine(out string) string {
-	lines := strings.Split(strings.TrimSpace(out), "\n")
-	if l := strings.TrimSpace(lines[len(lines)-1]); l != "" {
-		return l
-	}
-
-	return "no output"
-}

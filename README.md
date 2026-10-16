@@ -130,9 +130,11 @@ Homebrew cask and the Linux `install.sh` put it there), `manga-downloader ui`
 opens it. On Windows, double-clicking `manga-downloader.exe` does the same.
 
 When a newer release is out, a yellow *!* next to the version in the status bar
-links to it. On the Windows installer's copy and the Linux install script's
-copy it opens a dialog that updates the app in one click, after checking the
-download against the release's checksums.
+links to it. On the Windows installer's copy, the Linux install script's copy and
+a macOS copy you can write to, it opens a dialog that updates the app in one
+click, after checking the download against the release's checksums. While the
+app's Homebrew cask is installed it keeps the link instead, since `brew upgrade`
+updates that copy.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/09-update-dark.png">

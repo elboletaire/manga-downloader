@@ -86,6 +86,12 @@ func linuxTarballName(tag, goarch string) string {
 	return fmt.Sprintf("manga-downloader-gui-%s-linux-%s.tar.gz", tag, goarch)
 }
 
+// darwinZipName is the macOS zip's asset name for a release tag; one universal
+// build serves every GOARCH
+func darwinZipName(tag string) string {
+	return fmt.Sprintf("manga-downloader-gui-%s-darwin-universal.zip", tag)
+}
+
 // sumsName is the checksums asset the release workflow publishes for the GUI
 func sumsName(tag string) string {
 	return fmt.Sprintf("manga-downloader-gui-%s-SHA256SUMS.txt", tag)
@@ -363,4 +369,14 @@ func saveExact(path string, r io.Reader, size int64) error {
 	}
 
 	return nil
+}
+
+// lastLine is the last non-empty line of a command's output
+func lastLine(out string) string {
+	lines := strings.Split(strings.TrimSpace(out), "\n")
+	if l := strings.TrimSpace(lines[len(lines)-1]); l != "" {
+		return l
+	}
+
+	return "no output"
 }
