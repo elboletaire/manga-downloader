@@ -110,7 +110,7 @@ Function .onInit
                 Abort
             ${EndIf}
             ClearErrors
-            ExecShell "runas" "$EXEPATH" "$1 /elevated"
+            ExecShell "runas" "$EXEPATH" "/elevated $1"
             IfErrors 0 +3
             MessageBox MB_OK|MB_ICONSTOP "${INFO_PRODUCTNAME} is installed for all users, so updating it needs administrator rights."
             Abort
@@ -160,7 +160,8 @@ Function .onInit
     done:
 FunctionEnd
 
-# An upgrade keeps the recorded folder, so it skips the page.
+# An upgrade keeps the recorded folder, so it skips the page. /D= and silent installs have no
+# page either, and use the scope default or the existing location by design.
 Function DirPre
     ${If} $ExistingInstall == 1
         Abort
@@ -172,20 +173,65 @@ Function DirLeave
     ${If} $0 == "\"
         StrCpy $INSTDIR $INSTDIR -1
     ${EndIf}
-    # A drive root or the bare parent folders get our own subfolder.
+    # Only X:\... or UNC paths; a drive root, a share root or the bare parent folders get our own subfolder.
     StrLen $0 $INSTDIR
-    ${If} $0 <= 2
-    ${OrIf} $INSTDIR == "$PROGRAMFILES64"
+    StrCpy $2 $INSTDIR 2
+    ${If} $2 == "\\"
+        StrCpy $3 0
+        StrCpy $5 0
+        countloop:
+        StrCmp $5 $0 countdone
+        StrCpy $6 $INSTDIR 1 $5
+        ${If} $6 == "\"
+            IntOp $3 $3 + 1
+        ${EndIf}
+        IntOp $5 $5 + 1
+        Goto countloop
+        countdone:
+        ${If} $3 < 3
+            Goto invalid
+        ${EndIf}
+        ${If} $3 == 3
+            StrCpy $INSTDIR "$INSTDIR\${INFO_PRODUCTNAME}"
+        ${EndIf}
+    ${Else}
+        StrCpy $6 $INSTDIR 1 1
+        ${If} $6 != ":"
+            Goto invalid
+        ${EndIf}
+        ${If} $0 == 2
+            StrCpy $INSTDIR "$INSTDIR\${INFO_PRODUCTNAME}"
+        ${ElseIf} $0 > 2
+            StrCpy $6 $INSTDIR 1 2
+            ${If} $6 != "\"
+                Goto invalid
+            ${EndIf}
+        ${EndIf}
+    ${EndIf}
+    ${If} $INSTDIR == "$PROGRAMFILES64"
     ${OrIf} $INSTDIR == "$LOCALAPPDATA\Programs"
         StrCpy $INSTDIR "$INSTDIR\${INFO_PRODUCTNAME}"
     ${EndIf}
 
     ${If} $MachineScope != 1
-        # Not elevated: the folder must be writable, and a folder created for the probe goes away.
+        # Not elevated: the folder must be writable. Only the last folder is ever created,
+        # so a failed probe leaves nothing behind once it's removed.
         StrCpy $1 0
-        IfFileExists "$INSTDIR\*.*" +3
+        IfFileExists "$INSTDIR\*.*" probe
+        StrLen $4 $INSTDIR
+        StrCpy $5 $4
+        parentloop:
+        IntOp $5 $5 - 1
+        StrCpy $6 $INSTDIR 1 $5
+        StrCmp $6 "\" parentfound
+        StrCmp $5 0 failed
+        Goto parentloop
+        parentfound:
+        StrCpy $7 $INSTDIR $5
+        IfFileExists "$7\*.*" 0 failed
         StrCpy $1 1
         CreateDirectory "$INSTDIR"
+        probe:
         ClearErrors
         FileOpen $0 "$INSTDIR\.write-probe" w
         IfErrors failed
@@ -199,6 +245,11 @@ Function DirLeave
         MessageBox MB_OK|MB_ICONEXCLAMATION "You can't install there without administrator rights. Pick another folder or run the installer as administrator."
         Abort
     ${EndIf}
+    Return
+
+    invalid:
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Pick a folder like C:\Apps\${INFO_PRODUCTNAME}, or a network path."
+    Abort
 FunctionEnd
 
 # Through explorer.exe so the app doesn't inherit the installer's elevation.
@@ -266,9 +317,14 @@ SectionEnd
 # Apps & features doesn't grant, so it relaunches itself elevated.
 Function un.onInit
     SetRegView 64
-    StrLen $0 "$LOCALAPPDATA\Programs"
-    StrCpy $1 $INSTDIR $0
-    ${If} $1 == "$LOCALAPPDATA\Programs"
+    # The scope is whichever install is recorded at this folder; the folder page can put either anywhere.
+    ReadRegStr $0 HKCU "${UNINST_KEY}" "InstallLocation"
+    StrCpy $1 $0 1 -1
+    ${If} $1 == "\"
+        StrCpy $0 $0 -1
+    ${EndIf}
+    ${If} $0 != ""
+    ${AndIf} $0 == $INSTDIR
         SetShellVarContext current
         StrCpy $MachineScope 0
     ${Else}
