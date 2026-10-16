@@ -245,3 +245,22 @@ func TestStripBlogName(t *testing.T) {
 		}
 	}
 }
+
+func TestBloggerSeriesPost(t *testing.T) {
+	const page = `<html><head><meta content='Aldo no Isekai Tensei' property='og:title'/><title>Aldo no Isekai Tensei</title></head></html>`
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(page))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b := &Blogger{Grabber: &Grabber{URL: "https://www.re-yume.my.id/2026/04/aldo-no-isekai-tensei.html"}, doc: doc}
+	if err := b.resolveSeriesURL(); err != nil || b.query != "Aldo no Isekai Tensei" {
+		t.Errorf("resolveSeriesURL() = %q, %v", b.query, err)
+	}
+
+	empty, _ := goquery.NewDocumentFromReader(strings.NewReader(`<html></html>`))
+	b = &Blogger{Grabber: &Grabber{URL: "https://x.example/2026/04/a.html"}, doc: empty}
+	if err := b.resolveSeriesURL(); err == nil {
+		t.Error("a post with no title should not resolve")
+	}
+}

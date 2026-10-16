@@ -105,13 +105,27 @@ func (b *Blogger) resolveSeriesURL() error {
 		return errSeriesNotFound(b.URL)
 	}
 
-	post, ok := bloggerPostTitle(b.doc)
-	if !ok {
-		return errSeriesNotFound(b.URL)
+	if post, ok := bloggerPostTitle(b.doc); ok {
+		b.query = post.Series
+		return nil
 	}
-	b.query = post.Series
+	// a title without a number is a series post, searched under its own name
+	if name := bloggerSeriesPostTitle(b.doc); name != "" {
+		b.query = name
+		return nil
+	}
 
-	return nil
+	return errSeriesNotFound(b.URL)
+}
+
+// bloggerSeriesPostTitle returns the title of a post that names a series
+// instead of a chapter (no number in it), or "" when it has none.
+func bloggerSeriesPostTitle(doc *goquery.Document) string {
+	name := stripKindWord(stripBlogName(strings.TrimSpace(doc.Find(`meta[property="og:title"]`).AttrOr("content", ""))))
+	if name == "" || bloggerNumberRe.MatchString(name) {
+		return ""
+	}
+	return name
 }
 
 // bloggerPostTitle reads a chapter post's title from the first place that
