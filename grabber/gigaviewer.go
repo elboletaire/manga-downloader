@@ -28,10 +28,11 @@ var gigaviewerDomains = []string{"shonenjumpplus.com"}
 var (
 	gigaviewerEpisodeRe = regexp.MustCompile(`/episode/(\d+)`)
 	gigaviewerFeedRe    = regexp.MustCompile(`/(?:rss|atom)/series/(\d+)`)
-	// gigaviewerMarkerRe is the leading "[139話 後編]" marker of a title
-	gigaviewerMarkerRe = regexp.MustCompile(`^\[([^\]]*)\]`)
-	// gigaviewerEpisodeNumRe reads the episode number out of a marker
-	gigaviewerEpisodeNumRe = regexp.MustCompile(`第?(\d+)話`)
+	// gigaviewerMarkerRe is the number marker a title starts with: a bracket
+	// "[139話 後編]", or a bare "第10話", "第655回", "≪＃432≫"
+	gigaviewerMarkerRe = regexp.MustCompile(`^(?:\[([^\]]*)\]|(?:最終話)?[《≪]＃([0-9０-９]+)[》≫]|第([0-9０-９.]+)[話回章])`)
+	// gigaviewerEpisodeNumRe reads the episode number out of a bracket
+	gigaviewerEpisodeNumRe = regexp.MustCompile(`第?([0-9]+(?:\.[0-9]+)?)話`)
 	// gigaviewerSeriesRe takes the series name out of the feed's channel
 	// title, "少年ジャンプ＋（SERIES）"
 	gigaviewerSeriesRe = regexp.MustCompile(`（(.+)）$`)
@@ -229,26 +230,37 @@ func gigaviewerEpisodeID(link string) string {
 	return m[1]
 }
 
-// gigaviewerTitle splits a feed title, "[139話 後編]SERIES" or "[2話]SUBTITLE",
+// gigaviewerTitle splits a feed title, "[139話 後編]SERIES" or "第2話 SUBTITLE",
 // into the episode's title (empty when it's only the series name), its number
-// and its part (the 前編/後編 in the marker). A title without a "[N話]" marker
-// is kept as it is, numbered 0.
+// and, for a bracket, its part (the 前編/後編 in it). A title without a number
+// marker is kept as it is, numbered 0.
 func gigaviewerTitle(raw, series string) (title string, number float64, part string) {
 	raw = cleanTitle(raw)
-	loc := gigaviewerMarkerRe.FindStringSubmatchIndex(raw)
-	if loc == nil {
-		return raw, 0, ""
-	}
-
-	marker := gigaviewerDigits.Replace(raw[loc[2]:loc[3]])
-	m := gigaviewerEpisodeNumRe.FindStringSubmatch(marker)
+	m := gigaviewerMarkerRe.FindStringSubmatchIndex(raw)
 	if m == nil {
 		return raw, 0, ""
 	}
-	number, _ = strconv.ParseFloat(m[1], 64)
-	part = strings.Trim(gigaviewerEpisodeNumRe.ReplaceAllString(marker, ""), " 　～~-・")
 
-	title = cleanTitle(raw[loc[1]:])
+	var num string
+	if m[2] >= 0 {
+		bracket := gigaviewerDigits.Replace(raw[m[2]:m[3]])
+		nm := gigaviewerEpisodeNumRe.FindStringSubmatch(bracket)
+		if nm == nil {
+			return raw, 0, ""
+		}
+		num = nm[1]
+		part = strings.Trim(gigaviewerEpisodeNumRe.ReplaceAllString(bracket, ""), " 　～~-・")
+	} else if m[4] >= 0 {
+		num = gigaviewerDigits.Replace(raw[m[4]:m[5]])
+	} else {
+		num = gigaviewerDigits.Replace(raw[m[6]:m[7]])
+	}
+	number, err := strconv.ParseFloat(num, 64)
+	if err != nil {
+		return raw, 0, ""
+	}
+
+	title = cleanTitle(raw[m[1]:])
 	if title == series {
 		title = ""
 	}
