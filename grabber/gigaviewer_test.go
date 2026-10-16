@@ -99,8 +99,10 @@ func TestGigaviewerSeriesIdentifier(t *testing.T) {
 func TestGigaviewerSeries(t *testing.T) {
 	cases := map[string]string{
 		"少年ジャンプ＋（夫婦と16歳）": "夫婦と16歳",
-		"OUR FEEL（アワフィール）| 女性マンガレーベル、第1・3木曜日更新!!（うさぴょん）": "うさぴょん",
-		"まんがタイムSquare｜読者と作品の広場（スクエア）。（ふたりの距離の10年後）":      "ふたりの距離の10年後",
+		"OUR FEEL（アワフィール）| 女性マンガレーベル、第1・3木曜日更新!!（うさぴょん）":                                         "うさぴょん",
+		"まんがタイムSquare｜読者と作品の広場（スクエア）。（ふたりの距離の10年後）":                                              "ふたりの距離の10年後",
+		"コミックガルド（姉の引き立て役に徹してきましたが、今日でやめます（タテ読みフルカラー））":                                           "姉の引き立て役に徹してきましたが、今日でやめます（タテ読みフルカラー）",
+		"コミック アース・スター｜毎週木曜・最新話更新！無料で漫画が読めるWEBコミック誌（魔物（マンドラゴラ）ってバレたら討伐ですか？ ～花の魔女のほほえみは勘違いの種を蒔く～）": "魔物（マンドラゴラ）ってバレたら討伐ですか？ ～花の魔女のほほえみは勘違いの種を蒔く～",
 		"no parentheses": "no parentheses",
 	}
 	for channel, want := range cases {
@@ -134,12 +136,45 @@ func TestGigaviewerTitle(t *testing.T) {
 		{"第3話", "うさぴょん", "", "", 3},
 		{"番外編①", "まるせっせんす", "番外編①", "", 0},
 		{"読切", "だから", "読切", "", 0},
+		// live titles that were numbered 0 before
+		{"【第153話】地底湖の決戦③", "夫婦", "地底湖の決戦③", "", 153},
+		{"【第112話前編】予定", "夫婦", "予定", "前編", 112},
+		{"［第五十七話］乾季の呼び声\u3000後編②", "夫婦", "乾季の呼び声\u3000後編②", "", 57},
+		{"第八十話（3）", "夫婦", "（3）", "", 80},
+		{"第五十七話（3）", "夫婦", "（3）", "", 57},
+		{"第12＆13話", "夫婦", "", "", 12},
+		{"第126.5話", "夫婦", "", "", 126.5},
+		{"第４９．５話\u3000パラオへ", "夫婦", "パラオへ", "", 49.5},
+		{"Season26 中編", "夫婦", "中編", "", 26},
+		{"Case.25\u3000魔剣", "夫婦", "魔剣", "", 25},
+		{"Episode.3", "夫婦", "", "", 3},
+		{"Op.7-1", "夫婦", "", "1", 7},
+		{"#8 身内は身内でよそはよそ", "夫婦", "身内は身内でよそはよそ", "", 8},
+		{"10", "夫婦", "", "", 10},
+		// only a title's start is a number: a subtitle's is not
+		{"身内 第3話", "夫婦", "身内 第3話", "", 0},
+		{"2026年前期・第1回受賞作", "夫婦", "2026年前期・第1回受賞作", "", 0},
+		{"最終話 さよならシナモン", "夫婦", "最終話 さよならシナモン", "", 0},
 	}
 	for _, c := range cases {
 		title, number, part := gigaviewerTitle(c.raw, c.series)
 		if title != c.title || number != c.number || part != c.part {
 			t.Errorf("gigaviewerTitle(%q, %q) = %q, %v, %q; want %q, %v, %q",
 				c.raw, c.series, title, number, part, c.title, c.number, c.part)
+		}
+	}
+}
+
+// TestGigaviewerNotice checks which feed items are dropped as announcements or ads
+func TestGigaviewerNotice(t *testing.T) {
+	for _, title := range []string{"休載のお知らせ", "[休載イラスト] 聖母の断罪", "単行本告知イラスト", "更新日変更のお知らせ"} {
+		if !gigaviewerNoticeRe.MatchString(title) {
+			t.Errorf("%q is not dropped", title)
+		}
+	}
+	for _, title := range []string{"読切", "番外編", "特別編", "予告編", "番外編①"} {
+		if gigaviewerNoticeRe.MatchString(title) {
+			t.Errorf("%q is dropped, want kept", title)
 		}
 	}
 }
