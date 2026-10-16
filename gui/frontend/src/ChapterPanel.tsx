@@ -516,8 +516,12 @@ function ChapterList({
                 <ChapterBox on={on} locked={ch.locked} />
                 <span className="num">{formatNumber(ch.number)}</span>
                 <ChapterTitle title={ch.title} locked={ch.locked} />
-                {ch.language !== '' && <span className="lang">{ch.language}</span>}
-                {ch.group !== '' && <span className="group">{ch.group}</span>}
+                {(ch.language !== '' || ch.group !== '') && (
+                  <span className="tags">
+                    {ch.language !== '' && <span className="lang">{ch.language}</span>}
+                    {ch.group !== '' && <span className="group">{ch.group}</span>}
+                  </span>
+                )}
               </div>
             );
           })}
