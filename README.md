@@ -666,9 +666,9 @@ to a minute.
 | [eskimangalar.com](https://eskimangalar.com) |  | 2026-10-15 |
 | [evascans.net](https://evascans.net) | former evascans.org | 2026-10-15 |
 | [fanfox.net](https://fanfox.net) | Manga Fox | 2026-10-15 |
+| [fbsquadx.com](https://fbsquadx.com) | Fleur Blanche Scan, Spanish | 2026-10-16 |
 | [flamecomics.xyz](https://flamecomics.xyz) | Flame Comics, former Flame Scans | 2026-10-15 |
 | [fmteam.fr](https://fmteam.fr) |  | 2026-10-15 |
-| [fbsquadx.com](https://fbsquadx.com) | Fleur Blanche Scan, Spanish | 2026-10-16 |
 | [furyosociety.com](https://furyosociety.com) |  | 2026-10-15 |
 | [gdscans.com](https://gdscans.com) | GalaxyDegenScans | 2026-10-15 |
 | [genztoons.org](https://genztoons.org) | Genz Toon, former genzupdates.com | 2026-10-15 |

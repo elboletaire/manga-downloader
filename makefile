@@ -284,7 +284,8 @@ grabber/gdscans:
 grabber/anikiga:
 	go run . https://anikiga.com/manga/alma/ 5
 
-# Madara and themesia sites that PlainHTML claims, no code of their own
+# Madara and themesia sites whose series URLs PlainHTML claims (chapter URLs
+# can go through Tcb), no code of their own
 grabber/apollcomics:
 	go run . https://apollcomics.es/manga/las-manos-sanadoras-del-doctor/ 40-41
 grabber/fbsquadx:

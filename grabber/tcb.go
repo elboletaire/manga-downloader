@@ -89,10 +89,10 @@ func (t *Tcb) FetchTitle() (string, error) {
 	}
 
 	// Madara prints rank badges inside the h1 and indents its text; some themes
-	// add a summary h1 outside .post-title.
+	// add a summary h1 outside .post-title, so never join them.
 	h1 := body.Find(".post-title h1").First()
 	if h1.Length() == 0 {
-		h1 = body.Find("h1")
+		h1 = body.Find("h1").First()
 	}
 	h1 = h1.Clone()
 	h1.Find(".manga-title-badges").Remove()
