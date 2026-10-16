@@ -139,6 +139,16 @@ Function .onInit
     ${EndIf}
 
     # A running exe can't be opened for writing, which tells us the app is still open.
+    # The in-app updater starts us with /relaunch and quits right after, so then wait
+    # for it before asking; a silent install only waits.
+    ${GetParameters} $3
+    ClearErrors
+    ${GetOptions} $3 "/relaunch" $3
+    ${If} ${Errors}
+        StrCpy $3 0
+    ${Else}
+        StrCpy $3 1
+    ${EndIf}
     StrCpy $2 0
     check:
     IfFileExists "$INSTDIR\${PRODUCT_EXECUTABLE}" 0 done
@@ -148,15 +158,18 @@ Function .onInit
     FileClose $1
     Goto done
     busy:
-    IfSilent +3
+    IntOp $2 $2 + 1
+    ${If} $2 <= 10
+        ${If} ${Silent}
+        ${OrIf} $3 == 1
+            Sleep 1000
+            Goto check
+        ${EndIf}
+    ${EndIf}
+    IfSilent 0 +2
+    Abort
     MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "${INFO_PRODUCTNAME} is running. Close it, then click Retry." IDRETRY check
     Abort
-    IntOp $2 $2 + 1
-    ${If} $2 > 10
-        Abort
-    ${EndIf}
-    Sleep 1000
-    Goto check
     done:
 FunctionEnd
 
