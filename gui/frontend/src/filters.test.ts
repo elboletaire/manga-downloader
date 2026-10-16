@@ -43,9 +43,12 @@ describe('filterOptions', () => {
     expect(groups[0]).toEqual({ value: 'all', label: 'All groups' });
   });
 
-  it('lists the values alphabetically', () => {
-    const options = filterOptions(choice({ values: ['pt-br', 'es', 'En'], selected: 'es' }), 'language');
-    expect(options.map((o) => o.value)).toEqual(['En', 'es', 'pt-br']);
+  it('keeps the backend order and slots in an unlisted selection alphabetically', () => {
+    const options = filterOptions(choice({ values: ['Dawn', 'Écarlate', 'Fable', 'Zed'], selected: 'Ecru' }), 'scanlator');
+    expect(options.map((o) => o.value)).toEqual(['Dawn', 'Écarlate', 'Ecru', 'Fable', 'Zed']);
+
+    const accented = filterOptions(choice({ values: ['Dawn', 'Fable', 'Zed'], selected: 'Écarlate' }), 'scanlator');
+    expect(accented.map((o) => o.value)).toEqual(['Dawn', 'Écarlate', 'Fable', 'Zed']);
   });
 
   it('has no All option where the site has none', () => {

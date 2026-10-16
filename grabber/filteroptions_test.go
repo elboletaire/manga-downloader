@@ -275,6 +275,13 @@ func TestSortedValuesIsCaseInsensitiveAndNatural(t *testing.T) {
 	}
 }
 
+func TestSortedValuesFoldsAccents(t *testing.T) {
+	want := []string{"Dawn", "Écarlate", "Fable", "Zed"}
+	if got := SortedValues([]string{"Zed", "Fable", "Écarlate", "Dawn"}); !reflect.DeepEqual(got, want) {
+		t.Errorf("SortedValues() = %v, want %v", got, want)
+	}
+}
+
 func TestUnavailableFilterErrorListsSorted(t *testing.T) {
 	err := &UnavailableFilterError{Filter: "language", Value: "zz", Available: []string{"es", "en", "ca"}}
 	want := `language "zz" isn't available for this title (available: ca, en, es)`

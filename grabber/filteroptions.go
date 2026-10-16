@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+
+	"golang.org/x/text/unicode/norm"
 )
 
 // FilterAll is the explicit "every value" sentinel for --language and
@@ -45,32 +47,52 @@ func SortedValues(values []string) []string {
 	return sorted
 }
 
+// sortKey lowercases s and drops its accents, so "Écarlate" sorts as "ecarlate"
+func sortKey(s string) string {
+	decomposed := norm.NFD.String(strings.ToLower(s))
+	return strings.Map(func(r rune) rune {
+		if unicode.Is(unicode.Mn, r) {
+			return -1
+		}
+		return r
+	}, decomposed)
+}
+
+// naturalLess orders by sortKey with digit runs as numbers, then by the
+// original strings so equal keys keep a stable order
 func naturalLess(a, b string) bool {
-	a, b = strings.ToLower(a), strings.ToLower(b)
-	for a != "" && b != "" {
-		if unicode.IsDigit(rune(a[0])) && unicode.IsDigit(rune(b[0])) {
-			na, ra := digitRun(a)
-			nb, rb := digitRun(b)
+	ka, kb := sortKey(a), sortKey(b)
+	for ka != "" && kb != "" {
+		if isDigit(ka[0]) && isDigit(kb[0]) {
+			na, ra := digitRun(ka)
+			nb, rb := digitRun(kb)
 			if na != nb {
 				return len(na) < len(nb) || (len(na) == len(nb) && na < nb)
 			}
-			a, b = ra, rb
+			ka, kb = ra, rb
 
 			continue
 		}
-		if a[0] != b[0] {
-			return a[0] < b[0]
+		if ka[0] != kb[0] {
+			return ka[0] < kb[0]
 		}
-		a, b = a[1:], b[1:]
+		ka, kb = ka[1:], kb[1:]
+	}
+	if len(ka) != len(kb) {
+		return len(ka) < len(kb)
 	}
 
-	return len(a) < len(b)
+	return a < b
+}
+
+func isDigit(b byte) bool {
+	return b >= '0' && b <= '9'
 }
 
 // digitRun splits the leading digits of s, without their leading zeros
 func digitRun(s string) (digits, rest string) {
 	i := 0
-	for i < len(s) && s[i] >= '0' && s[i] <= '9' {
+	for i < len(s) && isDigit(s[i]) {
 		i++
 	}
 
