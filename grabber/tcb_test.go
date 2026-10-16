@@ -172,9 +172,15 @@ func TestTcbChapterURLUsesSeries(t *testing.T) {
 }
 
 func TestTcbMovedHost(t *testing.T) {
-	got := tcbMovedHostRe.ReplaceAllString("https://www.diamondfansub.com/seri/a/bolum-1/", "${1}webtoonia.fun/")
-	if want := "https://webtoonia.fun/seri/a/bolum-1/"; got != want {
-		t.Errorf("rewrite = %q, want %q", got, want)
+	for _, in := range []string{
+		"https://www.diamondfansub.com/seri/a/bolum-1/",
+		"https://www.webtoonia.fun/seri/a/bolum-1/",
+		"https://WWW.Webtoonia.fun/seri/a/bolum-1/",
+	} {
+		got := tcbMovedHostRe.ReplaceAllString(in, "${1}webtoonia.fun/")
+		if want := "https://webtoonia.fun/seri/a/bolum-1/"; got != want {
+			t.Errorf("rewrite of %q = %q, want %q", in, got, want)
+		}
 	}
 }
 

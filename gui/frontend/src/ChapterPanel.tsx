@@ -508,7 +508,7 @@ function ChapterList({
                 aria-posinset={pos + 1}
                 aria-selected={on}
                 aria-disabled={ch.locked || undefined}
-                className={`row${grouping !== null ? ' in-group' : ''}${on ? ' on' : ''}${ch.locked ? ' paid' : ''}${pos === active ? ' active' : ''}`}
+                className={`row${grouping !== null ? ' in-group' : ''}${on ? ' on' : ''}${ch.locked ? ' locked' : ''}${pos === active ? ' active' : ''}`}
                 style={style}
                 onMouseDown={keepFocus}
                 onClick={(e) => toggleRow(pos, e.shiftKey)}

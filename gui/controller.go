@@ -984,7 +984,7 @@ func (c *Controller) SelectedCount() int {
 }
 
 // selectable reports whether chapter i may be selected: the ones the
-// listing marks as paid can't be, as a run could only fail them. Needs c.mu.
+// listing marks as locked can't be, as a run could only fail them. Needs c.mu.
 func (c *Controller) selectable(i int) bool {
 	return !grabber.LockedOf(c.series.Chapters[i])
 }

@@ -544,21 +544,21 @@ describe('mock locked chapters', () => {
     const api = createMockApi({ scenario: 'empty', locked: true });
     await api.load('https://example.com/manga/one-piece');
     const list = await api.chapters();
-    const paid = list.filter((c) => c.locked).map((c) => c.index);
-    expect(paid.length).toBeGreaterThan(0);
+    const lockedIdx = list.filter((c) => c.locked).map((c) => c.index);
+    expect(lockedIdx.length).toBeGreaterThan(0);
 
-    await api.setSelected(paid[0], true);
-    await api.setSelectedMany(paid, true);
+    await api.setSelected(lockedIdx[0], true);
+    await api.setSelectedMany(lockedIdx, true);
     expect(await api.selection()).toEqual([]);
 
     await api.setAll(true);
-    expect((await api.selection()).length).toBe(list.length - paid.length);
-    expect((await api.selection()).some((i) => paid.includes(i))).toBe(false);
+    expect((await api.selection()).length).toBe(list.length - lockedIdx.length);
+    expect((await api.selection()).some((i) => lockedIdx.includes(i))).toBe(false);
 
     await api.setAll(false);
     const first = list[0].number;
     const n = await api.selectRange(`${first}-${list[list.length - 1].number}`);
-    expect(n).toBe(list.length - paid.length);
+    expect(n).toBe(list.length - lockedIdx.length);
   });
 });
 

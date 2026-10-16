@@ -476,7 +476,7 @@ func toMetaFunc(c *color.Color) func(string) string {
 }
 
 // allChaptersLabel is the prompt for downloading every listed chapter, which
-// says how many of them the listing marks as locked and locked
+// says how many of them the listing marks as locked
 func allChaptersLabel(chapters grabber.Filterables) string {
 	label := fmt.Sprintf("Do you want to download all %d chapters", len(chapters))
 	locked := 0

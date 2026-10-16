@@ -578,12 +578,12 @@ code {
 }
 
 /* a locked chapter can't be picked: its row stays, dimmed, with the lock */
-.row.paid {
+.row.locked {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.row.paid:hover {
+.row.locked:hover {
   background: none;
 }
 

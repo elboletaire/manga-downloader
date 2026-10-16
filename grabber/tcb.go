@@ -42,8 +42,9 @@ type TcbChapter struct {
 var tcbSeriesRe = regexp.MustCompile(`/((?:manga|gl|seri)/[^/]+)/`)
 
 // tcbMovedHostRe matches diamondfansub.com, which now redirects every series
-// and chapter page to webtoonia.fun (a chapter URL there lands on the series).
-var tcbMovedHostRe = regexp.MustCompile(`^(https?://)(?:www\.)?diamondfansub\.com/`)
+// and chapter page to webtoonia.fun (a chapter URL there lands on the series),
+// and www.webtoonia.fun, which redirects to the apex.
+var tcbMovedHostRe = regexp.MustCompile(`(?i)^(https?://)(?:www\.)?(?:diamondfansub|webtoonia)\.(?:com|fun)/`)
 
 // Test returns true if the URL is a compatible TCBScans URL
 func (t *Tcb) Test() (bool, error) {
