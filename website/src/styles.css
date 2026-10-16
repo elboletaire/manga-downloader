@@ -972,6 +972,11 @@ code {
   margin-top: auto;
 }
 
+/* a second box (the Homebrew cask) sits right under its foot text */
+.install-card .code ~ .code {
+  margin-top: 0;
+}
+
 .install-card .card-foot {
   font-size: 0.88rem;
 }
