@@ -258,6 +258,18 @@ func TestBloggerSeriesPost(t *testing.T) {
 		t.Errorf("resolveSeriesURL() = %q, %v", b.query, err)
 	}
 
+	tagged, _ := goquery.NewDocumentFromReader(strings.NewReader(`<html><head><meta content='Leer Aldo no Isekai Tensei [Español] - ReYume' property='og:title'/></head></html>`))
+	b = &Blogger{Grabber: &Grabber{URL: "https://x.example/2026/04/a.html"}, doc: tagged}
+	if err := b.resolveSeriesURL(); err != nil || b.query != "Aldo no Isekai Tensei" {
+		t.Errorf("tagged series post = %q, %v", b.query, err)
+	}
+
+	chapter, _ := goquery.NewDocumentFromReader(strings.NewReader(`<html><head><meta content='Aldo no Isekai Tensei Chapter 05' property='og:title'/></head></html>`))
+	b = &Blogger{Grabber: &Grabber{URL: "https://x.example/2026/04/a.html"}, doc: chapter}
+	if err := b.resolveSeriesURL(); err != nil || b.query != "Aldo no Isekai Tensei" {
+		t.Errorf("chapter post = %q, %v", b.query, err)
+	}
+
 	empty, _ := goquery.NewDocumentFromReader(strings.NewReader(`<html></html>`))
 	b = &Blogger{Grabber: &Grabber{URL: "https://x.example/2026/04/a.html"}, doc: empty}
 	if err := b.resolveSeriesURL(); err == nil {

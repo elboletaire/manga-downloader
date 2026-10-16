@@ -121,7 +121,9 @@ func (b *Blogger) resolveSeriesURL() error {
 // bloggerSeriesPostTitle returns the title of a post that names a series
 // instead of a chapter (no number in it), or "" when it has none.
 func bloggerSeriesPostTitle(doc *goquery.Document) string {
-	name := stripKindWord(stripBlogName(strings.TrimSpace(doc.Find(`meta[property="og:title"]`).AttrOr("content", ""))))
+	name := stripBlogName(doc.Find(`meta[property="og:title"]`).AttrOr("content", ""))
+	name = bloggerLeerRe.ReplaceAllString(name, "")
+	name = stripKindWord(bloggerBracketRe.ReplaceAllString(name, " "))
 	if name == "" || bloggerNumberRe.MatchString(name) {
 		return ""
 	}
