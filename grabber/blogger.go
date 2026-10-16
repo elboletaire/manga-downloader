@@ -347,10 +347,9 @@ func bloggerKey(name string) string {
 	}), " ")
 }
 
-// bloggerPages returns the reader images of a chapter post. Blogger's own
-// decorations (the hidden cover, the WhatsApp badge, the footer banner) carry
-// an alt text, while the pages the uploader pasted in have alt="". Templates
-// that render the pages by script keep the post body in a hidden textarea.
+// bloggerPages returns a chapter post's pages: Blogger's own decorations carry an
+// alt text, the uploaded pages alt="". Script-rendered templates keep the body in
+// a hidden textarea.
 func bloggerPages(doc *goquery.Document, postURL *url.URL) []Page {
 	if pages := bloggerImages(doc.Find("div.post-body img[alt='']"), postURL); len(pages) > 0 {
 		return pages

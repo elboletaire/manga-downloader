@@ -149,7 +149,6 @@ grabber: \
 	grabber/mangadenizi \
 	grabber/mangadex \
 	grabber/mangadelsiglotvmanga \
-	grabber/re-yume \
 	grabber/mangafire \
 	grabber/mangahere \
 	grabber/mangak \
@@ -167,6 +166,7 @@ grabber: \
 	grabber/mkissa \
 	grabber/projectsuki \
 	grabber/qimanga \
+	grabber/re-yume \
 	grabber/roliascan \
 	grabber/sacachispa \
 	grabber/stonescape \
