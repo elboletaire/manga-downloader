@@ -1,13 +1,13 @@
 // Copyright (C) 2023-2026 Òscar Casajuana Alonso
 
-//go:build !windows && !linux
+//go:build !windows && !linux && !darwin
 
 package main
 
 import "errors"
 
-// packageName is "": only Windows and Linux have a one-click update. A macOS
-// implementation goes in its own installer_darwin.go.
+// packageName is "": only Windows, Linux and macOS have a one-click update,
+// each in its own installer_*.go.
 func packageName(string, string) string { return "" }
 
 func installedCopy() bool { return false }

@@ -30,12 +30,16 @@ func TestPickAsset(t *testing.T) {
 		asset(windowsInstallerName("v2.0.0", "arm64"), 7),
 		asset(windowsInstallerName("v2.0.0", "amd64"), 9),
 		asset(linuxTarballName("v2.0.0", "amd64"), 11),
+		asset(darwinZipName("v2.0.0"), 13),
 	}
 	if got := pickAsset(assets, windowsInstallerName("v2.0.0", "amd64")); got == nil || got.Size != 9 {
 		t.Errorf("amd64 = %+v", got)
 	}
 	if got := pickAsset(assets, linuxTarballName("v2.0.0", "amd64")); got == nil || got.Size != 11 {
 		t.Errorf("tarball = %+v", got)
+	}
+	if got := pickAsset(assets, darwinZipName("v2.0.0")); got == nil || got.Size != 13 {
+		t.Errorf("macOS zip = %+v", got)
 	}
 	if got := pickAsset(assets, linuxTarballName("v2.0.0", "arm64")); got != nil {
 		t.Errorf("missing arch = %+v, want none", got)
