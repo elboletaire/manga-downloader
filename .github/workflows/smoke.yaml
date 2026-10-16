@@ -87,6 +87,7 @@ jobs:
           - mangadelsiglotvmanga
           - re-yume
           - tvymanga3
+          - shonenjumpplus
           # Plain-HTML (goquery) scrapers
           - tcbscans
           - arenascan

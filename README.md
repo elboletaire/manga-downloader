@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[161 supported sites](#supported-sites)**, from big aggregators to small
+- **[162 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -644,7 +644,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 161 supported sites</b></summary>
+<summary><b>Show all 162 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -783,6 +783,7 @@ to a minute.
 | [sanascans.com](https://sanascans.com) | Sana Scans | 2026-10-15 |
 | [scan-vf.net](https://www.scan-vf.net) | ScanVF | 2026-10-15 |
 | [setsuscans.com](https://setsuscans.com) \* |  | 2026-10-15 |
+| [shonenjumpplus.com](https://shonenjumpplus.com) | Japanese, Jump+ (GigaViewer) | — |
 | [silentquill.net](https://silentquill.net) | Armageddon Scanlation | 2026-10-15 |
 | [stonescape.xyz](https://stonescape.xyz) |  | 2026-10-15 |
 | [sushiscan.net](https://sushiscan.net) \* |  | 2026-10-15 |

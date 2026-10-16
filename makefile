@@ -171,6 +171,7 @@ grabber: \
 	grabber/re-yume \
 	grabber/roliascan \
 	grabber/sacachispa \
+	grabber/shonenjumpplus \
 	grabber/stonescape \
 	grabber/taiyo \
 	grabber/tcb \
@@ -471,6 +472,9 @@ grabber/roliascan:
 	go run . https://roliascan.com/manga/no-marriage/ 77
 grabber/sacachispa:
 	go run . https://sacachispa.site/manga/3ba3f7c1-4655-488f-87c5-bf1d797007c1/tsutte-tabetai-gal-sawa-san 19
+# GigaViewer: an episode URL downloads its whole series, episode 2 is free
+grabber/shonenjumpplus:
+	go run . https://shonenjumpplus.com/episode/17107419589696004710 2
 grabber/teamshadowi:
 	go run . https://www.team-shadowi.com/series/the-regressed-mercenary-has-a-plan 98
 grabber/taiyo:
