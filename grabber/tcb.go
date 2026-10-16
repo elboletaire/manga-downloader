@@ -151,6 +151,7 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 		title := strings.TrimSpace(link.Text())
 		href := link.AttrOr("href", "")
 		num := tcbChapterNumber(title, href)
+		title, group := t.splitTitleGroup(title)
 		chapter := &TcbChapter{
 			Chapter{
 				Title:  title,
@@ -161,10 +162,30 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 			href,
 		}
 
+		chapter.SetGroups(group)
 		chapters = append(chapters, chapter)
 	})
 
 	return
+}
+
+// tcbTitleGroups maps sites that glue the scanlation group to a chapter title
+// ("30th Battle - REDLION") to the group names they use; the row has no markup
+// for it, and other trailing parts ("Part 1") are real titles.
+var tcbTitleGroups = map[string][]string{
+	"reader.decadencescans.com": {"Transcendence", "Friendship Scans", "REDLION", "Dragomir Scans", "Phoenix Serenade Scans", "Lazy Scans"},
+}
+
+// splitTitleGroup moves a trailing " - <group>" off the title on the sites in
+// tcbTitleGroups, leaving other titles untouched.
+func (t Tcb) splitTitleGroup(title string) (string, string) {
+	u, _ := url.Parse(t.URL)
+	for _, g := range tcbTitleGroups[u.Host] {
+		if rest, ok := strings.CutSuffix(title, " - "+g); ok {
+			return rest, g
+		}
+	}
+	return title, ""
 }
 
 var tcbNumberRe = regexp.MustCompile(`\d+\.?\d*`)
@@ -304,6 +325,7 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 		Pages:      pages,
 		ID:         chapterURLID(tchap.URL),
 	}
+	chapter.SetGroups(tchap.GetGroups()...)
 
 	return chapter, nil
 }
