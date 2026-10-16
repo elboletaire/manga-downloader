@@ -840,6 +840,21 @@ func TestFetchingRowEndsBeforeStarted(t *testing.T) {
 	})
 }
 
+// The fetched chapter's title can differ from the listing's, and the row takes it.
+func TestFetchedRowTakesFetchedTitle(t *testing.T) {
+	c := NewController(&grabber.Settings{}, nil)
+	c.byChap = map[*grabber.Chapter]*Job{}
+	c.fetching = map[grabber.Filterable]*Job{}
+	e := events{c}
+	listed := &grabber.Chapter{Title: "Market", Number: 1}
+	fetched := &grabber.Chapter{Title: "Chapter 0001 Market", Number: 1}
+	e.Fetching(listed)
+	e.Fetched(listed, fetched)
+	if jobs := c.Jobs(); len(jobs) != 1 || jobs[0].Title != "Chapter 0001 Market" {
+		t.Errorf("jobs = %+v, want the fetched chapter's title", jobs)
+	}
+}
+
 // Cancelling while a chapter's page list is being fetched can't stop the fetch,
 // so the chapter's row must still leave "fetching".
 func TestCancelWhileFetchingEndsTheRow(t *testing.T) {

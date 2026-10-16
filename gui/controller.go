@@ -1449,10 +1449,13 @@ func (e events) Fetched(listed grabber.Filterable, ch *grabber.Chapter) {
 	c := e.c
 	c.mu.Lock()
 	if j := c.fetching[listed]; j != nil {
+		// the fetched chapter's title can differ from the listing's
+		j.Title, j.Tags = ch.GetTitle(), c.releaseTags(ch)
 		c.byChap[ch] = j
 		delete(c.fetching, listed)
 	}
 	c.mu.Unlock()
+	c.emit()
 }
 
 // endRow marks the row of a chapter that ended before it started, or adds one
