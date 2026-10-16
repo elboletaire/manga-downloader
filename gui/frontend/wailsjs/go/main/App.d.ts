@@ -42,4 +42,6 @@ export function Start():Promise<void>;
 
 export function State():Promise<main.State>;
 
+export function Update():Promise<void>;
+
 export function Version():Promise<string>;

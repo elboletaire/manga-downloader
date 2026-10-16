@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/elboletaire/manga-downloader/core"
@@ -59,6 +60,14 @@ type App struct {
 	updateCtx    context.Context
 	cancelUpdate context.CancelFunc
 	interval     time.Duration
+	// installed is whether this exe is an installed copy (the Windows
+	// installer's, the Linux install.sh's), which can update itself; the
+	// other fields of the update are test seams
+	installed bool
+	updating  atomic.Bool
+	fetch     func(ctx context.Context, pkg, sums *Asset) (string, error)
+	install   func(string) error
+	quit      func()
 
 	// saveMu serialises writes to gui.json, so two saves can't race a rename
 	saveMu sync.Mutex
@@ -82,9 +91,17 @@ func newApp(ctrl *Controller, s sink, prefsPath, tag, version string) *App {
 		version:      version,
 		updateCtx:    updateCtx,
 		cancelUpdate: cancelUpdate,
-		interval:     refreshInterval,
-		dirty:        make(chan struct{}, 1),
-		stop:         make(chan struct{}),
+		installed:    installedCopy(),
+		fetch: func(ctx context.Context, pkg, sums *Asset) (string, error) {
+			ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+			defer cancel()
+
+			return downloadInstaller(ctx, newDownloadClient(), pkg, sums)
+		},
+		install:  runInstaller,
+		interval: refreshInterval,
+		dirty:    make(chan struct{}, 1),
+		stop:     make(chan struct{}),
 	}
 }
 
@@ -138,6 +155,8 @@ func (a *App) pump() {
 // runtime calls need.
 func (a *App) startup(ctx context.Context, rt *wailsRuntime) {
 	rt.set(ctx)
+	a.quit = func() { wruntime.Quit(ctx) }
+	go sweepUpdateDirs(os.TempDir())
 	a.launch()
 	// release builds only: a dev build has no release to compare with. The
 	// check runs behind the window, which is up already.
@@ -213,6 +232,9 @@ type VolumesDTO struct {
 type UpdateDTO struct {
 	Latest string `json:"latest"`
 	URL    string `json:"url"`
+	// OneClick is whether Update can install it: an installed copy and its
+	// package and checksums on the release
+	OneClick bool `json:"oneClick"`
 }
 
 // FilterDTO is what a filter's selector offers: the values, whether the site
@@ -309,7 +331,7 @@ func (a *App) State() State {
 		Options:            optionsOf(c.Settings()),
 		Version:            a.version,
 		ReleaseURL:         releaseURL(a.tag),
-		Update:             updateDTO(c.Update()),
+		Update:             updateDTO(c.Update(), a.installed),
 
 		BrowserVisibleAuto: c.BrowserVisibleAuto(),
 		BrowserAlert:       c.BrowserAlert(),
@@ -599,6 +621,56 @@ func (a *App) DismissBrowserAlert() {
 	a.ctrl.DismissBrowserAlert()
 }
 
+// Update downloads the newer release's package, checks it against the release's
+// checksums, runs its installer (which relaunches the app) and quits. Any
+// failure is logged and returned; the release link stays the fallback.
+func (a *App) Update() error {
+	u := a.ctrl.Update()
+	if !a.installed || u == nil || u.Installer == nil || u.Sums == nil {
+		return errors.New("one-click update isn't available for this copy")
+	}
+	if !a.updating.CompareAndSwap(false, true) {
+		return errors.New("the update is already in progress")
+	}
+	defer a.updating.Store(false)
+	if a.ctrl.Running() {
+		return a.failUpdate(errors.New("wait for the download to finish, or cancel it, before updating"))
+	}
+
+	a.ctrl.addLog(LogInfo, "Downloading the update "+u.Latest+"...")
+	path, err := a.fetch(a.updateCtx, u.Installer, u.Sums)
+	if err != nil {
+		return a.failUpdate(fmt.Errorf("couldn't download the update: %w", err))
+	}
+	if a.ctrl.Running() {
+		_ = removeUpdateDir(filepath.Dir(path))
+		return a.failUpdate(errors.New("a download started meanwhile: finish or cancel it, then update again"))
+	}
+	if err := a.install(path); errors.Is(err, errNotRestarted) {
+		// installed already, so the files stay; only the restart is left to the user
+		err = a.failUpdate(fmt.Errorf("Updated to %s, but couldn't restart; open Manga Downloader again", u.Latest))
+		if a.quit != nil {
+			a.quit()
+		}
+
+		return err
+	} else if err != nil {
+		_ = removeUpdateDir(filepath.Dir(path))
+		return a.failUpdate(fmt.Errorf("couldn't start the installer: %w", err))
+	}
+	if a.quit != nil {
+		a.quit()
+	}
+
+	return nil
+}
+
+func (a *App) failUpdate(err error) error {
+	a.ctrl.addLog(LogError, err.Error())
+
+	return err
+}
+
 // Version returns the release tag, or the build's version when it has none
 func (a *App) Version() string {
 	return a.version
@@ -670,12 +742,12 @@ func loadMessage(err error) string {
 }
 
 // updateDTO converts an available update, nil when there's none
-func updateDTO(u *Update) *UpdateDTO {
+func updateDTO(u *Update, installed bool) *UpdateDTO {
 	if u == nil {
 		return nil
 	}
 
-	return &UpdateDTO{Latest: u.Latest, URL: latestReleasePage}
+	return &UpdateDTO{Latest: u.Latest, URL: latestReleasePage, OneClick: installed && u.Installer != nil && u.Sums != nil}
 }
 
 // filterDTO converts a filter's selector, nil when the site doesn't list it

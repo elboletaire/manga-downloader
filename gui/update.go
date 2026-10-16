@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +31,12 @@ var updateClient = &http.Client{Timeout: 10 * time.Second}
 type Update struct {
 	// Latest is the newest release's tag, as GitHub names it
 	Latest string
+	// Installer is the package that updates this build in place (the Windows
+	// installer, the Linux tarball), nil when the release has none or has no
+	// checksums for it
+	Installer *Asset
+	// Sums is the release's checksums asset, which Installer is verified against
+	Sums *Asset
 }
 
 // releaseURL is the GitHub page of the release a build was made from, "" when
@@ -80,42 +87,52 @@ func (c *Controller) Update() *Update {
 // checkUpdate returns the release newer than current, nil when current is the
 // newest one
 func checkUpdate(ctx context.Context, current, apiURL string, client *http.Client) (*Update, error) {
-	latest, err := fetchLatestTag(ctx, apiURL, client)
+	latest, assets, err := fetchLatestRelease(ctx, apiURL, client)
 	if err != nil {
 		return nil, err
 	}
+	update, err := newerRelease(current, latest)
+	if update != nil {
+		update.Installer = pickAsset(assets, packageName(latest, runtime.GOARCH))
+		update.Sums = pickAsset(assets, sumsName(latest))
+		if update.Sums == nil {
+			update.Installer = nil
+		}
+	}
 
-	return newerRelease(current, latest)
+	return update, err
 }
 
-// fetchLatestTag reads the tag of the release the API reports as the latest
-func fetchLatestTag(ctx context.Context, apiURL string, client *http.Client) (string, error) {
+// fetchLatestRelease reads the tag and the assets of the release the API
+// reports as the latest
+func fetchLatestRelease(ctx context.Context, apiURL string, client *http.Client) (string, []Asset, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "manga-downloader-gui")
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("GitHub answered %s", resp.Status)
+		return "", nil, fmt.Errorf("GitHub answered %s", resp.Status)
 	}
 
 	var release struct {
-		TagName string `json:"tag_name"`
+		TagName string  `json:"tag_name"`
+		Assets  []Asset `json:"assets"`
 	}
 	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&release); err != nil {
-		return "", err
+		return "", nil, err
 	}
 	if release.TagName == "" {
-		return "", errors.New("the latest release has no tag")
+		return "", nil, errors.New("the latest release has no tag")
 	}
 
-	return release.TagName, nil
+	return release.TagName, release.Assets, nil
 }
 
 // newerRelease returns the update to latest when it's newer than current, nil

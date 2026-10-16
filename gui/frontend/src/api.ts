@@ -39,6 +39,8 @@ export interface Api {
   readClipboard(): Promise<string>;
   start(): Promise<void>;
   cancel(): Promise<void>;
+  /** Downloads and runs the installer, then quits; rejects with the reason (also logged) when it can't */
+  update(): Promise<void>;
   /** Brings the browser window to the front again */
   showBrowser(): Promise<void>;
   /** Hides browserAlert; the window and the load waiting for it go on */
@@ -106,6 +108,7 @@ export function createWailsApi(): Api {
     readClipboard: async () => ClipboardGetText(),
     start: () => app.Start(),
     cancel: () => app.Cancel(),
+    update: () => app.Update(),
     showBrowser: () => app.ShowBrowser(),
     dismissBrowserAlert: () => app.DismissBrowserAlert(),
 

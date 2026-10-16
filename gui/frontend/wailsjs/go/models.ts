@@ -133,6 +133,7 @@ export namespace main {
 	export class UpdateDTO {
 	    latest: string;
 	    url: string;
+	    oneClick: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new UpdateDTO(source);
@@ -142,6 +143,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.latest = source["latest"];
 	        this.url = source["url"];
+	        this.oneClick = source["oneClick"];
 	    }
 	}
 	export class VolumesDTO {

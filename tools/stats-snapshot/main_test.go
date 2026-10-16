@@ -16,6 +16,8 @@ const releasesJSON = `[
  {"tag_name":"v2","draft":false,"published_at":"2026-01-02T00:00:00Z","assets":[
   {"name":"manga-downloader-linux-amd64","download_count":%d},
   {"name":"manga-downloader-linux-amd64.md5","download_count":99},
+  {"name":"manga-downloader-v2-SHA256SUMS.txt","download_count":98},
+  {"name":"manga-downloader-gui-v2-SHA256SUMS.txt","download_count":97},
   {"name":"manga-downloader-gui-linux-amd64.zip","download_count":%d}]},
  {"tag_name":"v3","draft":true,"published_at":"2026-01-03T00:00:00Z","assets":[
   {"name":"manga-downloader-draft","download_count":1000}]}
@@ -61,8 +63,8 @@ func TestClassify(t *testing.T) {
 	if len(s.Releases) != 1 {
 		t.Fatalf("draft not skipped: %d releases", len(s.Releases))
 	}
-	if len(s.Releases[0].Assets) != 3 {
-		t.Fatalf("raw assets must keep .md5: %v", s.Releases[0].Assets)
+	if len(s.Releases[0].Assets) != 5 {
+		t.Fatalf("raw assets must keep checksum files: %v", s.Releases[0].Assets)
 	}
 	if cli, app := classify(s.Releases); cli != 10 || app != 5 {
 		t.Fatalf("cli=%d app=%d", cli, app)

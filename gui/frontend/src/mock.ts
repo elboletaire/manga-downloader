@@ -363,7 +363,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     version: reportsRelease ? releaseVersion : 'v0.0.0-mock',
     releaseURL: reportsRelease ? `${REPO}/releases/tag/${releaseVersion}` : '',
     update: isReleaseBuild(scenario)
-      ? { latest: shot ? UPDATE_VERSION_SHOT : UPDATE_VERSION_DEV, url: `${REPO}/releases/latest` }
+      ? { latest: shot ? UPDATE_VERSION_SHOT : UPDATE_VERSION_DEV, url: `${REPO}/releases/latest`, oneClick: !shot }
       : null,
     browserVisibleAuto: browserAuto,
     browserAlert,
@@ -940,6 +940,12 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       }
       pushLog('info', `Downloading ${picked.length} chapter(s) of ${title}`);
       simulateRun(picked);
+    },
+    async update() {
+      pushLog('info', 'Downloading the update ' + UPDATE_VERSION_DEV + '... (mock)');
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      pushLog('error', `couldn't download the update: the mock has no installer`);
+      throw new Error('the mock has no installer');
     },
     async showBrowser() {
       pushLog('info', 'would bring the browser window to the front (mock)');

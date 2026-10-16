@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { AlertIcon, CopyIcon, ErrorIcon, LogIcon, XIcon } from './icons';
+import { UpdateDialog } from './UpdateDialog';
 import type { LogLine, Update } from './types';
 
 interface BarProps {
@@ -17,9 +18,13 @@ interface BarProps {
   onToggle: () => void;
   /** Opens a link in the system's browser */
   onOpenURL: (url: string) => void;
+  /** Installs the update (update.oneClick); rejects when it can't, the backend having logged why */
+  onUpdate: () => Promise<void>;
 }
 
-export function StatusBar({ log, version, releaseURL, update, open, onToggle, onOpenURL }: BarProps) {
+export function StatusBar({ log, version, releaseURL, update, open, onToggle, onOpenURL, onUpdate }: BarProps) {
+  const [updateOpen, setUpdateOpen] = useState(false);
+
   // links open outside the window, which must stay on the app
   const openLink = (url: string) => (e: MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -68,7 +73,14 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
           <a
             className="update-badge warning"
             href={update.url}
-            onClick={openLink(update.url)}
+            onClick={
+              update.oneClick
+                ? (e) => {
+                    e.preventDefault();
+                    setUpdateOpen(true);
+                  }
+                : openLink(update.url)
+            }
             title={`Update available: ${update.latest}`}
             aria-label={`Update available: ${update.latest}`}
           >
@@ -89,6 +101,15 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
           </span>
         )}
       </span>
+      {update?.oneClick && updateOpen && (
+        <UpdateDialog
+          latest={update.latest}
+          current={version}
+          onUpdate={onUpdate}
+          onReleaseNotes={() => onOpenURL(update.url)}
+          onClose={() => setUpdateOpen(false)}
+        />
+      )}
     </footer>
   );
 }

@@ -128,6 +128,8 @@ export interface Update {
   latest: string;
   /** The page the update is linked to: the latest release */
   url: string;
+  /** Update() can install it: an installed copy, and its package and checksums on the release */
+  oneClick: boolean;
 }
 
 export interface Chapter {
