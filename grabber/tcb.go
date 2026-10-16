@@ -155,6 +155,8 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 			link.Children().Remove()
 		}
 		title := strings.TrimSpace(link.Text())
+		// webtoonia.fun tags its members-only chapters with a trailing " - 💦"
+		title, locked := strings.CutSuffix(title, tcbLockedSuffix)
 		href := link.AttrOr("href", "")
 		num := tcbChapterNumber(title, href)
 		title, group := t.splitTitleGroup(title)
@@ -164,6 +166,7 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 				Number: num,
 				Volume: tcbVolume(s),
 				ID:     chapterURLID(href),
+				Locked: locked,
 			},
 			href,
 		}
@@ -194,6 +197,8 @@ func (t Tcb) splitTitleGroup(title string) (string, string) {
 	}
 	return title, ""
 }
+
+const tcbLockedSuffix = " - 💦"
 
 var tcbNumberRe = regexp.MustCompile(`\d+\.?\d*`)
 

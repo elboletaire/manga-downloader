@@ -24,8 +24,8 @@ func SplitLocked(chapters grabber.Filterables) (open, locked grabber.Filterables
 	return open, locked
 }
 
-// LockedMessage says which paid chapters are being left out, with runs of
-// consecutive whole numbers compacted: "skipping 4 paid chapters: 134-136, 140"
+// LockedMessage says which locked chapters are being left out, with runs of
+// consecutive whole numbers compacted: "skipping 4 locked chapters: 134-136, 140"
 func LockedMessage(locked grabber.Filterables) string {
 	var parts []string
 	for i := 0; i < len(locked); {
@@ -45,5 +45,5 @@ func LockedMessage(locked grabber.Filterables) string {
 	if len(locked) == 1 {
 		noun = "chapter"
 	}
-	return fmt.Sprintf("skipping %d paid %s: %s", len(locked), noun, strings.Join(parts, ", "))
+	return fmt.Sprintf("skipping %d locked %s: %s", len(locked), noun, strings.Join(parts, ", "))
 }

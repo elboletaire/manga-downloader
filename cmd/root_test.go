@@ -826,7 +826,7 @@ func TestSkipLocked(t *testing.T) {
 	if len(open) != 1 || open[0].GetNumber() != 133 {
 		t.Errorf("open = %v, want only chapter 133", open)
 	}
-	if want := "skipping 2 paid chapters: 134-135"; note != want {
+	if want := "skipping 2 locked chapters: 134-135"; note != want {
 		t.Errorf("note = %q, want %q", note, want)
 	}
 

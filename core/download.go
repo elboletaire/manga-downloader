@@ -116,7 +116,7 @@ var ErrEmptyVolume = errors.New("none of its chapters could be downloaded")
 
 // ErrLocked is the FetchFailed error of a chapter the listing marks as paid.
 // It's reported without fetching the chapter, as a reader of it gets no pages
-var ErrLocked = errors.New("locked: paid chapter")
+var ErrLocked = errors.New("locked chapter")
 
 // ErrSkippedVolume is the VolumePacked error of a volume whose chapters were
 // all skipped by --skip-pages: there's nothing to pack, and nothing failed

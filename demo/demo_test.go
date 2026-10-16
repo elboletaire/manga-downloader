@@ -226,7 +226,7 @@ func TestLockedChaptersAreSkippedLikeOnARealSite(t *testing.T) {
 	if len(open) != 2 || len(locked) != 2 {
 		t.Fatalf("got %d open and %d locked chapters, want 2 and 2", len(open), len(locked))
 	}
-	if got, want := core.LockedMessage(locked), "skipping 2 paid chapters: 2-3"; got != want {
+	if got, want := core.LockedMessage(locked), "skipping 2 locked chapters: 2-3"; got != want {
 		t.Errorf("message = %q, want %q", got, want)
 	}
 }

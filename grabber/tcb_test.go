@@ -395,3 +395,21 @@ func TestTcbFetchChapterSinglePageFetchesOnce(t *testing.T) {
 		t.Errorf("chapter page fetched %d times, want 1", n)
 	}
 }
+
+// a trailing " - 💦" marks a members-only chapter: locked, and not part of the title
+func TestTcbFetchChaptersLockedMarker(t *testing.T) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(`<ul>
+<li class="wp-manga-chapter"><a href="https://webtoonia.fun/seri/x/bolum-6/">Bölüm 6 - 💦</a></li>
+<li class="wp-manga-chapter"><a href="https://webtoonia.fun/seri/x/bolum-5/">Bölüm 5</a></li></ul>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	tcb := Tcb{Grabber: &Grabber{URL: "https://webtoonia.fun/seri/x/"}, chaps: doc.Find("li.wp-manga-chapter")}
+	chapters, _ := tcb.FetchChapters()
+	if len(chapters) != 2 || !LockedOf(chapters[0]) || LockedOf(chapters[1]) {
+		t.Fatalf("locked flags wrong: %+v", chapters)
+	}
+	if got := chapters[0].GetTitle(); got != "Bölüm 6" || chapters[0].GetNumber() != 6 {
+		t.Errorf("got %q (%v), want \"Bölüm 6\" (6)", got, chapters[0].GetNumber())
+	}
+}

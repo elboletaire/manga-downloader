@@ -15,7 +15,7 @@
 // screenshots), &dupes lists some numbers twice in two languages, &chapters=N
 // shows the newest N chapters, &novolumes lists no volumes (the series
 // otherwise files its chapters by their real One Piece volume), &locked marks
-// some chapters paid and locked (see below), &fail makes
+// some chapters locked (see below), &fail makes
 // the fourth chapter fail halfway and &skip makes the sixth one come out
 // skipped, every page excluded by --skip-pages (both off by default; every run
 // saves every chapter without them), &epub starts the output as EPUB, &prompt
@@ -33,7 +33,7 @@
 // group the series doesn't list falls back on load, as the backend does: typed
 // "xx" under multi loads "all", under plus the edition the URL points at.
 // Typed values match ignoring case, and take the spelling the series lists.
-// &locked lists every 50th chapter as paid and locked: the list shows its lock
+// &locked lists every 50th chapter as locked: the list shows its lock
 // and never selects it, as the backend does.
 
 import type { Api, Unsubscribe } from './api';
@@ -87,7 +87,7 @@ export interface MockSetup {
   fail: boolean;
   /** The sixth chapter comes out skipped (every page excluded by --skip-pages) */
   skip: boolean;
-  /** Every 50th chapter is listed as paid and locked */
+  /** Every 50th chapter is listed as locked */
   locked: boolean;
   /** Use production release versions and a macOS output path (for screenshots) */
   shot: boolean;
@@ -196,9 +196,9 @@ function mockChapters(count: number, withLanguages: boolean, withVolumes = true,
 }
 
 /** The error a locked chapter fails with, as core.ErrLocked says it */
-const LOCKED_REASON = 'locked: paid chapter';
+const LOCKED_REASON = 'locked chapter';
 
-/** Every 50th chapter is paid and locked (a listing's coin lock), so a few show in dev. */
+/** Every 50th chapter is locked (a listing's coin lock), so a few show in dev. */
 function isMockLocked(number: number): boolean {
   return number % 50 === 0;
 }

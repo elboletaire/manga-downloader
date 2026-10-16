@@ -551,7 +551,7 @@ export function ChapterBox({ on, locked }: { on: boolean; locked: boolean }) {
 }
 
 /** The tooltip and label of a locked chapter's mark */
-export const LOCKED_HINT = 'Paid and locked, so it cannot be selected';
+export const LOCKED_HINT = 'Locked, so it cannot be selected';
 
 /** A chapter's title, marked with a lock when the listing says it's paid */
 export function ChapterTitle({ title, locked }: { title: string; locked: boolean }) {
