@@ -1251,6 +1251,8 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
+	authorizeMadaradex(doc)
+
 	return m.chapterFromDoc(f, doc), nil
 }
 

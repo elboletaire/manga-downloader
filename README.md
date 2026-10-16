@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[147 supported sites](#supported-sites)**, from big aggregators to small
+- **[148 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -629,7 +629,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 147 supported sites</b></summary>
+<summary><b>Show all 148 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -694,6 +694,7 @@ to a minute.
 | [lilymanga.net](https://lilymanga.net) | yuri, some NSFW | 2026-10-15 |
 | [limonmanga.com](https://limonmanga.com) |  | 2026-10-15 |
 | [luacomic.org](https://luacomic.org) | LuaScans | 2026-10-15 |
+| [madaradex.org](https://madaradex.org) | some adult titles | 2026-10-16 |
 | [madarascans.net](https://madarascans.net) | former madarascans.org/.com | 2026-10-15 |
 | [maid.my.id](https://www.maid.my.id) |  | 2026-10-15 |
 | [manga.adonisfansub.com](https://manga.adonisfansub.com) | Adonis Fansub, Turkish | 2026-10-16 |
