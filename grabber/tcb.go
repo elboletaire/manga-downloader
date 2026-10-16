@@ -3,6 +3,8 @@
 package grabber
 
 import (
+	"errors"
+	"io"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -66,8 +68,50 @@ func (t *Tcb) Test() (bool, error) {
 	// would pick up those volume headers (and their empty list-wrapper <li>)
 	// as bogus duplicate chapters alongside the real ones.
 	t.chaps = body.Find("li.wp-manga-chapter")
+	if t.chaps.Length() == 0 {
+		t.chaps, err = t.fetchAdminAjaxChapters()
+		if err != nil {
+			return false, nil
+		}
+	}
 
 	return t.chaps.Length() > 0, nil
+}
+
+var tcbMangaIDRe = regexp.MustCompile(`"manga_id":"(\d+)"`)
+
+// fetchAdminAjaxChapters reads the list through admin-ajax.php for the Madara
+// installs whose ajax/chapters endpoint just answers with the series page.
+func (t *Tcb) fetchAdminAjaxChapters() (*goquery.Selection, error) {
+	page, err := http.Get(http.RequestParams{URL: t.series, DisableRetry: true})
+	if err != nil {
+		return nil, err
+	}
+	html, err := io.ReadAll(page)
+	page.Close()
+	if err != nil {
+		return nil, err
+	}
+	id := tcbMangaIDRe.FindSubmatch(html)
+	if id == nil {
+		return nil, errors.New("manga id not found")
+	}
+
+	rbody, err := http.Post(http.RequestParams{
+		URL:          t.BaseUrl() + "/wp-admin/admin-ajax.php",
+		Referer:      t.series,
+		Body:         "action=manga_get_chapters&manga=" + string(id[1]),
+		DisableRetry: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer rbody.Close()
+	doc, err := goquery.NewDocumentFromReader(rbody)
+	if err != nil {
+		return nil, err
+	}
+	return doc.Find("li.wp-manga-chapter"), nil
 }
 
 // GetTitle fetches and returns the manga title

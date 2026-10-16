@@ -745,6 +745,7 @@ to a minute.
 | [mundomanhwa.com](https://mundomanhwa.com) | Spanish | 2026-10-16 |
 | [natomanga.com](https://www.natomanga.com) \* | MangaNato, former manganato.com/manganelo.com | 2026-10-15 |
 | [natsu.one](https://natsu.one) | NatsuID, Indonesian, some adult titles, former natsu.id | 2026-10-16 |
+| [niji-translations.com](https://niji-translations.com) | Niji, Arabic, yuri | 2026-10-16 |
 | [noranofansub.com](https://www.noranofansub.com) | NoraNoFansub, Spanish | 2026-10-16 |
 | [nyraxmanga.com](https://nyraxmanga.com) | Nyrax, some adult titles | 2026-10-16 |
 | [onma.top](https://onma.top) | Arabic | 2026-10-16 |
