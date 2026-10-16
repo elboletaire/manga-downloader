@@ -19,6 +19,7 @@ describe('assetOS', () => {
   it('returns windows for -windows- in name', () => {
     expect(assetOS('manga-downloader-v1.14.0-windows-amd64.zip')).toBe('windows')
     expect(assetOS('manga-downloader-gui-v1.14.0-windows-amd64.zip')).toBe('windows')
+    expect(assetOS('manga-downloader-gui-v1.14.0-windows-arm64-installer.exe')).toBe('windows')
     expect(assetOS('manga-downloader-v1.14.0-windows-32bit-legacy.zip')).toBe('windows')
   })
 

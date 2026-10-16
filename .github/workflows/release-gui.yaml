@@ -15,7 +15,8 @@ permissions:
 # TAG; `wails build` adds the desktop,production tags and -s -w itself.
 # The wailsjs/ bindings are committed, so the build doesn't need a webview to
 # generate them (-skipbindings). Windows arm64 is built too, so ARM Windows
-# doesn't run the amd64 build emulated.
+# doesn't run the amd64 build emulated. Each Windows arch also gets an NSIS
+# installer (gui/build/windows/installer/project.nsi) next to its zip.
 jobs:
   linux:
     name: Linux ${{ matrix.goarch }}
@@ -98,25 +99,30 @@ jobs:
         node-version: 22
         cache: pnpm
         cache-dependency-path: gui/frontend/pnpm-lock.yaml
+    - name: Install NSIS
+      run: sudo apt-get update && sudo apt-get install -y nsis
     - name: Install the Wails CLI
       run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
     - name: Build and package
       working-directory: gui
       run: |
         set -euo pipefail
-        # the Windows version resource and the bundle's Info.plist take the version from wails.json
+        # the Windows version resource, the installer's version and the bundle's Info.plist take the version from wails.json
         sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
         # wails embeds the icon and manifest from build/windows into the exe,
         # and links it as a GUI app (no console window)
         tags="$(make -s -C .. --no-print-directory print-GUI_TAGS)"
         ldflags="$(make -s -C .. --no-print-directory print-GUI_LDFLAGS)"
         wails build -platform windows/${{ matrix.goarch }} -tags "$tags" -trimpath -skipbindings \
-          -m -nosyncgomod -ldflags "$ldflags"
+          -m -nosyncgomod -nsis -ldflags "$ldflags"
         name="manga-downloader-gui-$TAG-windows-${{ matrix.goarch }}"
         rm -rf "stage/$name" && mkdir -p "stage/$name"
         cp build/bin/manga-downloader-gui.exe ../LICENSE "stage/$name/"
         (cd stage && zip -qr "../$name.zip" "$name")
-        gh release upload "$TAG" "$name.zip" --clobber
+        # the in-app updater looks the installer up by this name
+        installer="$name-installer.exe"
+        mv "build/bin/manga-downloader-gui-${{ matrix.goarch }}-installer.exe" "$installer"
+        gh release upload "$TAG" "$name.zip" "$installer" --clobber
 
   macos:
     name: macOS universal

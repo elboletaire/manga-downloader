@@ -69,6 +69,8 @@
     "title": "All downloads",
     "intro": "Latest release <a href=\"{{repo}}/releases/latest\" data-release-tag>on GitHub</a>. Unsure which one? Most PCs are x64; Macs take the universal app.",
     "legacy32": "32-bit (legacy)",
+    "windowsInstaller": "Desktop app: installer",
+    "windowsPortable": "Desktop app: portable zip",
     "bit32": "32-bit",
     "appleSilicon": "Apple silicon",
     "foot": "The builds aren't signed, so Windows and macOS warn you the first time. <a href=\"#faq-smartscreen\">Here's how to get past it</a>."

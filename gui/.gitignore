@@ -6,3 +6,6 @@ frontend/.vitest/
 build/bin/
 # wails build caches a hash of the frontend manifest here
 frontend/package.json.md5
+# wails regenerates these on every -nsis build; project.nsi is ours
+build/windows/installer/wails_tools.nsh
+build/windows/installer/tmp/

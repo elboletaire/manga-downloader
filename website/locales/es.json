@@ -69,6 +69,8 @@
     "title": "Todas las descargas",
     "intro": "Última versión <a href=\"{{repo}}/releases/latest\" data-release-tag>en GitHub</a>. ¿No sabes cuál elegir? La mayoría de los PC son x64; para Mac, la app universal.",
     "legacy32": "32 bits (antiguo)",
+    "windowsInstaller": "Aplicación de escritorio: instalador",
+    "windowsPortable": "Aplicación de escritorio: zip portable",
     "bit32": "32 bits",
     "appleSilicon": "Chip de Apple",
     "foot": "Los ejecutables no están firmados, así que Windows y macOS te avisarán la primera vez. <a href=\"#faq-smartscreen\">Así puedes saltarte el aviso</a>."
