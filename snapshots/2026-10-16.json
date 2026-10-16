@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "taken_at": "2026-10-16T00:33:20Z",
+  "taken_at": "2026-10-16T09:15:11Z",
   "repo": {
-    "stars": 268,
+    "stars": 269,
     "forks": 34,
     "subscribers": 3,
-    "open_issues": 3
+    "open_issues": 4
   },
   "releases": [
     {
@@ -14,87 +14,95 @@
       "assets": [
         {
           "name": "manga-downloader-gui-v1.17.0-darwin-universal.zip",
-          "download_count": 2
+          "download_count": 6
         },
         {
           "name": "manga-downloader-gui-v1.17.0-linux-amd64.tar.gz",
-          "download_count": 0
+          "download_count": 4
         },
         {
           "name": "manga-downloader-gui-v1.17.0-linux-arm64.tar.gz",
-          "download_count": 0
-        },
-        {
-          "name": "manga-downloader-gui-v1.17.0-windows-amd64.zip",
-          "download_count": 1
-        },
-        {
-          "name": "manga-downloader-gui-v1.17.0-windows-arm64.zip",
-          "download_count": 0
-        },
-        {
-          "name": "manga-downloader-v1.17.0-darwin-amd64.tar.gz",
-          "download_count": 1
-        },
-        {
-          "name": "manga-downloader-v1.17.0-darwin-amd64.tar.gz.md5",
-          "download_count": 0
-        },
-        {
-          "name": "manga-downloader-v1.17.0-darwin-arm64.tar.gz",
           "download_count": 2
         },
         {
+          "name": "manga-downloader-gui-v1.17.0-SHA256SUMS.txt",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-gui-v1.17.0-windows-amd64.zip",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-gui-v1.17.0-windows-arm64.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.17.0-darwin-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.17.0-darwin-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.17.0-darwin-arm64.tar.gz",
+          "download_count": 4
+        },
+        {
           "name": "manga-downloader-v1.17.0-darwin-arm64.tar.gz.md5",
-          "download_count": 0
+          "download_count": 2
         },
         {
           "name": "manga-downloader-v1.17.0-linux-386.tar.gz",
-          "download_count": 1
+          "download_count": 3
         },
         {
           "name": "manga-downloader-v1.17.0-linux-386.tar.gz.md5",
-          "download_count": 0
+          "download_count": 2
         },
         {
           "name": "manga-downloader-v1.17.0-linux-amd64.tar.gz",
-          "download_count": 1
+          "download_count": 5
         },
         {
           "name": "manga-downloader-v1.17.0-linux-amd64.tar.gz.md5",
-          "download_count": 0
+          "download_count": 2
         },
         {
           "name": "manga-downloader-v1.17.0-linux-arm64.tar.gz",
-          "download_count": 1
+          "download_count": 3
         },
         {
           "name": "manga-downloader-v1.17.0-linux-arm64.tar.gz.md5",
-          "download_count": 0
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.17.0-SHA256SUMS.txt",
+          "download_count": 2
         },
         {
           "name": "manga-downloader-v1.17.0-windows-32bit-legacy.zip",
-          "download_count": 0
+          "download_count": 2
         },
         {
           "name": "manga-downloader-v1.17.0-windows-32bit-legacy.zip.md5",
-          "download_count": 0
+          "download_count": 2
         },
         {
           "name": "manga-downloader-v1.17.0-windows-amd64.zip",
-          "download_count": 0
+          "download_count": 6
         },
         {
           "name": "manga-downloader-v1.17.0-windows-amd64.zip.md5",
-          "download_count": 0
+          "download_count": 2
         },
         {
           "name": "manga-downloader-v1.17.0-windows-arm64.zip",
-          "download_count": 0
+          "download_count": 2
         },
         {
           "name": "manga-downloader-v1.17.0-windows-arm64.zip.md5",
-          "download_count": 0
+          "download_count": 2
         }
       ]
     },
@@ -238,7 +246,7 @@
         },
         {
           "name": "manga-downloader-v1.16.0-linux-amd64.tar.gz",
-          "download_count": 2
+          "download_count": 3
         },
         {
           "name": "manga-downloader-v1.16.0-linux-amd64.tar.gz.md5",
@@ -2766,7 +2774,7 @@
     }
   ],
   "docker": {
-    "pull_count": 33564,
+    "pull_count": 33711,
     "star_count": 1
   }
 }
