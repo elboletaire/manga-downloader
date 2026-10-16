@@ -128,11 +128,14 @@ func TestAppUpdate(t *testing.T) {
 		a := newApp(c, &fakeSink{}, "", "v1.0.0", "v1.0.0")
 		a.installed = installed
 		var calls []string
+		dir := filepath.Join(t.TempDir(), updateDirPrefix+"x")
+		path := filepath.Join(dir, "i.exe")
 		a.fetch = func(context.Context, *Asset) (string, error) {
 			calls = append(calls, "fetch")
-			return "/tmp/i.exe", nil
+
+			return path, os.MkdirAll(dir, 0o700)
 		}
-		a.install = func(p string) error { calls = append(calls, "install "+p); return nil }
+		a.install = func(string) error { calls = append(calls, "install"); return nil }
 		a.quit = func() { calls = append(calls, "quit") }
 
 		return a, &calls
@@ -145,7 +148,7 @@ func TestAppUpdate(t *testing.T) {
 	if err := a.Update(); err != nil {
 		t.Fatal(err)
 	}
-	if got := strings.Join(*calls, ","); got != "fetch,install /tmp/i.exe,quit" {
+	if got := strings.Join(*calls, ","); got != "fetch,install,quit" {
 		t.Errorf("calls = %s", got)
 	}
 
@@ -176,3 +179,34 @@ func TestAppUpdate(t *testing.T) {
 }
 
 func runtimeArchIs(arch string) bool { return runtime.GOARCH == arch }
+
+func TestRemoveUpdateDirRefusesOthers(t *testing.T) {
+	other := t.TempDir()
+	if err := removeUpdateDir(other); err == nil {
+		t.Error("removed a directory that isn't an update directory")
+	}
+	if _, err := os.Stat(other); err != nil {
+		t.Errorf("the directory is gone: %v", err)
+	}
+	if err := removeUpdateDir(filepath.Dir(other)); err == nil {
+		t.Error("removed a parent directory")
+	}
+}
+
+func TestSweepUpdateDirs(t *testing.T) {
+	tmp := t.TempDir()
+	stale := filepath.Join(tmp, updateDirPrefix+"1")
+	keep := filepath.Join(tmp, "other")
+	for _, d := range []string{stale, keep} {
+		if err := os.Mkdir(d, 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	sweepUpdateDirs(tmp)
+	if _, err := os.Stat(stale); err == nil {
+		t.Error("the stale directory is still there")
+	}
+	if _, err := os.Stat(keep); err != nil {
+		t.Error("an unrelated directory was removed")
+	}
+}

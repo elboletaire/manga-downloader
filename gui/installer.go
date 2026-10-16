@@ -11,11 +11,47 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // installerURLPrefix is where a release's assets live; the installer is run
 // elevated, so nothing from another place is downloaded
 const installerURLPrefix = repoURL + "/releases/download/"
+
+// updateDirPrefix names the temp directories downloadInstaller creates; the
+// cleanup helpers refuse any other directory
+const updateDirPrefix = "manga-downloader-update-"
+
+// updateTimeout bounds a whole installer download
+const updateTimeout = 10 * time.Minute
+
+// newDownloadClient is the client for the installer download: a stalled server
+// fails on the headers, and updateTimeout bounds the body through the context.
+func newDownloadClient() *http.Client {
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.ResponseHeaderTimeout = 30 * time.Second
+
+	return &http.Client{Transport: t}
+}
+
+// removeUpdateDir deletes a download directory, and refuses anything that
+// isn't named like one
+func removeUpdateDir(dir string) error {
+	if !strings.HasPrefix(filepath.Base(dir), updateDirPrefix) {
+		return fmt.Errorf("refusing to remove %q: not an update directory", dir)
+	}
+
+	return os.RemoveAll(dir)
+}
+
+// sweepUpdateDirs removes the update directories earlier runs left in tmp,
+// since the installer runs from its directory and can't delete it itself
+func sweepUpdateDirs(tmp string) {
+	dirs, _ := filepath.Glob(filepath.Join(tmp, updateDirPrefix+"*"))
+	for _, d := range dirs {
+		_ = removeUpdateDir(d)
+	}
+}
 
 // Asset is a file attached to a GitHub release
 type Asset struct {
@@ -84,13 +120,13 @@ func downloadInstaller(ctx context.Context, client *http.Client, a *Asset) (stri
 		return "", fmt.Errorf("GitHub answered %s", resp.Status)
 	}
 
-	dir, err := os.MkdirTemp("", "manga-downloader-update-")
+	dir, err := os.MkdirTemp("", updateDirPrefix)
 	if err != nil {
 		return "", err
 	}
 	path := filepath.Join(dir, a.Name)
 	if err := saveExact(path, resp.Body, a.Size); err != nil {
-		_ = os.RemoveAll(dir)
+		_ = removeUpdateDir(dir)
 
 		return "", err
 	}

@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -93,7 +92,10 @@ func newApp(ctrl *Controller, s sink, prefsPath, tag, version string) *App {
 		cancelUpdate: cancelUpdate,
 		installed:    installedCopy(),
 		fetch: func(ctx context.Context, a *Asset) (string, error) {
-			return downloadInstaller(ctx, &http.Client{}, a)
+			ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+			defer cancel()
+
+			return downloadInstaller(ctx, newDownloadClient(), a)
 		},
 		install:  runInstaller,
 		interval: refreshInterval,
@@ -153,6 +155,9 @@ func (a *App) pump() {
 func (a *App) startup(ctx context.Context, rt *wailsRuntime) {
 	rt.set(ctx)
 	a.quit = func() { wruntime.Quit(ctx) }
+	if runtime.GOOS == "windows" {
+		go sweepUpdateDirs(os.TempDir())
+	}
 	a.launch()
 	// release builds only: a dev build has no release to compare with. The
 	// check runs behind the window, which is up already.
@@ -638,8 +643,12 @@ func (a *App) Update() error {
 	if err != nil {
 		return a.failUpdate(fmt.Errorf("couldn't download the update: %w", err))
 	}
+	if a.ctrl.Running() {
+		_ = removeUpdateDir(filepath.Dir(path))
+		return a.failUpdate(errors.New("a download started meanwhile: finish or cancel it, then update again"))
+	}
 	if err := a.install(path); err != nil {
-		_ = os.RemoveAll(filepath.Dir(path))
+		_ = removeUpdateDir(filepath.Dir(path))
 		return a.failUpdate(fmt.Errorf("couldn't start the installer: %w", err))
 	}
 	if a.quit != nil {
