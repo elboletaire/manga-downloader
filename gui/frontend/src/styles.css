@@ -1464,6 +1464,7 @@ fieldset:disabled .check {
   color: var(--text-3);
 }
 
+.job-fetching .job-icon,
 .job-downloading .job-icon,
 .job-archiving .job-icon {
   color: var(--accent);
@@ -1564,6 +1565,31 @@ fieldset:disabled .check {
   background: var(--accent);
   transform-origin: left center;
   transition: transform 0.25s var(--ease);
+}
+
+.job-fetching .bar > span {
+  right: 60%;
+  opacity: 0.6;
+  transition: none;
+  animation: fetching-slide 1.2s var(--ease) infinite alternate;
+}
+
+@keyframes fetching-slide {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(150%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .job-fetching .bar > span {
+    animation: none;
+    right: 0;
+    opacity: 0.25;
+  }
 }
 
 .job-archiving .bar > span {

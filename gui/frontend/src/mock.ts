@@ -18,7 +18,9 @@
 // some chapters locked (see below), &fail makes
 // the fourth chapter fail halfway and &skip makes the sixth one come out
 // skipped, every page excluded by --skip-pages (both off by default; every run
-// saves every chapter without them), &epub starts the output as EPUB, &prompt
+// saves every chapter without them), &fetching has each chapter's row spend its
+// first few ticks fetching its page list (frozen, the newest rows are still
+// fetching), &epub starts the output as EPUB, &prompt
 // (with update) makes the update one-click and opens its prompt on load, &shot
 // uses production release versions and a macOS output path (for screenshots),
 // and VITE_MOCK=1 at build time includes the mock in production builds (e.g.
@@ -91,6 +93,8 @@ export interface MockSetup {
   locked: boolean;
   /** Use production release versions and a macOS output path (for screenshots) */
   shot: boolean;
+  /** Chapter rows start fetching their page list before they download */
+  fetching: boolean;
   /** Start with EPUB as the output format */
   epub: boolean;
   /** With the update scenario: one-click update, its prompt open on load */
@@ -151,6 +155,7 @@ export function mockSetupFrom(search: string): MockSetup {
     skip: params.has('skip'),
     locked: params.has('locked'),
     shot: params.has('shot'),
+    fetching: params.has('fetching'),
     epub: params.has('epub'),
     prompt: params.has('prompt'),
   };
@@ -245,6 +250,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     skip,
     locked,
     shot,
+    fetching,
     epub,
     prompt,
   } = {
@@ -258,6 +264,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     skip: false,
     locked: false,
     shot: false,
+    fetching: false,
     epub: false,
     prompt: false,
     ...(typeof setup === 'string' ? { scenario: setup } : setup),
@@ -453,6 +460,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   let pending: Chapter[] = [];
   // how many chapters each volume row of the run holds, by title
   let volumeChapters = new Map<string, number>();
+  // with &fetching, the ticks a chapter's row has left fetching its page list
+  const fetchLeft = new Map<string, number>();
+  const FETCH_TICKS = 4;
 
   /** A tick's steps: the pace it had when a page was two steps, scaled to STEPS_PER_PAGE. */
   function ticks(n: number): number {
@@ -507,6 +517,19 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       };
     });
 
+    jobs = jobs.map((j) => {
+      const left = fetchLeft.get(j.title);
+      if (j.state !== 'fetching' || left === undefined) {
+        return j;
+      }
+      if (left > 1) {
+        fetchLeft.set(j.title, left - 1);
+        return j;
+      }
+      fetchLeft.delete(j.title);
+      return { ...j, state: 'downloading', total: PAGES * STEPS_PER_PAGE, status: '' };
+    });
+
     jobs = jobs.map((j, idx) => {
       if (j.volume || (j.state !== 'downloading' && j.state !== 'archiving')) {
         return j;
@@ -520,7 +543,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       return { ...j, done, state };
     });
 
-    const active = jobs.filter((j) => !j.volume && (j.state === 'downloading' || j.state === 'archiving')).length;
+    const active = jobs.filter(
+      (j) => !j.volume && (j.state === 'fetching' || j.state === 'downloading' || j.state === 'archiving'),
+    ).length;
     if (!cancelling && active < 3 && pending.length > 0) {
       const c = pending.shift()!;
       if (c.locked) {
@@ -564,24 +589,28 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         pushLog('warn', `skipping ${c.title}: every page is excluded by --skip-pages`);
         return true;
       }
+      if (fetching) {
+        fetchLeft.set(c.title, FETCH_TICKS);
+      }
       jobs = [
         ...jobs,
         {
           title: c.title,
           tags: '',
           number: c.number,
-          total: PAGES * STEPS_PER_PAGE,
+          total: fetching ? 0 : PAGES * STEPS_PER_PAGE,
           done: 0,
-          state: 'downloading',
+          state: fetching ? 'fetching' : 'downloading',
           reason: '',
-          status: '',
+          status: fetching ? 'Fetching pages...' : '',
           volume: false,
         },
       ];
     }
 
     return (
-      jobs.some((j) => j.state === 'downloading' || j.state === 'archiving') || (!cancelling && pending.length > 0)
+      jobs.some((j) => j.state === 'fetching' || j.state === 'downloading' || j.state === 'archiving') ||
+      (!cancelling && pending.length > 0)
     );
   }
 
@@ -594,6 +623,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     summary = null;
     pending = [...list];
     volumeChapters = new Map();
+    fetchLeft.clear();
     runRows = runBundle ? 1 : list.length;
     if (runVolumes) {
       // the backend makes a row per volume up front, and runs the chapters

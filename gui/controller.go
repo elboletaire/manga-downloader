@@ -54,6 +54,9 @@ const (
 	JobFailed
 	// JobSkipped is a chapter whose pages were all excluded by --skip-pages
 	JobSkipped
+	// JobFetching is a chapter whose page list is being fetched, before any
+	// page is known
+	JobFetching
 )
 
 // Job is the progress of one chapter. In bundle mode there's a single Job for
@@ -203,9 +206,12 @@ type Controller struct {
 	byVolume  map[*core.Volume]*Job
 	listedVol map[grabber.Filterable]*Job
 	chapVol   map[*grabber.Chapter]*Job
-	stats     runStats
-	summary   *Summary
-	log       []LogLine
+	// fetching holds the rows of the chapters whose page list is being
+	// fetched, by listed chapter, until Fetched moves them to byChap
+	fetching map[grabber.Filterable]*Job
+	stats    runStats
+	summary  *Summary
+	log      []LogLine
 }
 
 // NewController returns a controller that works on its own copy of settings
@@ -572,7 +578,7 @@ func setSiteSettings(site grabber.Site, s *grabber.Settings) {
 // series' results don't show next to a new title. The caller holds c.mu.
 func (c *Controller) resetResultsLocked() {
 	c.jobs, c.bundle, c.byChap, c.failedC = nil, nil, nil, nil
-	c.byVolume, c.listedVol, c.chapVol = nil, nil, nil
+	c.byVolume, c.listedVol, c.chapVol, c.fetching = nil, nil, nil, nil
 	c.summary = nil
 	c.runinfo = RunInfo{}
 	c.stats = runStats{}
@@ -1238,6 +1244,7 @@ func (c *Controller) Start() error {
 	c.byVolume = map[*core.Volume]*Job{}
 	c.listedVol = map[grabber.Filterable]*Job{}
 	c.chapVol = map[*grabber.Chapter]*Job{}
+	c.fetching = map[grabber.Filterable]*Job{}
 	c.bundle = nil
 	c.stats = runStats{}
 	c.summary = nil
@@ -1425,12 +1432,48 @@ func (e events) BundleStart(pages int64) {
 	c.emit()
 }
 
+func (e events) Fetching(listed grabber.Filterable) {
+	c := e.c
+	c.mu.Lock()
+	// a bundle or a volume has its own row
+	if c.bundle == nil && c.listedVol[listed] == nil {
+		j := &Job{Title: listed.GetTitle(), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFetching, Status: "Fetching pages..."}
+		c.jobs = append(c.jobs, j)
+		c.fetching[listed] = j
+	}
+	c.mu.Unlock()
+	c.emit()
+}
+
+func (e events) Fetched(listed grabber.Filterable, ch *grabber.Chapter) {
+	c := e.c
+	c.mu.Lock()
+	if j := c.fetching[listed]; j != nil {
+		c.byChap[ch] = j
+		delete(c.fetching, listed)
+	}
+	c.mu.Unlock()
+}
+
+// endRow marks the row of a chapter that ended before it started, or adds one
+// when it never had any. Callers hold mu.
+func (c *Controller) endRow(ch *grabber.Chapter, state JobState, reason string) {
+	if j := c.byChap[ch]; j != nil {
+		j.State, j.Reason, j.Status = state, reason, ""
+		return
+	}
+	c.jobs = append(c.jobs, &Job{Title: ch.GetTitle(), Tags: c.releaseTags(ch), Number: ch.GetNumber(), State: state, Reason: reason})
+}
+
 func (e events) FetchFailed(listed grabber.Filterable, err error) {
 	c := e.c
 	c.mu.Lock()
 	msg := fmt.Sprintf("%s: %s", c.releaseLabel(listed), err)
 	c.stats.failures = append(c.stats.failures, msg)
-	if c.bundle == nil && c.listedVol[listed] == nil {
+	if j := c.fetching[listed]; j != nil {
+		j.State, j.Reason, j.Status = JobFailed, err.Error(), ""
+		delete(c.fetching, listed)
+	} else if c.bundle == nil && c.listedVol[listed] == nil {
 		c.jobs = append(c.jobs, &Job{Title: listed.GetTitle(), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFailed, Reason: err.Error()})
 	}
 	c.appendLogLocked(LogError, "error fetching "+msg)
@@ -1443,7 +1486,7 @@ func (e events) Skipped(ch *grabber.Chapter) {
 	c.mu.Lock()
 	c.stats.skipped++
 	if c.bundle == nil && c.chapVol[ch] == nil {
-		c.jobs = append(c.jobs, &Job{Title: ch.GetTitle(), Tags: c.releaseTags(ch), Number: ch.GetNumber(), State: JobSkipped, Reason: "every page excluded by --skip-pages"})
+		c.endRow(ch, JobSkipped, "every page excluded by --skip-pages")
 	}
 	c.appendLogLocked(LogWarn, fmt.Sprintf("skipping %s: every page is excluded by --skip-pages", c.releaseLabel(ch)))
 	c.mu.Unlock()
@@ -1456,8 +1499,7 @@ func (e events) FilenameFailed(ch *grabber.Chapter, err error) {
 	msg := fmt.Sprintf("%s: filename: %s", c.releaseLabel(ch), err)
 	c.stats.failures = append(c.stats.failures, msg)
 	if c.bundle == nil {
-		j := &Job{Title: ch.GetTitle(), Tags: c.releaseTags(ch), Number: ch.GetNumber(), State: JobFailed, Reason: "filename: " + err.Error()}
-		c.jobs = append(c.jobs, j)
+		c.endRow(ch, JobFailed, "filename: "+err.Error())
 	}
 	c.appendLogLocked(LogError, "error creating filename for "+msg)
 	c.mu.Unlock()
@@ -1473,6 +1515,10 @@ func (e events) Started(ch *grabber.Chapter) {
 		// its row is too narrow for the chapter's title: the phase and
 		// percentage say enough. The bar moves with VolumeProgress.
 		j.Status = ""
+	} else if j := c.byChap[ch]; j != nil {
+		// the row Fetching made becomes the downloading one
+		j.Total = ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight)
+		j.State, j.Status = JobDownloading, ""
 	} else {
 		// the CLI's bar: each page's download and archive steps
 		j := &Job{Title: ch.GetTitle(), Tags: c.releaseTags(ch), Number: ch.GetNumber(), Total: ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight), State: JobDownloading}

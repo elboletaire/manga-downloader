@@ -1,7 +1,7 @@
 // Types of the data the Go App sends to the window. They mirror the JSON of
 // the DTOs in gui/app.go and gui/store.go; keep the two in step.
 
-export type JobState = 'downloading' | 'archiving' | 'done' | 'failed' | 'skipped';
+export type JobState = 'fetching' | 'downloading' | 'archiving' | 'done' | 'failed' | 'skipped';
 
 export type LogLevel = 'info' | 'warn' | 'error';
 

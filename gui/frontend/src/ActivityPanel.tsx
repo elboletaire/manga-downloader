@@ -186,6 +186,7 @@ function JobRow({ job, style }: { job: Job; style: React.CSSProperties }) {
 
 function JobIcon({ state }: { state: Job['state'] }) {
   switch (state) {
+    case 'fetching':
     case 'downloading':
       return <Spinner size={14} />;
     case 'archiving':

@@ -29,12 +29,25 @@ type chapterStartedMsg struct {
 	chapter *grabber.Chapter
 	total   int64
 }
+
+// chapterFetchingMsg adds a chapter whose page list is being fetched, by its
+// listing entry; chapterFetchedMsg re-keys it to the fetched chapter
+type chapterFetchingMsg struct{ listed grabber.Filterable }
+type chapterFetchedMsg struct {
+	listed  grabber.Filterable
+	chapter *grabber.Chapter
+}
 type pageSuccessMsg struct{ chapter *grabber.Chapter }
 type downloadFailedMsg struct{ chapter *grabber.Chapter }
 
 // chapterEndedMsg reports a chapter that is no longer pending: downloaded,
 // skipped by --skip-pages, or failed to fetch (then it's the listing entry)
-type chapterEndedMsg struct{ chapter grabber.Filterable }
+type chapterEndedMsg struct {
+	chapter grabber.Filterable
+	// status is the row's final status when it ends without a download:
+	// "skipped" or "failed", empty when it downloaded
+	status string
+}
 
 type archivedMsg struct{ chapter *grabber.Chapter }
 type packedMsg struct {
@@ -75,7 +88,7 @@ type barState struct {
 	tags     string // release tags (" [en] [Group]"), kept whole while the row fits
 	current  int64
 	total    int64
-	status   string          // "downloading" | "archiving" | "done" | "failed"
+	status   string          // "fetching" | "downloading" | "archiving" | "done" | "failed" | "skipped"
 	bar      *progress.Model // brand-coloured bar (violet gradient while active, green when done)
 	failBar  *progress.Model // danger-coloured bar, created lazily on failure
 }
@@ -175,8 +188,10 @@ type progressModel struct {
 	done        bool // set true on downloadDoneMsg; View renders full bars immediately
 
 	// non-bundle, loose chapters
-	chapters []*grabber.Chapter
-	states   map[*grabber.Chapter]*barState
+	// chapters and states are keyed by the listing entry while the page list
+	// is fetched, then by the fetched chapter
+	chapters []grabber.Filterable
+	states   map[grabber.Filterable]*barState
 
 	// volumes support
 	volumes       []*core.Volume
@@ -208,7 +223,7 @@ func newProgressModel(seriesTitle, bundleRange string, bundle, showLang, showGro
 		showGroup:     showGroup,
 		hasDarkBg:     hasDarkBg,
 		width:         80,
-		states:        make(map[*grabber.Chapter]*barState),
+		states:        make(map[grabber.Filterable]*barState),
 		volStates:     make(map[*core.Volume]*volumeBarState),
 		chapterVolume: make(map[*grabber.Chapter]*core.Volume),
 	}
@@ -329,12 +344,39 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.bundleStarted = true
 		m.bundleStatus = "downloading"
 
+	case chapterFetchingMsg:
+		// bundle and volume rows already say they're waiting
+		if m.bundle || m.volumeOf(msg.listed) != nil {
+			return m, nil
+		}
+		_, barW, _ := btLayout(m.width)
+		m.chapters = append(m.chapters, msg.listed)
+		rawTitle, tags := chapterTitle(m.seriesTitle, msg.listed, m.showLang, m.showGroup)
+		m.states[msg.listed] = &barState{rawTitle: rawTitle, tags: tags, status: "fetching", bar: m.makeBar(barW)}
+		return m, nil
+
+	case chapterFetchedMsg:
+		if s := m.states[msg.listed]; s != nil {
+			delete(m.states, msg.listed)
+			m.states[msg.chapter] = s
+			if i := slices.Index(m.chapters, msg.listed); i >= 0 {
+				m.chapters[i] = msg.chapter
+			}
+		}
+		return m, nil
+
 	case chapterStartedMsg:
 		if m.bundle {
 			return m, nil
 		}
 		// Skip chapters that belong to a volume; volumes have their own bars.
 		if _, inVolume := m.chapterVolume[msg.chapter]; inVolume {
+			return m, nil
+		}
+		if s := m.states[msg.chapter]; s != nil {
+			// the row was added while fetching: it only gets its total and status
+			s.total = msg.total
+			s.status = "downloading"
 			return m, nil
 		}
 		_, barW, _ := btLayout(m.width)
@@ -374,6 +416,9 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case chapterEndedMsg:
 		m.countVolumeChapter(msg.chapter)
+		if s := m.states[msg.chapter]; s != nil && msg.status != "" {
+			s.status = msg.status
+		}
 
 	case downloadFailedMsg:
 		m.countVolumeChapter(msg.chapter)
@@ -567,8 +612,10 @@ func (m progressModel) View() tea.View {
 		}
 		// Loose chapter rows (chapters not in any volume).
 		for _, c := range m.chapters {
-			if _, inVolume := m.chapterVolume[c]; inVolume {
-				continue
+			if ch, ok := c.(*grabber.Chapter); ok {
+				if _, inVolume := m.chapterVolume[ch]; inVolume {
+					continue
+				}
 			}
 			s := m.states[c]
 			if s == nil {
@@ -643,6 +690,8 @@ func (m progressModel) renderChapterRow(s *barState) string {
 
 	var barStr string
 	switch {
+	case s.status == "fetching" || s.status == "skipped":
+		barStr = s.bar.ViewAs(0)
 	case s.status == "failed":
 		// Danger-coloured bar at actual progress reached, never 100%.
 		if s.failBar == nil {
@@ -662,7 +711,10 @@ func (m progressModel) renderChapterRow(s *barState) string {
 	if narrow {
 		row = title + " " + barStr
 	} else {
-		counter := fmt.Sprintf("%9s", pageCounter(s.current, s.total))
+		counter := strings.Repeat(" ", btCounterW)
+		if s.status != "fetching" {
+			counter = fmt.Sprintf("%9s", pageCounter(s.current, s.total))
+		}
 		row = title + " " + barStr + " " + counter + " " + m.statusStyle(s.status)
 	}
 	return clipRow(row, m.width)
@@ -812,21 +864,30 @@ func (e *bubbleEvents) BundleStart(pages int64) {
 	e.prog.Send(bundleStartMsg{total: pages})
 }
 
+func (e *bubbleEvents) Fetching(listed grabber.Filterable) {
+	e.prog.Send(chapterFetchingMsg{listed: listed})
+}
+
+func (e *bubbleEvents) Fetched(listed grabber.Filterable, c *grabber.Chapter) {
+	e.prog.Send(chapterFetchedMsg{listed: listed, chapter: c})
+}
+
 func (e *bubbleEvents) FetchFailed(listed grabber.Filterable, err error) {
 	e.println(color.RedString("- error fetching %s: %s",
 		core.ReleaseLabel(listed, e.showLang, e.showGroup), err.Error()))
-	e.prog.Send(chapterEndedMsg{chapter: listed})
+	e.prog.Send(chapterEndedMsg{chapter: listed, status: "failed"})
 }
 
 func (e *bubbleEvents) Skipped(c *grabber.Chapter) {
 	e.println(color.YellowString(
 		"- skipping %s: --skip-pages excludes all of its pages", core.ReleaseLabel(c, e.showLang, e.showGroup)))
-	e.prog.Send(chapterEndedMsg{chapter: c})
+	e.prog.Send(chapterEndedMsg{chapter: c, status: "skipped"})
 }
 
 func (e *bubbleEvents) FilenameFailed(c *grabber.Chapter, err error) {
 	e.println(color.RedString(
 		"- error creating filename for %s: %s", core.ReleaseLabel(c, e.showLang, e.showGroup), err.Error()))
+	e.prog.Send(chapterEndedMsg{chapter: c, status: "failed"})
 }
 
 func (e *bubbleEvents) Started(c *grabber.Chapter) {
@@ -912,6 +973,12 @@ func (plainEvents) BundlePacking()              {}
 func (plainEvents) BundleArchived(int)          {}
 func (plainEvents) Archived(*grabber.Chapter)   {}
 
+func (p plainEvents) Fetching(listed grabber.Filterable) {
+	fmt.Fprintf(color.Output, "fetching pages of %s...\n", core.ReleaseLabel(listed, p.showLang, p.showGroup))
+}
+
+func (plainEvents) Fetched(grabber.Filterable, *grabber.Chapter) {}
+
 func (p plainEvents) FetchFailed(listed grabber.Filterable, err error) {
 	red("- error fetching %s: %s", core.ReleaseLabel(listed, p.showLang, p.showGroup), err.Error())
 }
@@ -971,7 +1038,7 @@ func (plainEvents) VolumePacked(v *core.Volume, _ string, err error) {
 
 // chapterTitle builds an untruncated "Series - Chapter" title, with the release
 // tags " [lang] [group]" kept apart so they can stay whole.
-func chapterTitle(seriesTitle string, c *grabber.Chapter, showLanguage, showGroup bool) (title, tags string) {
+func chapterTitle(seriesTitle string, c grabber.Filterable, showLanguage, showGroup bool) (title, tags string) {
 	title = c.GetTitle()
 	if seriesTitle != "" {
 		title = seriesTitle + " - " + title

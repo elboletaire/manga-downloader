@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/packer"
@@ -27,6 +28,9 @@ import (
 type recorder struct {
 	mu     sync.Mutex
 	events []string
+	// withFetch also records Fetching and Fetched, which the other tests'
+	// expected sequences leave out
+	withFetch bool
 }
 
 func (r *recorder) add(format string, a ...any) {
@@ -35,6 +39,16 @@ func (r *recorder) add(format string, a ...any) {
 	r.events = append(r.events, fmt.Sprintf(format, a...))
 }
 
+func (r *recorder) Fetching(l grabber.Filterable) {
+	if r.withFetch {
+		r.add("fetching %g", l.GetNumber())
+	}
+}
+func (r *recorder) Fetched(l grabber.Filterable, _ *grabber.Chapter) {
+	if r.withFetch {
+		r.add("fetched %g", l.GetNumber())
+	}
+}
 func (r *recorder) BundleStart(pages int64) { r.add("bundle-start %d", pages) }
 func (r *recorder) FetchFailed(l grabber.Filterable, _ error) {
 	r.add("fetch-failed %g", l.GetNumber())
@@ -123,6 +137,8 @@ type fakeChapter struct {
 	limited map[int]bool
 	// volume is the volume the listing gives the chapter, 0 for none
 	volume int
+	// fetchDelay makes FetchChapter slow
+	fetchDelay time.Duration
 }
 
 // fakeSite serves fakeChapters from an httptest server
@@ -153,6 +169,7 @@ func (f *fakeSite) FetchChapter(l grabber.Filterable) (*grabber.Chapter, error) 
 		if c.number != l.GetNumber() {
 			continue
 		}
+		time.Sleep(c.fetchDelay)
 		f.mu.Lock()
 		f.served[c.number]++
 		n := f.served[c.number]
@@ -704,4 +721,85 @@ func TestDownloadLockedChapterInVolume(t *testing.T) {
 	if entries := zipEntries(t, files[0]); len(entries) != 2 {
 		t.Errorf("volume holds %q, want chapter 2's 2 pages", entries)
 	}
+}
+
+// Fetching comes before the page list is fetched, and Fetched pairs the
+// listing entry with the chapter right after, ahead of Started.
+func TestDownloadFetchingBeforeStarted(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 1, fetchDelay: 20 * time.Millisecond},
+		fakeChapter{number: 2, pages: 1, failFetch: map[int]bool{1: true}},
+	)
+	series, _ := newSeries(t, site, false)
+	rec := &recorder{withFetch: true}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	want := []string{
+		"fetching 1", "fetched 1", "started 1", "page 1 0", "archived 1", "packed 1",
+		"fetching 2", "fetch-failed 2",
+	}
+	if strings.Join(rec.events, "|") != strings.Join(want, "|") {
+		t.Errorf("events:\n got %q\nwant %q", rec.events, want)
+	}
+}
+
+// The bundle's totals pass doesn't report Fetching: only the download's fetch
+// does, once per chapter.
+func TestDownloadBundleFetchingOncePerChapter(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 1},
+		fakeChapter{number: 2, pages: 1},
+	)
+	series, _ := newSeries(t, site, true)
+	rec := &recorder{withFetch: true}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "1-2", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	if got := rec.count("fetching "); got != 2 {
+		t.Errorf("got %d fetching events, want 2: %q", got, rec.events)
+	}
+	if rec.events[0] != "bundle-start 2" {
+		t.Errorf("first event %q, want the totals pass to report nothing before bundle-start", rec.events[0])
+	}
+	for _, n := range []string{"1", "2"} {
+		if indexOf(rec.events, "fetching "+n) > indexOf(rec.events, "started "+n) {
+			t.Errorf("chapter %s started before it was fetching: %q", n, rec.events)
+		}
+	}
+}
+
+// A volume's chapters report Fetching too, ahead of VolumeChapter.
+func TestDownloadVolumeFetchingBeforeVolumeChapter(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 1},
+		fakeChapter{number: 2, pages: 1},
+	)
+	series, _ := newSeries(t, site, false)
+	site.Settings.Volumes = "1-2"
+	rec := &recorder{withFetch: true}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	for _, n := range []string{"1", "2"} {
+		f, v := indexOf(rec.events, "fetching "+n), indexOf(rec.events, "volume-chapter 1 "+n)
+		if f < 0 || v < 0 || f > v {
+			t.Errorf("chapter %s: fetching at %d, volume-chapter at %d: %q", n, f, v, rec.events)
+		}
+	}
+}
+
+func indexOf(events []string, e string) int {
+	for i, got := range events {
+		if got == e {
+			return i
+		}
+	}
+	return -1
 }

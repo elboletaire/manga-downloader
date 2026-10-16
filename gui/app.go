@@ -797,6 +797,8 @@ func jobStateName(s JobState) string {
 		return "failed"
 	case JobSkipped:
 		return "skipped"
+	case JobFetching:
+		return "fetching"
 	}
 
 	return ""
