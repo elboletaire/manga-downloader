@@ -156,6 +156,7 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
           <TextField
             label="Filename template"
             value={o.filenameTemplate}
+            placeholder={state.filenameTemplateDefault}
             mono
             disabled={locked}
             hint={

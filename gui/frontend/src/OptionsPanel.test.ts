@@ -92,6 +92,12 @@ describe('Filename template', () => {
     expect(options(blank)).toContain('Use default');
   });
 
+  it('shows the default as the placeholder of an empty box', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    const blank: State = { ...base, options: { ...base.options, filenameTemplate: '' } };
+    expect(options(blank)).toContain(`placeholder="${base.filenameTemplateDefault.replace(/"/g, '&quot;')}"`);
+  });
+
   it('warns when the template names no number or title', async () => {
     const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
     expect(options(base)).not.toContain('files only differ');
