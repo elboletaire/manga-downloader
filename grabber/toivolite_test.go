@@ -74,8 +74,9 @@ func TestToivoLiteChapterTitle(t *testing.T) {
 	}{
 		{"JOJOLands, Chapter 41", "Chapter 41", ""},
 		{"The Apothecary Diaries, Chapter 63.2", "Chapter 63.2", ""},
-		// No series prefix: the site's text as is
-		{"Chapter 7", "Chapter 7", "Chapter 7"},
+		// No series prefix
+		{"Chapter 7", "Chapter 7", ""},
+		{"Chapter 7: Foo", "Chapter 7: Foo", "Chapter 7: Foo"},
 		// Lowercase "chapter" keyword in source: the label names it
 		{"Series Name, chapter 5", "Chapter 5", ""},
 		{"Series Name, Chapter 5: Foo", "Chapter 5: Foo", "Chapter 5: Foo"},

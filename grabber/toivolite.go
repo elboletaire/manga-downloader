@@ -199,7 +199,7 @@ func toivoLiteChapterList(doc *goquery.Document, baseURL string) (entries []toiv
 // title when only the number follows, which the label gives as written.
 func toivoLiteChapterTitle(raw string) (string, Label) {
 	idx := strings.Index(strings.ToLower(raw), "chapter")
-	if idx <= 0 {
+	if idx < 0 {
 		return raw, Label{}
 	}
 	if m := toivoLiteNumberOnlyRe.FindStringSubmatch(raw[idx+len("chapter"):]); m != nil {

@@ -143,9 +143,8 @@ func TestChapterLabelHelpers(t *testing.T) {
 	}
 }
 
-// chapterWordRe matches a chapter or part word as titles write it, in an
-// interpreted string literal (raw ones hold patterns, selectors and tags)
-var chapterWordRe = regexp.MustCompile(`^".*\b(Chapter|Chapitre|Capítulo|Bölüm|Episode|Ch\.|Part)( |"$)`)
+// chapterWordRe matches a chapter or part word as titles write it
+var chapterWordRe = regexp.MustCompile(`\b(Chapter|Chapitre|Capítulo|Bölüm|Episode|Ch\.|Part)( |["` + "`" + `]$)`)
 
 // TestNoChapterWordOutsideLabels keeps grabbers from writing a chapter word of
 // their own into titles: outside label.go, a string literal holding one must
@@ -196,10 +195,14 @@ func isMessageOrPattern(call *ast.CallExpr) bool {
 	if !ok {
 		return false
 	}
+	switch sel.Sel.Name {
+	case "Find", "Filter", "Is", "Not", "Has", "Contains", "Closest", "ChildrenFiltered", "ParentsFiltered", "NextFiltered", "PrevFiltered", "SiblingsFiltered":
+		// goquery selectors, whatever the receiver
+		return true
+	}
 	pkg, _ := sel.X.(*ast.Ident)
 	if pkg == nil {
-		// methods: goquery selectors and the like
-		return sel.Sel.Name == "Find" || sel.Sel.Name == "Filter" || sel.Sel.Name == "Is" || sel.Sel.Name == "Contains"
+		return false
 	}
 	switch pkg.Name {
 	case "fmt":
