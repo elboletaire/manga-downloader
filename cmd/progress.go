@@ -362,6 +362,8 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if i := slices.Index(m.chapters, msg.listed); i >= 0 {
 				m.chapters[i] = msg.chapter
 			}
+			// the fetched chapter's title can differ from the listing's
+			s.rawTitle, s.tags = chapterTitle(m.seriesTitle, msg.chapter, m.showLang, m.showGroup)
 		}
 		return m, nil
 

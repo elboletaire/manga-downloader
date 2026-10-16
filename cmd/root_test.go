@@ -925,3 +925,18 @@ func TestFetchingAddsNoRowInBundleOrVolume(t *testing.T) {
 		t.Errorf("volume chapter got %d rows from fetching", len(m.states))
 	}
 }
+
+// The fetched chapter's title can differ from the listing's, and the row shows it.
+func TestChapterRowTakesFetchedTitle(t *testing.T) {
+	listed := &grabber.Chapter{Title: "Market"}
+	fetched := &grabber.Chapter{Title: "Chapter 0001 Market", PagesCount: 10}
+	m := newProgressModel("Series", "", false, false, false, true)
+	m.width = 80
+	for _, msg := range []tea.Msg{chapterFetchingMsg{listed: listed}, chapterFetchedMsg{listed: listed, chapter: fetched}} {
+		next, _ := m.Update(msg)
+		m = next.(progressModel)
+	}
+	if row := ansi.Strip(m.renderChapterRow(m.states[fetched])); !strings.Contains(row, "Series - Chapter 0001 Market") {
+		t.Errorf("row %q, want the fetched chapter's title", row)
+	}
+}
