@@ -23,7 +23,26 @@ import (
 // gigaviewerDomains are the hosts of GigaViewer, Hatena's reader platform.
 // List another host here to serve it too: its episode and feed URLs are the
 // same.
-var gigaviewerDomains = []string{"shonenjumpplus.com"}
+var gigaviewerDomains = []string{
+	"shonenjumpplus.com",
+	"tonarinoyj.jp",
+	"comic-days.com",
+	"kuragebunch.com",
+	"magcomi.com",
+	"comic-gardo.com",
+	"comic-zenon.com",
+	"comic-action.com",
+	"comic-trail.com",
+	"comic-earthstar.com",
+	"comic-ogyaaa.com",
+	"sunday-webry.com",
+	"comic-seasons.com",
+	"comic-y-ours.com",
+	"ourfeel.jp",
+	"feelweb.jp",
+	"ichicomi.com",
+	"mangatime-square.com",
+}
 
 var (
 	gigaviewerEpisodeRe = regexp.MustCompile(`/episode/(\d+)`)
