@@ -1,0 +1,23 @@
+{
+ "meta": {
+  "code": 200
+ },
+ "payload": {
+  "results": {
+   "id": 7312,
+   "name": "ACTS ONE NINE",
+   "slug": "acts-one-nine",
+   "lang": "en",
+   "comic_langs": [
+    {
+     "lang_id": "en",
+     "name": "ACTS ONE NINE"
+    },
+    {
+     "lang_id": "es",
+     "name": "ACTS ONE NINE"
+    }
+   ]
+  }
+ }
+}

@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[160 supported sites](#supported-sites)**, from big aggregators to small
+- **[161 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -629,7 +629,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 160 supported sites</b></summary>
+<summary><b>Show all 161 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -671,6 +671,7 @@ to a minute.
 | [flamecomics.xyz](https://flamecomics.xyz) | Flame Comics, former Flame Scans | 2026-10-15 |
 | [fmteam.fr](https://fmteam.fr) |  | 2026-10-15 |
 | [furyosociety.com](https://furyosociety.com) |  | 2026-10-15 |
+| [globalcomix.com](https://globalcomix.com) | Western comics, free issues only | — |
 | [gdscans.com](https://gdscans.com) | GalaxyDegenScans | 2026-10-15 |
 | [genztoons.org](https://genztoons.org) | Genz Toon, former genzupdates.com | 2026-10-15 |
 | [gourmetsupremacy.com](https://gourmetsupremacy.com) | Gourmet Scans, free chapters only | 2026-10-16 |

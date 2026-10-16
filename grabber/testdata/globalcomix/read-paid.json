@@ -1,0 +1,23 @@
+{
+ "meta": {
+  "code": 200
+ },
+ "payload": {
+  "results": {
+   "comic_slug": "dceased-2019-",
+   "is_free": false,
+   "page_count": 36,
+   "reader_cdn_access": {
+    "base_url": "https://reader-cdn.globalcomix.com",
+    "release_key": "59cd868b-094b-47fb-9c04-76fff5306dda",
+    "url_template": "{base_url}/r/{release_key}/p/{order}/{quality}.webp",
+    "ranges": [
+     [
+      1,
+      10
+     ]
+    ]
+   }
+  }
+ }
+}
