@@ -31,9 +31,12 @@ var updateClient = &http.Client{Timeout: 10 * time.Second}
 type Update struct {
 	// Latest is the newest release's tag, as GitHub names it
 	Latest string
-	// Installer is the Windows installer of this build's architecture on the
-	// release, nil when it has none
+	// Installer is the package that updates this build in place (the Windows
+	// installer, the Linux tarball), nil when the release has none or has no
+	// checksums for it
 	Installer *Asset
+	// Sums is the release's checksums asset, which Installer is verified against
+	Sums *Asset
 }
 
 // releaseURL is the GitHub page of the release a build was made from, "" when
@@ -90,7 +93,11 @@ func checkUpdate(ctx context.Context, current, apiURL string, client *http.Clien
 	}
 	update, err := newerRelease(current, latest)
 	if update != nil {
-		update.Installer = pickInstaller(assets, latest, runtime.GOARCH)
+		update.Installer = pickAsset(assets, packageName(latest, runtime.GOARCH))
+		update.Sums = pickAsset(assets, sumsName(latest))
+		if update.Sums == nil {
+			update.Installer = nil
+		}
 	}
 
 	return update, err

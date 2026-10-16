@@ -60,11 +60,12 @@ type App struct {
 	updateCtx    context.Context
 	cancelUpdate context.CancelFunc
 	interval     time.Duration
-	// installed is whether this exe is the Windows installer's copy, which can
-	// update itself; the other fields of the update are test seams
+	// installed is whether this exe is an installed copy (the Windows
+	// installer's, the Linux install.sh's), which can update itself; the
+	// other fields of the update are test seams
 	installed bool
 	updating  atomic.Bool
-	fetch     func(context.Context, *Asset) (string, error)
+	fetch     func(ctx context.Context, pkg, sums *Asset) (string, error)
 	install   func(string) error
 	quit      func()
 
@@ -91,11 +92,11 @@ func newApp(ctrl *Controller, s sink, prefsPath, tag, version string) *App {
 		updateCtx:    updateCtx,
 		cancelUpdate: cancelUpdate,
 		installed:    installedCopy(),
-		fetch: func(ctx context.Context, a *Asset) (string, error) {
+		fetch: func(ctx context.Context, pkg, sums *Asset) (string, error) {
 			ctx, cancel := context.WithTimeout(ctx, updateTimeout)
 			defer cancel()
 
-			return downloadInstaller(ctx, newDownloadClient(), a)
+			return downloadInstaller(ctx, newDownloadClient(), pkg, sums)
 		},
 		install:  runInstaller,
 		interval: refreshInterval,
@@ -233,8 +234,8 @@ type VolumesDTO struct {
 type UpdateDTO struct {
 	Latest string `json:"latest"`
 	URL    string `json:"url"`
-	// OneClick is whether Update can install it: an installed Windows copy and
-	// an installer on the release
+	// OneClick is whether Update can install it: an installed copy and its
+	// package and checksums on the release
 	OneClick bool `json:"oneClick"`
 }
 
@@ -622,12 +623,12 @@ func (a *App) DismissBrowserAlert() {
 	a.ctrl.DismissBrowserAlert()
 }
 
-// Update downloads the newer release's installer, runs it (it relaunches the
-// app once installed) and quits so the installer can replace the exe. Any
+// Update downloads the newer release's package, checks it against the release's
+// checksums, runs its installer (which relaunches the app) and quits. Any
 // failure is logged and returned; the release link stays the fallback.
 func (a *App) Update() error {
 	u := a.ctrl.Update()
-	if !a.installed || u == nil || u.Installer == nil {
+	if !a.installed || u == nil || u.Installer == nil || u.Sums == nil {
 		return errors.New("one-click update isn't available for this copy")
 	}
 	if !a.updating.CompareAndSwap(false, true) {
@@ -639,7 +640,7 @@ func (a *App) Update() error {
 	}
 
 	a.ctrl.addLog(LogInfo, "Downloading the update "+u.Latest+"...")
-	path, err := a.fetch(a.updateCtx, u.Installer)
+	path, err := a.fetch(a.updateCtx, u.Installer, u.Sums)
 	if err != nil {
 		return a.failUpdate(fmt.Errorf("couldn't download the update: %w", err))
 	}
@@ -740,7 +741,7 @@ func updateDTO(u *Update, installed bool) *UpdateDTO {
 		return nil
 	}
 
-	return &UpdateDTO{Latest: u.Latest, URL: latestReleasePage, OneClick: installed && u.Installer != nil}
+	return &UpdateDTO{Latest: u.Latest, URL: latestReleasePage, OneClick: installed && u.Installer != nil && u.Sums != nil}
 }
 
 // filterDTO converts a filter's selector, nil when the site doesn't list it

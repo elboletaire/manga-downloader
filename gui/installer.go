@@ -3,7 +3,11 @@
 package main
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -14,8 +18,8 @@ import (
 	"time"
 )
 
-// installerURLPrefix is where a release's assets live; the installer is run
-// elevated, so nothing from another place is downloaded
+// installerURLPrefix is where a release's assets live; what is downloaded gets
+// run (the Windows installer elevated), so nothing from another place is fetched
 const installerURLPrefix = repoURL + "/releases/download/"
 
 // updateDirPrefix names the temp directories downloadInstaller creates; the
@@ -25,7 +29,13 @@ const updateDirPrefix = "manga-downloader-update-"
 // updateTimeout bounds a whole installer download
 const updateTimeout = 10 * time.Minute
 
-// newDownloadClient is the client for the installer download: a stalled server
+// maxSumsSize bounds the checksums file, which is read into memory
+const maxSumsSize = 1 << 20
+
+// maxExtractSize bounds what a tarball may unpack to
+const maxExtractSize = 1 << 30
+
+// newDownloadClient is the client for the update download: a stalled server
 // fails on the headers, and updateTimeout bounds the body through the context.
 func newDownloadClient() *http.Client {
 	t := http.DefaultTransport.(*http.Transport).Clone()
@@ -60,22 +70,79 @@ type Asset struct {
 	Size int64  `json:"size"`
 }
 
-// installerName is the Windows installer's asset name for a release tag and
-// GOARCH, as the release workflow names it
-func installerName(tag, goarch string) string {
+// windowsInstallerName is the Windows installer's asset name for a release
+// tag and GOARCH, as the release workflow names it
+func windowsInstallerName(tag, goarch string) string {
 	return fmt.Sprintf("manga-downloader-gui-%s-windows-%s-installer.exe", tag, goarch)
 }
 
-// pickInstaller returns the installer asset for tag and goarch, nil when the
-// release has none (or its URL isn't a release download of this repository)
-func pickInstaller(assets []Asset, tag, goarch string) *Asset {
-	want := installerName(tag, goarch)
+// linuxTarballName is the Linux tarball's asset name for a release tag and GOARCH
+func linuxTarballName(tag, goarch string) string {
+	return fmt.Sprintf("manga-downloader-gui-%s-linux-%s.tar.gz", tag, goarch)
+}
+
+// sumsName is the checksums asset the release workflow publishes for the GUI
+func sumsName(tag string) string {
+	return fmt.Sprintf("manga-downloader-gui-%s-SHA256SUMS.txt", tag)
+}
+
+// pickAsset returns the asset called name, nil when the release has none (or
+// its URL isn't a release download of this repository)
+func pickAsset(assets []Asset, name string) *Asset {
+	if name == "" {
+		return nil
+	}
 	for _, a := range assets {
-		if a.Name == want && a.Size > 0 && strings.HasPrefix(a.URL, installerURLPrefix) {
+		if a.Name == name && a.Size > 0 && strings.HasPrefix(a.URL, installerURLPrefix) {
 			asset := a
 
 			return &asset
 		}
+	}
+
+	return nil
+}
+
+// parseSums reads sha256sum output ("<hex>  <name>", or "<hex> *<name>")
+// into name -> lowercase hex digest
+func parseSums(data []byte) map[string]string {
+	sums := map[string]string{}
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimRight(line, "\r")
+		sum, name, ok := strings.Cut(line, " ")
+		if !ok || len(sum) != sha256.Size*2 {
+			continue
+		}
+		if _, err := hex.DecodeString(sum); err != nil {
+			continue
+		}
+		name = strings.TrimPrefix(strings.TrimPrefix(name, " "), "*")
+		if name != "" {
+			sums[name] = strings.ToLower(sum)
+		}
+	}
+
+	return sums
+}
+
+// verifyChecksum hashes the file at path and compares it with name's entry in
+// the sums; a missing entry is as much a failure as a mismatch
+func verifyChecksum(path, name string, sums map[string]string) error {
+	want, ok := sums[name]
+	if !ok {
+		return fmt.Errorf("the release's checksums don't list %s", name)
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+	if got := hex.EncodeToString(h.Sum(nil)); got != want {
+		return fmt.Errorf("the checksum of %s doesn't match the release's (got %s, want %s)", name, got, want)
 	}
 
 	return nil
@@ -100,25 +167,66 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
-// downloadInstaller saves the asset into a new temp directory and returns its
-// path. The size must match the API's, so a cut-off download never runs.
-func downloadInstaller(ctx context.Context, client *http.Client, a *Asset) (string, error) {
-	if a == nil || !strings.HasPrefix(a.URL, installerURLPrefix) || filepath.Base(a.Name) != a.Name {
-		return "", errors.New("the release has no installer for this system")
+// get opens a GET on url, which must be a release download
+func get(ctx context.Context, client *http.Client, url string) (*http.Response, error) {
+	if !strings.HasPrefix(url, installerURLPrefix) {
+		return nil, errors.New("the release has no update for this system")
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, a.URL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	req.Header.Set("User-Agent", "manga-downloader-gui")
 	resp, err := client.Do(req)
 	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+
+		return nil, fmt.Errorf("GitHub answered %s", resp.Status)
+	}
+
+	return resp, nil
+}
+
+// fetchSums downloads the release's checksums file
+func fetchSums(ctx context.Context, client *http.Client, a *Asset) (map[string]string, error) {
+	if a == nil || a.Size <= 0 || a.Size > maxSumsSize {
+		return nil, errors.New("the release has no checksums for this system")
+	}
+	resp, err := get(ctx, client, a.URL)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	data, err := io.ReadAll(io.LimitReader(resp.Body, a.Size+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) != a.Size {
+		return nil, fmt.Errorf("the checksums are %d bytes, expected %d", len(data), a.Size)
+	}
+
+	return parseSums(data), nil
+}
+
+// downloadInstaller saves the asset into a new temp directory and returns its
+// path. The size must match the API's and the SHA-256 the release's checksums
+// (sums), so a cut-off or swapped download never runs.
+func downloadInstaller(ctx context.Context, client *http.Client, a, sums *Asset) (string, error) {
+	if a == nil || filepath.Base(a.Name) != a.Name || a.Name == "." {
+		return "", errors.New("the release has no update for this system")
+	}
+	list, err := fetchSums(ctx, client, sums)
+	if err != nil {
+		return "", err
+	}
+	resp, err := get(ctx, client, a.URL)
+	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("GitHub answered %s", resp.Status)
-	}
 
 	dir, err := os.MkdirTemp("", updateDirPrefix)
 	if err != nil {
@@ -130,8 +238,77 @@ func downloadInstaller(ctx context.Context, client *http.Client, a *Asset) (stri
 
 		return "", err
 	}
+	if err := verifyChecksum(path, a.Name, list); err != nil {
+		_ = removeUpdateDir(dir)
+
+		return "", err
+	}
 
 	return path, nil
+}
+
+// extractTarGz unpacks a .tar.gz into dest (an existing directory). Only
+// directories and regular files are accepted, and every name must stay inside
+// dest, so a crafted archive can't write elsewhere.
+func extractTarGz(src, dest string) error {
+	f, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	gz, err := gzip.NewReader(f)
+	if err != nil {
+		return err
+	}
+	defer gz.Close()
+
+	tr := tar.NewReader(gz)
+	var total int64
+	for {
+		h, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if !filepath.IsLocal(h.Name) {
+			return fmt.Errorf("the archive has an entry outside its folder: %q", h.Name)
+		}
+		target := filepath.Join(dest, filepath.FromSlash(h.Name))
+		switch h.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(target, 0o700); err != nil {
+				return err
+			}
+		case tar.TypeReg:
+			total += h.Size
+			if h.Size < 0 || total > maxExtractSize {
+				return errors.New("the archive is too large")
+			}
+			if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+				return err
+			}
+			if err := writeEntry(target, tr, h.Size, os.FileMode(h.Mode).Perm()&0o755|0o600); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("the archive has an entry that isn't a file or folder: %q", h.Name)
+		}
+	}
+}
+
+func writeEntry(path string, r io.Reader, size int64, mode os.FileMode) error {
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(f, io.LimitReader(r, size))
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+
+	return err
 }
 
 // saveExact writes r to path and fails unless it holds exactly size bytes
@@ -148,7 +325,7 @@ func saveExact(path string, r io.Reader, size int64) error {
 		return err
 	}
 	if n != size {
-		return fmt.Errorf("the installer is %d bytes, expected %d", n, size)
+		return fmt.Errorf("the download is %d bytes, expected %d", n, size)
 	}
 
 	return nil

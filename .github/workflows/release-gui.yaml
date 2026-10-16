@@ -16,7 +16,8 @@ permissions:
 # The wailsjs/ bindings are committed, so the build doesn't need a webview to
 # generate them (-skipbindings). Windows arm64 is built too, so ARM Windows
 # doesn't run the amd64 build emulated. Each Windows arch also gets an NSIS
-# installer (gui/build/windows/installer/project.nsi) next to its zip.
+# installer (gui/build/windows/installer/project.nsi) next to its zip. The last
+# job publishes the SHA-256 of every GUI asset for the app's one-click update.
 jobs:
   linux:
     name: Linux ${{ matrix.goarch }}
@@ -168,6 +169,30 @@ jobs:
         name="manga-downloader-gui-$TAG-darwin-universal"
         ditto -c -k --keepParent "build/bin/Manga Downloader.app" "$name.zip"
         gh release upload "$TAG" "$name.zip" --clobber
+
+  checksums:
+    name: Checksums
+    needs: [linux, windows, macos]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+    # the app's one-click update verifies what it downloads against this file
+    - name: Publish the checksums of the GUI assets
+      run: |
+        set -euo pipefail
+        mkdir assets
+        gh release download "$TAG" -p "manga-downloader-gui-$TAG-*" -D assets
+        sums="manga-downloader-gui-$TAG-SHA256SUMS.txt"
+        # a re-run finds the previous file among the assets
+        rm -f "assets/$sums"
+        count="$(find assets -type f | wc -l)"
+        if [ "$count" -lt 5 ]; then echo "::error::only $count GUI assets found, expected the zips, tarballs and installers"; exit 1; fi
+        (cd assets && sha256sum -- * > "../$sums")
+        cat "$sums"
+        gh release upload "$TAG" "$sums" --clobber
 
   homebrew:
     name: Update the Homebrew cask

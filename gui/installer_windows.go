@@ -14,6 +14,9 @@ import (
 
 const uninstallKey = `Software\Microsoft\Windows\CurrentVersion\Uninstall\Manga Downloader`
 
+// packageName is the release asset that updates this platform
+func packageName(tag, goarch string) string { return windowsInstallerName(tag, goarch) }
+
 // installedCopy reports whether the running exe is the installer's copy
 func installedCopy() bool {
 	exe, err := os.Executable()
