@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
@@ -238,7 +239,6 @@ func tcbReaderTypeError(doc *goquery.Document, title string) error {
 func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 	tchap := f.(*TcbChapter)
 
-	// Get first page to find all page URLs
 	rbody, err := http.Get(http.RequestParams{
 		URL: tchap.URL,
 	})
@@ -250,18 +250,68 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := tcbReaderTypeError(body, f.GetTitle()); err != nil {
+		return nil, err
+	}
 
-	// Get all page URLs from the single-pager select
+	var pages []Page
+	// Protected readers (wp-manga-chapter-images-protection) don't ship this
+	// list, so this branch needs no decoder.
+	if urls := tcbPreloadedImages(body); len(urls) > 0 {
+		for i, u := range urls {
+			if u = strings.TrimSpace(u); u == "" || isThemeImage(u) {
+				continue
+			}
+			pages = append(pages, t.readerImage(i, u))
+		}
+	} else if pages, err = t.walkPager(f, body); err != nil {
+		return nil, err
+	}
+
+	chapter := &Chapter{
+		Title:      f.GetTitle(),
+		Number:     f.GetNumber(),
+		PagesCount: int64(len(pages)), // Use actual number of found pages
+		Language:   "en",
+		Pages:      pages,
+		ID:         chapterURLID(tchap.URL),
+	}
+	chapter.SetGroups(tchap.GetGroups()...)
+
+	return chapter, nil
+}
+
+var tcbPreloadedRe = regexp.MustCompile(`chapter_preloaded_images\s*=\s*`)
+
+// tcbPreloadedImages returns the chapter's image list that Madara's paged reader
+// embeds on every reader page, saving one GET per page.
+func tcbPreloadedImages(doc *goquery.Document) []string {
+	script := doc.Find("script#chapter_preloaded_images").Text()
+	loc := tcbPreloadedRe.FindStringIndex(script)
+	if loc == nil {
+		return nil
+	}
+	var urls []string
+	if err := json.NewDecoder(strings.NewReader(script[loc[1]:])).Decode(&urls); err != nil {
+		return nil
+	}
+	return urls
+}
+
+// walkPager collects the images of a paged reader one page at a time, or of
+// the chapter page itself when it has no pager.
+func (t Tcb) walkPager(f Filterable, body *goquery.Document) ([]Page, error) {
+	// The pager is rendered more than once (top and bottom), with the same pages.
 	pageURLs := []string{}
+	seen := map[string]bool{}
 	body.Find("#single-pager option").Each(func(i int, s *goquery.Selection) {
-		if url := s.AttrOr("data-redirect", ""); url != "" {
+		if url := s.AttrOr("data-redirect", ""); url != "" && !seen[url] {
+			seen[url] = true
 			pageURLs = append(pageURLs, url)
 		}
 	})
-
-	// If no pages found in select, this might be a single-page chapter
 	if len(pageURLs) == 0 {
-		pageURLs = append(pageURLs, tchap.URL)
+		return t.readerPageImages(f, 0, body), nil
 	}
 
 	// Paged readers cost one HTML GET per page, so walk them concurrently and
@@ -290,18 +340,7 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 	for _, r := range results {
 		pages = append(pages, r...)
 	}
-
-	chapter := &Chapter{
-		Title:      f.GetTitle(),
-		Number:     f.GetNumber(),
-		PagesCount: int64(len(pages)), // Use actual number of found pages
-		Language:   "en",
-		Pages:      pages,
-		ID:         chapterURLID(tchap.URL),
-	}
-	chapter.SetGroups(tchap.GetGroups()...)
-
-	return chapter, nil
+	return pages, nil
 }
 
 // tcbPageWorkers bounds the concurrent reader-page fetches of one chapter.
@@ -310,7 +349,7 @@ const tcbPageWorkers = 8
 // fetchReaderPage returns the images of one reader page, warning and returning
 // none when the page can't be fetched or parsed, and an error for a reader
 // that isn't a manga chapter.
-func (t Tcb) fetchReaderPage(f Filterable, pageNum int, pageURL string) (pages []Page, err error) {
+func (t Tcb) fetchReaderPage(f Filterable, pageNum int, pageURL string) ([]Page, error) {
 	rbody, err := http.Get(http.RequestParams{
 		URL:     pageURL,
 		Referer: t.BaseUrl(),
@@ -330,7 +369,23 @@ func (t Tcb) fetchReaderPage(f Filterable, pageNum int, pageURL string) (pages [
 	if err := tcbReaderTypeError(pageDoc, f.GetTitle()); err != nil {
 		return nil, err
 	}
+	return t.readerPageImages(f, pageNum, pageDoc), nil
+}
 
+// readerImage builds the page for an image URL found on reader page pageNum.
+func (t Tcb) readerImage(pageNum int, u string) Page {
+	if !strings.HasPrefix(u, "http") {
+		u = t.BaseUrl() + u
+	}
+	return Page{
+		Number:     int64(pageNum + 1),
+		URL:        u,
+		RetryFlaky: t.retryFlaky(),
+	}
+}
+
+// readerPageImages returns the images of reader page pageNum.
+func (t Tcb) readerPageImages(f Filterable, pageNum int, pageDoc *goquery.Document) (pages []Page) {
 	if urls, ok, err := wpMangaProtectorImages(pageDoc); ok {
 		if err != nil {
 			notice.Warn("could not decode the protected pages of %s: %s", f.GetTitle(), err)
@@ -338,27 +393,18 @@ func (t Tcb) fetchReaderPage(f Filterable, pageNum int, pageURL string) (pages [
 		for _, u := range urls {
 			pages = append(pages, Page{Number: int64(pageNum + 1), URL: u})
 		}
-		return pages, nil
+		return pages
 	}
 
-	// Collect all images in this page
 	pageDoc.Find("div.reading-content img").Each(func(i int, s *goquery.Selection) {
 		u := strings.TrimSpace(s.AttrOr("data-src", s.AttrOr("src", "")))
 		if u == "" {
 			notice.Warn("page %d of %s has an image with no URL to fetch from", pageNum+1, f.GetTitle())
 			return
 		}
-		if isThemeImage(u) {
-			return
+		if !isThemeImage(u) {
+			pages = append(pages, t.readerImage(pageNum, u))
 		}
-		if !strings.HasPrefix(u, "http") {
-			u = t.BaseUrl() + u
-		}
-		pages = append(pages, Page{
-			Number:     int64(pageNum + 1),
-			URL:        u,
-			RetryFlaky: t.retryFlaky(),
-		})
 	})
-	return pages, nil
+	return pages
 }
