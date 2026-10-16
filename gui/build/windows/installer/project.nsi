@@ -34,11 +34,11 @@ ManifestDPIAware true
 !define MUI_ABORTWARNING # This will warn the user if they exit from the installer.
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION FinishRun
-!define MUI_PAGE_CUSTOMFUNCTION_SHOW FinishShow
 
 !insertmacro MUI_PAGE_WELCOME # Welcome to the installer page.
 # !insertmacro MUI_PAGE_LICENSE "resources\eula.txt" # Adds a EULA page to the installer
 !insertmacro MUI_PAGE_INSTFILES # Installing page.
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW FinishShow
 !insertmacro MUI_PAGE_FINISH # Finished installation page.
 
 !insertmacro MUI_UNPAGE_INSTFILES # Uinstalling page
@@ -109,11 +109,12 @@ FunctionEnd
 Function FinishShow
     ${GetParameters} $0
     ${GetOptions} $0 "/relaunch" $1
-    IfErrors +4
+    IfErrors +5
     # 1203 is the Run checkbox's control id on the finish page.
     FindWindow $0 "#32770" "" $HWNDPARENT
     GetDlgItem $0 $0 1203
     ShowWindow $0 ${SW_HIDE}
+    SendMessage $0 ${BM_SETCHECK} ${BST_UNCHECKED} 0
 FunctionEnd
 
 Section
