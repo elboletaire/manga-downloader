@@ -615,12 +615,12 @@ grabber/html: \
 	grabber/lelscanfr \
 	grabber/limonmanga \
 	grabber/madaradex \
-	grabber/mangalami \
 	grabber/madarascans \
 	grabber/maid \
 	grabber/mangaberri \
 	grabber/mangaeclipse \
 	grabber/mangakatana \
+	grabber/mangalami \
 	grabber/mangapill \
 	grabber/mangaread \
 	grabber/mangasorigines \
@@ -721,7 +721,7 @@ grabber/manhuaplus:
 grabber/silentquill:
 	go run . https://silentquill.net/series/i-was-invited-to-join-the-country-as-an-otherworldly-warrior-but-i-refused-and-decided-to-start-as-a-soldier/ 59
 grabber/decadencescans:
-	go run . https://reader.decadencescans.com/manga/ashi-girl/ 1-2
+	go run . https://reader.decadencescans.com/manga/ashi-girl/ 1
 grabber/mangalami:
 	go run . https://mangalami.com/chainsaw-man-%e0%b8%95%e0%b8%ad%e0%b8%99%e0%b8%97%e0%b8%b5%e0%b9%88-202/ 200-201
 grabber/deathtollscans:
