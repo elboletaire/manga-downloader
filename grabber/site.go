@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -258,6 +259,20 @@ func pageLanguage(doc *goquery.Document) string {
 func (g Grabber) BaseUrl() string {
 	u, _ := url.Parse(g.URL)
 	return u.Scheme + "://" + u.Host
+}
+
+// retryFlakyHosts are the sites whose origin fails pages at random with a
+// 404 or 5xx (see Page.RetryFlaky).
+var retryFlakyHosts = []string{"mangazin.org"}
+
+// retryFlaky reports whether the site's pages opt in to Page.RetryFlaky
+func (g *Grabber) retryFlaky() bool {
+	if g == nil {
+		return false
+	}
+	u, _ := url.Parse(g.URL)
+	host := strings.TrimPrefix(strings.ToLower(u.Hostname()), "www.")
+	return slices.Contains(retryFlakyHosts, host)
 }
 
 // GetPreferredLanguage returns the preferred language for the site

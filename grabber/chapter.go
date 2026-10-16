@@ -76,6 +76,10 @@ type Page struct {
 	// hosts that refuse a request carrying one (their reader sets
 	// referrerpolicy="no-referrer" on its images)
 	NoReferer bool
+	// RetryFlaky retries a 404 or 5xx several times, 1s apart, each with a
+	// cache-busting query, for an origin that fails pages at random (a CDN
+	// may even cache its 404)
+	RetryFlaky bool
 	// Transform, if non-nil, post-processes the raw downloaded page bytes
 	// before they're packed (e.g. undoing a site's client-side image
 	// scrambling). Errors are retried the same as a failed download.

@@ -1282,18 +1282,34 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 			notice.Warn("page %d of %s has no URL to fetch from 😕 (will be ignored)", i, chapter.GetTitle())
 			continue
 		}
+		if isThemeImage(img) {
+			continue
+		}
 		if !strings.HasPrefix(img, "http") {
 			img = m.BaseUrl() + img
 		}
 
 		page := Page{
-			Number: int64(i),
-			URL:    img,
+			Number:     int64(i),
+			URL:        img,
+			RetryFlaky: m.retryFlaky(),
 		}
 		chapter.Pages = append(chapter.Pages, page)
 	}
 
 	return chapter
+}
+
+// isSVGPlaceholder reports whether src is a lazy-load spinner (an .svg) with
+// the real image in data-src; pages are never SVG.
+func isSVGPlaceholder(src string, s *goquery.Selection) bool {
+	return strings.HasSuffix(strings.ToLower(src), ".svg") && s.AttrOr("data-src", "") != ""
+}
+
+// isThemeImage reports whether u is a promo or "to be continued" image from
+// the theme's own folder, which Madara clones pad chapters with.
+func isThemeImage(u string) bool {
+	return strings.Contains(u, "/wp-content/themes/")
 }
 
 // canonicalHost returns the host of the page's canonical link, without the
@@ -1529,7 +1545,7 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 			return
 		}
 		src := s.AttrOr("src", "")
-		if src == "" || strings.HasPrefix(src, "data:image") {
+		if src == "" || strings.HasPrefix(src, "data:image") || isSVGPlaceholder(src, s) {
 			src = s.AttrOr("data-src", "")
 		}
 		if src == "" {

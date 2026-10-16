@@ -9,6 +9,8 @@ import (
 	"io"
 	stdhttp "net/http"
 	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -69,7 +71,7 @@ func FetchChapter(ctx context.Context, site grabber.Site, chapter *grabber.Chapt
 				Referer: referer,
 				Headers: page.Headers,
 				Accept:  http.ImageAccept,
-			}, uint(page.Number), site.GetRetries(), page.Transform, pace)
+			}, uint(page.Number), site.GetRetries(), page.Transform, pace, page.RetryFlaky)
 
 			if err != nil {
 				select {
@@ -115,11 +117,13 @@ func FetchChapter(ctx context.Context, site grabber.Site, chapter *grabber.Chapt
 // see retryWait). transform, if non-nil, post-processes the downloaded bytes.
 // Cancelling ctx abandons the wait before a retry.
 func FetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error)) (*File, error) {
-	return fetchFile(ctx, params, page, retries, transform, nil)
+	return fetchFile(ctx, params, page, retries, transform, nil, false)
 }
 
-// fetchFile is FetchFile with an optional pace, called before every attempt
-func fetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error), pace func()) (file *File, err error) {
+// fetchFile is FetchFile with an optional pace, called before every attempt,
+// and retryFlaky (Page.RetryFlaky)
+func fetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error), pace func(), retryFlaky bool) (file *File, err error) {
+	orig := params.URL
 	for attempt := uint8(0); ; attempt++ {
 		if pace != nil {
 			pace()
@@ -137,11 +141,19 @@ func fetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 			return
 		}
 
-		if attempt >= retries {
+		wait := retryWait(err, attempt)
+		limit := retries
+		if retryFlaky && retries > 0 && isFlaky(err) {
+			limit, wait = max(retries, flakyRetries), retryDelay
+		}
+		if attempt >= limit {
 			return
 		}
+		if retryFlaky && isFlaky(err) {
+			params.URL = bustCache(orig)
+		}
 
-		t := time.NewTimer(retryWait(err, attempt))
+		t := time.NewTimer(wait)
 		select {
 		case <-ctx.Done():
 			t.Stop()
@@ -149,6 +161,26 @@ func fetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 		case <-t.C:
 		}
 	}
+}
+
+// flakyRetries is how many times an opted-in page that fails is retried at least.
+const flakyRetries = 6
+
+// isFlaky reports whether err is a 404 or a 5xx, the failures an opted-in
+// origin gives at random (a 429 keeps its own Retry-After handling).
+func isFlaky(err error) bool {
+	var se *http.StatusError
+	return errors.As(err, &se) && (se.Code == stdhttp.StatusNotFound || se.Code >= 500)
+}
+
+// bustCache appends a unique query to the raw URL, leaving any existing one
+// byte for byte (it may be signed), so a retry skips a CDN's cached 404.
+func bustCache(rawURL string) string {
+	sep := "?"
+	if strings.Contains(rawURL, "?") {
+		sep = "&"
+	}
+	return rawURL + sep + "retry=" + strconv.FormatInt(time.Now().UnixNano(), 36)
 }
 
 // retryWait is the delay before retrying after attempt (0-based) failed with
