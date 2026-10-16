@@ -78,3 +78,55 @@ func TestVolumeGroupIsShared(t *testing.T) {
 		}
 	}
 }
+
+// TestFilenameLabelUnchanged checks that a chapter whose grabber now leaves the
+// chapter word to its label is named, labelled and keyed as when the grabber
+// wrote it into the title, and that {{.SiteTitle}} is the site's title alone
+func TestFilenameLabelUnchanged(t *testing.T) {
+	tests := []struct {
+		name      string
+		old       string
+		chapter   grabber.Chapter
+		file      string
+		siteTitle string
+	}{
+		{"no title", "Chapter 12", grabber.Chapter{Number: 12, LabelStyle: grabber.LabelNumbered}, "Series 12 - Chapter 12", ""},
+		{"decimal", "Chapter 10.5", grabber.Chapter{Number: 10.5, LabelStyle: grabber.LabelNumbered}, "Series 10.5 - Chapter 10.5", ""},
+		{"titled", "Dead End", grabber.Chapter{Title: "Dead End", Number: 36, LabelStyle: grabber.LabelNumbered}, "Series 36 - Dead End", "Dead End"},
+		{"site's chapter word", "Capítulo 7: Foo", grabber.Chapter{Title: "Capítulo 7: Foo", Number: 7, LabelStyle: grabber.LabelNumbered}, "Series 7 - Capítulo 7; Foo", "Capítulo 7; Foo"},
+		{"group", "Chapter 3", grabber.Chapter{Number: 3, Group: "Alpha", LabelStyle: grabber.LabelNumbered}, "Series 3 - Chapter 3 [Alpha]", ""},
+		{"prefixed", "Chapter 5 - Foo", grabber.Chapter{Title: "Foo", Number: 5, LabelStyle: grabber.LabelPrefixed}, "Series 5 - Chapter 5 - Foo", "Foo"},
+		{"padded", "Chapter 0001 Market", grabber.Chapter{Title: "Market", Number: 1, LabelStyle: grabber.LabelPadded}, "Series 1 - Chapter 0001 Market", "Market"},
+		{"padded, no title", "Chapter 0010 ", grabber.Chapter{Number: 10.5, LabelStyle: grabber.LabelPadded}, "Series 10.5 - Chapter 0010", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			before := tt.chapter
+			before.Title, before.LabelStyle = tt.old, grabber.LabelTitle
+			name := func(c *grabber.Chapter) string {
+				got, err := NewFilenameFromTemplate(FilenameTemplateDefault, NewChapterFileTemplateParts("Series", c))
+				if err != nil {
+					t.Fatal(err)
+				}
+				return got
+			}
+			after := tt.chapter
+			if got, want := name(&after), name(&before); got != want || got != tt.file {
+				t.Errorf("file name = %q, want %q (before: %q)", got, tt.file, want)
+			}
+			if got, want := chapterLabel(&after), chapterLabel(&before); got != want {
+				t.Errorf("EPUB label = %q, want %q", got, want)
+			}
+			if got, want := chapterKey(&after), chapterKey(&before); got != want {
+				t.Errorf("EPUB key = %q, want %q", got, want)
+			}
+			got, err := NewFilenameFromTemplate("{{.SiteTitle}}", NewChapterFileTemplateParts("Series", &after))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != tt.siteTitle {
+				t.Errorf("{{.SiteTitle}} = %q, want %q", got, tt.siteTitle)
+			}
+		})
+	}
+}

@@ -559,6 +559,10 @@ left as is:
 A custom template names them too, with `{{.Number}}` being the volume's
 chapters (`1-7`) and `{{.Title}}` `Vol. 01`.
 
+`{{.Title}}` is the chapter's label: its title, or `Chapter 12` when the site
+gives none. `{{.SiteTitle}}` is the site's title alone, empty when it gives none
+and for a volume or a bundle.
+
 `{{.Group}}` is the scanlation group that made the release (empty when the site
 doesn't say). A volume or a bundle gets its group only when all of its chapters
 were made by the same one, so mixed groups leave it empty.

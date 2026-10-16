@@ -21,6 +21,9 @@ type FilenameTemplateParts struct {
 	// Title is the chapter's label (e.g. "The Beginning", or "Chapter 12" when
 	// the site gives no title), see grabber.ChapterLabel
 	Title string
+	// SiteTitle is the site's own chapter title, empty when it gives none or
+	// for a volume or bundle
+	SiteTitle string
 	// Group is the scanlation group that made the release (e.g. "Alpha"). For a
 	// volume or a bundle, the group its chapters share, empty when they differ
 	// or name none. Several groups of one release are joined with ", "
@@ -80,11 +83,12 @@ func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string,
 // NewChapterFileTemplateParts returns a new FilenameTemplateParts from a title and a chapter
 func NewChapterFileTemplateParts(title string, chapter *grabber.Chapter) FilenameTemplateParts {
 	return FilenameTemplateParts{
-		Series: SanitizeFilename(title),
-		Number: strings.Replace(fmt.Sprintf("%.1f", chapter.GetNumber()), ".0", "", 1),
-		Title:  SanitizeFilename(grabber.ChapterLabel(chapter)),
-		Group:  SanitizeFilename(chapter.Group),
-		Volume: chapter.Volume,
+		Series:    SanitizeFilename(title),
+		Number:    strings.Replace(fmt.Sprintf("%.1f", chapter.GetNumber()), ".0", "", 1),
+		Title:     SanitizeFilename(grabber.ChapterLabel(chapter)),
+		SiteTitle: SanitizeFilename(chapter.GetTitle()),
+		Group:     SanitizeFilename(chapter.Group),
+		Volume:    chapter.Volume,
 	}
 }
 
