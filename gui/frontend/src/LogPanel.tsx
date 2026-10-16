@@ -23,7 +23,7 @@ interface BarProps {
 }
 
 export function StatusBar({ log, version, releaseURL, update, open, onToggle, onOpenURL, onUpdate }: BarProps) {
-  const [updateOpen, setUpdateOpen] = useState(false);
+  const [updateOpen, setUpdateOpen] = useState(update?.prompt === true);
 
   // links open outside the window, which must stay on the app
   const openLink = (url: string) => (e: MouseEvent<HTMLAnchorElement>) => {

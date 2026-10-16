@@ -284,6 +284,16 @@ describe('createMockApi', () => {
     expect((await createMockApi('loaded').state()).releaseURL).toBe('');
   });
 
+  it('keeps the update not one-click with shot, and opens its prompt with prompt', async () => {
+    const shot = (await createMockApi({ scenario: 'update', shot: true }).state()).update;
+    expect(shot?.oneClick).toBe(false);
+    expect(shot?.prompt).toBeUndefined();
+
+    const prompt = (await createMockApi({ scenario: 'update', shot: true, prompt: true }).state()).update;
+    expect(prompt).toMatchObject({ latest: 'v1.18.0', oneClick: true, prompt: true });
+    expect((await createMockApi({ scenario: 'loaded', prompt: true }).state()).update).toBeNull();
+  });
+
   it('uses the macOS output path with shot and the Linux path without', async () => {
     const withShot = await createMockApi({ shot: true }).state();
     expect(withShot.options.outputDir).toBe('/Users/reader/Downloads/Manga');
@@ -423,6 +433,7 @@ describe('mockSetupFrom', () => {
       locked: false,
       shot: false,
       epub: false,
+      prompt: false,
     });
     expect(mockSetupFrom('?novolumes').novolumes).toBe(true);
     expect(mockSetupFrom('?chapters=nope').chapters).toBeGreaterThan(100);
@@ -430,6 +441,7 @@ describe('mockSetupFrom', () => {
     expect(mockSetupFrom('?skip').skip).toBe(true);
     expect(mockSetupFrom('?locked').locked).toBe(true);
     expect(mockSetupFrom('?shot').shot).toBe(true);
+    expect(mockSetupFrom('?prompt').prompt).toBe(true);
     expect(mockSetupFrom('?epub').epub).toBe(true);
   });
 

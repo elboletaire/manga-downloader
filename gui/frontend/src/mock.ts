@@ -18,7 +18,8 @@
 // some chapters paid and locked (see below), &fail makes
 // the fourth chapter fail halfway and &skip makes the sixth one come out
 // skipped, every page excluded by --skip-pages (both off by default; every run
-// saves every chapter without them), &epub starts the output as EPUB, &shot
+// saves every chapter without them), &epub starts the output as EPUB, &prompt
+// (with update) makes the update one-click and opens its prompt on load, &shot
 // uses production release versions and a macOS output path (for screenshots),
 // and VITE_MOCK=1 at build time includes the mock in production builds (e.g.
 // for the screenshot capture build; set via Wails frontend env).
@@ -92,6 +93,8 @@ export interface MockSetup {
   shot: boolean;
   /** Start with EPUB as the output format */
   epub: boolean;
+  /** With the update scenario: one-click update, its prompt open on load */
+  prompt: boolean;
 }
 
 /** What the mock series offers for each filter; null when the site lists none */
@@ -149,6 +152,7 @@ export function mockSetupFrom(search: string): MockSetup {
     locked: params.has('locked'),
     shot: params.has('shot'),
     epub: params.has('epub'),
+    prompt: params.has('prompt'),
   };
 }
 
@@ -242,6 +246,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     locked,
     shot,
     epub,
+    prompt,
   } = {
     scenario: 'empty' as Scenario,
     freeze: false,
@@ -254,6 +259,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     locked: false,
     shot: false,
     epub: false,
+    prompt: false,
     ...(typeof setup === 'string' ? { scenario: setup } : setup),
   };
   const offers = OFFERS[site];
@@ -363,7 +369,12 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     version: reportsRelease ? releaseVersion : 'v0.0.0-mock',
     releaseURL: reportsRelease ? `${REPO}/releases/tag/${releaseVersion}` : '',
     update: isReleaseBuild(scenario)
-      ? { latest: shot ? UPDATE_VERSION_SHOT : UPDATE_VERSION_DEV, url: `${REPO}/releases/latest`, oneClick: !shot }
+      ? {
+          latest: shot ? UPDATE_VERSION_SHOT : UPDATE_VERSION_DEV,
+          url: `${REPO}/releases/latest`,
+          oneClick: !shot || prompt,
+          ...(prompt && { prompt: true }),
+        }
       : null,
     browserVisibleAuto: browserAuto,
     browserAlert,

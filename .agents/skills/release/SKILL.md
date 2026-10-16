@@ -16,7 +16,7 @@ Do it from a clean worktree off `origin/master`, at the commit the release will 
 | Asset | Source | Used in | Refresh |
 |---|---|---|---|
 | Terminal GIFs, `assets/demos/*.gif` (dark) and `*-light.gif` | `assets/demos/*.tape` and `*-light.tape` twins | README (`download`, `prompt`, `groups`, `bundle`, `volumes`), website (`download`, `bundle`, `volumes`, via raw GitHub URLs on `master`) | every release |
-| App screenshots, `assets/screenshots/{02..10}-*-{light,dark}.png` | `tools/screenshots/` | README | every release that changed the app's UI |
+| App screenshots, `assets/screenshots/{02..11}-*-{light,dark}.png` | `tools/screenshots/` | README | every release that changed the app's UI |
 | Website WebPs, `website/src/assets/screenshots/*.webp` | the PNGs above, cropped by `website/build/crop-screenshots.sh` | website | with the PNGs (`capture-all.sh --install` does it) |
 | Brand rasters | `assets/brand/**.svg` | see "Brand" below | only when the brand changed |
 
@@ -43,9 +43,9 @@ Prerequisites: Xcode command line tools (`swiftc`), `cliclick`, `pngquant`, Imag
 tools/screenshots/capture-all.sh --install
 ```
 
-It builds the app with `capture.patch` applied (and reverts it, whatever happens) and `VITE_MOCK=1`, so the mock scenarios in `gui/frontend/src/mock.ts` are used and no site is involved. It then captures the 9 shots in light and dark (the window's own appearance, not the system's), crops them to 2000x1390, quantizes with `pngquant`, and, with `--install`, copies them into `assets/screenshots/` and rebuilds the website's WebPs (`website/build/crop-screenshots.sh` for the crops, `magick` for the `app-overview` hero). Without `--install` the PNGs stay in `tools/screenshots/out/` for a look first. Details are in `tools/screenshots/README.md` and `website/README.md` ("Screenshots").
+It builds the app with `capture.patch` applied (and reverts it, whatever happens) and `VITE_MOCK=1`, so the mock scenarios in `gui/frontend/src/mock.ts` are used and no site is involved. It then captures the 11 shots in light and dark (the window's own appearance, not the system's), crops them to 2000x1390, quantizes with `pngquant`, and, with `--install`, copies them into `assets/screenshots/` and rebuilds the website's WebPs (`website/build/crop-screenshots.sh` for the crops, `magick` for the `app-overview` hero). Without `--install` the PNGs stay in `tools/screenshots/out/` for a look first. Details are in `tools/screenshots/README.md` and `website/README.md` ("Screenshots").
 
-- **Update the mock's release constant first**: the shots show a fixed version, `RELEASE_VERSION_SHOT` in `gui/frontend/src/mock.ts` (and the tests in `mock.test.ts` that pin it). Set it to the version being released (the `09-update` shot is the "newer release" one, so keep the relation between the two).
+- **Update the mock's version constants first**: the shots show fixed versions, `RELEASE_VERSION_SHOT` and `UPDATE_VERSION_SHOT` in `gui/frontend/src/mock.ts` (and the tests in `mock.test.ts` that pin them). Bump both: the first to the version being released, the second kept above it (the `09-update` shot is the "newer release" one, and `11-update-prompt` shows both in the one-click dialog).
 - If a shot's layout changed (new control, different window content), check that the crop geometries still hold: the table in `website/README.md` and `website/build/crop-screenshots.sh`. Changing the crops means checking the `<img>` `width`/`height` in `website/index.html`, which come from the output.
 - New or removed screenshots also mean `capture-all.sh`, the README and `website/index.html`.
 

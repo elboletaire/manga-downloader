@@ -34,8 +34,10 @@ binary:
 
 The mock is built in with `VITE_MOCK=1` (production builds leave it out), and
 every query adds `&shot`: the release version, a macOS folder path and no debug
-line in `update`. `&fail` is only used for `10-failed`. When the app's version
-moves on, update the `&shot` constants near `RELEASE_VERSION` in `mock.ts`.
+line in `update`. `&fail` is only used for `10-failed`, and `&prompt` (with the
+`update` scenario) for `11-update-prompt`: it makes the update one-click and
+opens its dialog. When the app's version moves on, update the `&shot` constants
+near `RELEASE_VERSION` in `mock.ts`.
 
 ## Files
 
