@@ -58,8 +58,9 @@ func removeUpdateDir(dir string) error {
 	return os.RemoveAll(dir)
 }
 
-// sweepUpdateDirs removes the update directories earlier runs left in tmp,
-// since the installer runs from its directory and can't delete it itself
+// sweepUpdateDirs removes the update directories earlier runs left in tmp.
+// An update quits the app once its installer starts, so the next start
+// cleans up after it, on every system the same way.
 func sweepUpdateDirs(tmp string) {
 	dirs, _ := filepath.Glob(filepath.Join(tmp, updateDirPrefix+"*"))
 	for _, d := range dirs {

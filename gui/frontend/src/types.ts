@@ -128,7 +128,7 @@ export interface Update {
   latest: string;
   /** The page the update is linked to: the latest release */
   url: string;
-  /** Update() can install it: an installed Windows copy and an installer on the release */
+  /** Update() can install it: an installed copy, and its package and checksums on the release */
   oneClick: boolean;
 }
 

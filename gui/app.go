@@ -156,9 +156,7 @@ func (a *App) pump() {
 func (a *App) startup(ctx context.Context, rt *wailsRuntime) {
 	rt.set(ctx)
 	a.quit = func() { wruntime.Quit(ctx) }
-	if runtime.GOOS == "windows" {
-		go sweepUpdateDirs(os.TempDir())
-	}
+	go sweepUpdateDirs(os.TempDir())
 	a.launch()
 	// release builds only: a dev build has no release to compare with. The
 	// check runs behind the window, which is up already.
