@@ -105,6 +105,7 @@ func TestTcbSeriesRe(t *testing.T) {
 		{"https://lhtranslation.net/manga/gaikotsu-kishi-sama/", "manga/gaikotsu-kishi-sama"},
 		{"https://lilymanga.net/gl/a-love-hate-chord/", "gl/a-love-hate-chord"},
 		{"https://mangalivre.to/manga/chainsaw-man-pt-br/", "manga/chainsaw-man-pt-br"},
+		{"https://webtoonia.fun/seri/ask-bagimlisi/bolum-19/", "seri/ask-bagimlisi"},
 		{"https://lhtranslation.net/manga/gaikotsu-kishi-sama/chapter-1/", "manga/gaikotsu-kishi-sama"},
 		{"https://gdscans.com/manga/example/volume-10/chapter-50/", "manga/example"},
 		{"https://lilymanga.net/gl/a-love-hate-chord/episode-02/", "gl/a-love-hate-chord"},
@@ -167,6 +168,19 @@ func TestTcbChapterURLUsesSeries(t *testing.T) {
 	want := []string{"/gl/a-love-hate-chord/ajax/chapters", "/gl/a-love-hate-chord/"}
 	if len(requested) != len(want) || requested[0] != want[0] || requested[1] != want[1] {
 		t.Errorf("requested paths = %v, want %v", requested, want)
+	}
+}
+
+func TestTcbMovedHost(t *testing.T) {
+	for _, in := range []string{
+		"https://www.diamondfansub.com/seri/a/bolum-1/",
+		"https://www.webtoonia.fun/seri/a/bolum-1/",
+		"https://WWW.Webtoonia.fun/seri/a/bolum-1/",
+	} {
+		got := tcbMovedHostRe.ReplaceAllString(in, "${1}webtoonia.fun/")
+		if want := "https://webtoonia.fun/seri/a/bolum-1/"; got != want {
+			t.Errorf("rewrite of %q = %q, want %q", in, got, want)
+		}
 	}
 }
 
@@ -385,5 +399,30 @@ func TestTcbFetchChapterSinglePageFetchesOnce(t *testing.T) {
 	}
 	if n := hits.Load(); n != 1 {
 		t.Errorf("chapter page fetched %d times, want 1", n)
+	}
+}
+
+// a trailing " - 💦" marks a members-only chapter: locked, and not part of the title
+func TestTcbFetchChaptersLockedMarker(t *testing.T) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(`<ul>
+<li class="wp-manga-chapter"><a href="https://webtoonia.fun/seri/x/bolum-6/">Bölüm 6 - 💦</a></li>
+<li class="wp-manga-chapter"><a href="https://webtoonia.fun/seri/x/bolum-5/">Bölüm 5</a></li></ul>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	tcb := Tcb{Grabber: &Grabber{URL: "https://webtoonia.fun/seri/x/"}, chaps: doc.Find("li.wp-manga-chapter")}
+	chapters, _ := tcb.FetchChapters()
+	if len(chapters) != 2 || !LockedOf(chapters[0]) || LockedOf(chapters[1]) {
+		t.Fatalf("locked flags wrong: %+v", chapters)
+	}
+	if got := chapters[0].GetTitle(); got != "Bölüm 6" || chapters[0].GetNumber() != 6 {
+		t.Errorf("got %q (%v), want \"Bölüm 6\" (6)", got, chapters[0].GetNumber())
+	}
+
+	// another host keeps the marker in the title and the chapter unlocked
+	tcb.URL = "https://example.com/manga/x/"
+	chapters, _ = tcb.FetchChapters()
+	if LockedOf(chapters[0]) || chapters[0].GetTitle() != "Bölüm 6 - 💦" {
+		t.Errorf("other host: locked %v, title %q", LockedOf(chapters[0]), chapters[0].GetTitle())
 	}
 }

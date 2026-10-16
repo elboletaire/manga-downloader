@@ -35,9 +35,9 @@ func TestLockedMessage(t *testing.T) {
 		locked grabber.Filterables
 		want   string
 	}{
-		{mk(134), "skipping 1 paid chapter: 134"},
-		{mk(134, 135, 136), "skipping 3 paid chapters: 134-136"},
-		{mk(134, 135, 136, 140, 141.5), "skipping 5 paid chapters: 134-136, 140, 141.5"},
+		{mk(134), "skipping 1 locked chapter: 134"},
+		{mk(134, 135, 136), "skipping 3 locked chapters: 134-136"},
+		{mk(134, 135, 136, 140, 141.5), "skipping 5 locked chapters: 134-136, 140, 141.5"},
 	}
 	for _, tt := range tests {
 		if got := LockedMessage(tt.locked); got != tt.want {

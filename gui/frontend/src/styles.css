@@ -577,13 +577,13 @@ code {
   border-radius: 6px;
 }
 
-/* a paid chapter can't be picked: its row stays, dimmed, with the lock */
-.row.paid {
+/* a locked chapter can't be picked: its row stays, dimmed, with the lock */
+.row.locked {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.row.paid:hover {
+.row.locked:hover {
   background: none;
 }
 
@@ -777,7 +777,7 @@ code {
   letter-spacing: 0.04em;
 }
 
-/* a paid chapter's mark, inline before its title */
+/* a locked chapter's mark, inline before its title */
 .lock {
   display: inline-flex;
   vertical-align: -2px;

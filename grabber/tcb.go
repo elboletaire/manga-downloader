@@ -36,14 +36,19 @@ type TcbChapter struct {
 	URL string
 }
 
-// tcbSeriesRe matches the series path of a Madara URL: /manga/<slug>/ on most
-// themes, /gl/<slug>/ on some (lilymanga.net). The slug must end in a slash,
-// so a pasted chapter URL such as /manga/<slug>/<chapter>/ maps to its series,
-// while /somanga/ and /glimpse/ don't match at all.
-var tcbSeriesRe = regexp.MustCompile(`/((?:manga|gl)/[^/]+)/`)
+// tcbSeriesRe matches the series path of a Madara URL: /manga/<slug>/, or
+// /gl/ (lilymanga.net) and /seri/ (webtoonia.fun). The slug must end in a slash,
+// so a chapter URL maps to its series while /somanga/ and /glimpse/ don't match.
+var tcbSeriesRe = regexp.MustCompile(`/((?:manga|gl|seri)/[^/]+)/`)
+
+// tcbMovedHostRe matches diamondfansub.com, which now redirects every series
+// and chapter page to webtoonia.fun (a chapter URL there lands on the series),
+// and www.webtoonia.fun, which redirects to the apex.
+var tcbMovedHostRe = regexp.MustCompile(`(?i)^(https?://)(?:www\.)?(?:diamondfansub|webtoonia)\.(?:com|fun)/`)
 
 // Test returns true if the URL is a compatible TCBScans URL
 func (t *Tcb) Test() (bool, error) {
+	t.URL = tcbMovedHostRe.ReplaceAllString(t.URL, "${1}webtoonia.fun/")
 	match := tcbSeriesRe.FindStringSubmatch(t.URL)
 	if match == nil {
 		return false, nil
@@ -151,6 +156,11 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 			link.Children().Remove()
 		}
 		title := strings.TrimSpace(link.Text())
+		// webtoonia.fun tags members-only chapters with a trailing " - 💦" (other sites may mean something else by it)
+		locked := false
+		if strings.Contains(t.URL, "://webtoonia.fun/") {
+			title, locked = strings.CutSuffix(title, tcbLockedSuffix)
+		}
 		href := link.AttrOr("href", "")
 		num := tcbChapterNumber(title, href)
 		title, group := t.splitTitleGroup(title)
@@ -160,6 +170,7 @@ func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
 				Number: num,
 				Volume: tcbVolume(s),
 				ID:     chapterURLID(href),
+				Locked: locked,
 			},
 			href,
 		}
@@ -190,6 +201,8 @@ func (t Tcb) splitTitleGroup(title string) (string, string) {
 	}
 	return title, ""
 }
+
+const tcbLockedSuffix = " - 💦"
 
 var tcbNumberRe = regexp.MustCompile(`\d+\.?\d*`)
 

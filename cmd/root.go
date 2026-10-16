@@ -168,13 +168,13 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(1)
 	}
 
-	// paid chapters can't be read logged out: leave them out instead of failing each
+	// locked chapters can't be read logged out: leave them out instead of failing each
 	chapters, lockedNote := skipLocked(chapters)
 	if lockedNote != "" {
 		yellow("%s", lockedNote)
 	}
 	if len(chapters) == 0 {
-		yellow("Every chapter matched by the specified ranges is paid and locked")
+		yellow("Every chapter matched by the specified ranges is locked")
 		exit(1)
 	}
 
@@ -476,7 +476,7 @@ func toMetaFunc(c *color.Color) func(string) string {
 }
 
 // allChaptersLabel is the prompt for downloading every listed chapter, which
-// says how many of them the listing marks as paid and locked
+// says how many of them the listing marks as locked
 func allChaptersLabel(chapters grabber.Filterables) string {
 	label := fmt.Sprintf("Do you want to download all %d chapters", len(chapters))
 	locked := 0
@@ -486,12 +486,12 @@ func allChaptersLabel(chapters grabber.Filterables) string {
 		}
 	}
 	if locked > 0 {
-		label += fmt.Sprintf(" (%d paid and locked, skipped)", locked)
+		label += fmt.Sprintf(" (%d locked, skipped)", locked)
 	}
 	return label
 }
 
-// skipLocked drops the chapters the listing marks as paid, returning the rest
+// skipLocked drops the chapters the listing marks as locked, returning the rest
 // and the line that says which were left out ("" when none were)
 func skipLocked(chapters grabber.Filterables) (grabber.Filterables, string) {
 	open, locked := core.SplitLocked(chapters)

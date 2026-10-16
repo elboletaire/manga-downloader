@@ -4,7 +4,7 @@
 
 import type { Chapter } from './types';
 
-/** The chapters that can be picked: the ones the listing marks paid and locked can't */
+/** The chapters that can be picked: the ones the listing marks locked can't */
 export function pickable(chapters: Chapter[]): Chapter[] {
   return chapters.filter((c) => !c.locked);
 }

@@ -28,7 +28,7 @@ type fakeChapter struct {
 	fail   map[int]bool
 	// volume is the volume the site lists the chapter under, 0 for none
 	volume int
-	// locked lists the chapter as paid
+	// locked lists the chapter as locked
 	locked bool
 }
 
@@ -720,7 +720,7 @@ func TestEventsNameTheReleaseWhenCopiesNeedAGroup(t *testing.T) {
 	}
 }
 
-// a chapter the listing marks as paid is never selected, by any path
+// a chapter the listing marks as locked is never selected, by any path
 func TestLockedChaptersCannotBeSelected(t *testing.T) {
 	list := chapters(5, 1)
 	list[1].locked = true

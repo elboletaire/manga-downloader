@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[159 supported sites](#supported-sites)**, from big aggregators to small
+- **[160 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -297,8 +297,8 @@ Open the app and follow these steps:
    button). The app loads the series on its own, without a button.
 2. **Pick chapters** in the list. Type a range such as `1-10,12` and press
    *Add range*, Shift+click to select a span, or use *All* and *None*. The
-   arrow keys and Space work too. Paid chapters the site
-   locks (coins or early access) show a lock and can't be selected.
+   arrow keys and Space work too. Locked chapters (paid or members-only) show
+   a lock and can't be selected.
 3. **Choose a language and a scanlation group** when the site offers them. The
    selectors tell you when a series has none, and picking one reloads the
    chapter list. Sites that support it also offer *All*.
@@ -381,7 +381,7 @@ manga-downloader [flags] [url] [chapters]
 - `chapters` is a comma-separated list of numbers and ranges, such as
   `1,3,5-10`. If you leave it out, the tool asks whether to download every
   chapter. The answer defaults to "no".
-  Paid chapters the site marks as locked (coins or early access) are skipped,
+  Chapters the site marks as locked (coins, early access or members-only) are skipped,
   with a line saying which.
 
 Arguments aren't positional, so `manga-downloader 1-50 [url]` works too.
@@ -629,7 +629,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 159 supported sites</b></summary>
+<summary><b>Show all 160 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -787,6 +787,7 @@ to a minute.
 | [uzaymanga.com](https://uzaymanga.com) |  | 2026-10-15 |
 | [violetscans.org](https://violetscans.org) |  | 2026-10-15 |
 | [vortexscans.org](https://vortexscans.org) |  | 2026-10-15 |
+| [webtoonia.fun](https://webtoonia.fun) | Turkish, former diamondfansub.com, some NSFW | 2026-10-16 |
 | [webtoons.com](https://www.webtoons.com) | WEBTOON, free episodes only | 2026-10-15 |
 | [weebcentral.com](https://weebcentral.com) |  | 2026-10-15 |
 | [witchtoons.net](https://witchtoons.net) | WitchToons, former witchscans.com | 2026-10-15 |

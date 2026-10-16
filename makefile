@@ -182,6 +182,7 @@ grabber: \
 	grabber/utoon \
 	grabber/vortexscans \
 	grabber/weebcentral \
+	grabber/webtoonia \
 	grabber/webtoons \
 	grabber/witchtoons \
 	grabber/yurionair \
@@ -788,6 +789,10 @@ grabber/violetscans:
 # list is paginated, so this also walks the whole episode list
 grabber/webtoons:
 	go run . 'https://www.webtoons.com/en/fantasy/tower-of-god/list?title_no=95' 2
+# former diamondfansub.com (which redirects here): Madara under /seri/, matched by
+# the generic Tcb grabber
+grabber/webtoonia:
+	go run . https://webtoonia.fun/seri/ask-bagimlisi/ 5
 # witchscans.com rebranded to witchtoons.net: new platform (Next.js, chapters
 # and pages in the RSC payload), so it has its own grabber instead of a
 # plainhtml selector entry
