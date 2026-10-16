@@ -231,10 +231,9 @@ func (m *Mangadex) fetchManga() (*mangadexManga, error) {
 	return body, nil
 }
 
-// LanguageOptions lists the languages the series is translated into, without
-// those whose chapters are all external. A language filter hides the others
-// from the feed, so only an all-languages listing narrows the manga's own list
-// to the readable ones; a filtered one only rules out its own language.
+// LanguageOptions lists the languages the series is translated into, minus
+// those whose chapters are all external. Only a complete all-languages listing
+// can vouch for the rest; a filtered one only rules out its own language.
 func (m *Mangadex) LanguageOptions() FilterOptions {
 	body, err := m.fetchManga()
 	if err != nil {
@@ -263,12 +262,17 @@ type mangadexExternalError struct {
 }
 
 func (e *mangadexExternalError) Error() string {
-	msg := fmt.Sprintf("the %q chapters of this title are hosted elsewhere (e.g. MANGA Plus): %s", e.Language, e.URL)
+	what := "this title's"
+	if e.Language != FilterAll {
+		what = fmt.Sprintf("the %q chapters of this title are", e.Language)
+	} else {
+		what += " chapters are"
+	}
 	if strings.Contains(e.URL, "mangaplus.shueisha.co.jp") {
-		msg += " (MANGA Plus is supported, try that link)"
+		return fmt.Sprintf("%s hosted on MANGA Plus, which is supported: try %s", what, e.URL)
 	}
 
-	return msg
+	return fmt.Sprintf("%s hosted elsewhere: %s", what, e.URL)
 }
 
 // FetchChapters returns the chapters of the manga
@@ -284,7 +288,7 @@ func (m *Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 	if filter == FilterAll {
 		filter = ""
 	}
-	m.unfiltered = filter == ""
+	m.unfiltered = false
 	m.readable, m.external = map[string]bool{}, map[string]string{}
 	var firstExternal string
 
@@ -353,6 +357,8 @@ func (m *Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 	}
 	// initial call
 	fetchChaps(0)
+	// a partial listing can't vouch for which languages have nothing readable
+	m.unfiltered = filter == "" && len(errs) == 0
 
 	if len(chapters) == 0 && len(errs) == 0 {
 		if filter != "" {

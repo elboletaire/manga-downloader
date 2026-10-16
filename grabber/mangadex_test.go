@@ -265,7 +265,7 @@ func TestMangadexExternalOnlyLanguage(t *testing.T) {
 	if len(chapters) != 0 || len(errs) != 1 {
 		t.Fatalf("FetchChapters = %d chapters, errs %v", len(chapters), errs)
 	}
-	for _, want := range []string{"hosted elsewhere", "mangaplus.shueisha.co.jp/viewer/1", "try that link"} {
+	for _, want := range []string{"hosted on MANGA Plus", "try https://mangaplus.shueisha.co.jp/viewer/1"} {
 		if !strings.Contains(errs[0].Error(), want) {
 			t.Errorf("error %q lacks %q", errs[0], want)
 		}
@@ -309,5 +309,56 @@ func TestMangadexLanguageOptionsBeforeListing(t *testing.T) {
 	m := newMangadexExternal("")
 	if got := m.LanguageOptions().Values; !slices.Equal(got, []string{"en", "es", "fr"}) {
 		t.Errorf("LanguageOptions = %v, want [en es fr]", got)
+	}
+}
+
+// Every chapter external with no language filter: the error drops the language
+func TestMangadexExternalAllLanguages(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("offset") != "0" {
+			_, _ = w.Write([]byte(`{"data":[]}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"data":[{"id":"e","attributes":{"chapter":"1","translatedLanguage":"en","pages":0,"externalUrl":"https://example.test/x"}}]}`))
+	}))
+	defer srv.Close()
+	old := mangadexAPI
+	mangadexAPI = srv.URL
+	defer func() { mangadexAPI = old }()
+
+	_, errs := newMangadexExternal("all").FetchChapters()
+	want := "this title's chapters are hosted elsewhere: https://example.test/x"
+	if len(errs) != 1 || errs[0].Error() != want {
+		t.Errorf("errs = %v, want %q", errs, want)
+	}
+}
+
+// A listing that failed on a later page prunes nothing
+func TestMangadexPartialListingKeepsLanguages(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/feed"):
+			if r.URL.Query().Get("offset") != "0" {
+				http.Error(w, "boom", http.StatusBadRequest)
+				return
+			}
+			_, _ = w.Write([]byte(`{"data":[{"id":"f1","attributes":{"chapter":"1","translatedLanguage":"fr","pages":3}}]}`))
+		case strings.Contains(r.URL.Path, "/manga/"):
+			_, _ = w.Write([]byte(`{"data":{"attributes":{"title":{"en":"T"},"availableTranslatedLanguages":["en","fr"]}}}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+	old := mangadexAPI
+	mangadexAPI = srv.URL
+	defer func() { mangadexAPI = old }()
+
+	m := newMangadexExternal("")
+	if _, errs := m.FetchChapters(); len(errs) == 0 {
+		t.Fatal("want an error from the failing page")
+	}
+	if got := m.LanguageOptions().Values; !slices.Equal(got, []string{"en", "fr"}) {
+		t.Errorf("LanguageOptions = %v, want [en fr]", got)
 	}
 }
