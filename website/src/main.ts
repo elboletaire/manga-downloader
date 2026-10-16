@@ -227,7 +227,7 @@ function enhanceSites(): void {
   update()
 }
 
-/** Remembers the language picked in the header, so the English page stops redirecting, and keeps the URL's #section. */
+/** Remembers the language picked in the header, so the English page stops redirecting */
 function rememberLanguage(): void {
   for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-lang]')) {
     link.addEventListener('click', () => {
