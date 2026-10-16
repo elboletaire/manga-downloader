@@ -10,6 +10,7 @@ Mascot **Neko Book**: an open manga volume that is also a cat's face. One body, 
 |---|---|
 | `mark/soft/`, `mark/happy/` | `mark` (light), `mark-dark`, `mark-small` / `mark-small-dark` (16–32px), `mark-mono` / `mark-mono-small` (`currentColor`) |
 | `lockup/` | `lockup` (stacked, primary), `lockup-line` (one line, tight spaces); each `-dark` and `-mono` |
+| `wordmark/` | `wordmark-line` and `-dark`: the lockup's lettering alone, cropped to the text (the GUI header uses it beside the live mascot) |
 | `app/appicon.svg` | source of the app icons, which live in `gui/build/`: `appicon.png` (1024², macOS tile; Wails builds the .icns from it), `windows/icon.ico` (16/24/32 small artwork, BMP, + 48/64 BMP + 256 PNG), `linux/icon.png` (free shape, transparent; window icon and .desktop file) |
 | `favicon/` | `favicon.svg` (switches colour with `prefers-color-scheme`) → the GUI's page icon; `icon-pwa.svg`, `apple-touch-icon.svg` (sources for the PNGs) |
 | `social/opengraph.{svg,png}` | 1280×640 social preview |

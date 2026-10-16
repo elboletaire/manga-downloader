@@ -236,6 +236,11 @@ code {
   letter-spacing: -0.01em;
 }
 
+.brand-name img {
+  display: block;
+  width: auto;
+}
+
 .url-form {
   display: flex;
   gap: 8px;

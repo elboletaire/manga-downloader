@@ -7,7 +7,7 @@ import { AUTO_LOAD_DELAY_MS, shouldAutoLoad } from './autoLoad';
 import { SelectField, TextField } from './fields';
 import { sameScanlator, typedValue, filterControl, filtersIdentified, filterOptions, shownSelection, type FilterControl, type FilterKind } from './filters';
 import { AlertIcon, LinkIcon, RefreshIcon, Spinner } from './icons';
-import { Mascot, useExpression } from './Mascot';
+import { Mascot, useExpression, Wordmark } from './Mascot';
 import type { FilterChoice, Options, State } from './types';
 
 /** What the clipboard's text means for the URL box: trimmed, or '' when there is nothing to paste */
@@ -101,7 +101,7 @@ export function SourceBar({
       <div className="source-row">
         <div className="brand" title="Manga Downloader">
           <Mascot expression={expression} size={48} />
-          <span className="brand-name">Manga Downloader</span>
+          <Wordmark />
         </div>
         <form
           className="url-form"
