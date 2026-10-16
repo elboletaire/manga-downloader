@@ -183,6 +183,28 @@ func TestTcbFetchTitleDropsBadges(t *testing.T) {
 	}
 }
 
+// Themes add other h1s (a hero banner, a summary heading): .post-title wins,
+// and without it only the first h1 counts.
+func TestTcbFetchTitleSingleH1(t *testing.T) {
+	for name, tc := range map[string]struct{ html, want string }{
+		"post-title": {`<h1>Hero</h1><div class="post-title"><h1>Real</h1></div><h1>Summary</h1>`, "Real"},
+		"first h1":   {`<h1>Hero</h1><div class="content"><h1>Summary</h1></div>`, "Hero"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write([]byte(tc.html))
+			}))
+			t.Cleanup(srv.Close)
+
+			tcb := NewTcb(&Grabber{URL: srv.URL, Settings: &Settings{}})
+			tcb.series = srv.URL + "/manga/x/"
+			if title, err := tcb.FetchTitle(); err != nil || title != tc.want {
+				t.Errorf("FetchTitle() = %q, %v; want %q", title, err, tc.want)
+			}
+		})
+	}
+}
+
 func TestTcbChapterNumber(t *testing.T) {
 	tests := []struct {
 		title, href string

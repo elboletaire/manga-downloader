@@ -149,6 +149,10 @@ jobs:
           - ruyamanga2
           - natsuone
           - noranofansub
+          - apollcomics
+          - fbsquadx
+          - kombatch
+          - mundomanhwa
           - smuglo
           # These sites block GitHub's datacenter IPs (403) but work fine
           # from residential connections — verified locally 2026-07-23.

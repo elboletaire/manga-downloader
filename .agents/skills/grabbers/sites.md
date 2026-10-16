@@ -35,4 +35,3 @@ Sites rebrand constantly; probe for a successor before declaring one dead, and d
 - **nyraxmanga.com** (themesia): paid rows are `li.chapter-is-locked` with a `.plus-badge`, and their reader serves no images logged out, so its own `PlainHTML` entry (rows scoped to the site's host) sets `Locked`. The generic themesia entry doesn't.
 - **manga.smuglo.li** (Lilyreader, FoOlSlide): the long series restart the chapter numbers in every volume, so one number matches a chapter per volume. The smoke target uses a short series with unique numbers.
 - **noranofansub.com** (FoOlSlide): the reader's `img.page-N` placeholders are what lets `SeriesLink` fire, so a pasted chapter URL reaches its series instead of the site's latest-releases page.
-- **Adult catalogues left out (Oct 2026)**: kombatch.cc, fbsquadx.com, apollcomics.es and mundomanhwa.com download fine but are mostly explicit.

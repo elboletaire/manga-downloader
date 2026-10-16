@@ -284,6 +284,17 @@ grabber/gdscans:
 grabber/anikiga:
 	go run . https://anikiga.com/manga/alma/ 5
 
+# Madara and themesia sites whose series URLs PlainHTML claims (chapter URLs
+# can go through Tcb), no code of their own
+grabber/apollcomics:
+	go run . https://apollcomics.es/manga/las-manos-sanadoras-del-doctor/ 40-41
+grabber/fbsquadx:
+	go run . https://fbsquadx.com/manga/minmotion-syndrome/ 60-61
+grabber/kombatch:
+	go run . https://kombatch.cc/manga/secret-class/ 318-319
+grabber/mundomanhwa:
+	go run . https://mundomanhwa.com/manga/primavera-para-blossom/ 28-29
+
 # another Madara wordpress site (Turkish). Its series page lists every row
 # under "<title> N" titles, which the PlainHTML li.wp-manga-chapter entry
 # can't number, so PlainHTML declines it and the Tcb grabber reads the full
@@ -576,6 +587,7 @@ grabber/smuglo:
 grabber/html: \
 	grabber/adonisfansub \
 	grabber/anzmanga25 \
+	grabber/apollcomics \
 	grabber/arenascan \
 	grabber/asura \
 	grabber/deathtollscans \
@@ -584,8 +596,10 @@ grabber/html: \
 	grabber/eldermanga \
 	grabber/eskimangalar \
 	grabber/evascans \
+	grabber/fbsquadx \
 	grabber/furyosociety \
 	grabber/kingofshojo \
+	grabber/kombatch \
 	grabber/komikindo \
 	grabber/komikmanga \
 	grabber/komikstation \
@@ -611,6 +625,7 @@ grabber/html: \
 	grabber/manhuaplus \
 	grabber/manhwaonline \
 	grabber/mistscans \
+	grabber/mundomanhwa \
 	grabber/natsuone \
 	grabber/noranofansub \
 	grabber/nyraxmanga \

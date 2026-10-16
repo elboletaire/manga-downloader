@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[152 supported sites](#supported-sites)**, from big aggregators to small
+- **[156 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -629,7 +629,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 152 supported sites</b></summary>
+<summary><b>Show all 156 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -639,6 +639,7 @@ to a minute.
 | [animeallstar1.com](https://www.animeallstar1.com) | AnimeAllStar, Spanish | 2026-10-15 |
 | [animeallstar30.com](https://animeallstar30.com) | AnimeAllStar, Spanish | 2026-10-15 |
 | [anzmanga25.com](https://www.anzmanga25.com) | AnzManga, Spanish | 2026-10-16 |
+| [apollcomics.es](https://apollcomics.es) | Spanish | 2026-10-16 |
 | [arenascan.com](https://arenascan.com) |  | 2026-10-15 |
 | [asmotoon.com](https://asmotoon.com) \* | Asmodeus Scans | 2026-10-15 |
 | [asurascans.com](https://asurascans.com) | Asura Scans, former asuratoon.com | 2026-10-15 |
@@ -665,6 +666,7 @@ to a minute.
 | [eskimangalar.com](https://eskimangalar.com) |  | 2026-10-15 |
 | [evascans.net](https://evascans.net) | former evascans.org | 2026-10-15 |
 | [fanfox.net](https://fanfox.net) | Manga Fox | 2026-10-15 |
+| [fbsquadx.com](https://fbsquadx.com) | Fleur Blanche Scan, Spanish | 2026-10-16 |
 | [flamecomics.xyz](https://flamecomics.xyz) | Flame Comics, former Flame Scans | 2026-10-15 |
 | [fmteam.fr](https://fmteam.fr) |  | 2026-10-15 |
 | [furyosociety.com](https://furyosociety.com) |  | 2026-10-15 |
@@ -674,7 +676,7 @@ to a minute.
 | [guya.moe](https://guya.moe) | Guya, Kaguya-sama | 2026-10-15 |
 | [hachirumi.com](https://hachirumi.com) | Hachirumi, Guya instance, has an NSFW section | 2026-10-16 |
 | [heavenly-delusion.com](https://heavenly-delusion.com) | Heavenly Delusion | 2026-10-15 |
-| [heavenmanga.com](https://heavenmanga.com) | Spanish, some adult titles | 2026-10-15 |
+| [heavenmanga.com](https://heavenmanga.com) | Spanish | 2026-10-15 |
 | [hivetoons.org](https://hivetoons.org) | HiveToons, VoidScans | 2026-10-15 |
 | [inmanga.com](https://inmanga.com) |  | 2026-10-15 |
 | [jestful.net](https://jestful.net) |  | 2026-10-15 |
@@ -683,6 +685,7 @@ to a minute.
 | [kappabeast.com](https://kappabeast.com) \* |  | 2026-10-15 |
 | [kaynscans.com](https://kaynscans.com) | Kayn Scans, former kaynscan.org | 2026-10-15 |
 | [kingofshojo.com](https://kingofshojo.com) |  | 2026-10-15 |
+| [kombatch.cc](https://kombatch.cc) | Indonesian | 2026-10-16 |
 | [komikindo.ch](https://komikindo.ch) |  | 2026-10-15 |
 | [komikmanga.com](https://komikmanga.com) | MangaReader, English | 2026-10-16 |
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-15 |
@@ -739,6 +742,7 @@ to a minute.
 | [mgeko.cc](https://www.mgeko.cc) |  | 2026-10-15 |
 | [mistscans.com](https://mistscans.com) |  | 2026-10-15 |
 | [mkissa.to](https://mkissa.to) \* |  | 2026-10-15 |
+| [mundomanhwa.com](https://mundomanhwa.com) | Spanish | 2026-10-16 |
 | [natomanga.com](https://www.natomanga.com) \* | MangaNato, former manganato.com/manganelo.com | 2026-10-15 |
 | [natsu.one](https://natsu.one) | NatsuID, Indonesian, some adult titles, former natsu.id | 2026-10-16 |
 | [noranofansub.com](https://www.noranofansub.com) | NoraNoFansub, Spanish | 2026-10-16 |
