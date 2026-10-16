@@ -174,6 +174,8 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitle: "a",
 		Link:         "a",
 		Image:        "div.reading-content img",
+		// paid rows carry Madara's login lock
+		Locked: "span.required-login",
 	},
 	// mangas-origines.fr: Madara-derived theme with its own chapter list (the
 	// ajax endpoint is walled) under /oeuvre/. Reader images lazy-load
@@ -1306,6 +1308,14 @@ func canonicalHost(doc *goquery.Document) string {
 }
 
 func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
+	// Madara sites using the chapter images protection plugin ship no <img>
+	if urls, ok, err := wpMangaProtectorImages(doc); ok {
+		if err != nil {
+			notice.Warn("could not decode the protected pages: %s", err)
+		}
+		return urls
+	}
+
 	// Check for chapImages JavaScript variable first
 
 	html, _ := doc.Html()

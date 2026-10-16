@@ -274,6 +274,8 @@ grabber/mangasushi:
 # another Madara/wp-manga site, handled by the same Tcb grabber; this one
 # groups chapters under "Volume N" wrappers (exercises the wp-manga-chapter
 # scoping fix)
+grabber/gourmetsupremacy:
+	go run . https://gourmetsupremacy.com/project/hikikomori-princess-marriage/ 10,10.5
 grabber/gdscans:
 	go run . https://gdscans.com/manga/a-rank-boukensha-no-slow-life/ 50
 # another Madara site, handled by the Tcb grabber; its one-shots have no number
@@ -579,6 +581,7 @@ grabber/html: \
 	grabber/kingofshojo \
 	grabber/komikindo \
 	grabber/komikstation \
+	grabber/gourmetsupremacy \
 	grabber/lagoonscans \
 	grabber/lelmanga \
 	grabber/lelscanfr \
