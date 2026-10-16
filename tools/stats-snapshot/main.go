@@ -1,10 +1,7 @@
 // Copyright (C) 2023-2026 Òscar Casajuana Alonso
 
-// stats-snapshot stores a daily raw snapshot of the project's download, pull
-// and star numbers, since GitHub and Docker Hub only expose current totals.
-//
-// It writes <dir>/snapshots/YYYY-MM-DD.json and rewrites <dir>/daily.csv from
-// every snapshot present, so a rerun or a missed day stays consistent.
+// stats-snapshot stores a daily raw snapshot of downloads, pulls and stars, since
+// GitHub and Docker Hub only expose current totals, and rebuilds daily.csv from all of them.
 //
 // Usage: go run ./tools/stats-snapshot -dir DIR [-repo owner/name] [-date YYYY-MM-DD]
 package main
@@ -164,6 +161,10 @@ func getJSON(url, token string, v any) error {
 		return err
 	}
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "manga-downloader-stats-snapshot")
+	if strings.HasPrefix(url, githubAPI) {
+		req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	}
 	if token != "" {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
@@ -213,6 +214,9 @@ func writeCSV(dir string) error {
 	var rows []row
 	for _, f := range files {
 		date := strings.TrimSuffix(filepath.Base(f), ".json")
+		if !dateRe.MatchString(date) {
+			continue
+		}
 		b, err := os.ReadFile(f)
 		if err != nil {
 			return err

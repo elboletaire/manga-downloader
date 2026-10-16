@@ -30,7 +30,7 @@ jobs:
       - name: Check out the data branch
         run: |
           if git ls-remote --exit-code --heads origin stats-data >/dev/null; then
-            git fetch origin stats-data
+            git fetch origin stats-data:refs/remotes/origin/stats-data
             git worktree add "$RUNNER_TEMP/stats-data" origin/stats-data --detach
           else
             git worktree add --orphan -b stats-data "$RUNNER_TEMP/stats-data"
