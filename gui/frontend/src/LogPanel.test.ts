@@ -16,6 +16,7 @@ function bar(overrides: { releaseURL?: string; update?: Update | null; log?: Log
       open: false,
       onToggle: () => undefined,
       onOpenURL: () => undefined,
+      onUpdate: () => Promise.resolve(),
       ...overrides,
     }),
   );
@@ -37,7 +38,7 @@ describe('StatusBar version', () => {
 
   it('flags a newer release in yellow, before the version', () => {
     const html = bar({
-      update: { latest: 'v1.13.0', url: 'https://github.com/elboletaire/manga-downloader/releases/latest' },
+      update: { latest: 'v1.13.0', url: 'https://github.com/elboletaire/manga-downloader/releases/latest', oneClick: false },
     });
     expect(html).toContain('class="update-badge warning"');
     expect(html).toContain('aria-label="Update available: v1.13.0"');
@@ -45,6 +46,13 @@ describe('StatusBar version', () => {
     expect(html.indexOf('update-badge')).toBeLessThan(html.indexOf('class="version"'));
   });
 
+  it('offers the one-click update only when the backend says it can', () => {
+    const url = 'https://github.com/elboletaire/manga-downloader/releases/latest';
+    expect(bar({ update: { latest: 'v1.13.0', url, oneClick: false } })).not.toContain('Update to');
+    const html = bar({ update: { latest: 'v1.13.0', url, oneClick: true } });
+    expect(html).toContain('Update to v1.13.0');
+    expect(html).toContain('update-badge');
+  });
 });
 
 describe('StatusBar last-line title', () => {

@@ -549,3 +549,10 @@ describe('mock locked chapters', () => {
     expect(n).toBe(list.length - paid.length);
   });
 });
+
+describe('one-click update', () => {
+  it('is offered in the update scenario, but not in the screenshot', async () => {
+    expect((await createMockApi('update').state()).update?.oneClick).toBe(true);
+    expect((await createMockApi({ scenario: 'update', shot: true }).state()).update?.oneClick).toBe(false);
+  });
+});

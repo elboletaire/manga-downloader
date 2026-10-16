@@ -17,9 +17,17 @@ interface BarProps {
   onToggle: () => void;
   /** Opens a link in the system's browser */
   onOpenURL: (url: string) => void;
+  /** Installs the update (update.oneClick); rejects when it can't, the backend having logged why */
+  onUpdate: () => Promise<void>;
 }
 
-export function StatusBar({ log, version, releaseURL, update, open, onToggle, onOpenURL }: BarProps) {
+export function StatusBar({ log, version, releaseURL, update, open, onToggle, onOpenURL, onUpdate }: BarProps) {
+  const [updating, setUpdating] = useState(false);
+  const runUpdate = () => {
+    setUpdating(true);
+    onUpdate().catch(() => undefined).finally(() => setUpdating(false));
+  };
+
   // links open outside the window, which must stay on the app
   const openLink = (url: string) => (e: MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -64,6 +72,11 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
         {lastLine ? lastLine.text : 'Ready'}
       </span>
       <span className="version-group">
+        {update?.oneClick && (
+          <button type="button" className="btn small warning" onClick={runUpdate} disabled={updating}>
+            {updating ? 'Updating...' : `Update to ${update.latest}`}
+          </button>
+        )}
         {update && (
           <a
             className="update-badge warning"

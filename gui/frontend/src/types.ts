@@ -128,6 +128,8 @@ export interface Update {
   latest: string;
   /** The page the update is linked to: the latest release */
   url: string;
+  /** Update() can install it: an installed Windows copy and an installer on the release */
+  oneClick: boolean;
 }
 
 export interface Chapter {

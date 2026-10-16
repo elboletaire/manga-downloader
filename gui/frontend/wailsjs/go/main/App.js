@@ -82,6 +82,10 @@ export function State() {
   return window['go']['main']['App']['State']();
 }
 
+export function Update() {
+  return window['go']['main']['App']['Update']();
+}
+
 export function Version() {
   return window['go']['main']['App']['Version']();
 }
