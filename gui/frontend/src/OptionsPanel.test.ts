@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { createMockApi } from './mock';
+import { createMockApi, templateWarning } from './mock';
 import { AVIF_EPUB_HINT } from './convertImages';
 import { OptionsPanel, PACK_HINTS, VOLUMES_HINT_NOT_LOADED } from './OptionsPanel';
 import type { State } from './types';
@@ -76,5 +76,62 @@ describe('AVIF under Convert to JPEG', () => {
     expect(avifInput(markup)).not.toMatch(/checked=""/);
     expect(avifInput(markup)).not.toMatch(/disabled=""/);
     expect(markup).not.toContain(AVIF_EPUB_HINT.replace("'", '&#x27;'));
+  });
+});
+
+describe('Filename template', () => {
+  it('offers the reset button only when the template differs from the default', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    expect(base.options.filenameTemplate).toBe(base.filenameTemplateDefault);
+    expect(options(base)).not.toContain('Use default template');
+    // the wrapper stays when the button is hidden, so the input isn't remounted
+    expect(options(base)).toContain('class="input-wrap"');
+
+    const custom: State = { ...base, options: { ...base.options, filenameTemplate: '{{.Series}} {{.Number}}' } };
+    expect(options(custom)).toContain('aria-label="Use default template"');
+
+    const blank: State = { ...base, options: { ...base.options, filenameTemplate: '' } };
+    expect(options(blank)).toContain('aria-label="Use default template"');
+  });
+
+  it('draws the reset button inside the box and disables it while locked', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    const custom: State = { ...base, options: { ...base.options, filenameTemplate: '{{.Series}}' } };
+    expect(options(custom)).toMatch(/<div class="input-wrap">.*<div class="input-action"><button[^>]*aria-label="Use default template"/);
+
+    const locked: State = { ...custom, running: true };
+    expect(options(locked)).toMatch(/<button[^>]*aria-label="Use default template"[^>]*disabled=""/);
+  });
+
+  it('shows the default as the placeholder of an empty box', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    const blank: State = { ...base, options: { ...base.options, filenameTemplate: '' } };
+    expect(options(blank)).toContain(`placeholder="${base.filenameTemplateDefault.replace(/"/g, '&quot;')}"`);
+  });
+
+  it('warns when the template names no number or title', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    expect(options(base)).not.toContain('files only differ');
+
+    const warned: State = { ...base, options: { ...base.options, filenameTemplate: '{{.Series}}' }, filenameTemplateWarning: 'files only differ by a version suffix.' };
+    expect(options(warned)).toContain('files only differ');
+  });
+
+  it('puts the default back through the mock and clears the warning', async () => {
+    const api = createMockApi({ scenario: 'empty', freeze: true });
+    const base = await api.state();
+    await api.setOptions({ ...base.options, filenameTemplate: 'fixed' });
+    expect((await api.state()).filenameTemplateWarning).not.toBe('');
+    await api.setOptions({ ...base.options, filenameTemplate: base.filenameTemplateDefault });
+    expect((await api.state()).filenameTemplateWarning).toBe('');
+  });
+});
+
+describe('templateWarning (mock)', () => {
+  it('matches the Go cases', () => {
+    for (const ok of ['', '  ', '{{ .Number }}', '{{- .Number}}', '{{printf "%03s" .Number}}', '{{pad .Number 4}}', '{{.Series}} {{.Volume}}']) {
+      expect(templateWarning(ok), ok).toBe('');
+    }
+    expect(templateWarning('{{.Series}}')).not.toBe('');
   });
 });

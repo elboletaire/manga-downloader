@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/elboletaire/manga-downloader/browser"
+	"github.com/elboletaire/manga-downloader/packer"
 )
 
 func TestBrowserVisibleAutoFollowsTheLoadedSite(t *testing.T) {
@@ -109,5 +110,33 @@ func TestClearDropsTheBrowserAlert(t *testing.T) {
 	}
 	if got := a.State().BrowserAlert; got != "" {
 		t.Errorf("alert = %q after clearing, want none", got)
+	}
+}
+
+func TestStateCarriesTheFilenameTemplateDefaultAndWarning(t *testing.T) {
+	a, _, _ := newTestApp(t, 3)
+	st := a.State()
+	if st.FilenameTemplateDefault != packer.FilenameTemplateDefault || st.FilenameTemplateWarning != "" {
+		t.Errorf("default state: %q, %q", st.FilenameTemplateDefault, st.FilenameTemplateWarning)
+	}
+	o := st.Options
+	o.FilenameTemplate = "{{.Series}}"
+	if err := a.SetOptions(o); err != nil {
+		t.Fatal(err)
+	}
+	if a.State().FilenameTemplateWarning == "" {
+		t.Error("no warning for a template without a number or title")
+	}
+}
+
+func TestFilenameTemplateWarningOnlyForChapters(t *testing.T) {
+	a, _, _ := newTestApp(t, 3)
+	o := a.State().Options
+	o.FilenameTemplate, o.PackAs = "{{.Series}}", PackBundle
+	if err := a.SetOptions(o); err != nil {
+		t.Fatal(err)
+	}
+	if w := a.State().FilenameTemplateWarning; w != "" {
+		t.Errorf("warned in bundle mode: %q", w)
 	}
 }

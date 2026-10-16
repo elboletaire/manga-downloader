@@ -184,6 +184,10 @@ code {
   line-height: 1.4;
 }
 
+.warn-text {
+  color: var(--warning);
+}
+
 .error-text {
   color: var(--danger);
 }
@@ -1147,6 +1151,23 @@ code {
 
 .input.invalid {
   border-color: var(--danger);
+}
+
+/* the box with a control inside its right end; the padding keeps text clear of it */
+.input-wrap {
+  position: relative;
+}
+
+.input-wrap > .input {
+  display: block;
+  padding-right: 36px;
+}
+
+.input-action {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  transform: translateY(-50%);
 }
 
 .folder {

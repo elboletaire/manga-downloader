@@ -112,6 +112,10 @@ export interface State {
   browserVisibleAuto: boolean;
   /** What to tell the user while the browser window waits for them; "" when it isn't */
   browserAlert: string;
+  /** The filename template a blank option stands for */
+  filenameTemplateDefault: string;
+  /** What is wrong with options.filenameTemplate; "" when nothing */
+  filenameTemplateWarning: string;
 }
 
 /** The Volumes box, used when the options pack as volumes */

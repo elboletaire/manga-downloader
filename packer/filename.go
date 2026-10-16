@@ -5,6 +5,7 @@ package packer
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -57,18 +58,43 @@ func MigrateFilenameTemplate(templ string) string {
 	return templ
 }
 
+// isDefaultTemplate reports whether templ is a chapter default: blank, the
+// current default or the legacy one
+func isDefaultTemplate(templ string) bool {
+	templ = strings.TrimSpace(templ)
+	return templ == "" || templ == FilenameTemplateDefault || templ == filenameTemplateLegacyDefault
+}
+
+// templateNamesFile matches an action that reads a field telling files apart,
+// however it is spaced, trimmed or piped
+var templateNamesFile = regexp.MustCompile(`\{\{-?\s*[^}]*\.(Number|Title|SiteTitle|Volume)\b`)
+
+// TemplateWarning returns a warning when a per-chapter templ names no number,
+// title or volume, so files only differ by a version suffix; "" when it's
+// fine or blank (the default)
+func TemplateWarning(templ string) string {
+	if strings.TrimSpace(templ) == "" || templateNamesFile.MatchString(templ) {
+		return ""
+	}
+	return "This template has no {{.Number}}, {{.Title}}, {{.SiteTitle}} or {{.Volume}}, so files only differ by a version suffix."
+}
+
 // VolumeTemplate returns the template volume files are named with: the
 // volume default when the filename template is a chapter default (or
 // unset), the user's own template otherwise
 func VolumeTemplate(templ string) string {
-	if templ == "" || templ == FilenameTemplateDefault || templ == filenameTemplateLegacyDefault {
+	if isDefaultTemplate(templ) {
 		return FilenameVolumeTemplateDefault
 	}
 	return templ
 }
 
-// NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template
+// NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template.
+// A blank template is the default.
 func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string, error) {
+	if strings.TrimSpace(templ) == "" {
+		templ = FilenameTemplateDefault
+	}
 	tmpl, err := template.New("filename").Funcs(template.FuncMap{"pad": padNumber}).Parse(templ)
 	if err != nil {
 		return "", err

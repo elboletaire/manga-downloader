@@ -17,6 +17,8 @@ interface TextFieldProps {
   /** Marks the field as changed-but-not-applied */
   flagged?: boolean;
   className?: string;
+  /** A control drawn inside the box's right end */
+  action?: ReactNode;
 }
 
 interface SelectFieldProps {
@@ -55,11 +57,12 @@ export function SelectField({ label, value, options, onChange, disabled, classNa
 
 /** A text option. Escape reverts to the committed value. */
 export function TextField(props: TextFieldProps) {
-  const { label, value, onCommit, onError, placeholder, hint, disabled, mono, flagged, className } = props;
+  const { label, value, onCommit, onError, placeholder, hint, disabled, mono, flagged, className, action } = props;
   const [draft, setDraft] = useState(value);
   // the draft the last commit sent, until the backend pushes it back: Enter
   // commits and the blur that follows must not send it again
   const sent = useRef<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const id = useId();
 
   // a pushed value replaces the draft; while typing, pushes carry the old
@@ -81,29 +84,47 @@ export function TextField(props: TextFieldProps) {
     });
   };
 
+  const input = (
+    <input
+      ref={inputRef}
+      id={id}
+      type="text"
+      className={`input${mono ? ' mono' : ''}${flagged ? ' flagged' : ''}`}
+      value={draft}
+      placeholder={placeholder}
+      disabled={disabled}
+      spellCheck={false}
+      autoComplete="off"
+      aria-describedby={hint ? `${id}-hint` : undefined}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          commit();
+        } else if (e.key === 'Escape') {
+          setDraft(value);
+        }
+      }}
+    />
+  );
+
   return (
     <div className={`field ${className ?? ''}`}>
       <label htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        type="text"
-        className={`input${mono ? ' mono' : ''}${flagged ? ' flagged' : ''}`}
-        value={draft}
-        placeholder={placeholder}
-        disabled={disabled}
-        spellCheck={false}
-        autoComplete="off"
-        aria-describedby={hint ? `${id}-hint` : undefined}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            commit();
-          } else if (e.key === 'Escape') {
-            setDraft(value);
-          }
-        }}
-      />
+      {/* the wrapper stays while an action is passed (even when it's false), so the input isn't remounted */}
+      {action !== undefined ? (
+        <div className="input-wrap">
+          {input}
+          {/* the action's click focuses the field back, as the button is removed when it resets */}
+          {action && (
+            <div className="input-action" onClick={() => inputRef.current?.focus()}>
+              {action}
+            </div>
+          )}
+        </div>
+      ) : (
+        input
+      )}
       {hint && (
         <p className="hint" id={`${id}-hint`}>
           {hint}
