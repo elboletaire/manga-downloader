@@ -769,6 +769,13 @@ code {
   text-overflow: ellipsis;
 }
 
+/* both tags share the row's last grid column, so a row never spills into another */
+.tags {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .lang,
 .group {
   padding: 1px 7px;
