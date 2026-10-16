@@ -74,6 +74,44 @@ func TestInstalledAt(t *testing.T) {
 	}
 }
 
+func TestDetectScope(t *testing.T) {
+	sep := string(filepath.Separator)
+	user := filepath.Join(sep+"Users", "me", "AppData", "Local", "Programs", "Manga Downloader")
+	machine := filepath.Join(sep+"Program Files", "Manga Downloader")
+	exeIn := func(d string) string { return filepath.Join(d, "manga-downloader-gui.exe") }
+	none := func(string) bool { return false }
+	keys := func(u, m string) func(installScope) string {
+		return func(sc installScope) string {
+			if sc == scopeUser {
+				return u
+			}
+
+			return m
+		}
+	}
+	cases := []struct {
+		name   string
+		exe    string
+		read   func(installScope) string
+		exists func(string) bool
+		want   installScope
+	}{
+		{"per user", exeIn(user), keys(user, ""), none, scopeUser},
+		{"per machine", exeIn(machine), keys("", machine), none, scopeMachine},
+		{"both installs, running the machine one", exeIn(machine), keys(user, machine), none, scopeMachine},
+		{"both installs, running the user one", exeIn(user), keys(user, machine), none, scopeUser},
+		{"portable copy", exeIn(sep + "Tmp"), keys(user, machine), func(string) bool { return true }, 0},
+		{"no keys, uninstaller next to it", exeIn(sep + "Tmp"), keys("", ""), func(p string) bool { return strings.HasSuffix(p, "uninstall.exe") }, scopeMachine},
+		{"no keys, no uninstaller", exeIn(sep + "Tmp"), keys("", ""), none, 0},
+	}
+	for _, tc := range cases {
+		got, ok := detectScope(tc.exe, tc.read, tc.exists)
+		if got != tc.want || ok != (tc.want != 0) {
+			t.Errorf("%s: detectScope = %v, %v; want %v", tc.name, got, ok, tc.want)
+		}
+	}
+}
+
 func TestCheckUpdatePicksThePackageAndNeedsSums(t *testing.T) {
 	pkg := packageName("v2.0.0", runtime.GOARCH)
 	if pkg == "" {

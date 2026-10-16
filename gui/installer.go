@@ -165,6 +165,38 @@ func installedAt(exe, location string, exists func(string) bool) bool {
 	return exists(filepath.Join(dir, "uninstall.exe"))
 }
 
+// installScope is where the Windows installer put the app: per user (HKCU,
+// %LOCALAPPDATA%) or per machine (HKLM, Program Files)
+type installScope int
+
+const (
+	scopeUser installScope = iota + 1
+	scopeMachine
+)
+
+// detectScope finds the scope whose uninstall key (read(scope), "" when
+// missing) points at exe's folder, the user's first. With no key at all, an
+// uninstall.exe next to exe still says it is installed; the scope is then
+// unknown and counts as per machine, whose elevated run works for both.
+func detectScope(exe string, read func(installScope) string, exists func(string) bool) (installScope, bool) {
+	keys := false
+	for _, sc := range []installScope{scopeUser, scopeMachine} {
+		loc := read(sc)
+		if loc == "" {
+			continue
+		}
+		keys = true
+		if installedAt(exe, loc, exists) {
+			return sc, true
+		}
+	}
+	if !keys && installedAt(exe, "", exists) {
+		return scopeMachine, true
+	}
+
+	return 0, false
+}
+
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 

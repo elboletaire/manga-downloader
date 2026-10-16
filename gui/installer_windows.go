@@ -7,6 +7,7 @@ package main
 import (
 	"errors"
 	"os"
+	"sync/atomic"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
@@ -17,20 +18,30 @@ const uninstallKey = `Software\Microsoft\Windows\CurrentVersion\Uninstall\Manga 
 // packageName is the release asset that updates this platform
 func packageName(tag, goarch string) string { return windowsInstallerName(tag, goarch) }
 
-// installedCopy reports whether the running exe is the installer's copy
+// scope is where installedCopy found the app; set once at startup
+var scope atomic.Int32
+
+// installedCopy reports whether the running exe is the installer's copy, per
+// user or per machine, and remembers which
 func installedCopy() bool {
 	exe, err := os.Executable()
 	if err != nil {
 		return false
 	}
+	sc, ok := detectScope(exe, installLocation, fileExists)
+	scope.Store(int32(sc))
 
-	return installedAt(exe, installLocation(), fileExists)
+	return ok
 }
 
-// installLocation reads the uninstall key from the 64-bit view, where the
-// installer writes it; "" when it isn't there
-func installLocation() string {
-	k, err := registry.OpenKey(registry.LOCAL_MACHINE, uninstallKey, registry.QUERY_VALUE|registry.WOW64_64KEY)
+// installLocation reads the scope's uninstall key; a per-machine one is in the
+// 64-bit view, where the installer writes it. "" when it isn't there.
+func installLocation(sc installScope) string {
+	root, access := registry.CURRENT_USER, uint32(registry.QUERY_VALUE)
+	if sc == scopeMachine {
+		root, access = registry.LOCAL_MACHINE, registry.QUERY_VALUE|registry.WOW64_64KEY
+	}
+	k, err := registry.OpenKey(root, uninstallKey, access)
 	if err != nil {
 		return ""
 	}
@@ -43,11 +54,16 @@ func installLocation() string {
 	return v
 }
 
-// runInstaller starts the installer with /relaunch. It asks for elevation
-// itself, which CreateProcess (os/exec) can't do (error 740), so it goes
-// through ShellExecute's "runas", which shows the UAC prompt.
+// runInstaller starts the installer with /relaunch. A per-machine install
+// needs elevation, which CreateProcess (os/exec) can't do (error 740), so it
+// goes through ShellExecute's "runas" (the UAC prompt); a per-user one just
+// opens.
 func runInstaller(path string) error {
-	verb, _ := windows.UTF16PtrFromString("runas")
+	name := "open"
+	if installScope(scope.Load()) == scopeMachine {
+		name = "runas"
+	}
+	verb, _ := windows.UTF16PtrFromString(name)
 	file, err := windows.UTF16PtrFromString(path)
 	if err != nil {
 		return err
