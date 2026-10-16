@@ -12,7 +12,7 @@ These guides are not loaded with every session. Open the file when the task matc
 
 - **Sites and grabbers** (adding, fixing or investigating a site (new or supported), smoke-test failures, Cloudflare/browser problems): the `grabbers` skill, `.agents/skills/grabbers/SKILL.md`.
 - **Desktop app** (`gui/`: Go backend, React frontend, bindings, packaging, theme, options): the `gui` skill, `.agents/skills/gui/SKILL.md`.
-- **Release assets** (retaking the README and website screenshots and demo GIFs before a release; macOS only): the `release` skill, `.agents/skills/release/SKILL.md`.
+- **Release assets** (retaking the README and website screenshots and demo GIFs before a release; macOS only): the `pre-release` skill, `.agents/skills/pre-release/SKILL.md`.
 
 ## Commands
 
