@@ -684,9 +684,9 @@ grabber/mangaread:
 	go run . https://www.mangaread.org/manga/one-piece/ 1188
 grabber/mangasorigines:
 	go run . https://mangas-origines.fr/oeuvre/girl-crush/ 30-31
-# mangazin.org's image CDN 404s on random pages of most older chapters; 76 is complete
+# its image CDN caches random origin 404s, so pages opt into the cache-busting retry
 grabber/mangazin:
-	go run . https://mangazin.org/manga/the-cold-blooded-warrior/ 76
+	go run . https://mangazin.org/manga/the-cold-blooded-warrior/ 75-76
 grabber/manhuaplus:
 	go run . https://manhuaplus.com/manga/tales-of-demons-and-gods01/ 522.6
 grabber/silentquill:
