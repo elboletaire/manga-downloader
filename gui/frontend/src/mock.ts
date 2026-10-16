@@ -18,9 +18,9 @@
 // some chapters paid and locked (see below), &fail makes
 // the fourth chapter fail halfway and &skip makes the sixth one come out
 // skipped, every page excluded by --skip-pages (both off by default; every run
-// saves every chapter without them), &epub starts the output as EPUB, &prompt (with update) makes the update
-// one-click and opens its prompt on load, &shot uses production release
-// versions and a macOS output path (for screenshots),
+// saves every chapter without them), &epub starts the output as EPUB, &prompt
+// (with update) makes the update one-click and opens its prompt on load, &shot
+// uses production release versions and a macOS output path (for screenshots),
 // and VITE_MOCK=1 at build time includes the mock in production builds (e.g.
 // for the screenshot capture build; set via Wails frontend env).
 //
