@@ -179,6 +179,9 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:        "div.reading-content img",
 		// paid rows carry Madara's login lock
 		Locked: "span.required-login",
+		// a reader page lists the chapters but not the series title
+		SeriesLink:       `.c-breadcrumb a[href*="/manga/"]`,
+		FollowSeriesLink: true,
 	},
 	// mangas-origines.fr: Madara-derived theme with its own chapter list (the
 	// ajax endpoint is walled) under /oeuvre/. Reader images lazy-load
@@ -219,7 +222,8 @@ var plainHTMLSelectors = []SiteSelector{
 	// itemprop because some of these (violetscans) also render decorative
 	// <h1> stat labels (Type/Status/Views).
 	{
-		Title:        `h1[itemprop="name"]`,
+		// kombatch.cc prints the title in a span instead of an h1
+		Title:        `h1[itemprop="name"], span.entry-title`,
 		Rows:         "#chapterlist li:has(.chapternum):has(a[href])",
 		Chapter:      ".chapternum",
 		ChapterTitle: ".chapternum",

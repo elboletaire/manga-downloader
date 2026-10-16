@@ -639,7 +639,7 @@ to a minute.
 | [animeallstar1.com](https://www.animeallstar1.com) | AnimeAllStar, Spanish | 2026-10-15 |
 | [animeallstar30.com](https://animeallstar30.com) | AnimeAllStar, Spanish | 2026-10-15 |
 | [anzmanga25.com](https://www.anzmanga25.com) | AnzManga, Spanish | 2026-10-16 |
-| [apollcomics.es](https://apollcomics.es) | Spanish, adult titles | 2026-10-16 |
+| [apollcomics.es](https://apollcomics.es) | Spanish | 2026-10-16 |
 | [arenascan.com](https://arenascan.com) |  | 2026-10-15 |
 | [asmotoon.com](https://asmotoon.com) \* | Asmodeus Scans | 2026-10-15 |
 | [asurascans.com](https://asurascans.com) | Asura Scans, former asuratoon.com | 2026-10-15 |
@@ -668,6 +668,7 @@ to a minute.
 | [fanfox.net](https://fanfox.net) | Manga Fox | 2026-10-15 |
 | [flamecomics.xyz](https://flamecomics.xyz) | Flame Comics, former Flame Scans | 2026-10-15 |
 | [fmteam.fr](https://fmteam.fr) |  | 2026-10-15 |
+| [fbsquadx.com](https://fbsquadx.com) | Fleur Blanche Scan, Spanish | 2026-10-16 |
 | [furyosociety.com](https://furyosociety.com) |  | 2026-10-15 |
 | [gdscans.com](https://gdscans.com) | GalaxyDegenScans | 2026-10-15 |
 | [genztoons.org](https://genztoons.org) | Genz Toon, former genzupdates.com | 2026-10-15 |
@@ -675,7 +676,7 @@ to a minute.
 | [guya.moe](https://guya.moe) | Guya, Kaguya-sama | 2026-10-15 |
 | [hachirumi.com](https://hachirumi.com) | Hachirumi, Guya instance, has an NSFW section | 2026-10-16 |
 | [heavenly-delusion.com](https://heavenly-delusion.com) | Heavenly Delusion | 2026-10-15 |
-| [heavenmanga.com](https://heavenmanga.com) | Spanish, some adult titles | 2026-10-15 |
+| [heavenmanga.com](https://heavenmanga.com) | Spanish | 2026-10-15 |
 | [hivetoons.org](https://hivetoons.org) | HiveToons, VoidScans | 2026-10-15 |
 | [inmanga.com](https://inmanga.com) |  | 2026-10-15 |
 | [jestful.net](https://jestful.net) |  | 2026-10-15 |
@@ -684,6 +685,7 @@ to a minute.
 | [kappabeast.com](https://kappabeast.com) \* |  | 2026-10-15 |
 | [kaynscans.com](https://kaynscans.com) | Kayn Scans, former kaynscan.org | 2026-10-15 |
 | [kingofshojo.com](https://kingofshojo.com) |  | 2026-10-15 |
+| [kombatch.cc](https://kombatch.cc) | Indonesian | 2026-10-16 |
 | [komikindo.ch](https://komikindo.ch) |  | 2026-10-15 |
 | [komikmanga.com](https://komikmanga.com) | MangaReader, English | 2026-10-16 |
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-15 |
@@ -740,7 +742,7 @@ to a minute.
 | [mgeko.cc](https://www.mgeko.cc) |  | 2026-10-15 |
 | [mistscans.com](https://mistscans.com) |  | 2026-10-15 |
 | [mkissa.to](https://mkissa.to) \* |  | 2026-10-15 |
-| [mundomanhwa.com](https://mundomanhwa.com) | Spanish, some adult titles | 2026-10-16 |
+| [mundomanhwa.com](https://mundomanhwa.com) | Spanish | 2026-10-16 |
 | [natomanga.com](https://www.natomanga.com) \* | MangaNato, former manganato.com/manganelo.com | 2026-10-15 |
 | [natsu.one](https://natsu.one) | NatsuID, Indonesian, some adult titles, former natsu.id | 2026-10-16 |
 | [noranofansub.com](https://www.noranofansub.com) | NoraNoFansub, Spanish | 2026-10-16 |

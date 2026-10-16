@@ -108,7 +108,6 @@ grabber: \
 	grabber/anikiga \
 	grabber/animeallstar1 \
 	grabber/animeallstar30 \
-	grabber/apollcomics \
 	grabber/apothecary \
 	grabber/atsumaru \
 	grabber/aurorascans \
@@ -165,7 +164,6 @@ grabber: \
 	grabber/manhwatop \
 	grabber/mgeko \
 	grabber/mkissa \
-	grabber/mundomanhwa \
 	grabber/projectsuki \
 	grabber/qimanga \
 	grabber/re-yume \
@@ -286,9 +284,13 @@ grabber/gdscans:
 grabber/anikiga:
 	go run . https://anikiga.com/manga/alma/ 5
 
-# the Apolltoons family: Madara sites matched by the generic Tcb grabber
+# Madara and themesia sites that PlainHTML claims, no code of their own
 grabber/apollcomics:
 	go run . https://apollcomics.es/manga/las-manos-sanadoras-del-doctor/ 40-41
+grabber/fbsquadx:
+	go run . https://fbsquadx.com/manga/minmotion-syndrome/ 60-61
+grabber/kombatch:
+	go run . https://kombatch.cc/manga/secret-class/ 318-319
 grabber/mundomanhwa:
 	go run . https://mundomanhwa.com/manga/primavera-para-blossom/ 28-29
 
@@ -584,6 +586,7 @@ grabber/smuglo:
 grabber/html: \
 	grabber/adonisfansub \
 	grabber/anzmanga25 \
+	grabber/apollcomics \
 	grabber/arenascan \
 	grabber/asura \
 	grabber/deathtollscans \
@@ -592,8 +595,10 @@ grabber/html: \
 	grabber/eldermanga \
 	grabber/eskimangalar \
 	grabber/evascans \
+	grabber/fbsquadx \
 	grabber/furyosociety \
 	grabber/kingofshojo \
+	grabber/kombatch \
 	grabber/komikindo \
 	grabber/komikmanga \
 	grabber/komikstation \
@@ -619,6 +624,7 @@ grabber/html: \
 	grabber/manhuaplus \
 	grabber/manhwaonline \
 	grabber/mistscans \
+	grabber/mundomanhwa \
 	grabber/natsuone \
 	grabber/noranofansub \
 	grabber/nyraxmanga \
