@@ -1,5 +1,5 @@
 ---
-name: release
+name: pre-release
 description: Use when preparing a release and the README and website images need retaking - the desktop-app screenshots (assets/screenshots and the website WebPs) and the terminal demo GIFs (assets/demos), plus the brand rasters when the brand changed. macOS only; check the OS before doing anything.
 ---
 
