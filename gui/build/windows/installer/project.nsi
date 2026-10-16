@@ -8,7 +8,10 @@ Unicode true
 
 !include "wails_tools.nsh"
 
+!include "WordFunc.nsh"
+
 !insertmacro GetParameters
+!insertmacro VersionCompare
 !insertmacro GetOptions
 
 # The version information for this two must consist of 4 parts
@@ -61,6 +64,18 @@ Function .onInit
     ReadRegStr $0 HKLM "${UNINST_KEY}" "InstallLocation"
     ${If} $0 != ""
         StrCpy $INSTDIR $0
+    ${EndIf}
+
+    # Downgrading asks first, and never happens silently.
+    ReadRegStr $0 HKLM "${UNINST_KEY}" "DisplayVersion"
+    ${If} $0 != ""
+        ${VersionCompare} "$0" "${INFO_PRODUCTVERSION}" $1
+        ${If} $1 == 1
+            IfSilent 0 +2
+            Abort
+            MessageBox MB_YESNO|MB_ICONEXCLAMATION "${INFO_PRODUCTNAME} $0 is already installed, which is newer than this installer (${INFO_PRODUCTVERSION}). Install the older version anyway?" IDYES +2
+            Abort
+        ${EndIf}
     ${EndIf}
 
     # A running exe can't be opened for writing, which tells us the app is still open.
