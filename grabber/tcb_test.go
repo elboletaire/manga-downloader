@@ -3,10 +3,13 @@
 package grabber
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -245,5 +248,142 @@ func TestTcbFetchChapterRejectsNonMangaReaders(t *testing.T) {
 				t.Errorf("FetchChapter() error = %v, want %q", err, tc.want)
 			}
 		})
+	}
+}
+
+func TestTcbSplitTitleGroup(t *testing.T) {
+	deca := Tcb{Grabber: &Grabber{URL: "https://reader.decadencescans.com/manga/ashi-girl/"}}
+	other := Tcb{Grabber: &Grabber{URL: "https://example.com/manga/x/"}}
+	for _, tc := range []struct {
+		tcb       Tcb
+		title     string
+		want      string
+		wantGroup string
+	}{
+		{deca, "30th Battle - REDLION", "30th Battle", "REDLION"},
+		{deca, "35th Battle - fixed - REDLION", "35th Battle - fixed", "REDLION"},
+		{deca, "30th Battle - redlion", "30th Battle", "REDLION"},
+		{deca, "Extra - Part 1 - X", "Extra - Part 1 - X", ""},
+		{other, "30th Battle - REDLION", "30th Battle - REDLION", ""},
+	} {
+		title, group := tc.tcb.splitTitleGroup(tc.title)
+		if title != tc.want || group != tc.wantGroup {
+			t.Errorf("%q: got %q, %q; want %q, %q", tc.title, title, group, tc.want, tc.wantGroup)
+		}
+	}
+}
+
+// A paged reader's pages are fetched concurrently (bounded) but must come back in page
+// order with their reader page numbers.
+func TestTcbFetchChapterPagedReaderConcurrent(t *testing.T) {
+	const pages = 12
+	const delay = 50 * time.Millisecond
+	var inFlight, peak atomic.Int32
+	mux := http.NewServeMux()
+	mux.HandleFunc("/manga/x/ch-1/", func(w http.ResponseWriter, r *http.Request) {
+		var sb strings.Builder
+		// Madara renders the pager more than once, with the same pages.
+		for range 3 {
+			sb.WriteString(`<select id="single-pager">`)
+			for i := 1; i <= pages; i++ {
+				fmt.Fprintf(&sb, `<option data-redirect="http://%s/manga/x/ch-1/p/%d/">%d</option>`, r.Host, i, i)
+			}
+			sb.WriteString(`</select>`)
+		}
+		_, _ = w.Write([]byte(sb.String()))
+	})
+	mux.HandleFunc("/manga/x/ch-1/p/", func(w http.ResponseWriter, r *http.Request) {
+		n := strings.Trim(strings.TrimPrefix(r.URL.Path, "/manga/x/ch-1/p/"), "/")
+		cur := inFlight.Add(1)
+		defer inFlight.Add(-1)
+		for {
+			old := peak.Load()
+			if cur <= old || peak.CompareAndSwap(old, cur) {
+				break
+			}
+		}
+		time.Sleep(delay)
+		fmt.Fprintf(w, `<div class="reading-content"><img src="/img/%s.jpg"></div>`, n)
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	tcb := NewTcb(&Grabber{URL: srv.URL + "/manga/x/", Settings: &Settings{}})
+	chapter, err := tcb.FetchChapter(&TcbChapter{Chapter{Title: "ch-1", Number: 1}, srv.URL + "/manga/x/ch-1/"})
+	if err != nil {
+		t.Fatalf("FetchChapter() error: %s", err)
+	}
+	if len(chapter.Pages) != pages {
+		t.Fatalf("got %d pages, want %d", len(chapter.Pages), pages)
+	}
+	for i, p := range chapter.Pages {
+		if want := fmt.Sprintf("%s/img/%d.jpg", srv.URL, i+1); p.URL != want || p.Number != int64(i+1) {
+			t.Errorf("page %d = %d %q, want %d %q", i, p.Number, p.URL, i+1, want)
+		}
+	}
+	if p := int(peak.Load()); p < 2 || p > tcbPageWorkers {
+		t.Errorf("peak concurrent page fetches = %d, want between 2 and %d", p, tcbPageWorkers)
+	}
+}
+
+// A paged reader's embedded chapter_preloaded_images list is used as is,
+// without walking the pager.
+func TestTcbFetchChapterPreloadedImages(t *testing.T) {
+	var walked atomic.Int32
+	mux := http.NewServeMux()
+	mux.HandleFunc("/manga/x/ch-1/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, `<select id="single-pager"><option data-redirect="http://%[1]s/manga/x/ch-1/p/1/">1</option>
+<option data-redirect="http://%[1]s/manga/x/ch-1/p/2/">2</option></select>
+<script type="text/javascript" id="chapter_preloaded_images">
+var chapter_preloaded_images = ["https:\/\/cdn.example.com\/b\/p000.jpg", "https:\/\/cdn.example.com\/a\/p001.jpg","\/wp-content\/p002.jpg"], chapter_images_per_page = 1;
+</script>
+<div class="reading-content"><img src="https://cdn.example.com/b/p000.jpg"></div>`, r.Host)
+	})
+	mux.HandleFunc("/manga/x/ch-1/p/", func(w http.ResponseWriter, r *http.Request) {
+		walked.Add(1)
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	tcb := NewTcb(&Grabber{URL: srv.URL + "/manga/x/", Settings: &Settings{}})
+	chapter, err := tcb.FetchChapter(&TcbChapter{Chapter{Title: "ch-1", Number: 1}, srv.URL + "/manga/x/ch-1/"})
+	if err != nil {
+		t.Fatalf("FetchChapter() error: %s", err)
+	}
+	want := []string{"https://cdn.example.com/b/p000.jpg", "https://cdn.example.com/a/p001.jpg", srv.URL + "/wp-content/p002.jpg"}
+	if len(chapter.Pages) != len(want) {
+		t.Fatalf("got %d pages, want %d", len(chapter.Pages), len(want))
+	}
+	for i, p := range chapter.Pages {
+		if p.URL != want[i] || p.Number != int64(i+1) {
+			t.Errorf("page %d = %d %q, want %d %q", i, p.Number, p.URL, i+1, want[i])
+		}
+	}
+	if n := walked.Load(); n != 0 {
+		t.Errorf("walked %d reader pages, want 0", n)
+	}
+}
+
+// A chapter without a pager is read from the page already fetched.
+func TestTcbFetchChapterSinglePageFetchesOnce(t *testing.T) {
+	var hits atomic.Int32
+	mux := http.NewServeMux()
+	mux.HandleFunc("/manga/x/ch-1/", func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		fmt.Fprint(w, `<div class="reading-content"><img data-src=" /img/1.jpg "><img src="/img/2.jpg"></div>`)
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	tcb := NewTcb(&Grabber{URL: srv.URL + "/manga/x/", Settings: &Settings{}})
+	chapter, err := tcb.FetchChapter(&TcbChapter{Chapter{Title: "ch-1", Number: 1}, srv.URL + "/manga/x/ch-1/"})
+	if err != nil {
+		t.Fatalf("FetchChapter() error: %s", err)
+	}
+	if len(chapter.Pages) != 2 || chapter.Pages[1].URL != srv.URL+"/img/2.jpg" {
+		t.Errorf("pages = %+v, want /img/1.jpg and /img/2.jpg", chapter.Pages)
+	}
+	if n := hits.Load(); n != 1 {
+		t.Errorf("chapter page fetched %d times, want 1", n)
 	}
 }

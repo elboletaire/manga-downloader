@@ -595,6 +595,7 @@ grabber/html: \
 	grabber/apollcomics \
 	grabber/arenascan \
 	grabber/asura \
+	grabber/decadencescans \
 	grabber/deathtollscans \
 	grabber/demonicscans \
 	grabber/dynastyscans \
@@ -619,6 +620,7 @@ grabber/html: \
 	grabber/mangaberri \
 	grabber/mangaeclipse \
 	grabber/mangakatana \
+	grabber/mangalami \
 	grabber/mangapill \
 	grabber/mangaread \
 	grabber/mangasorigines \
@@ -718,6 +720,10 @@ grabber/manhuaplus:
 	go run . https://manhuaplus.com/manga/tales-of-demons-and-gods01/ 522.6
 grabber/silentquill:
 	go run . https://silentquill.net/series/i-was-invited-to-join-the-country-as-an-otherworldly-warrior-but-i-refused-and-decided-to-start-as-a-soldier/ 59
+grabber/decadencescans:
+	go run . https://reader.decadencescans.com/manga/ashi-girl/ 1
+grabber/mangalami:
+	go run . https://mangalami.com/chainsaw-man-%e0%b8%95%e0%b8%ad%e0%b8%99%e0%b8%97%e0%b8%b5%e0%b9%88-202/ 200-201
 grabber/deathtollscans:
 	go run . https://reader.deathtollscans.net/series/kakushigoto/ 30
 grabber/evascans:

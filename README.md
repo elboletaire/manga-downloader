@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[157 supported sites](#supported-sites)**, from big aggregators to small
+- **[159 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -629,7 +629,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 157 supported sites</b></summary>
+<summary><b>Show all 159 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -653,6 +653,7 @@ to a minute.
 | [chainsawmannmanga.com](https://chainsawmannmanga.com) | Chainsaw Man | 2026-10-15 |
 | [comix.to](https://comix.to) \* |  | 2026-10-15 |
 | [danke.moe](https://danke.moe) | Danke fürs Lesen | 2026-10-15 |
+| [decadencescans.com](https://reader.decadencescans.com) | Decadence Scans, slow image host | 2026-10-16 |
 | [deathtollscans.net](https://reader.deathtollscans.net) |  | 2026-10-15 |
 | [demonicscans.org](https://demonicscans.org) | MangaDemon / Demonic Scans | 2026-10-15 |
 | [dragonballmangaa.com](https://dragonballmangaa.com) | Dragon Ball Super | 2026-10-15 |
@@ -717,6 +718,7 @@ to a minute.
 | [mangak.io](https://mangak.io) | MangaK, former mangabuddy.com | 2026-10-15 |
 | [mangakakalot.gg](https://www.mangakakalot.gg) \* | MangaKakalot | 2026-10-15 |
 | [mangakatana.com](https://mangakatana.com) |  | 2026-10-15 |
+| [mangalami.com](https://mangalami.com) | LamiManga, Thai | 2026-10-16 |
 | [mangalib.me](https://mangalib.me) | MangaLib | 2026-10-15 |
 | [mangalivre.to](https://mangalivre.to) | Manga Livre, former mangalivre.tv/mangalivre.net | 2026-10-15 |
 | [manganato.gg](https://www.manganato.gg) \* | MangaNato | 2026-10-15 |
