@@ -191,3 +191,33 @@ func TestPadNumber(t *testing.T) {
 		t.Errorf("template pad = %q (%v), want %q", got, err, "007.5 03")
 	}
 }
+
+func TestBlankTemplateIsTheDefault(t *testing.T) {
+	parts := FilenameTemplateParts{Series: "Series", Number: "5", Title: "Chapter 5", Version: 1}
+	for _, templ := range []string{"", "  ", "\t\n"} {
+		got, err := NewFilenameFromTemplate(templ, parts)
+		if err != nil || got != "Series 5 - Chapter 5" {
+			t.Errorf("NewFilenameFromTemplate(%q) = %q, %v", templ, got, err)
+		}
+		if VolumeTemplate(templ) != FilenameVolumeTemplateDefault {
+			t.Errorf("VolumeTemplate(%q) is not the volume default", templ)
+		}
+	}
+}
+
+func TestTemplateWarning(t *testing.T) {
+	for templ, warn := range map[string]bool{
+		"":                              false,
+		"  ":                            false,
+		FilenameTemplateDefault:         false,
+		"{{.Series}} {{.Title}}":        false,
+		"{{.Series}} {{pad .Number 3}}": false,
+		"{{.Series}} {{.SiteTitle}}":    false,
+		"{{.Series}}":                   true,
+		"fixed":                         true,
+	} {
+		if got := TemplateWarning(templ) != ""; got != warn {
+			t.Errorf("TemplateWarning(%q) warns = %v, want %v", templ, got, warn)
+		}
+	}
+}

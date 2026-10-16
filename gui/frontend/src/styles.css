@@ -184,6 +184,14 @@ code {
   line-height: 1.4;
 }
 
+.warn-text {
+  color: var(--warning);
+}
+
+.use-default {
+  align-self: flex-start;
+}
+
 .error-text {
   color: var(--danger);
 }

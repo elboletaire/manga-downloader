@@ -78,3 +78,34 @@ describe('AVIF under Convert to JPEG', () => {
     expect(markup).not.toContain(AVIF_EPUB_HINT.replace("'", '&#x27;'));
   });
 });
+
+describe('Filename template', () => {
+  it('offers Use default only when the template differs from the default', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    expect(base.options.filenameTemplate).toBe(base.filenameTemplateDefault);
+    expect(options(base)).not.toContain('Use default');
+
+    const custom: State = { ...base, options: { ...base.options, filenameTemplate: '{{.Series}} {{.Number}}' } };
+    expect(options(custom)).toContain('aria-label="Use default"');
+
+    const blank: State = { ...base, options: { ...base.options, filenameTemplate: '' } };
+    expect(options(blank)).toContain('Use default');
+  });
+
+  it('warns when the template names no number or title', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    expect(options(base)).not.toContain('files only differ');
+
+    const warned: State = { ...base, options: { ...base.options, filenameTemplate: '{{.Series}}' }, filenameTemplateWarning: 'files only differ by a version suffix.' };
+    expect(options(warned)).toContain('files only differ');
+  });
+
+  it('puts the default back through the mock and clears the warning', async () => {
+    const api = createMockApi({ scenario: 'empty', freeze: true });
+    const base = await api.state();
+    await api.setOptions({ ...base.options, filenameTemplate: 'fixed' });
+    expect((await api.state()).filenameTemplateWarning).not.toBe('');
+    await api.setOptions({ ...base.options, filenameTemplate: base.filenameTemplateDefault });
+    expect((await api.state()).filenameTemplateWarning).toBe('');
+  });
+});

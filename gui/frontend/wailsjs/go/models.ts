@@ -215,6 +215,8 @@ export namespace main {
 	    update?: UpdateDTO;
 	    browserVisibleAuto: boolean;
 	    browserAlert: string;
+	    filenameTemplateDefault: string;
+	    filenameTemplateWarning: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new State(source);
@@ -248,6 +250,8 @@ export namespace main {
 	        this.update = this.convertValues(source["update"], UpdateDTO);
 	        this.browserVisibleAuto = source["browserVisibleAuto"];
 	        this.browserAlert = source["browserAlert"];
+	        this.filenameTemplateDefault = source["filenameTemplateDefault"];
+	        this.filenameTemplateWarning = source["filenameTemplateWarning"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

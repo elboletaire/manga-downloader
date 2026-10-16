@@ -17,6 +17,7 @@ import (
 
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/elboletaire/manga-downloader/packer"
 	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -218,6 +219,10 @@ type State struct {
 	// BrowserAlert is the message of a browser window waiting for the user,
 	// "" when none is
 	BrowserAlert string `json:"browserAlert"`
+	// FilenameTemplateDefault is the template a blank option stands for, and
+	// FilenameTemplateWarning what is wrong with the current one, "" when nothing
+	FilenameTemplateDefault string `json:"filenameTemplateDefault"`
+	FilenameTemplateWarning string `json:"filenameTemplateWarning"`
 }
 
 // VolumesDTO is the Volumes box: the volumes a run packs, in --volumes'
@@ -335,6 +340,9 @@ func (a *App) State() State {
 
 		BrowserVisibleAuto: c.BrowserVisibleAuto(),
 		BrowserAlert:       c.BrowserAlert(),
+
+		FilenameTemplateDefault: packer.FilenameTemplateDefault,
+		FilenameTemplateWarning: packer.TemplateWarning(c.Settings().FilenameTemplate),
 	}
 	st.LoadedLanguage, st.LoadedScanlator = c.LoadedFilters()
 	st.Volumes.Text, st.Volumes.Site = c.Volumes()

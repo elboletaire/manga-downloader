@@ -57,18 +57,43 @@ func MigrateFilenameTemplate(templ string) string {
 	return templ
 }
 
+// isDefaultTemplate reports whether templ is a chapter default: blank, the
+// current default or the legacy one
+func isDefaultTemplate(templ string) bool {
+	templ = strings.TrimSpace(templ)
+	return templ == "" || templ == FilenameTemplateDefault || templ == filenameTemplateLegacyDefault
+}
+
+// TemplateWarning returns a warning when templ names no number or title, so
+// every file would get the same name; "" when it's fine or blank (the default)
+func TemplateWarning(templ string) string {
+	if strings.TrimSpace(templ) == "" {
+		return ""
+	}
+	for _, field := range []string{"{{.Number}}", "{{.Title}}", "{{.SiteTitle}}", "{{pad .Number"} {
+		if strings.Contains(templ, field) {
+			return ""
+		}
+	}
+	return "This template has no {{.Number}}, {{.Title}} or {{.SiteTitle}}, so files only differ by a version suffix."
+}
+
 // VolumeTemplate returns the template volume files are named with: the
 // volume default when the filename template is a chapter default (or
 // unset), the user's own template otherwise
 func VolumeTemplate(templ string) string {
-	if templ == "" || templ == FilenameTemplateDefault || templ == filenameTemplateLegacyDefault {
+	if isDefaultTemplate(templ) {
 		return FilenameVolumeTemplateDefault
 	}
 	return templ
 }
 
-// NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template
+// NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template.
+// A blank template is the default.
 func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string, error) {
+	if strings.TrimSpace(templ) == "" {
+		templ = FilenameTemplateDefault
+	}
 	tmpl, err := template.New("filename").Funcs(template.FuncMap{"pad": padNumber}).Parse(templ)
 	if err != nil {
 		return "", err

@@ -169,6 +169,22 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
             onCommit={(filenameTemplate) => onOptions({ filenameTemplate })}
             onError={onError}
           />
+          {state.filenameTemplateWarning && (
+            <p className="hint warn-text" role="status">
+              {state.filenameTemplateWarning}
+            </p>
+          )}
+          {o.filenameTemplate !== state.filenameTemplateDefault && (
+            <button
+              type="button"
+              className="btn small use-default"
+              aria-label="Use default"
+              disabled={locked}
+              onClick={() => set({ filenameTemplate: state.filenameTemplateDefault })}
+            >
+              Use default
+            </button>
+          )}
           <Switch
             label="Show the browser window"
             description={browser.hint}
