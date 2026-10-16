@@ -1301,13 +1301,13 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 }
 
 // isSVGPlaceholder reports whether src is a lazy-load spinner (an .svg) with
-// the real image in data-src (mangazin.org); pages are never SVG.
+// the real image in data-src; pages are never SVG.
 func isSVGPlaceholder(src string, s *goquery.Selection) bool {
 	return strings.HasSuffix(strings.ToLower(src), ".svg") && s.AttrOr("data-src", "") != ""
 }
 
 // isThemeImage reports whether u is a promo or "to be continued" image from
-// the theme's own folder, which Madara clones pad chapters with (mangazin.org).
+// the theme's own folder, which Madara clones pad chapters with.
 func isThemeImage(u string) bool {
 	return strings.Contains(u, "/wp-content/themes/")
 }
