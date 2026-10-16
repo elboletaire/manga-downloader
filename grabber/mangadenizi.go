@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
-	"strconv"
 
 	"github.com/elboletaire/manga-downloader/http"
 )
@@ -80,14 +79,11 @@ func (m *Mangadenizi) FetchChapters() (chapters Filterables, errs []error) {
 	}
 
 	for _, c := range manga.Chapters {
-		title := c.Title
-		if title == "" {
-			title = "Bölüm " + strconv.FormatFloat(c.Number, 'f', -1, 64)
-		}
 		chapters = append(chapters, &MangadeniziChapter{
 			Chapter{
 				Number:   c.Number,
-				Title:    title,
+				Title:    c.Title,
+				Label:    Label{Style: LabelNumbered, Lang: "tr"},
 				Language: "tr",
 				ID:       c.Slug,
 			},
@@ -123,6 +119,7 @@ func (m *Mangadenizi) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(feed.Pages)),
 		Language:   "tr",

@@ -117,9 +117,6 @@ func (s Stonescape) FetchChapters() (chapters Filterables, errs []error) {
 		if c.Title != nil {
 			title = *c.Title
 		}
-		if title == "" {
-			title = "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
-		}
 
 		chapters = append(chapters, &StonescapeChapter{
 			Chapter{
@@ -127,6 +124,7 @@ func (s Stonescape) FetchChapters() (chapters Filterables, errs []error) {
 				Title:    title,
 				Language: "en",
 				ID:       c.ChapterId,
+				Label:    Label{Style: LabelNumbered},
 			},
 			c.ChapterId,
 		})
@@ -160,6 +158,7 @@ func (s Stonescape) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		Language:   "en",
 		PagesCount: int64(len(feed.Pages)),

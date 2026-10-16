@@ -148,16 +148,12 @@ func (m *Jestful) FetchChapters() (Filterables, []error) {
 			continue
 		}
 
-		title := strings.TrimSpace(c.Name)
-		if title == "" {
-			title = "Chapter " + c.Chapter
-		}
-
 		chapters = append(chapters, &JestfulChapter{
 			Chapter{
 				Number: number,
-				Title:  title,
+				Title:  strings.TrimSpace(c.Name),
 				ID:     c.ID,
+				Label:  Label{Style: LabelNumbered, Number: c.Chapter},
 			},
 			c.ID,
 			c.Chapter,
@@ -198,6 +194,7 @@ func (m *Jestful) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:    f.GetTitle(),
+		Label:    labelOf(f),
 		Number:   f.GetNumber(),
 		Language: "en",
 		ID:       jchap.ID,

@@ -175,8 +175,8 @@ func (m *Mkissa) FetchChapters() (chapters Filterables, errs []error) {
 		chapters = append(chapters, &MkissaChapter{
 			Chapter{
 				Number:   number,
-				Title:    "Chapter " + numStr,
 				Language: "en",
+				Label:    Label{Style: LabelNumbered, Number: numStr},
 			},
 			id,
 			numStr,
@@ -220,6 +220,7 @@ func (m *Mkissa) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:    f.GetTitle(),
+		Label:    labelOf(f),
 		Number:   f.GetNumber(),
 		Language: "en",
 	}

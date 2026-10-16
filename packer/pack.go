@@ -121,7 +121,7 @@ func pageFormats(format string, formats grabber.ConvertFormats) grabber.ConvertF
 func chapterKey(chapter *grabber.Chapter) string {
 	release := chapter.ID
 	if release == "" {
-		release = chapter.GetTitle()
+		release = grabber.ChapterLabel(chapter)
 		if chapter.Group != "" {
 			release = chapter.Group + "\x00" + release
 		}
@@ -168,7 +168,7 @@ func chapterFolders(chapters []*DownloadedChapter, format string, convert grabbe
 	// both chapters' pages into one folder (which would lose the first one's).
 	usedFolders := map[string]int{}
 	for _, chapter := range chapters {
-		base := SanitizeFilename(fmt.Sprintf("Chapter %s", paddedChapterNumber(chapter.GetNumber())))
+		base := SanitizeFilename(grabber.NumberTextLabel(paddedChapterNumber(chapter.GetNumber())))
 		folder := base
 		if n := usedFolders[base]; n > 0 {
 			folder = fmt.Sprintf("%s (%d)", base, n+1)
@@ -192,8 +192,8 @@ func chapterFolders(chapters []*DownloadedChapter, format string, convert grabbe
 // decimals kept), with its title when the title says more than the number
 func chapterLabel(chapter *grabber.Chapter) string {
 	number := chapter.GetNumber()
-	label := "Chapter " + formatChapterNumber(number)
-	if title := titleBeyondNumber(chapter.GetTitle(), number); title != "" {
+	label := grabber.NumberLabel(number)
+	if title := titleBeyondNumber(grabber.ChapterLabel(chapter), number); title != "" {
 		label += " - " + title
 	}
 	return label

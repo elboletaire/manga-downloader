@@ -559,6 +559,21 @@ left as is:
 A custom template names them too, with `{{.Number}}` being the volume's
 chapters (`1-7`) and `{{.Title}}` `Vol. 01`.
 
+`{{.Title}}` is the chapter's label: its title, or `Chapter 12` when the site
+gives none. `{{.SiteTitle}}` is the site's own title alone, empty when it gives
+none and for a volume or a bundle.
+
+`pad` zero-pads a number's whole part and keeps its decimals: `{{pad .Number 4}}`
+is `0005` for chapter 5 and `0010.5` for 10.5. MangaDex chapters used to be
+named with a padded label; this template names per-chapter MangaDex downloads
+that way again (with `Capítulo` in place of `Chapter` for InManga), except that
+decimal chapters keep their real number (`0010.5`). Like any custom template,
+it also names `--volumes` files, and in the app it applies to every site:
+
+~~~
+{{.Series}} {{.Number}} - Chapter {{pad .Number 4}}{{if .SiteTitle}} {{.SiteTitle}}{{end}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
+~~~
+
 `{{.Group}}` is the scanlation group that made the release (empty when the site
 doesn't say). A volume or a bundle gets its group only when all of its chapters
 were made by the same one, so mixed groups leave it empty.

@@ -494,7 +494,7 @@ func TestFetchChaptersTitles(t *testing.T) {
 		t.Fatalf("expected %d chapters, got %d", len(want), len(chapters))
 	}
 	for i, c := range chapters {
-		if got := c.GetTitle(); got != want[i] {
+		if got := ChapterLabel(c); got != want[i] {
 			t.Errorf("chapter %d title = %q, want %q", i, got, want[i])
 		}
 	}

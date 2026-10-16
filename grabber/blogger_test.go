@@ -72,7 +72,7 @@ func TestBloggerChapters(t *testing.T) {
 		t.Fatalf("got %d chapters, want 1", len(chapters))
 	}
 	c := chapters[0].(*BloggerChapter)
-	if c.Number != 1196 || c.Title != "Chapter 1196" || c.Language != "es" || c.URL != entries[0].URL {
+	if c.Number != 1196 || ChapterLabel(c) != "Chapter 1196" || c.Language != "es" || c.URL != entries[0].URL {
 		t.Errorf("chapter = %+v (%s), want number 1196 in es", c.Chapter, c.URL)
 	}
 
@@ -80,8 +80,8 @@ func TestBloggerChapters(t *testing.T) {
 	if len(chapters) != 2 {
 		t.Fatalf("got %d Blue Lock chapters, want 2", len(chapters))
 	}
-	if part := chapters[0].(*BloggerChapter); part.Title != "Chapter 364 Part 2" || part.Number != 364 {
-		t.Errorf("part chapter = %q (%v), want %q (364)", part.Title, part.Number, "Chapter 364 Part 2")
+	if part := chapters[0].(*BloggerChapter); ChapterLabel(part) != "Chapter 364 Part 2" || part.Title != "" || part.Number != 364 {
+		t.Errorf("part chapter = %q %q (%v), want %q (364)", ChapterLabel(part), part.Title, part.Number, "Chapter 364 Part 2")
 	}
 }
 

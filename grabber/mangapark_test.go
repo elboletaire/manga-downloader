@@ -34,7 +34,7 @@ func TestMangaparkChapterTitle(t *testing.T) {
 		{"Chapter 267: Finale: Goodbye, Shonan", 267, "Finale: Goodbye, Shonan"},
 		// Decimal number with subtitle
 		{"Chapter 267.5: Extra", 267.5, "Extra"},
-		// Number only: fallback to "Chapter N"
+		// Number only: labelled "Chapter N"
 		{"Chapter 267", 267, "Chapter 267"},
 		{"Chapter 267.5", 267.5, "Chapter 267.5"},
 		// No "Chapter N" prefix: keep as-is
@@ -42,9 +42,11 @@ func TestMangaparkChapterTitle(t *testing.T) {
 		// Bare "Chapter" (no number): keep as-is (one-shot without subtitle)
 		{"Chapter", 1, "Chapter"},
 	}
+	// want is the label, as the title used to read before labels were composed
 	for _, c := range cases {
-		if got := mangaparkChapterTitle(c.title, c.number); got != c.want {
-			t.Errorf("mangaparkChapterTitle(%q, %v) = %q, want %q", c.title, c.number, got, c.want)
+		ch := Chapter{Title: mangaparkChapterTitle(c.title), Number: c.number, Label: Label{Style: LabelNumbered}}
+		if got := ChapterLabel(ch); got != c.want {
+			t.Errorf("label of %q (%v) = %q, want %q", c.title, c.number, got, c.want)
 		}
 	}
 }
@@ -164,8 +166,8 @@ func TestParseMangaparkChaptersBatch(t *testing.T) {
 		if c.Number != test.wantNumber {
 			t.Errorf("chapter %d: number = %v, want %v", test.idx, c.Number, test.wantNumber)
 		}
-		if c.Title != test.wantTitle {
-			t.Errorf("chapter %d: title = %q, want %q", test.idx, c.Title, test.wantTitle)
+		if ChapterLabel(c) != test.wantTitle {
+			t.Errorf("chapter %d: title = %q, want %q", test.idx, ChapterLabel(c), test.wantTitle)
 		}
 		if c.Link != test.wantLink {
 			t.Errorf("chapter %d: link = %q, want %q", test.idx, c.Link, test.wantLink)

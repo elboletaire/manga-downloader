@@ -91,17 +91,13 @@ func (g Guya) FetchChapters() (Filterables, []error) {
 			continue
 		}
 
-		title := c.Title
-		if title == "" {
-			title = "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
-		}
-
 		for _, groupId := range orderedGroups(c.Groups, feed.PreferredSort) {
 			listed := &GuyaChapter{
 				Chapter{
 					Number: number,
-					Title:  title,
+					Title:  c.Title,
 					ID:     c.Folder + "/" + groupId,
+					Label:  Label{Style: LabelNumbered},
 				},
 				feed.Slug,
 				c.Folder,
@@ -125,6 +121,7 @@ func (g Guya) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(gchap.Files)),
 		Language:   "en",

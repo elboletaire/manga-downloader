@@ -90,11 +90,6 @@ func (t *Teamshadowi) FetchChapters() (Filterables, []error) {
 			continue
 		}
 
-		title := fmt.Sprintf("Chapter %s", c.Number)
-		if strings.TrimSpace(c.Title) != "" {
-			title += " - " + c.Title
-		}
-
 		pages := make([]Page, 0, len(c.ImagePaths))
 		for i, url := range c.ImagePaths {
 			pages = append(pages, Page{
@@ -106,10 +101,11 @@ func (t *Teamshadowi) FetchChapters() (Filterables, []error) {
 		chapters = append(chapters, &TeamshadowiChapter{
 			Chapter{
 				Number:     number,
-				Title:      title,
+				Title:      c.Title,
 				PagesCount: int64(len(pages)),
 				Pages:      pages,
 				Language:   "en",
+				Label:      Label{Style: LabelPrefixed, Number: c.Number},
 			},
 		})
 	}

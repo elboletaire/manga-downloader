@@ -118,8 +118,8 @@ func (m *LelScans) FetchChapters() (chapters Filterables, errs []error) {
 		chapters = append(chapters, &LelScansChapter{
 			Chapter{
 				Number: number,
-				Title:  "Chapter " + strconv.FormatFloat(number, 'f', -1, 64),
 				ID:     chapterURLID(href),
+				Label:  Label{Style: LabelNumbered},
 			},
 			href,
 		})
@@ -147,6 +147,7 @@ func (m *LelScans) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:    f.GetTitle(),
+		Label:    labelOf(f),
 		Number:   f.GetNumber(),
 		Language: "fr",
 		ID:       chap.ID,

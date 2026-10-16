@@ -98,8 +98,8 @@ func (m Mangitto) FetchChapters() (chapters Filterables, errs []error) {
 			chapters = append(chapters, &MangittoChapter{
 				Chapter{
 					Number:   c.Number,
-					Title:    "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64),
 					Language: "tr",
+					Label:    Label{Style: LabelNumbered},
 				},
 			})
 		}
@@ -136,6 +136,7 @@ func (m Mangitto) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:    f.GetTitle(),
+		Label:    labelOf(f),
 		Number:   f.GetNumber(),
 		Language: mchap.Language,
 	}

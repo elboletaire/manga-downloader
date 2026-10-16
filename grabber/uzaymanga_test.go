@@ -55,8 +55,8 @@ func TestUzaymanga(t *testing.T) {
 		t.Fatalf("expected the 2 list rows only, got %d", len(chapters))
 	}
 	first := chapters[0].(*PlainHTMLChapter)
-	if first.GetTitle() != "Chapter 2" {
-		t.Errorf("unexpected title %q, want the series title and the Bölüm label stripped", first.GetTitle())
+	if ChapterLabel(first) != "Chapter 2" {
+		t.Errorf("unexpected title %q, want the series title and the Bölüm label stripped", ChapterLabel(first))
 	}
 	if first.GetNumber() != 2 || first.URL != srv.URL+"/manga/kunlun-daginin-seytani-ustasi/2-bolum-oku" {
 		t.Errorf("unexpected first chapter: %v %q", first.GetNumber(), first.URL)

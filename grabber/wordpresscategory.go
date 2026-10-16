@@ -297,16 +297,12 @@ func wpChapters(posts []wpPost, lang string) Filterables {
 			continue
 		}
 
-		chapterTitle := "Chapter " + strconv.FormatFloat(num, 'f', -1, 64)
-		if part != "" {
-			chapterTitle += " Part " + part
-		}
 		chapters = append(chapters, &WordPressCategoryChapter{
 			Chapter: Chapter{
 				// the post title repeats the series name, which the filename already has
-				Title:    chapterTitle,
 				Number:   num,
 				Language: lang,
+				Label:    Label{Style: LabelNumbered, Part: part},
 			},
 			URL: p.Link,
 		})
@@ -354,11 +350,12 @@ func (w *WordPressCategory) FetchChapter(f Filterable) (*Chapter, error) {
 
 	pages := wpPageImages(doc)
 	if len(pages) == 0 {
-		return nil, fmt.Errorf("no pages found for %s", f.GetTitle())
+		return nil, fmt.Errorf("no pages found for %s", ChapterLabel(f))
 	}
 
 	return &Chapter{
 		Title:      f.GetTitle(),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
 		Language:   w.language,

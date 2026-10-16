@@ -265,16 +265,11 @@ func bloggerChapters(entries []bloggerEntry, query, lang string) (Filterables, s
 			title = post.Series
 		}
 
-		chapterTitle := "Chapter " + strconv.FormatFloat(post.Number, 'f', -1, 64)
-		if post.Part != "" {
-			chapterTitle += " Part " + post.Part
-		}
-
 		chapters = append(chapters, &BloggerChapter{
 			Chapter{
-				Title:    chapterTitle,
 				Number:   post.Number,
 				Language: lang,
+				Label:    Label{Style: LabelNumbered, Part: post.Part},
 			},
 			e.URL,
 		})
@@ -442,7 +437,7 @@ func (b *Blogger) FetchChapter(f Filterable) (*Chapter, error) {
 
 	pages := bloggerPages(doc, postURL)
 	if len(pages) == 0 {
-		return nil, fmt.Errorf("no pages found for %s", bchap.GetTitle())
+		return nil, fmt.Errorf("no pages found for %s", ChapterLabel(bchap))
 	}
 
 	chapter := bchap.Chapter

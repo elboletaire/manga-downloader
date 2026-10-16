@@ -2,6 +2,7 @@
 
 - **Paywalls mostly look like success.** Recent chapters commonly render zero images with no error, or replace the link with a modal. Several `Rows` selectors end in `a[href]` just to filter those out. **Smoke-test a chapter slightly behind the latest**, never the newest.
 - **Verify CBZ contents, not their existence.** A run can "succeed" with empty or junk archives; `tools/verify-cbz` checks sizes and magic bytes.
+- **Leave the chapter word to the label**: `Title` is only ever the site's own title. A chapter the site gives none gets an empty `Title` and `Label: Label{Style: LabelNumbered}` (copied to the fetched chapter with `labelOf(f)`; `Label.Number` keeps a number the site writes its own way, like "05"), and `grabber.ChapterLabel` names it "Chapter N". Show and name chapters by `ChapterLabel`, never `GetTitle()`; `TestNoChapterWordOutsideLabels` fails on a chapter word in a grabber's string literal (#326).
 - **Chapter titles need `sanitizeTitle()` too**, not just series titles — several themes pad `.chapternum` with raw tabs/newlines or mix in a trailing date, which leaked into filenames.
 - **Scope bare `h1` selectors** — sidebar labels and decorative stat headings are common (`h1[itemprop="name"]`).
 - **Scope Madara reader selectors** — `div.reading-content img` picks up decorative banners/footers on some sites, and `body.Find("li")` matches "Volume N" wrappers as bogus chapters.

@@ -106,9 +106,9 @@ func (h *HeavenlyDelusion) chaptersFromLocs(locs []string) Filterables {
 
 		chapters = append(chapters, &HeavenlyDelusionChapter{
 			Chapter{
-				Title:  fmt.Sprintf("Chapter %s", numStr),
 				Number: num,
 				ID:     chapterURLID(loc),
+				Label:  Label{Style: LabelNumbered, Number: numStr},
 			},
 			loc,
 		})
@@ -170,13 +170,14 @@ func (h *HeavenlyDelusion) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
-	pages, err := toivoLiteEntryContentPages(doc, f.GetTitle())
+	pages, err := toivoLiteEntryContentPages(doc, ChapterLabel(f))
 	if err != nil {
 		return nil, err
 	}
 
 	return &Chapter{
 		Title:      f.GetTitle(),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
 		Language:   "en",

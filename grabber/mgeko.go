@@ -3,7 +3,6 @@
 package grabber
 
 import (
-	"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -148,15 +147,6 @@ func formatChapterNumber(number float64) string {
 	return strconv.FormatFloat(number, 'f', -1, 64)
 }
 
-// chapterTitleOrDefault trims title, falling back to "Chapter N" when empty
-func chapterTitleOrDefault(title string, number float64) string {
-	title = strings.TrimSpace(title)
-	if title == "" {
-		title = "Chapter " + formatChapterNumber(number)
-	}
-	return title
-}
-
 // FetchChapters returns the chapters of the manga. The series page only
 // lists the most recent ~50 chapters, so the full list is fetched from the
 // site's own "all-chapters" page instead.
@@ -194,8 +184,8 @@ func (m *Mgeko) FetchChapters() (chapters Filterables, errs []error) {
 		chapters = append(chapters, &MgekoChapter{
 			Chapter{
 				Number: number,
-				Title:  fmt.Sprintf("Chapter %s", formatChapterNumber(number)),
 				ID:     chapterURLID(u),
+				Label:  Label{Style: LabelNumbered},
 			},
 			u,
 		})
@@ -223,6 +213,7 @@ func (m *Mgeko) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:    f.GetTitle(),
+		Label:    labelOf(f),
 		Number:   f.GetNumber(),
 		Language: "en",
 		ID:       chapterURLID(mchap.URL),

@@ -275,8 +275,8 @@ func TestParseManganeloChaptersPage(t *testing.T) {
 		if first.Number != c.wantFirst {
 			t.Errorf("%s: first number = %v, want %v", c.name, first.Number, c.wantFirst)
 		}
-		if first.Title != c.wantTitle {
-			t.Errorf("%s: first title = %q, want %q", c.name, first.Title, c.wantTitle)
+		if ChapterLabel(first) != c.wantTitle {
+			t.Errorf("%s: first title = %q, want %q", c.name, ChapterLabel(first), c.wantTitle)
 		}
 		if first.Slug != c.wantSlug {
 			t.Errorf("%s: first slug = %q, want %q", c.name, first.Slug, c.wantSlug)

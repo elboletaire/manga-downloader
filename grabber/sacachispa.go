@@ -114,7 +114,7 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 			if err != nil {
 				continue
 			}
-			title := chapterTitleOrDefault(c.Title, number)
+			title := strings.TrimSpace(c.Title)
 
 			rels := s.preferredReleases(releases[c.ID])
 			if len(rels) == 0 {
@@ -123,6 +123,7 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 						Number:   number,
 						Title:    title,
 						Language: "en",
+						Label:    Label{Style: LabelNumbered},
 					},
 					PatreonOnly: c.PatreonOnly,
 				})
@@ -135,6 +136,7 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 						Title:    title,
 						Language: r.Language,
 						ID:       r.ID,
+						Label:    Label{Style: LabelNumbered},
 					},
 					PatreonOnly: c.PatreonOnly,
 				}

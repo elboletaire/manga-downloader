@@ -183,6 +183,7 @@ func (i *Inmanga) FetchChapter(chap Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      chap.GetTitle(),
+		Label:      labelOf(chap),
 		Number:     chap.GetNumber(),
 		PagesCount: int64(ichap.PagesCount),
 		// Inmanga only hosts spanish mangas
@@ -216,7 +217,7 @@ func newInmangaChapter(c inmangaChapterFeedResult) *InmangaChapter {
 		Chapter{
 			Number:     c.Number,
 			PagesCount: int64(c.PagesCount),
-			Title:      fmt.Sprintf("Capítulo %04d", int64(c.Number)),
+			Label:      Label{Style: LabelNumbered, Lang: "es"},
 			ID:         c.Id,
 		},
 		c.Id,

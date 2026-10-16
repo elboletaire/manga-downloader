@@ -91,15 +91,11 @@ func (f *Fmteam) FetchChapters() (chapters Filterables, errs []error) {
 			continue
 		}
 
-		title := strings.TrimSpace(c.Title)
-		if title == "" {
-			title = "Chapitre " + strconv.FormatFloat(number, 'f', -1, 64)
-		}
-
 		fchap := &FmteamChapter{
 			Chapter{
 				Number:   number,
-				Title:    title,
+				Title:    strings.TrimSpace(c.Title),
+				Label:    Label{Style: LabelNumbered, Lang: "fr"},
 				Language: c.Language,
 				ID:       c.Url,
 			},
@@ -132,6 +128,7 @@ func (f Fmteam) FetchChapter(fl Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      fl.GetTitle(),
+		Label:      labelOf(fl),
 		Number:     fl.GetNumber(),
 		Language:   fchap.Language,
 		ID:         fchap.ID,

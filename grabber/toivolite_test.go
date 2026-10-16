@@ -68,22 +68,24 @@ func TestToivoLiteChapterNum(t *testing.T) {
 	}
 }
 
-func TestToivoLiteNormalizeTitle(t *testing.T) {
+func TestToivoLiteChapterTitle(t *testing.T) {
 	tests := []struct {
-		raw  string
-		want string
+		raw, label, siteTitle string
 	}{
-		{"JOJOLands, Chapter 41", "Chapter 41"},
-		{"The Apothecary Diaries, Chapter 63.2", "Chapter 63.2"},
-		// No series prefix — returned unchanged
-		{"Chapter 7", "Chapter 7"},
-		// Lowercase "chapter" keyword in source: normalized to capital C
-		{"Series Name, chapter 5", "Chapter 5"},
+		{"JOJOLands, Chapter 41", "Chapter 41", ""},
+		{"The Apothecary Diaries, Chapter 63.2", "Chapter 63.2", ""},
+		// No series prefix
+		{"Chapter 7", "Chapter 7", ""},
+		{"Chapter 7: Foo", "Chapter 7: Foo", "Chapter 7: Foo"},
+		// Lowercase "chapter" keyword in source: the label names it
+		{"Series Name, chapter 5", "Chapter 5", ""},
+		{"Series Name, Chapter 5: Foo", "Chapter 5: Foo", "Chapter 5: Foo"},
 	}
 	for _, tt := range tests {
-		got := toivoLiteNormalizeTitle(tt.raw)
-		if got != tt.want {
-			t.Errorf("toivoLiteNormalizeTitle(%q) = %q, want %q", tt.raw, got, tt.want)
+		title, label := toivoLiteChapterTitle(tt.raw)
+		c := Chapter{Title: title, Label: label}
+		if got := ChapterLabel(c); got != tt.label || c.GetTitle() != tt.siteTitle {
+			t.Errorf("toivoLiteChapterTitle(%q): label %q, title %q, want %q, %q", tt.raw, got, c.GetTitle(), tt.label, tt.siteTitle)
 		}
 	}
 }
@@ -179,8 +181,8 @@ func TestToivoLiteChapterList(t *testing.T) {
 	wantTitles := []string{"Chapter 41", "Chapter 63.2", "Chapter 7"}
 	wantNums := []float64{41, 63.2, 7}
 	for i, e := range entries {
-		if e.Title != wantTitles[i] {
-			t.Errorf("entry[%d].Title = %q, want %q", i, e.Title, wantTitles[i])
+		if got := ChapterLabel(Chapter{Title: e.Title, Number: e.Number, Label: e.Label}); got != wantTitles[i] {
+			t.Errorf("entry[%d] label = %q, want %q", i, got, wantTitles[i])
 		}
 		if e.Number != wantNums[i] {
 			t.Errorf("entry[%d].Number = %v, want %v", i, e.Number, wantNums[i])

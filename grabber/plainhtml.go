@@ -1015,9 +1015,9 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 			if strip != nil {
 				title = sanitizeTitle(strip.ReplaceAllString(title, ""))
 			}
-			if title == "" || chapterOnlyTitleRe.MatchString(title) {
-				// nothing left but the number, so the filename gets a real label
-				title = "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
+			if chapterOnlyTitleRe.MatchString(title) {
+				// nothing left but the number, which the label already gives
+				title = ""
 			}
 
 			locked := lockedNumbers[number] || (m.site.Locked != "" && s.Find(m.site.Locked).Length() > 0)
@@ -1042,6 +1042,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 						Title:  title,
 						ID:     id,
 						Locked: locked,
+						Label:  Label{Style: LabelNumbered},
 					},
 					u,
 				}
@@ -1272,6 +1273,7 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(pcount),
 		Language:   "en",
@@ -1286,7 +1288,7 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 	for i, img := range pimages {
 		if img == "" {
 			// this error is not critical and is not from our side, so just log it out
-			notice.Warn("page %d of %s has no URL to fetch from 😕 (will be ignored)", i, chapter.GetTitle())
+			notice.Warn("page %d of %s has no URL to fetch from 😕 (will be ignored)", i, ChapterLabel(chapter))
 			continue
 		}
 		if isThemeImage(img) {

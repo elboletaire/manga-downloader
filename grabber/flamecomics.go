@@ -97,15 +97,13 @@ func (f *Flamecomics) FetchChapters() (chapters Filterables, errs []error) {
 		if c.Title != nil {
 			title = *c.Title
 		}
-		if title == "" {
-			title = "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
-		}
 
 		chapters = append(chapters, &FlamecomicsChapter{
 			Chapter{
 				Number: number,
 				Title:  title,
 				ID:     c.Token,
+				Label:  Label{Style: LabelNumbered},
 			},
 			c.SeriesId,
 			c.Token,
@@ -158,6 +156,7 @@ func (f Flamecomics) FetchChapter(fl Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      fl.GetTitle(),
+		Label:      labelOf(fl),
 		Number:     fl.GetNumber(),
 		Language:   "en",
 		PagesCount: int64(len(indexes)),

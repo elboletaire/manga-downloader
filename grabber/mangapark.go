@@ -62,14 +62,9 @@ func mangaparkLang(lang string) string {
 }
 
 // mangaparkChapterTitle strips the "Chapter N" or "Chapter N: " prefix from a
-// span title and returns the subtitle. When nothing remains, it returns
-// "Chapter N" so the filename has a real label.
-func mangaparkChapterTitle(title string, number float64) string {
-	sub := strings.TrimSpace(mangaparkTitlePrefixRe.ReplaceAllString(title, ""))
-	if sub == "" {
-		return "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
-	}
-	return sub
+// span title and returns the subtitle, empty when nothing remains
+func mangaparkChapterTitle(title string) string {
+	return strings.TrimSpace(mangaparkTitlePrefixRe.ReplaceAllString(title, ""))
 }
 
 // mangaparkSeriesURL returns the canonical series page URL for any link the
@@ -212,13 +207,12 @@ func parseMangaparkChaptersBatch(body string) (Filterables, int, bool, error) {
 
 		dataNum := li.AttrOr("data-number", "")
 		var number float64
+		style := LabelNumbered
 		if dataNum == "" {
 			// One-shot or unnumbered: assign the next sequential number.
 			number = seqNum
 			seqNum++
-			if title == "" {
-				title = "Chapter"
-			}
+			style = LabelUnnumbered
 		} else {
 			var parseErr error
 			number, parseErr = strconv.ParseFloat(dataNum, 64)
@@ -227,7 +221,7 @@ func parseMangaparkChaptersBatch(body string) (Filterables, int, bool, error) {
 			}
 			seqNum = number + 1
 			// Strip "Chapter N: " prefix; keep only the subtitle.
-			title = mangaparkChapterTitle(title, number)
+			title = mangaparkChapterTitle(title)
 		}
 
 		chapters = append(chapters, &MangaparkChapter{
@@ -236,6 +230,7 @@ func parseMangaparkChaptersBatch(body string) (Filterables, int, bool, error) {
 				Title:    title,
 				Language: lang,
 				ID:       href,
+				Label:    Label{Style: style},
 			},
 			href,
 		})
@@ -265,6 +260,7 @@ func (m *Mangapark) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:    f.GetTitle(),
+		Label:    labelOf(f),
 		Number:   f.GetNumber(),
 		Language: mchap.Language,
 		ID:       mchap.Link,

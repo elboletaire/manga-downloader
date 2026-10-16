@@ -103,8 +103,8 @@ func TestSacachispaTitleAndChapters(t *testing.T) {
 	if chapters[2].GetNumber() != 22.5 || chapters[2].GetTitle() != "Named" {
 		t.Errorf("chapters[2] = %v %q, unexpected", chapters[2].GetNumber(), chapters[2].GetTitle())
 	}
-	if chapters[0].GetTitle() != "Chapter 1" {
-		t.Errorf("chapters[0] title = %q, want the \"Chapter N\" fallback", chapters[0].GetTitle())
+	if ChapterLabel(chapters[0]) != "Chapter 1" {
+		t.Errorf("chapters[0] title = %q, want the \"Chapter N\" fallback", ChapterLabel(chapters[0]))
 	}
 }
 

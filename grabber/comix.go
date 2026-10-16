@@ -304,11 +304,12 @@ func comixChapter(chap *ComixChapter, html string) (*Chapter, error) {
 
 	pages, err := comixPages(doc)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", chap.GetTitle(), err)
+		return nil, fmt.Errorf("%s: %w", ChapterLabel(chap), err)
 	}
 
 	chapter := &Chapter{
 		Title:      chap.GetTitle(),
+		Label:      labelOf(chap),
 		Number:     chap.GetNumber(),
 		Language:   "en",
 		ID:         chap.ID,
@@ -347,8 +348,8 @@ func comixParseRow(row *goquery.Selection, baseURL string) (*ComixChapter, error
 	chapter := &ComixChapter{
 		Chapter{
 			Number: number,
-			Title:  "Chapter " + strconv.FormatFloat(number, 'f', -1, 64),
 			ID:     chapterURLID(href),
+			Label:  Label{Style: LabelNumbered},
 		},
 		href,
 	}

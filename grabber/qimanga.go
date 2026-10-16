@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -152,6 +151,7 @@ func (q Qimanga) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:    f.GetTitle(),
+		Label:    labelOf(f),
 		Number:   f.GetNumber(),
 		Language: "en",
 		ID:       qchap.Slug,
@@ -199,16 +199,13 @@ type qimangaChaptersFeed struct {
 // purchase
 func (f qimangaChaptersFeed) chapters() (chapters Filterables) {
 	for _, c := range f.Data {
-		title := c.Title
-		if title == "" {
-			title = "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64)
-		}
 		chapters = append(chapters, &QimangaChapter{
 			Chapter{
 				Number: c.Number,
-				Title:  title,
+				Title:  c.Title,
 				ID:     c.Slug,
 				Locked: c.RequiresPurchase,
+				Label:  Label{Style: LabelNumbered},
 			},
 			c.Slug,
 		})

@@ -85,6 +85,7 @@ func (t *ToivoLite) fetchRoot() error {
 				Title:  e.Title,
 				Number: e.Number,
 				ID:     chapterURLID(e.URL),
+				Label:  e.Label,
 			},
 			e.URL,
 		})
@@ -128,13 +129,14 @@ func (t *ToivoLite) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
-	pages, err := toivoLiteEntryContentPages(doc, f.GetTitle())
+	pages, err := toivoLiteEntryContentPages(doc, ChapterLabel(f))
 	if err != nil {
 		return nil, err
 	}
 
 	return &Chapter{
 		Title:      f.GetTitle(),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
 		Language:   "en",
@@ -146,6 +148,7 @@ func (t *ToivoLite) FetchChapter(f Filterable) (*Chapter, error) {
 // toivoLiteChapterEntry is one chapter as listed in the sidebar widget.
 type toivoLiteChapterEntry struct {
 	Title  string
+	Label  Label
 	Number float64
 	URL    string
 }
@@ -178,10 +181,11 @@ func toivoLiteChapterList(doc *goquery.Document, baseURL string) (entries []toiv
 			return
 		}
 
-		title := toivoLiteNormalizeTitle(rawTitle)
+		title, label := toivoLiteChapterTitle(rawTitle)
 
 		entries = append(entries, toivoLiteChapterEntry{
 			Title:  title,
+			Label:  label,
 			Number: num,
 			URL:    u,
 		})
@@ -190,14 +194,22 @@ func toivoLiteChapterList(doc *goquery.Document, baseURL string) (entries []toiv
 	return
 }
 
-// toivoLiteNormalizeTitle strips the series-name prefix, keeping from
-// "Chapter" onwards: "JOJOLands, Chapter 41" → "Chapter 41".
-func toivoLiteNormalizeTitle(raw string) string {
-	if idx := strings.Index(strings.ToLower(raw), "chapter"); idx > 0 {
-		return "Chapter" + raw[idx+len("chapter"):]
+// toivoLiteChapterTitle strips the series-name prefix, keeping from the
+// chapter word onwards ("JOJOLands, Chapter 41: X" → "Chapter 41: X"), or no
+// title when only the number follows, which the label gives as written.
+func toivoLiteChapterTitle(raw string) (string, Label) {
+	idx := strings.Index(strings.ToLower(raw), "chapter")
+	if idx < 0 {
+		return raw, Label{}
 	}
-	return raw
+	if m := toivoLiteNumberOnlyRe.FindStringSubmatch(raw[idx+len("chapter"):]); m != nil {
+		return "", Label{Style: LabelNumbered, Number: m[1]}
+	}
+	return raw[idx:], Label{}
 }
+
+// toivoLiteNumberOnlyRe matches what follows the chapter word when it's just the number
+var toivoLiteNumberOnlyRe = regexp.MustCompile(`^ (\d+(?:\.\d+)?)$`)
 
 // toivoLiteChapterNum resolves a chapter number from widget link text,
 // falling back to the URL slug.

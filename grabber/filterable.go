@@ -49,11 +49,11 @@ var ChapterTitlePrefix = regexp.MustCompile(`(?i)^(?:vol(?:ume|umen)?\.?\s*\d+\s
 // bareNumber matches a number a title opens with and no chapter word ("186. Foo")
 var bareNumber = regexp.MustCompile(`^0*(\d+(?:\.\d+)?)\b`)
 
-// ChapterName names a chapter in messages: its title, or "Chapter N (title)"
-// when the title doesn't open with its number, as sites often number their
-// own seasons in titles. Chapter 0 is left to the title (it may be unread).
+// ChapterName names a chapter in messages: its label, or "Chapter N (label)"
+// when the label doesn't open with its number, as sites often number their
+// own seasons in titles. Chapter 0 is left to the label (it may be unread).
 func ChapterName(f Filterable) string {
-	title, number := f.GetTitle(), f.GetNumber()
+	title, number := ChapterLabel(f), f.GetNumber()
 	if number <= 0 {
 		return title
 	}
@@ -64,7 +64,7 @@ func ChapterName(f Filterable) string {
 			}
 		}
 	}
-	name := "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
+	name := NumberLabel(number)
 	if title == "" {
 		return name
 	}

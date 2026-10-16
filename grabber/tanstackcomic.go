@@ -109,8 +109,9 @@ func (t *tanstackComic) FetchChapters() (chapters Filterables, errs []error) {
 		chapters = append(chapters, &TanstackChapter{
 			Chapter{
 				Number: c.Number,
-				Title:  chapterTitleOrDefault(c.Title, c.Number),
+				Title:  strings.TrimSpace(c.Title),
 				ID:     c.Slug,
+				Label:  Label{Style: LabelNumbered},
 				// a short-link lock may still open to a reader (none is live to
 				// check), so only the other locks fail a chapter unfetched
 				Locked: c.IsLocked && !c.IsShortLinkLocked,
@@ -151,6 +152,7 @@ func (t *tanstackComic) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:    f.GetTitle(),
+		Label:    labelOf(f),
 		Number:   f.GetNumber(),
 		Language: "en",
 		ID:       tchap.Slug,

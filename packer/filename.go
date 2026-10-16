@@ -18,8 +18,12 @@ type FilenameTemplateParts struct {
 	Series string
 	// Number represents the chapter number (e.g. "1.0")
 	Number string
-	// Title represents the chapter title (e.g. "The Beginning")
+	// Title is the chapter's label (e.g. "The Beginning", or "Chapter 12" when
+	// the site gives no title), see grabber.ChapterLabel
 	Title string
+	// SiteTitle is the site's own chapter title, empty when it gives none or
+	// for a volume or bundle
+	SiteTitle string
 	// Group is the scanlation group that made the release (e.g. "Alpha"). For a
 	// volume or a bundle, the group its chapters share, empty when they differ
 	// or name none. Several groups of one release are joined with ", "
@@ -65,7 +69,7 @@ func VolumeTemplate(templ string) string {
 
 // NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template
 func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string, error) {
-	tmpl, err := template.New("filename").Parse(templ)
+	tmpl, err := template.New("filename").Funcs(template.FuncMap{"pad": padNumber}).Parse(templ)
 	if err != nil {
 		return "", err
 	}
@@ -76,14 +80,26 @@ func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string,
 	return buffer.String(), err
 }
 
+// padNumber is the template's pad: number with its whole part zero-padded to
+// width digits and its decimals kept ({{pad .Number 4}} is "0010.5" for 10.5)
+func padNumber(number any, width int) string {
+	s := fmt.Sprint(number)
+	digits := len(s) - len(strings.TrimLeft(s, "0123456789"))
+	if digits == 0 || digits >= width {
+		return s
+	}
+	return strings.Repeat("0", width-digits) + s
+}
+
 // NewChapterFileTemplateParts returns a new FilenameTemplateParts from a title and a chapter
 func NewChapterFileTemplateParts(title string, chapter *grabber.Chapter) FilenameTemplateParts {
 	return FilenameTemplateParts{
-		Series: SanitizeFilename(title),
-		Number: strings.Replace(fmt.Sprintf("%.1f", chapter.GetNumber()), ".0", "", 1),
-		Title:  SanitizeFilename(chapter.GetTitle()),
-		Group:  SanitizeFilename(chapter.Group),
-		Volume: chapter.Volume,
+		Series:    SanitizeFilename(title),
+		Number:    strings.Replace(fmt.Sprintf("%.1f", chapter.GetNumber()), ".0", "", 1),
+		Title:     SanitizeFilename(grabber.ChapterLabel(chapter)),
+		SiteTitle: SanitizeFilename(chapter.GetTitle()),
+		Group:     SanitizeFilename(chapter.Group),
+		Volume:    chapter.Volume,
 	}
 }
 
