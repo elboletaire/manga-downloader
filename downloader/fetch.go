@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"io"
 	stdhttp "net/http"
+	"net/url"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -137,11 +139,18 @@ func fetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 			return
 		}
 
-		if attempt >= retries {
+		wait := retryWait(err, attempt)
+		limit := retries
+		if retries > 0 && isNotFound(err) {
+			// that origin 404s at random, so a 404 gets more, quicker tries
+			limit, wait = max(retries, notFoundRetries), retryDelay
+			params.URL = bustCache(params.URL)
+		}
+		if attempt >= limit {
 			return
 		}
 
-		t := time.NewTimer(retryWait(err, attempt))
+		t := time.NewTimer(wait)
 		select {
 		case <-ctx.Done():
 			t.Stop()
@@ -149,6 +158,28 @@ func fetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 		case <-t.C:
 		}
 	}
+}
+
+// notFoundRetries is how many times a page that 404s is retried at least.
+const notFoundRetries = 6
+
+// isNotFound reports whether err is an HTTP 404.
+func isNotFound(err error) bool {
+	var se *http.StatusError
+	return errors.As(err, &se) && se.Code == stdhttp.StatusNotFound
+}
+
+// bustCache adds a unique query so a retry skips a CDN's cached 404: some
+// origins 404 an image once and the CDN serves that for hours (mangazin.org).
+func bustCache(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	q := u.Query()
+	q.Set("retry", strconv.FormatInt(time.Now().UnixNano(), 36))
+	u.RawQuery = q.Encode()
+	return u.String()
 }
 
 // retryWait is the delay before retrying after attempt (0-based) failed with

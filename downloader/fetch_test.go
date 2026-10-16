@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -446,5 +447,29 @@ func TestFetchChapter_ImageAccept(t *testing.T) {
 	}
 	if accept != mangahttp.ImageAccept {
 		t.Errorf("Accept = %q, want the image Accept %q", accept, mangahttp.ImageAccept)
+	}
+}
+
+func TestFetchFile_404RetryBustsCache(t *testing.T) {
+	withFastRetryDelay(t)
+
+	var first, second string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if first == "" {
+			first = r.URL.RequestURI()
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		second = r.URL.RequestURI()
+		w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	file, err := FetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 1, nil)
+	if err != nil || string(file.Data) != "ok" {
+		t.Fatalf("expected the retry to succeed, got %v", err)
+	}
+	if first != "/a.jpg" || !strings.HasPrefix(second, "/a.jpg?retry=") {
+		t.Errorf("expected a plain first request and a busted retry, got %q then %q", first, second)
 	}
 }
