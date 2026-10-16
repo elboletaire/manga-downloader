@@ -972,6 +972,11 @@ code {
   margin-top: auto;
 }
 
+/* a second box (the Homebrew cask) sits right under its foot text */
+.install-card .code ~ .code {
+  margin-top: 0;
+}
+
 .install-card .card-foot {
   font-size: 0.88rem;
 }
@@ -1450,6 +1455,12 @@ code {
 
 .faq summary code {
   white-space: nowrap;
+}
+
+/* A long inline command in an answer wraps instead of widening the page. */
+.faq details p code {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .faq summary::-webkit-details-marker {
