@@ -750,6 +750,7 @@ to a minute.
 | [rackusreads.com](https://rackusreads.com) | Rackus | 2026-10-16 |
 | [ravenscans.org](https://ravenscans.org) |  | 2026-10-15 |
 | [rawkuma.net](https://rawkuma.net) |  | 2026-10-15 |
+| [re-yume.my.id](https://www.re-yume.my.id) | Re-Yume, Indonesian | 2026-10-16 |
 | [ritharscans.com](https://ritharscans.com) |  | 2026-10-15 |
 | [rizzfables.com](https://rizzfables.com) |  | 2026-10-15 |
 | [rokaricomics.com](https://rokaricomics.com) |  | 2026-10-15 |

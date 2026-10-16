@@ -139,6 +139,21 @@ func TestBloggerPages(t *testing.T) {
 	}
 }
 
+func TestBloggerPagesTextarea(t *testing.T) {
+	const post = `<html><body><textarea id='zeist-raw-data' style='display:none;'><div class="separator"><a href="https://x/1.jpg"><img alt="" src="https://x/1.jpg"/></a></div><img alt="" src="https://x/2.jpg"/></textarea></body></html>`
+
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(post))
+	if err != nil {
+		t.Fatal(err)
+	}
+	postURL, _ := url.Parse("https://blog.example/2026/10/a-chapter-1.html")
+
+	pages := bloggerPages(doc, postURL)
+	if len(pages) != 2 || pages[1].URL != "https://x/2.jpg" || pages[1].Number != 2 {
+		t.Fatalf("pages = %+v", pages)
+	}
+}
+
 func TestBloggerFingerprint(t *testing.T) {
 	cases := map[string]bool{
 		`<link href='https://www.blogger.com/static/v1/widgets/4165133002-widget_css_bundle.css' rel='stylesheet'/>`:    true,

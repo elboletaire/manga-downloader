@@ -149,6 +149,7 @@ grabber: \
 	grabber/mangadenizi \
 	grabber/mangadex \
 	grabber/mangadelsiglotvmanga \
+	grabber/re-yume \
 	grabber/mangafire \
 	grabber/mangahere \
 	grabber/mangak \
@@ -336,6 +337,11 @@ grabber/tvymanga3:
 # Blogger blog, series search by title as for animeallstar1
 grabber/mangadelsiglotvmanga:
 	go run . "https://www.mangadelsiglotvmanga.com.mx/search?q=Kagurabachi" 130
+
+# Blogger blog whose chapter posts keep the pages in a hidden textarea
+# (script-rendered reader); a chapter post resolves to its series.
+grabber/re-yume:
+	go run . https://www.re-yume.my.id/2026/09/shangri-la-frontier-chapter-281.html 280-281
 
 # Madara wordpress site whose series URLs live under /gl/ instead of /manga/;
 # the generic Tcb grabber matches them through the same ajax/chapters endpoint.

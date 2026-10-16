@@ -349,11 +349,26 @@ func bloggerKey(name string) string {
 
 // bloggerPages returns the reader images of a chapter post. Blogger's own
 // decorations (the hidden cover, the WhatsApp badge, the footer banner) carry
-// an alt text, while the pages the uploader pasted in have alt="".
+// an alt text, while the pages the uploader pasted in have alt="". Templates
+// that render the pages by script keep the post body in a hidden textarea.
 func bloggerPages(doc *goquery.Document, postURL *url.URL) []Page {
+	if pages := bloggerImages(doc.Find("div.post-body img[alt='']"), postURL); len(pages) > 0 {
+		return pages
+	}
+
+	raw := doc.Find("textarea#zeist-raw-data").First().Text()
+	body, err := goquery.NewDocumentFromReader(strings.NewReader(raw))
+	if err != nil {
+		return nil
+	}
+	return bloggerImages(body.Find("img[alt='']"), postURL)
+}
+
+// bloggerImages turns the src of each image into a numbered page.
+func bloggerImages(imgs *goquery.Selection, postURL *url.URL) []Page {
 	var pages []Page
 
-	doc.Find("div.post-body img[alt='']").Each(func(_ int, s *goquery.Selection) {
+	imgs.Each(func(_ int, s *goquery.Selection) {
 		src := strings.TrimSpace(s.AttrOr("src", ""))
 		if src == "" {
 			return
