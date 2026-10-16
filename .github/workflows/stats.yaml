@@ -1,0 +1,63 @@
+name: Stats
+
+# Stores a daily raw snapshot of downloads, pulls and stars on the
+# `stats-data` branch (never master), since GitHub and Docker Hub only expose
+# current totals. See tools/stats-snapshot.
+on:
+  schedule:
+    - cron: "41 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stats
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      # the data branch is an orphan, created on the first run
+      - name: Check out the data branch
+        run: |
+          if git ls-remote --exit-code --heads origin stats-data >/dev/null; then
+            git fetch origin stats-data:refs/remotes/origin/stats-data
+            git worktree add "$RUNNER_TEMP/stats-data" origin/stats-data --detach
+          else
+            git worktree add --orphan -b stats-data "$RUNNER_TEMP/stats-data"
+            cat > "$RUNNER_TEMP/stats-data/README.md" <<'README'
+          # Stats data
+
+          Written daily by the `Stats` workflow (`tools/stats-snapshot`).
+
+          - `snapshots/YYYY-MM-DD.json`: raw numbers of that day (release assets with their download counts, Docker Hub pulls, repo stars, forks, watchers and open issues).
+          - `daily.csv`: one row per snapshot, with the downloads split into CLI and app, and the change since the previous row.
+          README
+          fi
+
+      - name: Take the snapshot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: go run ./tools/stats-snapshot -dir "$RUNNER_TEMP/stats-data"
+
+      - name: Commit and push
+        working-directory: ${{ runner.temp }}/stats-data
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "stats: snapshot $(date -u +%F)"
+          git push origin HEAD:stats-data
