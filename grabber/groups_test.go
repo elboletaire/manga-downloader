@@ -24,9 +24,9 @@ func groupedListing() Filterables {
 	}
 }
 
-func TestGroupOptionsListsGroupsByChaptersThenName(t *testing.T) {
+func TestGroupOptionsListsGroupsByName(t *testing.T) {
 	got := GroupOptions(groupedListing())
-	want := &FilterOptions{Values: []string{"Delta", "Alpha"}, All: true}
+	want := &FilterOptions{Values: []string{"Alpha", "Delta"}, All: true}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("GroupOptions() = %+v, want %+v", got, want)
 	}
@@ -41,8 +41,8 @@ func TestGroupOptionsIsNilWithoutGroups(t *testing.T) {
 func TestGroupOptionsSplitsJoinedGroups(t *testing.T) {
 	listing := Filterables{groupedChapter(1, "Alpha, Delta"), groupedChapter(2, "Delta")}
 	got := GroupOptions(listing)
-	if got == nil || !reflect.DeepEqual(got.Values, []string{"Delta", "Alpha"}) {
-		t.Errorf("GroupOptions() = %+v, want Delta then Alpha", got)
+	if got == nil || !reflect.DeepEqual(got.Values, []string{"Alpha", "Delta"}) {
+		t.Errorf("GroupOptions() = %+v, want Alpha then Delta", got)
 	}
 }
 
@@ -110,7 +110,7 @@ func TestSelectGroupUnknownListsTheAvailableGroups(t *testing.T) {
 	if unavailable.Filter != "scanlator" || unavailable.Value != "Omega" {
 		t.Errorf("error = %+v, want the scanlator Omega", unavailable)
 	}
-	if !reflect.DeepEqual(unavailable.Available, []string{"Delta", "Alpha"}) {
+	if !reflect.DeepEqual(unavailable.Available, []string{"Alpha", "Delta"}) {
 		t.Errorf("Available = %v, want the listed groups", unavailable.Available)
 	}
 }
@@ -135,7 +135,7 @@ func TestGroupsKeepASeparatorInOneName(t *testing.T) {
 	listing := Filterables{big, groupedChapter(2, "Delta")}
 
 	got := GroupOptions(listing)
-	if got == nil || !reflect.DeepEqual(got.Values, []string{"Delta", "Ah, my next job is to exterminate monsters project"}) {
+	if got == nil || !reflect.DeepEqual(got.Values, []string{"Ah, my next job is to exterminate monsters project", "Delta"}) {
 		t.Fatalf("GroupOptions() = %+v, want the whole name next to Delta", got)
 	}
 	selected, err := SelectGroup(listing, "ah, my next job is to exterminate monsters project")

@@ -94,9 +94,10 @@ export function shownSelection(filter: FilterChoice, loaded: boolean): string {
 
 /**
  * The options of one selector, in the order shown: "All" first where the site
- * takes it, then the values as the site lists them. The selected value is
- * always among them, even when the site doesn't list it (a value the series
- * was loaded with), so the select never shows the wrong one.
+ * takes it, then the values in the backend's alphabetical order. The selected
+ * value is always among them, even when the site doesn't list it (a value the
+ * series was loaded with), so the select never shows the wrong one; it goes in
+ * at its alphabetical place.
  */
 export function filterOptions(filter: FilterChoice, kind: FilterKind, locale = 'en', loaded = true): FilterOption[] {
   const options: FilterOption[] = [];
@@ -112,7 +113,7 @@ export function filterOptions(filter: FilterChoice, kind: FilterKind, locale = '
 
   const values = [...filter.values];
   if (selected !== '' && selected !== FILTER_ALL && !values.includes(selected)) {
-    values.push(selected);
+    values.splice(insertionIndex(values, selected), 0, selected);
   }
   for (const value of values) {
     const label = kind === 'language' ? labelOfLanguage(value, locale) : value;
@@ -120,6 +121,30 @@ export function filterOptions(filter: FilterChoice, kind: FilterKind, locale = '
   }
 
   return options;
+}
+
+// sortKey mirrors the backend's: lowercased, accents dropped
+function sortKey(value: string): string {
+  return value.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+}
+
+function insertionIndex(sorted: string[], value: string): number {
+  const compare = (a: string, b: string) => {
+    const ka = sortKey(a);
+    const kb = sortKey(b);
+    // byte order like the backend, with digit runs as numbers
+    const pa = ka.match(/\d+|\D+/g) ?? [];
+    const pb = kb.match(/\d+|\D+/g) ?? [];
+    for (let i = 0; i < Math.min(pa.length, pb.length); i++) {
+      if (pa[i] === pb[i]) continue;
+      if (/^\d/.test(pa[i]) && /^\d/.test(pb[i])) return Number(pa[i]) - Number(pb[i]);
+      return pa[i] < pb[i] ? -1 : 1;
+    }
+    return pa.length - pb.length || (a < b ? -1 : a > b ? 1 : 0);
+  };
+  const at = sorted.findIndex((v) => compare(value, v) < 0);
+
+  return at === -1 ? sorted.length : at;
 }
 
 function labelOfLanguage(code: string, locale: string): string {

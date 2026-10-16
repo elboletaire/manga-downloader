@@ -440,7 +440,7 @@ func parseMangafireDropdown(raw json.RawMessage) (mangafireDropdown, error) {
 }
 
 // mangafireOptions turns the dropdown into the language options: the codes
-// --language takes, in the site's order, with the label shown by default as
+// --language takes, as the site lists them, with the label shown by default as
 // Current. A label without a code in mangafireLangs can't be typed, so it's
 // left out.
 func mangafireOptions(d mangafireDropdown) FilterOptions {

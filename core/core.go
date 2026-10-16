@@ -148,15 +148,15 @@ type Series struct {
 // (err is the load's error), so a front end can still offer the values that exist.
 func FilterOptionsOf(site grabber.Site, err error) (languages, scanlators *grabber.FilterOptions) {
 	if l, ok := site.(grabber.LanguageLister); ok {
-		options := l.LanguageOptions()
+		options := l.LanguageOptions().Sorted()
 		languages = &options
 	}
 
 	var unavailable *grabber.UnavailableFilterError
 	if errors.As(err, &unavailable) && unavailable.Filter == "scanlator" {
-		scanlators = &grabber.FilterOptions{Values: unavailable.Available, All: true}
+		scanlators = &grabber.FilterOptions{Values: grabber.SortedValues(unavailable.Available), All: true}
 	} else if s, ok := site.(grabber.ScanlatorLister); ok {
-		options := s.ScanlatorOptions()
+		options := s.ScanlatorOptions().Sorted()
 		scanlators = &options
 	}
 

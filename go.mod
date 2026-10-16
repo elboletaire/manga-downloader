@@ -20,6 +20,7 @@ require (
 	golang.org/x/image v0.44.0
 	golang.org/x/sys v0.47.0
 	golang.org/x/term v0.43.0
+	golang.org/x/text v0.40.0
 )
 
 require (

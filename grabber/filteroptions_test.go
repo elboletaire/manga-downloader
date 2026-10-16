@@ -263,3 +263,29 @@ func TestMangafireLanguageAllIsEmpty(t *testing.T) {
 		}
 	}
 }
+
+func TestSortedValuesIsCaseInsensitiveAndNatural(t *testing.T) {
+	in := []string{"es-la", "Delta", "en", "alpha", "Group 10", "Group 9", "pt-br"}
+	want := []string{"alpha", "Delta", "en", "es-la", "Group 9", "Group 10", "pt-br"}
+	if got := SortedValues(in); !reflect.DeepEqual(got, want) {
+		t.Errorf("SortedValues() = %v, want %v", got, want)
+	}
+	if in[0] != "es-la" {
+		t.Errorf("SortedValues() changed its input: %v", in)
+	}
+}
+
+func TestSortedValuesFoldsAccents(t *testing.T) {
+	want := []string{"Dawn", "Écarlate", "Fable", "Zed"}
+	if got := SortedValues([]string{"Zed", "Fable", "Écarlate", "Dawn"}); !reflect.DeepEqual(got, want) {
+		t.Errorf("SortedValues() = %v, want %v", got, want)
+	}
+}
+
+func TestUnavailableFilterErrorListsSorted(t *testing.T) {
+	err := &UnavailableFilterError{Filter: "language", Value: "zz", Available: []string{"es", "en", "ca"}}
+	want := `language "zz" isn't available for this title (available: ca, en, es)`
+	if got := err.Error(); got != want {
+		t.Errorf("Error() = %q, want %q", got, want)
+	}
+}
