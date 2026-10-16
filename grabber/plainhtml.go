@@ -221,7 +221,9 @@ var plainHTMLSelectors = []SiteSelector{
 		Chapter:      ".chapternum",
 		ChapterTitle: ".chapternum",
 		Link:         "a",
-		Image:        "#readerarea img",
+		// mangacanblog.com leaves #readerarea empty and renders the pages
+		// after it, as img.ts-main-image
+		Image: "#readerarea img, img.ts-main-image",
 		// the coin icon rokaricomics.com draws on its paid rows; the svg keeps
 		// a bare text-gold colour class on another theme from flagging a row
 		Locked: "span.text-gold svg",

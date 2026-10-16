@@ -703,6 +703,7 @@ to a minute.
 | [mangaball.com](https://mangaball.com) | former mangaball.net | 2026-10-15 |
 | [mangabats.com](https://www.mangabats.com) | former mangabat.com | 2026-10-15 |
 | [mangaberri.com](https://mangaberri.com) |  | 2026-10-15 |
+| [mangacanblog.com](https://mangacanblog.com) | Indonesian | 2026-10-16 |
 | [mangadelsiglotvmanga.com.mx](https://www.mangadelsiglotvmanga.com.mx) | Manga del Siglo TV Manga, Spanish | 2026-10-15 |
 | [mangadenizi.net](https://www.mangadenizi.net) |  | 2026-10-15 |
 | [mangadex.org](https://mangadex.org) | MangaDex | 2026-10-15 |

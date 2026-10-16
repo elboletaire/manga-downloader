@@ -1150,3 +1150,19 @@ func TestRetryFlakyOptIn(t *testing.T) {
 		t.Error("a nil grabber must not opt in")
 	}
 }
+
+// mangacanblog.com leaves #readerarea empty and renders the pages after it,
+// next to ad images that must not count
+func TestPlainHTMLImagesOutsideReaderArea(t *testing.T) {
+	const html = `<body><img src="https://x/icon.png"><div id="readerarea"></div>
+<center><img src="https://x/01.jpg" class="ts-main-image"></center>
+<center><img src="https://x/02.jpg" class="ts-main-image"></center></body>`
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := getPlainHTMLImageURL("#readerarea img, img.ts-main-image", doc)
+	if len(got) != 2 || got[0] != "https://x/01.jpg" || got[1] != "https://x/02.jpg" {
+		t.Errorf("got %v", got)
+	}
+}

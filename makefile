@@ -591,6 +591,7 @@ grabber/html: \
 	grabber/madarascans \
 	grabber/maid \
 	grabber/mangaberri \
+	grabber/mangacanblog \
 	grabber/mangaeclipse \
 	grabber/mangakatana \
 	grabber/mangapill \
@@ -709,6 +710,9 @@ grabber/maid:
 	go run . https://www.maid.my.id/manga/watashi-no-oshi-wa-akuyaku-reijou/ 50
 grabber/mangaberri:
 	go run . https://mangaberri.com/title/dai-dark 37
+
+grabber/mangacanblog:
+	go run . https://mangacanblog.com/baca-komik-one_piece-bahasa-indonesia-online-terbaru.html 1195-1196
 grabber/kingofshojo:
 	go run . https://kingofshojo.com/manga/although-i-was-a-condemned-witch-everyone-dotes-on-me-after-regressing/ 14
 grabber/komikindo:
