@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -272,11 +273,12 @@ func TestTcbSplitTitleGroup(t *testing.T) {
 	}
 }
 
-// A paged reader's pages are fetched concurrently but must come back in page
+// A paged reader's pages are fetched concurrently (bounded) but must come back in page
 // order with their reader page numbers.
 func TestTcbFetchChapterPagedReaderConcurrent(t *testing.T) {
 	const pages = 12
-	const delay = 200 * time.Millisecond
+	const delay = 50 * time.Millisecond
+	var inFlight, peak atomic.Int32
 	mux := http.NewServeMux()
 	mux.HandleFunc("/manga/x/ch-1/", func(w http.ResponseWriter, r *http.Request) {
 		var sb strings.Builder
@@ -289,6 +291,14 @@ func TestTcbFetchChapterPagedReaderConcurrent(t *testing.T) {
 	})
 	mux.HandleFunc("/manga/x/ch-1/p/", func(w http.ResponseWriter, r *http.Request) {
 		n := strings.Trim(strings.TrimPrefix(r.URL.Path, "/manga/x/ch-1/p/"), "/")
+		cur := inFlight.Add(1)
+		defer inFlight.Add(-1)
+		for {
+			old := peak.Load()
+			if cur <= old || peak.CompareAndSwap(old, cur) {
+				break
+			}
+		}
 		time.Sleep(delay)
 		fmt.Fprintf(w, `<div class="reading-content"><img src="/img/%s.jpg"></div>`, n)
 	})
@@ -296,9 +306,7 @@ func TestTcbFetchChapterPagedReaderConcurrent(t *testing.T) {
 	t.Cleanup(srv.Close)
 
 	tcb := NewTcb(&Grabber{URL: srv.URL + "/manga/x/", Settings: &Settings{}})
-	start := time.Now()
 	chapter, err := tcb.FetchChapter(&TcbChapter{Chapter{Title: "ch-1", Number: 1}, srv.URL + "/manga/x/ch-1/"})
-	elapsed := time.Since(start)
 	if err != nil {
 		t.Fatalf("FetchChapter() error: %s", err)
 	}
@@ -310,7 +318,7 @@ func TestTcbFetchChapterPagedReaderConcurrent(t *testing.T) {
 			t.Errorf("page %d = %d %q, want %d %q", i, p.Number, p.URL, i+1, want)
 		}
 	}
-	if sequential := pages * delay; elapsed > sequential/2 {
-		t.Errorf("fetch took %s, want well under the sequential %s", elapsed, sequential)
+	if p := int(peak.Load()); p < 2 || p > tcbPageWorkers {
+		t.Errorf("peak concurrent page fetches = %d, want between 2 and %d", p, tcbPageWorkers)
 	}
 }
