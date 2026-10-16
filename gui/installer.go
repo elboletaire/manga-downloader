@@ -174,23 +174,20 @@ const (
 	scopeMachine
 )
 
-// detectScope finds the scope whose uninstall key (read(scope), "" when
-// missing) points at exe's folder, the user's first. With no key at all, an
-// uninstall.exe next to exe still says it is installed; the scope is then
-// unknown and counts as per machine, whose elevated run works for both.
+// detectScope finds the scope whose uninstall key points at exe's folder, the
+// user's first. Failing that, an uninstall.exe beside exe counts as per machine,
+// whose elevated run works for both.
 func detectScope(exe string, read func(installScope) string, exists func(string) bool) (installScope, bool) {
-	keys := false
 	for _, sc := range []installScope{scopeUser, scopeMachine} {
 		loc := read(sc)
 		if loc == "" {
 			continue
 		}
-		keys = true
 		if installedAt(exe, loc, exists) {
 			return sc, true
 		}
 	}
-	if !keys && installedAt(exe, "", exists) {
+	if installedAt(exe, "", exists) {
 		return scopeMachine, true
 	}
 

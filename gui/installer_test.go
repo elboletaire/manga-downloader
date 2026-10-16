@@ -100,7 +100,8 @@ func TestDetectScope(t *testing.T) {
 		{"per machine", exeIn(machine), keys("", machine), none, scopeMachine},
 		{"both installs, running the machine one", exeIn(machine), keys(user, machine), none, scopeMachine},
 		{"both installs, running the user one", exeIn(user), keys(user, machine), none, scopeUser},
-		{"portable copy", exeIn(sep + "Tmp"), keys(user, machine), func(string) bool { return true }, 0},
+		{"portable copy", exeIn(sep + "Tmp"), keys(user, machine), none, 0},
+		{"stale keys, uninstaller next to it", exeIn(sep + "Tmp"), keys(user, machine), func(p string) bool { return strings.HasSuffix(p, "uninstall.exe") }, scopeMachine},
 		{"no keys, uninstaller next to it", exeIn(sep + "Tmp"), keys("", ""), func(p string) bool { return strings.HasSuffix(p, "uninstall.exe") }, scopeMachine},
 		{"no keys, no uninstaller", exeIn(sep + "Tmp"), keys("", ""), none, 0},
 	}

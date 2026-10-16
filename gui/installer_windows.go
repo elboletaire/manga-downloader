@@ -54,10 +54,8 @@ func installLocation(sc installScope) string {
 	return v
 }
 
-// runInstaller starts the installer with /relaunch. A per-machine install
-// needs elevation, which CreateProcess (os/exec) can't do (error 740), so it
-// goes through ShellExecute's "runas" (the UAC prompt); a per-user one just
-// opens.
+// runInstaller starts the installer with /relaunch: "runas" for a per-machine
+// install (elevation, which os/exec can't do), "open" for a per-user one.
 func runInstaller(path string) error {
 	name := "open"
 	if installScope(scope.Load()) == scopeMachine {
