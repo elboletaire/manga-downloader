@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { redirectTarget } from './lang'
+import { redirectTarget, withHash } from './lang'
 
 describe('redirectTarget', () => {
   it.each([
@@ -24,5 +24,16 @@ describe('redirectTarget', () => {
     const inlined = new Function(`return (${redirectTarget.toString()})`)() as typeof redirectTarget
     expect(inlined(['ca', 'es'], null)).toBe('ca')
     expect(inlined(['es'], 'en')).toBe(null)
+  })
+})
+
+describe('withHash', () => {
+  it.each([
+    ['/es/', '#faq-old', '/es/#faq-old'],
+    ['/es/#sites', '#faq-old', '/es/#faq-old'],
+    ['/es/#sites', '', '/es/'],
+    ['/', '#', '/'],
+  ])('%s with %j gives %s', (href, hash, want) => {
+    expect(withHash(href, hash)).toBe(want)
   })
 })

@@ -3,7 +3,7 @@ import '@fontsource-variable/inter/wght.css'
 import '@fontsource-variable/fredoka/wght.css'
 import './styles.css'
 import { EN_RUNTIME, plural, type RuntimeStrings } from './i18n'
-import { LANG_KEY } from './lang'
+import { LANG_KEY, withHash } from './lang'
 import { forcedTheme, parseTheme, schemeMedia, THEME_KEY, type Theme } from './theme'
 import {
   LATEST_RELEASE_API,
@@ -240,6 +240,13 @@ function rememberLanguage(): void {
   }
 }
 
+/** Keeps the language links pointing at the current #section (ids match across languages), so new-tab opens carry it too. */
+function syncLanguageLinks(): void {
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-lang]')) {
+    link.setAttribute('href', withHash(link.getAttribute('href') ?? '', location.hash))
+  }
+}
+
 /** Opens the FAQ entry a link or the URL points at; the browser only expands ancestors. */
 function openTargetedDetails(): void {
   const id = decodeURIComponent(location.hash.slice(1))
@@ -309,4 +316,6 @@ enhanceSites()
 openTargetedDetails()
 window.addEventListener('hashchange', openTargetedDetails)
 rememberLanguage()
+syncLanguageLinks()
+window.addEventListener('hashchange', syncLanguageLinks)
 void enhanceDownload()
