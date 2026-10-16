@@ -6,7 +6,7 @@ import { browserSwitchOf } from './browserVisible';
 import { AVIF_EPUB_HINT, avifSwitchOf, convertFlagsOf, convertValueOf } from './convertImages';
 import { Check, Segmented, Switch, TextField } from './fields';
 import { errorMessage } from './format';
-import { FolderIcon } from './icons';
+import { FolderIcon, RefreshIcon } from './icons';
 import type { Options, PackAs, State } from './types';
 
 export const PACK_HINTS: Record<PackAs, string> = {
@@ -167,6 +167,20 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
                 <code>Series Vol. 01</code>, or <code>Series Vol. 01 [Group]</code> when their chapters share a group.
               </>
             }
+            action={
+              o.filenameTemplate !== state.filenameTemplateDefault && (
+                <button
+                  type="button"
+                  className="btn ghost small icon-only"
+                  aria-label="Use default template"
+                  title="Use default template"
+                  disabled={locked}
+                  onClick={() => set({ filenameTemplate: state.filenameTemplateDefault })}
+                >
+                  <RefreshIcon />
+                </button>
+              )
+            }
             onCommit={(filenameTemplate) => onOptions({ filenameTemplate })}
             onError={onError}
           />
@@ -174,17 +188,6 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
             <p className="hint warn-text" role="status">
               {state.filenameTemplateWarning}
             </p>
-          )}
-          {o.filenameTemplate !== state.filenameTemplateDefault && (
-            <button
-              type="button"
-              className="btn small use-default"
-              aria-label="Use default"
-              disabled={locked}
-              onClick={() => set({ filenameTemplate: state.filenameTemplateDefault })}
-            >
-              Use default
-            </button>
           )}
           <Switch
             label="Show the browser window"

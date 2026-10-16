@@ -17,6 +17,8 @@ interface TextFieldProps {
   /** Marks the field as changed-but-not-applied */
   flagged?: boolean;
   className?: string;
+  /** A control drawn inside the box's right end */
+  action?: ReactNode;
 }
 
 interface SelectFieldProps {
@@ -55,7 +57,7 @@ export function SelectField({ label, value, options, onChange, disabled, classNa
 
 /** A text option. Escape reverts to the committed value. */
 export function TextField(props: TextFieldProps) {
-  const { label, value, onCommit, onError, placeholder, hint, disabled, mono, flagged, className } = props;
+  const { label, value, onCommit, onError, placeholder, hint, disabled, mono, flagged, className, action } = props;
   const [draft, setDraft] = useState(value);
   // the draft the last commit sent, until the backend pushes it back: Enter
   // commits and the blur that follows must not send it again
@@ -81,29 +83,41 @@ export function TextField(props: TextFieldProps) {
     });
   };
 
+  const input = (
+    <input
+      id={id}
+      type="text"
+      className={`input${mono ? ' mono' : ''}${flagged ? ' flagged' : ''}`}
+      value={draft}
+      placeholder={placeholder}
+      disabled={disabled}
+      spellCheck={false}
+      autoComplete="off"
+      aria-describedby={hint ? `${id}-hint` : undefined}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          commit();
+        } else if (e.key === 'Escape') {
+          setDraft(value);
+        }
+      }}
+    />
+  );
+
   return (
     <div className={`field ${className ?? ''}`}>
       <label htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        type="text"
-        className={`input${mono ? ' mono' : ''}${flagged ? ' flagged' : ''}`}
-        value={draft}
-        placeholder={placeholder}
-        disabled={disabled}
-        spellCheck={false}
-        autoComplete="off"
-        aria-describedby={hint ? `${id}-hint` : undefined}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            commit();
-          } else if (e.key === 'Escape') {
-            setDraft(value);
-          }
-        }}
-      />
+      {/* the wrapper only exists with an action, so other fields keep their markup */}
+      {action ? (
+        <div className="input-wrap">
+          {input}
+          <div className="input-action">{action}</div>
+        </div>
+      ) : (
+        input
+      )}
       {hint && (
         <p className="hint" id={`${id}-hint`}>
           {hint}

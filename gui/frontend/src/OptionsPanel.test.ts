@@ -80,16 +80,25 @@ describe('AVIF under Convert to JPEG', () => {
 });
 
 describe('Filename template', () => {
-  it('offers Use default only when the template differs from the default', async () => {
+  it('offers the reset button only when the template differs from the default', async () => {
     const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
     expect(base.options.filenameTemplate).toBe(base.filenameTemplateDefault);
-    expect(options(base)).not.toContain('Use default');
+    expect(options(base)).not.toContain('Use default template');
 
     const custom: State = { ...base, options: { ...base.options, filenameTemplate: '{{.Series}} {{.Number}}' } };
-    expect(options(custom)).toContain('aria-label="Use default"');
+    expect(options(custom)).toContain('aria-label="Use default template"');
 
     const blank: State = { ...base, options: { ...base.options, filenameTemplate: '' } };
-    expect(options(blank)).toContain('Use default');
+    expect(options(blank)).toContain('aria-label="Use default template"');
+  });
+
+  it('draws the reset button inside the box and disables it while locked', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    const custom: State = { ...base, options: { ...base.options, filenameTemplate: '{{.Series}}' } };
+    expect(options(custom)).toMatch(/<div class="input-wrap">.*<div class="input-action"><button[^>]*aria-label="Use default template"/);
+
+    const locked: State = { ...custom, running: true };
+    expect(options(locked)).toMatch(/<button[^>]*aria-label="Use default template"[^>]*disabled=""/);
   });
 
   it('shows the default as the placeholder of an empty box', async () => {
