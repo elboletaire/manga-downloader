@@ -169,7 +169,8 @@ var plainHTMLSelectors = []SiteSelector{
 	// page with HTTP 200); the list is still complete for what's
 	// downloadable, so nothing to work around here.
 	{
-		Title:        "h1",
+		// scoped: some themes add a summary <h1> that would join the title
+		Title:        ".post-title h1",
 		TitleNoise:   ".manga-title-badges",
 		Rows:         "li.wp-manga-chapter",
 		Chapter:      "a",

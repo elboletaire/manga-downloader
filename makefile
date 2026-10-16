@@ -108,6 +108,7 @@ grabber: \
 	grabber/anikiga \
 	grabber/animeallstar1 \
 	grabber/animeallstar30 \
+	grabber/apollcomics \
 	grabber/apothecary \
 	grabber/atsumaru \
 	grabber/aurorascans \
@@ -164,6 +165,7 @@ grabber: \
 	grabber/manhwatop \
 	grabber/mgeko \
 	grabber/mkissa \
+	grabber/mundomanhwa \
 	grabber/projectsuki \
 	grabber/qimanga \
 	grabber/re-yume \
@@ -283,6 +285,12 @@ grabber/gdscans:
 # another Madara site, handled by the Tcb grabber; its one-shots have no number
 grabber/anikiga:
 	go run . https://anikiga.com/manga/alma/ 5
+
+# the Apolltoons family: Madara sites matched by the generic Tcb grabber
+grabber/apollcomics:
+	go run . https://apollcomics.es/manga/las-manos-sanadoras-del-doctor/ 40-41
+grabber/mundomanhwa:
+	go run . https://mundomanhwa.com/manga/primavera-para-blossom/ 28-29
 
 # another Madara wordpress site (Turkish). Its series page lists every row
 # under "<title> N" titles, which the PlainHTML li.wp-manga-chapter entry
