@@ -583,6 +583,7 @@ grabber/html: \
 	grabber/lelmanga \
 	grabber/lelscanfr \
 	grabber/limonmanga \
+	grabber/madaradex \
 	grabber/madarascans \
 	grabber/maid \
 	grabber/mangaberri \
@@ -692,6 +693,8 @@ grabber/furyosociety:
 # old domain still 301s /manga/{slug}/ and the grabber remaps old URLs in code
 grabber/elftoon:
 	go run . https://elftoon.net/series/comic/god-level-assassin-im-the-shadow 123
+grabber/madaradex:
+	go run . https://madaradex.org/title/boss-give-me-your-daughter-uncensored/ 70
 grabber/madarascans:
 	go run . https://madarascans.net/series/my-disciples-are-all-big-villains/ 481
 grabber/maid:

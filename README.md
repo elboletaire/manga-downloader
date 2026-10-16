@@ -694,6 +694,7 @@ to a minute.
 | [lilymanga.net](https://lilymanga.net) | yuri, some NSFW | 2026-10-15 |
 | [limonmanga.com](https://limonmanga.com) |  | 2026-10-15 |
 | [luacomic.org](https://luacomic.org) | LuaScans | 2026-10-15 |
+| [madaradex.org](https://madaradex.org) | some adult titles | 2026-10-16 |
 | [madarascans.net](https://madarascans.net) | former madarascans.org/.com | 2026-10-15 |
 | [maid.my.id](https://www.maid.my.id) |  | 2026-10-15 |
 | [manga.adonisfansub.com](https://manga.adonisfansub.com) | Adonis Fansub, Turkish | 2026-10-16 |
