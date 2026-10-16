@@ -43,6 +43,11 @@ describe('filterOptions', () => {
     expect(groups[0]).toEqual({ value: 'all', label: 'All groups' });
   });
 
+  it('lists the values alphabetically', () => {
+    const options = filterOptions(choice({ values: ['pt-br', 'es', 'En'], selected: 'es' }), 'language');
+    expect(options.map((o) => o.value)).toEqual(['En', 'es', 'pt-br']);
+  });
+
   it('has no All option where the site has none', () => {
     const options = filterOptions(choice({ values: ['en', 'es'], selected: 'en' }), 'language');
     expect(options.map((o) => o.value)).toEqual(['en', 'es']);

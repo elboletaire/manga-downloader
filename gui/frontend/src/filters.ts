@@ -94,7 +94,7 @@ export function shownSelection(filter: FilterChoice, loaded: boolean): string {
 
 /**
  * The options of one selector, in the order shown: "All" first where the site
- * takes it, then the values as the site lists them. The selected value is
+ * takes it, then the values alphabetically. The selected value is
  * always among them, even when the site doesn't list it (a value the series
  * was loaded with), so the select never shows the wrong one.
  */
@@ -114,6 +114,7 @@ export function filterOptions(filter: FilterChoice, kind: FilterKind, locale = '
   if (selected !== '' && selected !== FILTER_ALL && !values.includes(selected)) {
     values.push(selected);
   }
+  values.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base', numeric: true }));
   for (const value of values) {
     const label = kind === 'language' ? labelOfLanguage(value, locale) : value;
     options.push({ value, label });

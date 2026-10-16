@@ -697,8 +697,8 @@ func TestGroupSelectorOffersEveryGroupAndDefaultsToAll(t *testing.T) {
 	if len(c.Chapters()) != 3 {
 		t.Errorf("%d chapters, want every release (3)", len(c.Chapters()))
 	}
-	if _, scanlator := c.Filters(); scanlator == nil || !slices.Equal(scanlator.Values, []string{"Delta", "Alpha"}) || !scanlator.All || scanlator.Selected != grabber.FilterAll {
-		t.Errorf("scanlator selector = %+v, want Delta and Alpha, all groups, shown as all", scanlator)
+	if _, scanlator := c.Filters(); scanlator == nil || !slices.Equal(scanlator.Values, []string{"Alpha", "Delta"}) || !scanlator.All || scanlator.Selected != grabber.FilterAll {
+		t.Errorf("scanlator selector = %+v, want Alpha and Delta, all groups, shown as all", scanlator)
 	}
 }
 

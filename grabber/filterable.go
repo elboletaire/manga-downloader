@@ -155,7 +155,7 @@ type UnavailableFilterError struct {
 func (e *UnavailableFilterError) Error() string {
 	available := "none"
 	if len(e.Available) > 0 {
-		available = strings.Join(e.Available, ", ")
+		available = strings.Join(SortedValues(e.Available), ", ")
 	}
 
 	return fmt.Sprintf("%s %q isn't available for this title (available: %s)", e.Filter, e.Value, available)

@@ -108,8 +108,8 @@ func TestAtsumaruListingFiltersByGroup(t *testing.T) {
 	if len(got) != 3 {
 		t.Errorf("Alpha kept %d chapters, want its 3", len(got))
 	}
-	if options := GroupOptions(chapters); options == nil || !reflect.DeepEqual(options.Values, []string{"Delta", "Alpha"}) {
-		t.Errorf("GroupOptions() = %+v, want Delta (4 chapters) then Alpha", options)
+	if options := GroupOptions(chapters); options == nil || !reflect.DeepEqual(options.Values, []string{"Alpha", "Delta"}) {
+		t.Errorf("GroupOptions() = %+v, want Alpha then Delta", options)
 	}
 }
 

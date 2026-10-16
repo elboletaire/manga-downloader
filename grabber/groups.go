@@ -3,7 +3,6 @@
 package grabber
 
 import (
-	"sort"
 	"strings"
 )
 
@@ -52,33 +51,27 @@ func joinGroups(names []string) string {
 }
 
 // GroupOptions lists the scanlation groups of a listing, by the names
-// --scanlator takes: most chapters first, then by name. It's nil when no
-// chapter names a group, as there's then nothing to choose from.
+// --scanlator takes, sorted by name. It's nil when no chapter names a group,
+// as there's then nothing to choose from.
 func GroupOptions(chapters Filterables) *FilterOptions {
-	counts := map[string]int{}
+	seen := map[string]bool{}
+	var values []string
 	for _, c := range chapters {
 		g, ok := c.(groupsGetter)
 		if !ok {
 			continue
 		}
 		for _, name := range g.GetGroups() {
-			counts[name]++
+			if !seen[name] {
+				seen[name] = true
+				values = append(values, name)
+			}
 		}
 	}
-	if len(counts) == 0 {
+	if len(values) == 0 {
 		return nil
 	}
-
-	values := make([]string, 0, len(counts))
-	for name := range counts {
-		values = append(values, name)
-	}
-	sort.Slice(values, func(i, j int) bool {
-		if counts[values[i]] != counts[values[j]] {
-			return counts[values[i]] > counts[values[j]]
-		}
-		return values[i] < values[j]
-	})
+	values = SortedValues(values)
 
 	return &FilterOptions{Values: values, All: true}
 }
