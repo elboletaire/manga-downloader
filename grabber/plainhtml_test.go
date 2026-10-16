@@ -1166,3 +1166,20 @@ func TestPlainHTMLImagesOutsideReaderArea(t *testing.T) {
 		t.Errorf("got %v", got)
 	}
 }
+
+func TestPlainHTMLTitleStrip(t *testing.T) {
+	const strip = `^Komik\s+(.+?)\s+Indonesia\s+Terbaru$`
+	for in, want := range map[string]string{
+		"Komik One Piece Indonesia Terbaru": "One Piece",
+		"Solo Leveling":                     "Solo Leveling",
+	} {
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader("<h1>" + in + "</h1>"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		m := PlainHTML{doc: doc, site: SiteSelector{Title: "h1", TitleStrip: strip}}
+		if got, _ := m.FetchTitle(); got != want {
+			t.Errorf("%q: got %q, want %q", in, got, want)
+		}
+	}
+}

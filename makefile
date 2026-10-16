@@ -710,7 +710,6 @@ grabber/maid:
 	go run . https://www.maid.my.id/manga/watashi-no-oshi-wa-akuyaku-reijou/ 50
 grabber/mangaberri:
 	go run . https://mangaberri.com/title/dai-dark 37
-
 grabber/mangacanblog:
 	go run . https://mangacanblog.com/baca-komik-one_piece-bahasa-indonesia-online-terbaru.html 1195-1196
 grabber/kingofshojo:

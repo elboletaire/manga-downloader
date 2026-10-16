@@ -224,6 +224,8 @@ var plainHTMLSelectors = []SiteSelector{
 		// mangacanblog.com leaves #readerarea empty and renders the pages
 		// after it, as img.ts-main-image
 		Image: "#readerarea img, img.ts-main-image",
+		// mangacanblog.com wraps every series title as "Komik X Indonesia Terbaru"
+		TitleStrip: `^Komik\s+(.+?)\s+Indonesia\s+Terbaru$`,
 		// the coin icon rokaricomics.com draws on its paid rows; the svg keeps
 		// a bare text-gold colour class on another theme from flagging a row
 		Locked: "span.text-gold svg",
@@ -496,6 +498,9 @@ type SiteSelector struct {
 	// TitleNoise is a selector for elements inside Title to leave out, such as
 	// a "[Manga]" type badge nested in the heading
 	TitleNoise string
+	// TitleStrip is a regexp whose first capture group replaces the sanitized
+	// series title when it matches (e.g. "Komik X Indonesia Terbaru" -> "X")
+	TitleStrip string
 	// ChapterTitleStrip is a regexp removing site-specific noise from a
 	// sanitized chapter title (e.g. "^#?\d+\s*\.?\s*Bölüm$" for a bare number)
 	ChapterTitleStrip string
@@ -731,7 +736,13 @@ func (m PlainHTML) FetchTitle() (string, error) {
 		title = title.Clone()
 		title.Find(m.site.TitleNoise).Remove()
 	}
-	return sanitizeTitle(textWithoutNoise(title)), nil
+	text := sanitizeTitle(textWithoutNoise(title))
+	if m.site.TitleStrip != "" {
+		if sub := regexp.MustCompile(m.site.TitleStrip).FindStringSubmatch(text); len(sub) > 1 {
+			text = sub[1]
+		}
+	}
+	return text, nil
 }
 
 // textWithoutNoise returns a selection's text with common non-title noise
