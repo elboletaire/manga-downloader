@@ -30,8 +30,8 @@ var (
 // since the desktop app keeps the session for as long as it stays open.
 const madaradexAuthTTL = 5 * time.Hour
 
-// authorizeMadaradex does the reader's cookie handshake once per TTL, so the session sends both cookies to the image CDN. It's a no-op on
-// other pages.
+// authorizeMadaradex does the reader's cookie handshake once per TTL, so the
+// session sends both cookies to the image CDN. It's a no-op on other pages.
 func authorizeMadaradex(doc *goquery.Document) {
 	html := ""
 	doc.Find("script").EachWithBreak(func(_ int, sc *goquery.Selection) bool {
