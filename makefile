@@ -590,6 +590,7 @@ grabber/html: \
 	grabber/mangakatana \
 	grabber/mangapill \
 	grabber/mangaread \
+	grabber/mangasorigines \
 	grabber/mangasusuku \
 	grabber/mangavault \
 	grabber/mangaworld \
@@ -675,6 +676,8 @@ grabber/dynastyscans:
 	go run . https://dynasty-scans.com/series/please_bully_me_miss_villainess 162
 grabber/mangaread:
 	go run . https://www.mangaread.org/manga/one-piece/ 1188
+grabber/mangasorigines:
+	go run . https://mangas-origines.fr/oeuvre/girl-crush/ 30-31
 grabber/manhuaplus:
 	go run . https://manhuaplus.com/manga/tales-of-demons-and-gods01/ 522.6
 grabber/silentquill:
