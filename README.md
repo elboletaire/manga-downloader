@@ -76,8 +76,9 @@ the [releases page][releases]:
 
 - **Windows**: `manga-downloader-gui-<tag>-windows-amd64-installer.exe`, or
   `-windows-arm64-installer.exe` for ARM devices such as Snapdragon laptops. It
-  installs to `C:\Program Files\Manga Downloader` and adds a Start menu
-  shortcut. For a portable copy, use the `.zip` of the same name instead: unzip
+  installs for your user alone (`%LOCALAPPDATA%\Programs\Manga Downloader`),
+  or for everyone in `C:\Program Files\Manga Downloader` if you run it as
+  administrator, and adds a Start menu shortcut. For a portable copy, use the `.zip` of the same name instead: unzip
   it and run `manga-downloader-gui.exe`.
 - **macOS**: `manga-downloader-gui-<tag>-darwin-universal.zip`. Unzip it and move
   `Manga Downloader.app` wherever you like. Or install it with

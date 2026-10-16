@@ -2,7 +2,10 @@ Unicode true
 
 # Defines read by wails_tools.nsh. The install dir, uninstall key and shortcuts use the
 # product name alone, and the app is installed under the name the zip ships it as.
-# The in-app updater relies on all of these, so change them together with it.
+# The scope is picked at run time: elevated installs per machine (HKLM, Program Files),
+# otherwise per user (HKCU, %LOCALAPPDATA%\Programs). The in-app updater relies on all
+# of these, so change them together with it.
+!define REQUEST_EXECUTION_LEVEL "user"
 !define PRODUCT_EXECUTABLE "manga-downloader-gui.exe"
 !define UNINST_KEY_NAME    "Manga Downloader"
 
@@ -12,6 +15,10 @@ Unicode true
 
 !insertmacro GetParameters
 !insertmacro VersionCompare
+!insertmacro un.GetParameters
+!insertmacro GetSize
+
+Var MachineScope
 !insertmacro GetOptions
 
 # The version information for this two must consist of 4 parts
@@ -57,17 +64,56 @@ OutFile "..\..\bin\manga-downloader-gui-${ARCH}-installer.exe" # Name of the ins
 InstallDir "$PROGRAMFILES64\${INFO_PRODUCTNAME}" # Never under the company name.
 ShowInstDetails show # This will always show the installation details.
 
+# Whether this process is elevated: only an admin token can write under HKLM\Software.
+!macro IsElevated RESULT
+    SetRegView 64
+    ClearErrors
+    WriteRegStr HKLM "Software\${INFO_PRODUCTNAME}Probe" "" ""
+    ${If} ${Errors}
+        StrCpy ${RESULT} 0
+    ${Else}
+        DeleteRegKey HKLM "Software\${INFO_PRODUCTNAME}Probe"
+        StrCpy ${RESULT} 1
+    ${EndIf}
+!macroend
+
 Function .onInit
     !insertmacro wails.checkArchitecture
 
     SetRegView 64
-    ReadRegStr $0 HKLM "${UNINST_KEY}" "InstallLocation"
+    !insertmacro IsElevated $3
+    ${If} $3 == 1
+        SetShellVarContext all
+        StrCpy $INSTDIR "$PROGRAMFILES64\${INFO_PRODUCTNAME}"
+        # A per-user copy stays: it has its own uninstall entry.
+        ReadRegStr $0 HKCU "${UNINST_KEY}" "InstallLocation"
+        ${If} $0 != ""
+            IfSilent +2
+            MessageBox MB_OK|MB_ICONINFORMATION "A per-user copy of ${INFO_PRODUCTNAME} is installed in $0. It stays; remove it from Add or remove programs if you no longer need it."
+        ${EndIf}
+    ${Else}
+        SetShellVarContext current
+        StrCpy $INSTDIR "$LOCALAPPDATA\Programs\${INFO_PRODUCTNAME}"
+        # A per-machine install exists: upgrade it in place, which needs elevation.
+        ReadRegStr $0 HKLM "${UNINST_KEY}" "InstallLocation"
+        ${If} $0 != ""
+            ${GetParameters} $1
+            ClearErrors
+            ExecShell "runas" "$EXEPATH" "$1"
+            IfErrors 0 +3
+            MessageBox MB_OK|MB_ICONSTOP "${INFO_PRODUCTNAME} is installed for all users, so updating it needs administrator rights."
+            Abort
+            Quit
+        ${EndIf}
+    ${EndIf}
+
+    ReadRegStr $0 SHCTX "${UNINST_KEY}" "InstallLocation"
     ${If} $0 != ""
         StrCpy $INSTDIR $0
     ${EndIf}
 
     # Downgrading asks first, and never happens silently.
-    ReadRegStr $0 HKLM "${UNINST_KEY}" "DisplayVersion"
+    ReadRegStr $0 SHCTX "${UNINST_KEY}" "DisplayVersion"
     ${If} $0 != ""
         ${VersionCompare} "$0" "${INFO_PRODUCTVERSION}" $1
         ${If} $1 == 1
@@ -133,8 +179,6 @@ Function FinishShow
 FunctionEnd
 
 Section
-    !insertmacro wails.setShellContext
-
     !insertmacro wails.webview2runtime
 
     SetOutPath $INSTDIR
@@ -146,20 +190,57 @@ Section
     !insertmacro wails.associateFiles
     !insertmacro wails.associateCustomProtocols
 
-    !insertmacro wails.writeUninstaller
+    WriteUninstaller "$INSTDIR\uninstall.exe"
 
-    # The in-app updater and the next install read the install dir from here.
+    # SHCTX follows SetShellVarContext: HKLM for a per-machine install, HKCU for a per-user one.
+    # The in-app updater reads InstallLocation and DisplayVersion from here.
     SetRegView 64
-    WriteRegStr HKLM "${UNINST_KEY}" "InstallLocation" "$INSTDIR"
+    WriteRegStr SHCTX "${UNINST_KEY}" "Publisher" "${INFO_COMPANYNAME}"
+    WriteRegStr SHCTX "${UNINST_KEY}" "DisplayName" "${INFO_PRODUCTNAME}"
+    WriteRegStr SHCTX "${UNINST_KEY}" "DisplayVersion" "${INFO_PRODUCTVERSION}"
+    WriteRegStr SHCTX "${UNINST_KEY}" "DisplayIcon" "$INSTDIR\${PRODUCT_EXECUTABLE}"
+    WriteRegStr SHCTX "${UNINST_KEY}" "InstallLocation" "$INSTDIR"
+    WriteRegStr SHCTX "${UNINST_KEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+    WriteRegStr SHCTX "${UNINST_KEY}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
+    ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+    IntFmt $0 "0x%08X" $0
+    WriteRegDWORD SHCTX "${UNINST_KEY}" "EstimatedSize" "$0"
 SectionEnd
 
-Section "uninstall"
-    !insertmacro wails.setShellContext
+# The scope follows where uninstall.exe lives. A per-machine uninstall needs admin, which
+# Apps & features doesn't grant, so it relaunches itself elevated.
+Function un.onInit
+    SetRegView 64
+    StrLen $0 "$LOCALAPPDATA\Programs"
+    StrCpy $1 $INSTDIR $0
+    ${If} $1 == "$LOCALAPPDATA\Programs"
+        SetShellVarContext current
+        StrCpy $MachineScope 0
+    ${Else}
+        SetShellVarContext all
+        StrCpy $MachineScope 1
+        ClearErrors
+        WriteRegStr HKLM "Software\${INFO_PRODUCTNAME}Probe" "" ""
+        ${If} ${Errors}
+            ${GetParameters} $1
+            ClearErrors
+            ExecShell "runas" "$EXEPATH" "$1"
+            IfErrors 0 +3
+            MessageBox MB_OK|MB_ICONSTOP "Uninstalling ${INFO_PRODUCTNAME} for all users needs administrator rights."
+            Abort
+            Quit
+        ${EndIf}
+        DeleteRegKey HKLM "Software\${INFO_PRODUCTNAME}Probe"
+    ${EndIf}
+FunctionEnd
 
-    # The WebView2 data path is per user, whereas the shortcut below is per machine.
+Section "uninstall"
+    # The WebView2 data path is per user, whereas the shortcut below follows the scope.
     SetShellVarContext current
     RMDir /r "$AppData\${PRODUCT_EXECUTABLE}"
-    SetShellVarContext all
+    ${If} $MachineScope == 1
+        SetShellVarContext all
+    ${EndIf}
 
     Delete "$INSTDIR\${PRODUCT_EXECUTABLE}"
 
@@ -168,7 +249,9 @@ Section "uninstall"
     !insertmacro wails.unassociateFiles
     !insertmacro wails.unassociateCustomProtocols
 
-    !insertmacro wails.deleteUninstaller
+    Delete "$INSTDIR\uninstall.exe"
+    SetRegView 64
+    DeleteRegKey SHCTX "${UNINST_KEY}"
 
     # Not recursive: a folder with anything else in it is left alone.
     RMDir $INSTDIR
