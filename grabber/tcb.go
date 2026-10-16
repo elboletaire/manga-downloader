@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/url"
 	"regexp"
@@ -196,6 +197,20 @@ func tcbVolume(row *goquery.Selection) int {
 	return parseVolume(m[1])
 }
 
+// tcbReaderTypeError rejects Madara chapters that aren't images: the reader
+// wrapper's chapter-type-* class marks videos (anime) and novels, which have
+// no pages to pack.
+func tcbReaderTypeError(doc *goquery.Document, title string) error {
+	class := doc.Find(".reading-content-wrap").First().AttrOr("class", "")
+	switch {
+	case strings.Contains(class, "chapter-type-video"):
+		return fmt.Errorf("%s is a video, not a manga chapter", title)
+	case strings.Contains(class, "chapter-type-text"):
+		return fmt.Errorf("%s is a novel chapter, not a manga chapter", title)
+	}
+	return nil
+}
+
 // FetchChapter fetches a chapter and its pages
 func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 	tchap := f.(*TcbChapter)
@@ -244,6 +259,10 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 		if err != nil {
 			notice.Warn("error parsing page %d: %s", pageNum+1, err.Error())
 			continue
+		}
+
+		if err := tcbReaderTypeError(pageDoc, f.GetTitle()); err != nil {
+			return nil, err
 		}
 
 		if urls, ok, err := wpMangaProtectorImages(pageDoc); ok {
