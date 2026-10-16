@@ -450,23 +450,23 @@ func TestFetchChapter_ImageAccept(t *testing.T) {
 	}
 }
 
-// serve404 answers the first n requests with a 404, recording each URI
-func serve404(n int, uris *[]string) *httptest.Server {
+// serveStatus answers the first n requests with status, recording each URI
+func serveStatus(status, n int, uris *[]string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		*uris = append(*uris, r.URL.RequestURI())
 		if len(*uris) <= n {
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(status)
 			return
 		}
 		w.Write([]byte("ok"))
 	}))
 }
 
-func TestFetchFile_RetryNotFoundBustsCache(t *testing.T) {
+func TestFetchFile_RetryFlakyBustsCache(t *testing.T) {
 	withFastRetryDelay(t)
 
 	var uris []string
-	server := serve404(3, &uris)
+	server := serveStatus(http.StatusNotFound, 3, &uris)
 	defer server.Close()
 
 	file, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg?sig=B&x=a%2Fb"}, 1, 1, nil, nil, true)
@@ -487,7 +487,7 @@ func TestFetchFile_NotFoundWithoutOptInIsRetriedPlain(t *testing.T) {
 	withFastRetryDelay(t)
 
 	var uris []string
-	server := serve404(100, &uris)
+	server := serveStatus(http.StatusNotFound, 100, &uris)
 	defer server.Close()
 
 	if _, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 1, nil, nil, false); err == nil {
@@ -498,15 +498,43 @@ func TestFetchFile_NotFoundWithoutOptInIsRetriedPlain(t *testing.T) {
 	}
 }
 
-func TestFetchFile_RetryNotFoundZeroRetries(t *testing.T) {
+func TestFetchFile_RetryFlakyZeroRetries(t *testing.T) {
 	withFastRetryDelay(t)
 
 	var uris []string
-	server := serve404(100, &uris)
+	server := serveStatus(http.StatusNotFound, 100, &uris)
 	defer server.Close()
 
 	fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 0, nil, nil, true)
 	if len(uris) != 1 {
 		t.Errorf("--retry 0 must not retry, got %q", uris)
+	}
+}
+
+func TestFetchFile_RetryFlaky5xx(t *testing.T) {
+	withFastRetryDelay(t)
+
+	var uris []string
+	server := serveStatus(http.StatusInternalServerError, 5, &uris)
+	defer server.Close()
+
+	file, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 1, nil, nil, true)
+	if err != nil || string(file.Data) != "ok" || len(uris) != 6 {
+		t.Fatalf("expected success on the 6th request, got %v after %d", err, len(uris))
+	}
+}
+
+func TestFetchFile_5xxWithoutOptInKeepsPlainRetry(t *testing.T) {
+	withFastRetryDelay(t)
+
+	var uris []string
+	server := serveStatus(http.StatusInternalServerError, 100, &uris)
+	defer server.Close()
+
+	if _, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 1, nil, nil, false); err == nil {
+		t.Fatal("expected an error")
+	}
+	if len(uris) != 2 || uris[1] != "/a.jpg" {
+		t.Errorf("expected one plain retry only, got %q", uris)
 	}
 }

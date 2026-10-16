@@ -71,7 +71,7 @@ func FetchChapter(ctx context.Context, site grabber.Site, chapter *grabber.Chapt
 				Referer: referer,
 				Headers: page.Headers,
 				Accept:  http.ImageAccept,
-			}, uint(page.Number), site.GetRetries(), page.Transform, pace, page.RetryNotFound)
+			}, uint(page.Number), site.GetRetries(), page.Transform, pace, page.RetryFlaky)
 
 			if err != nil {
 				select {
@@ -121,8 +121,8 @@ func FetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 }
 
 // fetchFile is FetchFile with an optional pace, called before every attempt,
-// and retryNotFound (Page.RetryNotFound)
-func fetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error), pace func(), retryNotFound bool) (file *File, err error) {
+// and retryFlaky (Page.RetryFlaky)
+func fetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error), pace func(), retryFlaky bool) (file *File, err error) {
 	orig := params.URL
 	for attempt := uint8(0); ; attempt++ {
 		if pace != nil {
@@ -143,13 +143,13 @@ func fetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 
 		wait := retryWait(err, attempt)
 		limit := retries
-		if retryNotFound && retries > 0 && isNotFound(err) {
-			limit, wait = max(retries, notFoundRetries), retryDelay
+		if retryFlaky && retries > 0 && isFlaky(err) {
+			limit, wait = max(retries, flakyRetries), retryDelay
 		}
 		if attempt >= limit {
 			return
 		}
-		if retryNotFound && isNotFound(err) {
+		if retryFlaky && isFlaky(err) {
 			params.URL = bustCache(orig)
 		}
 
@@ -163,13 +163,14 @@ func fetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 	}
 }
 
-// notFoundRetries is how many times an opted-in page that 404s is retried at least.
-const notFoundRetries = 6
+// flakyRetries is how many times an opted-in page that fails is retried at least.
+const flakyRetries = 6
 
-// isNotFound reports whether err is an HTTP 404.
-func isNotFound(err error) bool {
+// isFlaky reports whether err is a 404 or a 5xx, the failures an opted-in
+// origin gives at random (a 429 keeps its own Retry-After handling).
+func isFlaky(err error) bool {
 	var se *http.StatusError
-	return errors.As(err, &se) && se.Code == stdhttp.StatusNotFound
+	return errors.As(err, &se) && (se.Code == stdhttp.StatusNotFound || se.Code >= 500)
 }
 
 // bustCache appends a unique query to the raw URL, leaving any existing one

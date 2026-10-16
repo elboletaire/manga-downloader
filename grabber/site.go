@@ -261,18 +261,18 @@ func (g Grabber) BaseUrl() string {
 	return u.Scheme + "://" + u.Host
 }
 
-// retryNotFoundHosts are the sites whose origin 404s pages at random and
-// whose CDN then caches the 404 (see Page.RetryNotFound).
-var retryNotFoundHosts = []string{"mangazin.org"}
+// retryFlakyHosts are the sites whose origin fails pages at random with a
+// 404 or 5xx (see Page.RetryFlaky).
+var retryFlakyHosts = []string{"mangazin.org"}
 
-// retryNotFound reports whether the site's pages opt in to Page.RetryNotFound
-func (g *Grabber) retryNotFound() bool {
+// retryFlaky reports whether the site's pages opt in to Page.RetryFlaky
+func (g *Grabber) retryFlaky() bool {
 	if g == nil {
 		return false
 	}
 	u, _ := url.Parse(g.URL)
 	host := strings.TrimPrefix(strings.ToLower(u.Hostname()), "www.")
-	return slices.Contains(retryNotFoundHosts, host)
+	return slices.Contains(retryFlakyHosts, host)
 }
 
 // GetPreferredLanguage returns the preferred language for the site
