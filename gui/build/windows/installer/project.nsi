@@ -33,11 +33,11 @@ ManifestDPIAware true
 !define MUI_FINISHPAGE_NOAUTOCLOSE # Wait on the INSTFILES page so the user can take a look into the details of the installation steps
 !define MUI_ABORTWARNING # This will warn the user if they exit from the installer.
 !define MUI_FINISHPAGE_RUN
-!define MUI_FINISHPAGE_RUN_FUNCTION LaunchApp
+!define MUI_FINISHPAGE_RUN_FUNCTION FinishRun
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW FinishShow
 
 !insertmacro MUI_PAGE_WELCOME # Welcome to the installer page.
 # !insertmacro MUI_PAGE_LICENSE "resources\eula.txt" # Adds a EULA page to the installer
-!insertmacro MUI_PAGE_DIRECTORY # In which folder install page.
 !insertmacro MUI_PAGE_INSTFILES # Installing page.
 !insertmacro MUI_PAGE_FINISH # Finished installation page.
 
@@ -55,7 +55,34 @@ InstallDir "$PROGRAMFILES64\${INFO_PRODUCTNAME}" # Never under the company name.
 ShowInstDetails show # This will always show the installation details.
 
 Function .onInit
-   !insertmacro wails.checkArchitecture
+    !insertmacro wails.checkArchitecture
+
+    SetRegView 64
+    ReadRegStr $0 HKLM "${UNINST_KEY}" "InstallLocation"
+    ${If} $0 != ""
+        StrCpy $INSTDIR $0
+    ${EndIf}
+
+    # A running exe can't be opened for writing, which tells us the app is still open.
+    StrCpy $2 0
+    check:
+    IfFileExists "$INSTDIR\${PRODUCT_EXECUTABLE}" 0 done
+    ClearErrors
+    FileOpen $1 "$INSTDIR\${PRODUCT_EXECUTABLE}" a
+    IfErrors busy
+    FileClose $1
+    Goto done
+    busy:
+    IfSilent +3
+    MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "${INFO_PRODUCTNAME} is running. Close it, then click Retry." IDRETRY check
+    Abort
+    IntOp $2 $2 + 1
+    ${If} $2 > 10
+        Abort
+    ${EndIf}
+    Sleep 1000
+    Goto check
+    done:
 FunctionEnd
 
 # Through explorer.exe so the app doesn't inherit the installer's elevation.
@@ -69,6 +96,24 @@ Function .onInstSuccess
     ${GetOptions} $0 "/relaunch" $1
     IfErrors +2
     Call LaunchApp
+FunctionEnd
+
+# With /relaunch the app is already started, so the finish page must not start it again.
+Function FinishRun
+    ${GetParameters} $0
+    ${GetOptions} $0 "/relaunch" $1
+    IfErrors 0 +2
+    Call LaunchApp
+FunctionEnd
+
+Function FinishShow
+    ${GetParameters} $0
+    ${GetOptions} $0 "/relaunch" $1
+    IfErrors +4
+    # 1203 is the Run checkbox's control id on the finish page.
+    FindWindow $0 "#32770" "" $HWNDPARENT
+    GetDlgItem $0 $0 1203
+    ShowWindow $0 ${SW_HIDE}
 FunctionEnd
 
 Section
@@ -86,14 +131,21 @@ Section
     !insertmacro wails.associateCustomProtocols
 
     !insertmacro wails.writeUninstaller
+
+    # The in-app updater and the next install read the install dir from here.
+    SetRegView 64
+    WriteRegStr HKLM "${UNINST_KEY}" "InstallLocation" "$INSTDIR"
 SectionEnd
 
 Section "uninstall"
     !insertmacro wails.setShellContext
 
-    RMDir /r "$AppData\${PRODUCT_EXECUTABLE}" # Remove the WebView2 DataPath
+    # The WebView2 data path is per user, whereas the shortcut below is per machine.
+    SetShellVarContext current
+    RMDir /r "$AppData\${PRODUCT_EXECUTABLE}"
+    SetShellVarContext all
 
-    RMDir /r $INSTDIR
+    Delete "$INSTDIR\${PRODUCT_EXECUTABLE}"
 
     Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
 
@@ -101,4 +153,7 @@ Section "uninstall"
     !insertmacro wails.unassociateCustomProtocols
 
     !insertmacro wails.deleteUninstaller
+
+    # Not recursive: a folder with anything else in it is left alone.
+    RMDir $INSTDIR
 SectionEnd

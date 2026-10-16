@@ -107,6 +107,11 @@ jobs:
       working-directory: gui
       run: |
         set -euo pipefail
+        # the installer's VIProductVersion only takes X.Y.Z
+        if ! [[ "${TAG#v}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "::error::the tag $TAG isn't a numeric X.Y.Z version, which the Windows installer needs"
+          exit 1
+        fi
         # the Windows version resource, the installer's version and the bundle's Info.plist take the version from wails.json
         sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
         # wails embeds the icon and manifest from build/windows into the exe,
