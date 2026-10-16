@@ -128,6 +128,7 @@ grabber: \
 	grabber/fmteam \
 	grabber/gdscans \
 	grabber/genztoon \
+	grabber/globalcomix \
 	grabber/guya \
 	grabber/hachirumi \
 	grabber/heavenlydelusion \
@@ -434,6 +435,10 @@ grabber/fmteam:
 # pick a chapter a bit behind the tip if this starts 404ing on pages
 grabber/genztoon:
 	go run . https://genztoons.org/series/the-return-of-the-legendary-genius-ranker/ 33
+# licensed comics over a JSON API; paid issues are listed as locked, so the target
+# uses a free series (10 is a short 13-page issue)
+grabber/globalcomix:
+	go run . https://globalcomix.com/c/acts-one-nine 10
 # drakecomic.org moved wholesale to drakecomic.net (same RSC platform as
 # witchtoons.net/kaynscans.com); the old domain still 301s /manga/{slug}/
 # here and the grabber remaps old URLs in code. No browser needed anymore.

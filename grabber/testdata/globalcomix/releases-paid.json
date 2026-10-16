@@ -1,0 +1,49 @@
+{
+ "meta": {
+  "code": 200
+ },
+ "payload": {
+  "results": [
+   {
+    "key": "cd9d89f4-5112-44e9-90bf-e8985be4ce2f",
+    "lang_id": "en",
+    "chapter_type": "o",
+    "chapter": "1",
+    "order": 1,
+    "title": "DCeased: The Deluxe Edition",
+    "page_count": 290,
+    "is_free": false
+   },
+   {
+    "key": "bbfeb5ab-d577-4ad8-b8aa-0f96e67a1b1d",
+    "lang_id": "en",
+    "chapter_type": "v",
+    "chapter": "1",
+    "order": 2,
+    "title": "DCeased",
+    "page_count": 227,
+    "is_free": false
+   },
+   {
+    "key": "59cd868b-094b-47fb-9c04-76fff5306dda",
+    "lang_id": "en",
+    "chapter_type": "c",
+    "chapter": "1",
+    "order": 3,
+    "title": "DCeased (2019-) #1",
+    "page_count": 36,
+    "is_free": false
+   },
+   {
+    "key": "5e748050-4472-492e-ace9-965073faa27a",
+    "lang_id": "en",
+    "chapter_type": "c",
+    "chapter": "2",
+    "order": 4,
+    "title": "DCeased: A Good Day to Die (2019-) #1",
+    "page_count": 45,
+    "is_free": false
+   }
+  ]
+ }
+}

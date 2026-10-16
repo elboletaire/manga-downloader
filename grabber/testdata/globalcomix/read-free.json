@@ -1,0 +1,23 @@
+{
+ "meta": {
+  "code": 200
+ },
+ "payload": {
+  "results": {
+   "comic_slug": "acts-one-nine",
+   "is_free": true,
+   "page_count": 53,
+   "reader_cdn_access": {
+    "base_url": "https://reader-cdn.globalcomix.com",
+    "release_key": "6d7935c9-a32e-49e3-944b-dd0813719b32",
+    "url_template": "{base_url}/r/{release_key}/p/{order}/{quality}.webp",
+    "ranges": [
+     [
+      1,
+      53
+     ]
+    ]
+   }
+  }
+ }
+}
