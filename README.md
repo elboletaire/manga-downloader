@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[146 supported sites](#supported-sites)**, from big aggregators to small
+- **[147 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -618,7 +618,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 146 supported sites</b></summary>
+<summary><b>Show all 147 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -707,6 +707,7 @@ to a minute.
 | [mangapill.com](https://mangapill.com) |  | 2026-10-15 |
 | [mangaplus.shueisha.co.jp](https://mangaplus.shueisha.co.jp) | Manga Plus, Shueisha's official reader | 2026-10-15 |
 | [mangaread.org](https://www.mangaread.org) |  | 2026-10-15 |
+| [mangas-origines.fr](https://mangas-origines.fr) | French | 2026-10-16 |
 | [mangasushi.org](https://mangasushi.org) |  | 2026-10-15 |
 | [mangasusuku.com](https://mangasusuku.com) | Indonesian, mostly NSFW | 2026-10-15 |
 | [mangataro.org](https://mangataro.org) |  | 2026-10-15 |

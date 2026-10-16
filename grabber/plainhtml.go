@@ -175,6 +175,17 @@ var plainHTMLSelectors = []SiteSelector{
 		Link:         "a",
 		Image:        "div.reading-content img",
 	},
+	// mangas-origines.fr: Madara-derived theme with its own chapter list (the
+	// ajax endpoint is walled) under /oeuvre/. Reader images lazy-load
+	// through data-src.
+	{
+		Title:        "h1.ori-sr-title",
+		Rows:         "div.ori-chl-row",
+		Chapter:      ".ori-chl-nom-long",
+		ChapterTitle: ".ori-chl-nom-long",
+		Link:         "a.ori-chl-corps",
+		Image:        "img.wp-manga-chapter-img",
+	},
 	// nyraxmanga.com: themesia markup (below) whose paid rows carry a "PLUS"
 	// badge and no images logged out. Rows are scoped to the site's own
 	// links so Locked can't flag another themesia site.
