@@ -684,6 +684,7 @@ to a minute.
 | [kaynscans.com](https://kaynscans.com) | Kayn Scans, former kaynscan.org | 2026-10-15 |
 | [kingofshojo.com](https://kingofshojo.com) |  | 2026-10-15 |
 | [komikindo.ch](https://komikindo.ch) |  | 2026-10-15 |
+| [komikmanga.com](https://komikmanga.com) | MangaReader, English | 2026-10-16 |
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-15 |
 | [ksgroupscans.com](https://ksgroupscans.com) | KSGroupScans | 2026-10-16 |
 | [lagoonscans.com](https://lagoonscans.com) |  | 2026-10-15 |

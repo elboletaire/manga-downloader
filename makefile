@@ -581,6 +581,7 @@ grabber/html: \
 	grabber/furyosociety \
 	grabber/kingofshojo \
 	grabber/komikindo \
+	grabber/komikmanga \
 	grabber/komikstation \
 	grabber/gourmetsupremacy \
 	grabber/lagoonscans \
@@ -713,6 +714,8 @@ grabber/kingofshojo:
 	go run . https://kingofshojo.com/manga/although-i-was-a-condemned-witch-everyone-dotes-on-me-after-regressing/ 14
 grabber/komikindo:
 	go run . https://komikindo.ch/komik/155895-nano-machine/ 98
+grabber/komikmanga:
+	go run . https://komikmanga.com/manga/Unrivaled-Spear-Demon 55
 grabber/komikstation:
 	go run . https://komikstation.org/manga/boukun-wo-teki-ni-mawashita-akujo-desu-ga-bankaisa-sete-itadakimasu/ 10
 grabber/mangavault:
