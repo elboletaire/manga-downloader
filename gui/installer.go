@@ -29,6 +29,10 @@ const updateDirPrefix = "manga-downloader-update-"
 // updateTimeout bounds a whole installer download
 const updateTimeout = 10 * time.Minute
 
+// errNotRestarted marks an installer that finished but couldn't start the new
+// version again
+var errNotRestarted = errors.New("couldn't restart")
+
 // maxSumsSize bounds the checksums file, which is read into memory
 const maxSumsSize = 1 << 20
 

@@ -342,6 +342,12 @@ func TestAppUpdate(t *testing.T) {
 	}
 
 	a, calls = newTest(true, &inst, &sums)
+	a.install = func(string) error { return errNotRestarted }
+	if err := a.Update(); err == nil || !strings.Contains(err.Error(), "open Manga Downloader again") || strings.Join(*calls, ",") != "fetch,quit" {
+		t.Errorf("failed restart: %v, calls %v", err, *calls)
+	}
+
+	a, calls = newTest(true, &inst, &sums)
 	a.install = func(string) error { return errors.New("denied") }
 	if err := a.Update(); err == nil || len(*calls) != 1 {
 		t.Errorf("failed install: %v, calls %v", err, *calls)

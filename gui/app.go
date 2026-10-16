@@ -648,7 +648,15 @@ func (a *App) Update() error {
 		_ = removeUpdateDir(filepath.Dir(path))
 		return a.failUpdate(errors.New("a download started meanwhile: finish or cancel it, then update again"))
 	}
-	if err := a.install(path); err != nil {
+	if err := a.install(path); errors.Is(err, errNotRestarted) {
+		// installed already, so the files stay; only the restart is left to the user
+		err = a.failUpdate(fmt.Errorf("Updated to %s, but couldn't restart; open Manga Downloader again", u.Latest))
+		if a.quit != nil {
+			a.quit()
+		}
+
+		return err
+	} else if err != nil {
 		_ = removeUpdateDir(filepath.Dir(path))
 		return a.failUpdate(fmt.Errorf("couldn't start the installer: %w", err))
 	}

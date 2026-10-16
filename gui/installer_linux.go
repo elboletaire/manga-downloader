@@ -74,7 +74,11 @@ func runInstaller(tarball string) error {
 		return fmt.Errorf("the installer failed: %w: %s", err, lastLine(string(out)))
 	}
 
-	return relaunch(exe)
+	if err := relaunch(exe); err != nil {
+		return fmt.Errorf("%w: %v", errNotRestarted, err)
+	}
+
+	return nil
 }
 
 // relaunch starts bin in a new session after a second, once this process has

@@ -188,8 +188,12 @@ jobs:
         sums="manga-downloader-gui-$TAG-SHA256SUMS.txt"
         # a re-run finds the previous file among the assets
         rm -f "assets/$sums"
-        count="$(find assets -type f | wc -l)"
-        if [ "$count" -lt 5 ]; then echo "::error::only $count GUI assets found, expected the zips, tarballs and installers"; exit 1; fi
+        for arch in amd64 arm64; do
+          for want in "linux-$arch.tar.gz" "windows-$arch.zip" "windows-$arch-installer.exe"; do
+            [ -f "assets/manga-downloader-gui-$TAG-$want" ] || { echo "::error::missing GUI asset manga-downloader-gui-$TAG-$want"; exit 1; }
+          done
+        done
+        [ -f "assets/manga-downloader-gui-$TAG-darwin-universal.zip" ] || { echo "::error::missing GUI asset manga-downloader-gui-$TAG-darwin-universal.zip"; exit 1; }
         (cd assets && sha256sum -- * > "../$sums")
         cat "$sums"
         gh release upload "$TAG" "$sums" --clobber
