@@ -5,12 +5,12 @@
 import { useEffect, useRef, useState } from 'react';
 import happyMark from '../../../assets/brand/mark/happy/mark.svg';
 import happyMarkDark from '../../../assets/brand/mark/happy/mark-dark.svg';
-import wordmark from '../../../assets/brand/wordmark/wordmark-line.svg';
-import wordmarkDark from '../../../assets/brand/wordmark/wordmark-line-dark.svg';
 import softMark from '../../../assets/brand/mark/soft/mark.svg';
 import softMarkDark from '../../../assets/brand/mark/soft/mark-dark.svg';
 import smallMark from '../../../assets/brand/mark/soft/mark-small.svg';
 import smallMarkDark from '../../../assets/brand/mark/soft/mark-small-dark.svg';
+import wordmark from '../../../assets/brand/wordmark/wordmark-line.svg';
+import wordmarkDark from '../../../assets/brand/wordmark/wordmark-line-dark.svg';
 import { celebrating, celebratesOnOpen, type Expression } from './expression';
 import type { State } from './types';
 
