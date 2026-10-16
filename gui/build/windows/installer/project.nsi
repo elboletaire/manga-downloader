@@ -1,10 +1,8 @@
 Unicode true
 
-# Defines read by wails_tools.nsh. The install dir, uninstall key and shortcuts use the
-# product name alone, and the app is installed under the name the zip ships it as.
-# The scope is picked at run time: elevated installs per machine (HKLM, Program Files),
-# otherwise per user (HKCU, %LOCALAPPDATA%\Programs). The in-app updater relies on all
-# of these, so change them together with it.
+# Defines read by wails_tools.nsh. Install dir, uninstall key and shortcuts use the product
+# name alone, the exe keeps the zip's name, and the scope (elevated: per machine in HKLM,
+# else per user in HKCU) is picked at run time. The in-app updater relies on all of this.
 !define REQUEST_EXECUTION_LEVEL "user"
 !define PRODUCT_EXECUTABLE "manga-downloader-gui.exe"
 !define UNINST_KEY_NAME    "Manga Downloader"
@@ -16,6 +14,7 @@ Unicode true
 !insertmacro GetParameters
 !insertmacro VersionCompare
 !insertmacro un.GetParameters
+!insertmacro un.GetOptions
 !insertmacro GetSize
 
 Var MachineScope
@@ -94,12 +93,20 @@ Function .onInit
     ${Else}
         SetShellVarContext current
         StrCpy $INSTDIR "$LOCALAPPDATA\Programs\${INFO_PRODUCTNAME}"
-        # A per-machine install exists: upgrade it in place, which needs elevation.
-        ReadRegStr $0 HKLM "${UNINST_KEY}" "InstallLocation"
-        ${If} $0 != ""
+        # Only a per-machine install exists: upgrade it in place, which needs elevation.
+        # /elevated marks the relaunch so a failed elevation can't loop.
+        ReadRegStr $0 HKCU "${UNINST_KEY}" "InstallLocation"
+        ReadRegStr $2 HKLM "${UNINST_KEY}" "InstallLocation"
+        ${If} $0 == ""
+        ${AndIf} $2 != ""
             ${GetParameters} $1
+            ${GetOptions} $1 "/elevated" $3
+            ${IfNot} ${Errors}
+                MessageBox MB_OK|MB_ICONSTOP "${INFO_PRODUCTNAME} is installed for all users, but administrator rights couldn't be obtained."
+                Abort
+            ${EndIf}
             ClearErrors
-            ExecShell "runas" "$EXEPATH" "$1"
+            ExecShell "runas" "$EXEPATH" "$1 /elevated"
             IfErrors 0 +3
             MessageBox MB_OK|MB_ICONSTOP "${INFO_PRODUCTNAME} is installed for all users, so updating it needs administrator rights."
             Abort
@@ -222,9 +229,18 @@ Function un.onInit
         ClearErrors
         WriteRegStr HKLM "Software\${INFO_PRODUCTNAME}Probe" "" ""
         ${If} ${Errors}
-            ${GetParameters} $1
+            ${un.GetParameters} $1
+            ${un.GetOptions} $1 "/elevated" $2
+            ${IfNot} ${Errors}
+                MessageBox MB_OK|MB_ICONSTOP "Uninstalling ${INFO_PRODUCTNAME} for all users needs administrator rights, which couldn't be obtained."
+                Abort
+            ${EndIf}
+            # Not $EXEPATH, which is NSIS's temp copy of the uninstaller.
+            StrCpy $1 "/elevated"
+            IfSilent 0 +2
+            StrCpy $1 "/S /elevated"
             ClearErrors
-            ExecShell "runas" "$EXEPATH" "$1"
+            ExecShell "runas" "$INSTDIR\uninstall.exe" "$1"
             IfErrors 0 +3
             MessageBox MB_OK|MB_ICONSTOP "Uninstalling ${INFO_PRODUCTNAME} for all users needs administrator rights."
             Abort
