@@ -130,6 +130,8 @@ export interface Update {
   url: string;
   /** Update() can install it: an installed copy, and its package and checksums on the release */
   oneClick: boolean;
+  /** Open the update prompt on load; only the mock sets it (the 11-update-prompt screenshot) */
+  prompt?: boolean;
 }
 
 export interface Chapter {

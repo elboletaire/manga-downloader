@@ -70,3 +70,14 @@ describe('StatusBar last-line title', () => {
     expect(html).toContain('aria-live="polite">Ready</span>');
   });
 });
+
+describe('StatusBar update prompt', () => {
+  const update: Update = { latest: 'v1.18.0', url: 'https://example.com/latest', oneClick: true };
+
+  it('opens the dialog on load only when the update asks for it', () => {
+    expect(bar({ update })).not.toContain('update-dialog-title');
+    const html = bar({ update: { ...update, prompt: true } });
+    expect(html).toContain('update-dialog-title');
+    expect(html).toContain('v1.18.0');
+  });
+});

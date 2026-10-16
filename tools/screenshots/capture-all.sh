@@ -50,6 +50,7 @@ for theme in light dark; do
   shot 08-browser-alert '?mock&scenario=check&freeze&shot'
   shot 09-update '?mock&scenario=update&freeze&shot'
   shot 10-failed '?mock&scenario=done&freeze&fail&shot'
+  shot 11-update-prompt '?mock&scenario=update&freeze&shot&prompt'
 done
 
 # 2054x1444 -> 2000x1390, then 8-bit palette PNGs (~190-230 KB)
