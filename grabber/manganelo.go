@@ -262,7 +262,7 @@ func (m *Manganelo) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(images)),
 		Language:   "en",
@@ -325,10 +325,10 @@ func parseManganeloChaptersPage(body string) (chapters Filterables, hasMore bool
 		// would otherwise leak straight into the cbz filename
 		chapters = append(chapters, &ManganeloChapter{
 			Chapter{
-				Number:     c.Number,
-				Title:      sanitizeTitle(c.Name),
-				ID:         c.Slug,
-				LabelStyle: LabelNumbered,
+				Number: c.Number,
+				Title:  sanitizeTitle(c.Name),
+				ID:     c.Slug,
+				Label:  Label{Style: LabelNumbered},
 			},
 			c.Slug,
 		})

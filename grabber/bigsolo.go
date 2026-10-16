@@ -70,16 +70,12 @@ func (b *Bigsolo) FetchChapters() (chapters Filterables, errs []error) {
 			continue
 		}
 
-		title := c.Title
-		if title == "" {
-			title = "Chapitre " + key
-		}
-
 		chapters = append(chapters, &BigsoloChapter{
 			Chapter{
 				Number: number,
-				Title:  title,
+				Title:  c.Title,
 				ID:     c.Source.Id,
+				Label:  Label{Style: LabelNumbered, Number: key, Lang: "fr"},
 			},
 			c.Source.Id,
 		})
@@ -121,6 +117,7 @@ func (b Bigsolo) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(files)),
 		Language:   "fr",

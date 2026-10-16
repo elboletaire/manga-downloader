@@ -100,10 +100,10 @@ func (f *Flamecomics) FetchChapters() (chapters Filterables, errs []error) {
 
 		chapters = append(chapters, &FlamecomicsChapter{
 			Chapter{
-				Number:     number,
-				Title:      title,
-				ID:         c.Token,
-				LabelStyle: LabelNumbered,
+				Number: number,
+				Title:  title,
+				ID:     c.Token,
+				Label:  Label{Style: LabelNumbered},
 			},
 			c.SeriesId,
 			c.Token,
@@ -156,7 +156,7 @@ func (f Flamecomics) FetchChapter(fl Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      fl.GetTitle(),
-		LabelStyle: labelStyleOf(fl),
+		Label:      labelOf(fl),
 		Number:     fl.GetNumber(),
 		Language:   "en",
 		PagesCount: int64(len(indexes)),

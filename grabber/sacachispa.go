@@ -120,10 +120,10 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 			if len(rels) == 0 {
 				chapters = append(chapters, &SacachispaChapter{
 					Chapter: Chapter{
-						Number:     number,
-						Title:      title,
-						Language:   "en",
-						LabelStyle: LabelNumbered,
+						Number:   number,
+						Title:    title,
+						Language: "en",
+						Label:    Label{Style: LabelNumbered},
 					},
 					PatreonOnly: c.PatreonOnly,
 				})
@@ -132,11 +132,11 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 			for _, r := range rels {
 				listed := &SacachispaChapter{
 					Chapter: Chapter{
-						Number:     number,
-						Title:      title,
-						Language:   r.Language,
-						ID:         r.ID,
-						LabelStyle: LabelNumbered,
+						Number:   number,
+						Title:    title,
+						Language: r.Language,
+						ID:       r.ID,
+						Label:    Label{Style: LabelNumbered},
 					},
 					PatreonOnly: c.PatreonOnly,
 				}

@@ -207,13 +207,12 @@ func parseMangaparkChaptersBatch(body string) (Filterables, int, bool, error) {
 
 		dataNum := li.AttrOr("data-number", "")
 		var number float64
+		style := LabelNumbered
 		if dataNum == "" {
 			// One-shot or unnumbered: assign the next sequential number.
 			number = seqNum
 			seqNum++
-			if title == "" {
-				title = "Chapter"
-			}
+			style = LabelUnnumbered
 		} else {
 			var parseErr error
 			number, parseErr = strconv.ParseFloat(dataNum, 64)
@@ -227,11 +226,11 @@ func parseMangaparkChaptersBatch(body string) (Filterables, int, bool, error) {
 
 		chapters = append(chapters, &MangaparkChapter{
 			Chapter{
-				Number:     number,
-				Title:      title,
-				Language:   lang,
-				ID:         href,
-				LabelStyle: LabelNumbered,
+				Number:   number,
+				Title:    title,
+				Language: lang,
+				ID:       href,
+				Label:    Label{Style: style},
 			},
 			href,
 		})
@@ -260,11 +259,11 @@ func (m *Mangapark) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	chapter := &Chapter{
-		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
-		Number:     f.GetNumber(),
-		Language:   mchap.Language,
-		ID:         mchap.Link,
+		Title:    f.GetTitle(),
+		Label:    labelOf(f),
+		Number:   f.GetNumber(),
+		Language: mchap.Language,
+		ID:       mchap.Link,
 	}
 
 	doc.Find("section.chapter-reader img").Each(func(i int, s *goquery.Selection) {

@@ -106,10 +106,9 @@ func (h *HeavenlyDelusion) chaptersFromLocs(locs []string) Filterables {
 
 		chapters = append(chapters, &HeavenlyDelusionChapter{
 			Chapter{
-				Title:      numberTitle(numStr, num),
-				Number:     num,
-				ID:         chapterURLID(loc),
-				LabelStyle: LabelNumbered,
+				Number: num,
+				ID:     chapterURLID(loc),
+				Label:  Label{Style: LabelNumbered, Number: numStr},
 			},
 			loc,
 		})
@@ -178,7 +177,7 @@ func (h *HeavenlyDelusion) FetchChapter(f Filterable) (*Chapter, error) {
 
 	return &Chapter{
 		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
 		Language:   "en",

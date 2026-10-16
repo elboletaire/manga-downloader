@@ -197,11 +197,11 @@ func (m Mangatown) FetchChapters() (chapters Filterables, errs []error) {
 
 		chapters = append(chapters, &MangatownChapter{
 			Chapter{
-				Number:     number,
-				Title:      mangatownChapterTitle(seriesTitle, s.Text()),
-				Volume:     urlVolume(href),
-				LabelStyle: LabelNumbered,
-				ID:         chapterURLID(href),
+				Number: number,
+				Title:  mangatownChapterTitle(seriesTitle, s.Text()),
+				Volume: urlVolume(href),
+				Label:  Label{Style: LabelNumbered},
+				ID:     chapterURLID(href),
 			},
 			href,
 		})
@@ -237,7 +237,7 @@ func (m Mangatown) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(count),
 		Language:   "en",

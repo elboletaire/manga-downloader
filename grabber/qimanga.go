@@ -150,11 +150,11 @@ func (q Qimanga) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	chapter := &Chapter{
-		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
-		Number:     f.GetNumber(),
-		Language:   "en",
-		ID:         qchap.Slug,
+		Title:    f.GetTitle(),
+		Label:    labelOf(f),
+		Number:   f.GetNumber(),
+		Language: "en",
+		ID:       qchap.Slug,
 	}
 
 	doc.Find("img.r-page-img").Each(func(i int, s *goquery.Selection) {
@@ -201,11 +201,11 @@ func (f qimangaChaptersFeed) chapters() (chapters Filterables) {
 	for _, c := range f.Data {
 		chapters = append(chapters, &QimangaChapter{
 			Chapter{
-				Number:     c.Number,
-				Title:      c.Title,
-				ID:         c.Slug,
-				Locked:     c.RequiresPurchase,
-				LabelStyle: LabelNumbered,
+				Number: c.Number,
+				Title:  c.Title,
+				ID:     c.Slug,
+				Locked: c.RequiresPurchase,
+				Label:  Label{Style: LabelNumbered},
 			},
 			c.Slug,
 		})

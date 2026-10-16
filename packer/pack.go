@@ -168,7 +168,7 @@ func chapterFolders(chapters []*DownloadedChapter, format string, convert grabbe
 	// both chapters' pages into one folder (which would lose the first one's).
 	usedFolders := map[string]int{}
 	for _, chapter := range chapters {
-		base := SanitizeFilename(fmt.Sprintf("Chapter %s", paddedChapterNumber(chapter.GetNumber())))
+		base := SanitizeFilename(grabber.NumberTextLabel(paddedChapterNumber(chapter.GetNumber())))
 		folder := base
 		if n := usedFolders[base]; n > 0 {
 			folder = fmt.Sprintf("%s (%d)", base, n+1)

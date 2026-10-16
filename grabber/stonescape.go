@@ -120,11 +120,11 @@ func (s Stonescape) FetchChapters() (chapters Filterables, errs []error) {
 
 		chapters = append(chapters, &StonescapeChapter{
 			Chapter{
-				Number:     number,
-				Title:      title,
-				Language:   "en",
-				ID:         c.ChapterId,
-				LabelStyle: LabelNumbered,
+				Number:   number,
+				Title:    title,
+				Language: "en",
+				ID:       c.ChapterId,
+				Label:    Label{Style: LabelNumbered},
 			},
 			c.ChapterId,
 		})
@@ -158,7 +158,7 @@ func (s Stonescape) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		Language:   "en",
 		PagesCount: int64(len(feed.Pages)),

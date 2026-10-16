@@ -204,9 +204,9 @@ func (w *WeebCentral) FetchChapters() (chapters Filterables, errs []error) {
 
 		chapters = append(chapters, &WeebCentralChapter{
 			Chapter{
-				Number:     number,
-				ID:         weebCentralChapterID(href),
-				LabelStyle: LabelNumbered,
+				Number: number,
+				ID:     weebCentralChapterID(href),
+				Label:  Label{Style: LabelNumbered},
 			},
 			href,
 		})
@@ -235,11 +235,11 @@ func (w *WeebCentral) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	chapter := &Chapter{
-		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
-		Number:     f.GetNumber(),
-		Language:   "en",
-		ID:         weebCentralChapterID(wchap.URL),
+		Title:    f.GetTitle(),
+		Label:    labelOf(f),
+		Number:   f.GetNumber(),
+		Language: "en",
+		ID:       weebCentralChapterID(wchap.URL),
 	}
 
 	doc.Find("img").Each(func(i int, s *goquery.Selection) {

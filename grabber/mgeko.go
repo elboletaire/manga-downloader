@@ -183,9 +183,9 @@ func (m *Mgeko) FetchChapters() (chapters Filterables, errs []error) {
 
 		chapters = append(chapters, &MgekoChapter{
 			Chapter{
-				Number:     number,
-				ID:         chapterURLID(u),
-				LabelStyle: LabelNumbered,
+				Number: number,
+				ID:     chapterURLID(u),
+				Label:  Label{Style: LabelNumbered},
 			},
 			u,
 		})
@@ -212,11 +212,11 @@ func (m *Mgeko) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	chapter := &Chapter{
-		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
-		Number:     f.GetNumber(),
-		Language:   "en",
-		ID:         chapterURLID(mchap.URL),
+		Title:    f.GetTitle(),
+		Label:    labelOf(f),
+		Number:   f.GetNumber(),
+		Language: "en",
+		ID:       chapterURLID(mchap.URL),
 	}
 
 	// the reader embeds every real page as <img id="image-N" src="...">,

@@ -297,18 +297,12 @@ func wpChapters(posts []wpPost, lang string) Filterables {
 			continue
 		}
 
-		// a part keeps its number in the title, which a label can't add after it
-		chapterTitle := ""
-		if part != "" {
-			chapterTitle = NumberLabel(num) + " Part " + part
-		}
 		chapters = append(chapters, &WordPressCategoryChapter{
 			Chapter: Chapter{
 				// the post title repeats the series name, which the filename already has
-				Title:      chapterTitle,
-				Number:     num,
-				Language:   lang,
-				LabelStyle: LabelNumbered,
+				Number:   num,
+				Language: lang,
+				Label:    Label{Style: LabelNumbered, Part: part},
 			},
 			URL: p.Link,
 		})
@@ -361,7 +355,7 @@ func (w *WordPressCategory) FetchChapter(f Filterable) (*Chapter, error) {
 
 	return &Chapter{
 		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
 		Language:   w.language,

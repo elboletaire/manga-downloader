@@ -99,10 +99,9 @@ func chainsawManOnlineParseRoot(doc *goquery.Document) (string, Filterables) {
 
 		chapters = append(chapters, &ChainsawManOnlineChapter{
 			Chapter{
-				Title:      numberTitle(numStr, num),
-				Number:     num,
-				ID:         chapterURLID(href),
-				LabelStyle: LabelNumbered,
+				Number: num,
+				ID:     chapterURLID(href),
+				Label:  Label{Style: LabelNumbered, Number: numStr},
 			},
 			href,
 		})
@@ -167,7 +166,7 @@ func (c *ChainsawManOnline) FetchChapter(f Filterable) (*Chapter, error) {
 
 	return &Chapter{
 		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
 		Language:   "en",

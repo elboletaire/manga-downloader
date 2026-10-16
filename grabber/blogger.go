@@ -265,18 +265,11 @@ func bloggerChapters(entries []bloggerEntry, query, lang string) (Filterables, s
 			title = post.Series
 		}
 
-		// a part keeps its number in the title, which a label can't add after it
-		chapterTitle := ""
-		if post.Part != "" {
-			chapterTitle = NumberLabel(post.Number) + " Part " + post.Part
-		}
-
 		chapters = append(chapters, &BloggerChapter{
 			Chapter{
-				Title:      chapterTitle,
-				Number:     post.Number,
-				Language:   lang,
-				LabelStyle: LabelNumbered,
+				Number:   post.Number,
+				Language: lang,
+				Label:    Label{Style: LabelNumbered, Part: post.Part},
 			},
 			e.URL,
 		})

@@ -146,7 +146,7 @@ func (m *Mangafire) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		Language:   mchap.Language,
 		ID:         mchap.ID,
@@ -251,11 +251,11 @@ func (m *Mangafire) load() error {
 	for _, c := range parseMangafireChapters(responses, feedPrefix) {
 		listed := &MangafireChapter{
 			Chapter: Chapter{
-				Number:     c.Number,
-				Title:      c.Name,
-				Language:   c.Language,
-				ID:         strconv.FormatInt(c.Id, 10),
-				LabelStyle: LabelNumbered,
+				Number:   c.Number,
+				Title:    c.Name,
+				Language: c.Language,
+				ID:       strconv.FormatInt(c.Id, 10),
+				Label:    Label{Style: LabelNumbered},
 			},
 			URL: fmt.Sprintf("%s/chapter/%d", m.readerBase, c.Id),
 			Id:  c.Id,

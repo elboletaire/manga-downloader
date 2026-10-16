@@ -165,17 +165,13 @@ func mangataroReleases(items []mangataroChapterItem, language string) Filterable
 		if err != nil {
 			continue
 		}
-		title := c.Title
-		if title == "" {
-			title = numberTitle(c.Chapter, num)
-		}
 		listed := &MangataroChapter{
 			Chapter{
-				Number:     num,
-				Title:      title,
-				Language:   c.Language,
-				ID:         c.Id,
-				LabelStyle: LabelNumbered,
+				Number:   num,
+				Title:    c.Title,
+				Language: c.Language,
+				ID:       c.Id,
+				Label:    Label{Style: LabelNumbered, Number: c.Chapter},
 			},
 			c.Id,
 		}
@@ -218,7 +214,7 @@ func (m *Mangataro) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		Language:   mchap.Language,
 		ID:         mchap.ID,

@@ -90,19 +90,24 @@ func TestFilenameLabelUnchanged(t *testing.T) {
 		file      string
 		siteTitle string
 	}{
-		{"no title", "Chapter 12", grabber.Chapter{Number: 12, LabelStyle: grabber.LabelNumbered}, "Series 12 - Chapter 12", ""},
-		{"decimal", "Chapter 10.5", grabber.Chapter{Number: 10.5, LabelStyle: grabber.LabelNumbered}, "Series 10.5 - Chapter 10.5", ""},
-		{"titled", "Dead End", grabber.Chapter{Title: "Dead End", Number: 36, LabelStyle: grabber.LabelNumbered}, "Series 36 - Dead End", "Dead End"},
-		{"site's chapter word", "Capítulo 7: Foo", grabber.Chapter{Title: "Capítulo 7: Foo", Number: 7, LabelStyle: grabber.LabelNumbered}, "Series 7 - Capítulo 7; Foo", "Capítulo 7; Foo"},
-		{"group", "Chapter 3", grabber.Chapter{Number: 3, Group: "Alpha", LabelStyle: grabber.LabelNumbered}, "Series 3 - Chapter 3 [Alpha]", ""},
-		{"prefixed", "Chapter 5 - Foo", grabber.Chapter{Title: "Foo", Number: 5, LabelStyle: grabber.LabelPrefixed}, "Series 5 - Chapter 5 - Foo", "Foo"},
-		{"padded", "Chapter 0001 Market", grabber.Chapter{Title: "Market", Number: 1, LabelStyle: grabber.LabelPadded}, "Series 1 - Chapter 0001 Market", "Market"},
-		{"padded, no title", "Chapter 0010 ", grabber.Chapter{Number: 10.5, LabelStyle: grabber.LabelPadded}, "Series 10.5 - Chapter 0010", ""},
+		{"no title", "Chapter 12", grabber.Chapter{Number: 12, Label: grabber.Label{Style: grabber.LabelNumbered}}, "Series 12 - Chapter 12", ""},
+		{"decimal", "Chapter 10.5", grabber.Chapter{Number: 10.5, Label: grabber.Label{Style: grabber.LabelNumbered}}, "Series 10.5 - Chapter 10.5", ""},
+		{"titled", "Dead End", grabber.Chapter{Title: "Dead End", Number: 36, Label: grabber.Label{Style: grabber.LabelNumbered}}, "Series 36 - Dead End", "Dead End"},
+		{"site's chapter word", "Capítulo 7: Foo", grabber.Chapter{Title: "Capítulo 7: Foo", Number: 7, Label: grabber.Label{Style: grabber.LabelNumbered}}, "Series 7 - Capítulo 7; Foo", "Capítulo 7; Foo"},
+		{"group", "Chapter 3", grabber.Chapter{Number: 3, Group: "Alpha", Label: grabber.Label{Style: grabber.LabelNumbered}}, "Series 3 - Chapter 3 [Alpha]", ""},
+		{"prefixed", "Chapter 5 - Foo", grabber.Chapter{Title: "Foo", Number: 5, Label: grabber.Label{Style: grabber.LabelPrefixed}}, "Series 5 - Chapter 5 - Foo", "Foo"},
+		{"padded", "Chapter 0001 Market", grabber.Chapter{Title: "Market", Number: 1, Label: grabber.Label{Style: grabber.LabelPadded}}, "Series 1 - Chapter 0001 Market", "Market"},
+		{"padded, no title", "Chapter 0010 ", grabber.Chapter{Number: 10.5, Label: grabber.Label{Style: grabber.LabelPadded}}, "Series 10.5 - Chapter 0010", ""},
+		{"site's number text", "Chapter 05", grabber.Chapter{Number: 5, Label: grabber.Label{Style: grabber.LabelNumbered, Number: "05"}}, "Series 5 - Chapter 05", ""},
+		{"part", "Chapter 364 Part 2", grabber.Chapter{Number: 364, Label: grabber.Label{Style: grabber.LabelNumbered, Part: "2"}}, "Series 364 - Chapter 364 Part 2", ""},
+		{"one-shot", "Chapter", grabber.Chapter{Number: 4, Label: grabber.Label{Style: grabber.LabelUnnumbered}}, "Series 4 - Chapter", ""},
+		{"another language", "Capítulo 0005", grabber.Chapter{Number: 5, Label: grabber.Label{Style: grabber.LabelPadded, Lang: "es"}}, "Series 5 - Capítulo 0005", ""},
+		{"another language, numbered", "Chapitre 3", grabber.Chapter{Number: 3, Label: grabber.Label{Style: grabber.LabelNumbered, Lang: "fr"}}, "Series 3 - Chapitre 3", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			before := tt.chapter
-			before.Title, before.LabelStyle = tt.old, grabber.LabelTitle
+			before.Title, before.Label = tt.old, grabber.Label{}
 			name := func(c *grabber.Chapter) string {
 				got, err := NewFilenameFromTemplate(FilenameTemplateDefault, NewChapterFileTemplateParts("Series", c))
 				if err != nil {

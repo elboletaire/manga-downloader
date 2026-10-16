@@ -110,10 +110,10 @@ func (a *Atsumaru) FetchChapters() (chapters Filterables, errs []error) {
 		}
 		listed := &AtsumaruChapter{
 			Chapter{
-				Number:     c.Number,
-				Title:      c.Title,
-				ID:         c.Id,
-				LabelStyle: LabelNumbered,
+				Number: c.Number,
+				Title:  c.Title,
+				ID:     c.Id,
+				Label:  Label{Style: LabelNumbered},
 			},
 			c.Id,
 		}
@@ -214,7 +214,7 @@ func atsumaruChapter(achap *AtsumaruChapter, body string) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      achap.GetTitle(),
-		LabelStyle: labelStyleOf(achap),
+		Label:      labelOf(achap),
 		Number:     achap.GetNumber(),
 		Language:   "en",
 		ID:         achap.ID,

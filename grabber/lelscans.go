@@ -117,9 +117,9 @@ func (m *LelScans) FetchChapters() (chapters Filterables, errs []error) {
 
 		chapters = append(chapters, &LelScansChapter{
 			Chapter{
-				Number:     number,
-				ID:         chapterURLID(href),
-				LabelStyle: LabelNumbered,
+				Number: number,
+				ID:     chapterURLID(href),
+				Label:  Label{Style: LabelNumbered},
 			},
 			href,
 		})
@@ -146,11 +146,11 @@ func (m *LelScans) FetchChapter(f Filterable) (*Chapter, error) {
 	})
 
 	chapter := &Chapter{
-		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
-		Number:     f.GetNumber(),
-		Language:   "fr",
-		ID:         chap.ID,
+		Title:    f.GetTitle(),
+		Label:    labelOf(f),
+		Number:   f.GetNumber(),
+		Language: "fr",
+		ID:       chap.ID,
 	}
 
 	for page := 1; page <= pages; page++ {

@@ -59,8 +59,8 @@ type Chapter struct {
 	// access): a logged-out reader gets no pages, so it's failed unfetched.
 	// Only grabbers whose listing says so set it
 	Locked bool
-	// LabelStyle is how ChapterLabel composes the label from Number and Title
-	LabelStyle LabelStyle
+	// Label is how ChapterLabel composes the label from Number and Title
+	Label Label
 }
 
 // Page represents a chapter page

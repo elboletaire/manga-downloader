@@ -80,7 +80,7 @@ func TestMangatownChapterTitle(t *testing.T) {
 
 	// want is the label, as the title used to read before labels were composed
 	for _, c := range cases {
-		ch := Chapter{Title: mangatownChapterTitle(series, c.text), Number: c.number, LabelStyle: LabelNumbered}
+		ch := Chapter{Title: mangatownChapterTitle(series, c.text), Number: c.number, Label: Label{Style: LabelNumbered}}
 		if got := ChapterLabel(ch); got != c.want {
 			t.Errorf("label of %q = %q, want %q", c.text, got, c.want)
 		}

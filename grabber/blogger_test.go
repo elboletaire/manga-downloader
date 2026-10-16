@@ -80,8 +80,8 @@ func TestBloggerChapters(t *testing.T) {
 	if len(chapters) != 2 {
 		t.Fatalf("got %d Blue Lock chapters, want 2", len(chapters))
 	}
-	if part := chapters[0].(*BloggerChapter); part.Title != "Chapter 364 Part 2" || part.Number != 364 {
-		t.Errorf("part chapter = %q (%v), want %q (364)", part.Title, part.Number, "Chapter 364 Part 2")
+	if part := chapters[0].(*BloggerChapter); ChapterLabel(part) != "Chapter 364 Part 2" || part.Title != "" || part.Number != 364 {
+		t.Errorf("part chapter = %q %q (%v), want %q (364)", ChapterLabel(part), part.Title, part.Number, "Chapter 364 Part 2")
 	}
 }
 

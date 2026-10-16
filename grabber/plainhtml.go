@@ -1038,11 +1038,11 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 				}
 				chapter := &PlainHTMLChapter{
 					Chapter{
-						Number:     number,
-						Title:      title,
-						ID:         id,
-						Locked:     locked,
-						LabelStyle: LabelNumbered,
+						Number: number,
+						Title:  title,
+						ID:     id,
+						Locked: locked,
+						Label:  Label{Style: LabelNumbered},
 					},
 					u,
 				}
@@ -1273,7 +1273,7 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
-		LabelStyle: labelStyleOf(f),
+		Label:      labelOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(pcount),
 		Language:   "en",

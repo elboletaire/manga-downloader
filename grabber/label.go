@@ -7,31 +7,54 @@ import (
 	"strconv"
 )
 
-// chapterWord is the word labels name a chapter with, kept in this one place
-// so it can be localized
-const chapterWord = "Chapter"
+// chapterWords are the words labels name a chapter with, by Label.Lang ("" is
+// English), kept in this one place so they can be localized
+var chapterWords = map[string]string{"": "Chapter", "es": "Capítulo", "fr": "Chapitre", "tr": "Bölüm"}
+
+// partWord names the part of a chapter split over several posts
+const partWord = "Part"
 
 // NumberLabel names a chapter by its number alone: "Chapter 12", "Chapter 10.5"
 func NumberLabel(number float64) string {
-	return chapterWord + " " + strconv.FormatFloat(number, 'f', -1, 64)
+	return NumberTextLabel(strconv.FormatFloat(number, 'f', -1, 64))
+}
+
+// NumberTextLabel names a chapter by its number written as text: "Chapter 0012"
+func NumberTextLabel(number string) string {
+	return chapterWords[""] + " " + number
 }
 
 // LabelStyle is how ChapterLabel composes a chapter's label from its number and
-// the site's title. The zero value shows the title as is, for grabbers that
-// still write the chapter word into it.
+// the site's title. The zero value shows the title as is.
 type LabelStyle uint8
 
 const (
 	// LabelTitle is the title as is
 	LabelTitle LabelStyle = iota
-	// LabelNumbered is the title, or NumberLabel when the site gives none
+	// LabelNumbered is the title or, when the site gives none, the chapter word
+	// and number, then the part: "Chapter 12", "Chapter 364 Part 2"
 	LabelNumbered
-	// LabelPrefixed is NumberLabel, then " - " and the title when there is one
+	// LabelPrefixed is the chapter word and number, then " - " and the title
 	LabelPrefixed
 	// LabelPadded is the chapter word, the number's whole part padded to four
 	// digits, then the title: "Chapter 0012 Title"
 	LabelPadded
+	// LabelUnnumbered is the title, or the chapter word alone (a one-shot
+	// numbered by its position in the list)
+	LabelUnnumbered
 )
+
+// Label is what ChapterLabel composes a chapter's label from, besides its
+// Number and Title
+type Label struct {
+	Style LabelStyle
+	// Number is the site's number text when it writes it its own way ("05")
+	Number string
+	// Part is the part of a chapter split over several posts
+	Part string
+	// Lang picks the chapter word from chapterWords
+	Lang string
+}
 
 // Labeler is a chapter that composes its own label
 type Labeler interface {
@@ -39,7 +62,7 @@ type Labeler interface {
 }
 
 // ChapterLabel is what a chapter is shown and named with ({{.Title}} in file
-// names): its number and the site's title, composed as its LabelStyle says
+// names): its number and the site's title, composed as its Label says
 func ChapterLabel(f Filterable) string {
 	if l, ok := f.(Labeler); ok {
 		return l.GetLabel()
@@ -50,42 +73,44 @@ func ChapterLabel(f Filterable) string {
 // GetLabel returns the chapter's label, see ChapterLabel. Composed labels get
 // the same cleanup as GetTitle.
 func (c Chapter) GetLabel() string {
-	switch c.LabelStyle {
+	word := chapterWords[c.Label.Lang]
+	number := c.Label.Number
+	if number == "" {
+		number = strconv.FormatFloat(c.Number, 'f', -1, 64)
+	}
+	title := c.GetTitle()
+	switch c.Label.Style {
 	case LabelNumbered:
-		if c.GetTitle() == "" {
-			return NumberLabel(c.Number)
+		if title == "" {
+			title = word + " " + number
+			if c.Label.Part != "" {
+				title += " " + partWord + " " + c.Label.Part
+			}
 		}
 	case LabelPrefixed:
-		if c.GetTitle() == "" {
-			return NumberLabel(c.Number)
+		if title == "" {
+			return word + " " + number
 		}
-		return cleanTitle(NumberLabel(c.Number) + " - " + c.Title)
+		return cleanTitle(word + " " + number + " - " + c.Title)
 	case LabelPadded:
-		return cleanTitle(fmt.Sprintf("%s %04d %s", chapterWord, int64(c.Number), c.Title))
+		return cleanTitle(fmt.Sprintf("%s %04d %s", word, int64(c.Number), c.Title))
+	case LabelUnnumbered:
+		if title == "" {
+			return word
+		}
 	}
-	return c.GetTitle()
+	return title
 }
 
-// numberTitle is the title of a chapter the site names by its number alone:
-// empty, for ChapterLabel to name, unless the site writes the number its own
-// way ("05"), which the label keeps.
-func numberTitle(raw string, number float64) string {
-	if raw == strconv.FormatFloat(number, 'f', -1, 64) {
-		return ""
+// labelOf returns the Label of a listed chapter, for the chapter FetchChapter
+// builds from it to be labelled the same
+func labelOf(f Filterable) Label {
+	if c, ok := f.(interface{ label() Label }); ok {
+		return c.label()
 	}
-	return chapterWord + " " + raw
+	return Label{}
 }
 
-// GetLabelStyle returns how the chapter's label is composed
-func (c Chapter) GetLabelStyle() LabelStyle {
-	return c.LabelStyle
-}
-
-// labelStyleOf returns the LabelStyle of a listed chapter, for the chapter
-// FetchChapter builds from it to be labelled the same
-func labelStyleOf(f Filterable) LabelStyle {
-	if c, ok := f.(interface{ GetLabelStyle() LabelStyle }); ok {
-		return c.GetLabelStyle()
-	}
-	return LabelTitle
+func (c Chapter) label() Label {
+	return c.Label
 }

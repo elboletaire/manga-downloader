@@ -4,109 +4,96 @@ package grabber
 
 import (
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 )
 
-// TestChapterLabelGolden pins every changed grabber's labels to the titles the
-// grabber used to write, which file names and the app still show as is
+// TestChapterLabelGolden pins every grabber that composes labels to the titles
+// it wrote before #326, which file names and the app still show, and checks
+// that the title it keeps is the site's own
 func TestChapterLabelGolden(t *testing.T) {
-	// numbered builds a listed chapter as the grabbers falling back to the
-	// number do now: the site's title, or none
-	numbered := func(title string, number float64) Chapter {
-		return Chapter{Title: title, Number: number, LabelStyle: LabelNumbered}
-	}
-	// oldFallback is the title those grabbers wrote before labels were composed
-	oldFallback := func(title string, number float64) string {
-		if title == "" {
-			return "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
-		}
-		return title
-	}
-	// oldNumber is the title of the grabbers that wrote the site's number string
-	oldNumber := func(raw string) string { return "Chapter " + raw }
-
 	type row struct {
-		name    string
-		chapter Chapter
-		want    string
+		name      string
+		chapter   Chapter
+		want      string // the old title, now the label
+		siteTitle string
 	}
 	var rows []row
+	format := func(n float64) string { return strconv.FormatFloat(n, 'f', -1, 64) }
 
-	// the site's title, or "Chapter N" when it gives none
-	for _, g := range []string{"atsumaru", "flamecomics", "guya", "mangafire", "manganelo", "qimanga", "rsccomic", "sacachispa", "stonescape", "tanstackcomic", "plainhtml"} {
+	// the site's title, or the chapter word and number when it gives none
+	for _, g := range []struct{ name, lang, word string }{
+		{"atsumaru", "", "Chapter"}, {"flamecomics", "", "Chapter"}, {"guya", "", "Chapter"},
+		{"mangafire", "", "Chapter"}, {"manganelo", "", "Chapter"}, {"qimanga", "", "Chapter"},
+		{"rsccomic", "", "Chapter"}, {"sacachispa", "", "Chapter"}, {"stonescape", "", "Chapter"},
+		{"tanstackcomic", "", "Chapter"}, {"plainhtml", "", "Chapter"},
+		{"fmteam", "fr", "Chapitre"}, {"mangadenizi", "tr", "Bölüm"},
+	} {
 		for _, c := range []struct {
 			title  string
 			number float64
 		}{
 			{"", 12}, {"", 10.5}, {"", 0}, {"Dead End", 36}, {"Chapter 186 - Foo", 186}, {"Capítulo 0012", 12},
 		} {
-			rows = append(rows, row{fmt.Sprintf("%s %q %v", g, c.title, c.number), numbered(c.title, c.number), oldFallback(c.title, c.number)})
+			want := c.title
+			if want == "" {
+				want = g.word + " " + format(c.number)
+			}
+			rows = append(rows, row{fmt.Sprintf("%s %q %v", g.name, c.title, c.number),
+				Chapter{Title: c.title, Number: c.number, Label: Label{Style: LabelNumbered, Lang: g.lang}}, want, c.title})
 		}
 	}
-	// never a site title: always "Chapter N"
+	// never a site title
 	for _, g := range []string{"comix", "heavenmanga", "lelscans", "mangitto", "mgeko", "weebcentral", "blogger", "wordpresscategory"} {
 		for _, n := range []float64{1, 10.5, 1196} {
-			rows = append(rows, row{fmt.Sprintf("%s %v", g, n), numbered("", n), oldFallback("", n)})
+			rows = append(rows, row{fmt.Sprintf("%s %v", g, n),
+				Chapter{Number: n, Label: Label{Style: LabelNumbered}}, "Chapter " + format(n), ""})
 		}
 	}
-	// a part keeps its own words
+	// a chapter split over several posts
 	for _, g := range []string{"blogger", "wordpresscategory"} {
-		rows = append(rows, row{g + " part", numbered(NumberLabel(364)+" Part 2", 364), "Chapter 364 Part 2"})
+		rows = append(rows,
+			row{g + " part", Chapter{Number: 364, Label: Label{Style: LabelNumbered, Part: "2"}}, "Chapter 364 Part 2", ""},
+			row{g + " decimal part", Chapter{Number: 10.5, Label: Label{Style: LabelNumbered, Part: "1"}}, "Chapter 10.5 Part 1", ""})
 	}
-	// the site's number string: canonical ones are composed, others stay as written
-	for _, g := range []string{"chainsawmanonline", "heavenlydelusion", "jestful", "mangataro", "mkissa", "roliascan"} {
+	// the site's number text, as written
+	for _, g := range []struct{ name, lang, word string }{
+		{"chainsawmanonline", "", "Chapter"}, {"heavenlydelusion", "", "Chapter"}, {"mkissa", "", "Chapter"},
+		{"jestful", "", "Chapter"}, {"mangataro", "", "Chapter"}, {"roliascan", "", "Chapter"},
+		{"toivolite", "", "Chapter"}, {"bigsolo", "fr", "Chapitre"},
+	} {
 		for _, raw := range []string{"231", "13.5", "05", "10.50"} {
 			n, _ := strconv.ParseFloat(raw, 64)
-			rows = append(rows, row{g + " " + raw, numbered(numberTitle(raw, n), n), oldNumber(raw)})
+			rows = append(rows, row{g.name + " " + raw,
+				Chapter{Number: n, Label: Label{Style: LabelNumbered, Number: raw, Lang: g.lang}}, g.word + " " + raw, ""})
 		}
-	}
-	rows = append(rows,
-		row{"jestful titled", numbered("Foo", 3), "Foo"},
-		row{"mangataro titled", numbered("Night", 26), "Night"},
-		row{"roliascan titled", numbered("Night", 26), "Night"},
-	)
-	// a link text left with only the number, or with more
-	for _, c := range []struct {
-		text   string
-		number float64
-		want   string
-	}{
-		{"Series 10", 10, "Chapter 10"},
-		{"Series 10.5", 10.5, "Chapter 10.5"},
-		{"Series 10 Extra Story", 10, "10 Extra Story"},
-		{"Chapter 3", 3, "Chapter 3"},
-		{"", 4, "Chapter 4"},
-	} {
-		rows = append(rows, row{"mangatown " + c.text, numbered(mangatownChapterTitle("Series", c.text), c.number), c.want})
-	}
-	for _, c := range []struct {
-		span   string
-		number float64
-		want   string
-	}{
-		{"Chapter 267: Finale", 267, "Finale"},
-		{"Chapter 267", 267, "Chapter 267"},
-		{"Chapter 267.5", 267.5, "Chapter 267.5"},
-		{"", 3, "Chapter 3"},
-	} {
-		rows = append(rows, row{"mangapark " + c.span, numbered(mangaparkChapterTitle(c.span), c.number), c.want})
+		rows = append(rows, row{g.name + " titled",
+			Chapter{Title: "Night", Number: 26, Label: Label{Style: LabelNumbered, Number: "26", Lang: g.lang}}, "Night", "Night"})
 	}
 	// "Chapter N", then " - title" when the site gives one
 	for _, c := range []struct {
-		title  string
-		number float64
+		title, number string
+		want          string
 	}{
-		{"", 5}, {"   ", 5}, {"Foo", 5}, {"  Foo  ", 10.5}, {"Chapter 5 - Foo", 5},
+		{"", "5", "Chapter 5"}, {"   ", "5", "Chapter 5"}, {"Foo", "5", "Chapter 5 - Foo"},
+		{"  Foo  ", "10.5", "Chapter 10.5 -   Foo"}, {"Foo", "05", "Chapter 05 - Foo"}, {"", "05", "Chapter 05"},
 	} {
-		old := "Chapter " + strconv.FormatFloat(c.number, 'f', -1, 64)
-		if c.title != "" && c.title != "   " {
-			old += " - " + c.title
-		}
-		rows = append(rows, row{fmt.Sprintf("teamshadowi %q %v", c.title, c.number),
-			Chapter{Title: c.title, Number: c.number, LabelStyle: LabelPrefixed}, cleanTitle(old)})
+		n, _ := strconv.ParseFloat(c.number, 64)
+		rows = append(rows, row{fmt.Sprintf("teamshadowi %q %s", c.title, c.number),
+			Chapter{Title: c.title, Number: n, Label: Label{Style: LabelPrefixed, Number: c.number}}, c.want, strings.TrimSpace(c.title)})
 	}
-	// the fetched chapter, zero-padded and its decimals dropped; the listing keeps the title
+	// a one-shot without a title
+	rows = append(rows,
+		row{"mangapark one-shot", Chapter{Number: 4, Label: Label{Style: LabelUnnumbered}}, "Chapter", ""},
+		row{"mangapark titled one-shot", Chapter{Title: "Extra", Number: 4, Label: Label{Style: LabelUnnumbered}}, "Extra", "Extra"})
+	// zero-padded with the decimals dropped; mangadex's listing keeps the site's title
 	for _, c := range []struct {
 		title  string
 		number float64
@@ -115,61 +102,109 @@ func TestChapterLabelGolden(t *testing.T) {
 	} {
 		rows = append(rows,
 			row{fmt.Sprintf("mangadex fetched %q %v", c.title, c.number),
-				Chapter{Title: c.title, Number: c.number, LabelStyle: LabelPadded},
-				cleanTitle(fmt.Sprintf("Chapter %04d %s", int64(c.number), c.title))},
+				Chapter{Title: c.title, Number: c.number, Label: Label{Style: LabelPadded}},
+				strings.TrimSpace(fmt.Sprintf("Chapter %04d %s", int64(c.number), c.title)), c.title},
 			row{fmt.Sprintf("mangadex listed %q %v", c.title, c.number),
-				Chapter{Title: c.title, Number: c.number}, c.title})
+				Chapter{Title: c.title, Number: c.number}, c.title, c.title})
+	}
+	for _, n := range []float64{5, 10.5, 1186} {
+		rows = append(rows, row{fmt.Sprintf("inmanga %v", n),
+			Chapter{Number: n, Label: Label{Style: LabelPadded, Lang: "es"}}, fmt.Sprintf("Capítulo %04d", int64(n)), ""})
 	}
 
 	for _, r := range rows {
 		if got := ChapterLabel(r.chapter); got != r.want {
 			t.Errorf("%s: ChapterLabel = %q, want %q", r.name, got, r.want)
 		}
+		if got := r.chapter.GetTitle(); got != r.siteTitle {
+			t.Errorf("%s: GetTitle = %q, want the site's %q", r.name, got, r.siteTitle)
+		}
 		// messages name the chapter from its label, as they did from the title
-		old := r.chapter
-		old.Title, old.LabelStyle = r.want, LabelTitle
+		old := Chapter{Title: r.want, Number: r.chapter.Number}
 		if got, want := ChapterName(r.chapter), ChapterName(old); got != want {
 			t.Errorf("%s: ChapterName = %q, want %q", r.name, got, want)
 		}
 	}
 }
 
-func TestChapterLabelStyles(t *testing.T) {
-	tests := []struct {
-		name    string
-		chapter Chapter
-		want    string
-	}{
-		{"title as is", Chapter{Title: " Foo\nBar ", Number: 3}, "Foo Bar"},
-		{"title as is, empty", Chapter{Number: 3}, ""},
-		{"numbered, empty", Chapter{Number: 3, LabelStyle: LabelNumbered}, "Chapter 3"},
-		{"numbered, decimal", Chapter{Number: 3.25, LabelStyle: LabelNumbered}, "Chapter 3.25"},
-		{"numbered, titled", Chapter{Title: "Foo", Number: 3, LabelStyle: LabelNumbered}, "Foo"},
-		{"prefixed, empty", Chapter{Number: 3, LabelStyle: LabelPrefixed}, "Chapter 3"},
-		{"prefixed, titled", Chapter{Title: "Foo", Number: 3, LabelStyle: LabelPrefixed}, "Chapter 3 - Foo"},
-		{"padded, empty", Chapter{Number: 3, LabelStyle: LabelPadded}, "Chapter 0003"},
-		{"padded, titled", Chapter{Title: "Foo", Number: 3.5, LabelStyle: LabelPadded}, "Chapter 0003 Foo"},
+func TestChapterLabelHelpers(t *testing.T) {
+	// a listing type embedding Chapter composes the same, and passes its Label on
+	listed := &MangadexChapter{Chapter: Chapter{Number: 2, Label: Label{Style: LabelNumbered, Number: "02"}}}
+	if got := ChapterLabel(listed); got != "Chapter 02" {
+		t.Errorf("ChapterLabel(listed) = %q, want %q", got, "Chapter 02")
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := ChapterLabel(tt.chapter); got != tt.want {
-				t.Errorf("ChapterLabel() = %q, want %q", got, tt.want)
+	fetched := &Chapter{Title: listed.GetTitle(), Number: listed.Number, Label: labelOf(listed)}
+	if got := ChapterLabel(fetched); got != "Chapter 02" {
+		t.Errorf("fetched label = %q, want %q", got, "Chapter 02")
+	}
+	if got := ChapterLabel(&Chapter{Title: " Foo\nBar ", Number: 3}); got != "Foo Bar" {
+		t.Errorf("LabelTitle = %q, want %q", got, "Foo Bar")
+	}
+}
+
+// chapterWordRe matches a chapter or part word as titles write it, in an
+// interpreted string literal (raw ones hold patterns, selectors and tags)
+var chapterWordRe = regexp.MustCompile(`^".*\b(Chapter|Chapitre|Capítulo|Bölüm|Episode|Ch\.|Part)( |"$)`)
+
+// TestNoChapterWordOutsideLabels keeps grabbers from writing a chapter word of
+// their own into titles: outside label.go, a string literal holding one must
+// be a pattern or a message, listed here with its reason
+func TestNoChapterWordOutsideLabels(t *testing.T) {
+	allowed := map[string]string{
+		`", Chapter "`: "chainsawmanonline parses the site's aria-label with it",
+	}
+	files, err := filepath.Glob("*.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fset := token.NewFileSet()
+	for _, name := range files {
+		if strings.HasSuffix(name, "_test.go") || name == "label.go" {
+			continue
+		}
+		src, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		file, err := parser.ParseFile(fset, name, src, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ast.Inspect(file, func(n ast.Node) bool {
+			call, ok := n.(*ast.CallExpr)
+			if ok && isMessageOrPattern(call) {
+				// errors, warnings and regexps may name chapters
+				return false
 			}
-			// a listing type embedding Chapter composes the same
-			if got := ChapterLabel(&MangadexChapter{Chapter: tt.chapter}); got != tt.want {
-				t.Errorf("ChapterLabel(listed) = %q, want %q", got, tt.want)
+			lit, ok := n.(*ast.BasicLit)
+			if !ok || lit.Kind != token.STRING || !chapterWordRe.MatchString(lit.Value) {
+				return true
 			}
+			if _, ok := allowed[lit.Value]; !ok {
+				t.Errorf("%s: %s holds a chapter word; titles leave it to ChapterLabel", fset.Position(lit.Pos()), lit.Value)
+			}
+			return true
 		})
 	}
 }
 
-func TestLabelStyleOf(t *testing.T) {
-	listed := &MangadexChapter{Chapter: Chapter{Number: 2, LabelStyle: LabelNumbered}}
-	if got := labelStyleOf(listed); got != LabelNumbered {
-		t.Errorf("labelStyleOf(listed) = %v, want LabelNumbered", got)
+// isMessageOrPattern tells calls whose string arguments are errors, warnings,
+// selectors or patterns rather than titles
+func isMessageOrPattern(call *ast.CallExpr) bool {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return false
 	}
-	fetched := &Chapter{Title: listed.GetTitle(), Number: listed.Number, LabelStyle: labelStyleOf(listed)}
-	if got := ChapterLabel(fetched); got != "Chapter 2" {
-		t.Errorf("fetched label = %q, want %q", got, "Chapter 2")
+	pkg, _ := sel.X.(*ast.Ident)
+	if pkg == nil {
+		// methods: goquery selectors and the like
+		return sel.Sel.Name == "Find" || sel.Sel.Name == "Filter" || sel.Sel.Name == "Is" || sel.Sel.Name == "Contains"
 	}
+	switch pkg.Name {
+	case "fmt":
+		return sel.Sel.Name == "Errorf"
+	case "errors", "regexp", "notice":
+		return true
+	}
+	return false
 }

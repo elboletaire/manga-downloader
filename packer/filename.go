@@ -21,8 +21,8 @@ type FilenameTemplateParts struct {
 	// Title is the chapter's label (e.g. "The Beginning", or "Chapter 12" when
 	// the site gives no title), see grabber.ChapterLabel
 	Title string
-	// SiteTitle is usually the site's own chapter title (some grabbers still
-	// write "Chapter N" into it), empty when it gives none or for a volume or bundle
+	// SiteTitle is the site's own chapter title, empty when it gives none or
+	// for a volume or bundle
 	SiteTitle string
 	// Group is the scanlation group that made the release (e.g. "Alpha"). For a
 	// volume or a bundle, the group its chapters share, empty when they differ
