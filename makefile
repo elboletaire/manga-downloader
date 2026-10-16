@@ -158,13 +158,13 @@ grabber: \
 	grabber/manganato \
 	grabber/mangaplus \
 	grabber/mangasushi \
-	grabber/nijitranslations \
 	grabber/mangataro \
 	grabber/mangatown \
 	grabber/mangitto \
 	grabber/manhwatop \
 	grabber/mgeko \
 	grabber/mkissa \
+	grabber/nijitranslations \
 	grabber/projectsuki \
 	grabber/qimanga \
 	grabber/re-yume \
@@ -285,7 +285,6 @@ grabber/gdscans:
 # grabber reads the list through admin-ajax.php (Arabic)
 grabber/nijitranslations:
 	go run . https://niji-translations.com/manga/adachi-and-shimamura/ 41
-
 # another Madara site, handled by the Tcb grabber; its one-shots have no number
 grabber/anikiga:
 	go run . https://anikiga.com/manga/alma/ 5

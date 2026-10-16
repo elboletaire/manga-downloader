@@ -3,7 +3,7 @@
 package grabber
 
 import (
-	"errors"
+	"bytes"
 	"io"
 	"net/url"
 	"regexp"
@@ -58,7 +58,12 @@ func (t *Tcb) Test() (bool, error) {
 		return false, err
 	}
 
-	body, err := goquery.NewDocumentFromReader(rbody)
+	page, err := io.ReadAll(rbody)
+	rbody.Close()
+	if err != nil {
+		return false, err
+	}
+	body, err := goquery.NewDocumentFromReader(bytes.NewReader(page))
 	if err != nil {
 		return false, err
 	}
@@ -69,9 +74,12 @@ func (t *Tcb) Test() (bool, error) {
 	// as bogus duplicate chapters alongside the real ones.
 	t.chaps = body.Find("li.wp-manga-chapter")
 	if t.chaps.Length() == 0 {
-		t.chaps, err = t.fetchAdminAjaxChapters()
-		if err != nil {
-			return false, nil
+		// Some installs answer with the series page, which names the manga id
+		// admin-ajax.php needs.
+		if id := tcbMangaIDRe.FindSubmatch(page); id != nil {
+			if t.chaps, err = t.fetchAdminAjaxChapters(string(id[1])); err != nil {
+				return false, nil
+			}
 		}
 	}
 
@@ -81,26 +89,12 @@ func (t *Tcb) Test() (bool, error) {
 var tcbMangaIDRe = regexp.MustCompile(`"manga_id":"(\d+)"`)
 
 // fetchAdminAjaxChapters reads the list through admin-ajax.php for the Madara
-// installs whose ajax/chapters endpoint just answers with the series page.
-func (t *Tcb) fetchAdminAjaxChapters() (*goquery.Selection, error) {
-	page, err := http.Get(http.RequestParams{URL: t.series, DisableRetry: true})
-	if err != nil {
-		return nil, err
-	}
-	html, err := io.ReadAll(page)
-	page.Close()
-	if err != nil {
-		return nil, err
-	}
-	id := tcbMangaIDRe.FindSubmatch(html)
-	if id == nil {
-		return nil, errors.New("manga id not found")
-	}
-
+// installs whose ajax/chapters endpoint doesn't return it.
+func (t *Tcb) fetchAdminAjaxChapters(id string) (*goquery.Selection, error) {
 	rbody, err := http.Post(http.RequestParams{
 		URL:          t.BaseUrl() + "/wp-admin/admin-ajax.php",
 		Referer:      t.series,
-		Body:         "action=manga_get_chapters&manga=" + string(id[1]),
+		Body:         "action=manga_get_chapters&manga=" + id,
 		DisableRetry: true,
 	})
 	if err != nil {
