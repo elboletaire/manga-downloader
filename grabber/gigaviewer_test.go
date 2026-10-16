@@ -96,6 +96,20 @@ func TestGigaviewerSeriesIdentifier(t *testing.T) {
 	}
 }
 
+func TestGigaviewerSeries(t *testing.T) {
+	cases := map[string]string{
+		"少年ジャンプ＋（夫婦と16歳）": "夫婦と16歳",
+		"OUR FEEL（アワフィール）| 女性マンガレーベル、第1・3木曜日更新!!（うさぴょん）": "うさぴょん",
+		"まんがタイムSquare｜読者と作品の広場（スクエア）。（ふたりの距離の10年後）":      "ふたりの距離の10年後",
+		"no parentheses": "no parentheses",
+	}
+	for channel, want := range cases {
+		if got := gigaviewerSeries(channel); got != want {
+			t.Errorf("gigaviewerSeries(%q) = %q, want %q", channel, got, want)
+		}
+	}
+}
+
 func TestGigaviewerTitle(t *testing.T) {
 	cases := []struct {
 		raw, series, title, part string

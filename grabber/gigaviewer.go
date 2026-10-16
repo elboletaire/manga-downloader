@@ -34,8 +34,9 @@ var (
 	// gigaviewerEpisodeNumRe reads the episode number out of a bracket
 	gigaviewerEpisodeNumRe = regexp.MustCompile(`第?([0-9]+(?:\.[0-9]+)?)話`)
 	// gigaviewerSeriesRe takes the series name out of the feed's channel
-	// title, "少年ジャンプ＋（SERIES）"
-	gigaviewerSeriesRe = regexp.MustCompile(`（(.+)）$`)
+	// title, "少年ジャンプ＋（SERIES）": the last parenthesised part, as a
+	// subtitle may hold parentheses of its own
+	gigaviewerSeriesRe = regexp.MustCompile(`（([^（）]+)）$`)
 	// gigaviewerDigits makes the full-width digits of a title ASCII
 	gigaviewerDigits = strings.NewReplacer("０", "0", "１", "1", "２", "2", "３", "3", "４", "4",
 		"５", "5", "６", "6", "７", "7", "８", "8", "９", "9")
@@ -175,10 +176,7 @@ func (g *Gigaviewer) fetchFeed() error {
 		freeIDs = append(freeIDs, gigaviewerEpisodeID(item.Link))
 	}
 
-	series := strings.TrimSpace(all.Channel.Title)
-	if m := gigaviewerSeriesRe.FindStringSubmatch(series); m != nil {
-		series = m[1]
-	}
+	series := gigaviewerSeries(all.Channel.Title)
 
 	// the feed lists the newest first, and core sorts by number anyway
 	var chapters Filterables
@@ -228,6 +226,16 @@ func gigaviewerEpisodeID(link string) string {
 		return ""
 	}
 	return m[1]
+}
+
+// gigaviewerSeries returns the series name of a feed's channel title, the
+// whole title when it has no parenthesised name
+func gigaviewerSeries(channel string) string {
+	channel = strings.TrimSpace(channel)
+	if m := gigaviewerSeriesRe.FindStringSubmatch(channel); m != nil {
+		return m[1]
+	}
+	return channel
 }
 
 // gigaviewerTitle splits a feed title, "[139話 後編]SERIES" or "第2話 SUBTITLE",
