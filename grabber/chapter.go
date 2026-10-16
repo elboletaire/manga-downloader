@@ -76,6 +76,9 @@ type Page struct {
 	// hosts that refuse a request carrying one (their reader sets
 	// referrerpolicy="no-referrer" on its images)
 	NoReferer bool
+	// RetryNotFound retries a 404 several times with a cache-busting query,
+	// for an origin that 404s at random behind a CDN that caches the 404
+	RetryNotFound bool
 	// Transform, if non-nil, post-processes the raw downloaded page bytes
 	// before they're packed (e.g. undoing a site's client-side image
 	// scrambling). Errors are retried the same as a failed download.

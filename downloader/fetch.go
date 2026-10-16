@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"io"
 	stdhttp "net/http"
-	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -71,7 +71,7 @@ func FetchChapter(ctx context.Context, site grabber.Site, chapter *grabber.Chapt
 				Referer: referer,
 				Headers: page.Headers,
 				Accept:  http.ImageAccept,
-			}, uint(page.Number), site.GetRetries(), page.Transform, pace)
+			}, uint(page.Number), site.GetRetries(), page.Transform, pace, page.RetryNotFound)
 
 			if err != nil {
 				select {
@@ -117,11 +117,13 @@ func FetchChapter(ctx context.Context, site grabber.Site, chapter *grabber.Chapt
 // see retryWait). transform, if non-nil, post-processes the downloaded bytes.
 // Cancelling ctx abandons the wait before a retry.
 func FetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error)) (*File, error) {
-	return fetchFile(ctx, params, page, retries, transform, nil)
+	return fetchFile(ctx, params, page, retries, transform, nil, false)
 }
 
-// fetchFile is FetchFile with an optional pace, called before every attempt
-func fetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error), pace func()) (file *File, err error) {
+// fetchFile is FetchFile with an optional pace, called before every attempt,
+// and retryNotFound (Page.RetryNotFound)
+func fetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error), pace func(), retryNotFound bool) (file *File, err error) {
+	orig := params.URL
 	for attempt := uint8(0); ; attempt++ {
 		if pace != nil {
 			pace()
@@ -141,13 +143,14 @@ func fetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 
 		wait := retryWait(err, attempt)
 		limit := retries
-		if retries > 0 && isNotFound(err) {
-			// that origin 404s at random, so a 404 gets more, quicker tries
+		if retryNotFound && retries > 0 && isNotFound(err) {
 			limit, wait = max(retries, notFoundRetries), retryDelay
-			params.URL = bustCache(params.URL)
 		}
 		if attempt >= limit {
 			return
+		}
+		if retryNotFound && isNotFound(err) {
+			params.URL = bustCache(orig)
 		}
 
 		t := time.NewTimer(wait)
@@ -160,7 +163,7 @@ func fetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 	}
 }
 
-// notFoundRetries is how many times a page that 404s is retried at least.
+// notFoundRetries is how many times an opted-in page that 404s is retried at least.
 const notFoundRetries = 6
 
 // isNotFound reports whether err is an HTTP 404.
@@ -169,17 +172,14 @@ func isNotFound(err error) bool {
 	return errors.As(err, &se) && se.Code == stdhttp.StatusNotFound
 }
 
-// bustCache adds a unique query so a retry skips a CDN's cached 404: some
-// origins 404 an image once and the CDN serves that for hours (mangazin.org).
+// bustCache appends a unique query to the raw URL, leaving any existing one
+// byte for byte (it may be signed), so a retry skips a CDN's cached 404.
 func bustCache(rawURL string) string {
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return rawURL
+	sep := "?"
+	if strings.Contains(rawURL, "?") {
+		sep = "&"
 	}
-	q := u.Query()
-	q.Set("retry", strconv.FormatInt(time.Now().UnixNano(), 36))
-	u.RawQuery = q.Encode()
-	return u.String()
+	return rawURL + sep + "retry=" + strconv.FormatInt(time.Now().UnixNano(), 36)
 }
 
 // retryWait is the delay before retrying after attempt (0-based) failed with

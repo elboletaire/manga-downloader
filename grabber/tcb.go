@@ -227,8 +227,9 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 				u = t.BaseUrl() + u
 			}
 			pages = append(pages, Page{
-				Number: int64(pageNum + 1),
-				URL:    u,
+				Number:        int64(pageNum + 1),
+				URL:           u,
+				RetryNotFound: t.retryNotFound(),
 			})
 		})
 	}

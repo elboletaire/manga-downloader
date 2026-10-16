@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -258,6 +259,20 @@ func pageLanguage(doc *goquery.Document) string {
 func (g Grabber) BaseUrl() string {
 	u, _ := url.Parse(g.URL)
 	return u.Scheme + "://" + u.Host
+}
+
+// retryNotFoundHosts are the sites whose origin 404s pages at random and
+// whose CDN then caches the 404 (see Page.RetryNotFound).
+var retryNotFoundHosts = []string{"mangazin.org"}
+
+// retryNotFound reports whether the site's pages opt in to Page.RetryNotFound
+func (g *Grabber) retryNotFound() bool {
+	if g == nil {
+		return false
+	}
+	u, _ := url.Parse(g.URL)
+	host := strings.TrimPrefix(strings.ToLower(u.Hostname()), "www.")
+	return slices.Contains(retryNotFoundHosts, host)
 }
 
 // GetPreferredLanguage returns the preferred language for the site

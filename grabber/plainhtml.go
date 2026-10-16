@@ -1290,8 +1290,9 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 		}
 
 		page := Page{
-			Number: int64(i),
-			URL:    img,
+			Number:        int64(i),
+			URL:           img,
+			RetryNotFound: m.retryNotFound(),
 		}
 		chapter.Pages = append(chapter.Pages, page)
 	}

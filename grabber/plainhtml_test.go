@@ -1135,3 +1135,18 @@ func TestPlainHTMLLazySVGAndThemeImages(t *testing.T) {
 		t.Errorf("pages = %v, want %v", got, want)
 	}
 }
+
+func TestRetryNotFoundOptIn(t *testing.T) {
+	for url, want := range map[string]bool{
+		"https://mangazin.org/manga/x/":     true,
+		"https://www.mangazin.org/manga/x/": true,
+		"https://example.com/manga/x/":      false,
+	} {
+		if got := (&Grabber{URL: url}).retryNotFound(); got != want {
+			t.Errorf("retryNotFound(%s) = %v, want %v", url, got, want)
+		}
+	}
+	if (*Grabber)(nil).retryNotFound() {
+		t.Error("a nil grabber must not opt in")
+	}
+}
