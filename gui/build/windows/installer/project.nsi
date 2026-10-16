@@ -18,6 +18,7 @@ Unicode true
 !insertmacro GetSize
 
 Var MachineScope
+Var ExistingInstall
 !insertmacro GetOptions
 
 # The version information for this two must consist of 4 parts
@@ -46,6 +47,9 @@ ManifestDPIAware true
 
 !insertmacro MUI_PAGE_WELCOME # Welcome to the installer page.
 # !insertmacro MUI_PAGE_LICENSE "resources\eula.txt" # Adds a EULA page to the installer
+!define MUI_PAGE_CUSTOMFUNCTION_PRE DirPre
+!define MUI_PAGE_CUSTOMFUNCTION_LEAVE DirLeave
+!insertmacro MUI_PAGE_DIRECTORY # In which folder install page.
 !insertmacro MUI_PAGE_INSTFILES # Installing page.
 !define MUI_PAGE_CUSTOMFUNCTION_SHOW FinishShow
 !insertmacro MUI_PAGE_FINISH # Finished installation page.
@@ -114,9 +118,12 @@ Function .onInit
         ${EndIf}
     ${EndIf}
 
+    StrCpy $MachineScope $3
+    StrCpy $ExistingInstall 0
     ReadRegStr $0 SHCTX "${UNINST_KEY}" "InstallLocation"
     ${If} $0 != ""
         StrCpy $INSTDIR $0
+        StrCpy $ExistingInstall 1
     ${EndIf}
 
     # Downgrading asks first, and never happens silently.
@@ -151,6 +158,47 @@ Function .onInit
     Sleep 1000
     Goto check
     done:
+FunctionEnd
+
+# An upgrade keeps the recorded folder, so it skips the page.
+Function DirPre
+    ${If} $ExistingInstall == 1
+        Abort
+    ${EndIf}
+FunctionEnd
+
+Function DirLeave
+    StrCpy $0 $INSTDIR 1 -1
+    ${If} $0 == "\"
+        StrCpy $INSTDIR $INSTDIR -1
+    ${EndIf}
+    # A drive root or the bare parent folders get our own subfolder.
+    StrLen $0 $INSTDIR
+    ${If} $0 <= 2
+    ${OrIf} $INSTDIR == "$PROGRAMFILES64"
+    ${OrIf} $INSTDIR == "$LOCALAPPDATA\Programs"
+        StrCpy $INSTDIR "$INSTDIR\${INFO_PRODUCTNAME}"
+    ${EndIf}
+
+    ${If} $MachineScope != 1
+        # Not elevated: the folder must be writable, and a folder created for the probe goes away.
+        StrCpy $1 0
+        IfFileExists "$INSTDIR\*.*" +3
+        StrCpy $1 1
+        CreateDirectory "$INSTDIR"
+        ClearErrors
+        FileOpen $0 "$INSTDIR\.write-probe" w
+        IfErrors failed
+        FileClose $0
+        Delete "$INSTDIR\.write-probe"
+        Return
+        failed:
+        ${If} $1 == 1
+            RMDir "$INSTDIR"
+        ${EndIf}
+        MessageBox MB_OK|MB_ICONEXCLAMATION "You can't install there without administrator rights. Pick another folder or run the installer as administrator."
+        Abort
+    ${EndIf}
 FunctionEnd
 
 # Through explorer.exe so the app doesn't inherit the installer's elevation.
