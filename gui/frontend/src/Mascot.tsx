@@ -5,6 +5,8 @@
 import { useEffect, useRef, useState } from 'react';
 import happyMark from '../../../assets/brand/mark/happy/mark.svg';
 import happyMarkDark from '../../../assets/brand/mark/happy/mark-dark.svg';
+import wordmark from '../../../assets/brand/wordmark/wordmark-line.svg';
+import wordmarkDark from '../../../assets/brand/wordmark/wordmark-line-dark.svg';
 import softMark from '../../../assets/brand/mark/soft/mark.svg';
 import softMarkDark from '../../../assets/brand/mark/soft/mark-dark.svg';
 import smallMark from '../../../assets/brand/mark/soft/mark-small.svg';
@@ -32,6 +34,16 @@ export function Mascot({ expression, size }: { expression: Expression; size: num
       <source media="(prefers-color-scheme: dark)" srcSet={dark} />
       {/* keyed by expression, so a change plays the entrance again */}
       <img key={expression} className="mascot-face" src={light} width={size} height={size} alt="" aria-hidden="true" />
+    </picture>
+  );
+}
+
+/** The brand's "manga downloader" lettering, themed like the mascot; hidden on narrow windows */
+export function Wordmark() {
+  return (
+    <picture className="brand-name">
+      <source media="(prefers-color-scheme: dark)" srcSet={wordmarkDark} />
+      <img src={wordmark} height={20} alt="Manga Downloader" />
     </picture>
   );
 }
