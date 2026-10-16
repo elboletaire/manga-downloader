@@ -39,6 +39,13 @@ type Events interface {
 	Skipped(c *grabber.Chapter)
 	// FilenameFailed reports a chapter whose filename couldn't be built
 	FilenameFailed(c *grabber.Chapter, err error)
+	// Fetching reports a chapter whose page list is about to be fetched, then
+	// FetchFailed or Fetched follows. Bundle mode's totals pass doesn't report
+	// it: the bundle's row already says it is gathering info.
+	Fetching(listed grabber.Filterable)
+	// Fetched pairs a listing entry reported by Fetching with the chapter its
+	// fetch returned, which the later events identify it by
+	Fetched(listed grabber.Filterable, c *grabber.Chapter)
 	// Started reports a chapter about to download its pages
 	Started(c *grabber.Chapter)
 	// Page reports the outcome of one page: err is nil on success, and idx is
@@ -92,23 +99,25 @@ type Events interface {
 // NoEvents ignores every event. Embed it to implement only the events you need.
 type NoEvents struct{}
 
-func (NoEvents) BundleStart(int64)                       {}
-func (NoEvents) FetchFailed(grabber.Filterable, error)   {}
-func (NoEvents) Skipped(*grabber.Chapter)                {}
-func (NoEvents) FilenameFailed(*grabber.Chapter, error)  {}
-func (NoEvents) Started(*grabber.Chapter)                {}
-func (NoEvents) Page(*grabber.Chapter, int, error)       {}
-func (NoEvents) DownloadFailed(*grabber.Chapter, error)  {}
-func (NoEvents) Archived(*grabber.Chapter)               {}
-func (NoEvents) Packed(*grabber.Chapter, string, error)  {}
-func (NoEvents) Downloaded(*grabber.Chapter)             {}
-func (NoEvents) BundlePacking()                          {}
-func (NoEvents) BundleArchived(int)                      {}
-func (NoEvents) VolumeStart(*Volume)                     {}
-func (NoEvents) VolumeChapter(*Volume, *grabber.Chapter) {}
-func (NoEvents) VolumePacking(*Volume)                   {}
-func (NoEvents) VolumeProgress(*Volume, float64)         {}
-func (NoEvents) VolumePacked(*Volume, string, error)     {}
+func (NoEvents) BundleStart(int64)                            {}
+func (NoEvents) FetchFailed(grabber.Filterable, error)        {}
+func (NoEvents) Skipped(*grabber.Chapter)                     {}
+func (NoEvents) FilenameFailed(*grabber.Chapter, error)       {}
+func (NoEvents) Fetching(grabber.Filterable)                  {}
+func (NoEvents) Fetched(grabber.Filterable, *grabber.Chapter) {}
+func (NoEvents) Started(*grabber.Chapter)                     {}
+func (NoEvents) Page(*grabber.Chapter, int, error)            {}
+func (NoEvents) DownloadFailed(*grabber.Chapter, error)       {}
+func (NoEvents) Archived(*grabber.Chapter)                    {}
+func (NoEvents) Packed(*grabber.Chapter, string, error)       {}
+func (NoEvents) Downloaded(*grabber.Chapter)                  {}
+func (NoEvents) BundlePacking()                               {}
+func (NoEvents) BundleArchived(int)                           {}
+func (NoEvents) VolumeStart(*Volume)                          {}
+func (NoEvents) VolumeChapter(*Volume, *grabber.Chapter)      {}
+func (NoEvents) VolumePacking(*Volume)                        {}
+func (NoEvents) VolumeProgress(*Volume, float64)              {}
+func (NoEvents) VolumePacked(*Volume, string, error)          {}
 
 // ErrEmptyVolume is the VolumePacked error of a volume none of whose chapters
 // could be downloaded, which leaves nothing to pack
@@ -395,12 +404,14 @@ loop:
 				ev.FetchFailed(chap, ErrLocked)
 				return
 			}
+			ev.Fetching(chap)
 			chapter, err := s.Site.FetchChapter(chap)
 			if err != nil {
 				ev.FetchFailed(chap, err)
 				return
 			}
 			fillVolume(chapter, chap)
+			ev.Fetched(chap, chapter)
 			if run != nil {
 				ev.VolumeChapter(run.v, chapter)
 			}

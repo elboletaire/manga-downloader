@@ -111,6 +111,10 @@ describe('jobShortStatus', () => {
     expect(jobShortStatus(job({ state: 'archiving', done: 18 }))).toBe('Packing · 75%');
   });
 
+  it('says a row is fetching its pages without a percentage', () => {
+    expect(jobShortStatus(job({ state: 'fetching', total: 0, done: 0 }))).toBe('Fetching pages\u2026');
+  });
+
   it("uses the bundle's own phase without its trailing dots", () => {
     expect(jobShortStatus(job({ status: 'Creating the bundle...', done: 12 }))).toBe('Creating the bundle · 50%');
   });

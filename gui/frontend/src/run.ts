@@ -13,7 +13,7 @@ export function isFinished(j: Job): boolean {
 export type Tally = Record<JobState, number>;
 
 export function tally(jobs: Job[]): Tally {
-  const t: Tally = { downloading: 0, archiving: 0, done: 0, failed: 0, skipped: 0 };
+  const t: Tally = { fetching: 0, downloading: 0, archiving: 0, done: 0, failed: 0, skipped: 0 };
   for (const j of jobs) {
     t[j.state]++;
   }

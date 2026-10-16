@@ -432,6 +432,7 @@ describe('mockSetupFrom', () => {
       skip: false,
       locked: false,
       shot: false,
+      fetching: false,
       epub: false,
       prompt: false,
     });
@@ -566,5 +567,19 @@ describe('one-click update', () => {
   it('is offered in the update scenario, but not in the screenshot', async () => {
     expect((await createMockApi('update').state()).update?.oneClick).toBe(true);
     expect((await createMockApi({ scenario: 'update', shot: true }).state()).update?.oneClick).toBe(false);
+  });
+});
+
+describe('mock fetching rows', () => {
+  it('starts each chapter fetching its pages, then downloading them', async () => {
+    const api = createMockApi({ scenario: 'running', fetching: true, freeze: true });
+    const rows = (await api.state()).jobs;
+    expect(rows.some((j) => j.state === 'fetching' && j.total === 0 && j.status !== '')).toBe(true);
+    expect(rows.some((j) => j.state === 'downloading')).toBe(true);
+  });
+
+  it('keeps the other running scenarios free of fetching rows', async () => {
+    const rows = (await createMockApi({ scenario: 'running', freeze: true }).state()).jobs;
+    expect(rows.some((j) => j.state === 'fetching')).toBe(false);
   });
 });

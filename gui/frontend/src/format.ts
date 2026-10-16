@@ -65,6 +65,8 @@ export function summarySentence(s: Summary): string {
 /** The status text of a progress row */
 export function jobStatus(j: Job): string {
   switch (j.state) {
+    case 'fetching':
+      return j.status !== '' ? j.status : 'Fetching pages...';
     case 'downloading':
       return j.status !== '' ? j.status : 'downloading';
     case 'archiving':
@@ -81,6 +83,8 @@ export function jobStatus(j: Job): string {
 /** The short status at the end of a progress row: phase and percentage while it moves, the outcome after */
 export function jobShortStatus(j: Job): string {
   switch (j.state) {
+    case 'fetching':
+      return 'Fetching pages\u2026';
     case 'downloading':
     case 'archiving': {
       const phase =
