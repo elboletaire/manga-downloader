@@ -37,13 +37,18 @@ type TcbChapter struct {
 }
 
 // tcbSeriesRe matches the series path of a Madara URL: /manga/<slug>/ on most
-// themes, /gl/<slug>/ on some (lilymanga.net). The slug must end in a slash,
+// themes, /gl/<slug>/ on lilymanga.net and /seri/<slug>/ on webtoonia.fun. The slug must end in a slash,
 // so a pasted chapter URL such as /manga/<slug>/<chapter>/ maps to its series,
 // while /somanga/ and /glimpse/ don't match at all.
-var tcbSeriesRe = regexp.MustCompile(`/((?:manga|gl)/[^/]+)/`)
+var tcbSeriesRe = regexp.MustCompile(`/((?:manga|gl|seri)/[^/]+)/`)
+
+// tcbMovedHostRe matches diamondfansub.com, which now redirects every series
+// and chapter page to webtoonia.fun (chapters land on the series page).
+var tcbMovedHostRe = regexp.MustCompile(`^(https?://)(?:www\.)?diamondfansub\.com/`)
 
 // Test returns true if the URL is a compatible TCBScans URL
 func (t *Tcb) Test() (bool, error) {
+	t.URL = tcbMovedHostRe.ReplaceAllString(t.URL, "${1}webtoonia.fun/")
 	match := tcbSeriesRe.FindStringSubmatch(t.URL)
 	if match == nil {
 		return false, nil

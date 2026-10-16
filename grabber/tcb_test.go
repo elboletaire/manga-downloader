@@ -105,6 +105,7 @@ func TestTcbSeriesRe(t *testing.T) {
 		{"https://lhtranslation.net/manga/gaikotsu-kishi-sama/", "manga/gaikotsu-kishi-sama"},
 		{"https://lilymanga.net/gl/a-love-hate-chord/", "gl/a-love-hate-chord"},
 		{"https://mangalivre.to/manga/chainsaw-man-pt-br/", "manga/chainsaw-man-pt-br"},
+		{"https://webtoonia.fun/seri/ask-bagimlisi/bolum-19/", "seri/ask-bagimlisi"},
 		{"https://lhtranslation.net/manga/gaikotsu-kishi-sama/chapter-1/", "manga/gaikotsu-kishi-sama"},
 		{"https://gdscans.com/manga/example/volume-10/chapter-50/", "manga/example"},
 		{"https://lilymanga.net/gl/a-love-hate-chord/episode-02/", "gl/a-love-hate-chord"},
@@ -167,6 +168,13 @@ func TestTcbChapterURLUsesSeries(t *testing.T) {
 	want := []string{"/gl/a-love-hate-chord/ajax/chapters", "/gl/a-love-hate-chord/"}
 	if len(requested) != len(want) || requested[0] != want[0] || requested[1] != want[1] {
 		t.Errorf("requested paths = %v, want %v", requested, want)
+	}
+}
+
+func TestTcbMovedHost(t *testing.T) {
+	got := tcbMovedHostRe.ReplaceAllString("https://www.diamondfansub.com/seri/a/bolum-1/", "${1}webtoonia.fun/")
+	if want := "https://webtoonia.fun/seri/a/bolum-1/"; got != want {
+		t.Errorf("rewrite = %q, want %q", got, want)
 	}
 }
 

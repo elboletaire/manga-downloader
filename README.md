@@ -787,6 +787,7 @@ to a minute.
 | [uzaymanga.com](https://uzaymanga.com) |  | 2026-10-15 |
 | [violetscans.org](https://violetscans.org) |  | 2026-10-15 |
 | [vortexscans.org](https://vortexscans.org) |  | 2026-10-15 |
+| [webtoonia.fun](https://webtoonia.fun) | Turkish, former diamondfansub.com, some NSFW | 2026-10-16 |
 | [webtoons.com](https://www.webtoons.com) | WEBTOON, free episodes only | 2026-10-15 |
 | [weebcentral.com](https://weebcentral.com) |  | 2026-10-15 |
 | [witchtoons.net](https://witchtoons.net) | WitchToons, former witchscans.com | 2026-10-15 |
