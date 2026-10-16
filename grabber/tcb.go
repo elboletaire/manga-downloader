@@ -263,7 +263,7 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := tcbReaderTypeError(body, f.GetTitle()); err != nil {
+	if err := tcbReaderTypeError(body, ChapterLabel(f)); err != nil {
 		return nil, err
 	}
 
@@ -379,7 +379,7 @@ func (t Tcb) fetchReaderPage(f Filterable, pageNum int, pageURL string) ([]Page,
 		return nil, nil
 	}
 
-	if err := tcbReaderTypeError(pageDoc, f.GetTitle()); err != nil {
+	if err := tcbReaderTypeError(pageDoc, ChapterLabel(f)); err != nil {
 		return nil, err
 	}
 	return t.readerPageImages(f, pageNum, pageDoc), nil
@@ -401,7 +401,7 @@ func (t Tcb) readerImage(pageNum int, u string) Page {
 func (t Tcb) readerPageImages(f Filterable, pageNum int, pageDoc *goquery.Document) (pages []Page) {
 	if urls, ok, err := wpMangaProtectorImages(pageDoc); ok {
 		if err != nil {
-			notice.Warn("could not decode the protected pages of %s: %s", f.GetTitle(), err)
+			notice.Warn("could not decode the protected pages of %s: %s", ChapterLabel(f), err)
 		}
 		for _, u := range urls {
 			pages = append(pages, Page{Number: int64(pageNum + 1), URL: u})
@@ -412,7 +412,7 @@ func (t Tcb) readerPageImages(f Filterable, pageNum int, pageDoc *goquery.Docume
 	pageDoc.Find("div.reading-content img").Each(func(i int, s *goquery.Selection) {
 		u := strings.TrimSpace(s.AttrOr("data-src", s.AttrOr("src", "")))
 		if u == "" {
-			notice.Warn("page %d of %s has an image with no URL to fetch from", pageNum+1, f.GetTitle())
+			notice.Warn("page %d of %s has an image with no URL to fetch from", pageNum+1, ChapterLabel(f))
 			return
 		}
 		if !isThemeImage(u) {

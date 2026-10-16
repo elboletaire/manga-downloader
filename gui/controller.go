@@ -1437,7 +1437,7 @@ func (e events) Fetching(listed grabber.Filterable) {
 	c.mu.Lock()
 	// a bundle or a volume has its own row
 	if c.bundle == nil && c.listedVol[listed] == nil {
-		j := &Job{Title: listed.GetTitle(), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFetching, Status: "Fetching pages..."}
+		j := &Job{Title: grabber.ChapterLabel(listed), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFetching, Status: "Fetching pages..."}
 		c.jobs = append(c.jobs, j)
 		c.fetching[listed] = j
 	}
@@ -1450,7 +1450,7 @@ func (e events) Fetched(listed grabber.Filterable, ch *grabber.Chapter) {
 	c.mu.Lock()
 	if j := c.fetching[listed]; j != nil {
 		// the fetched chapter's title can differ from the listing's
-		j.Title, j.Tags = ch.GetTitle(), c.releaseTags(ch)
+		j.Title, j.Tags = grabber.ChapterLabel(ch), c.releaseTags(ch)
 		c.byChap[ch] = j
 		delete(c.fetching, listed)
 	}
@@ -1465,7 +1465,7 @@ func (c *Controller) endRow(ch *grabber.Chapter, state JobState, reason string) 
 		j.State, j.Reason, j.Status = state, reason, ""
 		return
 	}
-	c.jobs = append(c.jobs, &Job{Title: ch.GetTitle(), Tags: c.releaseTags(ch), Number: ch.GetNumber(), State: state, Reason: reason})
+	c.jobs = append(c.jobs, &Job{Title: grabber.ChapterLabel(ch), Tags: c.releaseTags(ch), Number: ch.GetNumber(), State: state, Reason: reason})
 }
 
 func (e events) FetchFailed(listed grabber.Filterable, err error) {
@@ -1477,7 +1477,7 @@ func (e events) FetchFailed(listed grabber.Filterable, err error) {
 		j.State, j.Reason, j.Status = JobFailed, err.Error(), ""
 		delete(c.fetching, listed)
 	} else if c.bundle == nil && c.listedVol[listed] == nil {
-		c.jobs = append(c.jobs, &Job{Title: listed.GetTitle(), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFailed, Reason: err.Error()})
+		c.jobs = append(c.jobs, &Job{Title: grabber.ChapterLabel(listed), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFailed, Reason: err.Error()})
 	}
 	c.appendLogLocked(LogError, "error fetching "+msg)
 	c.mu.Unlock()
@@ -1524,7 +1524,7 @@ func (e events) Started(ch *grabber.Chapter) {
 		j.State, j.Status = JobDownloading, ""
 	} else {
 		// the CLI's bar: each page's download and archive steps
-		j := &Job{Title: ch.GetTitle(), Tags: c.releaseTags(ch), Number: ch.GetNumber(), Total: ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight), State: JobDownloading}
+		j := &Job{Title: grabber.ChapterLabel(ch), Tags: c.releaseTags(ch), Number: ch.GetNumber(), Total: ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight), State: JobDownloading}
 		c.jobs = append(c.jobs, j)
 		c.byChap[ch] = j
 	}

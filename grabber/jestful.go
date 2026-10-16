@@ -150,14 +150,15 @@ func (m *Jestful) FetchChapters() (Filterables, []error) {
 
 		title := strings.TrimSpace(c.Name)
 		if title == "" {
-			title = "Chapter " + c.Chapter
+			title = numberTitle(c.Chapter, number)
 		}
 
 		chapters = append(chapters, &JestfulChapter{
 			Chapter{
-				Number: number,
-				Title:  title,
-				ID:     c.ID,
+				Number:     number,
+				Title:      title,
+				ID:         c.ID,
+				LabelStyle: LabelNumbered,
 			},
 			c.ID,
 			c.Chapter,
@@ -197,10 +198,11 @@ func (m *Jestful) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	chapter := &Chapter{
-		Title:    f.GetTitle(),
-		Number:   f.GetNumber(),
-		Language: "en",
-		ID:       jchap.ID,
+		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
+		Number:     f.GetNumber(),
+		Language:   "en",
+		ID:         jchap.ID,
 	}
 
 	doc.Find("img.chapter-img").Each(func(i int, s *goquery.Selection) {

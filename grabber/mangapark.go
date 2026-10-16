@@ -62,14 +62,9 @@ func mangaparkLang(lang string) string {
 }
 
 // mangaparkChapterTitle strips the "Chapter N" or "Chapter N: " prefix from a
-// span title and returns the subtitle. When nothing remains, it returns
-// "Chapter N" so the filename has a real label.
-func mangaparkChapterTitle(title string, number float64) string {
-	sub := strings.TrimSpace(mangaparkTitlePrefixRe.ReplaceAllString(title, ""))
-	if sub == "" {
-		return "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
-	}
-	return sub
+// span title and returns the subtitle, empty when nothing remains
+func mangaparkChapterTitle(title string) string {
+	return strings.TrimSpace(mangaparkTitlePrefixRe.ReplaceAllString(title, ""))
 }
 
 // mangaparkSeriesURL returns the canonical series page URL for any link the
@@ -227,15 +222,16 @@ func parseMangaparkChaptersBatch(body string) (Filterables, int, bool, error) {
 			}
 			seqNum = number + 1
 			// Strip "Chapter N: " prefix; keep only the subtitle.
-			title = mangaparkChapterTitle(title, number)
+			title = mangaparkChapterTitle(title)
 		}
 
 		chapters = append(chapters, &MangaparkChapter{
 			Chapter{
-				Number:   number,
-				Title:    title,
-				Language: lang,
-				ID:       href,
+				Number:     number,
+				Title:      title,
+				Language:   lang,
+				ID:         href,
+				LabelStyle: LabelNumbered,
 			},
 			href,
 		})
@@ -264,10 +260,11 @@ func (m *Mangapark) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	chapter := &Chapter{
-		Title:    f.GetTitle(),
-		Number:   f.GetNumber(),
-		Language: mchap.Language,
-		ID:       mchap.Link,
+		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
+		Number:     f.GetNumber(),
+		Language:   mchap.Language,
+		ID:         mchap.Link,
 	}
 
 	doc.Find("section.chapter-reader img").Each(func(i int, s *goquery.Selection) {

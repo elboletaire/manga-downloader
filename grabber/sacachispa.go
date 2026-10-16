@@ -114,15 +114,16 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 			if err != nil {
 				continue
 			}
-			title := chapterTitleOrDefault(c.Title, number)
+			title := strings.TrimSpace(c.Title)
 
 			rels := s.preferredReleases(releases[c.ID])
 			if len(rels) == 0 {
 				chapters = append(chapters, &SacachispaChapter{
 					Chapter: Chapter{
-						Number:   number,
-						Title:    title,
-						Language: "en",
+						Number:     number,
+						Title:      title,
+						Language:   "en",
+						LabelStyle: LabelNumbered,
 					},
 					PatreonOnly: c.PatreonOnly,
 				})
@@ -131,10 +132,11 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 			for _, r := range rels {
 				listed := &SacachispaChapter{
 					Chapter: Chapter{
-						Number:   number,
-						Title:    title,
-						Language: r.Language,
-						ID:       r.ID,
+						Number:     number,
+						Title:      title,
+						Language:   r.Language,
+						ID:         r.ID,
+						LabelStyle: LabelNumbered,
 					},
 					PatreonOnly: c.PatreonOnly,
 				}

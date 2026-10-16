@@ -86,10 +86,11 @@ func (r *rscComic) FetchChapters() (chapters Filterables, errs []error) {
 			}
 			chapters = append(chapters, &RSCComicChapter{
 				Chapter{
-					Number: c.Number,
-					Title:  chapterTitleOrDefault(c.Title, c.Number),
-					ID:     chapterURLID(uri),
-					Locked: c.IsLocked,
+					Number:     c.Number,
+					Title:      strings.TrimSpace(c.Title),
+					ID:         chapterURLID(uri),
+					Locked:     c.IsLocked,
+					LabelStyle: LabelNumbered,
 				},
 				uri,
 			})
@@ -117,10 +118,11 @@ func (r *rscComic) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	chapter := &Chapter{
-		Title:    f.GetTitle(),
-		Number:   f.GetNumber(),
-		Language: "en",
-		ID:       chapterURLID(rchap.URL),
+		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
+		Number:     f.GetNumber(),
+		Language:   "en",
+		ID:         chapterURLID(rchap.URL),
 	}
 
 	for _, p := range pages {

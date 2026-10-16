@@ -333,7 +333,8 @@ func (m *Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 	pcount := len(body.Chapter.Data)
 
 	chapter := &Chapter{
-		Title:      fmt.Sprintf("Chapter %04d %s", int64(f.GetNumber()), chap.Title),
+		Title:      chap.Title,
+		LabelStyle: LabelPadded,
 		Number:     f.GetNumber(),
 		PagesCount: int64(pcount),
 		Language:   chap.Language,

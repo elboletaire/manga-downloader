@@ -97,9 +97,9 @@ func (m Mangitto) FetchChapters() (chapters Filterables, errs []error) {
 		for _, c := range feed.Chapters {
 			chapters = append(chapters, &MangittoChapter{
 				Chapter{
-					Number:   c.Number,
-					Title:    "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64),
-					Language: "tr",
+					Number:     c.Number,
+					Language:   "tr",
+					LabelStyle: LabelNumbered,
 				},
 			})
 		}
@@ -135,9 +135,10 @@ func (m Mangitto) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	chapter := &Chapter{
-		Title:    f.GetTitle(),
-		Number:   f.GetNumber(),
-		Language: mchap.Language,
+		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
+		Number:     f.GetNumber(),
+		Language:   mchap.Language,
 	}
 
 	doc.Find("img[data-page-number]").Each(func(i int, s *goquery.Selection) {

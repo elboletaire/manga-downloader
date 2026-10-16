@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -263,6 +262,7 @@ func (m *Manganelo) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(images)),
 		Language:   "en",
@@ -323,15 +323,12 @@ func parseManganeloChaptersPage(body string) (chapters Filterables, hasMore bool
 		// chapter titles need sanitizing too, not just series titles: the
 		// API happily returns names padded with stray whitespace, which
 		// would otherwise leak straight into the cbz filename
-		title := sanitizeTitle(c.Name)
-		if title == "" {
-			title = "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64)
-		}
 		chapters = append(chapters, &ManganeloChapter{
 			Chapter{
-				Number: c.Number,
-				Title:  title,
-				ID:     c.Slug,
+				Number:     c.Number,
+				Title:      sanitizeTitle(c.Name),
+				ID:         c.Slug,
+				LabelStyle: LabelNumbered,
 			},
 			c.Slug,
 		})

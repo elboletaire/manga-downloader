@@ -99,9 +99,10 @@ func chainsawManOnlineParseRoot(doc *goquery.Document) (string, Filterables) {
 
 		chapters = append(chapters, &ChainsawManOnlineChapter{
 			Chapter{
-				Title:  fmt.Sprintf("Chapter %s", numStr),
-				Number: num,
-				ID:     chapterURLID(href),
+				Title:      numberTitle(numStr, num),
+				Number:     num,
+				ID:         chapterURLID(href),
+				LabelStyle: LabelNumbered,
 			},
 			href,
 		})
@@ -161,11 +162,12 @@ func (c *ChainsawManOnline) FetchChapter(f Filterable) (*Chapter, error) {
 	})
 
 	if len(pages) == 0 {
-		return nil, fmt.Errorf("no pages found for %s", f.GetTitle())
+		return nil, fmt.Errorf("no pages found for %s", ChapterLabel(f))
 	}
 
 	return &Chapter{
 		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
 		Language:   "en",

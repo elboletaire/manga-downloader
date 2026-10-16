@@ -141,11 +141,12 @@ func (m *Mangafire) FetchChapter(f Filterable) (*Chapter, error) {
 		}
 	}
 	if len(pages) == 0 {
-		return nil, fmt.Errorf("no pages found for chapter %s (it may be premium/locked)", f.GetTitle())
+		return nil, fmt.Errorf("no pages found for chapter %s (it may be premium/locked)", ChapterLabel(f))
 	}
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
 		Number:     f.GetNumber(),
 		Language:   mchap.Language,
 		ID:         mchap.ID,
@@ -248,16 +249,13 @@ func (m *Mangafire) load() error {
 		feedPrefix += "?language=" + lang.code + "&"
 	}
 	for _, c := range parseMangafireChapters(responses, feedPrefix) {
-		title := c.Name
-		if title == "" {
-			title = "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64)
-		}
 		listed := &MangafireChapter{
 			Chapter: Chapter{
-				Number:   c.Number,
-				Title:    title,
-				Language: c.Language,
-				ID:       strconv.FormatInt(c.Id, 10),
+				Number:     c.Number,
+				Title:      c.Name,
+				Language:   c.Language,
+				ID:         strconv.FormatInt(c.Id, 10),
+				LabelStyle: LabelNumbered,
 			},
 			URL: fmt.Sprintf("%s/chapter/%d", m.readerBase, c.Id),
 			Id:  c.Id,

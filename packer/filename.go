@@ -18,7 +18,8 @@ type FilenameTemplateParts struct {
 	Series string
 	// Number represents the chapter number (e.g. "1.0")
 	Number string
-	// Title represents the chapter title (e.g. "The Beginning")
+	// Title is the chapter's label (e.g. "The Beginning", or "Chapter 12" when
+	// the site gives no title), see grabber.ChapterLabel
 	Title string
 	// Group is the scanlation group that made the release (e.g. "Alpha"). For a
 	// volume or a bundle, the group its chapters share, empty when they differ
@@ -81,7 +82,7 @@ func NewChapterFileTemplateParts(title string, chapter *grabber.Chapter) Filenam
 	return FilenameTemplateParts{
 		Series: SanitizeFilename(title),
 		Number: strings.Replace(fmt.Sprintf("%.1f", chapter.GetNumber()), ".0", "", 1),
-		Title:  SanitizeFilename(chapter.GetTitle()),
+		Title:  SanitizeFilename(grabber.ChapterLabel(chapter)),
 		Group:  SanitizeFilename(chapter.Group),
 		Volume: chapter.Volume,
 	}

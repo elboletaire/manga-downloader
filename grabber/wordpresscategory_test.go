@@ -40,7 +40,7 @@ func TestWordPressCategoryChapters(t *testing.T) {
 	}
 	for i, w := range want {
 		c := chapters[i].(*WordPressCategoryChapter)
-		if c.Title != w.title || c.Number != w.num || c.URL != w.url || c.Language != "es" {
+		if ChapterLabel(c) != w.title || c.Number != w.num || c.URL != w.url || c.Language != "es" {
 			t.Errorf("chapter %d = %+v, want %+v", i, c, w)
 		}
 	}
@@ -85,7 +85,7 @@ func TestWordPressCategoryPartChapters(t *testing.T) {
 		t.Fatalf("got %d chapters, want %d", len(chapters), len(want))
 	}
 	for i, w := range want {
-		if c := chapters[i].GetTitle(); c != w {
+		if c := ChapterLabel(chapters[i]); c != w {
 			t.Errorf("chapter %d title = %q, want %q", i, c, w)
 		}
 	}

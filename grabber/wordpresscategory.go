@@ -297,16 +297,18 @@ func wpChapters(posts []wpPost, lang string) Filterables {
 			continue
 		}
 
-		chapterTitle := "Chapter " + strconv.FormatFloat(num, 'f', -1, 64)
+		// a part keeps its number in the title, which a label can't add after it
+		chapterTitle := ""
 		if part != "" {
-			chapterTitle += " Part " + part
+			chapterTitle = NumberLabel(num) + " Part " + part
 		}
 		chapters = append(chapters, &WordPressCategoryChapter{
 			Chapter: Chapter{
 				// the post title repeats the series name, which the filename already has
-				Title:    chapterTitle,
-				Number:   num,
-				Language: lang,
+				Title:      chapterTitle,
+				Number:     num,
+				Language:   lang,
+				LabelStyle: LabelNumbered,
 			},
 			URL: p.Link,
 		})
@@ -354,11 +356,12 @@ func (w *WordPressCategory) FetchChapter(f Filterable) (*Chapter, error) {
 
 	pages := wpPageImages(doc)
 	if len(pages) == 0 {
-		return nil, fmt.Errorf("no pages found for %s", f.GetTitle())
+		return nil, fmt.Errorf("no pages found for %s", ChapterLabel(f))
 	}
 
 	return &Chapter{
 		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(len(pages)),
 		Language:   w.language,

@@ -367,7 +367,7 @@ func (a *App) Chapters() []ChapterDTO {
 	dupes := a.ctrl.HasDuplicates()
 	groupDupes := a.ctrl.HasGroupDuplicates()
 	for i, ch := range list {
-		row := ChapterDTO{Index: i, Number: ch.GetNumber(), Title: ch.GetTitle(), Volume: grabber.VolumeOf(ch), Locked: grabber.LockedOf(ch)}
+		row := ChapterDTO{Index: i, Number: ch.GetNumber(), Title: grabber.ChapterLabel(ch), Volume: grabber.VolumeOf(ch), Locked: grabber.LockedOf(ch)}
 		// the language only tells copies of the same number apart, so it's
 		// only sent when the list has such copies (as the CLI shows it)
 		if l, ok := ch.(interface{ GetLanguage() string }); ok && dupes {

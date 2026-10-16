@@ -278,7 +278,7 @@ func (m *Baozimh) FetchChapter(f Filterable) (*Chapter, error) {
 			if img == "" {
 				// len(pages)+1 matches the 1-based Number the next page would get,
 				// rather than the 0-based DOM index (which drifts after a skip)
-				notice.Warn("page %d of %s has no URL to fetch from 😕 (will be ignored)", len(pages)+1, f.GetTitle())
+				notice.Warn("page %d of %s has no URL to fetch from 😕 (will be ignored)", len(pages)+1, ChapterLabel(f))
 				return
 			}
 			if seen[img] {
@@ -308,7 +308,7 @@ func (m *Baozimh) FetchChapter(f Filterable) (*Chapter, error) {
 		// the chapter list skips 序章/後記, so a numbered chapter that yields no
 		// pages is broken (premium/early-access locked, or selector drift) -
 		// fail loudly instead of silently producing an empty archive
-		return nil, fmt.Errorf("chapter %q has no pages (premium/early-access locked?)", f.GetTitle())
+		return nil, fmt.Errorf("chapter %q has no pages (premium/early-access locked?)", ChapterLabel(f))
 	}
 
 	return &Chapter{

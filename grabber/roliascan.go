@@ -160,15 +160,16 @@ func roliascanReleases(items []roliascanChapterItem, language string) Filterable
 
 		title := c.Title
 		if title == "" {
-			title = "Chapter " + c.Chapter
+			title = numberTitle(c.Chapter, num)
 		}
 
 		listed := &RoliascanChapter{
 			Chapter{
-				Number:   num,
-				Title:    title,
-				Language: c.Language,
-				ID:       c.Id,
+				Number:     num,
+				Title:      title,
+				Language:   c.Language,
+				ID:         c.Id,
+				LabelStyle: LabelNumbered,
 			},
 			c.Id,
 		}
@@ -205,6 +206,7 @@ func (m *Roliascan) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
 		Number:     f.GetNumber(),
 		Language:   rchap.Language,
 		ID:         rchap.ID,

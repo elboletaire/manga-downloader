@@ -143,7 +143,7 @@ func TestGuyaFetchChaptersPerGroup(t *testing.T) {
 	got := map[float64][]release{}
 	for _, c := range chapters {
 		gc := c.(*GuyaChapter)
-		got[gc.Number] = append(got[gc.Number], release{gc.ID, gc.Group, gc.Title})
+		got[gc.Number] = append(got[gc.Number], release{gc.ID, gc.Group, ChapterLabel(gc)})
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("FetchChapters() = %v, want %v", got, want)

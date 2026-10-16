@@ -154,15 +154,15 @@ var mangatownChapterTitleNumberRe = regexp.MustCompile(`^\d+(?:\.\d+)?$`)
 
 // mangatownChapterTitle returns the chapter title from its link text, which
 // repeats the series title before the number ("<series> 10"). The series prefix
-// is dropped, and a title left with only the number becomes "Chapter <n>".
-func mangatownChapterTitle(seriesTitle, text string, number float64) string {
+// is dropped, and a title left with only the number is empty.
+func mangatownChapterTitle(seriesTitle, text string) string {
 	title := sanitizeTitle(text)
 	if seriesTitle != "" && len(title) >= len(seriesTitle) && strings.EqualFold(title[:len(seriesTitle)], seriesTitle) {
 		title = strings.TrimSpace(title[len(seriesTitle):])
 	}
 
-	if title == "" || mangatownChapterTitleNumberRe.MatchString(title) {
-		return "Chapter " + strconv.FormatFloat(number, 'f', -1, 64)
+	if mangatownChapterTitleNumberRe.MatchString(title) {
+		return ""
 	}
 
 	return title
@@ -197,10 +197,11 @@ func (m Mangatown) FetchChapters() (chapters Filterables, errs []error) {
 
 		chapters = append(chapters, &MangatownChapter{
 			Chapter{
-				Number: number,
-				Title:  mangatownChapterTitle(seriesTitle, s.Text(), number),
-				Volume: urlVolume(href),
-				ID:     chapterURLID(href),
+				Number:     number,
+				Title:      mangatownChapterTitle(seriesTitle, s.Text()),
+				Volume:     urlVolume(href),
+				LabelStyle: LabelNumbered,
+				ID:         chapterURLID(href),
 			},
 			href,
 		})
@@ -236,6 +237,7 @@ func (m Mangatown) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
 		Number:     f.GetNumber(),
 		PagesCount: int64(count),
 		Language:   "en",

@@ -72,7 +72,7 @@ func TestBloggerChapters(t *testing.T) {
 		t.Fatalf("got %d chapters, want 1", len(chapters))
 	}
 	c := chapters[0].(*BloggerChapter)
-	if c.Number != 1196 || c.Title != "Chapter 1196" || c.Language != "es" || c.URL != entries[0].URL {
+	if c.Number != 1196 || ChapterLabel(c) != "Chapter 1196" || c.Language != "es" || c.URL != entries[0].URL {
 		t.Errorf("chapter = %+v (%s), want number 1196 in es", c.Chapter, c.URL)
 	}
 

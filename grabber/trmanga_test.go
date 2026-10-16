@@ -74,8 +74,8 @@ func TestTrmanga(t *testing.T) {
 	if first.GetNumber() != 2 || first.URL != srv.URL+"/webtoon/no-place-for-the-fake-princess/2" {
 		t.Errorf("unexpected first chapter: %v %q", first.GetNumber(), first.URL)
 	}
-	if first.GetTitle() != "Chapter 2" {
-		t.Errorf("unexpected title %q, want the bare number labelled", first.GetTitle())
+	if ChapterLabel(first) != "Chapter 2" {
+		t.Errorf("unexpected title %q, want the bare number labelled", ChapterLabel(first))
 	}
 }
 

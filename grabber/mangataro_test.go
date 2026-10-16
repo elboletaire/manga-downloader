@@ -60,9 +60,9 @@ func TestMangataroReleases(t *testing.T) {
 	}
 	for i, w := range wants {
 		c := got[i].(*MangataroChapter)
-		if c.ID != w.id || c.Id != w.id || c.Group != w.group || c.Title != w.title {
+		if c.ID != w.id || c.Id != w.id || c.Group != w.group || ChapterLabel(c) != w.title {
 			t.Errorf("chapter[%d] = {ID %q, Id %q, Group %q, Title %q}, want {%q, %q, %q, %q}",
-				i, c.ID, c.Id, c.Group, c.Title, w.id, w.id, w.group, w.title)
+				i, c.ID, c.Id, c.Group, ChapterLabel(c), w.id, w.id, w.group, w.title)
 		}
 	}
 

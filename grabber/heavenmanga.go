@@ -167,9 +167,9 @@ func (m *HeavenManga) FetchChapters() (chapters Filterables, errs []error) {
 		id := strconv.FormatInt(row.ID, 10)
 		chapter := &HeavenMangaChapter{
 			Chapter{
-				Number: number,
-				Title:  "Chapter " + strconv.FormatFloat(number, 'f', -1, 64),
-				ID:     id,
+				Number:     number,
+				ID:         id,
+				LabelStyle: LabelNumbered,
 			},
 			m.BaseUrl() + "/manga/leer/" + id,
 		}
@@ -201,10 +201,11 @@ func (m *HeavenManga) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	chapter := &Chapter{
-		Title:    f.GetTitle(),
-		Number:   f.GetNumber(),
-		Language: "es",
-		ID:       listed.ID,
+		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
+		Number:     f.GetNumber(),
+		Language:   "es",
+		ID:         listed.ID,
 	}
 	chapter.SetGroups(listed.GetGroups()...)
 

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -205,9 +204,9 @@ func (w *WeebCentral) FetchChapters() (chapters Filterables, errs []error) {
 
 		chapters = append(chapters, &WeebCentralChapter{
 			Chapter{
-				Number: number,
-				Title:  "Chapter " + strconv.FormatFloat(number, 'f', -1, 64),
-				ID:     weebCentralChapterID(href),
+				Number:     number,
+				ID:         weebCentralChapterID(href),
+				LabelStyle: LabelNumbered,
 			},
 			href,
 		})
@@ -236,10 +235,11 @@ func (w *WeebCentral) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	chapter := &Chapter{
-		Title:    f.GetTitle(),
-		Number:   f.GetNumber(),
-		Language: "en",
-		ID:       weebCentralChapterID(wchap.URL),
+		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
+		Number:     f.GetNumber(),
+		Language:   "en",
+		ID:         weebCentralChapterID(wchap.URL),
 	}
 
 	doc.Find("img").Each(func(i int, s *goquery.Selection) {

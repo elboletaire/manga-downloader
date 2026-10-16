@@ -90,9 +90,13 @@ func (t *Teamshadowi) FetchChapters() (Filterables, []error) {
 			continue
 		}
 
-		title := fmt.Sprintf("Chapter %s", c.Number)
-		if strings.TrimSpace(c.Title) != "" {
-			title += " - " + c.Title
+		title, style := c.Title, LabelPrefixed
+		if c.Number != formatChapterNumber(number) {
+			// a number the site writes its own way ("05") stays as written
+			title, style = chapterWord+" "+c.Number, LabelTitle
+			if strings.TrimSpace(c.Title) != "" {
+				title += " - " + c.Title
+			}
 		}
 
 		pages := make([]Page, 0, len(c.ImagePaths))
@@ -110,6 +114,7 @@ func (t *Teamshadowi) FetchChapters() (Filterables, []error) {
 				PagesCount: int64(len(pages)),
 				Pages:      pages,
 				Language:   "en",
+				LabelStyle: style,
 			},
 		})
 	}

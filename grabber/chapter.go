@@ -59,6 +59,8 @@ type Chapter struct {
 	// access): a logged-out reader gets no pages, so it's failed unfetched.
 	// Only grabbers whose listing says so set it
 	Locked bool
+	// LabelStyle is how ChapterLabel composes the label from Number and Title
+	LabelStyle LabelStyle
 }
 
 // Page represents a chapter page
@@ -173,9 +175,13 @@ func (c *Chapter) SkipPages(rngs []ranges.Range) int {
 	return skipped
 }
 
-// GetTitle returns the chapter title removing whitespace and newlines
+// GetTitle returns the site's chapter title removing whitespace and newlines.
+// Show ChapterLabel instead, which names a chapter the site gives no title.
 func (c Chapter) GetTitle() string {
-	title := strings.TrimSpace(c.Title)
-	title = strings.ReplaceAll(title, "\n", " ")
-	return title
+	return cleanTitle(c.Title)
+}
+
+// cleanTitle trims title and puts its newlines on one line
+func cleanTitle(title string) string {
+	return strings.ReplaceAll(strings.TrimSpace(title), "\n", " ")
 }

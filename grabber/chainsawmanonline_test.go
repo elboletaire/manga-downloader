@@ -74,8 +74,8 @@ func TestChainsawManOnlineParseRoot(t *testing.T) {
 		{"Chapter 232", 232},
 	}
 	for i, w := range want {
-		if chapters[i].GetTitle() != w.title {
-			t.Errorf("chapter[%d].title = %q, want %q", i, chapters[i].GetTitle(), w.title)
+		if ChapterLabel(chapters[i]) != w.title {
+			t.Errorf("chapter[%d].title = %q, want %q", i, ChapterLabel(chapters[i]), w.title)
 		}
 		if chapters[i].GetNumber() != w.number {
 			t.Errorf("chapter[%d].number = %v, want %v", i, chapters[i].GetNumber(), w.number)

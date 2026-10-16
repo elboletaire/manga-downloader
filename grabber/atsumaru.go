@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/url"
 	"regexp"
-	"strconv"
 
 	"github.com/elboletaire/manga-downloader/http"
 	"github.com/elboletaire/manga-downloader/notice"
@@ -104,10 +103,6 @@ func (a *Atsumaru) FetchChapters() (chapters Filterables, errs []error) {
 	}
 
 	for _, c := range info.Chapters {
-		title := c.Title
-		if title == "" {
-			title = "Chapter " + strconv.FormatFloat(c.Number, 'f', -1, 64)
-		}
 		// a group the series page doesn't name is listed by its id
 		group := names[c.ScanId]
 		if group == "" {
@@ -115,9 +110,10 @@ func (a *Atsumaru) FetchChapters() (chapters Filterables, errs []error) {
 		}
 		listed := &AtsumaruChapter{
 			Chapter{
-				Number: c.Number,
-				Title:  title,
-				ID:     c.Id,
+				Number:     c.Number,
+				Title:      c.Title,
+				ID:         c.Id,
+				LabelStyle: LabelNumbered,
 			},
 			c.Id,
 		}
@@ -218,6 +214,7 @@ func atsumaruChapter(achap *AtsumaruChapter, body string) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      achap.GetTitle(),
+		LabelStyle: labelStyleOf(achap),
 		Number:     achap.GetNumber(),
 		Language:   "en",
 		ID:         achap.ID,

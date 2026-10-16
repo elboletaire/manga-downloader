@@ -128,7 +128,7 @@ func (t *ToivoLite) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
-	pages, err := toivoLiteEntryContentPages(doc, f.GetTitle())
+	pages, err := toivoLiteEntryContentPages(doc, ChapterLabel(f))
 	if err != nil {
 		return nil, err
 	}

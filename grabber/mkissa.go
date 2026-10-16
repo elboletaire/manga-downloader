@@ -174,9 +174,10 @@ func (m *Mkissa) FetchChapters() (chapters Filterables, errs []error) {
 		}
 		chapters = append(chapters, &MkissaChapter{
 			Chapter{
-				Number:   number,
-				Title:    "Chapter " + numStr,
-				Language: "en",
+				Number:     number,
+				Title:      numberTitle(numStr, number),
+				Language:   "en",
+				LabelStyle: LabelNumbered,
 			},
 			id,
 			numStr,
@@ -219,9 +220,10 @@ func (m *Mkissa) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	chapter := &Chapter{
-		Title:    f.GetTitle(),
-		Number:   f.GetNumber(),
-		Language: "en",
+		Title:      f.GetTitle(),
+		LabelStyle: labelStyleOf(f),
+		Number:     f.GetNumber(),
+		Language:   "en",
 	}
 
 	doc.Find(mkissaImgSelector).Each(func(i int, s *goquery.Selection) {

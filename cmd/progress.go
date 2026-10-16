@@ -1041,7 +1041,7 @@ func (plainEvents) VolumePacked(v *core.Volume, _ string, err error) {
 // chapterTitle builds an untruncated "Series - Chapter" title, with the release
 // tags " [lang] [group]" kept apart so they can stay whole.
 func chapterTitle(seriesTitle string, c grabber.Filterable, showLanguage, showGroup bool) (title, tags string) {
-	title = c.GetTitle()
+	title = grabber.ChapterLabel(c)
 	if seriesTitle != "" {
 		title = seriesTitle + " - " + title
 	}
