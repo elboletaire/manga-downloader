@@ -96,16 +96,26 @@ func TestGigaviewerSeriesIdentifier(t *testing.T) {
 	}
 }
 
-func TestGigaviewerNumber(t *testing.T) {
-	cases := map[string]float64{
-		"[26話]夫婦と16歳":         26,
-		"[139話 後編]SPY×FAMILY": 139,
-		"[第１話～第４話]ふつうの軽音部":    1,
-		"[特別読切]番外編":           0,
+func TestGigaviewerTitle(t *testing.T) {
+	cases := []struct {
+		raw, series, title, part string
+		number                   float64
+	}{
+		// the series name after the marker is not a title
+		{"[26話]夫婦と16歳", "夫婦と16歳", "", "", 26},
+		{"[139話 後編]SPY×FAMILY", "SPY×FAMILY", "", "後編", 139},
+		{"[139話 前編]SPY×FAMILY", "SPY×FAMILY", "", "前編", 139},
+		{"[第１話～第４話]ふつうの軽音部", "ふつうの軽音部", "", "", 1},
+		// a real subtitle stays
+		{"[139話 前編]番外編", "SPY×FAMILY", "番外編", "前編", 139},
+		// a special has no number marker and keeps its title as it is
+		{"[特別読切]番外編", "夫婦と16歳", "[特別読切]番外編", "", 0},
 	}
-	for title, want := range cases {
-		if got := gigaviewerNumber(title); got != want {
-			t.Errorf("gigaviewerNumber(%q) = %v, want %v", title, got, want)
+	for _, c := range cases {
+		title, number, part := gigaviewerTitle(c.raw, c.series)
+		if title != c.title || number != c.number || part != c.part {
+			t.Errorf("gigaviewerTitle(%q, %q) = %q, %v, %q; want %q, %v, %q",
+				c.raw, c.series, title, number, part, c.title, c.number, c.part)
 		}
 	}
 }
@@ -142,11 +152,12 @@ func TestGigaviewerFetchChapters(t *testing.T) {
 		wantNumbers := []float64{1, 2, 0}
 		wantLocked := []bool{false, false, true}
 		wantIDs := []string{"1", "2", "3"}
+		wantLabels := []string{"Chapter 1", "Chapter 2", "[特別読切]番外編"}
 		for i, f := range chapters {
 			c := f.(*GigaviewerChapter)
-			if c.GetNumber() != wantNumbers[i] || LockedOf(c) != wantLocked[i] || c.ID != wantIDs[i] {
-				t.Errorf("%s: chapter %d = number %v locked %v id %q, want %v %v %q", url, i,
-					c.GetNumber(), LockedOf(c), c.ID, wantNumbers[i], wantLocked[i], wantIDs[i])
+			if c.GetNumber() != wantNumbers[i] || LockedOf(c) != wantLocked[i] || c.ID != wantIDs[i] || ChapterLabel(c) != wantLabels[i] {
+				t.Errorf("%s: chapter %d = number %v locked %v id %q label %q, want %v %v %q %q", url, i,
+					c.GetNumber(), LockedOf(c), c.ID, ChapterLabel(c), wantNumbers[i], wantLocked[i], wantIDs[i], wantLabels[i])
 			}
 		}
 	}

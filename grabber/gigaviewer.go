@@ -28,8 +28,10 @@ var gigaviewerDomains = []string{"shonenjumpplus.com"}
 var (
 	gigaviewerEpisodeRe = regexp.MustCompile(`/episode/(\d+)`)
 	gigaviewerFeedRe    = regexp.MustCompile(`/(?:rss|atom)/series/(\d+)`)
-	// gigaviewerNumberRe reads the number from a title like "[139話 後編]"
-	gigaviewerNumberRe = regexp.MustCompile(`(\d+)話`)
+	// gigaviewerMarkerRe is the leading "[139話 後編]" marker of a title
+	gigaviewerMarkerRe = regexp.MustCompile(`^\[([^\]]*)\]`)
+	// gigaviewerEpisodeNumRe reads the episode number out of a marker
+	gigaviewerEpisodeNumRe = regexp.MustCompile(`第?(\d+)話`)
 	// gigaviewerSeriesRe takes the series name out of the feed's channel
 	// title, "少年ジャンプ＋（SERIES）"
 	gigaviewerSeriesRe = regexp.MustCompile(`（(.+)）$`)
@@ -172,6 +174,11 @@ func (g *Gigaviewer) fetchFeed() error {
 		freeIDs = append(freeIDs, gigaviewerEpisodeID(item.Link))
 	}
 
+	series := strings.TrimSpace(all.Channel.Title)
+	if m := gigaviewerSeriesRe.FindStringSubmatch(series); m != nil {
+		series = m[1]
+	}
+
 	// the feed lists the newest first, and core sorts by number anyway
 	var chapters Filterables
 	for i := len(all.Channel.Items) - 1; i >= 0; i-- {
@@ -180,21 +187,18 @@ func (g *Gigaviewer) fetchFeed() error {
 		if id == "" {
 			continue
 		}
-		title := cleanTitle(item.Title)
+		title, number, part := gigaviewerTitle(item.Title, series)
 		chapters = append(chapters, &GigaviewerChapter{Chapter{
 			Title:    title,
-			Number:   gigaviewerNumber(title),
+			Number:   number,
 			ID:       id,
 			Locked:   !slices.Contains(freeIDs, id),
 			Language: "ja",
-			Label:    Label{Style: LabelNumbered},
+			Label:    Label{Style: LabelNumbered, Part: part},
 		}})
 	}
 
-	g.title = strings.TrimSpace(all.Channel.Title)
-	if m := gigaviewerSeriesRe.FindStringSubmatch(g.title); m != nil {
-		g.title = m[1]
-	}
+	g.title = series
 	g.chapters = chapters
 	g.feedLoaded = true
 
@@ -225,18 +229,30 @@ func gigaviewerEpisodeID(link string) string {
 	return m[1]
 }
 
-// gigaviewerNumber returns the number a title gives its episode, 0 for a
-// special ("[特別読切]") or a title that names its episode another way
-func gigaviewerNumber(title string) float64 {
-	m := gigaviewerNumberRe.FindStringSubmatch(gigaviewerDigits.Replace(title))
+// gigaviewerTitle splits a feed title, "[139話 後編]SERIES" or "[2話]SUBTITLE",
+// into the episode's title (empty when it's only the series name), its number
+// and its part (the 前編/後編 in the marker). A title without a "[N話]" marker
+// is kept as it is, numbered 0.
+func gigaviewerTitle(raw, series string) (title string, number float64, part string) {
+	raw = cleanTitle(raw)
+	loc := gigaviewerMarkerRe.FindStringSubmatchIndex(raw)
+	if loc == nil {
+		return raw, 0, ""
+	}
+
+	marker := gigaviewerDigits.Replace(raw[loc[2]:loc[3]])
+	m := gigaviewerEpisodeNumRe.FindStringSubmatch(marker)
 	if m == nil {
-		return 0
+		return raw, 0, ""
 	}
-	num, err := strconv.ParseFloat(m[1], 64)
-	if err != nil {
-		return 0
+	number, _ = strconv.ParseFloat(m[1], 64)
+	part = strings.Trim(gigaviewerEpisodeNumRe.ReplaceAllString(marker, ""), " 　～~-・")
+
+	title = cleanTitle(raw[loc[1]:])
+	if title == series {
+		title = ""
 	}
-	return num
+	return title, number, part
 }
 
 // FetchTitle returns the series title.
