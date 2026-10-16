@@ -217,7 +217,7 @@ func newInmangaChapter(c inmangaChapterFeedResult) *InmangaChapter {
 		Chapter{
 			Number:     c.Number,
 			PagesCount: int64(c.PagesCount),
-			Label:      Label{Style: LabelPadded, Lang: "es"},
+			Label:      Label{Style: LabelNumbered, Lang: "es"},
 			ID:         c.Id,
 		},
 		c.Id,

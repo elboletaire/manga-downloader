@@ -16,8 +16,8 @@ import (
 )
 
 // TestChapterLabelGolden pins every grabber that composes labels to the titles
-// it wrote before #326, which file names and the app still show, and checks
-// that the title it keeps is the site's own
+// it wrote before #326 (but for mangadex and inmanga, which drop the padding),
+// and checks that the title it keeps is the site's own
 func TestChapterLabelGolden(t *testing.T) {
 	type row struct {
 		name      string
@@ -93,23 +93,24 @@ func TestChapterLabelGolden(t *testing.T) {
 	rows = append(rows,
 		row{"mangapark one-shot", Chapter{Number: 4, Label: Label{Style: LabelUnnumbered}}, "Chapter", ""},
 		row{"mangapark titled one-shot", Chapter{Title: "Extra", Number: 4, Label: Label{Style: LabelUnnumbered}}, "Extra", "Extra"})
-	// zero-padded with the decimals dropped; mangadex's listing keeps the site's title
+	// the number, then the title; mangadex's listing keeps the site's title
 	for _, c := range []struct {
 		title  string
 		number float64
+		want   string
 	}{
-		{"Market", 1}, {"", 1}, {"", 10.5}, {"Foo", 1186}, {"Chapter 5", 5},
+		{"Market", 1, "Chapter 1 Market"}, {"", 1, "Chapter 1"}, {"", 10.5, "Chapter 10.5"},
+		{"Foo", 10.5, "Chapter 10.5 Foo"}, {"Foo", 1186, "Chapter 1186 Foo"}, {"Chapter 5", 5, "Chapter 5 Chapter 5"},
 	} {
 		rows = append(rows,
 			row{fmt.Sprintf("mangadex fetched %q %v", c.title, c.number),
-				Chapter{Title: c.title, Number: c.number, Label: Label{Style: LabelPadded}},
-				strings.TrimSpace(fmt.Sprintf("Chapter %04d %s", int64(c.number), c.title)), c.title},
+				Chapter{Title: c.title, Number: c.number, Label: Label{Style: LabelNumberFirst}}, c.want, c.title},
 			row{fmt.Sprintf("mangadex listed %q %v", c.title, c.number),
 				Chapter{Title: c.title, Number: c.number}, c.title, c.title})
 	}
-	for _, n := range []float64{5, 10.5, 1186} {
+	for _, n := range []float64{5, 912.5, 1186} {
 		rows = append(rows, row{fmt.Sprintf("inmanga %v", n),
-			Chapter{Number: n, Label: Label{Style: LabelPadded, Lang: "es"}}, fmt.Sprintf("Capítulo %04d", int64(n)), ""})
+			Chapter{Number: n, Label: Label{Style: LabelNumbered, Lang: "es"}}, "Capítulo " + format(n), ""})
 	}
 
 	for _, r := range rows {

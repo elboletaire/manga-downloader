@@ -69,7 +69,7 @@ func VolumeTemplate(templ string) string {
 
 // NewFilenameFromTemplate returns a new filename from a series title, a chapter and a template
 func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string, error) {
-	tmpl, err := template.New("filename").Parse(templ)
+	tmpl, err := template.New("filename").Funcs(template.FuncMap{"pad": padNumber}).Parse(templ)
 	if err != nil {
 		return "", err
 	}
@@ -78,6 +78,17 @@ func NewFilenameFromTemplate(templ string, parts FilenameTemplateParts) (string,
 	err = tmpl.Execute(buffer, parts)
 
 	return buffer.String(), err
+}
+
+// padNumber is the template's pad: number with its whole part zero-padded to
+// width digits and its decimals kept ({{pad .Number 4}} is "0010.5" for 10.5)
+func padNumber(number any, width int) string {
+	s := fmt.Sprint(number)
+	digits := len(s) - len(strings.TrimLeft(s, "0123456789"))
+	if digits == 0 || digits >= width {
+		return s
+	}
+	return strings.Repeat("0", width-digits) + s
 }
 
 // NewChapterFileTemplateParts returns a new FilenameTemplateParts from a title and a chapter

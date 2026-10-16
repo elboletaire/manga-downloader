@@ -334,7 +334,7 @@ func (m *Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 
 	chapter := &Chapter{
 		Title:      chap.Title,
-		Label:      Label{Style: LabelPadded},
+		Label:      Label{Style: LabelNumberFirst},
 		Number:     f.GetNumber(),
 		PagesCount: int64(pcount),
 		Language:   chap.Language,

@@ -2,10 +2,7 @@
 
 package grabber
 
-import (
-	"fmt"
-	"strconv"
-)
+import "strconv"
 
 // chapterWords are the words labels name a chapter with, by Label.Lang ("" is
 // English), kept in this one place so they can be localized
@@ -36,9 +33,9 @@ const (
 	LabelNumbered
 	// LabelPrefixed is the chapter word and number, then " - " and the title
 	LabelPrefixed
-	// LabelPadded is the chapter word, the number's whole part padded to four
-	// digits, then the title: "Chapter 0012 Title"
-	LabelPadded
+	// LabelNumberFirst is the chapter word and number, then the title:
+	// "Chapter 12 Title"
+	LabelNumberFirst
 	// LabelUnnumbered is the title, or the chapter word alone (a one-shot
 	// numbered by its position in the list)
 	LabelUnnumbered
@@ -92,8 +89,8 @@ func (c Chapter) GetLabel() string {
 			return word + " " + number
 		}
 		return cleanTitle(word + " " + number + " - " + c.Title)
-	case LabelPadded:
-		return cleanTitle(fmt.Sprintf("%s %04d %s", word, int64(c.Number), c.Title))
+	case LabelNumberFirst:
+		return cleanTitle(word + " " + number + " " + c.Title)
 	case LabelUnnumbered:
 		if title == "" {
 			return word
