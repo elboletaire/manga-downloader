@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[148 supported sites](#supported-sites)**, from big aggregators to small
+- **[149 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -629,7 +629,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 148 supported sites</b></summary>
+<summary><b>Show all 149 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -670,6 +670,7 @@ to a minute.
 | [furyosociety.com](https://furyosociety.com) |  | 2026-10-15 |
 | [gdscans.com](https://gdscans.com) | GalaxyDegenScans | 2026-10-15 |
 | [genztoons.org](https://genztoons.org) | Genz Toon, former genzupdates.com | 2026-10-15 |
+| [gourmetsupremacy.com](https://gourmetsupremacy.com) | Gourmet Scans, free chapters only | 2026-10-16 |
 | [guya.moe](https://guya.moe) | Guya, Kaguya-sama | 2026-10-15 |
 | [hachirumi.com](https://hachirumi.com) | Hachirumi, Guya instance, has an NSFW section | 2026-10-16 |
 | [heavenly-delusion.com](https://heavenly-delusion.com) | Heavenly Delusion | 2026-10-15 |

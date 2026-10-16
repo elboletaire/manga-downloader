@@ -203,6 +203,16 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 			continue
 		}
 
+		if urls, ok, err := wpMangaProtectorImages(pageDoc); ok {
+			if err != nil {
+				notice.Warn("could not decode the protected pages of %s: %s", f.GetTitle(), err)
+			}
+			for _, u := range urls {
+				pages = append(pages, Page{Number: int64(pageNum + 1), URL: u})
+			}
+			continue
+		}
+
 		// Collect all images in this page
 		pageDoc.Find("div.reading-content img").Each(func(i int, s *goquery.Selection) {
 			u := strings.TrimSpace(s.AttrOr("data-src", s.AttrOr("src", "")))

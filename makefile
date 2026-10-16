@@ -271,6 +271,9 @@ grabber/tcb:
 # changes needed: same ajax/chapters endpoint and reading-content markup)
 grabber/mangasushi:
 	go run . https://mangasushi.org/manga/lonely-attack-on-the-different-world/ 324
+# a Madara site whose reader encrypts the page list (wp-manga-chapter-images-protection)
+grabber/gourmetsupremacy:
+	go run . https://gourmetsupremacy.com/project/hikikomori-princess-marriage/ 10,10.5
 # another Madara/wp-manga site, handled by the same Tcb grabber; this one
 # groups chapters under "Volume N" wrappers (exercises the wp-manga-chapter
 # scoping fix)
@@ -579,6 +582,7 @@ grabber/html: \
 	grabber/kingofshojo \
 	grabber/komikindo \
 	grabber/komikstation \
+	grabber/gourmetsupremacy \
 	grabber/lagoonscans \
 	grabber/lelmanga \
 	grabber/lelscanfr \
