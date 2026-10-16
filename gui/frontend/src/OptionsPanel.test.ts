@@ -84,6 +84,8 @@ describe('Filename template', () => {
     const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
     expect(base.options.filenameTemplate).toBe(base.filenameTemplateDefault);
     expect(options(base)).not.toContain('Use default template');
+    // the wrapper stays when the button is hidden, so the input isn't remounted
+    expect(options(base)).toContain('class="input-wrap"');
 
     const custom: State = { ...base, options: { ...base.options, filenameTemplate: '{{.Series}} {{.Number}}' } };
     expect(options(custom)).toContain('aria-label="Use default template"');

@@ -62,6 +62,7 @@ export function TextField(props: TextFieldProps) {
   // the draft the last commit sent, until the backend pushes it back: Enter
   // commits and the blur that follows must not send it again
   const sent = useRef<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const id = useId();
 
   // a pushed value replaces the draft; while typing, pushes carry the old
@@ -85,6 +86,7 @@ export function TextField(props: TextFieldProps) {
 
   const input = (
     <input
+      ref={inputRef}
       id={id}
       type="text"
       className={`input${mono ? ' mono' : ''}${flagged ? ' flagged' : ''}`}
@@ -109,11 +111,16 @@ export function TextField(props: TextFieldProps) {
   return (
     <div className={`field ${className ?? ''}`}>
       <label htmlFor={id}>{label}</label>
-      {/* the wrapper only exists with an action, so other fields keep their markup */}
-      {action ? (
+      {/* the wrapper stays while an action is passed (even when it's false), so the input isn't remounted */}
+      {action !== undefined ? (
         <div className="input-wrap">
           {input}
-          <div className="input-action">{action}</div>
+          {/* the action's click focuses the field back, as the button is removed when it resets */}
+          {action && (
+            <div className="input-action" onClick={() => inputRef.current?.focus()}>
+              {action}
+            </div>
+          )}
         </div>
       ) : (
         input
