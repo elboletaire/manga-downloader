@@ -185,7 +185,7 @@ func classify(releases []Release) (cli, app int) {
 	for _, r := range releases {
 		for _, a := range r.Assets {
 			switch {
-			case strings.HasSuffix(a.Name, ".md5"):
+			case strings.HasSuffix(a.Name, ".md5"), strings.HasSuffix(a.Name, "-SHA256SUMS.txt"):
 			case strings.HasPrefix(a.Name, "manga-downloader-gui-"):
 				app += a.DownloadCount
 			case strings.HasPrefix(a.Name, "manga-downloader-"):
