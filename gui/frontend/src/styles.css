@@ -2105,3 +2105,7 @@ a.version:hover {
   justify-content: flex-end;
   gap: 8px;
 }
+
+.browser-alert p.update-error {
+  color: var(--danger);
+}

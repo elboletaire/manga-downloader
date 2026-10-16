@@ -48,10 +48,11 @@ describe('StatusBar version', () => {
 
   it('offers the one-click update only when the backend says it can', () => {
     const url = 'https://github.com/elboletaire/manga-downloader/releases/latest';
-    expect(bar({ update: { latest: 'v1.13.0', url, oneClick: false } })).not.toContain('Update to');
     const html = bar({ update: { latest: 'v1.13.0', url, oneClick: true } });
-    expect(html).toContain('Update to v1.13.0');
     expect(html).toContain('update-badge');
+    expect(html).not.toContain('Update to');
+    // the dialog opens on click, so it isn't in the first render
+    expect(html).not.toContain('alertdialog');
   });
 });
 

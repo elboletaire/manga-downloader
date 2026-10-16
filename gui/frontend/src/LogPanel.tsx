@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { AlertIcon, CopyIcon, ErrorIcon, LogIcon, XIcon } from './icons';
+import { UpdateDialog } from './UpdateDialog';
 import type { LogLine, Update } from './types';
 
 interface BarProps {
@@ -22,11 +23,7 @@ interface BarProps {
 }
 
 export function StatusBar({ log, version, releaseURL, update, open, onToggle, onOpenURL, onUpdate }: BarProps) {
-  const [updating, setUpdating] = useState(false);
-  const runUpdate = () => {
-    setUpdating(true);
-    onUpdate().catch(() => undefined).finally(() => setUpdating(false));
-  };
+  const [updateOpen, setUpdateOpen] = useState(false);
 
   // links open outside the window, which must stay on the app
   const openLink = (url: string) => (e: MouseEvent<HTMLAnchorElement>) => {
@@ -72,16 +69,18 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
         {lastLine ? lastLine.text : 'Ready'}
       </span>
       <span className="version-group">
-        {update?.oneClick && (
-          <button type="button" className="btn small warning" onClick={runUpdate} disabled={updating}>
-            {updating ? 'Updating...' : `Update to ${update.latest}`}
-          </button>
-        )}
         {update && (
           <a
             className="update-badge warning"
             href={update.url}
-            onClick={openLink(update.url)}
+            onClick={
+              update.oneClick
+                ? (e) => {
+                    e.preventDefault();
+                    setUpdateOpen(true);
+                  }
+                : openLink(update.url)
+            }
             title={`Update available: ${update.latest}`}
             aria-label={`Update available: ${update.latest}`}
           >
@@ -102,6 +101,15 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
           </span>
         )}
       </span>
+      {update?.oneClick && updateOpen && (
+        <UpdateDialog
+          latest={update.latest}
+          current={version}
+          onUpdate={onUpdate}
+          onReleaseNotes={() => onOpenURL(update.url)}
+          onClose={() => setUpdateOpen(false)}
+        />
+      )}
     </footer>
   );
 }
