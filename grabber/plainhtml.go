@@ -110,16 +110,16 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:      "img.js-page",
 		SeriesLink: `a[data-hotkey="m"]`,
 	},
-	// demonicscans.org: reader page embeds the real (non-lazy) image
-	// src directly, no JS variable needed. komikmanga.com shares the
-	// chapter list markup but wraps its pages in .reader-page and links
-	// back to the series from .reader-back (no <h1> there).
+	// demonicscans.org and komikmanga.com share the list markup; the latter
+	// has .reader-page images, no reader <h1> (.reader-back) and rows that
+	// end in the release date.
 	{
-		Title:      "h1",
-		Rows:       "#chapters-list li",
-		Link:       "a",
-		Image:      "img.imgholder, .reader-page img",
-		SeriesLink: "h1 a, a.reader-back",
+		Title:             "h1",
+		Rows:              "#chapters-list li",
+		Link:              "a",
+		Image:             "img.imgholder, .reader-page img",
+		SeriesLink:        "h1 a, a.reader-back",
+		ChapterTitleStrip: `\s*\d{4}-\d{2}-\d{2}$`,
 	},
 	// mangakatana.com: reader page images never land in the HTML as real
 	// <img src>/data-src (they stay as data-src="#" placeholders), they
