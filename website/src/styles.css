@@ -1452,6 +1452,12 @@ code {
   white-space: nowrap;
 }
 
+/* A long inline command in an answer wraps instead of widening the page. */
+.faq details p code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .faq summary::-webkit-details-marker {
   display: none;
 }
