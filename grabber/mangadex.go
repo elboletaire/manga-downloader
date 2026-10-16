@@ -33,6 +33,12 @@ type Mangadex struct {
 	title string
 	// manga caches the manga endpoint, read for the title and the languages
 	manga *mangadexManga
+	// readable and external track, per language, the chapters the feed listed
+	// that can be downloaded and the first external URL of those that can't
+	readable map[string]bool
+	external map[string]string
+	// unfiltered is set once the feed was read for every language
+	unfiltered bool
 	// rateLimiter rate limiter for the FetchChapter method. This call uses the '/at-home' endpoint which has a rate limit
 	// of 40 calls per minute, if we exceed this limit we get a 429, and the consequent chapters fail. This may eventually
 	// lead to an IP ban.
@@ -225,18 +231,44 @@ func (m *Mangadex) fetchManga() (*mangadexManga, error) {
 	return body, nil
 }
 
-// LanguageOptions lists the languages the series is translated into. The feed
-// is filtered by language, so its own chapters can't tell them apart.
+// LanguageOptions lists the languages the series is translated into, without
+// those whose chapters are all external. A language filter hides the others
+// from the feed, so only an all-languages listing narrows the manga's own list
+// to the readable ones; a filtered one only rules out its own language.
 func (m *Mangadex) LanguageOptions() FilterOptions {
 	body, err := m.fetchManga()
 	if err != nil {
 		return FilterOptions{}
 	}
 
-	return FilterOptions{
-		Values: uniqueValues(body.Data.Attributes.AvailableTranslatedLanguages),
-		All:    true,
+	var values []string
+	for _, lang := range uniqueValues(body.Data.Attributes.AvailableTranslatedLanguages) {
+		if _, ext := m.external[lang]; ext && !m.readable[lang] {
+			continue
+		}
+		if m.unfiltered && !m.readable[lang] {
+			continue
+		}
+		values = append(values, lang)
 	}
+
+	return FilterOptions{Values: values, All: true}
+}
+
+// mangadexExternalError reports a language whose chapters all live on another
+// site, which there is nothing to download from here.
+type mangadexExternalError struct {
+	Language string
+	URL      string
+}
+
+func (e *mangadexExternalError) Error() string {
+	msg := fmt.Sprintf("the %q chapters of this title are hosted elsewhere (e.g. MANGA Plus): %s", e.Language, e.URL)
+	if strings.Contains(e.URL, "mangaplus.shueisha.co.jp") {
+		msg += " (MANGA Plus is supported, try that link)"
+	}
+
+	return msg
 }
 
 // FetchChapters returns the chapters of the manga
@@ -247,6 +279,14 @@ func (m *Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 
 	// the API only knows lowercase ids
 	id := strings.ToLower(getUuid(m.URL))
+
+	filter := m.Settings.Language
+	if filter == FilterAll {
+		filter = ""
+	}
+	m.unfiltered = filter == ""
+	m.readable, m.external = map[string]bool{}, map[string]string{}
+	var firstExternal string
 
 	baseOffset := 500
 	var fetchChaps func(int)
@@ -284,8 +324,13 @@ func (m *Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 			// report 0 pages, but some stubs still claim a page count, so
 			// check the external url too.
 			if c.Attributes.Pages == 0 || c.Attributes.ExternalUrl != "" {
+				lang := c.Attributes.TranslatedLanguage
+				if _, ok := m.external[lang]; !ok && c.Attributes.ExternalUrl != "" {
+					m.external[lang] = c.Attributes.ExternalUrl
+				}
 				continue
 			}
+			m.readable[c.Attributes.TranslatedLanguage] = true
 			num, _ := strconv.ParseFloat(c.Attributes.Chapter, 64)
 			listed := &MangadexChapter{
 				Chapter{
@@ -308,6 +353,24 @@ func (m *Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 	}
 	// initial call
 	fetchChaps(0)
+
+	if len(chapters) == 0 && len(errs) == 0 {
+		if filter != "" {
+			firstExternal = m.external[filter]
+		} else {
+			for _, u := range m.external {
+				firstExternal = u
+				break
+			}
+		}
+		if firstExternal != "" {
+			lang := filter
+			if lang == "" {
+				lang = FilterAll
+			}
+			errs = append(errs, &mangadexExternalError{Language: lang, URL: firstExternal})
+		}
+	}
 
 	return
 }
