@@ -220,3 +220,30 @@ func TestTcbChapterNumber(t *testing.T) {
 		}
 	}
 }
+
+func TestTcbFetchChapterRejectsNonMangaReaders(t *testing.T) {
+	for name, tc := range map[string]struct{ html, want string }{
+		"video": {`<div class="reading-content-wrap chapter-type-video"><iframe src="https://mega.nz/embed/x"></iframe></div>`, "Ep 1 is a video, not a manga chapter"},
+		"text":  {`<div class="reading-content-wrap chapter-type-text"><p>Once upon a time</p></div>`, "Ep 1 is a novel chapter, not a manga chapter"},
+		"manga": {`<div class="reading-content-wrap chapter-type-manga"><div class="reading-content"><img id="image-0" data-src="/a.png"></div></div>`, ""},
+	} {
+		t.Run(name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write([]byte(tc.html))
+			}))
+			t.Cleanup(srv.Close)
+
+			tcb := NewTcb(&Grabber{URL: srv.URL, Settings: &Settings{}})
+			ch, err := tcb.FetchChapter(&TcbChapter{Chapter: Chapter{Title: "Ep 1"}, URL: srv.URL + "/manga/x/ep-1/"})
+			if tc.want == "" {
+				if err != nil || len(ch.Pages) != 1 {
+					t.Fatalf("FetchChapter() = %v, %v; want 1 page", ch, err)
+				}
+				return
+			}
+			if err == nil || err.Error() != tc.want {
+				t.Errorf("FetchChapter() error = %v, want %q", err, tc.want)
+			}
+		})
+	}
+}

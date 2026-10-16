@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[156 supported sites](#supported-sites)**, from big aggregators to small
+- **[157 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -629,7 +629,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 156 supported sites</b></summary>
+<summary><b>Show all 157 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -745,6 +745,7 @@ to a minute.
 | [mundomanhwa.com](https://mundomanhwa.com) | Spanish | 2026-10-16 |
 | [natomanga.com](https://www.natomanga.com) \* | MangaNato, former manganato.com/manganelo.com | 2026-10-15 |
 | [natsu.one](https://natsu.one) | NatsuID, Indonesian, some adult titles, former natsu.id | 2026-10-16 |
+| [niji-translations.com](https://niji-translations.com) | Niji, Arabic, yuri | 2026-10-16 |
 | [noranofansub.com](https://www.noranofansub.com) | NoraNoFansub, Spanish | 2026-10-16 |
 | [nyraxmanga.com](https://nyraxmanga.com) | Nyrax, some adult titles | 2026-10-16 |
 | [onma.top](https://onma.top) | Arabic | 2026-10-16 |

@@ -164,6 +164,7 @@ grabber: \
 	grabber/manhwatop \
 	grabber/mgeko \
 	grabber/mkissa \
+	grabber/nijitranslations \
 	grabber/projectsuki \
 	grabber/qimanga \
 	grabber/re-yume \
@@ -280,6 +281,10 @@ grabber/gourmetsupremacy:
 # scoping fix)
 grabber/gdscans:
 	go run . https://gdscans.com/manga/a-rank-boukensha-no-slow-life/ 50
+# a Madara site whose ajax/chapters answers with the series page, so the Tcb
+# grabber reads the list through admin-ajax.php (Arabic)
+grabber/nijitranslations:
+	go run . https://niji-translations.com/manga/adachi-and-shimamura/ 41
 # another Madara site, handled by the Tcb grabber; its one-shots have no number
 grabber/anikiga:
 	go run . https://anikiga.com/manga/alma/ 5

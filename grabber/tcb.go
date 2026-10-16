@@ -3,6 +3,9 @@
 package grabber
 
 import (
+	"bytes"
+	"fmt"
+	"io"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -56,7 +59,12 @@ func (t *Tcb) Test() (bool, error) {
 		return false, err
 	}
 
-	body, err := goquery.NewDocumentFromReader(rbody)
+	page, err := io.ReadAll(rbody)
+	rbody.Close()
+	if err != nil {
+		return false, err
+	}
+	body, err := goquery.NewDocumentFromReader(bytes.NewReader(page))
 	if err != nil {
 		return false, err
 	}
@@ -66,8 +74,39 @@ func (t *Tcb) Test() (bool, error) {
 	// would pick up those volume headers (and their empty list-wrapper <li>)
 	// as bogus duplicate chapters alongside the real ones.
 	t.chaps = body.Find("li.wp-manga-chapter")
+	if t.chaps.Length() == 0 {
+		// Some installs answer with the series page, which names the manga id
+		// admin-ajax.php needs.
+		if id := tcbMangaIDRe.FindSubmatch(page); id != nil {
+			if t.chaps, err = t.fetchAdminAjaxChapters(string(id[1])); err != nil {
+				return false, nil
+			}
+		}
+	}
 
 	return t.chaps.Length() > 0, nil
+}
+
+var tcbMangaIDRe = regexp.MustCompile(`"manga_id":"(\d+)"`)
+
+// fetchAdminAjaxChapters reads the list through admin-ajax.php for the Madara
+// installs whose ajax/chapters endpoint doesn't return it.
+func (t *Tcb) fetchAdminAjaxChapters(id string) (*goquery.Selection, error) {
+	rbody, err := http.Post(http.RequestParams{
+		URL:          t.BaseUrl() + "/wp-admin/admin-ajax.php",
+		Referer:      t.series,
+		Body:         "action=manga_get_chapters&manga=" + id,
+		DisableRetry: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer rbody.Close()
+	doc, err := goquery.NewDocumentFromReader(rbody)
+	if err != nil {
+		return nil, err
+	}
+	return doc.Find("li.wp-manga-chapter"), nil
 }
 
 // GetTitle fetches and returns the manga title
@@ -158,6 +197,20 @@ func tcbVolume(row *goquery.Selection) int {
 	return parseVolume(m[1])
 }
 
+// tcbReaderTypeError rejects Madara chapters that aren't images: the reader
+// wrapper's chapter-type-* class marks videos (anime) and novels, which have
+// no pages to pack.
+func tcbReaderTypeError(doc *goquery.Document, title string) error {
+	class := doc.Find(".reading-content-wrap").First().AttrOr("class", "")
+	switch {
+	case strings.Contains(class, "chapter-type-video"):
+		return fmt.Errorf("%s is a video, not a manga chapter", title)
+	case strings.Contains(class, "chapter-type-text"):
+		return fmt.Errorf("%s is a novel chapter, not a manga chapter", title)
+	}
+	return nil
+}
+
 // FetchChapter fetches a chapter and its pages
 func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 	tchap := f.(*TcbChapter)
@@ -206,6 +259,10 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 		if err != nil {
 			notice.Warn("error parsing page %d: %s", pageNum+1, err.Error())
 			continue
+		}
+
+		if err := tcbReaderTypeError(pageDoc, f.GetTitle()); err != nil {
+			return nil, err
 		}
 
 		if urls, ok, err := wpMangaProtectorImages(pageDoc); ok {
