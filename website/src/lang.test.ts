@@ -31,7 +31,7 @@ describe('withHash', () => {
   it.each([
     ['/es/', '#faq-old', '/es/#faq-old'],
     ['/es/#sites', '#faq-old', '/es/#faq-old'],
-    ['/es/#sites', '', '/es/#sites'],
+    ['/es/#sites', '', '/es/'],
     ['/', '#', '/'],
   ])('%s with %j gives %s', (href, hash, want) => {
     expect(withHash(href, hash)).toBe(want)

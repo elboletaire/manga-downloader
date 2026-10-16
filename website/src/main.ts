@@ -231,14 +231,19 @@ function enhanceSites(): void {
 function rememberLanguage(): void {
   for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-lang]')) {
     link.addEventListener('click', () => {
-      // Carry the current section over; ids are the same in every language.
-      link.setAttribute('href', withHash(link.getAttribute('href') ?? '', location.hash))
       try {
         localStorage.setItem(LANG_KEY, link.dataset.lang!)
       } catch {
         // Storage disabled: the link still works.
       }
     })
+  }
+}
+
+/** Keeps the language links pointing at the current #section (ids match across languages), so new-tab opens carry it too. */
+function syncLanguageLinks(): void {
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-lang]')) {
+    link.setAttribute('href', withHash(link.getAttribute('href') ?? '', location.hash))
   }
 }
 
@@ -311,4 +316,6 @@ enhanceSites()
 openTargetedDetails()
 window.addEventListener('hashchange', openTargetedDetails)
 rememberLanguage()
+syncLanguageLinks()
+window.addEventListener('hashchange', syncLanguageLinks)
 void enhanceDownload()
