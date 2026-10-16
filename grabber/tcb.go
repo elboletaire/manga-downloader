@@ -181,8 +181,9 @@ var tcbTitleGroups = map[string][]string{
 func (t Tcb) splitTitleGroup(title string) (string, string) {
 	u, _ := url.Parse(t.URL)
 	for _, g := range tcbTitleGroups[u.Host] {
-		if rest, ok := strings.CutSuffix(title, " - "+g); ok {
-			return rest, g
+		n := len(title) - len(" - "+g)
+		if n >= 0 && strings.EqualFold(title[n:], " - "+g) {
+			return title[:n], g
 		}
 	}
 	return title, ""

@@ -247,3 +247,25 @@ func TestTcbFetchChapterRejectsNonMangaReaders(t *testing.T) {
 		})
 	}
 }
+
+func TestTcbSplitTitleGroup(t *testing.T) {
+	deca := Tcb{Grabber: &Grabber{URL: "https://reader.decadencescans.com/manga/ashi-girl/"}}
+	other := Tcb{Grabber: &Grabber{URL: "https://example.com/manga/x/"}}
+	for _, tc := range []struct {
+		tcb       Tcb
+		title     string
+		want      string
+		wantGroup string
+	}{
+		{deca, "30th Battle - REDLION", "30th Battle", "REDLION"},
+		{deca, "35th Battle - fixed - REDLION", "35th Battle - fixed", "REDLION"},
+		{deca, "30th Battle - redlion", "30th Battle", "REDLION"},
+		{deca, "Extra - Part 1 - X", "Extra - Part 1 - X", ""},
+		{other, "30th Battle - REDLION", "30th Battle - REDLION", ""},
+	} {
+		title, group := tc.tcb.splitTitleGroup(tc.title)
+		if title != tc.want || group != tc.wantGroup {
+			t.Errorf("%q: got %q, %q; want %q, %q", tc.title, title, group, tc.want, tc.wantGroup)
+		}
+	}
+}
