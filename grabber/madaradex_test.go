@@ -8,6 +8,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 func TestAuthorizeMadaradex(t *testing.T) {
@@ -25,14 +28,24 @@ func TestAuthorizeMadaradex(t *testing.T) {
 
 	html := fmt.Sprintf(`const configuredDomain = ".127.0.0.1";
 const ajaxUrl = "%s"; 'action=mdx_auth_refresh'`, strings.ReplaceAll(srv.URL, "/", `\/`))
-	authorizeMadaradex(html)
-	authorizeMadaradex(html)
+	doc, _ := goquery.NewDocumentFromReader(strings.NewReader("<script>" + html + "</script>"))
+	authorizeMadaradex(doc)
+	authorizeMadaradex(doc)
 	if hits != 1 {
 		t.Errorf("handshake hits = %d, want 1", hits)
 	}
 
-	authorizeMadaradex("<html>no handshake</html>")
-	if hits != 1 {
+	madaradexMu.Lock()
+	madaradexDone[srv.URL] = time.Now().Add(-madaradexAuthTTL - time.Minute)
+	madaradexMu.Unlock()
+	authorizeMadaradex(doc)
+	if hits != 2 {
+		t.Errorf("an expired handshake hits = %d, want 2", hits)
+	}
+
+	other, _ := goquery.NewDocumentFromReader(strings.NewReader("<html>no handshake</html>"))
+	authorizeMadaradex(other)
+	if hits != 2 {
 		t.Errorf("a page without the script triggered a request")
 	}
 }

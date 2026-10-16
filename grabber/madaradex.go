@@ -9,7 +9,9 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
 )
 
@@ -19,14 +21,27 @@ var (
 	madaradexAjaxRe   = regexp.MustCompile(`const ajaxUrl = "([^"]+)"`)
 	madaradexDomainRe = regexp.MustCompile(`const configuredDomain = "\.?([^"]+)"`)
 
-	madaradexMu   sync.Mutex
-	madaradexDone = map[string]bool{}
+	madaradexMu sync.Mutex
+	// madaradexDone holds when each site's handshake last ran
+	madaradexDone = map[string]time.Time{}
 )
 
-// authorizeMadaradex does the reader's cookie handshake once per site, so the
-// session sends both cookies to the image CDN. It's a no-op on other pages.
-func authorizeMadaradex(html string) {
-	if !strings.Contains(html, "mdx_auth_refresh") {
+// madaradexAuthTTL renews the handshake before the cookie's six hours run out,
+// since the desktop app keeps the session for as long as it stays open.
+const madaradexAuthTTL = 5 * time.Hour
+
+// authorizeMadaradex does the reader's cookie handshake once per TTL, so the session sends both cookies to the image CDN. It's a no-op on
+// other pages.
+func authorizeMadaradex(doc *goquery.Document) {
+	html := ""
+	doc.Find("script").EachWithBreak(func(_ int, sc *goquery.Selection) bool {
+		if text := sc.Text(); strings.Contains(text, "mdx_auth_refresh") {
+			html = text
+			return false
+		}
+		return true
+	})
+	if html == "" {
 		return
 	}
 	ajax := madaradexAjaxRe.FindStringSubmatch(html)
@@ -38,7 +53,7 @@ func authorizeMadaradex(html string) {
 
 	madaradexMu.Lock()
 	defer madaradexMu.Unlock()
-	if madaradexDone[endpoint] {
+	if at, ok := madaradexDone[endpoint]; ok && time.Since(at) < madaradexAuthTTL {
 		return
 	}
 
@@ -55,5 +70,5 @@ func authorizeMadaradex(html string) {
 		return
 	}
 	body.Close()
-	madaradexDone[endpoint] = true
+	madaradexDone[endpoint] = time.Now()
 }
