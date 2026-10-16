@@ -74,9 +74,12 @@ The easiest way is the [website][website], which picks the right download for
 your system. Or download the `manga-downloader-gui` asset for your system from
 the [releases page][releases]:
 
-- **Windows**: `manga-downloader-gui-<tag>-windows-amd64.zip`, or
-  `-windows-arm64.zip` for ARM devices such as Snapdragon laptops. Unzip it and
-  run `manga-downloader-gui.exe`.
+- **Windows**: `manga-downloader-gui-<tag>-windows-amd64-installer.exe`, or
+  `-windows-arm64-installer.exe` for ARM devices such as Snapdragon laptops. It
+  installs for your user alone (`%LOCALAPPDATA%\Programs\Manga Downloader`),
+  or for everyone in `C:\Program Files\Manga Downloader` if you run it as
+  administrator, and adds a Start menu shortcut. For a portable copy, use the `.zip` of the same name instead: unzip
+  it and run `manga-downloader-gui.exe`.
 - **macOS**: `manga-downloader-gui-<tag>-darwin-universal.zip`. Unzip it and move
   `Manga Downloader.app` wherever you like. Or install it with
   [Homebrew][homebrew], which also puts `manga-downloader-gui` on your `PATH`:
@@ -118,8 +121,9 @@ the [releases page][releases]:
 >
 > **Windows** needs the Microsoft Edge WebView2 runtime. Windows 11 and current
 > Windows 10 already have it; without it, the app offers to download and install it on first launch.
-> If SmartScreen shows *"Windows protected your PC"*, click **More info** →
-> **Run anyway**: the file is only flagged because it isn't signed.
+> If SmartScreen shows *"Windows protected your PC"* when you run the installer
+> or the app, click **More info** → **Run anyway**: the file is only flagged
+> because it isn't signed.
 
 If the desktop app sits next to the command line tool or is on your `PATH` (the
 Homebrew cask and the Linux `install.sh` put it there), `manga-downloader ui`

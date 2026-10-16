@@ -80,10 +80,16 @@ export function guiAssetNames(tag: string, p: Platform): string[] {
   const base = `manga-downloader-gui-${tag}`
   switch (p.os) {
     case 'windows':
+      // The installer comes first; releases from before it fall back to the zip.
       // ARM Windows runs the x64 build emulated if there's no native one.
       return p.arch === 'arm64'
-        ? [`${base}-windows-arm64.zip`, `${base}-windows-amd64.zip`]
-        : [`${base}-windows-amd64.zip`]
+        ? [
+            `${base}-windows-arm64-installer.exe`,
+            `${base}-windows-amd64-installer.exe`,
+            `${base}-windows-arm64.zip`,
+            `${base}-windows-amd64.zip`,
+          ]
+        : [`${base}-windows-amd64-installer.exe`, `${base}-windows-amd64.zip`]
     case 'macos':
       return [`${base}-darwin-universal.zip`]
     case 'linux':
@@ -181,6 +187,8 @@ export interface AssetRow {
 
 /** Every asset the page links to, keyed by the name without its tag. */
 export const ASSET_KEYS = [
+  'gui-windows-amd64-installer.exe',
+  'gui-windows-arm64-installer.exe',
   'gui-windows-amd64.zip',
   'gui-windows-arm64.zip',
   'gui-darwin-universal.zip',

@@ -49,8 +49,13 @@ describe('asset names', () => {
   const tag = 'v1.11.0'
 
   it('names the desktop app archives', () => {
-    expect(guiAssetNames(tag, { os: 'windows', arch: 'amd64' })).toEqual(['manga-downloader-gui-v1.11.0-windows-amd64.zip'])
+    expect(guiAssetNames(tag, { os: 'windows', arch: 'amd64' })).toEqual([
+      'manga-downloader-gui-v1.11.0-windows-amd64-installer.exe',
+      'manga-downloader-gui-v1.11.0-windows-amd64.zip',
+    ])
     expect(guiAssetNames(tag, { os: 'windows', arch: 'arm64' })).toEqual([
+      'manga-downloader-gui-v1.11.0-windows-arm64-installer.exe',
+      'manga-downloader-gui-v1.11.0-windows-amd64-installer.exe',
       'manga-downloader-gui-v1.11.0-windows-arm64.zip',
       'manga-downloader-gui-v1.11.0-windows-amd64.zip',
     ])
@@ -120,6 +125,19 @@ describe('chooseDownload', () => {
     expect(c.href.endsWith(`/manga-downloader-gui-v1.11.0-${file}`)).toBe(true)
     expect(c.label).toBe(label)
     expect(c.detail).toMatch(/^Desktop app v1\.11\.0 · /)
+  })
+
+  it('prefers the Windows installer over the zip', () => {
+    const r: Release = {
+      ...withGUI,
+      assets: [
+        asset('manga-downloader-gui-v1.11.0-windows-amd64.zip'),
+        asset('manga-downloader-gui-v1.11.0-windows-amd64-installer.exe'),
+      ],
+    }
+    const c = chooseDownload(r, { os: 'windows', arch: 'amd64' })
+    expect(c.href).toMatch(/windows-amd64-installer\.exe$/)
+    expect(c.detail).toMatch(/x64/)
   })
 
   it('falls back to the x64 desktop app on ARM Windows', () => {

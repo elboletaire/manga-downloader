@@ -69,6 +69,8 @@
     "title": "Totes les descàrregues",
     "intro": "Última versió <a href=\"{{repo}}/releases/latest\" data-release-tag>a GitHub</a>. No saps quina triar? La majoria d'ordinadors són x64; per a Mac, l'aplicació universal.",
     "legacy32": "32 bits (antic)",
+    "windowsInstaller": "Aplicació d'escriptori: instal·lador",
+    "windowsPortable": "Aplicació d'escriptori: zip portàtil",
     "bit32": "32 bits",
     "appleSilicon": "Xip d'Apple",
     "foot": "Els executables no estan signats, així que el Windows i el macOS t'avisaran la primera vegada. <a href=\"#faq-smartscreen\">Així pots saltar-te l'avís</a>."
