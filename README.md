@@ -671,9 +671,9 @@ to a minute.
 | [flamecomics.xyz](https://flamecomics.xyz) | Flame Comics, former Flame Scans | 2026-10-15 |
 | [fmteam.fr](https://fmteam.fr) |  | 2026-10-15 |
 | [furyosociety.com](https://furyosociety.com) |  | 2026-10-15 |
-| [globalcomix.com](https://globalcomix.com) | Western comics, free issues only | — |
 | [gdscans.com](https://gdscans.com) | GalaxyDegenScans | 2026-10-15 |
 | [genztoons.org](https://genztoons.org) | Genz Toon, former genzupdates.com | 2026-10-15 |
+| [globalcomix.com](https://globalcomix.com) | Western comics, free issues only | 2026-10-16 |
 | [gourmetsupremacy.com](https://gourmetsupremacy.com) | Gourmet Scans, free chapters only | 2026-10-16 |
 | [guya.moe](https://guya.moe) | Guya, Kaguya-sama | 2026-10-15 |
 | [hachirumi.com](https://hachirumi.com) | Hachirumi, Guya instance, has an NSFW section | 2026-10-16 |

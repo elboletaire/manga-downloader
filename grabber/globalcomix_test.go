@@ -3,9 +3,12 @@
 package grabber
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -13,6 +16,9 @@ import (
 const (
 	globalcomixFreeKey = "6d7935c9-a32e-49e3-944b-dd0813719b32"
 	globalcomixPaidKey = "59cd868b-094b-47fb-9c04-76fff5306dda"
+	// globalcomixTestKey is the api_key in testdata/globalcomix/page.html, not
+	// the fallback constant
+	globalcomixTestKey = "gck_fromthepage123"
 )
 
 // newTestGlobalcomix serves the trimmed fixtures as the API, and returns a
@@ -29,7 +35,12 @@ func newTestGlobalcomix(t *testing.T, pageURL string, settings *Settings) *Globa
 		"/v1/comics/18240/releases":        "releases-paid.json",
 	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("X-Gc-Client") == "" {
+		if strings.HasPrefix(r.URL.Path, "/c/") || strings.HasPrefix(r.URL.Path, "/read/") {
+			b, _ := os.ReadFile("testdata/globalcomix/page.html")
+			w.Write(b)
+			return
+		}
+		if r.Header.Get("X-Gc-Client") != globalcomixTestKey {
 			http.Error(w, `{"error":"CLIENT_HEADER_MISSING"}`, http.StatusBadRequest)
 			return
 		}
@@ -58,6 +69,10 @@ func newTestGlobalcomix(t *testing.T, pageURL string, settings *Settings) *Globa
 	if settings == nil {
 		settings = &Settings{}
 	}
+
+	// the page is read off the same server, so the path is all that matters
+	u, _ := url.Parse(pageURL)
+	pageURL = srv.URL + u.EscapedPath() + "?" + u.RawQuery
 
 	return NewGlobalcomix(&Grabber{URL: pageURL, Settings: settings})
 }
@@ -162,7 +177,50 @@ func TestGlobalcomixLanguages(t *testing.T) {
 	if got := g.languages(comic); len(got) != 2 {
 		t.Errorf("all = %v, want en and es", got)
 	}
-	if o := g.LanguageOptions(); o.Current != "en" || len(o.Values) != 2 {
+	if o := g.LanguageOptions(); o.Current != "" || len(o.Values) != 2 {
 		t.Errorf("options = %+v", o)
+	}
+}
+
+// the language that isn't offered is the same error the other language listers return
+func TestGlobalcomixUnknownLanguage(t *testing.T) {
+	g := newTestGlobalcomix(t, "https://globalcomix.com/c/acts-one-nine", &Settings{Language: "fr"})
+	_, errs := g.FetchChapters()
+	var unavailable *UnavailableFilterError
+	if len(errs) != 1 || !errors.As(errs[0], &unavailable) || unavailable.Filter != "language" || len(unavailable.Available) != 2 {
+		t.Errorf("errs = %v, want an UnavailableFilterError listing en and es", errs)
+	}
+}
+
+func TestGlobalcomixCurrentLanguage(t *testing.T) {
+	for _, tc := range []struct{ url, language, want string }{
+		{"https://globalcomix.com/c/acts-one-nine", "", "en"},
+		{"https://globalcomix.com/c/acts-one-nine?lang_id=es", "", "es"},
+		{"https://globalcomix.com/c/acts-one-nine?lang_id=es", "en", "en"},
+		{"https://globalcomix.com/c/acts-one-nine", FilterAll, ""},
+	} {
+		g := newTestGlobalcomix(t, tc.url, &Settings{Language: tc.language})
+		if got := g.LanguageOptions().Current; got != tc.want {
+			t.Errorf("%s %q: current = %q, want %q", tc.url, tc.language, got, tc.want)
+		}
+	}
+}
+
+// numbered collected editions are dropped, unnumbered ones kept without
+// taking an issue's number
+func TestGlobalcomixChaptersUnnumbered(t *testing.T) {
+	releases := []globalcomixRelease{
+		{Key: "k3", ChapterType: "c", Chapter: "2", Order: 3, IsFree: true},
+		{Key: "k1", ChapterType: "c", Chapter: "1", Order: 1, IsFree: true},
+		{Key: "k4", ChapterType: "v", Chapter: "1", Order: 4, IsFree: true},
+		{Key: "k2", ChapterType: "s", Chapter: "", Order: 2, Title: "Bonus", IsFree: true},
+		{Key: "k5", ChapterType: "o", Chapter: "", Order: 5, Title: "One-shot", IsFree: true},
+	}
+	var got []string
+	for _, c := range globalcomixChapters(releases, "en") {
+		got = append(got, c.(*GlobalcomixChapter).Key+"="+strconv.FormatFloat(c.GetNumber(), 'f', -1, 64))
+	}
+	if want := "k1=1,k2=1.01,k3=2,k5=2.01"; strings.Join(got, ",") != want {
+		t.Errorf("chapters = %v, want %s", got, want)
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -20,8 +21,8 @@ import (
 var globalcomixAPI = "https://api.globalcomix.com"
 
 const (
-	// globalcomixAPIKey is the public key the site's own web reader sends in
-	// X-Gc-Client; the API answers CLIENT_HEADER_MISSING without it
+	// globalcomixAPIKey is the fallback for the public key the site's own web
+	// reader sends in X-Gc-Client; the API answers CLIENT_HEADER_MISSING without it
 	globalcomixAPIKey = "gck_b4d492261ec541eda44ce41de79da424"
 	// globalcomixAuthCookie is the per-release cookie readV3 sets, which the
 	// page CDN demands (401 without it)
@@ -36,6 +37,7 @@ var (
 	globalcomixSeriesRe  = regexp.MustCompile(`(?i)^/c/([^/?#]+)`)
 	globalcomixReaderRe  = regexp.MustCompile(`(?i)^/read/([0-9a-f-]{36})`)
 	globalcomixCDNHostRe = regexp.MustCompile(`^https://[a-z0-9.-]*globalcomix\.com(?:/|$)`)
+	globalcomixKeyRe     = regexp.MustCompile(`"api_key":"(gck_[A-Za-z0-9]+)"`)
 	errGlobalcomixSeries = errors.New("could not find the series in the URL")
 )
 
@@ -46,6 +48,9 @@ type Globalcomix struct {
 	*Grabber
 	client *http.Client
 	mu     sync.Mutex
+	// key is the API key read off the page, fetched once under keyMu
+	keyMu sync.Mutex
+	key   string
 	// comic is the series, fetched once for FetchTitle, FetchChapters and
 	// LanguageOptions
 	comic *globalcomixComic
@@ -98,6 +103,36 @@ func (g *Globalcomix) Test() (bool, error) {
 	return globalcomixHostRe.MatchString(g.URL), nil
 }
 
+// apiKey returns the key the page embeds as window.gc.global.api_key, so a
+// rotation doesn't break the grabber; the constant stands in if it can't be read.
+func (g *Globalcomix) apiKey() string {
+	g.keyMu.Lock()
+	defer g.keyMu.Unlock()
+
+	if g.key != "" {
+		return g.key
+	}
+	g.key = globalcomixAPIKey
+
+	resp, err := g.client.Get(g.URL)
+	if err != nil {
+		return g.key
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return g.key
+	}
+	body, err := io.ReadAll(io.LimitReader(resp.Body, globalcomixMaxResponseSize))
+	if err != nil {
+		return g.key
+	}
+	if m := globalcomixKeyRe.FindSubmatch(body); m != nil {
+		g.key = string(m[1])
+	}
+
+	return g.key
+}
+
 // get fetches an API path and returns the payload's results. The reader's
 // auth cookie, when the response sets one, is returned apart: it belongs to
 // that release alone, so it can't live in the shared session.
@@ -107,7 +142,7 @@ func (g *Globalcomix) get(path string) (results json.RawMessage, cookie string, 
 		return nil, "", err
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36")
-	req.Header.Set("X-Gc-Client", globalcomixAPIKey)
+	req.Header.Set("X-Gc-Client", g.apiKey())
 	req.Header.Set("X-Gc-Identmode", "cookie")
 	req.Header.Set("Accept", "application/json")
 
@@ -228,18 +263,29 @@ func (g *Globalcomix) LanguageOptions() FilterOptions {
 		values = append(values, l.LangID)
 	}
 
-	return FilterOptions{Values: uniqueValues(values), All: true, Current: comic.Lang}
+	options := FilterOptions{Values: uniqueValues(values), All: true}
+	if langs := g.languages(comic); len(langs) == 1 {
+		options.Current = langs[0]
+	}
+
+	return options
 }
 
-// languages returns the lang_ids to list: the --language one, else the
-// ?lang_id= of the URL, else the series' own
-func (g *Globalcomix) languages(comic *globalcomixComic) []string {
-	lang := g.Settings.Language
-	if lang == "" {
-		if u, err := url.Parse(g.URL); err == nil {
-			lang = u.Query().Get("lang_id")
-		}
+// requestedLanguage is the --language one, else the ?lang_id= of the URL
+func (g *Globalcomix) requestedLanguage() string {
+	if lang := g.Settings.Language; lang != "" {
+		return lang
 	}
+	if u, err := url.Parse(g.URL); err == nil {
+		return u.Query().Get("lang_id")
+	}
+
+	return ""
+}
+
+// languages returns the lang_ids to list: the requested one, else the series' own
+func (g *Globalcomix) languages(comic *globalcomixComic) []string {
+	lang := g.requestedLanguage()
 	switch lang {
 	case "":
 		return []string{comic.Lang}
@@ -262,6 +308,18 @@ func (g *Globalcomix) FetchChapters() (chapters Filterables, errs []error) {
 		return nil, []error{err}
 	}
 
+	if lang := g.requestedLanguage(); lang != "" && lang != FilterAll {
+		known := false
+		var available []string
+		for _, l := range comic.Langs {
+			available = append(available, l.LangID)
+			known = known || l.LangID == lang
+		}
+		if !known {
+			return nil, []error{&UnavailableFilterError{Filter: "language", Value: lang, Available: uniqueValues(available)}}
+		}
+	}
+
 	for _, lang := range g.languages(comic) {
 		results, _, err := g.get(fmt.Sprintf("/v1/comics/%d/releases?lang_id=%s", comic.ID, url.QueryEscape(lang)))
 		if err != nil {
@@ -279,22 +337,33 @@ func (g *Globalcomix) FetchChapters() (chapters Filterables, errs []error) {
 	return chapters, errs
 }
 
-// globalcomixChapters turns a listing into chapters. Collected editions
-// ("v", "o") repeat the issues' content under their own numbers, so they're
-// dropped whenever the series has issues ("c").
+// globalcomixChapters turns a listing into chapters. The API only says a
+// release's type and number: a numbered collected edition ("v", "o") is taken
+// to repeat the issues, so it's dropped when the series has issues ("c"),
+// whereas an unnumbered one (a one-shot, a bonus) can't be told apart and stays.
+// Unnumbered releases get the previous number plus a hundredth, so they never
+// collide with a real issue.
 func globalcomixChapters(releases []globalcomixRelease, lang string) (chapters Filterables) {
+	sort.SliceStable(releases, func(i, j int) bool { return releases[i].Order < releases[j].Order })
+
 	hasIssues := false
 	for _, r := range releases {
 		hasIssues = hasIssues || r.ChapterType == "c"
 	}
 
+	var previous float64
+	var unnumbered int
 	for _, r := range releases {
-		if r.Key == "" || (hasIssues && r.ChapterType != "c") {
+		number, err := strconv.ParseFloat(strings.TrimSpace(r.Chapter), 64)
+		numbered := err == nil
+		if r.Key == "" || (hasIssues && r.ChapterType != "c" && numbered) {
 			continue
 		}
-		number, err := strconv.ParseFloat(strings.TrimSpace(r.Chapter), 64)
-		if err != nil {
-			number = float64(r.Order)
+		if numbered {
+			previous, unnumbered = number, 0
+		} else {
+			unnumbered++
+			number = previous + float64(unnumbered)/100
 		}
 		chapters = append(chapters, &GlobalcomixChapter{
 			Chapter: Chapter{
