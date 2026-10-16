@@ -29,3 +29,9 @@ export function redirectTarget(languages: readonly string[], stored: string | nu
   }
   return null
 }
+
+/** The link's href with `hash` as its fragment (any existing one replaced); unchanged when `hash` is empty. */
+export function withHash(href: string, hash: string): string {
+  if (hash.length < 2) return href
+  return href.split('#')[0] + hash
+}

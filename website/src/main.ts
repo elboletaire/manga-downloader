@@ -3,7 +3,7 @@ import '@fontsource-variable/inter/wght.css'
 import '@fontsource-variable/fredoka/wght.css'
 import './styles.css'
 import { EN_RUNTIME, plural, type RuntimeStrings } from './i18n'
-import { LANG_KEY } from './lang'
+import { LANG_KEY, withHash } from './lang'
 import { forcedTheme, parseTheme, schemeMedia, THEME_KEY, type Theme } from './theme'
 import {
   LATEST_RELEASE_API,
@@ -227,10 +227,12 @@ function enhanceSites(): void {
   update()
 }
 
-/** Remembers the language picked in the header, so the English page stops redirecting. */
+/** Remembers the language picked in the header, so the English page stops redirecting, and keeps the URL's #section. */
 function rememberLanguage(): void {
   for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-lang]')) {
     link.addEventListener('click', () => {
+      // Carry the current section over; ids are the same in every language.
+      link.setAttribute('href', withHash(link.getAttribute('href') ?? '', location.hash))
       try {
         localStorage.setItem(LANG_KEY, link.dataset.lang!)
       } catch {
