@@ -1118,3 +1118,20 @@ func TestPlainHTMLSelectorRegexps(t *testing.T) {
 		}
 	}
 }
+
+func TestPlainHTMLLazySVGAndThemeImages(t *testing.T) {
+	doc := docFromHTML(t, `<div class="reading-content">
+<img src="/wp-content/themes/x/loading.svg" data-src="https://cdn.example/a.jpg">
+<img src="/wp-content/themes/x/loading.svg" data-src="https://cdn.example/wp-content/themes/m/promo.webp">
+<img src="https://cdn.example/b.jpg" data-src="https://cdn.example/other.jpg"></div>`)
+	m := PlainHTML{site: SiteSelector{Image: ".reading-content img"}}
+	ch := m.chapterFromDoc(&PlainHTMLChapter{}, doc)
+	var got []string
+	for _, p := range ch.Pages {
+		got = append(got, p.URL)
+	}
+	want := []string{"https://cdn.example/a.jpg", "https://cdn.example/b.jpg"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("pages = %v, want %v", got, want)
+	}
+}

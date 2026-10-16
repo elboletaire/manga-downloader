@@ -220,6 +220,9 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 				notice.Warn("page %d of %s has an image with no URL to fetch from", pageNum+1, f.GetTitle())
 				return
 			}
+			if isThemeImage(u) {
+				return
+			}
 			if !strings.HasPrefix(u, "http") {
 				u = t.BaseUrl() + u
 			}

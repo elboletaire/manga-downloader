@@ -600,6 +600,7 @@ grabber/html: \
 	grabber/mangavault \
 	grabber/mangaworld \
 	grabber/mangawow \
+	grabber/mangazin \
 	grabber/manhuaplus \
 	grabber/manhwaonline \
 	grabber/mistscans \
@@ -683,6 +684,9 @@ grabber/mangaread:
 	go run . https://www.mangaread.org/manga/one-piece/ 1188
 grabber/mangasorigines:
 	go run . https://mangas-origines.fr/oeuvre/girl-crush/ 30-31
+# mangazin.org's image CDN 404s on random pages of most older chapters; 76 is complete
+grabber/mangazin:
+	go run . https://mangazin.org/manga/the-cold-blooded-warrior/ 76
 grabber/manhuaplus:
 	go run . https://manhuaplus.com/manga/tales-of-demons-and-gods01/ 522.6
 grabber/silentquill:
