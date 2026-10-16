@@ -46,12 +46,12 @@ import { OP_CHAPTERS } from './mock-onepiece';
 const TEMPLATE_DEFAULT =
   '{{.Series}} {{.Number}} - {{.Title}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}';
 const TEMPLATE_WARNING =
-  'This template has no {{.Number}}, {{.Title}} or {{.SiteTitle}}, so files only differ by a version suffix.';
+  'This template has no {{.Number}}, {{.Title}}, {{.SiteTitle}} or {{.Volume}}, so files only differ by a version suffix.';
 
 /** Mirrors packer.TemplateWarning */
-function templateWarning(templ: string): string {
+export function templateWarning(templ: string): string {
   const t = templ.trim();
-  return t === '' || /\{\{(\.Number|\.Title|\.SiteTitle|pad \.Number)/.test(t) ? '' : TEMPLATE_WARNING;
+  return t === '' || /\{\{-?\s*[^}]*\.(Number|Title|SiteTitle|Volume)\b/.test(t) ? '' : TEMPLATE_WARNING;
 }
 
 /** Total chapters in the Catalan One Piece feed (MangaDex, ch 598-1194) */
@@ -397,7 +397,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     browserVisibleAuto: browserAuto,
     browserAlert,
     filenameTemplateDefault: TEMPLATE_DEFAULT,
-    filenameTemplateWarning: templateWarning(options.filenameTemplate),
+    filenameTemplateWarning: options.packAs === 'chapters' ? templateWarning(options.filenameTemplate) : '',
   });
   const push = () => stateBus.emit(snapshot());
 

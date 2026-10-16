@@ -342,7 +342,10 @@ func (a *App) State() State {
 		BrowserAlert:       c.BrowserAlert(),
 
 		FilenameTemplateDefault: packer.FilenameTemplateDefault,
-		FilenameTemplateWarning: packer.TemplateWarning(c.Settings().FilenameTemplate),
+	}
+	// a bundle's name is always distinct, and a volume template needs .Volume
+	if st.Options.PackAs == PackChapters {
+		st.FilenameTemplateWarning = packer.TemplateWarning(st.Options.FilenameTemplate)
 	}
 	st.LoadedLanguage, st.LoadedScanlator = c.LoadedFilters()
 	st.Volumes.Text, st.Volumes.Site = c.Volumes()

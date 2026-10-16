@@ -128,3 +128,15 @@ func TestStateCarriesTheFilenameTemplateDefaultAndWarning(t *testing.T) {
 		t.Error("no warning for a template without a number or title")
 	}
 }
+
+func TestFilenameTemplateWarningOnlyForChapters(t *testing.T) {
+	a, _, _ := newTestApp(t, 3)
+	o := a.State().Options
+	o.FilenameTemplate, o.PackAs = "{{.Series}}", PackBundle
+	if err := a.SetOptions(o); err != nil {
+		t.Fatal(err)
+	}
+	if w := a.State().FilenameTemplateWarning; w != "" {
+		t.Errorf("warned in bundle mode: %q", w)
+	}
+}

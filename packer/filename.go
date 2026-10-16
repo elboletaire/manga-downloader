@@ -5,6 +5,7 @@ package packer
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -64,18 +65,18 @@ func isDefaultTemplate(templ string) bool {
 	return templ == "" || templ == FilenameTemplateDefault || templ == filenameTemplateLegacyDefault
 }
 
-// TemplateWarning returns a warning when templ names no number or title, so
-// every file would get the same name; "" when it's fine or blank (the default)
+// templateNamesFile matches an action that reads a field telling files apart,
+// however it is spaced, trimmed or piped
+var templateNamesFile = regexp.MustCompile(`\{\{-?\s*[^}]*\.(Number|Title|SiteTitle|Volume)\b`)
+
+// TemplateWarning returns a warning when a per-chapter templ names no number,
+// title or volume, so files only differ by a version suffix; "" when it's
+// fine or blank (the default)
 func TemplateWarning(templ string) string {
-	if strings.TrimSpace(templ) == "" {
+	if strings.TrimSpace(templ) == "" || templateNamesFile.MatchString(templ) {
 		return ""
 	}
-	for _, field := range []string{"{{.Number}}", "{{.Title}}", "{{.SiteTitle}}", "{{pad .Number"} {
-		if strings.Contains(templ, field) {
-			return ""
-		}
-	}
-	return "This template has no {{.Number}}, {{.Title}} or {{.SiteTitle}}, so files only differ by a version suffix."
+	return "This template has no {{.Number}}, {{.Title}}, {{.SiteTitle}} or {{.Volume}}, so files only differ by a version suffix."
 }
 
 // VolumeTemplate returns the template volume files are named with: the

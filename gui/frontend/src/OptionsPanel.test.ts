@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { createMockApi } from './mock';
+import { createMockApi, templateWarning } from './mock';
 import { AVIF_EPUB_HINT } from './convertImages';
 import { OptionsPanel, PACK_HINTS, VOLUMES_HINT_NOT_LOADED } from './OptionsPanel';
 import type { State } from './types';
@@ -113,5 +113,14 @@ describe('Filename template', () => {
     expect((await api.state()).filenameTemplateWarning).not.toBe('');
     await api.setOptions({ ...base.options, filenameTemplate: base.filenameTemplateDefault });
     expect((await api.state()).filenameTemplateWarning).toBe('');
+  });
+});
+
+describe('templateWarning (mock)', () => {
+  it('matches the Go cases', () => {
+    for (const ok of ['', '  ', '{{ .Number }}', '{{- .Number}}', '{{printf "%03s" .Number}}', '{{pad .Number 4}}', '{{.Series}} {{.Volume}}']) {
+      expect(templateWarning(ok), ok).toBe('');
+    }
+    expect(templateWarning('{{.Series}}')).not.toBe('');
   });
 });
