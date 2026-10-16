@@ -500,6 +500,30 @@ func TestFetchChaptersTitles(t *testing.T) {
 	}
 }
 
+// TestFetchChaptersStripsReleaseDate covers the shared demonicscans/komikmanga
+// entry, whose chapter rows end in the release date.
+func TestFetchChaptersStripsReleaseDate(t *testing.T) {
+	html := `<html><body><h1>Series</h1><div id="chapters-list">
+		<li><a href="https://example.com/chapter/1">Chapter 52.1 <span>2026-06-02</span></a></li>
+		</div></body></html>`
+	var site SiteSelector
+	for _, s := range plainHTMLSelectors {
+		if s.Rows == "#chapters-list li" {
+			site = s
+		}
+	}
+	m := PlainHTML{doc: docFromHTML(t, html), site: site}
+	m.rows = m.doc.Find(site.Rows)
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) != 0 || len(chapters) != 1 {
+		t.Fatalf("got %d chapters, errors %v", len(chapters), errs)
+	}
+	if got := chapters[0].GetTitle(); got != "Chapter 52.1" {
+		t.Errorf("title = %q, want %q", got, "Chapter 52.1")
+	}
+}
+
 // TestSeriesURLCandidates tests the SeriesLink selector precedence and generic
 // candidate extraction (breadcrumbs, back-links, parent paths).
 func TestSeriesURLCandidates(t *testing.T) {

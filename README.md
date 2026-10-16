@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[150 supported sites](#supported-sites)**, from big aggregators to small
+- **[151 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -629,7 +629,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 150 supported sites</b></summary>
+<summary><b>Show all 151 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -684,6 +684,7 @@ to a minute.
 | [kaynscans.com](https://kaynscans.com) | Kayn Scans, former kaynscan.org | 2026-10-15 |
 | [kingofshojo.com](https://kingofshojo.com) |  | 2026-10-15 |
 | [komikindo.ch](https://komikindo.ch) |  | 2026-10-15 |
+| [komikmanga.com](https://komikmanga.com) | MangaReader, English | 2026-10-16 |
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-15 |
 | [ksgroupscans.com](https://ksgroupscans.com) | KSGroupScans | 2026-10-16 |
 | [lagoonscans.com](https://lagoonscans.com) |  | 2026-10-15 |
