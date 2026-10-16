@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
@@ -263,59 +264,31 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 		pageURLs = append(pageURLs, tchap.URL)
 	}
 
-	pages := []Page{}
-	// Visit each page URL to get its image
+	// Paged readers cost one HTML GET per page, so walk them concurrently and
+	// flatten in page order.
+	results := make([][]Page, len(pageURLs))
+	errs := make([]error, len(pageURLs))
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, tcbPageWorkers)
 	for pageNum, pageURL := range pageURLs {
-		// Fetch page content
-		rbody, err := http.Get(http.RequestParams{
-			URL:     pageURL,
-			Referer: t.BaseUrl(),
-		})
+		wg.Add(1)
+		sem <- struct{}{}
+		go func() {
+			defer wg.Done()
+			defer func() { <-sem }()
+			results[pageNum], errs[pageNum] = t.fetchReaderPage(f, pageNum, pageURL)
+		}()
+	}
+	wg.Wait()
+	for _, err := range errs {
 		if err != nil {
-			notice.Warn("error fetching page %d: %s", pageNum+1, err.Error())
-			continue
-		}
-
-		pageDoc, err := goquery.NewDocumentFromReader(rbody)
-		rbody.Close()
-		if err != nil {
-			notice.Warn("error parsing page %d: %s", pageNum+1, err.Error())
-			continue
-		}
-
-		if err := tcbReaderTypeError(pageDoc, f.GetTitle()); err != nil {
 			return nil, err
 		}
+	}
 
-		if urls, ok, err := wpMangaProtectorImages(pageDoc); ok {
-			if err != nil {
-				notice.Warn("could not decode the protected pages of %s: %s", f.GetTitle(), err)
-			}
-			for _, u := range urls {
-				pages = append(pages, Page{Number: int64(pageNum + 1), URL: u})
-			}
-			continue
-		}
-
-		// Collect all images in this page
-		pageDoc.Find("div.reading-content img").Each(func(i int, s *goquery.Selection) {
-			u := strings.TrimSpace(s.AttrOr("data-src", s.AttrOr("src", "")))
-			if u == "" {
-				notice.Warn("page %d of %s has an image with no URL to fetch from", pageNum+1, f.GetTitle())
-				return
-			}
-			if isThemeImage(u) {
-				return
-			}
-			if !strings.HasPrefix(u, "http") {
-				u = t.BaseUrl() + u
-			}
-			pages = append(pages, Page{
-				Number:     int64(pageNum + 1),
-				URL:        u,
-				RetryFlaky: t.retryFlaky(),
-			})
-		})
+	pages := []Page{}
+	for _, r := range results {
+		pages = append(pages, r...)
 	}
 
 	chapter := &Chapter{
@@ -329,4 +302,63 @@ func (t Tcb) FetchChapter(f Filterable) (*Chapter, error) {
 	chapter.SetGroups(tchap.GetGroups()...)
 
 	return chapter, nil
+}
+
+// tcbPageWorkers bounds the concurrent reader-page fetches of one chapter.
+const tcbPageWorkers = 8
+
+// fetchReaderPage returns the images of one reader page, warning and returning
+// none when the page can't be fetched or parsed, and an error for a reader
+// that isn't a manga chapter.
+func (t Tcb) fetchReaderPage(f Filterable, pageNum int, pageURL string) (pages []Page, err error) {
+	rbody, err := http.Get(http.RequestParams{
+		URL:     pageURL,
+		Referer: t.BaseUrl(),
+	})
+	if err != nil {
+		notice.Warn("error fetching page %d: %s", pageNum+1, err.Error())
+		return nil, nil
+	}
+
+	pageDoc, err := goquery.NewDocumentFromReader(rbody)
+	rbody.Close()
+	if err != nil {
+		notice.Warn("error parsing page %d: %s", pageNum+1, err.Error())
+		return nil, nil
+	}
+
+	if err := tcbReaderTypeError(pageDoc, f.GetTitle()); err != nil {
+		return nil, err
+	}
+
+	if urls, ok, err := wpMangaProtectorImages(pageDoc); ok {
+		if err != nil {
+			notice.Warn("could not decode the protected pages of %s: %s", f.GetTitle(), err)
+		}
+		for _, u := range urls {
+			pages = append(pages, Page{Number: int64(pageNum + 1), URL: u})
+		}
+		return pages, nil
+	}
+
+	// Collect all images in this page
+	pageDoc.Find("div.reading-content img").Each(func(i int, s *goquery.Selection) {
+		u := strings.TrimSpace(s.AttrOr("data-src", s.AttrOr("src", "")))
+		if u == "" {
+			notice.Warn("page %d of %s has an image with no URL to fetch from", pageNum+1, f.GetTitle())
+			return
+		}
+		if isThemeImage(u) {
+			return
+		}
+		if !strings.HasPrefix(u, "http") {
+			u = t.BaseUrl() + u
+		}
+		pages = append(pages, Page{
+			Number:     int64(pageNum + 1),
+			URL:        u,
+			RetryFlaky: t.retryFlaky(),
+		})
+	})
+	return pages, nil
 }
