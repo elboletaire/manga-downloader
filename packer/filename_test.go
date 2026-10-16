@@ -79,9 +79,9 @@ func TestVolumeGroupIsShared(t *testing.T) {
 	}
 }
 
-// TestFilenameLabelUnchanged checks that a chapter whose grabber now leaves the
-// chapter word to its label is named, labelled and keyed as when the grabber
-// wrote it into the title, and that {{.SiteTitle}} is the site's title alone
+// TestFilenameLabelUnchanged checks that a chapter with a composed label is named,
+// labelled and keyed as one carrying that label as its title, and that
+// {{.SiteTitle}} is the site's title alone
 func TestFilenameLabelUnchanged(t *testing.T) {
 	tests := []struct {
 		name      string

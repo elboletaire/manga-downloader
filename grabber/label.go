@@ -47,8 +47,8 @@ func ChapterLabel(f Filterable) string {
 	return f.GetTitle()
 }
 
-// GetLabel returns the chapter's label, see ChapterLabel. Composed labels go
-// through the same cleanup as GetTitle, as when grabbers wrote them as titles.
+// GetLabel returns the chapter's label, see ChapterLabel. Composed labels get
+// the same cleanup as GetTitle.
 func (c Chapter) GetLabel() string {
 	switch c.LabelStyle {
 	case LabelNumbered:
