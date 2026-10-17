@@ -52,6 +52,28 @@ for (const [path, raw] of app) {
   for (const m of text.matchAll(MESSAGE_KEY)) literalUses.push({ path, key: m[1] });
 }
 
+// The keys the Go side sends (msg, uiErr, the shared errors and job.* literals),
+// read from the non-test sources in gui/.
+const goSources = import.meta.glob(['../../../*.go', '!../../../*_test.go'], {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
+
+const GO_MESSAGE = /\b(?:msg|uiErr)\("([^"]+)"/g;
+const GO_SHARED = /\{core\.Err\w+, "([^"]+)"\}/g;
+const GO_JOB = /"(job\.[^"]+)"/g;
+
+const goKeys: string[] = [];
+for (const raw of Object.values(goSources)) {
+  for (const re of [GO_MESSAGE, GO_SHARED, GO_JOB]) {
+    for (const m of raw.matchAll(re)) goKeys.push(m[1]);
+  }
+}
+
+// A plural pair counts as its base key.
+const base = (key: string) => key.replace(/_(one|other)$/, '');
+
 describe('used keys', () => {
   it('finds the keys the app uses', () => {
     expect(literalUses.length).toBeGreaterThan(200);
@@ -64,5 +86,20 @@ describe('used keys', () => {
 
   it('takes a string literal as the key of every t() call', () => {
     expect(dynamic).toEqual([]);
+  });
+
+  it('finds the keys the Go side sends', () => {
+    expect(goKeys).toContain('errors.enterURL');
+    expect(goKeys).toContain('job.reason.locked');
+  });
+
+  it('uses every key of the en catalog', () => {
+    const used = new Set<string>();
+    for (const key of [...literalUses.map((u) => u.key), ...goKeys]) {
+      used.add(key);
+      used.add(base(key));
+    }
+    const unused = [...en].filter((key) => !used.has(key) && !used.has(base(key)));
+    expect(unused).toEqual([]);
   });
 });
