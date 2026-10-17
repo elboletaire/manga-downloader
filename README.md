@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[180 supported sites](#supported-sites)**, from big aggregators to small
+- **[185 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -644,7 +644,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 180 supported sites</b></summary>
+<summary><b>Show all 185 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -666,16 +666,19 @@ to a minute.
 | [bluesolo.org](https://bluesolo.org) | Blue Solo, French scantrad | 2026-10-15 |
 | [chainsawman-chapter.online](https://chainsawman-chapter.online) | Chainsaw Man | 2026-10-15 |
 | [chainsawmannmanga.com](https://chainsawmannmanga.com) | Chainsaw Man | 2026-10-15 |
+| [championcross.jp](https://championcross.jp) | Japanese, Champion Cross (Comici) | 2026-10-17 |
 | [comic-action.com](https://comic-action.com) | Japanese, Web Action (GigaViewer) | — |
 | [comic-days.com](https://comic-days.com) | Japanese, Comic DAYS (GigaViewer) | — |
 | [comic-earthstar.com](https://comic-earthstar.com) | Japanese, Comic Earth Star (GigaViewer) | — |
 | [comic-gardo.com](https://comic-gardo.com) | Japanese, Comic Gardo (GigaViewer) | — |
+| [comic-growl.com](https://comic-growl.com) | Japanese, Comic Growl (Comici) | 2026-10-17 |
 | [comic-ogyaaa.com](https://comic-ogyaaa.com) | Japanese, Comic Ogyaaa (GigaViewer) | — |
 | [comic-seasons.com](https://comic-seasons.com) | Japanese, Seasons (GigaViewer) | — |
 | [comic-trail.com](https://comic-trail.com) | Japanese, Comic Trail (GigaViewer) | — |
 | [comic-walker.com](https://comic-walker.com) | Japanese, KadoComi (KADOKAWA) | 2026-10-17 |
 | [comic-y-ours.com](https://comic-y-ours.com) | Japanese, Comic Y-Ours (GigaViewer) | — |
 | [comic-zenon.com](https://comic-zenon.com) | Japanese, Comic Zenon (GigaViewer) | — |
+| [comicride.jp](https://comicride.jp) | Japanese, Comic Ride (Comici) | 2026-10-17 |
 | [comix.to](https://comix.to) \* |  | 2026-10-15 |
 | [danke.moe](https://danke.moe) | Danke fürs Lesen | 2026-10-15 |
 | [decadencescans.com](https://reader.decadencescans.com) | Decadence Scans, slow image host | 2026-10-16 |
@@ -705,6 +708,7 @@ to a minute.
 | [hachirumi.com](https://hachirumi.com) | Hachirumi, Guya instance, has an NSFW section | 2026-10-16 |
 | [heavenly-delusion.com](https://heavenly-delusion.com) | Heavenly Delusion | 2026-10-15 |
 | [heavenmanga.com](https://heavenmanga.com) | Spanish | 2026-10-15 |
+| [heros-web.com](https://heros-web.com) | Japanese, Hero's Web (Comici) | 2026-10-17 |
 | [hivetoons.org](https://hivetoons.org) | HiveToons, VoidScans | 2026-10-15 |
 | [ichicomi.com](https://ichicomi.com) | Japanese, Ichi Comic (GigaViewer) | — |
 | [inmanga.com](https://inmanga.com) |  | 2026-10-15 |
@@ -805,6 +809,7 @@ to a minute.
 | [sunday-webry.com](https://www.sunday-webry.com) | Japanese, Sunday Webry (GigaViewer) | — |
 | [sushiscan.net](https://sushiscan.net) \* |  | 2026-10-15 |
 | [taiyo.moe](https://taiyo.moe) |  | 2026-10-15 |
+| [takecomic.jp](https://takecomic.jp) | Japanese, Take Comic (Comici) | 2026-10-17 |
 | [tcbonepiecechapters.com](https://tcbonepiecechapters.com) | TCB Scans, former tcbscans.com | 2026-10-15 |
 | [team-shadowi.com](https://www.team-shadowi.com) |  | 2026-10-15 |
 | [templetoons.com](https://templetoons.com) \* | Temple Scan | 2026-10-15 |
