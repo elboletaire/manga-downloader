@@ -9,7 +9,7 @@
   },
   "short": {
     "fetching": "Fetching pages…",
-    "phase": "{{phase}} · {{percent}}%",
+    "phase": "{{phase}} · {{percent}}",
     "packing": "Packing",
     "downloading": "Downloading",
     "done": "Saved",

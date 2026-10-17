@@ -85,7 +85,7 @@ function SummaryCard({ summary, onOpenFolder }: { summary: Summary; onOpenFolder
 
 /** A bundle is one job; its phase text is the story, so it gets room to show it */
 function BundleCard({ job, chapters }: { job: Job; chapters: number }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const fraction = jobFraction(job);
   const moving = job.state === 'downloading' || job.state === 'archiving';
   return (
@@ -96,7 +96,7 @@ function BundleCard({ job, chapters }: { job: Job; chapters: number }) {
       </div>
       <p className="bundle-phase">
         <JobIcon state={job.state} />
-        <span>{moving ? jobShortStatus(job, t) : jobStatus(job, t)}</span>
+        <span>{moving ? jobShortStatus(job, t, lang) : jobStatus(job, t)}</span>
       </p>
       {moving && (
         <div
@@ -154,7 +154,7 @@ function JobList({ state }: { state: State }) {
 }
 
 function JobRow({ job, style }: { job: Job; style: React.CSSProperties }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const fraction = jobFraction(job);
   const status = jobStatus(job, t);
 
@@ -167,7 +167,7 @@ function JobRow({ job, style }: { job: Job; style: React.CSSProperties }) {
         <div className="job-line">
           <span className="job-title">{job.title}</span>
           {job.tags && <span className="job-tags">{job.tags}</span>}
-          <span className="job-status">{jobShortStatus(job, t)}</span>
+          <span className="job-status">{jobShortStatus(job, t, lang)}</span>
         </div>
         {job.state === 'failed' || job.state === 'skipped' ? (
           <span className="job-reason">{job.reason}</span>

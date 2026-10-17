@@ -1,22 +1,28 @@
 {
+  "merged_one": "{{count}} capítulo unido desde partes",
+  "merged_other": "{{count}} capítulos unidos desde partes",
   "headline": {
     "cancelledNoBundle": "Cancelado, no se ha escrito ningún paquete",
     "cancelled": "Cancelado, {{saved}}",
     "bundleFailed": "No se pudo escribir el paquete",
-    "bundleSaved": "Guardado {{bundle}}",
+    "bundleSaved": "Se ha guardado {{bundle}}",
     "inVolumes": "{{saved}} en {{volumes}}",
-    "mergedFromParts": "{{saved}}, {{merged}} fusionados desde partes",
+    "mergedFromParts": "{{saved}}, {{merged}}",
     "nothingSaved": "No se guardó nada"
   },
   "sentence": {
     "cancelledNoBundle": "Cancelado. No se escribió ningún paquete.",
     "cancelledBeforeSaving": "Cancelado antes de guardar nada.",
-    "cancelled": "Cancelado. {{chapters}} guardados antes de detenerse, en {{dir}}.",
+    "savedBefore_one": "Cancelado. {{count}} capítulo guardado antes de detenerse, en {{dir}}.",
+    "savedBefore_other": "Cancelado. {{count}} capítulos guardados antes de detenerse, en {{dir}}.",
     "bundleFailed": "No se pudo escribir el paquete.",
-    "bundleSaved": "Guardado {{bundle}} en {{dir}} ({{chapters}}).",
-    "mergedFromParts": "Se han guardado {{chapters}} en {{dir}}, con {{merged}} fusionados desde partes.",
-    "volumeFiles": "Se han guardado {{chapters}} en {{dir}}, con {{files}}.",
-    "saved": "Se han guardado {{chapters}} en {{dir}}.",
+    "bundleSaved": "Se ha guardado {{bundle}} en {{dir}} ({{chapters}}).",
+    "mergedFromParts_one": "Se ha guardado {{count}} capítulo en {{dir}}, con {{merged}}.",
+    "mergedFromParts_other": "Se han guardado {{count}} capítulos en {{dir}}, con {{merged}}.",
+    "volumeFiles_one": "Se ha guardado {{count}} capítulo en {{dir}}, con {{files}}.",
+    "volumeFiles_other": "Se han guardado {{count}} capítulos en {{dir}}, con {{files}}.",
+    "saved_one": "Se ha guardado {{count}} capítulo en {{dir}}.",
+    "saved_other": "Se han guardado {{count}} capítulos en {{dir}}.",
     "nothingSaved": "No se ha guardado nada."
   }
 }

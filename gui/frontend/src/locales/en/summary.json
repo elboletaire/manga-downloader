@@ -1,22 +1,28 @@
 {
+  "merged_one": "{{count}} chapter merged from parts",
+  "merged_other": "{{count}} chapters merged from parts",
   "headline": {
     "cancelledNoBundle": "Cancelled, no bundle written",
     "cancelled": "Cancelled, {{saved}}",
     "bundleFailed": "The bundle could not be written",
     "bundleSaved": "Saved {{bundle}}",
     "inVolumes": "{{saved}} in {{volumes}}",
-    "mergedFromParts": "{{saved}}, {{merged}} merged from parts",
+    "mergedFromParts": "{{saved}}, {{merged}}",
     "nothingSaved": "Nothing was saved"
   },
   "sentence": {
     "cancelledNoBundle": "Cancelled. No bundle was written.",
     "cancelledBeforeSaving": "Cancelled before anything was saved.",
-    "cancelled": "Cancelled. {{chapters}} saved before it stopped, in {{dir}}.",
+    "savedBefore_one": "Cancelled. {{count}} chapter saved before it stopped, in {{dir}}.",
+    "savedBefore_other": "Cancelled. {{count}} chapters saved before it stopped, in {{dir}}.",
     "bundleFailed": "The bundle could not be written.",
     "bundleSaved": "Saved {{bundle}} to {{dir}} ({{chapters}}).",
-    "mergedFromParts": "Saved {{chapters}} to {{dir}}, with {{merged}} merged from parts.",
-    "volumeFiles": "Saved {{chapters}} to {{dir}}, with {{files}}.",
-    "saved": "Saved {{chapters}} to {{dir}}.",
+    "mergedFromParts_one": "Saved {{count}} chapter to {{dir}}, with {{merged}}.",
+    "mergedFromParts_other": "Saved {{count}} chapters to {{dir}}, with {{merged}}.",
+    "volumeFiles_one": "Saved {{count}} chapter to {{dir}}, with {{files}}.",
+    "volumeFiles_other": "Saved {{count}} chapters to {{dir}}, with {{files}}.",
+    "saved_one": "Saved {{count}} chapter to {{dir}}.",
+    "saved_other": "Saved {{count}} chapters to {{dir}}.",
     "nothingSaved": "Nothing was saved."
   }
 }

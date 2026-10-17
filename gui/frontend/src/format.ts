@@ -1,6 +1,7 @@
 // Pure helpers that turn the window's state into the words shown to the user.
 
-import type { T } from './i18n';
+import type { Lang, T } from './i18n';
+import { percent } from './i18n/format';
 import type { Job, Summary } from './types';
 
 export function plural(n: number, one: string, many: string): string {
@@ -26,7 +27,7 @@ export function summaryHeadline(s: Summary, t: T): string {
   if (s.saved > 0) {
     const saved = t('count.saved', { count: s.saved });
     if (s.volumes > 0 && s.parts) {
-      parts.push(t('summary.headline.mergedFromParts', { saved, merged: t('count.chapter', { count: s.volumes }) }));
+      parts.push(t('summary.headline.mergedFromParts', { saved, merged: t('summary.merged', { count: s.volumes }) }));
     } else {
       parts.push(
         s.volumes > 0
@@ -54,7 +55,7 @@ export function summarySentence(s: Summary, t: T): string {
     return t('summary.sentence.cancelledBeforeSaving');
   }
   if (s.cancelled) {
-    return t('summary.sentence.cancelled', { chapters: t('count.chapter', { count: s.saved }), dir: s.dir });
+    return t('summary.sentence.savedBefore', { count: s.saved, dir: s.dir });
   }
   if (s.error !== '') {
     return t('summary.sentence.bundleFailed');
@@ -66,23 +67,22 @@ export function summarySentence(s: Summary, t: T): string {
       chapters: t('count.chapter', { count: s.saved }),
     });
   }
-  const chapters = t('count.chapter', { count: s.saved });
   if (s.saved > 0 && s.volumes > 0 && s.parts) {
     return t('summary.sentence.mergedFromParts', {
-      chapters,
+      count: s.saved,
       dir: s.dir,
-      merged: t('count.chapter', { count: s.volumes }),
+      merged: t('summary.merged', { count: s.volumes }),
     });
   }
   if (s.saved > 0 && s.volumes > 0) {
     return t('summary.sentence.volumeFiles', {
-      chapters,
+      count: s.saved,
       dir: s.dir,
       files: t('count.volumeFile', { count: s.volumes }),
     });
   }
   if (s.saved > 0) {
-    return t('summary.sentence.saved', { chapters, dir: s.dir });
+    return t('summary.sentence.saved', { count: s.saved, dir: s.dir });
   }
 
   return t('summary.sentence.nothingSaved');
@@ -107,7 +107,7 @@ export function jobStatus(j: Job, t: T): string {
 }
 
 /** The short status at the end of a progress row: phase and percentage while it moves, the outcome after */
-export function jobShortStatus(j: Job, t: T): string {
+export function jobShortStatus(j: Job, t: T, lang: Lang): string {
   switch (j.state) {
     case 'fetching':
       return t('job.short.fetching');
@@ -119,7 +119,7 @@ export function jobShortStatus(j: Job, t: T): string {
           : j.state === 'archiving'
             ? t('job.short.packing')
             : t('job.short.downloading');
-      return t('job.short.phase', { phase, percent: Math.round(jobFraction(j) * 100) });
+      return t('job.short.phase', { phase, percent: percent(jobFraction(j), lang) });
     }
     case 'done':
       return t('job.short.done');

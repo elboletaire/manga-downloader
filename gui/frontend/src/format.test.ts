@@ -123,22 +123,22 @@ describe('jobShortStatus', () => {
   });
 
   it('shows the phase and percentage while moving', () => {
-    expect(jobShortStatus(job({}), en)).toBe('Downloading · 25%');
-    expect(jobShortStatus(job({ state: 'archiving', done: 18 }), en)).toBe('Packing · 75%');
+    expect(jobShortStatus(job({}), en, 'en')).toBe('Downloading · 25%');
+    expect(jobShortStatus(job({ state: 'archiving', done: 18 }), en, 'en')).toBe('Packing · 75%');
   });
 
   it('says a row is fetching its pages without a percentage', () => {
-    expect(jobShortStatus(job({ state: 'fetching', total: 0, done: 0 }), en)).toBe('Fetching pages\u2026');
+    expect(jobShortStatus(job({ state: 'fetching', total: 0, done: 0 }), en, 'en')).toBe('Fetching pages\u2026');
   });
 
   it("uses the bundle's own phase without its trailing dots", () => {
-    expect(jobShortStatus(job({ status: 'Creating the bundle...', done: 12 }), en)).toBe('Creating the bundle · 50%');
+    expect(jobShortStatus(job({ status: 'Creating the bundle...', done: 12 }), en, 'en')).toBe('Creating the bundle · 50%');
   });
 
   it('names the outcome once finished', () => {
-    expect(jobShortStatus(job({ state: 'done' }), en)).toBe('Saved');
-    expect(jobShortStatus(job({ state: 'failed', reason: '404' }), en)).toBe('Failed');
-    expect(jobShortStatus(job({ state: 'skipped' }), en)).toBe('Skipped');
+    expect(jobShortStatus(job({ state: 'done' }), en, 'en')).toBe('Saved');
+    expect(jobShortStatus(job({ state: 'failed', reason: '404' }), en, 'en')).toBe('Failed');
+    expect(jobShortStatus(job({ state: 'skipped' }), en, 'en')).toBe('Skipped');
   });
 });
 
@@ -161,6 +161,36 @@ describe('translated helpers', () => {
     expect(summaryHeadline({ ...base, cancelled: true, saved: 2 }, ca)).toBe('Cancel·lat, 2 desats');
   });
 
+  it('agrees the Spanish sentence with a count of one and of two', () => {
+    expect(summarySentence({ ...base, saved: 1 }, es)).toBe('Se ha guardado 1 capítulo en /out.');
+    expect(summarySentence({ ...base, saved: 2 }, es)).toBe('Se han guardado 2 capítulos en /out.');
+    expect(summarySentence({ ...base, saved: 1, volumes: 1, parts: true }, es)).toBe(
+      'Se ha guardado 1 capítulo en /out, con 1 capítulo unido desde partes.',
+    );
+    expect(summarySentence({ ...base, saved: 2, volumes: 2, parts: true }, es)).toBe(
+      'Se han guardado 2 capítulos en /out, con 2 capítulos unidos desde partes.',
+    );
+    expect(summarySentence({ ...base, cancelled: true, saved: 1 }, es)).toBe(
+      'Cancelado. 1 capítulo guardado antes de detenerse, en /out.',
+    );
+  });
+
+  it('formats the percentage in the language', () => {
+    const job: Job = {
+      title: 'Ch 1',
+      tags: '',
+      number: 1,
+      total: 24,
+      done: 18,
+      state: 'archiving',
+      reason: '',
+      status: '',
+      volume: false,
+    };
+    expect(jobShortStatus(job, es, 'es')).toBe('Empaquetando · 75\u00a0%');
+    expect(jobShortStatus(job, en, 'en')).toBe('Packing · 75%');
+  });
+
   it('reads the job status in Catalan', () => {
     const job: Job = {
       title: 'Ch 1',
@@ -173,7 +203,7 @@ describe('translated helpers', () => {
       status: '',
       volume: false,
     };
-    expect(jobShortStatus(job, ca)).toBe('Empaquetant · 75%');
+    expect(jobShortStatus(job, ca, 'ca')).toBe('Empaquetant · 75\u00a0%');
     expect(jobStatus({ ...job, state: 'failed', reason: '404' }, ca)).toBe('fallit: 404');
   });
 });

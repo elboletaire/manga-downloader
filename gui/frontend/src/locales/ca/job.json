@@ -9,7 +9,7 @@
   },
   "short": {
     "fetching": "Obtenint pàgines…",
-    "phase": "{{phase}} · {{percent}}%",
+    "phase": "{{phase}} · {{percent}}",
     "packing": "Empaquetant",
     "downloading": "Descarregant",
     "done": "Desat",
