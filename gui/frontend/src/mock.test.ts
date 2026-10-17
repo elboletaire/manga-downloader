@@ -412,12 +412,11 @@ describe('mock volumes', () => {
       const state = await api.state();
       expect(state.options.packAs).toBe('parts');
       expect(state.title).toBe('One Piece');
-      // the parts share their chapter's title, plus their part; the English list has
-      // no title for these chapters, so each part is just its name
+      // the parts share their chapter's title, plus their part
       const chapters = await api.chapters();
-      expect(chapters[0]).toMatchObject({ number: 1, title: '' });
-      expect(chapters[1]).toMatchObject({ number: 2, title: 'Part 1' });
-      expect(chapters[2]).toMatchObject({ number: 2, title: 'Part 2' });
+      expect(chapters[0]).toMatchObject({ number: 1, title: 'Niddhoggr' });
+      expect(chapters[1]).toMatchObject({ number: 2, title: 'With Pride Part 1' });
+      expect(chapters[2]).toMatchObject({ number: 2, title: 'With Pride Part 2' });
       // chapter 1, both parts of 2-4 and the open part of 19
       expect(state.selectedCount).toBe(8);
       await api.start();
