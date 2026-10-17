@@ -20,5 +20,6 @@
   "selectOne": "select at least one chapter",
   "noVolumes": "the site doesn't say which volume these chapters are in; give the volumes as chapter ranges instead, e.g. \"1-7/8-16\"",
   "loadTitle": "Couldn't fetch the series title: {{reason}}",
-  "loadChapters": "Couldn't fetch the chapter list: {{reason}}"
+  "loadChapters": "Couldn't fetch the chapter list: {{reason}}",
+  "noChapterDownloaded": "no chapter could be downloaded"
 }

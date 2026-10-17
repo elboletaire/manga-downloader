@@ -93,8 +93,15 @@ func (j *Job) setTitle(m Message)  { j.Title, j.TitleMsg = m.Text, &m }
 func (j *Job) setStatus(m Message) { j.Status, j.StatusMsg = m.Text, &m }
 func (j *Job) setReason(m Message) { j.Reason, j.ReasonMsg = m.Text, &m }
 
-// setReasonText sets a reason from upstream, which the window shows as it is
-func (j *Job) setReasonText(s string) { j.Reason, j.ReasonMsg = s, nil }
+// setReasonErr sets a reason from an error: a shared one the window translates
+// keeps its message, any other shows as its text
+func (j *Job) setReasonErr(err error) {
+	if m := messageOf(err); m != nil {
+		j.setReason(*m)
+		return
+	}
+	j.Reason, j.ReasonMsg = err.Error(), nil
+}
 
 // clearStatus ends the row's phase
 func (j *Job) clearStatus() { j.Status, j.StatusMsg = "", nil }
@@ -1397,7 +1404,7 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 	case c.bundle != nil && c.stats.saved == 0:
 		// core still packs an empty bundle when every chapter failed (as the
 		// CLI does), so the file it leaves behind is not a result
-		s.Err = errors.New("no chapter could be downloaded")
+		s.Err = uiErr("errors.noChapterDownloaded", nil, nil)
 		s.Failures = append(s.Failures, "packing bundle: no chapter could be downloaded")
 		c.appendMsgLocked(LogError, msg("log.bundleEmpty", nil))
 	default:
@@ -1571,7 +1578,7 @@ func (e events) FetchFailed(listed grabber.Filterable, err error) {
 	c.stats.failures = append(c.stats.failures, failure)
 	if j := c.fetching[listed]; j != nil {
 		j.State = JobFailed
-		j.setReasonText(err.Error())
+		j.setReasonErr(err)
 		j.clearStatus()
 		delete(c.fetching, listed)
 	} else if c.bundle == nil && c.listedVol[listed] == nil {
@@ -1810,14 +1817,14 @@ func (e events) VolumePacked(v *core.Volume, name string, err error) {
 		// its chapters were each counted as skipped already
 		if j != nil {
 			j.State = JobSkipped
-			j.setReasonText(err.Error())
+			j.setReasonErr(err)
 		}
 	case err != nil:
 		failure := fmt.Sprintf("%s: %s", label, err)
 		c.stats.failures = append(c.stats.failures, failure)
 		if j != nil {
 			j.State = JobFailed
-			j.setReasonText(err.Error())
+			j.setReasonErr(err)
 		}
 		c.appendMsgLocked(LogError, msg("log.errorPacking", map[string]any{"label": label, "reason": err.Error()}))
 	default:

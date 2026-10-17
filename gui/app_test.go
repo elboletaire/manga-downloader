@@ -153,6 +153,17 @@ func TestLoadMessageNamesTheFailingStep(t *testing.T) {
 	}
 }
 
+// a bundle's error is its summary's message, and a shared one keeps its key
+func TestSummaryErrorCarriesItsMessage(t *testing.T) {
+	s := summaryDTO(&Summary{Err: uiErr("errors.noChapterDownloaded", nil, nil)})
+	if s.ErrorMsg == nil || s.ErrorMsg.Key != "errors.noChapterDownloaded" || s.Error != "no chapter could be downloaded" {
+		t.Errorf("summary error = %q, message = %+v", s.Error, s.ErrorMsg)
+	}
+	if s := summaryDTO(&Summary{Err: errors.New("plain")}); s.ErrorMsg != nil {
+		t.Errorf("plain error got message %+v", s.ErrorMsg)
+	}
+}
+
 // the load errors the window translates carry their key; the rest don't
 func TestLoadMessageCarriesItsKey(t *testing.T) {
 	cases := []struct {

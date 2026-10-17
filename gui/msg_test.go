@@ -169,6 +169,17 @@ func TestWindowErrorTranslatesSharedErrors(t *testing.T) {
 	}
 }
 
+// messageOf is nil for an error the window doesn't translate, and the message
+// of a shared sentinel wrapped or not
+func TestMessageOf(t *testing.T) {
+	if m := messageOf(errors.New("plain")); m != nil {
+		t.Errorf("plain error got message %+v", m)
+	}
+	if m := messageOf(fmt.Errorf("x: %w", core.ErrLocked)); m == nil || m.Key != "job.reason.locked" {
+		t.Errorf("wrapped ErrLocked = %+v, want job.reason.locked", m)
+	}
+}
+
 // messageKeyRE matches a literal key passed to msg or uiErr
 var messageKeyRE = regexp.MustCompile(`\b(?:msg|uiErr)\("([^"]+)"`)
 

@@ -20,5 +20,6 @@
   "selectOne": "selecciona al menos un capítulo",
   "noVolumes": "el sitio no indica a qué volumen pertenecen estos capítulos; indica los volúmenes como rangos de capítulos, p. ej. \"1-7/8-16\"",
   "loadTitle": "No se pudo obtener el título de la serie: {{reason}}",
-  "loadChapters": "No se pudo obtener la lista de capítulos: {{reason}}"
+  "loadChapters": "No se pudo obtener la lista de capítulos: {{reason}}",
+  "noChapterDownloaded": "no se pudo descargar ningún capítulo"
 }

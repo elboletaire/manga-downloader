@@ -130,20 +130,33 @@ var sharedMessages = []struct {
 	key string
 }{
 	{core.ErrNoVolumes, "errors.noVolumes"},
+	{core.ErrLocked, "job.reason.locked"},
+	{core.ErrEmptyVolume, "job.reason.emptyVolume"},
+}
+
+// messageOf is the message of err when the window translates it, nil otherwise
+func messageOf(err error) *Message {
+	var ue *uiError
+	if errors.As(err, &ue) {
+		m := ue.Message
+		return &m
+	}
+	for _, s := range sharedMessages {
+		if errors.Is(err, s.err) {
+			m := msg(s.key, nil)
+			return &m
+		}
+	}
+
+	return nil
 }
 
 // windowError is the Wails ErrorFormatter. Wails hands the formatted value to
 // the window as an Error message, so a message error is its Message as JSON
 // (the window parses it) and any other error its text.
 func windowError(err error) string {
-	var ue *uiError
-	if errors.As(err, &ue) {
-		return messageJSON(ue.Message)
-	}
-	for _, s := range sharedMessages {
-		if errors.Is(err, s.err) {
-			return messageJSON(msg(s.key, nil))
-		}
+	if m := messageOf(err); m != nil {
+		return messageJSON(*m)
 	}
 
 	return err.Error()

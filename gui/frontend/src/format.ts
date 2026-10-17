@@ -171,8 +171,9 @@ function parseMessage(text: string): Message | undefined {
   }
   try {
     const parsed: unknown = JSON.parse(text);
-    if (typeof parsed === 'object' && parsed !== null && typeof (parsed as { key?: unknown }).key === 'string') {
-      return parsed as Message;
+    const candidate = parsed as { key?: unknown; text?: unknown } | null;
+    if (typeof candidate === 'object' && candidate !== null && typeof candidate.key === 'string' && typeof candidate.text === 'string') {
+      return candidate as Message;
     }
   } catch {
     // not JSON: the text is shown as it is

@@ -998,8 +998,27 @@ func TestJobRowsCarryTheirMessages(t *testing.T) {
 		t.Errorf("after clearStatus: Status = %q, StatusMsg = %+v", row.Status, row.StatusMsg)
 	}
 	row.setReason(msg("job.reason.cancelled", nil))
-	row.setReasonText("plain")
+	row.setReasonErr(errors.New("plain"))
 	if row.ReasonMsg != nil || row.Reason != "plain" {
-		t.Errorf("after setReasonText: Reason = %q, ReasonMsg = %+v", row.Reason, row.ReasonMsg)
+		t.Errorf("after setReasonErr: Reason = %q, ReasonMsg = %+v", row.Reason, row.ReasonMsg)
+	}
+}
+
+// a shared sentinel keeps its message as a row's reason, any other error is plain
+func TestSetReasonErrTranslatesSharedSentinels(t *testing.T) {
+	cases := []struct {
+		err  error
+		key  string
+		text string
+	}{
+		{core.ErrLocked, "job.reason.locked", "locked chapter"},
+		{core.ErrEmptyVolume, "job.reason.emptyVolume", "none of its chapters could be downloaded"},
+	}
+	for _, c := range cases {
+		var j Job
+		j.setReasonErr(c.err)
+		if j.ReasonMsg == nil || j.ReasonMsg.Key != c.key || j.Reason != c.text {
+			t.Errorf("%v: reason = %q, message = %+v, want key %q", c.err, j.Reason, j.ReasonMsg, c.key)
+		}
 	}
 }

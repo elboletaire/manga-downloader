@@ -120,6 +120,10 @@ describe('errorMessage', () => {
     expect(errorMessage('{"text":"x"}', es)).toBe('{"text":"x"}');
   });
 
+  it('shows JSON without a text as it is, since there is no English to fall back to', () => {
+    expect(errorMessage('{"key":"errors.enterURL"}', es)).toBe('{"key":"errors.enterURL"}');
+  });
+
   it('falls back to the message text for a key the catalog lacks', () => {
     expect(errorMessage(JSON.stringify({ key: 'errors.nope', text: 'English' }), es)).toBe('English');
   });

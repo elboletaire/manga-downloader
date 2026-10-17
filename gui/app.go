@@ -311,6 +311,8 @@ type SummaryDTO struct {
 	Failures []string `json:"failures"`
 	// Error is set when a bundle couldn't be written
 	Error string `json:"error"`
+	// ErrorMsg is Error as a message, when the window translates it
+	ErrorMsg *Message `json:"errorMsg,omitempty"`
 }
 
 // ChapterDTO is one row of the chapter list. Index is the position in the
@@ -871,6 +873,7 @@ func summaryDTO(s *Summary) *SummaryDTO {
 	}
 	if s.Err != nil {
 		out.Error = s.Err.Error()
+		out.ErrorMsg = messageOf(s.Err)
 	}
 
 	return out

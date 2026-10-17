@@ -59,6 +59,24 @@ describe('ActivityPanel', () => {
     expect(html).toContain('<h3>3 desats</h3>');
   });
 
+  it('translates the last download\'s error in Spanish', () => {
+    const html = render(
+      {
+        running: false,
+        summary: {
+          ...summary,
+          bundled: true,
+          error: 'no chapter could be downloaded',
+          errorMsg: { key: 'errors.noChapterDownloaded', text: 'no chapter could be downloaded' },
+        },
+        jobs: [],
+      },
+      'es',
+    );
+    expect(html).toContain('no se pudo descargar ningún capítulo');
+    expect(html).not.toContain('no chapter could be downloaded');
+  });
+
   it('shows a volume row and its reason in Spanish', () => {
     const volume: Job = {
       ...job,

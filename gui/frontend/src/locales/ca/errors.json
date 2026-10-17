@@ -20,5 +20,6 @@
   "selectOne": "selecciona almenys un capítol",
   "noVolumes": "el lloc no indica a quin volum pertanyen aquests capítols; indica els volums com a rangs de capítols, p. ex. \"1-7/8-16\"",
   "loadTitle": "No s'ha pogut obtenir el títol de la sèrie: {{reason}}",
-  "loadChapters": "No s'ha pogut obtenir la llista de capítols: {{reason}}"
+  "loadChapters": "No s'ha pogut obtenir la llista de capítols: {{reason}}",
+  "noChapterDownloaded": "no s'ha pogut descarregar cap capítol"
 }

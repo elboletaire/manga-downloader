@@ -58,7 +58,7 @@ function SummaryCard({ summary, onOpenFolder }: { summary: Summary; onOpenFolder
         <h3>{summaryHeadline(summary, t)}</h3>
       </div>
       <p className="summary-text">{summarySentence(summary, t)}</p>
-      {summary.error !== '' && <p className="error-text small">{summary.error}</p>}
+      {summary.error !== '' && <p className="error-text small">{say(t, summary.errorMsg, summary.error)}</p>}
       {summary.skipped > 0 && (
         <p className="muted small">
           {t('activity.skippedNote', { count: summary.skipped })}

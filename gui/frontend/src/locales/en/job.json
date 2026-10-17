@@ -35,6 +35,8 @@
     "skipped": "every page excluded by --skip-pages",
     "download": "download: {{reason}}",
     "packing": "packing: {{reason}}",
-    "filename": "filename: {{reason}}"
+    "filename": "filename: {{reason}}",
+    "locked": "locked chapter",
+    "emptyVolume": "none of its chapters could be downloaded"
   }
 }

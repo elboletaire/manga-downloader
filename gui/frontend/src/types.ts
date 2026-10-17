@@ -75,6 +75,8 @@ export interface Summary {
   failures: string[];
   /** Set when a bundle couldn't be written */
   error: string;
+  /** error as a message, when the window translates it */
+  errorMsg?: Message;
 }
 
 /**
