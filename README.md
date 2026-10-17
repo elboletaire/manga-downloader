@@ -341,7 +341,7 @@ Open the app and follow these steps:
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/12-parts-dark.png">
-     <img alt="Merged parts: each chapter split in parts on one row, with its parts picked together" src="assets/screenshots/12-parts-light.png">
+     <img alt="Pack as Merged: the chapter list with each chapter's parts grouped under it" src="assets/screenshots/12-parts-light.png">
    </picture>
 
 5. **Press Download.** The *Activity* tab shows each chapter as it's fetched and
