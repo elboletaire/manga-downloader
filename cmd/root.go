@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -18,7 +19,6 @@ import (
 	"github.com/elboletaire/manga-downloader/packer"
 	"github.com/elboletaire/manga-downloader/ranges"
 	"github.com/fatih/color"
-	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
@@ -130,14 +130,7 @@ func Run(cmd *cobra.Command, args []string) {
 	rangeRequested := len(args) > 1
 	// ranges argument is not provided
 	if len(args) == 1 {
-		prompt := promptui.Prompt{
-			Label:     allChaptersLabel(chapters),
-			IsConfirm: true,
-		}
-
-		_, err := prompt.Run()
-
-		if err != nil {
+		if err := confirmAll(allChaptersLabel(chapters)); err != nil {
 			yellow("Canceled by user")
 			exit(0)
 		}
@@ -494,6 +487,85 @@ func allChaptersLabel(chapters grabber.Filterables) string {
 		label += fmt.Sprintf(" (%d locked, skipped)", locked)
 	}
 	return label
+}
+
+// errDeclined is what confirmAll returns for anything but a "y" answer
+var errDeclined = errors.New("declined")
+
+// confirmAll asks label as a yes/no question and fails unless the answer is "y".
+// It reads the keys itself: a second goroutine redrawing on Enter duplicates the line.
+func confirmAll(label string) error {
+	fd := int(os.Stdin.Fd())
+	if term.IsTerminal(fd) {
+		if state, err := term.MakeRaw(fd); err == nil {
+			defer term.Restore(fd, state)
+		}
+	}
+	return readConfirm(os.Stdin, color.Output, label)
+}
+
+// readConfirm draws the question, echoes the answer as it is typed and returns
+// nil only for "y" then Enter; anything else declines
+func readConfirm(in io.Reader, out io.Writer, label string) error {
+	fmt.Fprintf(out, "%s %s %s ",
+		color.New(color.FgBlue, color.Bold).Sprint("?"),
+		color.New(color.Bold).Sprint(label+"?"),
+		color.New(color.Faint).Sprint("[y/N]"))
+
+	var answer []byte
+	key := make([]byte, 1)
+	for {
+		if _, err := in.Read(key); err != nil {
+			fmt.Fprint(out, "\r\n")
+			return errDeclined
+		}
+		c := key[0]
+		if c == '\r' || c == '\n' {
+			break
+		}
+		switch {
+		case c == 3 || c == 4: // Ctrl+C, Ctrl+D
+			fmt.Fprint(out, "\r\n")
+			return errDeclined
+		case c == 27: // an escape sequence (arrow keys...) is not part of the answer
+			if err := skipEscape(in, key); err != nil {
+				fmt.Fprint(out, "\r\n")
+				return errDeclined
+			}
+		case (c == 127 || c == 8) && len(answer) > 0:
+			answer = answer[:len(answer)-1]
+			fmt.Fprint(out, "\b \b")
+		case c >= ' ' && c < 127:
+			answer = append(answer, c)
+			_, _ = out.Write(key)
+		}
+	}
+
+	// the answered line replaces the question
+	fmt.Fprintf(out, "\r\x1b[2K%s %s\r\n", color.New(color.Faint).Sprint(label+":"), answer)
+	if !strings.EqualFold(string(answer), "y") {
+		return errDeclined
+	}
+	return nil
+}
+
+// skipEscape consumes the rest of an escape sequence after its ESC, reading
+// through key: a CSI or SS3 sequence runs up to its final byte (0x40-0x7E)
+func skipEscape(in io.Reader, key []byte) error {
+	if _, err := in.Read(key); err != nil {
+		return err
+	}
+	if key[0] != '[' && key[0] != 'O' {
+		return nil
+	}
+	for {
+		if _, err := in.Read(key); err != nil {
+			return err
+		}
+		if key[0] >= 0x40 && key[0] <= 0x7E {
+			return nil
+		}
+	}
 }
 
 // skipLocked drops the chapters the listing marks as locked, returning the rest

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/iotest"
 	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
@@ -811,6 +812,78 @@ func TestAllChaptersLabel(t *testing.T) {
 	want := "Do you want to download all 2 chapters (1 locked, skipped)"
 	if got := allChaptersLabel(grabber.Filterables{free, paid}); got != want {
 		t.Errorf("one locked chapter: got %q, want %q", got, want)
+	}
+}
+
+// only a "y" answer confirms; the answered line is drawn once, not repeated
+func TestReadConfirm(t *testing.T) {
+	const label = "Do you want to download all 5 chapters"
+	tests := []struct {
+		name    string
+		input   string
+		wantErr bool
+		// the answered line as drawn over the question, "" when nothing is redrawn
+		wantLine string
+	}{
+		{"yes", "y\r", false, label + ": y"},
+		{"upper case", "Y\n", false, label + ": Y"},
+		{"backspace corrects", "yn\x7f\r", false, label + ": y"},
+		{"no", "n\r", true, label + ": n"},
+		{"default no", "\r", true, label + ": "},
+		{"not just y", "yes\r", true, label + ": yes"},
+		{"ctrl+c", "y\x03", true, ""},
+		{"ctrl+d", "\x04", true, ""},
+		{"input ends", "y", true, ""},
+		{"tab is ignored", "\ty\r", false, label + ": y"},
+		{"tab after the answer is ignored", "y\t\r", false, label + ": y"},
+		{"arrow key is not echoed", "\x1b[Dy\r", false, label + ": y"},
+		{"ss3 arrow key is not echoed", "\x1bODy\r", false, label + ": y"},
+		{"arrow key after the answer", "y\x1b[D\r", false, label + ": y"},
+		{"escape cut short", "y\x1b[", true, ""},
+	}
+	readers := map[string]func(string) io.Reader{
+		"whole input": func(s string) io.Reader { return strings.NewReader(s) },
+		// one byte per Read, as a terminal delivers keys
+		"one byte per read": func(s string) io.Reader { return iotest.OneByteReader(strings.NewReader(s)) },
+	}
+	for rname, reader := range readers {
+		for _, tt := range tests {
+			t.Run(rname+"/"+tt.name, func(t *testing.T) {
+				var out bytes.Buffer
+				err := readConfirm(reader(tt.input), &out, label)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("err = %v, wantErr %v", err, tt.wantErr)
+				}
+				got := out.String()
+				// every outcome ends its line, so "Canceled by user" starts a fresh one
+				if !strings.HasSuffix(got, "\r\n") {
+					t.Errorf("output %q doesn't end its line", got)
+				}
+				if n := strings.Count(got, label+"?"); n != 1 {
+					t.Errorf("question drawn %d times, want 1: %q", n, got)
+				}
+				if tt.wantLine != "" && !strings.HasSuffix(got, "\r\x1b[2K"+tt.wantLine+"\r\n") {
+					t.Errorf("answered line not redrawn as %q: %q", tt.wantLine, got)
+				}
+				if tt.wantLine != "" && strings.Count(got, label+":") != 1 {
+					t.Errorf("answered line drawn %d times, want 1: %q", strings.Count(got, label+":"), got)
+				}
+			})
+		}
+	}
+}
+
+// backspace on an empty answer prints nothing, so the line stays intact
+func TestReadConfirmBackspaceOnEmpty(t *testing.T) {
+	var out bytes.Buffer
+	if err := readConfirm(strings.NewReader("\x7f\x08y\r"), &out, "Q"); err != nil {
+		t.Fatalf("err = %v, want nil", err)
+	}
+	if strings.Contains(out.String(), "\b") {
+		t.Errorf("backspace on an empty answer was echoed: %q", out.String())
+	}
+	if !strings.HasSuffix(out.String(), "\r\x1b[2KQ: y\r\n") {
+		t.Errorf("line broken: %q", out.String())
 	}
 }
 

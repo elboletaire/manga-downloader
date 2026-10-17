@@ -13,7 +13,6 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/gen2brain/avif v0.6.0
 	github.com/ivanpirog/coloredcobra v1.0.1
-	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-runewidth v0.0.30
 	github.com/spf13/cobra v1.6.1
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e
@@ -32,7 +31,6 @@ require (
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
 	github.com/chromedp/sysutil v1.1.0 // indirect
-	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/ebitengine/purego v0.10.1 // indirect
