@@ -99,11 +99,8 @@ export function shownSelection(filter: FilterChoice, loaded: boolean): string {
 }
 
 /**
- * The options of one selector, in the order shown: a placeholder when no value
- * is shown, "All" first where the site takes it, then the values in the
- * backend's order (sortedValues), whatever the UI language. The selected value
- * is always among them, even when the site doesn't list it (a value the series
- * was loaded with), so the select never shows the wrong one.
+ * The options of one selector: a placeholder if none is shown, "All" first if the
+ * site takes it, then the backend's values. The selected value is always among them.
  */
 export function filterOptions(filter: FilterChoice, kind: FilterKind, t: T, lang: Lang = 'en', loaded = true): FilterOption[] {
   const options: FilterOption[] = [];
@@ -114,7 +111,7 @@ export function filterOptions(filter: FilterChoice, kind: FilterKind, t: T, lang
     options.push({ value: '', label: kind === 'language' ? t('filters.chooseLanguage') : t('filters.chooseGroup'), disabled: true });
   }
   if (filter.all) {
-    options.push({ value: FILTER_ALL, label: kind === 'language' ? t('common.all') : t('filters.allGroups') });
+    options.push({ value: FILTER_ALL, label: kind === 'language' ? t('filters.allLanguages') : t('filters.allGroups') });
   }
 
   const values = [...filter.values];
