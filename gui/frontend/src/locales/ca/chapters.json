@@ -20,7 +20,7 @@
   "selected": "<strong>{{selected}}</strong> de {{total}} seleccionats",
   "selectAll": "Selecciona-ho tot",
   "selectNone": "Desselecciona-ho tot",
-  "addRange": "Selecciona",
+  "addRange": "Afegeix el rang a la selecció",
   "rangeLabel": "Rang de capítols per afegir a la selecció",
   "rangeNone": "Cap capítol coincideix amb aquest rang.",
   "rangeAdded_one": "S'ha afegit {{count}} capítol.",

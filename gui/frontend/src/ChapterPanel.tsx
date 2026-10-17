@@ -417,30 +417,16 @@ function ChapterList({
             {t('common.none')}
           </button>
         </div>
-        <form
-          className="range-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void applyRange();
+        <RangeForm
+          text={rangeText}
+          bad={rangeNote?.bad ?? false}
+          disabled={disabled}
+          onText={(text) => {
+            setRangeText(text);
+            setRangeNote(null);
           }}
-        >
-          <input
-            type="text"
-            className={`input small mono${rangeNote?.bad ? ' invalid' : ''}`}
-            placeholder="1-10,12"
-            aria-label={t('chapters.rangeLabel')}
-            value={rangeText}
-            disabled={disabled}
-            spellCheck={false}
-            onChange={(e) => {
-              setRangeText(e.target.value);
-              setRangeNote(null);
-            }}
-          />
-          <button type="submit" className="btn small" disabled={disabled || rangeText.trim() === ''}>
-            {t('chapters.addRange')}
-          </button>
-        </form>
+          onApply={() => void applyRange()}
+        />
       </div>
       {rangeNote && (
         <p className={`range-note ${rangeNote.bad ? 'bad' : 'good'}`} role="status">
@@ -602,6 +588,58 @@ function ChapterList({
 /** A chapter's checkbox: greyed out for a locked chapter, which can't be picked */
 export function ChapterBox({ on, locked }: { on: boolean; locked: boolean }) {
   return <span className={`box${on ? ' on' : ''}${locked ? ' disabled' : ''}`} aria-hidden="true" />;
+}
+
+/** The range box: Enter or the + inside it applies the range, and the + shows only once there's text */
+export function RangeForm({
+  text,
+  bad,
+  disabled,
+  onText,
+  onApply,
+}: {
+  text: string;
+  bad: boolean;
+  disabled?: boolean;
+  onText: (text: string) => void;
+  onApply: () => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <form
+      className="range-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onApply();
+      }}
+    >
+      <div className="input-wrap">
+        <input
+          type="text"
+          className={`input small mono${bad ? ' invalid' : ''}`}
+          placeholder="1-10,12"
+          aria-label={t('chapters.rangeLabel')}
+          value={text}
+          disabled={disabled}
+          spellCheck={false}
+          onChange={(e) => onText(e.target.value)}
+        />
+        {text.trim() !== '' && (
+          <div className="input-action">
+            <button
+              type="submit"
+              className="btn ghost small icon-only"
+              aria-label={t('chapters.addRange')}
+              title={t('chapters.addRange')}
+              disabled={disabled}
+            >
+              +
+            </button>
+          </div>
+        )}
+      </div>
+    </form>
+  );
 }
 
 

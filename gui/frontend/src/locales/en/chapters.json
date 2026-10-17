@@ -20,7 +20,7 @@
   "selected": "<strong>{{selected}}</strong> of {{total}} selected",
   "selectAll": "Select all",
   "selectNone": "Select none",
-  "addRange": "Select",
+  "addRange": "Add range to selection",
   "rangeLabel": "Chapter range to add to the selection",
   "rangeNone": "No chapter matches that range.",
   "rangeAdded_one": "Added {{count}} chapter.",

@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { CATALOG, createT } from './i18n';
 import { I18nProvider } from './i18n/react';
-import { ChapterBox, ChapterPanel, ChapterTitle, partsCount } from './ChapterPanel';
+import { ChapterBox, ChapterPanel, ChapterTitle, RangeForm, partsCount } from './ChapterPanel';
 import { createMockApi } from './mock';
 
 const LOCKED_HINT = createT('en')('chapters.locked');
@@ -37,6 +37,20 @@ describe('ChapterBox', () => {
   it('leaves a free chapter\'s box as it was', () => {
     expect(box(false, false)).toBe('<span class="box" aria-hidden="true"></span>');
     expect(box(true, false)).toBe('<span class="box on" aria-hidden="true"></span>');
+  });
+});
+
+
+describe('RangeForm', () => {
+  const form = (text: string) =>
+    renderToStaticMarkup(createElement(RangeForm, { text, bad: false, onText: () => {}, onApply: () => {} }));
+  const plus = '<div class="input-action"><button type="submit" class="btn ghost small icon-only" aria-label="Add range to selection" title="Add range to selection"';
+
+  it('shows the + inside the field only once there is text', () => {
+    expect(form('')).not.toContain('input-action');
+    expect(form('   ')).not.toContain('input-action');
+    expect(form('1-10')).toContain(plus);
+    expect(form('1-10')).toMatch(/<div class="input-wrap">.*<\/button><\/div><\/div>/);
   });
 });
 
