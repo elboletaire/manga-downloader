@@ -57,6 +57,8 @@ type App struct {
 	// update check
 	tag     string
 	version string
+	// releaseAPI is where the update check asks for the latest release; a test seam
+	releaseAPI string
 	// updateCtx bounds the update check; cancelUpdate ends it at shutdown
 	updateCtx    context.Context
 	cancelUpdate context.CancelFunc
@@ -90,6 +92,7 @@ func newApp(ctrl *Controller, s sink, prefsPath, tag, version string) *App {
 		prefsPath:    prefsPath,
 		tag:          tag,
 		version:      version,
+		releaseAPI:   latestReleaseAPI,
 		updateCtx:    updateCtx,
 		cancelUpdate: cancelUpdate,
 		installed:    installedCopy(),
@@ -169,7 +172,7 @@ func (a *App) checkUpdates() {
 	if !shouldCheckUpdates(a.tag, a.ctrl.Prefs()) || !a.ctrl.claimUpdateCheck() {
 		return
 	}
-	go a.ctrl.CheckUpdate(a.updateCtx, a.tag, latestReleaseAPI, updateClient)
+	go a.ctrl.CheckUpdate(a.updateCtx, a.tag, a.releaseAPI, updateClient)
 }
 
 // shutdown stops the pushes before the window goes away, then cancels any run

@@ -60,10 +60,8 @@ func (c *Controller) CheckUpdate(ctx context.Context, current, apiURL string, cl
 		log.Printf("couldn't check for updates: %v", err)
 	}
 	c.mu.Lock()
-	// turned off while it ran: the answer is dropped, and a turn-on checks again
-	if !c.prefs.CheckUpdates {
-		c.updateChecked = false
-	}
+	c.updateChecking = false
+	// turned off while it ran: the answer is dropped
 	recorded := c.prefs.CheckUpdates && update != nil
 	if recorded {
 		c.update = update
@@ -74,23 +72,25 @@ func (c *Controller) CheckUpdate(ctx context.Context, current, apiURL string, cl
 	}
 }
 
-// ClearUpdate forgets the update the check found, so the window stops offering it
+// ClearUpdate forgets the update the check found, so the window stops offering it,
+// and lets the next turn-on check again even while an old check is still running
 func (c *Controller) ClearUpdate() {
 	c.mu.Lock()
 	c.update = nil
+	c.updateChecking = false
 	c.mu.Unlock()
 	c.emit()
 }
 
-// claimUpdateCheck reports whether no update check has started this session, and
-// records that one is starting
+// claimUpdateCheck reports whether no update check is running, and marks one as
+// running. CheckUpdate clears the mark when it ends.
 func (c *Controller) claimUpdateCheck() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.updateChecked {
+	if c.updateChecking {
 		return false
 	}
-	c.updateChecked = true
+	c.updateChecking = true
 
 	return true
 }

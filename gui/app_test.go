@@ -5,6 +5,8 @@ package main
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"reflect"
 	"sync"
@@ -333,6 +335,44 @@ func TestTurningUpdatesOffClearsTheUpdate(t *testing.T) {
 	}
 	if st := a.State(); st.Update != nil || st.Prefs.CheckUpdates {
 		t.Errorf("after turning updates off: update %+v, prefs %+v", st.Update, st.Prefs)
+	}
+}
+
+// a check still running when updates are turned off must not record its answer,
+// and turning them on again must check afresh
+func TestUpdateCheckFinishingAfterTurnOffIsDropped(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	gate := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-gate
+		_, _ = w.Write([]byte(`{"tag_name":"v1.13.0"}`))
+	}))
+	defer srv.Close()
+	a.tag, a.releaseAPI = "v1.12.0", srv.URL
+
+	if !a.ctrl.claimUpdateCheck() {
+		t.Fatal("no check was running yet")
+	}
+	done := make(chan struct{})
+	go func() {
+		a.ctrl.CheckUpdate(context.Background(), a.tag, a.releaseAPI, srv.Client())
+		close(done)
+	}()
+	if err := a.SetCheckUpdates(false); err != nil {
+		t.Fatal(err)
+	}
+	close(gate)
+	<-done
+	if u := a.ctrl.Update(); u != nil {
+		t.Fatalf("the answer of a check that ended after turning off was recorded: %+v", u)
+	}
+
+	if err := a.SetCheckUpdates(true); err != nil {
+		t.Fatal(err)
+	}
+	waitUntil(t, "the update check after turning updates on", func() bool { return a.State().Update != nil })
+	if got := a.State().Update.Latest; got != "v1.13.0" {
+		t.Errorf("update after turning updates on = %q", got)
 	}
 }
 

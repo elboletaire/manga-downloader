@@ -191,9 +191,9 @@ type Controller struct {
 	listedVolumes int
 	// update is the newer release the update check found, nil when none
 	update *Update
-	// updateChecked is set once an update check has started this session (see
-	// claimUpdateCheck), so a turn-on doesn't check again
-	updateChecked bool
+	// updateChecking is set while an update check runs (see claimUpdateCheck), so
+	// two checks don't start at once
+	updateChecking bool
 	// prefs are the app-only preferences, outside settings (see PrefsDTO)
 	prefs PrefsDTO
 	// attention is the browser window waiting for the user (a check to pass
