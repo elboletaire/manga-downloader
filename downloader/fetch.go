@@ -3,6 +3,7 @@
 package downloader
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -130,8 +131,14 @@ func fetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 		}
 		var data []byte
 		data, err = fetchFileOnce(params)
+		if err == nil {
+			err = checkPage(data)
+		}
 		if err == nil && transform != nil {
 			data, err = transform(data)
+		}
+		if err == nil {
+			err = checkPage(data)
 		}
 		if err == nil {
 			file = &File{
@@ -139,6 +146,9 @@ func fetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 				Page: page,
 			}
 			return
+		}
+		if errors.Is(err, errHTMLPage) {
+			return nil, err
 		}
 
 		wait := retryWait(err, attempt)
@@ -210,4 +220,32 @@ func fetchFileOnce(params http.RequestParams) (data []byte, err error) {
 
 	data, err = io.ReadAll(body)
 	return
+}
+
+// errHTMLPage is what a page answered with an HTML document (a challenge or
+// error page, usually with a 200) gets. Refetching it gives the same page,
+// so fetchFile doesn't retry it.
+var errHTMLPage = errors.New("not an image (got an HTML page)")
+
+// checkPage returns errHTMLPage when data is an HTML document. Any other
+// bytes pass, including formats imgfmt doesn't know, and SVG (XML).
+func checkPage(data []byte) error {
+	if isHTMLPage(data) {
+		return errHTMLPage
+	}
+	return nil
+}
+
+// isHTMLPage matches only HTML openers. http.DetectContentType isn't used:
+// it calls an SVG that starts with a comment text/html.
+func isHTMLPage(data []byte) bool {
+	head := bytes.TrimLeft(data, "\t\r\n \ufeff")
+	head = head[:min(len(head), 16)]
+	lower := bytes.ToLower(head)
+	for _, opener := range []string{"<!doctype html", "<html", "<head", "<body"} {
+		if bytes.HasPrefix(lower, []byte(opener)) {
+			return true
+		}
+	}
+	return false
 }
