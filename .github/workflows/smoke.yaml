@@ -66,9 +66,11 @@ jobs:
           - elftoon
           - hijala
           - mangataro
+          - zinmanga
           - tcb
           - webtoonia
           - mangasushi
+          - mangaowl
           - gdscans
           - nijitranslations
           - gourmetsupremacy
@@ -113,6 +115,10 @@ jobs:
           - comicride
           - comicryu
           - takecomic
+          - bigcomics
+          - comicborder
+          - kansai
+          - younganimal
           # Plain-HTML (goquery) scrapers
           - tcbscans
           - arenascan
@@ -185,6 +191,14 @@ jobs:
           - kombatch
           - mundomanhwa
           - smuglo
+          - afroditscans
+          - hentai20
+          - komikdewasa
+          - mangadistrict
+          - manhwabuddy
+          - nabicix
+          - sektedoujin
+          - sereinscan
           # These sites block GitHub's datacenter IPs (403) but work fine
           # from residential connections — verified locally 2026-07-23.
           # Kept out of the matrix rather than hammering sites that don't

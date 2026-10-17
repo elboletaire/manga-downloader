@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/elboletaire/manga-downloader/http"
 )
 
 // Grabber is the base struct for all grabbers/sites
@@ -171,6 +172,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewMangaball(g),
 		NewMangataro(g),
 		NewMangitto(g),
+		NewZinmanga(g),
 		NewMangalib(g),
 		NewMangadenizi(g),
 		NewRoliascan(g),
@@ -207,6 +209,10 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		plainHTML,
 		NewTcb(g),
 		NewJestful(g),
+		// Hosts outside the domain lists, detected by markup once the others
+		// declined, so only the URLs they left are fetched
+		NewGigaviewerByMarkup(g, plainHTML),
+		NewComiciByMarkup(g, plainHTML),
 	}
 	var early []Site
 	for _, newSite := range earlySites {
@@ -384,6 +390,32 @@ func hostMatchesDomain(rawURL, domain string) bool {
 	host := strings.ToLower(u.Hostname())
 	d := strings.ToLower(domain)
 	return host == d || strings.HasSuffix(host, "."+d)
+}
+
+// pageHasMarkup reports whether rawURL's page contains every marker. It reads
+// the document PlainHTML parsed for the same URL, and fetches the page once
+// otherwise, without retries (a failure means "not this site")
+func pageHasMarkup(rawURL string, fetched *PlainHTML, markers ...string) (bool, error) {
+	var page string
+	if fetched != nil && fetched.doc != nil && fetched.URL == rawURL {
+		html, err := fetched.doc.Html()
+		if err != nil {
+			return false, err
+		}
+		page = html
+	} else {
+		body, err := http.GetText(http.RequestParams{URL: rawURL, DisableRetry: true})
+		if err != nil {
+			return false, err
+		}
+		page = body
+	}
+	for _, marker := range markers {
+		if !strings.Contains(page, marker) {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 // getUuid returns the first uuid found in the passed string

@@ -7,7 +7,10 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"net/http"
+	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
@@ -125,5 +128,75 @@ func TestComiciUnscramble(t *testing.T) {
 	want := tile(1, 0)
 	if uint8(r>>8) != want.R || uint8(g>>8) != want.G {
 		t.Errorf("tile 0 colour = (%d,%d), want (%d,%d)", r>>8, g>>8, want.R, want.G)
+	}
+}
+
+// comiciMarkupPage is a series page with the vendor link and an episode item
+const comiciMarkupPage = `<html><body><a href="https://comici.co.jp/terms">terms</a><ul><li data-e2e="eli"><a href="/episodes/c1ffef58c01d8">1</a></li></ul></body></html>`
+
+// TestComiciTestByMarkup checks that a host outside the list is matched by its
+// page's markup, with one fetch, and that a page with only the vendor link (a
+// footer) or another URL shape is refused
+func TestComiciTestByMarkup(t *testing.T) {
+	var hits atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/plain/"):
+			w.Write([]byte(`<html><body><a href="/">no platform here</a></body></html>`))
+		case strings.HasPrefix(r.URL.Path, "/footer/"):
+			w.Write([]byte(`<html><body><a href="https://comici.co.jp/terms">terms</a></body></html>`))
+		default:
+			w.Write([]byte(comiciMarkupPage))
+		}
+	}))
+	defer srv.Close()
+
+	check := func(path string, want bool, wantHits int32) {
+		t.Helper()
+		before := hits.Load()
+		got, err := NewComiciByMarkup(&Grabber{URL: srv.URL + path, Settings: &Settings{}}, nil).Test()
+		if err != nil || got != want {
+			t.Errorf("Test(%q) = %v, %v; want %v, nil", path, got, err, want)
+		}
+		if n := hits.Load() - before; n != wantHits {
+			t.Errorf("Test(%q) made %d requests, want %d", path, n, wantHits)
+		}
+	}
+
+	check("/series/842677db37980/1", true, 1)
+	check("/episodes/c1ffef58c01d8", true, 1)
+	check("/plain/series/842677db37980/1", false, 1)
+	check("/footer/series/842677db37980/1", false, 1)
+	check("/comics/842677db37980", false, 0)
+
+	// the listed-host instance never fetches an unlisted host
+	before := hits.Load()
+	if got, _ := NewComici(&Grabber{URL: srv.URL + "/episodes/c1ffef58c01d8", Settings: &Settings{}}).Test(); got || hits.Load() != before {
+		t.Errorf("listed-host Test on an unlisted host = %v with %d requests; want false and none", got, hits.Load()-before)
+	}
+}
+
+// TestComiciTestReusesPlainHTML checks that the markup check reads the page
+// PlainHTML already fetched for the URL, so it makes no request of its own
+func TestComiciTestReusesPlainHTML(t *testing.T) {
+	var hits atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.Write([]byte(comiciMarkupPage))
+	}))
+	defer srv.Close()
+
+	g := &Grabber{URL: srv.URL + "/series/842677db37980/1", Settings: &Settings{}}
+	plain := NewPlainHTML(g)
+	plain.Test()
+	before := hits.Load()
+
+	got, err := NewComiciByMarkup(g, plain).Test()
+	if err != nil || !got {
+		t.Errorf("Test = %v, %v; want true, nil", got, err)
+	}
+	if n := hits.Load() - before; n != 0 {
+		t.Errorf("markup check made %d requests after PlainHTML fetched the page, want 0", n)
 	}
 }

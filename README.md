@@ -18,7 +18,7 @@
 
 </div>
 
-Manga Downloader downloads manga chapters from MangaDex and more than 100 other
+Manga Downloader downloads manga chapters from MangaDex and 200 other
 sites and packs them into CBZ or EPUB files, ready to read on your e-reader or
 in your favorite comic app. It comes as a **desktop app** for Windows, macOS and
 Linux, and as a **command line tool** for scripts, servers and Docker.
@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[187 supported sites](#supported-sites)**, from big aggregators to small
+- **[201 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -662,12 +662,13 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 187 supported sites</b></summary>
+<summary><b>Show all 201 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
 | --- | --- | --- |
 | [3asq.online](https://3asq.online) | Arabic, former 3asq.org | 2026-10-15 |
+| [afroditscans.com](https://afroditscans.com) | Turkish | — |
 | [anikiga.com](https://anikiga.com) | Turkish | 2026-10-16 |
 | [animeallstar1.com](https://www.animeallstar1.com) | AnimeAllStar, Spanish | 2026-10-15 |
 | [animeallstar30.com](https://animeallstar30.com) | AnimeAllStar, Spanish | 2026-10-15 |
@@ -679,6 +680,7 @@ to a minute.
 | [atsu.moe](https://atsu.moe) | Atsumaru | 2026-10-15 |
 | [aurorascans.com](https://aurorascans.com) | redirects to qimanga.com | 2026-10-15 |
 | [azorafly.com](https://azorafly.com) | Azorafly, Arabic | 2026-10-15 |
+| [bigcomics.jp](https://bigcomics.jp) | Japanese, Big Comics (Comici) | — |
 | [bigsolo.org](https://bigsolo.org) |  | 2026-10-15 |
 | [blackcloveronline.com](https://blackcloveronline.com) | Black Clover | 2026-10-15 |
 | [bluesolo.org](https://bluesolo.org) | Blue Solo, French scantrad | 2026-10-15 |
@@ -698,6 +700,7 @@ to a minute.
 | [comic-y-ours.com](https://comic-y-ours.com) | Japanese, Comic Y-Ours (GigaViewer) | 2026-10-17 |
 | [comic-zenon.com](https://comic-zenon.com) | Japanese, Comic Zenon (GigaViewer) | 2026-10-17 |
 | [comic.naver.com](https://comic.naver.com) | Naver Webtoon, Korean, free episodes only | 2026-10-17 |
+| [comicborder.com](https://comicborder.com) | Japanese, Comic Border (GigaViewer) | — |
 | [comicride.jp](https://comicride.jp) | Japanese, Comic Ride (Comici) | 2026-10-17 |
 | [comix.to](https://comix.to) \* |  | 2026-10-15 |
 | [danke.moe](https://danke.moe) | Danke fürs Lesen | 2026-10-15 |
@@ -728,6 +731,7 @@ to a minute.
 | [hachirumi.com](https://hachirumi.com) | Hachirumi, Guya instance, has an NSFW section | 2026-10-16 |
 | [heavenly-delusion.com](https://heavenly-delusion.com) | Heavenly Delusion | 2026-10-15 |
 | [heavenmanga.com](https://heavenmanga.com) | Spanish | 2026-10-15 |
+| [hentai20.io](https://hentai20.io) | English, mostly NSFW | — |
 | [heros-web.com](https://heros-web.com) | Japanese, Hero's Web (Comici) | 2026-10-17 |
 | [hivetoons.org](https://hivetoons.org) | HiveToons, VoidScans | 2026-10-15 |
 | [ichicomi.com](https://ichicomi.com) | Japanese, Ichi Comic (GigaViewer) | 2026-10-17 |
@@ -735,10 +739,12 @@ to a minute.
 | [jestful.net](https://jestful.net) |  | 2026-10-15 |
 | [jojolandsmanga.com](https://jojolandsmanga.com) | The JoJoLands | 2026-10-15 |
 | [jujutsukaisenmanga.pro](https://jujutsukaisenmanga.pro) | Jujutsu Kaisen | 2026-10-15 |
+| [kansai.mag-garden.co.jp](https://kansai.mag-garden.co.jp) | Japanese, Mag Garden Kansai (Comici) | — |
 | [kappabeast.com](https://kappabeast.com) \* |  | 2026-10-15 |
 | [kaynscans.com](https://kaynscans.com) | Kayn Scans, former kaynscan.org | 2026-10-15 |
 | [kingofshojo.com](https://kingofshojo.com) |  | 2026-10-15 |
 | [kombatch.cc](https://kombatch.cc) | Indonesian | 2026-10-16 |
+| [komikdewasa.art](https://komikdewasa.art) | Indonesian, mostly NSFW | — |
 | [komikindo.ch](https://komikindo.ch) |  | 2026-10-15 |
 | [komikmanga.com](https://komikmanga.com) | MangaReader, English | 2026-10-16 |
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-15 |
@@ -765,6 +771,7 @@ to a minute.
 | [mangadelsiglotvmanga.com.mx](https://www.mangadelsiglotvmanga.com.mx) | Manga del Siglo TV Manga, Spanish | 2026-10-15 |
 | [mangadenizi.net](https://www.mangadenizi.net) |  | 2026-10-15 |
 | [mangadex.org](https://mangadex.org) | MangaDex | 2026-10-15 |
+| [mangadistrict.com](https://mangadistrict.com) | English, mostly NSFW | — |
 | [mangaeclipse.com](https://mangaeclipse.com) | Manga Eclipse | 2026-10-16 |
 | [mangafire.to](https://mangafire.to) \* |  | 2026-10-15 |
 | [mangahere.cc](https://www.mangahere.cc) | MangaHere | 2026-10-15 |
@@ -776,6 +783,7 @@ to a minute.
 | [mangalib.me](https://mangalib.me) | MangaLib | 2026-10-15 |
 | [mangalivre.to](https://mangalivre.to) | Manga Livre, former mangalivre.tv/mangalivre.net | 2026-10-15 |
 | [manganato.gg](https://www.manganato.gg) \* | MangaNato | 2026-10-15 |
+| [mangaowl.io](https://mangaowl.io) | English | — |
 | [mangapark.cc](https://mangapark.cc) | MangaPark | 2026-10-15 |
 | [mangapill.com](https://mangapill.com) |  | 2026-10-15 |
 | [mangaplus.shueisha.co.jp](https://mangaplus.shueisha.co.jp) | Manga Plus, Shueisha's official reader | 2026-10-15 |
@@ -794,12 +802,14 @@ to a minute.
 | [manhuaplus.com](https://manhuaplus.com) |  | 2026-10-15 |
 | [manhuatop.org](https://manhuatop.org) \* |  | 2026-10-15 |
 | [manhuaus.com](https://manhuaus.com) \* |  | 2026-10-15 |
+| [manhwabuddy.com](https://manhwabuddy.com) | English, raws | — |
 | [manhwaonline.org](https://manhwaonline.org) |  | 2026-10-15 |
 | [manhwatop.com](https://manhwatop.com) | MANHWATOP | 2026-10-16 |
 | [mgeko.cc](https://www.mgeko.cc) |  | 2026-10-15 |
 | [mistscans.com](https://mistscans.com) |  | 2026-10-15 |
 | [mkissa.to](https://mkissa.to) \* |  | 2026-10-15 |
 | [mundomanhwa.com](https://mundomanhwa.com) | Spanish | 2026-10-16 |
+| [nabicix.com](https://www.nabicix.com) | Turkish, former nabimanga.com | — |
 | [natomanga.com](https://www.natomanga.com) \* | MangaNato, former manganato.com/manganelo.com | 2026-10-15 |
 | [natsu.one](https://natsu.one) | NatsuID, Indonesian, some adult titles, former natsu.id | 2026-10-16 |
 | [niji-translations.com](https://niji-translations.com) | Niji, Arabic, yuri | 2026-10-16 |
@@ -822,6 +832,8 @@ to a minute.
 | [sacachispa.site](https://sacachispa.site) |  | 2026-10-15 |
 | [sanascans.com](https://sanascans.com) | Sana Scans | 2026-10-15 |
 | [scan-vf.net](https://www.scan-vf.net) | ScanVF | 2026-10-15 |
+| [sektedoujin.cc](https://sektedoujin.cc) | Indonesian, mostly NSFW | — |
+| [sereinscan.com](https://sereinscan.com) | Turkish | — |
 | [setsuscans.com](https://setsuscans.com) \* |  | 2026-10-15 |
 | [shonenjumpplus.com](https://shonenjumpplus.com) | Japanese, Jump+ (GigaViewer) | 2026-10-17 |
 | [silentquill.net](https://silentquill.net) | Armageddon Scanlation | 2026-10-15 |
@@ -852,7 +864,9 @@ to a minute.
 | [weebcentral.com](https://weebcentral.com) |  | 2026-10-15 |
 | [witchtoons.net](https://witchtoons.net) | WitchToons, former witchscans.com | 2026-10-15 |
 | [writerscans.com](https://writerscans.com) |  | 2026-10-15 |
+| [younganimal.com](https://younganimal.com) | Japanese, Young Animal (Comici) | — |
 | [yurionair.top](https://yurionair.top) | Yuri Verso, Portuguese, yuri, some adult titles | 2026-10-16 |
+| [zinmanga.net](https://www.zinmanga.net) | ZinManga, English | — |
 | [zonatmo.org](https://zonatmo.org) | TuMangaOnline, former zonatmo.com | 2026-10-15 |
 
 Verified weekly by CI. Sites marked `*` open a browser window, so they are checked by hand and their dates are older. `—` means not checked yet.

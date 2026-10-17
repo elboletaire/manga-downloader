@@ -11,6 +11,7 @@ import (
 	"image/draw"
 	"image/jpeg"
 	_ "image/png"
+	"net/url"
 	"regexp"
 	"slices"
 	"strconv"
@@ -21,9 +22,9 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// gigaviewerDomains are the hosts of GigaViewer, Hatena's reader platform.
-// List another host here to serve it too: its episode and feed URLs are the
-// same.
+// gigaviewerDomains are the hosts of GigaViewer, Hatena's reader platform: a
+// fast path that needs no fetch. Any other host is detected by its markup
+// (gigaviewerFingerprint), so listing one is optional.
 var gigaviewerDomains = []string{
 	"shonenjumpplus.com",
 	"tonarinoyj.jp",
@@ -38,12 +39,18 @@ var gigaviewerDomains = []string{
 	"comic-ogyaaa.com",
 	"sunday-webry.com",
 	"comic-seasons.com",
+	"comicborder.com",
 	"comic-y-ours.com",
 	"ourfeel.jp",
 	"feelweb.jp",
 	"ichicomi.com",
 	"mangatime-square.com",
 }
+
+// gigaviewerFingerprint is in every GigaViewer page: its asset host
+// (cdn-scissors.gigaviewer.com) and the feed's xmlns:giga namespace. A page
+// needs it with its shape's marker, as a footer or a credit can name the host
+const gigaviewerFingerprint = "gigaviewer.com"
 
 // gvDigits, gvKanji and gvBreak are the number pieces of a title: digits (with
 // a decimal), kanji, and a "＆13" that follows the number it leads with
@@ -89,15 +96,26 @@ var (
 // Pages scrambled in tiles ("baku") are undone in Transform.
 type Gigaviewer struct {
 	*Grabber
+	// byMarkup also detects the hosts not in gigaviewerDomains (NewGigaviewerByMarkup),
+	// reading fetched's page when it has one
+	byMarkup   bool
+	fetched    *PlainHTML
 	seriesID   string
 	feedLoaded bool
 	title      string
 	chapters   Filterables
 }
 
-// NewGigaviewer returns a new Gigaviewer grabber.
+// NewGigaviewer returns a new Gigaviewer grabber, matching the listed hosts.
 func NewGigaviewer(g *Grabber) *Gigaviewer {
 	return &Gigaviewer{Grabber: g}
+}
+
+// NewGigaviewerByMarkup returns a Gigaviewer grabber that also matches an
+// episode or feed URL on any host whose page has the GigaViewer markup. fetched
+// is the PlainHTML that already parsed the URL's page, or nil.
+func NewGigaviewerByMarkup(g *Grabber, fetched *PlainHTML) *Gigaviewer {
+	return &Gigaviewer{Grabber: g, byMarkup: true, fetched: fetched}
 }
 
 // GigaviewerChapter is a chapter of a GigaViewer site, identified by its episode ID
@@ -133,14 +151,39 @@ type gigaviewerFeed struct {
 	} `xml:"channel"`
 }
 
-// Test returns true if the URL is on one of the GigaViewer hosts (host check, no fetch).
+// Test returns true if the URL is on one of the GigaViewer hosts (host check, no
+// fetch). The NewGigaviewerByMarkup instance also fetches an episode or feed URL
+// on another host, once, and checks its markup.
 func (g *Gigaviewer) Test() (bool, error) {
 	for _, domain := range gigaviewerDomains {
 		if hostMatchesDomain(g.URL, domain) {
 			return true, nil
 		}
 	}
-	return false, nil
+	if !g.byMarkup {
+		return false, nil
+	}
+	markers, ok := gigaviewerMarkers(g.URL)
+	if !ok {
+		return false, nil
+	}
+	return pageHasMarkup(g.URL, g.fetched, markers...)
+}
+
+// gigaviewerMarkers returns what a page of rawURL's shape must carry: the
+// platform's host, and the episode JSON or the feed's namespace. ok is false
+// for any other shape (an episode or a series feed is the only one read).
+func gigaviewerMarkers(rawURL string) (markers []string, ok bool) {
+	u, err := url.Parse(rawURL)
+	switch {
+	case err != nil:
+		return nil, false
+	case gigaviewerEpisodeRe.MatchString(u.Path):
+		return []string{gigaviewerFingerprint, "episode-json"}, true
+	case gigaviewerFeedRe.MatchString(u.Path):
+		return []string{gigaviewerFingerprint, "xmlns:giga="}, true
+	}
+	return nil, false
 }
 
 // seriesIdentifier returns the series of the URL: a feed URL names it, and

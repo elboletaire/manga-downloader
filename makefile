@@ -113,6 +113,7 @@ grabber: \
 	grabber/aurorascans \
 	grabber/azorafly \
 	grabber/baozimh \
+	grabber/bigcomics \
 	grabber/bigsolo \
 	grabber/blackcloveronline \
 	grabber/bluesolo \
@@ -120,6 +121,7 @@ grabber: \
 	grabber/chainsawmannmanga \
 	grabber/championcross \
 	grabber/comicaction \
+	grabber/comicborder \
 	grabber/comicdays \
 	grabber/comicearthstar \
 	grabber/comicgardo \
@@ -156,6 +158,7 @@ grabber: \
 	grabber/jestful \
 	grabber/jojolands \
 	grabber/jujutsukaisenmanga \
+	grabber/kansai \
 	grabber/kaynscan \
 	grabber/ksgroupscans \
 	grabber/kuragebunch \
@@ -176,6 +179,7 @@ grabber: \
 	grabber/mangalivre \
 	grabber/mangapark \
 	grabber/manganato \
+	grabber/mangaowl \
 	grabber/mangaplus \
 	grabber/mangasushi \
 	grabber/mangataro \
@@ -212,7 +216,9 @@ grabber: \
 	grabber/webtoonia \
 	grabber/webtoons \
 	grabber/witchtoons \
+	grabber/younganimal \
 	grabber/yurionair \
+	grabber/zinmanga \
 	grabber/html
 
 grabber/inmanga:
@@ -301,6 +307,9 @@ grabber/tcb:
 # changes needed: same ajax/chapters endpoint and reading-content markup)
 grabber/mangasushi:
 	go run . https://mangasushi.org/manga/lonely-attack-on-the-different-world/ 324
+# Madara under /read-N/ (not /manga/), matched by the generic Tcb grabber
+grabber/mangaowl:
+	go run . https://mangaowl.io/read-1/beyond-the-limit/ 1
 # a Madara site whose reader encrypts the page list (wp-manga-chapter-images-protection)
 grabber/gourmetsupremacy:
 	go run . https://gourmetsupremacy.com/project/hikikomori-princess-marriage/ 10,10.5
@@ -516,6 +525,8 @@ grabber/comiczenon:
 	go run . https://comic-zenon.com/episode/12207421984318179863 695
 grabber/comicaction:
 	go run . https://comic-action.com/episode/10044607041217599247 3
+grabber/comicborder:
+	go run . https://comicborder.com/episode/12207421984304147260 1
 grabber/comictrail:
 	go run . https://comic-trail.com/episode/12207421984031179174 45
 # KadoComi: a series URL, episode 1 is free
@@ -544,6 +555,12 @@ grabber/comicryu:
 	go run . https://comic-ryu.jp/episodes/c56f063e17d3d 1
 grabber/takecomic:
 	go run . https://takecomic.jp/episodes/3984bbf3a37b6 0
+grabber/bigcomics:
+	go run . https://bigcomics.jp/series/7e7e188909a6e 1
+grabber/kansai:
+	go run . https://kansai.mag-garden.co.jp/series/dfadc73bc5c8d 1
+grabber/younganimal:
+	go run . https://younganimal.com/series/7ad02dc9743d0 1
 grabber/ourfeel:
 	go run . https://ourfeel.jp/episode/12207421983347996105 1
 grabber/feelweb:
@@ -654,6 +671,10 @@ grabber/turkcemanga:
 grabber/yurionair:
 	go run . https://yurionair.top/manga/adachi-to-shimamura/ 46
 
+# plain HTTP, chapters from a paginated JSON api, images in data-src
+grabber/zinmanga:
+	go run . https://www.zinmanga.net/manga/academy-idolmaster-gold-rush 12
+
 # adonisfansub, nyraxmanga and rackusreads run the themesia theme. nyraxmanga
 # marks paid chapters with a PLUS badge: chapters 116-122 of this series are
 # (the CLI leaves them out), so 110 is a free one
@@ -682,6 +703,7 @@ grabber/smuglo:
 
 grabber/html: \
 	grabber/adonisfansub \
+	grabber/afroditscans \
 	grabber/anzmanga25 \
 	grabber/apollcomics \
 	grabber/arenascan \
@@ -695,8 +717,10 @@ grabber/html: \
 	grabber/evascans \
 	grabber/fbsquadx \
 	grabber/furyosociety \
+	grabber/hentai20 \
 	grabber/kingofshojo \
 	grabber/kombatch \
+	grabber/komikdewasa \
 	grabber/komikindo \
 	grabber/komikmanga \
 	grabber/komikstation \
@@ -709,6 +733,7 @@ grabber/html: \
 	grabber/madarascans \
 	grabber/maid \
 	grabber/mangaberri \
+	grabber/mangadistrict \
 	grabber/mangaeclipse \
 	grabber/mangakatana \
 	grabber/mangalami \
@@ -721,9 +746,11 @@ grabber/html: \
 	grabber/mangawow \
 	grabber/mangazin \
 	grabber/manhuaplus \
+	grabber/manhwabuddy \
 	grabber/manhwaonline \
 	grabber/mistscans \
 	grabber/mundomanhwa \
+	grabber/nabicix \
 	grabber/natsuone \
 	grabber/noranofansub \
 	grabber/nyraxmanga \
@@ -738,6 +765,8 @@ grabber/html: \
 	grabber/ruyamanga2 \
 	grabber/sanascans \
 	grabber/scanvf \
+	grabber/sektedoujin \
+	grabber/sereinscan \
 	grabber/silentquill \
 	grabber/smuglo \
 	grabber/tcbscans \
@@ -894,6 +923,24 @@ grabber/writerscans:
 # release; pick a chapter a few behind the latest one to keep it free
 grabber/mistscans:
 	go run . https://mistscans.com/series/i-was-thrown-into-an-unfamiliar-manga/ 33
+
+# PlainHTML selector entries, no code: Madara, manhwaonline, Turkish and themesia markup
+grabber/afroditscans:
+	go run . https://afroditscans.com/manga/kont-un-gizli-hizmetcisi 1
+grabber/hentai20:
+	go run . https://hentai20.io/manga/stop-smoking/ 1
+grabber/komikdewasa:
+	go run . https://komikdewasa.art/komik/no-sensor-mertua-doyan-tubuh-menantu/ 1
+grabber/mangadistrict:
+	go run . https://mangadistrict.com/series/professors-alt-account/ 1
+grabber/manhwabuddy:
+	go run . https://manhwabuddy.com/manhwa/a-flood-of-stories-raw/ 1
+grabber/nabicix:
+	go run . https://www.nabicix.com/manga/mutlak-kilic-hissi/ 1
+grabber/sektedoujin:
+	go run . https://sektedoujin.cc/manga/secret-class/ 1
+grabber/sereinscan:
+	go run . https://sereinscan.com/manga/sinif-arkadasi/ 1
 
 # runs the given smoke targets (names without "grabber/") and records their
 # results in the README's "Last verified" column, e.g.
