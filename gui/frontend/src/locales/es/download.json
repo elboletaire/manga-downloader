@@ -31,7 +31,7 @@
     "label": "Progreso general",
     "chapters": "{{done}} de {{total}} capítulos listos",
     "files": "{{done}} de {{total}} archivos listos",
-    "bundle": "Creando el archivo único",
+    "bundle": "Creando el archivo",
     "finishing": "Terminando los capítulos en curso",
     "cancelHint": "Los capítulos que ya se descargan terminarán; no empezará ninguno nuevo."
   },
