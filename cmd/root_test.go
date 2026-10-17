@@ -814,6 +814,41 @@ func TestAllChaptersLabel(t *testing.T) {
 	}
 }
 
+// only a "y" answer confirms; the answered line is drawn once, not repeated
+func TestReadConfirm(t *testing.T) {
+	const label = "Do you want to download all 5 chapters"
+	tests := []struct {
+		name    string
+		input   string
+		wantErr bool
+	}{
+		{"yes", "y\r", false},
+		{"upper case", "Y\n", false},
+		{"backspace corrects", "yn\x7f\r", false},
+		{"no", "n\r", true},
+		{"default no", "\r", true},
+		{"not just y", "yes\r", true},
+		{"ctrl+c", "y\x03", true},
+		{"input ends", "y", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var out bytes.Buffer
+			err := readConfirm(strings.NewReader(tt.input), &out, label)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("err = %v, wantErr %v", err, tt.wantErr)
+			}
+			if n := strings.Count(out.String(), label+"?"); n != 1 {
+				t.Errorf("question drawn %d times, want 1: %q", n, out.String())
+			}
+			// answered with Enter, the line is redrawn once as the answer
+			if n := strings.Count(out.String(), label+":"); strings.ContainsAny(tt.input, "\r\n") && n != 1 {
+				t.Errorf("answered line drawn %d times, want 1: %q", n, out.String())
+			}
+		})
+	}
+}
+
 // locked chapters are dropped before downloading, with one line naming them
 func TestSkipLocked(t *testing.T) {
 	chapters := grabber.Filterables{
