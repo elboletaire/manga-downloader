@@ -59,19 +59,15 @@ var (
 )
 
 // Test returns true if the URL is a WordPress category archive, or a post in
-// one, and remembers the category its chapters come from. The page is
-// fetched without retries so an unrelated site fails fast.
+// one, and remembers the category its chapters come from. A page that fails
+// to load declines, PlainHTML reports the error.
 func (w *WordPressCategory) Test() (bool, error) {
-	rbody, err := http.Get(http.RequestParams{
-		URL:          w.URL,
-		DisableRetry: true, // identification probe: a 5xx means "not this site"
-	})
+	body, err := w.identifyPage(w.URL)
 	if err != nil {
-		return false, err
+		return false, nil
 	}
-	defer rbody.Close()
 
-	doc, err := goquery.NewDocumentFromReader(rbody)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
 	if err != nil {
 		return false, err
 	}

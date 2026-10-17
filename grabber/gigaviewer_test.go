@@ -366,7 +366,7 @@ func TestGigaviewerTestByMarkup(t *testing.T) {
 	check := func(path string, want bool, wantHits int32) {
 		t.Helper()
 		before := hits.Load()
-		got, err := NewGigaviewerByMarkup(&Grabber{URL: srv.URL + path, Settings: &Settings{}}, nil).Test()
+		got, err := NewGigaviewerByMarkup(&Grabber{URL: srv.URL + path, Settings: &Settings{}}).Test()
 		if err != nil || got != want {
 			t.Errorf("Test(%q) = %v, %v; want %v, nil", path, got, err, want)
 		}
@@ -388,9 +388,10 @@ func TestGigaviewerTestByMarkup(t *testing.T) {
 	}
 }
 
-// TestGigaviewerTestReusesPlainHTML checks that the markup check reads the page
-// PlainHTML already fetched for the URL, so it makes no request of its own
-func TestGigaviewerTestReusesPlainHTML(t *testing.T) {
+// TestGigaviewerTestSharesPageCache checks that the markup check reads the page
+// PlainHTML already fetched in the same identification, so it makes no request
+// of its own
+func TestGigaviewerTestSharesPageCache(t *testing.T) {
 	var hits atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hits.Add(1)
@@ -399,11 +400,12 @@ func TestGigaviewerTestReusesPlainHTML(t *testing.T) {
 	defer srv.Close()
 
 	g := &Grabber{URL: srv.URL + "/episode/1", Settings: &Settings{}}
+	g.pages = newPageCache()
 	plain := NewPlainHTML(g)
 	plain.Test()
 	before := hits.Load()
 
-	got, err := NewGigaviewerByMarkup(g, plain).Test()
+	got, err := NewGigaviewerByMarkup(g).Test()
 	if err != nil || !got {
 		t.Errorf("Test = %v, %v; want true, nil", got, err)
 	}

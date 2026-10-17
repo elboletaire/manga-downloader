@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/elboletaire/manga-downloader/http"
 )
 
 // Grabber is the base struct for all grabbers/sites
@@ -20,6 +19,8 @@ type Grabber struct {
 	URL string
 	// Settings are the grabber settings
 	Settings *Settings
+	// pages caches the pages fetched while IdentifySite runs (see identifyPage)
+	pages *pageCache
 }
 
 // Settings are grabber settings
@@ -138,6 +139,11 @@ func RegisterEarly(newSite func(*Grabber) Site) {
 
 // IdentifySite returns the site passing the Test() for the specified url
 func (g *Grabber) IdentifySite() (Site, []error) {
+	// The pages fetched here are shared by the testers, and dropped on return
+	// so the matched site doesn't keep them
+	g.pages = newPageCache()
+	defer func() { g.pages = nil }()
+
 	// PlainHTML is pre-created so IdentifySite can call its chapter-URL
 	// resolution as a last resort after every other grabber has declined,
 	// reusing the already-fetched doc and avoiding extra requests for URLs
@@ -206,13 +212,19 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewProjectsuki(g),
 		NewHeavenManga(g),
 		NewLelScans(g),
+		// Platforms recognised by their markup, before PlainHTML so its loose
+		// selectors can't claim a clone; they share the cached page
+		// TanStack (T1)
+		// RSC comic (T2)
+		// Manganelo (T3)
+		// Toivo Lite (T4)
 		plainHTML,
 		NewTcb(g),
 		NewJestful(g),
 		// Hosts outside the domain lists, detected by markup once the others
 		// declined, so only the URLs they left are fetched
-		NewGigaviewerByMarkup(g, plainHTML),
-		NewComiciByMarkup(g, plainHTML),
+		NewGigaviewerByMarkup(g),
+		NewComiciByMarkup(g),
 	}
 	var early []Site
 	for _, newSite := range earlySites {
@@ -346,10 +358,7 @@ func NewSite(url string, settings *Settings) (Site, []error) {
 		return nil, []error{errors.New("invalid url")}
 	}
 
-	g := &Grabber{
-		url,
-		settings,
-	}
+	g := &Grabber{URL: url, Settings: settings}
 
 	return g.IdentifySite()
 }
@@ -392,30 +401,20 @@ func hostMatchesDomain(rawURL, domain string) bool {
 	return host == d || strings.HasSuffix(host, "."+d)
 }
 
-// pageHasMarkup reports whether rawURL's page contains every marker. It reads
-// the document PlainHTML parsed for the same URL, and fetches the page once
-// otherwise, without retries (a failure means "not this site")
-func pageHasMarkup(rawURL string, fetched *PlainHTML, markers ...string) (bool, error) {
-	var page string
-	if fetched != nil && fetched.doc != nil && fetched.URL == rawURL {
-		html, err := fetched.doc.Html()
-		if err != nil {
-			return false, err
-		}
-		page = html
-	} else {
-		body, err := http.GetText(http.RequestParams{URL: rawURL, DisableRetry: true})
-		if err != nil {
-			return false, err
-		}
-		page = body
+// pageHasMarkup reports whether rawURL's page contains every marker. A page
+// that fails to load isn't this site, so it reports false, and PlainHTML is
+// the one grabber that surfaces the error
+func pageHasMarkup(g *Grabber, rawURL string, markers ...string) bool {
+	page, err := g.identifyPage(rawURL)
+	if err != nil {
+		return false
 	}
 	for _, marker := range markers {
 		if !strings.Contains(page, marker) {
-			return false, nil
+			return false
 		}
 	}
-	return true, nil
+	return true
 }
 
 // getUuid returns the first uuid found in the passed string

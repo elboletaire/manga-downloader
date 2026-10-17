@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -45,6 +46,36 @@ func (s *identifyServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", contentType)
 	_, _ = w.Write([]byte(strings.ReplaceAll(string(body), s.origin, s.base)))
+}
+
+// requestCounter counts the requests a test server receives, per path
+type requestCounter struct {
+	mu   sync.Mutex
+	hits map[string]int
+}
+
+// count returns how many requests path has received
+func (c *requestCounter) count(path string) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.hits[path]
+}
+
+// newCountingServer starts a test server that answers with handler and counts
+// each request by its path
+func newCountingServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, *requestCounter) {
+	t.Helper()
+
+	counter := &requestCounter{hits: map[string]int{}}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		counter.mu.Lock()
+		counter.hits[r.URL.Path]++
+		counter.mu.Unlock()
+		handler(w, r)
+	}))
+	t.Cleanup(srv.Close)
+
+	return srv, counter
 }
 
 // newIdentifyServer starts a test server answering routes from origin's fixtures.

@@ -549,14 +549,11 @@ type PlainHTMLChapter struct {
 
 // Test returns true if the URL is a valid grabber URL
 func (m *PlainHTML) Test() (bool, error) {
-	body, err := http.Get(http.RequestParams{
-		URL:          m.URL,
-		DisableRetry: true, // identification probe: a 5xx means "not this site"
-	})
+	body, err := m.identifyPage(m.URL)
 	if err != nil {
 		return false, err
 	}
-	m.doc, err = goquery.NewDocumentFromReader(body)
+	m.doc, err = goquery.NewDocumentFromReader(strings.NewReader(body))
 	if err != nil {
 		return false, err
 	}

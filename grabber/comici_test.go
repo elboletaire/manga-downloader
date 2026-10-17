@@ -275,7 +275,7 @@ func TestComiciTestByMarkup(t *testing.T) {
 	check := func(path string, want bool, wantHits int32) {
 		t.Helper()
 		before := hits.Load()
-		got, err := NewComiciByMarkup(&Grabber{URL: srv.URL + path, Settings: &Settings{}}, nil).Test()
+		got, err := NewComiciByMarkup(&Grabber{URL: srv.URL + path, Settings: &Settings{}}).Test()
 		if err != nil || got != want {
 			t.Errorf("Test(%q) = %v, %v; want %v, nil", path, got, err, want)
 		}
@@ -297,9 +297,10 @@ func TestComiciTestByMarkup(t *testing.T) {
 	}
 }
 
-// TestComiciTestReusesPlainHTML checks that the markup check reads the page
-// PlainHTML already fetched for the URL, so it makes no request of its own
-func TestComiciTestReusesPlainHTML(t *testing.T) {
+// TestComiciTestSharesPageCache checks that the markup check reads the page
+// PlainHTML already fetched in the same identification, so it makes no request
+// of its own
+func TestComiciTestSharesPageCache(t *testing.T) {
 	var hits atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hits.Add(1)
@@ -308,11 +309,12 @@ func TestComiciTestReusesPlainHTML(t *testing.T) {
 	defer srv.Close()
 
 	g := &Grabber{URL: srv.URL + "/series/842677db37980/1", Settings: &Settings{}}
+	g.pages = newPageCache()
 	plain := NewPlainHTML(g)
 	plain.Test()
 	before := hits.Load()
 
-	got, err := NewComiciByMarkup(g, plain).Test()
+	got, err := NewComiciByMarkup(g).Test()
 	if err != nil || !got {
 		t.Errorf("Test = %v, %v; want true, nil", got, err)
 	}
