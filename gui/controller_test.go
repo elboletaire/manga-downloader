@@ -990,4 +990,16 @@ func TestJobRowsCarryTheirMessages(t *testing.T) {
 	if vol.Title != "Vol. 02 · chapter 2" {
 		t.Errorf("Title = %q, want the English text", vol.Title)
 	}
+
+	// a row that moves on from its message drops the message with its text
+	row.setStatus(msg("job.phase.waiting", nil))
+	row.clearStatus()
+	if row.StatusMsg != nil || row.Status != "" {
+		t.Errorf("after clearStatus: Status = %q, StatusMsg = %+v", row.Status, row.StatusMsg)
+	}
+	row.setReason(msg("job.reason.cancelled", nil))
+	row.setReasonText("plain")
+	if row.ReasonMsg != nil || row.Reason != "plain" {
+		t.Errorf("after setReasonText: Reason = %q, ReasonMsg = %+v", row.Reason, row.ReasonMsg)
+	}
 }

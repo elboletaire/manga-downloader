@@ -1506,7 +1506,7 @@ func (e events) BundleStart(pages int64) {
 	if c.bundle != nil {
 		c.bundle.Total = pages * (core.DownloadWeight + core.ArchiveWeight)
 		// a corrected total comes again mid-download, so keep the status a chapter set
-		if c.bundle.Status == "Gathering info..." {
+		if c.bundle.StatusMsg != nil && c.bundle.StatusMsg.Key == "job.phase.gathering" {
 			c.bundle.setStatus(msg("job.phase.downloading", nil))
 		}
 	}
