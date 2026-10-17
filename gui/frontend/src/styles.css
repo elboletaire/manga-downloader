@@ -1273,8 +1273,12 @@ select.input {
   flex: 1;
   display: grid;
   place-items: center;
-  height: 28px;
+  min-height: 28px;
+  padding: 4px 0;
   border-radius: 7px;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: break-word;
   color: var(--text-2);
   font-weight: 550;
   cursor: pointer;

@@ -18,8 +18,8 @@
   },
   "readingDirection": {
     "label": "Sentit de lectura",
-    "rtl": "De dreta a esquerra",
-    "ltr": "D'esquerra a dreta",
+    "rtl": "Dreta a esquerra",
+    "ltr": "Esquerra a dreta",
     "hint": "Cap a on giren les pàgines: el manga es llegeix de dreta a esquerra, els còmics occidentals d'esquerra a dreta."
   },
   "packAs": {
