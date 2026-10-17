@@ -119,7 +119,7 @@ var browserSelectors = []BrowserSiteSelector{
 	//
 	// drakecomic.org (Drake Scans) used to share this entry too, but the
 	// site moved wholesale to a plain-HTTP Next.js RSC platform on
-	// drakecomic.net (see drakecomic.go) — #chapterlist et al no longer
+	// drakecomic.net (see rsccomic.go) — #chapterlist et al no longer
 	// exist there.
 	{
 		SiteSelector: SiteSelector{
