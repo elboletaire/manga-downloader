@@ -10,7 +10,16 @@ import { extendsSpan, moveActive, pickable, spanIndices } from './listKeys';
 import { hostOf } from './run';
 import type { Chapter, State } from './types';
 import { useVirtualList } from './virtual';
-import { chapterSpan, groupChapters, groupedRows, parseVolumes, selectedIn, type GroupedRow } from './volumes';
+import {
+  chapterSpan,
+  groupChapters,
+  groupedRows,
+  isSiteVolumes,
+  parseVolumes,
+  selectedIn,
+  type GroupedRow,
+  volumesSummary,
+} from './volumes';
 
 const ROW_HEIGHT = 34;
 
@@ -421,6 +430,7 @@ function ChapterList({
         <VolumesBar
           text={state.volumes.text}
           site={state.volumes.site}
+          listed={state.volumes.listed}
           volumes={grouping.volumes.length}
           loose={grouping.loose.length}
           disabled={disabled}
@@ -578,6 +588,7 @@ function rowId(row: GroupedRow): string {
 interface VolumesBarProps {
   text: string;
   site: string;
+  listed: number;
   volumes: number;
   loose: number;
   disabled: boolean;
@@ -586,10 +597,10 @@ interface VolumesBarProps {
 
 /**
  * The Volumes box: chapter ranges, one group per volume, as --volumes takes
- * them. It starts with the site's volumes, when the site lists any, and
- * commits on Enter or when it loses focus, like the options.
+ * them. It starts empty (the site's volumes); the line under it offers them
+ * as ranges when they can be written so. Commits on Enter or on blur.
  */
-function VolumesBar({ text, site, volumes, loose, disabled, onVolumes }: VolumesBarProps) {
+function VolumesBar({ text, site, listed, volumes, loose, disabled, onVolumes }: VolumesBarProps) {
   const [draft, setDraft] = useState(text);
   const [error, setError] = useState('');
   // a pushed value replaces the draft, as in the option fields
@@ -609,12 +620,7 @@ function VolumesBar({ text, site, volumes, loose, disabled, onVolumes }: Volumes
     );
   };
 
-  const summary =
-    volumes === 0
-      ? site === '' && text === ''
-        ? 'The site lists no volumes: enter them as chapter ranges.'
-        : 'No chapter falls in these volumes.'
-      : `${plural(volumes, 'volume', 'volumes')}${loose > 0 ? `, ${plural(loose, 'chapter', 'chapters')} outside them` : ''}`;
+  const summary = volumesSummary(text, site, listed, volumes, loose);
 
   return (
     <div className="volumes-bar">
@@ -630,7 +636,7 @@ function VolumesBar({ text, site, volumes, loose, disabled, onVolumes }: Volumes
           id="volumes-input"
           type="text"
           className={`input small mono${error !== '' ? ' invalid' : ''}`}
-          placeholder="1-7/8-16"
+          placeholder={listed > 0 ? "1-7/8-16 (site's volumes if empty)" : '1-7/8-16'}
           title='Chapter ranges, one group per volume, separated by "/". Start a group with "N:" to give its volume number, e.g. "16:112-114".'
           value={draft}
           disabled={disabled}
@@ -670,7 +676,23 @@ function VolumesBar({ text, site, volumes, loose, disabled, onVolumes }: Volumes
         className={`volumes-note${error !== '' ? ' bad' : ''}`}
         role={error !== '' ? 'alert' : undefined}
       >
-        {error !== '' ? error : summary}
+        {error !== '' ? (
+          error
+        ) : (
+          <>
+            <span className="volumes-lead">{summary.text}</span>
+            {summary.ranges !== undefined && (
+              <>
+                <span className="volumes-sep" aria-hidden="true">
+                  ·
+                </span>
+                <span className="volumes-ranges mono" title={summary.ranges}>
+                  {summary.ranges}
+                </span>
+              </>
+            )}
+          </>
+        )}
       </p>
     </div>
   );

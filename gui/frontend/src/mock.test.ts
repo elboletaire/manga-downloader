@@ -353,13 +353,14 @@ describe('createMockApi', () => {
 });
 
 describe('mock volumes', () => {
-  it("prefills the Volumes box with the site's volumes on load", async () => {
+  it("starts the Volumes box empty, and offers the site's volumes", async () => {
     const api = createMockApi({ chapters: 30 });
     await api.load('https://example.com/series/a');
     const { volumes } = await api.state();
     // One Piece chapters are grouped by their real volumes
-    expect(volumes.site).toBe(volumes.text);
+    expect(volumes.text).toBe('');
     expect(volumes.site).toBeTruthy();
+    expect(volumes.listed).toBeGreaterThan(0);
     // newest 30 chapters include vol 114; first in list (ch 1165) has vol 114
     expect((await api.chapters())[0].volume).toBe(114);
   });
@@ -374,7 +375,7 @@ describe('mock volumes', () => {
 
   it('has no site volumes with novolumes, and refuses to start without any', async () => {
     const api = createMockApi({ scenario: 'loaded', novolumes: true });
-    expect((await api.state()).volumes).toEqual({ text: '', site: '' });
+    expect((await api.state()).volumes).toEqual({ text: '', site: '', listed: 0 });
     await api.setOptions({ ...(await api.state()).options, packAs: 'volumes' });
     await expect(api.start()).rejects.toMatch(/give the volumes as chapter ranges/);
     await api.setVolumes('1-5');

@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { chapterSpan, groupChapters, groupedRows, LOOSE, parseVolumes, selectedIn, siteVolumes } from './volumes';
+import {
+  chapterSpan,
+  groupChapters,
+  groupedRows,
+  isSiteVolumes,
+  LOOSE,
+  listedVolumes,
+  parseVolumes,
+  selectedIn,
+  siteVolumes,
+  volumesSummary,
+} from './volumes';
 import type { Chapter } from './types';
 import shared from '../../../ranges/testdata/volumes.json';
 
@@ -142,9 +153,23 @@ describe('siteVolumes', () => {
     ['loose chapter breaks the run', [ch(1, 1), ch(1.5), ch(2, 1), ch(3, 2)], '1,2/3'],
     ['missing volume is named', [ch(1, 1), ch(2, 3)], '1/3:2'],
     ['loose tail', [ch(1, 1), ch(2, 1), ch(3), ch(4)], '1-2'],
-    ['repeated number stays in its first volume', [ch(1, 1), ch(2, 1), ch(2, 2), ch(3, 2)], '1-2/3'],
+    ['repeated number across volumes gives no ranges', [ch(1, 1), ch(1, 2), ch(2, 1), ch(2, 2)], ''],
+    ['mixed volume tags on one number give no ranges', [ch(1, 1), ch(2, 1), ch(2, 0), ch(3, 1)], ''],
   ])('%s', (_, chapters, want) => {
     expect(siteVolumes(chapters)).toBe(want);
+  });
+
+  it.each([
+    ['none', [ch(1), ch(2)], 0],
+    ['repeated number across volumes', [ch(1, 1), ch(1, 2), ch(2, 1), ch(2, 2)], 2],
+    ['mixed volume tags on one number', [ch(1, 1), ch(2, 1), ch(2, 0), ch(3, 1)], 1],
+  ])('lists the volumes: %s', (_, chapters, want) => {
+    expect(listedVolumes(chapters)).toBe(want);
+  });
+
+  it('recognises the site volumes box', () => {
+    expect(['', '  ', 'auto', 'AUTO'].map(isSiteVolumes)).toEqual([true, true, true, true]);
+    expect(isSiteVolumes('1-7/8-16')).toBe(false);
   });
 });
 
@@ -171,6 +196,10 @@ describe('shared with Go', () => {
   it.each(shared.site.map((c) => [c.name, c] as const))('writes the site volumes: %s', (_, c) => {
     const chapters = c.chapters.map(([number, volume], i) => ch(number, volume, i));
     expect(siteVolumes(chapters)).toBe(c.want);
+    expect(listedVolumes(chapters)).toBe(c.listed);
+    if (c.want === '') {
+      return;
+    }
     // and what it writes groups each chapter where the site does
     const g = groupChapters(chapters, parseVolumes(c.want));
     expect(g.volumes.flatMap((v) => v.chapters.map((x) => [x.number, v.number]))).toEqual(
@@ -186,5 +215,70 @@ describe('named volumes', () => {
       [4, [1, 2]],
       [5, [3, 4, 5, 6]],
     ]);
+  });
+});
+
+describe('volumesSummary', () => {
+  // the four branches: own ranges, the site's ranges, listed but not writable, none listed
+  it.each([
+    { name: 'own ranges', text: '1-7/8-16', site: '', listed: 2, volumes: 2, loose: 0, want: { text: '2 volumes' } },
+    {
+      name: 'own ranges, outside chapters',
+      text: '1-7',
+      site: '',
+      listed: 1,
+      volumes: 1,
+      loose: 3,
+      want: { text: '1 volume, 3 chapters outside them' },
+    },
+    {
+      name: 'own ranges, none falls in',
+      text: '1-7',
+      site: '',
+      listed: 1,
+      volumes: 0,
+      loose: 0,
+      want: { text: 'No chapter falls in these volumes.' },
+    },
+    {
+      name: 'site ranges',
+      text: '',
+      site: '61:598-603/604-614',
+      listed: 55,
+      volumes: 55,
+      loose: 15,
+      want: { text: "Site's volumes: 55, 15 chapters outside them", ranges: '61:598-603/604-614' },
+    },
+    {
+      name: 'auto is the site',
+      text: 'auto',
+      site: '1-2/3-4',
+      listed: 2,
+      volumes: 2,
+      loose: 0,
+      want: { text: "Site's volumes: 2", ranges: '1-2/3-4' },
+    },
+    {
+      name: 'listed, not writable',
+      text: '',
+      site: '',
+      listed: 9,
+      volumes: 7,
+      loose: 1,
+      want: {
+        text: "9 volumes, as the site files them (they can't be written as chapter ranges), 1 chapter outside them",
+      },
+    },
+    {
+      name: 'none listed',
+      text: '',
+      site: '',
+      listed: 0,
+      volumes: 0,
+      loose: 0,
+      want: { text: 'The site lists no volumes: enter them as chapter ranges.' },
+    },
+  ])('$name', ({ text, site, listed, volumes, loose, want }) => {
+    expect(volumesSummary(text, site, listed, volumes, loose)).toEqual(want);
   });
 });

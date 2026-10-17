@@ -149,6 +149,7 @@ export namespace main {
 	export class VolumesDTO {
 	    text: string;
 	    site: string;
+	    listed: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new VolumesDTO(source);
@@ -158,6 +159,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.text = source["text"];
 	        this.site = source["site"];
+	        this.listed = source["listed"];
 	    }
 	}
 	export class SummaryDTO {

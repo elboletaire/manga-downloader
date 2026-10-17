@@ -179,11 +179,12 @@ type Controller struct {
 
 	// loadErr is the last load's error, which the view shows under the URL
 	loadErr error
-	// volumesText is the Volumes box, the volumes a run in volume mode packs:
-	// --volumes' syntax, "" meaning the site's own. siteVolumes is the site's
-	// volumes in the same syntax, what the box starts with on each load.
-	volumesText string
-	siteVolumes string
+	// volumesText is the Volumes box, starting empty on each load ("" is the
+	// site's own volumes). siteVolumes is those volumes as ranges, "" when they
+	// can't be written so; listedVolumes counts the volumes the site lists.
+	volumesText   string
+	siteVolumes   string
+	listedVolumes int
 	// update is the newer release the update check found, nil when none
 	update *Update
 	// attention is the browser window waiting for the user (a check to pass
@@ -518,7 +519,8 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	c.hasDuplicates = core.HasDuplicateChapterNumbers(series.Chapters)
 	c.hasGroupDuplicates = core.HasGroupDuplicates(series.Chapters)
 	c.siteVolumes = core.SiteVolumes(series.Chapters)
-	c.volumesText = c.siteVolumes
+	c.listedVolumes = core.ListedVolumes(series.Chapters)
+	c.volumesText = ""
 	c.resetResultsLocked()
 	c.appendLogLocked(LogInfo, fmt.Sprintf("Loaded %s: %d chapters", series.Title, len(series.Chapters)))
 	return nil
@@ -807,7 +809,7 @@ func (c *Controller) Clear() error {
 	c.selGen++
 	c.hasDuplicates = false
 	c.hasGroupDuplicates = false
-	c.volumesText, c.siteVolumes = "", ""
+	c.volumesText, c.siteVolumes, c.listedVolumes = "", "", 0
 	c.languages, c.scanlators = nil, nil
 	c.loadedLanguage, c.loadedScanlator = "", ""
 	// the sites of the cached listings may hold a browser: they go with the series
@@ -1099,12 +1101,13 @@ func inRanges(n float64, rngs []ranges.Range) bool {
 	return false
 }
 
-// Volumes returns the Volumes box and the site's volumes, in --volumes'
-// syntax; site is "" when the site doesn't say
-func (c *Controller) Volumes() (text, site string) {
+// Volumes returns the Volumes box, the site's volumes in --volumes' syntax
+// (site is "" when they can't be written as ranges) and how many volumes the
+// site lists
+func (c *Controller) Volumes() (text, site string, listed int) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.volumesText, c.siteVolumes
+	return c.volumesText, c.siteVolumes, c.listedVolumes
 }
 
 // SetVolumes sets the Volumes box: chapter ranges, one group per volume

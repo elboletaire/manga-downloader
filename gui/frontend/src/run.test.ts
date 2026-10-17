@@ -130,12 +130,14 @@ describe('downloadBlocker', () => {
   it('asks for volumes when the site lists none', async () => {
     const s = await loadedState();
     const volumes = { ...s.options, packAs: 'volumes' as const };
-    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '' } })).toMatch(
+    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '', listed: 0 } })).toMatch(
       /enter them as chapter ranges/,
     );
-    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '1-7', site: '' } })).toBe('');
-    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '1-7' } })).toBe('');
-    expect(downloadBlocker({ ...s, volumes: { text: '', site: '' } })).toBe('');
+    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '1-7', site: '', listed: 0 } })).toBe('');
+    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '1-7', listed: 1 } })).toBe('');
+    // a site whose volumes don't write as ranges still packs them, as auto
+    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '', listed: 2 } })).toBe('');
+    expect(downloadBlocker({ ...s, volumes: { text: '', site: '', listed: 0 } })).toBe('');
   });
 });
 
@@ -165,7 +167,7 @@ describe('downloadLabel', () => {
 
     it('names the volumes and their chapters', async () => {
       const s = await loadedState();
-      const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '1-7/8-16', site: '' } };
+      const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '1-7/8-16', site: '', listed: 0 } };
       expect(downloadLabel({ ...volumes, selectedCount: 16 }, list, from(1, 16))).toBe(
         'Download 2 volumes (16 chapters)',
       );
@@ -174,7 +176,7 @@ describe('downloadLabel', () => {
 
     it('names the loose chapters beside the volumes', async () => {
       const s = await loadedState();
-      const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '1-7/8-16', site: '' } };
+      const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '1-7/8-16', site: '', listed: 0 } };
       expect(downloadLabel({ ...volumes, selectedCount: 19 }, list, [...from(1, 16), ...from(17, 19)])).toBe(
         'Download 2 volumes and 3 chapters',
       );
@@ -186,7 +188,7 @@ describe('downloadLabel', () => {
     it('takes the site volumes when the Volumes box is empty', async () => {
       const s = await loadedState();
       const sited = list.map((ch, i) => ({ ...ch, volume: i < 7 ? 1 : i < 16 ? 2 : 0 }));
-      const site = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '', site: '' } };
+      const site = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '', site: '', listed: 0 } };
       expect(downloadLabel({ ...site, selectedCount: 16 }, sited, from(1, 16))).toBe('Download 2 volumes (16 chapters)');
       expect(downloadLabel({ ...site, selectedCount: 17 }, sited, [...from(1, 16), 17])).toBe(
         'Download 2 volumes and 1 chapter',
@@ -195,13 +197,13 @@ describe('downloadLabel', () => {
 
     it('falls back to the chapter count when no selected chapter is in a volume', async () => {
       const s = await loadedState();
-      const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '1-7/8-16', site: '' } };
+      const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '1-7/8-16', site: '', listed: 0 } };
       expect(downloadLabel({ ...volumes, selectedCount: 3 }, list, from(17, 19))).toBe('Download 3 chapters');
     });
 
     it('falls back to the chapter count when the Volumes box does not parse', async () => {
       const s = await loadedState();
-      const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: 'nope', site: '' } };
+      const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: 'nope', site: '', listed: 0 } };
       expect(downloadLabel({ ...volumes, selectedCount: 16 }, list, from(1, 16))).toBe('Download 16 chapters');
     });
   });

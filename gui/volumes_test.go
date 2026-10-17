@@ -38,14 +38,14 @@ func written(t *testing.T, dir string) []string {
 	return out
 }
 
-func TestLoadPrefillsSiteVolumes(t *testing.T) {
+// Each load starts the box empty (auto), with the site's volumes offered for editing
+func TestLoadOffersSiteVolumes(t *testing.T) {
 	c, _, _ := newTestController(t, false, nil, volumeChapters(5, 1, 2)...)
 	if err := c.Load("https://example.com/manga/test"); err != nil {
 		t.Fatal(err)
 	}
-	text, site := c.Volumes()
-	if site != "1-2/3-4/5" || text != site {
-		t.Errorf("Volumes() = %q, %q; want the site's 1-2/3-4/5 in both", text, site)
+	if text, site, listed := c.Volumes(); text != "" || site != "1-2/3-4/5" || listed != 3 {
+		t.Errorf("Volumes() = %q, %q, %d; want an empty box, the site's 1-2/3-4/5 and 3 volumes", text, site, listed)
 	}
 
 	if err := c.SetVolumes("1-3/3-5"); err == nil {
@@ -54,21 +54,21 @@ func TestLoadPrefillsSiteVolumes(t *testing.T) {
 	if err := c.SetVolumes(" 1-3/4 "); err != nil {
 		t.Fatal(err)
 	}
-	if text, _ := c.Volumes(); text != "1-3/4" {
+	if text, _, _ := c.Volumes(); text != "1-3/4" {
 		t.Errorf("box = %q, want it trimmed", text)
 	}
 
 	if err := c.Clear(); err != nil {
 		t.Fatal(err)
 	}
-	if text, site := c.Volumes(); text != "" || site != "" {
-		t.Errorf("Clear kept the volumes %q, %q", text, site)
+	if text, site, listed := c.Volumes(); text != "" || site != "" || listed != 0 {
+		t.Errorf("Clear kept the volumes %q, %q, %d", text, site, listed)
 	}
 }
 
 // A listing whose first volume isn't 1 (one language's chapters only) names
-// it, rather than prefilling a run of empty groups
-func TestLoadPrefillsNamedVolume(t *testing.T) {
+// it, so the offered ranges don't start with a run of empty groups
+func TestLoadNamedSiteVolume(t *testing.T) {
 	list := volumeChapters(5, 1, 0)
 	for i := range list {
 		list[i].volume = 16
@@ -78,14 +78,47 @@ func TestLoadPrefillsNamedVolume(t *testing.T) {
 	if err := c.Load("https://example.com/manga/test"); err != nil {
 		t.Fatal(err)
 	}
-	if text, site := c.Volumes(); site != "16:1-4/18:5" || text != site {
-		t.Errorf("Volumes() = %q, %q; want 16:1-4/18:5 in both", text, site)
+	if text, site, _ := c.Volumes(); site != "16:1-4/18:5" || text != "" {
+		t.Errorf("Volumes() = %q, %q; want an empty box and 16:1-4/18:5", text, site)
 	}
 	if err := c.SetVolumes("16: 1-2/3-4"); err != nil {
 		t.Errorf("named volumes were refused: %v", err)
 	}
 	if err := c.SetVolumes("16: 1-2/16: 3"); err == nil {
 		t.Error("a volume given twice was accepted")
+	}
+}
+
+// Chapter numbers repeated across volumes (an anthology restarting its
+// numbering) can't be written as ranges, so no site volumes are offered, but
+// the site still lists its volumes and a run packs them as the site files them
+func TestLoadSiteVolumesWithoutRanges(t *testing.T) {
+	list := []fakeChapter{
+		{number: 1, pages: 1, volume: 1},
+		{number: 1, pages: 1, volume: 2},
+		{number: 2, pages: 1, volume: 1},
+		{number: 2, pages: 1, volume: 2},
+	}
+	c, _, dir := newTestController(t, false, nil, list...)
+	c.Configure(func(s *grabber.Settings) { applyPackAs(s, PackVolumes) })
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	if text, site, listed := c.Volumes(); text != "" || site != "" || listed != 2 {
+		t.Errorf("Volumes() = %q, %q, %d; want an empty box, no ranges and 2 volumes", text, site, listed)
+	}
+	c.SetAll(true)
+	if err := c.Start(); err != nil {
+		t.Fatal(err)
+	}
+	if r := c.Run(); !r.Volumes || r.Rows != 2 {
+		t.Errorf("run = %+v, want 2 volume rows", r)
+	}
+	if s := waitFinished(t, c); s.Volumes != 2 || s.Saved != 4 {
+		t.Errorf("summary = %+v, want 2 volume files of 4 chapters", s)
+	}
+	if files := written(t, dir); len(files) != 2 {
+		t.Errorf("wrote %q, want 2 volume files", files)
 	}
 }
 
@@ -175,8 +208,8 @@ func TestStartVolumesWithoutSiteVolumes(t *testing.T) {
 	if err := c.Load("https://example.com/manga/test"); err != nil {
 		t.Fatal(err)
 	}
-	if text, site := c.Volumes(); text != "" || site != "" {
-		t.Fatalf("volumes %q, %q for a site without any", text, site)
+	if text, site, listed := c.Volumes(); text != "" || site != "" || listed != 0 {
+		t.Fatalf("volumes %q, %q, %d for a site without any", text, site, listed)
 	}
 	c.SetAll(true)
 	if err := c.Start(); !errors.Is(err, core.ErrNoVolumes) {
