@@ -4,8 +4,7 @@
   "close": "Close",
   "language": {
     "heading": "Language",
-    "system": "System",
-    "systemHint": "Follows the system: {{language}}."
+    "systemOption": "System ({{language}})"
   },
   "updates": {
     "heading": "Updates",

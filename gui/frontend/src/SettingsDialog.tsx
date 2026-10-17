@@ -5,7 +5,7 @@ import { useEffect, useRef, type MouseEvent } from 'react';
 import { errorMessage } from './format';
 import { LANG_INFO, LANGS, type Lang, type LangPref } from './i18n';
 import { useI18n } from './i18n/react';
-import { Segmented, Switch } from './fields';
+import { SelectField, Switch } from './fields';
 import { XIcon } from './icons';
 import type { State } from './types';
 
@@ -63,9 +63,10 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
     onOpenURL(url);
   };
 
+  // the endonyms stay untranslated; System names the language it resolves to
   const languageOptions = [
-    { value: '' as LangPref, label: t('settings.language.system') },
-    ...LANGS.map((l) => ({ value: l as LangPref, label: LANG_INFO[l].name })),
+    { value: '', label: t('settings.language.systemOption', { language: LANG_INFO[systemLang].name }) },
+    ...LANGS.map((l) => ({ value: l, label: LANG_INFO[l].name })),
   ];
 
   // the license is the one link in the line, so the translated text is split around its name
@@ -107,15 +108,12 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
         <div className="settings-body">
           <section className="opt-group">
             <h3>{t('settings.language.heading')}</h3>
-            <Segmented<LangPref>
+            <SelectField
               label={t('settings.language.heading')}
               value={pref}
               options={languageOptions}
-              onChange={pick}
+              onChange={(value) => pick(value as LangPref)}
             />
-            {pref === '' && (
-              <p className="hint">{t('settings.language.systemHint', { language: LANG_INFO[systemLang].name })}</p>
-            )}
           </section>
 
           <section className="opt-group">

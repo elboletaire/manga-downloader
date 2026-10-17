@@ -2260,8 +2260,8 @@ a.version:hover {
   padding-top: 12px;
 }
 
-/* the heading above is the visible label; the legend keeps the name for screen readers */
-.settings-dialog .segmented-field > legend {
+/* the heading above is the visible label; the select's label keeps the name for screen readers */
+.settings-dialog .opt-group .field > label {
   position: absolute;
   width: 1px;
   height: 1px;

@@ -4,8 +4,7 @@
   "close": "Cerrar",
   "language": {
     "heading": "Idioma",
-    "system": "Sistema",
-    "systemHint": "Sigue el idioma del sistema: {{language}}."
+    "systemOption": "Sistema ({{language}})"
   },
   "updates": {
     "heading": "Actualizaciones",

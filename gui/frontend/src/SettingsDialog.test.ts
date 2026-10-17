@@ -36,20 +36,28 @@ function render(pref: LangPref, s: State, systemLanguages = ['fr-FR']) {
 }
 
 describe('SettingsDialog', () => {
-  it('names each language in itself, whatever the UI language', () => {
+  it('names each language in itself as an option, whatever the UI language', () => {
     for (const lang of LANGS) {
       const html = render(lang, state());
-      expect(html, lang).toContain('English');
-      expect(html, lang).toContain('Español');
-      expect(html, lang).toContain('Català');
+      expect(html, lang).toContain('>English</option>');
+      expect(html, lang).toContain('>Español</option>');
+      expect(html, lang).toContain('>Català</option>');
     }
   });
 
-  it('shows the system hint only when the language follows the system', () => {
-    expect(render('', state(), ['fr-FR'])).toContain('Follows the system: English.');
-    expect(render('', state(), ['es-ES'])).toContain('Sigue el idioma del sistema: Español.');
-    expect(render('en', state(), ['es-ES'])).not.toContain('Follows the system');
-    expect(render('ca', state(), ['es-ES'])).not.toContain("Segueix l'idioma del sistema");
+  it('names the resolved system language in the System option', () => {
+    expect(render('', state(), ['fr-FR'])).toContain('<option value="" selected="">System (English)</option>');
+    expect(render('', state(), ['es-ES'])).toContain('<option value="" selected="">Sistema (Español)</option>');
+    expect(render('', state(), ['ca-ES'])).toContain('<option value="" selected="">Sistema (Català)</option>');
+  });
+
+  it('selects the option matching the saved language', () => {
+    for (const lang of LANGS) {
+      const html = render(lang, state());
+      expect(html, lang).toContain(`<option value="${lang}" selected="">`);
+      expect(html.match(/selected=""/g), lang).toHaveLength(1);
+    }
+    expect(render('', state())).not.toContain('<option value="en" selected="">');
   });
 
   it('shows the update switch off and disabled with the dev hint when there is no release URL', () => {

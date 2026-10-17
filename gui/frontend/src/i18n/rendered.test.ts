@@ -239,7 +239,7 @@ function components({ state, chapters, selected, log }: Snapshot): Screen[] {
         label: t('settings.language.heading'),
         value: 'system',
         options: [
-          { value: 'system', label: t('settings.language.system') },
+          { value: 'system', label: t('settings.language.systemOption', { language: LANG_INFO.en.name }) },
           { value: 'en', label: LANG_INFO.en.name },
         ],
         onChange: noop,

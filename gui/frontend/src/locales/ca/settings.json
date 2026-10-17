@@ -4,8 +4,7 @@
   "close": "Tanca",
   "language": {
     "heading": "Idioma",
-    "system": "Sistema",
-    "systemHint": "Segueix l'idioma del sistema: {{language}}."
+    "systemOption": "Sistema ({{language}})"
   },
   "updates": {
     "heading": "Actualitzacions",
