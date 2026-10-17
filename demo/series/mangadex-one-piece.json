@@ -1,0 +1,12 @@
+{
+ "urls": ["https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece"],
+ "title": "One Piece",
+ "nameFormat": "Chapter %04d %s",
+ "chapters": [
+  {"number": 1185, "title": "Més us val plegar el ram", "language": "ca", "id": "9d2a7f41-3c86-4e10-b5f7-2a8e6c1d0b51", "pages": 16, "groups": ["Yohoho Scanlation"]},
+  {"number": 1186, "title": "Un altre cop", "language": "ca", "id": "1f6c9e83-7a24-4b5d-8e01-6d3b9a2f4c62", "pages": 17, "groups": ["Yohoho Scanlation"]},
+  {"number": 1187, "title": "La mare dels ous", "language": "ca", "id": "c4e8b2a0-5d37-4f96-9a1e-8b0d7c3e5f73", "pages": 13, "groups": ["Yohoho Scanlation"]},
+  {"number": 1188, "title": "Buit tempestuós", "language": "ca", "id": "6a3f0d59-2e18-4c7b-a4d6-9f1e8b5c2d84", "pages": 16, "groups": ["Yohoho Scanlation"]},
+  {"number": 1189, "title": "El rei del món", "language": "ca", "id": "e7b5c1f4-8d02-4a3e-b9c6-1d4f2a7e6b95", "pages": 15, "groups": ["Yohoho Scanlation"]}
+ ]
+}
