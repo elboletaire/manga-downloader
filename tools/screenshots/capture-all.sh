@@ -47,6 +47,7 @@ for theme in light dark; do
   shot 05-done '?mock&scenario=done&freeze&shot'
   shot 06-options '?mock&scenario=loaded&freeze&shot&epub' "$SCROLL"
   shot 07-volumes '?mock&scenario=volumes&freeze&shot' "$FOLD"
+  shot 12-parts '?mock&scenario=parts&freeze&shot'
   shot 08-browser-alert '?mock&scenario=check&freeze&shot'
   shot 09-update '?mock&scenario=update&freeze&shot'
   shot 10-failed '?mock&scenario=done&freeze&fail&shot'

@@ -76,7 +76,7 @@ every browser the site cares about reads, so there are no PNG fallbacks.
 
 - `app-overview` is the full window (`02-loaded-{light,dark}.png`), at 1000 and
   1600 px wide: the hero.
-- `language-selector`, `chapter-list`, `volumes` and `finished-run` are crops of the
+- `language-selector`, `chapter-list`, `volumes`, `parts` and `finished-run` are crops of the
   2000 px originals in the repo's [`assets/screenshots/`](../assets/screenshots/),
   at 600 and 1000 px wide.
   They are cut to the part that matters, so they stay readable at the
@@ -99,6 +99,7 @@ panel's left edge, so no edge of the list shows in it):
 | `language-selector` | `03-language-selector-{light,dark}.png` | `740x960+85+56`     |
 | `chapter-list`      | `04-downloading-{light,dark}.png`       | `1118x787+117+405`  |
 | `volumes`           | `07-volumes-{light,dark}.png`           | `1118x787+117+405`  |
+| `parts`             | `12-parts-{light,dark}.png`             | `1118x787+117+405`  |
 | `finished-run`      | `05-done-{light,dark}.png`              | `624x787+1259+405`  |
 
 To regenerate from the originals, run it with the repo's originals folder and an
