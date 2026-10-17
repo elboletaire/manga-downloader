@@ -456,6 +456,26 @@ describe('mock volumes', () => {
       vi.useRealTimers();
     }
   });
+
+  it('sends a failed chapter as a labelled failure, with its reason as a message', async () => {
+    const api = createMockApi({ chapters: 40, fail: true });
+    await api.load('https://example.com/series/a');
+    await api.setAll(true);
+    vi.useFakeTimers();
+    try {
+      await api.start();
+      await vi.advanceTimersByTimeAsync(60_000);
+      const { summary } = await api.state();
+      expect(summary!.failures).toHaveLength(1);
+      expect(summary!.failures[0]).toMatchObject({
+        label: expect.stringMatching(/\S/),
+        reason: 'download: page 5 returned 404 Not Found',
+        reasonMsg: { key: 'job.reason.download', args: { reason: 'page 5 returned 404 Not Found' } },
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('mockSetupFrom', () => {

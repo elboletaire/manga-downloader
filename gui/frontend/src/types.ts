@@ -61,6 +61,16 @@ export interface Job {
   volume: boolean;
 }
 
+/** A line of the run's failures: what failed, and why */
+export interface Failure {
+  /** The release or volume the line is about; "" when it names none */
+  label: string;
+  /** The reason in English, shown when the window has no message for it */
+  reason: string;
+  /** The reason as the window words it, when it has window words of its own */
+  reasonMsg?: Message;
+}
+
 export interface Summary {
   dir: string;
   cancelled: boolean;
@@ -72,7 +82,7 @@ export interface Summary {
   bundled: boolean;
   bundle: string;
   skipped: number;
-  failures: string[];
+  failures: Failure[];
   /** Set when a bundle couldn't be written */
   error: string;
   /** error as a message, when the window translates it */

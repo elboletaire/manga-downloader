@@ -6,7 +6,6 @@ import {
   downloadLabel,
   hostOf,
   overallProgress,
-  splitFailure,
   summaryTone,
   tally,
 } from './run';
@@ -246,23 +245,13 @@ describe('downloadLabel, merging parts', () => {
 describe('summaryTone', () => {
   it('maps outcomes to colours', () => {
     expect(summaryTone({ ...summary, saved: 3 })).toBe('success');
-    expect(summaryTone({ ...summary, saved: 3, failures: ['a'] })).toBe('warning');
-    expect(summaryTone({ ...summary, failures: ['a'] })).toBe('danger');
+    expect(summaryTone({ ...summary, saved: 3, failures: [{ label: '', reason: 'a' }] })).toBe('warning');
+    expect(summaryTone({ ...summary, failures: [{ label: '', reason: 'a' }] })).toBe('danger');
     expect(summaryTone({ ...summary, bundled: true, error: 'disk full' })).toBe('danger');
     expect(summaryTone({ ...summary, cancelled: true, saved: 2 })).toBe('neutral');
     expect(summaryTone(summary)).toBe('neutral');
     expect(summaryTone({ ...summary, bundled: true, bundle: 'a.cbz', saved: 3 })).toBe('success');
-    expect(summaryTone({ ...summary, volumes: 1, failures: ['a'] })).toBe('warning');
-  });
-});
-
-describe('splitFailure', () => {
-  it('splits at the first colon', () => {
-    expect(splitFailure('Chapter 4: download: page 5 returned 404')).toEqual({
-      what: 'Chapter 4',
-      why: 'download: page 5 returned 404',
-    });
-    expect(splitFailure('no colon here')).toEqual({ what: '', why: 'no colon here' });
+    expect(summaryTone({ ...summary, volumes: 1, failures: [{ label: '', reason: 'a' }] })).toBe('warning');
   });
 });
 

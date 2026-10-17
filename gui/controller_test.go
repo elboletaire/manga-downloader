@@ -432,8 +432,8 @@ func TestDownloadBundleWithFailure(t *testing.T) {
 	if s.Err != nil || s.Cancelled {
 		t.Fatalf("summary = %+v", s)
 	}
-	if len(s.Failures) != 1 || !strings.Contains(s.Failures[0], "Chapter 2") {
-		t.Errorf("failures = %v, want chapter 2", s.Failures)
+	if len(s.Failures) != 1 || !strings.Contains(s.Failures[0].Label, "Chapter 2") {
+		t.Errorf("failures = %+v, want chapter 2", s.Failures)
 	}
 	if s.Saved != 2 || s.Bundle == "" {
 		t.Errorf("saved %d, bundle %q; want 2 chapters and a file", s.Saved, s.Bundle)
@@ -1019,6 +1019,43 @@ func TestSetReasonErrTranslatesSharedSentinels(t *testing.T) {
 		j.setReasonErr(c.err)
 		if j.ReasonMsg == nil || j.ReasonMsg.Key != c.key || j.Reason != c.text {
 			t.Errorf("%v: reason = %q, message = %+v, want key %q", c.err, j.Reason, j.ReasonMsg, c.key)
+		}
+	}
+}
+
+// A failure line names its release apart from the reason; the reasons the
+// window words carry their message, and the ones from core stay plain text.
+func TestFailureLinesCarryTheirMessages(t *testing.T) {
+	c := NewController(&grabber.Settings{}, nil)
+	c.byChap = map[*grabber.Chapter]*Job{}
+	c.fetching = map[grabber.Filterable]*Job{}
+	c.failedC = map[*grabber.Chapter]bool{}
+	e := events{c}
+	ch := &grabber.Chapter{Title: "Chapter 5", Number: 5}
+
+	e.FilenameFailed(ch, errors.New("bad"))
+	e.Packed(ch, "", errors.New("disk full"))
+	e.DownloadFailed(ch, errors.New("boom"))
+
+	failures := c.stats.failures
+	if len(failures) != 3 {
+		t.Fatalf("failures = %+v, want 3", failures)
+	}
+	want := []struct {
+		reason string
+		key    string
+	}{
+		{"filename: bad", "job.reason.filename"},
+		{"packing: disk full", "job.reason.packing"},
+		{"boom", ""},
+	}
+	for i, w := range want {
+		f := failures[i]
+		if f.Label != c.releaseLabel(ch) || f.Reason != w.reason {
+			t.Errorf("failure %d = %+v, want release %q reason %q", i, f, c.releaseLabel(ch), w.reason)
+		}
+		if (f.ReasonMsg == nil) != (w.key == "") || (w.key != "" && f.ReasonMsg.Key != w.key) {
+			t.Errorf("failure %d message = %+v, want key %q", i, f.ReasonMsg, w.key)
 		}
 	}
 }

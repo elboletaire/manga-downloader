@@ -185,19 +185,6 @@ export function summaryTone(s: Summary): Tone {
   return 'success';
 }
 
-/**
- * Splits a failure line ("Chapter 4: download: page 5 returned 404") into
- * what failed and why, at the first ": ". A line without one is all reason.
- */
-export function splitFailure(line: string): { what: string; why: string } {
-  const at = line.indexOf(': ');
-  if (at <= 0) {
-    return { what: '', why: line };
-  }
-
-  return { what: line.slice(0, at), why: line.slice(at + 2) };
-}
-
 /** The host of a URL without "www.", or "" when it doesn't parse */
 export function hostOf(url: string): string {
   try {

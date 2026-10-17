@@ -164,6 +164,25 @@ func TestSummaryErrorCarriesItsMessage(t *testing.T) {
 	}
 }
 
+// a failure line's window wording travels as its message; a plain reason has none
+func TestSummaryFailuresCarryTheirMessage(t *testing.T) {
+	s := summaryDTO(&Summary{Failures: []Failure{
+		windowFailure("Chapter 5", msg("job.reason.packing", map[string]any{"reason": "disk full"})),
+		newFailure("Chapter 6", errors.New("boom")),
+	}})
+	packed, plain := s.Failures[0], s.Failures[1]
+	if packed.Label != "Chapter 5" || packed.Reason != "packing: disk full" || packed.ReasonMsg == nil ||
+		packed.ReasonMsg.Key != "job.reason.packing" {
+		t.Errorf("packing failure = %+v", packed)
+	}
+	if plain.Label != "Chapter 6" || plain.Reason != "boom" || plain.ReasonMsg != nil {
+		t.Errorf("plain failure = %+v", plain)
+	}
+	if empty := summaryDTO(&Summary{}); empty.Failures == nil {
+		t.Errorf("no failures sent as null, want an empty list")
+	}
+}
+
 // the load errors the window translates carry their key; the rest don't
 func TestLoadMessageCarriesItsKey(t *testing.T) {
 	cases := []struct {

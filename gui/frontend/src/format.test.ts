@@ -30,7 +30,7 @@ const base: Summary = {
 
 describe('summaryHeadline', () => {
   it('describes a plain run', () => {
-    expect(summaryHeadline({ ...base, saved: 9, failures: ['x'], skipped: 1 }, en)).toBe(
+    expect(summaryHeadline({ ...base, saved: 9, failures: [{ label: '', reason: 'x' }], skipped: 1 }, en)).toBe(
       '9 saved, 1 failed, 1 skipped',
     );
     expect(summaryHeadline(base, en)).toBe('Nothing was saved');
@@ -170,7 +170,7 @@ describe('formatNumber', () => {
 
 describe('translated helpers', () => {
   it('reads the summary in Spanish and Catalan', () => {
-    expect(summaryHeadline({ ...base, saved: 9, failures: ['x'], skipped: 1 }, es)).toBe(
+    expect(summaryHeadline({ ...base, saved: 9, failures: [{ label: '', reason: 'x' }], skipped: 1 }, es)).toBe(
       '9 guardados, 1 fallido, 1 omitido',
     );
     expect(summarySentence({ ...base, saved: 12, volumes: 1 }, es)).toBe(

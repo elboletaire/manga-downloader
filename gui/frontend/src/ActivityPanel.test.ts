@@ -95,6 +95,26 @@ describe('ActivityPanel', () => {
     expect(html).toContain('descarga: x');
   });
 
+  it('translates the window words of a failure line and keeps a core reason as it is', () => {
+    const failures = [
+      {
+        label: 'Chapter 4',
+        reason: 'packing: disk full',
+        reasonMsg: { key: 'job.reason.packing', args: { reason: 'disk full' }, text: 'packing: disk full' },
+      },
+      { label: 'Chapter 5', reason: 'page 5 returned 404' },
+      {
+        label: '',
+        reason: 'volumes: x',
+        reasonMsg: { key: 'log.volumesFailed', args: { reason: 'x' }, text: 'volumes: x' },
+      },
+    ];
+    const html = render({ running: false, summary: { ...summary, failures }, jobs: [] }, 'ca');
+    expect(html).toContain('<strong>Chapter 4</strong><span>empaquetat: disk full</span>');
+    expect(html).toContain('<strong>Chapter 5</strong><span>page 5 returned 404</span>');
+    expect(html).toContain('<span>volums: x</span>');
+  });
+
   it('titles the running chapters and their progress in Spanish', () => {
     const html = render(
       { running: true, summary: null, jobs: [job], run: { chapters: 1, bundle: false, volumes: false, rows: 1 } },

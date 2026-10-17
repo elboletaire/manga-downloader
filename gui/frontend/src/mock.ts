@@ -541,7 +541,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       .filter((j) => j.state === 'done')
       .reduce((n, j) => n + (j.volume ? (volumeChapters.get(j.title) ?? 0) : 1), 0);
     const volumes = jobs.filter((j) => j.volume && j.state === 'done').length;
-    const failures = jobs.filter((j) => j.state === 'failed').map((j) => `${j.title}: ${j.reason}`);
+    const failures = jobs
+      .filter((j) => j.state === 'failed')
+      .map((j) => ({ label: j.title, reason: j.reason, reasonMsg: j.reasonMsg }));
     const skipped = jobs.filter((j) => j.state === 'skipped').length;
     const bundled = runBundle;
     summary = {

@@ -42,7 +42,7 @@ func TestSmokeRealSite(t *testing.T) {
 	s := waitFinished(t, c)
 	t.Logf("summary: saved %d, skipped %d, bundle %q, cancelled %v, err %v", s.Saved, s.Skipped, s.Bundle, s.Cancelled, s.Err)
 	for _, f := range s.Failures {
-		t.Logf("failure: %s", f)
+		t.Logf("failure: %s: %s", f.Label, f.Reason)
 	}
 	if s.Saved == 0 || len(s.Failures) > 0 {
 		t.Errorf("smoke download failed: %+v", s)

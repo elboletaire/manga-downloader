@@ -297,6 +297,13 @@ type JobDTO struct {
 	Volume bool `json:"volume"`
 }
 
+// FailureDTO is a line of the run summary's failures
+type FailureDTO struct {
+	Label     string   `json:"label"`
+	Reason    string   `json:"reason"`
+	ReasonMsg *Message `json:"reasonMsg,omitempty"`
+}
+
 // SummaryDTO is the outcome of a finished run
 type SummaryDTO struct {
 	Dir       string `json:"dir"`
@@ -304,11 +311,11 @@ type SummaryDTO struct {
 	Saved     int    `json:"saved"`
 	Volumes   int    `json:"volumes"`
 	// Parts is set when the volume files are chapters with their parts merged
-	Parts    bool     `json:"parts"`
-	Bundled  bool     `json:"bundled"`
-	Bundle   string   `json:"bundle"`
-	Skipped  int      `json:"skipped"`
-	Failures []string `json:"failures"`
+	Parts    bool         `json:"parts"`
+	Bundled  bool         `json:"bundled"`
+	Bundle   string       `json:"bundle"`
+	Skipped  int          `json:"skipped"`
+	Failures []FailureDTO `json:"failures"`
 	// Error is set when a bundle couldn't be written
 	Error string `json:"error"`
 	// ErrorMsg is Error as a message, when the window translates it
@@ -869,7 +876,10 @@ func summaryDTO(s *Summary) *SummaryDTO {
 		Bundled:   s.Bundled,
 		Bundle:    s.Bundle,
 		Skipped:   s.Skipped,
-		Failures:  append([]string{}, s.Failures...),
+		Failures:  []FailureDTO{},
+	}
+	for _, f := range s.Failures {
+		out.Failures = append(out.Failures, FailureDTO{Label: f.Label, Reason: f.Reason, ReasonMsg: f.ReasonMsg})
 	}
 	if s.Err != nil {
 		out.Error = s.Err.Error()

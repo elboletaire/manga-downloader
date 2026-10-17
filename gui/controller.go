@@ -5,7 +5,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -136,9 +135,28 @@ type Summary struct {
 	Bundled  bool
 	Bundle   string
 	Skipped  int
-	Failures []string
+	Failures []Failure
 	// Err is a bundle packing error
 	Err error
+}
+
+// Failure is a summary line: the release or volume it's about (Label, "" for
+// none) and Reason, with ReasonMsg when the window words the reason itself.
+type Failure struct {
+	Label     string
+	Reason    string
+	ReasonMsg *Message
+}
+
+// newFailure is a failure of label whose reason is err, keeping the message of
+// a shared error the window translates
+func newFailure(label string, err error) Failure {
+	return Failure{Label: label, Reason: err.Error(), ReasonMsg: messageOf(err)}
+}
+
+// windowFailure is a failure of label worded by the window: m is its message
+func windowFailure(label string, m Message) Failure {
+	return Failure{Label: label, Reason: m.Text, ReasonMsg: &m}
 }
 
 // runStats collects what the events report during a run, for the summary
@@ -146,7 +164,7 @@ type runStats struct {
 	saved    int
 	volumes  int
 	skipped  int
-	failures []string
+	failures []Failure
 	bundle   string
 	err      error
 }
@@ -1257,7 +1275,7 @@ func (c *Controller) Summary() *Summary {
 		return nil
 	}
 	s := *c.summary
-	s.Failures = append([]string(nil), c.summary.Failures...)
+	s.Failures = append([]Failure(nil), c.summary.Failures...)
 	return &s
 }
 
@@ -1391,22 +1409,25 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 	case err != nil && c.runinfo.Volumes && !errors.Is(err, context.Canceled):
 		// only the volumes check Start already ran can fail a volume run
 		s.Err = err
-		s.Failures = append(s.Failures, "volumes: "+err.Error())
-		c.appendMsgLocked(LogError, msg("log.volumesFailed", map[string]any{"reason": err.Error()}))
+		m := msg("log.volumesFailed", map[string]any{"reason": err.Error()})
+		s.Failures = append(s.Failures, windowFailure("", m))
+		c.appendMsgLocked(LogError, m)
 	case errors.Is(err, context.Canceled):
 		// a cancelled bundle is never packed: the chapters it never started
 		// would be silently missing from it
 		s.Cancelled = true
 	case err != nil:
 		s.Err = err
-		s.Failures = append(s.Failures, "packing bundle: "+err.Error())
-		c.appendMsgLocked(LogError, msg("log.packingBundle", map[string]any{"reason": err.Error()}))
+		m := msg("log.packingBundle", map[string]any{"reason": err.Error()})
+		s.Failures = append(s.Failures, windowFailure("", m))
+		c.appendMsgLocked(LogError, m)
 	case c.bundle != nil && c.stats.saved == 0:
 		// core still packs an empty bundle when every chapter failed (as the
 		// CLI does), so the file it leaves behind is not a result
 		s.Err = uiErr("errors.noChapterDownloaded", nil, nil)
-		s.Failures = append(s.Failures, "packing bundle: no chapter could be downloaded")
-		c.appendMsgLocked(LogError, msg("log.bundleEmpty", nil))
+		m := msg("log.bundleEmpty", nil)
+		s.Failures = append(s.Failures, windowFailure("", m))
+		c.appendMsgLocked(LogError, m)
 	default:
 		s.Bundle = file
 	}
@@ -1574,8 +1595,7 @@ func (c *Controller) endRow(ch *grabber.Chapter, state JobState, reason Message)
 func (e events) FetchFailed(listed grabber.Filterable, err error) {
 	c := e.c
 	c.mu.Lock()
-	failure := fmt.Sprintf("%s: %s", c.releaseLabel(listed), err)
-	c.stats.failures = append(c.stats.failures, failure)
+	c.stats.failures = append(c.stats.failures, newFailure(c.releaseLabel(listed), err))
 	if j := c.fetching[listed]; j != nil {
 		j.State = JobFailed
 		j.setReasonErr(err)
@@ -1604,10 +1624,10 @@ func (e events) Skipped(ch *grabber.Chapter) {
 func (e events) FilenameFailed(ch *grabber.Chapter, err error) {
 	c := e.c
 	c.mu.Lock()
-	failure := fmt.Sprintf("%s: filename: %s", c.releaseLabel(ch), err)
-	c.stats.failures = append(c.stats.failures, failure)
+	reason := msg("job.reason.filename", map[string]any{"reason": err.Error()})
+	c.stats.failures = append(c.stats.failures, windowFailure(c.releaseLabel(ch), reason))
 	if c.bundle == nil {
-		c.endRow(ch, JobFailed, msg("job.reason.filename", map[string]any{"reason": err.Error()}))
+		c.endRow(ch, JobFailed, reason)
 	}
 	c.appendMsgLocked(LogError, msg("log.errorFilename", map[string]any{"label": c.releaseLabel(ch), "reason": err.Error()}))
 	c.mu.Unlock()
@@ -1656,8 +1676,7 @@ func (e events) DownloadFailed(ch *grabber.Chapter, err error) {
 	c := e.c
 	c.mu.Lock()
 	c.failedC[ch] = true
-	failure := fmt.Sprintf("%s: %s", c.releaseLabel(ch), err)
-	c.stats.failures = append(c.stats.failures, failure)
+	c.stats.failures = append(c.stats.failures, newFailure(c.releaseLabel(ch), err))
 	// a volume goes on with its other chapters
 	if j := c.byChap[ch]; j != nil && c.bundle == nil {
 		j.State = JobFailed
@@ -1684,11 +1703,11 @@ func (e events) Packed(ch *grabber.Chapter, name string, err error) {
 	c.mu.Lock()
 	j := c.byChap[ch]
 	if err != nil {
-		failure := fmt.Sprintf("%s: packing: %s", c.releaseLabel(ch), err)
-		c.stats.failures = append(c.stats.failures, failure)
+		reason := msg("job.reason.packing", map[string]any{"reason": err.Error()})
+		c.stats.failures = append(c.stats.failures, windowFailure(c.releaseLabel(ch), reason))
 		if j != nil {
 			j.State = JobFailed
-			j.setReason(msg("job.reason.packing", map[string]any{"reason": err.Error()}))
+			j.setReason(reason)
 		}
 		c.appendMsgLocked(LogError, msg("log.packFailed", map[string]any{"label": c.releaseLabel(ch), "reason": err.Error()}))
 	} else {
@@ -1820,8 +1839,7 @@ func (e events) VolumePacked(v *core.Volume, name string, err error) {
 			j.setReasonErr(err)
 		}
 	case err != nil:
-		failure := fmt.Sprintf("%s: %s", label, err)
-		c.stats.failures = append(c.stats.failures, failure)
+		c.stats.failures = append(c.stats.failures, newFailure(label, err))
 		if j != nil {
 			j.State = JobFailed
 			j.setReasonErr(err)

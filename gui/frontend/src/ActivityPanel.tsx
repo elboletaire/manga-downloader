@@ -6,7 +6,7 @@ import { say } from './i18n';
 import { useI18n } from './i18n/react';
 import { jobFraction, jobShortStatus, jobStatus, summaryHeadline, summarySentence } from './format';
 import { AlertIcon, CheckIcon, ErrorIcon, FolderIcon, PackageIcon, SkipIcon, Spinner, XIcon } from './icons';
-import { overallProgress, splitFailure, summaryTone } from './run';
+import { overallProgress, summaryTone } from './run';
 import type { Job, State, Summary } from './types';
 import { useVirtualList } from './virtual';
 
@@ -66,15 +66,12 @@ function SummaryCard({ summary, onOpenFolder }: { summary: Summary; onOpenFolder
       )}
       {summary.failures.length > 0 && (
         <ul className="failures" aria-label={t('activity.failedChapters')}>
-          {summary.failures.map((f, i) => {
-            const { what, why } = splitFailure(f);
-            return (
-              <li key={i}>
-                {what !== '' && <strong>{what}</strong>}
-                <span>{why}</span>
-              </li>
-            );
-          })}
+          {summary.failures.map((f, i) => (
+            <li key={i}>
+              {f.label !== '' && <strong>{f.label}</strong>}
+              <span>{say(t, f.reasonMsg, f.reason)}</span>
+            </li>
+          ))}
         </ul>
       )}
       <button type="button" className="btn small" onClick={onOpenFolder}>
