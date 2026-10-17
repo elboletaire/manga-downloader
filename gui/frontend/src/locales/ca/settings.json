@@ -16,6 +16,6 @@
     "version": "Manga Downloader {{version}}",
     "website": "Lloc web",
     "issues": "Informa d'un problema",
-    "madeBy": "Fet amb orgull per <author>{{author}}</author> · © {{years}} · <license>{{license}}</license>"
+    "madeBy": "Fet amb amor per <author>{{author}}</author> · © {{years}} · <license>{{license}}</license>"
   }
 }
