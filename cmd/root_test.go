@@ -830,6 +830,10 @@ func TestReadConfirm(t *testing.T) {
 		{"not just y", "yes\r", true},
 		{"ctrl+c", "y\x03", true},
 		{"input ends", "y", true},
+		{"arrow key is not echoed", "\x1b[Dy\r", false},
+		{"ss3 arrow key is not echoed", "\x1bODy\r", false},
+		{"arrow key after the answer", "y\x1b[D\r", false},
+		{"escape cut short", "y\x1b[", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -837,6 +841,10 @@ func TestReadConfirm(t *testing.T) {
 			err := readConfirm(strings.NewReader(tt.input), &out, label)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("err = %v, wantErr %v", err, tt.wantErr)
+			}
+			// every outcome ends its line, so "Canceled by user" starts a fresh one
+			if !strings.HasSuffix(out.String(), "\r\n") {
+				t.Errorf("output %q doesn't end its line", out.String())
 			}
 			if n := strings.Count(out.String(), label+"?"); n != 1 {
 				t.Errorf("question drawn %d times, want 1: %q", n, out.String())

@@ -493,22 +493,19 @@ func allChaptersLabel(chapters grabber.Filterables) string {
 var errDeclined = errors.New("declined")
 
 // confirmAll asks label as a yes/no question and fails unless the answer is "y".
-// It reads the keys itself: promptui's readline redrew the line after Enter,
-// racing its final line, which left the answer duplicated or unfinished.
+// It reads the keys itself: a second goroutine redrawing on Enter duplicates the line.
 func confirmAll(label string) error {
 	fd := int(os.Stdin.Fd())
 	if term.IsTerminal(fd) {
-		state, err := term.MakeRaw(fd)
-		if err != nil {
-			return err
+		if state, err := term.MakeRaw(fd); err == nil {
+			defer term.Restore(fd, state)
 		}
-		defer term.Restore(fd, state)
 	}
 	return readConfirm(os.Stdin, color.Output, label)
 }
 
 // readConfirm draws the question, echoes the answer as it is typed and returns
-// nil only for "y"; Enter, Ctrl+C or the input ending declines
+// nil only for "y" then Enter; anything else declines
 func readConfirm(in io.Reader, out io.Writer, label string) error {
 	fmt.Fprintf(out, "%s %s %s ",
 		color.New(color.FgBlue, color.Bold).Sprint("?"),
@@ -519,6 +516,7 @@ func readConfirm(in io.Reader, out io.Writer, label string) error {
 	key := make([]byte, 1)
 	for {
 		if _, err := in.Read(key); err != nil {
+			fmt.Fprint(out, "\r\n")
 			return errDeclined
 		}
 		c := key[0]
@@ -529,6 +527,11 @@ func readConfirm(in io.Reader, out io.Writer, label string) error {
 		case c == 3 || c == 4: // Ctrl+C, Ctrl+D
 			fmt.Fprint(out, "\r\n")
 			return errDeclined
+		case c == 27: // an escape sequence (arrow keys...) is not part of the answer
+			if err := skipEscape(in, key); err != nil {
+				fmt.Fprint(out, "\r\n")
+				return errDeclined
+			}
 		case (c == 127 || c == 8) && len(answer) > 0:
 			answer = answer[:len(answer)-1]
 			fmt.Fprint(out, "\b \b")
@@ -544,6 +547,25 @@ func readConfirm(in io.Reader, out io.Writer, label string) error {
 		return errDeclined
 	}
 	return nil
+}
+
+// skipEscape consumes the rest of an escape sequence after its ESC, reading
+// through key: a CSI or SS3 sequence runs up to its final byte (0x40-0x7E)
+func skipEscape(in io.Reader, key []byte) error {
+	if _, err := in.Read(key); err != nil {
+		return err
+	}
+	if key[0] != '[' && key[0] != 'O' {
+		return nil
+	}
+	for {
+		if _, err := in.Read(key); err != nil {
+			return err
+		}
+		if key[0] >= 0x40 && key[0] <= 0x7E {
+			return nil
+		}
+	}
 }
 
 // skipLocked drops the chapters the listing marks as locked, returning the rest
