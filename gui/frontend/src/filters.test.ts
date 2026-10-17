@@ -50,7 +50,7 @@ describe('filterOptions', () => {
     expect(langs[0]).toEqual({ value: 'all', label: 'All' });
 
     const groups = filterOptions(choice({ values: ['Alpha'], all: true, selected: 'all' }), 'scanlator', t);
-    expect(groups[0]).toEqual({ value: 'all', label: 'All groups' });
+    expect(groups[0]).toEqual({ value: 'all', label: 'All' });
   });
 
   it('sorts the values in the backend order, and slots in an unlisted selection alphabetically', () => {
@@ -121,7 +121,7 @@ describe('filterOptions', () => {
     expect(languages.map((o) => o.label)).toEqual(['Todos', 'en · Inglés']);
 
     const groups = filterOptions(choice({ values: ['Alpha'], all: true, selected: '' }), 'scanlator', createT('ca'), 'ca');
-    expect(groups.map((o) => o.label)).toEqual(['Tria un grup…', 'Tots els grups', 'Alpha']);
+    expect(groups.map((o) => o.label)).toEqual(['Tria un grup…', 'Tots', 'Alpha']);
   });
 });
 
