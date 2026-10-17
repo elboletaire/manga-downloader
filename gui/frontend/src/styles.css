@@ -117,6 +117,8 @@ body,
 body {
   margin: 0;
   overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 h1,
@@ -166,6 +168,28 @@ code {
 
 ::selection {
   background: var(--accent-soft);
+}
+
+/* the app is chrome by default: only what people copy (fields, logs,
+   errors, paths, tokens) stays selectable; chapter rows never do */
+input,
+textarea,
+code,
+.log-lines,
+.failures,
+.summary-text,
+.job-reason,
+.folder-path,
+.version,
+.locked-note,
+.error-text,
+.warn-text,
+.update-error,
+.banner,
+.browser-alert p,
+.browser-alert h2 {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .muted {
