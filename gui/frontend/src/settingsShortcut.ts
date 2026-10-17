@@ -26,3 +26,12 @@ export function isSettingsShortcut(
 export function shortcutLabel(mac: boolean): string {
   return mac ? '⌘,' : 'Ctrl+,';
 }
+
+/** Whether a keydown opens or closes the settings; never over another modal (the browser alert or the update dialog) */
+export function shouldToggleSettings(
+  e: { key: string; ctrlKey: boolean; metaKey: boolean; shiftKey: boolean; altKey: boolean },
+  mac: boolean,
+  otherModalOpen: boolean,
+): boolean {
+  return !otherModalOpen && isSettingsShortcut(e, mac);
+}

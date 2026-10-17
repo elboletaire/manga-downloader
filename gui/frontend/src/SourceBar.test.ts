@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { I18nProvider } from './i18n/react';
 import { createMockApi } from './mock';
 import { pasteValue, SourceBar } from './SourceBar';
+import { isMac, shortcutLabel } from './settingsShortcut';
 import type { State } from './types';
 
 async function noneSite(language: string): Promise<State> {
@@ -24,6 +25,8 @@ function render(state: State): string {
       onError: () => undefined,
       loadRefusal: '',
       optionError: '',
+      onOpenSettings: () => undefined,
+      settingsOpen: false,
     }),
   );
 }
@@ -118,6 +121,8 @@ describe('SourceBar in another language', () => {
           onError: () => undefined,
           loadRefusal: '',
           optionError: '',
+          onOpenSettings: () => undefined,
+          settingsOpen: false,
         }),
       ),
     );
@@ -137,5 +142,58 @@ describe('SourceBar in another language', () => {
     const markup = await renderIn('ca', await createMockApi({ scenario: 'loaded', freeze: true }).state());
     expect(markup).toContain('Filtra la llista');
     expect(markup).toContain('Recarrega');
+  });
+});
+
+describe('SourceBar settings button', () => {
+  it('shows the gear with the shortcut in its label, and the dialog state', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    const markup = renderToStaticMarkup(
+      createElement(SourceBar, {
+        state: base,
+        onLoad: () => undefined,
+        readClipboard: () => Promise.resolve(''),
+        onClear: () => undefined,
+        onOptions: () => Promise.resolve(),
+        onPick: () => Promise.resolve(),
+        onError: () => undefined,
+        loadRefusal: '',
+        optionError: '',
+        onOpenSettings: () => undefined,
+        settingsOpen: true,
+      }),
+    );
+    const label = `Settings (${shortcutLabel(isMac())})`;
+
+    expect(markup).toContain('settings-btn');
+    expect(markup).toContain('aria-haspopup="dialog"');
+    expect(markup).toContain('aria-expanded="true"');
+    expect(markup).toContain(`aria-label="${label}"`);
+  });
+
+  it('translates its label to Spanish', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    const markup = renderToStaticMarkup(
+      createElement(
+        I18nProvider,
+        { pref: 'es', persist: () => Promise.resolve() },
+        createElement(SourceBar, {
+          state: base,
+          onLoad: () => undefined,
+          readClipboard: () => Promise.resolve(''),
+          onClear: () => undefined,
+          onOptions: () => Promise.resolve(),
+          onPick: () => Promise.resolve(),
+          onError: () => undefined,
+          loadRefusal: '',
+          optionError: '',
+          onOpenSettings: () => undefined,
+          settingsOpen: false,
+        }),
+      ),
+    );
+
+    expect(markup).toContain(`aria-label="Ajustes (${shortcutLabel(isMac())})"`);
+    expect(markup).toContain('aria-expanded="false"');
   });
 });

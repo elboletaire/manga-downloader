@@ -18,7 +18,9 @@ import { Mascot } from './Mascot';
 import { LogDrawer, StatusBar } from './LogPanel';
 import { createOptionsWriter } from './optionsWriter';
 import { OptionsPanel } from './OptionsPanel';
+import { SettingsDialog } from './SettingsDialog';
 import { SourceBar } from './SourceBar';
+import { isMac, shouldToggleSettings } from './settingsShortcut';
 import { tally } from './run';
 import type { Options, State } from './types';
 import { useWindow } from './useWindow';
@@ -33,6 +35,9 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
   const [loadRefusal, setLoadRefusal] = useState('');
   const [actionError, setActionError] = useState('');
   const [optionError, setOptionError] = useState('');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const gear = useRef<HTMLButtonElement>(null);
+  const wasSettingsOpen = useRef(false);
   // options are written one at a time, each patch over the last set sent
   const [optionsWriter] = useState(() =>
     createOptionsWriter((options, load) =>
@@ -45,6 +50,27 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
       optionsWriter.pushed(state.options);
     }
   }, [state, optionsWriter]);
+
+  // the shortcut toggles the settings; the browser alert and the update dialog share a backdrop class
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!shouldToggleSettings(e, isMac(), document.querySelector('.browser-alert-backdrop') !== null)) {
+        return;
+      }
+      e.preventDefault();
+      setSettingsOpen((open) => !open);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // the gear takes the focus back once the dialog has gone, which is when it's no longer modal
+  useEffect(() => {
+    if (wasSettingsOpen.current && !settingsOpen) {
+      gear.current?.focus();
+    }
+    wasSettingsOpen.current = settingsOpen;
+  }, [settingsOpen]);
 
   // a run that starts brings its progress into view, as does opening the
   // window on a run (or its outcome); the tab stays the user's to change
@@ -119,6 +145,9 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
         onError={setOptionError}
         loadRefusal={loadRefusal}
         optionError={optionError}
+        onOpenSettings={() => setSettingsOpen(true)}
+        settingsOpen={settingsOpen}
+        settingsRef={gear}
       />
 
       <main className="workspace">
@@ -208,6 +237,17 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
         </aside>
       </main>
 
+      {settingsOpen && (
+        <SettingsDialog
+          state={state}
+          onClose={() => setSettingsOpen(false)}
+          onCheckUpdates={(on) => {
+            api.setCheckUpdates(on).catch((e: unknown) => setOptionError(errorMessage(e)));
+          }}
+          onOpenURL={(url) => api.openURL(url)}
+          onError={setOptionError}
+        />
+      )}
       {logOpen && <LogDrawer log={log} onClose={() => setLogOpen(false)} />}
       {state.browserAlert !== '' && (
         <BrowserAlert

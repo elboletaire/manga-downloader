@@ -2,12 +2,13 @@
 // that shape the chapter list the site returns (language, scanlator). They sit
 // together because all three only take effect when the series is (re)loaded.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type Ref } from 'react';
 import { AUTO_LOAD_DELAY_MS, shouldAutoLoad } from './autoLoad';
 import { SelectField, TextField } from './fields';
 import { sameScanlator, typedValue, filterControl, filtersIdentified, filterOptions, shownSelection, type FilterControl, type FilterKind } from './filters';
 import { useI18n } from './i18n/react';
-import { AlertIcon, LinkIcon, RefreshIcon, Spinner } from './icons';
+import { shortcutLabel, isMac } from './settingsShortcut';
+import { AlertIcon, GearIcon, LinkIcon, RefreshIcon, Spinner } from './icons';
 import { Mascot, useExpression, Wordmark } from './Mascot';
 import type { FilterChoice, Options, State } from './types';
 
@@ -31,6 +32,11 @@ interface Props {
   loadRefusal: string;
   /** A refused option (from here or the side panel), shown wherever the tab is */
   optionError: string;
+  /** Opens the settings dialog from the gear button */
+  onOpenSettings: () => void;
+  settingsOpen: boolean;
+  /** The gear button, so the dialog can hand focus back to it when it closes */
+  settingsRef?: Ref<HTMLButtonElement>;
 }
 
 export function SourceBar({
@@ -43,6 +49,9 @@ export function SourceBar({
   onError,
   loadRefusal,
   optionError,
+  onOpenSettings,
+  settingsOpen,
+  settingsRef,
 }: Props) {
   const { t } = useI18n();
   // null until the user types: the field shows the backend's URL until then
@@ -97,6 +106,7 @@ export function SourceBar({
   };
   // a failed load with nothing listed is told in the chapter area instead
   const problem = loadRefusal !== '' ? loadRefusal : state.loaded ? state.loadError : '';
+  const settingsLabel = `${t('settings.open')} (${shortcutLabel(isMac())})`;
 
   return (
     <header className="source">
@@ -177,6 +187,18 @@ export function SourceBar({
             )}
           </button>
         </form>
+        <button
+          ref={settingsRef}
+          type="button"
+          className="btn ghost icon-only settings-btn"
+          aria-label={settingsLabel}
+          title={settingsLabel}
+          aria-haspopup="dialog"
+          aria-expanded={settingsOpen}
+          onClick={onOpenSettings}
+        >
+          <GearIcon />
+        </button>
       </div>
 
       <div className="filter-row">

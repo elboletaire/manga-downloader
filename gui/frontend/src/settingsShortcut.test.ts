@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { isMac, isSettingsShortcut, shortcutLabel } from './settingsShortcut';
+import { isMac, isSettingsShortcut, shortcutLabel, shouldToggleSettings } from './settingsShortcut';
 
 type Key = Parameters<typeof isSettingsShortcut>[0];
 
@@ -70,5 +70,21 @@ describe('shortcutLabel', () => {
   it('shows the macOS and other-platform labels', () => {
     expect(shortcutLabel(true)).toBe('⌘,');
     expect(shortcutLabel(false)).toBe('Ctrl+,');
+  });
+});
+
+describe('shouldToggleSettings', () => {
+  it('toggles on the shortcut when no other modal is open', () => {
+    expect(shouldToggleSettings({ ...none, ctrlKey: true }, false, false)).toBe(true);
+    expect(shouldToggleSettings({ ...none, metaKey: true }, true, false)).toBe(true);
+  });
+
+  it('ignores the shortcut while another modal is open', () => {
+    expect(shouldToggleSettings({ ...none, ctrlKey: true }, false, true)).toBe(false);
+    expect(shouldToggleSettings({ ...none, metaKey: true }, true, true)).toBe(false);
+  });
+
+  it('ignores other keys', () => {
+    expect(shouldToggleSettings({ ...none, key: 'a', ctrlKey: true }, false, false)).toBe(false);
   });
 });

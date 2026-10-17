@@ -9,12 +9,6 @@ import { Segmented, Switch } from './fields';
 import { XIcon } from './icons';
 import type { State } from './types';
 
-/** The app-only preferences, as the backend pushes them in State.prefs */
-interface Prefs {
-  uiLanguage: LangPref;
-  checkUpdates: boolean;
-}
-
 interface Props {
   state: State;
   onClose: () => void;
@@ -35,7 +29,6 @@ export function websiteURL(lang: Lang): string {
 export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onError }: Props) {
   const { t, pref, systemLang, lang, setLanguage } = useI18n();
   const dialog = useRef<HTMLDialogElement>(null);
-  const prefs = (state as State & { prefs?: Prefs }).prefs ?? { uiLanguage: '', checkUpdates: true };
   const devBuild = state.releaseURL === '';
 
   useEffect(() => {
@@ -109,7 +102,7 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
             <Switch
               label={t('settings.updates.check')}
               description={devBuild ? t('settings.updates.devHint') : t('settings.updates.hint')}
-              checked={prefs.checkUpdates}
+              checked={state.prefs.checkUpdates}
               disabled={devBuild}
               onChange={onCheckUpdates}
             />
