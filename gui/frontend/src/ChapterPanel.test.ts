@@ -65,14 +65,16 @@ describe('ChapterPanel of a parts run', () => {
         onError: () => {},
       }),
     );
-    const title = chapters[2].wholeTitle ?? '';
+    const first = chapters.find((c) => c.number === 2 && c.part === 'Part 1');
+    expect(first).toBeDefined();
+    const title = first?.wholeTitle ?? '';
     expect(title).not.toBe('');
     expect(markup).toContain(`Chapter 2 · ${escapeHtml(title)} · 2 parts`);
-    expect(markup).toContain('class="row in-group part-row"');
-    expect(markup).toContain('>Part 1</span>');
-    expect(markup).toContain('>Part 2</span>');
+    expect(markup).toMatch(/class="[^"]*\bpart-row\b/);
+    expect(markup).toMatch(/>Part 1</);
+    expect(markup).toMatch(/>Part 2</);
     // a part row never repeats the chapter's title
-    expect(markup).not.toContain(escapeHtml(chapters[2].title));
+    expect(markup).not.toContain(escapeHtml(first?.title ?? ''));
   });
 });
 

@@ -116,8 +116,7 @@ func TestFiltersByLanguageAndModelsVolumesAndGroups(t *testing.T) {
 	}
 }
 
-// every listed chapter has the title the progress rows show, a blank one left
-// the prompt demo's rows empty
+// every listed chapter needs a label, as a blank one leaves its progress row empty
 func TestEveryChapterHasATitle(t *testing.T) {
 	for _, data := range loaded(t) {
 		chapters, errs := newSite(&grabber.Grabber{Settings: &grabber.Settings{}}, data).FetchChapters()
