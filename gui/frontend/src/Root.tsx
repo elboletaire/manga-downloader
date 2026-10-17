@@ -8,28 +8,32 @@ import type { State } from './types';
 /** The language a State asks for; gui.json omits uiLanguage when it follows the system */
 export const prefOf = (state: State): LangPref => state.prefs.uiLanguage ?? '';
 
-export interface PrefHandlers {
-  /** The saved language: from the first snapshot, and from every push after it */
-  onSaved(pref: LangPref): void;
-  /** The first snapshot, or null when it can't be read (App then asks again and shows the failure) */
-  onInitial(state: State | null): void;
+export interface StateHandlers {
+  /** The newest State: a push, or the first snapshot unless a push came before it */
+  onState(state: State): void;
+  /** The first snapshot can't be read and no push has come: App asks again and shows the failure */
+  onFailure(): void;
 }
 
-/** Subscribes to the pushes before asking for the first snapshot, so nothing is missed */
-export function watchPrefs(api: Api, handlers: PrefHandlers): Unsubscribe {
+/**
+ * Subscribes to the pushes before asking for the first snapshot, so nothing is
+ * missed. A push always wins over a snapshot that resolves after it.
+ */
+export function watchState(api: Api, handlers: StateHandlers): Unsubscribe {
   let alive = true;
+  let pushed = false;
   const off = api.onState((state) => {
-    if (alive) handlers.onSaved(prefOf(state));
+    if (alive) {
+      pushed = true;
+      handlers.onState(state);
+    }
   });
   api.state().then(
     (state) => {
-      if (alive) {
-        handlers.onSaved(prefOf(state));
-        handlers.onInitial(state);
-      }
+      if (alive && !pushed) handlers.onState(state);
     },
     () => {
-      if (alive) handlers.onInitial(null);
+      if (alive && !pushed) handlers.onFailure();
     },
   );
   return () => {
@@ -39,20 +43,20 @@ export function watchPrefs(api: Api, handlers: PrefHandlers): Unsubscribe {
 }
 
 /**
- * Gives the window its language before anything renders: nothing shows until the
- * first snapshot is read, so the saved language never flashes past the system's.
+ * Gives the window its language before anything renders: nothing shows until a
+ * State is known, so the saved language never flashes past the system's. It keeps
+ * the newest State, which App takes as its first one.
  */
 export function Root({ api }: { api: Api }) {
-  // undefined until the first snapshot is read; null when it can't be read
-  const [initial, setInitial] = useState<State | null | undefined>(undefined);
-  const [pref, setPref] = useState<LangPref>('');
-  useEffect(() => watchPrefs(api, { onSaved: setPref, onInitial: setInitial }), [api]);
+  // undefined until a State is known; null when the first snapshot can't be read
+  const [latest, setLatest] = useState<State | null | undefined>(undefined);
+  useEffect(() => watchState(api, { onState: setLatest, onFailure: () => setLatest(null) }), [api]);
   const persist = useCallback((next: LangPref) => api.setUILanguage(next), [api]);
 
-  if (initial === undefined) return null;
+  if (latest === undefined) return null;
   return (
-    <I18nProvider pref={pref} persist={persist}>
-      <App api={api} initial={initial ?? undefined} />
+    <I18nProvider pref={latest ? prefOf(latest) : ''} persist={persist}>
+      <App api={api} initial={latest ?? undefined} />
     </I18nProvider>
   );
 }

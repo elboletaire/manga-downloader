@@ -24,6 +24,13 @@ export function useWindow(api: Api, initial?: State): WindowData & { failure: st
   // which fields a push has already filled, so a late snapshot doesn't clobber them
   const pushed = useRef({ state: false, chapters: false, selected: false, log: false });
 
+  // a newer State from the caller: it saw pushes that came before this window subscribed
+  useEffect(() => {
+    if (initial !== undefined) {
+      setData((d) => ({ ...d, state: initial }));
+    }
+  }, [initial]);
+
   useEffect(() => {
     let alive = true;
     const seen = pushed.current;
