@@ -4,14 +4,14 @@
     "loading": "Les opcions estan bloquejades mentre es carrega la sèrie."
   },
   "save": {
-    "title": "Desar",
+    "title": "Desa",
     "folder": "Carpeta",
     "notSet": "Sense definir",
     "browse": "Examina…"
   },
   "format": {
     "label": "Format",
-    "cbz": "Arxiu CBZ",
+    "cbz": "Fitxer CBZ",
     "raw": "Carpeta d'imatges",
     "epub": "EPUB"
   },
@@ -24,16 +24,16 @@
   "packAs": {
     "label": "Empaqueta com",
     "chapters": "Capítols",
-    "parts": "Combinats",
+    "parts": "Units",
     "volumes": "Volums",
-    "bundle": "Un arxiu"
+    "bundle": "Un fitxer"
   },
   "packHint": {
-    "chapters": "Un arxiu per capítol.",
-    "parts": "Un arxiu per capítol, amb les seves parts combinades. Els capítols sense parts tenen un arxiu cadascun, com sempre.",
-    "volumes": "Un arxiu per volum, definit sobre la llista de capítols. Els capítols fora de tots els volums tenen un arxiu cadascun.",
-    "volumesNotLoaded": "Un arxiu per volum, definit sobre la llista de capítols (quan es carregui). Els capítols fora de tots els volums tenen un arxiu cadascun.",
-    "bundle": "Els capítols seleccionats en un sol arxiu."
+    "chapters": "Un fitxer per capítol.",
+    "parts": "Un fitxer per capítol, amb les seves parts unides. Els capítols sense parts tenen un fitxer cadascun, com sempre.",
+    "volumes": "Un fitxer per volum, definit sobre la llista de capítols. Els capítols fora de tots els volums tenen un fitxer cadascun.",
+    "volumesNotLoaded": "Un fitxer per volum, definit sobre la llista de capítols (quan es carregui). Els capítols fora de tots els volums tenen un fitxer cadascun.",
+    "bundle": "Els capítols seleccionats en un sol fitxer."
   },
   "pages": {
     "title": "Pàgines",
@@ -52,7 +52,7 @@
     "title": "Avançat"
   },
   "template": {
-    "label": "Plantilla del nom de l'arxiu",
+    "label": "Plantilla del nom del fitxer",
     "hint": "Fes servir <code>{{series}}</code>, <code>{{number}}</code>, <code>{{title}}</code>, <code>{{siteTitle}}</code>, <code>{{group}}</code>, <code>{{volume}}</code> i <code>{{version}}</code>; <code>{{padded}}</code> omple un número amb zeros. Si no la canvies, els volums es diuen <code>{{volumeName}}</code>, o <code>{{volumeGroupName}}</code> quan els seus capítols comparteixen grup.",
     "reset": "Fes servir la plantilla per defecte"
   },
