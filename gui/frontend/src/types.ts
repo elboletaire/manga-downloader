@@ -175,5 +175,8 @@ export interface Chapter {
 
 export interface LogLine {
   level: LogLevel;
+  /** The English text: what copying the log gives, and what shows when the window can't translate msg */
   text: string;
+  /** The line as a translatable message, when the Go side sent one (see say() in i18n) */
+  msg?: { key: string; args?: Record<string, unknown>; text: string };
 }

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { useI18n } from './i18n/react';
 import { AlertIcon, CopyIcon, ErrorIcon, LogIcon, XIcon } from './icons';
 import { UpdateDialog } from './UpdateDialog';
+import { say } from './i18n';
 import type { LogLine, Update } from './types';
 
 interface BarProps {
@@ -67,8 +68,12 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
           </span>
         )}
       </button>
-      <span className={`last-line level-${lastLine?.level ?? 'info'}`} aria-live="polite" title={lastLine?.text}>
-        {lastLine ? lastLine.text : t('log.ready')}
+      <span
+        className={`last-line level-${lastLine?.level ?? 'info'}`}
+        aria-live="polite"
+        title={lastLine && say(t, lastLine.msg, lastLine.text)}
+      >
+        {lastLine ? say(t, lastLine.msg, lastLine.text) : t('log.ready')}
       </span>
       <span className="version-group">
         {update && (
@@ -144,7 +149,12 @@ export function LogDrawer({ log, onClose }: DrawerProps) {
   }, []);
 
   const copy = () => {
-    const text = log.map((l) => (l.level === 'info' ? l.text : `${l.level.toUpperCase()}: ${l.text}`)).join('\n');
+    const text = log
+      .map((l) => {
+        const shown = say(t, l.msg, l.text);
+        return l.level === 'info' ? shown : `${l.level.toUpperCase()}: ${shown}`;
+      })
+      .join('\n');
     navigator.clipboard?.writeText(text).then(
       () => {
         setCopied(true);
@@ -179,7 +189,7 @@ export function LogDrawer({ log, onClose }: DrawerProps) {
         {log.map((line, i) => (
           <p key={i} className={`line level-${line.level}`}>
             {line.level === 'error' ? <ErrorIcon size={13} /> : line.level === 'warn' ? <AlertIcon size={13} /> : null}
-            <span>{line.text}</span>
+            <span>{say(t, line.msg, line.text)}</span>
           </p>
         ))}
       </div>

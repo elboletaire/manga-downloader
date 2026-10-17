@@ -880,3 +880,59 @@ func TestCancelWhileFetchingEndsTheRow(t *testing.T) {
 		t.Errorf("jobs after the cancel = %+v, want one finished row", jobs)
 	}
 }
+
+// a line the window translates carries its message; Text is the English it
+// would have had before
+func TestLogLinesCarryTheirMessage(t *testing.T) {
+	ch := &grabber.Chapter{Title: "Chapter 5", Number: 5, Language: "en", PagesCount: 1}
+	boom := errors.New("boom")
+	cases := []struct {
+		name string
+		log  func(c *Controller)
+		key  string
+		text func(c *Controller) string
+	}{
+		{"cancel", func(c *Controller) {
+			c.cancel = func() {}
+			c.Cancel()
+		}, "log.cancelling", func(*Controller) string {
+			return "Cancelling: chapters already downloading will finish, no new ones start"
+		}},
+		{"error downloading", func(c *Controller) { events{c}.DownloadFailed(ch, boom) }, "log.errorDownload", func(c *Controller) string {
+			return "error downloading " + c.releaseLabel(ch) + ": boom"
+		}},
+		{"skipping", func(c *Controller) { events{c}.Skipped(ch) }, "log.skipping", func(c *Controller) string {
+			return "skipping " + c.releaseLabel(ch) + ": every page is excluded by --skip-pages"
+		}},
+		{"fallback", func(c *Controller) { c.addMsg(LogInfo, fallbackMessage("group", "Beta", "Alpha")) }, "log.groupFallbackValue", func(*Controller) string {
+			return `scanlation group "Beta" isn't in this series, loading "Alpha" instead`
+		}},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewController(&grabber.Settings{}, nil)
+			// the maps a run starts with, which the events write into
+			c.byChap = map[*grabber.Chapter]*Job{}
+			c.failedC = map[*grabber.Chapter]bool{}
+			tt.log(c)
+			log := c.Log()
+			last := log[len(log)-1]
+			if last.Msg == nil || last.Msg.Key != tt.key {
+				t.Fatalf("message = %+v, want key %q", last.Msg, tt.key)
+			}
+			if want := tt.text(c); last.Text != want || last.Msg.Text != want {
+				t.Errorf("Text = %q, Msg.Text = %q, want %q", last.Text, last.Msg.Text, want)
+			}
+		})
+	}
+}
+
+// the download's start counts its chapters in English, one or several
+func TestDownloadingLogIsPlural(t *testing.T) {
+	cases := map[int]string{1: "Downloading 1 chapter of X", 3: "Downloading 3 chapters of X"}
+	for n, want := range cases {
+		if got := msg("log.downloading", map[string]any{"count": n, "title": "X"}).Text; got != want {
+			t.Errorf("count %d: Text = %q, want %q", n, got, want)
+		}
+	}
+}

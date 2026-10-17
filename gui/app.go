@@ -329,10 +329,12 @@ type ChapterDTO struct {
 	Unnumbered bool `json:"unnumbered,omitempty"`
 }
 
-// LogDTO is one line of the log
+// LogDTO is one line of the log. Msg is set when the window translates the
+// line; Text stays the English text (for copying the log).
 type LogDTO struct {
-	Level string `json:"level"`
-	Text  string `json:"text"`
+	Level string   `json:"level"`
+	Text  string   `json:"text"`
+	Msg   *Message `json:"msg,omitempty"`
 }
 
 // State returns the window's state
@@ -430,7 +432,7 @@ func (a *App) Log() []LogDTO {
 	}
 	out := make([]LogDTO, 0, len(lines))
 	for _, l := range lines {
-		out = append(out, LogDTO{Level: logLevelName(l.Level), Text: l.Text})
+		out = append(out, LogDTO{Level: logLevelName(l.Level), Text: l.Text, Msg: l.Msg})
 	}
 
 	return out
@@ -584,7 +586,7 @@ func (a *App) save() {
 	a.saveMu.Lock()
 	defer a.saveMu.Unlock()
 	if err := saveOptions(a.prefsPath, optionsOf(a.ctrl.Settings()), a.ctrl.Prefs()); err != nil {
-		a.ctrl.addLog(LogWarn, "could not save the options: "+err.Error())
+		a.ctrl.addMsg(LogWarn, msg("log.saveFailed", map[string]any{"reason": err.Error()}))
 	}
 }
 
@@ -700,7 +702,7 @@ func (a *App) Update() error {
 		return a.failUpdate(errors.New("wait for the download to finish, or cancel it, before updating"))
 	}
 
-	a.ctrl.addLog(LogInfo, "Downloading the update "+u.Latest+"...")
+	a.ctrl.addMsg(LogInfo, msg("log.downloadingUpdate", map[string]any{"version": u.Latest}))
 	path, err := a.fetch(a.updateCtx, u.Installer, u.Sums)
 	if err != nil {
 		return a.failUpdate(fmt.Errorf("couldn't download the update: %w", err))

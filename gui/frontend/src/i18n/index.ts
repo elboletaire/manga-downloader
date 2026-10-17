@@ -64,6 +64,21 @@ export function createT(lang: Lang, catalog: Catalog = CATALOG): T {
   return (key, vars = {}) => fill(template(key, vars), vars);
 }
 
+/**
+ * A message the Go side sent: its key and args are translated, and its text is
+ * the English rendering, shown when the catalog lacks the key. Without a
+ * message, the plain text stands.
+ */
+export function say(
+  t: T,
+  msg: { key: string; args?: Record<string, unknown>; text: string } | undefined,
+  text: string,
+): string {
+  if (!msg) return text;
+  const out = t(msg.key, msg.args as Vars | undefined);
+  return out === msg.key ? msg.text : out;
+}
+
 type Tree = { [key: string]: string | Tree };
 
 /** Builds the catalogs from the namespace files, keyed by `<lang>/<namespace>.json`. */

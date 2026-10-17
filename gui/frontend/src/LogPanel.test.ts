@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { I18nProvider } from './i18n/react';
-import { StatusBar } from './LogPanel';
+import { LogDrawer, StatusBar } from './LogPanel';
 import type { LogLine, Update } from './types';
 
 const RELEASE = 'https://github.com/elboletaire/manga-downloader/releases/tag/v1.12.0';
@@ -119,5 +119,30 @@ describe('StatusBar translations', () => {
     const html = render('ca', []);
     expect(html).toContain('title="Mostra el registre"');
     expect(html).toContain('>Preparat</span>');
+  });
+});
+
+describe('LogDrawer messages', () => {
+  const drawer = (log: LogLine[]) =>
+    renderToStaticMarkup(
+      createElement(
+        I18nProvider,
+        { pref: 'es', persist: async () => undefined, systemLanguages: ['en'] },
+        createElement(LogDrawer, { log, onClose: () => undefined }),
+      ),
+    );
+
+  it('shows a message line in the chosen language, and the plain text without one', () => {
+    const html = drawer([
+      {
+        level: 'info',
+        text: 'Loaded Naruto: 2 chapters',
+        msg: { key: 'log.loaded', args: { title: 'Naruto', chapters: 2 }, text: 'Loaded Naruto: 2 chapters' },
+      },
+      { level: 'warn', text: 'site check: timed out' },
+    ]);
+    expect(html).toContain('Cargado Naruto: 2 capítulos');
+    expect(html).toContain('site check: timed out');
+    expect(html).not.toContain('Loaded Naruto');
   });
 });

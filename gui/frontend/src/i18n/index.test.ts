@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CATALOG, createT, createTemplate, fill, loadCatalog, resolveLanguage } from './index';
+import { CATALOG, createT, createTemplate, fill, loadCatalog, resolveLanguage, say } from './index';
 
 describe('resolveLanguage', () => {
   it('takes the saved language over the system', () => {
@@ -79,5 +79,23 @@ describe('createTemplate', () => {
   it('returns the message with its placeholders unfilled', () => {
     const catalog = { en: { 'app.hi': 'Hi {{name}}' } };
     expect(createTemplate('en', catalog)('app.hi', { name: 'x' })).toBe('Hi {{name}}');
+  });
+});
+
+describe('say', () => {
+  const es = createT('es');
+
+  it('translates a message with its args', () => {
+    const msg = { key: 'log.loaded', args: { title: 'Naruto', chapters: 2 }, text: 'Loaded Naruto: 2 chapters' };
+    expect(say(es, msg, 'Loaded Naruto: 2 chapters')).toBe('Cargado Naruto: 2 capítulos');
+  });
+
+  it('falls back to the message text for a key the catalog lacks', () => {
+    const msg = { key: 'log.nope', text: 'English text' };
+    expect(say(es, msg, 'plain')).toBe('English text');
+  });
+
+  it('uses the plain text when there is no message', () => {
+    expect(say(es, undefined, 'plain')).toBe('plain');
   });
 });
