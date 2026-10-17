@@ -337,13 +337,22 @@ func gigaviewerTitle(raw, series string) (title string, number float64, part str
 // gigaviewerSplitPart reads the "①" or "（2）" that follows an episode number as
 // the part of a split episode, and returns the rest of the title
 func gigaviewerSplitPart(title string) (part, rest string, ok bool) {
-	if r, size := utf8.DecodeRuneInString(title); r >= '①' && r <= '⑳' {
-		return strconv.Itoa(int(r-'①') + 1), cleanTitle(title[size:]), true
+	r, size := utf8.DecodeRuneInString(title)
+	if p, ok := gigaviewerCircled(r); ok {
+		return p, cleanTitle(title[size:]), true
 	}
 	if m := gigaviewerPartRe.FindStringSubmatch(title); m != nil {
 		return gigaviewerDigits.Replace(m[1]), cleanTitle(title[len(m[0]):]), true
 	}
 	return "", title, false
+}
+
+// gigaviewerCircled returns the number a circled digit ("①" to "⑳") stands for
+func gigaviewerCircled(r rune) (string, bool) {
+	if r < '①' || r > '⑳' {
+		return "", false
+	}
+	return strconv.Itoa(int(r-'①') + 1), true
 }
 
 // gigaviewerMarker reads the number a title starts with: where it ends, its
@@ -356,6 +365,11 @@ func gigaviewerMarker(raw string) (end int, text, part string, ok bool) {
 			return 0, "", "", false
 		}
 		part = strings.Trim(gigaviewerInnerRe.ReplaceAllString(inner, ""), gigaviewerSeparators)
+		if r, size := utf8.DecodeRuneInString(part); size == len(part) {
+			if p, ok := gigaviewerCircled(r); ok {
+				part = p
+			}
+		}
 		return loc[1], text, part, true
 	}
 	for _, re := range []*regexp.Regexp{gigaviewerBareRe, gigaviewerSymbolRe, gigaviewerHashRe, gigaviewerWholeRe} {
