@@ -1,10 +1,13 @@
 import { createElement, type ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import type { Api } from '../api';
 import { ActivityPanel } from '../ActivityPanel';
+import { App } from '../App';
 import { BrowserAlert } from '../BrowserAlert';
 import { ChapterPanel } from '../ChapterPanel';
 import { DownloadDock } from '../DownloadDock';
+import { Check, SelectField, Segmented, Switch, TextField } from '../fields';
 import { LogDrawer, StatusBar } from '../LogPanel';
 import { createMockApi, type MockSetup } from '../mock';
 import { OptionsPanel } from '../OptionsPanel';
@@ -12,7 +15,7 @@ import { SettingsDialog } from '../SettingsDialog';
 import { SourceBar } from '../SourceBar';
 import type { Chapter, LogLine, State } from '../types';
 import { UpdateDialog } from '../UpdateDialog';
-import { CATALOG, createT, say, type Catalog } from './index';
+import { CATALOG, createT, LANG_INFO, say, type Catalog } from './index';
 import { I18nProvider } from './react';
 
 // The English catalog with every value wrapped in ⟦ ⟧: whatever shows
@@ -100,12 +103,21 @@ async function snapshot(setup: Partial<MockSetup>): Promise<Snapshot> {
 const noop = () => undefined;
 const later = async () => undefined;
 
+/** A rendered component, with the source file that defines it. */
+interface Screen {
+  file: string;
+  name: string;
+  element: ReactElement;
+}
+
 /** Each component the window renders, with the props App gives it. */
-function components({ state, chapters, selected, log }: Snapshot): Array<[string, ReactElement]> {
-  const list: Array<[string, ReactElement]> = [
-    [
-      'SourceBar',
-      createElement(SourceBar, {
+function components({ state, chapters, selected, log }: Snapshot): Screen[] {
+  const list: Screen[] = [
+    { file: 'App.tsx', name: 'App', element: createElement(App, { api: {} as Api, initial: state }) },
+    {
+      file: 'SourceBar.tsx',
+      name: 'SourceBar',
+      element: createElement(SourceBar, {
         state,
         onLoad: noop,
         readClipboard: () => Promise.resolve(''),
@@ -118,10 +130,11 @@ function components({ state, chapters, selected, log }: Snapshot): Array<[string
         onOpenSettings: noop,
         settingsOpen: false,
       }),
-    ],
-    [
-      'ChapterPanel',
-      createElement(ChapterPanel, {
+    },
+    {
+      file: 'ChapterPanel.tsx',
+      name: 'ChapterPanel',
+      element: createElement(ChapterPanel, {
         state,
         chapters,
         selected,
@@ -134,26 +147,26 @@ function components({ state, chapters, selected, log }: Snapshot): Array<[string
         onReload: noop,
         onError: noop,
       }),
-    ],
-    [
-      'OptionsPanel',
-      createElement(OptionsPanel, { state, onOptions: later, onChooseFolder: later, onError: noop }),
-    ],
-    ['ActivityPanel', createElement(ActivityPanel, { state, onOpenFolder: noop })],
-    [
-      'DownloadDock',
-      createElement(DownloadDock, {
-        state,
-        error: '',
-        chapters,
-        selected,
-        onStart: noop,
-        onCancel: noop,
-      }),
-    ],
-    [
-      'StatusBar',
-      createElement(StatusBar, {
+    },
+    {
+      file: 'OptionsPanel.tsx',
+      name: 'OptionsPanel',
+      element: createElement(OptionsPanel, { state, onOptions: later, onChooseFolder: later, onError: noop }),
+    },
+    {
+      file: 'ActivityPanel.tsx',
+      name: 'ActivityPanel',
+      element: createElement(ActivityPanel, { state, onOpenFolder: noop }),
+    },
+    {
+      file: 'DownloadDock.tsx',
+      name: 'DownloadDock',
+      element: createElement(DownloadDock, { state, error: '', chapters, selected, onStart: noop, onCancel: noop }),
+    },
+    {
+      file: 'LogPanel.tsx',
+      name: 'StatusBar',
+      element: createElement(StatusBar, {
         log,
         version: state.version,
         releaseURL: state.releaseURL,
@@ -163,44 +176,104 @@ function components({ state, chapters, selected, log }: Snapshot): Array<[string
         onOpenURL: noop,
         onUpdate: later,
       }),
-    ],
-    ['LogDrawer', createElement(LogDrawer, { log, onClose: noop })],
-    [
-      'SettingsDialog',
-      createElement(SettingsDialog, { state, onClose: noop, onCheckUpdates: noop, onOpenURL: noop, onError: noop }),
-    ],
-    [
-      'SettingsDialog without updates',
-      createElement(SettingsDialog, {
+    },
+    { file: 'LogPanel.tsx', name: 'LogDrawer', element: createElement(LogDrawer, { log, onClose: noop }) },
+    {
+      file: 'SettingsDialog.tsx',
+      name: 'SettingsDialog',
+      element: createElement(SettingsDialog, {
+        state,
+        onClose: noop,
+        onCheckUpdates: noop,
+        onOpenURL: noop,
+        onError: noop,
+      }),
+    },
+    {
+      file: 'SettingsDialog.tsx',
+      name: 'SettingsDialog without updates',
+      element: createElement(SettingsDialog, {
         state: { ...state, releaseURL: '' },
         onClose: noop,
         onCheckUpdates: noop,
         onOpenURL: noop,
         onError: noop,
       }),
-    ],
+    },
+    {
+      file: 'fields.tsx',
+      name: 'TextField',
+      element: createElement(TextField, {
+        label: t('source.url.label'),
+        value: '',
+        placeholder: t('source.url.placeholder'),
+        hint: t('source.filter.noLanguage'),
+        onCommit: later,
+        onError: noop,
+      }),
+    },
+    {
+      file: 'fields.tsx',
+      name: 'SelectField',
+      element: createElement(SelectField, {
+        label: t('source.filter.language'),
+        value: '',
+        options: [{ value: '', label: t('source.filter.any') }],
+        onChange: noop,
+      }),
+    },
+    {
+      file: 'fields.tsx',
+      name: 'Switch',
+      element: createElement(Switch, {
+        label: t('settings.updates.check'),
+        description: t('settings.updates.hint'),
+        checked: true,
+        onChange: noop,
+      }),
+    },
+    {
+      file: 'fields.tsx',
+      name: 'Segmented',
+      element: createElement(Segmented, {
+        label: t('settings.language.heading'),
+        value: 'system',
+        options: [
+          { value: 'system', label: t('settings.language.system') },
+          { value: 'en', label: LANG_INFO.en.name },
+        ],
+        onChange: noop,
+      }),
+    },
+    {
+      file: 'fields.tsx',
+      name: 'Check',
+      element: createElement(Check, { label: t('common.all'), checked: false, onChange: noop }),
+    },
   ];
   if (state.update?.oneClick) {
-    list.push([
-      'UpdateDialog',
-      createElement(UpdateDialog, {
+    list.push({
+      file: 'UpdateDialog.tsx',
+      name: 'UpdateDialog',
+      element: createElement(UpdateDialog, {
         latest: state.update.latest,
         current: state.version,
         onUpdate: later,
         onReleaseNotes: noop,
         onClose: noop,
       }),
-    ]);
+    });
   }
   if (state.browserAlert !== '') {
-    list.push([
-      'BrowserAlert',
-      createElement(BrowserAlert, {
+    list.push({
+      file: 'BrowserAlert.tsx',
+      name: 'BrowserAlert',
+      element: createElement(BrowserAlert, {
         message: say(t, state.browserAlertMsg, state.browserAlert),
         onShow: noop,
         onDismiss: noop,
       }),
-    ]);
+    });
   }
   return list;
 }
@@ -215,6 +288,13 @@ function render(element: ReactElement): string {
   );
 }
 
+// Every component file in src that reads its strings through useI18n; each must be rendered above.
+const callers = Object.entries(
+  import.meta.glob('../*.tsx', { query: '?raw', import: 'default', eager: true }) as Record<string, string>,
+)
+  .filter(([, text]) => text.includes('useI18n()'))
+  .map(([path]) => path.replace(/^.*\//, ''));
+
 describe('the pseudo catalog', () => {
   it('wraps every English value and keeps its placeholders and tags', () => {
     const values = Object.entries(CATALOG.en ?? {});
@@ -226,10 +306,19 @@ describe('the pseudo catalog', () => {
 });
 
 describe('the rendered window in the pseudo catalog', () => {
+  it('renders every component file that calls useI18n', async () => {
+    expect(callers.length).toBeGreaterThan(5);
+    const covered = new Set<string>();
+    for (const [, setup] of SCREENS) {
+      for (const { file } of components(await snapshot(setup))) covered.add(file);
+    }
+    expect(callers.filter((file) => !covered.has(file))).toEqual([]);
+  });
+
   for (const [name, setup] of SCREENS) {
     it(`shows no English that skips t() in the ${name} state`, async () => {
       const screen = await snapshot(setup);
-      for (const [component, element] of components(screen)) {
+      for (const { name: component, element } of components(screen)) {
         const html = render(element);
         expect(html, component).toContain('⟦');
         const text = untranslated(html);

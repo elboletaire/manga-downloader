@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CATALOG } from './index';
+import { code } from './lintSource';
 
 // The app's sources, as text: there's no @types/node to read the disk with.
 // gui/*.go is not read here; msg_test.go already checks the Go side's keys.
@@ -22,13 +23,6 @@ const known = (key: string) => en.has(key) || (en.has(`${key}_one`) && en.has(`$
 // Helpers that pass on a key they were given, not one they wrote; t() gets
 // their first argument as is.
 const DYNAMIC_KEYS = [{ path: '/i18n/index.ts', arg: 'msg.key' }];
-
-// Comment lines are not code; the examples in them use keys that don't exist.
-const code = (text: string) =>
-  text
-    .split('\n')
-    .filter((line) => !/^\s*(\/\/|\/\*|\*)/.test(line))
-    .join('\n');
 
 const CALL = /(?<![\w$.])t\(/g;
 const LITERAL = /^\s*(['"`])([^'"`$\\]*)\1/;
