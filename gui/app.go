@@ -166,7 +166,7 @@ func (a *App) startup(ctx context.Context, rt *wailsRuntime) {
 	a.checkUpdates()
 }
 
-// checkUpdates starts the update check in the background, once per session, when
+// checkUpdates starts the update check in the background, unless one is running, when
 // shouldCheckUpdates allows it
 func (a *App) checkUpdates() {
 	if !shouldCheckUpdates(a.tag, a.ctrl.Prefs()) || !a.ctrl.claimUpdateCheck() {
@@ -560,8 +560,8 @@ func (a *App) SetUILanguage(lang string) error {
 }
 
 // SetCheckUpdates turns the update check at startup on or off. Turning it off
-// forgets the update found; turning it on checks now, unless a check already ran
-// this session. It's never refused while busy.
+// forgets the update found; turning it on checks now, unless a check is still
+// running. It's never refused while busy.
 func (a *App) SetCheckUpdates(on bool) error {
 	a.ctrl.SetPrefs(func(p *PrefsDTO) { p.CheckUpdates = on })
 	if on {
