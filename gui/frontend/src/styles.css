@@ -1212,16 +1212,30 @@ select.input {
   position: relative;
 }
 
+/* the padding clears the action: its 3px inset, its size and a 6px gap */
 .input-wrap > .input {
   display: block;
-  padding-right: 36px;
+  padding-right: 35px;
 }
 
+.input-wrap > .input.small {
+  padding-right: 31px;
+}
+
+/* 2px inside the border, square; the radius nests inside the input's */
 .input-action {
   position: absolute;
   top: 50%;
-  right: 2px;
+  right: 3px;
+  height: calc(100% - 6px);
+  aspect-ratio: 1;
   transform: translateY(-50%);
+}
+
+.input-wrap .input-action > .btn {
+  width: 100%;
+  height: 100%;
+  border-radius: calc(var(--radius-sm) - 2px);
 }
 
 .folder {
@@ -2146,6 +2160,24 @@ a.version:hover {
 
   .range-form .input {
     width: 112px;
+  }
+}
+
+/* on wide windows the range box takes the toolbar's free space, up to 400px */
+@media (min-width: 1041px) {
+  .range-form {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
+
+  .range-form .input-wrap {
+    flex: 1 1 128px;
+    min-width: 128px;
+    max-width: 400px;
+  }
+
+  .range-form .input {
+    width: 100%;
   }
 }
 
