@@ -217,7 +217,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		// TanStack (T1)
 		// RSC comic (T2)
 		// Manganelo (T3)
-		// Toivo Lite (T4)
+		NewToivoLiteByMarkup(g),
 		plainHTML,
 		NewTcb(g),
 		NewJestful(g),
