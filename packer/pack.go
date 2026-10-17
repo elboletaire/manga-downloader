@@ -110,10 +110,23 @@ func PackParts(outputdir string, s grabber.Site, chapters []*DownloadedChapter, 
 			Labels:           labels,
 		}
 	}
-	chapter := *chapters[0].Chapter
-	chapter.Label.Part = ""
+	chapter := mergedChapter(chapters)
 	return pack(outputdir, format, s.GetFilenameTemplate(), "chapter "+number,
 		NewChapterFileTemplateParts(title, &chapter), files, info, progress)
+}
+
+// mergedChapter is the chapter a merged file is named after: the parts' shared
+// title without their parts, else the chapter's number alone, as a numbered chapter
+func mergedChapter(chapters []*DownloadedChapter) grabber.Chapter {
+	parts := make(grabber.Filterables, len(chapters))
+	for i, d := range chapters {
+		parts[i] = d.Chapter
+	}
+	chapter := *chapters[0].Chapter
+	chapter.Title = grabber.PartsTitle(parts)
+	chapter.Label.Part = ""
+	chapter.Label.Style = grabber.LabelNumbered
+	return chapter
 }
 
 // releaseName names a chapter's release for messages: its chapter name, then

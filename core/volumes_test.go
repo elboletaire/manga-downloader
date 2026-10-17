@@ -370,6 +370,27 @@ func TestDownloadVolumesParts(t *testing.T) {
 	}
 }
 
+// the parts of a chapter are named by their shared title, or by the number
+// alone when the parts' titles differ
+func TestDownloadVolumesPartsTitle(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 19, part: "1", title: "Shared", pages: 1, group: "A"},
+		fakeChapter{number: 19, part: "2", title: "Shared", pages: 1, group: "A"},
+		fakeChapter{number: 21, part: "1", title: "First", pages: 1, group: "A"},
+		fakeChapter{number: 21, part: "2", title: "Second", pages: 1, group: "A"},
+	)
+	series, dir := newSeries(t, site, false)
+	site.Settings.Volumes = "parts"
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", &recorder{}); err != nil {
+		t.Fatal(err)
+	}
+	files := basenames(cbzFiles(t, dir))
+	if want := []string{"Test Series 19 - Shared [A].cbz", "Test Series 21 - Chapter 21 [A].cbz"}; !reflect.DeepEqual(files, want) {
+		t.Errorf("wrote %q, want %q", files, want)
+	}
+}
+
 func TestDownloadVolumesAuto(t *testing.T) {
 	site := newFakeSite(t,
 		fakeChapter{number: 1, pages: 1, volume: 3},

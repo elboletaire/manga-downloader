@@ -9,6 +9,7 @@ import {
   listedVolumes,
   parseVolumes,
   partRows,
+  partsTitle,
   selectedIn,
   siteVolumes,
   volumesSummary,
@@ -226,6 +227,15 @@ describe('shared parts with Go', () => {
     }));
     const files = groupParts(chapters).map((g) => g.chapters.map((x) => x.index));
     expect(files.sort((a, b) => a[0] - b[0])).toEqual(c.want);
+  });
+});
+
+describe('shared parts titles with Go', () => {
+  // the cases grabber.PartsTitle runs too, so the merged file and the header name a run alike
+  it.each(shared.partsTitle.map((c) => [c.name, c] as const))('names the parts: %s', (_, c) => {
+    const listed = c.parts as { part: string; title: string }[];
+    const parts = listed.map((p, i) => ({ ...ch(1, 0, i), part: p.part, wholeTitle: p.title }));
+    expect(partsTitle(parts)).toBe(c.want);
   });
 });
 

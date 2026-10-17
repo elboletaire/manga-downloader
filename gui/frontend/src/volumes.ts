@@ -320,7 +320,7 @@ export function partRows(groups: PartGroup[], collapsed: ReadonlySet<string>): G
     const key = `part-${g.chapters[0].index}`;
     const isCollapsed = collapsed.has(key);
     const label = `Chapter ${formatNumber(g.number)}`;
-    const title = commonTitle(g.chapters);
+    const title = partsTitle(g.chapters);
     const count = `${g.chapters.length} parts`;
     rows.push({
       kind: 'group',
@@ -342,8 +342,8 @@ export function partRows(groups: PartGroup[], collapsed: ReadonlySet<string>): G
   return rows;
 }
 
-/** The title a chapter's parts share without their parts, '' unless every part has one and they agree */
-function commonTitle(chapters: Chapter[]): string {
+/** The title a chapter's parts share without their parts, '' unless every part has one and they agree (grabber.PartsTitle) */
+export function partsTitle(chapters: Chapter[]): string {
   const [first] = chapters;
   if (!first.part || !chapters.every((ch) => ch.part && ch.wholeTitle === first.wholeTitle)) {
     return '';

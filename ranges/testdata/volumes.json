@@ -1,5 +1,5 @@
 {
-  "comment": "Volumes box cases shared by ranges.ParseVolumes, core.SiteVolumes and gui/frontend/src/volumes.ts, so Go and the app agree. volumes maps each volume number to its [begin, end] ranges; error is a substring of the message. site: want is the SiteVolumes text (\"\" when the ranges can't group the chapters as the site does), listed the volumes ListedVolumes counts. parts lists chapters for --volumes parts: want holds the indices of each file's chapters in file order (the part order), the files sorted by first index, a single chapter being a file of its own.",
+  "comment": "Volumes box cases shared by ranges.ParseVolumes, core.SiteVolumes and gui/frontend/src/volumes.ts, so Go and the app agree. volumes maps each volume number to its [begin, end] ranges; error is a substring of the message. site: want is the SiteVolumes text (\"\" when the ranges can't group the chapters as the site does), listed the volumes ListedVolumes counts. partsTitle is the title their merged file and header name them by (grabber.PartsTitle, the app's header). parts lists chapters for --volumes parts: want holds the indices of each file's chapters in file order (the part order), the files sorted by first index, a single chapter being a file of its own.",
   "parse": [
     { "in": "1-7/8-16", "volumes": { "1": [[1, 7]], "2": [[8, 16]] } },
     { "in": " 1-7 / 8-16 /", "volumes": { "1": [[1, 7]], "2": [[8, 16]] } },
@@ -43,5 +43,11 @@
     { "name": "parts sort by part number", "chapters": [{ "number": 19, "part": "10", "group": "A", "language": "en" }, { "number": 19, "part": "2", "group": "A", "language": "en" }, { "number": 19, "part": "1", "group": "A", "language": "en" }], "want": [[2, 1, 0]] },
     { "name": "parts without a part sort by title", "chapters": [{ "number": 356, "title": "Berserk 356b", "group": "A", "language": "en" }, { "number": 356, "title": "Berserk 356a", "group": "A", "language": "en" }], "want": [[1, 0]] },
     { "name": "parts with one title keep the oldest first", "chapters": [{ "number": 7, "title": "Chapter 7", "group": "A", "language": "en" }, { "number": 7, "title": "Chapter 7", "group": "A", "language": "en" }], "want": [[1, 0]] }
+  ],
+  "partsTitle": [
+    { "name": "parts share a title", "parts": [{ "part": "1", "title": "Un títol" }, { "part": "2", "title": "Un títol" }], "want": "Un títol" },
+    { "name": "titles differ", "parts": [{ "part": "1", "title": "A" }, { "part": "2", "title": "B" }], "want": "" },
+    { "name": "a part without a part", "parts": [{ "part": "1", "title": "A" }, { "part": "", "title": "A" }], "want": "" },
+    { "name": "no titles", "parts": [{ "part": "1", "title": "" }, { "part": "2", "title": "" }], "want": "" }
   ]
 }

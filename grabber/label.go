@@ -130,6 +130,21 @@ func PartOf(f Filterable) (part, title string) {
 	return partLabel(l.Part), f.GetTitle()
 }
 
+// PartsTitle is the title a chapter's parts share without their parts, which
+// names their merged file and its header: the title PartOf gives when every part
+// has a part and they all agree, "" otherwise
+func PartsTitle(parts Filterables) string {
+	title := ""
+	for i, p := range parts {
+		part, t := PartOf(p)
+		if part == "" || (i > 0 && t != title) {
+			return ""
+		}
+		title = t
+	}
+	return title
+}
+
 // PartLess orders the parts of a chapter as their merged file lists them: by
 // their part ("Part 2" before "Part 10"), else by their label ("356a" before "356b")
 func PartLess(a, b Filterable) bool {

@@ -3,6 +3,7 @@
 package grabber
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -177,6 +178,37 @@ func TestPartOf(t *testing.T) {
 	} {
 		if part, title := PartOf(&tt.chapter); part != tt.part || title != tt.title {
 			t.Errorf("%s: PartOf = %q, %q, want %q, %q", tt.name, part, title, tt.part, tt.title)
+		}
+	}
+}
+
+// TestPartsTitleShared runs the partsTitle cases gui/frontend/src/volumes.test.ts
+// runs too, so the merged file and the app's header name a parts run alike
+func TestPartsTitleShared(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "ranges", "testdata", "volumes.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cases struct {
+		PartsTitle []struct {
+			Name  string `json:"name"`
+			Parts []struct {
+				Part  string `json:"part"`
+				Title string `json:"title"`
+			} `json:"parts"`
+			Want string `json:"want"`
+		} `json:"partsTitle"`
+	}
+	if err := json.Unmarshal(data, &cases); err != nil {
+		t.Fatal(err)
+	}
+	for _, tt := range cases.PartsTitle {
+		var parts Filterables
+		for _, p := range tt.Parts {
+			parts = append(parts, &Chapter{Title: p.Title, Label: Label{Style: LabelNumbered, Part: p.Part}})
+		}
+		if got := PartsTitle(parts); got != tt.Want {
+			t.Errorf("%s: PartsTitle = %q, want %q", tt.Name, got, tt.Want)
 		}
 	}
 }

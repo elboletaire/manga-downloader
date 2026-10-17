@@ -141,6 +141,8 @@ type fakeChapter struct {
 	// other releases: the part it's split into, and the group that made it
 	part  string
 	group string
+	// title is a part's title without its part, '' for none (see grabber.PartOf)
+	title string
 	// fetchDelay makes FetchChapter slow
 	fetchDelay time.Duration
 }
@@ -193,8 +195,8 @@ func (f *fakeSite) FetchChapter(l grabber.Filterable) (*grabber.Chapter, error) 
 			Label:      grabber.Label{Style: grabber.LabelNumbered, Part: c.part},
 		}
 		if c.part != "" {
-			// a part's title is its number and part, as the listing gives it
-			chapter.Title = ""
+			// a part's title is the title without its part, as the listing gives it
+			chapter.Title = c.title
 		}
 		chapter.SetGroups(c.group)
 		for i := 0; i < pages; i++ {
@@ -279,7 +281,7 @@ func newSeries(t *testing.T, site *fakeSite, bundle bool) (*Series, string) {
 func listed(site *fakeSite) grabber.Filterables {
 	var out grabber.Filterables
 	for _, c := range site.chapters {
-		chapter := &grabber.Chapter{Number: c.number, Volume: c.volume, Label: grabber.Label{Style: grabber.LabelNumbered, Part: c.part}}
+		chapter := &grabber.Chapter{Title: c.title, Number: c.number, Volume: c.volume, Label: grabber.Label{Style: grabber.LabelNumbered, Part: c.part}}
 		chapter.SetGroups(c.group)
 		out = append(out, chapter)
 	}
