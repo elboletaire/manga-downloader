@@ -226,7 +226,8 @@ function partsChapters(): Chapter[] {
   const list: Chapter[] = [];
   const add = (number: number, title: string, locked: boolean) =>
     list.push({ index: list.length, number, title, language: '', group: '', volume: 0, locked });
-  const titleOf = (n: number) => OP_CHAPTERS[n - 1][1];
+  const newest = OP_CHAPTERS.slice(-20).map(([, title]) => title);
+  const titleOf = (n: number) => newest[n - 1];
   add(1, titleOf(1), false);
   for (let n = 2; n <= 20; n++) {
     add(n, `${titleOf(n)} Part 1`, n > 4);
