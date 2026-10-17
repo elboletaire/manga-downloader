@@ -20,7 +20,7 @@
   "selected": "<strong>{{selected}}</strong> de {{total}} seleccionados",
   "selectAll": "Seleccionar todo",
   "selectNone": "Deseleccionar todo",
-  "addRange": "Añadir rango",
+  "addRange": "Elegir",
   "rangeLabel": "Rango de capítulos que añadir a la selección",
   "rangeNone": "Ningún capítulo coincide con ese rango.",
   "rangeAdded_one": "Añadido {{count}} capítulo.",

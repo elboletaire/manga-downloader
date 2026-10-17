@@ -2140,10 +2140,6 @@ a.version:hover {
     display: none;
   }
 
-  .workspace {
-    grid-template-columns: minmax(0, 1fr) 312px;
-  }
-
   .toolbar-buttons .btn {
     padding: 0 7px;
   }
