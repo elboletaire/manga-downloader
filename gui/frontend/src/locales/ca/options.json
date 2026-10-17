@@ -1,0 +1,64 @@
+{
+  "locked": {
+    "running": "Les opcions estan bloquejades mentre hi ha una descàrrega.",
+    "loading": "Les opcions estan bloquejades mentre es carrega la sèrie."
+  },
+  "save": {
+    "title": "Desar",
+    "folder": "Carpeta",
+    "notSet": "Sense definir",
+    "browse": "Examina…"
+  },
+  "format": {
+    "label": "Format",
+    "cbz": "Arxiu CBZ",
+    "raw": "Carpeta d'imatges",
+    "epub": "EPUB"
+  },
+  "readingDirection": {
+    "label": "Sentit de lectura",
+    "rtl": "De dreta a esquerra",
+    "ltr": "D'esquerra a dreta",
+    "hint": "Cap a on giren les pàgines: el manga es llegeix de dreta a esquerra, els webtoons i els còmics occidentals d'esquerra a dreta."
+  },
+  "packAs": {
+    "label": "Empaqueta com",
+    "chapters": "Capítols",
+    "parts": "Combinats",
+    "volumes": "Volums",
+    "bundle": "Un arxiu"
+  },
+  "packHint": {
+    "chapters": "Un arxiu per capítol.",
+    "parts": "Un arxiu per capítol, amb les seves parts combinades. Els capítols sense parts tenen un arxiu cadascun, com sempre.",
+    "volumes": "Un arxiu per volum, definit sobre la llista de capítols. Els capítols fora de tots els volums tenen un arxiu cadascun.",
+    "volumesNotLoaded": "Un arxiu per volum, definit sobre la llista de capítols (quan es carregui). Els capítols fora de tots els volums tenen un arxiu cadascun.",
+    "bundle": "Els capítols seleccionats en un sol arxiu."
+  },
+  "pages": {
+    "title": "Pàgines",
+    "convert": "Converteix a JPEG",
+    "avif": "AVIF",
+    "webp": "WebP",
+    "convertHint": "La majoria de lectors electrònics no obren AVIF; WebP no és fiable en tinta electrònica.",
+    "avifEpub": "Sempre activat per a EPUB: els lectors no mostren AVIF."
+  },
+  "skipPages": {
+    "label": "Omet pàgines",
+    "placeholder": "p. ex. {{example}}",
+    "hint": "Posicions que s'ometen de cada capítol: {{first}} és la segona pàgina, {{last}} l'última."
+  },
+  "advanced": {
+    "title": "Avançat"
+  },
+  "template": {
+    "label": "Plantilla del nom de l'arxiu",
+    "hint": "Fes servir <code>{{series}}</code>, <code>{{number}}</code>, <code>{{title}}</code>, <code>{{siteTitle}}</code>, <code>{{group}}</code>, <code>{{volume}}</code> i <code>{{version}}</code>; <code>{{padded}}</code> omple un número amb zeros. Si no la canvies, els volums es diuen <code>{{volumeName}}</code>, o <code>{{volumeGroupName}}</code> quan els seus capítols comparteixen grup.",
+    "reset": "Fes servir la plantilla per defecte"
+  },
+  "browser": {
+    "label": "Mostra la finestra del navegador",
+    "hint": "Gairebé mai cal: la finestra s'obre sola quan un lloc la demana.",
+    "auto": "Cal per a aquest lloc: la finestra s'obre sola."
+  }
+}
