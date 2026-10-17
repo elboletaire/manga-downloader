@@ -14,7 +14,6 @@ import (
 	_ "image/png"
 	"regexp"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
@@ -39,14 +38,12 @@ var (
 	// comiciNumberRe is the number a title starts with: "第34話", "0話", "2-①" (a
 	// split episode), "#9.5" or a bare "1"
 	comiciNumberRe = regexp.MustCompile(`^(?:第(` + gvDigits + `)話|(` + gvDigits + `)話|(` + gvDigits + `)-|#(` + gvDigits + `)|(` + gvDigits + `)$)`)
-	// comiciPartRe is the part after a number: "①", "（2）", "前編" or "前編①"
-	comiciPartRe = regexp.MustCompile(`^(?:[前中後]編[①-⑳]?|[①-⑳]|[（(][0-9０-９]+[）)])`)
+	// comiciWordRe is a part written as a word: "前編" in "第36話前編①"
+	comiciWordRe = regexp.MustCompile(`^[前中後]編`)
 )
 
-// Comici is a grabber for Comici, the viewer of several Japanese publishers:
-// the series' listing marks which episodes are free, and an episode page embeds
-// the viewer whose pages are served through the contentsInfo API. Pages scrambled
-// in tiles are undone in Transform.
+// Comici is a grabber for Comici, the viewer of several Japanese publishers.
+// Its listing marks the free episodes, and each one's pages come from the API.
 type Comici struct {
 	*Grabber
 	seriesID   string
@@ -177,7 +174,7 @@ func (c *Comici) fetchSeries() error {
 // comiciIsFree reports whether a listed episode is free to read now. A locked
 // one shows a wait-free or paid badge instead of the free text.
 func comiciIsFree(item *goquery.Selection) bool {
-	return item.Find(".series-eplist-item-access-text.mode-free").Length() > 0
+	return item.Find(`[data-e2e="eliFreeBadge"]`).Length() > 0
 }
 
 // comiciSeries returns the series name of a page's title, "Name - Authors | Site".
@@ -207,23 +204,14 @@ func comiciTitle(raw string) (title string, number float64, part string) {
 	}
 
 	rest := raw[end:]
-	if p := comiciPartRe.FindString(rest); p != "" {
-		part, rest = comiciPart(p), rest[len(p):]
+	word := comiciWordRe.FindString(rest)
+	rest = rest[len(word):]
+	if p, r, ok := gigaviewerSplitPart(rest); ok {
+		part, rest = word+p, r
+	} else {
+		part = word
 	}
 	return cleanTitle(rest), number, part
-}
-
-// comiciPart reads a part as the number it stands for ("①", "（2）") or as
-// written ("前編")
-func comiciPart(p string) string {
-	r, size := utf8.DecodeRuneInString(p)
-	if n, ok := gigaviewerCircled(r); ok && size == len(p) {
-		return n
-	}
-	if strings.HasPrefix(p, "（") || strings.HasPrefix(p, "(") {
-		return gigaviewerDigits.Replace(strings.Trim(p, "（）()"))
-	}
-	return p
 }
 
 // FetchTitle returns the series title.

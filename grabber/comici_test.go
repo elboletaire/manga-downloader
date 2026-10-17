@@ -7,7 +7,10 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"strings"
 	"testing"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 func TestComiciTest(t *testing.T) {
@@ -28,7 +31,8 @@ func TestComiciTitle(t *testing.T) {
 	}{
 		{"第1話　血まみれのカオリス", "血まみれのカオリス", "", 1},
 		{"第34話①", "", "1", 34},
-		{"第36話前編①", "", "前編①", 36},
+		{"第36話前編①", "", "前編1", 36},
+		{"第36話前編", "", "前編", 36},
 		{"第35話　黒の衝撃", "黒の衝撃", "", 35},
 		{"0話", "", "", 0},
 		{"1", "", "", 1},
@@ -46,6 +50,24 @@ func TestComiciTitle(t *testing.T) {
 				tt.raw, title, number, part, tt.title, tt.number, tt.part)
 		}
 	}
+}
+
+// TestComiciIsFree reads the badge that marks an episode free: the one with
+// data-e2e="eliFreeBadge". A second "今なら無料" span without it is no free badge.
+func TestComiciIsFree(t *testing.T) {
+	const listing = `<div data-e2e="eli"><span class="series-eplist-item-access-text mode-free" data-e2e="eliFreeBadge">無料</span></div>
+<div data-e2e="eli"><span class="series-eplist-item-access-text mode-free">今なら無料</span></div>
+<div data-e2e="eli"><span class="series-eplist-item-access-icon"></span></div>`
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(listing))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []bool{true, false, false}
+	doc.Find(`[data-e2e="eli"]`).Each(func(i int, item *goquery.Selection) {
+		if got := comiciIsFree(item); got != want[i] {
+			t.Errorf("item %d: comiciIsFree = %v, want %v", i, got, want[i])
+		}
+	})
 }
 
 func TestComiciSeries(t *testing.T) {
