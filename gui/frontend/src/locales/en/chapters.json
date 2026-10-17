@@ -1,0 +1,53 @@
+{
+  "section": "Chapters",
+  "empty": {
+    "title": "Start with a series",
+    "paste": "Paste the link to a series in the bar above (or use its Paste button). A link to any of its chapters works too.",
+    "listed": "Its chapters will be listed here, ready to pick and save for your reader."
+  },
+  "loading": {
+    "asking": "Asking {{host}} for the chapter list…",
+    "fetching": "Fetching the chapter list…"
+  },
+  "failed": {
+    "title": "Couldn't load this series",
+    "hint": "Check that the link opens the series in a browser. Sites behind a Cloudflare check may need <em>Show the browser window</em>, under Options › Advanced.",
+    "retry": "Try again"
+  },
+  "reloading": "Reloading…",
+  "splitParts": "{{count}} split in parts",
+  "selected": "<strong>{{selected}}</strong> of {{total}} selected",
+  "selectAll": "Select all",
+  "selectNone": "Select none",
+  "addRange": "Add range",
+  "rangeLabel": "Chapter range to add to the selection",
+  "rangeNone": "No chapter matches that range.",
+  "rangeAdded_one": "Added {{count}} chapter.",
+  "rangeAdded_other": "Added {{count}} chapters.",
+  "listLabel": "Chapters of {{title}}",
+  "noneSelected": "none selected",
+  "group": {
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "aria": "{{label}} · {{detail}}, {{selected}} of {{total}} selected",
+    "ariaFolded": "{{label}} · {{detail}}, {{selected}} of {{total}} selected, folded",
+    "fold": "Fold {{label}}",
+    "unfold": "Unfold {{label}}"
+  },
+  "parts": {
+    "whole": "whole chapter",
+    "partial": "{{selected}} of {{total}} parts",
+    "none": "No chapter of this series is split in parts, so each one gets a file as usual.",
+    "partialHint": "Only the selected parts go in its file"
+  },
+  "locked": "Locked, so it cannot be selected",
+  "duplicates": {
+    "language": "Some numbers are listed once per language; the language tag tells them apart.",
+    "group": "Some numbers are listed once per group; the group tag tells them apart."
+  },
+  "hint": {
+    "volume": "Click a volume to pick all of its chapters · <kbd>←</kbd><kbd>→</kbd> fold · <kbd>Space</kbd> toggles",
+    "part": "Click a chapter to pick all of its parts · <kbd>←</kbd><kbd>→</kbd> fold · <kbd>Space</kbd> toggles",
+    "plain": "<kbd>Shift</kbd>+click selects a span · <kbd>↑</kbd><kbd>↓</kbd> move · <kbd>Space</kbd> toggles"
+  }
+}

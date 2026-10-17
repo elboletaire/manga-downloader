@@ -3,7 +3,9 @@
 // arrows move, Space toggles, Shift extends, as in a native list box.
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
-import { errorMessage, formatNumber, plural } from './format';
+import { errorMessage, formatNumber } from './format';
+import type { T as Translator } from './i18n';
+import { T, useI18n } from './i18n/react';
 import { AlertIcon, ChevronIcon, LinkIcon, LockIcon, RefreshIcon } from './icons';
 import { Mascot } from './Mascot';
 import { extendsSpan, moveActive, pickable, spanIndices } from './listKeys';
@@ -60,27 +62,28 @@ export function ChapterPanel(props: Props) {
 }
 
 function EmptyState() {
+  const { t } = useI18n();
   return (
-    <section className="panel chapters empty-state" aria-label="Chapters">
+    <section className="panel chapters empty-state" aria-label={t('chapters.section')}>
       <Mascot expression="happy" size={112} />
-      <h2>Start with a series</h2>
-      <p>
-        Paste the link to a series in the bar above (or use its Paste button). A link to any of its chapters works too.
-      </p>
-      <p className="muted">Its chapters will be listed here, ready to pick and save for your reader.</p>
+      <h2>{t('chapters.empty.title')}</h2>
+      <p>{t('chapters.empty.paste')}</p>
+      <p className="muted">{t('chapters.empty.listed')}</p>
     </section>
   );
 }
 
 function LoadingState({ url }: { url: string }) {
+  const { t } = useI18n();
   const host = hostOf(url);
   return (
-    <section className="panel chapters" aria-label="Chapters" aria-busy="true">
+    <section className="panel chapters" aria-label={t('chapters.section')} aria-busy="true">
       <div className="series-head">
         <div>
           <div className="skeleton skeleton-title" />
           <p className="series-meta">
-            <LinkIcon size={13} /> {host !== '' ? `Asking ${host} for the chapter list…` : 'Fetching the chapter list…'}
+            <LinkIcon size={13} />{' '}
+            {host !== '' ? t('chapters.loading.asking', { host }) : t('chapters.loading.fetching')}
           </p>
         </div>
       </div>
@@ -98,23 +101,23 @@ function LoadingState({ url }: { url: string }) {
 }
 
 function FailedState({ state, onRetry }: { state: State; onRetry: () => void }) {
+  const { t } = useI18n();
   const host = hostOf(state.url);
   return (
-    <section className="panel chapters empty-state failed" aria-label="Chapters">
+    <section className="panel chapters empty-state failed" aria-label={t('chapters.section')}>
       <div className="empty-icon danger">
         <AlertIcon size={26} />
       </div>
-      <h2>Couldn't load this series</h2>
+      <h2>{t('chapters.failed.title')}</h2>
       <p className="error-text" role="alert">
         {state.loadError}
       </p>
       {host !== '' && <p className="muted mono small">{state.url}</p>}
       <p className="muted">
-        Check that the link opens the series in a browser. Sites behind a Cloudflare check may need{' '}
-        <em>Show the browser window</em>, under Options › Advanced.
+        <T k="chapters.failed.hint" />
       </p>
       <button type="button" className="btn" disabled={state.loading || state.running} onClick={onRetry}>
-        <RefreshIcon /> Try again
+        <RefreshIcon /> {t('chapters.failed.retry')}
       </button>
     </section>
   );
@@ -132,6 +135,7 @@ function ChapterList({
   onVolumes,
   onError,
 }: Props) {
+  const { t } = useI18n();
   const [rangeText, setRangeText] = useState('');
   const [rangeNote, setRangeNote] = useState<{ text: string; bad: boolean } | null>(null);
   const [active, setActive] = useState(-1);
@@ -331,8 +335,8 @@ function ChapterList({
       const n = await onRange(rangeText);
       setRangeNote(
         n === 0
-          ? { text: 'No chapter matches that range.', bad: true }
-          : { text: `Added ${plural(n, 'chapter', 'chapters')}.`, bad: false },
+          ? { text: t('chapters.rangeNone'), bad: true }
+          : { text: t('chapters.rangeAdded', { count: n }), bad: false },
       );
     } catch (e) {
       setRangeNote({ text: errorMessage(e), bad: true });
@@ -347,7 +351,7 @@ function ChapterList({
   const activeRow = active >= first && active < last ? rows[active] : undefined;
 
   return (
-    <section className="panel chapters" aria-label="Chapters">
+    <section className="panel chapters" aria-label={t('chapters.section')}>
       <div className="series-head">
         <div className="series-id">
           <h2 className="series-title" title={state.title}>
@@ -362,22 +366,22 @@ function ChapterList({
                 </span>
               </>
             )}
-            <span>{plural(state.chapterCount, 'chapter', 'chapters')}</span>
+            <span>{t('count.chapter', { count: state.chapterCount })}</span>
             {byParts && split > 0 && (
               <>
                 <span className="dot" aria-hidden="true">
                   ·
                 </span>
-                <span>{split} split in parts</span>
+                <span>{t('chapters.splitParts', { count: split })}</span>
               </>
             )}
-            {state.loading && <span className="reloading">Reloading…</span>}
+            {state.loading && <span className="reloading">{t('chapters.reloading')}</span>}
           </p>
         </div>
       </div>
 
       <div className="list-toolbar">
-        <label className="master" title={all ? 'Select none' : 'Select all'}>
+        <label className="master" title={all ? t('chapters.selectNone') : t('chapters.selectAll')}>
           <input
             type="checkbox"
             checked={all}
@@ -387,12 +391,12 @@ function ChapterList({
               }
             }}
             disabled={disabled || selectable === 0}
-            aria-label={all ? 'Select none' : 'Select all'}
+            aria-label={all ? t('chapters.selectNone') : t('chapters.selectAll')}
             onChange={() => onSetAll(!all).catch(fail)}
           />
         </label>
         <p className="count" aria-live="polite">
-          <strong>{state.selectedCount}</strong> of {selectable} selected
+          <T k="chapters.selected" values={{ selected: state.selectedCount, total: selectable }} />
         </p>
         <div className="toolbar-buttons">
           <button
@@ -401,7 +405,7 @@ function ChapterList({
             disabled={disabled || all || selectable === 0}
             onClick={() => onSetAll(true).catch(fail)}
           >
-            All
+            {t('common.all')}
           </button>
           <button
             type="button"
@@ -409,7 +413,7 @@ function ChapterList({
             disabled={disabled || state.selectedCount === 0}
             onClick={() => onSetAll(false).catch(fail)}
           >
-            None
+            {t('common.none')}
           </button>
         </div>
         <form
@@ -423,7 +427,7 @@ function ChapterList({
             type="text"
             className={`input small mono${rangeNote?.bad ? ' invalid' : ''}`}
             placeholder="1-10,12"
-            aria-label="Chapter range to add to the selection"
+            aria-label={t('chapters.rangeLabel')}
             value={rangeText}
             disabled={disabled}
             spellCheck={false}
@@ -433,7 +437,7 @@ function ChapterList({
             }}
           />
           <button type="submit" className="btn small" disabled={disabled || rangeText.trim() === ''}>
-            Add range
+            {t('chapters.addRange')}
           </button>
         </form>
       </div>
@@ -459,7 +463,7 @@ function ChapterList({
         ref={list.ref}
         onScroll={list.onScroll}
         role="listbox"
-        aria-label={`Chapters of ${state.title}`}
+        aria-label={t('chapters.listLabel', { title: state.title })}
         aria-multiselectable="true"
         aria-disabled={disabled || undefined}
         aria-activedescendant={
@@ -488,7 +492,11 @@ function ChapterList({
               const n = selectedIn(open, chosen);
               const on = open.length > 0 && n === open.length;
               const label = `${row.label} · ${row.detail}`;
-              const count = byParts ? partsCount(n, row.chapters.length) : n > 0 ? `${n} selected` : 'none selected';
+              const count = byParts
+                ? partsCount(n, row.chapters.length, t)
+                : n > 0
+                  ? t('chapters.group.selected', { count: n })
+                  : t('chapters.noneSelected');
               return (
                 <div
                   key={rowId(row)}
@@ -498,7 +506,11 @@ function ChapterList({
                   aria-posinset={pos + 1}
                   aria-selected={on}
                   aria-disabled={open.length === 0 || undefined}
-                  aria-label={`${label}, ${n} of ${open.length} selected${row.collapsed ? ', folded' : ''}`}
+                  aria-label={
+                    row.collapsed
+                      ? t('chapters.group.ariaFolded', { label: row.label, detail: row.detail, selected: n, total: open.length })
+                      : t('chapters.group.aria', { label: row.label, detail: row.detail, selected: n, total: open.length })
+                  }
                   className={`row group-row${on ? ' on' : ''}${pos === active ? ' active' : ''}`}
                   style={style}
                   onMouseDown={keepFocus}
@@ -509,7 +521,7 @@ function ChapterList({
                     type="button"
                     className={`fold${row.collapsed ? '' : ' open'}`}
                     tabIndex={-1}
-                    aria-label={row.collapsed ? `Unfold ${row.label}` : `Fold ${row.label}`}
+                    aria-label={row.collapsed ? t('chapters.group.unfold', { label: row.label }) : t('chapters.group.fold', { label: row.label })}
                     onMouseDown={keepFocus}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -528,7 +540,7 @@ function ChapterList({
                     )}
                     <span
                       className={`group-count${byParts && n > 0 && n < row.chapters.length ? ' partial' : ''}`}
-                      title={byParts && n > 0 && n < row.chapters.length ? PARTIAL_HINT : undefined}
+                      title={byParts && n > 0 && n < row.chapters.length ? t('chapters.parts.partialHint') : undefined}
                     >
                       {count}
                     </span>
@@ -569,26 +581,17 @@ function ChapterList({
       <p className="list-foot">
         {state.hasDuplicates || state.hasGroupDuplicates ? (
           <>
-            {state.hasDuplicates && <>Some numbers are listed once per language; the language tag tells them apart. </>}
-            {state.hasGroupDuplicates && <>Some numbers are listed once per group; the group tag tells them apart.</>}
+            {state.hasDuplicates && <>{t('chapters.duplicates.language')} </>}
+            {state.hasGroupDuplicates && <>{t('chapters.duplicates.group')}</>}
           </>
         ) : grouping !== null ? (
-          <>
-            Click a volume to pick all of its chapters · <kbd>←</kbd>
-            <kbd>→</kbd> fold · <kbd>Space</kbd> toggles
-          </>
+          <T k="chapters.hint.volume" />
         ) : byParts && split > 0 ? (
-          <>
-            Click a chapter to pick all of its parts · <kbd>←</kbd>
-            <kbd>→</kbd> fold · <kbd>Space</kbd> toggles
-          </>
+          <T k="chapters.hint.part" />
         ) : byParts ? (
-          <>No chapter of this series is split in parts, so each one gets a file as usual.</>
+          t('chapters.parts.none')
         ) : (
-          <>
-            <kbd>Shift</kbd>+click selects a span · <kbd>↑</kbd>
-            <kbd>↓</kbd> move · <kbd>Space</kbd> toggles
-          </>
+          <T k="chapters.hint.plain" />
         )}
       </p>
     </section>
@@ -601,14 +604,14 @@ export function ChapterBox({ on, locked }: { on: boolean; locked: boolean }) {
 }
 
 /** The tooltip and label of a locked chapter's mark */
-export const LOCKED_HINT = 'Locked, so it cannot be selected';
 
 /** A chapter's title, marked with a lock when the listing says it's locked */
 export function ChapterTitle({ title, locked }: { title: string; locked: boolean }) {
+  const { t } = useI18n();
   return (
     <span className="title">
       {locked && (
-        <span className="lock" role="img" title={LOCKED_HINT} aria-label={LOCKED_HINT}>
+        <span className="lock" role="img" title={t('chapters.locked')} aria-label={t('chapters.locked')}>
           <LockIcon size={12} />
         </span>
       )}
@@ -621,15 +624,12 @@ function rowId(row: GroupedRow): string {
   return row.kind === 'group' ? `group-${row.key}` : `chapter-${row.chapter.index}`;
 }
 
-/** The tooltip of a chapter with only some of its parts picked */
-export const PARTIAL_HINT = 'Only the selected parts go in its file';
-
 /** What a chapter's header says of its picked parts: none, all of them, or how many */
-export function partsCount(selected: number, total: number): string {
+export function partsCount(selected: number, total: number, t: Translator): string {
   if (selected === 0) {
-    return 'none selected';
+    return t('chapters.noneSelected');
   }
-  return selected === total ? 'whole chapter' : `${selected} of ${total} parts`;
+  return selected === total ? t('chapters.parts.whole') : t('chapters.parts.partial', { selected, total });
 }
 
 interface VolumesBarProps {

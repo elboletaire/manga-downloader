@@ -1,0 +1,53 @@
+{
+  "section": "Capítols",
+  "empty": {
+    "title": "Comença amb una sèrie",
+    "paste": "Enganxa l'enllaç d'una sèrie a la barra de dalt (o fes servir el botó Enganxa). També serveix un enllaç a qualsevol dels seus capítols.",
+    "listed": "Els seus capítols apareixeran aquí, a punt per triar-los i desar-los per al teu lector."
+  },
+  "loading": {
+    "asking": "Demanant a {{host}} la llista de capítols…",
+    "fetching": "Obtenint la llista de capítols…"
+  },
+  "failed": {
+    "title": "No s'ha pogut carregar aquesta sèrie",
+    "hint": "Comprova que l'enllaç obre la sèrie en un navegador. Els llocs protegits per una comprovació de Cloudflare poden necessitar <em>Show the browser window</em>, a Options › Advanced.",
+    "retry": "Torna-ho a provar"
+  },
+  "reloading": "Recarregant…",
+  "splitParts": "{{count}} dividits en parts",
+  "selected": "<strong>{{selected}}</strong> de {{total}} seleccionats",
+  "selectAll": "Selecciona-ho tot",
+  "selectNone": "Desselecciona-ho tot",
+  "addRange": "Afegeix el rang",
+  "rangeLabel": "Rang de capítols per afegir a la selecció",
+  "rangeNone": "Cap capítol coincideix amb aquest rang.",
+  "rangeAdded_one": "S'ha afegit {{count}} capítol.",
+  "rangeAdded_other": "S'han afegit {{count}} capítols.",
+  "listLabel": "Capítols de {{title}}",
+  "noneSelected": "cap seleccionat",
+  "group": {
+    "selected_one": "{{count}} seleccionat",
+    "selected_other": "{{count}} seleccionats",
+    "aria": "{{label}} · {{detail}}, {{selected}} de {{total}} seleccionats",
+    "ariaFolded": "{{label}} · {{detail}}, {{selected}} de {{total}} seleccionats, plegat",
+    "fold": "Plega {{label}}",
+    "unfold": "Desplega {{label}}"
+  },
+  "parts": {
+    "whole": "capítol sencer",
+    "partial": "{{selected}} de {{total}} parts",
+    "none": "Cap capítol d'aquesta sèrie no està dividit en parts, així que cada un rep el seu fitxer com sempre.",
+    "partialHint": "Només les parts seleccionades van al seu fitxer"
+  },
+  "locked": "Bloquejat, així que no es pot seleccionar",
+  "duplicates": {
+    "language": "Alguns números apareixen una vegada per idioma; l'etiqueta d'idioma els distingeix.",
+    "group": "Alguns números apareixen una vegada per grup; l'etiqueta de grup els distingeix."
+  },
+  "hint": {
+    "volume": "Fes clic en un volum per triar tots els seus capítols · <kbd>←</kbd><kbd>→</kbd> plega · <kbd>Espai</kbd> commuta",
+    "part": "Fes clic en un capítol per triar totes les seves parts · <kbd>←</kbd><kbd>→</kbd> plega · <kbd>Espai</kbd> commuta",
+    "plain": "<kbd>Majús</kbd>+clic selecciona un tram · <kbd>↑</kbd><kbd>↓</kbd> moure · <kbd>Espai</kbd> commuta"
+  }
+}

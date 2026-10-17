@@ -1,8 +1,12 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { ChapterBox, ChapterPanel, ChapterTitle, LOCKED_HINT, partsCount } from './ChapterPanel';
+import { CATALOG, createT } from './i18n';
+import { I18nProvider } from './i18n/react';
+import { ChapterBox, ChapterPanel, ChapterTitle, partsCount } from './ChapterPanel';
 import { createMockApi } from './mock';
+
+const LOCKED_HINT = createT('en')('chapters.locked');
 
 function title(locked: boolean): string {
   return renderToStaticMarkup(createElement(ChapterTitle, { title: 'Chapter 186', locked }));
@@ -38,9 +42,28 @@ describe('ChapterBox', () => {
 
 describe('partsCount', () => {
   it('says whether a chapter goes whole, in part, or not at all', () => {
-    expect(partsCount(0, 2)).toBe('none selected');
-    expect(partsCount(2, 2)).toBe('whole chapter');
-    expect(partsCount(1, 2)).toBe('1 of 2 parts');
+    const t = createT('en');
+    expect(partsCount(0, 2, t)).toBe('none selected');
+    expect(partsCount(2, 2, t)).toBe('whole chapter');
+    expect(partsCount(1, 2, t)).toBe('1 of 2 parts');
+  });
+
+  it('translates the header of a chapter with its parts picked', () => {
+    expect(partsCount(1, 2, createT('es'))).toBe('1 de 2 partes');
+    expect(partsCount(2, 2, createT('ca'))).toBe('capítol sencer');
+  });
+});
+
+describe('ChapterTitle in another language', () => {
+  it('names the lock in the language of the app', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        I18nProvider,
+        { pref: 'es', persist: async () => {}, catalog: CATALOG, systemLanguages: [] },
+        createElement(ChapterTitle, { title: 'Capítulo 186', locked: true }),
+      ),
+    );
+    expect(html).toContain('title="Bloqueado, así que no se puede seleccionar"');
   });
 });
 
