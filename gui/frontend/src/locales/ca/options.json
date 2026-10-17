@@ -12,7 +12,7 @@
   "format": {
     "label": "Format",
     "cbz": "Fitxer CBZ",
-    "raw": "Carpeta d'imatges",
+    "raw": "Carpeta",
     "epub": "EPUB"
   },
   "readingDirection": {
@@ -26,14 +26,14 @@
     "chapters": "Capítols",
     "parts": "Units",
     "volumes": "Volums",
-    "bundle": "Un fitxer"
+    "bundle": "Paquet"
   },
   "packHint": {
     "chapters": "Un fitxer per capítol.",
     "parts": "Un fitxer per capítol, amb les seves parts unides. Els capítols sense parts tenen un fitxer cadascun, com sempre.",
     "volumes": "Un fitxer per volum, definit sobre la llista de capítols. Els capítols fora de tots els volums tenen un fitxer cadascun.",
     "volumesNotLoaded": "Un fitxer per volum, definit sobre la llista de capítols (quan es carregui). Els capítols fora de tots els volums tenen un fitxer cadascun.",
-    "bundle": "Els capítols seleccionats en un sol fitxer."
+    "bundle": "Els capítols seleccionats en un paquet."
   },
   "pages": {
     "title": "Pàgines",

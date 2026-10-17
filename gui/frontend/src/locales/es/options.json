@@ -12,7 +12,7 @@
   "format": {
     "label": "Formato",
     "cbz": "Archivo CBZ",
-    "raw": "Carpeta de imágenes",
+    "raw": "Carpeta",
     "epub": "EPUB"
   },
   "readingDirection": {
@@ -26,14 +26,14 @@
     "chapters": "Capítulos",
     "parts": "Unidos",
     "volumes": "Volúmenes",
-    "bundle": "Un archivo"
+    "bundle": "Paquete"
   },
   "packHint": {
     "chapters": "Un archivo por capítulo.",
     "parts": "Un archivo por capítulo, con sus partes unidas en él. Los capítulos sin partes tienen un archivo cada uno, como de costumbre.",
     "volumes": "Un archivo por volumen, definido encima de la lista de capítulos. Los capítulos fuera de todos los volúmenes tienen un archivo cada uno.",
     "volumesNotLoaded": "Un archivo por volumen, definido encima de la lista de capítulos (cuando se cargue). Los capítulos fuera de todos los volúmenes tienen un archivo cada uno.",
-    "bundle": "Los capítulos seleccionados en un solo archivo."
+    "bundle": "Los capítulos seleccionados en un paquete."
   },
   "pages": {
     "title": "Páginas",

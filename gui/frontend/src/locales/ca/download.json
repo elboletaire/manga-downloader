@@ -9,7 +9,7 @@
   "label": {
     "download": "Descarrega",
     "chapters": "Descarrega {{chapters}}",
-    "bundle": "Descarrega {{chapters}} en un sol fitxer",
+    "bundle": "Descarrega {{chapters}} en un paquet",
     "volumes": "Descarrega {{volumes}} ({{chapters}})",
     "volumesAndChapters": "Descarrega {{volumes}} i {{chapters}}",
     "partsMerged": "Descarrega {{chapters}}, amb les parts unides"
