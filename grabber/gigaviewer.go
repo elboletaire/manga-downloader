@@ -15,6 +15,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
@@ -23,20 +24,63 @@ import (
 // gigaviewerDomains are the hosts of GigaViewer, Hatena's reader platform.
 // List another host here to serve it too: its episode and feed URLs are the
 // same.
-var gigaviewerDomains = []string{"shonenjumpplus.com"}
+var gigaviewerDomains = []string{
+	"shonenjumpplus.com",
+	"tonarinoyj.jp",
+	"comic-days.com",
+	"kuragebunch.com",
+	"magcomi.com",
+	"comic-gardo.com",
+	"comic-zenon.com",
+	"comic-action.com",
+	"comic-trail.com",
+	"comic-earthstar.com",
+	"comic-ogyaaa.com",
+	"sunday-webry.com",
+	"comic-seasons.com",
+	"comic-y-ours.com",
+	"ourfeel.jp",
+	"feelweb.jp",
+	"ichicomi.com",
+	"mangatime-square.com",
+}
+
+// gvDigits, gvKanji and gvBreak are the number pieces of a title: digits (with
+// a decimal), kanji, and a "＆13" that follows the number it leads with
+const (
+	gvDigits = `[0-9０-９]+(?:[.．][0-9０-９]+)?`
+	gvKanji  = `[〇零一二三四五六七八九十百千]+`
+	gvBreak  = `(?:[＆&][0-9０-９]+)?`
+)
 
 var (
 	gigaviewerEpisodeRe = regexp.MustCompile(`/episode/(\d+)`)
 	gigaviewerFeedRe    = regexp.MustCompile(`/(?:rss|atom)/series/(\d+)`)
-	// gigaviewerMarkerRe is the leading "[139話 後編]" marker of a title
-	gigaviewerMarkerRe = regexp.MustCompile(`^\[([^\]]*)\]`)
-	// gigaviewerEpisodeNumRe reads the episode number out of a marker
-	gigaviewerEpisodeNumRe = regexp.MustCompile(`第?(\d+)話`)
-	// gigaviewerSeriesRe takes the series name out of the feed's channel
-	// title, "少年ジャンプ＋（SERIES）"
-	gigaviewerSeriesRe = regexp.MustCompile(`（(.+)）$`)
+	// gigaviewerBracketRe is a title's leading bracket, [], ［］ or 【】
+	gigaviewerBracketRe = regexp.MustCompile(`^[\[［【]([^\]］】]*)[\]］】]`)
+	// gigaviewerInnerRe is a number with its 話, 回 or 章: "第五十七話", "第12＆13話", "26.5話"
+	gigaviewerInnerRe = regexp.MustCompile(`(?:第(` + gvKanji + `|` + gvDigits + `)|(` + gvDigits + `))` + gvBreak + `[話回章]`)
+	// gigaviewerBareRe is gigaviewerInnerRe anchored at the start of a title
+	gigaviewerBareRe = regexp.MustCompile(`^` + gigaviewerInnerRe.String())
+	// gigaviewerSymbolRe is the "≪＃432≫" and "最終話《＃432》" markers
+	gigaviewerSymbolRe = regexp.MustCompile(`^(?:最終話)?[《≪]＃([0-9０-９]+)[》≫]`)
+	// gigaviewerHashRe is the "#8" marker
+	gigaviewerHashRe = regexp.MustCompile(`^#([0-9０-９]+)`)
+	// gigaviewerLatinRe is a "Op.7-1" or "Season01" marker; the part is the "-1"
+	gigaviewerLatinRe = regexp.MustCompile(`^(?:Op|Season|Case|Episode|Profile)[ .]?([0-9０-９]+)(?:-([0-9０-９]+))?`)
+	// gigaviewerWholeRe is a title that is only its number
+	gigaviewerWholeRe = regexp.MustCompile(`^([0-9０-９]+)$`)
+	// gigaviewerNoticeRe matches the feed's announcements and ads, which aren't episodes
+	// (only for a title without a number: "第43話 告知" is a story episode)
+	gigaviewerNoticeRe = regexp.MustCompile(`お知らせ|休載|告知`)
+	// gigaviewerHalfRe is the 前編/中編/後編 that follows a Latin marker, "Season26 前編"
+	gigaviewerHalfRe = regexp.MustCompile(`^[` + gigaviewerSeparators + `]*([前中後]編)`)
+	// gigaviewerPartRe is a leading "(2)" or "（２）" after the number
+	gigaviewerPartRe = regexp.MustCompile(`^[（(]([0-9０-９]+)[）)]`)
+	// gigaviewerSeparators are what sits between a number and a part, or a part and nothing
+	gigaviewerSeparators = " 　～~-・"
 	// gigaviewerDigits makes the full-width digits of a title ASCII
-	gigaviewerDigits = strings.NewReplacer("０", "0", "１", "1", "２", "2", "３", "3", "４", "4",
+	gigaviewerDigits = strings.NewReplacer("．", ".", "０", "0", "１", "1", "２", "2", "３", "3", "４", "4",
 		"５", "5", "６", "6", "７", "7", "８", "8", "９", "9")
 )
 
@@ -174,10 +218,7 @@ func (g *Gigaviewer) fetchFeed() error {
 		freeIDs = append(freeIDs, gigaviewerEpisodeID(item.Link))
 	}
 
-	series := strings.TrimSpace(all.Channel.Title)
-	if m := gigaviewerSeriesRe.FindStringSubmatch(series); m != nil {
-		series = m[1]
-	}
+	series := gigaviewerSeries(all.Channel.Title)
 
 	// the feed lists the newest first, and core sorts by number anyway
 	var chapters Filterables
@@ -188,6 +229,9 @@ func (g *Gigaviewer) fetchFeed() error {
 			continue
 		}
 		title, number, part := gigaviewerTitle(item.Title, series)
+		if gigaviewerIsNotice(item.Title, number) {
+			continue
+		}
 		chapters = append(chapters, &GigaviewerChapter{Chapter{
 			Title:    title,
 			Number:   number,
@@ -229,30 +273,173 @@ func gigaviewerEpisodeID(link string) string {
 	return m[1]
 }
 
-// gigaviewerTitle splits a feed title, "[139話 後編]SERIES" or "[2話]SUBTITLE",
-// into the episode's title (empty when it's only the series name), its number
-// and its part (the 前編/後編 in the marker). A title without a "[N話]" marker
-// is kept as it is, numbered 0.
+// gigaviewerSeries returns the series name of a feed's channel title, the
+// parentheses it ends with. Matching from the closing bracket keeps a name
+// with parentheses of its own whole.
+func gigaviewerSeries(channel string) string {
+	channel = strings.TrimSpace(channel)
+	if !strings.HasSuffix(channel, "）") {
+		return channel
+	}
+	depth := 0
+	for i := len(channel); i > 0; {
+		r, size := utf8.DecodeLastRuneInString(channel[:i])
+		i -= size
+		switch r {
+		case '）':
+			depth++
+		case '（':
+			depth--
+			if depth == 0 {
+				return channel[i+size : len(channel)-len("）")]
+			}
+		}
+	}
+	return channel
+}
+
+// gigaviewerIsNotice reports whether a feed item is an announcement or ad. A
+// numbered title only is one when its bracket says so: "[休載イラスト＋第2回…]".
+func gigaviewerIsNotice(raw string, number float64) bool {
+	if number == 0 {
+		return gigaviewerNoticeRe.MatchString(raw)
+	}
+	loc := gigaviewerBracketRe.FindStringSubmatch(raw)
+	return loc != nil && gigaviewerNoticeRe.MatchString(loc[1])
+}
+
+// gigaviewerTitle splits a feed title into its title (empty when it's only the
+// series name), number and part. The number must start the title, so a
+// subtitle's numbers are never read; a title without one is numbered 0.
 func gigaviewerTitle(raw, series string) (title string, number float64, part string) {
 	raw = cleanTitle(raw)
-	loc := gigaviewerMarkerRe.FindStringSubmatchIndex(raw)
-	if loc == nil {
+	end, text, part, ok := gigaviewerMarker(raw)
+	if !ok {
+		return raw, 0, ""
+	}
+	number, ok = gigaviewerNumberOf(text)
+	if !ok {
 		return raw, 0, ""
 	}
 
-	marker := gigaviewerDigits.Replace(raw[loc[2]:loc[3]])
-	m := gigaviewerEpisodeNumRe.FindStringSubmatch(marker)
-	if m == nil {
-		return raw, 0, ""
+	title = cleanTitle(raw[end:])
+	if part == "" {
+		if p, rest, ok := gigaviewerSplitPart(title); ok {
+			part, title = p, rest
+		}
 	}
-	number, _ = strconv.ParseFloat(m[1], 64)
-	part = strings.Trim(gigaviewerEpisodeNumRe.ReplaceAllString(marker, ""), " 　～~-・")
-
-	title = cleanTitle(raw[loc[1]:])
 	if title == series {
 		title = ""
 	}
 	return title, number, part
+}
+
+// gigaviewerSplitPart reads the "①" or "（2）" that follows an episode number as
+// the part of a split episode, and returns the rest of the title
+func gigaviewerSplitPart(title string) (part, rest string, ok bool) {
+	r, size := utf8.DecodeRuneInString(title)
+	if p, ok := gigaviewerCircled(r); ok {
+		return p, cleanTitle(title[size:]), true
+	}
+	if m := gigaviewerPartRe.FindStringSubmatch(title); m != nil {
+		return gigaviewerDigits.Replace(m[1]), cleanTitle(title[len(m[0]):]), true
+	}
+	return "", title, false
+}
+
+// gigaviewerCircled returns the number a circled digit ("①" to "⑳") stands for
+func gigaviewerCircled(r rune) (string, bool) {
+	if r < '①' || r > '⑳' {
+		return "", false
+	}
+	return strconv.Itoa(int(r-'①') + 1), true
+}
+
+// gigaviewerMarker reads the number a title starts with: where it ends, its
+// text and the part after it ("前編" in 【第112話前編】, "1" in Op.7-1)
+func gigaviewerMarker(raw string) (end int, text, part string, ok bool) {
+	if loc := gigaviewerBracketRe.FindStringSubmatchIndex(raw); loc != nil {
+		inner := gigaviewerDigits.Replace(raw[loc[2]:loc[3]])
+		_, text, ok := gigaviewerGroup(gigaviewerInnerRe, inner)
+		if !ok {
+			return 0, "", "", false
+		}
+		part = strings.Trim(gigaviewerInnerRe.ReplaceAllString(inner, ""), gigaviewerSeparators)
+		if r, size := utf8.DecodeRuneInString(part); size == len(part) {
+			if p, ok := gigaviewerCircled(r); ok {
+				part = p
+			}
+		}
+		return loc[1], text, part, true
+	}
+	for _, re := range []*regexp.Regexp{gigaviewerBareRe, gigaviewerSymbolRe, gigaviewerHashRe, gigaviewerWholeRe} {
+		if end, text, ok := gigaviewerGroup(re, raw); ok {
+			return end, text, "", true
+		}
+	}
+	if loc := gigaviewerLatinRe.FindStringSubmatchIndex(raw); loc != nil {
+		part := ""
+		if loc[4] >= 0 {
+			part = gigaviewerDigits.Replace(raw[loc[4]:loc[5]])
+		}
+		end = loc[1]
+		if part == "" {
+			if h := gigaviewerHalfRe.FindStringSubmatchIndex(raw[end:]); h != nil {
+				part, end = raw[end+h[2]:end+h[3]], end+h[1]
+			}
+		}
+		return end, raw[loc[2]:loc[3]], part, true
+	}
+	return 0, "", "", false
+}
+
+// gigaviewerGroup returns where re's match at the start of s ends, and the
+// text of its first group that matched
+func gigaviewerGroup(re *regexp.Regexp, s string) (end int, text string, ok bool) {
+	loc := re.FindStringSubmatchIndex(s)
+	if loc == nil {
+		return 0, "", false
+	}
+	for k := 2; k+1 < len(loc); k += 2 {
+		if loc[k] >= 0 {
+			return loc[1], s[loc[k]:loc[k+1]], true
+		}
+	}
+	return loc[1], "", true
+}
+
+// gigaviewerNumberOf reads a number written in digits, decimals or kanji
+func gigaviewerNumberOf(text string) (float64, bool) {
+	text = gigaviewerDigits.Replace(text)
+	if n, err := strconv.ParseFloat(text, 64); err == nil {
+		return n, true
+	}
+	n, ok := gigaviewerKanjiNumber(text)
+	return float64(n), ok
+}
+
+var gigaviewerKanjiDigits = map[rune]int{'〇': 0, '零': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9}
+var gigaviewerKanjiUnits = map[rune]int{'十': 10, '百': 100, '千': 1000}
+
+// gigaviewerKanjiNumber reads a number written in kanji, "五十七" as 57
+func gigaviewerKanjiNumber(text string) (int, bool) {
+	total, cur := 0, 0
+	for _, r := range text {
+		if d, ok := gigaviewerKanjiDigits[r]; ok {
+			cur = d
+			continue
+		}
+		unit, ok := gigaviewerKanjiUnits[r]
+		if !ok {
+			return 0, false
+		}
+		if cur == 0 {
+			cur = 1
+		}
+		total += cur * unit
+		cur = 0
+	}
+	return total + cur, text != ""
 }
 
 // FetchTitle returns the series title.

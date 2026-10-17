@@ -118,12 +118,22 @@ grabber: \
 	grabber/bluesolo \
 	grabber/chainsawman \
 	grabber/chainsawmannmanga \
+	grabber/comicaction \
+	grabber/comicdays \
+	grabber/comicearthstar \
+	grabber/comicgardo \
+	grabber/comicogyaaa \
+	grabber/comicseasons \
+	grabber/comictrail \
+	grabber/comicyours \
+	grabber/comiczenon \
 	grabber/comix \
 	grabber/danke \
 	grabber/dragonballmangaa \
 	grabber/drakecomic \
 	grabber/elftoon \
 	grabber/fanfox \
+	grabber/feelweb \
 	grabber/flamecomics \
 	grabber/fmteam \
 	grabber/gdscans \
@@ -135,16 +145,19 @@ grabber: \
 	grabber/heavenmanga \
 	grabber/hijala \
 	grabber/hivetoons \
+	grabber/ichicomi \
 	grabber/inmanga \
 	grabber/jestful \
 	grabber/jojolands \
 	grabber/jujutsukaisenmanga \
 	grabber/kaynscan \
 	grabber/ksgroupscans \
+	grabber/kuragebunch \
 	grabber/leercapitulo \
 	grabber/lelscans \
 	grabber/lilymanga \
 	grabber/luascans \
+	grabber/magcomi \
 	grabber/mangaball \
 	grabber/mangabats \
 	grabber/mangadenizi \
@@ -160,12 +173,14 @@ grabber: \
 	grabber/mangaplus \
 	grabber/mangasushi \
 	grabber/mangataro \
+	grabber/mangatimesquare \
 	grabber/mangatown \
 	grabber/mangitto \
 	grabber/manhwatop \
 	grabber/mgeko \
 	grabber/mkissa \
 	grabber/nijitranslations \
+	grabber/ourfeel \
 	grabber/projectsuki \
 	grabber/qimanga \
 	grabber/re-yume \
@@ -173,10 +188,12 @@ grabber: \
 	grabber/sacachispa \
 	grabber/shonenjumpplus \
 	grabber/stonescape \
+	grabber/sundaywebry \
 	grabber/taiyo \
 	grabber/tcb \
 	grabber/teamshadowi \
 	grabber/templetoons \
+	grabber/tonarinoyj \
 	grabber/tortugaceviri \
 	grabber/turkcemanga \
 	grabber/tvymanga3 \
@@ -475,6 +492,41 @@ grabber/sacachispa:
 # GigaViewer: an episode URL downloads its whole series, episode 2 is free
 grabber/shonenjumpplus:
 	go run . https://shonenjumpplus.com/episode/17107419589696004710 2
+# GigaViewer hosts, served by the grabber of shonenjumpplus
+grabber/tonarinoyj:
+	go run . https://tonarinoyj.jp/episode/12207421984093802437 1
+grabber/comicdays:
+	go run . https://comic-days.com/episode/10834108156628505403 1
+grabber/kuragebunch:
+	go run . https://kuragebunch.com/episode/10834108156628843112 1
+grabber/magcomi:
+	go run . https://magcomi.com/episode/12207421984022901697 56
+grabber/comicgardo:
+	go run . https://comic-gardo.com/episode/10044607041200756622 1
+grabber/comiczenon:
+	go run . https://comic-zenon.com/episode/12207421984318179863 695
+grabber/comicaction:
+	go run . https://comic-action.com/episode/10044607041217599247 3
+grabber/comictrail:
+	go run . https://comic-trail.com/episode/12207421984031179174 45
+grabber/comicearthstar:
+	go run . https://comic-earthstar.com/episode/12207421983368356635 1
+grabber/comicogyaaa:
+	go run . https://comic-ogyaaa.com/episode/12207421984209269805 7
+grabber/sundaywebry:
+	go run . https://www.sunday-webry.com/episode/12207421983409579527 1
+grabber/comicseasons:
+	go run . https://comic-seasons.com/episode/12207421983368290655 0
+grabber/comicyours:
+	go run . https://comic-y-ours.com/episode/12207421983368565943 56
+grabber/ourfeel:
+	go run . https://ourfeel.jp/episode/12207421983347996105 1
+grabber/feelweb:
+	go run . https://feelweb.jp/episode/10044607041223436639 1
+grabber/ichicomi:
+	go run . https://ichicomi.com/episode/12207421983348275548 2
+grabber/mangatimesquare:
+	go run . https://mangatime-square.com/episode/12207421983656601022 1
 grabber/teamshadowi:
 	go run . https://www.team-shadowi.com/series/the-regressed-mercenary-has-a-plan 98
 grabber/taiyo:
