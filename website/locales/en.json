@@ -1,14 +1,14 @@
 {
   "meta": {
     "title": "manga downloader: download manga as CBZ or EPUB for e-readers",
-    "description_one": "Free desktop app and CLI that downloads manga from MangaDex and {{count}} other site into CBZ or EPUB files for Kobo, KOReader and comic apps. Windows, macOS and Linux.",
-    "description_other": "Free desktop app and CLI that downloads manga from MangaDex and {{count}} other sites into CBZ or EPUB files for Kobo, KOReader and comic apps. Windows, macOS and Linux.",
+    "description_one": "Free desktop app and CLI that downloads manga from MangaDex and {{count}} other site into CBZ, CBR or EPUB files for Kobo, KOReader and comic apps. Windows, macOS and Linux.",
+    "description_other": "Free desktop app and CLI that downloads manga from MangaDex and {{count}} other sites into CBZ, CBR or EPUB files for Kobo, KOReader and comic apps. Windows, macOS and Linux.",
     "socialTitle": "manga downloader: manga chapters → reader-ready CBZ & EPUB",
-    "socialDescription_one": "Download manga from MangaDex and {{count}} other site as CBZ or EPUB files for your e-reader or comic app. A desktop app and a CLI, free and open source.",
-    "socialDescription_other": "Download manga from MangaDex and {{count}} other sites as CBZ or EPUB files for your e-reader or comic app. A desktop app and a CLI, free and open source.",
+    "socialDescription_one": "Download manga from MangaDex and {{count}} other site as CBZ, CBR or EPUB files for your e-reader or comic app. A desktop app and a CLI, free and open source.",
+    "socialDescription_other": "Download manga from MangaDex and {{count}} other sites as CBZ, CBR or EPUB files for your e-reader or comic app. A desktop app and a CLI, free and open source.",
     "imageAlt": "The manga downloader mascot, a cat-shaped open book, next to the tagline: Manga chapters → reader-ready CBZ & EPUB.",
-    "jsonLdDescription_one": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other site and packs them into CBZ or EPUB files for e-readers and comic apps.",
-    "jsonLdDescription_other": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other sites and packs them into CBZ or EPUB files for e-readers and comic apps."
+    "jsonLdDescription_one": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other site and packs them into CBZ, CBR or EPUB files for e-readers and comic apps.",
+    "jsonLdDescription_other": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other sites and packs them into CBZ, CBR or EPUB files for e-readers and comic apps."
   },
   "common": {
     "desktopApp": "Desktop app",
@@ -27,8 +27,8 @@
   "hero": {
     "eyebrow": "Since v1.11: a desktop app for Windows, macOS and Linux",
     "title": "Manga chapters <span class=\"arrow\">→</span> <span class=\"accent\">reader&#8209;ready CBZ &amp; EPUB</span>",
-    "lede_one": "Paste a link from MangaDex or {{count}} other supported site, pick your chapters, and get clean CBZ or EPUB files that open on your e-reader or in your favourite comic app.",
-    "lede_other": "Paste a link from MangaDex or any of {{count}} other supported sites, pick your chapters, and get clean CBZ or EPUB files that open on your e-reader or in your favourite comic app.",
+    "lede_one": "Paste a link from MangaDex or {{count}} other supported site, pick your chapters, and get clean CBZ, CBR or EPUB files that open on your e-reader or in your favourite comic app.",
+    "lede_other": "Paste a link from MangaDex or any of {{count}} other supported sites, pick your chapters, and get clean CBZ, CBR or EPUB files that open on your e-reader or in your favourite comic app.",
     "downloadLabel": "Download the desktop app",
     "downloadDetail": "For Windows, macOS and Linux",
     "otherPlatforms": "Other platforms",
@@ -37,7 +37,7 @@
     "chips": {
       "sites_one": "{{count}} site",
       "sites_other": "{{count}} sites",
-      "formats": "CBZ, EPUB or raw images",
+      "formats": "CBZ, CBR, EPUB or raw images",
       "ereader": "E-reader ready",
       "apps": "Desktop app + CLI",
       "free": "Free and open source"
@@ -54,7 +54,7 @@
     "pickText": "Type a range such as <code>1-10,12,15-20</code>, or click a chapter and Shift-click another to select everything in between.",
     "chapterListAlt": "The chapter list during a run: the selected chapters, locked while they download.",
     "volumesTitle": "One file per volume",
-    "volumesText": "Pack each volume into its own CBZ or EPUB. Chapters are grouped by the volumes the site lists, or you can set the groups yourself, such as <code>1-7/8-16</code>.",
+    "volumesText": "Pack each volume into its own CBZ, CBR or EPUB. Chapters are grouped by the volumes the site lists, or you can set the groups yourself, such as <code>1-7/8-16</code>.",
     "volumesAlt": "The chapter list grouped into volumes, each with its selected count.",
     "partsTitle": "One file per chapter, parts merged",
     "partsText": "Some sites split a chapter into parts. Pack as Merged in the app, or <code>--volumes parts</code> on the command line, joins them into one file named after the chapter; chapters without parts stay as they are.",
@@ -108,8 +108,8 @@
     "title": "Made for reading, not fiddling",
     "ereaderTitle": "E-reader friendly",
     "ereaderText": "AVIF pages become JPEG automatically, so they don't show up blank on Kobo, KOReader or Calibre. WebP too, if you ask.",
-    "cbzTitle": "CBZ, EPUB or raw",
-    "cbzText": "One CBZ or EPUB per chapter, or plain image folders with <code>--format raw</code> when you'd rather do the packing yourself.",
+    "cbzTitle": "CBZ, CBR, EPUB or raw",
+    "cbzText": "One CBZ, CBR or EPUB per chapter, or plain image folders with <code>--format raw</code> when you'd rather do the packing yourself.",
     "bundlesTitle": "Bundles",
     "bundlesText": "<code>--bundle</code> packs a whole arc into one file, with a folder per chapter inside it.",
     "rangesTitle": "Chapter ranges",

@@ -148,6 +148,7 @@ describe('createMockApi', () => {
   it('names the bundle after the format it packs as', async () => {
     const cases = [
       ['cbz', 'One Piece 1-3.cbz'],
+      ['cbr', 'One Piece 1-3.cbr'],
       ['epub', 'One Piece 1-3.epub'],
       ['raw', 'One Piece 1-3'],
     ] as const;

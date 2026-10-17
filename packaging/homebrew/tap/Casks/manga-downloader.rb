@@ -4,7 +4,7 @@ cask "manga-downloader" do
 
   url "https://github.com/elboletaire/manga-downloader/releases/download/v#{version}/manga-downloader-gui-v#{version}-darwin-universal.zip"
   name "Manga Downloader"
-  desc "Download manga chapters to CBZ or EPUB files"
+  desc "Download manga chapters to CBZ, CBR or EPUB files"
   homepage "https://mangadownloader.cat/"
 
   livecheck do

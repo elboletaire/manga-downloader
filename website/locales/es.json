@@ -1,14 +1,14 @@
 {
   "meta": {
     "title": "manga downloader: descarga manga en CBZ o EPUB para tu e-reader",
-    "description_one": "App de escritorio y CLI gratuitas que descargan manga de MangaDex y {{count}} sitio más en archivos CBZ o EPUB para Kobo, KOReader y apps de cómics. Windows, macOS y Linux.",
-    "description_other": "App de escritorio y CLI gratuitas que descargan manga de MangaDex y {{count}} sitios más en archivos CBZ o EPUB para Kobo, KOReader y apps de cómics. Windows, macOS y Linux.",
+    "description_one": "App de escritorio y CLI gratuitas que descargan manga de MangaDex y {{count}} sitio más en archivos CBZ, CBR o EPUB para Kobo, KOReader y apps de cómics. Windows, macOS y Linux.",
+    "description_other": "App de escritorio y CLI gratuitas que descargan manga de MangaDex y {{count}} sitios más en archivos CBZ, CBR o EPUB para Kobo, KOReader y apps de cómics. Windows, macOS y Linux.",
     "socialTitle": "manga downloader: capítulos de manga → CBZ y EPUB listos para leer",
-    "socialDescription_one": "Descarga manga de MangaDex y {{count}} sitio más en archivos CBZ o EPUB para tu e-reader o tu app de cómics. App de escritorio y CLI, gratis y de código abierto.",
-    "socialDescription_other": "Descarga manga de MangaDex y {{count}} sitios más en archivos CBZ o EPUB para tu e-reader o tu app de cómics. App de escritorio y CLI, gratis y de código abierto.",
+    "socialDescription_one": "Descarga manga de MangaDex y {{count}} sitio más en archivos CBZ, CBR o EPUB para tu e-reader o tu app de cómics. App de escritorio y CLI, gratis y de código abierto.",
+    "socialDescription_other": "Descarga manga de MangaDex y {{count}} sitios más en archivos CBZ, CBR o EPUB para tu e-reader o tu app de cómics. App de escritorio y CLI, gratis y de código abierto.",
     "imageAlt": "La mascota de manga downloader, un libro abierto con forma de gato, junto al lema «Manga chapters → reader-ready CBZ & EPUB».",
-    "jsonLdDescription_one": "Aplicación de escritorio y herramienta de línea de comandos que descarga capítulos de manga de MangaDex y {{count}} sitio más y los empaqueta en archivos CBZ o EPUB para e-readers y apps de cómics.",
-    "jsonLdDescription_other": "Aplicación de escritorio y herramienta de línea de comandos que descarga capítulos de manga de MangaDex y {{count}} sitios más y los empaqueta en archivos CBZ o EPUB para e-readers y apps de cómics."
+    "jsonLdDescription_one": "Aplicación de escritorio y herramienta de línea de comandos que descarga capítulos de manga de MangaDex y {{count}} sitio más y los empaqueta en archivos CBZ, CBR o EPUB para e-readers y apps de cómics.",
+    "jsonLdDescription_other": "Aplicación de escritorio y herramienta de línea de comandos que descarga capítulos de manga de MangaDex y {{count}} sitios más y los empaqueta en archivos CBZ, CBR o EPUB para e-readers y apps de cómics."
   },
   "common": {
     "desktopApp": "App de escritorio",
@@ -27,8 +27,8 @@
   "hero": {
     "eyebrow": "Desde la v1.11: app de escritorio para Windows, macOS y Linux",
     "title": "Capítulos de manga <span class=\"arrow\">→</span> <span class=\"accent\">CBZ y EPUB listos para leer</span>",
-    "lede_one": "Pega un enlace de MangaDex o de {{count}} sitio compatible más, elige los capítulos y consigue archivos CBZ o EPUB limpios que se abren en tu e-reader o en tu app de cómics favorita.",
-    "lede_other": "Pega un enlace de MangaDex o de cualquiera de los otros {{count}} sitios compatibles, elige los capítulos y consigue archivos CBZ o EPUB limpios que se abren en tu e-reader o en tu app de cómics favorita.",
+    "lede_one": "Pega un enlace de MangaDex o de {{count}} sitio compatible más, elige los capítulos y consigue archivos CBZ, CBR o EPUB limpios que se abren en tu e-reader o en tu app de cómics favorita.",
+    "lede_other": "Pega un enlace de MangaDex o de cualquiera de los otros {{count}} sitios compatibles, elige los capítulos y consigue archivos CBZ, CBR o EPUB limpios que se abren en tu e-reader o en tu app de cómics favorita.",
     "downloadLabel": "Descargar la app de escritorio",
     "downloadDetail": "Para Windows, macOS y Linux",
     "otherPlatforms": "Otras plataformas",
@@ -37,7 +37,7 @@
     "chips": {
       "sites_one": "{{count}} sitio",
       "sites_other": "{{count}} sitios",
-      "formats": "CBZ, EPUB o imágenes sueltas",
+      "formats": "CBZ, CBR, EPUB o imágenes sueltas",
       "ereader": "Listo para tu e-reader",
       "apps": "App de escritorio + CLI",
       "free": "Gratis y de código abierto"
@@ -54,7 +54,7 @@
     "pickText": "Escribe un rango como <code>1-10,12,15-20</code>, o haz clic en un capítulo y Mayús+clic en otro para seleccionar todos los que hay entre ambos.",
     "chapterListAlt": "La lista de capítulos durante una descarga: los capítulos seleccionados, bloqueados mientras se descargan.",
     "volumesTitle": "Un archivo por volumen",
-    "volumesText": "Empaqueta cada volumen en su propio CBZ o EPUB. Los capítulos se agrupan según los volúmenes que indica el sitio, o puedes definir tú los grupos, como <code>1-7/8-16</code>.",
+    "volumesText": "Empaqueta cada volumen en su propio CBZ, CBR o EPUB. Los capítulos se agrupan según los volúmenes que indica el sitio, o puedes definir tú los grupos, como <code>1-7/8-16</code>.",
     "volumesAlt": "La lista de capítulos agrupada en volúmenes, con los seleccionados de cada uno.",
     "partsTitle": "Un archivo por capítulo, con las partes unidas",
     "partsText": "Algunos sitios dividen un capítulo en partes. «Merged» en la app, o <code>--volumes parts</code> en la línea de comandos, las une en un solo archivo con el nombre del capítulo; los capítulos sin partes siguen igual.",
@@ -108,8 +108,8 @@
     "title": "Hecho para leer, no para pelearte con ajustes",
     "ereaderTitle": "Pensado para e-readers",
     "ereaderText": "Las páginas AVIF se convierten a JPEG automáticamente, para que no salgan en blanco en Kobo, KOReader o Calibre. Y las WebP también, si se lo pides.",
-    "cbzTitle": "CBZ, EPUB o imágenes sueltas",
-    "cbzText": "Un CBZ o EPUB por capítulo, o carpetas de imágenes con <code>--format raw</code> si prefieres empaquetarlas tú.",
+    "cbzTitle": "CBZ, CBR, EPUB o imágenes sueltas",
+    "cbzText": "Un CBZ, CBR o EPUB por capítulo, o carpetas de imágenes con <code>--format raw</code> si prefieres empaquetarlas tú.",
     "bundlesTitle": "Paquetes",
     "bundlesText": "<code>--bundle</code> empaqueta un arco entero en un solo archivo, con una carpeta por capítulo dentro.",
     "rangesTitle": "Rangos de capítulos",

@@ -179,7 +179,7 @@ export function mockSetupFrom(search: string): MockSetup {
 }
 
 // the extension each format's output carries; raw writes a folder without one
-const EXTENSIONS: Record<Options['format'], string> = { cbz: '.cbz', epub: '.epub', raw: '' };
+const EXTENSIONS: Record<Options['format'], string> = { cbz: '.cbz', cbr: '.cbr', epub: '.epub', raw: '' };
 
 function defaultOptions(shot: boolean, epub: boolean): Options {
   return {

@@ -10,6 +10,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.11.9
 	github.com/chromedp/cdproto v0.0.0-20260714215040-dc233986426f
 	github.com/chromedp/chromedp v0.16.0
+	github.com/elboletaire/go-rar v0.2.0
 	github.com/fatih/color v1.13.0
 	github.com/gen2brain/avif v0.6.0
 	github.com/ivanpirog/coloredcobra v1.0.1

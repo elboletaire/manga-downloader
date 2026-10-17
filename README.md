@@ -18,9 +18,9 @@
 
 </div>
 
-Manga Downloader downloads manga chapters from MangaDex and 200 other
-sites and packs them into CBZ or EPUB files, ready to read on your e-reader or
-in your favorite comic app. It comes as a **desktop app** for Windows, macOS and
+Manga Downloader downloads manga chapters from MangaDex and 200 other sites and
+packs them into CBZ, CBR or EPUB files, ready to read on your e-reader or in
+your favorite comic app. It comes as a **desktop app** for Windows, macOS and
 Linux, and as a **command line tool** for scripts, servers and Docker.
 
 <div align="center">
@@ -52,9 +52,10 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
   show up blank on Kobo, KOReader or Calibre (WebP too, if you ask).
-- **Flexible output**: one CBZ per chapter, one per volume (`--volumes`), a
-  single bundled CBZ (`--bundle`), EPUB e-books (`--format epub`), or plain
-  image folders (`--format raw`), named from a template.
+- **Flexible output**: one file per chapter, one per volume (`--volumes`), or a
+  single bundled file (`--bundle`), as CBZ (the default) or CBR comics
+  (`--format cbr`), EPUB e-books (`--format epub`), or plain image folders
+  (`--format raw`), named from a template.
 - **Language and scanlation group filters** for sites that host several versions
   of a chapter, and **skipping pages** such as credits or ads.
 - **Concurrent downloads** with retries.
@@ -308,14 +309,14 @@ Open the app and follow these steps:
      <img alt="The language selector open, with Catalan selected" src="assets/screenshots/03-language-selector-light.png">
    </picture>
 
-4. **Set the options** in the *Options* tab: where the files go, the format (CBZ
-   archive, image folder or EPUB; EPUB adds a *Reading direction*), *Pack as* (a
-   file per chapter, per volume, or one for everything), *Convert to JPEG* for
-   AVIF and WebP pages, and pages to skip. Under *Advanced* are the file name
-   template and *Show the browser window*, which you rarely need: a site that
-   needs the window opens it by itself. Packing by volume adds a *Volumes* box
-   above the chapter list. It starts empty, which packs the site's volumes; a
-   line under it offers them as chapter ranges when they can be written that
+4. **Set the options** in the *Options* tab: where the files go, the format
+   (CBZ, CBR, Folder or EPUB; EPUB adds a *Reading direction*), *Pack as*
+   (a file per chapter, per volume, or one for everything), *Convert to JPEG*
+   for AVIF and WebP pages, and pages to skip. Under *Advanced* are the file
+   name template and *Show the browser window*, which you rarely need: a site
+   that needs the window opens it by itself. Packing by volume adds a *Volumes*
+   box above the chapter list. It starts empty, which packs the site's volumes;
+   a line under it offers them as chapter ranges when they can be written that
    way. The list is grouped by volume.
 
    <picture>
@@ -442,6 +443,9 @@ suffix (`v2`, `v3`…), in no particular group order.
 # all chapters in a single CBZ, one folder per chapter inside it
 manga-downloader --bundle [url] 1-8
 
+# CBR archives instead of CBZ files, for readers that prefer RAR
+manga-downloader --format cbr [url] 1-8
+
 # plain image folders instead of CBZ files
 manga-downloader --format raw [url] 1-8
 
@@ -464,11 +468,12 @@ volume, separated by slashes, in the chapter range syntax:
 manga-downloader --volumes 1-7/8-16 [url] 1-20
 ~~~
 
-That writes `Series Vol. 01.cbz` and `Series Vol. 02.cbz` (`.epub` with
-`--format epub`), with a folder per chapter inside, and chapters 17 to 20,
-outside every volume, one file each. The chapters argument still picks what's
-downloaded: a volume packs the chapters of it you asked for. A group can give
-its volume number with `N:`, and the groups after it count on from there:
+That writes `Series Vol. 01.cbz` and `Series Vol. 02.cbz` (`.cbr` with
+`--format cbr`, `.epub` with `--format epub`), with a folder per chapter
+inside, and chapters 17 to 20, outside every volume, one file each. The
+chapters argument still picks what's downloaded: a volume packs the chapters
+of it you asked for. A group can give its volume number with `N:`, and the
+groups after it count on from there:
 
 ~~~bash
 manga-downloader --volumes 16:112-114/115-118 [url] 112-118
@@ -639,7 +644,7 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--output-dir`        | `-o`  | Folder to write the downloaded files to                  | current folder |
 | `--bundle`            | `-b`  | Bundle all chapters into a single file                   | off            |
 | `--volumes`           |       | One file per volume: `auto`, `parts`, `1-7/8-16`         | off            |
-| `--format`            | `-f`  | Output format: `cbz`, `raw` or `epub`                    | `cbz`          |
+| `--format`            | `-f`  | Output format: `cbz`, `cbr`, `raw` or `epub`             | `cbz`          |
 | `--reading-direction` |       | Page turn direction for EPUB: `rtl` (manga) or `ltr`     | `rtl`          |
 | `--filename-template` | `-t`  | Template for the file names                              | see above      |
 | `--language`          | `-l`  | Only download the specified language                     | site default   |

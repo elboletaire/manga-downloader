@@ -19,6 +19,7 @@ require (
 	github.com/chromedp/chromedp v0.16.0 // indirect
 	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/ebitengine/purego v0.10.1 // indirect
+	github.com/elboletaire/go-rar v0.2.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/gen2brain/avif v0.6.0 // indirect
 	github.com/go-json-experiment/json v0.0.0-20260623181947-01eb4420fa68 // indirect

@@ -38,11 +38,11 @@ func (e *SettingError) Unwrap() error { return e.Err }
 // direction in s.
 func Validate(s *grabber.Settings) ([]ranges.Range, error) {
 	s.Format = strings.ToLower(strings.TrimSpace(s.Format))
-	if s.Format != packer.FormatCBZ && s.Format != packer.FormatRaw && s.Format != packer.FormatEPUB {
+	if s.Format != packer.FormatCBZ && s.Format != packer.FormatCBR && s.Format != packer.FormatRaw && s.Format != packer.FormatEPUB {
 		return nil, &SettingError{
 			Setting: "format",
 			Value:   s.Format,
-			Err:     fmt.Errorf("must be %q, %q or %q", packer.FormatCBZ, packer.FormatRaw, packer.FormatEPUB),
+			Err:     fmt.Errorf("must be %q, %q, %q or %q", packer.FormatCBZ, packer.FormatCBR, packer.FormatRaw, packer.FormatEPUB),
 		}
 	}
 

@@ -4,7 +4,7 @@ Guidance for coding agents working in this repository.
 
 ## Project
 
-Go CLI (cobra) that downloads manga chapters from supported websites and packs them into CBZ or EPUB files, plus a Wails desktop app in `gui/` (see the `gui` skill). Module: `github.com/elboletaire/manga-downloader`, targeting Go 1.26.0 (the `go` directive in `go.mod` and `gui/go.mod`, pinned by CI's test and smoke workflows).
+Go CLI (cobra) that downloads manga chapters from supported websites and packs them into CBZ, CBR or EPUB files, plus a Wails desktop app in `gui/` (see the `gui` skill). Module: `github.com/elboletaire/manga-downloader`, targeting Go 1.26.0 (the `go` directive in `go.mod` and `gui/go.mod`, pinned by CI's test and smoke workflows).
 
 ## On-demand guides
 
@@ -25,7 +25,7 @@ make test/demo        # the demo build's tests
 GOOS=windows GOARCH=386 make build/release   # one release binary, built as release.yaml does
 make test             # go test -v ./... (uses richgo if installed)
 go test ./ranges -run TestParse   # run a single test
-make clean            # remove built binaries and *.cbz and *.epub files
+make clean            # remove built binaries and *.cbz, *.cbr and *.epub files
 ```
 
 Unit test coverage is thin; real verification is the makefile smoke targets, which download from live sites — run them selectively. `make grabber` runs everything, `make grabber/html` all `PlainHTML` sites, `make grabber/<site>` just one; check the archives with `tools/verify-cbz`, since a run can succeed with empty or junk CBZs.
@@ -47,7 +47,7 @@ The steps:
 2. The matched `Site` fetches title and chapters; the range argument (`ranges.Parse`, `1-10,12,15-20`) filters them.
 3. Each fetched chapter is passed through `Chapter.SkipPages` (`--skip-pages`, see below) before anything is downloaded, inside `core.Download`.
 4. Each chapter's page list is fetched after `Events.Fetching` (renderers show the row as "fetching pages" until `Started`; `--bundle`'s totals pre-pass doesn't emit it). Chapters download concurrently (`downloader.FetchChapter`), bounded by `--concurrency` (max 5) and `--concurrency-pages` (max 10). Pages are plain GETs with a Referer.
-5. `packer` writes CBZ, EPUB or raw output (`PackSingle`, or `PackBundle` with `--bundle`), named via a text/template (`--filename-template`, `packer/filename.go`; `{{.Title}}` is `grabber.ChapterLabel`, `{{.SiteTitle}}` the site's title alone); duplicate names get a `v{{.Version}}` suffix. Both paths go through `namePages` (`packer/pack.go`), which sniffs each page's format to name it `000.jpg`, `001.png`, … and transcodes per `--convert-images`.
+5. `packer` writes CBZ, CBR, EPUB or raw output (`PackSingle`, or `PackBundle` with `--bundle`), named via a text/template (`--filename-template`, `packer/filename.go`; `{{.Title}}` is `grabber.ChapterLabel`, `{{.SiteTitle}}` the site's title alone); duplicate names get a `v{{.Version}}` suffix. Both paths go through `namePages` (`packer/pack.go`), which sniffs each page's format to name it `000.jpg`, `001.png`, … and transcodes per `--convert-images`.
 
 **Chapter URL resolution**: both series and chapter links are accepted; see the grabbers skill for the full pattern.
 

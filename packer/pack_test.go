@@ -25,6 +25,7 @@ func TestPackTemplateWithoutVersionAddsTheSuffix(t *testing.T) {
 		names  []string
 	}{
 		{FormatCBZ, []string{"X 1 [Alpha].cbz", "X 1 [Alpha] v2.cbz", "X 1 [Alpha] v3.cbz"}},
+		{FormatCBR, []string{"X 1 [Alpha].cbr", "X 1 [Alpha] v2.cbr", "X 1 [Alpha] v3.cbr"}},
 		{FormatEPUB, []string{"X 1 [Alpha].epub", "X 1 [Alpha] v2.epub", "X 1 [Alpha] v3.epub"}},
 		{FormatRaw, []string{"X 1 [Alpha]", "X 1 [Alpha] v2", "X 1 [Alpha] v3"}},
 	}
