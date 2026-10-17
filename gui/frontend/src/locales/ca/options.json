@@ -11,7 +11,8 @@
   },
   "format": {
     "label": "Format",
-    "cbz": "Fitxer CBZ",
+    "cbz": "CBZ",
+    "cbr": "CBR",
     "raw": "Carpeta",
     "epub": "EPUB"
   },

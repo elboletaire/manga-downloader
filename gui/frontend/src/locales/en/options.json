@@ -11,8 +11,9 @@
   },
   "format": {
     "label": "Format",
-    "cbz": "CBZ archive",
-    "raw": "Image folder",
+    "cbz": "CBZ",
+    "cbr": "CBR",
+    "raw": "Folder",
     "epub": "EPUB"
   },
   "readingDirection": {
