@@ -52,6 +52,9 @@ func TestComiciTitle(t *testing.T) {
 		{"#特別版", "#特別版", "", 0, false},
 		{"第４集 単行本告知", "第４集 単行本告知", "", 0, false},
 		// a trailing part: 前編/後編, or a circled number after the title
+		{"第一服「魔女と再会」", "「魔女と再会」", "", 1, true},
+		{"第二十一服「魔女と背信」前編", "「魔女と背信」", "前編", 21, true},
+		{"EPISODE.01　復活", "復活", "", 1, true},
 		{"第2話 特定熊事象(2)前編", "特定熊事象(2)", "前編", 2, true},
 		{"第2話 特定熊事象(2)後編", "特定熊事象(2)", "後編", 2, true},
 		{"第2話　したい事(働いてみたい)①", "したい事(働いてみたい)", "1", 2, true},
@@ -65,10 +68,60 @@ func TestComiciTitle(t *testing.T) {
 		{"特別イラスト②", "特別イラスト②", "", 0, false},
 	}
 	for _, tt := range tests {
-		title, number, part, numbered := comiciTitle(tt.raw)
+		title, number, part, numbered := comiciTitle(tt.raw, true)
 		if title != tt.title || number != tt.number || part != tt.part || numbered != tt.numbered {
 			t.Errorf("comiciTitle(%q) = (%q, %v, %q, %v), want (%q, %v, %q, %v)",
 				tt.raw, title, number, part, numbered, tt.title, tt.number, tt.part, tt.numbered)
+		}
+	}
+}
+
+// TestComiciTitleLoneTrailingPart keeps a trailing marker in the title when no
+// other episode shares the number: "25話 サマーキャンプ①" is an arc, not a part
+func TestComiciTitleLoneTrailingPart(t *testing.T) {
+	for _, tt := range []struct {
+		raw, title, part string
+		number           float64
+	}{
+		{"25話 サマーキャンプ①", "サマーキャンプ①", "", 25},
+		{"第4話 したい事(セックスがしたい①)③", "したい事(セックスがしたい①)③", "", 4},
+		{"第2話 特定熊事象(2)前編", "特定熊事象(2)前編", "", 2},
+	} {
+		title, number, part, _ := comiciTitle(tt.raw, false)
+		if title != tt.title || number != tt.number || part != tt.part {
+			t.Errorf("comiciTitle(%q, false) = (%q, %v, %q), want (%q, %v, %q)",
+				tt.raw, title, number, part, tt.title, tt.number, tt.part)
+		}
+	}
+}
+
+// TestComiciFetchChaptersTrailingParts splits a trailing part only where the
+// listing shares the number
+func TestComiciFetchChaptersTrailingParts(t *testing.T) {
+	const listing = `<title>テスト - 作者 | サイト</title>
+<div data-e2e="eli"><a href="/episodes/aaaaaaaaaaaaa"></a><span data-e2e="eliTitle">25話 サマーキャンプ①</span></div>
+<div data-e2e="eli"><a href="/episodes/bbbbbbbbbbbbb"></a><span data-e2e="eliTitle">26話 サマーキャンプ②</span></div>
+<div data-e2e="eli"><a href="/episodes/ccccccccccccc"></a><span data-e2e="eliTitle">2話 特定熊事象(2)後編</span></div>
+<div data-e2e="eli"><a href="/episodes/ddddddddddddd"></a><span data-e2e="eliTitle">2話 特定熊事象(2)前編</span></div>`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/series/eeeeeeeeeeeee/1" {
+			fmt.Fprint(w, listing)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer srv.Close()
+
+	c := NewComici(&Grabber{URL: srv.URL + "/series/eeeeeeeeeeeee", Settings: &Settings{}})
+	chapters, errs := c.FetchChapters()
+	if len(errs) != 0 || len(chapters) != 4 {
+		t.Fatalf("FetchChapters() = %d chapters, errs %v; want 4", len(chapters), errs)
+	}
+	// listed as the site lists them: the 後編 first
+	want := []string{"サマーキャンプ①", "サマーキャンプ②", "後編 特定熊事象(2)", "前編 特定熊事象(2)"}
+	for i, w := range want {
+		if got := ChapterLabel(chapters[i]); got != w {
+			t.Errorf("chapter %d: label %q, want %q", i, got, w)
 		}
 	}
 }
@@ -78,7 +131,7 @@ func TestComiciTitle(t *testing.T) {
 func TestComiciPartsTitle(t *testing.T) {
 	var parts Filterables
 	for _, raw := range []string{"第2話 特定熊事象(2)後編", "第2話 特定熊事象(2)前編"} {
-		title, number, part, _ := comiciTitle(raw)
+		title, number, part, _ := comiciTitle(raw, true)
 		parts = append(parts, &ComiciChapter{Chapter{Title: title, Number: number, Label: Label{Style: LabelNumbered, Part: part}}})
 	}
 	if got := PartsTitle(parts); got != "特定熊事象(2)" {
