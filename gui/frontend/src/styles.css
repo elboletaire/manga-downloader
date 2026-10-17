@@ -1185,12 +1185,12 @@ code {
 
 .input:disabled {
   color: var(--text-3);
-  background: var(--sunken);
+  background-color: var(--sunken);
 }
 
 .input.flagged {
   border-color: var(--warning-solid);
-  background: var(--warning-soft);
+  background-color: var(--warning-soft);
 }
 
 .input.invalid {
