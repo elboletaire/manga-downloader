@@ -214,6 +214,9 @@ describe('groupParts', () => {
   });
 });
 
+/** A listed part as the DTO sends it: a number is "Part N" */
+const partLabel = (raw: string) => (/^\d+$/.test(raw) ? `Part ${raw}` : raw);
+
 describe('shared parts with Go', () => {
   // the cases core.GroupVolumes runs too, so the list and the run group the same way
   it.each(shared.parts.map((c) => [c.name, c] as const))('merges the parts: %s', (_, c) => {
@@ -221,7 +224,7 @@ describe('shared parts with Go', () => {
     const chapters = listed.map((p, i) => ({
       ...ch(p.number, 0, i),
       title: p.title ?? '',
-      part: p.part,
+      part: partLabel(p.part),
       group: p.group,
       language: p.language,
     }));
@@ -234,7 +237,7 @@ describe('shared parts titles with Go', () => {
   // the cases grabber.PartsTitle runs too, so the merged file and the header name a run alike
   it.each(shared.partsTitle.map((c) => [c.name, c] as const))('names the parts: %s', (_, c) => {
     const listed = c.parts as { part: string; title: string }[];
-    const parts = listed.map((p, i) => ({ ...ch(1, 0, i), part: p.part, wholeTitle: p.title }));
+    const parts = listed.map((p, i) => ({ ...ch(1, 0, i), part: partLabel(p.part), wholeTitle: p.title, title: p.title }));
     expect(partsTitle(parts)).toBe(c.want);
   });
 });

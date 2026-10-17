@@ -278,10 +278,8 @@ export interface PartGroup {
 const partOrder = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
 
 /**
- * Groups the chapters a parts run merges (--volumes parts): those sharing a
- * number, group and language, so two groups' or two languages' releases never
- * merge. Parts are in part order, the list's oldest first for ties, and the
- * groups keep the list order of their first part.
+ * Groups the chapters a parts run merges: those sharing a number, group and
+ * language, in part order.
  */
 export function groupParts(chapters: Chapter[]): PartGroup[] {
   const out: PartGroup[] = [];
@@ -298,7 +296,7 @@ export function groupParts(chapters: Chapter[]): PartGroup[] {
     }
   }
   for (const g of out) {
-    // the list is newest first, so reversing it puts ties oldest first
+    // most sites list newest first, so reversing puts ties oldest first
     g.chapters.reverse();
     g.chapters.sort((a, b) => partOrder.compare(a.part || a.title, b.part || b.title));
   }
@@ -342,14 +340,17 @@ export function partRows(groups: PartGroup[], collapsed: ReadonlySet<string>): G
   return rows;
 }
 
-/** The title a chapter's parts share without their parts, '' unless every part has one and they agree (grabber.PartsTitle) */
+/**
+ * The title a chapter's merged file and header are named by (grabber.PartsTitle):
+ * the parts' shared title without their parts, else the one label identical
+ * duplicates share, '' otherwise.
+ */
 export function partsTitle(chapters: Chapter[]): string {
   const [first] = chapters;
-  if (!first.part || !chapters.every((ch) => ch.part && ch.wholeTitle === first.wholeTitle)) {
-    return '';
+  if (first.part) {
+    return chapters.every((ch) => ch.part && ch.wholeTitle === first.wholeTitle) ? (first.wholeTitle ?? '') : '';
   }
-
-  return first.wholeTitle ?? '';
+  return first.title !== '' && chapters.every((ch) => !ch.part && ch.title === first.title) ? first.title : '';
 }
 
 /** How many of the chapters are selected */

@@ -98,6 +98,7 @@ func TestMergedChapterName(t *testing.T) {
 		{"shared title", []*DownloadedChapter{part("1", "Un títol", grabber.LabelNumbered), part("2", "Un títol", grabber.LabelNumbered)}, "Un títol"},
 		{"titles differ", []*DownloadedChapter{part("1", "Berserk 356a", grabber.LabelNumbered), part("2", "Berserk 356b", grabber.LabelNumbered)}, "Chapter 356"},
 		{"no parts given", []*DownloadedChapter{part("", "Berserk 356a", grabber.LabelTitle), part("", "Berserk 356b", grabber.LabelTitle)}, "Chapter 356"},
+		{"identical duplicates keep their label", []*DownloadedChapter{part("", "Foo", grabber.LabelPrefixed), part("", "Foo", grabber.LabelPrefixed)}, "Chapter 356 - Foo"},
 	} {
 		chapter := mergedChapter(tt.parts)
 		if got := grabber.ChapterLabel(&chapter); got != tt.want {

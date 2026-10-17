@@ -130,10 +130,22 @@ func PartOf(f Filterable) (part, title string) {
 	return partLabel(l.Part), f.GetTitle()
 }
 
-// PartsTitle is the title a chapter's parts share without their parts, which
-// names their merged file and its header: the title PartOf gives when every part
-// has a part and they all agree, "" otherwise
+// PartsTitle is the title a chapter's parts are named by, merged file and header
+// alike: the title PartOf gives when every part has a part and they agree, else the
+// label identical parts without one share, "" otherwise
 func PartsTitle(parts Filterables) string {
+	if len(parts) == 0 {
+		return ""
+	}
+	if part, _ := PartOf(parts[0]); part == "" {
+		label := ChapterLabel(parts[0])
+		for _, p := range parts {
+			if part, _ := PartOf(p); part != "" || ChapterLabel(p) != label {
+				return ""
+			}
+		}
+		return label
+	}
 	title := ""
 	for i, p := range parts {
 		part, t := PartOf(p)

@@ -48,6 +48,8 @@
     { "name": "parts share a title", "parts": [{ "part": "1", "title": "Un títol" }, { "part": "2", "title": "Un títol" }], "want": "Un títol" },
     { "name": "titles differ", "parts": [{ "part": "1", "title": "A" }, { "part": "2", "title": "B" }], "want": "" },
     { "name": "a part without a part", "parts": [{ "part": "1", "title": "A" }, { "part": "", "title": "A" }], "want": "" },
-    { "name": "no titles", "parts": [{ "part": "1", "title": "" }, { "part": "2", "title": "" }], "want": "" }
+    { "name": "no titles", "parts": [{ "part": "1", "title": "" }, { "part": "2", "title": "" }], "want": "" },
+    { "name": "identical duplicates keep their label", "parts": [{ "part": "", "title": "Chapter 7 - Foo" }, { "part": "", "title": "Chapter 7 - Foo" }], "want": "Chapter 7 - Foo" },
+    { "name": "duplicates with different labels", "parts": [{ "part": "", "title": "A" }, { "part": "", "title": "B" }], "want": "" }
   ]
 }
