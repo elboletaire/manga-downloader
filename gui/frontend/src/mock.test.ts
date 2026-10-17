@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createT, say, type Vars } from './i18n';
 import { createMockApi, mockSetupFrom, scenarioFrom } from './mock';
 import type { State } from './types';
+
+const en = createT('en');
+
+/** A rejection as the mock gives it: the message's JSON, the way the window's backend sends it */
+const rejected = (key: string, args?: Vars) =>
+  JSON.stringify(args === undefined ? { key, text: en(key) } : { key, args, text: en(key, args) });
 
 describe('scenarioFrom', () => {
   it('reads the scenario from the query, defaulting to empty', () => {
@@ -14,7 +21,7 @@ describe('createMockApi', () => {
   it('starts empty and refuses a download without a series', async () => {
     const api = createMockApi('empty');
     expect((await api.state()).loaded).toBe(false);
-    await expect(api.start()).rejects.toBe('load a series first');
+    await expect(api.start()).rejects.toBe(rejected('errors.loadFirst'));
   });
 
   it('loads a series, selects a range and reports the match count', async () => {
@@ -33,8 +40,8 @@ describe('createMockApi', () => {
   it('rejects an empty selection and an empty URL', async () => {
     const api = createMockApi('loaded');
     await api.setAll(false);
-    await expect(api.start()).rejects.toBe('select at least one chapter');
-    await expect(api.load('  ')).rejects.toBe('enter the URL of a series first');
+    await expect(api.start()).rejects.toBe(rejected('errors.selectOne'));
+    await expect(api.load('  ')).rejects.toBe(rejected('errors.enterURL'));
   });
 
   it('marks the list stale when the language changes until it is reloaded', async () => {
@@ -51,7 +58,7 @@ describe('createMockApi', () => {
     await api.setSelectedMany([2, 3, 4], true);
     expect(await api.selection()).toEqual([2, 3, 4]);
 
-    await expect(api.setSelectedMany([0, 99], true)).rejects.toBe('chapter 99 is not in the list');
+    await expect(api.setSelectedMany([0, 99], true)).rejects.toBe(rejected('errors.chapterMissing', { index: 99 }));
     expect(await api.selection()).toEqual([2, 3, 4]);
 
     await api.setSelectedMany([3], false);
@@ -60,7 +67,7 @@ describe('createMockApi', () => {
 
   it('refuses to change the selection, pick a folder or start while a download runs', async () => {
     const api = createMockApi({ scenario: 'running', freeze: true });
-    const busy = 'a series is loading or a download is running';
+    const busy = rejected('errors.busy');
     await expect(api.setSelected(0, false)).rejects.toBe(busy);
     await expect(api.setSelectedMany([0], false)).rejects.toBe(busy);
     await expect(api.setAll(false)).rejects.toBe(busy);
@@ -71,7 +78,7 @@ describe('createMockApi', () => {
 
   it('refuses to start while a series loads', async () => {
     const api = createMockApi({ scenario: 'loading', freeze: true });
-    await expect(api.start()).rejects.toBe('a series is loading or a download is running');
+    await expect(api.start()).rejects.toBe(rejected('errors.busy'));
   });
 
   it('keeps the bundle flag a run started with', async () => {
@@ -199,7 +206,7 @@ describe('createMockApi', () => {
   it('refuses to clear while a series loads', async () => {
     const api = createMockApi({ chapters: 30 });
     const loading = api.load('https://example.com/series/a');
-    await expect(api.clear()).rejects.toBe('a series is loading or a download is running');
+    await expect(api.clear()).rejects.toBe(rejected('errors.busy'));
     await loading;
     expect((await api.state()).loaded).toBe(true);
   });
@@ -658,5 +665,48 @@ describe('mock app preferences', () => {
     await api.setCheckUpdates(true);
     expect((await api.state()).update).not.toBeNull();
     stop();
+  });
+});
+
+describe('mock messages', () => {
+  it('sends the browser alert as a message the window translates', async () => {
+    const state = await createMockApi({ scenario: 'check', freeze: true }).state();
+    expect(state.browserAlertMsg).toEqual({
+      key: 'browser.alertNamed',
+      args: { browser: 'Brave', host: 'check.example.com' },
+      text: state.browserAlert,
+    });
+    expect(say(createT('es'), state.browserAlertMsg, state.browserAlert)).toContain(
+      'Brave abrió una ventana para superar una comprobación en check.example.com.',
+    );
+  });
+
+  it('sends a failed load as a message, with the text it had', async () => {
+    const state = await createMockApi('error').state();
+    expect(state.loadErrorMsg).toEqual({
+      key: 'errors.loadChapters',
+      args: { reason: 'unexpected status 403 Forbidden' },
+      text: "Couldn't fetch the chapter list: unexpected status 403 Forbidden",
+    });
+    expect(state.loadError).toBe(state.loadErrorMsg?.text);
+  });
+
+  it('sends the rows of a running volume download with their title and phase as messages', async () => {
+    const api = createMockApi({ scenario: 'volumes-running', freeze: true });
+    const state = await api.state();
+    const row = state.jobs[0];
+    expect(row.volume).toBe(true);
+    expect(row.titleMsg?.key).toBe('job.title.volume');
+    expect(row.titleMsg?.text).toBe(row.title);
+    expect(row.statusMsg?.text ?? '').toBe(row.status);
+    const log = await api.log();
+    expect(log.some((l) => l.msg?.key === 'log.downloading' && l.msg.text === l.text)).toBe(true);
+  });
+
+  it('sends the bundle row and its phase as messages', async () => {
+    const state = await createMockApi({ scenario: 'bundle', freeze: true }).state();
+    const bundle = state.jobs[0];
+    expect(bundle.titleMsg).toEqual({ key: 'job.title.bundle', args: { range: `1-${state.run.chapters}` }, text: bundle.title });
+    expect(bundle.statusMsg?.text).toBe(bundle.status);
   });
 });
