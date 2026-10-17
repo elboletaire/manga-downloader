@@ -71,7 +71,10 @@ var (
 	// gigaviewerWholeRe is a title that is only its number
 	gigaviewerWholeRe = regexp.MustCompile(`^([0-9０-９]+)$`)
 	// gigaviewerNoticeRe matches the feed's announcements and ads, which aren't episodes
+	// (only for a title without a number: "第43話 告知" is a story episode)
 	gigaviewerNoticeRe = regexp.MustCompile(`お知らせ|休載|告知`)
+	// gigaviewerHalfRe is the 前編/中編/後編 that follows a Latin marker, "Season26 前編"
+	gigaviewerHalfRe = regexp.MustCompile(`^[` + gigaviewerSeparators + `]*([前中後]編)`)
 	// gigaviewerSeparators are what sits between a number and a part, or a part and nothing
 	gigaviewerSeparators = " 　～~-・"
 	// gigaviewerDigits makes the full-width digits of a title ASCII
@@ -220,10 +223,13 @@ func (g *Gigaviewer) fetchFeed() error {
 	for i := len(all.Channel.Items) - 1; i >= 0; i-- {
 		item := all.Channel.Items[i]
 		id := gigaviewerEpisodeID(item.Link)
-		if id == "" || gigaviewerNoticeRe.MatchString(item.Title) {
+		if id == "" {
 			continue
 		}
 		title, number, part := gigaviewerTitle(item.Title, series)
+		if gigaviewerIsNotice(item.Title, number) {
+			continue
+		}
 		chapters = append(chapters, &GigaviewerChapter{Chapter{
 			Title:    title,
 			Number:   number,
@@ -290,6 +296,16 @@ func gigaviewerSeries(channel string) string {
 	return channel
 }
 
+// gigaviewerIsNotice reports whether a feed item is an announcement or ad. A
+// numbered title only is one when its bracket says so: "[休載イラスト＋第2回…]".
+func gigaviewerIsNotice(raw string, number float64) bool {
+	if number == 0 {
+		return gigaviewerNoticeRe.MatchString(raw)
+	}
+	loc := gigaviewerBracketRe.FindStringSubmatch(raw)
+	return loc != nil && gigaviewerNoticeRe.MatchString(loc[1])
+}
+
 // gigaviewerTitle splits a feed title into its title (empty when it's only the
 // series name), number and part. The number must start the title, so a
 // subtitle's numbers are never read; a title without one is numbered 0.
@@ -333,7 +349,13 @@ func gigaviewerMarker(raw string) (end int, text, part string, ok bool) {
 		if loc[4] >= 0 {
 			part = gigaviewerDigits.Replace(raw[loc[4]:loc[5]])
 		}
-		return loc[1], raw[loc[2]:loc[3]], part, true
+		end = loc[1]
+		if part == "" {
+			if h := gigaviewerHalfRe.FindStringSubmatchIndex(raw[end:]); h != nil {
+				part, end = raw[end+h[2]:end+h[3]], end+h[1]
+			}
+		}
+		return end, raw[loc[2]:loc[3]], part, true
 	}
 	return 0, "", "", false
 }

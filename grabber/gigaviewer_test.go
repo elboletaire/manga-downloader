@@ -145,7 +145,10 @@ func TestGigaviewerTitle(t *testing.T) {
 		{"第12＆13話", "夫婦", "", "", 12},
 		{"第126.5話", "夫婦", "", "", 126.5},
 		{"第４９．５話\u3000パラオへ", "夫婦", "パラオへ", "", 49.5},
-		{"Season26 中編", "夫婦", "中編", "", 26},
+		{"Season26 中編", "夫婦", "", "中編", 26},
+		{"Season26 前編 魔剣", "夫婦", "魔剣", "前編", 26},
+		{"【第110話後編】ヤる時", "ぐらんぶる", "ヤる時", "後編", 110},
+		{"第43話 告知", "夫婦", "告知", "", 43},
 		{"Case.25\u3000魔剣", "夫婦", "魔剣", "", 25},
 		{"Episode.3", "夫婦", "", "", 3},
 		{"Op.7-1", "夫婦", "", "1", 7},
@@ -167,13 +170,17 @@ func TestGigaviewerTitle(t *testing.T) {
 
 // TestGigaviewerNotice checks which feed items are dropped as announcements or ads
 func TestGigaviewerNotice(t *testing.T) {
-	for _, title := range []string{"休載のお知らせ", "[休載イラスト] 聖母の断罪", "単行本告知イラスト", "更新日変更のお知らせ"} {
-		if !gigaviewerNoticeRe.MatchString(title) {
+	isNotice := func(raw string) bool {
+		_, number, _ := gigaviewerTitle(raw, "夫婦")
+		return gigaviewerIsNotice(raw, number)
+	}
+	for _, title := range []string{"休載のお知らせ", "[休載イラスト] 聖母の断罪", "単行本告知イラスト", "更新日変更のお知らせ", "単行本第④巻のお知らせ", "[休載イラスト＋第2回人気投票企画]魔都精兵のスレイブ"} {
+		if !isNotice(title) {
 			t.Errorf("%q is not dropped", title)
 		}
 	}
-	for _, title := range []string{"読切", "番外編", "特別編", "予告編", "番外編①"} {
-		if gigaviewerNoticeRe.MatchString(title) {
+	for _, title := range []string{"読切", "番外編", "特別編", "予告編", "番外編①", "第43話 告知"} {
+		if isNotice(title) {
 			t.Errorf("%q is dropped, want kept", title)
 		}
 	}
