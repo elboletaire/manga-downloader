@@ -158,6 +158,8 @@ export interface Chapter {
   part?: string;
   /** With a part: the title without it, '' when the site gives none */
   wholeTitle?: string;
+  /** The site lists it without a number: a parts run packs it alone */
+  unnumbered?: boolean;
 }
 
 export interface LogLine {

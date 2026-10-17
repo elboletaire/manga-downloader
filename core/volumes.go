@@ -138,11 +138,17 @@ type partsKey struct {
 }
 
 // groupParts groups the chapters sharing a number, group and language, in part
-// order (grabber.PartLess). A chapter no other shares them with is loose.
+// order (grabber.PartLess). A chapter no other shares them with is loose, and so
+// is one without a number of its own, which all share the number 0.
 func groupParts(chapters grabber.Filterables) ([]*Volume, grabber.Filterables) {
 	byKey := map[partsKey]*Volume{}
 	var order []*Volume
+	var loose grabber.Filterables
 	for _, chap := range chapters {
+		if grabber.Unnumbered(chap) {
+			loose = append(loose, chap)
+			continue
+		}
 		var language string
 		if l, ok := chap.(interface{ GetLanguage() string }); ok {
 			language = l.GetLanguage()
@@ -158,7 +164,6 @@ func groupParts(chapters grabber.Filterables) ([]*Volume, grabber.Filterables) {
 	}
 
 	var volumes []*Volume
-	var loose grabber.Filterables
 	for _, v := range order {
 		// most sites list newest first, so reversing puts ties oldest first
 		slices.Reverse(v.Chapters)

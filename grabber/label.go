@@ -183,3 +183,10 @@ func labelOf(f Filterable) Label {
 func (c Chapter) label() Label {
 	return c.Label
 }
+
+// Unnumbered reports whether a listed chapter has no number of its own (its
+// Number is 0 for want of one), so it must not be grouped with other chapters
+// of number 0
+func Unnumbered(f Filterable) bool {
+	return labelOf(f).Style == LabelUnnumbered
+}

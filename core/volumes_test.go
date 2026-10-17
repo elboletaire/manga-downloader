@@ -144,6 +144,33 @@ func TestGroupVolumesParts(t *testing.T) {
 	}
 }
 
+// TestGroupVolumesPartsUnnumbered keeps the chapters without a number apart,
+// where they'd all share the number 0, and still merges a numbered 0's parts
+func TestGroupVolumesPartsUnnumbered(t *testing.T) {
+	unnumbered := func(title string) *grabber.Chapter {
+		c := part(0, "", "A")
+		c.Title = title
+		c.Label.Style = grabber.LabelUnnumbered
+		return c
+	}
+	list := grabber.Filterables{
+		unnumbered("特別イラスト"),
+		unnumbered("単行本告知"),
+		part(0, "1", "A"),
+		part(0, "2", "A"),
+	}
+	vols, loose, err := GroupVolumes(list, &VolumeSpec{Parts: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(vols) != 1 || !reflect.DeepEqual(numbers(vols[0].Chapters), []float64{0, 0}) {
+		t.Errorf("volumes = %v, want the numbered 0's two parts", vols)
+	}
+	if len(loose) != 2 || loose[0] != list[0] || loose[1] != list[1] {
+		t.Errorf("loose = %v, want the two unnumbered chapters", loose)
+	}
+}
+
 // TestGroupVolumesPartsShared runs the parts cases gui/frontend/src/volumes.test.ts
 // runs too
 func TestGroupVolumesPartsShared(t *testing.T) {
@@ -155,11 +182,12 @@ func TestGroupVolumesPartsShared(t *testing.T) {
 		Parts []struct {
 			Name     string `json:"name"`
 			Chapters []struct {
-				Number   float64 `json:"number"`
-				Part     string  `json:"part"`
-				Title    string  `json:"title"`
-				Group    string  `json:"group"`
-				Language string  `json:"language"`
+				Number     float64 `json:"number"`
+				Part       string  `json:"part"`
+				Title      string  `json:"title"`
+				Group      string  `json:"group"`
+				Language   string  `json:"language"`
+				Unnumbered bool    `json:"unnumbered"`
 			} `json:"chapters"`
 			Want [][]int `json:"want"`
 		} `json:"parts"`
@@ -170,7 +198,11 @@ func TestGroupVolumesPartsShared(t *testing.T) {
 	for _, tt := range cases.Parts {
 		var list grabber.Filterables
 		for _, c := range tt.Chapters {
-			ch := &grabber.Chapter{Number: c.Number, Title: c.Title, Language: c.Language, Label: grabber.Label{Style: grabber.LabelNumbered, Part: c.Part}}
+			style := grabber.LabelNumbered
+			if c.Unnumbered {
+				style = grabber.LabelUnnumbered
+			}
+			ch := &grabber.Chapter{Number: c.Number, Title: c.Title, Language: c.Language, Label: grabber.Label{Style: style, Part: c.Part}}
 			ch.SetGroups(c.Group)
 			list = append(list, ch)
 		}
