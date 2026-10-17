@@ -276,14 +276,14 @@ export interface PartGroup {
 
 /**
  * Groups the chapters a parts run merges (--volumes parts): those sharing a
- * number and a group, so two groups' releases never merge. Files keep the
- * list order, at their first part.
+ * number, group and language, so two groups' or two languages' releases never
+ * merge. Files keep the list order, at their first part.
  */
 export function groupParts(chapters: Chapter[]): PartGroup[] {
   const out: PartGroup[] = [];
   const byKey = new Map<string, PartGroup>();
   for (const ch of chapters) {
-    const key = `${ch.number}\u0000${ch.group}`;
+    const key = `${ch.number}\u0000${ch.group}\u0000${ch.language}`;
     const g = byKey.get(key);
     if (g) {
       g.chapters.push(ch);

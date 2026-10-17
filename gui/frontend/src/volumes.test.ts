@@ -176,6 +176,15 @@ describe('groupParts', () => {
   });
 });
 
+describe('shared parts with Go', () => {
+  // the cases core.GroupVolumes runs too, so the list and the run group the same way
+  it.each(shared.parts.map((c) => [c.name, c] as const))('merges the parts: %s', (_, c) => {
+    const chapters = c.chapters.map((p, i) => ({ ...ch(p.number, 0, i), group: p.group, language: p.language }));
+    const files = groupParts(chapters).map((g) => g.chapters.map((x) => x.index));
+    expect(files.sort((a, b) => a[0] - b[0])).toEqual(c.want);
+  });
+});
+
 describe('helpers', () => {
   it('names the span of a volume', () => {
     expect(chapterSpan([ch(1), ch(7.5)])).toBe('chapters 1–7.5');

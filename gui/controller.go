@@ -1201,7 +1201,7 @@ func (c *Controller) Start() error {
 	// volume mode packs the Volumes box, which isn't saved with the options;
 	// a parts run has no box
 	volumes := c.settings.Volumes != ""
-	parts := c.settings.Volumes == volumesParts
+	parts := c.settings.Volumes == core.VolumesParts
 	if volumes && !parts {
 		c.settings.Volumes = c.runVolumes()
 	}
@@ -1639,31 +1639,26 @@ func (e events) BundleArchived(n int) {
 	c.emit()
 }
 
-// partFiles is how many files a parts run writes: one per number and group,
-// as core merges them
+// partFiles is how many files a parts run writes: one per number, group and
+// language, as core merges them
 func partFiles(chapters grabber.Filterables) int {
 	type key struct {
-		number float64
-		group  string
+		number   float64
+		group    string
+		language string
 	}
 	seen := map[key]bool{}
 	for _, chap := range chapters {
-		var group string
+		var group, language string
 		if g, ok := chap.(interface{ GetGroup() string }); ok {
 			group = g.GetGroup()
 		}
-		seen[key{chap.GetNumber(), group}] = true
+		if l, ok := chap.(interface{ GetLanguage() string }); ok {
+			language = l.GetLanguage()
+		}
+		seen[key{chap.GetNumber(), group, language}] = true
 	}
 	return len(seen)
-}
-
-// volumeLabel names a volume's file in the log: "Vol. 01", or "Chapter 19"
-// for a chapter's merged parts. Callers hold mu.
-func (c *Controller) volumeLabel(v *core.Volume) string {
-	if c.runinfo.Parts {
-		return "Chapter " + formatNumber(v.FirstNumber())
-	}
-	return core.VolumeLabel(v.Number)
 }
 
 // volumeTitle is the row title of a volume: "Vol. 01 · chapters 1–7", or
@@ -1673,13 +1668,13 @@ func (c *Controller) volumeTitle(v *core.Volume) string {
 		if len(v.Chapters) == 1 {
 			return grabber.ChapterLabel(v.Chapters[0])
 		}
-		return fmt.Sprintf("%s · %d parts", c.volumeLabel(v), len(v.Chapters))
+		return fmt.Sprintf("%s · %d parts", v.Label(), len(v.Chapters))
 	}
 	first, last := formatNumber(v.FirstNumber()), formatNumber(v.LastNumber())
 	if first == last {
-		return fmt.Sprintf("%s · chapter %s", core.VolumeLabel(v.Number), first)
+		return fmt.Sprintf("%s · chapter %s", v.Label(), first)
 	}
-	return fmt.Sprintf("%s · chapters %s–%s", core.VolumeLabel(v.Number), first, last)
+	return fmt.Sprintf("%s · chapters %s–%s", v.Label(), first, last)
 }
 
 func (e events) VolumeStart(v *core.Volume) {
@@ -1739,7 +1734,7 @@ func (e events) VolumePacked(v *core.Volume, name string, err error) {
 	c := e.c
 	c.mu.Lock()
 	j := c.byVolume[v]
-	label := c.volumeLabel(v)
+	label := v.Label()
 	switch {
 	case errors.Is(err, context.Canceled):
 		// a cancelled run says so in its summary; the row only stops

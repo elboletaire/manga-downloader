@@ -306,9 +306,12 @@ func TestPartFiles(t *testing.T) {
 		&grabber.Chapter{Number: 2, Title: "Part 2"},
 		&grabber.Chapter{Number: 3, Group: "Alpha"},
 		&grabber.Chapter{Number: 3, Group: "Beta"},
+		// the same number in two languages is two files
+		&grabber.Chapter{Number: 4, Language: "en"},
+		&grabber.Chapter{Number: 4, Language: "es"},
 	}
-	if got := partFiles(chapters); got != 4 {
-		t.Errorf("partFiles = %d, want 4", got)
+	if got := partFiles(chapters); got != 6 {
+		t.Errorf("partFiles = %d, want 6", got)
 	}
 }
 
@@ -323,10 +326,11 @@ func TestVolumeTitleParts(t *testing.T) {
 		t.Errorf("volume title = %q", got)
 	}
 	c.runinfo.Parts = true
+	v.Parts = true
 	if got := c.volumeTitle(v); got != "Chapter 2 · 2 parts" {
 		t.Errorf("parts title = %q", got)
 	}
-	if got := c.volumeLabel(v); got != "Chapter 2" {
+	if got := v.Label(); got != "Chapter 2" {
 		t.Errorf("parts label = %q", got)
 	}
 }

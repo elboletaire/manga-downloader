@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/notice"
 	"github.com/elboletaire/manga-downloader/packer"
@@ -293,7 +294,7 @@ func TestApplyPackAsKeepsVolumes(t *testing.T) {
 func TestApplyPackAsParts(t *testing.T) {
 	s := defaultSettings()
 	applyPackAs(s, PackParts)
-	if s.Volumes != volumesParts || s.Bundle || packAsOf(*s) != PackParts {
+	if s.Volumes != core.VolumesParts || s.Bundle || packAsOf(*s) != PackParts {
 		t.Fatalf("parts: %q bundle %v", s.Volumes, s.Bundle)
 	}
 	// volumes after parts starts from the site's volumes, not "parts"

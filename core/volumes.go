@@ -75,6 +75,15 @@ type Volume struct {
 func (v *Volume) FirstNumber() float64 { return v.Chapters[0].GetNumber() }
 func (v *Volume) LastNumber() float64  { return v.Chapters[len(v.Chapters)-1].GetNumber() }
 
+// Label is how the volume is shown in progress and messages: "Vol. 01", or
+// "Chapter 19.5" for a chapter's parts
+func (v *Volume) Label() string {
+	if v.Parts {
+		return grabber.NumberLabel(v.FirstNumber())
+	}
+	return VolumeLabel(v.Number)
+}
+
 // GroupVolumes splits chapters into the spec's volumes, sorted by number, and
 // the chapters no volume holds, which are packed one file per chapter rather
 // than dropped. A volume holding none of the chapters isn't returned. With
@@ -119,20 +128,26 @@ func GroupVolumes(chapters grabber.Filterables, spec *VolumeSpec) ([]*Volume, gr
 	return volumes, loose, nil
 }
 
-// partsKey tells the parts of a chapter apart from its other releases
+// partsKey tells the parts of a chapter apart from its other releases, by
+// number, group and language
 type partsKey struct {
-	number float64
-	groups string
+	number   float64
+	groups   string
+	language string
 }
 
-// groupParts groups the chapters sharing a number and group, in listing order.
+// groupParts groups the chapters sharing a number, group and language, in listing order.
 // A chapter no other shares its number and group with is loose, as it's packed
 // on its own. The volumes are sorted by number.
 func groupParts(chapters grabber.Filterables) ([]*Volume, grabber.Filterables) {
 	byKey := map[partsKey]*Volume{}
 	var order []*Volume
 	for _, chap := range chapters {
-		key := partsKey{chap.GetNumber(), strings.Join(grabber.GroupsOf(chap), "\x00")}
+		var language string
+		if l, ok := chap.(interface{ GetLanguage() string }); ok {
+			language = l.GetLanguage()
+		}
+		key := partsKey{chap.GetNumber(), strings.Join(grabber.GroupsOf(chap), "\x00"), language}
 		v := byKey[key]
 		if v == nil {
 			v = &Volume{Number: int(chap.GetNumber()), Parts: true}

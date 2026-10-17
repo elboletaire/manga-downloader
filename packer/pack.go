@@ -93,10 +93,8 @@ func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*Downlo
 		NewVolumeFileTemplateParts(title, volume, listed), files, info, progress)
 }
 
-// PackParts packs the parts of one chapter (--volumes parts) into one file,
-// laid out as a bundle is (a folder per part). It's named with the chapter's
-// template, as the chapter, without the part its title names. chapters must be
-// in the order the site lists them.
+// PackParts packs a chapter's parts, in listing order, into one file named as
+// the chapter without its part.
 func PackParts(outputdir string, s grabber.Site, chapters []*DownloadedChapter, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()

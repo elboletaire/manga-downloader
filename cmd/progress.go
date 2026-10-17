@@ -486,7 +486,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		bar := m.makeBar(barW)
 		m.volumes = append(m.volumes, msg.volume)
 		m.volStates[msg.volume] = &volumeBarState{
-			rawTitle: m.seriesTitle + " - " + core.VolumeLabel(msg.volume.Number),
+			rawTitle: m.seriesTitle + " - " + msg.volume.Label(),
 			chCount:  msg.chCount,
 			finished: make(map[grabber.Filterable]bool),
 			status:   "downloading",
@@ -954,9 +954,9 @@ func (e *bubbleEvents) VolumeProgress(v *core.Volume, fraction float64) {
 
 func (e *bubbleEvents) VolumePacked(v *core.Volume, name string, err error) {
 	if errors.Is(err, core.ErrSkippedVolume) {
-		e.println(color.YellowString("- skipping %s: %s", core.VolumeLabel(v.Number), err.Error()))
+		e.println(color.YellowString("- skipping %s: %s", v.Label(), err.Error()))
 	} else if err != nil {
-		e.println(color.RedString("- error packing %s: %s", core.VolumeLabel(v.Number), err.Error()))
+		e.println(color.RedString("- error packing %s: %s", v.Label(), err.Error()))
 	}
 	e.prog.Send(volumePackedMsg{volume: v, err: err})
 }
@@ -1015,24 +1015,24 @@ func (plainEvents) Packed(_ *grabber.Chapter, _ string, err error) {
 }
 
 func (plainEvents) VolumeStart(v *core.Volume) {
-	fmt.Fprintf(color.Output, "downloading %s...\n", core.VolumeLabel(v.Number))
+	fmt.Fprintf(color.Output, "downloading %s...\n", v.Label())
 }
 
 func (plainEvents) VolumeChapter(*core.Volume, *grabber.Chapter) {}
 
 func (plainEvents) VolumePacking(v *core.Volume) {
-	fmt.Fprintf(color.Output, "archiving %s...\n", core.VolumeLabel(v.Number))
+	fmt.Fprintf(color.Output, "archiving %s...\n", v.Label())
 }
 
 func (plainEvents) VolumeProgress(*core.Volume, float64) {}
 
 func (plainEvents) VolumePacked(v *core.Volume, _ string, err error) {
 	if errors.Is(err, core.ErrSkippedVolume) {
-		yellow("- skipping %s: %s", core.VolumeLabel(v.Number), err.Error())
+		yellow("- skipping %s: %s", v.Label(), err.Error())
 		return
 	}
 	if err != nil {
-		red("- error packing %s: %s", core.VolumeLabel(v.Number), err.Error())
+		red("- error packing %s: %s", v.Label(), err.Error())
 	}
 }
 

@@ -1,5 +1,5 @@
 {
-  "comment": "Volumes box cases shared by ranges.ParseVolumes, core.SiteVolumes and gui/frontend/src/volumes.ts, so Go and the app agree. volumes maps each volume number to its [begin, end] ranges; error is a substring of the message. site: want is the SiteVolumes text (\"\" when the ranges can't group the chapters as the site does), listed the volumes ListedVolumes counts.",
+  "comment": "Volumes box cases shared by ranges.ParseVolumes, core.SiteVolumes and gui/frontend/src/volumes.ts, so Go and the app agree. volumes maps each volume number to its [begin, end] ranges; error is a substring of the message. site: want is the SiteVolumes text (\"\" when the ranges can't group the chapters as the site does), listed the volumes ListedVolumes counts. parts lists chapters for --volumes parts: want holds the indices of each file's chapters, sorted by first index, a single chapter being a file of its own.",
   "parse": [
     { "in": "1-7/8-16", "volumes": { "1": [[1, 7]], "2": [[8, 16]] } },
     { "in": " 1-7 / 8-16 /", "volumes": { "1": [[1, 7]], "2": [[8, 16]] } },
@@ -33,5 +33,12 @@
     { "name": "repeated number across volumes", "chapters": [[1, 1], [1, 2], [2, 1], [2, 2]], "want": "", "listed": 2 },
     { "name": "mixed volume tags on one number", "chapters": [[1, 1], [2, 1], [2, 0], [3, 1]], "want": "", "listed": 1 },
     { "name": "loose chapters", "chapters": [[1, 1], [1.5, 0], [2, 1], [3, 0]], "want": "1,2", "listed": 1 }
+  ],
+  "parts": [
+    { "name": "parts merge", "chapters": [{ "number": 19, "part": "1", "group": "A", "language": "en" }, { "number": 19, "part": "2", "group": "A", "language": "en" }], "want": [[0, 1]] },
+    { "name": "19 and 19.5 stay apart", "chapters": [{ "number": 19, "part": "1", "group": "A", "language": "en" }, { "number": 19, "part": "2", "group": "A", "language": "en" }, { "number": 19.5, "part": "1", "group": "A", "language": "en" }, { "number": 19.5, "part": "2", "group": "A", "language": "en" }], "want": [[0, 1], [2, 3]] },
+    { "name": "different groups stay apart", "chapters": [{ "number": 19, "part": "1", "group": "A", "language": "en" }, { "number": 19, "part": "1", "group": "B", "language": "en" }, { "number": 19, "part": "2", "group": "A", "language": "en" }], "want": [[0, 2], [1]] },
+    { "name": "different languages stay apart", "chapters": [{ "number": 19, "part": "", "group": "A", "language": "en" }, { "number": 19, "part": "", "group": "A", "language": "es" }], "want": [[0], [1]] },
+    { "name": "chapter without parts stays single", "chapters": [{ "number": 18, "part": "", "group": "A", "language": "en" }, { "number": 19, "part": "1", "group": "A", "language": "en" }, { "number": 19, "part": "2", "group": "A", "language": "en" }, { "number": 20, "part": "", "group": "A", "language": "en" }], "want": [[0], [1, 2], [3]] }
   ]
 }

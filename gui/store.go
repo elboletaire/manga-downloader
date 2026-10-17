@@ -42,15 +42,12 @@ const (
 	PackBundle = "bundle"
 )
 
-// volumesParts is the --volumes value that merges each chapter's parts
-const volumesParts = "parts"
-
 // packAsOf returns the "Pack as" choice the settings amount to
 func packAsOf(s grabber.Settings) string {
 	switch {
 	case s.Bundle:
 		return PackBundle
-	case s.Volumes == volumesParts:
+	case s.Volumes == core.VolumesParts:
 		return PackParts
 	case s.Volumes != "":
 		return PackVolumes
@@ -66,10 +63,10 @@ func applyPackAs(s *grabber.Settings, packAs string) {
 	case PackBundle:
 		s.Bundle, s.Volumes = true, ""
 	case PackParts:
-		s.Bundle, s.Volumes = false, volumesParts
+		s.Bundle, s.Volumes = false, core.VolumesParts
 	case PackVolumes:
 		s.Bundle = false
-		if s.Volumes == "" || s.Volumes == volumesParts {
+		if s.Volumes == "" || s.Volumes == core.VolumesParts {
 			s.Volumes = core.VolumesAuto
 		}
 	default:

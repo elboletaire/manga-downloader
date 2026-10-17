@@ -144,6 +144,66 @@ func TestGroupVolumesParts(t *testing.T) {
 	}
 }
 
+// TestGroupVolumesPartsShared runs the parts cases gui/frontend/src/volumes.test.ts
+// runs too
+func TestGroupVolumesPartsShared(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "ranges", "testdata", "volumes.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cases struct {
+		Parts []struct {
+			Name     string `json:"name"`
+			Chapters []struct {
+				Number   float64 `json:"number"`
+				Part     string  `json:"part"`
+				Group    string  `json:"group"`
+				Language string  `json:"language"`
+			} `json:"chapters"`
+			Want [][]int `json:"want"`
+		} `json:"parts"`
+	}
+	if err := json.Unmarshal(data, &cases); err != nil {
+		t.Fatal(err)
+	}
+	for _, tt := range cases.Parts {
+		var list grabber.Filterables
+		for _, c := range tt.Chapters {
+			ch := &grabber.Chapter{Number: c.Number, Language: c.Language, Label: grabber.Label{Style: grabber.LabelNumbered, Part: c.Part}}
+			ch.SetGroups(c.Group)
+			list = append(list, ch)
+		}
+		vols, loose, err := GroupVolumes(list, &VolumeSpec{Parts: true})
+		if err != nil {
+			t.Fatalf("%s: %v", tt.Name, err)
+		}
+		// each file as the indices of its chapters, a loose chapter being a file of its own
+		var files [][]int
+		index := func(f grabber.Filterable) int {
+			for i, ch := range list {
+				if ch == f {
+					return i
+				}
+			}
+			return -1
+		}
+		for _, v := range vols {
+			var file []int
+			for _, ch := range v.Chapters {
+				file = append(file, index(ch))
+			}
+			files = append(files, file)
+		}
+		for _, ch := range loose {
+			files = append(files, []int{index(ch)})
+		}
+		sort.Slice(files, func(i, j int) bool { return files[i][0] < files[j][0] })
+		if !reflect.DeepEqual(files, tt.Want) {
+			t.Errorf("%s: files = %v, want %v", tt.Name, files, tt.Want)
+		}
+	}
+}
+
 func TestSiteVolumes(t *testing.T) {
 	tests := []struct {
 		name string
