@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AUTO_LOAD_DELAY_MS, shouldAutoLoad } from './autoLoad';
 import { SelectField, TextField } from './fields';
 import { sameScanlator, typedValue, filterControl, filtersIdentified, filterOptions, shownSelection, type FilterControl, type FilterKind } from './filters';
+import { useI18n } from './i18n/react';
 import { AlertIcon, LinkIcon, RefreshIcon, Spinner } from './icons';
 import { Mascot, useExpression, Wordmark } from './Mascot';
 import type { FilterChoice, Options, State } from './types';
@@ -43,6 +44,7 @@ export function SourceBar({
   loadRefusal,
   optionError,
 }: Props) {
+  const { t } = useI18n();
   // null until the user types: the field shows the backend's URL until then
   const [typed, setTyped] = useState<string | null>(null);
   const url = typed ?? state.url;
@@ -118,8 +120,8 @@ export function SourceBar({
               ref={input}
               type="url"
               className="url-input"
-              aria-label="Series URL"
-              placeholder="Paste the link to a series or one of its chapters"
+              aria-label={t('source.url.label')}
+              placeholder={t('source.url.placeholder')}
               value={url}
               // readOnly, not disabled: a disabled input drops focus while a load runs
               readOnly={busy}
@@ -133,8 +135,8 @@ export function SourceBar({
               <button
                 type="button"
                 className="url-clear"
-                aria-label="Clear the URL"
-                title="Clear"
+                aria-label={t('source.url.clearLabel')}
+                title={t('source.url.clear')}
                 onClick={() => {
                   // the pending automatic load must not fire on the emptied field
                   clearTimeout(timer.current);
@@ -149,11 +151,11 @@ export function SourceBar({
               <button
                 type="button"
                 className="btn small ghost url-paste"
-                aria-label="Paste link from clipboard"
-                title="Paste link from clipboard"
+                aria-label={t('source.url.pasteLabel')}
+                title={t('source.url.pasteLabel')}
                 onClick={paste}
               >
-                Paste
+                {t('source.url.paste')}
               </button>
             )}
           </div>
@@ -164,24 +166,24 @@ export function SourceBar({
           >
             {state.loading ? (
               <>
-                <Spinner /> Loading…
+                <Spinner /> {t('source.load.loading')}
               </>
             ) : same ? (
               <>
-                <RefreshIcon /> Reload
+                <RefreshIcon /> {t('source.load.reload')}
               </>
             ) : (
-              'Load'
+              t('source.load.load')
             )}
           </button>
         </form>
       </div>
 
       <div className="filter-row">
-        <span className="filter-label">Filter the list</span>
+        <span className="filter-label">{t('source.filter.heading')}</span>
         <FilterField
           kind="language"
-          label="Language"
+          label={t('source.filter.language')}
           typed={state.options.language}
           choice={state.languages}
           control={filterControl(state, state.languages)}
@@ -194,7 +196,7 @@ export function SourceBar({
         />
         <FilterField
           kind="scanlator"
-          label="Scanlator"
+          label={t('source.filter.scanlator')}
           typed={state.options.scanlator}
           choice={state.scanlators}
           control={filterControl(state, state.scanlators)}
@@ -208,14 +210,14 @@ export function SourceBar({
         {state.stale ? (
           <div className="stale-note" role="status">
             <AlertIcon />
-            <span>Not applied yet</span>
+            <span>{t('source.filter.notApplied')}</span>
             <button type="button" className="btn small warning" disabled={busy} onClick={() => onLoad(state.url)}>
-              <RefreshIcon /> Reload
+              <RefreshIcon /> {t('source.load.reload')}
             </button>
           </div>
         ) : (
           <span className="filter-hint">
-            {identified ? 'Picking one applies it at once' : 'Applied when the series loads'}
+            {identified ? t('source.filter.appliesAtOnce') : t('source.filter.appliesOnLoad')}
           </span>
         )}
       </div>
@@ -267,13 +269,14 @@ function FilterField({
   onOptions,
   onError,
 }: FilterFieldProps) {
+  const { t, lang } = useI18n();
   if (control === 'text') {
     return (
       <TextField
         className="inline-field"
         label={label}
         value={typedValue(typed)}
-        placeholder="any"
+        placeholder={t('source.filter.any')}
         disabled={busy}
         flagged={flagged}
         onCommit={(value) => onOptions(kind === 'language' ? { language: value } : { scanlator: value })}
@@ -289,9 +292,9 @@ function FilterField({
         className="inline-field"
         label={label}
         value=""
-        placeholder="any"
+        placeholder={t('source.filter.any')}
         disabled
-        hint={kind === 'language' ? 'This site has no language choice' : 'This site has no scanlation groups to choose from'}
+        hint={kind === 'language' ? t('source.filter.noLanguage') : t('source.filter.noScanlator')}
         onCommit={() => Promise.resolve()}
         onError={onError}
       />
@@ -303,7 +306,7 @@ function FilterField({
       className="inline-field"
       label={label}
       value={shownSelection(choice, loaded)}
-      options={filterOptions(choice, kind, 'en', loaded)}
+      options={filterOptions(choice, kind, t, lang, loaded)}
       disabled={busy}
       onChange={onPick}
     />

@@ -1,0 +1,26 @@
+{
+  "url": {
+    "label": "URL de la sèrie",
+    "placeholder": "Enganxa l'enllaç d'una sèrie o d'un dels seus capítols",
+    "clear": "Esborra",
+    "clearLabel": "Esborra l'URL",
+    "paste": "Enganxa",
+    "pasteLabel": "Enganxa l'enllaç del portapapers"
+  },
+  "load": {
+    "load": "Carrega",
+    "loading": "Carregant…",
+    "reload": "Recarrega"
+  },
+  "filter": {
+    "heading": "Filtra la llista",
+    "language": "Llengua",
+    "scanlator": "Grup",
+    "any": "qualsevol",
+    "noLanguage": "Aquest lloc no permet triar la llengua",
+    "noScanlator": "Aquest lloc no té grups de scanlation entre els quals triar",
+    "notApplied": "Encara no aplicat",
+    "appliesAtOnce": "En triar-ne un, s'aplica a l'instant",
+    "appliesOnLoad": "S'aplica en carregar la sèrie"
+  }
+}

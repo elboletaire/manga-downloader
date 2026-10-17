@@ -1,6 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { I18nProvider } from './i18n/react';
 import { createMockApi } from './mock';
 import { pasteValue, SourceBar } from './SourceBar';
 import type { State } from './types';
@@ -98,5 +99,43 @@ describe('SourceBar filter notes', () => {
     const base = await createMockApi({ scenario: 'loaded', freeze: true }).state();
 
     expect(render({ ...base, stale: true })).toContain('Not applied yet');
+  });
+});
+
+describe('SourceBar in another language', () => {
+  async function renderIn(lang: 'es' | 'ca', state: State): Promise<string> {
+    return renderToStaticMarkup(
+      createElement(
+        I18nProvider,
+        { pref: lang, persist: () => Promise.resolve() },
+        createElement(SourceBar, {
+          state,
+          onLoad: () => undefined,
+          readClipboard: () => Promise.resolve(''),
+          onClear: () => undefined,
+          onOptions: () => Promise.resolve(),
+          onPick: () => Promise.resolve(),
+          onError: () => undefined,
+          loadRefusal: '',
+          optionError: '',
+        }),
+      ),
+    );
+  }
+
+  it('shows the Spanish labels and the Spanish language names', async () => {
+    const empty = await renderIn('es', await createMockApi({ scenario: 'empty', freeze: true }).state());
+    expect(empty).toContain('aria-label="Pegar el enlace del portapapeles"');
+    expect(empty).toContain('Filtrar la lista');
+    expect(empty).toContain('>Cargar<');
+
+    const loaded = await renderIn('es', await createMockApi({ scenario: 'loaded', freeze: true }).state());
+    expect(loaded).toContain('Recargar');
+  });
+
+  it('shows the Catalan labels', async () => {
+    const markup = await renderIn('ca', await createMockApi({ scenario: 'loaded', freeze: true }).state());
+    expect(markup).toContain('Filtra la llista');
+    expect(markup).toContain('Recarrega');
   });
 });
