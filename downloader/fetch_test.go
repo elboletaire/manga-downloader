@@ -538,3 +538,93 @@ func TestFetchFile_5xxWithoutOptInKeepsPlainRetry(t *testing.T) {
 		t.Errorf("expected one plain retry only, got %q", uris)
 	}
 }
+
+// bodyServer answers every request with 200 and body, counting the requests.
+func bodyServer(t *testing.T, body []byte) (*httptest.Server, *int32) {
+	t.Helper()
+	var requests int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&requests, 1)
+		_, _ = w.Write(body)
+	}))
+	t.Cleanup(server.Close)
+	return server, &requests
+}
+
+// A challenge page with 200 is rejected once, not retried: refetching it
+// returns the same page
+func TestFetchFile_RejectsHTMLPageWithoutRetry(t *testing.T) {
+	withFastRetryDelay(t)
+	server, requests := bodyServer(t, []byte(`<!DOCTYPE html><html><head><title>Just a moment...</title></head></html>`))
+
+	_, err := FetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL}, 1, 3, nil)
+	if !errors.Is(err, errHTMLPage) {
+		t.Fatalf("err = %v, want errHTMLPage", err)
+	}
+	if got := atomic.LoadInt32(requests); got != 1 {
+		t.Errorf("expected exactly 1 request (HTML is not retried), got %d", got)
+	}
+}
+
+// The HTML check runs before the transform, so a transform never gets a
+// page it would turn into junk bytes that pass the final check
+func TestFetchFile_RejectsHTMLBeforeTransform(t *testing.T) {
+	server, _ := bodyServer(t, []byte("<html><body>challenge</body></html>"))
+
+	var calls int32
+	transform := func(data []byte) ([]byte, error) {
+		atomic.AddInt32(&calls, 1)
+		return data, nil
+	}
+	if _, err := FetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL}, 1, 0, transform); !errors.Is(err, errHTMLPage) {
+		t.Fatalf("err = %v, want errHTMLPage", err)
+	}
+	if got := atomic.LoadInt32(&calls); got != 0 {
+		t.Errorf("transform ran %d times on an HTML page, want 0", got)
+	}
+}
+
+// FetchChapter names the page the error belongs to
+func TestFetchChapter_HTMLPageNamesPage(t *testing.T) {
+	server, _ := bodyServer(t, []byte("<!doctype html>\n<html></html>"))
+
+	site := &fetchChapterTestSite{Grabber: &grabber.Grabber{
+		URL: server.URL,
+		Settings: &grabber.Settings{
+			MaxConcurrency: grabber.MaxConcurrency{Chapters: 1, Pages: 1},
+		},
+	}}
+	chapter := &grabber.Chapter{Number: 1, Pages: []grabber.Page{{Number: 3, URL: server.URL + "/page"}}}
+
+	_, err := FetchChapter(context.Background(), site, chapter, func(page, progress int, err error) {})
+	if err == nil || !strings.HasPrefix(err.Error(), "page 3: not an image (got an HTML page)") {
+		t.Fatalf("err = %v, want it to start with %q", err, "page 3: not an image (got an HTML page)")
+	}
+}
+
+// Formats imgfmt doesn't know, and SVG (XML, not HTML), pass through
+func TestFetchFile_AcceptsNonHTMLPages(t *testing.T) {
+	cases := []struct {
+		name string
+		body string
+	}{
+		{"jpeg", "\xff\xd8\xff\xe0jpeg-data"},
+		{"unknown binary (bmp)", "BM\x00\x00\x00\x00bmp-data"},
+		{"svg", `<svg xmlns="http://www.w3.org/2000/svg"></svg>`},
+		{"svg with xml prolog", `<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"></svg>`},
+		{"svg after a comment", `<!-- drawn in Inkscape --><svg xmlns="http://www.w3.org/2000/svg"></svg>`},
+		{"svg with a doctype", `<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg></svg>`},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			server, _ := bodyServer(t, []byte(c.body))
+			file, err := FetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL}, 1, 0, nil)
+			if err != nil {
+				t.Fatalf("FetchFile: %v", err)
+			}
+			if string(file.Data) != c.body {
+				t.Errorf("data = %q, want the body back", file.Data)
+			}
+		})
+	}
+}
