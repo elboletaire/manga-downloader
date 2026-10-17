@@ -2,7 +2,12 @@
 
 package grabber
 
-import "testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+)
 
 func TestMangatownTest(t *testing.T) {
 	cases := []struct {
@@ -177,5 +182,68 @@ func TestMangatownPageImage(t *testing.T) {
 
 	if _, err := mangatownPageImage(mangatownSampleNoImg); err == nil {
 		t.Error("expected an error for a page without #image, got nil")
+	}
+}
+
+// a long-strip reader: every page is in #viewer, and the <img> outside it is
+// not a page
+const mangatownSampleStrip = `<div id="viewer" class="read_img" style="width:800px">
+<img src="//zjcdn.mangahere.org/store/manga/48829/001.0/compressed/g001.jpg" class="image" alt="Damn Necromancer 1 Page 1">
+<img src="//zjcdn.mangahere.org/store/manga/48829/001.0/compressed/g002.jpg" class="image" alt="Damn Necromancer 1 Page 2">
+</div>
+<img src="//example.com/ad.jpg" class="image">
+<script>var total_pages = 2;</script>`
+
+func TestMangatownStripImages(t *testing.T) {
+	got := mangatownStripImages(mangatownSampleStrip)
+	want := []string{
+		"https://zjcdn.mangahere.org/store/manga/48829/001.0/compressed/g001.jpg",
+		"https://zjcdn.mangahere.org/store/manga/48829/001.0/compressed/g002.jpg",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("mangatownStripImages() = %q, want %q", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("mangatownStripImages()[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+
+	if paged := mangatownStripImages(mangatownSamplePage); len(paged) != 0 {
+		t.Errorf("mangatownStripImages(paged) = %q, want none", paged)
+	}
+}
+
+// FetchChapter reads a long-strip chapter from its first document alone
+func TestMangatownFetchChapterStrip(t *testing.T) {
+	requests := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		if r.URL.Path != "/manga/damn_necromancer/c001/" {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write([]byte(mangatownSampleStrip))
+	}))
+	defer srv.Close()
+
+	m := Mangatown{Grabber: &Grabber{URL: srv.URL + "/manga/damn_necromancer/"}}
+	chapter, err := m.FetchChapter(&MangatownChapter{
+		Chapter: Chapter{Title: "Chapter 1", Number: 1},
+		URL:     srv.URL + "/manga/damn_necromancer/c001/",
+	})
+	if err != nil {
+		t.Fatalf("FetchChapter() error: %v", err)
+	}
+	if requests != 1 {
+		t.Errorf("FetchChapter() made %d requests, want 1", requests)
+	}
+	if chapter.PagesCount != 2 || len(chapter.Pages) != 2 {
+		t.Fatalf("FetchChapter() = %d pages (count %d), want 2", len(chapter.Pages), chapter.PagesCount)
+	}
+	for i, p := range chapter.Pages {
+		if p.Number != int64(i+1) || !strings.HasPrefix(p.URL, "https://") {
+			t.Errorf("page %d = number %d, url %q", i, p.Number, p.URL)
+		}
 	}
 }
