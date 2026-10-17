@@ -3,9 +3,9 @@
 # Requires the demo binary built at the repo root (make build/demo): it serves the
 # series from demo/series, so the run needs no network (see demo/README.md).
 # Uses a short (5 chapter) series so answering "y" downloads everything quickly.
-# Filtered to a single language ("es-la", Latin American Spanish) because the
-# series is translated into several languages nowadays and the unfiltered
-# download would show 3 bars per chapter.
+# One Piece on MangaDex, filtered to Catalan ("ca"), the language the makefile's
+# MangaDex smoke target uses, because the series is translated into several
+# languages and the unfiltered download would show a bar per language.
 Output assets/demos/prompt-light.gif
 
 Set Shell "bash"
@@ -25,7 +25,7 @@ Type 'export MANGA_DOWNLOADER_DEMO_DELAY=0.7 && export PATH="$PWD:$PATH" && mkdi
 Enter
 Show
 
-Type "manga-downloader https://mangadex.org/title/851f6d0a-49ae-4912-9939-2aeb865d13cd --language es-la"
+Type "manga-downloader https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece --language ca"
 Sleep 500ms
 Enter
 Wait+Screen@60s /y\/N/

@@ -1,0 +1,18 @@
+{
+ "urls": ["https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece"],
+ "title": "One Piece",
+ "languages": ["en", "ca"],
+ "nameFormat": "Chapter %04d %s",
+ "chapters": [
+  {"number": 1180, "title": "Omen", "language": "en", "id": "5b1e7c3a-2d94-4f60-8a1b-6e3c9d0f4a31", "pages": 18, "groups": ["Teahouse Team"]},
+  {"number": 1181, "title": "God and Devil", "language": "en", "id": "9a4f2e7b-6c15-4d83-b0e2-1f7a5c8d3e32", "pages": 19, "groups": ["Teahouse Team"]},
+  {"number": 1182, "title": "Zaza", "language": "en", "id": "0c8d3b6e-4a27-4e91-9f5d-7b2e1a6c9f33", "pages": 17, "groups": ["Teahouse Team"]},
+  {"number": 1183, "title": "Good Morn-Maid", "language": "en", "id": "e2f6a9d1-7b38-4c04-8e6a-3d9b0f2c1a34", "pages": 20, "groups": ["Teahouse Team"]},
+  {"number": 1184, "title": "We're All Bones When We Die", "language": "en", "id": "47b3c8e5-1d69-4a2f-b7c0-9e4d6a3f5b35", "pages": 18, "groups": ["Teahouse Team"]},
+  {"number": 1180, "title": "Omen", "language": "ca", "id": "5b1e7c3a-2d94-4f60-8a1b-6e3c9d0f4a21", "pages": 18, "groups": ["Einherjar Scan"]},
+  {"number": 1181, "title": "God and Devil", "language": "ca", "id": "9a4f2e7b-6c15-4d83-b0e2-1f7a5c8d3e22", "pages": 19, "groups": ["Einherjar Scan"]},
+  {"number": 1182, "title": "Zaza", "language": "ca", "id": "0c8d3b6e-4a27-4e91-9f5d-7b2e1a6c9f23", "pages": 17, "groups": ["Einherjar Scan"]},
+  {"number": 1183, "title": "Good Morn-Maid", "language": "ca", "id": "e2f6a9d1-7b38-4c04-8e6a-3d9b0f2c1a24", "pages": 20, "groups": ["Einherjar Scan"]},
+  {"number": 1184, "title": "We're All Bones When We Die", "language": "ca", "id": "47b3c8e5-1d69-4a2f-b7c0-9e4d6a3f5b25", "pages": 18, "groups": ["Einherjar Scan"]}
+ ]
+}
