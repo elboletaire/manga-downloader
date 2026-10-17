@@ -3,8 +3,11 @@
 package grabber
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 )
@@ -287,5 +290,29 @@ func TestUnavailableFilterErrorListsSorted(t *testing.T) {
 	want := `language "zz" isn't available for this title (available: ca, en, es)`
 	if got := err.Error(); got != want {
 		t.Errorf("Error() = %q, want %q", got, want)
+	}
+}
+
+// TestSortedValuesFixture checks SortedValues against the cases the GUI's
+// filters.test.ts reads too, so both sides keep one order
+func TestSortedValuesFixture(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("testdata", "filteroptions.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixture struct {
+		Cases []struct {
+			Name   string   `json:"name"`
+			Values []string `json:"values"`
+			Sorted []string `json:"sorted"`
+		} `json:"cases"`
+	}
+	if err := json.Unmarshal(data, &fixture); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range fixture.Cases {
+		if got := SortedValues(c.Values); !reflect.DeepEqual(got, c.Sorted) {
+			t.Errorf("%s: SortedValues(%q) = %q, want %q", c.Name, c.Values, got, c.Sorted)
+		}
 	}
 }

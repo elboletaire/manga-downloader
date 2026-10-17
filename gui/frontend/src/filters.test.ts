@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createT } from './i18n';
-import { sameScanlator, typedValue, filterControl, filtersIdentified, filterOptions, languageName, shownSelection } from './filters';
+import { sameScanlator, typedValue, filterControl, filtersIdentified, filterOptions, languageName, shownSelection, sortedValues } from './filters';
 import type { FilterChoice } from './types';
+import shared from '../../../grabber/testdata/filteroptions.json';
 
 const t = createT('en');
 
@@ -52,7 +53,7 @@ describe('filterOptions', () => {
     expect(groups[0]).toEqual({ value: 'all', label: 'All groups' });
   });
 
-  it('sorts the values with the collation, and slots in an unlisted selection alphabetically', () => {
+  it('sorts the values in the backend order, and slots in an unlisted selection alphabetically', () => {
     const options = filterOptions(choice({ values: ['Dawn', 'Écarlate', 'Fable', 'Zed'], selected: 'Ecru' }), 'scanlator', t);
     expect(options.map((o) => o.value)).toEqual(['Dawn', 'Écarlate', 'Ecru', 'Fable', 'Zed']);
 
@@ -121,6 +122,23 @@ describe('filterOptions', () => {
 
     const groups = filterOptions(choice({ values: ['Alpha'], all: true, selected: '' }), 'scanlator', createT('ca'), 'ca');
     expect(groups.map((o) => o.label)).toEqual(['Tria un grup…', 'Tots els grups', 'Alpha']);
+  });
+});
+
+describe('sortedValues', () => {
+  // the same cases grabber's TestSortedValuesFixture reads
+  it.each(shared.cases)('$name', ({ values, sorted }) => {
+    expect(sortedValues(values)).toEqual(sorted);
+  });
+});
+
+describe('filterOptions order', () => {
+  it.each(['en', 'es', 'ca'] as const)('is the backend order under %s', (lang) => {
+    const tl = createT(lang);
+    for (const { values, sorted } of shared.cases) {
+      const options = filterOptions(choice({ values, selected: values[0] }), 'scanlator', tl, lang);
+      expect(options.map((o) => o.value)).toEqual(sorted);
+    }
   });
 });
 

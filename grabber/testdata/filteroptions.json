@@ -1,0 +1,39 @@
+{
+  "cases": [
+    {
+      "name": "case and accent ties keep the raw strings' order",
+      "values": ["alpha", "Alpha"],
+      "sorted": ["Alpha", "alpha"]
+    },
+    {
+      "name": "accents fold before comparing",
+      "values": ["Nz", "nube", "Ñu"],
+      "sorted": ["Ñu", "nube", "Nz"]
+    },
+    {
+      "name": "punctuation sorts by its byte",
+      "values": ["a_b", "a-b"],
+      "sorted": ["a-b", "a_b"]
+    },
+    {
+      "name": "digit runs compare as numbers, zeros aside",
+      "values": ["Group 10", "Group 2", "Group 02"],
+      "sorted": ["Group 02", "Group 2", "Group 10"]
+    },
+    {
+      "name": "an accent-only difference is a tie",
+      "values": ["Écarlate", "Ecarlate"],
+      "sorted": ["Ecarlate", "Écarlate"]
+    },
+    {
+      "name": "non-Latin names sort by their code points after Latin ones",
+      "values": ["漫画", "Zed", "Ωmega"],
+      "sorted": ["Zed", "Ωmega", "漫画"]
+    },
+    {
+      "name": "Catalan ç folds to c, and l·l sorts after lla",
+      "values": ["l·l", "Lla", "Ceba", "Ça"],
+      "sorted": ["Ça", "Ceba", "Lla", "l·l"]
+    }
+  ]
+}

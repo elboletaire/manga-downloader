@@ -100,9 +100,9 @@ export function shownSelection(filter: FilterChoice, loaded: boolean): string {
 
 /**
  * The options of one selector, in the order shown: a placeholder when no value
- * is shown, "All" first where the site takes it, then the values sorted with
- * the UI language's collation (digit runs as numbers). The selected value is
- * always among them, even when the site doesn't list it (a value the series
+ * is shown, "All" first where the site takes it, then the values in the
+ * backend's order (sortedValues), whatever the UI language. The selected value
+ * is always among them, even when the site doesn't list it (a value the series
  * was loaded with), so the select never shows the wrong one.
  */
 export function filterOptions(filter: FilterChoice, kind: FilterKind, t: T, lang: Lang = 'en', loaded = true): FilterOption[] {
@@ -121,14 +121,76 @@ export function filterOptions(filter: FilterChoice, kind: FilterKind, t: T, lang
   if (selected !== '' && selected !== FILTER_ALL && !values.includes(selected)) {
     values.push(selected);
   }
-  const collator = new Intl.Collator(lang, { numeric: true });
-  values.sort(collator.compare);
-  for (const value of values) {
+  for (const value of sortedValues(values)) {
     const label = kind === 'language' ? labelOfLanguage(value, lang) : value;
     options.push({ value, label });
   }
 
   return options;
+}
+
+const encoder = new TextEncoder();
+
+// byteLess compares UTF-8 bytes, as Go's string order does
+function byteLess(a: string, b: string): boolean {
+  const x = encoder.encode(a);
+  const y = encoder.encode(b);
+  for (let i = 0; i < Math.min(x.length, y.length); i++) {
+    if (x[i] !== y[i]) return x[i] < y[i];
+  }
+
+  return x.length < y.length;
+}
+
+// sortKey lowercases s and drops its accents, so "Écarlate" sorts as "ecarlate"
+function sortKey(s: string): string {
+  const lower = [...s].map((c) => c.toLowerCase()).join('');
+
+  return lower.normalize('NFD').replace(/\p{Mn}/gu, '');
+}
+
+const isDigit = (c: string) => c >= '0' && c <= '9';
+
+// digitRun reads the digits from start, without their leading zeros
+function digitRun(chars: string[], start: number): { digits: string; end: number } {
+  let end = start;
+  while (end < chars.length && isDigit(chars[end])) end++;
+
+  return { digits: chars.slice(start, end).join('').replace(/^0+/, ''), end };
+}
+
+// naturalLess mirrors grabber's: by sortKey with digit runs as numbers, then by the raw strings
+function naturalLess(a: string, b: string): boolean {
+  const ka = [...sortKey(a)];
+  const kb = [...sortKey(b)];
+  let i = 0;
+  let j = 0;
+  while (i < ka.length && j < kb.length) {
+    if (isDigit(ka[i]) && isDigit(kb[j])) {
+      const da = digitRun(ka, i);
+      const db = digitRun(kb, j);
+      if (da.digits !== db.digits) {
+        return da.digits.length < db.digits.length || (da.digits.length === db.digits.length && da.digits < db.digits);
+      }
+      i = da.end;
+      j = db.end;
+      continue;
+    }
+    if (ka[i] !== kb[j]) return byteLess(ka[i], kb[j]);
+    i++;
+    j++;
+  }
+  // the rest is compared in bytes, as the backend does
+  const restA = encoder.encode(ka.slice(i).join('')).length;
+  const restB = encoder.encode(kb.slice(j).join('')).length;
+  if (restA !== restB) return restA < restB;
+
+  return byteLess(a, b);
+}
+
+/** The values in the backend's order (grabber.SortedValues): case and accents folded, digit runs as numbers. A copy. */
+export function sortedValues(values: readonly string[]): string[] {
+  return [...values].sort((a, b) => (naturalLess(a, b) ? -1 : naturalLess(b, a) ? 1 : 0));
 }
 
 function labelOfLanguage(code: string, lang: Lang): string {
