@@ -20,7 +20,7 @@ describe('UpdateDialog', () => {
       ),
     );
     expect(html).toContain('Actualización disponible');
-    expect(html).toContain('Manga Downloader v1.13.0 está disponible (tienes v1.12.0).');
+    expect(html).toContain('Manga Downloader v1.13.0 está disponible (tienes la v1.12.0).');
     expect(html).toContain('Actualizar ahora');
     expect(html).toContain('Más tarde');
   });
