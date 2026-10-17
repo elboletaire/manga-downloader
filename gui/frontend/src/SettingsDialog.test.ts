@@ -47,9 +47,9 @@ describe('SettingsDialog', () => {
 
   it('shows the system hint only when the language follows the system', () => {
     expect(render('', state(), ['fr-FR'])).toContain('Follows the system: English.');
-    expect(render('', state(), ['es-ES'])).toContain('Sigue al sistema: Español.');
+    expect(render('', state(), ['es-ES'])).toContain('Sigue el idioma del sistema: Español.');
     expect(render('en', state(), ['es-ES'])).not.toContain('Follows the system');
-    expect(render('ca', state(), ['es-ES'])).not.toContain('Segueix el sistema');
+    expect(render('ca', state(), ['es-ES'])).not.toContain('Segueix la llengua del sistema');
   });
 
   it('disables the update switch with the dev hint when there is no release URL', () => {

@@ -41,15 +41,23 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
   useEffect(() => {
     const el = dialog.current;
     if (el && !el.open) el.showModal();
+    // closing on unmount hands focus back to the element that opened the dialog
+    return () => {
+      if (el?.open) el.close();
+    };
   }, []);
 
   const pick = (next: LangPref) => {
     setLanguage(next).catch((e: unknown) => onError(errorMessage(e)));
   };
 
-  // A click on the dialog itself, not on its content, is a click on the backdrop.
+  // A click on the dialog itself is a backdrop click, but only when the press started there too.
+  const pressedBackdrop = useRef(false);
+  const onBackdropDown = (e: MouseEvent<HTMLDialogElement>) => {
+    pressedBackdrop.current = e.target === e.currentTarget;
+  };
   const onBackdrop = (e: MouseEvent<HTMLDialogElement>) => {
-    if (e.target === e.currentTarget) onClose();
+    if (pressedBackdrop.current && e.target === e.currentTarget) onClose();
   };
 
   const link = (url: string) => (e: MouseEvent<HTMLAnchorElement>) => {
@@ -71,6 +79,7 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
         e.preventDefault();
         onClose();
       }}
+      onMouseDown={onBackdropDown}
       onClick={onBackdrop}
     >
       <div className="settings-content">
@@ -81,29 +90,31 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
           </button>
         </header>
 
-        <section className="opt-group">
-          <h3>{t('settings.language.heading')}</h3>
-          <Segmented<LangPref>
-            label={t('settings.language.heading')}
-            value={pref}
-            options={languageOptions}
-            onChange={pick}
-          />
-          {pref === '' && (
-            <p className="hint">{t('settings.language.systemHint', { language: LANG_INFO[systemLang].name })}</p>
-          )}
-        </section>
+        <div className="settings-body">
+          <section className="opt-group">
+            <h3>{t('settings.language.heading')}</h3>
+            <Segmented<LangPref>
+              label={t('settings.language.heading')}
+              value={pref}
+              options={languageOptions}
+              onChange={pick}
+            />
+            {pref === '' && (
+              <p className="hint">{t('settings.language.systemHint', { language: LANG_INFO[systemLang].name })}</p>
+            )}
+          </section>
 
-        <section className="opt-group">
-          <h3>{t('settings.updates.heading')}</h3>
-          <Switch
-            label={t('settings.updates.check')}
-            description={devBuild ? t('settings.updates.devHint') : t('settings.updates.hint')}
-            checked={prefs.checkUpdates}
-            disabled={devBuild}
-            onChange={onCheckUpdates}
-          />
-        </section>
+          <section className="opt-group">
+            <h3>{t('settings.updates.heading')}</h3>
+            <Switch
+              label={t('settings.updates.check')}
+              description={devBuild ? t('settings.updates.devHint') : t('settings.updates.hint')}
+              checked={prefs.checkUpdates}
+              disabled={devBuild}
+              onChange={onCheckUpdates}
+            />
+          </section>
+        </div>
 
         <footer className="settings-about">
           {state.releaseURL !== '' ? (

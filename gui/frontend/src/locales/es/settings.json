@@ -5,12 +5,12 @@
   "language": {
     "heading": "Idioma",
     "system": "Sistema",
-    "systemHint": "Sigue al sistema: {{language}}."
+    "systemHint": "Sigue el idioma del sistema: {{language}}."
   },
   "updates": {
     "heading": "Actualizaciones",
-    "check": "Buscar nuevas versiones al abrir la app",
-    "hint": "Consulta a GitHub la última versión publicada cada vez que se abre la app.",
+    "check": "Buscar actualizaciones al abrir la app",
+    "hint": "Consulta en GitHub la última versión cada vez que se abre la app.",
     "devHint": "Las versiones de desarrollo no buscan actualizaciones."
   },
   "about": {
