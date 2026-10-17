@@ -1,0 +1,31 @@
+{
+  "label": "Volumes",
+  "placeholder": "{{example}} (site's volumes if empty)",
+  "title": "Chapter ranges, one group per volume, separated by \"{{separator}}\". Start a group with \"{{prefix}}\" to give its volume number, e.g. \"{{example}}\".",
+  "useSite": "Use the site's volumes",
+  "summary": {
+    "own_one": "{{count}} volume{{outside}}",
+    "own_other": "{{count}} volumes{{outside}}",
+    "none": "No chapter falls in these volumes.",
+    "site": "Site's volumes: {{volumes}}{{outside}}",
+    "listed_one": "{{count}} volume, as the site files them (they can't be written as chapter ranges){{outside}}",
+    "listed_other": "{{count}} volumes, as the site files them (they can't be written as chapter ranges){{outside}}",
+    "unlisted": "The site lists no volumes: enter them as chapter ranges.",
+    "outside_one": ", {{count}} chapter outside them",
+    "outside_other": ", {{count}} chapters outside them"
+  },
+  "group": {
+    "volume": "Volume {{number}}",
+    "loose": "Not in a volume"
+  },
+  "span": {
+    "none": "no chapters",
+    "one": "chapter {{number}}",
+    "range": "chapters {{first}}–{{last}}"
+  },
+  "parts": {
+    "chapter": "Chapter {{number}}",
+    "count_one": "{{count}} part",
+    "count_other": "{{count}} parts"
+  }
+}

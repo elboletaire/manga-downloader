@@ -4,8 +4,12 @@
 // chapter list to show, before the run. A parts run (--volumes parts) has
 // no box: groupParts is its grouping.
 
-import { formatNumber, plural } from './format';
+import { formatNumber } from './format';
+import { createT, type T } from './i18n';
 import type { Chapter } from './types';
+
+/** The English catalog, as grabbers title a chapter header "Chapter N" */
+const englishLabel = createT('en');
 
 export interface Range {
   begin: number;
@@ -183,13 +187,15 @@ function groupOf(number: number, groups: Range[][]): number {
 }
 
 /** "chapters 1–7", or "chapter 5" for a volume of one number */
-export function chapterSpan(chapters: Chapter[]): string {
+export function chapterSpan(chapters: Chapter[], t: T): string {
   if (chapters.length === 0) {
-    return 'no chapters';
+    return t('volumes.span.none');
   }
   const first = formatNumber(chapters[0].number);
   const last = formatNumber(chapters[chapters.length - 1].number);
-  return first === last ? `chapter ${first}` : `chapters ${first}–${last}`;
+  return first === last
+    ? t('volumes.span.one', { number: first })
+    : t('volumes.span.range', { first, last });
 }
 
 /** The Volumes box's note: a line, and the site's ranges to set at its end (cut with an ellipsis) */
@@ -209,22 +215,24 @@ export function volumesSummary(
   listed: number,
   volumes: number,
   loose: number,
+  t: T,
 ): VolumesSummary {
-  const outside = loose > 0 ? `, ${plural(loose, 'chapter', 'chapters')} outside them` : '';
+  const outside = loose > 0 ? t('volumes.summary.outside', { count: loose }) : '';
   if (!isSiteVolumes(text)) {
     return {
-      text: volumes === 0 ? 'No chapter falls in these volumes.' : `${plural(volumes, 'volume', 'volumes')}${outside}`,
+      text:
+        volumes === 0
+          ? t('volumes.summary.none')
+          : t('volumes.summary.own', { count: volumes, outside }),
     };
   }
   if (site !== '') {
-    return { text: `Site's volumes: ${volumes}${outside}`, ranges: site };
+    return { text: t('volumes.summary.site', { volumes, outside }), ranges: site };
   }
   if (listed > 0) {
-    return {
-      text: `${plural(listed, 'volume', 'volumes')}, as the site files them (they can't be written as chapter ranges)${outside}`,
-    };
+    return { text: t('volumes.summary.listed', { count: listed, outside }) };
   }
-  return { text: 'The site lists no volumes: enter them as chapter ranges.' };
+  return { text: t('volumes.summary.unlisted') };
 }
 
 /** A row of the grouped list: a group's header, or a chapter (in a group or on its own) */
@@ -245,7 +253,7 @@ export function plainRows(chapters: Chapter[]): GroupedRow[] {
  * chapters, unless collapsed, and the chapters outside every volume last,
  * under "Not in a volume".
  */
-export function groupedRows(grouping: Grouping, collapsed: ReadonlySet<string>): GroupedRow[] {
+export function groupedRows(grouping: Grouping, collapsed: ReadonlySet<string>, t: T): GroupedRow[] {
   const rows: GroupedRow[] = [];
   const add = (key: string, label: string, detail: string, chapters: Chapter[]) => {
     const isCollapsed = collapsed.has(key);
@@ -257,10 +265,10 @@ export function groupedRows(grouping: Grouping, collapsed: ReadonlySet<string>):
     }
   };
   for (const v of grouping.volumes) {
-    add(`volume-${v.number}`, `Volume ${v.number}`, chapterSpan(v.chapters), v.chapters);
+    add(`volume-${v.number}`, t('volumes.group.volume', { number: v.number }), chapterSpan(v.chapters, t), v.chapters);
   }
   if (grouping.loose.length > 0) {
-    add(LOOSE, 'Not in a volume', plural(grouping.loose.length, 'chapter', 'chapters'), grouping.loose);
+    add(LOOSE, t('volumes.group.loose'), t('count.chapter', { count: grouping.loose.length }), grouping.loose);
   }
 
   return rows;
@@ -313,7 +321,7 @@ export function groupParts(chapters: Chapter[]): PartGroup[] {
  * The list rows of a parts run: a chapter with parts is a header followed by
  * its parts, unless collapsed; a chapter without parts stays a plain row.
  */
-export function partRows(groups: PartGroup[], collapsed: ReadonlySet<string>): GroupedRow[] {
+export function partRows(groups: PartGroup[], collapsed: ReadonlySet<string>, t: T): GroupedRow[] {
   const rows: GroupedRow[] = [];
   for (const g of groups) {
     if (g.chapters.length === 1) {
@@ -322,14 +330,16 @@ export function partRows(groups: PartGroup[], collapsed: ReadonlySet<string>): G
     }
     const key = `part-${g.chapters[0].index}`;
     const isCollapsed = collapsed.has(key);
-    const label = `Chapter ${formatNumber(g.number)}`;
+    const number = formatNumber(g.number);
+    const label = t('volumes.parts.chapter', { number });
     const title = partsTitle(g.chapters);
-    const count = `${g.chapters.length} parts`;
+    const count = t('volumes.parts.count', { count: g.chapters.length });
     rows.push({
       kind: 'group',
       key,
       label,
-      detail: title !== '' && title !== label ? `${title} · ${count}` : count,
+      // a title that only repeats the header's label is left out, in any language
+      detail: title !== '' && title !== englishLabel('volumes.parts.chapter', { number }) ? `${title} · ${count}` : count,
       tag: g.group,
       chapters: g.chapters,
       collapsed: isCollapsed,

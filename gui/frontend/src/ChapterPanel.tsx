@@ -167,10 +167,10 @@ function ChapterList({
   const split = useMemo(() => parts?.filter((g) => g.chapters.length > 1).length ?? 0, [parts]);
   const rows: GroupedRow[] = useMemo(() => {
     if (grouping !== null) {
-      return groupedRows(grouping, collapsed);
+      return groupedRows(grouping, collapsed, t);
     }
-    return parts !== null ? partRows(parts, collapsed) : plainRows(chapters);
-  }, [grouping, parts, chapters, collapsed]);
+    return parts !== null ? partRows(parts, collapsed, t) : plainRows(chapters);
+  }, [grouping, parts, chapters, collapsed, t]);
   const list = useVirtualList(rows.length, ROW_HEIGHT);
 
   // a new list starts at the top, with nothing active and nothing folded
@@ -647,6 +647,7 @@ interface VolumesBarProps {
  * as ranges when they can be written so. Commits on Enter or on blur.
  */
 function VolumesBar({ text, site, listed, volumes, loose, disabled, onVolumes }: VolumesBarProps) {
+  const { t } = useI18n();
   const [draft, setDraft] = useState(text);
   const [error, setError] = useState('');
   // a pushed value replaces the draft, as in the option fields
@@ -666,7 +667,7 @@ function VolumesBar({ text, site, listed, volumes, loose, disabled, onVolumes }:
     );
   };
 
-  const summary = volumesSummary(text, site, listed, volumes, loose);
+  const summary = volumesSummary(text, site, listed, volumes, loose, t);
 
   return (
     <div className="volumes-bar">
@@ -677,13 +678,13 @@ function VolumesBar({ text, site, listed, volumes, loose, disabled, onVolumes }:
           commit(draft);
         }}
       >
-        <label htmlFor="volumes-input">Volumes</label>
+        <label htmlFor="volumes-input">{t('volumes.label')}</label>
         <input
           id="volumes-input"
           type="text"
           className={`input small mono${error !== '' ? ' invalid' : ''}`}
-          placeholder={listed > 0 ? "1-7/8-16 (site's volumes if empty)" : '1-7/8-16'}
-          title='Chapter ranges, one group per volume, separated by "/". Start a group with "N:" to give its volume number, e.g. "16:112-114".'
+          placeholder={listed > 0 ? t('volumes.placeholder', { example: '1-7/8-16' }) : '1-7/8-16'}
+          title={t('volumes.title', { separator: '/', prefix: 'N:', example: '16:112-114' })}
           value={draft}
           disabled={disabled}
           spellCheck={false}
@@ -713,7 +714,7 @@ function VolumesBar({ text, site, listed, volumes, loose, disabled, onVolumes }:
               commit(site);
             }}
           >
-            Use the site's volumes
+            {t('volumes.useSite')}
           </button>
         )}
       </form>

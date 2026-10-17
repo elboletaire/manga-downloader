@@ -1,0 +1,31 @@
+{
+  "label": "Volums",
+  "placeholder": "{{example}} (els volums del lloc si està buit)",
+  "title": "Rangs de capítols, un grup per volum, separats per \"{{separator}}\". Comença un grup amb \"{{prefix}}\" per donar-li el número del volum, p. ex. \"{{example}}\".",
+  "useSite": "Fes servir els volums del lloc",
+  "summary": {
+    "own_one": "{{count}} volum{{outside}}",
+    "own_other": "{{count}} volums{{outside}}",
+    "none": "Cap capítol no cau en aquests volums.",
+    "site": "Volums del lloc: {{volumes}}{{outside}}",
+    "listed_one": "{{count}} volum, tal com els ordena el lloc (no es poden escriure com a rangs de capítols){{outside}}",
+    "listed_other": "{{count}} volums, tal com els ordena el lloc (no es poden escriure com a rangs de capítols){{outside}}",
+    "unlisted": "El lloc no llista volums: indica'ls com a rangs de capítols.",
+    "outside_one": ", {{count}} capítol fora d'ells",
+    "outside_other": ", {{count}} capítols fora d'ells"
+  },
+  "group": {
+    "volume": "Volum {{number}}",
+    "loose": "Sense volum"
+  },
+  "span": {
+    "none": "sense capítols",
+    "one": "capítol {{number}}",
+    "range": "capítols {{first}}–{{last}}"
+  },
+  "parts": {
+    "chapter": "Capítol {{number}}",
+    "count_one": "{{count}} part",
+    "count_other": "{{count}} parts"
+  }
+}

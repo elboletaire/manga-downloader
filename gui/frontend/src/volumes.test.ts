@@ -14,8 +14,11 @@ import {
   siteVolumes,
   volumesSummary,
 } from './volumes';
+import { createT } from './i18n';
 import type { Chapter } from './types';
 import shared from '../../../ranges/testdata/volumes.json';
+
+const en = createT('en');
 
 const ch = (number: number, volume = 0, index = number): Chapter => ({
   index,
@@ -104,7 +107,7 @@ describe('groupedRows', () => {
   const g = groupChapters(list, parseVolumes('1-2/3-4'));
 
   it('puts each volume header before its chapters, and the rest last', () => {
-    const rows = groupedRows(g, new Set());
+    const rows = groupedRows(g, new Set(), en);
     expect(rows.map((r) => (r.kind === 'group' ? r.label : r.chapter.number))).toEqual([
       'Volume 1',
       1,
@@ -120,7 +123,7 @@ describe('groupedRows', () => {
   });
 
   it('hides the chapters of a collapsed group, keeping its header', () => {
-    const rows = groupedRows(g, new Set(['volume-1', LOOSE]));
+    const rows = groupedRows(g, new Set(['volume-1', LOOSE]), en);
     expect(rows.map((r) => (r.kind === 'group' ? `${r.label}${r.collapsed ? ' +' : ''}` : r.chapter.number))).toEqual([
       'Volume 1 +',
       'Volume 2',
@@ -131,7 +134,7 @@ describe('groupedRows', () => {
   });
 
   it('has no "Not in a volume" group when every chapter has a volume', () => {
-    const rows = groupedRows(groupChapters(list, parseVolumes('1-10')), new Set());
+    const rows = groupedRows(groupChapters(list, parseVolumes('1-10')), new Set(), en);
     expect(rows.filter((r) => r.kind === 'group')).toHaveLength(1);
   });
 });
@@ -160,7 +163,7 @@ describe('groupParts', () => {
   });
 
   it('heads a chapter with parts, and leaves one without them a plain row', () => {
-    const rows = partRows(groupParts(parts), new Set());
+    const rows = partRows(groupParts(parts), new Set(), en);
     expect(
       rows.map((r) =>
         r.kind === 'group' ? `${r.label} · ${r.detail}${r.tag ? ` [${r.tag}]` : ''}` : `${r.chapter.index}${r.part ? ` ${r.part.n}/${r.part.of} ${r.part.label}` : ''}${r.inGroup ? '' : ' alone'}`,
@@ -178,7 +181,7 @@ describe('groupParts', () => {
   });
 
   it('folds a chapter to its header', () => {
-    const rows = partRows(groupParts(parts), new Set(['part-2']));
+    const rows = partRows(groupParts(parts), new Set(['part-2']), en);
     expect(rows.filter((r) => r.kind === 'chapter').map((r) => (r.kind === 'chapter' ? r.chapter.index : -1))).toEqual([
       0, 5, 3, 4,
     ]);
@@ -203,6 +206,7 @@ describe('groupParts', () => {
         titled(7, 7, 'Part 2 Same', 'Part 2', 'Same'),
       ]),
       new Set(),
+      en,
     );
     expect(rows.map((r) => (r.kind === 'group' ? `${r.label} · ${r.detail}` : r.part?.label))).toEqual([
       // the header names a title only when every part has the same one
@@ -254,8 +258,25 @@ describe('shared parts titles with Go', () => {
 
 describe('helpers', () => {
   it('names the span of a volume', () => {
-    expect(chapterSpan([ch(1), ch(7.5)])).toBe('chapters 1–7.5');
-    expect(chapterSpan([ch(5)])).toBe('chapter 5');
+    expect(chapterSpan([ch(1), ch(7.5)], en)).toBe('chapters 1–7.5');
+    expect(chapterSpan([ch(5)], en)).toBe('chapter 5');
+  });
+
+  it('names the groups in the language of the app', () => {
+    const rows = groupedRows(groupChapters(list, parseVolumes('1-2/3-4')), new Set(), createT('es'));
+    expect(rows.flatMap((r) => (r.kind === 'group' ? [`${r.label} · ${r.detail}`] : []))).toEqual([
+      'Volumen 1 · capítulos 1–2',
+      'Volumen 2 · capítulos 3–4',
+      'Sin volumen · 3 capítulos',
+    ]);
+    expect(chapterSpan([ch(5)], createT('ca'))).toBe('capítol 5');
+  });
+
+  it('names the parts of a chapter in the language of the app', () => {
+    const rows = partRows(groupParts([ch(2, 0, 1), ch(2, 0, 2)]), new Set(), createT('es'));
+    expect(rows.flatMap((r) => (r.kind === 'group' ? [`${r.label} · ${r.detail}`] : []))).toEqual([
+      'Capítulo 2 · 2 partes',
+    ]);
   });
 
   it('counts the selected chapters of a group', () => {
@@ -398,6 +419,14 @@ describe('volumesSummary', () => {
       want: { text: 'The site lists no volumes: enter them as chapter ranges.' },
     },
   ])('$name', ({ text, site, listed, volumes, loose, want }) => {
-    expect(volumesSummary(text, site, listed, volumes, loose)).toEqual(want);
+    expect(volumesSummary(text, site, listed, volumes, loose, en)).toEqual(want);
+  });
+
+  it('says the summary in the language of the app', () => {
+    expect(volumesSummary('1-7', '', 1, 1, 3, createT('es')).text).toBe('1 volumen, 3 capítulos fuera de ellos');
+    expect(volumesSummary('', '61:598-603', 55, 55, 15, createT('ca'))).toEqual({
+      text: "Volums del lloc: 55, 15 capítols fora d'ells",
+      ranges: '61:598-603',
+    });
   });
 });
