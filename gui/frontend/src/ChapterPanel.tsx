@@ -603,7 +603,6 @@ export function ChapterBox({ on, locked }: { on: boolean; locked: boolean }) {
   return <span className={`box${on ? ' on' : ''}${locked ? ' disabled' : ''}`} aria-hidden="true" />;
 }
 
-/** The tooltip and label of a locked chapter's mark */
 
 /** A chapter's title, marked with a lock when the listing says it's locked */
 export function ChapterTitle({ title, locked }: { title: string; locked: boolean }) {

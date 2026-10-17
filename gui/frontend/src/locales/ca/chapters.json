@@ -11,11 +11,12 @@
   },
   "failed": {
     "title": "No s'ha pogut carregar aquesta sèrie",
-    "hint": "Comprova que l'enllaç obre la sèrie en un navegador. Els llocs protegits per una comprovació de Cloudflare poden necessitar <em>Show the browser window</em>, a Options › Advanced.",
+    "hint": "Comprova que l'enllaç obre la sèrie en un navegador. Els llocs protegits per una comprovació de Cloudflare poden necessitar <em>Mostra la finestra del navegador</em>, a Opcions › Avançat.",
     "retry": "Torna-ho a provar"
   },
   "reloading": "Recarregant…",
-  "splitParts": "{{count}} dividits en parts",
+  "splitParts_one": "{{count}} dividit en parts",
+  "splitParts_other": "{{count}} dividits en parts",
   "selected": "<strong>{{selected}}</strong> de {{total}} seleccionats",
   "selectAll": "Selecciona-ho tot",
   "selectNone": "Desselecciona-ho tot",

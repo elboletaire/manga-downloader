@@ -15,7 +15,8 @@
     "retry": "Try again"
   },
   "reloading": "Reloading…",
-  "splitParts": "{{count}} split in parts",
+  "splitParts_one": "{{count}} split in parts",
+  "splitParts_other": "{{count}} split in parts",
   "selected": "<strong>{{selected}}</strong> of {{total}} selected",
   "selectAll": "Select all",
   "selectNone": "Select none",

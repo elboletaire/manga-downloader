@@ -11,11 +11,12 @@
   },
   "failed": {
     "title": "No se pudo cargar esta serie",
-    "hint": "Comprueba que el enlace abre la serie en un navegador. Los sitios protegidos por una comprobación de Cloudflare pueden necesitar <em>Show the browser window</em>, en Options › Advanced.",
+    "hint": "Comprueba que el enlace abre la serie en un navegador. Los sitios protegidos por una comprobación de Cloudflare pueden necesitar <em>Mostrar la ventana del navegador</em>, en Opciones › Avanzado.",
     "retry": "Volver a intentarlo"
   },
   "reloading": "Recargando…",
-  "splitParts": "{{count}} divididos en partes",
+  "splitParts_one": "{{count}} dividido en partes",
+  "splitParts_other": "{{count}} divididos en partes",
   "selected": "<strong>{{selected}}</strong> de {{total}} seleccionados",
   "selectAll": "Seleccionar todo",
   "selectNone": "Deseleccionar todo",
