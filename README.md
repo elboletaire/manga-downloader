@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[186 supported sites](#supported-sites)**, from big aggregators to small
+- **[187 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -645,7 +645,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 186 supported sites</b></summary>
+<summary><b>Show all 187 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -674,6 +674,7 @@ to a minute.
 | [comic-gardo.com](https://comic-gardo.com) | Japanese, Comic Gardo (GigaViewer) | 2026-10-17 |
 | [comic-growl.com](https://comic-growl.com) | Japanese, Comic Growl (Comici) | 2026-10-17 |
 | [comic-ogyaaa.com](https://comic-ogyaaa.com) | Japanese, Comic Ogyaaa (GigaViewer) | 2026-10-17 |
+| [comic-ryu.jp](https://comic-ryu.jp) | Japanese, Comic Ryu (Comici) | 2026-10-17 |
 | [comic-seasons.com](https://comic-seasons.com) | Japanese, Seasons (GigaViewer) | 2026-10-17 |
 | [comic-trail.com](https://comic-trail.com) | Japanese, Comic Trail (GigaViewer) | 2026-10-17 |
 | [comic-walker.com](https://comic-walker.com) | Japanese, KadoComi (KADOKAWA) | 2026-10-17 |

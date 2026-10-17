@@ -28,6 +28,7 @@ var comiciDomains = []string{
 	"championcross.jp",
 	"comicride.jp",
 	"takecomic.jp",
+	"comic-ryu.jp",
 }
 
 var (
