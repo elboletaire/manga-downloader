@@ -44,11 +44,15 @@ var (
 	// episodes and series
 	comiciEpisodeRe = regexp.MustCompile(`/episodes/([0-9a-f]{13})`)
 	comiciSeriesRe  = regexp.MustCompile(`/series/([0-9a-f]{13})`)
-	// comiciNumberRe is the number a title starts with: "第34話", "0話", "2-①" (a
-	// split episode), "#9.5" or a bare "1"
-	comiciNumberRe = regexp.MustCompile(`^(?:第(` + gvDigits + `)話|(` + gvDigits + `)話|(` + gvDigits + `)-|#(` + gvDigits + `)|(` + gvDigits + `)$)`)
+	// comiciNumberRe is the number a title starts with: "第34話", "第一服" (a
+	// counter), "第七十一話", "EPISODE.01", "0話", "2-①" (a split episode), "#9.5",
+	// "＃1" or a bare "1"
+	comiciNumberRe = regexp.MustCompile(`^(?:第(` + gvKanji + `|` + gvDigits + `)[話服]|(` + gvDigits + `)話|(` + gvDigits + `)-|[#＃](` + gvDigits + `)|EPISODE[.．](` + gvDigits + `)|(` + gvDigits + `)$)`)
 	// comiciWordRe is a part written as a word: "前編" in "第36話前編①"
 	comiciWordRe = regexp.MustCompile(`^[前中後]編`)
+	// comiciTrailPartRe is a part a title ends with: "前編" in "特定熊事象(2)前編", "③"
+	// in "したい事(セックスがしたい①)③"
+	comiciTrailPartRe = regexp.MustCompile(`([前中後]編)?([①-⑳])?$`)
 )
 
 // Comici is a grabber for Comici, the viewer of several Japanese publishers.
@@ -147,6 +151,14 @@ func (c *Comici) fetchDocument(path string) (*goquery.Document, error) {
 	return goquery.NewDocumentFromReader(strings.NewReader(body))
 }
 
+// comiciEpisode is an episode as the listing shows it, before its title is split
+type comiciEpisode struct {
+	raw, id  string
+	locked   bool
+	number   float64
+	numbered bool
+}
+
 // fetchSeries reads the series' title and episodes from its listing, once
 func (c *Comici) fetchSeries() error {
 	if c.seriesLoad {
@@ -159,7 +171,7 @@ func (c *Comici) fetchSeries() error {
 	}
 
 	// the listing is paginated, and a page past the last one is a 404
-	var chapters Filterables
+	var episodes []comiciEpisode
 	var title string
 	for page := 1; ; page++ {
 		doc, err := c.fetchDocument(fmt.Sprintf("/series/%s/%d", seriesID, page))
@@ -183,17 +195,38 @@ func (c *Comici) fetchSeries() error {
 			if id == nil {
 				return
 			}
-			raw := item.Find(`[data-e2e="eliTitle"]`).First().Text()
-			name, number, part := comiciTitle(raw)
-			chapters = append(chapters, &ComiciChapter{Chapter{
-				Title:    name,
-				Number:   number,
-				ID:       id[1],
-				Locked:   !comiciIsFree(item),
-				Language: "ja",
-				Label:    Label{Style: LabelNumbered, Part: part},
-			}})
+			episodes = append(episodes, comiciEpisode{
+				raw:    item.Find(`[data-e2e="eliTitle"]`).First().Text(),
+				id:     id[1],
+				locked: !comiciIsFree(item),
+			})
 		})
+	}
+
+	// a trailing part is only a part when another episode shares its number:
+	// a lone "25話 サマーキャンプ①" is an arc, not one of two parts
+	counts := map[float64]int{}
+	for i, e := range episodes {
+		_, episodes[i].number, _, episodes[i].numbered = comiciTitle(e.raw, false)
+		if episodes[i].numbered {
+			counts[episodes[i].number]++
+		}
+	}
+	var chapters Filterables
+	for _, e := range episodes {
+		name, number, part, numbered := comiciTitle(e.raw, counts[e.number] > 1)
+		style := LabelNumbered
+		if !numbered {
+			style = LabelUnnumbered
+		}
+		chapters = append(chapters, &ComiciChapter{Chapter{
+			Title:    name,
+			Number:   number,
+			ID:       e.id,
+			Locked:   e.locked,
+			Language: "ja",
+			Label:    Label{Style: style, Part: part},
+		}})
 	}
 
 	c.title = title
@@ -222,17 +255,18 @@ func comiciSeries(title string) string {
 	return strings.TrimSpace(title)
 }
 
-// comiciTitle splits an episode's listed title into its title, number and part.
-// A title without a number is numbered 0 and kept whole.
-func comiciTitle(raw string) (title string, number float64, part string) {
+// comiciTitle splits an episode's listed title into its title, number and part,
+// and reports whether it found a number. A title without one is kept whole. A
+// trailing part ("①") only counts when shared: another episode has the number.
+func comiciTitle(raw string, shared bool) (title string, number float64, part string, numbered bool) {
 	raw = cleanTitle(raw)
 	end, text, ok := gigaviewerGroup(comiciNumberRe, raw)
 	if !ok {
-		return raw, 0, ""
+		return raw, 0, "", false
 	}
 	number, ok = gigaviewerNumberOf(text)
 	if !ok {
-		return raw, 0, ""
+		return raw, 0, "", false
 	}
 
 	rest := raw[end:]
@@ -243,7 +277,29 @@ func comiciTitle(raw string) (title string, number float64, part string) {
 	} else {
 		part = word
 	}
-	return cleanTitle(rest), number, part
+	if part == "" && shared {
+		part, rest = comiciTrailingPart(rest)
+	}
+	return cleanTitle(rest), number, part, true
+}
+
+// comiciTrailingPart reads the part a title ends with, and returns the rest of
+// the title. The part can't be the whole title, so "前編" alone stays a title.
+func comiciTrailingPart(rest string) (part, title string) {
+	rest = cleanTitle(rest)
+	m := comiciTrailPartRe.FindStringSubmatch(rest)
+	if m == nil || m[0] == "" {
+		return "", rest
+	}
+	title = cleanTitle(rest[:len(rest)-len(m[0])])
+	if title == "" {
+		return "", rest
+	}
+	if m[2] == "" {
+		return m[1], title
+	}
+	n, _, _ := gigaviewerSplitPart(m[2])
+	return m[1] + n, title
 }
 
 // FetchTitle returns the series title.

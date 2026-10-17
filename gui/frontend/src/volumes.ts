@@ -279,12 +279,17 @@ const partOrder = new Intl.Collator('en', { numeric: true, sensitivity: 'base' }
 
 /**
  * Groups the chapters a parts run merges: those sharing a number, group and
- * language, in part order.
+ * language, in part order. An unnumbered chapter is a group of its own
+ * (grabber.Unnumbered), never merged with the other 0s.
  */
 export function groupParts(chapters: Chapter[]): PartGroup[] {
   const out: PartGroup[] = [];
   const byKey = new Map<string, PartGroup>();
   for (const ch of chapters) {
+    if (ch.unnumbered) {
+      out.push({ number: ch.number, group: ch.group, chapters: [ch] });
+      continue;
+    }
     const key = `${ch.number}\u0000${ch.group}\u0000${ch.language}`;
     const g = byKey.get(key);
     if (g) {

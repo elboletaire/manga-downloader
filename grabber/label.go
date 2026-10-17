@@ -183,3 +183,10 @@ func labelOf(f Filterable) Label {
 func (c Chapter) label() Label {
 	return c.Label
 }
+
+// Unnumbered reports whether a listed chapter has no number the site gives it
+// (its Number is 0, or its position in the list, as mangapark numbers them), so
+// it must not be grouped by number
+func Unnumbered(f Filterable) bool {
+	return labelOf(f).Style == LabelUnnumbered
+}

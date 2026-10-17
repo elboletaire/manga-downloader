@@ -150,6 +150,15 @@ describe('groupParts', () => {
     ]);
   });
 
+  it('keeps unnumbered chapters apart from one another and from the 0s', () => {
+    const unnumbered = (index: number): Chapter => ({ ...ch(0, 0, index), unnumbered: true });
+    expect(groupParts([unnumbered(0), unnumbered(1), part(2, 0)]).map((g) => g.chapters.map((c) => c.index))).toEqual([
+      [0],
+      [1],
+      [2],
+    ]);
+  });
+
   it('heads a chapter with parts, and leaves one without them a plain row', () => {
     const rows = partRows(groupParts(parts), new Set());
     expect(
@@ -220,13 +229,14 @@ const partLabel = (raw: string) => (/^\d+$/.test(raw) ? `Part ${raw}` : raw);
 describe('shared parts with Go', () => {
   // the cases core.GroupVolumes runs too, so the list and the run group the same way
   it.each(shared.parts.map((c) => [c.name, c] as const))('merges the parts: %s', (_, c) => {
-    const listed = c.chapters as { number: number; part: string; title?: string; group: string; language: string }[];
+    const listed = c.chapters as { number: number; part: string; title?: string; group: string; language: string; unnumbered?: boolean }[];
     const chapters = listed.map((p, i) => ({
       ...ch(p.number, 0, i),
       title: p.title ?? '',
       part: partLabel(p.part),
       group: p.group,
       language: p.language,
+      ...(p.unnumbered ? { unnumbered: true } : {}),
     }));
     const files = groupParts(chapters).map((g) => g.chapters.map((x) => x.index));
     expect(files.sort((a, b) => a[0] - b[0])).toEqual(c.want);

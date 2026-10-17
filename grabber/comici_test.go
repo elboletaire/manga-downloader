@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -31,27 +32,146 @@ func TestComiciTitle(t *testing.T) {
 	tests := []struct {
 		raw, title, part string
 		number           float64
+		numbered         bool
 	}{
-		{"第1話　血まみれのカオリス", "血まみれのカオリス", "", 1},
-		{"第34話①", "", "1", 34},
-		{"第36話前編①", "", "前編1", 36},
-		{"第36話前編", "", "前編", 36},
-		{"第35話　黒の衝撃", "黒の衝撃", "", 35},
-		{"0話", "", "", 0},
-		{"1", "", "", 1},
-		{"2-①", "", "1", 2},
-		{"19-②", "", "2", 19},
-		{"#9.5", "", "", 9.5},
-		{"#1", "", "", 1},
-		{"番外編", "番外編", "", 0},
-		{"#特別版", "#特別版", "", 0},
+		{"第1話　血まみれのカオリス", "血まみれのカオリス", "", 1, true},
+		{"第34話①", "", "1", 34, true},
+		{"第36話前編①", "", "前編1", 36, true},
+		{"第36話前編", "", "前編", 36, true},
+		{"第35話　黒の衝撃", "黒の衝撃", "", 35, true},
+		{"0話", "", "", 0, true},
+		{"第0話 はじめに", "はじめに", "", 0, true},
+		{"1", "", "", 1, true},
+		{"2-①", "", "1", 2, true},
+		{"19-②", "", "2", 19, true},
+		{"#9.5", "", "", 9.5, true},
+		{"#1", "", "", 1, true},
+		{"＃1 お楽しみ", "お楽しみ", "", 1, true},
+		{"第七十一話 ぬい", "ぬい", "", 71, true},
+		{"番外編", "番外編", "", 0, false},
+		{"#特別版", "#特別版", "", 0, false},
+		{"第４集 単行本告知", "第４集 単行本告知", "", 0, false},
+		// a trailing part: 前編/後編, or a circled number after the title
+		{"第一服「魔女と再会」", "「魔女と再会」", "", 1, true},
+		{"第二十一服「魔女と背信」前編", "「魔女と背信」", "前編", 21, true},
+		{"EPISODE.01　復活", "復活", "", 1, true},
+		{"第2話 特定熊事象(2)前編", "特定熊事象(2)", "前編", 2, true},
+		{"第2話 特定熊事象(2)後編", "特定熊事象(2)", "後編", 2, true},
+		{"第2話　したい事(働いてみたい)①", "したい事(働いてみたい)", "1", 2, true},
+		{"第4話 したい事(セックスがしたい①)③", "したい事(セックスがしたい①)", "3", 4, true},
+		{"第17話　2024年　由美子　17歳③", "2024年　由美子　17歳", "3", 17, true},
+		// not parts: a bracketed number, a numbered subtitle, a marker alone
+		{"第2話 巨獣禍の後に(1)", "巨獣禍の後に(1)", "", 2, true},
+		{"第62話 石川と田中とフジイ(2)", "石川と田中とフジイ(2)", "", 62, true},
+		{"第2話 文正の政変 その1", "文正の政変 その1", "", 2, true},
+		{"第3話 前編", "前編", "", 3, true},
+		{"特別イラスト②", "特別イラスト②", "", 0, false},
 	}
 	for _, tt := range tests {
-		title, number, part := comiciTitle(tt.raw)
+		title, number, part, numbered := comiciTitle(tt.raw, true)
+		if title != tt.title || number != tt.number || part != tt.part || numbered != tt.numbered {
+			t.Errorf("comiciTitle(%q) = (%q, %v, %q, %v), want (%q, %v, %q, %v)",
+				tt.raw, title, number, part, numbered, tt.title, tt.number, tt.part, tt.numbered)
+		}
+	}
+}
+
+// TestComiciTitleLoneTrailingPart keeps a trailing marker in the title when no
+// other episode shares the number: "25話 サマーキャンプ①" is an arc, not a part
+func TestComiciTitleLoneTrailingPart(t *testing.T) {
+	for _, tt := range []struct {
+		raw, title, part string
+		number           float64
+	}{
+		{"25話 サマーキャンプ①", "サマーキャンプ①", "", 25},
+		{"第4話 したい事(セックスがしたい①)③", "したい事(セックスがしたい①)③", "", 4},
+		{"第2話 特定熊事象(2)前編", "特定熊事象(2)前編", "", 2},
+	} {
+		title, number, part, _ := comiciTitle(tt.raw, false)
 		if title != tt.title || number != tt.number || part != tt.part {
-			t.Errorf("comiciTitle(%q) = (%q, %v, %q), want (%q, %v, %q)",
+			t.Errorf("comiciTitle(%q, false) = (%q, %v, %q), want (%q, %v, %q)",
 				tt.raw, title, number, part, tt.title, tt.number, tt.part)
 		}
+	}
+}
+
+// TestComiciFetchChaptersTrailingParts splits a trailing part only where the
+// listing shares the number
+func TestComiciFetchChaptersTrailingParts(t *testing.T) {
+	const listing = `<title>テスト - 作者 | サイト</title>
+<div data-e2e="eli"><a href="/episodes/aaaaaaaaaaaaa"></a><span data-e2e="eliTitle">25話 サマーキャンプ①</span></div>
+<div data-e2e="eli"><a href="/episodes/bbbbbbbbbbbbb"></a><span data-e2e="eliTitle">26話 サマーキャンプ②</span></div>
+<div data-e2e="eli"><a href="/episodes/ccccccccccccc"></a><span data-e2e="eliTitle">2話 特定熊事象(2)後編</span></div>
+<div data-e2e="eli"><a href="/episodes/ddddddddddddd"></a><span data-e2e="eliTitle">2話 特定熊事象(2)前編</span></div>`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/series/eeeeeeeeeeeee/1" {
+			fmt.Fprint(w, listing)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer srv.Close()
+
+	c := NewComici(&Grabber{URL: srv.URL + "/series/eeeeeeeeeeeee", Settings: &Settings{}})
+	chapters, errs := c.FetchChapters()
+	if len(errs) != 0 || len(chapters) != 4 {
+		t.Fatalf("FetchChapters() = %d chapters, errs %v; want 4", len(chapters), errs)
+	}
+	// listed as the site lists them: the 後編 first
+	want := []string{"サマーキャンプ①", "サマーキャンプ②", "後編 特定熊事象(2)", "前編 特定熊事象(2)"}
+	for i, w := range want {
+		if got := ChapterLabel(chapters[i]); got != w {
+			t.Errorf("chapter %d: label %q, want %q", i, got, w)
+		}
+	}
+}
+
+// TestComiciPartsTitle checks that the 前編 and 後編 of one episode merge under
+// its title, as the merged file is named
+func TestComiciPartsTitle(t *testing.T) {
+	var parts Filterables
+	for _, raw := range []string{"第2話 特定熊事象(2)後編", "第2話 特定熊事象(2)前編"} {
+		title, number, part, _ := comiciTitle(raw, true)
+		parts = append(parts, &ComiciChapter{Chapter{Title: title, Number: number, Label: Label{Style: LabelNumbered, Part: part}}})
+	}
+	if got := PartsTitle(parts); got != "特定熊事象(2)" {
+		t.Errorf("PartsTitle = %q, want %q", got, "特定熊事象(2)")
+	}
+}
+
+// TestComiciFetchChaptersUnnumbered lists episodes with and without a number:
+// the unnumbered ones are LabelUnnumbered, and 第0話 stays a numbered chapter
+func TestComiciFetchChaptersUnnumbered(t *testing.T) {
+	const listing = `<title>テスト - 作者 | サイト</title>
+<div data-e2e="eli"><a href="/episodes/aaaaaaaaaaaaa"></a><span data-e2e="eliTitle">第0話 はじめに</span></div>
+<div data-e2e="eli"><a href="/episodes/bbbbbbbbbbbbb"></a><span data-e2e="eliTitle">特別イラスト②</span></div>
+<div data-e2e="eli"><a href="/episodes/ccccccccccccc"></a><span data-e2e="eliTitle">第４集 単行本告知</span></div>
+<div data-e2e="eli"><a href="/episodes/ddddddddddddd"></a><span data-e2e="eliTitle">第七十一話 ぬい</span></div>`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/series/eeeeeeeeeeeee/1" {
+			fmt.Fprint(w, listing)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer srv.Close()
+
+	c := NewComici(&Grabber{URL: srv.URL + "/series/eeeeeeeeeeeee", Settings: &Settings{}})
+	chapters, errs := c.FetchChapters()
+	if len(errs) != 0 || len(chapters) != 4 {
+		t.Fatalf("FetchChapters() = %d chapters, errs %v; want 4", len(chapters), errs)
+	}
+	want := []struct {
+		number float64
+		style  LabelStyle
+	}{{0, LabelNumbered}, {0, LabelUnnumbered}, {0, LabelUnnumbered}, {71, LabelNumbered}}
+	for i, w := range want {
+		if got := labelOf(chapters[i]).Style; got != w.style || chapters[i].GetNumber() != w.number {
+			t.Errorf("chapter %d: number %v style %v, want %v %v", i, chapters[i].GetNumber(), got, w.number, w.style)
+		}
+	}
+	if !Unnumbered(chapters[1]) || Unnumbered(chapters[0]) {
+		t.Error("Unnumbered tells the numbered 第0話 from the unnumbered 特別イラスト②")
 	}
 }
 

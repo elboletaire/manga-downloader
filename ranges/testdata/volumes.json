@@ -42,7 +42,9 @@
     { "name": "chapter without parts stays single", "chapters": [{ "number": 18, "part": "", "group": "A", "language": "en" }, { "number": 19, "part": "1", "group": "A", "language": "en" }, { "number": 19, "part": "2", "group": "A", "language": "en" }, { "number": 20, "part": "", "group": "A", "language": "en" }], "want": [[0], [1, 2], [3]] },
     { "name": "parts sort by part number", "chapters": [{ "number": 19, "part": "10", "group": "A", "language": "en" }, { "number": 19, "part": "2", "group": "A", "language": "en" }, { "number": 19, "part": "1", "group": "A", "language": "en" }], "want": [[2, 1, 0]] },
     { "name": "parts without a part sort by title", "chapters": [{ "number": 356, "title": "Berserk 356b", "group": "A", "language": "en" }, { "number": 356, "title": "Berserk 356a", "group": "A", "language": "en" }], "want": [[1, 0]] },
-    { "name": "parts with one title keep the oldest first", "chapters": [{ "number": 7, "title": "Chapter 7", "group": "A", "language": "en" }, { "number": 7, "title": "Chapter 7", "group": "A", "language": "en" }], "want": [[1, 0]] }
+    { "name": "parts with one title keep the oldest first", "chapters": [{ "number": 7, "title": "Chapter 7", "group": "A", "language": "en" }, { "number": 7, "title": "Chapter 7", "group": "A", "language": "en" }], "want": [[1, 0]] },
+    { "name": "numbered 0 parts merge", "chapters": [{ "number": 0, "part": "1", "group": "A", "language": "ja" }, { "number": 0, "part": "2", "group": "A", "language": "ja" }], "want": [[0, 1]] },
+    { "name": "unnumbered chapters stay apart", "chapters": [{ "number": 0, "title": "特別イラスト", "group": "A", "language": "ja", "unnumbered": true }, { "number": 0, "title": "単行本告知", "group": "A", "language": "ja", "unnumbered": true }], "want": [[0], [1]] }
   ],
   "partsTitle": [
     { "name": "parts share a title", "parts": [{ "part": "1", "title": "Un títol" }, { "part": "2", "title": "Un títol" }], "want": "Un títol" },
@@ -50,6 +52,7 @@
     { "name": "a part without a part", "parts": [{ "part": "1", "title": "A" }, { "part": "", "title": "A" }], "want": "" },
     { "name": "no titles", "parts": [{ "part": "1", "title": "" }, { "part": "2", "title": "" }], "want": "" },
     { "name": "identical duplicates keep their label", "parts": [{ "part": "", "title": "Chapter 7 - Foo" }, { "part": "", "title": "Chapter 7 - Foo" }], "want": "Chapter 7 - Foo" },
+    { "name": "word parts share a title", "parts": [{ "part": "前編", "title": "特定熊事象(2)" }, { "part": "後編", "title": "特定熊事象(2)" }], "want": "特定熊事象(2)" },
     { "name": "duplicates with different labels", "parts": [{ "part": "", "title": "A" }, { "part": "", "title": "B" }], "want": "" }
   ]
 }

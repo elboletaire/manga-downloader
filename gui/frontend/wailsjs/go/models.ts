@@ -10,6 +10,7 @@ export namespace main {
 	    locked: boolean;
 	    part?: string;
 	    wholeTitle?: string;
+	    unnumbered?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new ChapterDTO(source);
@@ -26,6 +27,7 @@ export namespace main {
 	        this.locked = source["locked"];
 	        this.part = source["part"];
 	        this.wholeTitle = source["wholeTitle"];
+	        this.unnumbered = source["unnumbered"];
 	    }
 	}
 	export class FilterDTO {
