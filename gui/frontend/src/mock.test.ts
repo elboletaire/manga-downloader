@@ -266,20 +266,20 @@ describe('createMockApi', () => {
     expect((await createMockApi('done').state()).version).toBe('v0.0.0-mock');
   });
 
-  it('shows v1.18.0 for all scenarios with shot, v1.19.0 as the update', async () => {
+  it('shows v1.19.0 for all scenarios with shot, v1.20.0 as the update', async () => {
     const update = await createMockApi({ scenario: 'update', shot: true }).state();
-    expect(update.version).toBe('v1.18.0');
-    expect(update.update?.latest).toBe('v1.19.0');
+    expect(update.version).toBe('v1.19.0');
+    expect(update.update?.latest).toBe('v1.20.0');
 
     const loaded = await createMockApi({ scenario: 'loaded', shot: true }).state();
-    expect(loaded.version).toBe('v1.18.0');
+    expect(loaded.version).toBe('v1.19.0');
     expect(loaded.update).toBeNull();
   });
 
   it('links the version to its release whenever it reports a release', async () => {
     const tag = (v: string) => `https://github.com/elboletaire/manga-downloader/releases/tag/${v}`;
-    expect((await createMockApi({ scenario: 'loaded', shot: true }).state()).releaseURL).toBe(tag('v1.18.0'));
-    expect((await createMockApi({ scenario: 'update', shot: true }).state()).releaseURL).toBe(tag('v1.18.0'));
+    expect((await createMockApi({ scenario: 'loaded', shot: true }).state()).releaseURL).toBe(tag('v1.19.0'));
+    expect((await createMockApi({ scenario: 'update', shot: true }).state()).releaseURL).toBe(tag('v1.19.0'));
     expect((await createMockApi('update').state()).releaseURL).toBe(tag('v1.12.0'));
     expect((await createMockApi('loaded').state()).releaseURL).toBe('');
   });
@@ -290,7 +290,7 @@ describe('createMockApi', () => {
     expect(shot?.prompt).toBeUndefined();
 
     const prompt = (await createMockApi({ scenario: 'update', shot: true, prompt: true }).state()).update;
-    expect(prompt).toMatchObject({ latest: 'v1.19.0', oneClick: true, prompt: true });
+    expect(prompt).toMatchObject({ latest: 'v1.20.0', oneClick: true, prompt: true });
     expect((await createMockApi({ scenario: 'loaded', prompt: true }).state()).update).toBeNull();
   });
 

@@ -142,9 +142,9 @@ const MOCK_ALERT =
 
 const REPO = 'https://github.com/elboletaire/manga-downloader';
 const RELEASE_VERSION_DEV = 'v1.12.0';
-const RELEASE_VERSION_SHOT = 'v1.18.0';
+const RELEASE_VERSION_SHOT = 'v1.19.0';
 const UPDATE_VERSION_DEV = 'v1.13.0';
-const UPDATE_VERSION_SHOT = 'v1.19.0';
+const UPDATE_VERSION_SHOT = 'v1.20.0';
 
 function siteFrom(search: string): MockSite {
   const value = new URLSearchParams(search).get('site');
