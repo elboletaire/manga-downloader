@@ -21,8 +21,10 @@ var (
 	comicWalkerPartRe = regexp.MustCompile(`^(?:前編|中編|後編)`)
 	// comicWalkerChapterRe is the "Chapter1" some English titles start with
 	comicWalkerChapterRe = regexp.MustCompile(`^Chapter ?([0-9]+)`)
-	// comicWalkerVolumeRe is the number a volume's title ends with
-	comicWalkerVolumeRe = regexp.MustCompile(`[0-9０-９]+$`)
+	// comicWalkerVolumeRe is the number a volume's title ends with: "第３巻", "3巻", "(3)" or "3"
+	comicWalkerVolumeRe = regexp.MustCompile(`(?:第(` + gvKanji + `|` + gvDigits + `)巻?|(` + gvKanji + `|` + gvDigits + `)巻|[(（](` + gvDigits + `)[)）]|(` + gvDigits + `))$`)
+	// comicWalkerBracketRe is the 【電子限定特典つき】 a volume's title can end with
+	comicWalkerBracketRe = regexp.MustCompile(`【[^】]*】$`)
 )
 
 // ComicWalker is a grabber for KadoComi: the work's JSON API lists its episodes
@@ -122,14 +124,16 @@ func (c *ComicWalker) fetchWork() error {
 	}
 
 	// the serial episodes come first; a work with none lists its episodes under
-	// its volumes, numbered by the volume's title
+	// its volumes, numbered by the volume's title or its place in the list
 	episodes := append(work.FirstEpisodes.Result, work.LatestEpisodes.Result...)
 	volumes := map[string]int{}
+	places := map[string]int{}
 	if len(episodes) == 0 {
-		for _, comic := range work.Comics.Result {
-			for _, e := range comic.Episodes {
+		for i, comic := range work.Comics.Result {
+			for j, e := range comic.Episodes {
 				episodes = append(episodes, e)
-				volumes[e.ID] = comicWalkerVolume(comic.Title)
+				volumes[e.ID] = comicWalkerVolume(comic.Title, i+1)
+				places[e.ID] = j + 1
 			}
 		}
 	}
@@ -144,6 +148,10 @@ func (c *ComicWalker) fetchWork() error {
 		seen[e.ID] = true
 
 		title, number, part := comicWalkerTitle(e.Title)
+		// a volume's trial with no number is numbered by its place in the volume
+		if number == 0 && places[e.ID] > 0 {
+			number = float64(places[e.ID])
+		}
 		chapters = append(chapters, &ComicWalkerChapter{Chapter{
 			Title:    title,
 			Number:   number,
@@ -179,13 +187,18 @@ func comicWalkerTitle(raw string) (title string, number float64, part string) {
 	return title, number, part
 }
 
-// comicWalkerVolume returns the volume a comic's title ends with ("…　3" is 3), 0 if none
-func comicWalkerVolume(title string) int {
-	m := comicWalkerVolumeRe.FindString(cleanTitle(title))
-	if m == "" {
-		return 0
+// comicWalkerVolume returns the volume a comic's title ends with ("幼女社長２" is 2),
+// or its place in the list when the title names none
+func comicWalkerVolume(title string, place int) int {
+	title = cleanTitle(comicWalkerBracketRe.ReplaceAllString(cleanTitle(title), ""))
+	_, text, ok := gigaviewerGroup(comicWalkerVolumeRe, title)
+	if !ok {
+		return place
 	}
-	n, _ := gigaviewerNumberOf(m)
+	n, ok := gigaviewerNumberOf(text)
+	if !ok {
+		return place
+	}
 	return int(n)
 }
 

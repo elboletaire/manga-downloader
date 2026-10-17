@@ -160,8 +160,31 @@ func TestComicWalkerFetchChapters(t *testing.T) {
 	if len(errs) != 0 || len(chapters) != 1 {
 		t.Fatalf("comics-only FetchChapters() = %d chapters, errs %v; want the one episode", len(chapters), errs)
 	}
-	if c := chapters[0].(*ComicWalkerChapter); c.ID != "c1" || c.Volume != 1 || c.Title != "ちゅかいま１にちめ。" {
-		t.Errorf("comics-only chapter = id %q volume %d title %q, want c1, 1, the title", c.ID, c.Volume, c.Title)
+	// its title has no number, so it's numbered by its place in the volume
+	if c := chapters[0].(*ComicWalkerChapter); c.ID != "c1" || c.Volume != 1 || c.GetNumber() != 1 || c.Title != "ちゅかいま１にちめ。" {
+		t.Errorf("comics-only chapter = id %q volume %d number %v title %q, want c1, 1, 1, the title", c.ID, c.Volume, c.GetNumber(), c.Title)
+	}
+}
+
+func TestComicWalkerVolume(t *testing.T) {
+	tests := []struct {
+		title string
+		place int
+		want  int
+	}{
+		{"幼女社長２", 2, 2},
+		{"ゼロのちゅかいま　よーちえんnano!　1", 1, 1},
+		{"幼女社長", 1, 1},
+		{"ェアプレイ・フェアラバー【電子限定特典つき】", 7, 7},
+		{"作品名　第３巻", 5, 3},
+		{"作品名 第一巻", 5, 1},
+		{"作品名（３）", 5, 3},
+		{"作品名 3巻", 5, 3},
+	}
+	for _, tt := range tests {
+		if got := comicWalkerVolume(tt.title, tt.place); got != tt.want {
+			t.Errorf("comicWalkerVolume(%q, %d) = %d, want %d", tt.title, tt.place, got, tt.want)
+		}
 	}
 }
 
