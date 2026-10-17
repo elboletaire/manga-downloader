@@ -54,6 +54,8 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
   // the shortcut toggles the settings; the browser alert and the update dialog share a backdrop class
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // holding the keys repeats the keydown; only the first one toggles
+      if (e.repeat) return;
       if (!shouldToggleSettings(e, isMac(), document.querySelector('.browser-alert-backdrop') !== null)) {
         return;
       }
@@ -64,13 +66,19 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // the gear takes the focus back once the dialog has gone, which is when it's no longer modal
+  // the browser alert must not sit under the dialog's top layer, so it closes the dialog
+  const browserAlert = state?.browserAlert ?? '';
   useEffect(() => {
-    if (wasSettingsOpen.current && !settingsOpen) {
+    if (browserAlert !== '') setSettingsOpen(false);
+  }, [browserAlert]);
+
+  // the gear takes the focus back once the dialog has gone, unless the browser alert took it
+  useEffect(() => {
+    if (wasSettingsOpen.current && !settingsOpen && browserAlert === '') {
       gear.current?.focus();
     }
     wasSettingsOpen.current = settingsOpen;
-  }, [settingsOpen]);
+  }, [settingsOpen, browserAlert]);
 
   // a run that starts brings its progress into view, as does opening the
   // window on a run (or its outcome); the tab stays the user's to change
