@@ -142,6 +142,13 @@ updates that copy.
   <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/09-update-light.png">
 </picture>
 
+The gear icon in the header (or Ctrl+, / ⌘,) opens Settings, where you pick the app's language (English, Español or Català). The same panel turns the update check on or off.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/13-settings-dark.png">
+  <img alt="The Settings dialog, with the app's language and the update check" src="assets/screenshots/13-settings-light.png">
+</picture>
+
 ### Command line
 
 #### Homebrew

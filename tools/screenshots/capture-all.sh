@@ -3,8 +3,10 @@
 # mode, then exports the README PNGs and, with --install, the website WebPs.
 # macOS only: it captures the real window with screencapture. See README.md.
 #
-# usage: tools/screenshots/capture-all.sh [--install]
+# usage: [SHOT_LANG=en|es|ca] tools/screenshots/capture-all.sh [--install]
 #   without --install the PNGs stay in tools/screenshots/out/
+#   SHOT_LANG (default en) is the window's language; --install puts a
+#   translated run in assets/screenshots/<lang>/ and leaves the website alone
 #
 # Needs: Xcode command line tools (swiftc), cliclick, pngquant, ImageMagick
 # (website step), and python3. The terminal running it needs Accessibility
@@ -14,6 +16,9 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
 WORK=$HERE/work
 cd "$HERE"
+
+SHOT_LANG=${SHOT_LANG:-en}
+case $SHOT_LANG in en | es | ca) ;; *) echo "SHOT_LANG must be en, es or ca" >&2; exit 2 ;; esac
 
 # helpers: window ids and bounds by pid
 mkdir -p bin
@@ -40,7 +45,7 @@ SCROLL='const o=document.querySelector(".options");let e=o;while(e&&e.scrollHeig
 FOLD='const f=()=>document.querySelector(".fold.open")?.click();f();setTimeout(f,400);'
 
 for theme in light dark; do
-  shot() { ./shot.sh "$WORK/raw/$1-$theme.png" $theme "$2" 4 "${3:-}"; }
+  shot() { ./shot.sh "$WORK/raw/$1-$theme.png" $theme "$2&lang=$SHOT_LANG" 4 "${3:-}"; }
   shot 02-loaded '?mock&scenario=loaded&freeze&shot'
   ./shot-select.sh "$WORK/raw/03-language-selector-$theme.png" $theme
   shot 04-downloading '?mock&scenario=running&freeze&shot'
@@ -52,6 +57,7 @@ for theme in light dark; do
   shot 09-update '?mock&scenario=update&freeze&shot'
   shot 10-failed '?mock&scenario=done&freeze&fail&shot'
   shot 11-update-prompt '?mock&scenario=update&freeze&shot&prompt'
+  shot 13-settings '?mock&scenario=loaded&freeze&shot' 'document.querySelector(".settings-btn")?.click()'
 done
 
 # 2054x1444 -> 2000x1390, then 8-bit palette PNGs (~190-230 KB)
@@ -59,6 +65,14 @@ done
 pngquant --force --ext .png --speed 1 256 out/*.png
 
 [ "${1:-}" = --install ] || { echo "PNGs in $HERE/out"; exit 0; }
+
+if [ "$SHOT_LANG" != en ]; then
+  # the website and its hero are English, so a translated run only adds its PNGs
+  mkdir -p "$ROOT/assets/screenshots/$SHOT_LANG"
+  cp -f out/*.png "$ROOT/assets/screenshots/$SHOT_LANG/"
+  echo "PNGs in $ROOT/assets/screenshots/$SHOT_LANG"
+  exit 0
+fi
 
 cp -f out/*.png "$ROOT/assets/screenshots/"
 # website: the crops (geometry in the script) and the hero, see website/README.md

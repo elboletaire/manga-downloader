@@ -54,6 +54,19 @@ near `RELEASE_VERSION` in `mock.ts`.
 - `capture-all.sh [--install]`: all of the above for every shot and both
   themes, then the export; `--install` copies the PNGs into
   `assets/screenshots/` and regenerates the website's WebPs.
+- `13-settings`: the Settings dialog, opened by clicking the header's gear
+  (`.settings-btn`) on the loaded mock.
+
+## Languages
+
+`SHOT_LANG` (`en`, `es` or `ca`, default `en`) sets the window's language, as
+`&lang=` on every shot query (see `mock.ts`). A translated run with `--install`
+writes its PNGs to `assets/screenshots/<lang>/` and leaves the website's WebPs
+alone, since the site uses the English ones:
+
+```bash
+SHOT_LANG=es tools/screenshots/capture-all.sh --install
+```
 
 The individual steps are the ones used for #248; `capture-all.sh` puts them
 together, and retook every shot end to end for #245.

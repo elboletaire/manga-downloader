@@ -57,7 +57,7 @@
     "volumesText": "Empaqueta cada volumen en su propio CBZ, CBR o EPUB. Los capítulos se agrupan según los volúmenes que indica el sitio, o puedes definir tú los grupos, como <code>1-7/8-16</code>.",
     "volumesAlt": "La lista de capítulos agrupada en volúmenes, con los seleccionados de cada uno.",
     "partsTitle": "Un archivo por capítulo, con las partes unidas",
-    "partsText": "Algunos sitios dividen un capítulo en partes. «Merged» en la app, o <code>--volumes parts</code> en la línea de comandos, las une en un solo archivo con el nombre del capítulo; los capítulos sin partes siguen igual.",
+    "partsText": "Algunos sitios dividen un capítulo en partes. «Unidos» en la app, o <code>--volumes parts</code> en la línea de comandos, las une en un solo archivo con el nombre del capítulo; los capítulos sin partes siguen igual.",
     "partsAlt": "La lista de capítulos con las partes de cada capítulo agrupadas debajo, algunas plegadas.",
     "languageTitle": "Tu idioma, tu grupo",
     "languageText": "Cuando una serie está en varios idiomas o la traducen varios grupos de scanlation, la app te muestra solo los que ofrece de verdad, así que eliges entre opciones reales en lugar de adivinar códigos.",
