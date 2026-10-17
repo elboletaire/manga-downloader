@@ -15,8 +15,8 @@ Do it from a clean worktree off `origin/master`, at the commit the release will 
 
 | Asset | Source | Used in | Refresh |
 |---|---|---|---|
-| App screenshots, `assets/screenshots/{02..13}-*-{light,dark}.png` | `tools/screenshots/` | README | every release that changed the app's UI |
-| Website WebPs, `website/src/assets/screenshots/*.webp` | the PNGs above, cropped by `website/build/crop-screenshots.sh` | website | with the PNGs (`capture-all.sh --install` does it) |
+| App screenshots, `assets/screenshots/{02..13}-*-{light,dark}.png`, and `{es,ca}/` with `SHOT_LANG=all` | `tools/screenshots/` | README | every release that changed the app's UI |
+| Website WebPs, `website/src/assets/screenshots/*.webp` and `{es,ca}/*.webp` | the PNGs above, cropped by `website/build/crop-screenshots.sh` | website | with the PNGs (`capture-all.sh --install` does it) |
 | Terminal GIFs, `assets/demos/*.gif` (dark) and `*-light.gif` | `assets/demos/*.tape` and `*-light.tape` twins | README (`download`, `prompt`, `groups`, `bundle`, `volumes`), website (`download`, `bundle`, `volumes`, via raw GitHub URLs on `master`) | every release |
 | Brand rasters | `assets/brand/**.svg` | see "Brand" below | only when the brand changed |
 
