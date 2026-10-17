@@ -3,61 +3,17 @@
 package packer
 
 import (
-	"bufio"
 	"bytes"
+	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"reflect"
-	"strings"
 	"testing"
+
+	rar "github.com/elboletaire/go-rar"
 )
 
 // rarSignature is the RAR 4 marker block every RAR4 archive starts with
 var rarSignature = []byte("Rar!\x1a\x07\x00")
-
-// listRAR returns the entry names of the RAR at path, listed by bsdtar or
-// 7z, whichever is on PATH. ok is false when neither is, so the caller skips.
-func listRAR(t *testing.T, path string) (names []string, ok bool) {
-	t.Helper()
-
-	if bsdtar, err := exec.LookPath("bsdtar"); err == nil {
-		out, err := exec.Command(bsdtar, "-tf", path).Output()
-		if err != nil {
-			t.Fatalf("bsdtar -tf: %v", err)
-		}
-		return lines(out), true
-	}
-	if sevenZip, err := exec.LookPath("7z"); err == nil {
-		out, err := exec.Command(sevenZip, "l", "-slt", path).Output()
-		if err != nil {
-			t.Fatalf("7z l: %v", err)
-		}
-		// -slt prints one "Path = name" line per entry, the archive's own first
-		var names []string
-		for _, line := range lines(out) {
-			if name, found := strings.CutPrefix(line, "Path = "); found {
-				names = append(names, name)
-			}
-		}
-		if len(names) > 0 {
-			names = names[1:]
-		}
-		return names, true
-	}
-	return nil, false
-}
-
-// lines splits out one entry per line; strings.Fields would split a name
-// at its spaces
-func lines(out []byte) []string {
-	var got []string
-	sc := bufio.NewScanner(bytes.NewReader(out))
-	for sc.Scan() {
-		got = append(got, sc.Text())
-	}
-	return got
-}
 
 func TestArchiveCBRNoFiles(t *testing.T) {
 	err := ArchiveCBR(filepath.Join(t.TempDir(), "empty.cbr"), []File{}, func(page, progress int) {})
@@ -66,7 +22,7 @@ func TestArchiveCBRNoFiles(t *testing.T) {
 	}
 }
 
-func TestArchiveCBREntryNames(t *testing.T) {
+func TestArchiveCBREntries(t *testing.T) {
 	files := []File{
 		{Name: "Chapter 0001/000.jpg", Data: []byte("ch1-p0")},
 		{Name: "Chapter 0001/001.jpg", Data: []byte("ch1-p1")},
@@ -90,13 +46,32 @@ func TestArchiveCBREntryNames(t *testing.T) {
 		t.Fatalf("archive starts with %q, want the RAR4 signature %q", data[:min(len(data), len(rarSignature))], rarSignature)
 	}
 
-	names, ok := listRAR(t, path)
-	if !ok {
-		t.Skip("neither bsdtar nor 7z is on PATH, so the entries can't be listed")
+	r, err := rar.OpenReader(path)
+	if err != nil {
+		t.Fatalf("rar.OpenReader: %v", err)
 	}
-	want := []string{"Chapter 0001/000.jpg", "Chapter 0001/001.jpg", "Chapter 0002/000.jpg"}
-	if !reflect.DeepEqual(names, want) {
-		t.Errorf("entries = %v, want %v", names, want)
+	defer r.Close()
+
+	if len(r.File) != len(files) {
+		t.Fatalf("archive has %d entries, want %d", len(r.File), len(files))
+	}
+	for i, want := range files {
+		f := r.File[i]
+		if f.Name != want.Name {
+			t.Errorf("entry %d is %q, want %q", i, f.Name, want.Name)
+		}
+		rc, err := f.Open()
+		if err != nil {
+			t.Fatalf("open %q: %v", f.Name, err)
+		}
+		got, err := io.ReadAll(rc) // also checks the CRC32 at EOF
+		rc.Close()
+		if err != nil {
+			t.Fatalf("read %q: %v", f.Name, err)
+		}
+		if !bytes.Equal(got, want.Data) {
+			t.Errorf("entry %q holds %q, want %q", f.Name, got, want.Data)
+		}
 	}
 }
 
