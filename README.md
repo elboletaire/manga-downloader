@@ -785,7 +785,7 @@ to a minute.
 | [mangasusuku.com](https://mangasusuku.com) | Indonesian, mostly NSFW | 2026-10-15 |
 | [mangataro.org](https://mangataro.org) |  | 2026-10-15 |
 | [mangatime-square.com](https://mangatime-square.com) | Japanese, Mangatime Square (GigaViewer) | 2026-10-17 |
-| [mangatown.com](https://www.mangatown.com) |  | 2026-10-15 |
+| [mangatown.com](https://www.mangatown.com) |  | 2026-10-17 |
 | [mangavault.lat](https://mangavault.lat) | MangaVault | 2026-10-15 |
 | [mangaworld.mx](https://www.mangaworld.mx) | MangaWorld, Italian | 2026-10-15 |
 | [mangawow.org](https://mangawow.org) | MangaWOW, Turkish | 2026-10-16 |

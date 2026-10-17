@@ -13,11 +13,9 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Mangatown is a grabber for mangatown.com. It shares its reader with
-// mangahere.cc, but without the chapterfun.ashx round trip: every reader page
-// is its own HTML document (<chapter>/<n>.html) with the page's image in
-// <img id="image">, and the page count sits in a "total_pages" script
-// variable of the chapter's first page. Each page is therefore one plain GET.
+// Mangatown is a grabber for mangatown.com. Its reader is mangahere.cc's
+// without the chapterfun.ashx round trip: one HTML document per page, or a
+// long-strip chapter with every page in the first document.
 type Mangatown struct {
 	*Grabber
 }
@@ -226,6 +224,26 @@ func (m Mangatown) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
+	chapter := &Chapter{
+		Title:    f.GetTitle(),
+		Label:    labelOf(f),
+		Number:   f.GetNumber(),
+		Language: "en",
+		ID:       chapterURLID(mchap.URL),
+	}
+
+	// a long-strip chapter has all its pages in this document
+	if strip := mangatownStripImages(body); len(strip) > 0 {
+		for i, img := range strip {
+			chapter.Pages = append(chapter.Pages, Page{
+				Number: int64(i + 1),
+				URL:    img,
+			})
+		}
+		chapter.PagesCount = int64(len(strip))
+		return chapter, nil
+	}
+
 	countMatch := mangatownPagesCountRe.FindStringSubmatch(body)
 	if len(countMatch) != 2 {
 		return nil, fmt.Errorf("mangatown: could not find total_pages in %s", mchap.URL)
@@ -234,15 +252,7 @@ func (m Mangatown) FetchChapter(f Filterable) (*Chapter, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	chapter := &Chapter{
-		Title:      f.GetTitle(),
-		Label:      labelOf(f),
-		Number:     f.GetNumber(),
-		PagesCount: int64(count),
-		Language:   "en",
-		ID:         chapterURLID(mchap.URL),
-	}
+	chapter.PagesCount = int64(count)
 
 	first, err := mangatownPageImage(body)
 	if err != nil {
@@ -294,4 +304,27 @@ func mangatownPageImage(res string) (string, error) {
 	}
 
 	return img, nil
+}
+
+// mangatownStripImages returns the page images of a long-strip reader: the
+// img.image elements of #viewer, in order. A paged reader returns none.
+func mangatownStripImages(res string) []string {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(res))
+	if err != nil {
+		return nil
+	}
+
+	var images []string
+	doc.Find("#viewer img.image").Each(func(i int, s *goquery.Selection) {
+		img := s.AttrOr("src", "")
+		if img == "" {
+			return
+		}
+		if strings.HasPrefix(img, "//") {
+			img = "https:" + img
+		}
+		images = append(images, img)
+	})
+
+	return images
 }
