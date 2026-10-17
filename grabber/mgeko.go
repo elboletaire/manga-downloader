@@ -141,7 +141,7 @@ func parseMgekoChapterNumber(text string) (float64, bool) {
 }
 
 // formatChapterNumber formats a chapter number dropping a trailing ".0", so
-// 61 renders as "61" and 61.5 as "61.5" (witchtoons.go builds reader URLs
+// 61 renders as "61" and 61.5 as "61.5" (rsccomic.go builds reader URLs
 // with it, so it keeps every decimal instead of rounding to one)
 func formatChapterNumber(number float64) string {
 	return strconv.FormatFloat(number, 'f', -1, 64)

@@ -18,7 +18,7 @@ func TestMatchBrowserSelector(t *testing.T) {
 		{"dragontea.ink", true},
 		{"kappabeast.com", true},
 		{"sushiscan.net", true},
-		{"drakecomic.org", false},  // handled by the Drakecomic grabber
+		{"drakecomic.org", false},  // handled by the RSCComic grabber
 		{"mangakakalot.gg", false}, // handled by the Manganelo grabber
 		{"natomanga.com", false},   // handled by the Manganelo grabber
 		{"manhuaus.com", true},

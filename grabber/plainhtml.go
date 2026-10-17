@@ -210,7 +210,7 @@ var plainHTMLSelectors = []SiteSelector{
 	// (same markup as the cloudflare-gated sushiscan.net in
 	// plainhtmlbrowser.go): lagoonscans.com, rokaricomics.com and
 	// violetscans.org (witchscans.com moved to
-	// witchtoons.net on a different platform; see the witchtoons
+	// witchtoons.net on a different platform; see the RSC comic
 	// grabber). Reader pages embed all pages in a ts_reader.run(...)
 	// blob, already handled by getPlainHTMLImageURL, so Image is just a
 	// fallback here. Some of these coin-paywall their most recent

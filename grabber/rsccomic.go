@@ -13,28 +13,105 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// rscComic is the shared implementation for the Next.js App Router comic
-// platform behind witchtoons.net and kaynscans.com. It's fully server
-// rendered, so plain HTTP gets both the chapter list and the reader pages —
-// they just ship inside the RSC flight payload instead of the DOM (the series
-// page only renders a single "start reading" chapter link, so a
-// selector-driven grabber would silently see 1 chapter and look like it
-// works). Series live under /series/comic/{slug}, the chapter list is
+// RSCComic is the shared implementation for the Next.js App Router comic
+// platform behind witchtoons.net, kaynscans.com, drakecomic.net and
+// elftoon.net. It's fully server rendered, so plain HTTP gets both the chapter
+// list and the reader pages — they just ship inside the RSC flight payload
+// instead of the DOM (the series page only renders a single "start reading"
+// chapter link, so a selector-driven grabber would silently see 1 chapter and
+// look like it works). Series live under /series/comic/{slug}, the chapter list is
 // paginated at 100 chapters per page through a plain ?page=N query param, and
 // reader pages embed their images as a "pages":[{imageUrl}] array.
-type rscComic struct {
+type RSCComic struct {
 	*Grabber
 	pages map[int]*rscComicSeriesPage
+	// byMarkup also detects the hosts not in rscComicDomains (NewRSCComicByMarkup)
+	byMarkup bool
 }
 
-// RSCComicChapter represents an rscComic chapter
+// rscComicDomains are the platform's hosts, matched without a fetch
+var rscComicDomains = []string{"witchtoons.net", "kaynscans.com", "drakecomic.net", "elftoon.net"}
+
+// rscComicMoves are the old hosts that redirect into the platform. Test
+// rewrites their URLs in code, so the grabber builds URLs on the live host:
+// the path prefix from is swapped for to (kaynscan's already-new paths are left alone)
+var rscComicMoves = []struct {
+	domain, host, from, to string
+}{
+	{"kaynscan.org", "kaynscans.com", "/series/", "/series/comic/"},
+	{"drakecomic.org", "drakecomic.net", "/manga/", "/series/comic/"},
+	{"elftoon.com", "elftoon.net", "/manga/", "/series/comic/"},
+}
+
+// rscComicMarkers are the keys every page of the platform carries in its flight payload
+var rscComicMarkers = []string{"self.__next_f.push", `\"isTeamMember\":`, `\"coinPrice\":`}
+
+// rscComicSeriesRe is the URL shape of a series or chapter on the platform
+var rscComicSeriesRe = regexp.MustCompile(`^/series/comic/[^/]+`)
+
+// NewRSCComic returns a new RSCComic grabber, matching the listed hosts.
+func NewRSCComic(g *Grabber) *RSCComic {
+	return &RSCComic{Grabber: g}
+}
+
+// NewRSCComicByMarkup returns an RSCComic grabber that also matches a series or
+// chapter URL on any host whose page has the platform's markup.
+func NewRSCComicByMarkup(g *Grabber) *RSCComic {
+	return &RSCComic{Grabber: g, byMarkup: true}
+}
+
+// Test returns true if the URL is on one of the platform's hosts (host check,
+// no fetch), rewriting an old host's URL first. The NewRSCComicByMarkup
+// instance also fetches a series or chapter URL on another host, once, and
+// checks its markup.
+func (r *RSCComic) Test() (bool, error) {
+	for _, move := range rscComicMoves {
+		if hostMatchesDomain(r.URL, move.domain) {
+			return true, r.moveURL(move.host, move.from, move.to)
+		}
+	}
+	for _, domain := range rscComicDomains {
+		if hostMatchesDomain(r.URL, domain) {
+			return true, nil
+		}
+	}
+	if !r.byMarkup || !rscComicURLShape(r.URL) {
+		return false, nil
+	}
+	return pageHasMarkup(r.Grabber, r.URL, rscComicMarkers...), nil
+}
+
+// moveURL points the URL at the live host, swapping the path prefix from for to
+// unless it already starts with to
+func (r *RSCComic) moveURL(host, from, to string) error {
+	uri, err := url.Parse(r.URL)
+	if err != nil {
+		return err
+	}
+	uri.Scheme = "https"
+	uri.Host = host
+	if strings.HasPrefix(uri.Path, from) && !strings.HasPrefix(uri.Path, to) {
+		uri.Path = to + strings.TrimPrefix(uri.Path, from)
+	}
+	r.URL = uri.String()
+
+	return nil
+}
+
+// rscComicURLShape reports whether rawURL is a series or chapter of the platform
+func rscComicURLShape(rawURL string) bool {
+	u, err := url.Parse(rawURL)
+	return err == nil && rscComicSeriesRe.MatchString(u.Path)
+}
+
+// RSCComicChapter represents an RSCComic chapter
 type RSCComicChapter struct {
 	Chapter
 	URL string
 }
 
 // FetchTitle fetches and returns the manga title
-func (r *rscComic) FetchTitle() (string, error) {
+func (r *RSCComic) FetchTitle() (string, error) {
 	r.resolveSeriesURL()
 	page, err := r.fetchSeriesPage(1)
 	if err != nil {
@@ -45,7 +122,7 @@ func (r *rscComic) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (r *rscComic) FetchChapters() (chapters Filterables, errs []error) {
+func (r *RSCComic) FetchChapters() (chapters Filterables, errs []error) {
 	r.resolveSeriesURL()
 	first, err := r.fetchSeriesPage(1)
 	if err != nil {
@@ -101,7 +178,7 @@ func (r *rscComic) FetchChapters() (chapters Filterables, errs []error) {
 }
 
 // FetchChapter fetches a chapter and its pages
-func (r *rscComic) FetchChapter(f Filterable) (*Chapter, error) {
+func (r *RSCComic) FetchChapter(f Filterable) (*Chapter, error) {
 	rchap := f.(*RSCComicChapter)
 
 	body, err := http.GetText(http.RequestParams{
@@ -176,7 +253,7 @@ func rscComicChapterPages(html string) ([]rscComicPage, error) {
 
 // fetchSeriesPage fetches (and caches) the given page of the series' chapter
 // list, extracting the series info and chapters out of its RSC payload
-func (r *rscComic) fetchSeriesPage(page int) (*rscComicSeriesPage, error) {
+func (r *RSCComic) fetchSeriesPage(page int) (*rscComicSeriesPage, error) {
 	if r.pages == nil {
 		r.pages = map[int]*rscComicSeriesPage{}
 	}
@@ -258,7 +335,7 @@ var (
 )
 
 // resolveSeriesURL converts a chapter URL to a series URL if needed.
-func (r *rscComic) resolveSeriesURL() {
+func (r *RSCComic) resolveSeriesURL() {
 	if !rscComicChapterURLRe.MatchString(r.URL) {
 		return
 	}
