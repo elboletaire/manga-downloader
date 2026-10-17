@@ -25,15 +25,31 @@ var toivoLiteSites = []string{
 // chapter; pages are plain <img> tags in div.entry-content.
 type ToivoLite struct {
 	*Grabber
+	// byMarkup also matches the hosts not in toivoLiteSites (NewToivoLiteByMarkup)
+	byMarkup    bool
 	chapters    Filterables
 	errs        []error
 	title       string
 	rootFetched bool
 }
 
-// NewToivoLite creates a new ToivoLite grabber.
+// toivoLiteThemeMarker and toivoLiteWidgetMarker are on every Toivo Lite page:
+// the theme's asset path and the chapter sidebar widget
+const (
+	toivoLiteThemeMarker  = "/wp-content/themes/toivo-lite/"
+	toivoLiteWidgetMarker = "Chapters_List"
+)
+
+// NewToivoLite creates a new ToivoLite grabber, matching the listed hosts.
 func NewToivoLite(g *Grabber) *ToivoLite {
 	return &ToivoLite{Grabber: g}
+}
+
+// NewToivoLiteByMarkup returns a ToivoLite grabber that also matches a page on
+// any host carrying the Toivo Lite markup. It runs after HeavenlyDelusion's
+// domain match, which keeps heavenly-delusion.com on its own grabber.
+func NewToivoLiteByMarkup(g *Grabber) *ToivoLite {
+	return &ToivoLite{Grabber: g, byMarkup: true}
 }
 
 // ToivoLiteChapter is a chapter fetched by the ToivoLite grabber.
@@ -42,14 +58,19 @@ type ToivoLiteChapter struct {
 	URL string
 }
 
-// Test returns true if the URL is a Toivo Lite site URL (host check, no fetch).
+// Test returns true if the URL is a listed Toivo Lite host (no fetch). The
+// NewToivoLiteByMarkup instance also fetches any other URL once and checks its
+// markup, with no URL gate: the blog's root and every post carry the theme.
 func (t *ToivoLite) Test() (bool, error) {
 	for _, d := range toivoLiteSites {
 		if hostMatchesDomain(t.URL, d) {
 			return true, nil
 		}
 	}
-	return false, nil
+	if !t.byMarkup {
+		return false, nil
+	}
+	return pageHasMarkup(t.Grabber, t.URL, toivoLiteThemeMarker, toivoLiteWidgetMarker), nil
 }
 
 // fetchRoot fetches the site root, parses the title and chapter list, and
