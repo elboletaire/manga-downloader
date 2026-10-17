@@ -456,7 +456,7 @@ manga-downloader --format cbr [url] 1-8
 # plain image folders instead of CBZ files
 manga-downloader --format raw [url] 1-8
 
-# EPUB e-books, read left to right (webtoons and western comics)
+# EPUB e-books, read left to right (western comics)
 manga-downloader --format epub --reading-direction ltr [url] 1-8
 ~~~
 

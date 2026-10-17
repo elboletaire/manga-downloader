@@ -19,7 +19,7 @@
     "label": "Reading direction",
     "rtl": "Right to left",
     "ltr": "Left to right",
-    "hint": "Which way the pages turn: manga reads right to left, webtoons and western comics left to right."
+    "hint": "Which way the pages turn: manga reads right to left, western comics left to right."
   },
   "packAs": {
     "label": "Pack as",

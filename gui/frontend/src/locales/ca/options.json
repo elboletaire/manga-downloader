@@ -19,7 +19,7 @@
     "label": "Sentit de lectura",
     "rtl": "De dreta a esquerra",
     "ltr": "D'esquerra a dreta",
-    "hint": "Cap a on giren les pàgines: el manga es llegeix de dreta a esquerra, els webtoons i els còmics occidentals d'esquerra a dreta."
+    "hint": "Cap a on giren les pàgines: el manga es llegeix de dreta a esquerra, els còmics occidentals d'esquerra a dreta."
   },
   "packAs": {
     "label": "Empaqueta com",

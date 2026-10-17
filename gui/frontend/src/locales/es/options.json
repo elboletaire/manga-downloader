@@ -19,7 +19,7 @@
     "label": "Sentido de lectura",
     "rtl": "De derecha a izquierda",
     "ltr": "De izquierda a derecha",
-    "hint": "Hacia dónde pasan las páginas: el manga se lee de derecha a izquierda, los webtoons y los cómics occidentales de izquierda a derecha."
+    "hint": "Hacia dónde pasan las páginas: el manga se lee de derecha a izquierda, los cómics occidentales de izquierda a derecha."
   },
   "packAs": {
     "label": "Empaquetar como",
