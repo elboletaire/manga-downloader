@@ -1,6 +1,8 @@
 // Types of the data the Go App sends to the window. They mirror the JSON of
 // the DTOs in gui/app.go and gui/store.go; keep the two in step.
 
+import type { LangPref } from './i18n';
+
 export type JobState = 'fetching' | 'downloading' | 'archiving' | 'done' | 'failed' | 'skipped';
 
 export type LogLevel = 'info' | 'warn' | 'error';
@@ -118,6 +120,15 @@ export interface State {
   filenameTemplateDefault: string;
   /** What is wrong with options.filenameTemplate; "" when nothing */
   filenameTemplateWarning: string;
+  prefs: Prefs;
+}
+
+/** App-only preferences: what the CLI has no flag for, so they aren't Options */
+export interface Prefs {
+  /** The window's language; '' follows the system */
+  uiLanguage: LangPref;
+  /** Check GitHub for a newer release at startup */
+  checkUpdates: boolean;
 }
 
 /** The Volumes box, used when the options pack as volumes */

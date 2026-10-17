@@ -1,0 +1,5 @@
+{
+  "label": "Llengua",
+  "system": "Predeterminada del sistema ({{name}})",
+  "hint": "Segueix el sistema: {{language}}."
+}

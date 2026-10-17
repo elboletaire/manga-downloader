@@ -4,6 +4,7 @@
 
 import * as app from '../wailsjs/go/main/App';
 import { BrowserOpenURL, ClipboardGetText, EventsOn } from '../wailsjs/runtime/runtime';
+import type { LangPref } from './i18n';
 import type { Chapter, LogLine, Options, State } from './types';
 
 export type Unsubscribe = () => void;
@@ -45,6 +46,9 @@ export interface Api {
   showBrowser(): Promise<void>;
   /** Hides browserAlert; the window and the load waiting for it go on */
   dismissBrowserAlert(): Promise<void>;
+  /** Saves the window's language; '' follows the system. Takes effect at once in the window. */
+  setUILanguage(pref: LangPref): Promise<void>;
+  setCheckUpdates(on: boolean): Promise<void>;
 
   // Pushes. Each returns a function that stops the callback.
   onState(cb: (s: State) => void): Unsubscribe;
@@ -111,6 +115,8 @@ export function createWailsApi(): Api {
     update: () => app.Update(),
     showBrowser: () => app.ShowBrowser(),
     dismissBrowserAlert: () => app.DismissBrowserAlert(),
+    setUILanguage: (pref) => app.SetUILanguage(pref),
+    setCheckUpdates: (on) => app.SetCheckUpdates(on),
 
     onState: (cb) => state.subscribe(cb),
     onChapters: (cb) => chapters.subscribe(cb),

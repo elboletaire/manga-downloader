@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createMockApi, mockSetupFrom, scenarioFrom } from './mock';
+import type { State } from './types';
 
 describe('scenarioFrom', () => {
   it('reads the scenario from the query, defaulting to empty', () => {
@@ -467,6 +468,7 @@ describe('mockSetupFrom', () => {
       fetching: false,
       epub: false,
       prompt: false,
+      uiLanguage: 'en',
     });
     expect(mockSetupFrom('?novolumes').novolumes).toBe(true);
     expect(mockSetupFrom('?parts').parts).toBe(true);
@@ -614,5 +616,47 @@ describe('mock fetching rows', () => {
   it('keeps the other running scenarios free of fetching rows', async () => {
     const rows = (await createMockApi({ scenario: 'running', freeze: true }).state()).jobs;
     expect(rows.some((j) => j.state === 'fetching')).toBe(false);
+  });
+});
+
+describe('mockSetupFrom language', () => {
+  it('starts in English unless ?lang picks a language, and ?lang=system follows the browser', () => {
+    expect(mockSetupFrom('?mock').uiLanguage).toBe('en');
+    expect(mockSetupFrom('?mock&lang=es').uiLanguage).toBe('es');
+    expect(mockSetupFrom('?lang=ca').uiLanguage).toBe('ca');
+    expect(mockSetupFrom('?lang=system').uiLanguage).toBe('');
+    expect(mockSetupFrom('?lang=fr').uiLanguage).toBe('en');
+  });
+});
+
+describe('mock app preferences', () => {
+  it('starts with the language it was set up with', async () => {
+    expect((await createMockApi('empty').state()).prefs).toEqual({ uiLanguage: 'en', checkUpdates: true });
+    expect((await createMockApi({ uiLanguage: 'es' }).state()).prefs.uiLanguage).toBe('es');
+  });
+
+  it('keeps the language and pushes it', async () => {
+    const api = createMockApi('empty');
+    const pushed: State[] = [];
+    const stop = api.onState((s) => pushed.push(s));
+    await api.setUILanguage('ca');
+    expect(pushed.at(-1)?.prefs.uiLanguage).toBe('ca');
+    expect((await api.state()).prefs.uiLanguage).toBe('ca');
+    await api.setUILanguage('');
+    expect((await api.state()).prefs.uiLanguage).toBe('');
+    stop();
+  });
+
+  it('turning updates off clears the update and pushes that, and on brings the check back', async () => {
+    const api = createMockApi('update');
+    expect((await api.state()).update).not.toBeNull();
+    const pushed: State[] = [];
+    const stop = api.onState((s) => pushed.push(s));
+    await api.setCheckUpdates(false);
+    expect(pushed.at(-1)?.prefs.checkUpdates).toBe(false);
+    expect(pushed.at(-1)?.update).toBeNull();
+    await api.setCheckUpdates(true);
+    expect((await api.state()).update).not.toBeNull();
+    stop();
   });
 });

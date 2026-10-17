@@ -25,3 +25,16 @@ describe('App boot screen', () => {
     expect(boot('ca')).toContain('Iniciant…');
   });
 });
+
+describe('App boot screen before the saved language', () => {
+  it('follows the system language until the first State brings the saved one', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        I18nProvider,
+        { pref: '', persist: async () => {}, systemLanguages: ['ca-ES'] },
+        createElement(App, { api: {} as Api }),
+      ),
+    );
+    expect(html).toContain('Iniciant…');
+  });
+});

@@ -26,7 +26,9 @@
 // (with update) makes the update one-click and opens its prompt on load, &shot
 // uses production release versions and a macOS output path (for screenshots),
 // and VITE_MOCK=1 at build time includes the mock in production builds (e.g.
-// for the screenshot capture build; set via Wails frontend env).
+// for the screenshot capture build; set via Wails frontend env). ?lang=en|es|ca
+// starts the window in that language, ?lang=system follows the browser's, and
+// without it the window is English, so screenshots and dev stay English.
 //
 // &site= picks what the series lists for the two filters: multi (the default:
 // languages ca, en, es with All, Catalan shown by default, no groups), plus
@@ -41,7 +43,8 @@
 // and never selects it, as the backend does.
 
 import type { Api, Unsubscribe } from './api';
-import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary, Update } from './types';
+import { LANGS, type LangPref } from './i18n';
+import type { Chapter, FilterChoice, Job, LogLine, Options, Prefs, State, Summary, Update } from './types';
 import { groupChapters, groupParts, listedVolumes, parseVolumes, siteVolumes } from './volumes';
 import { OP_CHAPTERS } from './mock-onepiece';
 
@@ -115,6 +118,8 @@ export interface MockSetup {
   epub: boolean;
   /** With the update scenario: one-click update, its prompt open on load */
   prompt: boolean;
+  /** The window's language preference the mock starts with */
+  uiLanguage: LangPref;
 }
 
 /** What the mock series offers for each filter; null when the site lists none */
@@ -156,6 +161,15 @@ function scenarioFrom(search: string): Scenario {
   return (SCENARIOS as readonly string[]).includes(value ?? '') ? (value as Scenario) : 'empty';
 }
 
+/** ?lang=system is the preference that follows the system; anything else but en, es or ca is English */
+function uiLanguageFrom(search: string): LangPref {
+  const value = new URLSearchParams(search).get('lang');
+  if (value === 'system') {
+    return '';
+  }
+  return (LANGS as readonly string[]).includes(value ?? '') ? (value as LangPref) : 'en';
+}
+
 /** The mock's whole setup from the page's query string */
 export function mockSetupFrom(search: string): MockSetup {
   const params = new URLSearchParams(search);
@@ -175,6 +189,7 @@ export function mockSetupFrom(search: string): MockSetup {
     fetching: params.has('fetching'),
     epub: params.has('epub'),
     prompt: params.has('prompt'),
+    uiLanguage: uiLanguageFrom(search),
   };
 }
 
@@ -299,6 +314,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     fetching,
     epub,
     prompt,
+    uiLanguage,
   } = {
     scenario: 'empty' as Scenario,
     freeze: false,
@@ -314,10 +330,13 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     fetching: false,
     epub: false,
     prompt: false,
+    uiLanguage: 'en' as LangPref,
     ...(typeof setup === 'string' ? { scenario: setup } : setup),
   };
   const offers = OFFERS[site];
   const options = defaultOptions(shot, epub);
+  // the app preferences, kept as the backend keeps them in gui.json
+  const prefs: Prefs = { uiLanguage, checkUpdates: true };
   let url = '';
   let loading = false;
   let loadError = '';
@@ -424,19 +443,22 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     volumes: { text: volumesText, site: volumesSite, listed: volumesListed },
     version: reportsRelease ? releaseVersion : 'v0.0.0-mock',
     releaseURL: reportsRelease ? `${REPO}/releases/tag/${releaseVersion}` : '',
-    update: isReleaseBuild(scenario)
-      ? {
-          latest: shot ? UPDATE_VERSION_SHOT : UPDATE_VERSION_DEV,
-          url: `${REPO}/releases/latest`,
-          oneClick: !shot || prompt,
-          ...(prompt && { prompt: true }),
-        }
-      : null,
+    // turning the update check off forgets the release it found
+    update:
+      isReleaseBuild(scenario) && prefs.checkUpdates
+        ? {
+            latest: shot ? UPDATE_VERSION_SHOT : UPDATE_VERSION_DEV,
+            url: `${REPO}/releases/latest`,
+            oneClick: !shot || prompt,
+            ...(prompt && { prompt: true }),
+          }
+        : null,
     browserVisibleAuto: browserAuto,
     browserAlert,
     filenameTemplateDefault: TEMPLATE_DEFAULT,
     filenameTemplateWarning:
       options.packAs === 'chapters' || options.packAs === 'parts' ? templateWarning(options.filenameTemplate) : '',
+    prefs: { ...prefs },
   });
   const push = () => stateBus.emit(snapshot());
 
@@ -1083,6 +1105,15 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     },
     async dismissBrowserAlert() {
       browserAlert = '';
+      push();
+    },
+    // like the backend's, never refused while a load or run is going on
+    async setUILanguage(pref) {
+      prefs.uiLanguage = pref;
+      push();
+    },
+    async setCheckUpdates(on) {
+      prefs.checkUpdates = on;
       push();
     },
     async cancel() {
