@@ -1,0 +1,126 @@
+// The settings dialog: the app-only preferences (language, update check) and
+// the About footer. Controls apply at once, so there is no Save or Cancel.
+
+import { useEffect, useRef, type MouseEvent } from 'react';
+import { errorMessage } from './format';
+import { LANG_INFO, LANGS, type Lang, type LangPref } from './i18n';
+import { useI18n } from './i18n/react';
+import { Segmented, Switch } from './fields';
+import { XIcon } from './icons';
+import type { State } from './types';
+
+/** The app-only preferences, as the backend pushes them in State.prefs */
+interface Prefs {
+  uiLanguage: LangPref;
+  checkUpdates: boolean;
+}
+
+interface Props {
+  state: State;
+  onClose: () => void;
+  onCheckUpdates: (on: boolean) => void;
+  onOpenURL: (url: string) => void;
+  onError: (msg: string) => void;
+}
+
+const ISSUES_URL = 'https://github.com/elboletaire/manga-downloader/issues';
+
+const WEBSITE_PATHS: Record<Lang, string> = { en: '', es: 'es/', ca: 'ca/' };
+
+/** The project's website in a language: English at the root, the others under their own path */
+export function websiteURL(lang: Lang): string {
+  return `https://mangadownloader.cat/${WEBSITE_PATHS[lang]}`;
+}
+
+export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onError }: Props) {
+  const { t, pref, systemLang, lang, setLanguage } = useI18n();
+  const dialog = useRef<HTMLDialogElement>(null);
+  const prefs = (state as State & { prefs?: Prefs }).prefs ?? { uiLanguage: '', checkUpdates: true };
+  const devBuild = state.releaseURL === '';
+
+  useEffect(() => {
+    const el = dialog.current;
+    if (el && !el.open) el.showModal();
+  }, []);
+
+  const pick = (next: LangPref) => {
+    setLanguage(next).catch((e: unknown) => onError(errorMessage(e)));
+  };
+
+  // A click on the dialog itself, not on its content, is a click on the backdrop.
+  const onBackdrop = (e: MouseEvent<HTMLDialogElement>) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  const link = (url: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    onOpenURL(url);
+  };
+
+  const languageOptions = [
+    { value: '' as LangPref, label: t('settings.language.system') },
+    ...LANGS.map((l) => ({ value: l as LangPref, label: LANG_INFO[l].name })),
+  ];
+
+  return (
+    <dialog
+      ref={dialog}
+      className="settings-dialog"
+      aria-labelledby="settings-title"
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
+      onClick={onBackdrop}
+    >
+      <div className="settings-content">
+        <header className="settings-head">
+          <h2 id="settings-title">{t('settings.title')}</h2>
+          <button type="button" className="btn ghost icon-only" aria-label={t('settings.close')} onClick={onClose}>
+            <XIcon size={16} />
+          </button>
+        </header>
+
+        <section className="opt-group">
+          <h3>{t('settings.language.heading')}</h3>
+          <Segmented<LangPref>
+            label={t('settings.language.heading')}
+            value={pref}
+            options={languageOptions}
+            onChange={pick}
+          />
+          {pref === '' && (
+            <p className="hint">{t('settings.language.systemHint', { language: LANG_INFO[systemLang].name })}</p>
+          )}
+        </section>
+
+        <section className="opt-group">
+          <h3>{t('settings.updates.heading')}</h3>
+          <Switch
+            label={t('settings.updates.check')}
+            description={devBuild ? t('settings.updates.devHint') : t('settings.updates.hint')}
+            checked={prefs.checkUpdates}
+            disabled={devBuild}
+            onChange={onCheckUpdates}
+          />
+        </section>
+
+        <footer className="settings-about">
+          {state.releaseURL !== '' ? (
+            <a href={state.releaseURL} onClick={link(state.releaseURL)}>
+              {t('settings.about.version', { version: state.version })}
+            </a>
+          ) : (
+            <span>{t('settings.about.version', { version: state.version })}</span>
+          )}
+          <a href={websiteURL(lang)} onClick={link(websiteURL(lang))}>
+            {t('settings.about.website')}
+          </a>
+          <a href={ISSUES_URL} onClick={link(ISSUES_URL)}>
+            {t('settings.about.issues')}
+          </a>
+        </footer>
+      </div>
+    </dialog>
+  );
+}

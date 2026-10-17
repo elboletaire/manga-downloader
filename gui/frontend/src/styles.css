@@ -2210,3 +2210,68 @@ a.version:hover {
 .browser-alert p.update-error {
   color: var(--danger);
 }
+
+/* ---------- settings dialog ---------- */
+.settings-dialog {
+  width: min(460px, 100vw - 48px);
+  max-width: none;
+  max-height: calc(100vh - 48px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+  animation: pop-in 0.2s var(--ease);
+}
+
+.settings-dialog::backdrop {
+  background: rgb(20 18 15 / 45%);
+}
+
+.settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 12px 4px 16px;
+}
+
+.settings-head h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.settings-dialog .opt-group {
+  padding-top: 12px;
+}
+
+/* the heading above is the visible label; the legend keeps the name for screen readers */
+.settings-dialog .segmented-field > legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.settings-about {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.settings-about a {
+  color: var(--text-2);
+}
+
+.settings-about a:hover {
+  color: var(--text);
+}
