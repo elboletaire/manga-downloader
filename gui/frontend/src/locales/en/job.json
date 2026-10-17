@@ -1,0 +1,19 @@
+{
+  "status": {
+    "fetching": "Fetching pages...",
+    "downloading": "downloading",
+    "archiving": "archiving",
+    "done": "done",
+    "failed": "failed: {{reason}}",
+    "skipped": "skipped: {{reason}}"
+  },
+  "short": {
+    "fetching": "Fetching pages…",
+    "phase": "{{phase}} · {{percent}}%",
+    "packing": "Packing",
+    "downloading": "Downloading",
+    "done": "Saved",
+    "failed": "Failed",
+    "skipped": "Skipped"
+  }
+}

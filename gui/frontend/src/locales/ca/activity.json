@@ -1,0 +1,18 @@
+{
+  "emptyTitle": "Encara no s'ha descarregat res.",
+  "emptyHint": "Tria capítols i prem Descarregar: cada un apareix aquí mentre s'obté i s'empaqueta.",
+  "lastDownload": "Última descàrrega",
+  "openFolder": "Obre la carpeta",
+  "skippedNote_one": "{{count}} capítol s'ha omès: l'opció d'ometre pàgines va excloure totes les pàgines.",
+  "skippedNote_other": "{{count}} capítols s'han omès: l'opció d'ometre pàgines va excloure totes les pàgines.",
+  "failedChapters": "Capítols fallits",
+  "bundle": "Paquet",
+  "chaptersInRun": "Capítols d'aquesta descàrrega",
+  "thisRun": "Aquesta descàrrega",
+  "lastRun": "Última descàrrega",
+  "progress": "· {{finished}} de {{total}} acabats",
+  "queued_one": "{{count}} capítol més en espera",
+  "queued_other": "{{count}} capítols més en espera",
+  "progressOf": "Progrés de {{title}}{{tags}}",
+  "progressBundle": "Progrés del paquet"
+}

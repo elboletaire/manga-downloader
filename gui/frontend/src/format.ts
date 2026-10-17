@@ -1,5 +1,6 @@
 // Pure helpers that turn the window's state into the words shown to the user.
 
+import type { T } from './i18n';
 import type { Job, Summary } from './types';
 
 export function plural(n: number, one: string, many: string): string {
@@ -7,103 +8,125 @@ export function plural(n: number, one: string, many: string): string {
 }
 
 /** The short outcome shown next to the buttons */
-export function summaryHeadline(s: Summary): string {
+export function summaryHeadline(s: Summary, t: T): string {
   if (s.cancelled && s.bundled) {
-    return 'Cancelled, no bundle written';
+    return t('summary.headline.cancelledNoBundle');
   }
   if (s.cancelled) {
-    return `Cancelled, ${s.saved} saved`;
+    return t('summary.headline.cancelled', { saved: t('count.saved', { count: s.saved }) });
   }
   if (s.error !== '') {
-    return 'The bundle could not be written';
+    return t('summary.headline.bundleFailed');
   }
   if (s.bundled && s.bundle !== '') {
-    return `Saved ${s.bundle}`;
+    return t('summary.headline.bundleSaved', { bundle: s.bundle });
   }
 
   const parts: string[] = [];
   if (s.saved > 0) {
+    const saved = t('count.saved', { count: s.saved });
     if (s.volumes > 0 && s.parts) {
-      parts.push(`${s.saved} saved, ${plural(s.volumes, 'chapter', 'chapters')} merged from parts`);
+      parts.push(t('summary.headline.mergedFromParts', { saved, merged: t('count.chapter', { count: s.volumes }) }));
     } else {
-      parts.push(s.volumes > 0 ? `${s.saved} saved in ${plural(s.volumes, 'volume', 'volumes')}` : `${s.saved} saved`);
+      parts.push(
+        s.volumes > 0
+          ? t('summary.headline.inVolumes', { saved, volumes: t('count.volume', { count: s.volumes }) })
+          : saved,
+      );
     }
   }
   if (s.failures.length > 0) {
-    parts.push(`${s.failures.length} failed`);
+    parts.push(t('count.failed', { count: s.failures.length }));
   }
   if (s.skipped > 0) {
-    parts.push(`${s.skipped} skipped`);
+    parts.push(t('count.skipped', { count: s.skipped }));
   }
 
-  return parts.length === 0 ? 'Nothing was saved' : parts.join(', ');
+  return parts.length === 0 ? t('summary.headline.nothingSaved') : parts.join(', ');
 }
 
 /** The one sentence that says where a finished run's chapters went */
-export function summarySentence(s: Summary): string {
+export function summarySentence(s: Summary, t: T): string {
   if (s.cancelled && s.bundled) {
-    return 'Cancelled. No bundle was written.';
+    return t('summary.sentence.cancelledNoBundle');
   }
   if (s.cancelled && s.saved === 0) {
-    return 'Cancelled before anything was saved.';
+    return t('summary.sentence.cancelledBeforeSaving');
   }
   if (s.cancelled) {
-    return `Cancelled. ${plural(s.saved, 'chapter', 'chapters')} saved before it stopped, in ${s.dir}.`;
+    return t('summary.sentence.cancelled', { chapters: t('count.chapter', { count: s.saved }), dir: s.dir });
   }
   if (s.error !== '') {
-    return 'The bundle could not be written.';
+    return t('summary.sentence.bundleFailed');
   }
   if (s.bundled && s.bundle !== '') {
-    return `Saved ${s.bundle} to ${s.dir} (${plural(s.saved, 'chapter', 'chapters')}).`;
+    return t('summary.sentence.bundleSaved', {
+      bundle: s.bundle,
+      dir: s.dir,
+      chapters: t('count.chapter', { count: s.saved }),
+    });
   }
+  const chapters = t('count.chapter', { count: s.saved });
   if (s.saved > 0 && s.volumes > 0 && s.parts) {
-    return `Saved ${plural(s.saved, 'chapter', 'chapters')} to ${s.dir}, with ${plural(s.volumes, 'chapter', 'chapters')} merged from parts.`;
+    return t('summary.sentence.mergedFromParts', {
+      chapters,
+      dir: s.dir,
+      merged: t('count.chapter', { count: s.volumes }),
+    });
   }
   if (s.saved > 0 && s.volumes > 0) {
-    return `Saved ${plural(s.saved, 'chapter', 'chapters')} to ${s.dir}, with ${plural(s.volumes, 'volume file', 'volume files')}.`;
+    return t('summary.sentence.volumeFiles', {
+      chapters,
+      dir: s.dir,
+      files: t('count.volumeFile', { count: s.volumes }),
+    });
   }
   if (s.saved > 0) {
-    return `Saved ${plural(s.saved, 'chapter', 'chapters')} to ${s.dir}.`;
+    return t('summary.sentence.saved', { chapters, dir: s.dir });
   }
 
-  return 'Nothing was saved.';
+  return t('summary.sentence.nothingSaved');
 }
 
 /** The status text of a progress row */
-export function jobStatus(j: Job): string {
+export function jobStatus(j: Job, t: T): string {
   switch (j.state) {
     case 'fetching':
-      return j.status !== '' ? j.status : 'Fetching pages...';
+      return j.status !== '' ? j.status : t('job.status.fetching');
     case 'downloading':
-      return j.status !== '' ? j.status : 'downloading';
+      return j.status !== '' ? j.status : t('job.status.downloading');
     case 'archiving':
-      return j.status !== '' ? j.status : 'archiving';
+      return j.status !== '' ? j.status : t('job.status.archiving');
     case 'done':
-      return 'done';
+      return t('job.status.done');
     case 'failed':
-      return `failed: ${j.reason}`;
+      return t('job.status.failed', { reason: j.reason });
     case 'skipped':
-      return `skipped: ${j.reason}`;
+      return t('job.status.skipped', { reason: j.reason });
   }
 }
 
 /** The short status at the end of a progress row: phase and percentage while it moves, the outcome after */
-export function jobShortStatus(j: Job): string {
+export function jobShortStatus(j: Job, t: T): string {
   switch (j.state) {
     case 'fetching':
-      return 'Fetching pages\u2026';
+      return t('job.short.fetching');
     case 'downloading':
     case 'archiving': {
       const phase =
-        j.status !== '' ? j.status.replace(/\.+$/, '') : j.state === 'archiving' ? 'Packing' : 'Downloading';
-      return `${phase} · ${Math.round(jobFraction(j) * 100)}%`;
+        j.status !== ''
+          ? j.status.replace(/\.+$/, '')
+          : j.state === 'archiving'
+            ? t('job.short.packing')
+            : t('job.short.downloading');
+      return t('job.short.phase', { phase, percent: Math.round(jobFraction(j) * 100) });
     }
     case 'done':
-      return 'Saved';
+      return t('job.short.done');
     case 'failed':
-      return 'Failed';
+      return t('job.short.failed');
     case 'skipped':
-      return 'Skipped';
+      return t('job.short.skipped');
   }
 }
 

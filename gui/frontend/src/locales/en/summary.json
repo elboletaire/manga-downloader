@@ -1,0 +1,22 @@
+{
+  "headline": {
+    "cancelledNoBundle": "Cancelled, no bundle written",
+    "cancelled": "Cancelled, {{saved}}",
+    "bundleFailed": "The bundle could not be written",
+    "bundleSaved": "Saved {{bundle}}",
+    "inVolumes": "{{saved}} in {{volumes}}",
+    "mergedFromParts": "{{saved}}, {{merged}} merged from parts",
+    "nothingSaved": "Nothing was saved"
+  },
+  "sentence": {
+    "cancelledNoBundle": "Cancelled. No bundle was written.",
+    "cancelledBeforeSaving": "Cancelled before anything was saved.",
+    "cancelled": "Cancelled. {{chapters}} saved before it stopped, in {{dir}}.",
+    "bundleFailed": "The bundle could not be written.",
+    "bundleSaved": "Saved {{bundle}} to {{dir}} ({{chapters}}).",
+    "mergedFromParts": "Saved {{chapters}} to {{dir}}, with {{merged}} merged from parts.",
+    "volumeFiles": "Saved {{chapters}} to {{dir}}, with {{files}}.",
+    "saved": "Saved {{chapters}} to {{dir}}.",
+    "nothingSaved": "Nothing was saved."
+  }
+}

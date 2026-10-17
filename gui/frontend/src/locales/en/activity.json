@@ -1,0 +1,18 @@
+{
+  "emptyTitle": "Nothing downloaded yet.",
+  "emptyHint": "Pick chapters and press Download: each one shows up here as it's fetched and packed.",
+  "lastDownload": "Last download",
+  "openFolder": "Open folder",
+  "skippedNote_one": "{{count}} chapter was skipped: the skip-pages option excluded every page.",
+  "skippedNote_other": "{{count}} chapters were skipped: the skip-pages option excluded every page.",
+  "failedChapters": "Failed chapters",
+  "bundle": "Bundle",
+  "chaptersInRun": "Chapters in this run",
+  "thisRun": "This run",
+  "lastRun": "Last run",
+  "progress": "· {{finished}} of {{total}} finished",
+  "queued_one": "{{count}} more chapter waiting",
+  "queued_other": "{{count}} more chapters waiting",
+  "progressOf": "Progress of {{title}}{{tags}}",
+  "progressBundle": "Progress of the bundle"
+}

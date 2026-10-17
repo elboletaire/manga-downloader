@@ -1,0 +1,18 @@
+{
+  "emptyTitle": "Todavía no se ha descargado nada.",
+  "emptyHint": "Elige capítulos y pulsa Descargar: cada uno aparece aquí mientras se obtiene y se empaqueta.",
+  "lastDownload": "Última descarga",
+  "openFolder": "Abrir carpeta",
+  "skippedNote_one": "{{count}} capítulo se ha omitido: la opción de omitir páginas excluyó todas las páginas.",
+  "skippedNote_other": "{{count}} capítulos se han omitido: la opción de omitir páginas excluyó todas las páginas.",
+  "failedChapters": "Capítulos fallidos",
+  "bundle": "Paquete",
+  "chaptersInRun": "Capítulos de esta descarga",
+  "thisRun": "Esta descarga",
+  "lastRun": "Última descarga",
+  "progress": "· {{finished}} de {{total}} terminados",
+  "queued_one": "{{count}} capítulo más en espera",
+  "queued_other": "{{count}} capítulos más en espera",
+  "progressOf": "Progreso de {{title}}{{tags}}",
+  "progressBundle": "Progreso del paquete"
+}

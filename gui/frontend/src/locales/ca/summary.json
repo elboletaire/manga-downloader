@@ -1,0 +1,22 @@
+{
+  "headline": {
+    "cancelledNoBundle": "Cancel·lat, no s'ha escrit cap paquet",
+    "cancelled": "Cancel·lat, {{saved}}",
+    "bundleFailed": "No s'ha pogut escriure el paquet",
+    "bundleSaved": "Desat {{bundle}}",
+    "inVolumes": "{{saved}} en {{volumes}}",
+    "mergedFromParts": "{{saved}}, {{merged}} fusionats des de parts",
+    "nothingSaved": "No s'ha desat res"
+  },
+  "sentence": {
+    "cancelledNoBundle": "Cancel·lat. No s'ha escrit cap paquet.",
+    "cancelledBeforeSaving": "Cancel·lat abans de desar res.",
+    "cancelled": "Cancel·lat. {{chapters}} desats abans d'aturar-se, a {{dir}}.",
+    "bundleFailed": "No s'ha pogut escriure el paquet.",
+    "bundleSaved": "Desat {{bundle}} a {{dir}} ({{chapters}}).",
+    "mergedFromParts": "S'han desat {{chapters}} a {{dir}}, amb {{merged}} fusionats des de parts.",
+    "volumeFiles": "S'han desat {{chapters}} a {{dir}}, amb {{files}}.",
+    "saved": "S'han desat {{chapters}} a {{dir}}.",
+    "nothingSaved": "No s'ha desat res."
+  }
+}

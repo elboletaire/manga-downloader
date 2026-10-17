@@ -1,0 +1,22 @@
+{
+  "headline": {
+    "cancelledNoBundle": "Cancelado, no se ha escrito ningún paquete",
+    "cancelled": "Cancelado, {{saved}}",
+    "bundleFailed": "No se pudo escribir el paquete",
+    "bundleSaved": "Guardado {{bundle}}",
+    "inVolumes": "{{saved}} en {{volumes}}",
+    "mergedFromParts": "{{saved}}, {{merged}} fusionados desde partes",
+    "nothingSaved": "No se guardó nada"
+  },
+  "sentence": {
+    "cancelledNoBundle": "Cancelado. No se escribió ningún paquete.",
+    "cancelledBeforeSaving": "Cancelado antes de guardar nada.",
+    "cancelled": "Cancelado. {{chapters}} guardados antes de detenerse, en {{dir}}.",
+    "bundleFailed": "No se pudo escribir el paquete.",
+    "bundleSaved": "Guardado {{bundle}} en {{dir}} ({{chapters}}).",
+    "mergedFromParts": "Se han guardado {{chapters}} en {{dir}}, con {{merged}} fusionados desde partes.",
+    "volumeFiles": "Se han guardado {{chapters}} en {{dir}}, con {{files}}.",
+    "saved": "Se han guardado {{chapters}} en {{dir}}.",
+    "nothingSaved": "No se ha guardado nada."
+  }
+}

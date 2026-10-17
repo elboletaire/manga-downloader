@@ -1,0 +1,19 @@
+{
+  "status": {
+    "fetching": "Obtenint pàgines...",
+    "downloading": "descarregant",
+    "archiving": "empaquetant",
+    "done": "fet",
+    "failed": "fallit: {{reason}}",
+    "skipped": "omès: {{reason}}"
+  },
+  "short": {
+    "fetching": "Obtenint pàgines…",
+    "phase": "{{phase}} · {{percent}}%",
+    "packing": "Empaquetant",
+    "downloading": "Descarregant",
+    "done": "Desat",
+    "failed": "Fallit",
+    "skipped": "Omès"
+  }
+}
