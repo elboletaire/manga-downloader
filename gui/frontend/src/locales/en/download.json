@@ -1,0 +1,40 @@
+{
+  "blocker": {
+    "loading": "Wait for the series to finish loading.",
+    "notLoaded": "Load a series to pick its chapters.",
+    "stale": "The filters changed: reload the series first.",
+    "noChapters": "Select at least one chapter.",
+    "noVolumes": "The site lists no volumes: enter them as chapter ranges, e.g. {{example}}."
+  },
+  "label": {
+    "download": "Download",
+    "chapters": "Download {{chapters}}",
+    "bundle": "Download {{chapters}} as one file",
+    "volumes": "Download {{volumes}} ({{chapters}})",
+    "volumesAndChapters": "Download {{volumes}} and {{chapters}}",
+    "partsMerged": "Download {{chapters}}, parts merged"
+  },
+  "dest": {
+    "cbzFiles": "CBZ files",
+    "cbzPerVolume": "A CBZ per volume",
+    "cbzBundle": "One CBZ",
+    "epubFiles": "EPUB files",
+    "epubPerVolume": "An EPUB per volume",
+    "epubBundle": "One EPUB",
+    "rawFiles": "Image folders",
+    "rawPerVolume": "A folder per volume",
+    "rawBundle": "One image folder",
+    "files": "Files"
+  },
+  "where": "{{what}} in <dir>{{dir}}</dir>",
+  "progress": {
+    "label": "Overall progress",
+    "chapters": "{{done}} of {{total}} chapters done",
+    "files": "{{done}} of {{total}} files done",
+    "bundle": "Building the bundle",
+    "finishing": "Finishing the current chapters",
+    "cancelHint": "Chapters already downloading will finish; no new ones start."
+  },
+  "cancelling": "Cancelling…",
+  "failed": "Can't download: {{error}}"
+}

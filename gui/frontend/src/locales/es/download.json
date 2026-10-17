@@ -1,0 +1,40 @@
+{
+  "blocker": {
+    "loading": "Espera a que termine de cargarse la serie.",
+    "notLoaded": "Carga una serie para elegir sus capítulos.",
+    "stale": "Los filtros han cambiado: recarga la serie primero.",
+    "noChapters": "Selecciona al menos un capítulo.",
+    "noVolumes": "El sitio no lista volúmenes: introdúcelos como rangos de capítulos, p. ej. {{example}}."
+  },
+  "label": {
+    "download": "Descargar",
+    "chapters": "Descargar {{chapters}}",
+    "bundle": "Descargar {{chapters}} en un solo archivo",
+    "volumes": "Descargar {{volumes}} ({{chapters}})",
+    "volumesAndChapters": "Descargar {{volumes}} y {{chapters}}",
+    "partsMerged": "Descargar {{chapters}}, con las partes unidas"
+  },
+  "dest": {
+    "cbzFiles": "Archivos CBZ",
+    "cbzPerVolume": "Un CBZ por volumen",
+    "cbzBundle": "Un CBZ",
+    "epubFiles": "Archivos EPUB",
+    "epubPerVolume": "Un EPUB por volumen",
+    "epubBundle": "Un EPUB",
+    "rawFiles": "Carpetas de imágenes",
+    "rawPerVolume": "Una carpeta por volumen",
+    "rawBundle": "Una carpeta de imágenes",
+    "files": "Archivos"
+  },
+  "where": "{{what}} en <dir>{{dir}}</dir>",
+  "progress": {
+    "label": "Progreso general",
+    "chapters": "{{done}} de {{total}} capítulos listos",
+    "files": "{{done}} de {{total}} archivos listos",
+    "bundle": "Creando el archivo único",
+    "finishing": "Terminando los capítulos en curso",
+    "cancelHint": "Los capítulos que ya se descargan terminarán; no empezará ninguno nuevo."
+  },
+  "cancelling": "Cancelando…",
+  "failed": "No se puede descargar: {{error}}"
+}

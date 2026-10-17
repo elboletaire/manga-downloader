@@ -1,7 +1,8 @@
 // Pure helpers about the run as a whole: whether Download can start, how far
 // along it is, and how it ended. format.ts has the per-job and summary wording.
 
-import { jobFraction, plural } from './format';
+import { jobFraction } from './format';
+import type { T } from './i18n';
 import type { Chapter, Job, JobState, State, Summary } from './types';
 import { groupChapters, groupParts, isSiteVolumes, parseVolumes, selectedIn, type Grouping } from './volumes';
 
@@ -67,24 +68,24 @@ export function overallProgress(state: Pick<State, 'jobs' | 'run'>): Overall {
  * refusals the backend would answer with, shown before the click instead of
  * after it. The backend stays the authority: its own refusal still shows.
  */
-export function downloadBlocker(state: State): string {
+export function downloadBlocker(state: State, t: T): string {
   if (state.loading) {
-    return 'Wait for the series to finish loading.';
+    return t('download.blocker.loading');
   }
   if (state.running) {
     return '';
   }
   if (!state.loaded) {
-    return 'Load a series to pick its chapters.';
+    return t('download.blocker.notLoaded');
   }
   if (state.stale) {
-    return 'The filters changed: reload the series first.';
+    return t('download.blocker.stale');
   }
   if (state.selectedCount === 0) {
-    return 'Select at least one chapter.';
+    return t('download.blocker.noChapters');
   }
   if (state.options.packAs === 'volumes' && isSiteVolumes(state.volumes.text) && state.volumes.listed === 0) {
-    return 'The site lists no volumes: enter them as chapter ranges, e.g. 1-7/8-16.';
+    return t('download.blocker.noVolumes', { example: '1-7/8-16' });
   }
 
   return '';
@@ -95,25 +96,26 @@ export function downloadLabel(
   state: Pick<State, 'selectedCount' | 'options' | 'volumes'>,
   chapters: Chapter[],
   selected: number[],
+  t: T,
 ): string {
   const n = state.selectedCount;
   if (n === 0) {
-    return 'Download';
+    return t('download.label.download');
   }
   if (state.options.packAs === 'bundle' && n > 1) {
-    return `Download ${n} chapters as one file`;
+    return t('download.label.bundle', { chapters: t('count.chapter', { count: n }) });
   }
   if (state.options.packAs === 'volumes') {
-    const label = volumesLabel(state.volumes.text, chapters, selected);
+    const label = volumesLabel(state.volumes.text, chapters, selected, t);
     if (label !== '') {
       return label;
     }
   }
   if (state.options.packAs === 'parts') {
-    return partsLabel(chapters, selected);
+    return partsLabel(chapters, selected, t);
   }
 
-  return `Download ${plural(n, 'chapter', 'chapters')}`;
+  return t('download.label.chapters', { chapters: t('count.chapter', { count: n }) });
 }
 
 /**
@@ -121,7 +123,7 @@ export function downloadLabel(
  * selected chapters outside them. "" when the Volumes box doesn't parse or no
  * volume has a selected chapter, so the caller falls back to the chapter count.
  */
-function volumesLabel(text: string, chapters: Chapter[], selected: number[]): string {
+function volumesLabel(text: string, chapters: Chapter[], selected: number[], t: T): string {
   let grouping: Grouping;
   try {
     grouping = groupChapters(chapters, parseVolumes(text));
@@ -135,19 +137,19 @@ function volumesLabel(text: string, chapters: Chapter[], selected: number[]): st
   }
   const inVolumes = volumes.reduce((sum, k) => sum + k, 0);
   const loose = selectedIn(grouping.loose, chosen);
-  const named = plural(volumes.length, 'volume', 'volumes');
+  const named = t('count.volume', { count: volumes.length });
   if (loose > 0) {
-    return `Download ${named} and ${plural(loose, 'chapter', 'chapters')}`;
+    return t('download.label.volumesAndChapters', { volumes: named, chapters: t('count.chapter', { count: loose }) });
   }
 
-  return `Download ${named} (${plural(inVolumes, 'chapter', 'chapters')})`;
+  return t('download.label.volumes', { volumes: named, chapters: t('count.chapter', { count: inVolumes }) });
 }
 
 /**
  * The label of a parts run: one file per chapter, so it counts the chapters
  * the selected parts make, and says so only when some of them merge.
  */
-function partsLabel(chapters: Chapter[], selected: number[]): string {
+function partsLabel(chapters: Chapter[], selected: number[], t: T): string {
   const chosen = new Set(selected);
   let files = 0;
   let merged = false;
@@ -156,9 +158,11 @@ function partsLabel(chapters: Chapter[], selected: number[]): string {
     files += k > 0 ? 1 : 0;
     merged ||= k > 1;
   }
-  const named = `Download ${plural(files, 'chapter', 'chapters')}`;
+  const noun = t('count.chapter', { count: files });
 
-  return merged ? `${named}, parts merged` : named;
+  return merged
+    ? t('download.label.partsMerged', { chapters: noun })
+    : t('download.label.chapters', { chapters: noun });
 }
 
 export type Tone = 'success' | 'warning' | 'danger' | 'neutral';
