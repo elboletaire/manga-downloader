@@ -1,0 +1,2886 @@
+{
+  "version": 1,
+  "taken_at": "2026-10-17T08:46:34Z",
+  "repo": {
+    "stars": 269,
+    "forks": 34,
+    "subscribers": 3,
+    "open_issues": 3
+  },
+  "releases": [
+    {
+      "tag": "v1.18.0",
+      "published_at": "2026-10-16T20:37:08Z",
+      "assets": [
+        {
+          "name": "manga-downloader-gui-v1.18.0-darwin-universal.zip",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-gui-v1.18.0-linux-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-gui-v1.18.0-linux-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-gui-v1.18.0-SHA256SUMS.txt",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-gui-v1.18.0-windows-amd64-installer.exe",
+          "download_count": 15
+        },
+        {
+          "name": "manga-downloader-gui-v1.18.0-windows-amd64.zip",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-gui-v1.18.0-windows-arm64-installer.exe",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-gui-v1.18.0-windows-arm64.zip",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.18.0-darwin-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.18.0-darwin-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.18.0-darwin-arm64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.18.0-darwin-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.18.0-linux-386.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.18.0-linux-386.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.18.0-linux-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.18.0-linux-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.18.0-linux-arm64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.18.0-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.18.0-SHA256SUMS.txt",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.18.0-windows-32bit-legacy.zip",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.18.0-windows-32bit-legacy.zip.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.18.0-windows-amd64.zip",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.18.0-windows-amd64.zip.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.18.0-windows-arm64.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.18.0-windows-arm64.zip.md5",
+          "download_count": 2
+        }
+      ]
+    },
+    {
+      "tag": "v1.17.0",
+      "published_at": "2026-10-15T23:55:11Z",
+      "assets": [
+        {
+          "name": "manga-downloader-gui-v1.17.0-darwin-universal.zip",
+          "download_count": 11
+        },
+        {
+          "name": "manga-downloader-gui-v1.17.0-linux-amd64.tar.gz",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-gui-v1.17.0-linux-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-gui-v1.17.0-SHA256SUMS.txt",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-gui-v1.17.0-windows-amd64.zip",
+          "download_count": 23
+        },
+        {
+          "name": "manga-downloader-gui-v1.17.0-windows-arm64.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.17.0-darwin-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.17.0-darwin-amd64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.17.0-darwin-arm64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.17.0-darwin-arm64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.17.0-linux-386.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.17.0-linux-386.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.17.0-linux-amd64.tar.gz",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-v1.17.0-linux-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.17.0-linux-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.17.0-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.17.0-SHA256SUMS.txt",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.17.0-windows-32bit-legacy.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.17.0-windows-32bit-legacy.zip.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.17.0-windows-amd64.zip",
+          "download_count": 10
+        },
+        {
+          "name": "manga-downloader-v1.17.0-windows-amd64.zip.md5",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.17.0-windows-arm64.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.17.0-windows-arm64.zip.md5",
+          "download_count": 2
+        }
+      ]
+    },
+    {
+      "tag": "v1.16.1",
+      "published_at": "2026-10-15T00:18:05Z",
+      "assets": [
+        {
+          "name": "manga-downloader-gui-v1.16.1-darwin-universal.zip",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-gui-v1.16.1-linux-amd64.tar.gz",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-gui-v1.16.1-linux-arm64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-gui-v1.16.1-windows-amd64.zip",
+          "download_count": 23
+        },
+        {
+          "name": "manga-downloader-gui-v1.16.1-windows-arm64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.1-darwin-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.16.1-darwin-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.16.1-darwin-arm64.tar.gz",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-v1.16.1-darwin-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.16.1-linux-386.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.16.1-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.1-linux-amd64.tar.gz",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v1.16.1-linux-amd64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.16.1-linux-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.16.1-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.1-windows-32bit-legacy.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.1-windows-32bit-legacy.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.1-windows-amd64.zip",
+          "download_count": 10
+        },
+        {
+          "name": "manga-downloader-v1.16.1-windows-amd64.zip.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.16.1-windows-arm64.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.16.1-windows-arm64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.16.0",
+      "published_at": "2026-10-14T23:27:31Z",
+      "assets": [
+        {
+          "name": "manga-downloader-gui-v1.16.0-darwin-universal.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-gui-v1.16.0-linux-amd64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-gui-v1.16.0-linux-arm64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-gui-v1.16.0-windows-amd64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-gui-v1.16.0-windows-arm64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.0-darwin-amd64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.16.0-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.0-darwin-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.16.0-darwin-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.0-linux-386.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.16.0-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.0-linux-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.16.0-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.0-linux-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.16.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.0-windows-32bit-legacy.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.0-windows-32bit-legacy.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.0-windows-amd64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.0-windows-amd64.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.0-windows-arm64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.16.0-windows-arm64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.15.1",
+      "published_at": "2026-10-13T16:56:53Z",
+      "assets": [
+        {
+          "name": "manga-downloader-gui-v1.15.1-darwin-universal.zip",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-gui-v1.15.1-linux-amd64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-gui-v1.15.1-linux-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-gui-v1.15.1-windows-amd64.zip",
+          "download_count": 17
+        },
+        {
+          "name": "manga-downloader-gui-v1.15.1-windows-arm64.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.15.1-darwin-amd64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.15.1-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.1-darwin-arm64.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v1.15.1-darwin-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.1-linux-386.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.15.1-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.1-linux-amd64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.15.1-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.1-linux-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.15.1-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.1-windows-32bit-legacy.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.1-windows-32bit-legacy.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.1-windows-amd64.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.15.1-windows-amd64.zip.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.15.1-windows-arm64.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.15.1-windows-arm64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.15.0",
+      "published_at": "2026-10-12T23:05:01Z",
+      "assets": [
+        {
+          "name": "manga-downloader-gui-v1.15.0-darwin-universal.zip",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-gui-v1.15.0-linux-amd64.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-gui-v1.15.0-linux-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-gui-v1.15.0-windows-amd64.zip",
+          "download_count": 12
+        },
+        {
+          "name": "manga-downloader-gui-v1.15.0-windows-arm64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.0-darwin-amd64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.15.0-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.0-darwin-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.15.0-darwin-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.0-linux-386.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.15.0-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.0-linux-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.15.0-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.0-linux-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.15.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.0-windows-32bit-legacy.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.0-windows-32bit-legacy.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.0-windows-amd64.zip",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.15.0-windows-amd64.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.0-windows-arm64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.15.0-windows-arm64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.14.0",
+      "published_at": "2026-10-11T20:39:58Z",
+      "assets": [
+        {
+          "name": "manga-downloader-gui-v1.14.0-darwin-universal.zip",
+          "download_count": 10
+        },
+        {
+          "name": "manga-downloader-gui-v1.14.0-linux-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-gui-v1.14.0-linux-arm64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-gui-v1.14.0-windows-amd64.zip",
+          "download_count": 22
+        },
+        {
+          "name": "manga-downloader-gui-v1.14.0-windows-arm64.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.14.0-darwin-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.14.0-darwin-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.14.0-darwin-arm64.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v1.14.0-darwin-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.14.0-linux-386.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.14.0-linux-386.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.14.0-linux-amd64.tar.gz",
+          "download_count": 10
+        },
+        {
+          "name": "manga-downloader-v1.14.0-linux-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.14.0-linux-arm64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.14.0-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.14.0-windows-32bit-legacy.zip",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.14.0-windows-32bit-legacy.zip.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.14.0-windows-amd64.zip",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-v1.14.0-windows-amd64.zip.md5",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v1.14.0-windows-arm64.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.14.0-windows-arm64.zip.md5",
+          "download_count": 2
+        }
+      ]
+    },
+    {
+      "tag": "v1.13.0",
+      "published_at": "2026-10-11T16:54:41Z",
+      "assets": [
+        {
+          "name": "manga-downloader-gui-v1.13.0-darwin-universal.zip",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-gui-v1.13.0-linux-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-gui-v1.13.0-linux-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-gui-v1.13.0-windows-amd64.zip",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-gui-v1.13.0-windows-arm64.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.13.0-darwin-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.13.0-darwin-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.13.0-darwin-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.13.0-darwin-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.13.0-linux-386.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.13.0-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.13.0-linux-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.13.0-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.13.0-linux-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.13.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.13.0-windows-32bit-legacy.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.13.0-windows-32bit-legacy.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.13.0-windows-amd64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.13.0-windows-amd64.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.13.0-windows-arm64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.13.0-windows-arm64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.12.0",
+      "published_at": "2026-10-11T15:09:27Z",
+      "assets": [
+        {
+          "name": "manga-downloader-gui-v1.12.0-darwin-universal.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-gui-v1.12.0-linux-amd64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-gui-v1.12.0-linux-arm64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-gui-v1.12.0-windows-amd64.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-gui-v1.12.0-windows-arm64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-darwin-amd64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-darwin-arm64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-darwin-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-linux-386.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-linux-amd64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.12.0-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-linux-arm64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-windows-32bit-legacy.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-windows-32bit-legacy.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-windows-amd64.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.12.0-windows-amd64.zip.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.12.0-windows-arm64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.12.0-windows-arm64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.11.1",
+      "published_at": "2026-10-10T23:46:00Z",
+      "assets": [
+        {
+          "name": "manga-downloader-gui-v1.11.1-darwin-universal.zip",
+          "download_count": 12
+        },
+        {
+          "name": "manga-downloader-gui-v1.11.1-linux-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-gui-v1.11.1-linux-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-gui-v1.11.1-windows-amd64.zip",
+          "download_count": 12
+        },
+        {
+          "name": "manga-downloader-gui-v1.11.1-windows-arm64.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.11.1-darwin-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.11.1-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.1-darwin-arm64.tar.gz",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v1.11.1-darwin-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.11.1-linux-386.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.11.1-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.1-linux-amd64.tar.gz",
+          "download_count": 17
+        },
+        {
+          "name": "manga-downloader-v1.11.1-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.1-linux-arm64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.11.1-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.1-windows-32bit-legacy.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.1-windows-32bit-legacy.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.1-windows-amd64.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.11.1-windows-amd64.zip.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.11.1-windows-arm64.zip",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.11.1-windows-arm64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.11.0",
+      "published_at": "2026-10-10T23:19:36Z",
+      "assets": [
+        {
+          "name": "manga-downloader-gui-v1.11.0-linux-amd64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-gui-v1.11.0-linux-arm64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-gui-v1.11.0-windows-amd64.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-gui-v1.11.0-windows-arm64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-darwin-amd64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-darwin-arm64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-darwin-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-linux-386.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-linux-amd64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-linux-arm64.tar.gz",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-windows-32bit-legacy.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-windows-32bit-legacy.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-windows-amd64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-windows-amd64.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-windows-arm64.zip",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.11.0-windows-arm64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.10.0",
+      "published_at": "2026-10-08T18:42:14Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.10.0-darwin-amd64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.10.0-darwin-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.10.0-darwin-arm64.tar.gz",
+          "download_count": 10
+        },
+        {
+          "name": "manga-downloader-v1.10.0-darwin-arm64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.10.0-linux-386.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.10.0-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.10.0-linux-amd64.tar.gz",
+          "download_count": 16
+        },
+        {
+          "name": "manga-downloader-v1.10.0-linux-amd64.tar.gz.md5",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.10.0-linux-arm64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.10.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.10.0-windows-386.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.10.0-windows-386.zip.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.10.0-windows-amd64.zip",
+          "download_count": 31
+        },
+        {
+          "name": "manga-downloader-v1.10.0-windows-amd64.zip.md5",
+          "download_count": 14
+        }
+      ]
+    },
+    {
+      "tag": "v1.9.0",
+      "published_at": "2026-09-03T18:31:48Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.9.0-darwin-amd64.tar.gz",
+          "download_count": 117
+        },
+        {
+          "name": "manga-downloader-v1.9.0-darwin-amd64.tar.gz.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.9.0-darwin-arm64.tar.gz",
+          "download_count": 55
+        },
+        {
+          "name": "manga-downloader-v1.9.0-darwin-arm64.tar.gz.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.9.0-linux-386.tar.gz",
+          "download_count": 23
+        },
+        {
+          "name": "manga-downloader-v1.9.0-linux-386.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.9.0-linux-amd64.tar.gz",
+          "download_count": 84
+        },
+        {
+          "name": "manga-downloader-v1.9.0-linux-amd64.tar.gz.md5",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-v1.9.0-linux-arm64.tar.gz",
+          "download_count": 18
+        },
+        {
+          "name": "manga-downloader-v1.9.0-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.9.0-windows-386.zip",
+          "download_count": 101
+        },
+        {
+          "name": "manga-downloader-v1.9.0-windows-386.zip.md5",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v1.9.0-windows-amd64.zip",
+          "download_count": 246
+        },
+        {
+          "name": "manga-downloader-v1.9.0-windows-amd64.zip.md5",
+          "download_count": 48
+        }
+      ]
+    },
+    {
+      "tag": "v1.8.0",
+      "published_at": "2026-09-02T08:26:22Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.8.0-darwin-amd64.tar.gz",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-v1.8.0-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.8.0-darwin-arm64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.8.0-darwin-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.8.0-linux-386.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.8.0-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.8.0-linux-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.8.0-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.8.0-linux-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.8.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.8.0-windows-386.zip",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.8.0-windows-386.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.8.0-windows-amd64.zip",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v1.8.0-windows-amd64.zip.md5",
+          "download_count": 3
+        }
+      ]
+    },
+    {
+      "tag": "v1.7.1",
+      "published_at": "2026-08-24T13:39:27Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.7.1-darwin-amd64.tar.gz",
+          "download_count": 35
+        },
+        {
+          "name": "manga-downloader-v1.7.1-darwin-amd64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.7.1-darwin-arm64.tar.gz",
+          "download_count": 12
+        },
+        {
+          "name": "manga-downloader-v1.7.1-darwin-arm64.tar.gz.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.7.1-linux-386.tar.gz",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v1.7.1-linux-386.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.7.1-linux-amd64.tar.gz",
+          "download_count": 33
+        },
+        {
+          "name": "manga-downloader-v1.7.1-linux-amd64.tar.gz.md5",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.7.1-linux-arm64.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v1.7.1-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.7.1-windows-386.zip",
+          "download_count": 25
+        },
+        {
+          "name": "manga-downloader-v1.7.1-windows-386.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.7.1-windows-amd64.zip",
+          "download_count": 48
+        },
+        {
+          "name": "manga-downloader-v1.7.1-windows-amd64.zip.md5",
+          "download_count": 2
+        }
+      ]
+    },
+    {
+      "tag": "v1.7.0",
+      "published_at": "2026-08-18T08:10:39Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.7.0-darwin-amd64.tar.gz",
+          "download_count": 26
+        },
+        {
+          "name": "manga-downloader-v1.7.0-darwin-amd64.tar.gz.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.7.0-darwin-arm64.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v1.7.0-darwin-arm64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.7.0-linux-386.tar.gz",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-v1.7.0-linux-386.tar.gz.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.7.0-linux-amd64.tar.gz",
+          "download_count": 21
+        },
+        {
+          "name": "manga-downloader-v1.7.0-linux-amd64.tar.gz.md5",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.7.0-linux-arm64.tar.gz",
+          "download_count": 12
+        },
+        {
+          "name": "manga-downloader-v1.7.0-linux-arm64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.7.0-windows-386.zip",
+          "download_count": 24
+        },
+        {
+          "name": "manga-downloader-v1.7.0-windows-386.zip.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.7.0-windows-amd64.zip",
+          "download_count": 29
+        },
+        {
+          "name": "manga-downloader-v1.7.0-windows-amd64.zip.md5",
+          "download_count": 6
+        }
+      ]
+    },
+    {
+      "tag": "v1.6.1",
+      "published_at": "2026-08-17T11:44:07Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.6.1-darwin-amd64.tar.gz",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-v1.6.1-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.6.1-darwin-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.6.1-darwin-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.6.1-linux-386.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.6.1-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.6.1-linux-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.6.1-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.6.1-linux-arm64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.6.1-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.6.1-windows-386.zip",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.6.1-windows-386.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.6.1-windows-amd64.zip",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v1.6.1-windows-amd64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.6.0",
+      "published_at": "2026-08-10T15:45:18Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.6.0-darwin-amd64.tar.gz",
+          "download_count": 21
+        },
+        {
+          "name": "manga-downloader-v1.6.0-darwin-amd64.tar.gz.md5",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v1.6.0-darwin-arm64.tar.gz",
+          "download_count": 10
+        },
+        {
+          "name": "manga-downloader-v1.6.0-darwin-arm64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.6.0-linux-386.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v1.6.0-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.6.0-linux-amd64.tar.gz",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v1.6.0-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.6.0-linux-arm64.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v1.6.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.6.0-windows-386.zip",
+          "download_count": 12
+        },
+        {
+          "name": "manga-downloader-v1.6.0-windows-386.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.6.0-windows-amd64.zip",
+          "download_count": 28
+        },
+        {
+          "name": "manga-downloader-v1.6.0-windows-amd64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.5.0",
+      "published_at": "2026-08-03T00:47:31Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.5.0-darwin-amd64.tar.gz",
+          "download_count": 28
+        },
+        {
+          "name": "manga-downloader-v1.5.0-darwin-amd64.tar.gz.md5",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.5.0-darwin-arm64.tar.gz",
+          "download_count": 10
+        },
+        {
+          "name": "manga-downloader-v1.5.0-darwin-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.5.0-linux-386.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.5.0-linux-386.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.5.0-linux-amd64.tar.gz",
+          "download_count": 21
+        },
+        {
+          "name": "manga-downloader-v1.5.0-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.5.0-linux-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.5.0-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.5.0-windows-386.zip",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-v1.5.0-windows-386.zip.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.5.0-windows-amd64.zip",
+          "download_count": 23
+        },
+        {
+          "name": "manga-downloader-v1.5.0-windows-amd64.zip.md5",
+          "download_count": 3
+        }
+      ]
+    },
+    {
+      "tag": "v1.4.1",
+      "published_at": "2026-07-22T23:13:21Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.4.1-darwin-amd64.tar.gz",
+          "download_count": 34
+        },
+        {
+          "name": "manga-downloader-v1.4.1-darwin-amd64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.4.1-darwin-arm64.tar.gz",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v1.4.1-darwin-arm64.tar.gz.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.4.1-linux-386.tar.gz",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-v1.4.1-linux-386.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.4.1-linux-amd64.tar.gz",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v1.4.1-linux-amd64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.4.1-linux-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.4.1-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.4.1-windows-386.zip",
+          "download_count": 22
+        },
+        {
+          "name": "manga-downloader-v1.4.1-windows-386.zip.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.4.1-windows-amd64.zip",
+          "download_count": 45
+        },
+        {
+          "name": "manga-downloader-v1.4.1-windows-amd64.zip.md5",
+          "download_count": 7
+        }
+      ]
+    },
+    {
+      "tag": "v1.4.0",
+      "published_at": "2026-07-22T22:38:51Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.4.0-darwin-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.4.0-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.4.0-darwin-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.4.0-darwin-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.4.0-linux-386.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.4.0-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.4.0-linux-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.4.0-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.4.0-linux-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.4.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.4.0-windows-386.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.4.0-windows-386.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.4.0-windows-amd64.zip",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.4.0-windows-amd64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.3.0",
+      "published_at": "2026-07-21T22:20:57Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.3.0-darwin-amd64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v1.3.0-darwin-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.3.0-darwin-arm64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.3.0-darwin-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.3.0-linux-386.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.3.0-linux-386.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.3.0-linux-amd64.tar.gz",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-v1.3.0-linux-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.3.0-linux-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.3.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.3.0-windows-386.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.3.0-windows-386.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.3.0-windows-amd64.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.3.0-windows-amd64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.2.0",
+      "published_at": "2026-07-21T20:51:24Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.2.0-darwin-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.2.0-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.2.0-darwin-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.2.0-darwin-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.2.0-linux-386.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.2.0-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.2.0-linux-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.2.0-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.2.0-linux-arm64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.2.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.2.0-windows-386.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.2.0-windows-386.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.2.0-windows-amd64.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.2.0-windows-amd64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.1.1",
+      "published_at": "2026-07-21T16:50:07Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.1.1-darwin-amd64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.1.1-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.1.1-darwin-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.1.1-darwin-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.1.1-linux-386.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.1.1-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.1.1-linux-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.1.1-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.1.1-linux-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.1.1-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.1.1-windows-386.zip",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.1.1-windows-386.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.1.1-windows-amd64.zip",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.1.1-windows-amd64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.1.0",
+      "published_at": "2026-07-20T23:48:39Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.1.0-darwin-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.1.0-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.1.0-darwin-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.1.0-darwin-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.1.0-linux-386.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.1.0-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.1.0-linux-amd64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.1.0-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.1.0-linux-arm64.tar.gz",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v1.1.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.1.0-windows-386.zip",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v1.1.0-windows-386.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.1.0-windows-amd64.zip",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.1.0-windows-amd64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v1.0.0",
+      "published_at": "2026-07-20T22:55:39Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v1.0.0-darwin-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.0.0-darwin-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.0.0-darwin-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.0.0-darwin-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.0.0-linux-386.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.0.0-linux-386.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.0.0-linux-amd64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.0.0-linux-amd64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.0.0-linux-arm64.tar.gz",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.0.0-linux-arm64.tar.gz.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.0.0-windows-386.zip",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.0.0-windows-386.zip.md5",
+          "download_count": 1
+        },
+        {
+          "name": "manga-downloader-v1.0.0-windows-amd64.zip",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v1.0.0-windows-amd64.zip.md5",
+          "download_count": 1
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.15",
+      "published_at": "2025-07-11T10:56:52Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v0.0.15-darwin-amd64.tar.gz",
+          "download_count": 740
+        },
+        {
+          "name": "manga-downloader-v0.0.15-darwin-amd64.tar.gz.md5",
+          "download_count": 62
+        },
+        {
+          "name": "manga-downloader-v0.0.15-darwin-arm64.tar.gz",
+          "download_count": 149
+        },
+        {
+          "name": "manga-downloader-v0.0.15-darwin-arm64.tar.gz.md5",
+          "download_count": 23
+        },
+        {
+          "name": "manga-downloader-v0.0.15-linux-386.tar.gz",
+          "download_count": 76
+        },
+        {
+          "name": "manga-downloader-v0.0.15-linux-386.tar.gz.md5",
+          "download_count": 12
+        },
+        {
+          "name": "manga-downloader-v0.0.15-linux-amd64.tar.gz",
+          "download_count": 338
+        },
+        {
+          "name": "manga-downloader-v0.0.15-linux-amd64.tar.gz.md5",
+          "download_count": 16
+        },
+        {
+          "name": "manga-downloader-v0.0.15-linux-arm64.tar.gz",
+          "download_count": 69
+        },
+        {
+          "name": "manga-downloader-v0.0.15-linux-arm64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.15-windows-386.zip",
+          "download_count": 518
+        },
+        {
+          "name": "manga-downloader-v0.0.15-windows-386.zip.md5",
+          "download_count": 25
+        },
+        {
+          "name": "manga-downloader-v0.0.15-windows-amd64.zip",
+          "download_count": 818
+        },
+        {
+          "name": "manga-downloader-v0.0.15-windows-amd64.zip.md5",
+          "download_count": 42
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.14",
+      "published_at": "2025-05-17T16:06:34Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v0.0.14-darwin-amd64.tar.gz",
+          "download_count": 182
+        },
+        {
+          "name": "manga-downloader-v0.0.14-darwin-amd64.tar.gz.md5",
+          "download_count": 15
+        },
+        {
+          "name": "manga-downloader-v0.0.14-darwin-arm64.tar.gz",
+          "download_count": 40
+        },
+        {
+          "name": "manga-downloader-v0.0.14-darwin-arm64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-v0.0.14-linux-386.tar.gz",
+          "download_count": 21
+        },
+        {
+          "name": "manga-downloader-v0.0.14-linux-386.tar.gz.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v0.0.14-linux-amd64.tar.gz",
+          "download_count": 52
+        },
+        {
+          "name": "manga-downloader-v0.0.14-linux-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v0.0.14-linux-arm64.tar.gz",
+          "download_count": 18
+        },
+        {
+          "name": "manga-downloader-v0.0.14-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-v0.0.14-windows-386.zip",
+          "download_count": 151
+        },
+        {
+          "name": "manga-downloader-v0.0.14-windows-386.zip.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v0.0.14-windows-amd64.zip",
+          "download_count": 219
+        },
+        {
+          "name": "manga-downloader-v0.0.14-windows-amd64.zip.md5",
+          "download_count": 18
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.13",
+      "published_at": "2024-03-20T21:54:03Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v0.0.13-darwin-amd64.tar.gz",
+          "download_count": 1772
+        },
+        {
+          "name": "manga-downloader-v0.0.13-darwin-amd64.tar.gz.md5",
+          "download_count": 171
+        },
+        {
+          "name": "manga-downloader-v0.0.13-darwin-arm64.tar.gz",
+          "download_count": 260
+        },
+        {
+          "name": "manga-downloader-v0.0.13-darwin-arm64.tar.gz.md5",
+          "download_count": 30
+        },
+        {
+          "name": "manga-downloader-v0.0.13-linux-386.tar.gz",
+          "download_count": 157
+        },
+        {
+          "name": "manga-downloader-v0.0.13-linux-386.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.13-linux-amd64.tar.gz",
+          "download_count": 312
+        },
+        {
+          "name": "manga-downloader-v0.0.13-linux-amd64.tar.gz.md5",
+          "download_count": 17
+        },
+        {
+          "name": "manga-downloader-v0.0.13-linux-arm64.tar.gz",
+          "download_count": 101
+        },
+        {
+          "name": "manga-downloader-v0.0.13-linux-arm64.tar.gz.md5",
+          "download_count": 25
+        },
+        {
+          "name": "manga-downloader-v0.0.13-windows-386.zip",
+          "download_count": 1046
+        },
+        {
+          "name": "manga-downloader-v0.0.13-windows-386.zip.md5",
+          "download_count": 84
+        },
+        {
+          "name": "manga-downloader-v0.0.13-windows-amd64.zip",
+          "download_count": 1412
+        },
+        {
+          "name": "manga-downloader-v0.0.13-windows-amd64.zip.md5",
+          "download_count": 115
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.12",
+      "published_at": "2024-01-05T21:26:02Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v0.0.12-darwin-amd64.tar.gz",
+          "download_count": 213
+        },
+        {
+          "name": "manga-downloader-v0.0.12-darwin-amd64.tar.gz.md5",
+          "download_count": 22
+        },
+        {
+          "name": "manga-downloader-v0.0.12-darwin-arm64.tar.gz",
+          "download_count": 31
+        },
+        {
+          "name": "manga-downloader-v0.0.12-darwin-arm64.tar.gz.md5",
+          "download_count": 11
+        },
+        {
+          "name": "manga-downloader-v0.0.12-linux-386.tar.gz",
+          "download_count": 36
+        },
+        {
+          "name": "manga-downloader-v0.0.12-linux-386.tar.gz.md5",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v0.0.12-linux-amd64.tar.gz",
+          "download_count": 38
+        },
+        {
+          "name": "manga-downloader-v0.0.12-linux-amd64.tar.gz.md5",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v0.0.12-linux-arm64.tar.gz",
+          "download_count": 17
+        },
+        {
+          "name": "manga-downloader-v0.0.12-linux-arm64.tar.gz.md5",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v0.0.12-windows-386.zip",
+          "download_count": 134
+        },
+        {
+          "name": "manga-downloader-v0.0.12-windows-386.zip.md5",
+          "download_count": 17
+        },
+        {
+          "name": "manga-downloader-v0.0.12-windows-amd64.zip",
+          "download_count": 184
+        },
+        {
+          "name": "manga-downloader-v0.0.12-windows-amd64.zip.md5",
+          "download_count": 17
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.11",
+      "published_at": "2024-01-05T18:15:46Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v0.0.11-darwin-amd64.tar.gz",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.11-darwin-amd64.tar.gz.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v0.0.11-darwin-arm64.tar.gz",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v0.0.11-darwin-arm64.tar.gz.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v0.0.11-linux-386.tar.gz",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v0.0.11-linux-386.tar.gz.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v0.0.11-linux-amd64.tar.gz",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v0.0.11-linux-amd64.tar.gz.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v0.0.11-linux-arm64.tar.gz",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v0.0.11-linux-arm64.tar.gz.md5",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-v0.0.11-windows-386.zip",
+          "download_count": 15
+        },
+        {
+          "name": "manga-downloader-v0.0.11-windows-386.zip.md5",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-v0.0.11-windows-amd64.zip",
+          "download_count": 16
+        },
+        {
+          "name": "manga-downloader-v0.0.11-windows-amd64.zip.md5",
+          "download_count": 5
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.10",
+      "published_at": "2023-01-20T18:43:38Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v0.0.10-darwin-amd64.tar.gz",
+          "download_count": 96
+        },
+        {
+          "name": "manga-downloader-v0.0.10-darwin-amd64.tar.gz.md5",
+          "download_count": 27
+        },
+        {
+          "name": "manga-downloader-v0.0.10-darwin-arm64.tar.gz",
+          "download_count": 32
+        },
+        {
+          "name": "manga-downloader-v0.0.10-darwin-arm64.tar.gz.md5",
+          "download_count": 19
+        },
+        {
+          "name": "manga-downloader-v0.0.10-linux-386.tar.gz",
+          "download_count": 20
+        },
+        {
+          "name": "manga-downloader-v0.0.10-linux-386.tar.gz.md5",
+          "download_count": 16
+        },
+        {
+          "name": "manga-downloader-v0.0.10-linux-amd64.tar.gz",
+          "download_count": 37
+        },
+        {
+          "name": "manga-downloader-v0.0.10-linux-amd64.tar.gz.md5",
+          "download_count": 15
+        },
+        {
+          "name": "manga-downloader-v0.0.10-linux-arm64.tar.gz",
+          "download_count": 19
+        },
+        {
+          "name": "manga-downloader-v0.0.10-linux-arm64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.10-windows-386.zip",
+          "download_count": 42
+        },
+        {
+          "name": "manga-downloader-v0.0.10-windows-386.zip.md5",
+          "download_count": 16
+        },
+        {
+          "name": "manga-downloader-v0.0.10-windows-amd64.zip",
+          "download_count": 77
+        },
+        {
+          "name": "manga-downloader-v0.0.10-windows-amd64.zip.md5",
+          "download_count": 19
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.9",
+      "published_at": "2023-01-20T16:59:51Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v0.0.9-darwin-amd64.tar.gz",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v0.0.9-darwin-amd64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.9-darwin-arm64.tar.gz",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v0.0.9-darwin-arm64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.9-linux-386.tar.gz",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-v0.0.9-linux-386.tar.gz.md5",
+          "download_count": 13
+        },
+        {
+          "name": "manga-downloader-v0.0.9-linux-amd64.tar.gz",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v0.0.9-linux-amd64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.9-linux-arm64.tar.gz",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-v0.0.9-linux-arm64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.9-windows-386.zip",
+          "download_count": 11
+        },
+        {
+          "name": "manga-downloader-v0.0.9-windows-386.zip.md5",
+          "download_count": 13
+        },
+        {
+          "name": "manga-downloader-v0.0.9-windows-amd64.zip",
+          "download_count": 11
+        },
+        {
+          "name": "manga-downloader-v0.0.9-windows-amd64.zip.md5",
+          "download_count": 14
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.8",
+      "published_at": "2023-01-18T17:57:50Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v0.0.8-darwin-amd64.tar.gz",
+          "download_count": 11
+        },
+        {
+          "name": "manga-downloader-v0.0.8-darwin-amd64.tar.gz.md5",
+          "download_count": 13
+        },
+        {
+          "name": "manga-downloader-v0.0.8-darwin-arm64.tar.gz",
+          "download_count": 11
+        },
+        {
+          "name": "manga-downloader-v0.0.8-darwin-arm64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.8-linux-386.tar.gz",
+          "download_count": 16
+        },
+        {
+          "name": "manga-downloader-v0.0.8-linux-386.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.8-linux-amd64.tar.gz",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-v0.0.8-linux-amd64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.8-linux-arm64.tar.gz",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-v0.0.8-linux-arm64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.8-windows-386.zip",
+          "download_count": 10
+        },
+        {
+          "name": "manga-downloader-v0.0.8-windows-386.zip.md5",
+          "download_count": 13
+        },
+        {
+          "name": "manga-downloader-v0.0.8-windows-amd64.zip",
+          "download_count": 11
+        },
+        {
+          "name": "manga-downloader-v0.0.8-windows-amd64.zip.md5",
+          "download_count": 15
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.7",
+      "published_at": "2023-01-15T03:19:27Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v0.0.7-darwin-amd64.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v0.0.7-darwin-amd64.tar.gz.md5",
+          "download_count": 15
+        },
+        {
+          "name": "manga-downloader-v0.0.7-darwin-arm64.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v0.0.7-darwin-arm64.tar.gz.md5",
+          "download_count": 15
+        },
+        {
+          "name": "manga-downloader-v0.0.7-linux-386.tar.gz",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-v0.0.7-linux-386.tar.gz.md5",
+          "download_count": 15
+        },
+        {
+          "name": "manga-downloader-v0.0.7-linux-amd64.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v0.0.7-linux-amd64.tar.gz.md5",
+          "download_count": 15
+        },
+        {
+          "name": "manga-downloader-v0.0.7-linux-arm64.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v0.0.7-linux-arm64.tar.gz.md5",
+          "download_count": 15
+        },
+        {
+          "name": "manga-downloader-v0.0.7-windows-386.zip",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-v0.0.7-windows-386.zip.md5",
+          "download_count": 19
+        },
+        {
+          "name": "manga-downloader-v0.0.7-windows-amd64.zip",
+          "download_count": 9
+        },
+        {
+          "name": "manga-downloader-v0.0.7-windows-amd64.zip.md5",
+          "download_count": 15
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.6",
+      "published_at": "2023-01-14T03:41:05Z",
+      "assets": [
+        {
+          "name": "manga-downloader-v0.0.6-darwin-amd64.tar.gz",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-v0.0.6-darwin-amd64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.6-darwin-arm64.tar.gz",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-v0.0.6-darwin-arm64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.6-linux-386.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v0.0.6-linux-386.tar.gz.md5",
+          "download_count": 13
+        },
+        {
+          "name": "manga-downloader-v0.0.6-linux-amd64.tar.gz",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-v0.0.6-linux-amd64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.6-linux-arm64.tar.gz",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-v0.0.6-linux-arm64.tar.gz.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.6-windows-386.zip",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-v0.0.6-windows-386.zip.md5",
+          "download_count": 14
+        },
+        {
+          "name": "manga-downloader-v0.0.6-windows-amd64.zip",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-v0.0.6-windows-amd64.zip.md5",
+          "download_count": 14
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.5",
+      "published_at": "2023-01-10T01:39:57Z",
+      "assets": [
+        {
+          "name": "manga-downloader-0.0.5-darwin-amd64.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-0.0.5-darwin-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.5-darwin-arm64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.5-darwin-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.5-linux-386.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.5-linux-386.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.5-linux-amd64.tar.gz",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-0.0.5-linux-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.5-linux-arm64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.5-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.5-windows-386.zip",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-0.0.5-windows-386.zip.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.5-windows-amd64.zip",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-0.0.5-windows-amd64.zip.md5",
+          "download_count": 2
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.4",
+      "published_at": "2023-01-02T21:40:08Z",
+      "assets": [
+        {
+          "name": "manga-downloader-0.0.4-darwin-amd64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.4-darwin-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.4-darwin-arm64.tar.gz",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-0.0.4-darwin-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.4-linux-386.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.4-linux-386.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.4-linux-amd64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.4-linux-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.4-linux-arm64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.4-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.4-windows-386.zip",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-0.0.4-windows-386.zip.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-0.0.4-windows-amd64.zip",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-0.0.4-windows-amd64.zip.md5",
+          "download_count": 2
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.3",
+      "published_at": "2023-01-02T00:06:45Z",
+      "assets": [
+        {
+          "name": "manga-downloader-0.0.3-darwin-amd64.tar.gz",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-0.0.3-darwin-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.3-darwin-arm64.tar.gz",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-0.0.3-darwin-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.3-linux-386.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.3-linux-386.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-0.0.3-linux-amd64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.3-linux-amd64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-0.0.3-linux-arm64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.3-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.3-windows-386.zip",
+          "download_count": 8
+        },
+        {
+          "name": "manga-downloader-0.0.3-windows-386.zip.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.3-windows-amd64.zip",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-0.0.3-windows-amd64.zip.md5",
+          "download_count": 2
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.2",
+      "published_at": "2022-12-31T20:09:45Z",
+      "assets": [
+        {
+          "name": "manga-downloader-0.0.2-darwin-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-0.0.2-darwin-amd64.tar.gz.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-0.0.2-darwin-arm64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.2-darwin-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.2-linux-386.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.2-linux-386.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.2-linux-amd64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.2-linux-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.2-linux-arm64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-0.0.2-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.2-windows-386.zip",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-0.0.2-windows-386.zip.md5",
+          "download_count": 3
+        },
+        {
+          "name": "manga-downloader-0.0.2-windows-amd64.zip",
+          "download_count": 6
+        },
+        {
+          "name": "manga-downloader-0.0.2-windows-amd64.zip.md5",
+          "download_count": 3
+        }
+      ]
+    },
+    {
+      "tag": "v0.0.1",
+      "published_at": "2022-12-31T01:33:47Z",
+      "assets": [
+        {
+          "name": "manga-downloader-0.0.1-darwin-amd64.tar.gz",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.1-darwin-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.1-darwin-arm64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-0.0.1-darwin-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.1-linux-386.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-0.0.1-linux-386.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.1-linux-amd64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-0.0.1-linux-amd64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.1-linux-arm64.tar.gz",
+          "download_count": 4
+        },
+        {
+          "name": "manga-downloader-0.0.1-linux-arm64.tar.gz.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.1-windows-386.zip",
+          "download_count": 5
+        },
+        {
+          "name": "manga-downloader-0.0.1-windows-386.zip.md5",
+          "download_count": 2
+        },
+        {
+          "name": "manga-downloader-0.0.1-windows-amd64.zip",
+          "download_count": 7
+        },
+        {
+          "name": "manga-downloader-0.0.1-windows-amd64.zip.md5",
+          "download_count": 3
+        }
+      ]
+    }
+  ],
+  "docker": {
+    "pull_count": 35537,
+    "star_count": 1
+  }
+}

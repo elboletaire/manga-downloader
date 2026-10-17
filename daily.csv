@@ -1,2 +1,3 @@
 date,cli_downloads,app_downloads,total_downloads,docker_pulls,stars,forks,cli_delta,app_delta,total_delta,docker_delta,stars_delta
-2026-10-16,11734,238,11972,33711,269,34,,,,,
+2026-10-16,11732,236,11968,33711,269,34,,,,,
+2026-10-17,11773,300,12073,35537,269,34,41,64,105,1826,0
