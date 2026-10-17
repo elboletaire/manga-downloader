@@ -86,7 +86,7 @@ describe('say', () => {
   const es = createT('es');
 
   it('translates a message with its args', () => {
-    const msg = { key: 'log.loaded', args: { title: 'Naruto', chapters: 2 }, text: 'Loaded Naruto: 2 chapters' };
+    const msg = { key: 'log.loaded', args: { title: 'Naruto', count: 2 }, text: 'Loaded Naruto: 2 chapters' };
     expect(say(es, msg, 'Loaded Naruto: 2 chapters')).toBe('Cargado Naruto: 2 capítulos');
   });
 

@@ -567,7 +567,7 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	c.listedVolumes = core.ListedVolumes(series.Chapters)
 	c.volumesText = ""
 	c.resetResultsLocked()
-	c.appendMsgLocked(LogInfo, msg("log.loaded", map[string]any{"title": series.Title, "chapters": len(series.Chapters)}))
+	c.appendMsgLocked(LogInfo, msg("log.loaded", map[string]any{"title": series.Title, "count": len(series.Chapters)}))
 	return nil
 }
 

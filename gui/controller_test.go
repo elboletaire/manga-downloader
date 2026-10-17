@@ -927,12 +927,21 @@ func TestLogLinesCarryTheirMessage(t *testing.T) {
 	}
 }
 
-// the download's start counts its chapters in English, one or several
+// the download's start and the load's count are plural in English, one or several
 func TestDownloadingLogIsPlural(t *testing.T) {
-	cases := map[int]string{1: "Downloading 1 chapter of X", 3: "Downloading 3 chapters of X"}
-	for n, want := range cases {
-		if got := msg("log.downloading", map[string]any{"count": n, "title": "X"}).Text; got != want {
-			t.Errorf("count %d: Text = %q, want %q", n, got, want)
+	cases := []struct {
+		key  string
+		n    int
+		want string
+	}{
+		{"log.downloading", 1, "Downloading 1 chapter of X"},
+		{"log.downloading", 3, "Downloading 3 chapters of X"},
+		{"log.loaded", 1, "Loaded X: 1 chapter"},
+		{"log.loaded", 0, "Loaded X: 0 chapters"},
+	}
+	for _, c := range cases {
+		if got := msg(c.key, map[string]any{"count": c.n, "title": "X"}).Text; got != c.want {
+			t.Errorf("%s with %d: Text = %q, want %q", c.key, c.n, got, c.want)
 		}
 	}
 }

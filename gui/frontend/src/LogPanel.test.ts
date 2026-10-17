@@ -137,7 +137,7 @@ describe('LogDrawer messages', () => {
       {
         level: 'info',
         text: 'Loaded Naruto: 2 chapters',
-        msg: { key: 'log.loaded', args: { title: 'Naruto', chapters: 2 }, text: 'Loaded Naruto: 2 chapters' },
+        msg: { key: 'log.loaded', args: { title: 'Naruto', count: 2 }, text: 'Loaded Naruto: 2 chapters' },
       },
       { level: 'warn', text: 'site check: timed out' },
     ]);
