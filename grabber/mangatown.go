@@ -13,13 +13,9 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Mangatown is a grabber for mangatown.com. It shares its reader with
-// mangahere.cc, but without the chapterfun.ashx round trip: every reader page
-// is its own HTML document (<chapter>/<n>.html) with the page's image in
-// <img id="image">, and the page count sits in a "total_pages" script
-// variable of the chapter's first page. Each page is therefore one plain GET.
-// Long-strip chapters put every page in the first document's #viewer instead
-// (img.image, no #image), so they are read from that one response.
+// Mangatown is a grabber for mangatown.com. Its reader is mangahere.cc's
+// without the chapterfun.ashx round trip: one HTML document per page, or a
+// long-strip chapter with every page in the first document.
 type Mangatown struct {
 	*Grabber
 }
