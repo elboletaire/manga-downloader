@@ -1,7 +1,8 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { ChapterBox, ChapterTitle, LOCKED_HINT, partsCount } from './ChapterPanel';
+import { ChapterBox, ChapterPanel, ChapterTitle, LOCKED_HINT, partsCount } from './ChapterPanel';
+import { createMockApi } from './mock';
 
 function title(locked: boolean): string {
   return renderToStaticMarkup(createElement(ChapterTitle, { title: 'Chapter 186', locked }));
@@ -42,3 +43,39 @@ describe('partsCount', () => {
     expect(partsCount(1, 2)).toBe('1 of 2 parts');
   });
 });
+
+describe('ChapterPanel of a parts run', () => {
+  it('heads a merged chapter with its title and count, and shows each part by its part alone', async () => {
+    const api = createMockApi({ scenario: 'parts' });
+    const state = await api.state();
+    const chapters = await api.chapters();
+    const noop = async () => {};
+    const markup = renderToStaticMarkup(
+      createElement(ChapterPanel, {
+        state,
+        chapters,
+        selected: [],
+        disabled: false,
+        onToggle: noop,
+        onToggleMany: noop,
+        onSetAll: noop,
+        onRange: async () => 0,
+        onVolumes: noop,
+        onReload: () => {},
+        onError: () => {},
+      }),
+    );
+    const title = chapters[2].wholeTitle ?? '';
+    expect(title).not.toBe('');
+    expect(markup).toContain(`Chapter 2 · ${escapeHtml(title)} · 2 parts`);
+    expect(markup).toContain('class="row in-group part-row"');
+    expect(markup).toContain('>Part 1</span>');
+    expect(markup).toContain('>Part 2</span>');
+    // a part row never repeats the chapter's title
+    expect(markup).not.toContain(escapeHtml(chapters[2].title));
+  });
+});
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+}

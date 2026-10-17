@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/elboletaire/manga-downloader/downloader"
 	"github.com/elboletaire/manga-downloader/grabber"
 )
 
@@ -104,5 +105,29 @@ func TestMergedChapterName(t *testing.T) {
 		if got := grabber.ChapterLabel(&chapter); got != tt.want {
 			t.Errorf("%s: named %q, want %q", tt.name, got, tt.want)
 		}
+	}
+}
+
+// the parts are packed in the order given, the first part's pages first
+func TestPackPartsKeepsPartOrder(t *testing.T) {
+	site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault}
+	part := func(label string, files ...string) *DownloadedChapter {
+		d := &DownloadedChapter{Chapter: &grabber.Chapter{Number: 19, Label: grabber.Label{Style: grabber.LabelNumbered, Part: label}}}
+		for _, f := range files {
+			d.Files = append(d.Files, &downloader.File{Data: []byte(f)})
+		}
+		return d
+	}
+	chapters := []*DownloadedChapter{part("1", "p1-0"), part("2", "p2-0", "p2-1")}
+
+	dir := t.TempDir()
+	filename, err := PackParts(dir, site, chapters, func(page, progress int) {})
+	if err != nil {
+		t.Fatalf("PackParts: %v", err)
+	}
+	names := entryNames(t, filepath.Join(dir, filename))
+	want := []string{"Chapter 0019/000.jpg", "Chapter 0019 (2)/000.jpg", "Chapter 0019 (2)/001.jpg"}
+	if fmt.Sprint(names) != fmt.Sprint(want) {
+		t.Errorf("entries = %v, want %v", names, want)
 	}
 }

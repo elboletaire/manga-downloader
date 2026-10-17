@@ -370,6 +370,31 @@ func TestDownloadVolumesParts(t *testing.T) {
 	}
 }
 
+// parts listed out of order (newest first, and "10" before "2") still merge in
+// part order, which reversing the listing alone wouldn't give
+func TestDownloadVolumesPartsListingOrder(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 19, part: "2", pages: 2, group: "A"},
+		fakeChapter{number: 19, part: "10", pages: 3, group: "A"},
+		fakeChapter{number: 19, part: "1", pages: 1, group: "A"},
+	)
+	series, dir := newSeries(t, site, false)
+	site.Settings.Volumes = "parts"
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", &recorder{}); err != nil {
+		t.Fatal(err)
+	}
+	entries := zipEntries(t, filepath.Join(dir, "Test Series 19 - Chapter 19 [A].cbz"))
+	want := []string{
+		"Chapter 0019/000.png",
+		"Chapter 0019 (2)/000.png", "Chapter 0019 (2)/001.png",
+		"Chapter 0019 (3)/000.png", "Chapter 0019 (3)/001.png", "Chapter 0019 (3)/002.png",
+	}
+	if !reflect.DeepEqual(entries, want) {
+		t.Errorf("parts file holds %q, want %q", entries, want)
+	}
+}
+
 // the parts of a chapter are named by their shared title, or by the number
 // alone when the parts' titles differ
 func TestDownloadVolumesPartsTitle(t *testing.T) {

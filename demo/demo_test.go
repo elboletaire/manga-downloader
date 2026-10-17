@@ -116,6 +116,22 @@ func TestFiltersByLanguageAndModelsVolumesAndGroups(t *testing.T) {
 	}
 }
 
+// every listed chapter has the title the progress rows show, a blank one left
+// the prompt demo's rows empty
+func TestEveryChapterHasATitle(t *testing.T) {
+	for _, data := range loaded(t) {
+		chapters, errs := newSite(&grabber.Grabber{Settings: &grabber.Settings{}}, data).FetchChapters()
+		if len(errs) > 0 {
+			t.Fatalf("%v: %v", data.URLs, errs)
+		}
+		for _, c := range chapters {
+			if grabber.ChapterLabel(c) == "" {
+				t.Errorf("%v: chapter %v has no title", data.URLs, c.GetNumber())
+			}
+		}
+	}
+}
+
 func TestPageDelayIsStableAndVaried(t *testing.T) {
 	seen := make(map[time.Duration]bool)
 	for n := 1; n <= 5; n++ {
