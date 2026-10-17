@@ -115,7 +115,8 @@ func FetchChapter(ctx context.Context, site grabber.Site, chapter *grabber.Chapt
 // On failure (either the GET itself, a mid-body read, or the optional
 // transform) it retries up to `retries` additional times, with a short
 // growing delay between attempts (or the server's Retry-After after a 429,
-// see retryWait). transform, if non-nil, post-processes the downloaded bytes.
+// see retryWait). An HTML body fails at once, without retries. transform, if
+// non-nil, post-processes the downloaded bytes.
 // Cancelling ctx abandons the wait before a retry.
 func FetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error)) (*File, error) {
 	return fetchFile(ctx, params, page, retries, transform, nil, false)
