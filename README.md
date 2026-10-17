@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[179 supported sites](#supported-sites)**, from big aggregators to small
+- **[180 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -644,7 +644,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 179 supported sites</b></summary>
+<summary><b>Show all 180 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -673,6 +673,7 @@ to a minute.
 | [comic-ogyaaa.com](https://comic-ogyaaa.com) | Japanese, Comic Ogyaaa (GigaViewer) | — |
 | [comic-seasons.com](https://comic-seasons.com) | Japanese, Seasons (GigaViewer) | — |
 | [comic-trail.com](https://comic-trail.com) | Japanese, Comic Trail (GigaViewer) | — |
+| [comic-walker.com](https://comic-walker.com) | Japanese, KadoComi (KADOKAWA) | 2026-10-17 |
 | [comic-y-ours.com](https://comic-y-ours.com) | Japanese, Comic Y-Ours (GigaViewer) | — |
 | [comic-zenon.com](https://comic-zenon.com) | Japanese, Comic Zenon (GigaViewer) | — |
 | [comix.to](https://comix.to) \* |  | 2026-10-15 |

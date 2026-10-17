@@ -125,6 +125,7 @@ grabber: \
 	grabber/comicogyaaa \
 	grabber/comicseasons \
 	grabber/comictrail \
+	grabber/comicwalker \
 	grabber/comicyours \
 	grabber/comiczenon \
 	grabber/comix \
@@ -509,6 +510,9 @@ grabber/comicaction:
 	go run . https://comic-action.com/episode/10044607041217599247 3
 grabber/comictrail:
 	go run . https://comic-trail.com/episode/12207421984031179174 45
+# KadoComi: a series URL, episode 1 is free
+grabber/comicwalker:
+	go run . https://comic-walker.com/detail/KC_000061_S 1
 grabber/comicearthstar:
 	go run . https://comic-earthstar.com/episode/12207421983368356635 1
 grabber/comicogyaaa:
