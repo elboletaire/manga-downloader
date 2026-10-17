@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 )
 
@@ -334,5 +335,46 @@ func TestGigaviewerUnscramble(t *testing.T) {
 func TestGigaviewerUnscrambleRejectsNonImage(t *testing.T) {
 	if _, err := gigaviewerUnscramble([]byte(strings.Repeat("x", 64))); err == nil {
 		t.Error("gigaviewerUnscramble of non-image bytes = nil error, want one")
+	}
+}
+
+// TestGigaviewerTestByMarkup checks that a host outside the list is matched by
+// its page's markup, with one fetch, and that another URL shape isn't fetched
+func TestGigaviewerTestByMarkup(t *testing.T) {
+	var hits atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/plain/"):
+			fmt.Fprint(w, `<html><body><a href="/">no platform here</a></body></html>`)
+		case strings.HasPrefix(r.URL.Path, "/rss/"):
+			fmt.Fprint(w, gigaviewerFeedFixture)
+		default:
+			fmt.Fprint(w, `<html><head><link rel="stylesheet" href="https://cdn-scissors.gigaviewer.com/app.css"></head></html>`)
+		}
+	}))
+	defer srv.Close()
+
+	check := func(path string, want bool, wantHits int32) {
+		t.Helper()
+		before := hits.Load()
+		got, err := NewGigaviewerByMarkup(&Grabber{URL: srv.URL + path, Settings: &Settings{}}).Test()
+		if err != nil || got != want {
+			t.Errorf("Test(%q) = %v, %v; want %v, nil", path, got, err, want)
+		}
+		if n := hits.Load() - before; n != wantHits {
+			t.Errorf("Test(%q) made %d requests, want %d", path, n, wantHits)
+		}
+	}
+
+	check("/episode/1", true, 1)
+	check("/rss/series/1", true, 1)
+	check("/plain/episode/1", false, 1)
+	check("/manga/1", false, 0)
+
+	// the listed-host instance never fetches an unlisted host
+	before := hits.Load()
+	if got, _ := NewGigaviewer(&Grabber{URL: srv.URL + "/episode/1", Settings: &Settings{}}).Test(); got || hits.Load() != before {
+		t.Errorf("listed-host Test on an unlisted host = %v with %d requests; want false and none", got, hits.Load()-before)
 	}
 }

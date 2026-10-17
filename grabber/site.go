@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/elboletaire/manga-downloader/http"
 )
 
 // Grabber is the base struct for all grabbers/sites
@@ -208,6 +209,10 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		plainHTML,
 		NewTcb(g),
 		NewJestful(g),
+		// Hosts outside the domain lists, detected by markup once the others
+		// declined, so only the URLs they left are fetched
+		NewGigaviewerByMarkup(g),
+		NewComiciByMarkup(g),
 	}
 	var early []Site
 	for _, newSite := range earlySites {
@@ -385,6 +390,16 @@ func hostMatchesDomain(rawURL, domain string) bool {
 	host := strings.ToLower(u.Hostname())
 	d := strings.ToLower(domain)
 	return host == d || strings.HasSuffix(host, "."+d)
+}
+
+// pageHasMarkup fetches rawURL once, without retries (a failure means "not this
+// site"), and reports whether the page contains marker
+func pageHasMarkup(rawURL, marker string) (bool, error) {
+	body, err := http.GetText(http.RequestParams{URL: rawURL, DisableRetry: true})
+	if err != nil {
+		return false, err
+	}
+	return strings.Contains(body, marker), nil
 }
 
 // getUuid returns the first uuid found in the passed string

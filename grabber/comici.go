@@ -12,6 +12,7 @@ import (
 	"image/draw"
 	"image/jpeg"
 	_ "image/png"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -20,8 +21,8 @@ import (
 )
 
 // comiciDomains are the hosts of Comici, the viewer of several Japanese
-// publishers. List another host here to serve it too: its episode and series
-// URLs are the same.
+// publishers: a fast path that needs no fetch. Any other host is detected by
+// its markup (comiciFingerprint), so listing one is optional.
 var comiciDomains = []string{
 	"comic-growl.com",
 	"heros-web.com",
@@ -33,6 +34,10 @@ var comiciDomains = []string{
 	"bigcomics.jp",
 	"kansai.mag-garden.co.jp",
 }
+
+// comiciFingerprint is Comici's vendor link, on the series and episode pages of
+// every host (bigcomics.jp has its own asset host, so the link is what they share)
+const comiciFingerprint = "comici.co.jp"
 
 var (
 	// comiciEpisodeRe and comiciSeriesRe match the 13-character IDs of
@@ -50,15 +55,23 @@ var (
 // Its listing marks the free episodes, and each one's pages come from the API.
 type Comici struct {
 	*Grabber
+	// byMarkup also detects the hosts not in comiciDomains (NewComiciByMarkup)
+	byMarkup   bool
 	seriesID   string
 	seriesLoad bool
 	title      string
 	chapters   Filterables
 }
 
-// NewComici returns a new Comici grabber.
+// NewComici returns a new Comici grabber, matching the listed hosts.
 func NewComici(g *Grabber) *Comici {
 	return &Comici{Grabber: g}
+}
+
+// NewComiciByMarkup returns a Comici grabber that also matches an episode or
+// series URL on any host whose page has the Comici markup.
+func NewComiciByMarkup(g *Grabber) *Comici {
+	return &Comici{Grabber: g, byMarkup: true}
 }
 
 // ComiciChapter is a chapter of a Comici site, identified by its episode ID
@@ -75,14 +88,26 @@ type comiciPages struct {
 	} `json:"result"`
 }
 
-// Test returns true if the URL is on one of the Comici hosts (host check, no fetch).
+// Test returns true if the URL is on one of the Comici hosts (host check, no
+// fetch). The NewComiciByMarkup instance also fetches an episode or series URL
+// on another host, once, and checks its markup.
 func (c *Comici) Test() (bool, error) {
 	for _, domain := range comiciDomains {
 		if hostMatchesDomain(c.URL, domain) {
 			return true, nil
 		}
 	}
-	return false, nil
+	if !c.byMarkup || !comiciURLShape(c.URL) {
+		return false, nil
+	}
+	return pageHasMarkup(c.URL, comiciFingerprint)
+}
+
+// comiciURLShape reports whether rawURL's path is an episode or a series, the
+// two shapes the grabber reads
+func comiciURLShape(rawURL string) bool {
+	u, err := url.Parse(rawURL)
+	return err == nil && (comiciEpisodeRe.MatchString(u.Path) || comiciSeriesRe.MatchString(u.Path))
 }
 
 // seriesIdentifier returns the series of the URL: a series URL names it, and an
