@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CATALOG, createT, fill, loadCatalog, resolveLanguage } from './index';
+import { CATALOG, createT, createTemplate, fill, loadCatalog, resolveLanguage } from './index';
 
 describe('resolveLanguage', () => {
   it('takes the saved language over the system', () => {
@@ -72,5 +72,12 @@ describe('createT', () => {
       '../locales/xx/app.json': { title: 'ignored' },
     });
     expect(built).toEqual({ en: { 'app.title': 'Title', 'app.hint.short': 'Short' } });
+  });
+});
+
+describe('createTemplate', () => {
+  it('returns the message with its placeholders unfilled', () => {
+    const catalog = { en: { 'app.hi': 'Hi {{name}}' } };
+    expect(createTemplate('en', catalog)('app.hi', { name: 'x' })).toBe('Hi {{name}}');
   });
 });

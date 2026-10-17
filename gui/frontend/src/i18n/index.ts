@@ -1,22 +1,24 @@
 // The desktop app's languages and translator. Catalogs are the JSON files in
 // locales/<lang>/<namespace>.json, flattened to `namespace.key` keys.
 
-export const LANGS = ['en', 'es', 'ca'] as const
-export type Lang = (typeof LANGS)[number]
+export const LANGS = ['en', 'es', 'ca'] as const;
+export type Lang = (typeof LANGS)[number];
 
 /** The saved preference: '' follows the system. */
-export type LangPref = '' | Lang
+export type LangPref = '' | Lang;
 
 /** Each language's name in itself, never translated. */
 export const LANG_INFO: Record<Lang, { name: string }> = {
   en: { name: 'English' },
   es: { name: 'Español' },
   ca: { name: 'Català' },
-}
+};
 
-export type Vars = Record<string, string | number>
-export type T = (key: string, vars?: Vars) => string
-export type Catalog = Partial<Record<Lang, Record<string, string>>>
+export type Vars = Record<string, string | number>;
+export type T = (key: string, vars?: Vars) => string;
+/** A message as written, its placeholders not filled yet. */
+export type Template = (key: string, vars?: Vars) => string;
+export type Catalog = Partial<Record<Lang, Record<string, string>>>;
 
 const isLang = (s: string): s is Lang => (LANGS as readonly string[]).includes(s);
 
@@ -38,10 +40,10 @@ export function fill(template: string, vars: Vars = {}): string {
 }
 
 /**
- * A translator for `lang`. With a `count`, `key_one` or `key_other` is picked by
- * the language's plural rules. A missing key falls back to English, then to the key.
+ * The message for `lang` as written. With a `count`, `key_one` or `key_other` is
+ * picked by the language's plural rules. A missing key falls back to English, then to the key.
  */
-export function createT(lang: Lang, catalog: Catalog = CATALOG): T {
+export function createTemplate(lang: Lang, catalog: Catalog = CATALOG): Template {
   const rules = new Intl.PluralRules(lang);
   return (key, vars = {}) => {
     const forms =
@@ -49,11 +51,17 @@ export function createT(lang: Lang, catalog: Catalog = CATALOG): T {
     for (const table of [catalog[lang], catalog.en]) {
       for (const form of forms) {
         const text = table?.[form];
-        if (text !== undefined) return fill(text, vars);
+        if (text !== undefined) return text;
       }
     }
     return key;
   };
+}
+
+/** A translator for `lang`: the template with its placeholders filled. */
+export function createT(lang: Lang, catalog: Catalog = CATALOG): T {
+  const template = createTemplate(lang, catalog);
+  return (key, vars = {}) => fill(template(key, vars), vars);
 }
 
 type Tree = { [key: string]: string | Tree };
