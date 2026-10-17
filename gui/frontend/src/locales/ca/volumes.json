@@ -6,10 +6,10 @@
   "summary": {
     "own_one": "{{count}} volum{{outside}}",
     "own_other": "{{count}} volums{{outside}}",
-    "none": "Cap capítol no cau en aquests volums.",
+    "none": "Cap capítol no entra en aquests volums.",
     "site": "Volums del lloc: {{volumes}}{{outside}}",
-    "listed_one": "{{count}} volum, tal com els ordena el lloc (no es poden escriure com a rangs de capítols){{outside}}",
-    "listed_other": "{{count}} volums, tal com els ordena el lloc (no es poden escriure com a rangs de capítols){{outside}}",
+    "listed_one": "{{count}} volum, tal com els organitza el lloc (no es poden escriure com a rangs de capítols){{outside}}",
+    "listed_other": "{{count}} volums, tal com els organitza el lloc (no es poden escriure com a rangs de capítols){{outside}}",
     "unlisted": "El lloc no llista volums: indica'ls com a rangs de capítols.",
     "outside_one": ", {{count}} capítol fora d'ells",
     "outside_other": ", {{count}} capítols fora d'ells"

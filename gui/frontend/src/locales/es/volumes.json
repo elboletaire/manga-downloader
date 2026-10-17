@@ -6,10 +6,10 @@
   "summary": {
     "own_one": "{{count}} volumen{{outside}}",
     "own_other": "{{count}} volúmenes{{outside}}",
-    "none": "Ningún capítulo cae en estos volúmenes.",
+    "none": "Ningún capítulo entra en estos volúmenes.",
     "site": "Volúmenes del sitio: {{volumes}}{{outside}}",
-    "listed_one": "{{count}} volumen, tal como los ordena el sitio (no se pueden escribir como rangos de capítulos){{outside}}",
-    "listed_other": "{{count}} volúmenes, tal como los ordena el sitio (no se pueden escribir como rangos de capítulos){{outside}}",
+    "listed_one": "{{count}} volumen, tal como los organiza el sitio (no se pueden escribir como rangos de capítulos){{outside}}",
+    "listed_other": "{{count}} volúmenes, tal como los organiza el sitio (no se pueden escribir como rangos de capítulos){{outside}}",
     "unlisted": "El sitio no lista volúmenes: indícalos como rangos de capítulos.",
     "outside_one": ", {{count}} capítulo fuera de ellos",
     "outside_other": ", {{count}} capítulos fuera de ellos"
