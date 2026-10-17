@@ -14,10 +14,11 @@ export interface WindowData {
 /**
  * Keeps the window's data current. It subscribes before asking for snapshots,
  * so nothing is missed, and a snapshot never overwrites a pushed value that
- * arrived first: whichever is newer wins.
+ * arrived first: whichever is newer wins. `initial` is a state the caller has
+ * already read, so the window doesn't ask for it again.
  */
-export function useWindow(api: Api): WindowData & { failure: string | null } {
-  const [data, setData] = useState<WindowData>({ state: null, chapters: [], selected: [], log: [] });
+export function useWindow(api: Api, initial?: State): WindowData & { failure: string | null } {
+  const [data, setData] = useState<WindowData>({ state: initial ?? null, chapters: [], selected: [], log: [] });
   // the error's text; the window words it in the language shown when it renders
   const [failure, setFailure] = useState<string | null>(null);
   // which fields a push has already filled, so a late snapshot doesn't clobber them
@@ -46,7 +47,7 @@ export function useWindow(api: Api): WindowData & { failure: string | null } {
       }),
     ];
 
-    Promise.all([api.state(), api.chapters(), api.selection(), api.log()])
+    Promise.all([initial ?? api.state(), api.chapters(), api.selection(), api.log()])
       .then(([state, chapters, selected, log]) => {
         if (!alive) {
           return;

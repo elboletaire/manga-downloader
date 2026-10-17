@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Api } from './api';
 import { I18nProvider } from './i18n/react';
 import { App } from './App';
+import { createMockApi } from './mock';
 
 // Without a snapshot the window shows its boot screen, so the test needs no API calls.
 const boot = (pref: '' | 'en' | 'es' | 'ca') =>
@@ -26,15 +27,17 @@ describe('App boot screen', () => {
   });
 });
 
-describe('App boot screen before the saved language', () => {
-  it('follows the system language until the first State brings the saved one', () => {
+describe('App with the first snapshot', () => {
+  it('renders the snapshot it is given, in the saved language, with no boot screen', async () => {
+    const initial = await createMockApi({ uiLanguage: 'ca' }).state();
     const html = renderToStaticMarkup(
       createElement(
         I18nProvider,
-        { pref: '', persist: async () => {}, systemLanguages: ['ca-ES'] },
-        createElement(App, { api: {} as Api }),
+        { pref: 'ca', persist: async () => {}, systemLanguages: ['fr-FR'] },
+        createElement(App, { api: {} as Api, initial }),
       ),
     );
-    expect(html).toContain('Iniciant…');
+    expect(html).toContain('Comença amb una sèrie');
+    expect(html).not.toContain('Iniciant…');
   });
 });

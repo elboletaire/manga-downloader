@@ -1,9 +1,7 @@
-import { StrictMode, useCallback, useEffect, useState } from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createWailsApi, type Api } from './api';
-import { App } from './App';
-import type { LangPref } from './i18n';
-import { I18nProvider } from './i18n/react';
+import { Root } from './Root';
 import '@fontsource-variable/inter/wght.css';
 import './styles.css';
 
@@ -21,28 +19,6 @@ async function chooseApi(): Promise<Api> {
     return createMockApi(mockSetupFrom(window.location.search));
   }
   return createWailsApi();
-}
-
-/**
- * Gives the window its language: the saved preference, read from the first
- * State. Until it arrives the provider follows the system's language.
- */
-function Root({ api }: { api: Api }) {
-  const [saved, setSaved] = useState<LangPref>('');
-  useEffect(() => {
-    // gui.json omits uiLanguage when it follows the system, so it can be absent
-    const stop = api.onState((s) => setSaved(s.prefs.uiLanguage ?? ''));
-    // a failed snapshot is shown by App itself
-    api.state().then((s) => setSaved(s.prefs.uiLanguage ?? ''), () => {});
-    return stop;
-  }, [api]);
-  const persist = useCallback((pref: LangPref) => api.setUILanguage(pref), [api]);
-
-  return (
-    <I18nProvider pref={saved} persist={persist}>
-      <App api={api} />
-    </I18nProvider>
-  );
 }
 
 function render(api: Api): void {

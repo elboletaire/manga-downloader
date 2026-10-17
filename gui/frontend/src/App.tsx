@@ -20,14 +20,14 @@ import { createOptionsWriter } from './optionsWriter';
 import { OptionsPanel } from './OptionsPanel';
 import { SourceBar } from './SourceBar';
 import { tally } from './run';
-import type { Options } from './types';
+import type { Options, State } from './types';
 import { useWindow } from './useWindow';
 
 type Tab = 'options' | 'activity';
 
-export function App({ api }: { api: Api }) {
+export function App({ api, initial }: { api: Api; initial?: State }) {
   const { t } = useI18n();
-  const { state, chapters, selected, log, failure } = useWindow(api);
+  const { state, chapters, selected, log, failure } = useWindow(api, initial);
   const [tab, setTab] = useState<Tab>('options');
   const [logOpen, setLogOpen] = useState(false);
   const [loadRefusal, setLoadRefusal] = useState('');

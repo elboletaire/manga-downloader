@@ -125,8 +125,8 @@ export interface State {
 
 /** App-only preferences: what the CLI has no flag for, so they aren't Options */
 export interface Prefs {
-  /** The window's language; '' follows the system */
-  uiLanguage: LangPref;
+  /** The window's language; '' follows the system. Go omits it when empty, so it can be absent */
+  uiLanguage?: LangPref;
   /** Check GitHub for a newer release at startup */
   checkUpdates: boolean;
 }

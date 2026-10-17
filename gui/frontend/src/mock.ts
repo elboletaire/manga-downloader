@@ -443,7 +443,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     volumes: { text: volumesText, site: volumesSite, listed: volumesListed },
     version: reportsRelease ? releaseVersion : 'v0.0.0-mock',
     releaseURL: reportsRelease ? `${REPO}/releases/tag/${releaseVersion}` : '',
-    // turning the update check off forgets the release it found
+    // off hides the update; on brings it back
     update:
       isReleaseBuild(scenario) && prefs.checkUpdates
         ? {
@@ -458,7 +458,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     filenameTemplateDefault: TEMPLATE_DEFAULT,
     filenameTemplateWarning:
       options.packAs === 'chapters' || options.packAs === 'parts' ? templateWarning(options.filenameTemplate) : '',
-    prefs: { ...prefs },
+    // the wire omits uiLanguage when it follows the system, as gui.json does
+    prefs: prefs.uiLanguage === '' ? { checkUpdates: prefs.checkUpdates } : { ...prefs },
   });
   const push = () => stateBus.emit(snapshot());
 

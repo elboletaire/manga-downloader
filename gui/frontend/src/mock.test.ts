@@ -643,7 +643,7 @@ describe('mock app preferences', () => {
     expect(pushed.at(-1)?.prefs.uiLanguage).toBe('ca');
     expect((await api.state()).prefs.uiLanguage).toBe('ca');
     await api.setUILanguage('');
-    expect((await api.state()).prefs.uiLanguage).toBe('');
+    expect((await api.state()).prefs.uiLanguage).toBeUndefined();
     stop();
   });
 
