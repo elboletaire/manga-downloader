@@ -14,10 +14,10 @@
   },
   "filter": {
     "heading": "Filtra la llista",
-    "language": "Llengua",
+    "language": "Idioma",
     "scanlator": "Grup",
     "any": "qualsevol",
-    "noLanguage": "Aquest lloc no permet triar la llengua",
+    "noLanguage": "Aquest lloc no permet triar l'idioma",
     "noScanlator": "Aquest lloc no té grups de scanlation entre els quals triar",
     "notApplied": "Encara no aplicat",
     "appliesAtOnce": "En triar-ne un, s'aplica a l'instant",

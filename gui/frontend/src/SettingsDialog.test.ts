@@ -49,7 +49,7 @@ describe('SettingsDialog', () => {
     expect(render('', state(), ['fr-FR'])).toContain('Follows the system: English.');
     expect(render('', state(), ['es-ES'])).toContain('Sigue el idioma del sistema: Español.');
     expect(render('en', state(), ['es-ES'])).not.toContain('Follows the system');
-    expect(render('ca', state(), ['es-ES'])).not.toContain('Segueix la llengua del sistema');
+    expect(render('ca', state(), ['es-ES'])).not.toContain("Segueix l'idioma del sistema");
   });
 
   it('shows the update switch off and disabled with the dev hint when there is no release URL', () => {

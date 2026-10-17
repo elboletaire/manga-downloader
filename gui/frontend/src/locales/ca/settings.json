@@ -3,9 +3,9 @@
   "open": "Configuració",
   "close": "Tanca",
   "language": {
-    "heading": "Llengua",
+    "heading": "Idioma",
     "system": "Sistema",
-    "systemHint": "Segueix la llengua del sistema: {{language}}."
+    "systemHint": "Segueix l'idioma del sistema: {{language}}."
   },
   "updates": {
     "heading": "Actualitzacions",
