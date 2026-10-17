@@ -122,8 +122,10 @@ export interface State {
 export interface Volumes {
   /** The volumes a run packs, as chapter ranges per volume ("1-7/8-16"); "" for the site's own */
   text: string;
-  /** The site's volumes in the same syntax; "" when the site doesn't say */
+  /** The site's volumes in the same syntax; "" when the site doesn't list them or chapter ranges can't group them as it does */
   site: string;
+  /** How many volumes the site files chapters under, 0 when none does */
+  listed: number;
 }
 
 /** A release newer than the running build, from the update check */

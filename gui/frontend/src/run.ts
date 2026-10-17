@@ -3,7 +3,7 @@
 
 import { jobFraction, plural } from './format';
 import type { Chapter, Job, JobState, State, Summary } from './types';
-import { groupChapters, parseVolumes, selectedIn, type Grouping } from './volumes';
+import { groupChapters, isSiteVolumes, parseVolumes, selectedIn, type Grouping } from './volumes';
 
 /** The states a job ends in */
 export function isFinished(j: Job): boolean {
@@ -83,17 +83,11 @@ export function downloadBlocker(state: State): string {
   if (state.selectedCount === 0) {
     return 'Select at least one chapter.';
   }
-  if (state.options.packAs === 'volumes' && isSiteVolumes(state.volumes.text) && state.volumes.site === '') {
+  if (state.options.packAs === 'volumes' && isSiteVolumes(state.volumes.text) && state.volumes.listed === 0) {
     return 'The site lists no volumes: enter them as chapter ranges, e.g. 1-7/8-16.';
   }
 
   return '';
-}
-
-/** Whether the Volumes box stands for the site's own volumes */
-function isSiteVolumes(text: string): boolean {
-  const t = text.trim().toLowerCase();
-  return t === '' || t === 'auto';
 }
 
 /** The Download button's label; chapters and selected are the loaded list and its selected indices */

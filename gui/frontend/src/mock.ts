@@ -40,7 +40,7 @@
 
 import type { Api, Unsubscribe } from './api';
 import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary, Update } from './types';
-import { groupChapters, parseVolumes, siteVolumes } from './volumes';
+import { groupChapters, listedVolumes, parseVolumes, siteVolumes } from './volumes';
 import { OP_CHAPTERS } from './mock-onepiece';
 
 const TEMPLATE_DEFAULT =
@@ -292,6 +292,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   // the Volumes box and the site's volumes, as the backend keeps them per load
   let volumesText = '';
   let volumesSite = '';
+  let volumesListed = 0;
   let applied = { language: '', scanlator: '' };
   // whether a load has been attempted, so the filters are the series' own choices
   let identified = false;
@@ -383,7 +384,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     jobs: jobs.map((j) => ({ ...j })),
     summary: summary ? { ...summary, failures: [...summary.failures] } : null,
     options: { ...options },
-    volumes: { text: volumesText, site: volumesSite },
+    volumes: { text: volumesText, site: volumesSite, listed: volumesListed },
     version: reportsRelease ? releaseVersion : 'v0.0.0-mock',
     releaseURL: reportsRelease ? `${REPO}/releases/tag/${releaseVersion}` : '',
     update: isReleaseBuild(scenario)
@@ -413,7 +414,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       chapters = groupedChapters(chapters);
     }
     volumesSite = siteVolumes(chapters);
-    volumesText = volumesSite;
+    volumesListed = listedVolumes(chapters);
+    volumesText = '';
     applied = { language: options.language, scanlator: options.scanlator };
     selected = new Set<number>();
     jobs = [];
@@ -856,6 +858,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       selected = new Set<number>();
       volumesText = '';
       volumesSite = '';
+      volumesListed = 0;
       jobs = [];
       summary = null;
       chaptersBus.emit([]);
@@ -987,7 +990,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       if (
         options.packAs === 'volumes' &&
         groupChapters(picked, parseVolumes(volumesText)).volumes.length === 0 &&
-        volumesSite === '' &&
+        volumesListed === 0 &&
         volumesText === ''
       ) {
         throw `the site doesn't say which volume these chapters are in; give the volumes as chapter ranges instead, e.g. "1-7/8-16"`;

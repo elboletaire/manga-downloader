@@ -113,7 +113,8 @@ func TestSiteVolumes(t *testing.T) {
 		{"first volume isn't 1", chapters(112, 16, 113, 16, 114, 16), "16:112-114"},
 		{"late start and a gap", chapters(1, 2, 2, 3, 3, 6), "2:1/2/6:3"},
 		{"loose tail", chapters(1, 1, 2, 1, 3, 0, 4, 0), "1-2"},
-		{"repeated number stays in its first volume", chapters(1, 1, 2, 1, 2, 2, 3, 2), "1-2/3"},
+		{"repeated number across volumes", chapters(1, 1, 1, 2, 2, 1, 2, 2), ""},
+		{"mixed volume tags on one number", chapters(1, 1, 2, 1, 2, 0, 3, 1), ""},
 	}
 	for _, tt := range tests {
 		got := SiteVolumes(tt.list)
@@ -446,6 +447,7 @@ func TestSiteVolumesShared(t *testing.T) {
 			Name     string       `json:"name"`
 			Chapters [][2]float64 `json:"chapters"`
 			Want     string       `json:"want"`
+			Listed   int          `json:"listed"`
 		} `json:"site"`
 	}
 	if err := json.Unmarshal(data, &cases); err != nil {
@@ -458,6 +460,9 @@ func TestSiteVolumesShared(t *testing.T) {
 		}
 		if got := SiteVolumes(chapters(pairs...)); got != tt.Want {
 			t.Errorf("%s: SiteVolumes = %q, want %q", tt.Name, got, tt.Want)
+		}
+		if got := ListedVolumes(chapters(pairs...)); got != tt.Listed {
+			t.Errorf("%s: ListedVolumes = %d, want %d", tt.Name, got, tt.Listed)
 		}
 	}
 }

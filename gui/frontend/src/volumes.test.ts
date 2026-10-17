@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { chapterSpan, groupChapters, groupedRows, LOOSE, parseVolumes, selectedIn, siteVolumes } from './volumes';
+import {
+  chapterSpan,
+  groupChapters,
+  groupedRows,
+  isSiteVolumes,
+  LOOSE,
+  listedVolumes,
+  parseVolumes,
+  selectedIn,
+  siteVolumes,
+} from './volumes';
 import type { Chapter } from './types';
 import shared from '../../../ranges/testdata/volumes.json';
 
@@ -142,9 +152,23 @@ describe('siteVolumes', () => {
     ['loose chapter breaks the run', [ch(1, 1), ch(1.5), ch(2, 1), ch(3, 2)], '1,2/3'],
     ['missing volume is named', [ch(1, 1), ch(2, 3)], '1/3:2'],
     ['loose tail', [ch(1, 1), ch(2, 1), ch(3), ch(4)], '1-2'],
-    ['repeated number stays in its first volume', [ch(1, 1), ch(2, 1), ch(2, 2), ch(3, 2)], '1-2/3'],
+    ['repeated number across volumes gives no ranges', [ch(1, 1), ch(1, 2), ch(2, 1), ch(2, 2)], ''],
+    ['mixed volume tags on one number give no ranges', [ch(1, 1), ch(2, 1), ch(2, 0), ch(3, 1)], ''],
   ])('%s', (_, chapters, want) => {
     expect(siteVolumes(chapters)).toBe(want);
+  });
+
+  it.each([
+    ['none', [ch(1), ch(2)], 0],
+    ['repeated number across volumes', [ch(1, 1), ch(1, 2), ch(2, 1), ch(2, 2)], 2],
+    ['mixed volume tags on one number', [ch(1, 1), ch(2, 1), ch(2, 0), ch(3, 1)], 1],
+  ])('lists the volumes: %s', (_, chapters, want) => {
+    expect(listedVolumes(chapters)).toBe(want);
+  });
+
+  it('recognises the site volumes box', () => {
+    expect(['', '  ', 'auto', 'AUTO'].map(isSiteVolumes)).toEqual([true, true, true, true]);
+    expect(isSiteVolumes('1-7/8-16')).toBe(false);
   });
 });
 
@@ -171,6 +195,10 @@ describe('shared with Go', () => {
   it.each(shared.site.map((c) => [c.name, c] as const))('writes the site volumes: %s', (_, c) => {
     const chapters = c.chapters.map(([number, volume], i) => ch(number, volume, i));
     expect(siteVolumes(chapters)).toBe(c.want);
+    expect(listedVolumes(chapters)).toBe(c.listed);
+    if (c.want === '') {
+      return;
+    }
     // and what it writes groups each chapter where the site does
     const g = groupChapters(chapters, parseVolumes(c.want));
     expect(g.volumes.flatMap((v) => v.chapters.map((x) => [x.number, v.number]))).toEqual(

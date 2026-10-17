@@ -1,5 +1,5 @@
 {
-  "comment": "Volumes box cases shared by ranges.ParseVolumes, core.SiteVolumes and gui/frontend/src/volumes.ts, so Go and the app agree. volumes maps each volume number to its [begin, end] ranges; error is a substring of the message.",
+  "comment": "Volumes box cases shared by ranges.ParseVolumes, core.SiteVolumes and gui/frontend/src/volumes.ts, so Go and the app agree. volumes maps each volume number to its [begin, end] ranges; error is a substring of the message. site: want is the SiteVolumes text (\"\" when the ranges can't group the chapters as the site does), listed the volumes ListedVolumes counts.",
   "parse": [
     { "in": "1-7/8-16", "volumes": { "1": [[1, 7]], "2": [[8, 16]] } },
     { "in": " 1-7 / 8-16 /", "volumes": { "1": [[1, 7]], "2": [[8, 16]] } },
@@ -26,10 +26,12 @@
     { "in": "1-7;8-16", "error": "volume 1: invalid range \"1-7;8-16\"" }
   ],
   "site": [
-    { "name": "contiguous", "chapters": [[1, 1], [2, 1], [3, 2], [4, 2]], "want": "1-2/3-4" },
-    { "name": "missing volume is named", "chapters": [[1, 1], [2, 3], [3, 4]], "want": "1/3:2/3" },
-    { "name": "first volume isn't 1", "chapters": [[112, 16], [113, 16], [114, 16]], "want": "16:112-114" },
-    { "name": "late start and a gap", "chapters": [[1, 2], [2, 3], [3, 6]], "want": "2:1/2/6:3" },
-    { "name": "loose chapters", "chapters": [[1, 1], [1.5, 0], [2, 1], [3, 0]], "want": "1,2" }
+    { "name": "contiguous", "chapters": [[1, 1], [2, 1], [3, 2], [4, 2]], "want": "1-2/3-4", "listed": 2 },
+    { "name": "missing volume is named", "chapters": [[1, 1], [2, 3], [3, 4]], "want": "1/3:2/3", "listed": 3 },
+    { "name": "first volume isn't 1", "chapters": [[112, 16], [113, 16], [114, 16]], "want": "16:112-114", "listed": 1 },
+    { "name": "late start and a gap", "chapters": [[1, 2], [2, 3], [3, 6]], "want": "2:1/2/6:3", "listed": 3 },
+    { "name": "repeated number across volumes", "chapters": [[1, 1], [1, 2], [2, 1], [2, 2]], "want": "", "listed": 2 },
+    { "name": "mixed volume tags on one number", "chapters": [[1, 1], [2, 1], [2, 0], [3, 1]], "want": "", "listed": 1 },
+    { "name": "loose chapters", "chapters": [[1, 1], [1.5, 0], [2, 1], [3, 0]], "want": "1,2", "listed": 1 }
   ]
 }

@@ -55,6 +55,12 @@ function volumeNumber(text: string): number {
   return n;
 }
 
+/** Whether the Volumes box stands for the site's own volumes: empty or "auto" */
+export function isSiteVolumes(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  return t === '' || t === 'auto';
+}
+
 /**
  * Parses the Volumes box. Empty or "auto" is the site's volumes. Otherwise
  * groups are separated by "/". A group can name its volume ("16:112-114");
@@ -64,10 +70,10 @@ function volumeNumber(text: string): number {
  * doesn't parse, in the backend's words (ranges.ParseVolumes).
  */
 export function parseVolumes(text: string): VolumeSpec {
-  const trimmed = text.trim();
-  if (trimmed === '' || trimmed.toLowerCase() === 'auto') {
+  if (isSiteVolumes(text)) {
     return { auto: true };
   }
+  const trimmed = text.trim();
   const segments = trimmed.split('/');
   while (segments.length > 0 && segments[segments.length - 1].trim() === '') {
     segments.pop();
@@ -231,12 +237,10 @@ export function selectedIn(chapters: Chapter[], chosen: ReadonlySet<number>): nu
 }
 
 /**
- * The site's volumes as a Volumes box ("1-7/8-16"), as the backend writes
- * them (core.SiteVolumes): each group lists runs of consecutive chapters, a
- * volume is named ("16:112-114") only where it doesn't follow the previous
- * one, at the start or after a missing volume, and a number listed twice
- * stays in the first volume it shows up in. "" when no chapter has a volume.
- * chapters must be in list order. The mock uses it; the app gets it from Go.
+ * The site's volumes as a Volumes box ("1-7/8-16"), as core.SiteVolumes
+ * writes them; chapters must be in list order. "" when no chapter has a
+ * volume, or when the ranges wouldn't group the chapters as the site does.
+ * The mock uses it; the app gets it from Go.
  */
 export function siteVolumes(chapters: Chapter[]): string {
   const volumeAt = chapters.map(() => 0);
@@ -288,5 +292,25 @@ export function siteVolumes(chapters: Chapter[]): string {
     prev = n;
   });
 
-  return parts.join('/');
+  const text = parts.join('/');
+  return groupsAsSite(text, chapters) ? text : '';
+}
+
+/** Whether the Volumes box text groups each chapter into the volume the site files it under, as auto does */
+function groupsAsSite(text: string, chapters: Chapter[]): boolean {
+  let spec: VolumeSpec;
+  try {
+    spec = parseVolumes(text);
+  } catch {
+    return false;
+  }
+  if (spec.auto) {
+    return false;
+  }
+  return chapters.every((ch) => groupOf(ch.number, spec.groups) === Math.max(ch.volume, 0));
+}
+
+/** How many volumes the site files the chapters under, 0 when none does (core.ListedVolumes) */
+export function listedVolumes(chapters: Chapter[]): number {
+  return new Set(chapters.filter((ch) => ch.volume > 0).map((ch) => ch.volume)).size;
 }

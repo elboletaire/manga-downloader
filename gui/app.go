@@ -225,12 +225,12 @@ type State struct {
 	FilenameTemplateWarning string `json:"filenameTemplateWarning"`
 }
 
-// VolumesDTO is the Volumes box: the volumes a run packs, in --volumes'
-// syntax ("" for the site's own), and the site's volumes in the same syntax,
-// "" when the site doesn't say
+// VolumesDTO is the Volumes box ("" for the site's own volumes), the site's
+// volumes as ranges ("" when they can't be written so) and how many it lists
 type VolumesDTO struct {
-	Text string `json:"text"`
-	Site string `json:"site"`
+	Text   string `json:"text"`
+	Site   string `json:"site"`
+	Listed int    `json:"listed"`
 }
 
 // UpdateDTO is a newer release than the running build
@@ -348,7 +348,7 @@ func (a *App) State() State {
 		st.FilenameTemplateWarning = packer.TemplateWarning(st.Options.FilenameTemplate)
 	}
 	st.LoadedLanguage, st.LoadedScanlator = c.LoadedFilters()
-	st.Volumes.Text, st.Volumes.Site = c.Volumes()
+	st.Volumes.Text, st.Volumes.Site, st.Volumes.Listed = c.Volumes()
 	language, scanlator := c.Filters()
 	st.Languages, st.Scanlators = filterDTO(language), filterDTO(scanlator)
 	if err := c.LoadError(); err != nil {

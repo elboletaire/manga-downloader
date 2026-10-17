@@ -115,13 +115,10 @@ func groupOf(number float64, groups [][]ranges.Range) int {
 }
 
 // SiteVolumes writes the volumes the site files chapters under as a --volumes
-// value ("1-7/8-16"), so the desktop app can prefill its box with something
-// that can be edited. chapters must be sorted by number. Each group lists
-// runs of consecutive chapters, so a chapter of another volume (or of none)
-// between two of a volume's never gets swept into its range. A volume is
-// named ("16:112-114") only where it doesn't follow the previous one, which
-// is at the start when the first isn't volume 1, and after a missing volume.
-// It's "" when no chapter has a volume.
+// value ("1-7/8-16") for the desktop app to offer; chapters must be sorted by
+// number. A volume is named ("16:112-114") only where it doesn't follow the
+// previous one. It's "" when no chapter has a volume, or when the ranges
+// wouldn't group the chapters as the site does (ListedVolumes still counts them).
 func SiteVolumes(chapters grabber.Filterables) string {
 	// the volume of each listed position; a number listed more than once (one
 	// entry per language, say) belongs to the first volume it shows up in,
@@ -179,7 +176,38 @@ func SiteVolumes(chapters grabber.Filterables) string {
 		parts = append(parts, part)
 		prev = i + 1
 	}
-	return strings.Join(parts, "/")
+	text := strings.Join(parts, "/")
+	if !siteRangesFaithful(text, chapters) {
+		return ""
+	}
+	return text
+}
+
+// siteRangesFaithful reports whether the --volumes value groups every chapter
+// into the volume the site files it under, as --volumes auto does
+func siteRangesFaithful(text string, chapters grabber.Filterables) bool {
+	groups, err := ranges.ParseVolumes(text)
+	if err != nil {
+		return false
+	}
+	for _, chap := range chapters {
+		if groupOf(chap.GetNumber(), groups) != max(grabber.VolumeOf(chap), 0) {
+			return false
+		}
+	}
+	return true
+}
+
+// ListedVolumes is how many volumes the site files chapters under, 0 when
+// none does
+func ListedVolumes(chapters grabber.Filterables) int {
+	listed := map[int]bool{}
+	for _, chap := range chapters {
+		if v := grabber.VolumeOf(chap); v > 0 {
+			listed[v] = true
+		}
+	}
+	return len(listed)
 }
 
 // VolumeLabel is how a volume is shown in progress and messages: "Vol. 01"
