@@ -17,7 +17,7 @@
     "skipped": "Omitido"
   },
   "title": {
-    "bundle": "Archivo único: capítulos {{range}}",
+    "bundle": "Paquete: capítulos {{range}}",
     "volume": "{{volume}} · capítulos {{first}}–{{last}}",
     "volumeChapter": "{{volume}} · capítulo {{first}}",
     "volumeParts": "{{volume}} · {{count}} partes"
@@ -26,7 +26,7 @@
     "gathering": "Obteniendo información...",
     "downloading": "Descargando...",
     "downloadingLabel": "Descargando {{label}}",
-    "creatingBundle": "Creando el archivo único de los capítulos {{range}}",
+    "creatingBundle": "Creando el paquete de los capítulos {{range}}",
     "waiting": "Esperando...",
     "packing": "Empaquetando..."
   },

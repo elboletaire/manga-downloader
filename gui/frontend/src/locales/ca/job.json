@@ -17,7 +17,7 @@
     "skipped": "Omès"
   },
   "title": {
-    "bundle": "Fitxer únic: capítols {{range}}",
+    "bundle": "Paquet: capítols {{range}}",
     "volume": "{{volume}} · capítols {{first}}–{{last}}",
     "volumeChapter": "{{volume}} · capítol {{first}}",
     "volumeParts": "{{volume}} · {{count}} parts"
@@ -26,7 +26,7 @@
     "gathering": "Obtenint informació...",
     "downloading": "Descarregant...",
     "downloadingLabel": "Descarregant {{label}}",
-    "creatingBundle": "Creant el fitxer únic dels capítols {{range}}",
+    "creatingBundle": "Creant el paquet dels capítols {{range}}",
     "waiting": "Esperant...",
     "packing": "Empaquetant..."
   },

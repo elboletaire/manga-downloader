@@ -31,7 +31,7 @@
     "label": "Progrés general",
     "chapters": "{{done}} de {{total}} capítols fets",
     "files": "{{done}} de {{total}} fitxers fets",
-    "bundle": "Creant el fitxer",
+    "bundle": "Creant el paquet",
     "finishing": "Acabant els capítols en curs",
     "cancelHint": "Els capítols que ja es descarreguen acabaran; no n'començarà cap de nou."
   },
