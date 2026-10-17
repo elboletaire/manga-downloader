@@ -537,8 +537,7 @@ func (s *Series) packVolume(r *volumeRun, outDir string, ev Events) {
 		ev.VolumePacked(r.v, "", err)
 		return
 	}
-	// in listing order, which keeps the parts of a chapter in the order the
-	// site lists them
+	// in the volume's order, which for parts is their part order (groupParts)
 	dc := make([]*packer.DownloadedChapter, 0, len(r.downloaded))
 	for _, chap := range r.v.Chapters {
 		if d := r.downloaded[chap]; d != nil {

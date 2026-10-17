@@ -140,11 +140,11 @@ describe('groupParts', () => {
   // 1 whole, 2 in two parts, 3 by two groups (Alpha in two parts)
   const parts = [part(0, 1), part(1, 2), part(2, 2), part(3, 3, 'Alpha'), part(4, 3, 'Beta'), part(5, 3, 'Alpha')];
 
-  it('merges the chapters sharing a number and a group, in list order', () => {
+  it('merges the chapters sharing a number and a group, oldest first without a part', () => {
     expect(groupParts(parts).map((g) => [g.number, g.group, g.chapters.map((c) => c.index)])).toEqual([
       [1, '', [0]],
-      [2, '', [1, 2]],
-      [3, 'Alpha', [3, 5]],
+      [2, '', [2, 1]],
+      [3, 'Alpha', [5, 3]],
       [3, 'Beta', [4]],
     ]);
   });
@@ -158,19 +158,19 @@ describe('groupParts', () => {
     ).toEqual([
       '0 alone',
       'Chapter 2 · 2 parts',
-      '1 1/2 Chapter 2',
-      '2 2/2 Chapter 2',
+      '2 1/2 Chapter 2',
+      '1 2/2 Chapter 2',
       'Chapter 3 · 2 parts [Alpha]',
-      '3 1/2 Chapter 3',
-      '5 2/2 Chapter 3',
+      '5 1/2 Chapter 3',
+      '3 2/2 Chapter 3',
       '4 alone',
     ]);
   });
 
   it('folds a chapter to its header', () => {
-    const rows = partRows(groupParts(parts), new Set(['part-1']));
+    const rows = partRows(groupParts(parts), new Set(['part-2']));
     expect(rows.filter((r) => r.kind === 'chapter').map((r) => (r.kind === 'chapter' ? r.chapter.index : -1))).toEqual([
-      0, 3, 5, 4,
+      0, 5, 3, 4,
     ]);
     expect(rows[1]).toMatchObject({ kind: 'group', collapsed: true });
   });
@@ -189,21 +189,26 @@ describe('groupParts', () => {
         titled(3, 5, 'Chapter 5 後編 Part 1', '後編 Part 1', ''),
         titled(4, 6, 'Foo, first half'),
         titled(5, 6, 'Foo, second half'),
+        titled(6, 7, 'Part 1 Same', 'Part 1', 'Same'),
+        titled(7, 7, 'Part 2 Same', 'Part 2', 'Same'),
       ]),
       new Set(),
     );
     expect(rows.map((r) => (r.kind === 'group' ? `${r.label} · ${r.detail}` : r.part?.label))).toEqual([
-      // the first part's title, as core names the merged file
-      "Chapter 4 · Un malson que s'esvaeix · 2 parts",
+      // the header names a title only when every part has the same one
+      'Chapter 4 · 2 parts',
       'Part 1',
       'Part 2',
       'Chapter 5 · 2 parts',
       '前編',
       '後編 Part 1',
       // without a part from the grabber, the titles as they are
-      'Chapter 6 · Foo, first half · 2 parts',
+      'Chapter 6 · 2 parts',
       'Foo, first half',
       'Foo, second half',
+      'Chapter 7 · Same · 2 parts',
+      'Part 1',
+      'Part 2',
     ]);
   });
 });
@@ -211,7 +216,14 @@ describe('groupParts', () => {
 describe('shared parts with Go', () => {
   // the cases core.GroupVolumes runs too, so the list and the run group the same way
   it.each(shared.parts.map((c) => [c.name, c] as const))('merges the parts: %s', (_, c) => {
-    const chapters = c.chapters.map((p, i) => ({ ...ch(p.number, 0, i), group: p.group, language: p.language }));
+    const listed = c.chapters as { number: number; part: string; title?: string; group: string; language: string }[];
+    const chapters = listed.map((p, i) => ({
+      ...ch(p.number, 0, i),
+      title: p.title ?? '',
+      part: p.part,
+      group: p.group,
+      language: p.language,
+    }));
     const files = groupParts(chapters).map((g) => g.chapters.map((x) => x.index));
     expect(files.sort((a, b) => a[0] - b[0])).toEqual(c.want);
   });

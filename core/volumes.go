@@ -4,6 +4,7 @@ package core
 
 import (
 	"errors"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -136,9 +137,10 @@ type partsKey struct {
 	language string
 }
 
-// groupParts groups the chapters sharing a number, group and language, in listing order.
-// A chapter no other shares its number, group and language with is loose, as it's packed
-// on its own. The volumes are sorted by number.
+// groupParts groups the chapters sharing a number, group and language, in part order
+// (grabber.PartLess, the listing's oldest first for ties). A chapter no other shares its
+// number, group and language with is loose, as it's packed on its own. The volumes are
+// sorted by number.
 func groupParts(chapters grabber.Filterables) ([]*Volume, grabber.Filterables) {
 	byKey := map[partsKey]*Volume{}
 	var order []*Volume
@@ -160,6 +162,9 @@ func groupParts(chapters grabber.Filterables) ([]*Volume, grabber.Filterables) {
 	var volumes []*Volume
 	var loose grabber.Filterables
 	for _, v := range order {
+		// the listing is newest first, so reversing it puts ties oldest first
+		slices.Reverse(v.Chapters)
+		sort.SliceStable(v.Chapters, func(i, j int) bool { return grabber.PartLess(v.Chapters[i], v.Chapters[j]) })
 		if len(v.Chapters) == 1 {
 			loose = append(loose, v.Chapters[0])
 		} else {

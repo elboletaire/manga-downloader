@@ -274,10 +274,14 @@ export interface PartGroup {
   chapters: Chapter[];
 }
 
+/** Orders parts like grabber.PartLess: digit runs as numbers, case and accents ignored */
+const partOrder = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+
 /**
  * Groups the chapters a parts run merges (--volumes parts): those sharing a
  * number, group and language, so two groups' or two languages' releases never
- * merge. Files keep the list order, at their first part.
+ * merge. Parts are in part order, the list's oldest first for ties, and the
+ * groups keep the list order of their first part.
  */
 export function groupParts(chapters: Chapter[]): PartGroup[] {
   const out: PartGroup[] = [];
@@ -292,6 +296,11 @@ export function groupParts(chapters: Chapter[]): PartGroup[] {
       byKey.set(key, next);
       out.push(next);
     }
+  }
+  for (const g of out) {
+    // the list is newest first, so reversing it puts ties oldest first
+    g.chapters.reverse();
+    g.chapters.sort((a, b) => partOrder.compare(a.part || a.title, b.part || b.title));
   }
 
   return out;
@@ -311,7 +320,7 @@ export function partRows(groups: PartGroup[], collapsed: ReadonlySet<string>): G
     const key = `part-${g.chapters[0].index}`;
     const isCollapsed = collapsed.has(key);
     const label = `Chapter ${formatNumber(g.number)}`;
-    const title = wholeTitle(g.chapters[0]);
+    const title = commonTitle(g.chapters);
     const count = `${g.chapters.length} parts`;
     rows.push({
       kind: 'group',
@@ -333,9 +342,14 @@ export function partRows(groups: PartGroup[], collapsed: ReadonlySet<string>): G
   return rows;
 }
 
-/** What a chapter's merged file is named after: its first part's title without the part */
-function wholeTitle(first: Chapter): string {
-  return first.part ? (first.wholeTitle ?? '') : first.title;
+/** The title a chapter's parts share without their parts, '' unless every part has one and they agree */
+function commonTitle(chapters: Chapter[]): string {
+  const [first] = chapters;
+  if (!first.part || !chapters.every((ch) => ch.part && ch.wholeTitle === first.wholeTitle)) {
+    return '';
+  }
+
+  return first.wholeTitle ?? '';
 }
 
 /** How many of the chapters are selected */

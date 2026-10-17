@@ -138,7 +138,7 @@ func TestGroupVolumesParts(t *testing.T) {
 	if want := []float64{18, 19, 20}; !reflect.DeepEqual(numbers(loose), want) {
 		t.Errorf("loose = %v, want %v", numbers(loose), want)
 	}
-	// the parts keep the order the site lists them in
+	// the parts come in part order
 	if v := vols[0]; v.Chapters[0].(*grabber.Chapter).Label.Part != "1" || v.Chapters[1].(*grabber.Chapter).Label.Part != "2" {
 		t.Errorf("parts out of listing order: %v", v.Chapters)
 	}
@@ -157,6 +157,7 @@ func TestGroupVolumesPartsShared(t *testing.T) {
 			Chapters []struct {
 				Number   float64 `json:"number"`
 				Part     string  `json:"part"`
+				Title    string  `json:"title"`
 				Group    string  `json:"group"`
 				Language string  `json:"language"`
 			} `json:"chapters"`
@@ -169,7 +170,7 @@ func TestGroupVolumesPartsShared(t *testing.T) {
 	for _, tt := range cases.Parts {
 		var list grabber.Filterables
 		for _, c := range tt.Chapters {
-			ch := &grabber.Chapter{Number: c.Number, Language: c.Language, Label: grabber.Label{Style: grabber.LabelNumbered, Part: c.Part}}
+			ch := &grabber.Chapter{Number: c.Number, Title: c.Title, Language: c.Language, Label: grabber.Label{Style: grabber.LabelNumbered, Part: c.Part}}
 			ch.SetGroups(c.Group)
 			list = append(list, ch)
 		}
@@ -177,7 +178,7 @@ func TestGroupVolumesPartsShared(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: %v", tt.Name, err)
 		}
-		// each file as the indices of its chapters, a loose chapter being a file of its own
+		// each file as the indices of its chapters in file order, a loose chapter being a file of its own
 		var files [][]int
 		index := func(f grabber.Filterable) int {
 			for i, ch := range list {

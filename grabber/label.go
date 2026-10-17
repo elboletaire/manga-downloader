@@ -130,6 +130,20 @@ func PartOf(f Filterable) (part, title string) {
 	return partLabel(l.Part), f.GetTitle()
 }
 
+// PartLess orders the parts of a chapter as their merged file lists them: by
+// their part ("Part 2" before "Part 10"), else by their label ("356a" before "356b")
+func PartLess(a, b Filterable) bool {
+	return naturalLess(partSortKey(a), partSortKey(b))
+}
+
+// partSortKey is the part a listed chapter's PartOf gives, else its label
+func partSortKey(f Filterable) string {
+	if part, _ := PartOf(f); part != "" {
+		return part
+	}
+	return ChapterLabel(f)
+}
+
 // labelOf returns the Label of a listed chapter, for the chapter FetchChapter
 // builds from it to be labelled the same
 func labelOf(f Filterable) Label {
