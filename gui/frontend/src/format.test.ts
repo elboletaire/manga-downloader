@@ -86,6 +86,14 @@ describe('job helpers', () => {
     expect(jobStatus(job({ state: 'failed', reason: 'packing: x' }), en)).toBe('failed: packing: x');
   });
 
+  it('translates the phase and reason the GUI wrote, and keeps the English without them', () => {
+    const phase = { key: 'job.phase.downloadingLabel', args: { label: 'Ch 5' }, text: 'Downloading Ch 5' };
+    expect(jobStatus(job({ status: 'Downloading Ch 5', statusMsg: phase }), es)).toBe('Descargando Ch 5');
+    expect(jobStatus(job({ status: 'Downloading Ch 5' }), es)).toBe('Downloading Ch 5');
+    const reason = { key: 'job.reason.download', args: { reason: 'x' }, text: 'download: x' };
+    expect(jobStatus(job({ state: 'failed', reason: 'download: x', reasonMsg: reason }), es)).toBe('fallido: descarga: x');
+  });
+
   it('fills to 1 when done and clamps the fraction', () => {
     expect(jobFraction(job({ done: 6 }))).toBe(0.25);
     expect(jobFraction(job({ state: 'done', done: 3 }))).toBe(1);

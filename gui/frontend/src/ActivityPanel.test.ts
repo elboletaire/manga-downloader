@@ -59,6 +59,24 @@ describe('ActivityPanel', () => {
     expect(html).toContain('<h3>3 desats</h3>');
   });
 
+  it('shows a volume row and its reason in Spanish', () => {
+    const volume: Job = {
+      ...job,
+      title: 'Vol. 01 · chapters 1–7',
+      titleMsg: {
+        key: 'job.title.volume',
+        args: { volume: 'Vol. 01', first: '1', last: '7' },
+        text: 'Vol. 01 · chapters 1–7',
+      },
+      state: 'failed',
+      reason: 'download: x',
+      reasonMsg: { key: 'job.reason.download', args: { reason: 'x' }, text: 'download: x' },
+    };
+    const html = render({ running: true, summary: null, jobs: [volume], run: { chapters: 7, bundle: false, volumes: true, rows: 1 } }, 'es');
+    expect(html).toContain('Vol. 01 · capítulos 1–7');
+    expect(html).toContain('descarga: x');
+  });
+
   it('titles the running chapters and their progress in Spanish', () => {
     const html = render(
       { running: true, summary: null, jobs: [job], run: { chapters: 1, bundle: false, volumes: false, rows: 1 } },

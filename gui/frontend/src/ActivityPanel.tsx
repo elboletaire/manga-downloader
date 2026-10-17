@@ -2,6 +2,7 @@
 // one row per chapter (or the single bundle job). Rows are windowed like the
 // chapter list, since "select all" on a long series makes thousands of them.
 
+import { say } from './i18n';
 import { useI18n } from './i18n/react';
 import { jobFraction, jobShortStatus, jobStatus, summaryHeadline, summarySentence } from './format';
 import { AlertIcon, CheckIcon, ErrorIcon, FolderIcon, PackageIcon, SkipIcon, Spinner, XIcon } from './icons';
@@ -91,7 +92,7 @@ function BundleCard({ job, chapters }: { job: Job; chapters: number }) {
   return (
     <section className={`bundle-card job-${job.state}`} aria-label={t('activity.bundle')}>
       <div className="job-line">
-        <span className="job-title">{job.title}</span>
+        <span className="job-title">{say(t, job.titleMsg, job.title)}</span>
         <span className="job-status">{t('count.chapter', { count: chapters })}</span>
       </div>
       <p className="bundle-phase">
@@ -157,6 +158,7 @@ function JobRow({ job, style }: { job: Job; style: React.CSSProperties }) {
   const { t, lang } = useI18n();
   const fraction = jobFraction(job);
   const status = jobStatus(job, t);
+  const title = say(t, job.titleMsg, job.title);
 
   return (
     <div role="listitem" className={`job job-${job.state}`} style={style} title={status}>
@@ -165,17 +167,17 @@ function JobRow({ job, style }: { job: Job; style: React.CSSProperties }) {
       </span>
       <div className="job-body">
         <div className="job-line">
-          <span className="job-title">{job.title}</span>
+          <span className="job-title">{title}</span>
           {job.tags && <span className="job-tags">{job.tags}</span>}
           <span className="job-status">{jobShortStatus(job, t, lang)}</span>
         </div>
         {job.state === 'failed' || job.state === 'skipped' ? (
-          <span className="job-reason">{job.reason}</span>
+          <span className="job-reason">{say(t, job.reasonMsg, job.reason)}</span>
         ) : (
           <div
             className="bar"
             role="progressbar"
-            aria-label={t('activity.progressOf', { title: job.title, tags: job.tags })}
+            aria-label={t('activity.progressOf', { title, tags: job.tags })}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(fraction * 100)}

@@ -1,6 +1,6 @@
 // Pure helpers that turn the window's state into the words shown to the user.
 
-import type { Lang, T } from './i18n';
+import { say, type Lang, type T } from './i18n';
 import { percent } from './i18n/format';
 import type { Job, Summary } from './types';
 
@@ -92,17 +92,17 @@ export function summarySentence(s: Summary, t: T): string {
 export function jobStatus(j: Job, t: T): string {
   switch (j.state) {
     case 'fetching':
-      return j.status !== '' ? j.status : t('job.status.fetching');
+      return j.status !== '' ? say(t, j.statusMsg, j.status) : t('job.status.fetching');
     case 'downloading':
-      return j.status !== '' ? j.status : t('job.status.downloading');
+      return j.status !== '' ? say(t, j.statusMsg, j.status) : t('job.status.downloading');
     case 'archiving':
-      return j.status !== '' ? j.status : t('job.status.archiving');
+      return j.status !== '' ? say(t, j.statusMsg, j.status) : t('job.status.archiving');
     case 'done':
       return t('job.status.done');
     case 'failed':
-      return t('job.status.failed', { reason: j.reason });
+      return t('job.status.failed', { reason: say(t, j.reasonMsg, j.reason) });
     case 'skipped':
-      return t('job.status.skipped', { reason: j.reason });
+      return t('job.status.skipped', { reason: say(t, j.reasonMsg, j.reason) });
   }
 }
 
@@ -115,7 +115,7 @@ export function jobShortStatus(j: Job, t: T, lang: Lang): string {
     case 'archiving': {
       const phase =
         j.status !== ''
-          ? j.status.replace(/\.+$/, '')
+          ? say(t, j.statusMsg, j.status).replace(/\.+$/, '')
           : j.state === 'archiving'
             ? t('job.short.packing')
             : t('job.short.downloading');

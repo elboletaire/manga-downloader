@@ -945,3 +945,49 @@ func TestDownloadingLogIsPlural(t *testing.T) {
 		}
 	}
 }
+
+// the row texts the GUI writes come with their messages, the upstream reasons
+// stay plain
+func TestJobRowsCarryTheirMessages(t *testing.T) {
+	c := NewController(&grabber.Settings{}, nil)
+	c.byChap = map[*grabber.Chapter]*Job{}
+	c.failedC = map[*grabber.Chapter]bool{}
+	c.byVolume = map[*core.Volume]*Job{}
+	c.listedVol = map[grabber.Filterable]*Job{}
+	c.chapVol = map[*grabber.Chapter]*Job{}
+	c.fetching = map[grabber.Filterable]*Job{}
+	e := events{c}
+	wantMsg := func(what string, m *Message, key, text string) {
+		t.Helper()
+		if m == nil || m.Key != key || m.Text != text {
+			t.Errorf("%s = %+v, want key %q and text %q", what, m, key, text)
+		}
+	}
+
+	skipped := &grabber.Chapter{Title: "Chapter 5", Number: 5, Language: "en", PagesCount: 1}
+	e.Skipped(skipped)
+	wantMsg("skipped reason", c.Jobs()[0].ReasonMsg, "job.reason.skipped", "every page excluded by --skip-pages")
+
+	failed := &grabber.Chapter{Title: "Chapter 6", Number: 6, Language: "en", PagesCount: 1}
+	e.Started(failed)
+	e.DownloadFailed(failed, errors.New("boom"))
+	row := c.Jobs()[1]
+	wantMsg("download reason", row.ReasonMsg, "job.reason.download", "download: boom")
+	if row.Reason != "download: boom" {
+		t.Errorf("Reason = %q, want the English text", row.Reason)
+	}
+
+	c.rng = "1-3"
+	c.bundle = &Job{}
+	e.BundlePacking()
+	wantMsg("bundle status", c.bundle.StatusMsg, "job.phase.creatingBundle", "Creating bundle for chapters 1-3")
+
+	v := &core.Volume{Number: 2, Chapters: grabber.Filterables{&grabber.Chapter{Number: 2, Title: "Chapter 2"}}}
+	e.VolumeStart(v)
+	vol := c.byVolume[v]
+	wantMsg("volume title", vol.TitleMsg, "job.title.volumeChapter", "Vol. 02 · chapter 2")
+	wantMsg("volume status", vol.StatusMsg, "job.phase.waiting", "Waiting...")
+	if vol.Title != "Vol. 02 · chapter 2" {
+		t.Errorf("Title = %q, want the English text", vol.Title)
+	}
+}

@@ -15,5 +15,26 @@
     "done": "Guardado",
     "failed": "Fallido",
     "skipped": "Omitido"
+  },
+  "title": {
+    "bundle": "Archivo único: capítulos {{range}}",
+    "volume": "{{volume}} · capítulos {{first}}–{{last}}",
+    "volumeChapter": "{{volume}} · capítulo {{first}}",
+    "volumeParts": "{{volume}} · {{count}} partes"
+  },
+  "phase": {
+    "gathering": "Obteniendo información...",
+    "downloading": "Descargando...",
+    "downloadingLabel": "Descargando {{label}}",
+    "creatingBundle": "Creando el archivo único de los capítulos {{range}}",
+    "waiting": "Esperando...",
+    "packing": "Empaquetando..."
+  },
+  "reason": {
+    "cancelled": "cancelado antes de empezar todos sus capítulos",
+    "skipped": "todas las páginas excluidas por --skip-pages",
+    "download": "descarga: {{reason}}",
+    "packing": "empaquetado: {{reason}}",
+    "filename": "nombre de archivo: {{reason}}"
   }
 }

@@ -273,18 +273,23 @@ type RunDTO struct {
 // JobDTO is the progress of one chapter (or of the whole bundle)
 type JobDTO struct {
 	Title string `json:"title"`
+	// TitleMsg, ReasonMsg and StatusMsg are the texts the GUI wrote, as
+	// messages for the window; Title, Reason and Status stay in English
+	TitleMsg *Message `json:"titleMsg,omitempty"`
 	// Tags is the release's language and group, shown apart from the title
 	Tags   string  `json:"tags"`
 	Number float64 `json:"number"`
 	// Total and Done count pages: each page is downloaded and then archived,
 	// so Total is twice the page count. A volume's row, whose pages aren't
 	// known until it's packed, counts its progress out of a fixed Total.
-	Total  int64  `json:"total"`
-	Done   int64  `json:"done"`
-	State  string `json:"state"`
-	Reason string `json:"reason"`
+	Total     int64    `json:"total"`
+	Done      int64    `json:"done"`
+	State     string   `json:"state"`
+	Reason    string   `json:"reason"`
+	ReasonMsg *Message `json:"reasonMsg,omitempty"`
 	// Status is the bundle's or volume's current phase; empty for single chapters
-	Status string `json:"status"`
+	Status    string   `json:"status"`
+	StatusMsg *Message `json:"statusMsg,omitempty"`
 	// Volume is set on the row of a volume
 	Volume bool `json:"volume"`
 }
@@ -380,15 +385,18 @@ func (a *App) State() State {
 	}
 	for _, j := range c.Jobs() {
 		st.Jobs = append(st.Jobs, JobDTO{
-			Title:  j.Title,
-			Tags:   j.Tags,
-			Number: j.Number,
-			Total:  j.Total,
-			Done:   j.Done,
-			State:  jobStateName(j.State),
-			Reason: j.Reason,
-			Status: j.Status,
-			Volume: j.Volume,
+			Title:     j.Title,
+			TitleMsg:  j.TitleMsg,
+			Tags:      j.Tags,
+			Number:    j.Number,
+			Total:     j.Total,
+			Done:      j.Done,
+			State:     jobStateName(j.State),
+			Reason:    j.Reason,
+			ReasonMsg: j.ReasonMsg,
+			Status:    j.Status,
+			StatusMsg: j.StatusMsg,
+			Volume:    j.Volume,
 		})
 	}
 

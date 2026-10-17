@@ -15,5 +15,26 @@
     "done": "Desat",
     "failed": "Fallit",
     "skipped": "Omès"
+  },
+  "title": {
+    "bundle": "Fitxer únic: capítols {{range}}",
+    "volume": "{{volume}} · capítols {{first}}–{{last}}",
+    "volumeChapter": "{{volume}} · capítol {{first}}",
+    "volumeParts": "{{volume}} · {{count}} parts"
+  },
+  "phase": {
+    "gathering": "Obtenint informació...",
+    "downloading": "Descarregant...",
+    "downloadingLabel": "Descarregant {{label}}",
+    "creatingBundle": "Creant el fitxer únic dels capítols {{range}}",
+    "waiting": "Esperant...",
+    "packing": "Empaquetant..."
+  },
+  "reason": {
+    "cancelled": "cancel·lat abans de començar tots els seus capítols",
+    "skipped": "totes les pàgines excloses per --skip-pages",
+    "download": "descàrrega: {{reason}}",
+    "packing": "empaquetat: {{reason}}",
+    "filename": "nom de fitxer: {{reason}}"
   }
 }

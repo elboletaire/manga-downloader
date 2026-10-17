@@ -333,12 +333,12 @@ func TestVolumeTitleParts(t *testing.T) {
 		&grabber.Chapter{Number: 2, Title: "Chapter 2 Part 1"},
 		&grabber.Chapter{Number: 2, Title: "Chapter 2 Part 2"},
 	}}
-	if got := c.volumeTitle(v); got != "Vol. 02 · chapter 2" {
+	if got := c.volumeTitle(v).Text; got != "Vol. 02 · chapter 2" {
 		t.Errorf("volume title = %q", got)
 	}
 	c.runinfo.Parts = true
 	v.Parts = true
-	if got := c.volumeTitle(v); got != "Chapter 2 · 2 parts" {
+	if got := c.volumeTitle(v).Text; got != "Chapter 2 · 2 parts" {
 		t.Errorf("parts title = %q", got)
 	}
 	if got := v.Label(); got != "Chapter 2" {

@@ -34,8 +34,17 @@ export interface Run {
   rows: number;
 }
 
+/** A text the Go side sent with its key and args: translated by say() (see i18n), its text in English */
+export interface Message {
+  key: string;
+  args?: Record<string, unknown>;
+  text: string;
+}
+
 export interface Job {
   title: string;
+  /** The title as a message, when the GUI wrote it (a bundle's or a volume's) */
+  titleMsg?: Message;
   /** The release's language and group (" [en] [Alpha]"), shown apart from the title; empty when none */
   tags: string;
   number: number;
@@ -44,8 +53,10 @@ export interface Job {
   done: number;
   state: JobState;
   reason: string;
+  reasonMsg?: Message;
   /** The bundle's or volume's current phase; empty for single chapters */
   status: string;
+  statusMsg?: Message;
   /** The row of a volume rather than a chapter */
   volume: boolean;
 }
@@ -178,5 +189,5 @@ export interface LogLine {
   /** The English text: what copying the log gives, and what shows when the window can't translate msg */
   text: string;
   /** The line as a translatable message, when the Go side sent one (see say() in i18n) */
-  msg?: { key: string; args?: Record<string, unknown>; text: string };
+  msg?: Message;
 }

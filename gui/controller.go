@@ -68,20 +68,36 @@ const (
 // Total of volumeScale (its pages aren't known until it's packed).
 type Job struct {
 	Title string
+	// TitleMsg, StatusMsg and ReasonMsg are the texts the GUI wrote, as
+	// messages for the window; they sit beside the English Title, Status and Reason
+	TitleMsg *Message
 	// Tags is the release's language and group (" [en] [Alpha]"), kept apart
 	// from Title so a narrow row truncates the title and keeps them
-	Tags   string
-	Number float64
-	Total  int64
-	Done   int64
-	State  JobState
-	Reason string
+	Tags      string
+	Number    float64
+	Total     int64
+	Done      int64
+	State     JobState
+	Reason    string
+	ReasonMsg *Message
 	// Status is the bundle's or the volume's phase ("Downloading
 	// <chapter>", "Creating bundle..."); unused for single chapters
-	Status string
+	Status    string
+	StatusMsg *Message
 	// Volume is set on the row of a volume
 	Volume bool
 }
+
+// setTitle, setStatus and setReason set a row's text the GUI wrote, with its message
+func (j *Job) setTitle(m Message)  { j.Title, j.TitleMsg = m.Text, &m }
+func (j *Job) setStatus(m Message) { j.Status, j.StatusMsg = m.Text, &m }
+func (j *Job) setReason(m Message) { j.Reason, j.ReasonMsg = m.Text, &m }
+
+// setReasonText sets a reason from upstream, which the window shows as it is
+func (j *Job) setReasonText(s string) { j.Reason, j.ReasonMsg = s, nil }
+
+// clearStatus ends the row's phase
+func (j *Job) clearStatus() { j.Status, j.StatusMsg = "", nil }
 
 // RunInfo describes the run in progress, or the last one
 type RunInfo struct {
@@ -1312,7 +1328,9 @@ func (c *Controller) Start() error {
 	c.stats = runStats{}
 	c.summary = nil
 	if c.settings.Bundle {
-		c.bundle = &Job{Title: "Bundle: chapters " + c.rng, Status: "Gathering info..."}
+		c.bundle = &Job{}
+		c.bundle.setTitle(msg("job.title.bundle", map[string]any{"range": c.rng}))
+		c.bundle.setStatus(msg("job.phase.gathering", nil))
 		c.jobs = append(c.jobs, c.bundle)
 	}
 	series := c.series
@@ -1383,7 +1401,7 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 			c.bundle.State = JobDone
 			c.bundle.Done = c.bundle.Total
 		}
-		c.bundle.Status = ""
+		c.bundle.clearStatus()
 	}
 	c.summary = s
 	c.running = false
@@ -1489,7 +1507,7 @@ func (e events) BundleStart(pages int64) {
 		c.bundle.Total = pages * (core.DownloadWeight + core.ArchiveWeight)
 		// a corrected total comes again mid-download, so keep the status a chapter set
 		if c.bundle.Status == "Gathering info..." {
-			c.bundle.Status = "Downloading..."
+			c.bundle.setStatus(msg("job.phase.downloading", nil))
 		}
 	}
 	c.mu.Unlock()
@@ -1501,7 +1519,8 @@ func (e events) Fetching(listed grabber.Filterable) {
 	c.mu.Lock()
 	// a bundle or a volume has its own row
 	if c.bundle == nil && c.listedVol[listed] == nil {
-		j := &Job{Title: grabber.ChapterLabel(listed), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFetching, Status: "Fetching pages..."}
+		j := &Job{Title: grabber.ChapterLabel(listed), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFetching}
+		j.setStatus(msg("job.status.fetching", nil))
 		c.jobs = append(c.jobs, j)
 		c.fetching[listed] = j
 	}
@@ -1524,12 +1543,16 @@ func (e events) Fetched(listed grabber.Filterable, ch *grabber.Chapter) {
 
 // endRow marks the row of a chapter that ended before it started, or adds one
 // when it never had any. Callers hold mu.
-func (c *Controller) endRow(ch *grabber.Chapter, state JobState, reason string) {
+func (c *Controller) endRow(ch *grabber.Chapter, state JobState, reason Message) {
 	if j := c.byChap[ch]; j != nil {
-		j.State, j.Reason, j.Status = state, reason, ""
+		j.State = state
+		j.setReason(reason)
+		j.clearStatus()
 		return
 	}
-	c.jobs = append(c.jobs, &Job{Title: grabber.ChapterLabel(ch), Tags: c.releaseTags(ch), Number: ch.GetNumber(), State: state, Reason: reason})
+	j := &Job{Title: grabber.ChapterLabel(ch), Tags: c.releaseTags(ch), Number: ch.GetNumber(), State: state}
+	j.setReason(reason)
+	c.jobs = append(c.jobs, j)
 }
 
 func (e events) FetchFailed(listed grabber.Filterable, err error) {
@@ -1538,7 +1561,9 @@ func (e events) FetchFailed(listed grabber.Filterable, err error) {
 	failure := fmt.Sprintf("%s: %s", c.releaseLabel(listed), err)
 	c.stats.failures = append(c.stats.failures, failure)
 	if j := c.fetching[listed]; j != nil {
-		j.State, j.Reason, j.Status = JobFailed, err.Error(), ""
+		j.State = JobFailed
+		j.setReasonText(err.Error())
+		j.clearStatus()
 		delete(c.fetching, listed)
 	} else if c.bundle == nil && c.listedVol[listed] == nil {
 		c.jobs = append(c.jobs, &Job{Title: grabber.ChapterLabel(listed), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFailed, Reason: err.Error()})
@@ -1553,7 +1578,7 @@ func (e events) Skipped(ch *grabber.Chapter) {
 	c.mu.Lock()
 	c.stats.skipped++
 	if c.bundle == nil && c.chapVol[ch] == nil {
-		c.endRow(ch, JobSkipped, "every page excluded by --skip-pages")
+		c.endRow(ch, JobSkipped, msg("job.reason.skipped", nil))
 	}
 	c.appendMsgLocked(LogWarn, msg("log.skipping", map[string]any{"label": c.releaseLabel(ch)}))
 	c.mu.Unlock()
@@ -1566,7 +1591,7 @@ func (e events) FilenameFailed(ch *grabber.Chapter, err error) {
 	failure := fmt.Sprintf("%s: filename: %s", c.releaseLabel(ch), err)
 	c.stats.failures = append(c.stats.failures, failure)
 	if c.bundle == nil {
-		c.endRow(ch, JobFailed, "filename: "+err.Error())
+		c.endRow(ch, JobFailed, msg("job.reason.filename", map[string]any{"reason": err.Error()}))
 	}
 	c.appendMsgLocked(LogError, msg("log.errorFilename", map[string]any{"label": c.releaseLabel(ch), "reason": err.Error()}))
 	c.mu.Unlock()
@@ -1577,15 +1602,16 @@ func (e events) Started(ch *grabber.Chapter) {
 	c := e.c
 	c.mu.Lock()
 	if c.bundle != nil {
-		c.bundle.Status = "Downloading " + c.releaseLabel(ch)
+		c.bundle.setStatus(msg("job.phase.downloadingLabel", map[string]any{"label": c.releaseLabel(ch)}))
 	} else if j := c.chapVol[ch]; j != nil {
 		// its row is too narrow for the chapter's title: the phase and
 		// percentage say enough. The bar moves with VolumeProgress.
-		j.Status = ""
+		j.clearStatus()
 	} else if j := c.byChap[ch]; j != nil {
 		// the row Fetching made becomes the downloading one
 		j.Total = ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight)
-		j.State, j.Status = JobDownloading, ""
+		j.State = JobDownloading
+		j.clearStatus()
 	} else {
 		// the CLI's bar: each page's download and archive steps
 		j := &Job{Title: grabber.ChapterLabel(ch), Tags: c.releaseTags(ch), Number: ch.GetNumber(), Total: ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight), State: JobDownloading}
@@ -1619,7 +1645,7 @@ func (e events) DownloadFailed(ch *grabber.Chapter, err error) {
 	// a volume goes on with its other chapters
 	if j := c.byChap[ch]; j != nil && c.bundle == nil {
 		j.State = JobFailed
-		j.Reason = "download: " + err.Error()
+		j.setReason(msg("job.reason.download", map[string]any{"reason": err.Error()}))
 	}
 	c.appendMsgLocked(LogError, msg("log.errorDownload", map[string]any{"label": c.releaseLabel(ch), "reason": err.Error()}))
 	c.mu.Unlock()
@@ -1646,7 +1672,7 @@ func (e events) Packed(ch *grabber.Chapter, name string, err error) {
 		c.stats.failures = append(c.stats.failures, failure)
 		if j != nil {
 			j.State = JobFailed
-			j.Reason = "packing: " + err.Error()
+			j.setReason(msg("job.reason.packing", map[string]any{"reason": err.Error()}))
 		}
 		c.appendMsgLocked(LogError, msg("log.packFailed", map[string]any{"label": c.releaseLabel(ch), "reason": err.Error()}))
 	} else {
@@ -1675,7 +1701,7 @@ func (e events) BundlePacking() {
 	c := e.c
 	c.mu.Lock()
 	if c.bundle != nil {
-		c.bundle.Status = "Creating bundle for chapters " + c.rng
+		c.bundle.setStatus(msg("job.phase.creatingBundle", map[string]any{"range": c.rng}))
 	}
 	c.mu.Unlock()
 	c.emit()
@@ -1693,21 +1719,23 @@ func (e events) BundleArchived(n int) {
 
 // volumeTitle is the row title of a volume: "Vol. 01 · chapters 1–7", or
 // "Chapter 19 · 2 parts" in a parts run. Callers hold mu.
-func (c *Controller) volumeTitle(v *core.Volume) string {
+func (c *Controller) volumeTitle(v *core.Volume) Message {
 	if c.runinfo.Parts {
-		return fmt.Sprintf("%s · %d parts", v.Label(), len(v.Chapters))
+		return msg("job.title.volumeParts", map[string]any{"volume": v.Label(), "count": len(v.Chapters)})
 	}
 	first, last := formatNumber(v.FirstNumber()), formatNumber(v.LastNumber())
 	if first == last {
-		return fmt.Sprintf("%s · chapter %s", v.Label(), first)
+		return msg("job.title.volumeChapter", map[string]any{"volume": v.Label(), "first": first})
 	}
-	return fmt.Sprintf("%s · chapters %s–%s", v.Label(), first, last)
+	return msg("job.title.volume", map[string]any{"volume": v.Label(), "first": first, "last": last})
 }
 
 func (e events) VolumeStart(v *core.Volume) {
 	c := e.c
 	c.mu.Lock()
-	j := &Job{Title: c.volumeTitle(v), Number: v.FirstNumber(), Total: volumeScale, State: JobDownloading, Status: "Waiting...", Volume: true}
+	j := &Job{Number: v.FirstNumber(), Total: volumeScale, State: JobDownloading, Volume: true}
+	j.setTitle(c.volumeTitle(v))
+	j.setStatus(msg("job.phase.waiting", nil))
 	if c.runinfo.Parts {
 		// one chapter's parts share its group and language
 		j.Tags = c.releaseTags(v.Chapters[0])
@@ -1735,7 +1763,7 @@ func (e events) VolumePacking(v *core.Volume) {
 	c.mu.Lock()
 	if j := c.byVolume[v]; j != nil {
 		j.State = JobArchiving
-		j.Status = "Packing..."
+		j.setStatus(msg("job.phase.packing", nil))
 	}
 	c.mu.Unlock()
 	c.emit()
@@ -1767,20 +1795,20 @@ func (e events) VolumePacked(v *core.Volume, name string, err error) {
 		// a cancelled run says so in its summary; the row only stops
 		if j != nil {
 			j.State = JobSkipped
-			j.Reason = "cancelled before all of its chapters started"
+			j.setReason(msg("job.reason.cancelled", nil))
 		}
 	case errors.Is(err, core.ErrSkippedVolume):
 		// its chapters were each counted as skipped already
 		if j != nil {
 			j.State = JobSkipped
-			j.Reason = err.Error()
+			j.setReasonText(err.Error())
 		}
 	case err != nil:
 		failure := fmt.Sprintf("%s: %s", label, err)
 		c.stats.failures = append(c.stats.failures, failure)
 		if j != nil {
 			j.State = JobFailed
-			j.Reason = err.Error()
+			j.setReasonText(err.Error())
 		}
 		c.appendMsgLocked(LogError, msg("log.errorPacking", map[string]any{"label": label, "reason": err.Error()}))
 	default:
@@ -1792,7 +1820,7 @@ func (e events) VolumePacked(v *core.Volume, name string, err error) {
 		c.appendMsgLocked(LogInfo, msg("log.saved", map[string]any{"name": name}))
 	}
 	if j != nil {
-		j.Status = ""
+		j.clearStatus()
 	}
 	c.mu.Unlock()
 	c.emit()
