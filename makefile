@@ -653,6 +653,7 @@ grabber/turkcemanga:
 	go run . https://turkcemanga.com/manga/the-lady-with-a-mask/ 50
 grabber/yurionair:
 	go run . https://yurionair.top/manga/adachi-to-shimamura/ 46
+
 # plain HTTP, chapters from a paginated JSON api, images in data-src
 grabber/zinmanga:
 	go run . https://www.zinmanga.net/manga/academy-idolmaster-gold-rush 12

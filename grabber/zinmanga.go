@@ -13,8 +13,8 @@ import (
 )
 
 // Zinmanga is a grabber for zinmanga.net, a custom PHP site that looks like
-// Madara. The series page only holds the title, the chapters come from a
-// paginated JSON api, and each reader page has its images as data-src
+// Madara. The series page only holds the title; the chapters come from a
+// paginated JSON api, and each reader page has its images as data-src.
 type Zinmanga struct {
 	*Grabber
 	title string
@@ -35,7 +35,7 @@ type ZinmangaChapter struct {
 var zinmangaChapterRe = regexp.MustCompile(`(?i)^(/manga/[^/]+)/[^/]+/?$`)
 
 // zinmangaSlugRe captures the series slug from a series or chapter URL
-var zinmangaSlugRe = regexp.MustCompile(`/manga/([^/?#]+)`)
+var zinmangaSlugRe = regexp.MustCompile(`(?i)/manga/([^/?#]+)`)
 
 // Test returns true if the URL is a zinmanga.net URL
 func (z *Zinmanga) Test() (bool, error) {
@@ -79,7 +79,11 @@ func (z *Zinmanga) FetchTitle() (string, error) {
 		return "", err
 	}
 
-	z.title = sanitizeTitle(doc.Find("h1").First().Text())
+	title := sanitizeTitle(doc.Find("h1").First().Text())
+	if title == "" {
+		return "", fmt.Errorf("could not find the title in %s", z.URL)
+	}
+	z.title = title
 
 	return z.title, nil
 }
@@ -168,6 +172,9 @@ func (z *Zinmanga) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:   f.GetNumber(),
 		Language: zchap.Language,
 		Pages:    zinmangaPages(doc),
+	}
+	if len(chapter.Pages) == 0 {
+		return nil, fmt.Errorf("no pages found for %s", ChapterLabel(f))
 	}
 	chapter.PagesCount = int64(len(chapter.Pages))
 

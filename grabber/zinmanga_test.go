@@ -185,3 +185,52 @@ func TestZinmangaFetch(t *testing.T) {
 		t.Errorf("FetchChapter() got %d pages, want 2", len(chapter.Pages))
 	}
 }
+
+func TestZinmangaSlug(t *testing.T) {
+	cases := map[string]string{
+		zinmangaSeriesURL:                "academy-idolmaster-gold-rush",
+		zinmangaSeriesURL + "/chapter-1": "academy-idolmaster-gold-rush",
+		"https://www.zinmanga.net/MANGA/Academy-Idolmaster-Gold-Rush/": "Academy-Idolmaster-Gold-Rush",
+		zinmangaSeriesURL + "/?tab=chapters":                           "academy-idolmaster-gold-rush",
+	}
+	for input, want := range cases {
+		z := &Zinmanga{Grabber: &Grabber{URL: input}}
+		got, err := z.slug()
+		if err != nil || got != want {
+			t.Errorf("slug(%q) = %q, %v; want %q", input, got, err, want)
+		}
+	}
+}
+
+// newStaticZinmanga serves body for every path, and returns a grabber for the
+// series URL on that server
+func newStaticZinmanga(t *testing.T, body string) *Zinmanga {
+	t.Helper()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(body))
+	}))
+	t.Cleanup(srv.Close)
+
+	return &Zinmanga{Grabber: &Grabber{URL: srv.URL + "/manga/academy-idolmaster-gold-rush", Settings: &Settings{}}}
+}
+
+func TestZinmangaFetchTitleWithoutHeading(t *testing.T) {
+	z := newStaticZinmanga(t, `<html><body><div class="post-title"></div></body></html>`)
+
+	if title, err := z.FetchTitle(); err == nil {
+		t.Errorf("FetchTitle() = %q, nil; want an error when the page has no title", title)
+	}
+}
+
+func TestZinmangaFetchChapterWithoutPages(t *testing.T) {
+	z := newStaticZinmanga(t, `<html><body><div class="reading-content"></div></body></html>`)
+
+	chapter, err := z.FetchChapter(&ZinmangaChapter{
+		Chapter: Chapter{Number: 1, Label: Label{Style: LabelNumbered}},
+		Slug:    "chapter-1",
+	})
+	if err == nil {
+		t.Errorf("FetchChapter() = %d pages, nil; want an error when the reader has no images", len(chapter.Pages))
+	}
+}
