@@ -16,9 +16,10 @@ export interface WindowData {
  * so nothing is missed, and a snapshot never overwrites a pushed value that
  * arrived first: whichever is newer wins.
  */
-export function useWindow(api: Api): WindowData & { failure: string } {
+export function useWindow(api: Api): WindowData & { failure: string | null } {
   const [data, setData] = useState<WindowData>({ state: null, chapters: [], selected: [], log: [] });
-  const [failure, setFailure] = useState('');
+  // the error's text; the window words it in the language shown when it renders
+  const [failure, setFailure] = useState<string | null>(null);
   // which fields a push has already filled, so a late snapshot doesn't clobber them
   const pushed = useRef({ state: false, chapters: false, selected: false, log: false });
 
@@ -60,7 +61,7 @@ export function useWindow(api: Api): WindowData & { failure: string } {
       .catch((e: unknown) => {
         // without a snapshot the window has nothing to show: say so instead of "Loading…"
         if (alive) {
-          setFailure(`Couldn't read the window's state: ${errorMessage(e)}`);
+          setFailure(errorMessage(e));
         }
       });
 

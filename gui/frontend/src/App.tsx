@@ -13,6 +13,7 @@ import { ChapterPanel } from './ChapterPanel';
 import { DownloadDock } from './DownloadDock';
 import { errorMessage } from './format';
 import { ActivityIcon, SlidersIcon, Spinner } from './icons';
+import { useI18n } from './i18n/react';
 import { Mascot } from './Mascot';
 import { LogDrawer, StatusBar } from './LogPanel';
 import { createOptionsWriter } from './optionsWriter';
@@ -25,6 +26,7 @@ import { useWindow } from './useWindow';
 type Tab = 'options' | 'activity';
 
 export function App({ api }: { api: Api }) {
+  const { t } = useI18n();
   const { state, chapters, selected, log, failure } = useWindow(api);
   const [tab, setTab] = useState<Tab>('options');
   const [logOpen, setLogOpen] = useState(false);
@@ -63,13 +65,13 @@ export function App({ api }: { api: Api }) {
     return (
       <main className="boot">
         <Mascot expression="soft" size={48} />
-        {failure !== '' ? (
+        {failure !== null ? (
           <p className="error-text" role="alert">
-            {failure}
+            {t('app.readFailed', { error: failure })}
           </p>
         ) : (
           <p className="muted">
-            <Spinner /> Starting…
+            <Spinner /> {t('app.starting')}
           </p>
         )}
       </main>
@@ -134,23 +136,23 @@ export function App({ api }: { api: Api }) {
           onError={setActionError}
         />
 
-        <aside className="side" aria-label="Download">
-          <div className="tabs" role="tablist" aria-label="Side panel">
+        <aside className="side" aria-label={t('app.download')}>
+          <div className="tabs" role="tablist" aria-label={t('app.tabs.label')}>
             <TabButton id="options" tab={tab} onSelect={setTab}>
-              <SlidersIcon size={15} /> Options
+              <SlidersIcon size={15} /> {t('app.tabs.options')}
             </TabButton>
             <TabButton id="activity" tab={tab} onSelect={setTab}>
-              <ActivityIcon size={15} /> Activity
+              <ActivityIcon size={15} /> {t('app.tabs.activity')}
               {state.running ? (
-                <span className="tab-badge live" aria-label="running">
+                <span className="tab-badge live" aria-label={t('app.running')}>
                   <Spinner size={11} />
                 </span>
               ) : failed > 0 ? (
-                <span className="tab-badge danger" aria-label={`${failed} failed`}>
+                <span className="tab-badge danger" aria-label={t('count.failed', { count: failed })}>
                   {failed}
                 </span>
               ) : state.summary ? (
-                <span className="tab-badge success" aria-label="finished" />
+                <span className="tab-badge success" aria-label={t('app.finished')} />
               ) : null}
             </TabButton>
           </div>

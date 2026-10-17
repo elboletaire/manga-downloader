@@ -1,0 +1,12 @@
+{
+  "starting": "Iniciando…",
+  "readFailed": "No se pudo leer el estado de la ventana: {{error}}",
+  "tabs": {
+    "label": "Panel lateral",
+    "options": "Opciones",
+    "activity": "Actividad"
+  },
+  "download": "Descargar",
+  "running": "en curso",
+  "finished": "terminado"
+}
