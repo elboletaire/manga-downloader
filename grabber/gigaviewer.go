@@ -75,6 +75,8 @@ var (
 	gigaviewerNoticeRe = regexp.MustCompile(`お知らせ|休載|告知`)
 	// gigaviewerHalfRe is the 前編/中編/後編 that follows a Latin marker, "Season26 前編"
 	gigaviewerHalfRe = regexp.MustCompile(`^[` + gigaviewerSeparators + `]*([前中後]編)`)
+	// gigaviewerPartRe is a leading "(2)" or "（２）" after the number
+	gigaviewerPartRe = regexp.MustCompile(`^[（(]([0-9０-９]+)[）)]`)
 	// gigaviewerSeparators are what sits between a number and a part, or a part and nothing
 	gigaviewerSeparators = " 　～~-・"
 	// gigaviewerDigits makes the full-width digits of a title ASCII
@@ -321,10 +323,27 @@ func gigaviewerTitle(raw, series string) (title string, number float64, part str
 	}
 
 	title = cleanTitle(raw[end:])
+	if part == "" {
+		if p, rest, ok := gigaviewerSplitPart(title); ok {
+			part, title = p, rest
+		}
+	}
 	if title == series {
 		title = ""
 	}
 	return title, number, part
+}
+
+// gigaviewerSplitPart reads the "①" or "（2）" that follows an episode number as
+// the part of a split episode, and returns the rest of the title
+func gigaviewerSplitPart(title string) (part, rest string, ok bool) {
+	if r, size := utf8.DecodeRuneInString(title); r >= '①' && r <= '⑳' {
+		return strconv.Itoa(int(r-'①') + 1), cleanTitle(title[size:]), true
+	}
+	if m := gigaviewerPartRe.FindStringSubmatch(title); m != nil {
+		return gigaviewerDigits.Replace(m[1]), cleanTitle(title[len(m[0]):]), true
+	}
+	return "", title, false
 }
 
 // gigaviewerMarker reads the number a title starts with: where it ends, its
