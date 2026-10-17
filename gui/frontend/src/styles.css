@@ -27,6 +27,7 @@
   --text: #1b1a18;
   --text-2: #55514b;
   --text-3: #736e67;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2355514b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
   --accent: #7c5ce0;
   --accent-hover: #6a4bd3;
@@ -77,6 +78,7 @@
     --text: #ececef;
     --text-2: #b4b4bc;
     --text-3: #8e8e98;
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23b4b4bc' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
     --accent: #a993ff;
     --accent-hover: #bba9ff;
@@ -1193,6 +1195,16 @@ code {
 
 .input.invalid {
   border-color: var(--danger);
+}
+
+/* a drawn chevron, so the arrow sits a fixed distance from the edge in every select */
+select.input {
+  appearance: none;
+  padding-right: 30px;
+  background-image: var(--chevron);
+  background-position: right 12px center;
+  background-size: 10px 6px;
+  background-repeat: no-repeat;
 }
 
 /* the box with a control inside its right end; the padding keeps text clear of it */
