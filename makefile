@@ -575,7 +575,7 @@ grabber/mkissa:
 
 # bestChallenge/challenge titles use the same API; 183559 is a free series
 grabber/naver:
-	go run . 'https://comic.naver.com/webtoon/list?titleId=183559' 1-2
+	go run . 'https://comic.naver.com/webtoon/list?titleId=183559' 2-3
 
 # sites needing a real browser: not part of the `grabber` target since they
 # open a Chrome window and may require solving an interactive challenge

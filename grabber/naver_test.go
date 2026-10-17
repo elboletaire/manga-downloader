@@ -54,7 +54,7 @@ func (r naverRT) RoundTrip(req *nethttp.Request) (*nethttp.Response, error) {
 func TestNaverFetchChapters(t *testing.T) {
 	http.SetRoundTripper(naverRT{
 		"/api/article/list?titleId=7&page=1": `{"pageInfo":{"totalPages":2},"articleList":[{"no":2,"subtitle":"Two","charge":false},{"no":1,"subtitle":"One","charge":true}]}`,
-		"/api/article/list?titleId=7&page=2": `{"pageInfo":{"totalPages":2},"articleList":[{"no":3,"subtitle":"Three","charge":false},{"no":2,"subtitle":"Two","charge":false}]}`,
+		"/api/article/list?titleId=7&page=2": `{"pageInfo":{"totalPages":2},"articleList":[{"no":3,"subtitle":"Three","charge":false},{"no":2,"subtitle":"Two","charge":false}],"chargeFolderArticleList":[{"no":4,"subtitle":"Four"}]}`,
 	})
 	defer http.SetRoundTripper(nil)
 
@@ -64,14 +64,14 @@ func TestNaverFetchChapters(t *testing.T) {
 	if len(errs) > 0 {
 		t.Fatal(errs)
 	}
-	if len(chapters) != 3 {
-		t.Fatalf("got %d chapters, want 3 (deduped)", len(chapters))
+	if len(chapters) != 4 {
+		t.Fatalf("got %d chapters, want 4 (deduped)", len(chapters))
 	}
 	byNo := map[float64]bool{}
 	for _, c := range chapters {
 		byNo[c.GetNumber()] = c.(*NaverChapter).Locked
 	}
-	if !byNo[1] || byNo[2] || byNo[3] {
+	if !byNo[1] || !byNo[4] || byNo[2] || byNo[3] {
 		t.Errorf("locked flags = %v", byNo)
 	}
 }

@@ -15,17 +15,13 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Naver is a grabber for Naver Webtoon (comic.naver.com), including its
-// challenge and bestChallenge titles. The episode list and title come from
-// JSON endpoints, the pages from the server-rendered viewer.
-//
-// Paid episodes (charge) redirect to the list when logged out, so they are
-// listed as Locked. Adult series answer the list API with "LOGIN" and can't
-// be read without an account.
+// Naver is a grabber for comic.naver.com (webtoon, challenge, bestChallenge): episodes from
+// the list API, pages from the viewer; adult series need a login.
 type Naver struct {
 	*Grabber
 	title    string
 	titleID  string
+	section  string
 	episodes []*NaverChapter
 }
 
@@ -64,6 +60,7 @@ func (n *Naver) Test() (bool, error) {
 	}
 
 	n.titleID = id
+	n.section = m[1]
 	n.URL = fmt.Sprintf("https://comic.naver.com/%s/list?titleId=%s", m[1], url.QueryEscape(id))
 
 	return true, nil
@@ -82,6 +79,8 @@ type naverList struct {
 		TotalPages int `json:"totalPages"`
 	} `json:"pageInfo"`
 	ArticleList []naverEpisode `json:"articleList"`
+	// ChargeFolderArticleList holds an ongoing series' newest paid episodes
+	ChargeFolderArticleList []naverEpisode `json:"chargeFolderArticleList"`
 }
 
 // naverGet fetches an API path as JSON, turning the "LOGIN" string adult
@@ -156,7 +155,12 @@ func (n *Naver) fetchEpisodes() ([]*NaverChapter, error) {
 		}
 		totalPages = list.PageInfo.TotalPages
 
-		for _, ep := range list.ArticleList {
+		eps := append([]naverEpisode{}, list.ArticleList...)
+		for _, ep := range list.ChargeFolderArticleList {
+			ep.Charge = true
+			eps = append(eps, ep)
+		}
+		for _, ep := range eps {
 			if seen[ep.No] {
 				continue
 			}
@@ -170,7 +174,7 @@ func (n *Naver) fetchEpisodes() ([]*NaverChapter, error) {
 					Language: "ko",
 					Label:    Label{Style: LabelNumbered},
 				},
-				URL: fmt.Sprintf("%s/%s/detail?titleId=%s&no=%d", n.BaseUrl(), n.kind(), url.QueryEscape(n.titleID), ep.No),
+				URL: fmt.Sprintf("%s/%s/detail?titleId=%s&no=%d", n.BaseUrl(), n.section, url.QueryEscape(n.titleID), ep.No),
 			})
 		}
 	}
@@ -179,14 +183,6 @@ func (n *Naver) fetchEpisodes() ([]*NaverChapter, error) {
 	}
 
 	return out, nil
-}
-
-// kind returns the path section (webtoon, challenge, bestChallenge) of the URL
-func (n *Naver) kind() string {
-	if m := naverPathRe.FindStringSubmatch(strings.SplitN(strings.TrimPrefix(n.URL, n.BaseUrl()), "?", 2)[0]); m != nil {
-		return m[1]
-	}
-	return "webtoon"
 }
 
 // FetchChapter fetches an episode and its pages
