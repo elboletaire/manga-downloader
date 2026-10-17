@@ -1,0 +1,29 @@
+{
+  "success": true,
+  "data": {
+    "chapters": [
+      {
+        "comic_id": 101970,
+        "chapter_id": 25,
+        "chapter_num": 24,
+        "chapter_name": "Chapter 24",
+        "chapter_slug": "chapter-24",
+        "updated_at": "2026-10-16T04:20:51.000000Z",
+        "view": 548
+      },
+      {
+        "comic_id": 101970,
+        "chapter_id": 24,
+        "chapter_num": 23,
+        "chapter_name": "Chapter 23",
+        "chapter_slug": "chapter-23",
+        "updated_at": "2026-10-16T04:20:51.000000Z",
+        "view": 942
+      }
+    ],
+    "total": 24,
+    "current_page": 1,
+    "per_page": 10,
+    "last_page": 3
+  }
+}

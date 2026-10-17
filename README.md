@@ -866,6 +866,7 @@ to a minute.
 | [writerscans.com](https://writerscans.com) |  | 2026-10-15 |
 | [younganimal.com](https://younganimal.com) | Japanese, Young Animal (Comici) | — |
 | [yurionair.top](https://yurionair.top) | Yuri Verso, Portuguese, yuri, some adult titles | 2026-10-16 |
+| [zinmanga.net](https://www.zinmanga.net) | ZinManga, English | — |
 | [zonatmo.org](https://zonatmo.org) | TuMangaOnline, former zonatmo.com | 2026-10-15 |
 
 Verified weekly by CI. Sites marked `*` open a browser window, so they are checked by hand and their dates are older. `—` means not checked yet.

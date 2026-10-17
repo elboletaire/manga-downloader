@@ -1,0 +1,29 @@
+{
+  "success": true,
+  "data": {
+    "chapters": [
+      {
+        "comic_id": 101970,
+        "chapter_id": 15,
+        "chapter_num": 14,
+        "chapter_name": "Chapter 14",
+        "chapter_slug": "chapter-14",
+        "updated_at": "2026-10-16T04:20:51.000000Z",
+        "view": 494
+      },
+      {
+        "comic_id": 101970,
+        "chapter_id": 14,
+        "chapter_num": 13,
+        "chapter_name": "Chapter 13",
+        "chapter_slug": "chapter-13",
+        "updated_at": "2026-10-16T04:20:51.000000Z",
+        "view": 865
+      }
+    ],
+    "total": 24,
+    "current_page": 2,
+    "per_page": 10,
+    "last_page": 3
+  }
+}
