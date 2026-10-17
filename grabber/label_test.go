@@ -3,6 +3,7 @@
 package grabber
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -159,6 +160,55 @@ func TestChapterLabelPart(t *testing.T) {
 	} {
 		if got := ChapterLabel(tt.chapter); got != tt.want {
 			t.Errorf("%s: ChapterLabel = %q, want %q", tt.name, got, tt.want)
+		}
+	}
+}
+
+// TestPartOf splits a part's label into its part and the title it shares
+func TestPartOf(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		chapter     Chapter
+		part, title string
+	}{
+		{"numeric part with title", Chapter{Title: "Foo", Number: 364, Label: Label{Style: LabelNumbered, Part: "2"}}, "Part 2", "Foo"},
+		{"word part", Chapter{Number: 110, Label: Label{Style: LabelNumbered, Part: "前編"}}, "前編", ""},
+		{"word part with number", Chapter{Title: "Bar", Number: 36, Label: Label{Style: LabelNumbered, Part: "前編1"}}, "前編 Part 1", "Bar"},
+		{"no part", Chapter{Title: "Foo", Number: 3, Label: Label{Style: LabelNumbered}}, "", ""},
+	} {
+		if part, title := PartOf(&tt.chapter); part != tt.part || title != tt.title {
+			t.Errorf("%s: PartOf = %q, %q, want %q, %q", tt.name, part, title, tt.part, tt.title)
+		}
+	}
+}
+
+// TestPartsTitleShared runs the partsTitle cases gui/frontend/src/volumes.test.ts
+// runs too, so the merged file and the app's header name a parts run alike
+func TestPartsTitleShared(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "ranges", "testdata", "volumes.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cases struct {
+		PartsTitle []struct {
+			Name  string `json:"name"`
+			Parts []struct {
+				Part  string `json:"part"`
+				Title string `json:"title"`
+			} `json:"parts"`
+			Want string `json:"want"`
+		} `json:"partsTitle"`
+	}
+	if err := json.Unmarshal(data, &cases); err != nil {
+		t.Fatal(err)
+	}
+	for _, tt := range cases.PartsTitle {
+		var parts Filterables
+		for _, p := range tt.Parts {
+			parts = append(parts, &Chapter{Title: p.Title, Label: Label{Style: LabelNumbered, Part: p.Part}})
+		}
+		if got := PartsTitle(parts); got != tt.Want {
+			t.Errorf("%s: PartsTitle = %q, want %q", tt.Name, got, tt.Want)
 		}
 	}
 }

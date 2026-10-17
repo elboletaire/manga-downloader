@@ -29,6 +29,7 @@ const summary: Summary = {
   cancelled: false,
   saved: 0,
   volumes: 0,
+  parts: false,
   bundled: false,
   bundle: '',
   skipped: 0,
@@ -206,6 +207,29 @@ describe('downloadLabel', () => {
       const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: 'nope', site: '', listed: 0 } };
       expect(downloadLabel({ ...volumes, selectedCount: 16 }, list, from(1, 16))).toBe('Download 16 chapters');
     });
+  });
+});
+
+describe('downloadLabel, merging parts', () => {
+  // 1 whole, then 2 and 3 in two parts each (indices 1-2 and 3-4)
+  const list = [1, 2, 2, 3, 3].map((number, index) => ({
+    index,
+    number,
+    title: '',
+    language: '',
+    group: '',
+    volume: 0,
+    locked: false,
+  }));
+
+  it('counts the chapters the parts make, and says when some merge', async () => {
+    const s = await loadedState();
+    const parts = { ...s, options: { ...s.options, packAs: 'parts' as const } };
+    expect(downloadLabel({ ...parts, selectedCount: 5 }, list, [0, 1, 2, 3, 4])).toBe(
+      'Download 3 chapters, parts merged',
+    );
+    expect(downloadLabel({ ...parts, selectedCount: 3 }, list, [0, 1, 3])).toBe('Download 3 chapters');
+    expect(downloadLabel({ ...parts, selectedCount: 2 }, list, [1, 2])).toBe('Download 1 chapter, parts merged');
   });
 });
 

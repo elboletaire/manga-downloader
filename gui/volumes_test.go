@@ -57,6 +57,9 @@ func TestLoadOffersSiteVolumes(t *testing.T) {
 	if text, _, _ := c.Volumes(); text != "1-3/4" {
 		t.Errorf("box = %q, want it trimmed", text)
 	}
+	if err := c.SetVolumes("parts"); err == nil {
+		t.Error("parts was accepted in the Volumes box")
+	}
 
 	if err := c.Clear(); err != nil {
 		t.Fatal(err)
@@ -296,4 +299,49 @@ func jobFraction(j Job) float64 {
 		return 0
 	}
 	return min(1, max(0, float64(j.Done)/float64(j.Total)))
+}
+
+// a parts run's rows are its merged chapters and the chapters on their own,
+// as core groups them
+func TestDownloadPartsRows(t *testing.T) {
+	c, _, _ := newTestController(t, false, nil,
+		fakeChapter{number: 1, pages: 1},
+		fakeChapter{number: 2, pages: 1},
+		fakeChapter{number: 2, pages: 2},
+		fakeChapter{number: 3, pages: 1},
+	)
+	if err := c.Configure(func(s *grabber.Settings) { applyPackAs(s, PackParts) }); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	c.SetAll(true)
+	if err := c.Start(); err != nil {
+		t.Fatal(err)
+	}
+	if r := c.Run(); !r.Parts || r.Rows != 3 || r.Chapters != 4 {
+		t.Errorf("run = %+v, want a parts run of 4 chapters in 3 rows", r)
+	}
+	waitFinished(t, c)
+}
+
+// a chapter's merged parts are named as the chapter, not as a volume
+func TestVolumeTitleParts(t *testing.T) {
+	c := NewController(&grabber.Settings{}, nil)
+	v := &core.Volume{Number: 2, Chapters: grabber.Filterables{
+		&grabber.Chapter{Number: 2, Title: "Chapter 2 Part 1"},
+		&grabber.Chapter{Number: 2, Title: "Chapter 2 Part 2"},
+	}}
+	if got := c.volumeTitle(v); got != "Vol. 02 · chapter 2" {
+		t.Errorf("volume title = %q", got)
+	}
+	c.runinfo.Parts = true
+	v.Parts = true
+	if got := c.volumeTitle(v); got != "Chapter 2 · 2 parts" {
+		t.Errorf("parts title = %q", got)
+	}
+	if got := v.Label(); got != "Chapter 2" {
+		t.Errorf("parts label = %q", got)
+	}
 }

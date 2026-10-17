@@ -137,6 +137,12 @@ type fakeChapter struct {
 	limited map[int]bool
 	// volume is the volume the listing gives the chapter, 0 for none
 	volume int
+	// part and group tell the chapter's release apart from its parts and
+	// other releases: the part it's split into, and the group that made it
+	part  string
+	group string
+	// title is a part's title without its part, '' for none (see grabber.PartOf)
+	title string
 	// fetchDelay makes FetchChapter slow
 	fetchDelay time.Duration
 }
@@ -166,7 +172,7 @@ func (f *fakeSite) FetchChapter(l grabber.Filterable) (*grabber.Chapter, error) 
 	f.mu.Unlock()
 
 	for _, c := range f.chapters {
-		if c.number != l.GetNumber() {
+		if c.number != l.GetNumber() || c.part != partOf(l) || c.group != strings.Join(grabber.GroupsOf(l), ", ") {
 			continue
 		}
 		time.Sleep(c.fetchDelay)
@@ -186,7 +192,13 @@ func (f *fakeSite) FetchChapter(l grabber.Filterable) (*grabber.Chapter, error) 
 			Title:      fmt.Sprintf("Chapter %g", c.number),
 			Number:     c.number,
 			PagesCount: int64(pages),
+			Label:      grabber.Label{Style: grabber.LabelNumbered, Part: c.part},
 		}
+		if c.part != "" {
+			// a part's title is the title without its part, as the listing gives it
+			chapter.Title = c.title
+		}
+		chapter.SetGroups(c.group)
 		for i := 0; i < pages; i++ {
 			chapter.Pages = append(chapter.Pages, grabber.Page{
 				Number: int64(i + 1),
@@ -269,9 +281,19 @@ func newSeries(t *testing.T, site *fakeSite, bundle bool) (*Series, string) {
 func listed(site *fakeSite) grabber.Filterables {
 	var out grabber.Filterables
 	for _, c := range site.chapters {
-		out = append(out, &grabber.Chapter{Number: c.number, Volume: c.volume})
+		chapter := &grabber.Chapter{Title: c.title, Number: c.number, Volume: c.volume, Label: grabber.Label{Style: grabber.LabelNumbered, Part: c.part}}
+		chapter.SetGroups(c.group)
+		out = append(out, chapter)
 	}
 	return out
+}
+
+// partOf returns the part a listed chapter is split into, "" for none
+func partOf(l grabber.Filterable) string {
+	if c, ok := l.(*grabber.Chapter); ok {
+		return c.Label.Part
+	}
+	return ""
 }
 
 // cbzFiles lists the archives written to dir

@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/elboletaire/manga-downloader/grabber"
 )
 
 // A template that ignores {{.Version}} renders the same name for every try,
@@ -79,5 +81,28 @@ func TestPackGivesUpOnAName(t *testing.T) {
 	_, err := pack(dir, FormatCBZ, "{{.Series}}", "X", FilenameTemplateParts{Series: "X"}, epubBundleFiles(t), EPUBInfo{}, func(page, progress int) {})
 	if err == nil {
 		t.Fatal("pack() succeeded with every name taken")
+	}
+}
+
+// a merged file is named after the parts' shared title, else the chapter's
+// number, whatever label style its release has (a site may give none)
+func TestMergedChapterName(t *testing.T) {
+	part := func(part, title string, style grabber.LabelStyle) *DownloadedChapter {
+		return &DownloadedChapter{Chapter: &grabber.Chapter{Number: 356, Title: title, Label: grabber.Label{Style: style, Part: part}}}
+	}
+	for _, tt := range []struct {
+		name  string
+		parts []*DownloadedChapter
+		want  string
+	}{
+		{"shared title", []*DownloadedChapter{part("1", "Un títol", grabber.LabelNumbered), part("2", "Un títol", grabber.LabelNumbered)}, "Un títol"},
+		{"titles differ", []*DownloadedChapter{part("1", "Berserk 356a", grabber.LabelNumbered), part("2", "Berserk 356b", grabber.LabelNumbered)}, "Chapter 356"},
+		{"no parts given", []*DownloadedChapter{part("", "Berserk 356a", grabber.LabelTitle), part("", "Berserk 356b", grabber.LabelTitle)}, "Chapter 356"},
+		{"identical duplicates keep their label", []*DownloadedChapter{part("", "Foo", grabber.LabelPrefixed), part("", "Foo", grabber.LabelPrefixed)}, "Chapter 356 - Foo"},
+	} {
+		chapter := mergedChapter(tt.parts)
+		if got := grabber.ChapterLabel(&chapter); got != tt.want {
+			t.Errorf("%s: named %q, want %q", tt.name, got, tt.want)
+		}
 	}
 }

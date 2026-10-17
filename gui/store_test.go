@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/notice"
 	"github.com/elboletaire/manga-downloader/packer"
@@ -215,6 +216,7 @@ func TestLoadOptionsMigratesBundle(t *testing.T) {
 		{`{"bundle":false}`, PackChapters},
 		{`{"packAs":"volumes"}`, PackVolumes},
 		{`{"packAs":"volumes","bundle":true}`, PackVolumes},
+		{`{"packAs":"parts"}`, PackParts},
 		{`{"packAs":"nonsense"}`, PackChapters},
 		{`{}`, PackChapters},
 	}
@@ -232,7 +234,7 @@ func TestLoadOptionsMigratesBundle(t *testing.T) {
 		if got := optionsOf(*s).PackAs; got != tt.want {
 			t.Errorf("%s: pack-as %q, want %q", tt.file, got, tt.want)
 		}
-		if s.Bundle != (tt.want == PackBundle) || (s.Volumes != "") != (tt.want == PackVolumes) {
+		if s.Bundle != (tt.want == PackBundle) || (s.Volumes != "") != (tt.want == PackVolumes || tt.want == PackParts) {
 			t.Errorf("%s: settings bundle %v volumes %q", tt.file, s.Bundle, s.Volumes)
 		}
 	}
@@ -286,5 +288,23 @@ func TestApplyPackAsKeepsVolumes(t *testing.T) {
 	applyPackAs(s, PackChapters)
 	if s.Volumes != "" || s.Bundle {
 		t.Errorf("chapters: %q bundle %v", s.Volumes, s.Bundle)
+	}
+}
+
+func TestApplyPackAsParts(t *testing.T) {
+	s := defaultSettings()
+	applyPackAs(s, PackParts)
+	if s.Volumes != core.VolumesParts || s.Bundle || packAsOf(*s) != PackParts {
+		t.Fatalf("parts: %q bundle %v", s.Volumes, s.Bundle)
+	}
+	// volumes after parts starts from the site's volumes, not "parts"
+	applyPackAs(s, PackVolumes)
+	if s.Volumes != "auto" {
+		t.Errorf("volumes after parts: %q", s.Volumes)
+	}
+	applyPackAs(s, PackParts)
+	applyPackAs(s, PackChapters)
+	if s.Volumes != "" || s.Bundle {
+		t.Errorf("chapters after parts: %q bundle %v", s.Volumes, s.Bundle)
 	}
 }

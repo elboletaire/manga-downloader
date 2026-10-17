@@ -114,3 +114,13 @@ func groupMatches(c Filterable, selection string) bool {
 
 	return false
 }
+
+// GroupsOf returns the scanlation groups a listed chapter names, nil when it
+// doesn't say
+func GroupsOf(f Filterable) []string {
+	if g, ok := f.(groupsGetter); ok {
+		return g.GetGroups()
+	}
+
+	return nil
+}

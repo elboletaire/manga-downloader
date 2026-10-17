@@ -136,9 +136,9 @@ export function DownloadDock({ state, error, chapters, selected, onStart, onCanc
 
 /** What the run writes, by format and Pack as, as the dock's first words */
 const DESTINATIONS: Record<Options['format'], Record<PackAs, string>> = {
-  cbz: { chapters: 'CBZ files', volumes: 'A CBZ per volume', bundle: 'One CBZ' },
-  epub: { chapters: 'EPUB files', volumes: 'An EPUB per volume', bundle: 'One EPUB' },
-  raw: { chapters: 'Image folders', volumes: 'A folder per volume', bundle: 'One image folder' },
+  cbz: { chapters: 'CBZ files', parts: 'CBZ files', volumes: 'A CBZ per volume', bundle: 'One CBZ' },
+  epub: { chapters: 'EPUB files', parts: 'EPUB files', volumes: 'An EPUB per volume', bundle: 'One EPUB' },
+  raw: { chapters: 'Image folders', parts: 'Image folders', volumes: 'A folder per volume', bundle: 'One image folder' },
 };
 
 /** What the run writes, as the dock's first words */

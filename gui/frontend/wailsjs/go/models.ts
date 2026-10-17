@@ -8,6 +8,8 @@ export namespace main {
 	    group: string;
 	    volume: number;
 	    locked: boolean;
+	    part?: string;
+	    wholeTitle?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new ChapterDTO(source);
@@ -22,6 +24,8 @@ export namespace main {
 	        this.group = source["group"];
 	        this.volume = source["volume"];
 	        this.locked = source["locked"];
+	        this.part = source["part"];
+	        this.wholeTitle = source["wholeTitle"];
 	    }
 	}
 	export class FilterDTO {
@@ -167,6 +171,7 @@ export namespace main {
 	    cancelled: boolean;
 	    saved: number;
 	    volumes: number;
+	    parts: boolean;
 	    bundled: boolean;
 	    bundle: string;
 	    skipped: number;
@@ -183,6 +188,7 @@ export namespace main {
 	        this.cancelled = source["cancelled"];
 	        this.saved = source["saved"];
 	        this.volumes = source["volumes"];
+	        this.parts = source["parts"];
 	        this.bundled = source["bundled"];
 	        this.bundle = source["bundle"];
 	        this.skipped = source["skipped"];

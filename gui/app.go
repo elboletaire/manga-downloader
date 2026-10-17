@@ -280,14 +280,16 @@ type JobDTO struct {
 
 // SummaryDTO is the outcome of a finished run
 type SummaryDTO struct {
-	Dir       string   `json:"dir"`
-	Cancelled bool     `json:"cancelled"`
-	Saved     int      `json:"saved"`
-	Volumes   int      `json:"volumes"`
-	Bundled   bool     `json:"bundled"`
-	Bundle    string   `json:"bundle"`
-	Skipped   int      `json:"skipped"`
-	Failures  []string `json:"failures"`
+	Dir       string `json:"dir"`
+	Cancelled bool   `json:"cancelled"`
+	Saved     int    `json:"saved"`
+	Volumes   int    `json:"volumes"`
+	// Parts is set when the volume files are chapters with their parts merged
+	Parts    bool     `json:"parts"`
+	Bundled  bool     `json:"bundled"`
+	Bundle   string   `json:"bundle"`
+	Skipped  int      `json:"skipped"`
+	Failures []string `json:"failures"`
 	// Error is set when a bundle couldn't be written
 	Error string `json:"error"`
 }
@@ -307,6 +309,10 @@ type ChapterDTO struct {
 	// Locked is set when the listing marks the chapter as locked: it can't be
 	// selected (see Controller.SetSelected) nor downloaded
 	Locked bool `json:"locked"`
+	// Part is the chapter's part as its label writes it ("Part 2"), and
+	// WholeTitle its title without it; both empty for a chapter without parts
+	Part       string `json:"part,omitempty"`
+	WholeTitle string `json:"wholeTitle,omitempty"`
 }
 
 // LogDTO is one line of the log
@@ -343,8 +349,9 @@ func (a *App) State() State {
 
 		FilenameTemplateDefault: packer.FilenameTemplateDefault,
 	}
-	// a bundle's name is always distinct, and a volume template needs .Volume
-	if st.Options.PackAs == PackChapters {
+	// a bundle's name is always distinct, and a volume template needs .Volume;
+	// a parts run names its files as chapters
+	if st.Options.PackAs == PackChapters || st.Options.PackAs == PackParts {
 		st.FilenameTemplateWarning = packer.TemplateWarning(st.Options.FilenameTemplate)
 	}
 	st.LoadedLanguage, st.LoadedScanlator = c.LoadedFilters()
@@ -379,6 +386,7 @@ func (a *App) Chapters() []ChapterDTO {
 	groupDupes := a.ctrl.HasGroupDuplicates()
 	for i, ch := range list {
 		row := ChapterDTO{Index: i, Number: ch.GetNumber(), Title: grabber.ChapterLabel(ch), Volume: grabber.VolumeOf(ch), Locked: grabber.LockedOf(ch)}
+		row.Part, row.WholeTitle = grabber.PartOf(ch)
 		// the language only tells copies of the same number apart, so it's
 		// only sent when the list has such copies (as the CLI shows it)
 		if l, ok := ch.(interface{ GetLanguage() string }); ok && dupes {
@@ -783,6 +791,7 @@ func summaryDTO(s *Summary) *SummaryDTO {
 		Cancelled: s.Cancelled,
 		Saved:     s.Saved,
 		Volumes:   s.Volumes,
+		Parts:     s.Parts,
 		Bundled:   s.Bundled,
 		Bundle:    s.Bundle,
 		Skipped:   s.Skipped,

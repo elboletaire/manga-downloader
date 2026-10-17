@@ -3,7 +3,7 @@
 
 import { jobFraction, plural } from './format';
 import type { Chapter, Job, JobState, State, Summary } from './types';
-import { groupChapters, isSiteVolumes, parseVolumes, selectedIn, type Grouping } from './volumes';
+import { groupChapters, groupParts, isSiteVolumes, parseVolumes, selectedIn, type Grouping } from './volumes';
 
 /** The states a job ends in */
 export function isFinished(j: Job): boolean {
@@ -109,6 +109,9 @@ export function downloadLabel(
       return label;
     }
   }
+  if (state.options.packAs === 'parts') {
+    return partsLabel(chapters, selected);
+  }
 
   return `Download ${plural(n, 'chapter', 'chapters')}`;
 }
@@ -138,6 +141,24 @@ function volumesLabel(text: string, chapters: Chapter[], selected: number[]): st
   }
 
   return `Download ${named} (${plural(inVolumes, 'chapter', 'chapters')})`;
+}
+
+/**
+ * The label of a parts run: one file per chapter, so it counts the chapters
+ * the selected parts make, and says so only when some of them merge.
+ */
+function partsLabel(chapters: Chapter[], selected: number[]): string {
+  const chosen = new Set(selected);
+  let files = 0;
+  let merged = false;
+  for (const g of groupParts(chapters)) {
+    const k = selectedIn(g.chapters, chosen);
+    files += k > 0 ? 1 : 0;
+    merged ||= k > 1;
+  }
+  const named = `Download ${plural(files, 'chapter', 'chapters')}`;
+
+  return merged ? `${named}, parts merged` : named;
 }
 
 export type Tone = 'success' | 'warning' | 'danger' | 'neutral';

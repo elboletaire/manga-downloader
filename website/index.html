@@ -256,6 +256,23 @@
                 </picture>
               </figure>
             </article>
+
+            <article class="showcase-item">
+              <div class="showcase-copy">
+                <h3>{{t:desktop.partsTitle}}</h3>
+                <p>{{t:desktop.partsText}}</p>
+              </div>
+              <figure class="shot">
+                <picture>
+                  <source type="image/webp" media="(prefers-color-scheme: dark)" srcset="/src/assets/screenshots/parts-dark-600.webp 600w, /src/assets/screenshots/parts-dark-1000.webp 1000w"
+                          sizes="(min-width: 821px) 45vw, 92vw" />
+                  <source type="image/webp" srcset="/src/assets/screenshots/parts-light-600.webp 600w, /src/assets/screenshots/parts-light-1000.webp 1000w"
+                          sizes="(min-width: 821px) 45vw, 92vw" />
+                  <img src="/src/assets/screenshots/parts-light-1000.webp" srcset="/src/assets/screenshots/parts-light-600.webp 600w, /src/assets/screenshots/parts-light-1000.webp 1000w"
+                       sizes="(min-width: 821px) 45vw, 92vw" width="1000" height="743" alt="{{a:desktop.partsAlt}}" loading="lazy" />
+                </picture>
+              </figure>
+            </article>
           </div>
 
           <!-- All downloads. Links point at the releases page; with JS they're

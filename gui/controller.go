@@ -88,6 +88,8 @@ type RunInfo struct {
 	Bundle   bool
 	// Volumes is set when the run packs one file per volume
 	Volumes bool
+	// Parts is set on a volumes run that merges each chapter's parts
+	Parts bool
 	// Rows is how many progress rows the run ends up with: one per chapter,
 	// one for a bundle, or one per volume plus one per chapter outside them
 	Rows int
@@ -102,6 +104,8 @@ type Summary struct {
 	Saved int
 	// Volumes counts the volume files written
 	Volumes int
+	// Parts is set when those files are chapters with their parts merged
+	Parts bool
 	// Bundled is set in bundle mode, where Bundle is the bundle's filename
 	// (empty when none was written)
 	Bundled  bool
@@ -1119,9 +1123,15 @@ func (c *Controller) SetVolumes(text string) error {
 		c.mu.Unlock()
 		return errBusy
 	}
-	if _, err := core.ParseVolumes(text); err != nil {
+	spec, err := core.ParseVolumes(text)
+	if err != nil {
 		c.mu.Unlock()
 		return err
+	}
+	// parts is Pack as's Merged, which has no box
+	if spec != nil && spec.Parts {
+		c.mu.Unlock()
+		return errors.New(`"parts" isn't a Volumes value: pick Merged under Pack as`)
 	}
 	c.volumesText = strings.TrimSpace(text)
 	c.mu.Unlock()
@@ -1194,9 +1204,11 @@ func (c *Controller) Start() error {
 		c.mu.Unlock()
 		return errors.New("the language or scanlator changed: reload the series first")
 	}
-	// volume mode packs the Volumes box, which isn't saved with the options
+	// volume mode packs the Volumes box, which isn't saved with the options;
+	// a parts run has no box
 	volumes := c.settings.Volumes != ""
-	if volumes {
+	parts := c.settings.Volumes == core.VolumesParts
+	if volumes && !parts {
 		c.settings.Volumes = c.runVolumes()
 	}
 	skip, err := core.Validate(c.settings)
@@ -1239,7 +1251,7 @@ func (c *Controller) Start() error {
 	c.cancel = cancel
 	c.running = true
 	c.rng = bundleRange(numbers, selected)
-	c.runinfo = RunInfo{Chapters: len(chapters), Bundle: c.settings.Bundle, Volumes: volumes, Rows: rows}
+	c.runinfo = RunInfo{Chapters: len(chapters), Bundle: c.settings.Bundle, Volumes: volumes, Parts: parts, Rows: rows}
 	c.cancelling = false
 	c.jobs = nil
 	c.byChap = map[*grabber.Chapter]*Job{}
@@ -1289,6 +1301,7 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 		Bundled:  c.bundle != nil,
 		Saved:    c.stats.saved,
 		Volumes:  c.stats.volumes,
+		Parts:    c.runinfo.Parts,
 		Skipped:  c.stats.skipped,
 		Failures: c.stats.failures,
 	}
@@ -1630,19 +1643,27 @@ func (e events) BundleArchived(n int) {
 	c.emit()
 }
 
-// volumeTitle is the row title of a volume: "Vol. 01 · chapters 1–7"
-func volumeTitle(v *core.Volume) string {
+// volumeTitle is the row title of a volume: "Vol. 01 · chapters 1–7", or
+// "Chapter 19 · 2 parts" in a parts run. Callers hold mu.
+func (c *Controller) volumeTitle(v *core.Volume) string {
+	if c.runinfo.Parts {
+		return fmt.Sprintf("%s · %d parts", v.Label(), len(v.Chapters))
+	}
 	first, last := formatNumber(v.FirstNumber()), formatNumber(v.LastNumber())
 	if first == last {
-		return fmt.Sprintf("%s · chapter %s", core.VolumeLabel(v.Number), first)
+		return fmt.Sprintf("%s · chapter %s", v.Label(), first)
 	}
-	return fmt.Sprintf("%s · chapters %s–%s", core.VolumeLabel(v.Number), first, last)
+	return fmt.Sprintf("%s · chapters %s–%s", v.Label(), first, last)
 }
 
 func (e events) VolumeStart(v *core.Volume) {
 	c := e.c
 	c.mu.Lock()
-	j := &Job{Title: volumeTitle(v), Number: v.FirstNumber(), Total: volumeScale, State: JobDownloading, Status: "Waiting...", Volume: true}
+	j := &Job{Title: c.volumeTitle(v), Number: v.FirstNumber(), Total: volumeScale, State: JobDownloading, Status: "Waiting...", Volume: true}
+	if c.runinfo.Parts {
+		// one chapter's parts share its group and language
+		j.Tags = c.releaseTags(v.Chapters[0])
+	}
 	c.jobs = append(c.jobs, j)
 	c.byVolume[v] = j
 	for _, chap := range v.Chapters {
@@ -1692,7 +1713,7 @@ func (e events) VolumePacked(v *core.Volume, name string, err error) {
 	c := e.c
 	c.mu.Lock()
 	j := c.byVolume[v]
-	label := core.VolumeLabel(v.Number)
+	label := v.Label()
 	switch {
 	case errors.Is(err, context.Canceled):
 		// a cancelled run says so in its summary; the row only stops

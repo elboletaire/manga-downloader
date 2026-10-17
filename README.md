@@ -336,6 +336,14 @@ Open the app and follow these steps:
      <img alt="Packing by volume: the Volumes box above the chapter list, the list grouped by volume, and the Download button naming the volumes" src="assets/screenshots/07-volumes-light.png">
    </picture>
 
+   *Pack as → Merged* packs a chapter's parts (19-① and 19-②) into one file named
+   after the chapter, and leaves the chapters without parts as one file each.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/12-parts-dark.png">
+     <img alt="Pack as Merged: the chapter list with each chapter's parts grouped under it" src="assets/screenshots/12-parts-light.png">
+   </picture>
+
 5. **Press Download.** The *Activity* tab shows each chapter as it's fetched and
    packed. *Cancel* lets the chapters already downloading finish, and starts no
    new ones. A log is one click away in the status bar.
@@ -468,6 +476,15 @@ manga-downloader --volumes 16:112-114/115-118 [url] 112-118
 
 That's volumes 16 and 17. An empty group also skips a number (`1-7//20-30` has
 no volume 2), and `--volumes` can't be combined with `--bundle`.
+
+`parts` packs the parts of a chapter (the releases sharing its number, group and language,
+like 19-① and 19-②) into one file named after the chapter, with a folder per part:
+
+~~~bash
+manga-downloader --volumes parts [url] 18-19
+~~~
+
+That writes `Series 19 - Chapter 19 [Group].cbz` next to the chapters without parts.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/demos/volumes.gif">
@@ -621,7 +638,7 @@ A URL points at one edition, and `--language` downloads another one instead
 | --------------------- | ----- | -------------------------------------------------------- | -------------- |
 | `--output-dir`        | `-o`  | Folder to write the downloaded files to                  | current folder |
 | `--bundle`            | `-b`  | Bundle all chapters into a single file                   | off            |
-| `--volumes`           |       | One file per volume: `auto`, `1-7/8-16`, `16:112-114`    | off            |
+| `--volumes`           |       | One file per volume: `auto`, `parts`, `1-7/8-16`         | off            |
 | `--format`            | `-f`  | Output format: `cbz`, `raw` or `epub`                    | `cbz`          |
 | `--reading-direction` |       | Page turn direction for EPUB: `rtl` (manga) or `ltr`     | `rtl`          |
 | `--filename-template` | `-t`  | Template for the file names                              | see above      |

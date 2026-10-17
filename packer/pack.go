@@ -93,6 +93,42 @@ func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*Downlo
 		NewVolumeFileTemplateParts(title, volume, listed), files, info, progress)
 }
 
+// PackParts packs a chapter's parts, in the order given (their part order), into
+// one file named as the chapter without its part.
+func PackParts(outputdir string, s grabber.Site, chapters []*DownloadedChapter, progress func(page, progress int)) (string, error) {
+	title, _ := s.FetchTitle()
+	format := s.GetFormat()
+	files, labels := chapterFolders(chapters, format, s.GetConvertImages())
+	number := formatChapterNumber(chapters[0].GetNumber())
+	var info EPUBInfo
+	if format == FormatEPUB {
+		info = EPUBInfo{
+			Series:           title,
+			Position:         number,
+			Identity:         "parts " + memberKeys(chapters),
+			ReadingDirection: s.GetReadingDirection(),
+			Labels:           labels,
+		}
+	}
+	chapter := mergedChapter(chapters)
+	return pack(outputdir, format, s.GetFilenameTemplate(), "chapter "+number,
+		NewChapterFileTemplateParts(title, &chapter), files, info, progress)
+}
+
+// mergedChapter is the chapter a merged file is named after: the parts' shared
+// title without their parts, else the chapter's number alone, as a numbered chapter
+func mergedChapter(chapters []*DownloadedChapter) grabber.Chapter {
+	parts := make(grabber.Filterables, len(chapters))
+	for i, d := range chapters {
+		parts[i] = d.Chapter
+	}
+	chapter := *chapters[0].Chapter
+	chapter.Title = grabber.PartsTitle(parts)
+	chapter.Label.Part = ""
+	chapter.Label.Style = grabber.LabelNumbered
+	return chapter
+}
+
 // releaseName names a chapter's release for messages: its chapter name, then
 // its group in brackets when it has one, so two releases of a number can be told apart.
 func releaseName(c *grabber.Chapter) string {
@@ -167,6 +203,7 @@ func chapterFolders(chapters []*DownloadedChapter, format string, convert grabbe
 	// disambiguated with a " (2)", " (3)" suffix instead of silently merging
 	// both chapters' pages into one folder (which would lose the first one's).
 	usedFolders := map[string]int{}
+	usedLabels := map[string]int{}
 	for _, chapter := range chapters {
 		base := SanitizeFilename(grabber.NumberTextLabel(paddedChapterNumber(chapter.GetNumber())))
 		folder := base
@@ -174,8 +211,13 @@ func chapterFolders(chapters []*DownloadedChapter, format string, convert grabbe
 			folder = fmt.Sprintf("%s (%d)", base, n+1)
 		}
 		usedFolders[base]++
-		// a repeated number gets the folder's suffix too, so the labels match the folders
-		labels[folder] = chapterLabel(chapter.Chapter) + strings.TrimPrefix(folder, base)
+		// only a repeated label gets the folder's suffix, as parts already differ by theirs
+		label := chapterLabel(chapter.Chapter)
+		if usedLabels[label] > 0 {
+			label += strings.TrimPrefix(folder, base)
+		}
+		usedLabels[label]++
+		labels[folder] = label
 
 		for _, page := range namePages(chapter.Files, formats, format) {
 			files = append(files, File{

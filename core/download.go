@@ -144,9 +144,10 @@ type volumeRun struct {
 	v  *Volume
 	ev Events
 
-	mu         sync.Mutex
-	remaining  int
-	downloaded grabber.Filterables
+	mu        sync.Mutex
+	remaining int
+	// downloaded holds the chapters kept for packing, by listing entry
+	downloaded map[grabber.Filterable]*packer.DownloadedChapter
 	// skipped counts the chapters --skip-pages emptied
 	skipped int
 	packed  bool
@@ -177,7 +178,7 @@ func (p *chapterProgress) fraction() float64 {
 }
 
 func newVolumeRun(v *Volume, ev Events) *volumeRun {
-	return &volumeRun{v: v, ev: ev, remaining: len(v.Chapters), chapters: map[grabber.Filterable]*chapterProgress{}}
+	return &volumeRun{v: v, ev: ev, remaining: len(v.Chapters), downloaded: map[grabber.Filterable]*packer.DownloadedChapter{}, chapters: map[grabber.Filterable]*chapterProgress{}}
 }
 
 // chapter returns the progress of a listed chapter. Callers hold mu.
@@ -233,7 +234,7 @@ func (r *volumeRun) finish(listed grabber.Filterable, d *packer.DownloadedChapte
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if d != nil {
-		r.downloaded = append(r.downloaded, d)
+		r.downloaded[listed] = d
 	}
 	if skipped {
 		r.skipped++
@@ -304,6 +305,10 @@ func (s *Series) Download(ctx context.Context, chapters grabber.Filterables, ski
 			// checked once, before anything is downloaded: unlike a chapter's,
 			// a volume's name failing would waste every chapter in it
 			templ := packer.VolumeTemplate(s.Site.GetFilenameTemplate())
+			if spec.Parts {
+				// parts are named as their chapter, see packer.PackParts
+				templ = s.Site.GetFilenameTemplate()
+			}
 			if _, err := packer.NewFilenameFromTemplate(templ, packer.FilenameTemplateParts{Series: s.Title, Number: "1", Title: VolumeLabel(1), Volume: 1}); err != nil {
 				return "", &SettingError{Setting: "filename-template", Value: templ, Err: err}
 			}
@@ -532,10 +537,12 @@ func (s *Series) packVolume(r *volumeRun, outDir string, ev Events) {
 		ev.VolumePacked(r.v, "", err)
 		return
 	}
-	downloaded := r.downloaded.SortByNumber()
-	dc := make([]*packer.DownloadedChapter, len(downloaded))
-	for i, d := range downloaded {
-		dc[i] = d.(*packer.DownloadedChapter)
+	// in the volume's order, which for parts is their part order (groupParts)
+	dc := make([]*packer.DownloadedChapter, 0, len(r.downloaded))
+	for _, chap := range r.v.Chapters {
+		if d := r.downloaded[chap]; d != nil {
+			dc = append(dc, d)
+		}
 	}
 
 	pages := 0
@@ -545,8 +552,13 @@ func (s *Series) packVolume(r *volumeRun, outDir string, ev Events) {
 	r.packing(pages)
 
 	ev.VolumePacking(r.v)
-	name, err := packer.PackVolume(outDir, s.Site, r.v.Number, dc, func(_, _ int) {
-		r.archive()
-	})
+	progress := func(_, _ int) { r.archive() }
+	var name string
+	var err error
+	if r.v.Parts {
+		name, err = packer.PackParts(outDir, s.Site, dc, progress)
+	} else {
+		name, err = packer.PackVolume(outDir, s.Site, r.v.Number, dc, progress)
+	}
 	ev.VolumePacked(r.v, name, err)
 }

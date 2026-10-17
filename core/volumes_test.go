@@ -45,6 +45,9 @@ func TestParseVolumesSpec(t *testing.T) {
 	if spec, err := ParseVolumes("AUTO"); err != nil || !spec.Auto {
 		t.Errorf("auto: got %+v, %v", spec, err)
 	}
+	if spec, err := ParseVolumes("Parts"); err != nil || !spec.Parts {
+		t.Errorf("parts: got %+v, %v", spec, err)
+	}
 	if spec, err := ParseVolumes("1-7/8"); err != nil || len(spec.Groups) != 2 {
 		t.Errorf("groups: got %+v, %v", spec, err)
 	}
@@ -96,6 +99,109 @@ func TestGroupVolumes(t *testing.T) {
 
 	if _, _, err := GroupVolumes(chapters(1, 0, 2, 0), &VolumeSpec{Auto: true}); !errors.Is(err, ErrNoVolumes) {
 		t.Errorf("auto without volumes: got %v, want ErrNoVolumes", err)
+	}
+}
+
+// part is a listing entry for one part of a chapter made by group
+func part(number float64, name, group string) *grabber.Chapter {
+	c := &grabber.Chapter{Number: number, Label: grabber.Label{Style: grabber.LabelNumbered, Part: name}}
+	c.SetGroups(group)
+	return c
+}
+
+func TestGroupVolumesParts(t *testing.T) {
+	list := grabber.Filterables{
+		part(18, "", "A"),
+		part(19, "1", "A"),
+		part(19, "2", "A"),
+		part(19, "1", "B"),
+		part(20, "", "A"),
+		part(21, "1", "A"),
+		part(21, "2", "A"),
+	}
+	vols, loose, err := GroupVolumes(list, &VolumeSpec{Parts: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, v := range vols {
+		if !v.Parts {
+			t.Errorf("volume %d isn't marked as parts", v.Number)
+		}
+		got = append(got, fmt.Sprintf("%d:%v", v.Number, numbers(v.Chapters)))
+	}
+	if want := []string{"19:[19 19]", "21:[21 21]"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("volumes = %v, want %v", got, want)
+	}
+	// a chapter no other shares its number and group with, the other group's
+	// 19 included, is packed on its own
+	if want := []float64{18, 19, 20}; !reflect.DeepEqual(numbers(loose), want) {
+		t.Errorf("loose = %v, want %v", numbers(loose), want)
+	}
+	// the parts come in part order
+	if v := vols[0]; v.Chapters[0].(*grabber.Chapter).Label.Part != "1" || v.Chapters[1].(*grabber.Chapter).Label.Part != "2" {
+		t.Errorf("parts out of listing order: %v", v.Chapters)
+	}
+}
+
+// TestGroupVolumesPartsShared runs the parts cases gui/frontend/src/volumes.test.ts
+// runs too
+func TestGroupVolumesPartsShared(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "ranges", "testdata", "volumes.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cases struct {
+		Parts []struct {
+			Name     string `json:"name"`
+			Chapters []struct {
+				Number   float64 `json:"number"`
+				Part     string  `json:"part"`
+				Title    string  `json:"title"`
+				Group    string  `json:"group"`
+				Language string  `json:"language"`
+			} `json:"chapters"`
+			Want [][]int `json:"want"`
+		} `json:"parts"`
+	}
+	if err := json.Unmarshal(data, &cases); err != nil {
+		t.Fatal(err)
+	}
+	for _, tt := range cases.Parts {
+		var list grabber.Filterables
+		for _, c := range tt.Chapters {
+			ch := &grabber.Chapter{Number: c.Number, Title: c.Title, Language: c.Language, Label: grabber.Label{Style: grabber.LabelNumbered, Part: c.Part}}
+			ch.SetGroups(c.Group)
+			list = append(list, ch)
+		}
+		vols, loose, err := GroupVolumes(list, &VolumeSpec{Parts: true})
+		if err != nil {
+			t.Fatalf("%s: %v", tt.Name, err)
+		}
+		// each file as the indices of its chapters in file order, a loose chapter being a file of its own
+		var files [][]int
+		index := func(f grabber.Filterable) int {
+			for i, ch := range list {
+				if ch == f {
+					return i
+				}
+			}
+			return -1
+		}
+		for _, v := range vols {
+			var file []int
+			for _, ch := range v.Chapters {
+				file = append(file, index(ch))
+			}
+			files = append(files, file)
+		}
+		for _, ch := range loose {
+			files = append(files, []int{index(ch)})
+		}
+		sort.Slice(files, func(i, j int) bool { return files[i][0] < files[j][0] })
+		if !reflect.DeepEqual(files, tt.Want) {
+			t.Errorf("%s: files = %v, want %v", tt.Name, files, tt.Want)
+		}
 	}
 }
 
@@ -231,6 +337,57 @@ func TestDownloadVolumes(t *testing.T) {
 	entries := zipEntries(t, filepath.Join(dir, "Test Series Vol. 01.cbz"))
 	if wantEntries := []string{"Chapter 0001/000.png", "Chapter 0001/001.png", "Chapter 0002/000.png"}; !reflect.DeepEqual(entries, wantEntries) {
 		t.Errorf("volume 1 holds %q, want %q", entries, wantEntries)
+	}
+}
+
+func TestDownloadVolumesParts(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 18, pages: 1, group: "A"},
+		fakeChapter{number: 19, part: "1", pages: 1, group: "A"},
+		fakeChapter{number: 19, part: "2", pages: 2, group: "A"},
+		fakeChapter{number: 20, pages: 1, group: "A"},
+	)
+	series, dir := newSeries(t, site, false)
+	site.Settings.Volumes = "parts"
+	rec := &recorder{}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", rec); err != nil {
+		t.Fatal(err)
+	}
+	// the parts of 19 make one file named as their chapter, the chapters on
+	// their own keep their chapter names
+	files := basenames(cbzFiles(t, dir))
+	if want := []string{"Test Series 18 - Chapter 18 [A].cbz", "Test Series 19 - Chapter 19 [A].cbz", "Test Series 20 - Chapter 20 [A].cbz"}; !reflect.DeepEqual(files, want) {
+		t.Errorf("wrote %q, want %q", files, want)
+	}
+	if n := rec.count("volume-start"); n != 1 {
+		t.Errorf("%d volumes started, want the one of the parts", n)
+	}
+	// each part is a folder, in the order the site lists them
+	entries := zipEntries(t, filepath.Join(dir, "Test Series 19 - Chapter 19 [A].cbz"))
+	if want := []string{"Chapter 0019/000.png", "Chapter 0019 (2)/000.png", "Chapter 0019 (2)/001.png"}; !reflect.DeepEqual(entries, want) {
+		t.Errorf("parts file holds %q, want %q", entries, want)
+	}
+}
+
+// the parts of a chapter are named by their shared title, or by the number
+// alone when the parts' titles differ
+func TestDownloadVolumesPartsTitle(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 19, part: "1", title: "Shared", pages: 1, group: "A"},
+		fakeChapter{number: 19, part: "2", title: "Shared", pages: 1, group: "A"},
+		fakeChapter{number: 21, part: "1", title: "First", pages: 1, group: "A"},
+		fakeChapter{number: 21, part: "2", title: "Second", pages: 1, group: "A"},
+	)
+	series, dir := newSeries(t, site, false)
+	site.Settings.Volumes = "parts"
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", &recorder{}); err != nil {
+		t.Fatal(err)
+	}
+	files := basenames(cbzFiles(t, dir))
+	if want := []string{"Test Series 19 - Shared [A].cbz", "Test Series 21 - Chapter 21 [A].cbz"}; !reflect.DeepEqual(files, want) {
+		t.Errorf("wrote %q, want %q", files, want)
 	}
 }
 

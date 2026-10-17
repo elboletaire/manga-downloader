@@ -14,8 +14,11 @@ import {
   chapterSpan,
   groupChapters,
   groupedRows,
+  groupParts,
   isSiteVolumes,
   parseVolumes,
+  partRows,
+  plainRows,
   selectedIn,
   type GroupedRow,
   volumesSummary,
@@ -132,13 +135,14 @@ function ChapterList({
   const [rangeText, setRangeText] = useState('');
   const [rangeNote, setRangeNote] = useState<{ text: string; bad: boolean } | null>(null);
   const [active, setActive] = useState(-1);
-  // the volumes folded away, by number (LOOSE for "Not in a volume")
-  const [collapsed, setCollapsed] = useState<ReadonlySet<number>>(new Set());
+  // the groups folded away, by key (LOOSE for "Not in a volume")
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   // where Shift+click and Shift+Space extend from
   const anchor = useRef(-1);
   const chosen = useMemo(() => new Set(selected), [selected]);
   const host = hostOf(state.url);
   const byVolume = state.options.packAs === 'volumes';
+  const byParts = state.options.packAs === 'parts';
 
   // the backend only takes a Volumes box that parses, so this is the grouping
   // a run would pack; the site's volumes stand in should it not
@@ -154,11 +158,15 @@ function ChapterList({
     }
     return groupChapters(chapters, spec);
   }, [byVolume, chapters, state.volumes.text]);
-  const rows: GroupedRow[] = useMemo(
-    () =>
-      grouping === null ? chapters.map((chapter) => ({ kind: 'chapter', chapter })) : groupedRows(grouping, collapsed),
-    [grouping, chapters, collapsed],
-  );
+  // a parts run merges the chapters sharing a number, group and language
+  const parts = useMemo(() => (byParts ? groupParts(chapters) : null), [byParts, chapters]);
+  const split = useMemo(() => parts?.filter((g) => g.chapters.length > 1).length ?? 0, [parts]);
+  const rows: GroupedRow[] = useMemo(() => {
+    if (grouping !== null) {
+      return groupedRows(grouping, collapsed);
+    }
+    return parts !== null ? partRows(parts, collapsed) : plainRows(chapters);
+  }, [grouping, parts, chapters, collapsed]);
   const list = useVirtualList(rows.length, ROW_HEIGHT);
 
   // a new list starts at the top, with nothing active and nothing folded
@@ -205,7 +213,7 @@ function ChapterList({
     }
   };
 
-  const toggleFold = (key: number) => {
+  const toggleFold = (key: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
       if (next.has(key)) {
@@ -280,7 +288,7 @@ function ChapterList({
       return;
     }
     const row = rows[active];
-    // left and right fold and unfold a volume, as in a tree
+    // left and right fold and unfold a group, as in a tree
     if (row?.kind === 'group' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
       e.preventDefault();
       if (row.collapsed === (e.key === 'ArrowRight')) {
@@ -288,8 +296,8 @@ function ChapterList({
       }
       return;
     }
-    // and left on a volume's chapter goes up to its header
-    if (row?.kind === 'chapter' && grouping !== null && e.key === 'ArrowLeft') {
+    // and left on a group's chapter goes up to its header
+    if (row?.kind === 'chapter' && row.inGroup && e.key === 'ArrowLeft') {
       e.preventDefault();
       for (let p = active - 1; p >= 0; p--) {
         if (rows[p].kind === 'group') {
@@ -355,6 +363,14 @@ function ChapterList({
               </>
             )}
             <span>{plural(state.chapterCount, 'chapter', 'chapters')}</span>
+            {byParts && split > 0 && (
+              <>
+                <span className="dot" aria-hidden="true">
+                  ·
+                </span>
+                <span>{split} split in parts</span>
+              </>
+            )}
             {state.loading && <span className="reloading">Reloading…</span>}
           </p>
         </div>
@@ -471,7 +487,8 @@ function ChapterList({
               const open = pickable(row.chapters);
               const n = selectedIn(open, chosen);
               const on = open.length > 0 && n === open.length;
-              const label = `${row.label} · ${row.key === 0 ? plural(row.chapters.length, 'chapter', 'chapters') : chapterSpan(row.chapters)}`;
+              const label = `${row.label} · ${row.detail}`;
+              const count = byParts ? partsCount(n, row.chapters.length) : n > 0 ? `${n} selected` : 'none selected';
               return (
                 <div
                   key={rowId(row)}
@@ -503,7 +520,19 @@ function ChapterList({
                     <ChevronIcon size={14} />
                   </button>
                   <span className="title group-title">{label}</span>
-                  <span className="group-count">{n > 0 ? `${n} selected` : 'none selected'}</span>
+                  <span className="group-end">
+                    {row.tag !== '' && (
+                      <span className="tags">
+                        <span className="group">{row.tag}</span>
+                      </span>
+                    )}
+                    <span
+                      className={`group-count${byParts && n > 0 && n < row.chapters.length ? ' partial' : ''}`}
+                      title={byParts && n > 0 && n < row.chapters.length ? PARTIAL_HINT : undefined}
+                    >
+                      {count}
+                    </span>
+                  </span>
                 </div>
               );
             }
@@ -518,14 +547,14 @@ function ChapterList({
                 aria-posinset={pos + 1}
                 aria-selected={on}
                 aria-disabled={ch.locked || undefined}
-                className={`row${grouping !== null ? ' in-group' : ''}${on ? ' on' : ''}${ch.locked ? ' locked' : ''}${pos === active ? ' active' : ''}`}
+                className={`row${row.inGroup ? ' in-group' : ''}${row.part ? ' part-row' : ''}${on ? ' on' : ''}${ch.locked ? ' locked' : ''}${pos === active ? ' active' : ''}`}
                 style={style}
                 onMouseDown={keepFocus}
                 onClick={(e) => toggleRow(pos, e.shiftKey)}
               >
                 <ChapterBox on={on} locked={ch.locked} />
-                <span className="num">{formatNumber(ch.number)}</span>
-                <ChapterTitle title={ch.title} locked={ch.locked} />
+                {!row.part && <span className="num">{formatNumber(ch.number)}</span>}
+                <ChapterTitle title={row.part ? row.part.label : ch.title} locked={ch.locked} />
                 {(ch.language !== '' || ch.group !== '') && (
                   <span className="tags">
                     {ch.language !== '' && <span className="lang">{ch.language}</span>}
@@ -548,6 +577,13 @@ function ChapterList({
             Click a volume to pick all of its chapters · <kbd>←</kbd>
             <kbd>→</kbd> fold · <kbd>Space</kbd> toggles
           </>
+        ) : byParts && split > 0 ? (
+          <>
+            Click a chapter to pick all of its parts · <kbd>←</kbd>
+            <kbd>→</kbd> fold · <kbd>Space</kbd> toggles
+          </>
+        ) : byParts ? (
+          <>No chapter of this series is split in parts, so each one gets a file as usual.</>
         ) : (
           <>
             <kbd>Shift</kbd>+click selects a span · <kbd>↑</kbd>
@@ -582,7 +618,18 @@ export function ChapterTitle({ title, locked }: { title: string; locked: boolean
 }
 
 function rowId(row: GroupedRow): string {
-  return row.kind === 'group' ? `volume-${row.key}` : `chapter-${row.chapter.index}`;
+  return row.kind === 'group' ? `group-${row.key}` : `chapter-${row.chapter.index}`;
+}
+
+/** The tooltip of a chapter with only some of its parts picked */
+export const PARTIAL_HINT = 'Only the selected parts go in its file';
+
+/** What a chapter's header says of its picked parts: none, all of them, or how many */
+export function partsCount(selected: number, total: number): string {
+  if (selected === 0) {
+    return 'none selected';
+  }
+  return selected === total ? 'whole chapter' : `${selected} of ${total} parts`;
 }
 
 interface VolumesBarProps {

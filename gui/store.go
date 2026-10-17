@@ -34,6 +34,8 @@ type OptionsDTO struct {
 const (
 	// PackChapters is one file per chapter
 	PackChapters = "chapters"
+	// PackParts is one file per chapter, its parts merged (--volumes parts)
+	PackParts = "parts"
 	// PackVolumes is one file per volume (--volumes)
 	PackVolumes = "volumes"
 	// PackBundle is one file for everything (--bundle)
@@ -45,6 +47,8 @@ func packAsOf(s grabber.Settings) string {
 	switch {
 	case s.Bundle:
 		return PackBundle
+	case s.Volumes == core.VolumesParts:
+		return PackParts
 	case s.Volumes != "":
 		return PackVolumes
 	}
@@ -58,9 +62,11 @@ func applyPackAs(s *grabber.Settings, packAs string) {
 	switch packAs {
 	case PackBundle:
 		s.Bundle, s.Volumes = true, ""
+	case PackParts:
+		s.Bundle, s.Volumes = false, core.VolumesParts
 	case PackVolumes:
 		s.Bundle = false
-		if s.Volumes == "" {
+		if s.Volumes == "" || s.Volumes == core.VolumesParts {
 			s.Volumes = core.VolumesAuto
 		}
 	default:
@@ -166,7 +172,7 @@ func loadOptions(path string, s *grabber.Settings) error {
 		}
 	}
 	switch o.PackAs {
-	case PackChapters, PackVolumes, PackBundle:
+	case PackChapters, PackParts, PackVolumes, PackBundle:
 	default:
 		notice.Warn("ignoring the saved pack-as %q, using %q", o.PackAs, PackChapters)
 		o.PackAs = PackChapters

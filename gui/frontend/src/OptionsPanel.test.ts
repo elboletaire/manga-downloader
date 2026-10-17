@@ -44,6 +44,15 @@ describe('Pack as volumes hint', () => {
     expect(markup).not.toContain('(when loaded)');
   });
 
+  it('offers merging parts between Chapters and Volumes, with its hint', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    const markup = options({ ...base, options: { ...base.options, packAs: 'parts' } });
+    expect(markup).toContain(PACK_HINTS.parts);
+    const at = (label: string) => markup.indexOf(`>${label}<`);
+    expect(at('Chapters')).toBeLessThan(at('Merged'));
+    expect(at('Merged')).toBeLessThan(at('Volumes'));
+  });
+
   it('shows the bundle hint regardless of loaded state', async () => {
     const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
     const state: State = { ...base, options: { ...base.options, packAs: 'bundle' } };

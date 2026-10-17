@@ -1,7 +1,8 @@
 // The Volumes box: chapter ranges, one group per volume ("1-7/8-16"), the
 // same syntax as --volumes. The backend is the authority (it refuses what
 // doesn't parse, and groups the run); this is the same grouping for the
-// chapter list to show, before the run.
+// chapter list to show, before the run. A parts run (--volumes parts) has
+// no box: groupParts is its grouping.
 
 import { formatNumber, plural } from './format';
 import type { Chapter } from './types';
@@ -226,38 +227,130 @@ export function volumesSummary(
   return { text: 'The site lists no volumes: enter them as chapter ranges.' };
 }
 
-/** A row of the grouped list: a group's header, or one of its chapters */
+/** A row of the grouped list: a group's header, or a chapter (in a group or on its own) */
 export type GroupedRow =
-  | { kind: 'group'; key: number; label: string; chapters: Chapter[]; collapsed: boolean }
-  | { kind: 'chapter'; chapter: Chapter };
+  | { kind: 'group'; key: string; label: string; detail: string; tag: string; chapters: Chapter[]; collapsed: boolean }
+  | { kind: 'chapter'; chapter: Chapter; inGroup: boolean; part?: { n: number; of: number; label: string } };
 
-/** The key of the "Not in a volume" group; volumes key by their number */
-export const LOOSE = 0;
+/** The key of the "Not in a volume" group; volumes key by "volume-N" */
+export const LOOSE = 'loose';
+
+/** The rows of a list shown ungrouped */
+export function plainRows(chapters: Chapter[]): GroupedRow[] {
+  return chapters.map((chapter) => ({ kind: 'chapter', chapter, inGroup: false }));
+}
 
 /**
  * Flattens a grouping into list rows: each volume's header followed by its
  * chapters, unless collapsed, and the chapters outside every volume last,
  * under "Not in a volume".
  */
-export function groupedRows(grouping: Grouping, collapsed: ReadonlySet<number>): GroupedRow[] {
+export function groupedRows(grouping: Grouping, collapsed: ReadonlySet<string>): GroupedRow[] {
   const rows: GroupedRow[] = [];
-  const add = (key: number, label: string, chapters: Chapter[]) => {
+  const add = (key: string, label: string, detail: string, chapters: Chapter[]) => {
     const isCollapsed = collapsed.has(key);
-    rows.push({ kind: 'group', key, label, chapters, collapsed: isCollapsed });
+    rows.push({ kind: 'group', key, label, detail, tag: '', chapters, collapsed: isCollapsed });
     if (!isCollapsed) {
       for (const chapter of chapters) {
-        rows.push({ kind: 'chapter', chapter });
+        rows.push({ kind: 'chapter', chapter, inGroup: true });
       }
     }
   };
   for (const v of grouping.volumes) {
-    add(v.number, `Volume ${v.number}`, v.chapters);
+    add(`volume-${v.number}`, `Volume ${v.number}`, chapterSpan(v.chapters), v.chapters);
   }
   if (grouping.loose.length > 0) {
-    add(LOOSE, 'Not in a volume', grouping.loose);
+    add(LOOSE, 'Not in a volume', plural(grouping.loose.length, 'chapter', 'chapters'), grouping.loose);
   }
 
   return rows;
+}
+
+/** A chapter's file in a parts run: its parts, or the chapter alone when it has none */
+export interface PartGroup {
+  number: number;
+  group: string;
+  /** In list order */
+  chapters: Chapter[];
+}
+
+/** Orders parts like grabber.PartLess: digit runs as numbers, case and accents ignored */
+const partOrder = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+
+/**
+ * Groups the chapters a parts run merges: those sharing a number, group and
+ * language, in part order.
+ */
+export function groupParts(chapters: Chapter[]): PartGroup[] {
+  const out: PartGroup[] = [];
+  const byKey = new Map<string, PartGroup>();
+  for (const ch of chapters) {
+    const key = `${ch.number}\u0000${ch.group}\u0000${ch.language}`;
+    const g = byKey.get(key);
+    if (g) {
+      g.chapters.push(ch);
+    } else {
+      const next = { number: ch.number, group: ch.group, chapters: [ch] };
+      byKey.set(key, next);
+      out.push(next);
+    }
+  }
+  for (const g of out) {
+    // most sites list newest first, so reversing puts ties oldest first
+    g.chapters.reverse();
+    g.chapters.sort((a, b) => partOrder.compare(a.part || a.title, b.part || b.title));
+  }
+
+  return out;
+}
+
+/**
+ * The list rows of a parts run: a chapter with parts is a header followed by
+ * its parts, unless collapsed; a chapter without parts stays a plain row.
+ */
+export function partRows(groups: PartGroup[], collapsed: ReadonlySet<string>): GroupedRow[] {
+  const rows: GroupedRow[] = [];
+  for (const g of groups) {
+    if (g.chapters.length === 1) {
+      rows.push({ kind: 'chapter', chapter: g.chapters[0], inGroup: false });
+      continue;
+    }
+    const key = `part-${g.chapters[0].index}`;
+    const isCollapsed = collapsed.has(key);
+    const label = `Chapter ${formatNumber(g.number)}`;
+    const title = partsTitle(g.chapters);
+    const count = `${g.chapters.length} parts`;
+    rows.push({
+      kind: 'group',
+      key,
+      label,
+      detail: title !== '' && title !== label ? `${title} · ${count}` : count,
+      tag: g.group,
+      chapters: g.chapters,
+      collapsed: isCollapsed,
+    });
+    if (!isCollapsed) {
+      g.chapters.forEach((chapter, i) => {
+        const part = { n: i + 1, of: g.chapters.length, label: chapter.part || chapter.title };
+        rows.push({ kind: 'chapter', chapter, inGroup: true, part });
+      });
+    }
+  }
+
+  return rows;
+}
+
+/**
+ * The title a chapter's merged file and header are named by (grabber.PartsTitle):
+ * the parts' shared title without their parts, else the one label identical
+ * duplicates share, '' otherwise.
+ */
+export function partsTitle(chapters: Chapter[]): string {
+  const [first] = chapters;
+  if (first.part) {
+    return chapters.every((ch) => ch.part && ch.wholeTitle === first.wholeTitle) ? (first.wholeTitle ?? '') : '';
+  }
+  return first.title !== '' && chapters.every((ch) => !ch.part && ch.title === first.title) ? first.title : '';
 }
 
 /** How many of the chapters are selected */

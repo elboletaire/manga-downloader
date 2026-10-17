@@ -787,6 +787,35 @@ func TestPackBundleEPUBLabelsRepeatedNumbers(t *testing.T) {
 	}
 }
 
+func TestPackPartsNamesChapterAndLabelsParts(t *testing.T) {
+	site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault, format: FormatEPUB}
+	part := func(name string) *DownloadedChapter {
+		chapter := &grabber.Chapter{Number: 2, Label: grabber.Label{Style: grabber.LabelNumbered, Part: name}}
+		return &DownloadedChapter{Chapter: chapter, Files: []*downloader.File{{Data: pngBytes(t, gradientImage(4, 4))}}}
+	}
+
+	dir := t.TempDir()
+	filename, err := PackParts(dir, site, []*DownloadedChapter{part("1"), part("2")}, func(page, progress int) {})
+	if err != nil {
+		t.Fatalf("PackParts: %v", err)
+	}
+	// named as the chapter, without the part its title would otherwise carry
+	if filename != "Test Series 2 - Chapter 2.epub" {
+		t.Errorf("filename = %q, want the chapter's name", filename)
+	}
+	_, contents := readEPUB(t, filepath.Join(dir, filename))
+
+	var nav struct {
+		Items []struct {
+			Text string `xml:",chardata"`
+		} `xml:"body>nav>ol>li>a"`
+	}
+	mustUnmarshal(t, "nav.xhtml", contents["OEBPS/nav.xhtml"], &nav)
+	if len(nav.Items) != 2 || nav.Items[0].Text != "Chapter 2 - Part 1" || nav.Items[1].Text != "Chapter 2 - Part 2" {
+		t.Errorf("nav = %+v, want one entry per part", nav.Items)
+	}
+}
+
 // readOPF returns the package document of an EPUB's contents
 func readOPF(t *testing.T, contents map[string][]byte) opfPackage {
 	t.Helper()
