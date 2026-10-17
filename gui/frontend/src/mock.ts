@@ -6,14 +6,16 @@
 // a given state, so screenshots need no clicking: empty, loading, error,
 // loaded, stale, running, bundle, cancelling, done, update, check, volumes
 // (loaded, packing by volume, with three volumes and a half selected) or
-// volumes-running (a run by volume in progress). update is loaded too, as a
+// volumes-running (a run by volume in progress) or parts (loaded, packing each
+// chapter with its parts merged, as &parts lists them). update is loaded too, as a
 // release build (v1.17.0 with &shot, v1.12.0 without) with a newer release
 // (v1.18.0 with &shot, v1.13.0 without): the status bar shows the yellow "!".
 // check is loading a site that needs the browser window, with the alert asking
 // the user to look at it; loading a URL with "check" in it does the same until
 // the load ends. &freeze stops the simulated run from moving (stable
 // screenshots), &dupes lists some numbers twice in two languages, &chapters=N
-// shows the newest N chapters, &novolumes lists no volumes (the series
+// shows the newest N chapters, &parts lists a series whose chapters come in
+// two parts (a real listing, its later chapters locked), &novolumes lists no volumes (the series
 // otherwise files its chapters by their real One Piece volume), &locked marks
 // some chapters locked (see below), &fail makes
 // the fourth chapter fail halfway and &skip makes the sixth one come out
@@ -40,7 +42,7 @@
 
 import type { Api, Unsubscribe } from './api';
 import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary, Update } from './types';
-import { groupChapters, listedVolumes, parseVolumes, siteVolumes } from './volumes';
+import { groupChapters, groupParts, listedVolumes, parseVolumes, siteVolumes } from './volumes';
 import { OP_CHAPTERS } from './mock-onepiece';
 
 const TEMPLATE_DEFAULT =
@@ -78,6 +80,7 @@ const SCENARIOS = [
   'check',
   'volumes',
   'volumes-running',
+  'parts',
 ] as const;
 
 export type Scenario = (typeof SCENARIOS)[number];
@@ -96,6 +99,8 @@ export interface MockSetup {
   site: MockSite;
   /** The series lists no volumes */
   novolumes: boolean;
+  /** The series splits its chapters in parts */
+  parts: boolean;
   /** The fourth chapter fails halfway through download */
   fail: boolean;
   /** The sixth chapter comes out skipped (every page excluded by --skip-pages) */
@@ -162,6 +167,7 @@ export function mockSetupFrom(search: string): MockSetup {
     chapters: Number.isInteger(n) && n > 0 ? n : CHAPTERS,
     site: siteFrom(search),
     novolumes: params.has('novolumes'),
+    parts: params.has('parts'),
     fail: params.has('fail'),
     skip: params.has('skip'),
     locked: params.has('locked'),
@@ -207,6 +213,24 @@ function mockChapters(count: number, withLanguages: boolean, withVolumes = true,
     if (withLanguages && number % 5 === 0) {
       list.push({ index: list.length, number, title: catTitle, language: 'en', group: '', volume, locked });
     }
+  }
+  return list;
+}
+
+const PARTS_TITLE = 'Saikyou Itan no Shokubutsu Tsukai';
+
+/**
+ * A real listing of a series published in parts: chapter 1 whole, then each
+ * chapter in two, everything past chapter 4 locked but the second half of 19.
+ */
+function partsChapters(): Chapter[] {
+  const list: Chapter[] = [];
+  const add = (number: number, title: string, locked: boolean) =>
+    list.push({ index: list.length, number, title, language: '', group: '', volume: 0, locked });
+  add(1, 'Chapter 1', false);
+  for (let n = 2; n <= 20; n++) {
+    add(n, `Chapter ${n} Part 1`, n > 4);
+    add(n, `Chapter ${n} Part 2`, n > 4 && n !== 19);
   }
   return list;
 }
@@ -257,6 +281,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     chapters: chapterCount,
     site,
     novolumes,
+    parts: withParts,
     fail,
     skip,
     locked,
@@ -271,6 +296,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     chapters: CHAPTERS,
     site: 'multi' as MockSite,
     novolumes: false,
+    parts: false,
     fail: false,
     skip: false,
     locked: false,
@@ -302,6 +328,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   // the bundle option as the run started with it, as the backend's RunInfo
   let runBundle = false;
   let runVolumes = false;
+  let runParts = false;
   let runRows = 0;
   let jobs: Job[] = [];
   let summary: Summary | null = null;
@@ -398,7 +425,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     browserVisibleAuto: browserAuto,
     browserAlert,
     filenameTemplateDefault: TEMPLATE_DEFAULT,
-    filenameTemplateWarning: options.packAs === 'chapters' ? templateWarning(options.filenameTemplate) : '',
+    filenameTemplateWarning:
+      options.packAs === 'chapters' || options.packAs === 'parts' ? templateWarning(options.filenameTemplate) : '',
   });
   const push = () => stateBus.emit(snapshot());
 
@@ -408,8 +436,11 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     identified = true;
     fallbackFor('language', 'language');
     fallbackFor('scanlator', 'scanlation group');
-    title = 'One Piece';
-    chapters = mockChapters(chapterCount, dupes || url.includes('dupes') || options.language === 'all', !novolumes, locked);
+    title = withParts || scenario === 'parts' ? PARTS_TITLE : 'One Piece';
+    chapters =
+      withParts || scenario === 'parts'
+        ? partsChapters()
+        : mockChapters(chapterCount, dupes || url.includes('dupes') || options.language === 'all', !novolumes, locked);
     if (offers.scanlator !== null) {
       chapters = groupedChapters(chapters);
     }
@@ -457,6 +488,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       cancelled: cancelling,
       saved: bundled && failures.length === 0 && !cancelling ? runChapters : saved,
       volumes,
+      parts: runParts,
       bundled,
       bundle: bundled && !cancelling ? `${title} 1-${runChapters}${EXTENSIONS[options.format]}` : '',
       skipped,
@@ -634,12 +666,37 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     cancelling = false;
     runChapters = list.length;
     runBundle = options.packAs === 'bundle';
-    runVolumes = options.packAs === 'volumes';
+    runVolumes = options.packAs === 'volumes' || options.packAs === 'parts';
+    runParts = options.packAs === 'parts';
     summary = null;
     pending = [...list];
     volumeChapters = new Map();
     fetchLeft.clear();
     runRows = runBundle ? 1 : list.length;
+    if (runParts) {
+      // a chapter's parts make one row, as a volume's chapters do
+      const groups = groupParts(list);
+      pending = groups.filter((g) => g.chapters.length === 1).map((g) => g.chapters[0]);
+      runRows = groups.length;
+      jobs = groups
+        .filter((g) => g.chapters.length > 1)
+        .map((g) => {
+          const title = `Chapter ${g.number} · ${g.chapters.length} parts`;
+          volumeChapters.set(title, g.chapters.length);
+          return {
+            title,
+            tags: '',
+            number: g.number,
+            total: g.chapters.length * PAGES * STEPS_PER_PAGE,
+            done: 0,
+            state: 'downloading' as const,
+            reason: '',
+            status: 'Waiting...',
+            volume: true,
+          };
+        });
+      return;
+    }
     if (runVolumes) {
       // the backend makes a row per volume up front, and runs the chapters
       // outside them one by one
@@ -754,6 +811,13 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         .filter((c) => !c.locked)
         .map((c) => c.index),
     );
+    selectionBus.emit(selectionOf());
+  }
+  if (scenario === 'parts') {
+    url = 'https://example.com/episodes/plant-tamer';
+    options.packAs = 'parts';
+    // every part that isn't locked: chapters 1-4, and the one open part of 19
+    selected = new Set(chapters.filter((c) => !c.locked).map((c) => c.index));
     selectionBus.emit(selectionOf());
   }
   if (scenario === 'volumes-running') {

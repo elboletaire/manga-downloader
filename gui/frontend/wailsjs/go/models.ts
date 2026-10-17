@@ -167,6 +167,7 @@ export namespace main {
 	    cancelled: boolean;
 	    saved: number;
 	    volumes: number;
+	    parts: boolean;
 	    bundled: boolean;
 	    bundle: string;
 	    skipped: number;
@@ -183,6 +184,7 @@ export namespace main {
 	        this.cancelled = source["cancelled"];
 	        this.saved = source["saved"];
 	        this.volumes = source["volumes"];
+	        this.parts = source["parts"];
 	        this.bundled = source["bundled"];
 	        this.bundle = source["bundle"];
 	        this.skipped = source["skipped"];

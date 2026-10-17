@@ -5,8 +5,8 @@ export type JobState = 'fetching' | 'downloading' | 'archiving' | 'done' | 'fail
 
 export type LogLevel = 'info' | 'warn' | 'error';
 
-/** How the chapters are packed: one file each, one per volume, or one for everything */
-export type PackAs = 'chapters' | 'volumes' | 'bundle';
+/** How the chapters are packed: one file each, one per chapter with its parts merged, one per volume, or one for everything */
+export type PackAs = 'chapters' | 'parts' | 'volumes' | 'bundle';
 
 export interface Options {
   outputDir: string;
@@ -54,6 +54,8 @@ export interface Summary {
   saved: number;
   /** Volume files written */
   volumes: number;
+  /** Those files are chapters with their parts merged */
+  parts: boolean;
   bundled: boolean;
   bundle: string;
   skipped: number;

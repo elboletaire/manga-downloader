@@ -7,6 +7,7 @@ const clean = (over: Partial<Summary> = {}): Summary => ({
   cancelled: false,
   saved: 3,
   volumes: 0,
+  parts: false,
   bundled: false,
   bundle: '',
   skipped: 0,

@@ -88,6 +88,8 @@ type RunInfo struct {
 	Bundle   bool
 	// Volumes is set when the run packs one file per volume
 	Volumes bool
+	// Parts is set on a volumes run that merges each chapter's parts
+	Parts bool
 	// Rows is how many progress rows the run ends up with: one per chapter,
 	// one for a bundle, or one per volume plus one per chapter outside them
 	Rows int
@@ -102,6 +104,8 @@ type Summary struct {
 	Saved int
 	// Volumes counts the volume files written
 	Volumes int
+	// Parts is set when those files are chapters with their parts merged
+	Parts bool
 	// Bundled is set in bundle mode, where Bundle is the bundle's filename
 	// (empty when none was written)
 	Bundled  bool
@@ -1194,9 +1198,11 @@ func (c *Controller) Start() error {
 		c.mu.Unlock()
 		return errors.New("the language or scanlator changed: reload the series first")
 	}
-	// volume mode packs the Volumes box, which isn't saved with the options
+	// volume mode packs the Volumes box, which isn't saved with the options;
+	// a parts run has no box
 	volumes := c.settings.Volumes != ""
-	if volumes {
+	parts := c.settings.Volumes == volumesParts
+	if volumes && !parts {
 		c.settings.Volumes = c.runVolumes()
 	}
 	skip, err := core.Validate(c.settings)
@@ -1223,7 +1229,9 @@ func (c *Controller) Start() error {
 	if c.settings.Bundle {
 		rows = 1
 	}
-	if volumes {
+	if parts {
+		rows = partFiles(chapters)
+	} else if volumes {
 		// grouped here too, so a site without volumes is refused before the
 		// run starts rather than failing it
 		spec, _ := core.ParseVolumes(c.settings.Volumes)
@@ -1239,7 +1247,7 @@ func (c *Controller) Start() error {
 	c.cancel = cancel
 	c.running = true
 	c.rng = bundleRange(numbers, selected)
-	c.runinfo = RunInfo{Chapters: len(chapters), Bundle: c.settings.Bundle, Volumes: volumes, Rows: rows}
+	c.runinfo = RunInfo{Chapters: len(chapters), Bundle: c.settings.Bundle, Volumes: volumes, Parts: parts, Rows: rows}
 	c.cancelling = false
 	c.jobs = nil
 	c.byChap = map[*grabber.Chapter]*Job{}
@@ -1289,6 +1297,7 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 		Bundled:  c.bundle != nil,
 		Saved:    c.stats.saved,
 		Volumes:  c.stats.volumes,
+		Parts:    c.runinfo.Parts,
 		Skipped:  c.stats.skipped,
 		Failures: c.stats.failures,
 	}
@@ -1630,8 +1639,42 @@ func (e events) BundleArchived(n int) {
 	c.emit()
 }
 
-// volumeTitle is the row title of a volume: "Vol. 01 · chapters 1–7"
-func volumeTitle(v *core.Volume) string {
+// partFiles is how many files a parts run writes: one per number and group,
+// as core merges them
+func partFiles(chapters grabber.Filterables) int {
+	type key struct {
+		number float64
+		group  string
+	}
+	seen := map[key]bool{}
+	for _, chap := range chapters {
+		var group string
+		if g, ok := chap.(interface{ GetGroup() string }); ok {
+			group = g.GetGroup()
+		}
+		seen[key{chap.GetNumber(), group}] = true
+	}
+	return len(seen)
+}
+
+// volumeLabel names a volume's file in the log: "Vol. 01", or "Chapter 19"
+// for a chapter's merged parts. Callers hold mu.
+func (c *Controller) volumeLabel(v *core.Volume) string {
+	if c.runinfo.Parts {
+		return "Chapter " + formatNumber(v.FirstNumber())
+	}
+	return core.VolumeLabel(v.Number)
+}
+
+// volumeTitle is the row title of a volume: "Vol. 01 · chapters 1–7", or
+// "Chapter 19 · 2 parts" in a parts run. Callers hold mu.
+func (c *Controller) volumeTitle(v *core.Volume) string {
+	if c.runinfo.Parts {
+		if len(v.Chapters) == 1 {
+			return grabber.ChapterLabel(v.Chapters[0])
+		}
+		return fmt.Sprintf("%s · %d parts", c.volumeLabel(v), len(v.Chapters))
+	}
 	first, last := formatNumber(v.FirstNumber()), formatNumber(v.LastNumber())
 	if first == last {
 		return fmt.Sprintf("%s · chapter %s", core.VolumeLabel(v.Number), first)
@@ -1642,7 +1685,11 @@ func volumeTitle(v *core.Volume) string {
 func (e events) VolumeStart(v *core.Volume) {
 	c := e.c
 	c.mu.Lock()
-	j := &Job{Title: volumeTitle(v), Number: v.FirstNumber(), Total: volumeScale, State: JobDownloading, Status: "Waiting...", Volume: true}
+	j := &Job{Title: c.volumeTitle(v), Number: v.FirstNumber(), Total: volumeScale, State: JobDownloading, Status: "Waiting...", Volume: true}
+	if c.runinfo.Parts {
+		// one chapter's parts share its group and language
+		j.Tags = c.releaseTags(v.Chapters[0])
+	}
 	c.jobs = append(c.jobs, j)
 	c.byVolume[v] = j
 	for _, chap := range v.Chapters {
@@ -1692,7 +1739,7 @@ func (e events) VolumePacked(v *core.Volume, name string, err error) {
 	c := e.c
 	c.mu.Lock()
 	j := c.byVolume[v]
-	label := core.VolumeLabel(v.Number)
+	label := c.volumeLabel(v)
 	switch {
 	case errors.Is(err, context.Canceled):
 		// a cancelled run says so in its summary; the row only stops

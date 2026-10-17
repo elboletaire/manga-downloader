@@ -773,6 +773,25 @@ code {
   color: var(--accent-text);
 }
 
+/* a group header's tag and count share its last column */
+.group-end {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* a chapter with only some of its parts picked: its file will lack the rest */
+.group-count.partial,
+.row.on .group-count.partial {
+  color: var(--warning);
+}
+
+/* a part's position in its chapter ("1/2"), quieter than a number */
+.num.part {
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .field-stack {
   display: grid;
   gap: 6px;

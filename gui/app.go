@@ -280,14 +280,16 @@ type JobDTO struct {
 
 // SummaryDTO is the outcome of a finished run
 type SummaryDTO struct {
-	Dir       string   `json:"dir"`
-	Cancelled bool     `json:"cancelled"`
-	Saved     int      `json:"saved"`
-	Volumes   int      `json:"volumes"`
-	Bundled   bool     `json:"bundled"`
-	Bundle    string   `json:"bundle"`
-	Skipped   int      `json:"skipped"`
-	Failures  []string `json:"failures"`
+	Dir       string `json:"dir"`
+	Cancelled bool   `json:"cancelled"`
+	Saved     int    `json:"saved"`
+	Volumes   int    `json:"volumes"`
+	// Parts is set when the volume files are chapters with their parts merged
+	Parts    bool     `json:"parts"`
+	Bundled  bool     `json:"bundled"`
+	Bundle   string   `json:"bundle"`
+	Skipped  int      `json:"skipped"`
+	Failures []string `json:"failures"`
 	// Error is set when a bundle couldn't be written
 	Error string `json:"error"`
 }
@@ -343,8 +345,9 @@ func (a *App) State() State {
 
 		FilenameTemplateDefault: packer.FilenameTemplateDefault,
 	}
-	// a bundle's name is always distinct, and a volume template needs .Volume
-	if st.Options.PackAs == PackChapters {
+	// a bundle's name is always distinct, and a volume template needs .Volume;
+	// a parts run names its files as chapters
+	if st.Options.PackAs == PackChapters || st.Options.PackAs == PackParts {
 		st.FilenameTemplateWarning = packer.TemplateWarning(st.Options.FilenameTemplate)
 	}
 	st.LoadedLanguage, st.LoadedScanlator = c.LoadedFilters()
@@ -783,6 +786,7 @@ func summaryDTO(s *Summary) *SummaryDTO {
 		Cancelled: s.Cancelled,
 		Saved:     s.Saved,
 		Volumes:   s.Volumes,
+		Parts:     s.Parts,
 		Bundled:   s.Bundled,
 		Bundle:    s.Bundle,
 		Skipped:   s.Skipped,

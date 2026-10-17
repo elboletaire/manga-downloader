@@ -297,3 +297,36 @@ func jobFraction(j Job) float64 {
 	}
 	return min(1, max(0, float64(j.Done)/float64(j.Total)))
 }
+
+// a parts run writes one file per number and group, as core merges them
+func TestPartFiles(t *testing.T) {
+	chapters := grabber.Filterables{
+		&grabber.Chapter{Number: 1},
+		&grabber.Chapter{Number: 2, Title: "Part 1"},
+		&grabber.Chapter{Number: 2, Title: "Part 2"},
+		&grabber.Chapter{Number: 3, Group: "Alpha"},
+		&grabber.Chapter{Number: 3, Group: "Beta"},
+	}
+	if got := partFiles(chapters); got != 4 {
+		t.Errorf("partFiles = %d, want 4", got)
+	}
+}
+
+// a chapter's merged parts are named as the chapter, not as a volume
+func TestVolumeTitleParts(t *testing.T) {
+	c := NewController(&grabber.Settings{}, nil)
+	v := &core.Volume{Number: 2, Chapters: grabber.Filterables{
+		&grabber.Chapter{Number: 2, Title: "Chapter 2 Part 1"},
+		&grabber.Chapter{Number: 2, Title: "Chapter 2 Part 2"},
+	}}
+	if got := c.volumeTitle(v); got != "Vol. 02 · chapter 2" {
+		t.Errorf("volume title = %q", got)
+	}
+	c.runinfo.Parts = true
+	if got := c.volumeTitle(v); got != "Chapter 2 · 2 parts" {
+		t.Errorf("parts title = %q", got)
+	}
+	if got := c.volumeLabel(v); got != "Chapter 2" {
+		t.Errorf("parts label = %q", got)
+	}
+}

@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { ChapterBox, ChapterTitle, LOCKED_HINT } from './ChapterPanel';
+import { ChapterBox, ChapterTitle, LOCKED_HINT, partsCount } from './ChapterPanel';
 
 function title(locked: boolean): string {
   return renderToStaticMarkup(createElement(ChapterTitle, { title: 'Chapter 186', locked }));
@@ -32,5 +32,13 @@ describe('ChapterBox', () => {
   it('leaves a free chapter\'s box as it was', () => {
     expect(box(false, false)).toBe('<span class="box" aria-hidden="true"></span>');
     expect(box(true, false)).toBe('<span class="box on" aria-hidden="true"></span>');
+  });
+});
+
+describe('partsCount', () => {
+  it('says whether a chapter goes whole, in part, or not at all', () => {
+    expect(partsCount(0, 2)).toBe('none selected');
+    expect(partsCount(2, 2)).toBe('whole chapter');
+    expect(partsCount(1, 2)).toBe('1 of 2 parts');
   });
 });

@@ -11,6 +11,7 @@ import type { Options, PackAs, State } from './types';
 
 export const PACK_HINTS: Record<PackAs, string> = {
   chapters: 'One file per chapter.',
+  parts: 'One file per chapter, with its parts merged into it. Chapters without parts get a file each as usual.',
   volumes: 'One file per volume, set above the chapter list. Chapters outside every volume get a file each.',
   bundle: 'The selected chapters in a single file.',
 };
@@ -103,6 +104,7 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
             disabled={locked}
             options={[
               { value: 'chapters', label: 'Chapters' },
+              { value: 'parts', label: 'Merged' },
               { value: 'volumes', label: 'Volumes' },
               { value: 'bundle', label: 'One file' },
             ]}

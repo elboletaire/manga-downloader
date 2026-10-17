@@ -3,10 +3,12 @@ import {
   chapterSpan,
   groupChapters,
   groupedRows,
+  groupParts,
   isSiteVolumes,
   LOOSE,
   listedVolumes,
   parseVolumes,
+  partRows,
   selectedIn,
   siteVolumes,
   volumesSummary,
@@ -117,7 +119,7 @@ describe('groupedRows', () => {
   });
 
   it('hides the chapters of a collapsed group, keeping its header', () => {
-    const rows = groupedRows(g, new Set([1, LOOSE]));
+    const rows = groupedRows(g, new Set(['volume-1', LOOSE]));
     expect(rows.map((r) => (r.kind === 'group' ? `${r.label}${r.collapsed ? ' +' : ''}` : r.chapter.number))).toEqual([
       'Volume 1 +',
       'Volume 2',
@@ -130,6 +132,47 @@ describe('groupedRows', () => {
   it('has no "Not in a volume" group when every chapter has a volume', () => {
     const rows = groupedRows(groupChapters(list, parseVolumes('1-10')), new Set());
     expect(rows.filter((r) => r.kind === 'group')).toHaveLength(1);
+  });
+});
+
+describe('groupParts', () => {
+  const part = (index: number, number: number, group = ''): Chapter => ({ ...ch(number, 0, index), group });
+  // 1 whole, 2 in two parts, 3 by two groups (Alpha in two parts)
+  const parts = [part(0, 1), part(1, 2), part(2, 2), part(3, 3, 'Alpha'), part(4, 3, 'Beta'), part(5, 3, 'Alpha')];
+
+  it('merges the chapters sharing a number and a group, in list order', () => {
+    expect(groupParts(parts).map((g) => [g.number, g.group, g.chapters.map((c) => c.index)])).toEqual([
+      [1, '', [0]],
+      [2, '', [1, 2]],
+      [3, 'Alpha', [3, 5]],
+      [3, 'Beta', [4]],
+    ]);
+  });
+
+  it('heads a chapter with parts, and leaves one without them a plain row', () => {
+    const rows = partRows(groupParts(parts), new Set());
+    expect(
+      rows.map((r) =>
+        r.kind === 'group' ? `${r.label} · ${r.detail}${r.tag ? ` [${r.tag}]` : ''}` : `${r.chapter.index}${r.part ? ` ${r.part.n}/${r.part.of}` : ''}${r.inGroup ? '' : ' alone'}`,
+      ),
+    ).toEqual([
+      '0 alone',
+      'Chapter 2 · 2 parts',
+      '1 1/2',
+      '2 2/2',
+      'Chapter 3 · 2 parts [Alpha]',
+      '3 1/2',
+      '5 2/2',
+      '4 alone',
+    ]);
+  });
+
+  it('folds a chapter to its header', () => {
+    const rows = partRows(groupParts(parts), new Set(['part-1']));
+    expect(rows.filter((r) => r.kind === 'chapter').map((r) => (r.kind === 'chapter' ? r.chapter.index : -1))).toEqual([
+      0, 3, 5, 4,
+    ]);
+    expect(rows[1]).toMatchObject({ kind: 'group', collapsed: true });
   });
 });
 

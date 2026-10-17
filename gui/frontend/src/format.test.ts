@@ -16,6 +16,7 @@ const base: Summary = {
   cancelled: false,
   saved: 0,
   volumes: 0,
+  parts: false,
   bundled: false,
   bundle: '',
   skipped: 0,
@@ -40,6 +41,10 @@ describe('summaryHeadline', () => {
   it('describes a volume run', () => {
     expect(summaryHeadline({ ...base, saved: 12, volumes: 2 })).toBe('12 saved in 2 volumes');
     expect(summarySentence({ ...base, saved: 12, volumes: 1 })).toBe('Saved 12 chapters to /out, with 1 volume file.');
+    expect(summaryHeadline({ ...base, saved: 8, volumes: 3, parts: true })).toBe('8 saved, 3 chapters merged from parts');
+    expect(summarySentence({ ...base, saved: 8, volumes: 3, parts: true })).toBe(
+      'Saved 8 chapters to /out, with 3 chapters merged from parts.',
+    );
   });
 
   it('describes cancelled and bundled runs', () => {

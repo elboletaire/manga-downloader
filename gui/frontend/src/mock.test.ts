@@ -397,6 +397,29 @@ describe('mock volumes', () => {
     ]);
   });
 
+  it('runs one row per chapter with parts, and says the files merge parts', async () => {
+    vi.useFakeTimers();
+    try {
+      const api = createMockApi({ scenario: 'parts' });
+      const state = await api.state();
+      expect(state.options.packAs).toBe('parts');
+      // chapter 1, both parts of 2-4 and the open part of 19
+      expect(state.selectedCount).toBe(8);
+      await api.start();
+      const running = await api.state();
+      expect(running.run).toMatchObject({ volumes: true, chapters: 8, rows: 5 });
+      expect(running.jobs.map((j) => j.title)).toEqual([
+        'Chapter 2 · 2 parts',
+        'Chapter 3 · 2 parts',
+        'Chapter 4 · 2 parts',
+      ]);
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect((await api.state()).summary).toMatchObject({ volumes: 3, saved: 8, parts: true });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('counts the chapters of saved volumes when the run ends', async () => {
     vi.useFakeTimers();
     try {
@@ -429,6 +452,7 @@ describe('mockSetupFrom', () => {
       chapters: 50,
       site: 'multi',
       novolumes: false,
+      parts: false,
       fail: false,
       skip: false,
       locked: false,
@@ -438,6 +462,7 @@ describe('mockSetupFrom', () => {
       prompt: false,
     });
     expect(mockSetupFrom('?novolumes').novolumes).toBe(true);
+    expect(mockSetupFrom('?parts').parts).toBe(true);
     expect(mockSetupFrom('?chapters=nope').chapters).toBeGreaterThan(100);
     expect(mockSetupFrom('?fail').fail).toBe(true);
     expect(mockSetupFrom('?skip').skip).toBe(true);
