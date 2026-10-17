@@ -35,10 +35,18 @@ import (
 type Manganelo struct {
 	*Grabber
 	title string
+	// byMarkup also detects the clones outside manganeloHostRe (NewManganeloByMarkup)
+	byMarkup bool
 }
 
 func NewManganelo(g *Grabber) *Manganelo {
 	return &Manganelo{Grabber: g}
+}
+
+// NewManganeloByMarkup returns a Manganelo grabber that also matches a series
+// or reader page on any host whose page carries the chapters API marker.
+func NewManganeloByMarkup(g *Grabber) *Manganelo {
+	return &Manganelo{Grabber: g, byMarkup: true}
 }
 
 // ManganeloChapter represents a Manganelo Chapter
@@ -106,16 +114,30 @@ func (m *Manganelo) WaitPage() {
 	manganeloPagePacer.wait()
 }
 
-// Test returns true if the URL hostname is one of the manganelo family
-// domains. It only checks the hostname (no fetch) so it can be tried early
-// without extra requests.
+// manganeloChaptersMarker is the chapters API URL that every series and reader
+// page carries, with the slug left as a __SLUG__ placeholder
+const manganeloChaptersMarker = "/api/manga/__SLUG__/chapters"
+
+// manganeloSeriesPathRe is the path shape of a series or reader page, the only
+// shape the markup check fetches
+var manganeloSeriesPathRe = regexp.MustCompile(`^/manga/[^/]+`)
+
+// Test matches the manganelo family domains without a fetch. The markup
+// instance also matches a series or reader page elsewhere that carries the
+// chapters API marker, and never fetches a browser host.
 func (m *Manganelo) Test() (bool, error) {
 	u, err := url.Parse(m.URL)
 	if err != nil {
 		return false, nil
 	}
+	if manganeloHostRe.MatchString(u.Hostname()) {
+		return true, nil
+	}
+	if !m.byMarkup || browser.NeedsVisible(m.URL) || !manganeloSeriesPathRe.MatchString(u.Path) {
+		return false, nil
+	}
 
-	return manganeloHostRe.MatchString(u.Hostname()), nil
+	return pageHasMarkup(m.Grabber, m.URL, manganeloChaptersMarker), nil
 }
 
 // resolveSeriesURL rewrites m.URL to the series URL when it is a chapter

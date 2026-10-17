@@ -210,7 +210,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		// selectors can't claim a clone; they share the cached page
 		NewTanstackComicByMarkup(g),
 		NewRSCComicByMarkup(g),
-		// Manganelo (T3)
+		NewManganeloByMarkup(g),
 		// Toivo Lite (T4)
 		plainHTML,
 		NewTcb(g),
