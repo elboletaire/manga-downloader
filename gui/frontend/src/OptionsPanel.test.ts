@@ -62,6 +62,15 @@ describe('Pack as volumes hint', () => {
   });
 });
 
+describe('Format', () => {
+  it('offers CBR next to CBZ, under its own name', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    const markup = options(base);
+    expect(markup.indexOf('CBR archive')).toBeGreaterThan(markup.indexOf('CBZ archive'));
+    expect(markup.indexOf('CBR archive')).toBeLessThan(markup.indexOf('>EPUB<'));
+  });
+});
+
 describe('AVIF under Convert to JPEG', () => {
   // the AVIF checkbox's input, as rendered
   function avifInput(markup: string): string {

@@ -18,6 +18,7 @@ func TestValidateFormatAndReadingDirection(t *testing.T) {
 		setting   string // the SettingError it should fail with; "" when it passes
 	}{
 		{"cbz", packer.FormatCBZ, packer.ReadingDirectionRTL, ""},
+		{"cbr", packer.FormatCBR, packer.ReadingDirectionRTL, ""},
 		{"raw", packer.FormatRaw, packer.ReadingDirectionLTR, ""},
 		{"epub rtl", packer.FormatEPUB, packer.ReadingDirectionRTL, ""},
 		{"epub ltr", packer.FormatEPUB, packer.ReadingDirectionLTR, ""},

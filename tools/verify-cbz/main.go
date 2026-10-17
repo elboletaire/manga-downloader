@@ -3,7 +3,8 @@
 // verify-cbz checks that the given .cbz files are real chapter archives:
 // they must exist, contain at least MinPages entries, and every entry must
 // be a non-empty image (JPG/PNG/GIF/WebP, checked by magic bytes) whose
-// extension matches its actual content.
+// extension matches its actual content. CBR files are skipped, as there is
+// no RAR reader yet.
 //
 // AVIF entries are a failure by default: the downloader converts AVIF pages
 // to JPEG (--convert-images, on by default) precisely because no dedicated
@@ -46,6 +47,10 @@ func main() {
 
 	failed := false
 	for _, path := range flag.Args() {
+		if strings.EqualFold(filepath.Ext(path), ".cbr") {
+			fmt.Printf("SKIP %s: CBR isn't checked yet (no RAR reader; list it with bsdtar -tf)\n", path)
+			continue
+		}
 		if err := verify(path); err != nil {
 			fmt.Fprintf(os.Stderr, "FAIL %s: %v\n", path, err)
 			failed = true

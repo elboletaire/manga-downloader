@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-// File represents a named entry to be written into a CBZ archive
+// File represents a named entry to be written into a CBZ or CBR archive
 type File struct {
 	// Name is the zip entry name (may include a directory prefix, e.g. "Chapter 0001/000.jpg")
 	Name string

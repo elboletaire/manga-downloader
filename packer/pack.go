@@ -18,6 +18,7 @@ import (
 // Supported output formats (see grabber.Settings.Format)
 const (
 	FormatCBZ  = "cbz"
+	FormatCBR  = "cbr"
 	FormatRaw  = "raw"
 	FormatEPUB = "epub"
 )
@@ -324,6 +325,9 @@ func pack(outputdir, format, template, label string, parts FilenameTemplateParts
 			name = filename + ".epub"
 			info.Title = filename
 			err = ArchiveEPUB(filepath.Join(outputdir, name), info, files, progress)
+		} else if format == FormatCBR {
+			name = filename + ".cbr"
+			err = ArchiveCBR(filepath.Join(outputdir, name), files, progress)
 		} else {
 			name = filename + ".cbz"
 			err = ArchiveCBZ(filepath.Join(outputdir, name), files, progress)

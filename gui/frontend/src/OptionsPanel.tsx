@@ -75,6 +75,7 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
           disabled={locked}
           options={[
             { value: 'cbz', label: 'CBZ archive' },
+            { value: 'cbr', label: 'CBR archive' },
             { value: 'raw', label: 'Image folder' },
             { value: 'epub', label: 'EPUB' },
           ]}
