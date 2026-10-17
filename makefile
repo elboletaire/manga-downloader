@@ -184,6 +184,7 @@ grabber: \
 	grabber/manhwatop \
 	grabber/mgeko \
 	grabber/mkissa \
+	grabber/naver \
 	grabber/nijitranslations \
 	grabber/ourfeel \
 	grabber/projectsuki \
@@ -571,6 +572,10 @@ grabber/templetoons:
 # --browser-visible needed, the challenge is never actually triggered
 grabber/mkissa:
 	go run . https://mkissa.to/manga/eaYBWW65WLabNiLEi 59
+
+# bestChallenge/challenge titles use the same API; 183559 is a free series
+grabber/naver:
+	go run . 'https://comic.naver.com/webtoon/list?titleId=183559' 1-2
 
 # sites needing a real browser: not part of the `grabber` target since they
 # open a Chrome window and may require solving an interactive challenge

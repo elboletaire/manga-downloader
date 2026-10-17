@@ -183,6 +183,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewMkissa(g),
 		NewWitchtoons(g),
 		NewWebtoons(g),
+		NewNaver(g),
 		NewMangahere(g),
 		NewMangatown(g),
 		NewMangaplus(g),
