@@ -1,0 +1,22 @@
+{
+  "chapter_one": "{{count}} capítol",
+  "chapter_other": "{{count}} capítols",
+  "volume_one": "{{count}} volum",
+  "volume_other": "{{count}} volums",
+  "volumeFile_one": "{{count}} fitxer de volum",
+  "volumeFile_other": "{{count}} fitxers de volum",
+  "part_one": "{{count}} part",
+  "part_other": "{{count}} parts",
+  "file_one": "{{count}} fitxer",
+  "file_other": "{{count}} fitxers",
+  "failed_one": "{{count}} fallit",
+  "failed_other": "{{count}} fallits",
+  "skipped_one": "{{count}} omès",
+  "skipped_other": "{{count}} omesos",
+  "saved_one": "{{count}} desat",
+  "saved_other": "{{count}} desats",
+  "error_one": "{{count}} error",
+  "error_other": "{{count}} errors",
+  "warning_one": "{{count}} avís",
+  "warning_other": "{{count}} avisos"
+}
