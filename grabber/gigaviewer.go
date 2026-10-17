@@ -38,6 +38,7 @@ var gigaviewerDomains = []string{
 	"comic-ogyaaa.com",
 	"sunday-webry.com",
 	"comic-seasons.com",
+	"comicborder.com",
 	"comic-y-ours.com",
 	"ourfeel.jp",
 	"feelweb.jp",

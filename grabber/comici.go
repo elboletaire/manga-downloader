@@ -29,6 +29,9 @@ var comiciDomains = []string{
 	"comicride.jp",
 	"takecomic.jp",
 	"comic-ryu.jp",
+	"younganimal.com",
+	"bigcomics.jp",
+	"kansai.mag-garden.co.jp",
 }
 
 var (
