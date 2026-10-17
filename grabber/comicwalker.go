@@ -17,10 +17,12 @@ const comicWalkerDomain = "comic-walker.com"
 var (
 	// comicWalkerWorkRe is the work code in a series or episode URL: "KC_000061_S"
 	comicWalkerWorkRe = regexp.MustCompile(`/detail/([^/?#]+)`)
-	// comicWalkerNumberRe is an episode title's number, "第3話" or "第１集" (a volume's first episode)
-	comicWalkerNumberRe = regexp.MustCompile(`^第(` + gvKanji + `|` + gvDigits + `)[話集]`)
 	// comicWalkerPartRe is the 前編, 中編 or 後編 that a split episode's number ends with
 	comicWalkerPartRe = regexp.MustCompile(`^(?:前編|中編|後編)`)
+	// comicWalkerChapterRe is the "Chapter1" some English titles start with
+	comicWalkerChapterRe = regexp.MustCompile(`^Chapter ?([0-9]+)`)
+	// comicWalkerVolumeRe is the number a volume's title ends with
+	comicWalkerVolumeRe = regexp.MustCompile(`[0-9０-９]+$`)
 )
 
 // ComicWalker is a grabber for KadoComi: the work's JSON API lists its episodes
@@ -44,13 +46,20 @@ type ComicWalkerChapter struct {
 	Chapter
 }
 
-// comicWalkerWork is the work JSON: its title and the first and latest episodes
+// comicWalkerWork is the work JSON: its title, the first and latest episodes and
+// the volumes, which list the episodes of a work with no serial ones
 type comicWalkerWork struct {
 	Work struct {
 		Title string `json:"title"`
 	} `json:"work"`
 	FirstEpisodes  comicWalkerEpisodes `json:"firstEpisodes"`
 	LatestEpisodes comicWalkerEpisodes `json:"latestEpisodes"`
+	Comics         struct {
+		Result []struct {
+			Title    string               `json:"title"`
+			Episodes []comicWalkerEpisode `json:"episodes"`
+		} `json:"result"`
+	} `json:"comics"`
 }
 
 type comicWalkerEpisodes struct {
@@ -112,13 +121,24 @@ func (c *ComicWalker) fetchWork() error {
 		return err
 	}
 
-	// the episode lists overlap, so each episode is kept once
+	// the serial episodes come first; a work with none lists its episodes under
+	// its volumes, numbered by the volume's title
+	episodes := append(work.FirstEpisodes.Result, work.LatestEpisodes.Result...)
+	volumes := map[string]int{}
+	if len(episodes) == 0 {
+		for _, comic := range work.Comics.Result {
+			for _, e := range comic.Episodes {
+				episodes = append(episodes, e)
+				volumes[e.ID] = comicWalkerVolume(comic.Title)
+			}
+		}
+	}
+
+	// the lists overlap, so each episode is kept once; promotions (type pr) aren't episodes
 	seen := map[string]bool{}
 	var chapters Filterables
-	for _, e := range append(work.FirstEpisodes.Result, work.LatestEpisodes.Result...) {
-		// the trial copies (web_trial) repeat the first episodes under other numbers,
-		// and the promotions (type pr) aren't episodes
-		if seen[e.ID] || e.Type != "normal" || e.ServiceID == "web_trial" {
+	for _, e := range episodes {
+		if seen[e.ID] || e.Type == "pr" {
 			continue
 		}
 		seen[e.ID] = true
@@ -128,6 +148,7 @@ func (c *ComicWalker) fetchWork() error {
 			Title:    title,
 			Number:   number,
 			ID:       e.ID,
+			Volume:   volumes[e.ID],
 			Locked:   !e.IsActive,
 			Language: "ja",
 			Label:    Label{Style: LabelNumbered, Part: part},
@@ -144,21 +165,28 @@ func (c *ComicWalker) fetchWork() error {
 // comicWalkerTitle splits an episode title into its title (empty when there is
 // none), number and part: "第3話後編" is number 3, part "後編"
 func comicWalkerTitle(raw string) (title string, number float64, part string) {
-	raw = cleanTitle(raw)
-	m := comicWalkerNumberRe.FindStringSubmatchIndex(raw)
-	if m == nil {
-		return raw, 0, ""
+	title, number, part = gigaviewerTitle(raw, "")
+	// gigaviewerTitle takes the 前編 after a number as the title
+	if part == "" {
+		if p := comicWalkerPartRe.FindString(title); p != "" {
+			part, title = p, cleanTitle(title[len(p):])
+		}
 	}
-	number, ok := gigaviewerNumberOf(raw[m[2]:m[3]])
-	if !ok {
-		return raw, 0, ""
+	if m := comicWalkerChapterRe.FindStringSubmatch(title); number == 0 && m != nil {
+		number, _ = gigaviewerNumberOf(m[1])
+		title = cleanTitle(title[len(m[0]):])
 	}
+	return title, number, part
+}
 
-	rest := raw[m[1]:]
-	if p := comicWalkerPartRe.FindString(rest); p != "" {
-		part, rest = p, rest[len(p):]
+// comicWalkerVolume returns the volume a comic's title ends with ("…　3" is 3), 0 if none
+func comicWalkerVolume(title string) int {
+	m := comicWalkerVolumeRe.FindString(cleanTitle(title))
+	if m == "" {
+		return 0
 	}
-	return cleanTitle(rest), number, part
+	n, _ := gigaviewerNumberOf(m)
+	return int(n)
 }
 
 // comicWalkerKey returns the 8-byte XOR key of a page: the first 16 hex digits of its drmHash
