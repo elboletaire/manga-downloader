@@ -118,11 +118,15 @@ grabber: \
 	grabber/bluesolo \
 	grabber/chainsawman \
 	grabber/chainsawmannmanga \
+	grabber/championcross \
 	grabber/comicaction \
 	grabber/comicdays \
 	grabber/comicearthstar \
 	grabber/comicgardo \
+	grabber/comicgrowl \
+	grabber/comicheros \
 	grabber/comicogyaaa \
+	grabber/comicride \
 	grabber/comicseasons \
 	grabber/comictrail \
 	grabber/comicwalker \
@@ -191,6 +195,7 @@ grabber: \
 	grabber/stonescape \
 	grabber/sundaywebry \
 	grabber/taiyo \
+	grabber/takecomic \
 	grabber/tcb \
 	grabber/teamshadowi \
 	grabber/templetoons \
@@ -523,6 +528,17 @@ grabber/comicseasons:
 	go run . https://comic-seasons.com/episode/12207421983368290655 0
 grabber/comicyours:
 	go run . https://comic-y-ours.com/episode/12207421983368565943 56
+# Comici, the viewer of several publishers: an episode URL downloads its whole series
+grabber/championcross:
+	go run . https://championcross.jp/episodes/02c083f070a2e 1
+grabber/comicgrowl:
+	go run . https://comic-growl.com/episodes/134898aec09ea 19
+grabber/comicheros:
+	go run . https://heros-web.com/episodes/c1ffef58c01d8 1
+grabber/comicride:
+	go run . https://comicride.jp/episodes/eedb40a2c4f53 1
+grabber/takecomic:
+	go run . https://takecomic.jp/episodes/3984bbf3a37b6 0
 grabber/ourfeel:
 	go run . https://ourfeel.jp/episode/12207421983347996105 1
 grabber/feelweb:

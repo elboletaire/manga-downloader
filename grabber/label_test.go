@@ -155,6 +155,7 @@ func TestChapterLabelPart(t *testing.T) {
 		{"numeric part with title", Chapter{Title: "Foo", Number: 364, Label: Label{Style: LabelNumbered, Part: "2"}}, "Part 2 Foo"},
 		{"word part", Chapter{Number: 110, Label: Label{Style: LabelNumbered, Part: "前編"}}, "Chapter 110 前編"},
 		{"word part with title", Chapter{Title: "ヤる時", Number: 110, Label: Label{Style: LabelNumbered, Part: "前編"}}, "前編 ヤる時"},
+		{"word part with number", Chapter{Number: 36, Label: Label{Style: LabelNumbered, Part: "前編1"}}, "Chapter 36 前編 Part 1"},
 	} {
 		if got := ChapterLabel(tt.chapter); got != tt.want {
 			t.Errorf("%s: ChapterLabel = %q, want %q", tt.name, got, tt.want)

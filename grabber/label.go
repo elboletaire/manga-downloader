@@ -2,7 +2,10 @@
 
 package grabber
 
-import "strconv"
+import (
+	"regexp"
+	"strconv"
+)
 
 // chapterWords are the words labels name a chapter with, by Label.Lang ("" is
 // English), kept in this one place so they can be localized
@@ -101,10 +104,17 @@ func (c Chapter) GetLabel() string {
 	return title
 }
 
-// partLabel names a chapter's part: "Part 2" for a number, a word ("前編") as is
+// partWordRe is a word part with its number, "前編1"
+var partWordRe = regexp.MustCompile(`^(\D+)(\d+)$`)
+
+// partLabel names a chapter's part: "Part 2" for a number, "前編 Part 1" for a
+// word with one, a word ("前編") as is
 func partLabel(part string) string {
 	if _, err := strconv.ParseFloat(part, 64); err == nil {
 		return partWord + " " + part
+	}
+	if m := partWordRe.FindStringSubmatch(part); m != nil {
+		return m[1] + " " + partWord + " " + m[2]
 	}
 	return part
 }
