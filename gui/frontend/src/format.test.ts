@@ -5,7 +5,6 @@ import {
   jobFraction,
   jobShortStatus,
   jobStatus,
-  plural,
   summaryHeadline,
   summarySentence,
 } from './format';
@@ -28,14 +27,6 @@ const base: Summary = {
   failures: [],
   error: '',
 };
-
-describe('plural', () => {
-  it('uses the singular only for one', () => {
-    expect(plural(1, 'chapter', 'chapters')).toBe('1 chapter');
-    expect(plural(0, 'chapter', 'chapters')).toBe('0 chapters');
-    expect(plural(2, 'chapter', 'chapters')).toBe('2 chapters');
-  });
-});
 
 describe('summaryHeadline', () => {
   it('describes a plain run', () => {

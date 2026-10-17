@@ -4,10 +4,6 @@ import { say, type Lang, type T } from './i18n';
 import { percent } from './i18n/format';
 import type { Job, Message, Summary } from './types';
 
-export function plural(n: number, one: string, many: string): string {
-  return n === 1 ? `1 ${one}` : `${n} ${many}`;
-}
-
 /** The short outcome shown next to the buttons */
 export function summaryHeadline(s: Summary, t: T): string {
   if (s.cancelled && s.bundled) {
