@@ -336,6 +336,14 @@ Open the app and follow these steps:
      <img alt="Packing by volume: the Volumes box above the chapter list, the list grouped by volume, and the Download button naming the volumes" src="assets/screenshots/07-volumes-light.png">
    </picture>
 
+   *Pack as → Merged* packs a chapter's parts (19-① and 19-②) into one file named
+   after the chapter, and leaves the chapters without parts as one file each.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/12-parts-dark.png">
+     <img alt="Merged parts: each chapter split in parts on one row, with its parts picked together" src="assets/screenshots/12-parts-light.png">
+   </picture>
+
 5. **Press Download.** The *Activity* tab shows each chapter as it's fetched and
    packed. *Cancel* lets the chapters already downloading finish, and starts no
    new ones. A log is one click away in the status bar.

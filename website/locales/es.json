@@ -54,7 +54,7 @@
     "pickText": "Escribe un rango como <code>1-10,12,15-20</code>, o haz clic en un capítulo y Mayús+clic en otro para seleccionar todos los que hay entre ambos.",
     "chapterListAlt": "La lista de capítulos durante una descarga: los capítulos seleccionados, bloqueados mientras se descargan.",
     "volumesTitle": "Un archivo por volumen",
-    "volumesText": "Empaqueta cada volumen en su propio CBZ o EPUB. Los capítulos se agrupan según los volúmenes que indica el sitio, o puedes definir tú los grupos, como <code>1-7/8-16</code>.",
+    "volumesText": "Empaqueta cada volumen en su propio CBZ o EPUB. Los capítulos se agrupan según los volúmenes que indica el sitio, o puedes definir tú los grupos, como <code>1-7/8-16</code>. Las partes de un capítulo también pueden unirse en un solo archivo: <code>--volumes parts</code> en la línea de comandos, o «Merged» en la app.",
     "volumesAlt": "La lista de capítulos agrupada en volúmenes, con los seleccionados de cada uno.",
     "languageTitle": "Tu idioma, tu grupo",
     "languageText": "Cuando una serie está en varios idiomas o la traducen varios grupos de scanlation, la app te muestra solo los que ofrece de verdad, así que eliges entre opciones reales en lugar de adivinar códigos.",
