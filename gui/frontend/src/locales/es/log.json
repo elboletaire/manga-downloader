@@ -1,0 +1,11 @@
+{
+  "title": "Registro",
+  "show": "Mostrar el registro",
+  "hide": "Ocultar el registro",
+  "closeLog": "Cerrar el registro",
+  "empty": "Todavía no hay nada en el registro.",
+  "ready": "Listo",
+  "updateAvailable": "Actualización disponible: {{latest}}",
+  "version": "Versión",
+  "versionRelease": "Publicación de esta versión"
+}

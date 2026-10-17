@@ -3,6 +3,7 @@
 // counted on the toggle, so a problem isn't missed with the drawer closed.
 
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useI18n } from './i18n/react';
 import { AlertIcon, CopyIcon, ErrorIcon, LogIcon, XIcon } from './icons';
 import { UpdateDialog } from './UpdateDialog';
 import type { LogLine, Update } from './types';
@@ -23,6 +24,7 @@ interface BarProps {
 }
 
 export function StatusBar({ log, version, releaseURL, update, open, onToggle, onOpenURL, onUpdate }: BarProps) {
+  const { t } = useI18n();
   const [updateOpen, setUpdateOpen] = useState(update?.prompt === true);
 
   // links open outside the window, which must stay on the app
@@ -50,23 +52,23 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
         aria-expanded={open}
         aria-controls="log-drawer"
         onClick={onToggle}
-        title={open ? 'Hide the log' : 'Show the log'}
+        title={open ? t('log.hide') : t('log.show')}
       >
         <LogIcon size={14} />
-        <span>Log</span>
+        <span>{t('log.title')}</span>
         {errors > 0 && (
-          <span className="count-badge danger" aria-label={`${errors} errors`}>
+          <span className="count-badge danger" aria-label={t('count.error', { count: errors })}>
             {errors}
           </span>
         )}
         {warns > 0 && (
-          <span className="count-badge warning" aria-label={`${warns} warnings`}>
+          <span className="count-badge warning" aria-label={t('count.warning', { count: warns })}>
             {warns}
           </span>
         )}
       </button>
       <span className={`last-line level-${lastLine?.level ?? 'info'}`} aria-live="polite" title={lastLine?.text}>
-        {lastLine ? lastLine.text : 'Ready'}
+        {lastLine ? lastLine.text : t('log.ready')}
       </span>
       <span className="version-group">
         {update && (
@@ -81,8 +83,8 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
                   }
                 : openLink(update.url)
             }
-            title={`Update available: ${update.latest}`}
-            aria-label={`Update available: ${update.latest}`}
+            title={t('log.updateAvailable', { latest: update.latest })}
+            aria-label={t('log.updateAvailable', { latest: update.latest })}
           >
             <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
               <circle className="update-disc" cx="8" cy="8" r="7" strokeWidth="1.5" />
@@ -92,11 +94,11 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
           </a>
         )}
         {releaseURL !== '' ? (
-          <a className="version" href={releaseURL} onClick={openLink(releaseURL)} title="This version's release">
+          <a className="version" href={releaseURL} onClick={openLink(releaseURL)} title={t('log.versionRelease')}>
             {version}
           </a>
         ) : (
-          <span className="version" title="Version">
+          <span className="version" title={t('log.version')}>
             {version}
           </span>
         )}
@@ -120,6 +122,7 @@ interface DrawerProps {
 }
 
 export function LogDrawer({ log, onClose }: DrawerProps) {
+  const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
 
@@ -155,7 +158,7 @@ export function LogDrawer({ log, onClose }: DrawerProps) {
     <section
       className="log-drawer"
       id="log-drawer"
-      aria-label="Log"
+      aria-label={t('log.title')}
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
           onClose();
@@ -163,16 +166,16 @@ export function LogDrawer({ log, onClose }: DrawerProps) {
       }}
     >
       <div className="log-head">
-        <h2>Log</h2>
+        <h2>{t('log.title')}</h2>
         <button type="button" className="btn ghost small" onClick={copy} disabled={log.length === 0}>
-          <CopyIcon size={14} /> {copied ? 'Copied' : 'Copy'}
+          <CopyIcon size={14} /> {copied ? t('common.copied') : t('common.copy')}
         </button>
-        <button type="button" className="btn ghost small icon-only" aria-label="Close the log" onClick={onClose}>
+        <button type="button" className="btn ghost small icon-only" aria-label={t('log.closeLog')} onClick={onClose}>
           <XIcon size={14} />
         </button>
       </div>
       <div className="log-lines" ref={box} role="log" tabIndex={0}>
-        {log.length === 0 && <p className="muted">Nothing logged yet.</p>}
+        {log.length === 0 && <p className="muted">{t('log.empty')}</p>}
         {log.map((line, i) => (
           <p key={i} className={`line level-${line.level}`}>
             {line.level === 'error' ? <ErrorIcon size={13} /> : line.level === 'warn' ? <AlertIcon size={13} /> : null}

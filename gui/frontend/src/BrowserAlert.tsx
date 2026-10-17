@@ -3,6 +3,7 @@
 // page renders or its load ends; Dismiss hides it sooner.
 
 import { useEffect, useRef } from 'react';
+import { useI18n } from './i18n/react';
 import { AlertIcon } from './icons';
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function BrowserAlert({ message, onShow, onDismiss }: Props) {
+  const { t } = useI18n();
   const show = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -33,15 +35,15 @@ export function BrowserAlert({ message, onShow, onDismiss }: Props) {
         }}
       >
         <h2 id="browser-alert-title">
-          <AlertIcon size={18} /> The browser needs you
+          <AlertIcon size={18} /> {t('browser.title')}
         </h2>
         <p id="browser-alert-text">{message}</p>
         <div className="browser-alert-actions">
           <button type="button" className="btn ghost" onClick={onDismiss}>
-            Dismiss
+            {t('browser.dismiss')}
           </button>
           <button type="button" className="btn primary" ref={show} onClick={onShow}>
-            Show the browser window
+            {t('browser.show')}
           </button>
         </div>
       </section>

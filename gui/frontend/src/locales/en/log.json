@@ -1,0 +1,11 @@
+{
+  "title": "Log",
+  "show": "Show the log",
+  "hide": "Hide the log",
+  "closeLog": "Close the log",
+  "empty": "Nothing logged yet.",
+  "ready": "Ready",
+  "updateAvailable": "Update available: {{latest}}",
+  "version": "Version",
+  "versionRelease": "This version's release"
+}

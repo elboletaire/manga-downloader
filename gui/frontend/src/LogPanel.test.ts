@@ -1,6 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { I18nProvider } from './i18n/react';
 import { StatusBar } from './LogPanel';
 import type { LogLine, Update } from './types';
 
@@ -79,5 +80,44 @@ describe('StatusBar update prompt', () => {
     const html = bar({ update: { ...update, prompt: true } });
     expect(html).toContain('update-dialog-title');
     expect(html).toContain('v1.18.0');
+  });
+});
+
+describe('StatusBar translations', () => {
+  const render = (lang: 'es' | 'ca', log: LogLine[]) =>
+    renderToStaticMarkup(
+      createElement(
+        I18nProvider,
+        { pref: lang, persist: async () => undefined, systemLanguages: ['en'] },
+        createElement(StatusBar, {
+          log,
+          version: 'v1.12.0',
+          releaseURL: '',
+          update: { latest: 'v1.13.0', url: 'https://example.com/latest', oneClick: false },
+          open: false,
+          onToggle: () => undefined,
+          onOpenURL: () => undefined,
+          onUpdate: () => Promise.resolve(),
+        }),
+      ),
+    );
+
+  it('shows the words and the plural counts in the chosen language', () => {
+    const html = render('es', [
+      { level: 'error', text: 'boom' },
+      { level: 'warn', text: 'careful' },
+      { level: 'warn', text: 'again' },
+    ]);
+    expect(html).toContain('Registro');
+    expect(html).toContain('aria-label="1 error"');
+    expect(html).toContain('aria-label="2 advertencias"');
+    expect(html).toContain('aria-label="Actualización disponible: v1.13.0"');
+    expect(render('es', [])).toContain('>Listo</span>');
+  });
+
+  it('translates the log toggle and the Catalan words', () => {
+    const html = render('ca', []);
+    expect(html).toContain('title="Mostra el registre"');
+    expect(html).toContain('>Preparat</span>');
   });
 });

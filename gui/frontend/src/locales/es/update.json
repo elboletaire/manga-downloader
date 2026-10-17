@@ -1,0 +1,8 @@
+{
+  "title": "Actualización disponible",
+  "body": "{{brand}} {{latest}} está disponible (tienes {{current}}).",
+  "later": "Más tarde",
+  "releaseNotes": "Notas de la versión",
+  "now": "Actualizar ahora",
+  "downloading": "Descargando…"
+}

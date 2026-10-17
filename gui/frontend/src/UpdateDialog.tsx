@@ -3,6 +3,7 @@
 // is shown here so the user doesn't have to open the log.
 
 import { useEffect, useRef, useState } from 'react';
+import { useI18n } from './i18n/react';
 import { AlertIcon } from './icons';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function UpdateDialog({ latest, current, onUpdate, onReleaseNotes, onClose }: Props) {
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const update = useRef<HTMLButtonElement>(null);
@@ -58,11 +60,9 @@ export function UpdateDialog({ latest, current, onUpdate, onReleaseNotes, onClos
         }}
       >
         <h2 id="update-dialog-title">
-          <AlertIcon size={18} /> Update available
+          <AlertIcon size={18} /> {t('update.title')}
         </h2>
-        <p id="update-dialog-text">
-          Manga Downloader {latest} is available (you have {current}).
-        </p>
+        <p id="update-dialog-text">{t('update.body', { brand: 'Manga Downloader', latest, current })}</p>
         {error !== '' && (
           <p className="update-error" role="alert">
             {error}
@@ -70,13 +70,13 @@ export function UpdateDialog({ latest, current, onUpdate, onReleaseNotes, onClos
         )}
         <div className="browser-alert-actions">
           <button type="button" className="btn ghost" onClick={close} disabled={busy}>
-            {error !== '' ? 'Close' : 'Later'}
+            {error !== '' ? t('common.close') : t('update.later')}
           </button>
           <button type="button" className="btn ghost" onClick={onReleaseNotes} disabled={busy}>
-            Release notes
+            {t('update.releaseNotes')}
           </button>
           <button type="button" className="btn primary" ref={update} onClick={run} disabled={busy}>
-            {busy ? 'Downloading…' : 'Update now'}
+            {busy ? t('update.downloading') : t('update.now')}
           </button>
         </div>
       </section>
