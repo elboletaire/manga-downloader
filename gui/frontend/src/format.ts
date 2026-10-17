@@ -2,7 +2,7 @@
 
 import { say, type Lang, type T } from './i18n';
 import { percent } from './i18n/format';
-import type { Job, Summary } from './types';
+import type { Job, Message, Summary } from './types';
 
 export function plural(n: number, one: string, many: string): string {
   return n === 1 ? `1 ${one}` : `${n} ${many}`;
@@ -143,7 +143,7 @@ export function jobFraction(j: Job): number {
 }
 
 /** Text for a thrown value from a bound call, which Wails rejects with a string */
-export function errorMessage(e: unknown): string {
+export function errorText(e: unknown): string {
   if (typeof e === 'string') {
     return e;
   }
@@ -152,6 +152,33 @@ export function errorMessage(e: unknown): string {
   }
 
   return String(e);
+}
+
+/**
+ * What to show for a thrown value from a bound call. The Go side sends an error
+ * it wrote as its message's JSON, which is translated here; other text is shown as it is.
+ */
+export function errorMessage(e: unknown, t: T): string {
+  const text = errorText(e);
+  const msg = parseMessage(text);
+
+  return msg ? say(t, msg, msg.text) : text;
+}
+
+function parseMessage(text: string): Message | undefined {
+  if (!text.startsWith('{')) {
+    return undefined;
+  }
+  try {
+    const parsed: unknown = JSON.parse(text);
+    if (typeof parsed === 'object' && parsed !== null && typeof (parsed as { key?: unknown }).key === 'string') {
+      return parsed as Message;
+    }
+  } catch {
+    // not JSON: the text is shown as it is
+  }
+
+  return undefined;
 }
 
 /** A chapter number as the site would print it: 12, 12.5, never 12.000001 */

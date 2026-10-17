@@ -23,7 +23,7 @@ const maxLogLines = 2000
 
 // errBusy is returned when an action is refused because a series is loading
 // or a download is running
-var errBusy = errors.New("a series is loading or a download is running")
+var errBusy = uiErr("errors.busy", nil, nil)
 
 // LogLevel is the severity of a log line
 type LogLevel int
@@ -274,7 +274,7 @@ func (c *Controller) onAttention(a browser.Attention) {
 	c.mu.Lock()
 	if a.Active {
 		c.attention = &a
-		c.appendLogLocked(LogWarn, a.Message())
+		c.appendMsgLocked(LogWarn, alertMessage(a))
 	} else {
 		c.attention = nil
 	}
@@ -282,15 +282,24 @@ func (c *Controller) onAttention(a browser.Attention) {
 	c.emit()
 }
 
-// BrowserAlert is the message of the browser window waiting for the user, ""
+// BrowserAlert is the alert of the browser window waiting for the user, nil
 // when none is
-func (c *Controller) BrowserAlert() string {
+func (c *Controller) BrowserAlert() *Message {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.attention == nil {
-		return ""
+		return nil
 	}
-	return c.attention.Message()
+	m := alertMessage(*c.attention)
+	return &m
+}
+
+// alertMessage is the browser's alert, in English as browser.Attention words it
+func alertMessage(a browser.Attention) Message {
+	if a.Browser != "" {
+		return msg("browser.alertNamed", map[string]any{"browser": a.Browser, "host": a.Host})
+	}
+	return msg("browser.alert", map[string]any{"host": a.Host})
 }
 
 // DismissBrowserAlert hides the alert; the window stays open, and the load
@@ -614,7 +623,7 @@ func (c *Controller) listingFor(url string, s *grabber.Settings, reuse grabber.S
 			c.addMsg(LogWarn, msg("log.siteCheck", map[string]any{"reason": err.Error()}))
 		}
 		if site == nil {
-			return nil, nil, errors.New("site not recognised")
+			return nil, nil, uiErr("errors.siteUnknown", nil, nil)
 		}
 	}
 
@@ -1101,7 +1110,7 @@ func (c *Controller) SetSelectedMany(indices []int, on bool) error {
 	for _, i := range indices {
 		if i < 0 || i >= len(c.selected) {
 			c.mu.Unlock()
-			return fmt.Errorf("chapter %d is not in the list", i)
+			return uiErr("errors.chapterMissing", map[string]any{"index": i}, nil)
 		}
 	}
 	for _, i := range indices {
@@ -1195,7 +1204,7 @@ func (c *Controller) SetVolumes(text string) error {
 	// parts is Pack as's Merged, which has no box
 	if spec != nil && spec.Parts {
 		c.mu.Unlock()
-		return errors.New(`"parts" isn't a Volumes value: pick Merged under Pack as`)
+		return uiErr("errors.partsVolumes", nil, nil)
 	}
 	c.volumesText = strings.TrimSpace(text)
 	c.mu.Unlock()
@@ -1262,11 +1271,11 @@ func (c *Controller) Start() error {
 	}
 	if c.series == nil {
 		c.mu.Unlock()
-		return errors.New("load a series first")
+		return uiErr("errors.loadFirst", nil, nil)
 	}
 	if c.filtersChanged() {
 		c.mu.Unlock()
-		return errors.New("the language or scanlator changed: reload the series first")
+		return uiErr("errors.filtersChanged", nil, nil)
 	}
 	// volume mode packs the Volumes box, which isn't saved with the options;
 	// a parts run has no box
@@ -1293,7 +1302,7 @@ func (c *Controller) Start() error {
 	}
 	if len(chapters) == 0 {
 		c.mu.Unlock()
-		return errors.New("select at least one chapter")
+		return uiErr("errors.selectOne", nil, nil)
 	}
 	rows := len(chapters)
 	if c.settings.Bundle {

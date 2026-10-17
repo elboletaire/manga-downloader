@@ -3,6 +3,7 @@
 // is shown here so the user doesn't have to open the log.
 
 import { useEffect, useRef, useState } from 'react';
+import { errorMessage } from './format';
 import { useI18n } from './i18n/react';
 import { AlertIcon } from './icons';
 
@@ -33,7 +34,7 @@ export function UpdateDialog({ latest, current, onUpdate, onReleaseNotes, onClos
     setBusy(true);
     setError('');
     onUpdate().catch((e: unknown) => {
-      setError(String(e instanceof Error ? e.message : e));
+      setError(errorMessage(e, t));
       setBusy(false);
     });
   };

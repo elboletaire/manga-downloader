@@ -60,5 +60,8 @@
     "label": "Mostra la finestra del navegador",
     "hint": "Gairebé mai cal: la finestra s'obre sola quan un lloc la demana.",
     "auto": "Cal per a aquest lloc: la finestra s'obre sola."
+  },
+  "folder": {
+    "dialogTitle": "Tria la carpeta de sortida"
   }
 }

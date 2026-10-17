@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type Ref } from 'react';
 import { AUTO_LOAD_DELAY_MS, shouldAutoLoad } from './autoLoad';
 import { SelectField, TextField } from './fields';
 import { sameScanlator, typedValue, filterControl, filtersIdentified, filterOptions, shownSelection, type FilterControl, type FilterKind } from './filters';
+import { say } from './i18n';
 import { useI18n } from './i18n/react';
 import { shortcutLabel, isMac } from './settingsShortcut';
 import { AlertIcon, GearIcon, LinkIcon, RefreshIcon, Spinner } from './icons';
@@ -105,7 +106,7 @@ export function SourceBar({
     void onPick(patch);
   };
   // a failed load with nothing listed is told in the chapter area instead
-  const problem = loadRefusal !== '' ? loadRefusal : state.loaded ? state.loadError : '';
+  const problem = loadRefusal !== '' ? loadRefusal : state.loaded ? say(t, state.loadErrorMsg, state.loadError) : '';
   const settingsLabel = `${t('settings.open')} (${shortcutLabel(isMac())})`;
 
   return (

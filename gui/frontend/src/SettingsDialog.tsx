@@ -41,7 +41,7 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
   }, []);
 
   const pick = (next: LangPref) => {
-    setLanguage(next).catch((e: unknown) => onError(errorMessage(e)));
+    setLanguage(next).catch((e: unknown) => onError(errorMessage(e, t)));
   };
 
   // A click on the dialog itself is a backdrop click, but only when the press started there too.

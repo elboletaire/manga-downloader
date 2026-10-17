@@ -23,6 +23,7 @@ type fakeSink struct {
 	events []fakeEvent
 	pick   string
 	picked []string
+	titles []string
 }
 
 type fakeEvent struct {
@@ -38,10 +39,11 @@ func (f *fakeSink) Emit(event string, data any) {
 
 func (f *fakeSink) Close() {}
 
-func (f *fakeSink) ChooseDirectory(defaultDir string) (string, error) {
+func (f *fakeSink) ChooseDirectory(title, defaultDir string) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.picked = append(f.picked, defaultDir)
+	f.titles = append(f.titles, title)
 	return f.pick, nil
 }
 
@@ -145,9 +147,29 @@ func TestLoadMessageNamesTheFailingStep(t *testing.T) {
 		{errors.New("plain"), "plain"},
 	}
 	for _, c := range cases {
-		if got := loadMessage(c.err); got != c.want {
+		if got, _ := loadMessage(c.err); got != c.want {
 			t.Errorf("loadMessage(%T) = %q, want %q", c.err, got, c.want)
 		}
+	}
+}
+
+// the load errors the window translates carry their key; the rest don't
+func TestLoadMessageCarriesItsKey(t *testing.T) {
+	cases := []struct {
+		err error
+		key string
+	}{
+		{&core.TitleError{Err: errors.New("boom")}, "errors.loadTitle"},
+		{&core.ChaptersError{Errs: []error{errors.New("boom")}}, "errors.loadChapters"},
+		{uiErr("errors.siteUnknown", nil, nil), "errors.siteUnknown"},
+	}
+	for _, c := range cases {
+		if _, m := loadMessage(c.err); m == nil || m.Key != c.key {
+			t.Errorf("loadMessage(%T) message = %+v, want key %q", c.err, m, c.key)
+		}
+	}
+	if _, m := loadMessage(errors.New("plain")); m != nil {
+		t.Errorf("a plain error got message %+v", m)
 	}
 }
 
@@ -399,12 +421,15 @@ func TestSetOptionsRefusedWhileBusy(t *testing.T) {
 func TestChooseFolderSetsTheOutputFolder(t *testing.T) {
 	a, sink, prefs := newTestApp(t, 1)
 	sink.pick = t.TempDir()
-	got, err := a.ChooseFolder()
+	got, err := a.ChooseFolder("Choose the output folder")
 	if err != nil || got != sink.pick {
 		t.Fatalf("ChooseFolder = %q, %v", got, err)
 	}
 	if a.Options().OutputDir != sink.pick {
 		t.Errorf("output folder %q, want %q", a.Options().OutputDir, sink.pick)
+	}
+	if len(sink.titles) != 1 || sink.titles[0] != "Choose the output folder" {
+		t.Errorf("dialog titles = %q, want the one passed", sink.titles)
 	}
 	if loaded := defaultSettings(); loadOptions(prefs, loaded) != nil || loaded.OutputDir != sink.pick {
 		t.Errorf("the picked folder wasn't saved")
@@ -415,7 +440,7 @@ func TestChooseFolderCancelledKeepsTheFolder(t *testing.T) {
 	a, sink, _ := newTestApp(t, 1)
 	before := a.Options().OutputDir
 	sink.pick = ""
-	got, err := a.ChooseFolder()
+	got, err := a.ChooseFolder("Choose the output folder")
 	if err != nil || got != "" {
 		t.Fatalf("cancelled ChooseFolder = %q, %v", got, err)
 	}

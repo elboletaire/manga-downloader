@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { errorMessage } from './format';
+import { errorText } from './format';
 import type { Api } from './api';
 import type { Chapter, LogLine, State } from './types';
 
@@ -71,7 +71,7 @@ export function useWindow(api: Api, initial?: State): WindowData & { failure: st
       .catch((e: unknown) => {
         // without a snapshot the window has nothing to show: say so instead of "Loading…"
         if (alive) {
-          setFailure(errorMessage(e));
+          setFailure(errorText(e));
         }
       });
 

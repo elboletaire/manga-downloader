@@ -46,15 +46,34 @@ export namespace main {
 	        this.selected = source["selected"];
 	    }
 	}
+	export class Message {
+	    key: string;
+	    args?: Record<string, any>;
+	    text: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Message(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.key = source["key"];
+	        this.args = source["args"];
+	        this.text = source["text"];
+	    }
+	}
 	export class JobDTO {
 	    title: string;
+	    titleMsg?: Message;
 	    tags: string;
 	    number: number;
 	    total: number;
 	    done: number;
 	    state: string;
 	    reason: string;
+	    reasonMsg?: Message;
 	    status: string;
+	    statusMsg?: Message;
 	    volume: boolean;
 	
 	    static createFrom(source: any = {}) {
@@ -64,19 +83,41 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.title = source["title"];
+	        this.titleMsg = this.convertValues(source["titleMsg"], Message);
 	        this.tags = source["tags"];
 	        this.number = source["number"];
 	        this.total = source["total"];
 	        this.done = source["done"];
 	        this.state = source["state"];
 	        this.reason = source["reason"];
+	        this.reasonMsg = this.convertValues(source["reasonMsg"], Message);
 	        this.status = source["status"];
+	        this.statusMsg = this.convertValues(source["statusMsg"], Message);
 	        this.volume = source["volume"];
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class LogDTO {
 	    level: string;
 	    text: string;
+	    msg?: Message;
 	
 	    static createFrom(source: any = {}) {
 	        return new LogDTO(source);
@@ -86,8 +127,28 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.level = source["level"];
 	        this.text = source["text"];
+	        this.msg = this.convertValues(source["msg"], Message);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
+	
 	export class OptionsDTO {
 	    outputDir: string;
 	    format: string;
@@ -217,6 +278,7 @@ export namespace main {
 	    loading: boolean;
 	    loaded: boolean;
 	    loadError: string;
+	    loadErrorMsg?: Message;
 	    title: string;
 	    chapterCount: number;
 	    hasDuplicates: boolean;
@@ -240,6 +302,7 @@ export namespace main {
 	    update?: UpdateDTO;
 	    browserVisibleAuto: boolean;
 	    browserAlert: string;
+	    browserAlertMsg?: Message;
 	    filenameTemplateDefault: string;
 	    filenameTemplateWarning: string;
 	
@@ -253,6 +316,7 @@ export namespace main {
 	        this.loading = source["loading"];
 	        this.loaded = source["loaded"];
 	        this.loadError = source["loadError"];
+	        this.loadErrorMsg = this.convertValues(source["loadErrorMsg"], Message);
 	        this.title = source["title"];
 	        this.chapterCount = source["chapterCount"];
 	        this.hasDuplicates = source["hasDuplicates"];
@@ -276,6 +340,7 @@ export namespace main {
 	        this.update = this.convertValues(source["update"], UpdateDTO);
 	        this.browserVisibleAuto = source["browserVisibleAuto"];
 	        this.browserAlert = source["browserAlert"];
+	        this.browserAlertMsg = this.convertValues(source["browserAlertMsg"], Message);
 	        this.filenameTemplateDefault = source["filenameTemplateDefault"];
 	        this.filenameTemplateWarning = source["filenameTemplateWarning"];
 	    }

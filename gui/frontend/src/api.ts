@@ -32,7 +32,8 @@ export interface Api {
   /** Sets the Volumes box ("1-7/8-16", "" for the site's own); rejects a value that doesn't parse */
   setVolumes(text: string): Promise<void>;
   /** Native folder picker; resolves with "" when cancelled */
-  chooseFolder(): Promise<string>;
+  /** Asks for the output folder with the picker titled title; "" when cancelled */
+  chooseFolder(title: string): Promise<string>;
   openFolder(): Promise<void>;
   /** Opens the URL in the system's browser, never in the window */
   openURL(url: string): void;
@@ -105,7 +106,7 @@ export function createWailsApi(): Api {
     setOptionsAndLoad: (options, url) =>
       app.SetOptionsAndLoad(options as unknown as Parameters<typeof app.SetOptionsAndLoad>[0], url),
     setVolumes: (text) => app.SetVolumes(text),
-    chooseFolder: () => app.ChooseFolder(),
+    chooseFolder: (title) => app.ChooseFolder(title),
     openFolder: () => app.OpenFolder(),
     openURL: (url) => BrowserOpenURL(url),
     // async, so a missing runtime rejects rather than throwing into the click

@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { errorMessage, formatNumber } from './format';
+import { say } from './i18n';
 import type { T as Translator } from './i18n';
 import { T, useI18n } from './i18n/react';
 import { AlertIcon, ChevronIcon, LinkIcon, LockIcon, RefreshIcon } from './icons';
@@ -110,7 +111,7 @@ function FailedState({ state, onRetry }: { state: State; onRetry: () => void }) 
       </div>
       <h2>{t('chapters.failed.title')}</h2>
       <p className="error-text" role="alert">
-        {state.loadError}
+        {say(t, state.loadErrorMsg, state.loadError)}
       </p>
       {host !== '' && <p className="muted mono small">{state.url}</p>}
       <p className="muted">
@@ -188,7 +189,7 @@ function ChapterList({
     }
   }, [rows.length, active]);
 
-  const fail = (e: unknown) => onError(errorMessage(e));
+  const fail = (e: unknown) => onError(errorMessage(e, t));
 
   // the chapters a span of rows covers: a header stands for its chapters
   // only while folded, as unfolded they're rows of the span already.
@@ -339,7 +340,7 @@ function ChapterList({
           : { text: t('chapters.rangeAdded', { count: n }), bad: false },
       );
     } catch (e) {
-      setRangeNote({ text: errorMessage(e), bad: true });
+      setRangeNote({ text: errorMessage(e, t), bad: true });
     }
   };
 
@@ -663,7 +664,7 @@ function VolumesBar({ text, site, listed, volumes, loose, disabled, onVolumes }:
     }
     onVolumes(value).then(
       () => setError(''),
-      (e: unknown) => setError(errorMessage(e)),
+      (e: unknown) => setError(errorMessage(e, t)),
     );
   };
 

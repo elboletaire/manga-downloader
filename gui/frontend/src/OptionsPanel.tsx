@@ -78,7 +78,7 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
               type="button"
               className="btn small"
               disabled={locked}
-              onClick={() => onChooseFolder().catch((e) => onError(errorMessage(e)))}
+              onClick={() => onChooseFolder().catch((e) => onError(errorMessage(e, t)))}
             >
               {t('options.save.browse')}
             </button>

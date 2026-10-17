@@ -1,3 +1,24 @@
 {
-  "enterURL": "introdueix primer la URL d'una sèrie"
+  "enterURL": "introdueix primer la URL d'una sèrie",
+  "busy": "s'està carregant una sèrie o hi ha una descàrrega en curs",
+  "parserFailed": "l'analitzador del lloc ha fallat: {{reason}}",
+  "unknownLanguage": "idioma desconegut \"{{language}}\"",
+  "folderMissing": "la carpeta {{path}} no existeix",
+  "updateUnavailable": "l'actualització d'un clic no està disponible per a aquesta còpia",
+  "updateBusy": "l'actualització ja és en curs",
+  "updateWaitDownload": "espera que acabi la descàrrega, o cancel·la-la, abans d'actualitzar",
+  "updateDownload": "no s'ha pogut descarregar l'actualització: {{reason}}",
+  "updateMeanwhile": "s'ha iniciat una descàrrega mentrestant: acaba-la o cancel·la-la i actualitza de nou",
+  "updateRestart": "Actualitzat a {{version}}, però no s'ha pogut reiniciar; obre Manga Downloader un altre cop",
+  "updateInstaller": "no s'ha pogut iniciar l'instal·lador: {{reason}}",
+  "notReady": "la finestra encara no és a punt",
+  "siteUnknown": "lloc no reconegut",
+  "chapterMissing": "el capítol {{index}} no és a la llista",
+  "partsVolumes": "\"parts\" no és un valor de Volums: tria Units a Empaqueta com",
+  "loadFirst": "carrega primer una sèrie",
+  "filtersChanged": "has canviat l'idioma o el grup: torna a carregar la sèrie primer",
+  "selectOne": "selecciona almenys un capítol",
+  "noVolumes": "el lloc no indica a quin volum pertanyen aquests capítols; indica els volums com a rangs de capítols, p. ex. \"1-7/8-16\"",
+  "loadTitle": "No s'ha pogut obtenir el títol de la sèrie: {{reason}}",
+  "loadChapters": "No s'ha pogut obtenir la llista de capítols: {{reason}}"
 }

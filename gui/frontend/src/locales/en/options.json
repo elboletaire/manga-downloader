@@ -60,5 +60,8 @@
     "label": "Show the browser window",
     "hint": "Rarely needed: the window opens by itself when a site asks for it.",
     "auto": "Needed for this site: the window opens by itself."
+  },
+  "folder": {
+    "dialogTitle": "Choose the output folder"
   }
 }

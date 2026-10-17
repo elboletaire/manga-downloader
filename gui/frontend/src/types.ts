@@ -95,6 +95,8 @@ export interface State {
   loading: boolean;
   loaded: boolean;
   loadError: string;
+  /** loadError as a message, when the GUI wrote it */
+  loadErrorMsg?: Message;
   title: string;
   chapterCount: number;
   hasDuplicates: boolean;
@@ -127,6 +129,8 @@ export interface State {
   browserVisibleAuto: boolean;
   /** What to tell the user while the browser window waits for them; "" when it isn't */
   browserAlert: string;
+  /** browserAlert as a message */
+  browserAlertMsg?: Message;
   /** The filename template a blank option stands for */
   filenameTemplateDefault: string;
   /** What is wrong with options.filenameTemplate; "" when nothing */

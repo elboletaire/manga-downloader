@@ -6,7 +6,7 @@ export function Cancel():Promise<void>;
 
 export function Chapters():Promise<Array<main.ChapterDTO>>;
 
-export function ChooseFolder():Promise<string>;
+export function ChooseFolder(arg1:string):Promise<string>;
 
 export function Clear():Promise<void>;
 

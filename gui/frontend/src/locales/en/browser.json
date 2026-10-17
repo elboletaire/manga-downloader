@@ -1,5 +1,7 @@
 {
   "title": "The browser needs you",
   "dismiss": "Dismiss",
-  "show": "Show the browser window"
+  "show": "Show the browser window",
+  "alert": "A browser window opened to pass a check on {{host}}. There may be a captcha or puzzle to solve there; the download continues by itself once it's done.",
+  "alertNamed": "{{browser}} opened a window to pass a check on {{host}}. There may be a captcha or puzzle to solve there; the download continues by itself once it's done."
 }

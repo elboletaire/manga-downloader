@@ -60,5 +60,8 @@
     "label": "Mostrar la ventana del navegador",
     "hint": "Rara vez hace falta: la ventana se abre sola cuando un sitio la pide.",
     "auto": "Hace falta para este sitio: la ventana se abre sola."
+  },
+  "folder": {
+    "dialogTitle": "Elige la carpeta de salida"
   }
 }

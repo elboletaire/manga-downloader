@@ -12,6 +12,7 @@ import { BrowserAlert } from './BrowserAlert';
 import { ChapterPanel } from './ChapterPanel';
 import { DownloadDock } from './DownloadDock';
 import { errorMessage } from './format';
+import { say } from './i18n';
 import { ActivityIcon, SlidersIcon, Spinner } from './icons';
 import { useI18n } from './i18n/react';
 import { Mascot } from './Mascot';
@@ -101,7 +102,7 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
         <Mascot expression="soft" size={48} />
         {failure !== null ? (
           <p className="error-text" role="alert">
-            {t('app.readFailed', { error: failure })}
+            {t('app.readFailed', { error: errorMessage(failure, t) })}
           </p>
         ) : (
           <p className="muted">
@@ -117,16 +118,16 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
   const load = (target: string) => {
     setLoadRefusal('');
     setActionError('');
-    api.load(target).catch((e) => setLoadRefusal(errorMessage(e)));
+    api.load(target).catch((e) => setLoadRefusal(errorMessage(e, t)));
   };
   const clear = () => {
     setLoadRefusal('');
-    api.clear().catch((e) => setLoadRefusal(errorMessage(e)));
+    api.clear().catch((e) => setLoadRefusal(errorMessage(e, t)));
   };
   const setOptions = (patch: Partial<Options>) => {
     setOptionError('');
     return optionsWriter.patch(patch).catch((e: unknown) => {
-      setOptionError(errorMessage(e));
+      setOptionError(errorMessage(e, t));
       throw e;
     });
   };
@@ -135,7 +136,7 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
   const pickFilter = (patch: Partial<Options>) => {
     setOptionError('');
     return optionsWriter.patch(patch, state.url).catch((e: unknown) => {
-      setOptionError(errorMessage(e));
+      setOptionError(errorMessage(e, t));
     });
   };
   const counts = tally(state.jobs);
@@ -208,7 +209,7 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
               onOptions={setOptions}
               onChooseFolder={async () => {
                 setOptionError('');
-                await api.chooseFolder();
+                await api.chooseFolder(t('options.folder.dialogTitle'));
               }}
               onError={setOptionError}
             />
@@ -224,7 +225,7 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
             <ActivityPanel
               state={state}
               onOpenFolder={() => {
-                api.openFolder().catch((e) => setActionError(errorMessage(e)));
+                api.openFolder().catch((e) => setActionError(errorMessage(e, t)));
               }}
             />
           </div>
@@ -236,10 +237,10 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
             selected={selected}
             onStart={() => {
               setActionError('');
-              api.start().catch((e) => setActionError(errorMessage(e)));
+              api.start().catch((e) => setActionError(errorMessage(e, t)));
             }}
             onCancel={() => {
-              api.cancel().catch((e) => setActionError(errorMessage(e)));
+              api.cancel().catch((e) => setActionError(errorMessage(e, t)));
             }}
           />
         </aside>
@@ -250,7 +251,7 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
           state={state}
           onClose={() => setSettingsOpen(false)}
           onCheckUpdates={(on) => {
-            api.setCheckUpdates(on).catch((e: unknown) => setOptionError(errorMessage(e)));
+            api.setCheckUpdates(on).catch((e: unknown) => setOptionError(errorMessage(e, t)));
           }}
           onOpenURL={(url) => api.openURL(url)}
           onError={setOptionError}
@@ -259,7 +260,7 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
       {logOpen && <LogDrawer log={log} onClose={() => setLogOpen(false)} />}
       {state.browserAlert !== '' && (
         <BrowserAlert
-          message={state.browserAlert}
+          message={say(t, state.browserAlertMsg, state.browserAlert)}
           onShow={() => {
             api.showBrowser().catch(() => undefined);
           }}

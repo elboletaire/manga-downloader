@@ -104,9 +104,24 @@ describe('job helpers', () => {
 
 describe('errorMessage', () => {
   it('reads a Wails rejection, which is a plain string', () => {
-    expect(errorMessage('select at least one chapter')).toBe('select at least one chapter');
-    expect(errorMessage(new Error('boom'))).toBe('boom');
-    expect(errorMessage(42)).toBe('42');
+    expect(errorMessage('select at least one chapter', en)).toBe('select at least one chapter');
+    expect(errorMessage(new Error('boom'), en)).toBe('boom');
+    expect(errorMessage(42, en)).toBe('42');
+  });
+
+  it('translates the message the Go side sent as JSON', () => {
+    const raw = JSON.stringify({ key: 'errors.enterURL', text: 'enter the URL of a series first' });
+    expect(errorMessage(raw, es)).toBe('introduce primero la URL de una serie');
+    expect(errorMessage(new Error(raw), es)).toBe('introduce primero la URL de una serie');
+  });
+
+  it('shows plain text, and JSON without a key, as it is', () => {
+    expect(errorMessage('not json {', es)).toBe('not json {');
+    expect(errorMessage('{"text":"x"}', es)).toBe('{"text":"x"}');
+  });
+
+  it('falls back to the message text for a key the catalog lacks', () => {
+    expect(errorMessage(JSON.stringify({ key: 'errors.nope', text: 'English' }), es)).toBe('English');
   });
 });
 

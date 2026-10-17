@@ -65,7 +65,7 @@ describe('createMockApi', () => {
     await expect(api.setSelectedMany([0], false)).rejects.toBe(busy);
     await expect(api.setAll(false)).rejects.toBe(busy);
     await expect(api.selectRange('1')).rejects.toBe(busy);
-    await expect(api.chooseFolder()).rejects.toBe(busy);
+    await expect(api.chooseFolder('Choose the output folder')).rejects.toBe(busy);
     await expect(api.start()).rejects.toBe(busy);
   });
 

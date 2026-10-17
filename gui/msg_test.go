@@ -5,12 +5,15 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/elboletaire/manga-downloader/core"
 )
 
 // withCatalog swaps the English catalog for the test and restores it after
@@ -127,6 +130,43 @@ func TestWindowError(t *testing.T) {
 			t.Errorf("windowError = %q, want the text", got)
 		}
 	})
+}
+
+// a uiErr keeps its key and English text, and its wrapped error
+func TestUIErrKeysAndTexts(t *testing.T) {
+	base := errors.New("boom")
+	cases := []struct {
+		err  error
+		key  string
+		text string
+	}{
+		{errBusy, "errors.busy", "a series is loading or a download is running"},
+		{uiErr("errors.folderMissing", map[string]any{"path": "/x"}, nil), "errors.folderMissing", "the folder /x doesn't exist"},
+		{uiErr("errors.chapterMissing", map[string]any{"index": 3}, nil), "errors.chapterMissing", "chapter 3 is not in the list"},
+		{uiErr("errors.updateDownload", map[string]any{"reason": "boom"}, base), "errors.updateDownload", "couldn't download the update: boom"},
+	}
+	for _, c := range cases {
+		var ue *uiError
+		if !errors.As(c.err, &ue) || ue.Key != c.key {
+			t.Errorf("%v: message key = %+v, want %q", c.err, ue, c.key)
+			continue
+		}
+		if c.err.Error() != c.text {
+			t.Errorf("Error() = %q, want %q", c.err.Error(), c.text)
+		}
+	}
+	if !errors.Is(uiErr("errors.updateDownload", nil, base), base) {
+		t.Error("errors.Is does not reach the wrapped error")
+	}
+}
+
+// a shared error the window translates keeps its English text under its key
+func TestWindowErrorTranslatesSharedErrors(t *testing.T) {
+	got := windowError(fmt.Errorf("grouping: %w", core.ErrNoVolumes))
+	var back Message
+	if err := json.Unmarshal([]byte(got), &back); err != nil || back.Key != "errors.noVolumes" || back.Text != core.ErrNoVolumes.Error() {
+		t.Errorf("windowError = %q, want the errors.noVolumes message", got)
+	}
 }
 
 // messageKeyRE matches a literal key passed to msg or uiErr

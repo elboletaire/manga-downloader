@@ -10,8 +10,8 @@ export function Chapters() {
   return window['go']['main']['App']['Chapters']();
 }
 
-export function ChooseFolder() {
-  return window['go']['main']['App']['ChooseFolder']();
+export function ChooseFolder(arg1) {
+  return window['go']['main']['App']['ChooseFolder'](arg1);
 }
 
 export function Clear() {

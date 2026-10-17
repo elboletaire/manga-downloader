@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/elboletaire/manga-downloader/core"
 )
 
 // Message is a string the window translates from Key and Args. Text is the
@@ -122,19 +124,37 @@ func uiErr(key string, args map[string]any, err error) error {
 	return &uiError{Message: msg(key, args), err: err}
 }
 
+// sharedMessages are the shared errors the window shows translated, by key
+var sharedMessages = []struct {
+	err error
+	key string
+}{
+	{core.ErrNoVolumes, "errors.noVolumes"},
+}
+
 // windowError is the Wails ErrorFormatter. Wails hands the formatted value to
-// the window as an Error message, so a uiError is its Message as JSON (the
-// window parses it) and any other error its text.
+// the window as an Error message, so a message error is its Message as JSON
+// (the window parses it) and any other error its text.
 func windowError(err error) string {
 	var ue *uiError
 	if errors.As(err, &ue) {
-		raw, merr := json.Marshal(ue.Message)
-		if merr != nil {
-			return ue.Text
+		return messageJSON(ue.Message)
+	}
+	for _, s := range sharedMessages {
+		if errors.Is(err, s.err) {
+			return messageJSON(msg(s.key, nil))
 		}
-
-		return string(raw)
 	}
 
 	return err.Error()
+}
+
+// messageJSON is m as JSON, its English text when that fails
+func messageJSON(m Message) string {
+	raw, err := json.Marshal(m)
+	if err != nil {
+		return m.Text
+	}
+
+	return string(raw)
 }
