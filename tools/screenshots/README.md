@@ -54,19 +54,30 @@ near `RELEASE_VERSION` in `mock.ts`.
 - `capture-all.sh [--install]`: all of the above for every shot and both
   themes, then the export; `--install` copies the PNGs into
   `assets/screenshots/` and regenerates the website's WebPs.
+  `SHOT_LANG` picks the language (see below).
 - `13-settings`: the Settings dialog, opened by clicking the header's gear
   (`.settings-btn`) on the loaded mock.
 
 ## Languages
 
-`SHOT_LANG` (`en`, `es` or `ca`, default `en`) sets the window's language, as
-`&lang=` on every shot query (see `mock.ts`). A translated run with `--install`
-writes its PNGs to `assets/screenshots/<lang>/` and leaves the website's WebPs
-alone, since the site uses the English ones:
+`SHOT_LANG` (`en`, `es`, `ca` or `all`, default `en`) sets the window's
+language, as `&lang=` on every shot query (see `mock.ts`). `all` runs the three
+in turn after one build, which is what a release needs:
 
 ```bash
-SHOT_LANG=es tools/screenshots/capture-all.sh --install
+SHOT_LANG=all tools/screenshots/capture-all.sh --install
 ```
+
+`--install` puts English in `assets/screenshots/` and the website's
+`src/assets/screenshots/`. `es` and `ca` go to a `<lang>/` folder in both, with
+their own WebPs (the crops and the hero, as for English). Without `--install`
+the PNGs stay in `out/<lang>/`.
+
+A translated label that changes a panel's size needs its crop checked in
+`website/build/crop-screenshots.sh`: the crops assume the panels sit where they
+do in English, which holds only while the window size is fixed. The Language
+select that `shot-select.sh` clicks is positioned the same way, so check its
+03 shot too.
 
 The individual steps are the ones used for #248; `capture-all.sh` puts them
 together, and retook every shot end to end for #245.

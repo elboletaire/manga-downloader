@@ -112,6 +112,13 @@ build/crop-screenshots.sh ../assets/screenshots src/assets/screenshots
 The shadow widens each derivative beyond the crop plus its 56 px margin, so the
 `<img>` sizes in `index.html` come from the output, not from the geometry.
 
+Each translated app language has its own set in `src/assets/screenshots/<lang>/`
+(`es`, `ca`), made by `tools/screenshots/capture-all.sh --install` from
+`assets/screenshots/<lang>/`. The es and ca pages use a file from there when it
+exists, and the English one for any image that doesn't, so the site never shows
+a missing image. The crop geometry above assumes the panels sit where they do
+in English; a translated label that changes a panel's size needs its crop checked.
+
 The hero (`app-overview`) is not cropped. Its WebP derivatives come from
 `02-loaded-{light,dark}.png` with ImageMagick:
 

@@ -1,9 +1,10 @@
 /// <reference types="vitest/config" />
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import i18next from 'i18next'
 import { defineConfig, type Plugin } from 'vite'
+import { localizeScreenshots } from './build/screenshots.ts'
 import { parseSites, renderSites } from './build/sites.ts'
 import { themeScript } from './src/theme.ts'
 import { LANG_INFO, LANG_KEY, LANGS, redirectTarget, type Lang } from './src/lang.ts'
@@ -126,7 +127,8 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
     : ''
 
   // Function replacers, so a "$" in the inserted text is never a replacement pattern.
-  return html
+  // Translated screenshots where their WebP exists, else the English one.
+  return localizeScreenshots(html, lang, (url) => existsSync(path.join(root, url)))
     .replace('<!-- theme:init -->', () => themeScript())
     .replace('<!-- i18n:detect -->', () => (lang === 'en' ? detectScript() : ''))
     .replace('<!-- i18n:alternates -->', () => alternates())
