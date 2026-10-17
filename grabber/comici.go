@@ -171,8 +171,8 @@ func (c *Comici) fetchSeries() error {
 	return nil
 }
 
-// comiciIsFree reports whether a listed episode is free to read now. A locked
-// one shows a wait-free or paid badge instead of the free text.
+// comiciIsFree reports whether a listed episode is free to read now, by its
+// eliFreeBadge: a plain "今なら無料" span is not free (no viewer anonymously).
 func comiciIsFree(item *goquery.Selection) bool {
 	return item.Find(`[data-e2e="eliFreeBadge"]`).Length() > 0
 }

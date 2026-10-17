@@ -365,9 +365,10 @@ func gigaviewerMarker(raw string) (end int, text, part string, ok bool) {
 			return 0, "", "", false
 		}
 		part = strings.Trim(gigaviewerInnerRe.ReplaceAllString(inner, ""), gigaviewerSeparators)
-		if r, size := utf8.DecodeRuneInString(part); size == len(part) {
-			if p, ok := gigaviewerCircled(r); ok {
-				part = p
+		// a circled part reads as its number, after a word too: "前編①" is "前編1"
+		if last, size := utf8.DecodeLastRuneInString(part); size > 0 {
+			if n, ok := gigaviewerCircled(last); ok {
+				part = part[:len(part)-size] + n
 			}
 		}
 		return loc[1], text, part, true
