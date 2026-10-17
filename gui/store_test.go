@@ -28,7 +28,7 @@ func TestOptionsSaveAndLoadRoundTrip(t *testing.T) {
 		FilenameTemplate: "{{.Series}} {{.Number}}",
 		BrowserVisible:   true,
 	}
-	if err := saveOptions(path, want); err != nil {
+	if err := saveOptions(path, want, defaultPrefs()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -41,9 +41,64 @@ func TestOptionsSaveAndLoadRoundTrip(t *testing.T) {
 	}
 }
 
+func TestPrefsSaveAndLoadRoundTrip(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	want := PrefsDTO{UILanguage: "ca", CheckUpdates: false}
+	if err := saveOptions(path, OptionsDTO{Format: "raw"}, want); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadPrefs(path); got != want {
+		t.Errorf("loaded prefs %+v, want %+v", got, want)
+	}
+}
+
+func TestLoadPrefsCheckUpdatesDefaultsToTrue(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	if err := os.WriteFile(path, []byte(`{"format":"cbz"}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadPrefs(path); !got.CheckUpdates {
+		t.Error("a missing checkUpdates loaded as off")
+	}
+	if err := os.WriteFile(path, []byte(`{"checkUpdates":false}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadPrefs(path); got.CheckUpdates {
+		t.Error("an explicit false checkUpdates loaded as on")
+	}
+}
+
+func TestLoadPrefsUnknownUILanguageFollowsTheSystem(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	if err := os.WriteFile(path, []byte(`{"uiLanguage":"fr"}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadPrefs(path); got.UILanguage != "" {
+		t.Errorf("uiLanguage = %q, want the system's", got.UILanguage)
+	}
+}
+
+// a gui.json from before the preferences existed loads both halves
+func TestOldGUIFileLoadsWithDefaultPrefs(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	if err := os.WriteFile(path, []byte(`{"outputDir":"/books","format":"raw","language":"es","bundle":true}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	s := defaultSettings()
+	if err := loadOptions(path, s); err != nil {
+		t.Fatal(err)
+	}
+	if s.OutputDir != "/books" || s.Format != "raw" || s.Language != "es" || !s.Bundle {
+		t.Errorf("old options not loaded: %+v", optionsOf(*s))
+	}
+	if got := loadPrefs(path); got != defaultPrefs() {
+		t.Errorf("prefs = %+v, want the defaults", got)
+	}
+}
+
 func TestSaveOptionsIsPrivate(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "sub", "gui.json")
-	if err := saveOptions(path, OptionsDTO{}); err != nil {
+	if err := saveOptions(path, OptionsDTO{}, defaultPrefs()); err != nil {
 		t.Fatal(err)
 	}
 	info, err := os.Stat(path)
@@ -104,7 +159,7 @@ func TestLoadOptionsCorruptFileLeavesSettings(t *testing.T) {
 func TestConvertImagesValuesSurviveSaving(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "gui.json")
 	for _, value := range []string{"avif", "avif,webp", "webp", "none"} {
-		if err := saveOptions(path, OptionsDTO{ConvertImages: value}); err != nil {
+		if err := saveOptions(path, OptionsDTO{ConvertImages: value}, defaultPrefs()); err != nil {
 			t.Fatal(err)
 		}
 		s := defaultSettings()

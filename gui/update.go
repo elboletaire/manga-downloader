@@ -56,19 +56,49 @@ func releaseURL(tag string) string {
 // on every offline start.
 func (c *Controller) CheckUpdate(ctx context.Context, current, apiURL string, client *http.Client) {
 	update, err := checkUpdate(ctx, current, apiURL, client)
-	if err != nil {
-		if ctx.Err() == nil {
-			log.Printf("couldn't check for updates: %v", err)
-		}
-		return
-	}
-	if update == nil {
-		return
+	if err != nil && ctx.Err() == nil {
+		log.Printf("couldn't check for updates: %v", err)
 	}
 	c.mu.Lock()
-	c.update = update
+	// turned off while it ran: the answer is dropped, and a turn-on checks again
+	if !c.prefs.CheckUpdates {
+		c.updateChecked = false
+	}
+	recorded := c.prefs.CheckUpdates && update != nil
+	if recorded {
+		c.update = update
+	}
+	c.mu.Unlock()
+	if recorded {
+		c.emit()
+	}
+}
+
+// ClearUpdate forgets the update the check found, so the window stops offering it
+func (c *Controller) ClearUpdate() {
+	c.mu.Lock()
+	c.update = nil
 	c.mu.Unlock()
 	c.emit()
+}
+
+// claimUpdateCheck reports whether no update check has started this session, and
+// records that one is starting
+func (c *Controller) claimUpdateCheck() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.updateChecked {
+		return false
+	}
+	c.updateChecked = true
+
+	return true
+}
+
+// shouldCheckUpdates is whether the update check runs: never for a dev build
+// (no tag), nor when the user turned it off
+func shouldCheckUpdates(tag string, prefs PrefsDTO) bool {
+	return tag != "" && prefs.CheckUpdates
 }
 
 // Update is the newer release the update check found, nil when there's none or

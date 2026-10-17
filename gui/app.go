@@ -159,11 +159,17 @@ func (a *App) startup(ctx context.Context, rt *wailsRuntime) {
 	a.quit = func() { wruntime.Quit(ctx) }
 	go sweepUpdateDirs(os.TempDir())
 	a.launch()
-	// release builds only: a dev build has no release to compare with. The
-	// check runs behind the window, which is up already.
-	if a.tag != "" {
-		go a.ctrl.CheckUpdate(a.updateCtx, a.tag, latestReleaseAPI, updateClient)
+	// the check runs behind the window, which is up already
+	a.checkUpdates()
+}
+
+// checkUpdates starts the update check in the background, once per session, when
+// shouldCheckUpdates allows it
+func (a *App) checkUpdates() {
+	if !shouldCheckUpdates(a.tag, a.ctrl.Prefs()) || !a.ctrl.claimUpdateCheck() {
+		return
 	}
+	go a.ctrl.CheckUpdate(a.updateCtx, a.tag, latestReleaseAPI, updateClient)
 }
 
 // shutdown stops the pushes before the window goes away, then cancels any run
@@ -202,6 +208,8 @@ type State struct {
 	Jobs            []JobDTO    `json:"jobs"`
 	Summary         *SummaryDTO `json:"summary"`
 	Options         OptionsDTO  `json:"options"`
+	// Prefs are the app-only preferences, which aren't options (see PrefsDTO)
+	Prefs PrefsDTO `json:"prefs"`
 	// Volumes is the Volumes box, used when the options pack as volumes
 	Volumes VolumesDTO `json:"volumes"`
 	// Languages and Scanlators are what the two filter selectors offer, null
@@ -343,6 +351,7 @@ func (a *App) State() State {
 		Jobs:               []JobDTO{},
 		Summary:            summaryDTO(c.Summary()),
 		Options:            optionsOf(c.Settings()),
+		Prefs:              c.Prefs(),
 		Version:            a.version,
 		ReleaseURL:         releaseURL(a.tag),
 		Update:             updateDTO(c.Update(), a.installed),
@@ -535,7 +544,35 @@ func (a *App) SetOptions(o OptionsDTO) error {
 	return nil
 }
 
-// save writes the current options to gui.json. A failure is logged rather than
+// SetUILanguage sets the window's language: "" follows the system, else en, es
+// or ca. It's never refused while busy, and is saved for the next run.
+func (a *App) SetUILanguage(lang string) error {
+	if !validUILanguage(lang) {
+		return fmt.Errorf("unknown language %q", lang)
+	}
+	a.ctrl.SetPrefs(func(p *PrefsDTO) { p.UILanguage = lang })
+	a.save()
+
+	return nil
+}
+
+// SetCheckUpdates turns the update check at startup on or off. Turning it off
+// forgets the update found; turning it on checks now, unless a check already ran
+// this session. It's never refused while busy.
+func (a *App) SetCheckUpdates(on bool) error {
+	a.ctrl.SetPrefs(func(p *PrefsDTO) { p.CheckUpdates = on })
+	if on {
+		a.checkUpdates()
+	} else {
+		a.ctrl.ClearUpdate()
+	}
+	a.save()
+
+	return nil
+}
+
+// save writes the current options and preferences to gui.json. Both go in every
+// write, so one never erases the other. A failure is logged rather than
 // returned: the options still apply for this run.
 func (a *App) save() {
 	if a.prefsPath == "" {
@@ -543,7 +580,7 @@ func (a *App) save() {
 	}
 	a.saveMu.Lock()
 	defer a.saveMu.Unlock()
-	if err := saveOptions(a.prefsPath, optionsOf(a.ctrl.Settings())); err != nil {
+	if err := saveOptions(a.prefsPath, optionsOf(a.ctrl.Settings()), a.ctrl.Prefs()); err != nil {
 		a.ctrl.addLog(LogWarn, "could not save the options: "+err.Error())
 	}
 }

@@ -94,6 +94,8 @@ func newSession(notify func()) (*Controller, string) {
 	if err := loadOptions(prefsPath, settings); err != nil {
 		notice.Warn("ignoring the saved options: %v", err)
 	}
+	// nothing else holds the controller yet, so it's set without the lock
+	ctrl.prefs = loadPrefs(prefsPath)
 
 	return ctrl, prefsPath
 }

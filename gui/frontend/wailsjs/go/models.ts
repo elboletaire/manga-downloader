@@ -118,6 +118,20 @@ export namespace main {
 	        this.browserVisible = source["browserVisible"];
 	    }
 	}
+	export class PrefsDTO {
+	    uiLanguage?: string;
+	    checkUpdates: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PrefsDTO(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.uiLanguage = source["uiLanguage"];
+	        this.checkUpdates = source["checkUpdates"];
+	    }
+	}
 	export class RunDTO {
 	    chapters: number;
 	    bundle: boolean;
@@ -217,6 +231,7 @@ export namespace main {
 	    jobs: JobDTO[];
 	    summary?: SummaryDTO;
 	    options: OptionsDTO;
+	    prefs: PrefsDTO;
 	    volumes: VolumesDTO;
 	    languages?: FilterDTO;
 	    scanlators?: FilterDTO;
@@ -252,6 +267,7 @@ export namespace main {
 	        this.jobs = this.convertValues(source["jobs"], JobDTO);
 	        this.summary = this.convertValues(source["summary"], SummaryDTO);
 	        this.options = this.convertValues(source["options"], OptionsDTO);
+	        this.prefs = this.convertValues(source["prefs"], PrefsDTO);
 	        this.volumes = this.convertValues(source["volumes"], VolumesDTO);
 	        this.languages = this.convertValues(source["languages"], FilterDTO);
 	        this.scanlators = this.convertValues(source["scanlators"], FilterDTO);

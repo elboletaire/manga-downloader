@@ -191,6 +191,11 @@ type Controller struct {
 	listedVolumes int
 	// update is the newer release the update check found, nil when none
 	update *Update
+	// updateChecked is set once an update check has started this session (see
+	// claimUpdateCheck), so a turn-on doesn't check again
+	updateChecked bool
+	// prefs are the app-only preferences, outside settings (see PrefsDTO)
+	prefs PrefsDTO
 	// attention is the browser window waiting for the user (a check to pass
 	// there), nil when none is or the user dismissed it
 	attention *browser.Attention
@@ -232,6 +237,7 @@ func NewController(settings *grabber.Settings, notifyFn func()) *Controller {
 		needsVisible: browser.NeedsVisible,
 		bringToFront: browser.BringToFront,
 		settings:     settings,
+		prefs:        defaultPrefs(),
 	}
 	notice.SetHandler(func(level notice.Level, msg string) {
 		lvl := LogInfo
@@ -334,6 +340,22 @@ func (c *Controller) Settings() grabber.Settings {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return *c.settings
+}
+
+// Prefs returns a copy of the app-only preferences
+func (c *Controller) Prefs() PrefsDTO {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.prefs
+}
+
+// SetPrefs applies fn to the preferences. Unlike Configure it's never refused,
+// as the preferences don't change a load or a run.
+func (c *Controller) SetPrefs(fn func(*PrefsDTO)) {
+	c.mu.Lock()
+	fn(&c.prefs)
+	c.mu.Unlock()
+	c.emit()
 }
 
 // Load identifies the site for url and fetches its title and chapter list.

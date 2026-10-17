@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -260,6 +261,88 @@ func TestSetOptionsAppliesAndSaves(t *testing.T) {
 	}
 	if saved.Format != "raw" || saved.ConvertImages != "webp" {
 		t.Errorf("saved options %+v", optionsOf(*saved))
+	}
+}
+
+// the prefs and the options share gui.json, so each setter must keep the other half
+func TestPrefSettersKeepEveryOption(t *testing.T) {
+	a, _, prefs := newTestApp(t, 1)
+	o := a.Options()
+	o.Format = "raw"
+	o.Language = "es"
+	o.ReadingDirection = "ltr"
+	if err := a.SetOptions(o); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.SetUILanguage("ca"); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.SetCheckUpdates(false); err != nil {
+		t.Fatal(err)
+	}
+	if got := a.Options(); got != o {
+		t.Errorf("options %+v after the pref setters, want %+v", got, o)
+	}
+	if got := loadPrefs(prefs); got != (PrefsDTO{UILanguage: "ca"}) {
+		t.Errorf("saved prefs %+v after the pref setters", got)
+	}
+
+	// and SetOptions keeps the prefs
+	o.Format = "epub"
+	if err := a.SetOptions(o); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadPrefs(prefs); got != (PrefsDTO{UILanguage: "ca"}) {
+		t.Errorf("saved prefs %+v after SetOptions", got)
+	}
+	saved := defaultSettings()
+	if err := loadOptions(prefs, saved); err != nil || optionsOf(*saved) != o {
+		t.Errorf("saved options %+v (%v) after SetOptions, want %+v", optionsOf(*saved), err, o)
+	}
+}
+
+func TestPrefSettersWorkWhileBusy(t *testing.T) {
+	a, _, prefs := newTestApp(t, 1)
+	if err := a.ctrl.BeginLoad("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	before := a.ctrl.Settings()
+	if err := a.SetUILanguage("es"); err != nil {
+		t.Errorf("SetUILanguage while loading = %v", err)
+	}
+	if err := a.SetCheckUpdates(false); err != nil {
+		t.Errorf("SetCheckUpdates while loading = %v", err)
+	}
+
+	if after := a.ctrl.Settings(); !reflect.DeepEqual(before, after) {
+		t.Errorf("the pref setters changed the settings:\n%+v\n%+v", before, after)
+	}
+	if st := a.State(); st.Prefs != (PrefsDTO{UILanguage: "es"}) {
+		t.Errorf("State().Prefs = %+v", st.Prefs)
+	}
+	if got := loadPrefs(prefs); got != (PrefsDTO{UILanguage: "es"}) {
+		t.Errorf("saved prefs %+v", got)
+	}
+}
+
+func TestTurningUpdatesOffClearsTheUpdate(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	a.ctrl.update = &Update{Latest: "v9.9.9"}
+	if err := a.SetCheckUpdates(false); err != nil {
+		t.Fatal(err)
+	}
+	if st := a.State(); st.Update != nil || st.Prefs.CheckUpdates {
+		t.Errorf("after turning updates off: update %+v, prefs %+v", st.Update, st.Prefs)
+	}
+}
+
+func TestSetUILanguageRefusesAnUnknownLanguage(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	if err := a.SetUILanguage("fr"); err == nil {
+		t.Error("an unknown language was accepted")
+	}
+	if got := a.State().Prefs; got.UILanguage != "" {
+		t.Errorf("prefs %+v after a refused language", got)
 	}
 }
 

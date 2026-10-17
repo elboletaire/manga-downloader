@@ -31,6 +31,37 @@ type OptionsDTO struct {
 	BrowserVisible   bool   `json:"browserVisible"`
 }
 
+// PrefsDTO are the app-only preferences, which the CLI has no flag for, so they
+// stay out of grabber.Settings. gui.json stores them next to OptionsDTO.
+type PrefsDTO struct {
+	// UILanguage is the window's language: "" follows the system, else en, es or ca
+	UILanguage string `json:"uiLanguage,omitempty"`
+	// CheckUpdates is whether the app checks for a newer release at startup
+	CheckUpdates bool `json:"checkUpdates"`
+}
+
+// guiFile is what gui.json holds: the options and the preferences, flat
+type guiFile struct {
+	OptionsDTO
+	PrefsDTO
+}
+
+// defaultPrefs are the preferences of a first run, and of any key gui.json leaves out
+func defaultPrefs() PrefsDTO {
+	return PrefsDTO{CheckUpdates: true}
+}
+
+// validUILanguage reports whether lang is one the window is translated into, or
+// "" for the system's
+func validUILanguage(lang string) bool {
+	switch lang {
+	case "", "en", "es", "ca":
+		return true
+	}
+
+	return false
+}
+
 // How the chapters are packed: the window's "Pack as" choice
 const (
 	// PackChapters is one file per chapter
@@ -206,14 +237,36 @@ func loadOptions(path string, s *grabber.Settings) error {
 	return nil
 }
 
-// saveOptions writes o to path, replacing the file in one step so a crash
-// mid-write can't leave a truncated file behind. The file is private to the
-// user, like the Manga Plus secret.
-func saveOptions(path string, o OptionsDTO) error {
+// loadPrefs reads the preferences saved at path. Keys missing from the file
+// keep their defaults; a file that doesn't parse gives the defaults, which
+// loadOptions reports.
+func loadPrefs(path string) PrefsDTO {
+	p := defaultPrefs()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return p
+	}
+	f := guiFile{PrefsDTO: p}
+	if err := json.Unmarshal(data, &f); err != nil {
+		return p
+	}
+	p = f.PrefsDTO
+	if !validUILanguage(p.UILanguage) {
+		notice.Warn("ignoring the saved ui-language %q, following the system", p.UILanguage)
+		p.UILanguage = ""
+	}
+
+	return p
+}
+
+// saveOptions writes the options and the preferences to path, replacing the file
+// in one step so a crash mid-write can't leave a truncated file behind. The file
+// is private to the user, like the Manga Plus secret.
+func saveOptions(path string, o OptionsDTO, p PrefsDTO) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return err
 	}
-	data, err := json.MarshalIndent(o, "", "  ")
+	data, err := json.MarshalIndent(guiFile{OptionsDTO: o, PrefsDTO: p}, "", "  ")
 	if err != nil {
 		return err
 	}
