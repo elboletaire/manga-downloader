@@ -66,8 +66,8 @@ describe('Format', () => {
   it('offers CBR next to CBZ, under its own name', async () => {
     const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
     const markup = options(base);
-    expect(markup.indexOf('CBR archive')).toBeGreaterThan(markup.indexOf('CBZ archive'));
-    expect(markup.indexOf('CBR archive')).toBeLessThan(markup.indexOf('>EPUB<'));
+    expect(markup.indexOf('>CBR<')).toBeGreaterThan(markup.indexOf('>CBZ<'));
+    expect(markup.indexOf('>CBR<')).toBeLessThan(markup.indexOf('>EPUB<'));
   });
 });
 

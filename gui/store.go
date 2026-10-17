@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -178,6 +179,14 @@ func loadOptions(path string, s *grabber.Settings) error {
 		o.PackAs = PackChapters
 	}
 	o.FilenameTemplate = packer.MigrateFilenameTemplate(o.FilenameTemplate)
+	// an unknown format would only fail at Start, so fall back to the default now
+	o.Format = strings.ToLower(strings.TrimSpace(o.Format))
+	switch o.Format {
+	case packer.FormatCBZ, packer.FormatCBR, packer.FormatRaw, packer.FormatEPUB:
+	default:
+		notice.Warn("ignoring the saved format %q, using %q", o.Format, packer.FormatCBZ)
+		o.Format = packer.FormatCBZ
+	}
 	// the same normalisation core.Validate applies at Start, so a saved "RTL" is kept
 	o.ReadingDirection = packer.NormalizeReadingDirection(o.ReadingDirection)
 	switch o.ReadingDirection {

@@ -74,9 +74,9 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
           value={o.format}
           disabled={locked}
           options={[
-            { value: 'cbz', label: 'CBZ archive' },
-            { value: 'cbr', label: 'CBR archive' },
-            { value: 'raw', label: 'Image folder' },
+            { value: 'cbz', label: 'CBZ' },
+            { value: 'cbr', label: 'CBR' },
+            { value: 'raw', label: 'Folder' },
             { value: 'epub', label: 'EPUB' },
           ]}
           onChange={(format) => set({ format })}

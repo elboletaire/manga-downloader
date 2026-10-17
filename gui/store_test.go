@@ -181,6 +181,49 @@ func TestLoadOptionsRejectsReadingDirectionFallsBackToDefault(t *testing.T) {
 	}
 }
 
+func TestLoadOptionsRejectsUnknownFormatFallsBackToCBZ(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	if err := os.WriteFile(path, []byte(`{"format":"pdf","readingDirection":"ltr"}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var warnings []string
+	notice.SetHandler(func(level notice.Level, msg string) {
+		if level == notice.LevelWarn {
+			warnings = append(warnings, msg)
+		}
+	})
+	defer notice.SetHandler(nil)
+
+	s := defaultSettings()
+	if err := loadOptions(path, s); err != nil {
+		t.Fatalf("an unknown format is not a load error: %v", err)
+	}
+	if s.Format != "cbz" {
+		t.Errorf("format %q, want the default cbz", s.Format)
+	}
+	if s.ReadingDirection != "ltr" {
+		t.Errorf("the other keys were not loaded: reading-direction %q", s.ReadingDirection)
+	}
+	if len(warnings) != 1 {
+		t.Errorf("got %d warnings, want 1: %q", len(warnings), warnings)
+	}
+}
+
+func TestLoadOptionsKeepsCBR(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	if err := os.WriteFile(path, []byte(`{"format":" CBR "}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	s := defaultSettings()
+	if err := loadOptions(path, s); err != nil {
+		t.Fatal(err)
+	}
+	if s.Format != "cbr" {
+		t.Errorf("format %q, want the normalised cbr", s.Format)
+	}
+}
+
 func TestLoadOptionsReadingDirectionIgnoresCase(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "gui.json")
 	if err := os.WriteFile(path, []byte(`{"readingDirection":" LTR ","format":"epub"}`), 0600); err != nil {

@@ -4,7 +4,7 @@ Guidance for coding agents working in this repository.
 
 ## Project
 
-Go CLI (cobra) that downloads manga chapters from supported websites and packs them into CBZ or EPUB files, plus a Wails desktop app in `gui/` (see the `gui` skill). Module: `github.com/elboletaire/manga-downloader`, targeting Go 1.26.0 (the `go` directive in `go.mod` and `gui/go.mod`, pinned by CI's test and smoke workflows).
+Go CLI (cobra) that downloads manga chapters from supported websites and packs them into CBZ, CBR or EPUB files, plus a Wails desktop app in `gui/` (see the `gui` skill). Module: `github.com/elboletaire/manga-downloader`, targeting Go 1.26.0 (the `go` directive in `go.mod` and `gui/go.mod`, pinned by CI's test and smoke workflows).
 
 ## On-demand guides
 
@@ -28,7 +28,7 @@ go test ./ranges -run TestParse   # run a single test
 make clean            # remove built binaries and *.cbz, *.cbr and *.epub files
 ```
 
-Unit test coverage is thin; real verification is the makefile smoke targets, which download from live sites — run them selectively. `make grabber` runs everything, `make grabber/html` all `PlainHTML` sites, `make grabber/<site>` just one; check the archives with `tools/verify-cbz`, since a run can succeed with empty or junk CBZs.
+Unit test coverage is thin; real verification is the makefile smoke targets, which download from live sites — run them selectively. `make grabber` runs everything, `make grabber/html` all `PlainHTML` sites, `make grabber/<site>` just one; check the archives with `tools/verify-cbz` (it skips `.cbr`; list those with `bsdtar -tf`), since a run can succeed with empty or junk CBZs.
 
 The makefile is tracked lowercase; on macOS `git add` needs the lowercase name. macOS also has no `timeout`.
 

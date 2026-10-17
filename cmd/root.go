@@ -30,9 +30,9 @@ var settings grabber.Settings
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "manga-downloader [flags] [url] [ranges]",
-	Short: "Helps you download mangas from websites to CBZ or EPUB files",
+	Short: "Helps you download mangas from websites to CBZ, CBR or EPUB files",
 
-	Long: `With manga-downloader you can easily convert/download web based mangas to CBZ or EPUB files.
+	Long: `With manga-downloader you can easily convert/download web based mangas to CBZ, CBR or EPUB files.
 
 You only need to specify the URL of the manga and the chapters you want to download as a range.
 

@@ -48,7 +48,8 @@ func listRAR(t *testing.T, path string) (names []string, ok bool) {
 	return nil, false
 }
 
-// lines splits out into its lines: one entry per line, where strings.Fields would split a name at its spaces
+// lines splits out one entry per line; strings.Fields would split a name
+// at its spaces
 func lines(out []byte) []string {
 	var got []string
 	sc := bufio.NewScanner(bytes.NewReader(out))
