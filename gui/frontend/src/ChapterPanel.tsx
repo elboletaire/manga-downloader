@@ -10,7 +10,16 @@ import { extendsSpan, moveActive, pickable, spanIndices } from './listKeys';
 import { hostOf } from './run';
 import type { Chapter, State } from './types';
 import { useVirtualList } from './virtual';
-import { chapterSpan, groupChapters, groupedRows, isSiteVolumes, parseVolumes, selectedIn, type GroupedRow } from './volumes';
+import {
+  chapterSpan,
+  groupChapters,
+  groupedRows,
+  isSiteVolumes,
+  parseVolumes,
+  selectedIn,
+  type GroupedRow,
+  volumesSummary,
+} from './volumes';
 
 const ROW_HEIGHT = 34;
 
@@ -611,17 +620,7 @@ function VolumesBar({ text, site, listed, volumes, loose, disabled, onVolumes }:
     );
   };
 
-  const outside = loose > 0 ? `, ${plural(loose, 'chapter', 'chapters')} outside them` : '';
-  let summary: string;
-  if (!isSiteVolumes(text)) {
-    summary = volumes === 0 ? 'No chapter falls in these volumes.' : `${plural(volumes, 'volume', 'volumes')}${outside}`;
-  } else if (site !== '') {
-    summary = `Site's volumes: ${site} (${plural(volumes, 'volume', 'volumes')})${outside}`;
-  } else if (listed > 0) {
-    summary = `${plural(listed, 'volume', 'volumes')}, as the site files them (they can't be written as chapter ranges)${outside}`;
-  } else {
-    summary = 'The site lists no volumes: enter them as chapter ranges.';
-  }
+  const summary = volumesSummary(text, site, listed, volumes, loose);
 
   return (
     <div className="volumes-bar">
@@ -677,7 +676,23 @@ function VolumesBar({ text, site, listed, volumes, loose, disabled, onVolumes }:
         className={`volumes-note${error !== '' ? ' bad' : ''}`}
         role={error !== '' ? 'alert' : undefined}
       >
-        {error !== '' ? error : summary}
+        {error !== '' ? (
+          error
+        ) : (
+          <>
+            <span className="volumes-lead">{summary.text}</span>
+            {summary.ranges !== undefined && (
+              <>
+                <span className="volumes-sep" aria-hidden="true">
+                  ·
+                </span>
+                <span className="volumes-ranges mono" title={summary.ranges}>
+                  {summary.ranges}
+                </span>
+              </>
+            )}
+          </>
+        )}
       </p>
     </div>
   );

@@ -690,9 +690,31 @@ code {
   white-space: nowrap;
 }
 
+/* the box is mono for its ranges; its placeholder reads as prose */
+.volumes-form .input::placeholder {
+  font-family: var(--font);
+}
+
 .volumes-note {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
   color: var(--text-3);
   font-size: 12px;
+}
+
+/* the site's ranges take what the count leaves, and cut with an ellipsis; the title has them all */
+.volumes-note .volumes-ranges {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.volumes-note .volumes-sep {
+  flex: none;
 }
 
 .volumes-note.bad {

@@ -316,7 +316,7 @@ Open the app and follow these steps:
    needs the window opens it by itself. Packing by volume adds a *Volumes* box
    above the chapter list. It starts empty, which packs the site's volumes; a
    line under it offers them as chapter ranges when they can be written that
-   way, and groups the list by volume.
+   way. The list is grouped by volume.
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.png">

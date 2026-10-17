@@ -3,7 +3,7 @@
 // doesn't parse, and groups the run); this is the same grouping for the
 // chapter list to show, before the run.
 
-import { formatNumber } from './format';
+import { formatNumber, plural } from './format';
 import type { Chapter } from './types';
 
 export interface Range {
@@ -191,6 +191,41 @@ export function chapterSpan(chapters: Chapter[]): string {
   return first === last ? `chapter ${first}` : `chapters ${first}–${last}`;
 }
 
+/** The Volumes box's note: a line, and the site's ranges to set at its end (cut with an ellipsis) */
+export interface VolumesSummary {
+  text: string;
+  ranges?: string;
+}
+
+/**
+ * The note under the Volumes box. With the box on the site's volumes, the
+ * ranges the site's volumes write as go at the end when they can, else the
+ * count of volumes the site lists; a box of the user's own gets the count.
+ */
+export function volumesSummary(
+  text: string,
+  site: string,
+  listed: number,
+  volumes: number,
+  loose: number,
+): VolumesSummary {
+  const outside = loose > 0 ? `, ${plural(loose, 'chapter', 'chapters')} outside them` : '';
+  if (!isSiteVolumes(text)) {
+    return {
+      text: volumes === 0 ? 'No chapter falls in these volumes.' : `${plural(volumes, 'volume', 'volumes')}${outside}`,
+    };
+  }
+  if (site !== '') {
+    return { text: `Site's volumes: ${volumes}${outside}`, ranges: site };
+  }
+  if (listed > 0) {
+    return {
+      text: `${plural(listed, 'volume', 'volumes')}, as the site files them (they can't be written as chapter ranges)${outside}`,
+    };
+  }
+  return { text: 'The site lists no volumes: enter them as chapter ranges.' };
+}
+
 /** A row of the grouped list: a group's header, or one of its chapters */
 export type GroupedRow =
   | { kind: 'group'; key: number; label: string; chapters: Chapter[]; collapsed: boolean }
@@ -237,10 +272,8 @@ export function selectedIn(chapters: Chapter[], chosen: ReadonlySet<number>): nu
 }
 
 /**
- * The site's volumes as a Volumes box ("1-7/8-16"), as core.SiteVolumes
- * writes them; chapters must be in list order. "" when no chapter has a
- * volume, or when the ranges wouldn't group the chapters as the site does.
- * The mock uses it; the app gets it from Go.
+ * The site's volumes as core.SiteVolumes writes them, "" when they can't be
+ * written so. chapters must be in list order.
  */
 export function siteVolumes(chapters: Chapter[]): string {
   const volumeAt = chapters.map(() => 0);

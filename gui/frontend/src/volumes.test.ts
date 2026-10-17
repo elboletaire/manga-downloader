@@ -9,6 +9,7 @@ import {
   parseVolumes,
   selectedIn,
   siteVolumes,
+  volumesSummary,
 } from './volumes';
 import type { Chapter } from './types';
 import shared from '../../../ranges/testdata/volumes.json';
@@ -214,5 +215,70 @@ describe('named volumes', () => {
       [4, [1, 2]],
       [5, [3, 4, 5, 6]],
     ]);
+  });
+});
+
+describe('volumesSummary', () => {
+  // the four branches: own ranges, the site's ranges, listed but not writable, none listed
+  it.each([
+    { name: 'own ranges', text: '1-7/8-16', site: '', listed: 2, volumes: 2, loose: 0, want: { text: '2 volumes' } },
+    {
+      name: 'own ranges, outside chapters',
+      text: '1-7',
+      site: '',
+      listed: 1,
+      volumes: 1,
+      loose: 3,
+      want: { text: '1 volume, 3 chapters outside them' },
+    },
+    {
+      name: 'own ranges, none falls in',
+      text: '1-7',
+      site: '',
+      listed: 1,
+      volumes: 0,
+      loose: 0,
+      want: { text: 'No chapter falls in these volumes.' },
+    },
+    {
+      name: 'site ranges',
+      text: '',
+      site: '61:598-603/604-614',
+      listed: 55,
+      volumes: 55,
+      loose: 15,
+      want: { text: "Site's volumes: 55, 15 chapters outside them", ranges: '61:598-603/604-614' },
+    },
+    {
+      name: 'auto is the site',
+      text: 'auto',
+      site: '1-2/3-4',
+      listed: 2,
+      volumes: 2,
+      loose: 0,
+      want: { text: "Site's volumes: 2", ranges: '1-2/3-4' },
+    },
+    {
+      name: 'listed, not writable',
+      text: '',
+      site: '',
+      listed: 9,
+      volumes: 7,
+      loose: 1,
+      want: {
+        text: "9 volumes, as the site files them (they can't be written as chapter ranges), 1 chapter outside them",
+      },
+    },
+    {
+      name: 'none listed',
+      text: '',
+      site: '',
+      listed: 0,
+      volumes: 0,
+      loose: 0,
+      want: { text: 'The site lists no volumes: enter them as chapter ranges.' },
+    },
+  ])('$name', ({ text, site, listed, volumes, loose, want }) => {
+    expect(volumesSummary(text, site, listed, volumes, loose)).toEqual(want);
   });
 });

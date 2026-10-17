@@ -114,11 +114,9 @@ func groupOf(number float64, groups [][]ranges.Range) int {
 	return 0
 }
 
-// SiteVolumes writes the volumes the site files chapters under as a --volumes
-// value ("1-7/8-16") for the desktop app to offer; chapters must be sorted by
-// number. A volume is named ("16:112-114") only where it doesn't follow the
-// previous one. It's "" when no chapter has a volume, or when the ranges
-// wouldn't group the chapters as the site does (ListedVolumes still counts them).
+// SiteVolumes writes the site's volumes as a --volumes value ("1-7/8-16"), naming
+// a volume ("16:112-114") where it doesn't follow the last; chapters must be sorted
+// by number. It's "" when no chapter has a volume or the ranges wouldn't group them as the site does.
 func SiteVolumes(chapters grabber.Filterables) string {
 	// the volume of each listed position; a number listed more than once (one
 	// entry per language, say) belongs to the first volume it shows up in,
