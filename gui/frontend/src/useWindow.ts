@@ -24,11 +24,13 @@ export function useWindow(api: Api, initial?: State): WindowData & { failure: st
   // which fields a push has already filled, so a late snapshot doesn't clobber them
   const pushed = useRef({ state: false, chapters: false, selected: false, log: false });
 
-  // a newer State from the caller: it saw pushes that came before this window subscribed
+  // a newer State from the caller: it saw pushes that came before this window subscribed,
+  // and stops mattering once the window's own subscription has delivered one
   useEffect(() => {
-    if (initial !== undefined) {
-      setData((d) => ({ ...d, state: initial }));
+    if (initial === undefined || pushed.current.state) {
+      return;
     }
+    setData((d) => (d.state === initial ? d : { ...d, state: initial }));
   }, [initial]);
 
   useEffect(() => {
