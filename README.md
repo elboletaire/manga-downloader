@@ -469,7 +469,7 @@ manga-downloader --volumes 16:112-114/115-118 [url] 112-118
 That's volumes 16 and 17. An empty group also skips a number (`1-7//20-30` has
 no volume 2), and `--volumes` can't be combined with `--bundle`.
 
-`parts` packs the parts of a chapter (the releases sharing its number and group,
+`parts` packs the parts of a chapter (the releases sharing its number, group and language,
 like 19-① and 19-②) into one file named after the chapter, with a folder per part:
 
 ~~~bash

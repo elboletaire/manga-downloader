@@ -298,7 +298,12 @@ func exitSettingError(err error) {
 	case "volumes":
 		red("Error: invalid --volumes value: %s", se.Err)
 	case "filename-template":
-		red("Error: the volume filename template %q doesn't work: %s", se.Value, se.Err)
+		// a parts run names its files by the chapter template
+		what := "the volume filename template"
+		if settings.Volumes == core.VolumesParts {
+			what = "the chapter filename template"
+		}
+		red("Error: %s %q doesn't work: %s", what, se.Value, se.Err)
 	default:
 		cerr(se.Err, "Error parsing --"+se.Setting+": ")
 	}

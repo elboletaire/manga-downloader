@@ -158,7 +158,7 @@ function ChapterList({
     }
     return groupChapters(chapters, spec);
   }, [byVolume, chapters, state.volumes.text]);
-  // a parts run merges the chapters sharing a number and a group
+  // a parts run merges the chapters sharing a number, group and language
   const parts = useMemo(() => (byParts ? groupParts(chapters) : null), [byParts, chapters]);
   const split = useMemo(() => parts?.filter((g) => g.chapters.length > 1).length ?? 0, [parts]);
   const rows: GroupedRow[] = useMemo(() => {

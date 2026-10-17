@@ -1123,9 +1123,15 @@ func (c *Controller) SetVolumes(text string) error {
 		c.mu.Unlock()
 		return errBusy
 	}
-	if _, err := core.ParseVolumes(text); err != nil {
+	spec, err := core.ParseVolumes(text)
+	if err != nil {
 		c.mu.Unlock()
 		return err
+	}
+	// parts is Pack as's Merged, which has no box
+	if spec != nil && spec.Parts {
+		c.mu.Unlock()
+		return errors.New(`"parts" isn't a Volumes value: pick Merged under Pack as`)
 	}
 	c.volumesText = strings.TrimSpace(text)
 	c.mu.Unlock()
@@ -1229,9 +1235,7 @@ func (c *Controller) Start() error {
 	if c.settings.Bundle {
 		rows = 1
 	}
-	if parts {
-		rows = partFiles(chapters)
-	} else if volumes {
+	if volumes {
 		// grouped here too, so a site without volumes is refused before the
 		// run starts rather than failing it
 		spec, _ := core.ParseVolumes(c.settings.Volumes)
@@ -1639,35 +1643,10 @@ func (e events) BundleArchived(n int) {
 	c.emit()
 }
 
-// partFiles is how many files a parts run writes: one per number, group and
-// language, as core merges them
-func partFiles(chapters grabber.Filterables) int {
-	type key struct {
-		number   float64
-		group    string
-		language string
-	}
-	seen := map[key]bool{}
-	for _, chap := range chapters {
-		var group, language string
-		if g, ok := chap.(interface{ GetGroup() string }); ok {
-			group = g.GetGroup()
-		}
-		if l, ok := chap.(interface{ GetLanguage() string }); ok {
-			language = l.GetLanguage()
-		}
-		seen[key{chap.GetNumber(), group, language}] = true
-	}
-	return len(seen)
-}
-
 // volumeTitle is the row title of a volume: "Vol. 01 · chapters 1–7", or
 // "Chapter 19 · 2 parts" in a parts run. Callers hold mu.
 func (c *Controller) volumeTitle(v *core.Volume) string {
 	if c.runinfo.Parts {
-		if len(v.Chapters) == 1 {
-			return grabber.ChapterLabel(v.Chapters[0])
-		}
 		return fmt.Sprintf("%s · %d parts", v.Label(), len(v.Chapters))
 	}
 	first, last := formatNumber(v.FirstNumber()), formatNumber(v.LastNumber())

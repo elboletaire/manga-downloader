@@ -17,7 +17,7 @@ import (
 const VolumesAuto = "auto"
 
 // VolumesParts is the --volumes value that packs the parts of a chapter (the
-// chapters sharing a number and group) into one file, named after the chapter
+// chapters sharing a number, group and language) into one file, named after the chapter
 const VolumesParts = "parts"
 
 // ErrNoVolumes is returned by GroupVolumes for --volumes auto when none of
@@ -137,7 +137,7 @@ type partsKey struct {
 }
 
 // groupParts groups the chapters sharing a number, group and language, in listing order.
-// A chapter no other shares its number and group with is loose, as it's packed
+// A chapter no other shares its number, group and language with is loose, as it's packed
 // on its own. The volumes are sorted by number.
 func groupParts(chapters grabber.Filterables) ([]*Volume, grabber.Filterables) {
 	byKey := map[partsKey]*Volume{}

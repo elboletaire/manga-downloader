@@ -57,6 +57,9 @@ func TestLoadOffersSiteVolumes(t *testing.T) {
 	if text, _, _ := c.Volumes(); text != "1-3/4" {
 		t.Errorf("box = %q, want it trimmed", text)
 	}
+	if err := c.SetVolumes("parts"); err == nil {
+		t.Error("parts was accepted in the Volumes box")
+	}
 
 	if err := c.Clear(); err != nil {
 		t.Fatal(err)
@@ -298,21 +301,29 @@ func jobFraction(j Job) float64 {
 	return min(1, max(0, float64(j.Done)/float64(j.Total)))
 }
 
-// a parts run writes one file per number and group, as core merges them
-func TestPartFiles(t *testing.T) {
-	chapters := grabber.Filterables{
-		&grabber.Chapter{Number: 1},
-		&grabber.Chapter{Number: 2, Title: "Part 1"},
-		&grabber.Chapter{Number: 2, Title: "Part 2"},
-		&grabber.Chapter{Number: 3, Group: "Alpha"},
-		&grabber.Chapter{Number: 3, Group: "Beta"},
-		// the same number in two languages is two files
-		&grabber.Chapter{Number: 4, Language: "en"},
-		&grabber.Chapter{Number: 4, Language: "es"},
+// a parts run's rows are its merged chapters and the chapters on their own,
+// as core groups them
+func TestDownloadPartsRows(t *testing.T) {
+	c, _, _ := newTestController(t, false, nil,
+		fakeChapter{number: 1, pages: 1},
+		fakeChapter{number: 2, pages: 1},
+		fakeChapter{number: 2, pages: 2},
+		fakeChapter{number: 3, pages: 1},
+	)
+	if err := c.Configure(func(s *grabber.Settings) { applyPackAs(s, PackParts) }); err != nil {
+		t.Fatal(err)
 	}
-	if got := partFiles(chapters); got != 6 {
-		t.Errorf("partFiles = %d, want 6", got)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
 	}
+	c.SetAll(true)
+	if err := c.Start(); err != nil {
+		t.Fatal(err)
+	}
+	if r := c.Run(); !r.Parts || r.Rows != 3 || r.Chapters != 4 {
+		t.Errorf("run = %+v, want a parts run of 4 chapters in 3 rows", r)
+	}
+	waitFinished(t, c)
 }
 
 // a chapter's merged parts are named as the chapter, not as a volume
