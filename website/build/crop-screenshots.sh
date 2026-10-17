@@ -37,10 +37,11 @@ crop() {
   done
 }
 
+# The panel geometry assumes the 340 px sidebar at the 915 px capture width.
 for theme in light dark; do
   crop language-selector "$theme" "03-language-selector-$theme.png" 740x960+85+56 $WINDOW_RADIUS
-  crop chapter-list "$theme" "04-downloading-$theme.png" 1118x787+117+405 $CARD_RADIUS
-  crop finished-run "$theme" "05-done-$theme.png" 624x787+1259+405 $CARD_RADIUS
-  crop volumes "$theme" "07-volumes-$theme.png" 1118x787+117+405 $CARD_RADIUS
-  crop parts "$theme" "12-parts-$theme.png" 1118x787+117+405 $CARD_RADIUS
+  crop chapter-list "$theme" "04-downloading-$theme.png" 1062x787+117+405 $CARD_RADIUS
+  crop finished-run "$theme" "05-done-$theme.png" 680x787+1203+405 $CARD_RADIUS
+  crop volumes "$theme" "07-volumes-$theme.png" 1062x787+117+405 $CARD_RADIUS
+  crop parts "$theme" "12-parts-$theme.png" 1062x787+117+405 $CARD_RADIUS
 done

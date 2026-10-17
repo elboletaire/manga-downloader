@@ -92,16 +92,17 @@ geometry is `WxH+X+Y` on the 2000x1390 original, with the window's top-left at
 (85,56), so `03-language-selector-*.png` crops to `740x960+85+56`, the
 left-hand part of the window with the Language dropdown open, stopping short of
 the range box. The
-panel crops start on the panel's border (`finished-run` at x=1259, the Activity
-panel's left edge, so no edge of the list shows in it):
+panel crops start on the panel's border (`finished-run` at x=1203, the Activity
+panel's left edge, so no edge of the list shows in it). The numbers assume the
+340 px sidebar at the 915 px capture width:
 
 | Crop                | Original                                | Geometry            |
 | ------------------- | --------------------------------------- | ------------------- |
 | `language-selector` | `03-language-selector-{light,dark}.png` | `740x960+85+56`     |
-| `chapter-list`      | `04-downloading-{light,dark}.png`       | `1118x787+117+405`  |
-| `volumes`           | `07-volumes-{light,dark}.png`           | `1118x787+117+405`  |
-| `parts`             | `12-parts-{light,dark}.png`             | `1118x787+117+405`  |
-| `finished-run`      | `05-done-{light,dark}.png`              | `624x787+1259+405`  |
+| `chapter-list`      | `04-downloading-{light,dark}.png`       | `1062x787+117+405`  |
+| `volumes`           | `07-volumes-{light,dark}.png`           | `1062x787+117+405`  |
+| `parts`             | `12-parts-{light,dark}.png`             | `1062x787+117+405`  |
+| `finished-run`      | `05-done-{light,dark}.png`              | `680x787+1203+405`  |
 
 To regenerate from the originals, run it with the captures' folder (made by
 `tools/screenshots/capture-all.sh`, on macOS) and an output folder, from `website/`:
