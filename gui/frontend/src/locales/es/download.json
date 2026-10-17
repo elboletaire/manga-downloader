@@ -4,7 +4,7 @@
     "notLoaded": "Carga una serie para elegir sus capítulos.",
     "stale": "Los filtros han cambiado: recarga la serie primero.",
     "noChapters": "Selecciona al menos un capítulo.",
-    "noVolumes": "El sitio no lista volúmenes: introdúcelos como rangos de capítulos, p. ej. {{example}}."
+    "noVolumes": "El sitio no lista volúmenes: indícalos como rangos de capítulos, p. ej. {{example}}."
   },
   "label": {
     "download": "Descargar",

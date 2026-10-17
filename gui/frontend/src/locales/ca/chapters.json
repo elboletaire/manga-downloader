@@ -43,7 +43,7 @@
   },
   "locked": "Bloquejat, així que no es pot seleccionar",
   "duplicates": {
-    "language": "Alguns números apareixen una vegada per idioma; l'etiqueta d'idioma els distingeix.",
+    "language": "Alguns números apareixen una vegada per llengua; l'etiqueta de llengua els distingeix.",
     "group": "Alguns números apareixen una vegada per grup; l'etiqueta de grup els distingeix."
   },
   "hint": {

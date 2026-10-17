@@ -25,7 +25,7 @@ describe('DownloadDock', () => {
     expect(es).toContain('Archivos CBZ en');
     const ca = await render('ca');
     expect(ca).toContain('Descarrega ');
-    expect(ca).toContain('Fitxers CBZ en');
+    expect(ca).toContain('Fitxers CBZ a');
   });
 
   it('translates the running progress and the cancelling state', async () => {

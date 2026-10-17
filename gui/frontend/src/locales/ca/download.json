@@ -4,7 +4,7 @@
     "notLoaded": "Carrega una sèrie per triar-ne els capítols.",
     "stale": "Els filtres han canviat: torna a carregar la sèrie primer.",
     "noChapters": "Selecciona almenys un capítol.",
-    "noVolumes": "El lloc no enumera volums: introdueix-los com a rangs de capítols, p. ex. {{example}}."
+    "noVolumes": "El lloc no llista volums: indica'ls com a rangs de capítols, p. ex. {{example}}."
   },
   "label": {
     "download": "Descarrega",
@@ -26,7 +26,7 @@
     "rawBundle": "Una carpeta d'imatges",
     "files": "Fitxers"
   },
-  "where": "{{what}} en <dir>{{dir}}</dir>",
+  "where": "{{what}} a <dir>{{dir}}</dir>",
   "progress": {
     "label": "Progrés general",
     "chapters": "{{done}} de {{total}} capítols fets",
