@@ -154,6 +154,10 @@ export interface Chapter {
   volume: number;
   /** The listing marks it locked: it can't be selected, so no run takes it */
   locked: boolean;
+  /** The part as its label writes it ("Part 2", "前編"); unset without one */
+  part?: string;
+  /** With a part: the title without it, '' when the site gives none */
+  wholeTitle?: string;
 }
 
 export interface LogLine {

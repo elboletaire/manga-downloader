@@ -153,16 +153,16 @@ describe('groupParts', () => {
     const rows = partRows(groupParts(parts), new Set());
     expect(
       rows.map((r) =>
-        r.kind === 'group' ? `${r.label} · ${r.detail}${r.tag ? ` [${r.tag}]` : ''}` : `${r.chapter.index}${r.part ? ` ${r.part.n}/${r.part.of}` : ''}${r.inGroup ? '' : ' alone'}`,
+        r.kind === 'group' ? `${r.label} · ${r.detail}${r.tag ? ` [${r.tag}]` : ''}` : `${r.chapter.index}${r.part ? ` ${r.part.n}/${r.part.of} ${r.part.label}` : ''}${r.inGroup ? '' : ' alone'}`,
       ),
     ).toEqual([
       '0 alone',
       'Chapter 2 · 2 parts',
-      '1 1/2',
-      '2 2/2',
+      '1 1/2 Chapter 2',
+      '2 2/2 Chapter 2',
       'Chapter 3 · 2 parts [Alpha]',
-      '3 1/2',
-      '5 2/2',
+      '3 1/2 Chapter 3',
+      '5 2/2 Chapter 3',
       '4 alone',
     ]);
   });
@@ -173,6 +173,38 @@ describe('groupParts', () => {
       0, 3, 5, 4,
     ]);
     expect(rows[1]).toMatchObject({ kind: 'group', collapsed: true });
+  });
+
+  it("heads a chapter with its title and labels its rows by their part", () => {
+    const titled = (index: number, number: number, title: string, part?: string, wholeTitle?: string): Chapter => ({
+      ...ch(number, 0, index),
+      title,
+      ...(part ? { part, wholeTitle } : {}),
+    });
+    const rows = partRows(
+      groupParts([
+        titled(0, 4, "Part 1 Un malson que s'esvaeix", 'Part 1', "Un malson que s'esvaeix"),
+        titled(1, 4, 'Part 2 Un altre títol', 'Part 2', 'Un altre títol'),
+        titled(2, 5, 'Chapter 5 前編', '前編', ''),
+        titled(3, 5, 'Chapter 5 後編 Part 1', '後編 Part 1', ''),
+        titled(4, 6, 'Foo, first half'),
+        titled(5, 6, 'Foo, second half'),
+      ]),
+      new Set(),
+    );
+    expect(rows.map((r) => (r.kind === 'group' ? `${r.label} · ${r.detail}` : r.part?.label))).toEqual([
+      // the first part's title, as core names the merged file
+      "Chapter 4 · Un malson que s'esvaeix · 2 parts",
+      'Part 1',
+      'Part 2',
+      'Chapter 5 · 2 parts',
+      '前編',
+      '後編 Part 1',
+      // without a part from the grabber, the titles as they are
+      'Chapter 6 · Foo, first half · 2 parts',
+      'Foo, first half',
+      'Foo, second half',
+    ]);
   });
 });
 

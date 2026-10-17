@@ -224,14 +224,23 @@ function mockChapters(count: number, withLanguages: boolean, withVolumes = true,
  */
 function partsChapters(): Chapter[] {
   const list: Chapter[] = [];
-  const add = (number: number, title: string, locked: boolean) =>
-    list.push({ index: list.length, number, title, language: '', group: '', volume: 0, locked });
+  const add = (number: number, title: string, locked: boolean, part?: string) =>
+    list.push({
+      index: list.length,
+      number,
+      title,
+      language: '',
+      group: '',
+      volume: 0,
+      locked,
+      ...(part ? { part, wholeTitle: titleOf(number) } : {}),
+    });
   const newest = OP_CHAPTERS.slice(-20).map(([, title]) => title);
   const titleOf = (n: number) => newest[n - 1];
   add(1, titleOf(1), false);
   for (let n = 2; n <= 20; n++) {
-    add(n, `${titleOf(n)} Part 1`, n > 4);
-    add(n, `${titleOf(n)} Part 2`, n > 4 && n !== 19);
+    add(n, `${titleOf(n)} Part 1`, n > 4, 'Part 1');
+    add(n, `${titleOf(n)} Part 2`, n > 4 && n !== 19, 'Part 2');
   }
   return list;
 }

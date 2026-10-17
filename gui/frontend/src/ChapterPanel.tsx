@@ -547,20 +547,14 @@ function ChapterList({
                 aria-posinset={pos + 1}
                 aria-selected={on}
                 aria-disabled={ch.locked || undefined}
-                className={`row${row.inGroup ? ' in-group' : ''}${on ? ' on' : ''}${ch.locked ? ' locked' : ''}${pos === active ? ' active' : ''}`}
+                className={`row${row.inGroup ? ' in-group' : ''}${row.part ? ' part-row' : ''}${on ? ' on' : ''}${ch.locked ? ' locked' : ''}${pos === active ? ' active' : ''}`}
                 style={style}
                 onMouseDown={keepFocus}
                 onClick={(e) => toggleRow(pos, e.shiftKey)}
               >
                 <ChapterBox on={on} locked={ch.locked} />
-                {row.part ? (
-                  <span className="num part" title={`Part ${row.part.n} of ${row.part.of}`}>
-                    {row.part.n}/{row.part.of}
-                  </span>
-                ) : (
-                  <span className="num">{formatNumber(ch.number)}</span>
-                )}
-                <ChapterTitle title={ch.title} locked={ch.locked} />
+                {!row.part && <span className="num">{formatNumber(ch.number)}</span>}
+                <ChapterTitle title={row.part ? row.part.label : ch.title} locked={ch.locked} />
                 {(ch.language !== '' || ch.group !== '') && (
                   <span className="tags">
                     {ch.language !== '' && <span className="lang">{ch.language}</span>}

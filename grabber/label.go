@@ -119,6 +119,17 @@ func partLabel(part string) string {
 	return part
 }
 
+// PartOf splits a listed chapter's label into its part ("Part 2", "前編") and its
+// title without it, "" when the site gives none, as its merged file is named.
+// part is "" for a chapter without one.
+func PartOf(f Filterable) (part, title string) {
+	l := labelOf(f)
+	if l.Style != LabelNumbered || l.Part == "" {
+		return "", ""
+	}
+	return partLabel(l.Part), f.GetTitle()
+}
+
 // labelOf returns the Label of a listed chapter, for the chapter FetchChapter
 // builds from it to be labelled the same
 func labelOf(f Filterable) Label {

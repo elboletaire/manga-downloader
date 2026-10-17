@@ -230,7 +230,7 @@ export function volumesSummary(
 /** A row of the grouped list: a group's header, or a chapter (in a group or on its own) */
 export type GroupedRow =
   | { kind: 'group'; key: string; label: string; detail: string; tag: string; chapters: Chapter[]; collapsed: boolean }
-  | { kind: 'chapter'; chapter: Chapter; inGroup: boolean; part?: { n: number; of: number } };
+  | { kind: 'chapter'; chapter: Chapter; inGroup: boolean; part?: { n: number; of: number; label: string } };
 
 /** The key of the "Not in a volume" group; volumes key by "volume-N" */
 export const LOOSE = 'loose';
@@ -310,23 +310,32 @@ export function partRows(groups: PartGroup[], collapsed: ReadonlySet<string>): G
     }
     const key = `part-${g.chapters[0].index}`;
     const isCollapsed = collapsed.has(key);
+    const label = `Chapter ${formatNumber(g.number)}`;
+    const title = wholeTitle(g.chapters[0]);
+    const count = `${g.chapters.length} parts`;
     rows.push({
       kind: 'group',
       key,
-      label: `Chapter ${formatNumber(g.number)}`,
-      detail: `${g.chapters.length} parts`,
+      label,
+      detail: title !== '' && title !== label ? `${title} · ${count}` : count,
       tag: g.group,
       chapters: g.chapters,
       collapsed: isCollapsed,
     });
     if (!isCollapsed) {
       g.chapters.forEach((chapter, i) => {
-        rows.push({ kind: 'chapter', chapter, inGroup: true, part: { n: i + 1, of: g.chapters.length } });
+        const part = { n: i + 1, of: g.chapters.length, label: chapter.part || chapter.title };
+        rows.push({ kind: 'chapter', chapter, inGroup: true, part });
       });
     }
   }
 
   return rows;
+}
+
+/** What a chapter's merged file is named after: its first part's title without the part */
+function wholeTitle(first: Chapter): string {
+  return first.part ? (first.wholeTitle ?? '') : first.title;
 }
 
 /** How many of the chapters are selected */

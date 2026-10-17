@@ -163,6 +163,24 @@ func TestChapterLabelPart(t *testing.T) {
 	}
 }
 
+// TestPartOf splits a part's label into its part and the title it shares
+func TestPartOf(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		chapter     Chapter
+		part, title string
+	}{
+		{"numeric part with title", Chapter{Title: "Foo", Number: 364, Label: Label{Style: LabelNumbered, Part: "2"}}, "Part 2", "Foo"},
+		{"word part", Chapter{Number: 110, Label: Label{Style: LabelNumbered, Part: "前編"}}, "前編", ""},
+		{"word part with number", Chapter{Title: "Bar", Number: 36, Label: Label{Style: LabelNumbered, Part: "前編1"}}, "前編 Part 1", "Bar"},
+		{"no part", Chapter{Title: "Foo", Number: 3, Label: Label{Style: LabelNumbered}}, "", ""},
+	} {
+		if part, title := PartOf(&tt.chapter); part != tt.part || title != tt.title {
+			t.Errorf("%s: PartOf = %q, %q, want %q, %q", tt.name, part, title, tt.part, tt.title)
+		}
+	}
+}
+
 // chapterWordRe matches a chapter or part word as titles write it
 var chapterWordRe = regexp.MustCompile(`\b(Chapter|Chapitre|Capítulo|Bölüm|Episode|Ch\.|Part)( |["` + "`" + `]$)`)
 
