@@ -18,7 +18,7 @@
 
 </div>
 
-Manga Downloader downloads manga chapters from MangaDex and more than 100 other
+Manga Downloader downloads manga chapters from MangaDex and 200 other
 sites and packs them into CBZ or EPUB files, ready to read on your e-reader or
 in your favorite comic app. It comes as a **desktop app** for Windows, macOS and
 Linux, and as a **command line tool** for scripts, servers and Docker.
