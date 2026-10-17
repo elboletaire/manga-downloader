@@ -34,7 +34,7 @@ rm -rf "$WORK/raw" out
 mkdir -p "$WORK/raw"
 # the Options panel scrolled to Format / Pack as / Convert to JPEG
 SCROLL='const o=document.querySelector(".options");let e=o;while(e&&e.scrollHeight<=e.clientHeight)e=e.parentElement;if(e)e.scrollTop=105;'
-# two volumes folded, to show the groups collapse. One at a time: React
+# two volumes (or parts) folded, to show the groups collapse. One at a time: React
 # re-renders between them, and the list is virtual, so the second header only
 # exists once the first volume has folded.
 FOLD='const f=()=>document.querySelector(".fold.open")?.click();f();setTimeout(f,400);'
@@ -47,7 +47,7 @@ for theme in light dark; do
   shot 05-done '?mock&scenario=done&freeze&shot'
   shot 06-options '?mock&scenario=loaded&freeze&shot&epub' "$SCROLL"
   shot 07-volumes '?mock&scenario=volumes&freeze&shot' "$FOLD"
-  shot 12-parts '?mock&scenario=parts&freeze&shot'
+  shot 12-parts '?mock&scenario=parts&freeze&shot' "$FOLD"
   shot 08-browser-alert '?mock&scenario=check&freeze&shot'
   shot 09-update '?mock&scenario=update&freeze&shot'
   shot 10-failed '?mock&scenario=done&freeze&fail&shot'

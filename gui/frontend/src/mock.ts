@@ -217,20 +217,20 @@ function mockChapters(count: number, withLanguages: boolean, withVolumes = true,
   return list;
 }
 
-const PARTS_TITLE = 'Saikyou Itan no Shokubutsu Tsukai';
-
 /**
- * A real listing of a series published in parts: chapter 1 whole, then each
- * chapter in two, everything past chapter 4 locked but the second half of 19.
+ * A series published in parts: chapter 1 whole, then each chapter in two,
+ * everything past chapter 4 locked but the second half of 19. The parts share
+ * their chapter's One Piece title, plus their part, as the grabbers give them.
  */
 function partsChapters(): Chapter[] {
   const list: Chapter[] = [];
   const add = (number: number, title: string, locked: boolean) =>
     list.push({ index: list.length, number, title, language: '', group: '', volume: 0, locked });
-  add(1, 'Chapter 1', false);
+  const titleOf = (n: number) => OP_CHAPTERS[n - 1][1];
+  add(1, titleOf(1), false);
   for (let n = 2; n <= 20; n++) {
-    add(n, `Chapter ${n} Part 1`, n > 4);
-    add(n, `Chapter ${n} Part 2`, n > 4 && n !== 19);
+    add(n, `${titleOf(n)} Part 1`, n > 4);
+    add(n, `${titleOf(n)} Part 2`, n > 4 && n !== 19);
   }
   return list;
 }
@@ -436,7 +436,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     identified = true;
     fallbackFor('language', 'language');
     fallbackFor('scanlator', 'scanlation group');
-    title = withParts || scenario === 'parts' ? PARTS_TITLE : 'One Piece';
+    title = 'One Piece';
     chapters =
       withParts || scenario === 'parts'
         ? partsChapters()
@@ -814,7 +814,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     selectionBus.emit(selectionOf());
   }
   if (scenario === 'parts') {
-    url = 'https://example.com/episodes/plant-tamer';
+    url = 'https://example.com/manga/one-piece';
     options.packAs = 'parts';
     // every part that isn't locked: chapters 1-4, and the one open part of 19
     selected = new Set(chapters.filter((c) => !c.locked).map((c) => c.index));

@@ -403,6 +403,12 @@ describe('mock volumes', () => {
       const api = createMockApi({ scenario: 'parts' });
       const state = await api.state();
       expect(state.options.packAs).toBe('parts');
+      expect(state.title).toBe('One Piece');
+      // the parts share their chapter's One Piece title, plus their part
+      const chapters = await api.chapters();
+      expect(chapters[0]).toMatchObject({ number: 1, title: '2 anys després' });
+      expect(chapters[1]).toMatchObject({ number: 2, title: 'Els nou pirates Part 1' });
+      expect(chapters[2]).toMatchObject({ number: 2, title: 'Els nou pirates Part 2' });
       // chapter 1, both parts of 2-4 and the open part of 19
       expect(state.selectedCount).toBe(8);
       await api.start();
