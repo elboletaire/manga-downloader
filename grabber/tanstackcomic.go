@@ -15,22 +15,74 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// tanstackComic is the shared implementation for the TanStack Start comic
-// platform behind en-hijala.com, hivetoons.org, vortexscans.org and
-// azorafly.com. Their series pages only server-render the ~20 most recent
-// chapters as DOM rows (the rest sits behind
-// a client-side "Load more"), but the FULL chapter list ships in the page's
-// seroval stream: an `initialChapters:$R[n]=[...]` literal followed by
-// `,totalChapterCount:N`. Reader pages are fully server rendered too: page
-// images sit in plain <img data-reader-page-image> tags, no browser needed.
-// Recently released chapters can be paywalled (coins/early access); those
-// render zero reader images.
-type tanstackComic struct {
-	*Grabber
-	series *tanstackSeries
+// tanstackDomains are the TanStack Start comic sites matched by domain, with
+// no fetch. Other hosts are detected by markup (NewTanstackComicByMarkup).
+var tanstackDomains = []string{
+	"en-hijala.com",
+	"hivetoons.org",
+	"vortexscans.org",
+	"azorafly.com",
 }
 
-// TanstackChapter represents a chapter of a tanstackComic site
+// tanstackSeriesURLRe is the path of a series page or one of its chapters,
+// the only shapes the markup is fetched for
+var tanstackSeriesURLRe = regexp.MustCompile(`^/series/[^/]+(/chapter-[^/]+)?/?$`)
+
+// TanstackComic is the shared implementation for the TanStack Start comic
+// platform (en-hijala.com, hivetoons.org, vortexscans.org, azorafly.com and
+// its clones). Their series pages only server-render the ~20 most recent
+// chapters as DOM rows (the rest sits behind a client-side "Load more"), but
+// the FULL chapter list ships in the page's seroval stream: an
+// `initialChapters:$R[n]=[...]` literal followed by `,totalChapterCount:N`.
+// Reader pages are fully server rendered too: page images sit in plain
+// <img data-reader-page-image> tags, no browser needed. Recently released
+// chapters can be paywalled (coins/early access); those render zero reader
+// images.
+type TanstackComic struct {
+	*Grabber
+	// byMarkup also detects the hosts not in tanstackDomains (NewTanstackComicByMarkup)
+	byMarkup bool
+	series   *tanstackSeries
+}
+
+// NewTanstackComic returns a TanstackComic grabber, matching the listed domains.
+func NewTanstackComic(g *Grabber) *TanstackComic {
+	return &TanstackComic{Grabber: g}
+}
+
+// NewTanstackComicByMarkup returns a TanstackComic grabber that also matches a
+// series or chapter URL on any host whose page has the TanStack markup.
+func NewTanstackComicByMarkup(g *Grabber) *TanstackComic {
+	return &TanstackComic{Grabber: g, byMarkup: true}
+}
+
+// Test returns true for a listed domain, or for a series or chapter page of
+// another host carrying the platform's markup
+func (t *TanstackComic) Test() (bool, error) {
+	for _, domain := range tanstackDomains {
+		if hostMatchesDomain(t.URL, domain) {
+			return true, nil
+		}
+	}
+	if !t.byMarkup {
+		return false, nil
+	}
+	u, err := url.Parse(t.URL)
+	if err != nil || !tanstackSeriesURLRe.MatchString(u.Path) {
+		return false, nil
+	}
+	// one fetch for both marker sets, so a reader page isn't GETted twice
+	// when there's no cache
+	page, err := t.identifyPage(t.URL)
+	if err != nil {
+		return false, nil
+	}
+	series := strings.Contains(page, "initialChapters:$R[") && strings.Contains(page, "totalChapterCount")
+	reader := strings.Contains(page, "data-reader-page-image") && strings.Contains(page, "$_TSR")
+	return series || reader, nil
+}
+
+// TanstackChapter represents a chapter of a TanstackComic site
 type TanstackChapter struct {
 	Chapter
 	Slug string
@@ -62,7 +114,7 @@ var (
 )
 
 // resolveSeriesURL converts a chapter URL to a series URL if needed.
-func (t *tanstackComic) resolveSeriesURL() {
+func (t *TanstackComic) resolveSeriesURL() {
 	if !tanstackChapterURLRe.MatchString(t.URL) {
 		return
 	}
@@ -74,7 +126,7 @@ func (t *tanstackComic) resolveSeriesURL() {
 }
 
 // FetchTitle fetches and returns the manga title
-func (t *tanstackComic) FetchTitle() (string, error) {
+func (t *TanstackComic) FetchTitle() (string, error) {
 	t.resolveSeriesURL()
 	series, err := t.fetchSeries()
 	if err != nil {
@@ -85,7 +137,7 @@ func (t *tanstackComic) FetchTitle() (string, error) {
 }
 
 // FetchChapters returns the chapters of the manga
-func (t *tanstackComic) FetchChapters() (chapters Filterables, errs []error) {
+func (t *TanstackComic) FetchChapters() (chapters Filterables, errs []error) {
 	t.resolveSeriesURL()
 	series, err := t.fetchSeries()
 	if err != nil {
@@ -124,7 +176,7 @@ func (t *tanstackComic) FetchChapters() (chapters Filterables, errs []error) {
 }
 
 // FetchChapter fetches a chapter and its pages
-func (t *tanstackComic) FetchChapter(f Filterable) (*Chapter, error) {
+func (t *TanstackComic) FetchChapter(f Filterable) (*Chapter, error) {
 	tchap := f.(*TanstackChapter)
 
 	slug, err := t.seriesSlug()
@@ -180,7 +232,7 @@ func (t *tanstackComic) FetchChapter(f Filterable) (*Chapter, error) {
 
 // seriesSlug returns the series slug from the URL (i.e. "some-manga" for
 // https://vortexscans.org/series/some-manga)
-func (t tanstackComic) seriesSlug() (string, error) {
+func (t TanstackComic) seriesSlug() (string, error) {
 	re := regexp.MustCompile(`/series/([^/?#]+)`)
 	matches := re.FindStringSubmatch(t.URL)
 	if len(matches) != 2 {
@@ -190,7 +242,7 @@ func (t tanstackComic) seriesSlug() (string, error) {
 }
 
 // fetchSeries fetches and caches the series page (see parseTanstackSeries)
-func (t *tanstackComic) fetchSeries() (*tanstackSeries, error) {
+func (t *TanstackComic) fetchSeries() (*tanstackSeries, error) {
 	if t.series != nil {
 		return t.series, nil
 	}

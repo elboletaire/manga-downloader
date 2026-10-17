@@ -165,16 +165,13 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewGuya(g),
 		NewAtsumaru(g),
 		NewGlobalcomix(g),
-		NewVortexscans(g),
-		NewAzorafly(g),
+		NewTanstackComic(g),
 		NewBigsolo(g),
 		NewDrakecomic(g),
 		NewElftoon(g),
 		NewFmteam(g),
 		NewGenzToon(g),
-		NewHivetoons(g),
 		NewKaynscan(g),
-		NewHijala(g),
 		NewMangaball(g),
 		NewMangataro(g),
 		NewMangitto(g),
@@ -214,7 +211,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewLelScans(g),
 		// Platforms recognised by their markup, before PlainHTML so its loose
 		// selectors can't claim a clone; they share the cached page
-		// TanStack (T1)
+		NewTanstackComicByMarkup(g),
 		// RSC comic (T2)
 		// Manganelo (T3)
 		// Toivo Lite (T4)
