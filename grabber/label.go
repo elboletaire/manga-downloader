@@ -29,7 +29,7 @@ const (
 	// LabelTitle is the title as is
 	LabelTitle LabelStyle = iota
 	// LabelNumbered is the title or, when the site gives none, the chapter word
-	// and number, then the part: "Chapter 12", "Chapter 364 Part 2"
+	// and number. A part goes with either: "Chapter 364 Part 2", "Part 2 Title"
 	LabelNumbered
 	// LabelPrefixed is the chapter word and number, then " - " and the title
 	LabelPrefixed
@@ -81,8 +81,10 @@ func (c Chapter) GetLabel() string {
 		if title == "" {
 			title = word + " " + number
 			if c.Label.Part != "" {
-				title += " " + partWord + " " + c.Label.Part
+				title += " " + partLabel(c.Label.Part)
 			}
+		} else if c.Label.Part != "" {
+			title = partLabel(c.Label.Part) + " " + title
 		}
 	case LabelPrefixed:
 		if title == "" {
@@ -97,6 +99,14 @@ func (c Chapter) GetLabel() string {
 		}
 	}
 	return title
+}
+
+// partLabel names a chapter's part: "Part 2" for a number, a word ("前編") as is
+func partLabel(part string) string {
+	if _, err := strconv.ParseFloat(part, 64); err == nil {
+		return partWord + " " + part
+	}
+	return part
 }
 
 // labelOf returns the Label of a listed chapter, for the chapter FetchChapter

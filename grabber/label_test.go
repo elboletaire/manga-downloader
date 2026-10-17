@@ -143,6 +143,25 @@ func TestChapterLabelHelpers(t *testing.T) {
 	}
 }
 
+// TestChapterLabelPart tells the halves of one episode apart: a numeric part
+// reads "Part 2", a word part ("前編") reads as is, and either goes with the title
+func TestChapterLabelPart(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		chapter Chapter
+		want    string
+	}{
+		{"numeric part", Chapter{Number: 364, Label: Label{Style: LabelNumbered, Part: "2"}}, "Chapter 364 Part 2"},
+		{"numeric part with title", Chapter{Title: "Foo", Number: 364, Label: Label{Style: LabelNumbered, Part: "2"}}, "Part 2 Foo"},
+		{"word part", Chapter{Number: 110, Label: Label{Style: LabelNumbered, Part: "前編"}}, "Chapter 110 前編"},
+		{"word part with title", Chapter{Title: "ヤる時", Number: 110, Label: Label{Style: LabelNumbered, Part: "前編"}}, "前編 ヤる時"},
+	} {
+		if got := ChapterLabel(tt.chapter); got != tt.want {
+			t.Errorf("%s: ChapterLabel = %q, want %q", tt.name, got, tt.want)
+		}
+	}
+}
+
 // chapterWordRe matches a chapter or part word as titles write it
 var chapterWordRe = regexp.MustCompile(`\b(Chapter|Chapitre|Capítulo|Bölüm|Episode|Ch\.|Part)( |["` + "`" + `]$)`)
 
