@@ -1,10 +1,8 @@
 # Recreates assets/demos/prompt.gif — run from the repo root: vhs assets/demos/prompt.tape
 # Requires the demo binary built at the repo root (make build/demo): it serves the
 # series from demo/series, so the run needs no network (see demo/README.md).
-# Uses a short (5 chapter) series so answering "y" downloads everything quickly.
-# One Piece on MangaDex, filtered to Catalan ("ca"), the language the makefile's
-# MangaDex smoke target uses, because the series is translated into several
-# languages and the unfiltered download would show a bar per language.
+# The mock serves 5 chapters, so answering "y" downloads everything quickly.
+# One Piece on MangaDex with --language ca, the flag the makefile's MangaDex smoke target uses.
 Output assets/demos/prompt.gif
 
 Set Shell "bash"
