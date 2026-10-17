@@ -93,6 +93,31 @@ func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*Downlo
 		NewVolumeFileTemplateParts(title, volume, listed), files, info, progress)
 }
 
+// PackParts packs the parts of one chapter (--volumes parts) into one file,
+// laid out as a bundle is (a folder per part). It's named with the chapter's
+// template, as the chapter, without the part its title names. chapters must be
+// in the order the site lists them.
+func PackParts(outputdir string, s grabber.Site, chapters []*DownloadedChapter, progress func(page, progress int)) (string, error) {
+	title, _ := s.FetchTitle()
+	format := s.GetFormat()
+	files, labels := chapterFolders(chapters, format, s.GetConvertImages())
+	number := formatChapterNumber(chapters[0].GetNumber())
+	var info EPUBInfo
+	if format == FormatEPUB {
+		info = EPUBInfo{
+			Series:           title,
+			Position:         number,
+			Identity:         "parts " + memberKeys(chapters),
+			ReadingDirection: s.GetReadingDirection(),
+			Labels:           labels,
+		}
+	}
+	chapter := *chapters[0].Chapter
+	chapter.Label.Part = ""
+	return pack(outputdir, format, s.GetFilenameTemplate(), "chapter "+number,
+		NewChapterFileTemplateParts(title, &chapter), files, info, progress)
+}
+
 // releaseName names a chapter's release for messages: its chapter name, then
 // its group in brackets when it has one, so two releases of a number can be told apart.
 func releaseName(c *grabber.Chapter) string {
@@ -167,6 +192,7 @@ func chapterFolders(chapters []*DownloadedChapter, format string, convert grabbe
 	// disambiguated with a " (2)", " (3)" suffix instead of silently merging
 	// both chapters' pages into one folder (which would lose the first one's).
 	usedFolders := map[string]int{}
+	usedLabels := map[string]int{}
 	for _, chapter := range chapters {
 		base := SanitizeFilename(grabber.NumberTextLabel(paddedChapterNumber(chapter.GetNumber())))
 		folder := base
@@ -174,8 +200,13 @@ func chapterFolders(chapters []*DownloadedChapter, format string, convert grabbe
 			folder = fmt.Sprintf("%s (%d)", base, n+1)
 		}
 		usedFolders[base]++
-		// a repeated number gets the folder's suffix too, so the labels match the folders
-		labels[folder] = chapterLabel(chapter.Chapter) + strings.TrimPrefix(folder, base)
+		// only a repeated label gets the folder's suffix, as parts already differ by theirs
+		label := chapterLabel(chapter.Chapter)
+		if usedLabels[label] > 0 {
+			label += strings.TrimPrefix(folder, base)
+		}
+		usedLabels[label]++
+		labels[folder] = label
 
 		for _, page := range namePages(chapter.Files, formats, format) {
 			files = append(files, File{

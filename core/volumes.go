@@ -16,6 +16,10 @@ import (
 // site files them under
 const VolumesAuto = "auto"
 
+// VolumesParts is the --volumes value that packs the parts of a chapter (the
+// chapters sharing a number and group) into one file, named after the chapter
+const VolumesParts = "parts"
+
 // ErrNoVolumes is returned by GroupVolumes for --volumes auto when none of
 // the chapters says which volume it's in
 var ErrNoVolumes = errors.New(`the site doesn't say which volume these chapters are in; give the volumes as chapter ranges instead, e.g. "1-7/8-16"`)
@@ -29,11 +33,13 @@ type VolumeSpec struct {
 	Auto bool
 	// Groups are the chapter ranges of each volume, volume N being Groups[N-1]
 	Groups [][]ranges.Range
+	// Parts groups the chapters sharing a number and group, see VolumesParts
+	Parts bool
 }
 
 // ParseVolumes parses a --volumes value: "auto", or chapter ranges separated
-// by slashes, one group per volume, optionally numbered ("16:112-114"). An
-// empty value is a nil spec, packing per chapter.
+// by slashes, one group per volume, optionally numbered ("16:112-114"), or
+// "parts". An empty value is a nil spec, packing per chapter.
 func ParseVolumes(s string) (*VolumeSpec, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
@@ -41,6 +47,9 @@ func ParseVolumes(s string) (*VolumeSpec, error) {
 	}
 	if strings.EqualFold(s, VolumesAuto) {
 		return &VolumeSpec{Auto: true}, nil
+	}
+	if strings.EqualFold(s, VolumesParts) {
+		return &VolumeSpec{Parts: true}, nil
 	}
 	groups, err := ranges.ParseVolumes(s)
 	if err != nil {
@@ -51,8 +60,12 @@ func ParseVolumes(s string) (*VolumeSpec, error) {
 
 // Volume is one volume file of a --volumes run
 type Volume struct {
-	// Number is the volume's number, which names its file
+	// Number is the volume's number, which names its file. For parts, the
+	// chapter's number rounded down, for the progress messages
 	Number int
+	// Parts is set for the parts of one chapter, which are named after the
+	// chapter rather than the volume
+	Parts bool
 	// Chapters are the listed chapters it holds, sorted by number
 	Chapters grabber.Filterables
 }
@@ -67,6 +80,10 @@ func (v *Volume) LastNumber() float64  { return v.Chapters[len(v.Chapters)-1].Ge
 // than dropped. A volume holding none of the chapters isn't returned. With
 // Auto, ErrNoVolumes is returned when no chapter has a volume.
 func GroupVolumes(chapters grabber.Filterables, spec *VolumeSpec) ([]*Volume, grabber.Filterables, error) {
+	if spec.Parts {
+		volumes, loose := groupParts(chapters)
+		return volumes, loose, nil
+	}
 	byNumber := map[int]*Volume{}
 	var loose grabber.Filterables
 	for _, chap := range chapters {
@@ -100,6 +117,43 @@ func GroupVolumes(chapters grabber.Filterables, spec *VolumeSpec) ([]*Volume, gr
 	sort.Slice(volumes, func(i, j int) bool { return volumes[i].Number < volumes[j].Number })
 
 	return volumes, loose, nil
+}
+
+// partsKey tells the parts of a chapter apart from its other releases
+type partsKey struct {
+	number float64
+	groups string
+}
+
+// groupParts groups the chapters sharing a number and group, in listing order.
+// A chapter no other shares its number and group with is loose, as it's packed
+// on its own. The volumes are sorted by number.
+func groupParts(chapters grabber.Filterables) ([]*Volume, grabber.Filterables) {
+	byKey := map[partsKey]*Volume{}
+	var order []*Volume
+	for _, chap := range chapters {
+		key := partsKey{chap.GetNumber(), strings.Join(grabber.GroupsOf(chap), "\x00")}
+		v := byKey[key]
+		if v == nil {
+			v = &Volume{Number: int(chap.GetNumber()), Parts: true}
+			byKey[key] = v
+			order = append(order, v)
+		}
+		v.Chapters = append(v.Chapters, chap)
+	}
+
+	var volumes []*Volume
+	var loose grabber.Filterables
+	for _, v := range order {
+		if len(v.Chapters) == 1 {
+			loose = append(loose, v.Chapters[0])
+		} else {
+			volumes = append(volumes, v)
+		}
+	}
+	sort.SliceStable(volumes, func(i, j int) bool { return volumes[i].FirstNumber() < volumes[j].FirstNumber() })
+
+	return volumes, loose
 }
 
 // groupOf returns the 1-based group holding number, 0 when none does

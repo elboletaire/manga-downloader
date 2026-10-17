@@ -469,6 +469,15 @@ manga-downloader --volumes 16:112-114/115-118 [url] 112-118
 That's volumes 16 and 17. An empty group also skips a number (`1-7//20-30` has
 no volume 2), and `--volumes` can't be combined with `--bundle`.
 
+`parts` packs the parts of a chapter (the releases sharing its number and group,
+like 19-① and 19-②) into one file named after the chapter, with a folder per part:
+
+~~~bash
+manga-downloader --volumes parts [url] 18-19
+~~~
+
+That writes `Series 19 - Chapter 19 [Group].cbz` next to the chapters without parts.
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/demos/volumes.gif">
   <img alt="The command line downloading thirteen chapters with --volumes auto, packed into one CBZ file per volume" src="assets/demos/volumes-light.gif">
@@ -621,7 +630,7 @@ A URL points at one edition, and `--language` downloads another one instead
 | --------------------- | ----- | -------------------------------------------------------- | -------------- |
 | `--output-dir`        | `-o`  | Folder to write the downloaded files to                  | current folder |
 | `--bundle`            | `-b`  | Bundle all chapters into a single file                   | off            |
-| `--volumes`           |       | One file per volume: `auto`, `1-7/8-16`, `16:112-114`    | off            |
+| `--volumes`           |       | One file per volume: `auto`, `parts`, `1-7/8-16`         | off            |
 | `--format`            | `-f`  | Output format: `cbz`, `raw` or `epub`                    | `cbz`          |
 | `--reading-direction` |       | Page turn direction for EPUB: `rtl` (manga) or `ltr`     | `rtl`          |
 | `--filename-template` | `-t`  | Template for the file names                              | see above      |
