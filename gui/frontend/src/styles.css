@@ -2288,3 +2288,11 @@ a.version:hover {
 .settings-about a:hover {
   color: var(--text);
 }
+
+/* a line of its own under the links, smaller and quieter than them */
+.settings-about .settings-author {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-3);
+}

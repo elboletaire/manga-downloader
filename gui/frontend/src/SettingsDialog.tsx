@@ -18,6 +18,11 @@ interface Props {
 }
 
 const ISSUES_URL = 'https://github.com/elboletaire/manga-downloader/issues';
+const LICENSE = 'AGPL-3.0';
+export const LICENSE_URL = 'https://github.com/elboletaire/manga-downloader/blob/master/LICENSE';
+const AUTHOR = 'Òscar Casajuana Alonso';
+// the years of the source files' copyright headers
+const YEARS = '2023–2026';
 
 const WEBSITE_PATHS: Record<Lang, string> = { en: '', es: 'es/', ca: 'ca/' };
 
@@ -63,6 +68,22 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
     ...LANGS.map((l) => ({ value: l as LangPref, label: LANG_INFO[l].name })),
   ];
 
+  // the license is the one link in the line, so the translated text is split around its name
+  const aboutLine = t('settings.about.madeBy', { author: AUTHOR, years: YEARS, license: LICENSE });
+  const at = aboutLine.indexOf(LICENSE);
+  const madeBy =
+    at < 0 ? (
+      aboutLine
+    ) : (
+      <>
+        {aboutLine.slice(0, at)}
+        <a href={LICENSE_URL} onClick={link(LICENSE_URL)}>
+          {LICENSE}
+        </a>
+        {aboutLine.slice(at + LICENSE.length)}
+      </>
+    );
+
   return (
     <dialog
       ref={dialog}
@@ -102,7 +123,7 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
             <Switch
               label={t('settings.updates.check')}
               description={devBuild ? t('settings.updates.devHint') : t('settings.updates.hint')}
-              checked={state.prefs.checkUpdates}
+              checked={!devBuild && state.prefs.checkUpdates}
               disabled={devBuild}
               onChange={onCheckUpdates}
             />
@@ -123,6 +144,7 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
           <a href={ISSUES_URL} onClick={link(ISSUES_URL)}>
             {t('settings.about.issues')}
           </a>
+          <p className="settings-author">{madeBy}</p>
         </footer>
       </div>
     </dialog>

@@ -16,6 +16,7 @@
   "about": {
     "version": "Manga Downloader {{version}}",
     "website": "Lloc web",
-    "issues": "Informa d'un problema"
+    "issues": "Informa d'un problema",
+    "madeBy": "Fet amb orgull per {{author}} · © {{years}} · {{license}}"
   }
 }

@@ -16,6 +16,7 @@
   "about": {
     "version": "Manga Downloader {{version}}",
     "website": "Website",
-    "issues": "Report a problem"
+    "issues": "Report a problem",
+    "madeBy": "Proudly made by {{author}} · © {{years}} · {{license}}"
   }
 }

@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { LANGS, type LangPref } from './i18n';
 import { I18nProvider } from './i18n/react';
-import { SettingsDialog, websiteURL } from './SettingsDialog';
+import { LICENSE_URL, SettingsDialog, websiteURL } from './SettingsDialog';
 import type { State } from './types';
 
 const persist = async () => undefined;
@@ -52,18 +52,31 @@ describe('SettingsDialog', () => {
     expect(render('ca', state(), ['es-ES'])).not.toContain('Segueix la llengua del sistema');
   });
 
-  it('disables the update switch with the dev hint when there is no release URL', () => {
+  it('shows the update switch off and disabled with the dev hint when there is no release URL', () => {
     const html = render('en', state({ releaseURL: '' }));
+    const input = html.match(/<input[^>]*role="switch"[^>]*>/)?.[0] ?? '';
     expect(html).toContain('Development builds don&#x27;t check for updates.');
     expect(html).not.toContain('Asks GitHub for the latest release');
-    expect(html).toMatch(/role="switch"[^>]*disabled=""/);
+    expect(input).toContain('disabled=""');
+    expect(input).not.toContain('checked=""');
   });
 
   it('enables the update switch with its hint on a release build', () => {
     const html = render('en', state());
+    const input = html.match(/<input[^>]*role="switch"[^>]*>/)?.[0] ?? '';
     expect(html).toContain('Asks GitHub for the latest release each time the app opens.');
     expect(html).not.toContain('Development builds');
-    expect(html).not.toMatch(/role="switch"[^>]*disabled=""/);
+    expect(input).not.toContain('disabled=""');
+    expect(input).toContain('checked=""');
+  });
+
+  it('credits the author and links the license, untranslated, in each language', () => {
+    const lines = { en: 'Proudly made by', es: 'Hecho con orgullo por', ca: 'Fet amb orgull per' };
+    for (const lang of LANGS) {
+      const html = render(lang, state());
+      expect(html, lang).toContain(`${lines[lang]} Òscar Casajuana Alonso · © 2023–2026 · <a href="${LICENSE_URL}"`);
+      expect(html, lang).toContain('>AGPL-3.0</a>');
+    }
   });
 
   it('links the version to the release only when there is one', () => {
