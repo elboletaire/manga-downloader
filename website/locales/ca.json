@@ -60,7 +60,7 @@
     "partsText": "Alguns llocs divideixen un capítol en parts. «Units» a l'app, o <code>--volumes parts</code> a la línia d'ordres, les uneix en un sol fitxer amb el nom del capítol; els capítols sense parts segueixen igual.",
     "partsAlt": "La llista de capítols amb les parts de cada capítol agrupades a sota, algunes plegades.",
     "languageTitle": "El teu idioma, el teu grup",
-    "languageText": "Quan una sèrie està en diverses llengües o la tradueixen diversos grups de scanlation, l'aplicació mostra només les opcions que ofereix realment, i així tries entre opcions reals en comptes d'endevinar codis.",
+    "languageText": "Quan una sèrie està en diversos idiomes o la tradueixen diversos grups de scanlation, l'aplicació mostra només les opcions que ofereix realment, i així tries entre opcions reals en comptes d'endevinar codis.",
     "languageAlt": "El desplegable d'idioma obert, amb català seleccionat.",
     "watchTitle": "Mira-ho en directe",
     "watchText": "Progrés en directe de cada capítol, mentre els fitxers van arribant a la carpeta que has triat amb el selector de carpetes del sistema. Quan acaba l'últim, ja ho tens tot.",
@@ -118,7 +118,7 @@
     "cloudflareText": "Els llocs que necessiten JavaScript o són darrere de Cloudflare s'obren amb el teu propi Chrome, Chromium, Brave o Edge, que fins i tot marca per tu la casella de verificació.",
     "dockerTitle": "Imatges de Docker",
     "dockerText": "Una imatge mínima per als llocs senzills i una altra <code>:browser</code> amb Chromium i una pantalla virtual per a la resta.",
-    "languagesTitle": "Llengües i grups",
+    "languagesTitle": "Idiomes i grups",
     "languagesText": "Tria un idioma amb <code>--language</code>, o un grup de scanlation amb <code>--scanlator</code> quan un lloc té diverses versions.",
     "namesTitle": "Els teus noms de fitxer",
     "namesText": "Posa nom als fitxers com vulguis amb una plantilla com <code>{{filenameTemplate}}</code>. Si dos noms coincideixen, s'hi afegeix un sufix de versió; mai no se sobreescriu res."
