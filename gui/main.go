@@ -64,10 +64,11 @@ func main() {
 		OnStartup: func(ctx context.Context) {
 			app.startup(ctx, rt)
 		},
-		OnShutdown: app.shutdown,
-		Bind:       []interface{}{app},
-		Linux:      &linux.Options{Icon: appIcon},
-		Mac:        &mac.Options{}, // without it Wails disables the zoom button
+		OnShutdown:     app.shutdown,
+		ErrorFormatter: func(err error) any { return windowError(err) },
+		Bind:           []interface{}{app},
+		Linux:          &linux.Options{Icon: appIcon},
+		Mac:            &mac.Options{}, // without it Wails disables the zoom button
 	})
 	// OnShutdown already closed it; this covers a Run that failed or returned
 	// without calling it
