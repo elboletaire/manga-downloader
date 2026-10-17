@@ -35,9 +35,9 @@ var comiciDomains = []string{
 	"kansai.mag-garden.co.jp",
 }
 
-// comiciFingerprint is Comici's vendor link, on the series and episode pages of
-// every host (bigcomics.jp has its own asset host, so the link is what they share)
-const comiciFingerprint = "comici.co.jp"
+// comiciMarkers are what a Comici series or episode page carries: the vendor
+// link, which a footer alone can also be, and the episode list's items
+var comiciMarkers = []string{"comici.co.jp", `data-e2e="eli"`}
 
 var (
 	// comiciEpisodeRe and comiciSeriesRe match the 13-character IDs of
@@ -55,8 +55,10 @@ var (
 // Its listing marks the free episodes, and each one's pages come from the API.
 type Comici struct {
 	*Grabber
-	// byMarkup also detects the hosts not in comiciDomains (NewComiciByMarkup)
+	// byMarkup also detects the hosts not in comiciDomains (NewComiciByMarkup),
+	// reading fetched's page when it has one
 	byMarkup   bool
+	fetched    *PlainHTML
 	seriesID   string
 	seriesLoad bool
 	title      string
@@ -69,9 +71,10 @@ func NewComici(g *Grabber) *Comici {
 }
 
 // NewComiciByMarkup returns a Comici grabber that also matches an episode or
-// series URL on any host whose page has the Comici markup.
-func NewComiciByMarkup(g *Grabber) *Comici {
-	return &Comici{Grabber: g, byMarkup: true}
+// series URL on any host whose page has the Comici markup. fetched is the
+// PlainHTML that already parsed the URL's page, or nil.
+func NewComiciByMarkup(g *Grabber, fetched *PlainHTML) *Comici {
+	return &Comici{Grabber: g, byMarkup: true, fetched: fetched}
 }
 
 // ComiciChapter is a chapter of a Comici site, identified by its episode ID
@@ -100,7 +103,7 @@ func (c *Comici) Test() (bool, error) {
 	if !c.byMarkup || !comiciURLShape(c.URL) {
 		return false, nil
 	}
-	return pageHasMarkup(c.URL, comiciFingerprint)
+	return pageHasMarkup(c.URL, c.fetched, comiciMarkers...)
 }
 
 // comiciURLShape reports whether rawURL's path is an episode or a series, the

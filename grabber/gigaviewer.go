@@ -48,7 +48,8 @@ var gigaviewerDomains = []string{
 }
 
 // gigaviewerFingerprint is in every GigaViewer page: its asset host
-// (cdn-scissors.gigaviewer.com) and the feed's xmlns:giga namespace
+// (cdn-scissors.gigaviewer.com) and the feed's xmlns:giga namespace. A page
+// needs it with its shape's marker, as a footer or a credit can name the host
 const gigaviewerFingerprint = "gigaviewer.com"
 
 // gvDigits, gvKanji and gvBreak are the number pieces of a title: digits (with
@@ -95,8 +96,10 @@ var (
 // Pages scrambled in tiles ("baku") are undone in Transform.
 type Gigaviewer struct {
 	*Grabber
-	// byMarkup also detects the hosts not in gigaviewerDomains (NewGigaviewerByMarkup)
+	// byMarkup also detects the hosts not in gigaviewerDomains (NewGigaviewerByMarkup),
+	// reading fetched's page when it has one
 	byMarkup   bool
+	fetched    *PlainHTML
 	seriesID   string
 	feedLoaded bool
 	title      string
@@ -109,9 +112,10 @@ func NewGigaviewer(g *Grabber) *Gigaviewer {
 }
 
 // NewGigaviewerByMarkup returns a Gigaviewer grabber that also matches an
-// episode or feed URL on any host whose page has the GigaViewer markup.
-func NewGigaviewerByMarkup(g *Grabber) *Gigaviewer {
-	return &Gigaviewer{Grabber: g, byMarkup: true}
+// episode or feed URL on any host whose page has the GigaViewer markup. fetched
+// is the PlainHTML that already parsed the URL's page, or nil.
+func NewGigaviewerByMarkup(g *Grabber, fetched *PlainHTML) *Gigaviewer {
+	return &Gigaviewer{Grabber: g, byMarkup: true, fetched: fetched}
 }
 
 // GigaviewerChapter is a chapter of a GigaViewer site, identified by its episode ID
@@ -156,17 +160,30 @@ func (g *Gigaviewer) Test() (bool, error) {
 			return true, nil
 		}
 	}
-	if !g.byMarkup || !gigaviewerURLShape(g.URL) {
+	if !g.byMarkup {
 		return false, nil
 	}
-	return pageHasMarkup(g.URL, gigaviewerFingerprint)
+	markers, ok := gigaviewerMarkers(g.URL)
+	if !ok {
+		return false, nil
+	}
+	return pageHasMarkup(g.URL, g.fetched, markers...)
 }
 
-// gigaviewerURLShape reports whether rawURL's path is an episode or a series
-// feed, the two shapes the grabber reads
-func gigaviewerURLShape(rawURL string) bool {
+// gigaviewerMarkers returns what a page of rawURL's shape must carry: the
+// platform's host, and the episode JSON or the feed's namespace. ok is false
+// for any other shape (an episode or a series feed is the only one read).
+func gigaviewerMarkers(rawURL string) (markers []string, ok bool) {
 	u, err := url.Parse(rawURL)
-	return err == nil && (gigaviewerEpisodeRe.MatchString(u.Path) || gigaviewerFeedRe.MatchString(u.Path))
+	switch {
+	case err != nil:
+		return nil, false
+	case gigaviewerEpisodeRe.MatchString(u.Path):
+		return []string{gigaviewerFingerprint, "episode-json"}, true
+	case gigaviewerFeedRe.MatchString(u.Path):
+		return []string{gigaviewerFingerprint, "xmlns:giga="}, true
+	}
+	return nil, false
 }
 
 // seriesIdentifier returns the series of the URL: a feed URL names it, and

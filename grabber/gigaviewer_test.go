@@ -338,8 +338,13 @@ func TestGigaviewerUnscrambleRejectsNonImage(t *testing.T) {
 	}
 }
 
+// gigaviewerMarkupPage is an episode page with the markers GigaViewer's own
+// pages carry: the asset host and the episode JSON, in single quotes as live
+const gigaviewerMarkupPage = `<html><head><link rel="stylesheet" href="https://cdn-scissors.gigaviewer.com/app.css"></head><body><script id='episode-json' type='text/json' data-value='{}'></script></body></html>`
+
 // TestGigaviewerTestByMarkup checks that a host outside the list is matched by
-// its page's markup, with one fetch, and that another URL shape isn't fetched
+// its page's markup, with one fetch, and that a page missing its shape's marker
+// or another URL shape is refused
 func TestGigaviewerTestByMarkup(t *testing.T) {
 	var hits atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -347,10 +352,13 @@ func TestGigaviewerTestByMarkup(t *testing.T) {
 		switch {
 		case strings.HasPrefix(r.URL.Path, "/plain/"):
 			fmt.Fprint(w, `<html><body><a href="/">no platform here</a></body></html>`)
+		case strings.HasPrefix(r.URL.Path, "/asset/"):
+			// a credit names the platform, but the page has no episode JSON
+			fmt.Fprint(w, `<html><body><a href="https://gigaviewer.com/">powered by</a></body></html>`)
 		case strings.HasPrefix(r.URL.Path, "/rss/"):
 			fmt.Fprint(w, gigaviewerFeedFixture)
 		default:
-			fmt.Fprint(w, `<html><head><link rel="stylesheet" href="https://cdn-scissors.gigaviewer.com/app.css"></head></html>`)
+			fmt.Fprint(w, gigaviewerMarkupPage)
 		}
 	}))
 	defer srv.Close()
@@ -358,7 +366,7 @@ func TestGigaviewerTestByMarkup(t *testing.T) {
 	check := func(path string, want bool, wantHits int32) {
 		t.Helper()
 		before := hits.Load()
-		got, err := NewGigaviewerByMarkup(&Grabber{URL: srv.URL + path, Settings: &Settings{}}).Test()
+		got, err := NewGigaviewerByMarkup(&Grabber{URL: srv.URL + path, Settings: &Settings{}}, nil).Test()
 		if err != nil || got != want {
 			t.Errorf("Test(%q) = %v, %v; want %v, nil", path, got, err, want)
 		}
@@ -370,11 +378,36 @@ func TestGigaviewerTestByMarkup(t *testing.T) {
 	check("/episode/1", true, 1)
 	check("/rss/series/1", true, 1)
 	check("/plain/episode/1", false, 1)
+	check("/asset/episode/1", false, 1)
 	check("/manga/1", false, 0)
 
 	// the listed-host instance never fetches an unlisted host
 	before := hits.Load()
 	if got, _ := NewGigaviewer(&Grabber{URL: srv.URL + "/episode/1", Settings: &Settings{}}).Test(); got || hits.Load() != before {
 		t.Errorf("listed-host Test on an unlisted host = %v with %d requests; want false and none", got, hits.Load()-before)
+	}
+}
+
+// TestGigaviewerTestReusesPlainHTML checks that the markup check reads the page
+// PlainHTML already fetched for the URL, so it makes no request of its own
+func TestGigaviewerTestReusesPlainHTML(t *testing.T) {
+	var hits atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		fmt.Fprint(w, gigaviewerMarkupPage)
+	}))
+	defer srv.Close()
+
+	g := &Grabber{URL: srv.URL + "/episode/1", Settings: &Settings{}}
+	plain := NewPlainHTML(g)
+	plain.Test()
+	before := hits.Load()
+
+	got, err := NewGigaviewerByMarkup(g, plain).Test()
+	if err != nil || !got {
+		t.Errorf("Test = %v, %v; want true, nil", got, err)
+	}
+	if n := hits.Load() - before; n != 0 {
+		t.Errorf("markup check made %d requests after PlainHTML fetched the page, want 0", n)
 	}
 }
