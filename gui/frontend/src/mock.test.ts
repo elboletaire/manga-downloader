@@ -253,7 +253,7 @@ describe('createMockApi', () => {
     const state = await api.state();
     expect(state.hasDuplicates).toBe(true);
     const chapters = await api.chapters();
-    // Find chapter numbers listed in both ca and en (multiples of 5 in newest 15)
+    // Find chapter numbers listed in both en and ca (multiples of 5 in newest 15)
     const chaptersByNumber = new Map<number, typeof chapters>();
     for (const c of chapters) {
       if (!chaptersByNumber.has(c.number)) {
@@ -263,10 +263,9 @@ describe('createMockApi', () => {
     }
     const duplicatedChapters = Array.from(chaptersByNumber.values()).filter((cs) => cs.length > 1);
     expect(duplicatedChapters.length).toBeGreaterThan(0);
-    // Primary language is Catalan; duplicates are in English
+    // Primary language is English, the window's; duplicates are in Catalan, the site's first other
     const languages = duplicatedChapters[0]!.map((c) => c.language).sort();
-    expect(languages).toContain('ca');
-    expect(languages).toContain('en');
+    expect(languages).toEqual(['ca', 'en']);
   });
 
   it('shows version v1.12.0 for update scenario and v0.0.0-mock otherwise', async () => {
@@ -321,16 +320,16 @@ describe('createMockApi', () => {
     expect(logWith.some((l) => l.text.includes('timed out waiting for'))).toBe(false);
   });
 
-  it('uses real One Piece chapter numbers and Catalan titles', async () => {
+  it('uses real One Piece chapter numbers and English titles by default', async () => {
     const api = createMockApi({ chapters: 5 });
     await api.load('https://example.com/series/a');
     const chapters = await api.chapters();
     expect(chapters).toHaveLength(5);
     // newest 5 chapters: 1190-1194
     expect(chapters[0].number).toBe(1190);
-    expect(chapters[0].title).toBe('Algú de qui se celebra la mort');
+    expect(chapters[0].title).toBe('Those Whose Death Brings Celebration');
     expect(chapters[4].number).toBe(1194);
-    expect(chapters[4].title).toBe('La impermanència de totes les coses');
+    expect(chapters[4].title).toBe('All Things Are In Flux');
     // newest chapters have no volume yet
     expect(chapters[0].volume).toBe(0);
   });
@@ -413,11 +412,12 @@ describe('mock volumes', () => {
       const state = await api.state();
       expect(state.options.packAs).toBe('parts');
       expect(state.title).toBe('One Piece');
-      // the parts share their chapter's One Piece title, plus their part
+      // the parts share their chapter's title, plus their part; the English list has
+      // no title for these chapters, so each part is just its name
       const chapters = await api.chapters();
-      expect(chapters[0]).toMatchObject({ number: 1, title: 'El drac dels llamps Nidhog' });
-      expect(chapters[1]).toMatchObject({ number: 2, title: 'Amb honor Part 1' });
-      expect(chapters[2]).toMatchObject({ number: 2, title: 'Amb honor Part 2' });
+      expect(chapters[0]).toMatchObject({ number: 1, title: '' });
+      expect(chapters[1]).toMatchObject({ number: 2, title: 'Part 1' });
+      expect(chapters[2]).toMatchObject({ number: 2, title: 'Part 2' });
       // chapter 1, both parts of 2-4 and the open part of 19
       expect(state.selectedCount).toBe(8);
       await api.start();
@@ -522,8 +522,8 @@ describe('mockSetupFrom', () => {
 describe('mock filters', () => {
   it('offers the languages of the site, and none for a site without them', async () => {
     const multi = createMockApi({ scenario: 'loaded', site: 'multi' });
-    // multi site: ca, en, es with All; Catalan is the default shown language
-    expect((await multi.state()).languages).toEqual({ values: ['ca', 'en', 'es'], all: true, selected: 'ca' });
+    // multi site: ca, en, es with All; the window's language (English by default) is shown
+    expect((await multi.state()).languages).toEqual({ values: ['ca', 'en', 'es'], all: true, selected: 'en' });
     expect((await multi.state()).scanlators).toBeNull();
 
     const none = createMockApi({ scenario: 'loaded', site: 'none' });
@@ -643,6 +643,38 @@ describe('mock fetching rows', () => {
   it('keeps the other running scenarios free of fetching rows', async () => {
     const rows = (await createMockApi({ scenario: 'running', freeze: true }).state()).jobs;
     expect(rows.some((j) => j.state === 'fetching')).toBe(false);
+  });
+});
+
+describe('mock languages', () => {
+  // the newest five chapters' titles, which the lists have for 1190 (the first)
+  const first = { en: 'Those Whose Death Brings Celebration', es: 'Su muerte es motivo de alegría', ca: 'Algú de qui se celebra la mort' };
+
+  it.each(['en', 'es', 'ca'] as const)('shows %s as the selected filter and lists its titles', async (lang) => {
+    const api = createMockApi({ scenario: 'loaded', uiLanguage: lang, chapters: 5 });
+    expect((await api.state()).languages).toMatchObject({ selected: lang });
+    await api.load('https://example.com/series/a');
+    expect((await api.state()).languages).toMatchObject({ selected: lang, values: ['ca', 'en', 'es'] });
+    expect((await api.chapters())[0]).toMatchObject({ number: 1190, title: first[lang] });
+  });
+
+  it('lists the chapters of the language the filter is set to on reload', async () => {
+    const api = createMockApi({ uiLanguage: 'en', chapters: 5 });
+    await api.load('https://example.com/series/a');
+    await api.setOptions({ ...(await api.state()).options, language: 'es' });
+    await api.load((await api.state()).url);
+    expect((await api.state()).languages).toMatchObject({ selected: 'es' });
+    expect((await api.chapters())[0].title).toBe(first.es);
+  });
+
+  it('repeats every fifth chapter in the site\'s other language with dupes', async () => {
+    const api = createMockApi({ uiLanguage: 'es', dupes: true, chapters: 5 });
+    await api.load('https://example.com/series/a');
+    const copies = (await api.chapters()).filter((c) => c.number === 1190);
+    expect(copies.map((c) => [c.language, c.title])).toEqual([
+      ['es', first.es],
+      ['ca', first.ca],
+    ]);
   });
 });
 

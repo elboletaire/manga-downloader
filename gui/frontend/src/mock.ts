@@ -28,10 +28,12 @@
 // and VITE_MOCK=1 at build time includes the mock in production builds (e.g.
 // for the screenshot capture build; set via Wails frontend env). ?lang=en|es|ca
 // starts the window in that language, ?lang=system follows the browser's, and
-// without it the window is English, so screenshots and dev stay English.
+// without it the window is English, so screenshots and dev stay English. Under
+// multi the language filter shows that language and the list is in it, titled
+// from OP_TITLES; every fifth chapter also appears once in another language.
 //
 // &site= picks what the series lists for the two filters: multi (the default:
-// languages ca, en, es with All, Catalan shown by default, no groups), plus
+// languages ca, en, es with All, the window's language shown by default, no groups), plus
 // (Manga Plus: languages without All, the URL edition shown by default),
 // groups (groups with All, every group shown by default, each chapter listed
 // once per group, no languages), or none (both fields disabled: a typed value shows cleared, as
@@ -43,10 +45,10 @@
 // and never selects it, as the backend does.
 
 import type { Api, Unsubscribe } from './api';
-import { createT, LANGS, type LangPref, type Vars } from './i18n';
+import { createT, LANGS, resolveLanguage, type Lang, type LangPref, type Vars } from './i18n';
 import type { Chapter, FilterChoice, Job, LogLine, Message, Options, Prefs, State, Summary, Update } from './types';
 import { groupChapters, groupParts, listedVolumes, parseVolumes, siteVolumes } from './volumes';
-import { OP_CHAPTERS } from './mock-onepiece';
+import { OP_TITLES } from './mock-onepiece';
 
 const TEMPLATE_DEFAULT =
   '{{.Series}} {{.Number}} - {{.Title}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}';
@@ -59,8 +61,8 @@ export function templateWarning(templ: string): string {
   return t === '' || /\{\{-?\s*[^}]*\.(Number|Title|SiteTitle|Volume)\b/.test(t) ? '' : TEMPLATE_WARNING;
 }
 
-/** Total chapters in the Catalan One Piece feed (MangaDex, ch 598-1194) */
-const CHAPTERS = OP_CHAPTERS.length; // 597
+/** Total chapters in the One Piece feed (MangaDex, ch 598-1194) */
+const CHAPTERS = OP_TITLES.ca.length; // 597
 const PAGES = 12;
 // a page's steps while downloading and while archiving, as core's
 // DownloadWeight and ArchiveWeight: a bar fills 80% in the download
@@ -136,11 +138,21 @@ interface MockOffers {
 }
 
 const OFFERS: Record<MockSite, MockOffers> = {
-  multi: { language: { values: ['ca', 'en', 'es'], all: true, current: 'ca' }, scanlator: null },
+  // multi's current language is the window's, see offersFor
+  multi: { language: { values: ['ca', 'en', 'es'], all: true, current: 'en' }, scanlator: null },
   plus: { language: { values: ['en', 'es'], all: false, current: 'en' }, scanlator: null },
   groups: { language: null, scanlator: { values: ['Alpha', 'Delta'], all: true, current: '' } },
   none: { language: null, scanlator: null },
 };
+
+/** A site's offers; multi shows the window's language, which its list is in */
+function offersFor(site: MockSite, lang: Lang): MockOffers {
+  const offers = OFFERS[site];
+  if (site !== 'multi' || offers.language === null) {
+    return offers;
+  }
+  return { ...offers, language: { ...offers.language, current: lang } };
+}
 
 const en = createT('en');
 
@@ -238,21 +250,27 @@ function defaultOptions(shot: boolean, epub: boolean): Options {
 }
 
 /**
- * Returns the newest `count` chapters from the One Piece Catalan dataset.
- * Volume 0 means not yet collected. With withLanguages, some chapters also
- * appear in English to simulate a multi-language listing.
+ * The newest `count` chapters, titled in `lang`. With withLanguages they are tagged with it, and every
+ * fifth also appears once in `other` (the two lists share their chapters, in order). Volume 0: not collected.
  */
-function mockChapters(count: number, withLanguages: boolean, withVolumes = true, withLocked = false): Chapter[] {
+function mockChapters(
+  count: number,
+  lang: Lang,
+  withLanguages: boolean,
+  other: Lang,
+  withVolumes = true,
+  withLocked = false,
+): Chapter[] {
   const list: Chapter[] = [];
-  const source =
-    count >= OP_CHAPTERS.length ? OP_CHAPTERS : OP_CHAPTERS.slice(OP_CHAPTERS.length - count);
-
-  for (const [number, catTitle, vol] of source) {
+  const rows = OP_TITLES[lang];
+  const otherRows = OP_TITLES[other];
+  for (let i = Math.max(0, rows.length - count); i < rows.length; i++) {
+    const [number, title, vol] = rows[i];
     const volume = withVolumes ? vol : 0;
     const locked = withLocked && isMockLocked(number);
-    list.push({ index: list.length, number, title: catTitle, language: withLanguages ? 'ca' : '', group: '', volume, locked });
+    list.push({ index: list.length, number, title, language: withLanguages ? lang : '', group: '', volume, locked });
     if (withLanguages && number % 5 === 0) {
-      list.push({ index: list.length, number, title: catTitle, language: 'en', group: '', volume, locked });
+      list.push({ index: list.length, number, title: otherRows[i][1], language: other, group: '', volume, locked });
     }
   }
   return list;
@@ -263,8 +281,9 @@ function mockChapters(count: number, withLanguages: boolean, withVolumes = true,
  * everything past chapter 4 locked but the second half of 19. The parts share
  * their chapter's One Piece title, plus their part, as the grabbers give them.
  */
-function partsChapters(): Chapter[] {
+function partsChapters(lang: Lang): Chapter[] {
   const list: Chapter[] = [];
+  const withPart = (title: string, part: string) => (title === '' ? part : `${title} ${part}`);
   const add = (number: number, title: string, locked: boolean, part?: string) =>
     list.push({
       index: list.length,
@@ -276,18 +295,21 @@ function partsChapters(): Chapter[] {
       locked,
       ...(part ? { part, wholeTitle: titleOf(number) } : {}),
     });
-  const newest = OP_CHAPTERS.slice(-20).map(([, title]) => title);
+  const newest = OP_TITLES[lang].slice(-20).map(([, title]) => title);
   const titleOf = (n: number) => newest[n - 1];
   add(1, titleOf(1), false);
   for (let n = 2; n <= 20; n++) {
-    add(n, `${titleOf(n)} Part 1`, n > 4, 'Part 1');
-    add(n, `${titleOf(n)} Part 2`, n > 4 && n !== 19, 'Part 2');
+    add(n, withPart(titleOf(n), 'Part 1'), n > 4, 'Part 1');
+    add(n, withPart(titleOf(n), 'Part 2'), n > 4 && n !== 19, 'Part 2');
   }
   return list;
 }
 
 /** The error a locked chapter fails with, as core.ErrLocked says it */
 const LOCKED_REASON = msgOf('job.reason.locked');
+
+/** A chapter's job label: its title, or its number where the list has none */
+const labelOf = (c: Chapter) => (c.title === '' ? `Chapter ${c.number}` : c.title);
 
 /** Every 50th chapter is locked (a listing's coin lock), so a few show in dev. */
 function isMockLocked(number: number): boolean {
@@ -359,7 +381,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     uiLanguage: 'en' as LangPref,
     ...(typeof setup === 'string' ? { scenario: setup } : setup),
   };
-  const offers = OFFERS[site];
+  // the window's language: the one a multi site shows and lists in
+  const uiLang = resolveLanguage(uiLanguage, typeof navigator === 'undefined' ? [] : navigator.languages);
+  const offers = offersFor(site, uiLang);
   const options = defaultOptions(shot, epub);
   // the app preferences, kept as the backend keeps them in gui.json
   const prefs: Prefs = { uiLanguage, checkUpdates: true };
@@ -417,6 +441,17 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       selected = offer.current !== '' ? offer.current : offer.all ? 'all' : '';
     }
     return { values: [...offer.values], all: offer.all, selected };
+  };
+  // the filter's language, else the site's current one (the window's where the site has no languages)
+  const listedLanguage = (): Lang => {
+    const offer = offers.language;
+    if (offer === null) return uiLang;
+    return (offer.values.includes(options.language) ? options.language : offer.current) as Lang;
+  };
+  // the language a list's repeated chapters are in: the site's first other one
+  const otherLanguage = (lang: Lang): Lang => {
+    const values: readonly string[] = offers.language?.values ?? LANGS;
+    return values.find((v) => v !== lang) as Lang;
   };
   // a typed value the series doesn't offer falls back as the backend does: to
   // "all" where the site takes it, else to the site's current value, else to no
@@ -498,10 +533,18 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     fallbackFor('language', 'language');
     fallbackFor('scanlator', 'group');
     title = 'One Piece';
+    const lang = listedLanguage();
     chapters =
       withParts || scenario === 'parts'
-        ? partsChapters()
-        : mockChapters(chapterCount, dupes || url.includes('dupes') || options.language === 'all', !novolumes, locked);
+        ? partsChapters(lang)
+        : mockChapters(
+            chapterCount,
+            lang,
+            dupes || url.includes('dupes') || options.language === 'all',
+            otherLanguage(lang),
+            !novolumes,
+            locked,
+          );
     if (offers.scanlator !== null) {
       chapters = groupedChapters(chapters);
     }
@@ -668,7 +711,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
           jobs = [
             ...jobs,
             {
-              title: c.title,
+              title: labelOf(c),
               tags: '',
               number: c.number,
               total: 0,
@@ -681,7 +724,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
             },
           ];
         }
-        pushLog('error', msgOf('log.errorFetching', { label: c.title, reason: LOCKED_REASON.text }));
+        pushLog('error', msgOf('log.errorFetching', { label: labelOf(c), reason: LOCKED_REASON.text }));
         return true;
       }
       if (skip && jobs.filter((j) => !j.volume).length === 5) {
@@ -689,7 +732,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         jobs = [
           ...jobs,
           {
-            title: c.title,
+            title: labelOf(c),
             tags: '',
             number: c.number,
             total: 0,
@@ -701,16 +744,16 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
             volume: false,
           },
         ];
-        pushLog('warn', msgOf('log.skipping', { label: c.title }));
+        pushLog('warn', msgOf('log.skipping', { label: labelOf(c) }));
         return true;
       }
       if (fetching) {
-        fetchLeft.set(c.title, FETCH_TICKS);
+        fetchLeft.set(labelOf(c), FETCH_TICKS);
       }
       jobs = [
         ...jobs,
         {
-          title: c.title,
+          title: labelOf(c),
           tags: '',
           number: c.number,
           total: fetching ? 0 : PAGES * STEPS_PER_PAGE,

@@ -69,7 +69,7 @@ describe('ChapterTitle in another language', () => {
 
 describe('ChapterPanel of a parts run', () => {
   it('heads a merged chapter with its title and count, and shows each part by its part alone', async () => {
-    const api = createMockApi({ scenario: 'parts' });
+    const api = createMockApi({ scenario: 'parts', uiLanguage: 'ca' });
     const state = await api.state();
     const chapters = await api.chapters();
     const noop = async () => {};

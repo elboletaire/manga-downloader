@@ -1,6 +1,6 @@
 #!/bin/bash
 # The 03 shot: the Language <select> open on the mock's default site, with
-# Catalan selected. A native popup can't be opened from JS, so this clicks it
+# the window's language selected. A native popup can't be opened from JS, so this clicks it
 # (cliclick); WebKit draws the popup inside the window, so one capture holds
 # both. The pointer moves, but screencapture -l leaves the cursor out.
 #
