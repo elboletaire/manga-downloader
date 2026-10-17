@@ -62,15 +62,17 @@ func TestVerifyCBR(t *testing.T) {
 	}
 }
 
-func TestVerifyCBZ(t *testing.T) {
+// writeCBZ zips files and returns the path.
+func writeCBZ(t *testing.T, files []packer.File) string {
+	t.Helper()
 	var buf bytes.Buffer
 	zw := zip.NewWriter(&buf)
-	for _, name := range []string{"000.jpg", "001.jpg", "002.jpg"} {
-		w, err := zw.Create(name)
+	for _, f := range files {
+		w, err := zw.Create(f.Name)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := w.Write(jpeg(name)); err != nil {
+		if _, err := w.Write(f.Data); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -82,7 +84,22 @@ func TestVerifyCBZ(t *testing.T) {
 	if err := os.WriteFile(path, buf.Bytes(), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := verify(path); err != nil {
-		t.Fatalf("verify() = %v, want nil", err)
+	return path
+}
+
+func TestVerifyCBZ(t *testing.T) {
+	good := []packer.File{
+		{Name: "000.jpg", Data: jpeg("a")},
+		{Name: "001.jpg", Data: jpeg("b")},
+		{Name: "002.jpg", Data: jpeg("c")},
+	}
+	html := []byte("<html><body>Cloudflare</body></html>")
+
+	if err := verify(writeCBZ(t, good)); err != nil {
+		t.Errorf("valid archive: verify() = %v, want nil", err)
+	}
+	bad := append(good[:2:2], packer.File{Name: "002.jpg", Data: html})
+	if err := verify(writeCBZ(t, bad)); err == nil {
+		t.Error("HTML named as jpg: verify() = nil, want an error")
 	}
 }

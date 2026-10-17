@@ -21,6 +21,7 @@ package main
 
 import (
 	"archive/zip"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -36,11 +37,8 @@ import (
 // contain to be considered valid.
 const MinPages = 3
 
-// entry is one file of an archive, read into memory for the checks.
-type entry struct {
-	name string
-	data []byte
-}
+// headSize is what imgfmt.Sniff reads: AVIF and WebP are told apart by bytes 4-11.
+const headSize = 12
 
 var allowAvif = flag.Bool("allow-avif", false, "accept AVIF entries (for archives downloaded with --convert-images=none)")
 
@@ -67,114 +65,129 @@ func main() {
 	}
 }
 
-// verify reads the archive at path and checks its entries.
+// verify reads the archive at path and checks its entries one at a time.
 func verify(path string) error {
-	var (
-		entries []entry
-		err     error
-	)
+	c := &checker{}
+	var err error
 	if strings.EqualFold(filepath.Ext(path), ".cbr") {
-		entries, err = readCBR(path)
+		err = readCBR(path, c.check)
 	} else {
-		entries, err = readCBZ(path)
+		err = readCBZ(path, c.check)
 	}
 	if err != nil {
 		return err
 	}
 
-	return checkEntries(entries)
+	return c.done()
 }
 
-// readCBZ reads every non-directory entry of the zip at path.
-func readCBZ(path string) ([]entry, error) {
+// checker applies the archive checks to one entry at a time, so an archive
+// never has to sit in memory.
+type checker struct {
+	images int
+}
+
+// check takes an entry's name and its leading bytes (at most headSize).
+func (c *checker) check(name string, head []byte) error {
+	if len(head) == 0 {
+		return fmt.Errorf("entry %q is empty", name)
+	}
+
+	format := imgfmt.Sniff(head)
+	if format == "" {
+		return fmt.Errorf("entry %q is not a recognised image", name)
+	}
+	if format == "avif" && !*allowAvif {
+		return fmt.Errorf("entry %q is AVIF; it should have been converted to JPEG (pass -allow-avif if it was downloaded with --convert-images=none)", name)
+	}
+	// a page whose name disagrees with its bytes breaks reader software in
+	// confusing ways, and is exactly what a half-done conversion produces
+	if ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(name), ".")); ext != format {
+		return fmt.Errorf("entry %q is named %q but its content is %s", name, ext, format)
+	}
+
+	c.images++
+	return nil
+}
+
+// done applies the MinPages rule once every entry has been checked.
+func (c *checker) done() error {
+	if c.images < MinPages {
+		return fmt.Errorf("only %d image entries, expected at least %d", c.images, MinPages)
+	}
+
+	return nil
+}
+
+// readCBZ calls visit with the head of every non-directory entry of the zip
+// at path, stopping at the first error.
+func readCBZ(path string, visit func(name string, head []byte) error) error {
 	r, err := zip.OpenReader(path)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open as zip: %w", err)
+		return fmt.Errorf("cannot open as zip: %w", err)
 	}
 	defer r.Close()
 
-	var entries []entry
 	for _, f := range r.File {
 		if f.FileInfo().IsDir() {
 			continue
 		}
-		data, err := readEntry(f.Name, f.Open)
-		if err != nil {
-			return nil, err
+		if err := visitEntry(f.Name, f.Open, false, visit); err != nil {
+			return err
 		}
-		entries = append(entries, entry{name: f.Name, data: data})
 	}
 
-	return entries, nil
+	return nil
 }
 
-// readCBR reads every non-directory entry of the RAR at path. Compressed
-// entries fail to open (go-rar only reads stored ones), which is a failure too.
-func readCBR(path string) ([]entry, error) {
+// readCBR calls visit with the head of every non-directory entry of the RAR
+// at path. Each entry is read to its end, so go-rar checks its CRC32; nothing
+// but the head is kept. Compressed entries can't be opened, and that's a failure.
+func readCBR(path string, visit func(name string, head []byte) error) error {
 	r, err := rar.OpenReader(path)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open as rar: %w", err)
+		return fmt.Errorf("cannot open as rar: %w", err)
 	}
 	defer r.Close()
 
-	var entries []entry
 	for _, f := range r.File {
-		if strings.HasSuffix(f.Name, "/") {
+		if f.FileInfo().IsDir() {
 			continue
 		}
-		data, err := readEntry(f.Name, f.Open)
-		if err != nil {
-			return nil, err
+		if err := visitEntry(f.Name, f.Open, true, visit); err != nil {
+			if errors.Is(err, rar.ErrAlgorithm) {
+				return fmt.Errorf("%s is a compressed RAR; only stored archives can be checked: %w", path, err)
+			}
+			return err
 		}
-		entries = append(entries, entry{name: f.Name, data: data})
 	}
 
-	return entries, nil
+	return nil
 }
 
-// readEntry reads one entry to its end, so the archive's own checksum (go-rar
-// verifies CRC32 at EOF) is checked too.
-func readEntry(name string, open func() (io.ReadCloser, error)) ([]byte, error) {
+// visitEntry opens one entry and passes its head to visit. With drain set it
+// then reads the rest, so go-rar checks the entry's CRC32 at EOF.
+func visitEntry(name string, open func() (io.ReadCloser, error), drain bool, visit func(name string, head []byte) error) error {
 	rc, err := open()
 	if err != nil {
-		return nil, fmt.Errorf("entry %q: %w", name, err)
+		return fmt.Errorf("entry %q: %w", name, err)
 	}
 	defer rc.Close()
 
-	data, err := io.ReadAll(rc)
-	if err != nil {
-		return nil, fmt.Errorf("entry %q: %w", name, err)
+	head := make([]byte, headSize)
+	n, err := io.ReadFull(rc, head)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return fmt.Errorf("entry %q: %w", name, err)
+	}
+	if err := visit(name, head[:n]); err != nil {
+		return err
+	}
+	if !drain {
+		return nil
 	}
 
-	return data, nil
-}
-
-// checkEntries applies the archive checks to entries read from either format.
-func checkEntries(entries []entry) error {
-	images := 0
-	for _, e := range entries {
-		if len(e.data) == 0 {
-			return fmt.Errorf("entry %q is empty", e.name)
-		}
-
-		format := imgfmt.Sniff(e.data)
-		if format == "" {
-			return fmt.Errorf("entry %q is not a recognised image", e.name)
-		}
-		if format == "avif" && !*allowAvif {
-			return fmt.Errorf("entry %q is AVIF; it should have been converted to JPEG (pass -allow-avif if it was downloaded with --convert-images=none)", e.name)
-		}
-		// a page whose name disagrees with its bytes breaks reader software in
-		// confusing ways, and is exactly what a half-done conversion produces
-		if ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(e.name), ".")); ext != format {
-			return fmt.Errorf("entry %q is named %q but its content is %s", e.name, ext, format)
-		}
-
-		images++
-	}
-
-	if images < MinPages {
-		return fmt.Errorf("only %d image entries, expected at least %d", images, MinPages)
+	if _, err := io.Copy(io.Discard, rc); err != nil {
+		return fmt.Errorf("entry %q: %w", name, err)
 	}
 
 	return nil
