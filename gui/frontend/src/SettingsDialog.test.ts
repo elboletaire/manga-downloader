@@ -78,12 +78,13 @@ describe('SettingsDialog', () => {
     expect(input).toContain('checked=""');
   });
 
-  it('credits the author and links the license, untranslated, in each language', () => {
+  it('links the author alias and the license, untranslated, in each language', () => {
     const lines = { en: 'Proudly made by', es: 'Hecho con orgullo por', ca: 'Fet amb orgull per' };
+    const author = '<a href="https://github.com/elboletaire">elboletaire</a>';
+    const license = `<a href="${LICENSE_URL}">AGPL-3.0</a>`;
     for (const lang of LANGS) {
       const html = render(lang, state());
-      expect(html, lang).toContain(`${lines[lang]} Òscar Casajuana Alonso · © 2023–2026 · <a href="${LICENSE_URL}"`);
-      expect(html, lang).toContain('>AGPL-3.0</a>');
+      expect(html, lang).toContain(`${lines[lang]} ${author} · © 2023–2026 · ${license}`);
     }
   });
 

@@ -4,7 +4,7 @@
 import { useEffect, useRef, type MouseEvent } from 'react';
 import { errorMessage } from './format';
 import { LANG_INFO, LANGS, type Lang, type LangPref } from './i18n';
-import { useI18n } from './i18n/react';
+import { T, useI18n } from './i18n/react';
 import { SelectField, Switch } from './fields';
 import { XIcon } from './icons';
 import type { State } from './types';
@@ -20,7 +20,8 @@ interface Props {
 const ISSUES_URL = 'https://github.com/elboletaire/manga-downloader/issues';
 const LICENSE = 'AGPL-3.0';
 export const LICENSE_URL = 'https://github.com/elboletaire/manga-downloader/blob/master/LICENSE';
-const AUTHOR = 'Òscar Casajuana Alonso';
+const AUTHOR = 'elboletaire';
+const AUTHOR_URL = 'https://github.com/elboletaire';
 // the years of the source files' copyright headers
 const YEARS = '2023–2026';
 
@@ -68,22 +69,6 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
     { value: '', label: t('settings.language.systemOption', { language: LANG_INFO[systemLang].name }) },
     ...LANGS.map((l) => ({ value: l, label: LANG_INFO[l].name })),
   ];
-
-  // the license is the one link in the line, so the translated text is split around its name
-  const aboutLine = t('settings.about.madeBy', { author: AUTHOR, years: YEARS, license: LICENSE });
-  const at = aboutLine.indexOf(LICENSE);
-  const madeBy =
-    at < 0 ? (
-      aboutLine
-    ) : (
-      <>
-        {aboutLine.slice(0, at)}
-        <a href={LICENSE_URL} onClick={link(LICENSE_URL)}>
-          {LICENSE}
-        </a>
-        {aboutLine.slice(at + LICENSE.length)}
-      </>
-    );
 
   return (
     <dialog
@@ -142,7 +127,24 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
           <a href={ISSUES_URL} onClick={link(ISSUES_URL)}>
             {t('settings.about.issues')}
           </a>
-          <p className="settings-author">{madeBy}</p>
+          <p className="settings-author">
+            <T
+              k="settings.about.madeBy"
+              values={{ author: AUTHOR, years: YEARS, license: LICENSE }}
+              components={{
+                author: (children) => (
+                  <a href={AUTHOR_URL} onClick={link(AUTHOR_URL)}>
+                    {children}
+                  </a>
+                ),
+                license: (children) => (
+                  <a href={LICENSE_URL} onClick={link(LICENSE_URL)}>
+                    {children}
+                  </a>
+                ),
+              }}
+            />
+          </p>
         </footer>
       </div>
     </dialog>

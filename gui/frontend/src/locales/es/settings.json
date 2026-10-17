@@ -16,6 +16,6 @@
     "version": "Manga Downloader {{version}}",
     "website": "Sitio web",
     "issues": "Informar de un problema",
-    "madeBy": "Hecho con orgullo por {{author}} · © {{years}} · {{license}}"
+    "madeBy": "Hecho con orgullo por <author>{{author}}</author> · © {{years}} · <license>{{license}}</license>"
   }
 }
