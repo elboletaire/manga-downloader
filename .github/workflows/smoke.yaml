@@ -111,6 +111,7 @@ jobs:
           - comicgrowl
           - comicheros
           - comicride
+          - comicryu
           - takecomic
           # Plain-HTML (goquery) scrapers
           - tcbscans

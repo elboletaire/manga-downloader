@@ -127,6 +127,7 @@ grabber: \
 	grabber/comicheros \
 	grabber/comicogyaaa \
 	grabber/comicride \
+	grabber/comicryu \
 	grabber/comicseasons \
 	grabber/comictrail \
 	grabber/comicwalker \
@@ -538,6 +539,8 @@ grabber/comicheros:
 	go run . https://heros-web.com/episodes/c1ffef58c01d8 1
 grabber/comicride:
 	go run . https://comicride.jp/episodes/eedb40a2c4f53 1
+grabber/comicryu:
+	go run . https://comic-ryu.jp/episodes/c56f063e17d3d 1
 grabber/takecomic:
 	go run . https://takecomic.jp/episodes/3984bbf3a37b6 0
 grabber/ourfeel:
