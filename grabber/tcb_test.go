@@ -430,3 +430,84 @@ func TestTcbFetchChaptersLockedMarker(t *testing.T) {
 		t.Errorf("other host: locked %v, title %q", LockedOf(chapters[0]), chapters[0].GetTitle())
 	}
 }
+
+// tcbRowsTcb builds a Tcb on the series URL whose listing has one row per href.
+func tcbRowsTcb(t *testing.T, series string, hrefs ...string) Tcb {
+	t.Helper()
+	var sb strings.Builder
+	sb.WriteString("<ul>")
+	for _, h := range hrefs {
+		fmt.Fprintf(&sb, `<li class="wp-manga-chapter"><a href="%s">Chapter</a></li>`, h)
+	}
+	sb.WriteString("</ul>")
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(sb.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return Tcb{Grabber: &Grabber{URL: series}, series: series, chaps: doc.Find("li.wp-manga-chapter")}
+}
+
+// mangaowl.io files another series' chapter 1 under beyond-the-limit: it's dropped,
+// leaving exactly one chapter 1 (the series' own).
+func TestTcbFetchChaptersDropsStraySeriesRows(t *testing.T) {
+	const series = "https://mangaowl.io/read-1/beyond-the-limit/"
+	tcb := tcbRowsTcb(t, series,
+		series+"beyond-the-limit-chapter-2/",
+		series+"beyond-the-limit-chapter-1/",
+		series+"beyond-the-limit-0/",
+		series+"the-male-lead-is-unhealthily-obsessed-with-my-health-chapter-1/",
+	)
+	chapters, errs := tcb.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	if len(chapters) != 3 {
+		t.Fatalf("expected 3 chapters, got %d", len(chapters))
+	}
+	ones := 0
+	for _, c := range chapters {
+		if c.GetNumber() == 1 {
+			ones++
+			if want := "/read-1/beyond-the-limit/beyond-the-limit-chapter-1/"; c.(*TcbChapter).ID != want {
+				t.Errorf("chapter 1 ID = %q, want %q", c.(*TcbChapter).ID, want)
+			}
+		}
+	}
+	if ones != 1 {
+		t.Errorf("found %d chapter 1s, want 1", ones)
+	}
+}
+
+// Without any row carrying the series slug, the guard is off and every row stays.
+func TestTcbFetchChaptersStrayGuardOff(t *testing.T) {
+	const series = "https://example.com/manga/foo/"
+	tcb := tcbRowsTcb(t, series,
+		series+"chapter-1/",
+		series+"chapter-2/",
+		series+"volume-1/chapter-3/",
+		series+"other-series-chapter-4/",
+	)
+	chapters, _ := tcb.FetchChapters()
+	if len(chapters) != 4 {
+		t.Fatalf("expected 4 chapters, got %d", len(chapters))
+	}
+}
+
+// Only the row naming another series goes; a bare chapter-N row is kept.
+func TestTcbFetchChaptersStrayMixed(t *testing.T) {
+	const series = "https://mangaowl.io/read-1/teacher-efforts/"
+	tcb := tcbRowsTcb(t, series,
+		series+"teacher-efforts-chapter-1/",
+		series+"chapter-1/",
+		series+"growth-type-superhero-chapter-5/",
+	)
+	chapters, _ := tcb.FetchChapters()
+	if len(chapters) != 2 {
+		t.Fatalf("expected 2 chapters, got %d", len(chapters))
+	}
+	for _, c := range chapters {
+		if strings.Contains(c.(*TcbChapter).ID, "growth-type") {
+			t.Errorf("stray row kept: %q", c.(*TcbChapter).ID)
+		}
+	}
+}

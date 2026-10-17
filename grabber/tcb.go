@@ -147,9 +147,42 @@ func (t *Tcb) FetchTitle() (string, error) {
 	return t.title, nil
 }
 
+// tcbStrayChapterRe matches a chapter slug that names its series before "-chapter-".
+var tcbStrayChapterRe = regexp.MustCompile(`^(.+)-chapter-`)
+
+// tcbOwnRows drops the rows of other series that a listing files under this one
+// (mangaowl.io lists another series' chapter 1 on beyond-the-limit). It acts only
+// when some row carries the series slug, so listings that never do keep every row.
+func tcbOwnRows(rows *goquery.Selection, series string) *goquery.Selection {
+	slug := tcbLastSegment(series)
+	if slug == "" {
+		return rows
+	}
+	slugOf := func(s *goquery.Selection) string {
+		return tcbLastSegment(s.Find("a").AttrOr("href", ""))
+	}
+	named := false
+	rows.Each(func(_ int, s *goquery.Selection) {
+		named = named || strings.HasPrefix(slugOf(s), slug+"-")
+	})
+	if !named {
+		return rows
+	}
+	return rows.FilterFunction(func(_ int, s *goquery.Selection) bool {
+		m := tcbStrayChapterRe.FindStringSubmatch(slugOf(s))
+		return m == nil || strings.HasPrefix(m[1], slug)
+	})
+}
+
+// tcbLastSegment returns the last path segment of a URL, ignoring a trailing slash.
+func tcbLastSegment(u string) string {
+	u = strings.TrimRight(u, "/")
+	return u[strings.LastIndex(u, "/")+1:]
+}
+
 // FetchChapters returns a slice of chapters
 func (t Tcb) FetchChapters() (chapters Filterables, errs []error) {
-	t.chaps.Each(func(i int, s *goquery.Selection) {
+	tcbOwnRows(t.chaps, t.series).Each(func(i int, s *goquery.Selection) {
 		// fetch title (usually "Chapter N")
 		link := s.Find("a")
 		if len(link.Children().Nodes) > 0 {

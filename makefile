@@ -309,7 +309,7 @@ grabber/mangasushi:
 	go run . https://mangasushi.org/manga/lonely-attack-on-the-different-world/ 324
 # Madara under /read-N/ (not /manga/), matched by the generic Tcb grabber
 grabber/mangaowl:
-	go run . https://mangaowl.io/read-1/beyond-the-limit/ 2
+	go run . https://mangaowl.io/read-1/beyond-the-limit/ 1
 # a Madara site whose reader encrypts the page list (wp-manga-chapter-images-protection)
 grabber/gourmetsupremacy:
 	go run . https://gourmetsupremacy.com/project/hikikomori-princess-marriage/ 10,10.5
