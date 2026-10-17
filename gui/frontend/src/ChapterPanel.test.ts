@@ -1,7 +1,8 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { ChapterBox, ChapterTitle, LOCKED_HINT, partsCount } from './ChapterPanel';
+import { ChapterBox, ChapterPanel, ChapterTitle, LOCKED_HINT, partsCount } from './ChapterPanel';
+import { createMockApi } from './mock';
 
 function title(locked: boolean): string {
   return renderToStaticMarkup(createElement(ChapterTitle, { title: 'Chapter 186', locked }));
@@ -42,3 +43,41 @@ describe('partsCount', () => {
     expect(partsCount(1, 2)).toBe('1 of 2 parts');
   });
 });
+
+describe('ChapterPanel of a parts run', () => {
+  it('heads a merged chapter with its title and count, and shows each part by its part alone', async () => {
+    const api = createMockApi({ scenario: 'parts' });
+    const state = await api.state();
+    const chapters = await api.chapters();
+    const noop = async () => {};
+    const markup = renderToStaticMarkup(
+      createElement(ChapterPanel, {
+        state,
+        chapters,
+        selected: [],
+        disabled: false,
+        onToggle: noop,
+        onToggleMany: noop,
+        onSetAll: noop,
+        onRange: async () => 0,
+        onVolumes: noop,
+        onReload: () => {},
+        onError: () => {},
+      }),
+    );
+    const first = chapters.find((c) => c.number === 2 && c.part === 'Part 1');
+    expect(first).toBeDefined();
+    const title = first?.wholeTitle ?? '';
+    expect(title).not.toBe('');
+    expect(markup).toContain(`Chapter 2 · ${escapeHtml(title)} · 2 parts`);
+    expect(markup).toMatch(/class="[^"]*\bpart-row\b/);
+    expect(markup).toMatch(/>Part 1</);
+    expect(markup).toMatch(/>Part 2</);
+    // a part row never repeats the chapter's title
+    expect(markup).not.toContain(escapeHtml(first?.title ?? ''));
+  });
+});
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+}
