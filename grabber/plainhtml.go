@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -493,6 +494,50 @@ type PlainHTML struct {
 
 func NewPlainHTML(g *Grabber) *PlainHTML {
 	return &PlainHTML{Grabber: g}
+}
+
+// plainHTMLPaces are the hosts whose reader guard counts image requests, so a
+// burst trips a cooldown. Keyed by host (www. dropped) because the limit is
+// per host and per IP, not per selector; shared by every instance for it.
+var plainHTMLPaces = map[string]plainHTMLPace{
+	"bloomscans.com": {
+		max:   MaxConcurrency{Chapters: 1, Pages: 1},
+		pacer: &pacer{interval: 4 * time.Second},
+	},
+}
+
+// plainHTMLPace caps a host's downloads and spaces its page requests
+type plainHTMLPace struct {
+	max   MaxConcurrency
+	pacer *pacer
+}
+
+// pace returns the limit of the site's host, if it has one
+func (m PlainHTML) pace() (plainHTMLPace, bool) {
+	u, err := url.Parse(m.URL)
+	if err != nil {
+		return plainHTMLPace{}, false
+	}
+	p, ok := plainHTMLPaces[strings.TrimPrefix(strings.ToLower(u.Hostname()), "www.")]
+	return p, ok
+}
+
+// GetMaxConcurrency caps the configured concurrency at the host's limit, if it
+// has one; lower settings are kept
+func (m PlainHTML) GetMaxConcurrency() MaxConcurrency {
+	mc := m.Grabber.GetMaxConcurrency()
+	if p, ok := m.pace(); ok {
+		mc.Chapters = min(mc.Chapters, p.max.Chapters)
+		mc.Pages = min(mc.Pages, p.max.Pages)
+	}
+	return mc
+}
+
+// WaitPage spaces page requests to the host's limit (PagePacer)
+func (m PlainHTML) WaitPage() {
+	if p, ok := m.pace(); ok {
+		p.pacer.wait()
+	}
 }
 
 type SiteSelector struct {
