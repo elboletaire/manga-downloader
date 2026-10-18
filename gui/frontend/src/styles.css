@@ -121,6 +121,12 @@ body {
   user-select: none;
 }
 
+/* a modal dialog sits in the top layer and doesn't inherit body's rule */
+dialog {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 h1,
 h2,
 h3,
