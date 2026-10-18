@@ -22,10 +22,9 @@ make build              # clean + test + build unix binary (injects version via 
 make build/all          # unix + windows binaries
 make build/demo         # the VHS tapes' binary, served from demo/series (demo tag, see demo/README.md)
 make test/demo          # the demo build's tests
-make build/gui/windows  # the release's wails build (NSIS=1, GOARCH=arm64, PRODUCT_VERSION=1.2.3); needs `make install/wails`
+make build/gui/windows  # the release's GUI build (also /linux, /darwin; options in the makefile)
 make test/gui           # the GUI's vet, race tests and frontend tests
-make build/website      # the website's dist/ (test/website runs its tests)
-make check/website     # the website's tests, then its build, as CI runs them
+make check/website      # the website's tests, then its build, as CI runs them
 make verify-cbz         # checks the CBZs in the directory hold images (FILES="a.cbz" to pick)
 GOOS=windows GOARCH=386 make build/release   # one release binary, built as release.yaml does
 make test               # go test -v ./... (uses richgo if installed)
