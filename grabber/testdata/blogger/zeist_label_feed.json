@@ -1,0 +1,205 @@
+{
+ "version": "1.0",
+ "encoding": "UTF-8",
+ "feed": {
+  "openSearch$totalResults": {
+   "$t": "4"
+  },
+  "openSearch$startIndex": {
+   "$t": "1"
+  },
+  "openSearch$itemsPerPage": {
+   "$t": "150"
+  },
+  "title": {
+   "type": "text",
+   "$t": "Tonikaku Kawaii"
+  },
+  "entry": [
+   {
+    "id": {
+     "$t": "tag:blogger.com,1999:blog-0.post-5223477232"
+    },
+    "published": {
+     "$t": "2026-10-01T00:00:00.000-03:00"
+    },
+    "updated": {
+     "$t": "2026-10-01T00:00:00.000-03:00"
+    },
+    "category": [
+     {
+      "scheme": "http://www.blogger.com/atom/ns#",
+      "term": "Manga"
+     },
+     {
+      "scheme": "http://www.blogger.com/atom/ns#",
+      "term": "Project"
+     },
+     {
+      "scheme": "http://www.blogger.com/atom/ns#",
+      "term": "Tonikaku Kawaii"
+     }
+    ],
+    "title": {
+     "type": "text",
+     "$t": "Tonikaku Kawaii"
+    },
+    "content": {
+     "type": "html",
+     "$t": "<p>Synopsis.</p>"
+    },
+    "link": [
+     {
+      "rel": "alternate",
+      "type": "text/html",
+      "href": "https://blog.test/2022/04/tonikaku-kawaii.html"
+     }
+    ],
+    "author": [
+     {
+      "name": {
+       "$t": "Dat-Gar Scan"
+      }
+     }
+    ]
+   },
+   {
+    "id": {
+     "$t": "tag:blogger.com,1999:blog-0.post-2892392200"
+    },
+    "published": {
+     "$t": "2026-10-01T00:00:00.000-03:00"
+    },
+    "updated": {
+     "$t": "2026-10-01T00:00:00.000-03:00"
+    },
+    "category": [
+     {
+      "scheme": "http://www.blogger.com/atom/ns#",
+      "term": "Chapter"
+     },
+     {
+      "scheme": "http://www.blogger.com/atom/ns#",
+      "term": "Project"
+     },
+     {
+      "scheme": "http://www.blogger.com/atom/ns#",
+      "term": "Tonikaku Kawaii"
+     }
+    ],
+    "title": {
+     "type": "text",
+     "$t": "Cap 362"
+    },
+    "content": {
+     "type": "html",
+     "$t": "<div class=\"separator\" style=\"clear: both;\"><a href=\"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhvaFJFto04SdRvC2JVnkZ-RRn69fVlCU_YSqonw4hyphenhyphenquSUqUYZ8EA0bz1vASTSI5ukHN_pvDf_3GtiU4WtzEoGWSNB1XNsTFP6F85_hEw557GPjWz20DXfVcba92I_nJGvdZc6_rsm0nNCF4cu6vMh120lR7uLydIAY6r32SkPka33_tPKPUbCrmkwLzFM/s1600/00_00.5.jpg\" style=\"display: block; text-align: center;\"><img alt=\"\" border=\"0\" src=\"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhvaFJFto04SdRvC2JVnkZ-RRn69fVlCU_YSqonw4hyphenhyphenquSUqUYZ8EA0bz1vASTSI5ukHN_pvDf_3GtiU4WtzEoGWSNB1XNsTFP6F85_hEw557GPjWz20DXfVcba92I_nJGvdZc6_rsm0nNCF4cu6vMh120lR7uLydIAY6r32SkPka33_tPKPUbCrmkwLzFM/s1600/00_00.5.jpg\"/></a></div><div class=\"separator\" style=\"clear: both;\"><a href=\"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi5-BVCnESzDzNl-iylXpYJ4fHfqzXatZeIY__Rqr6PLJKOGqJVyC6bchbhqMBHIdWG80w8uN4JVKZCzMjGZeoqZ7oyqckImiVBLI6ZvyvH36sgJPQ6qz7-u-feuPNNy52A93zERZkMFdnYkRuBm7rqSMtecvLQve97NtfLkOjAEG_KFB6C4oGJ_GktNQ2m/s1600/00_00.jpg\" style=\"display: block; text-align: center;\"><img alt=\"\" border=\"0\" src=\"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi5-BVCnESzDzNl-iylXpYJ4fHfqzXatZeIY__Rqr6PLJKOGqJVyC6bchbhqMBHIdWG80w8uN4JVKZCzMjGZeoqZ7oyqckImiVBLI6ZvyvH36sgJPQ6qz7-u-feuPNNy52A93zERZkMFdnYkRuBm7rqSMtecvLQve97NtfLkOjAEG_KFB6C4oGJ_GktNQ2m/s1600/00_00.jpg\"/></a></div>"
+    },
+    "link": [
+     {
+      "rel": "alternate",
+      "type": "text/html",
+      "href": "https://blog.test/2026/10/cap-362.html"
+     }
+    ],
+    "author": [
+     {
+      "name": {
+       "$t": "Dat-Gar Scan"
+      }
+     }
+    ]
+   },
+   {
+    "id": {
+     "$t": "tag:blogger.com,1999:blog-0.post-7105590283"
+    },
+    "published": {
+     "$t": "2026-10-01T00:00:00.000-03:00"
+    },
+    "updated": {
+     "$t": "2026-10-01T00:00:00.000-03:00"
+    },
+    "category": [
+     {
+      "scheme": "http://www.blogger.com/atom/ns#",
+      "term": "Chapter"
+     },
+     {
+      "scheme": "http://www.blogger.com/atom/ns#",
+      "term": "Project"
+     },
+     {
+      "scheme": "http://www.blogger.com/atom/ns#",
+      "term": "Tonikaku Kawaii"
+     }
+    ],
+    "title": {
+     "type": "text",
+     "$t": "Cap 350.5"
+    },
+    "content": {
+     "type": "html",
+     "$t": "<div class=\"separator\" style=\"clear: both;\"><a href=\"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhvaFJFto04SdRvC2JVnkZ-RRn69fVlCU_YSqonw4hyphenhyphenquSUqUYZ8EA0bz1vASTSI5ukHN_pvDf_3GtiU4WtzEoGWSNB1XNsTFP6F85_hEw557GPjWz20DXfVcba92I_nJGvdZc6_rsm0nNCF4cu6vMh120lR7uLydIAY6r32SkPka33_tPKPUbCrmkwLzFM/s1600/00_00.5.jpg\" style=\"display: block; text-align: center;\"><img alt=\"\" border=\"0\" src=\"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhvaFJFto04SdRvC2JVnkZ-RRn69fVlCU_YSqonw4hyphenhyphenquSUqUYZ8EA0bz1vASTSI5ukHN_pvDf_3GtiU4WtzEoGWSNB1XNsTFP6F85_hEw557GPjWz20DXfVcba92I_nJGvdZc6_rsm0nNCF4cu6vMh120lR7uLydIAY6r32SkPka33_tPKPUbCrmkwLzFM/s1600/00_00.5.jpg\"/></a></div>"
+    },
+    "link": [
+     {
+      "rel": "alternate",
+      "type": "text/html",
+      "href": "https://blog.test/2026/09/cap-3505.html"
+     }
+    ],
+    "author": [
+     {
+      "name": {
+       "$t": "Dat-Gar Scan"
+      }
+     }
+    ]
+   },
+   {
+    "id": {
+     "$t": "tag:blogger.com,1999:blog-0.post-3888164992"
+    },
+    "published": {
+     "$t": "2026-10-01T00:00:00.000-03:00"
+    },
+    "updated": {
+     "$t": "2026-10-01T00:00:00.000-03:00"
+    },
+    "category": [
+     {
+      "scheme": "http://www.blogger.com/atom/ns#",
+      "term": "Chapter"
+     },
+     {
+      "scheme": "http://www.blogger.com/atom/ns#",
+      "term": "Tonikaku Kawaii"
+     }
+    ],
+    "title": {
+     "type": "text",
+     "$t": "Cap 360"
+    },
+    "content": {
+     "type": "html",
+     "$t": ""
+    },
+    "link": [
+     {
+      "rel": "alternate",
+      "type": "text/html",
+      "href": "https://blog.test/2026/09/cap-360.html"
+     }
+    ],
+    "author": [
+     {
+      "name": {
+       "$t": "Dat-Gar Scan"
+      }
+     }
+    ]
+   }
+  ]
+ }
+}
