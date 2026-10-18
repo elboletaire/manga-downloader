@@ -19,8 +19,8 @@ type Grabber struct {
 	URL string
 	// Settings are the grabber settings
 	Settings *Settings
-	// pages caches the pages fetched while IdentifySite runs (see identifyPage)
-	pages *pageCache
+	// identifyPages caches the pages fetched while IdentifySite runs (see identifyPage)
+	identifyPages *pageCache
 }
 
 // Settings are grabber settings
@@ -141,8 +141,8 @@ func RegisterEarly(newSite func(*Grabber) Site) {
 func (g *Grabber) IdentifySite() (Site, []error) {
 	// The pages fetched here are shared by the testers, and dropped on return
 	// so the matched site doesn't keep them
-	g.pages = newPageCache()
-	defer func() { g.pages = nil }()
+	g.identifyPages = newPageCache()
+	defer func() { g.identifyPages = nil }()
 
 	// PlainHTML is pre-created so IdentifySite can call its chapter-URL
 	// resolution as a last resort after every other grabber has declined,

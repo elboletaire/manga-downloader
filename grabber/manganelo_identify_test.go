@@ -4,30 +4,16 @@ package grabber
 
 import (
 	"errors"
-	"net/http"
-	"sync/atomic"
 	"testing"
 
 	mhttp "github.com/elboletaire/manga-downloader/http"
 )
 
-// manganeloIdentifyServer serves the identify fixtures routed by path, counting
-// the requests each path receives
-func manganeloIdentifyServer(t *testing.T, routes map[string]string) (*requestCounter, string) {
-	t.Helper()
-
-	handler := &identifyServer{origin: "https://www.mangabats.com", routes: routes}
-	srv, counter := newCountingServer(t, handler.ServeHTTP)
-	handler.base = srv.URL
-
-	return counter, srv.URL
-}
-
 // TestManganeloTestByMarkup checks that a host outside the list is matched by
 // its series or reader page's chapters API marker, with one fetch, and that a
 // page without the marker or a URL outside /manga/{slug} is refused
 func TestManganeloTestByMarkup(t *testing.T) {
-	counter, base := manganeloIdentifyServer(t, map[string]string{
+	base, counter := newFixtureServer(t, "https://www.mangabats.com", map[string]string{
 		"/manga/apotheosis":              "manganelo_series.html",
 		"/manga/apotheosis/chapter-1297": "manganelo_chapter.html",
 		"/manga/themesia":                "themesia_series.html",
@@ -59,12 +45,21 @@ func TestManganeloTestByMarkup(t *testing.T) {
 			t.Errorf("Test(%q) made %d requests, want %d", c.path, hits, c.wantHits)
 		}
 	}
+
+	// the domain-only instance never fetches an unlisted host, even a series page
+	got, err := NewManganelo(&Grabber{URL: base + "/manga/apotheosis/", Settings: &Settings{}}).Test()
+	if err != nil || got {
+		t.Errorf("domain-only Test() = %v, %v; want false, nil", got, err)
+	}
+	if hits := counter.count("/manga/apotheosis/"); hits != 0 {
+		t.Errorf("domain-only Test() made %d requests, want 0", hits)
+	}
 }
 
 // TestManganeloIdentifySiteByMarkup checks that IdentifySite hands a clone's
 // series page to Manganelo with a single GET of that page
 func TestManganeloIdentifySiteByMarkup(t *testing.T) {
-	counter, base := manganeloIdentifyServer(t, map[string]string{
+	base, counter := newFixtureServer(t, "https://www.mangabats.com", map[string]string{
 		"/manga/apotheosis": "manganelo_series.html",
 	})
 
@@ -78,19 +73,11 @@ func TestManganeloIdentifySiteByMarkup(t *testing.T) {
 	}
 }
 
-// manganeloNoNetwork counts the requests Test would send, and fails them
-type manganeloNoNetwork struct{ hits atomic.Int32 }
-
-func (n *manganeloNoNetwork) RoundTrip(*http.Request) (*http.Response, error) {
-	n.hits.Add(1)
-	return nil, errors.New("no network in tests")
-}
-
 // TestManganeloTestListedHostNoRequest checks that the listed Cloudflare hosts
 // match by domain without a request, from both instances, since the browser
 // hosts must never be fetched to identify them
 func TestManganeloTestListedHostNoRequest(t *testing.T) {
-	counter := &manganeloNoNetwork{}
+	counter := &countingRoundTripper{err: errors.New("no network in tests")}
 	mhttp.SetRoundTripper(counter)
 	defer mhttp.SetRoundTripper(nil)
 

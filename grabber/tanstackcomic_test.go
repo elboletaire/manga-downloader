@@ -367,18 +367,6 @@ func TestTanstackDomains(t *testing.T) {
 	}
 }
 
-// newTanstackServer serves the fixtures on their paths from a host no grabber
-// lists, and counts the requests each path gets. It returns the base URL.
-func newTanstackServer(t *testing.T, routes map[string]string) (string, *requestCounter) {
-	t.Helper()
-
-	ids := &identifyServer{origin: "https://hivetoons.org", routes: routes}
-	srv, counter := newCountingServer(t, ids.ServeHTTP)
-	ids.base = srv.URL
-
-	return srv.URL, counter
-}
-
 // an unlisted host with the platform's markup is identified by it, and the
 // page is fetched once: the markup testers share that GET
 func TestTanstackMarkupIdentified(t *testing.T) {
@@ -393,7 +381,7 @@ func TestTanstackMarkupIdentified(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			base, counter := newTanstackServer(t, map[string]string{c.path: c.fixture})
+			base, counter := newFixtureServer(t, "https://hivetoons.org", map[string]string{c.path: c.fixture})
 
 			site, _ := NewSite(base+c.path, &Settings{})
 			if _, ok := site.(*TanstackComic); !ok {
@@ -411,7 +399,7 @@ func TestTanstackMarkupRejects(t *testing.T) {
 	for _, fixture := range []string{"madara_series.html", "themesia_series.html", "unrelated_page.html"} {
 		t.Run(fixture, func(t *testing.T) {
 			const path = "/series/some-manga"
-			base, counter := newTanstackServer(t, map[string]string{path: fixture})
+			base, counter := newFixtureServer(t, "https://hivetoons.org", map[string]string{path: fixture})
 
 			got, err := NewTanstackComicByMarkup(&Grabber{URL: base + path}).Test()
 			if err != nil {
@@ -435,7 +423,7 @@ func TestTanstackNoRequest(t *testing.T) {
 	for _, p := range paths {
 		routes[p] = "tanstack_series.html"
 	}
-	base, counter := newTanstackServer(t, routes)
+	base, counter := newFixtureServer(t, "https://hivetoons.org", routes)
 
 	for _, p := range paths {
 		got, _ := NewTanstackComicByMarkup(&Grabber{URL: base + p}).Test()

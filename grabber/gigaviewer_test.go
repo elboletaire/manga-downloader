@@ -400,7 +400,7 @@ func TestGigaviewerTestSharesPageCache(t *testing.T) {
 	defer srv.Close()
 
 	g := &Grabber{URL: srv.URL + "/episode/1", Settings: &Settings{}}
-	g.pages = newPageCache()
+	g.identifyPages = newPageCache()
 	plain := NewPlainHTML(g)
 	plain.Test()
 	before := hits.Load()

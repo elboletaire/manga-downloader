@@ -3,12 +3,8 @@
 package grabber
 
 import (
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
-	"sync/atomic"
 	"testing"
 
 	mhttp "github.com/elboletaire/manga-downloader/http"
@@ -85,17 +81,6 @@ func TestToivoLiteDomainOnlyNoRequest(t *testing.T) {
 	}
 }
 
-// fixtureRoundTripper answers every request with one body, counting them
-type fixtureRoundTripper struct {
-	body string
-	hits atomic.Int32
-}
-
-func (f *fixtureRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	f.hits.Add(1)
-	return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(f.body)), Header: http.Header{}, Request: req}, nil
-}
-
 // TestHeavenlyDelusionWinsOverToivoLiteMarkup checks that heavenly-delusion.com
 // stays on HeavenlyDelusion: its page has the Toivo Lite markup, and the
 // markup instance would match it with a GET if it ran first
@@ -104,7 +89,7 @@ func TestHeavenlyDelusionWinsOverToivoLiteMarkup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rt := &fixtureRoundTripper{body: string(page)}
+	rt := &countingRoundTripper{body: string(page)}
 	mhttp.SetRoundTripper(rt)
 	defer mhttp.SetRoundTripper(nil)
 
@@ -115,16 +100,4 @@ func TestHeavenlyDelusionWinsOverToivoLiteMarkup(t *testing.T) {
 	if n := rt.hits.Load(); n != 0 {
 		t.Errorf("identifying heavenly-delusion.com made %d requests, want 0", n)
 	}
-}
-
-// newFixtureServer serves routes from origin's fixtures and counts the requests
-// per path, returning the server's URL
-func newFixtureServer(t *testing.T, origin string, routes map[string]string) (string, *requestCounter) {
-	t.Helper()
-
-	ident := &identifyServer{origin: origin, routes: routes}
-	srv, hits := newCountingServer(t, ident.ServeHTTP)
-	ident.base = srv.URL
-
-	return srv.URL, hits
 }

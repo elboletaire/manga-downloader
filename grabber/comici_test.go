@@ -309,7 +309,7 @@ func TestComiciTestSharesPageCache(t *testing.T) {
 	defer srv.Close()
 
 	g := &Grabber{URL: srv.URL + "/series/842677db37980/1", Settings: &Settings{}}
-	g.pages = newPageCache()
+	g.identifyPages = newPageCache()
 	plain := NewPlainHTML(g)
 	plain.Test()
 	before := hits.Load()

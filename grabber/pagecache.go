@@ -29,14 +29,14 @@ func newPageCache() *pageCache {
 // failure means "not this site". Within IdentifySite each URL is fetched once,
 // its error included; outside it, every call fetches.
 func (g *Grabber) identifyPage(rawURL string) (string, error) {
-	if g.pages == nil {
+	if g.identifyPages == nil {
 		return fetchPage(rawURL)
 	}
-	if page, ok := g.pages.entries[rawURL]; ok {
+	if page, ok := g.identifyPages.entries[rawURL]; ok {
 		return page.body, page.err
 	}
 	body, err := fetchPage(rawURL)
-	g.pages.entries[rawURL] = cachedPage{body: body, err: err}
+	g.identifyPages.entries[rawURL] = cachedPage{body: body, err: err}
 	return body, err
 }
 

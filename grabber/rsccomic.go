@@ -61,9 +61,8 @@ func NewRSCComicByMarkup(g *Grabber) *RSCComic {
 }
 
 // Test returns true if the URL is on one of the platform's hosts (host check,
-// no fetch), rewriting an old host's URL first. The NewRSCComicByMarkup
-// instance also fetches a series or chapter URL on another host, once, and
-// checks its markup.
+// no fetch), rewriting an old host's URL first. The by-markup instance also
+// fetches a series or chapter URL on another host, once, to check its markup.
 func (r *RSCComic) Test() (bool, error) {
 	for _, move := range rscComicMoves {
 		if hostMatchesDomain(r.URL, move.domain) {

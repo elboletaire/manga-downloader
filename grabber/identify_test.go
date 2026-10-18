@@ -3,6 +3,7 @@
 package grabber
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 )
 
@@ -88,6 +90,34 @@ func newIdentifyServer(t *testing.T, origin string, routes map[string]string) *h
 	handler.base = srv.URL
 
 	return srv
+}
+
+// newFixtureServer serves routes from origin's fixtures and counts the requests
+// per path, returning the server's URL
+func newFixtureServer(t *testing.T, origin string, routes map[string]string) (string, *requestCounter) {
+	t.Helper()
+
+	ident := &identifyServer{origin: origin, routes: routes}
+	srv, hits := newCountingServer(t, ident.ServeHTTP)
+	ident.base = srv.URL
+
+	return srv.URL, hits
+}
+
+// countingRoundTripper counts the requests it receives, answering each with
+// body, or failing it with err when set
+type countingRoundTripper struct {
+	body string
+	err  error
+	hits atomic.Int32
+}
+
+func (c *countingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	c.hits.Add(1)
+	if c.err != nil {
+		return nil, c.err
+	}
+	return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(c.body)), Header: http.Header{}, Request: req}, nil
 }
 
 // TestIdentifySiteOrder checks which grabber IdentifySite hands each kind of

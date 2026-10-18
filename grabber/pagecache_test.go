@@ -73,7 +73,7 @@ func TestIdentifyPageKeysByURL(t *testing.T) {
 	})
 
 	g := &Grabber{URL: srv.URL + "/old/series/", Settings: &Settings{}}
-	g.pages = newPageCache()
+	g.identifyPages = newPageCache()
 
 	for _, u := range []string{"/old/series/", "/new/series/", "/old/series/"} {
 		g.URL = srv.URL + u
@@ -117,8 +117,8 @@ func TestIdentifySiteDropsPageCache(t *testing.T) {
 			if (site != nil) != c.wantMatch {
 				t.Fatalf("IdentifySite() = %T, want a match: %v", site, c.wantMatch)
 			}
-			if g.pages != nil {
-				t.Errorf("pages = %v after IdentifySite, want nil", g.pages)
+			if g.identifyPages != nil {
+				t.Errorf("identifyPages = %v after IdentifySite, want nil", g.identifyPages)
 			}
 		})
 	}
@@ -136,7 +136,7 @@ func TestIdentifyPageTruncatedBody(t *testing.T) {
 	})
 
 	g := &Grabber{URL: srv.URL + path, Settings: &Settings{}}
-	g.pages = newPageCache()
+	g.identifyPages = newPageCache()
 	for range 2 {
 		body, err := g.identifyPage(g.URL)
 		if err == nil {
