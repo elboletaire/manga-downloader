@@ -14,6 +14,7 @@ Read this for any site or grabber work: adding, fixing, debugging, investigating
 5. Add the smoke target, the README "Supported sites" table row (`| [domain](url) \* | notes | — |`, the `\*` only for browser sites; start it at `—`, or the date of your verified download; CI and `make site-status` keep the column current (a row with no smoke target stays `—` until one exists; the website shows new dates at the next daily Pages run); and bump both counts: the features-list bullet and "Show all N") and its name in `SMOKE_EXCLUDE` only when CI can't run it (browser grabbers, or sites that block GitHub's runners; the makefile's smoke section derives CI's rotation from the aggregates).
 6. Check whether the listing marks locked (paid, premium, early-access or members-only) chapters and, if so, set `Chapter.Locked` (see "Locked (paid) chapters" below).
 7. Verify with `tools/verify-cbz` on the downloaded archives, not just the smoke target's exit code.
+8. A fix refreshes the touched sites' README dates after the verified download: `make site-status TARGETS="<targets>"`, leaving unfixed sites' rows as they are.
 
 ### Investigating a new site
 
