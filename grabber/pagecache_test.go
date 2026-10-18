@@ -91,17 +91,64 @@ func TestIdentifyPageKeysByURL(t *testing.T) {
 }
 
 // TestIdentifySiteDropsPageCache checks that the page cache is gone once
-// IdentifySite returns, so the matched site doesn't keep the page
+// IdentifySite returns, whether a grabber matched the page or none did, so the
+// matched site doesn't keep the page
 func TestIdentifySiteDropsPageCache(t *testing.T) {
-	srv, _ := newCountingServer(t, func(w http.ResponseWriter, r *http.Request) {
+	unknown, _ := newCountingServer(t, func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, unknownPage)
 	})
+	themesia := newIdentifyServer(t, "https://example.com", map[string]string{
+		"/manga/x/": "themesia_series.html",
+	})
 
-	g := &Grabber{URL: srv.URL + "/unknown/series/", Settings: &Settings{}}
-	g.IdentifySite()
+	cases := []struct {
+		name      string
+		url       string
+		wantMatch bool
+	}{
+		{"unmatched", unknown.URL + "/unknown/series/", false},
+		{"matched", themesia.URL + "/manga/x/", true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			g := &Grabber{URL: c.url, Settings: &Settings{}}
+			site, _ := g.IdentifySite()
 
-	if g.pages != nil {
-		t.Errorf("pages = %v after IdentifySite, want nil", g.pages)
+			if (site != nil) != c.wantMatch {
+				t.Fatalf("IdentifySite() = %T, want a match: %v", site, c.wantMatch)
+			}
+			if g.pages != nil {
+				t.Errorf("pages = %v after IdentifySite, want nil", g.pages)
+			}
+		})
+	}
+}
+
+// TestIdentifyPageTruncatedBody checks that a body the connection cut short is
+// cached as an error, never returned as the page, and that it's fetched once
+func TestIdentifyPageTruncatedBody(t *testing.T) {
+	const path = "/unknown/series/"
+	srv, hits := newCountingServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Length", fmt.Sprint(len(unknownPage)))
+		fmt.Fprint(w, unknownPage[:20])
+		w.(http.Flusher).Flush()
+		panic(http.ErrAbortHandler)
+	})
+
+	g := &Grabber{URL: srv.URL + path, Settings: &Settings{}}
+	g.pages = newPageCache()
+	for range 2 {
+		body, err := g.identifyPage(g.URL)
+		if err == nil {
+			t.Fatal("identifyPage() error = nil for a truncated body, want an error")
+		}
+		if body != "" {
+			t.Errorf("identifyPage() body = %q, want none", body)
+		}
+	}
+
+	if n := hits.count(path); n != 1 {
+		t.Errorf("GET %s made %d requests, want 1", path, n)
 	}
 }
 
