@@ -53,7 +53,6 @@ jobs:
           - jojolands
           - projectsuki
           - roliascan
-          - teamshadowi
           - taiyo
           - stonescape
           - utoon
@@ -377,6 +376,8 @@ jobs:
           # - asmotoon     # now browser-based: cloudflare challenges plain HTTP
           #                # and headless alike. Run `make grabber/asmotoon`
           #                # locally.
+          # - teamshadowi  # now browser-based: cloudflare challenges plain HTTP
+          #                # (403). Run `make grabber/teamshadowi` locally.
           # - lilymanga    # rate-limits hard (429 on the series path, even
           #                # from residential IPs); smoke-test locally.
     steps:

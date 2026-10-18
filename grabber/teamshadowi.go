@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elboletaire/manga-downloader/http"
+	"github.com/elboletaire/manga-downloader/browser"
 )
 
 // Teamshadowi is a grabber for team-shadowi.com, a French scanlation site
@@ -24,6 +24,11 @@ import (
 type Teamshadowi struct {
 	*Grabber
 	data *teamshadowiPublicData
+}
+
+// headless never passes its Cloudflare challenge, so skip the doomed probe
+func init() {
+	browser.RequireVisible("team-shadowi.com")
 }
 
 func NewTeamshadowi(g *Grabber) *Teamshadowi {
@@ -134,10 +139,9 @@ func (t *Teamshadowi) fetchData() (*teamshadowiPublicData, error) {
 		return t.data, nil
 	}
 
-	body, err := http.GetText(http.RequestParams{
-		URL:     t.URL,
-		Referer: t.BaseUrl(),
-	})
+	// the site is behind a cloudflare challenge that plain HTTP gets a 403 on.
+	// Wait for the series title: WaitVisible never matches a <script> tag.
+	body, err := browser.GetHTML(t.URL, "main h1", 0)
 	if err != nil {
 		return nil, err
 	}
