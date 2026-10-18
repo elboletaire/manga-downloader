@@ -362,7 +362,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&settings.Language, "language", "l", "", `only download the specified language ("all" downloads every language, on sites listing several)`)
 	rootCmd.Flags().StringVarP(&settings.Scanlator, "scanlator", "s", "", `only download the releases of the specified scanlation group, for sites hosting several groups' versions of the same chapters (the default, and "all", keep every group's)`)
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename: {{.Series}}, {{.Number}}, {{.Title}}, {{.SiteTitle}}, {{.Group}}, {{.Volume}} and {{.Version}}; {{pad .Number 4}} zero-pads a number")
-	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz, raw (a folder with the images) or epub")
+	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz, cbr, raw (a folder with the images) or epub")
 	rootCmd.Flags().StringVar(&settings.ReadingDirection, "reading-direction", packer.ReadingDirectionRTL, `direction pages turn in epub files: "rtl" for manga, "ltr" for western comics`)
 	rootCmd.Flags().StringVar(&settings.ConvertImages, "convert-images", grabber.ConvertImagesDefault, `comma-separated source image formats to convert to jpeg for e-reader compatibility: "avif", "webp" or "none"`)
 	rootCmd.Flags().StringVar(&settings.Volumes, "volumes", "", `pack one file per volume: "auto" uses the site's volumes, "parts" packs the parts of a chapter into one file named after it, or give chapter ranges, one group per volume ("1-7/8-16"), "N:" giving a group's number ("16:112-114"); chapters outside every volume are packed on their own`)

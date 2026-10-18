@@ -149,10 +149,12 @@ export function DownloadDock({ state, error, chapters, selected, onStart, onCanc
 /** What the run writes, by format and Pack as, as the dock's first words */
 function destinations(t: Translator): Record<Options['format'], Record<PackAs, string>> {
   const cbz = t('download.dest.cbzFiles');
+  const cbr = t('download.dest.cbrFiles');
   const epub = t('download.dest.epubFiles');
   const raw = t('download.dest.rawFiles');
   return {
     cbz: { chapters: cbz, parts: cbz, volumes: t('download.dest.cbzPerVolume'), bundle: t('download.dest.cbzBundle') },
+    cbr: { chapters: cbr, parts: cbr, volumes: t('download.dest.cbrPerVolume'), bundle: t('download.dest.cbrBundle') },
     epub: {
       chapters: epub,
       parts: epub,
