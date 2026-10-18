@@ -201,6 +201,27 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want:     []string{"https://a.co/1.jpg"},
 		},
 		{
+			name:     "ts_reader inside a base64 data: script (themesia)",
+			selector: "div.reading-content img",
+			html: `<html><body><script defer src="data:text/javascript;base64,` +
+				`dHNfcmVhZGVyLnJ1bih7InBvc3RfaWQiOjEsInNvdXJjZXMiOlt7InNvdXJjZSI6IlNlcnZlciAxIiwiaW1hZ2VzIjpbImh0dHBzOlwvXC9hLmNvXC8xLmpwZyIsImh0dHBzOlwvXC9hLmNvXC8yLmpwZyJdfV19KTs=` +
+				`"></script></body></html>`,
+			want: []string{"https://a.co/1.jpg", "https://a.co/2.jpg"},
+		},
+		{
+			name:     "lazy-load attribute when src is a gif placeholder",
+			selector: "div.reading-content img",
+			html:     `<html><body><div class="reading-content"><img src="https://a.co/img/placeholder.gif" data-original="https://a.co/1.jpg"/><img src="data:image/gif;base64,abc" data-lazy-src="https://a.co/2.jpg"/></div></body></html>`,
+			want:     []string{"https://a.co/1.jpg", "https://a.co/2.jpg"},
+		},
+		{
+			name:     "RSC page objects are not a URL array (visorotaku)",
+			selector: `img[alt*=" pág. "]`,
+			html: `<html><body><script>self.__next_f.push([1,"...{\"pages\":[{\"id\":\"a\",\"width\":720,\"image_url\":\"https://cdn.example/1.webp\"}]}..."])</script>` +
+				`<img src="https://cdn.example/1.webp" alt="Chapter cap. 1 pág. 1"></body></html>`,
+			want: []string{"https://cdn.example/1.webp"},
+		},
+		{
 			name:     "obfuscated data-src array assignment (mangakatana)",
 			selector: "#imgs img",
 			html: `<html><body><div id="imgs"><img data-src="#"/><img data-src="#"/></div>` +
@@ -1172,6 +1193,67 @@ func TestPlainHTMLLazySVGAndThemeImages(t *testing.T) {
 		got = append(got, p.URL)
 	}
 	want := []string{"https://cdn.example/a.jpg", "https://cdn.example/b.jpg"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("pages = %v, want %v", got, want)
+	}
+}
+
+// an SVG page with no data-* alternative is still a page (SVG pages are accepted)
+func TestPlainHTMLSVGPageWithoutLazyAttr(t *testing.T) {
+	doc := docFromHTML(t, `<div class="reading-content"><img src="/x.svg" alt="p1"></div>`)
+	m := PlainHTML{Grabber: &Grabber{URL: "https://site.example/manga/x/1/"}, site: SiteSelector{Image: ".reading-content img"}}
+	ch := m.chapterFromDoc(&PlainHTMLChapter{}, doc)
+	if len(ch.Pages) != 1 || ch.Pages[0].URL != "https://site.example/x.svg" {
+		t.Errorf("pages = %+v, want one page at https://site.example/x.svg", ch.Pages)
+	}
+}
+
+// a placeholder with no real URL anywhere must not become a page, and a
+// scheme-relative URL takes the page's scheme
+func TestPlainHTMLPlaceholderAndSchemeRelative(t *testing.T) {
+	doc := docFromHTML(t, `<div class="reading-content">
+<img src="data:image/gif;base64,R0lGOD" alt="p1">
+<img src="//cdn.example/a.jpg" alt="p2">
+<img src="data:image/svg+xml;base64,PHN2Zy" data-src="data:image/gif;base64,R0lGOD" alt="p3"></div>`)
+	m := PlainHTML{Grabber: &Grabber{URL: "https://site.example/manga/x/1/"}, site: SiteSelector{Image: ".reading-content img"}}
+	ch := m.chapterFromDoc(&PlainHTMLChapter{}, doc)
+	var got []string
+	for _, p := range ch.Pages {
+		got = append(got, p.URL)
+	}
+	want := []string{"https://cdn.example/a.jpg"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("pages = %v, want %v", got, want)
+	}
+}
+
+// the Next.js single-series template (csmmangafree and kin) renders its reader
+// pages as plain <img>s whose alt names the page, next to the site's own logo
+func TestPlainHTMLNextTemplateReader(t *testing.T) {
+	var entry SiteSelector
+	for _, s := range plainHTMLSelectors {
+		if s.Rows == "#chapters a" {
+			entry = s
+			break
+		}
+	}
+	if entry.Image == "" {
+		t.Fatal("no #chapters a entry")
+	}
+	doc := docFromHTML(t, `<header><img src="https://site.example/logo.png" alt="Site"></header>
+<img src="https://img.qubn.us/uploads/chainsaw-man/127/chainsaw-man-ch127-001.webp" alt="Chainsaw Man Chapter 127 - Page 1" loading="eager">
+<img src="data:image/gif;base64,R0lGOD" alt="Chainsaw Man Chapter 127 - Page 2" loading="lazy">
+<img src="https://img.qubn.us/uploads/chainsaw-man/127/chainsaw-man-ch127-002.webp" alt="Chainsaw Man Chapter 127 - Page 2" loading="lazy">`)
+	m := PlainHTML{Grabber: &Grabber{URL: "https://site.example/en/chainsaw-man-en-chapter-127"}, site: entry}
+	ch := m.chapterFromDoc(&PlainHTMLChapter{}, doc)
+	var got []string
+	for _, p := range ch.Pages {
+		got = append(got, p.URL)
+	}
+	want := []string{
+		"https://img.qubn.us/uploads/chainsaw-man/127/chainsaw-man-ch127-001.webp",
+		"https://img.qubn.us/uploads/chainsaw-man/127/chainsaw-man-ch127-002.webp",
+	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("pages = %v, want %v", got, want)
 	}

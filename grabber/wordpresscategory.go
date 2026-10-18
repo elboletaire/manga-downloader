@@ -368,7 +368,8 @@ var wpBvURLRe = regexp.MustCompile(`bv-img-url="([^"]+)"`)
 func wpPageImages(doc *goquery.Document) []Page {
 	var pages []Page
 	seen := map[string]bool{}
-	doc.Find(".entry-content img").Each(func(_ int, s *goquery.Selection) {
+	// Elementor themes wrap the post body in a widget instead of .entry-content
+	doc.Find(".entry-content img, .elementor-widget-theme-post-content img").Each(func(_ int, s *goquery.Selection) {
 		if wpHiddenImage(s) {
 			return
 		}

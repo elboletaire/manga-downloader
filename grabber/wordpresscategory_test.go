@@ -150,6 +150,30 @@ func TestWordPressCategoryPageImages(t *testing.T) {
 	}
 }
 
+// Elementor themes keep the post body in a theme-post-content widget, not
+// .entry-content, and lazy-load it through data-src (LiteSpeed)
+func TestWordPressCategoryElementorPageImages(t *testing.T) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(`
+		<div class="elementor-widget-theme-post-content">
+			<figure class="wp-block-image"><img data-lazyloaded="1" src="data:image/svg+xml;base64,PHN2Zz" data-src="https://cdn.test/01.jpg" width="727" height="1062"></figure>
+			<figure class="wp-block-image"><img data-lazyloaded="1" src="data:image/svg+xml;base64,PHN2Zz" data-src="https://cdn.test/02.jpg" width="727" height="1062"></figure>
+		</div>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pages := wpPageImages(doc)
+	want := []string{"https://cdn.test/01.jpg", "https://cdn.test/02.jpg"}
+	if len(pages) != len(want) {
+		t.Fatalf("got %d pages, want %d: %+v", len(pages), len(want), pages)
+	}
+	for i, p := range pages {
+		if p.URL != want[i] {
+			t.Errorf("page %d = %s, want %s", i, p.URL, want[i])
+		}
+	}
+}
+
 func TestWordPressCategoryFromPage(t *testing.T) {
 	cases := []struct {
 		name string
