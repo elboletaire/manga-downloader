@@ -1,12 +1,7 @@
 name: Site smoke tests
 
-# Twice-weekly run of the live-site smoke targets to detect layout/API changes on
-# supported sites. The makefile picks the targets (make smoke/list): the ones
-# whose README rows were verified longest ago, split over eight shards that each
-# check their share one at a time, so a run stays gentle on the sites and on
-# runners. A site comes round about every two weeks. The makefile's smoke
-# section says which targets CI skips and why.
-#
+# Twice-weekly live-site smoke run: `make smoke` checks this run's targets, split
+# over eight shards (the makefile's smoke section says which and how).
 # A final job writes the results into the README's "Last verified" column.
 on:
   schedule:
@@ -25,7 +20,8 @@ on:
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # about 14 targets per shard at up to 5 minutes each; `all` runs far more
+    timeout-minutes: ${{ inputs.all && 360 || 180 }}
     strategy:
       fail-fast: false
       matrix:
@@ -40,12 +36,18 @@ jobs:
         with:
           go-version: "1.26"
 
+      # target names are lowercase letters, digits and hyphens, so nothing else reaches make
       - name: Check this shard's targets
-        run: make smoke SHARD=${{ matrix.shard }} SHARDS=8 SMOKE_RESULTS=shard-${{ matrix.shard }}.txt TARGETS="$TARGETS" ${{ inputs.all && 'SMOKE_COUNT=all' || '' }}
+        run: |
+          case "$TARGETS" in
+            *[!a-z0-9\ -]*) echo "::error::targets takes lowercase names separated by spaces" >&2; exit 1 ;;
+          esac
+          make smoke SHARD=${{ matrix.shard }} SHARDS=8 SMOKE_RESULTS=shard-${{ matrix.shard }}.txt TARGETS="$TARGETS" ${{ inputs.all && 'SMOKE_COUNT=all' || '' }}
 
-      # One "target pass|fail" line per target, for the status job below.
+      # One "target pass|fail" line per target, for the status job below. Uploaded
+      # even when cancelled, so a long shard keeps the targets it finished.
       - name: Upload result
-        if: always() && job.status != 'cancelled'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: result-shard-${{ matrix.shard }}

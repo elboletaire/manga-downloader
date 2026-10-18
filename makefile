@@ -441,7 +441,8 @@ grabber/manganato:
 # let them make the signed calls and intercept the responses; images then
 # download over plain HTTP. No --browser-visible needed, so not in the
 # grabber/browser group, but kept out of the CI smoke rotation (SMOKE_EXCLUDE)
-# like every other browser grabber. Uses an old chapter (stable, not premium-gated like newest).
+# like every other browser grabber. Uses an old chapter (stable, not
+# premium-gated like newest).
 # The two runs cover both chapter-list pager shapes (#169): One Piece has the
 # windowed pager with "Next page" arrows; the second series is short enough
 # (3 pages) that the site renders numbered buttons only, and its chapter 1
@@ -1935,10 +1936,9 @@ site-status:
 	go run ./tools/site-status -results $$results -date $$(date -u +%F); \
 	rm -f $$results $$stamp
 
-# the smoke rotation smoke.yaml runs twice a week: SMOKE_COUNT targets whose
-# README rows were verified longest ago, split round-robin over SHARDS shards,
-# each shard run one target at a time. TARGETS="a b" checks those instead.
-# About a quarter of the list, so each site comes round every two weeks.
+# the rotation smoke.yaml runs twice a week: the SMOKE_COUNT targets verified
+# longest ago, split round-robin over SHARDS (TARGETS="a b" overrides it).
+# About a quarter of the list: every site comes round about every two weeks.
 SMOKE_COUNT ?= 110
 SHARD ?= 1
 SHARDS ?= 1
@@ -1958,7 +1958,7 @@ SMOKE_EXCLUDE += comix mkissa templetoons mangafire
 SMOKE_TARGETS = $(filter-out $(SMOKE_EXCLUDE) html,$(sort $(patsubst grabber/%,%,$(shell awk '/^grabber: \\/ || /^grabber\/html: \\/ {f = 1; next} f && /^\t/ {gsub(/[\\\t ]/, ""); print; next} {f = 0}' makefile))))
 
 # GNU timeout bounds each target; macOS has none, so its targets run unbounded
-SMOKE_TIMEOUT = $(if $(shell command -v timeout),timeout 600)
+SMOKE_TIMEOUT = $(if $(shell command -v timeout),timeout 300)
 # not $(MAKE) itself: a line naming it runs in full even under make -n
 SMOKE_MAKE = $(MAKE)
 
@@ -1973,10 +1973,8 @@ smoke/list:
 	@list=$$($(SMOKE_PICK)) || exit 1; \
 	echo "$$list" | $(SMOKE_SHARD)
 
-# checks the smoke/list targets one by one: grabber/<t> must leave at least one
-# CBZ and tools/verify-cbz must accept the new ones (found with -print0, as
-# their names hold spaces). Each result is appended to SMOKE_RESULTS as
-# "<t> pass|fail" for tools/site-status; exits 1 once all have run if any failed.
+# runs each smoke/list target: grabber/<t> must leave CBZs that tools/verify-cbz accepts.
+# Appends "<t> pass|fail" to SMOKE_RESULTS and exits 1 at the end if any failed.
 smoke:
 	@list=$$($(SMOKE_PICK)) || exit 1; \
 	list=$$(echo "$$list" | $(SMOKE_SHARD)); \
