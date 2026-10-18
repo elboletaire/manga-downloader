@@ -352,6 +352,27 @@ func TestFetchFile_429WithoutRetryAfter(t *testing.T) {
 	}
 }
 
+// A host that pauses downloads fails the page at the first 429, without waiting
+func TestFetchFile_FailOn429DoesNotWait(t *testing.T) {
+	server, hits := rateLimitedServer(t, func() string { return "60" })
+
+	start := time.Now()
+	_, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL}, 1, 3, nil, nil, false, true)
+	if err == nil || !strings.Contains(err.Error(), "paused downloads") {
+		t.Fatalf("err = %v, want the site-paused error", err)
+	}
+	var se *mangahttp.StatusError
+	if !errors.As(err, &se) || se.Code != http.StatusTooManyRequests {
+		t.Errorf("err = %v, want it to keep the 429", err)
+	}
+	if elapsed := time.Since(start); elapsed > 5*time.Second {
+		t.Errorf("returned after %v, want at once", elapsed)
+	}
+	if len(*hits) != 1 {
+		t.Errorf("made %d requests, want 1", len(*hits))
+	}
+}
+
 // Cancelling during a Retry-After wait returns at once, so the app's Cancel
 // doesn't hang for up to a minute
 func TestFetchFile_CancelDuringBackoff(t *testing.T) {
@@ -469,7 +490,7 @@ func TestFetchFile_RetryFlakyBustsCache(t *testing.T) {
 	server := serveStatus(http.StatusNotFound, 3, &uris)
 	defer server.Close()
 
-	file, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg?sig=B&x=a%2Fb"}, 1, 1, nil, nil, true)
+	file, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg?sig=B&x=a%2Fb"}, 1, 1, nil, nil, true, false)
 	if err != nil || string(file.Data) != "ok" {
 		t.Fatalf("expected the retries to succeed, got %v", err)
 	}
@@ -490,7 +511,7 @@ func TestFetchFile_NotFoundWithoutOptInIsRetriedPlain(t *testing.T) {
 	server := serveStatus(http.StatusNotFound, 100, &uris)
 	defer server.Close()
 
-	if _, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 1, nil, nil, false); err == nil {
+	if _, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 1, nil, nil, false, false); err == nil {
 		t.Fatal("expected an error")
 	}
 	if len(uris) != 2 || uris[1] != "/a.jpg" {
@@ -505,7 +526,7 @@ func TestFetchFile_RetryFlakyZeroRetries(t *testing.T) {
 	server := serveStatus(http.StatusNotFound, 100, &uris)
 	defer server.Close()
 
-	fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 0, nil, nil, true)
+	fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 0, nil, nil, true, false)
 	if len(uris) != 1 {
 		t.Errorf("--retry 0 must not retry, got %q", uris)
 	}
@@ -518,7 +539,7 @@ func TestFetchFile_RetryFlaky5xx(t *testing.T) {
 	server := serveStatus(http.StatusInternalServerError, 5, &uris)
 	defer server.Close()
 
-	file, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 1, nil, nil, true)
+	file, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 1, nil, nil, true, false)
 	if err != nil || string(file.Data) != "ok" || len(uris) != 6 {
 		t.Fatalf("expected success on the 6th request, got %v after %d", err, len(uris))
 	}
@@ -531,7 +552,7 @@ func TestFetchFile_5xxWithoutOptInKeepsPlainRetry(t *testing.T) {
 	server := serveStatus(http.StatusInternalServerError, 100, &uris)
 	defer server.Close()
 
-	if _, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 1, nil, nil, false); err == nil {
+	if _, err := fetchFile(context.Background(), mangahttp.RequestParams{URL: server.URL + "/a.jpg"}, 1, 1, nil, nil, false, false); err == nil {
 		t.Fatal("expected an error")
 	}
 	if len(uris) != 2 || uris[1] != "/a.jpg" {

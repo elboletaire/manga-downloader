@@ -82,6 +82,9 @@ type Page struct {
 	// cache-busting query, for an origin that fails pages at random (a CDN
 	// may even cache its 404)
 	RetryFlaky bool
+	// FailOn429 fails the page at the first 429 instead of waiting out its
+	// Retry-After, for a site that pauses downloads from the IP for minutes
+	FailOn429 bool
 	// Transform, if non-nil, post-processes the raw downloaded page bytes
 	// before they're packed (e.g. undoing a site's client-side image
 	// scrambling). Errors are retried the same as a failed download.

@@ -514,6 +514,9 @@ type plainHTMLPace struct {
 
 // pace returns the limit of the site's host, if it has one
 func (m PlainHTML) pace() (plainHTMLPace, bool) {
+	if m.Grabber == nil {
+		return plainHTMLPace{}, false
+	}
 	u, err := url.Parse(m.URL)
 	if err != nil {
 		return plainHTMLPace{}, false
@@ -1476,10 +1479,12 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 			img = m.BaseUrl() + img
 		}
 
+		_, paced := m.pace()
 		page := Page{
 			Number:     int64(i),
 			URL:        img,
 			RetryFlaky: m.retryFlaky(),
+			FailOn429:  paced,
 		}
 		if s, ok := lrsFor(scrambles, img); ok {
 			page.Transform = lrsTransform(s)

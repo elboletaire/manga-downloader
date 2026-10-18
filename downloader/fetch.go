@@ -72,7 +72,7 @@ func FetchChapter(ctx context.Context, site grabber.Site, chapter *grabber.Chapt
 				Referer: referer,
 				Headers: page.Headers,
 				Accept:  http.ImageAccept,
-			}, uint(page.Number), site.GetRetries(), page.Transform, pace, page.RetryFlaky)
+			}, uint(page.Number), site.GetRetries(), page.Transform, pace, page.RetryFlaky, page.FailOn429)
 
 			if err != nil {
 				select {
@@ -119,12 +119,12 @@ func FetchChapter(ctx context.Context, site grabber.Site, chapter *grabber.Chapt
 // non-nil, post-processes the downloaded bytes.
 // Cancelling ctx abandons the wait before a retry.
 func FetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error)) (*File, error) {
-	return fetchFile(ctx, params, page, retries, transform, nil, false)
+	return fetchFile(ctx, params, page, retries, transform, nil, false, false)
 }
 
 // fetchFile is FetchFile with an optional pace, called before every attempt,
-// and retryFlaky (Page.RetryFlaky)
-func fetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error), pace func(), retryFlaky bool) (file *File, err error) {
+// retryFlaky (Page.RetryFlaky) and failOn429 (Page.FailOn429)
+func fetchFile(ctx context.Context, params http.RequestParams, page uint, retries uint8, transform func([]byte) ([]byte, error), pace func(), retryFlaky, failOn429 bool) (file *File, err error) {
 	orig := params.URL
 	for attempt := uint8(0); ; attempt++ {
 		if pace != nil {
@@ -150,6 +150,9 @@ func fetchFile(ctx context.Context, params http.RequestParams, page uint, retrie
 		}
 		if errors.Is(err, errHTMLPage) {
 			return nil, err
+		}
+		if failOn429 && isRateLimited(err) {
+			return nil, fmt.Errorf("the site paused downloads from this IP, try again later (%w)", err)
 		}
 
 		wait := retryWait(err, attempt)
@@ -194,12 +197,19 @@ func bustCache(rawURL string) string {
 	return rawURL + sep + "retry=" + strconv.FormatInt(time.Now().UnixNano(), 36)
 }
 
+// isRateLimited reports whether err is a 429 response
+func isRateLimited(err error) bool {
+	var se *http.StatusError
+	return errors.As(err, &se) && se.Code == stdhttp.StatusTooManyRequests
+}
+
 // retryWait is the delay before retrying after attempt (0-based) failed with
 // err. A 429 waits out its Retry-After (or rateLimitDelay): the linear delay
 // would retry while the rate limit still applies.
 func retryWait(err error, attempt uint8) time.Duration {
-	var se *http.StatusError
-	if errors.As(err, &se) && se.Code == stdhttp.StatusTooManyRequests {
+	if isRateLimited(err) {
+		var se *http.StatusError
+		errors.As(err, &se)
 		if se.RetryAfter > 0 {
 			return se.RetryAfter
 		}
