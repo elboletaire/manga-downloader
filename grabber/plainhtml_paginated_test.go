@@ -85,3 +85,26 @@ func TestPlainHTMLTitleNoise(t *testing.T) {
 		}
 	}
 }
+
+// TestPlainHTMLFoOlSlideTitle checks that the FoOlSlide entry's title leaves
+// read.yagami.me's view counter out of the series name.
+func TestPlainHTMLFoOlSlideTitle(t *testing.T) {
+	html := `<h1 class="title">` + "\n\t\t\tБашня Бога\t\t" +
+		`<span id="label_web-manhva" title="Веб-манхва"></span>` +
+		`<span class="visits">Просмотров: 1260698</span>` + "\n\t\t</h1>"
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, s := range plainHTMLSelectors {
+		if !strings.Contains(s.Image, "web_img") {
+			continue
+		}
+		m := PlainHTML{site: s, doc: doc}
+		if got, _ := m.FetchTitle(); got != "Башня Бога" {
+			t.Errorf("FetchTitle() = %q, want %q", got, "Башня Бога")
+		}
+		return
+	}
+	t.Fatal("no FoOlSlide selector with a web_img Image found")
+}

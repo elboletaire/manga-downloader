@@ -255,8 +255,10 @@ var plainHTMLSelectors = []SiteSelector{
 	// getPlainHTMLImageURL), so the Image selector below is just a
 	// fallback/documentation of what a single rendered page looks like
 	// (noranofansub.com renders empty img.page-N placeholders instead).
+	// read.yagami.me also puts a view counter (.visits) inside its h1.title.
 	{
 		Title:        "h1.title",
+		TitleNoise:   ".visits",
 		Rows:         ".list .element",
 		Chapter:      ".title a",
 		ChapterTitle: ".title a",
