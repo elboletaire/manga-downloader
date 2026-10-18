@@ -759,7 +759,7 @@ to a minute.
 | [comirela.com](https://comirela.com) | Japanese (Comici) | 2026-10-18 |
 | [comix.to](https://comix.to) \* |  | 2026-10-15 |
 | [csmmangafree.com](https://www.csmmangafree.com) | English, single series | 2026-10-18 |
-| [cucumbermanga.com](https://cucumbermanga.com) | English | 2026-10-18 |
+| [cucumbermanga.com](https://cucumbermanga.com) | English | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [dandadanmangas.online](https://dandadanmangas.online) | English, single series | 2026-10-18 |
 | [danke.moe](https://danke.moe) | Danke fürs Lesen | 2026-10-18 |
 | [datgarscanlation.blogspot.com](https://datgarscanlation.blogspot.com) | Spanish | ❌ failing since 2026-10-18 (checked 2026-10-18) |
@@ -799,7 +799,7 @@ to a minute.
 | [g-comi.jp](https://g-comi.jp) | Japanese (Comici), comic-medu.com redirects here | 2026-10-18 |
 | [gaiatoon.com](https://gaiatoon.com) | Turkish | 2026-10-18 |
 | [gakamangas.com](https://gakamangas.com) | English | 2026-10-18 |
-| [galaxscanlator.blogspot.com](https://galaxscanlator.blogspot.com) | Portuguese | 2026-10-18 |
+| [galaxscanlator.blogspot.com](https://galaxscanlator.blogspot.com) | Portuguese | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [gdscans.com](https://gdscans.com) | GalaxyDegenScans | 2026-10-18 |
 | [genztoons.org](https://genztoons.org) | Genz Toon, former genzupdates.com | 2026-10-18 |
 | [ghostoon.com](https://ghostoon.com) | Turkish, mostly NSFW | 2026-10-18 |
@@ -809,17 +809,17 @@ to a minute.
 | [gourmetsupremacy.com](https://gourmetsupremacy.com) | Gourmet Scans, free chapters only | 2026-10-18 |
 | [grabber.zone](https://grabber.zone) | Spanish | 2026-10-18 |
 | [grimscans.com](https://grimscans.com) | English, locked chapters skipped | 2026-10-18 |
-| [gutsberserk.com](https://www.gutsberserk.com) | English, single series | 2026-10-18 |
+| [gutsberserk.com](https://www.gutsberserk.com) | English, single series | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [guya.moe](https://guya.moe) | Guya, Kaguya-sama | 2026-10-18 |
 | [hachirumi.com](https://hachirumi.com) | Hachirumi, Guya instance, has an NSFW section | 2026-10-18 |
-| [hanamiheaven.org](https://hanamiheaven.org) | Portuguese, mostly NSFW | 2026-10-18 |
+| [hanamiheaven.org](https://hanamiheaven.org) | Portuguese, mostly NSFW | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [hanayume.com](https://hanayume.com) | Japanese (Comici), free episodes only | 2026-10-18 |
-| [hanmokkuscan.blogspot.com](https://hanmokkuscan.blogspot.com) | Portuguese | 2026-10-18 |
-| [harmony-scan.fr](https://harmony-scan.fr) | French | 2026-10-18 |
-| [hayacomic.jp](https://hayacomic.jp) | Japanese (Comici) | 2026-10-18 |
+| [hanmokkuscan.blogspot.com](https://hanmokkuscan.blogspot.com) | Portuguese | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [harmony-scan.fr](https://harmony-scan.fr) | French | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [hayacomic.jp](https://hayacomic.jp) | Japanese (Comici) | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [heavenly-delusion.com](https://heavenly-delusion.com) | Heavenly Delusion | 2026-10-18 |
 | [heavenmanga.com](https://heavenmanga.com) | Spanish | 2026-10-18 |
-| [heckscans.blogspot.com](https://heckscans.blogspot.com) | Portuguese | 2026-10-18 |
+| [heckscans.blogspot.com](https://heckscans.blogspot.com) | Portuguese | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [hentai-origines.com](https://hentai-origines.com) | French, mostly NSFW | 2026-10-18 |
 | [hentai-scantrad.org](https://hentai-scantrad.org) | French, mostly NSFW | 2026-10-18 |
 | [hentai1.io](https://hentai1.io) | English, mostly NSFW | 2026-10-18 |
