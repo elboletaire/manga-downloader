@@ -19,6 +19,12 @@ describe('isSeriesUrl', () => {
     expect(isSeriesUrl('https://mangadex.org/')).toBe(false);
   });
 
+  it('accepts a bare host when it was pasted', () => {
+    expect(isSeriesUrl('https://kaijuno8chapters.com/', { pasted: true })).toBe(true);
+    expect(isSeriesUrl('https://w2.dandadanmanga.net', { pasted: true })).toBe(true);
+    expect(isSeriesUrl('https://mangadex', { pasted: true })).toBe(false);
+  });
+
   it('refuses hosts with empty labels', () => {
     expect(isSeriesUrl('https://a./x')).toBe(false);
     expect(isSeriesUrl('https://.com/x')).toBe(false);
@@ -46,6 +52,24 @@ describe('shouldAutoLoad', () => {
 
   it('does not load a bare host', () => {
     expect(shouldAutoLoad('https://mangadex.org', idle)).toBe(false);
+  });
+
+  it('loads a pasted bare host, which a typed one never does', () => {
+    expect(shouldAutoLoad('https://kaijuno8chapters.com/', idle, { pasted: true })).toBe(true);
+    expect(shouldAutoLoad('https://w2.dandadanmanga.net', idle, { pasted: true })).toBe(true);
+    expect(shouldAutoLoad('https://kaijuno8chapters.com/', idle)).toBe(false);
+    expect(shouldAutoLoad('https://kaijuno8chapters.com/', idle, { pasted: false })).toBe(false);
+  });
+
+  it('does not reload a pasted bare host that is already loaded', () => {
+    const loaded = { url: 'https://kaijuno8chapters.com/', busy: false };
+    expect(shouldAutoLoad('https://kaijuno8chapters.com/', loaded, { pasted: true })).toBe(false);
+    expect(shouldAutoLoad('  https://kaijuno8chapters.com/\n', loaded, { pasted: true })).toBe(false);
+  });
+
+  it('does not load a pasted bare host while busy or when it is not a URL', () => {
+    expect(shouldAutoLoad('https://kaijuno8chapters.com/', { url: '', busy: true }, { pasted: true })).toBe(false);
+    expect(shouldAutoLoad('one piece', idle, { pasted: true })).toBe(false);
   });
 
   it('does not load the URL that is loaded or loading', () => {

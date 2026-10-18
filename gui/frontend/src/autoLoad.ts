@@ -7,10 +7,11 @@ export const AUTO_LOAD_DELAY_MS = 200;
 
 /**
  * Whether text is an http(s) URL to a series: a dotted host with no empty
- * labels, and a path. Parsed with `new URL`, and nothing looser; a bare host
- * (`https://mangadex.org`) is not a series, so it doesn't load on its own.
+ * labels, and a path. Parsed with `new URL`, and nothing looser. A bare host
+ * (`https://mangadex.org`) is not a series unless it was pasted (see
+ * shouldAutoLoad), so typing one never loads it.
  */
-export function isSeriesUrl(text: string): boolean {
+export function isSeriesUrl(text: string, { pasted = false }: { pasted?: boolean } = {}): boolean {
   // the scheme must be followed by `//` and then something that isn't a slash,
   // so `https:example.com` and `https:///example.com` are refused
   if (!/^https?:\/\/[^/]/i.test(text)) {
@@ -23,7 +24,7 @@ export function isSeriesUrl(text: string): boolean {
       (url.protocol === 'http:' || url.protocol === 'https:') &&
       labels.length > 1 &&
       labels.every(Boolean) &&
-      url.pathname.length > 1
+      (pasted || url.pathname.length > 1)
     );
   } catch {
     return false;
@@ -35,11 +36,16 @@ export function isSeriesUrl(text: string): boolean {
  * set when a load starts, so it covers a loaded, a loading and a failed
  * load alike: the same URL is never loaded again on its own, and a failed
  * one only reloads when the user edits it or presses Load or Enter.
+ * pasted lets a bare host load: it was pasted, not typed mid-way.
  */
-export function shouldAutoLoad(value: string, state: { url: string; busy: boolean }): boolean {
+export function shouldAutoLoad(
+  value: string,
+  state: { url: string; busy: boolean },
+  { pasted = false }: { pasted?: boolean } = {},
+): boolean {
   if (state.busy) {
     return false;
   }
   const trimmed = value.trim();
-  return isSeriesUrl(trimmed) && trimmed !== state.url.trim();
+  return isSeriesUrl(trimmed, { pasted }) && trimmed !== state.url.trim();
 }
