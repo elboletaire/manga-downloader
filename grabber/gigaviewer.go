@@ -96,10 +96,8 @@ var (
 // Pages scrambled in tiles ("baku") are undone in Transform.
 type Gigaviewer struct {
 	*Grabber
-	// byMarkup also detects the hosts not in gigaviewerDomains (NewGigaviewerByMarkup),
-	// reading fetched's page when it has one
+	// byMarkup also detects the hosts not in gigaviewerDomains (NewGigaviewerByMarkup)
 	byMarkup   bool
-	fetched    *PlainHTML
 	seriesID   string
 	feedLoaded bool
 	title      string
@@ -112,10 +110,9 @@ func NewGigaviewer(g *Grabber) *Gigaviewer {
 }
 
 // NewGigaviewerByMarkup returns a Gigaviewer grabber that also matches an
-// episode or feed URL on any host whose page has the GigaViewer markup. fetched
-// is the PlainHTML that already parsed the URL's page, or nil.
-func NewGigaviewerByMarkup(g *Grabber, fetched *PlainHTML) *Gigaviewer {
-	return &Gigaviewer{Grabber: g, byMarkup: true, fetched: fetched}
+// episode or feed URL on any host whose page has the GigaViewer markup.
+func NewGigaviewerByMarkup(g *Grabber) *Gigaviewer {
+	return &Gigaviewer{Grabber: g, byMarkup: true}
 }
 
 // GigaviewerChapter is a chapter of a GigaViewer site, identified by its episode ID
@@ -167,7 +164,7 @@ func (g *Gigaviewer) Test() (bool, error) {
 	if !ok {
 		return false, nil
 	}
-	return pageHasMarkup(g.URL, g.fetched, markers...)
+	return pageHasMarkup(g.Grabber, g.URL, markers...), nil
 }
 
 // gigaviewerMarkers returns what a page of rawURL's shape must carry: the

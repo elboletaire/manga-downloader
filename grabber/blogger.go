@@ -71,16 +71,12 @@ func (b *Blogger) Test() (bool, error) {
 		return false, nil
 	}
 
-	rbody, err := http.Get(http.RequestParams{
-		URL:          b.URL,
-		DisableRetry: true, // identification probe: a failure means "not this site"
-	})
+	body, err := b.identifyPage(b.URL)
 	if err != nil {
-		return false, err
+		return false, nil
 	}
-	defer rbody.Close()
 
-	doc, err := goquery.NewDocumentFromReader(rbody)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
 	if err != nil {
 		return false, err
 	}

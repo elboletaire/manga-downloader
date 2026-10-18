@@ -3,12 +3,15 @@
 package grabber
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 )
 
@@ -47,6 +50,36 @@ func (s *identifyServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(strings.ReplaceAll(string(body), s.origin, s.base)))
 }
 
+// requestCounter counts the requests a test server receives, per path
+type requestCounter struct {
+	mu   sync.Mutex
+	hits map[string]int
+}
+
+// count returns how many requests path has received
+func (c *requestCounter) count(path string) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.hits[path]
+}
+
+// newCountingServer starts a test server that answers with handler and counts
+// each request by its path
+func newCountingServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, *requestCounter) {
+	t.Helper()
+
+	counter := &requestCounter{hits: map[string]int{}}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		counter.mu.Lock()
+		counter.hits[r.URL.Path]++
+		counter.mu.Unlock()
+		handler(w, r)
+	}))
+	t.Cleanup(srv.Close)
+
+	return srv, counter
+}
+
 // newIdentifyServer starts a test server answering routes from origin's fixtures.
 func newIdentifyServer(t *testing.T, origin string, routes map[string]string) *httptest.Server {
 	t.Helper()
@@ -57,6 +90,34 @@ func newIdentifyServer(t *testing.T, origin string, routes map[string]string) *h
 	handler.base = srv.URL
 
 	return srv
+}
+
+// newFixtureServer serves routes from origin's fixtures and counts the requests
+// per path, returning the server's URL
+func newFixtureServer(t *testing.T, origin string, routes map[string]string) (string, *requestCounter) {
+	t.Helper()
+
+	ident := &identifyServer{origin: origin, routes: routes}
+	srv, hits := newCountingServer(t, ident.ServeHTTP)
+	ident.base = srv.URL
+
+	return srv.URL, hits
+}
+
+// countingRoundTripper counts the requests it receives, answering each with
+// body, or failing it with err when set
+type countingRoundTripper struct {
+	body string
+	err  error
+	hits atomic.Int32
+}
+
+func (c *countingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	c.hits.Add(1)
+	if c.err != nil {
+		return nil, c.err
+	}
+	return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(c.body)), Header: http.Header{}, Request: req}, nil
 }
 
 // TestIdentifySiteOrder checks which grabber IdentifySite hands each kind of

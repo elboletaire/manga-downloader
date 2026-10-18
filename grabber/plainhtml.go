@@ -210,7 +210,7 @@ var plainHTMLSelectors = []SiteSelector{
 	// (same markup as the cloudflare-gated sushiscan.net in
 	// plainhtmlbrowser.go): lagoonscans.com, rokaricomics.com and
 	// violetscans.org (witchscans.com moved to
-	// witchtoons.net on a different platform; see the witchtoons
+	// witchtoons.net on a different platform; see the RSC comic
 	// grabber). Reader pages embed all pages in a ts_reader.run(...)
 	// blob, already handled by getPlainHTMLImageURL, so Image is just a
 	// fallback here. Some of these coin-paywall their most recent
@@ -549,14 +549,11 @@ type PlainHTMLChapter struct {
 
 // Test returns true if the URL is a valid grabber URL
 func (m *PlainHTML) Test() (bool, error) {
-	body, err := http.Get(http.RequestParams{
-		URL:          m.URL,
-		DisableRetry: true, // identification probe: a 5xx means "not this site"
-	})
+	body, err := m.identifyPage(m.URL)
 	if err != nil {
 		return false, err
 	}
-	m.doc, err = goquery.NewDocumentFromReader(body)
+	m.doc, err = goquery.NewDocumentFromReader(strings.NewReader(body))
 	if err != nil {
 		return false, err
 	}
