@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createT, say, type Vars } from './i18n';
 import { createMockApi, mockSetupFrom, scenarioFrom } from './mock';
+import type { State } from './types';
+
+const en = createT('en');
+
+/** A rejection as the mock gives it: the message's JSON, the way the window's backend sends it */
+const rejected = (key: string, args?: Vars) =>
+  JSON.stringify(args === undefined ? { key, text: en(key) } : { key, args, text: en(key, args) });
 
 describe('scenarioFrom', () => {
   it('reads the scenario from the query, defaulting to empty', () => {
@@ -13,7 +21,7 @@ describe('createMockApi', () => {
   it('starts empty and refuses a download without a series', async () => {
     const api = createMockApi('empty');
     expect((await api.state()).loaded).toBe(false);
-    await expect(api.start()).rejects.toBe('load a series first');
+    await expect(api.start()).rejects.toBe(rejected('errors.loadFirst'));
   });
 
   it('loads a series, selects a range and reports the match count', async () => {
@@ -32,8 +40,8 @@ describe('createMockApi', () => {
   it('rejects an empty selection and an empty URL', async () => {
     const api = createMockApi('loaded');
     await api.setAll(false);
-    await expect(api.start()).rejects.toBe('select at least one chapter');
-    await expect(api.load('  ')).rejects.toBe('enter the URL of a series first');
+    await expect(api.start()).rejects.toBe(rejected('errors.selectOne'));
+    await expect(api.load('  ')).rejects.toBe(rejected('errors.enterURL'));
   });
 
   it('marks the list stale when the language changes until it is reloaded', async () => {
@@ -50,7 +58,7 @@ describe('createMockApi', () => {
     await api.setSelectedMany([2, 3, 4], true);
     expect(await api.selection()).toEqual([2, 3, 4]);
 
-    await expect(api.setSelectedMany([0, 99], true)).rejects.toBe('chapter 99 is not in the list');
+    await expect(api.setSelectedMany([0, 99], true)).rejects.toBe(rejected('errors.chapterMissing', { index: 99 }));
     expect(await api.selection()).toEqual([2, 3, 4]);
 
     await api.setSelectedMany([3], false);
@@ -59,18 +67,18 @@ describe('createMockApi', () => {
 
   it('refuses to change the selection, pick a folder or start while a download runs', async () => {
     const api = createMockApi({ scenario: 'running', freeze: true });
-    const busy = 'a series is loading or a download is running';
+    const busy = rejected('errors.busy');
     await expect(api.setSelected(0, false)).rejects.toBe(busy);
     await expect(api.setSelectedMany([0], false)).rejects.toBe(busy);
     await expect(api.setAll(false)).rejects.toBe(busy);
     await expect(api.selectRange('1')).rejects.toBe(busy);
-    await expect(api.chooseFolder()).rejects.toBe(busy);
+    await expect(api.chooseFolder('Choose the output folder')).rejects.toBe(busy);
     await expect(api.start()).rejects.toBe(busy);
   });
 
   it('refuses to start while a series loads', async () => {
     const api = createMockApi({ scenario: 'loading', freeze: true });
-    await expect(api.start()).rejects.toBe('a series is loading or a download is running');
+    await expect(api.start()).rejects.toBe(rejected('errors.busy'));
   });
 
   it('keeps the bundle flag a run started with', async () => {
@@ -198,7 +206,7 @@ describe('createMockApi', () => {
   it('refuses to clear while a series loads', async () => {
     const api = createMockApi({ chapters: 30 });
     const loading = api.load('https://example.com/series/a');
-    await expect(api.clear()).rejects.toBe('a series is loading or a download is running');
+    await expect(api.clear()).rejects.toBe(rejected('errors.busy'));
     await loading;
     expect((await api.state()).loaded).toBe(true);
   });
@@ -245,7 +253,7 @@ describe('createMockApi', () => {
     const state = await api.state();
     expect(state.hasDuplicates).toBe(true);
     const chapters = await api.chapters();
-    // Find chapter numbers listed in both ca and en (multiples of 5 in newest 15)
+    // Find chapter numbers listed in both en and ca (multiples of 5 in newest 15)
     const chaptersByNumber = new Map<number, typeof chapters>();
     for (const c of chapters) {
       if (!chaptersByNumber.has(c.number)) {
@@ -255,10 +263,9 @@ describe('createMockApi', () => {
     }
     const duplicatedChapters = Array.from(chaptersByNumber.values()).filter((cs) => cs.length > 1);
     expect(duplicatedChapters.length).toBeGreaterThan(0);
-    // Primary language is Catalan; duplicates are in English
+    // Primary language is English, the window's; duplicates are in Catalan, the site's first other
     const languages = duplicatedChapters[0]!.map((c) => c.language).sort();
-    expect(languages).toContain('ca');
-    expect(languages).toContain('en');
+    expect(languages).toEqual(['ca', 'en']);
   });
 
   it('shows version v1.12.0 for update scenario and v0.0.0-mock otherwise', async () => {
@@ -313,16 +320,16 @@ describe('createMockApi', () => {
     expect(logWith.some((l) => l.text.includes('timed out waiting for'))).toBe(false);
   });
 
-  it('uses real One Piece chapter numbers and Catalan titles', async () => {
+  it('uses real One Piece chapter numbers and English titles by default', async () => {
     const api = createMockApi({ chapters: 5 });
     await api.load('https://example.com/series/a');
     const chapters = await api.chapters();
     expect(chapters).toHaveLength(5);
     // newest 5 chapters: 1190-1194
     expect(chapters[0].number).toBe(1190);
-    expect(chapters[0].title).toBe('Algú de qui se celebra la mort');
+    expect(chapters[0].title).toBe('Those Whose Death Brings Celebration');
     expect(chapters[4].number).toBe(1194);
-    expect(chapters[4].title).toBe('La impermanència de totes les coses');
+    expect(chapters[4].title).toBe('All Things Are In Flux');
     // newest chapters have no volume yet
     expect(chapters[0].volume).toBe(0);
   });
@@ -405,11 +412,11 @@ describe('mock volumes', () => {
       const state = await api.state();
       expect(state.options.packAs).toBe('parts');
       expect(state.title).toBe('One Piece');
-      // the parts share their chapter's One Piece title, plus their part
+      // the parts share their chapter's title, plus their part
       const chapters = await api.chapters();
-      expect(chapters[0]).toMatchObject({ number: 1, title: 'El drac dels llamps Nidhog' });
-      expect(chapters[1]).toMatchObject({ number: 2, title: 'Amb honor Part 1' });
-      expect(chapters[2]).toMatchObject({ number: 2, title: 'Amb honor Part 2' });
+      expect(chapters[0]).toMatchObject({ number: 1, title: 'Niddhoggr' });
+      expect(chapters[1]).toMatchObject({ number: 2, title: 'With Pride Part 1' });
+      expect(chapters[2]).toMatchObject({ number: 2, title: 'With Pride Part 2' });
       // chapter 1, both parts of 2-4 and the open part of 19
       expect(state.selectedCount).toBe(8);
       await api.start();
@@ -448,6 +455,26 @@ describe('mock volumes', () => {
       vi.useRealTimers();
     }
   });
+
+  it('sends a failed chapter as a labelled failure, with its reason as a message', async () => {
+    const api = createMockApi({ chapters: 40, fail: true });
+    await api.load('https://example.com/series/a');
+    await api.setAll(true);
+    vi.useFakeTimers();
+    try {
+      await api.start();
+      await vi.advanceTimersByTimeAsync(60_000);
+      const { summary } = await api.state();
+      expect(summary!.failures).toHaveLength(1);
+      expect(summary!.failures[0]).toMatchObject({
+        label: expect.stringMatching(/\S/),
+        reason: 'download: page 5 returned 404 Not Found',
+        reasonMsg: { key: 'job.reason.download', args: { reason: 'page 5 returned 404 Not Found' } },
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('mockSetupFrom', () => {
@@ -467,6 +494,7 @@ describe('mockSetupFrom', () => {
       fetching: false,
       epub: false,
       prompt: false,
+      uiLanguage: 'en',
     });
     expect(mockSetupFrom('?novolumes').novolumes).toBe(true);
     expect(mockSetupFrom('?parts').parts).toBe(true);
@@ -493,8 +521,8 @@ describe('mockSetupFrom', () => {
 describe('mock filters', () => {
   it('offers the languages of the site, and none for a site without them', async () => {
     const multi = createMockApi({ scenario: 'loaded', site: 'multi' });
-    // multi site: ca, en, es with All; Catalan is the default shown language
-    expect((await multi.state()).languages).toEqual({ values: ['ca', 'en', 'es'], all: true, selected: 'ca' });
+    // multi site: ca, en, es with All; the window's language (English by default) is shown
+    expect((await multi.state()).languages).toEqual({ values: ['ca', 'en', 'es'], all: true, selected: 'en' });
     expect((await multi.state()).scanlators).toBeNull();
 
     const none = createMockApi({ scenario: 'loaded', site: 'none' });
@@ -614,5 +642,122 @@ describe('mock fetching rows', () => {
   it('keeps the other running scenarios free of fetching rows', async () => {
     const rows = (await createMockApi({ scenario: 'running', freeze: true }).state()).jobs;
     expect(rows.some((j) => j.state === 'fetching')).toBe(false);
+  });
+});
+
+describe('mock languages', () => {
+  // the newest five chapters' titles, which the lists have for 1190 (the first)
+  const first = { en: 'Those Whose Death Brings Celebration', es: 'Su muerte es motivo de alegría', ca: 'Algú de qui se celebra la mort' };
+
+  it.each(['en', 'es', 'ca'] as const)('shows %s as the selected filter and lists its titles', async (lang) => {
+    const api = createMockApi({ scenario: 'loaded', uiLanguage: lang, chapters: 5 });
+    expect((await api.state()).languages).toMatchObject({ selected: lang });
+    await api.load('https://example.com/series/a');
+    expect((await api.state()).languages).toMatchObject({ selected: lang, values: ['ca', 'en', 'es'] });
+    expect((await api.chapters())[0]).toMatchObject({ number: 1190, title: first[lang] });
+  });
+
+  it('lists the chapters of the language the filter is set to on reload', async () => {
+    const api = createMockApi({ uiLanguage: 'en', chapters: 5 });
+    await api.load('https://example.com/series/a');
+    await api.setOptions({ ...(await api.state()).options, language: 'es' });
+    await api.load((await api.state()).url);
+    expect((await api.state()).languages).toMatchObject({ selected: 'es' });
+    expect((await api.chapters())[0].title).toBe(first.es);
+  });
+
+  it('repeats every fifth chapter in the site\'s other language with dupes', async () => {
+    const api = createMockApi({ uiLanguage: 'es', dupes: true, chapters: 5 });
+    await api.load('https://example.com/series/a');
+    const copies = (await api.chapters()).filter((c) => c.number === 1190);
+    expect(copies.map((c) => [c.language, c.title])).toEqual([
+      ['es', first.es],
+      ['ca', first.ca],
+    ]);
+  });
+});
+
+describe('mockSetupFrom language', () => {
+  it('starts in English unless ?lang picks a language, and ?lang=system follows the browser', () => {
+    expect(mockSetupFrom('?mock').uiLanguage).toBe('en');
+    expect(mockSetupFrom('?mock&lang=es').uiLanguage).toBe('es');
+    expect(mockSetupFrom('?lang=ca').uiLanguage).toBe('ca');
+    expect(mockSetupFrom('?lang=system').uiLanguage).toBe('');
+    expect(mockSetupFrom('?lang=fr').uiLanguage).toBe('en');
+  });
+});
+
+describe('mock app preferences', () => {
+  it('starts with the language it was set up with', async () => {
+    expect((await createMockApi('empty').state()).prefs).toEqual({ uiLanguage: 'en', checkUpdates: true });
+    expect((await createMockApi({ uiLanguage: 'es' }).state()).prefs.uiLanguage).toBe('es');
+  });
+
+  it('keeps the language and pushes it', async () => {
+    const api = createMockApi('empty');
+    const pushed: State[] = [];
+    const stop = api.onState((s) => pushed.push(s));
+    await api.setUILanguage('ca');
+    expect(pushed.at(-1)?.prefs.uiLanguage).toBe('ca');
+    expect((await api.state()).prefs.uiLanguage).toBe('ca');
+    await api.setUILanguage('');
+    expect((await api.state()).prefs.uiLanguage).toBeUndefined();
+    stop();
+  });
+
+  it('turning updates off clears the update and pushes that, and on brings the check back', async () => {
+    const api = createMockApi('update');
+    expect((await api.state()).update).not.toBeNull();
+    const pushed: State[] = [];
+    const stop = api.onState((s) => pushed.push(s));
+    await api.setCheckUpdates(false);
+    expect(pushed.at(-1)?.prefs.checkUpdates).toBe(false);
+    expect(pushed.at(-1)?.update).toBeNull();
+    await api.setCheckUpdates(true);
+    expect((await api.state()).update).not.toBeNull();
+    stop();
+  });
+});
+
+describe('mock messages', () => {
+  it('sends the browser alert as a message the window translates', async () => {
+    const state = await createMockApi({ scenario: 'check', freeze: true }).state();
+    expect(state.browserAlertMsg).toEqual({
+      key: 'browser.alertNamed',
+      args: { browser: 'Brave', host: 'check.example.com' },
+      text: state.browserAlert,
+    });
+    expect(say(createT('es'), state.browserAlertMsg, state.browserAlert)).toContain(
+      'Brave ha abierto una ventana para superar una comprobación en check.example.com.',
+    );
+  });
+
+  it('sends a failed load as a message, with the text it had', async () => {
+    const state = await createMockApi('error').state();
+    expect(state.loadErrorMsg).toEqual({
+      key: 'errors.loadChapters',
+      args: { reason: 'unexpected status 403 Forbidden' },
+      text: "Couldn't fetch the chapter list: unexpected status 403 Forbidden",
+    });
+    expect(state.loadError).toBe(state.loadErrorMsg?.text);
+  });
+
+  it('sends the rows of a running volume download with their title and phase as messages', async () => {
+    const api = createMockApi({ scenario: 'volumes-running', freeze: true });
+    const state = await api.state();
+    const row = state.jobs[0];
+    expect(row.volume).toBe(true);
+    expect(row.titleMsg?.key).toBe('job.title.volume');
+    expect(row.titleMsg?.text).toBe(row.title);
+    expect(row.statusMsg?.text ?? '').toBe(row.status);
+    const log = await api.log();
+    expect(log.some((l) => l.msg?.key === 'log.downloading' && l.msg.text === l.text)).toBe(true);
+  });
+
+  it('sends the bundle row and its phase as messages', async () => {
+    const state = await createMockApi({ scenario: 'bundle', freeze: true }).state();
+    const bundle = state.jobs[0];
+    expect(bundle.titleMsg).toEqual({ key: 'job.title.bundle', args: { range: `1-${state.run.chapters}` }, text: bundle.title });
+    expect(bundle.statusMsg?.text).toBe(bundle.status);
   });
 });

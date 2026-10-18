@@ -34,7 +34,7 @@ describe('savedEverything', () => {
   });
 
   it('is false when a chapter failed', () => {
-    expect(savedEverything(clean({ failures: ['Chapter 4: download: page 5 returned 404'] }))).toBe(false);
+    expect(savedEverything(clean({ failures: [{ label: 'Chapter 4', reason: 'download: page 5 returned 404' }] }))).toBe(false);
   });
 
   it('is false when the run was cancelled', () => {
@@ -68,7 +68,7 @@ describe('celebratesOnOpen', () => {
   });
 
   it('does not celebrate a failed last run', () => {
-    expect(celebratesOnOpen(idle(clean({ failures: ['x'] })))).toBe(false);
+    expect(celebratesOnOpen(idle(clean({ failures: [{ label: '', reason: 'x' }] })))).toBe(false);
   });
 
   it('does not celebrate while a load or a run is going', () => {
@@ -83,7 +83,7 @@ describe('celebrating', () => {
   });
 
   it('stays off when a run ends with a failure', () => {
-    expect(celebrating(false, true, idle(clean({ failures: ['x'] })))).toBe(false);
+    expect(celebrating(false, true, idle(clean({ failures: [{ label: '', reason: 'x' }] })))).toBe(false);
   });
 
   it('stays off when a run is cancelled', () => {

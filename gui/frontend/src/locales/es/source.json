@@ -1,0 +1,26 @@
+{
+  "url": {
+    "label": "URL de la serie",
+    "placeholder": "Pega el enlace de una serie o de uno de sus capítulos",
+    "clear": "Borrar",
+    "clearLabel": "Borrar la URL",
+    "paste": "Pegar",
+    "pasteLabel": "Pegar el enlace del portapapeles"
+  },
+  "load": {
+    "load": "Cargar",
+    "loading": "Cargando…",
+    "reload": "Recargar"
+  },
+  "filter": {
+    "heading": "Filtrar la lista",
+    "language": "Idioma",
+    "scanlator": "Grupo",
+    "any": "cualquiera",
+    "noLanguage": "Este sitio no permite elegir idioma",
+    "noScanlator": "Este sitio no tiene grupos de scanlation entre los que elegir",
+    "notApplied": "Aún sin aplicar",
+    "appliesAtOnce": "Al elegir uno se aplica al momento",
+    "appliesOnLoad": "Se aplica al cargar la serie"
+  }
+}

@@ -3,6 +3,7 @@
 // earlier this session) gets it anyway, so the switch then shows on, locked,
 // with a hint, without touching the saved option.
 
+import type { T } from './i18n';
 import type { State } from './types';
 
 export interface BrowserSwitch {
@@ -11,13 +12,10 @@ export interface BrowserSwitch {
   hint: string;
 }
 
-export const BROWSER_HINT = 'Rarely needed: the window opens by itself when a site asks for it.';
-export const BROWSER_AUTO_HINT = 'Needed for this site: the window opens by itself.';
-
-export function browserSwitchOf(state: State): BrowserSwitch {
+export function browserSwitchOf(state: State, t: T): BrowserSwitch {
   const locked = state.loading || state.running;
   if (state.browserVisibleAuto) {
-    return { checked: true, disabled: true, hint: BROWSER_AUTO_HINT };
+    return { checked: true, disabled: true, hint: t('options.browser.auto') };
   }
-  return { checked: state.options.browserVisible, disabled: locked, hint: BROWSER_HINT };
+  return { checked: state.options.browserVisible, disabled: locked, hint: t('options.browser.hint') };
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { avifSwitchOf, convertFlagsOf, convertValueOf } from './convertImages';
+import { avifEpubHint, avifSwitchOf, convertFlagsOf, convertValueOf } from './convertImages';
+import { createT } from './i18n';
 
 describe('convertFlagsOf and convertValueOf', () => {
   it('maps the four valid settings to the checkboxes and back', () => {
@@ -36,5 +37,12 @@ describe('avifSwitchOf', () => {
   it('shows AVIF checked and locked for EPUB, whatever the saved value', () => {
     expect(avifSwitchOf({ avif: false, webp: false }, 'epub')).toEqual({ checked: true, disabled: true });
     expect(avifSwitchOf({ avif: false, webp: true }, 'epub')).toEqual({ checked: true, disabled: true });
+  });
+});
+
+describe('avifEpubHint', () => {
+  it('translates the EPUB note', () => {
+    expect(avifEpubHint(createT('en'))).toBe("Always on for EPUB: readers can't show AVIF.");
+    expect(avifEpubHint(createT('ca'))).toBe('Sempre activat per a EPUB: els lectors no mostren AVIF.');
   });
 });

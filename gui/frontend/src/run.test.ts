@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
+import { createT } from './i18n';
 import { createMockApi } from './mock';
 import {
   downloadBlocker,
   downloadLabel,
   hostOf,
   overallProgress,
-  splitFailure,
   summaryTone,
   tally,
 } from './run';
 import type { Job, State, Summary } from './types';
+
+const t = createT('en');
 
 const job = (over: Partial<Job>): Job => ({
   title: 'Ch',
@@ -118,37 +120,44 @@ describe('tally', () => {
 
 describe('downloadBlocker', () => {
   it('lets a loaded series with a selection download', async () => {
-    expect(downloadBlocker(await loadedState())).toBe('');
+    expect(downloadBlocker(await loadedState(), t)).toBe('');
   });
 
   it('explains each refusal before the click', async () => {
-    expect(downloadBlocker(await createMockApi('empty').state())).toMatch(/Load a series/);
-    expect(downloadBlocker(await loadedState({ loading: true }))).toMatch(/loading/);
-    expect(downloadBlocker(await loadedState({ stale: true }))).toMatch(/reload/);
-    expect(downloadBlocker(await loadedState({ selectedCount: 0 }))).toMatch(/Select at least one/);
+    expect(downloadBlocker(await createMockApi('empty').state(), t)).toMatch(/Load a series/);
+    expect(downloadBlocker(await loadedState({ loading: true }), t)).toMatch(/loading/);
+    expect(downloadBlocker(await loadedState({ stale: true }), t)).toMatch(/reload/);
+    expect(downloadBlocker(await loadedState({ selectedCount: 0 }), t)).toMatch(/Select at least one/);
   });
 
   it('asks for volumes when the site lists none', async () => {
     const s = await loadedState();
     const volumes = { ...s.options, packAs: 'volumes' as const };
-    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '', listed: 0 } })).toMatch(
+    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '', listed: 0 } }, t)).toMatch(
       /enter them as chapter ranges/,
     );
-    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '1-7', site: '', listed: 0 } })).toBe('');
-    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '1-7', listed: 1 } })).toBe('');
+    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '1-7', site: '', listed: 0 } }, t)).toBe('');
+    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '1-7', listed: 1 } }, t)).toBe('');
     // a site whose volumes don't write as ranges still packs them, as auto
-    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '', listed: 2 } })).toBe('');
-    expect(downloadBlocker({ ...s, volumes: { text: '', site: '', listed: 0 } })).toBe('');
+    expect(downloadBlocker({ ...s, options: volumes, volumes: { text: '', site: '', listed: 2 } }, t)).toBe('');
+    expect(downloadBlocker({ ...s, volumes: { text: '', site: '', listed: 0 } }, t)).toBe('');
   });
 });
 
 describe('downloadLabel', () => {
+  it('translates the label and the refusals', async () => {
+    const s = await loadedState({ selectedCount: 5 });
+    expect(downloadLabel(s, [], [], createT('es'))).toBe('Descargar 5 capítulos');
+    expect(downloadLabel(s, [], [], createT('ca'))).toBe('Descarrega 5 capítols');
+    expect(downloadBlocker({ ...s, selectedCount: 0 }, createT('ca'))).toBe('Selecciona almenys un capítol.');
+  });
+
   it('names the count, and the bundle when there is one', async () => {
     const s = await loadedState();
-    expect(downloadLabel({ ...s, selectedCount: 0 }, [], [])).toBe('Download');
-    expect(downloadLabel({ ...s, selectedCount: 1 }, [], [])).toBe('Download 1 chapter');
-    expect(downloadLabel({ ...s, selectedCount: 5 }, [], [])).toBe('Download 5 chapters');
-    expect(downloadLabel({ ...s, selectedCount: 5, options: { ...s.options, packAs: 'bundle' } }, [], [])).toBe(
+    expect(downloadLabel({ ...s, selectedCount: 0 }, [], [], t)).toBe('Download');
+    expect(downloadLabel({ ...s, selectedCount: 1 }, [], [], t)).toBe('Download 1 chapter');
+    expect(downloadLabel({ ...s, selectedCount: 5 }, [], [], t)).toBe('Download 5 chapters');
+    expect(downloadLabel({ ...s, selectedCount: 5, options: { ...s.options, packAs: 'bundle' } }, [], [], t)).toBe(
       'Download 5 chapters as one file',
     );
   });
@@ -169,19 +178,19 @@ describe('downloadLabel', () => {
     it('names the volumes and their chapters', async () => {
       const s = await loadedState();
       const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '1-7/8-16', site: '', listed: 0 } };
-      expect(downloadLabel({ ...volumes, selectedCount: 16 }, list, from(1, 16))).toBe(
+      expect(downloadLabel({ ...volumes, selectedCount: 16 }, list, from(1, 16), t)).toBe(
         'Download 2 volumes (16 chapters)',
       );
-      expect(downloadLabel({ ...volumes, selectedCount: 7 }, list, from(1, 7))).toBe('Download 1 volume (7 chapters)');
+      expect(downloadLabel({ ...volumes, selectedCount: 7 }, list, from(1, 7), t)).toBe('Download 1 volume (7 chapters)');
     });
 
     it('names the loose chapters beside the volumes', async () => {
       const s = await loadedState();
       const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '1-7/8-16', site: '', listed: 0 } };
-      expect(downloadLabel({ ...volumes, selectedCount: 19 }, list, [...from(1, 16), ...from(17, 19)])).toBe(
+      expect(downloadLabel({ ...volumes, selectedCount: 19 }, list, [...from(1, 16), ...from(17, 19)], t)).toBe(
         'Download 2 volumes and 3 chapters',
       );
-      expect(downloadLabel({ ...volumes, selectedCount: 8 }, list, [...from(1, 7), 16])).toBe(
+      expect(downloadLabel({ ...volumes, selectedCount: 8 }, list, [...from(1, 7), 16], t)).toBe(
         'Download 1 volume and 1 chapter',
       );
     });
@@ -190,8 +199,8 @@ describe('downloadLabel', () => {
       const s = await loadedState();
       const sited = list.map((ch, i) => ({ ...ch, volume: i < 7 ? 1 : i < 16 ? 2 : 0 }));
       const site = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '', site: '', listed: 0 } };
-      expect(downloadLabel({ ...site, selectedCount: 16 }, sited, from(1, 16))).toBe('Download 2 volumes (16 chapters)');
-      expect(downloadLabel({ ...site, selectedCount: 17 }, sited, [...from(1, 16), 17])).toBe(
+      expect(downloadLabel({ ...site, selectedCount: 16 }, sited, from(1, 16), t)).toBe('Download 2 volumes (16 chapters)');
+      expect(downloadLabel({ ...site, selectedCount: 17 }, sited, [...from(1, 16), 17], t)).toBe(
         'Download 2 volumes and 1 chapter',
       );
     });
@@ -199,13 +208,13 @@ describe('downloadLabel', () => {
     it('falls back to the chapter count when no selected chapter is in a volume', async () => {
       const s = await loadedState();
       const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: '1-7/8-16', site: '', listed: 0 } };
-      expect(downloadLabel({ ...volumes, selectedCount: 3 }, list, from(17, 19))).toBe('Download 3 chapters');
+      expect(downloadLabel({ ...volumes, selectedCount: 3 }, list, from(17, 19), t)).toBe('Download 3 chapters');
     });
 
     it('falls back to the chapter count when the Volumes box does not parse', async () => {
       const s = await loadedState();
       const volumes = { ...s, options: { ...s.options, packAs: 'volumes' as const }, volumes: { text: 'nope', site: '', listed: 0 } };
-      expect(downloadLabel({ ...volumes, selectedCount: 16 }, list, from(1, 16))).toBe('Download 16 chapters');
+      expect(downloadLabel({ ...volumes, selectedCount: 16 }, list, from(1, 16), t)).toBe('Download 16 chapters');
     });
   });
 });
@@ -225,34 +234,24 @@ describe('downloadLabel, merging parts', () => {
   it('counts the chapters the parts make, and says when some merge', async () => {
     const s = await loadedState();
     const parts = { ...s, options: { ...s.options, packAs: 'parts' as const } };
-    expect(downloadLabel({ ...parts, selectedCount: 5 }, list, [0, 1, 2, 3, 4])).toBe(
+    expect(downloadLabel({ ...parts, selectedCount: 5 }, list, [0, 1, 2, 3, 4], t)).toBe(
       'Download 3 chapters, parts merged',
     );
-    expect(downloadLabel({ ...parts, selectedCount: 3 }, list, [0, 1, 3])).toBe('Download 3 chapters');
-    expect(downloadLabel({ ...parts, selectedCount: 2 }, list, [1, 2])).toBe('Download 1 chapter, parts merged');
+    expect(downloadLabel({ ...parts, selectedCount: 3 }, list, [0, 1, 3], t)).toBe('Download 3 chapters');
+    expect(downloadLabel({ ...parts, selectedCount: 2 }, list, [1, 2], t)).toBe('Download 1 chapter, parts merged');
   });
 });
 
 describe('summaryTone', () => {
   it('maps outcomes to colours', () => {
     expect(summaryTone({ ...summary, saved: 3 })).toBe('success');
-    expect(summaryTone({ ...summary, saved: 3, failures: ['a'] })).toBe('warning');
-    expect(summaryTone({ ...summary, failures: ['a'] })).toBe('danger');
+    expect(summaryTone({ ...summary, saved: 3, failures: [{ label: '', reason: 'a' }] })).toBe('warning');
+    expect(summaryTone({ ...summary, failures: [{ label: '', reason: 'a' }] })).toBe('danger');
     expect(summaryTone({ ...summary, bundled: true, error: 'disk full' })).toBe('danger');
     expect(summaryTone({ ...summary, cancelled: true, saved: 2 })).toBe('neutral');
     expect(summaryTone(summary)).toBe('neutral');
     expect(summaryTone({ ...summary, bundled: true, bundle: 'a.cbz', saved: 3 })).toBe('success');
-    expect(summaryTone({ ...summary, volumes: 1, failures: ['a'] })).toBe('warning');
-  });
-});
-
-describe('splitFailure', () => {
-  it('splits at the first colon', () => {
-    expect(splitFailure('Chapter 4: download: page 5 returned 404')).toEqual({
-      what: 'Chapter 4',
-      why: 'download: page 5 returned 404',
-    });
-    expect(splitFailure('no colon here')).toEqual({ what: '', why: 'no colon here' });
+    expect(summaryTone({ ...summary, volumes: 1, failures: [{ label: '', reason: 'a' }] })).toBe('warning');
   });
 });
 

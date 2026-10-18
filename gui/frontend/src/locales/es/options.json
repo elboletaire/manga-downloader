@@ -1,0 +1,68 @@
+{
+  "locked": {
+    "running": "Las opciones están bloqueadas mientras hay una descarga en curso.",
+    "loading": "Las opciones están bloqueadas mientras se carga la serie."
+  },
+  "save": {
+    "title": "Guardar",
+    "folder": "Carpeta",
+    "notSet": "Sin definir",
+    "browse": "Examinar…"
+  },
+  "format": {
+    "label": "Formato",
+    "cbz": "CBZ",
+    "cbr": "CBR",
+    "raw": "Carpeta",
+    "epub": "EPUB"
+  },
+  "readingDirection": {
+    "label": "Sentido de lectura",
+    "rtl": "Derecha a izquierda",
+    "ltr": "Izquierda a derecha",
+    "hint": "Hacia dónde pasan las páginas: el manga se lee de derecha a izquierda, los cómics occidentales de izquierda a derecha."
+  },
+  "packAs": {
+    "label": "Empaquetar como",
+    "chapters": "Capítulos",
+    "parts": "Unidos",
+    "volumes": "Volúmenes",
+    "bundle": "Paquete"
+  },
+  "packHint": {
+    "chapters": "Un archivo por capítulo.",
+    "parts": "Un archivo por capítulo, con sus partes unidas en él. Los capítulos sin partes tienen un archivo cada uno, como de costumbre.",
+    "volumes": "Un archivo por volumen, definido encima de la lista de capítulos. Los capítulos que no están en ningún volumen tienen un archivo cada uno.",
+    "volumesNotLoaded": "Un archivo por volumen, definido encima de la lista de capítulos (cuando se cargue). Los capítulos que no están en ningún volumen tienen un archivo cada uno.",
+    "bundle": "Los capítulos seleccionados en un paquete."
+  },
+  "pages": {
+    "title": "Páginas",
+    "convert": "Convertir a JPEG",
+    "avif": "AVIF",
+    "webp": "WebP",
+    "convertHint": "La mayoría de lectores electrónicos no abren AVIF; WebP no es fiable en tinta electrónica.",
+    "avifEpub": "Siempre activado para EPUB: los lectores no muestran AVIF."
+  },
+  "skipPages": {
+    "label": "Omitir páginas",
+    "placeholder": "p. ej. {{example}}",
+    "hint": "Posiciones que se omiten en cada capítulo: {{first}} es la segunda página, {{last}} la última."
+  },
+  "advanced": {
+    "title": "Avanzado"
+  },
+  "template": {
+    "label": "Plantilla del nombre de archivo",
+    "hint": "Usa <code>{{series}}</code>, <code>{{number}}</code>, <code>{{title}}</code>, <code>{{siteTitle}}</code>, <code>{{group}}</code>, <code>{{volume}}</code> y <code>{{version}}</code>; <code>{{padded}}</code> rellena un número con ceros. Si no la cambias, los volúmenes se llaman <code>{{volumeName}}</code>, o <code>{{volumeGroupName}}</code> cuando sus capítulos comparten grupo.",
+    "reset": "Usar la plantilla por defecto"
+  },
+  "browser": {
+    "label": "Mostrar la ventana del navegador",
+    "hint": "Rara vez hace falta: la ventana se abre sola cuando un sitio la pide.",
+    "auto": "Hace falta para este sitio: la ventana se abre sola."
+  },
+  "folder": {
+    "dialogTitle": "Elige la carpeta de salida"
+  }
+}

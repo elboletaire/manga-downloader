@@ -141,6 +141,35 @@ func TestCheckUpdateStopsWithItsContext(t *testing.T) {
 	}
 }
 
+func TestShouldCheckUpdates(t *testing.T) {
+	on, off := PrefsDTO{CheckUpdates: true}, PrefsDTO{}
+	cases := []struct {
+		tag   string
+		prefs PrefsDTO
+		want  bool
+	}{
+		{"", on, false},
+		{"", off, false},
+		{"v1.12.0", off, false},
+		{"v1.12.0", on, true},
+	}
+	for _, c := range cases {
+		if got := shouldCheckUpdates(c.tag, c.prefs); got != c.want {
+			t.Errorf("shouldCheckUpdates(%q, %+v) = %v, want %v", c.tag, c.prefs, got, c.want)
+		}
+	}
+}
+
+func TestUpdateCheckStartsOncePerSession(t *testing.T) {
+	c := NewController(&grabber.Settings{}, nil)
+	if !c.claimUpdateCheck() {
+		t.Fatal("the first check was refused")
+	}
+	if c.claimUpdateCheck() {
+		t.Error("a second check in the same session was allowed")
+	}
+}
+
 func TestReleaseURL(t *testing.T) {
 	if got := releaseURL(""); got != "" {
 		t.Errorf("releaseURL(\"\") = %q, want none for a dev build", got)

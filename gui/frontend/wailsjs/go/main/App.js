@@ -10,8 +10,8 @@ export function Chapters() {
   return window['go']['main']['App']['Chapters']();
 }
 
-export function ChooseFolder() {
-  return window['go']['main']['App']['ChooseFolder']();
+export function ChooseFolder(arg1) {
+  return window['go']['main']['App']['ChooseFolder'](arg1);
 }
 
 export function Clear() {
@@ -50,6 +50,10 @@ export function SetAll(arg1) {
   return window['go']['main']['App']['SetAll'](arg1);
 }
 
+export function SetCheckUpdates(arg1) {
+  return window['go']['main']['App']['SetCheckUpdates'](arg1);
+}
+
 export function SetOptions(arg1) {
   return window['go']['main']['App']['SetOptions'](arg1);
 }
@@ -64,6 +68,10 @@ export function SetSelected(arg1, arg2) {
 
 export function SetSelectedMany(arg1, arg2) {
   return window['go']['main']['App']['SetSelectedMany'](arg1, arg2);
+}
+
+export function SetUILanguage(arg1) {
+  return window['go']['main']['App']['SetUILanguage'](arg1);
 }
 
 export function SetVolumes(arg1) {

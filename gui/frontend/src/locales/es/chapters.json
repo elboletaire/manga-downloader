@@ -1,0 +1,54 @@
+{
+  "section": "Capítulos",
+  "empty": {
+    "title": "Empieza con una serie",
+    "paste": "Pega el enlace de una serie en la barra de arriba (o usa su botón Pegar). También sirve un enlace a cualquiera de sus capítulos.",
+    "listed": "Sus capítulos aparecerán aquí, listos para elegirlos y guardarlos para tu lector."
+  },
+  "loading": {
+    "asking": "Pidiendo a {{host}} la lista de capítulos…",
+    "fetching": "Obteniendo la lista de capítulos…"
+  },
+  "failed": {
+    "title": "No se pudo cargar esta serie",
+    "hint": "Comprueba que el enlace abre la serie en un navegador. Los sitios protegidos por una comprobación de Cloudflare pueden necesitar <em>Mostrar la ventana del navegador</em>, en Opciones › Avanzado.",
+    "retry": "Volver a intentarlo"
+  },
+  "reloading": "Recargando…",
+  "splitParts_one": "{{count}} dividido en partes",
+  "splitParts_other": "{{count}} divididos en partes",
+  "selected": "<strong>{{selected}}</strong> de {{total}} seleccionados",
+  "selectAll": "Seleccionar todo",
+  "selectNone": "Deseleccionar todo",
+  "addRange": "Añadir rango a la selección",
+  "rangeLabel": "Rango de capítulos que añadir a la selección",
+  "rangeNone": "Ningún capítulo coincide con ese rango.",
+  "rangeAdded_one": "Añadido {{count}} capítulo.",
+  "rangeAdded_other": "Añadidos {{count}} capítulos.",
+  "listLabel": "Capítulos de {{title}}",
+  "noneSelected": "ninguno seleccionado",
+  "group": {
+    "selected_one": "{{count}} seleccionado",
+    "selected_other": "{{count}} seleccionados",
+    "aria": "{{label}} · {{detail}}, {{selected}} de {{total}} seleccionados",
+    "ariaFolded": "{{label}} · {{detail}}, {{selected}} de {{total}} seleccionados, contraído",
+    "fold": "Contraer {{label}}",
+    "unfold": "Expandir {{label}}"
+  },
+  "parts": {
+    "whole": "capítulo entero",
+    "partial": "{{selected}} de {{total}} partes",
+    "none": "Ningún capítulo de esta serie está dividido en partes, así que cada uno tiene su archivo, como de costumbre.",
+    "partialHint": "Solo las partes seleccionadas van en su archivo"
+  },
+  "locked": "Bloqueado, así que no se puede seleccionar",
+  "duplicates": {
+    "language": "Algunos números aparecen una vez por idioma; la etiqueta de idioma los distingue.",
+    "group": "Algunos números aparecen una vez por grupo; la etiqueta de grupo los distingue."
+  },
+  "hint": {
+    "volume": "Haz clic en un volumen para elegir todos sus capítulos · <kbd>←</kbd><kbd>→</kbd> contraer · <kbd>Espacio</kbd> alterna",
+    "part": "Haz clic en un capítulo para elegir todas sus partes · <kbd>←</kbd><kbd>→</kbd> contraer · <kbd>Espacio</kbd> alterna",
+    "plain": "<kbd>Mayús</kbd>+clic selecciona un tramo · <kbd>↑</kbd><kbd>↓</kbd> mover · <kbd>Espacio</kbd> alterna"
+  }
+}

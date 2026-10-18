@@ -2,6 +2,8 @@
 // comma-separated string (see grabber.ParseConvertFormats in Go). These map
 // between the two, so a saved value of any of the four valid strings loads.
 
+import type { T } from './i18n';
+
 export interface ConvertFlags {
   avif: boolean;
   webp: boolean;
@@ -33,7 +35,9 @@ export function convertValueOf(flags: ConvertFlags): string {
 }
 
 /** Shown under the AVIF box while the format is EPUB, which always converts it */
-export const AVIF_EPUB_HINT = "Always on for EPUB: readers can't show AVIF.";
+export function avifEpubHint(t: T): string {
+  return t('options.pages.avifEpub');
+}
 
 export interface AvifSwitch {
   checked: boolean;

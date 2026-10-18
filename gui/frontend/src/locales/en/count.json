@@ -1,0 +1,18 @@
+{
+  "chapter_one": "{{count}} chapter",
+  "chapter_other": "{{count}} chapters",
+  "volume_one": "{{count}} volume",
+  "volume_other": "{{count}} volumes",
+  "volumeFile_one": "{{count}} volume file",
+  "volumeFile_other": "{{count}} volume files",
+  "failed_one": "{{count}} failed",
+  "failed_other": "{{count}} failed",
+  "skipped_one": "{{count}} skipped",
+  "skipped_other": "{{count}} skipped",
+  "saved_one": "{{count}} saved",
+  "saved_other": "{{count}} saved",
+  "error_one": "{{count}} error",
+  "error_other": "{{count}} errors",
+  "warning_one": "{{count}} warning",
+  "warning_other": "{{count}} warnings"
+}

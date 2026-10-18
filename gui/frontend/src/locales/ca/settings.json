@@ -1,0 +1,21 @@
+{
+  "title": "Configuració",
+  "open": "Configuració",
+  "close": "Tanca",
+  "language": {
+    "heading": "Idioma",
+    "systemOption": "Sistema ({{language}})"
+  },
+  "updates": {
+    "heading": "Actualitzacions",
+    "check": "Cerca actualitzacions en obrir l'app",
+    "hint": "Demana a GitHub l'última versió cada cop que s'obre l'app.",
+    "devHint": "Les versions de desenvolupament no cerquen actualitzacions."
+  },
+  "about": {
+    "version": "Manga Downloader {{version}}",
+    "website": "Lloc web",
+    "issues": "Informa d'un problema",
+    "madeBy": "Fet amb amor per <author>{{author}}</author> · © {{years}} · <license>{{license}}</license>"
+  }
+}

@@ -198,7 +198,7 @@ func TestDownloadVolumesWithFailingChapter(t *testing.T) {
 		t.Errorf("jobs = %+v, want volume 1 done and volume 2 failed", jobs)
 	}
 	if len(s.Failures) != 4 {
-		t.Errorf("failures = %q, want the 3 chapters and the empty volume", s.Failures)
+		t.Errorf("failures = %+v, want the 3 chapters and the empty volume", s.Failures)
 	}
 	if files := written(t, dir); !reflect.DeepEqual(files, []string{"Test Series 2 - Vol. 01.cbz"}) {
 		t.Errorf("wrote %q", files)
@@ -333,12 +333,12 @@ func TestVolumeTitleParts(t *testing.T) {
 		&grabber.Chapter{Number: 2, Title: "Chapter 2 Part 1"},
 		&grabber.Chapter{Number: 2, Title: "Chapter 2 Part 2"},
 	}}
-	if got := c.volumeTitle(v); got != "Vol. 02 · chapter 2" {
+	if got := c.volumeTitle(v).Text; got != "Vol. 02 · chapter 2" {
 		t.Errorf("volume title = %q", got)
 	}
 	c.runinfo.Parts = true
 	v.Parts = true
-	if got := c.volumeTitle(v); got != "Chapter 2 · 2 parts" {
+	if got := c.volumeTitle(v).Text; got != "Chapter 2 · 2 parts" {
 		t.Errorf("parts title = %q", got)
 	}
 	if got := v.Label(); got != "Chapter 2" {

@@ -2,9 +2,15 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { createMockApi, templateWarning } from './mock';
-import { AVIF_EPUB_HINT } from './convertImages';
-import { OptionsPanel, PACK_HINTS, VOLUMES_HINT_NOT_LOADED } from './OptionsPanel';
+import { avifEpubHint } from './convertImages';
+import { createT } from './i18n';
+import { I18nProvider } from './i18n/react';
+import { OptionsPanel, packHints } from './OptionsPanel';
 import type { State } from './types';
+
+const en = createT('en');
+const PACK_HINTS = packHints(en);
+const VOLUMES_HINT_NOT_LOADED = en('options.packHint.volumesNotLoaded');
 
 function options(state: State): string {
   return renderToStaticMarkup(
@@ -84,7 +90,7 @@ describe('AVIF under Convert to JPEG', () => {
     const markup = options(state);
     expect(avifInput(markup)).toMatch(/checked=""/);
     expect(avifInput(markup)).toMatch(/disabled=""/);
-    expect(markup).toContain(AVIF_EPUB_HINT.replace("'", '&#x27;'));
+    expect(markup).toContain(avifEpubHint(en).replace("'", '&#x27;'));
   });
 
   it('follows the saved value for the other formats', async () => {
@@ -93,7 +99,7 @@ describe('AVIF under Convert to JPEG', () => {
     const markup = options(state);
     expect(avifInput(markup)).not.toMatch(/checked=""/);
     expect(avifInput(markup)).not.toMatch(/disabled=""/);
-    expect(markup).not.toContain(AVIF_EPUB_HINT.replace("'", '&#x27;'));
+    expect(markup).not.toContain(avifEpubHint(en).replace("'", '&#x27;'));
   });
 });
 
@@ -151,5 +157,40 @@ describe('templateWarning (mock)', () => {
       expect(templateWarning(ok), ok).toBe('');
     }
     expect(templateWarning('{{.Series}}')).not.toBe('');
+  });
+});
+
+describe('translation', () => {
+  // the panel inside a provider, as App renders it
+  function optionsIn(lang: 'es' | 'ca', state: State): string {
+    return renderToStaticMarkup(
+      createElement(
+        I18nProvider,
+        { pref: lang, persist: () => Promise.resolve() },
+        createElement(OptionsPanel, {
+          state,
+          onOptions: () => Promise.resolve(),
+          onChooseFolder: () => Promise.resolve(),
+          onError: () => undefined,
+        }),
+      ),
+    );
+  }
+
+  it('renders the labels, hints and template tokens in Spanish', async () => {
+    const base = await createMockApi({ scenario: 'loaded', freeze: true }).state();
+    const state: State = { ...base, options: { ...base.options, packAs: 'volumes', filenameTemplate: '{{.Series}}' } };
+    const markup = optionsIn('es', state);
+    expect(markup).toContain('Empaquetar como');
+    expect(markup).toContain('Un archivo por volumen');
+    expect(markup).toContain('<code>{{.Series}}</code>');
+    expect(markup).toContain('aria-label="Usar la plantilla por defecto"');
+  });
+
+  it('renders the labels and hints in Catalan', async () => {
+    const base = await createMockApi({ scenario: 'loaded', freeze: true }).state();
+    const markup = optionsIn('ca', { ...base, running: true });
+    expect(markup).toContain('Les opcions estan bloquejades mentre hi ha una descàrrega.');
+    expect(markup).toContain('Converteix a JPEG');
   });
 });

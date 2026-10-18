@@ -1,0 +1,12 @@
+{
+  "starting": "Iniciant…",
+  "readFailed": "No s'ha pogut llegir l'estat de la finestra: {{error}}",
+  "tabs": {
+    "label": "Panell lateral",
+    "options": "Opcions",
+    "activity": "Activitat"
+  },
+  "download": "Descàrrega",
+  "running": "en curs",
+  "finished": "acabat"
+}

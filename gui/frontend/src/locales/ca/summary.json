@@ -1,0 +1,28 @@
+{
+  "merged_one": "{{count}} capítol amb les parts unides",
+  "merged_other": "{{count}} capítols amb les parts unides",
+  "headline": {
+    "cancelledNoBundle": "Cancel·lat, no s'ha escrit cap paquet",
+    "cancelled": "Cancel·lat, {{saved}}",
+    "bundleFailed": "No s'ha pogut escriure el paquet",
+    "bundleSaved": "S'ha desat {{bundle}}",
+    "inVolumes": "{{saved}} en {{volumes}}",
+    "mergedFromParts": "{{saved}}, {{merged}}",
+    "nothingSaved": "No s'ha desat res"
+  },
+  "sentence": {
+    "cancelledNoBundle": "Cancel·lat. No s'ha escrit cap paquet.",
+    "cancelledBeforeSaving": "Cancel·lat abans de desar res.",
+    "savedBefore_one": "Cancel·lat. {{count}} capítol desat abans d'aturar-se, a {{dir}}.",
+    "savedBefore_other": "Cancel·lat. {{count}} capítols desats abans d'aturar-se, a {{dir}}.",
+    "bundleFailed": "No s'ha pogut escriure el paquet.",
+    "bundleSaved": "S'ha desat {{bundle}} a {{dir}} ({{chapters}}).",
+    "mergedFromParts_one": "S'ha desat {{count}} capítol a {{dir}}; {{merged}}.",
+    "mergedFromParts_other": "S'han desat {{count}} capítols a {{dir}}; {{merged}}.",
+    "volumeFiles_one": "S'ha desat {{count}} capítol a {{dir}}, amb {{files}}.",
+    "volumeFiles_other": "S'han desat {{count}} capítols a {{dir}}, amb {{files}}.",
+    "saved_one": "S'ha desat {{count}} capítol a {{dir}}.",
+    "saved_other": "S'han desat {{count}} capítols a {{dir}}.",
+    "nothingSaved": "No s'ha desat res."
+  }
+}

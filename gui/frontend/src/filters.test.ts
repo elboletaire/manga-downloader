@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { sameScanlator, typedValue, filterControl, filtersIdentified, filterOptions, languageName, shownSelection } from './filters';
+import { createT } from './i18n';
+import { sameScanlator, typedValue, filterControl, filtersIdentified, filterOptions, languageName, shownSelection, sortedValues } from './filters';
 import type { FilterChoice } from './types';
+import shared from '../../../grabber/testdata/filteroptions.json';
+
+const t = createT('en');
 
 const choice = (over: Partial<FilterChoice>): FilterChoice => ({
   values: [],
@@ -32,72 +36,109 @@ describe('languageName', () => {
   it('falls back to the code for an invalid tag', () => {
     expect(languageName('not a tag!', 'en')).toBe('not a tag!');
   });
+
+  it('names a language in the UI language, with a capital first letter', () => {
+    expect(languageName('en', 'es')).toBe('Inglés');
+    expect(languageName('en', 'ca')).toBe('Anglès');
+    expect(languageName('es-la', 'es')).toBe('Español latinoamericano');
+  });
 });
 
 describe('filterOptions', () => {
   it('puts All first, labelled for the kind', () => {
-    const langs = filterOptions(choice({ values: ['en'], all: true, selected: 'all' }), 'language');
+    const langs = filterOptions(choice({ values: ['en'], all: true, selected: 'all' }), 'language', t);
     expect(langs[0]).toEqual({ value: 'all', label: 'All' });
 
-    const groups = filterOptions(choice({ values: ['Alpha'], all: true, selected: 'all' }), 'scanlator');
-    expect(groups[0]).toEqual({ value: 'all', label: 'All groups' });
+    const groups = filterOptions(choice({ values: ['Alpha'], all: true, selected: 'all' }), 'scanlator', t);
+    expect(groups[0]).toEqual({ value: 'all', label: 'All' });
   });
 
-  it('keeps the backend order and slots in an unlisted selection alphabetically', () => {
-    const options = filterOptions(choice({ values: ['Dawn', 'Écarlate', 'Fable', 'Zed'], selected: 'Ecru' }), 'scanlator');
+  it('sorts the values in the backend order, and slots in an unlisted selection alphabetically', () => {
+    const options = filterOptions(choice({ values: ['Dawn', 'Écarlate', 'Fable', 'Zed'], selected: 'Ecru' }), 'scanlator', t);
     expect(options.map((o) => o.value)).toEqual(['Dawn', 'Écarlate', 'Ecru', 'Fable', 'Zed']);
 
-    const accented = filterOptions(choice({ values: ['Dawn', 'Fable', 'Zed'], selected: 'Écarlate' }), 'scanlator');
+    const accented = filterOptions(choice({ values: ['Dawn', 'Fable', 'Zed'], selected: 'Écarlate' }), 'scanlator', t);
     expect(accented.map((o) => o.value)).toEqual(['Dawn', 'Écarlate', 'Fable', 'Zed']);
   });
 
+  it('sorts digit runs as numbers', () => {
+    const options = filterOptions(choice({ values: ['Group 10', 'Group 2'], selected: 'Group 2' }), 'scanlator', t);
+    expect(options.map((o) => o.value)).toEqual(['Group 2', 'Group 10']);
+  });
+
   it('has no All option where the site has none', () => {
-    const options = filterOptions(choice({ values: ['en', 'es'], selected: 'en' }), 'language');
+    const options = filterOptions(choice({ values: ['en', 'es'], selected: 'en' }), 'language', t);
     expect(options.map((o) => o.value)).toEqual(['en', 'es']);
   });
 
   it('labels languages with the code and their name, groups by name', () => {
-    const langs = filterOptions(choice({ values: ['es-la'], selected: 'es-la' }), 'language');
+    const langs = filterOptions(choice({ values: ['es-la'], selected: 'es-la' }), 'language', t);
     expect(langs[0].label).toBe('es-la · Latin American Spanish');
 
-    const groups = filterOptions(choice({ values: ['Alpha'], selected: 'Alpha' }), 'scanlator');
+    const groups = filterOptions(choice({ values: ['Alpha'], selected: 'Alpha' }), 'scanlator', t);
     expect(groups[0].label).toBe('Alpha');
   });
 
   it('keeps the selected value even when the site does not list it', () => {
-    const options = filterOptions(choice({ values: ['en'], selected: 'fr' }), 'language');
+    const options = filterOptions(choice({ values: ['en'], selected: 'fr' }), 'language', t);
     expect(options.map((o) => o.value)).toEqual(['en', 'fr']);
   });
 
   it('does not offer the typed value of a failed load', () => {
     const failed = choice({ values: ['en'], selected: 'ca' });
     expect(shownSelection(failed, false)).toBe('');
-    const options = filterOptions(failed, 'language', 'en', false);
+    const options = filterOptions(failed, 'language', t, 'en', false);
     expect(options.map((o) => o.value)).toEqual(['', 'en']);
     expect(options[0].disabled).toBe(true);
     expect(shownSelection(choice({ values: ['en'], selected: 'en' }), false)).toBe('en');
   });
 
   it('does not repeat a listed selected value', () => {
-    const options = filterOptions(choice({ values: ['en', 'es'], selected: 'es' }), 'language');
+    const options = filterOptions(choice({ values: ['en', 'es'], selected: 'es' }), 'language', t);
     expect(options.map((o) => o.value)).toEqual(['en', 'es']);
   });
 
   it('leads with a disabled placeholder when the site shows no single value', () => {
-    const groups = filterOptions(choice({ values: ['Alpha', 'Delta'], selected: '' }), 'scanlator');
+    const groups = filterOptions(choice({ values: ['Alpha', 'Delta'], selected: '' }), 'scanlator', t);
     expect(groups[0]).toEqual({ value: '', label: 'Choose a group…', disabled: true });
     expect(groups.slice(1).map((o) => o.value)).toEqual(['Alpha', 'Delta']);
 
-    const languages = filterOptions(choice({ values: ['en', 'es'], selected: '' }), 'language');
+    const languages = filterOptions(choice({ values: ['en', 'es'], selected: '' }), 'language', t);
     expect(languages[0]).toEqual({ value: '', label: 'Choose a language…', disabled: true });
   });
 
   it('shows no placeholder when a value or all is selected', () => {
-    const picked = filterOptions(choice({ values: ['en', 'es'], selected: 'es' }), 'language');
+    const picked = filterOptions(choice({ values: ['en', 'es'], selected: 'es' }), 'language', t);
     expect(picked.some((o) => o.value === '' || o.disabled)).toBe(false);
 
-    const all = filterOptions(choice({ values: ['en', 'es'], all: true, selected: 'all' }), 'language');
+    const all = filterOptions(choice({ values: ['en', 'es'], all: true, selected: 'all' }), 'language', t);
     expect(all.some((o) => o.value === '' || o.disabled)).toBe(false);
+  });
+
+  it('labels the options in the UI language', () => {
+    const es = createT('es');
+    const languages = filterOptions(choice({ values: ['en'], all: true, selected: 'all' }), 'language', es, 'es');
+    expect(languages.map((o) => o.label)).toEqual(['Todos', 'en · Inglés']);
+
+    const groups = filterOptions(choice({ values: ['Alpha'], all: true, selected: '' }), 'scanlator', createT('ca'), 'ca');
+    expect(groups.map((o) => o.label)).toEqual(['Tria un grup…', 'Tots', 'Alpha']);
+  });
+});
+
+describe('sortedValues', () => {
+  // the same cases grabber's TestSortedValuesFixture reads
+  it.each(shared.cases)('$name', ({ values, sorted }) => {
+    expect(sortedValues(values)).toEqual(sorted);
+  });
+});
+
+describe('filterOptions order', () => {
+  it.each(['en', 'es', 'ca'] as const)('is the backend order under %s', (lang) => {
+    const tl = createT(lang);
+    for (const { values, sorted } of shared.cases) {
+      const options = filterOptions(choice({ values, selected: values[0] }), 'scanlator', tl, lang);
+      expect(options.map((o) => o.value)).toEqual(sorted);
+    }
   });
 });
 

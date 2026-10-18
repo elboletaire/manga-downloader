@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { errorMessage } from './format';
+import { errorText } from './format';
 import type { Api } from './api';
 import type { Chapter, LogLine, State } from './types';
 
@@ -12,15 +12,25 @@ export interface WindowData {
 }
 
 /**
- * Keeps the window's data current. It subscribes before asking for snapshots,
- * so nothing is missed, and a snapshot never overwrites a pushed value that
- * arrived first: whichever is newer wins.
+ * Keeps the window's data current: it subscribes before asking for snapshots,
+ * and a snapshot never overwrites a pushed value that arrived first. `initial`
+ * is a State the caller already read.
  */
-export function useWindow(api: Api): WindowData & { failure: string } {
-  const [data, setData] = useState<WindowData>({ state: null, chapters: [], selected: [], log: [] });
-  const [failure, setFailure] = useState('');
+export function useWindow(api: Api, initial?: State): WindowData & { failure: string | null } {
+  const [data, setData] = useState<WindowData>({ state: initial ?? null, chapters: [], selected: [], log: [] });
+  // the error's text; the window words it in the language shown when it renders
+  const [failure, setFailure] = useState<string | null>(null);
   // which fields a push has already filled, so a late snapshot doesn't clobber them
   const pushed = useRef({ state: false, chapters: false, selected: false, log: false });
+
+  // a newer State from the caller: it saw pushes that came before this window subscribed,
+  // and stops mattering once the window's own subscription has delivered one
+  useEffect(() => {
+    if (initial === undefined || pushed.current.state) {
+      return;
+    }
+    setData((d) => (d.state === initial ? d : { ...d, state: initial }));
+  }, [initial]);
 
   useEffect(() => {
     let alive = true;
@@ -45,7 +55,7 @@ export function useWindow(api: Api): WindowData & { failure: string } {
       }),
     ];
 
-    Promise.all([api.state(), api.chapters(), api.selection(), api.log()])
+    Promise.all([initial ?? api.state(), api.chapters(), api.selection(), api.log()])
       .then(([state, chapters, selected, log]) => {
         if (!alive) {
           return;
@@ -60,7 +70,7 @@ export function useWindow(api: Api): WindowData & { failure: string } {
       .catch((e: unknown) => {
         // without a snapshot the window has nothing to show: say so instead of "Loading…"
         if (alive) {
-          setFailure(`Couldn't read the window's state: ${errorMessage(e)}`);
+          setFailure(errorText(e));
         }
       });
 

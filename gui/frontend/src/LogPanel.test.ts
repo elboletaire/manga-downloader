@@ -1,7 +1,8 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { StatusBar } from './LogPanel';
+import { I18nProvider } from './i18n/react';
+import { LogDrawer, StatusBar } from './LogPanel';
 import type { LogLine, Update } from './types';
 
 const RELEASE = 'https://github.com/elboletaire/manga-downloader/releases/tag/v1.12.0';
@@ -79,5 +80,69 @@ describe('StatusBar update prompt', () => {
     const html = bar({ update: { ...update, prompt: true } });
     expect(html).toContain('update-dialog-title');
     expect(html).toContain('v1.18.0');
+  });
+});
+
+describe('StatusBar translations', () => {
+  const render = (lang: 'es' | 'ca', log: LogLine[]) =>
+    renderToStaticMarkup(
+      createElement(
+        I18nProvider,
+        { pref: lang, persist: async () => undefined, systemLanguages: ['en'] },
+        createElement(StatusBar, {
+          log,
+          version: 'v1.12.0',
+          releaseURL: '',
+          update: { latest: 'v1.13.0', url: 'https://example.com/latest', oneClick: false },
+          open: false,
+          onToggle: () => undefined,
+          onOpenURL: () => undefined,
+          onUpdate: () => Promise.resolve(),
+        }),
+      ),
+    );
+
+  it('shows the words and the plural counts in the chosen language', () => {
+    const html = render('es', [
+      { level: 'error', text: 'boom' },
+      { level: 'warn', text: 'careful' },
+      { level: 'warn', text: 'again' },
+    ]);
+    expect(html).toContain('Registro');
+    expect(html).toContain('aria-label="1 error"');
+    expect(html).toContain('aria-label="2 advertencias"');
+    expect(html).toContain('aria-label="Actualización disponible: v1.13.0"');
+    expect(render('es', [])).toContain('>Listo</span>');
+  });
+
+  it('translates the log toggle and the Catalan words', () => {
+    const html = render('ca', []);
+    expect(html).toContain('title="Mostra el registre"');
+    expect(html).toContain('>Preparat</span>');
+  });
+});
+
+describe('LogDrawer messages', () => {
+  const drawer = (log: LogLine[]) =>
+    renderToStaticMarkup(
+      createElement(
+        I18nProvider,
+        { pref: 'es', persist: async () => undefined, systemLanguages: ['en'] },
+        createElement(LogDrawer, { log, onClose: () => undefined }),
+      ),
+    );
+
+  it('shows a message line in the chosen language, and the plain text without one', () => {
+    const html = drawer([
+      {
+        level: 'info',
+        text: 'Loaded Naruto: 2 chapters',
+        msg: { key: 'log.loaded', args: { title: 'Naruto', count: 2 }, text: 'Loaded Naruto: 2 chapters' },
+      },
+      { level: 'warn', text: 'site check: timed out' },
+    ]);
+    expect(html).toContain('Se ha cargado Naruto: 2 capítulos');
+    expect(html).toContain('site check: timed out');
+    expect(html).not.toContain('Loaded Naruto');
   });
 });

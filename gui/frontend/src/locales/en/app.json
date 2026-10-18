@@ -1,0 +1,12 @@
+{
+  "starting": "Starting…",
+  "readFailed": "Couldn't read the window's state: {{error}}",
+  "tabs": {
+    "label": "Side panel",
+    "options": "Options",
+    "activity": "Activity"
+  },
+  "download": "Download",
+  "running": "running",
+  "finished": "finished"
+}

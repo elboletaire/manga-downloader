@@ -1,0 +1,21 @@
+{
+  "title": "Ajustes",
+  "open": "Ajustes",
+  "close": "Cerrar",
+  "language": {
+    "heading": "Idioma",
+    "systemOption": "Sistema ({{language}})"
+  },
+  "updates": {
+    "heading": "Actualizaciones",
+    "check": "Buscar actualizaciones al abrir la app",
+    "hint": "Consulta en GitHub la última versión cada vez que se abre la app.",
+    "devHint": "Las versiones de desarrollo no buscan actualizaciones."
+  },
+  "about": {
+    "version": "Manga Downloader {{version}}",
+    "website": "Sitio web",
+    "issues": "Informar de un problema",
+    "madeBy": "Hecho con amor por <author>{{author}}</author> · © {{years}} · <license>{{license}}</license>"
+  }
+}

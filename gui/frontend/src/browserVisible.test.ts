@@ -2,10 +2,15 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BrowserAlert } from './BrowserAlert';
-import { BROWSER_AUTO_HINT, BROWSER_HINT, browserSwitchOf } from './browserVisible';
+import { browserSwitchOf } from './browserVisible';
+import { createT } from './i18n';
 import { createMockApi } from './mock';
 import { OptionsPanel } from './OptionsPanel';
 import type { State } from './types';
+
+const en = createT('en');
+const BROWSER_HINT = en('options.browser.hint');
+const BROWSER_AUTO_HINT = en('options.browser.auto');
 
 async function loaded(patch: Partial<State> = {}): Promise<State> {
   const base = await createMockApi({ scenario: 'loaded', freeze: true }).state();
@@ -31,18 +36,23 @@ function browserInput(markup: string): string {
 }
 
 describe('browserSwitchOf', () => {
+  it('translates the hints', async () => {
+    expect(browserSwitchOf(await loaded({ browserVisibleAuto: true }), createT('es')).hint).toBe('Hace falta para este sitio: la ventana se abre sola.');
+    expect(browserSwitchOf(await loaded(), createT('ca')).hint).toBe("Gairebé mai cal: la finestra s'obre sola quan un lloc la demana.");
+  });
+
   it('follows the option when the site needs no window', async () => {
     const state = await loaded();
-    expect(browserSwitchOf(state)).toEqual({ checked: false, disabled: false, hint: BROWSER_HINT });
+    expect(browserSwitchOf(state, en)).toEqual({ checked: false, disabled: false, hint: BROWSER_HINT });
     const on = { ...state, options: { ...state.options, browserVisible: true } };
-    expect(browserSwitchOf(on).checked).toBe(true);
-    expect(browserSwitchOf({ ...state, running: true }).disabled).toBe(true);
+    expect(browserSwitchOf(on, en).checked).toBe(true);
+    expect(browserSwitchOf({ ...state, running: true }, en).disabled).toBe(true);
   });
 
   it('shows on and locked, with the hint, when the site needs the window', async () => {
     const state = await loaded({ browserVisibleAuto: true });
     expect(state.options.browserVisible).toBe(false);
-    expect(browserSwitchOf(state)).toEqual({ checked: true, disabled: true, hint: BROWSER_AUTO_HINT });
+    expect(browserSwitchOf(state, en)).toEqual({ checked: true, disabled: true, hint: BROWSER_AUTO_HINT });
   });
 });
 

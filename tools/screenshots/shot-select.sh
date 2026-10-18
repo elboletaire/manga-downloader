@@ -1,16 +1,16 @@
 #!/bin/bash
 # The 03 shot: the Language <select> open on the mock's default site, with
-# Catalan selected. A native popup can't be opened from JS, so this clicks it
+# the window's language selected. A native popup can't be opened from JS, so this clicks it
 # (cliclick); WebKit draws the popup inside the window, so one capture holds
 # both. The pointer moves, but screencapture -l leaves the cursor out.
 #
-# usage: shot-select.sh OUT.png light|dark
+# usage: [SHOT_LANG=en|es|ca] shot-select.sh OUT.png light|dark
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 . "$HERE/lib.sh"
 BIN=${BIN:-$HERE/../../manga-downloader-gui}
 
-SHOT_W=915 SHOT_H=578 SHOT_THEME=$2 SHOT_Q='?mock&scenario=loaded&freeze&shot' "$BIN" >/dev/null 2>&1 &
+SHOT_W=915 SHOT_H=578 SHOT_THEME=$2 SHOT_Q="?mock&scenario=loaded&freeze&shot&lang=${SHOT_LANG:-en}" "$BIN" >/dev/null 2>&1 &
 pid=$!
 sleep 1.5
 focus $pid

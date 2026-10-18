@@ -1,109 +1,128 @@
 // Pure helpers that turn the window's state into the words shown to the user.
 
-import type { Job, Summary } from './types';
-
-export function plural(n: number, one: string, many: string): string {
-  return n === 1 ? `1 ${one}` : `${n} ${many}`;
-}
+import { say, type Lang, type T } from './i18n';
+import { percent } from './i18n/format';
+import type { Job, Message, Summary } from './types';
 
 /** The short outcome shown next to the buttons */
-export function summaryHeadline(s: Summary): string {
+export function summaryHeadline(s: Summary, t: T): string {
   if (s.cancelled && s.bundled) {
-    return 'Cancelled, no bundle written';
+    return t('summary.headline.cancelledNoBundle');
   }
   if (s.cancelled) {
-    return `Cancelled, ${s.saved} saved`;
+    return t('summary.headline.cancelled', { saved: t('count.saved', { count: s.saved }) });
   }
   if (s.error !== '') {
-    return 'The bundle could not be written';
+    return t('summary.headline.bundleFailed');
   }
   if (s.bundled && s.bundle !== '') {
-    return `Saved ${s.bundle}`;
+    return t('summary.headline.bundleSaved', { bundle: s.bundle });
   }
 
   const parts: string[] = [];
   if (s.saved > 0) {
+    const saved = t('count.saved', { count: s.saved });
     if (s.volumes > 0 && s.parts) {
-      parts.push(`${s.saved} saved, ${plural(s.volumes, 'chapter', 'chapters')} merged from parts`);
+      parts.push(t('summary.headline.mergedFromParts', { saved, merged: t('summary.merged', { count: s.volumes }) }));
     } else {
-      parts.push(s.volumes > 0 ? `${s.saved} saved in ${plural(s.volumes, 'volume', 'volumes')}` : `${s.saved} saved`);
+      parts.push(
+        s.volumes > 0
+          ? t('summary.headline.inVolumes', { saved, volumes: t('count.volume', { count: s.volumes }) })
+          : saved,
+      );
     }
   }
   if (s.failures.length > 0) {
-    parts.push(`${s.failures.length} failed`);
+    parts.push(t('count.failed', { count: s.failures.length }));
   }
   if (s.skipped > 0) {
-    parts.push(`${s.skipped} skipped`);
+    parts.push(t('count.skipped', { count: s.skipped }));
   }
 
-  return parts.length === 0 ? 'Nothing was saved' : parts.join(', ');
+  return parts.length === 0 ? t('summary.headline.nothingSaved') : parts.join(', ');
 }
 
 /** The one sentence that says where a finished run's chapters went */
-export function summarySentence(s: Summary): string {
+export function summarySentence(s: Summary, t: T): string {
   if (s.cancelled && s.bundled) {
-    return 'Cancelled. No bundle was written.';
+    return t('summary.sentence.cancelledNoBundle');
   }
   if (s.cancelled && s.saved === 0) {
-    return 'Cancelled before anything was saved.';
+    return t('summary.sentence.cancelledBeforeSaving');
   }
   if (s.cancelled) {
-    return `Cancelled. ${plural(s.saved, 'chapter', 'chapters')} saved before it stopped, in ${s.dir}.`;
+    return t('summary.sentence.savedBefore', { count: s.saved, dir: s.dir });
   }
   if (s.error !== '') {
-    return 'The bundle could not be written.';
+    return t('summary.sentence.bundleFailed');
   }
   if (s.bundled && s.bundle !== '') {
-    return `Saved ${s.bundle} to ${s.dir} (${plural(s.saved, 'chapter', 'chapters')}).`;
+    return t('summary.sentence.bundleSaved', {
+      bundle: s.bundle,
+      dir: s.dir,
+      chapters: t('count.chapter', { count: s.saved }),
+    });
   }
   if (s.saved > 0 && s.volumes > 0 && s.parts) {
-    return `Saved ${plural(s.saved, 'chapter', 'chapters')} to ${s.dir}, with ${plural(s.volumes, 'chapter', 'chapters')} merged from parts.`;
+    return t('summary.sentence.mergedFromParts', {
+      count: s.saved,
+      dir: s.dir,
+      merged: t('summary.merged', { count: s.volumes }),
+    });
   }
   if (s.saved > 0 && s.volumes > 0) {
-    return `Saved ${plural(s.saved, 'chapter', 'chapters')} to ${s.dir}, with ${plural(s.volumes, 'volume file', 'volume files')}.`;
+    return t('summary.sentence.volumeFiles', {
+      count: s.saved,
+      dir: s.dir,
+      files: t('count.volumeFile', { count: s.volumes }),
+    });
   }
   if (s.saved > 0) {
-    return `Saved ${plural(s.saved, 'chapter', 'chapters')} to ${s.dir}.`;
+    return t('summary.sentence.saved', { count: s.saved, dir: s.dir });
   }
 
-  return 'Nothing was saved.';
+  return t('summary.sentence.nothingSaved');
 }
 
 /** The status text of a progress row */
-export function jobStatus(j: Job): string {
+export function jobStatus(j: Job, t: T): string {
   switch (j.state) {
     case 'fetching':
-      return j.status !== '' ? j.status : 'Fetching pages...';
+      return j.status !== '' ? say(t, j.statusMsg, j.status) : t('job.status.fetching');
     case 'downloading':
-      return j.status !== '' ? j.status : 'downloading';
+      return j.status !== '' ? say(t, j.statusMsg, j.status) : t('job.status.downloading');
     case 'archiving':
-      return j.status !== '' ? j.status : 'archiving';
+      return j.status !== '' ? say(t, j.statusMsg, j.status) : t('job.status.archiving');
     case 'done':
-      return 'done';
+      return t('job.status.done');
     case 'failed':
-      return `failed: ${j.reason}`;
+      return t('job.status.failed', { reason: say(t, j.reasonMsg, j.reason) });
     case 'skipped':
-      return `skipped: ${j.reason}`;
+      return t('job.status.skipped', { reason: say(t, j.reasonMsg, j.reason) });
   }
 }
 
 /** The short status at the end of a progress row: phase and percentage while it moves, the outcome after */
-export function jobShortStatus(j: Job): string {
+export function jobShortStatus(j: Job, t: T, lang: Lang): string {
   switch (j.state) {
     case 'fetching':
-      return 'Fetching pages\u2026';
+      return t('job.short.fetching');
     case 'downloading':
     case 'archiving': {
       const phase =
-        j.status !== '' ? j.status.replace(/\.+$/, '') : j.state === 'archiving' ? 'Packing' : 'Downloading';
-      return `${phase} · ${Math.round(jobFraction(j) * 100)}%`;
+        j.status !== ''
+          ? say(t, j.statusMsg, j.status).replace(/\.+$/, '')
+          : j.state === 'archiving'
+            ? t('job.short.packing')
+            : t('job.short.downloading');
+      return t('job.short.phase', { phase, percent: percent(jobFraction(j), lang) });
     }
     case 'done':
-      return 'Saved';
+      return t('job.short.done');
     case 'failed':
-      return 'Failed';
+      return t('job.short.failed');
     case 'skipped':
-      return 'Skipped';
+      return t('job.short.skipped');
   }
 }
 
@@ -120,7 +139,7 @@ export function jobFraction(j: Job): number {
 }
 
 /** Text for a thrown value from a bound call, which Wails rejects with a string */
-export function errorMessage(e: unknown): string {
+export function errorText(e: unknown): string {
   if (typeof e === 'string') {
     return e;
   }
@@ -129,6 +148,34 @@ export function errorMessage(e: unknown): string {
   }
 
   return String(e);
+}
+
+/**
+ * What to show for a thrown value from a bound call. The Go side sends an error
+ * it wrote as its message's JSON, which is translated here; other text is shown as it is.
+ */
+export function errorMessage(e: unknown, t: T): string {
+  const text = errorText(e);
+  const msg = parseMessage(text);
+
+  return msg ? say(t, msg, msg.text) : text;
+}
+
+function parseMessage(text: string): Message | undefined {
+  if (!text.startsWith('{')) {
+    return undefined;
+  }
+  try {
+    const parsed: unknown = JSON.parse(text);
+    const candidate = parsed as { key?: unknown; text?: unknown } | null;
+    if (typeof candidate === 'object' && candidate !== null && typeof candidate.key === 'string' && typeof candidate.text === 'string') {
+      return candidate as Message;
+    }
+  } catch {
+    // not JSON: the text is shown as it is
+  }
+
+  return undefined;
 }
 
 /** A chapter number as the site would print it: 12, 12.5, never 12.000001 */

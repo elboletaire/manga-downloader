@@ -5,7 +5,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -23,7 +22,7 @@ const maxLogLines = 2000
 
 // errBusy is returned when an action is refused because a series is loading
 // or a download is running
-var errBusy = errors.New("a series is loading or a download is running")
+var errBusy = uiErr("errors.busy", nil, nil)
 
 // LogLevel is the severity of a log line
 type LogLevel int
@@ -34,10 +33,12 @@ const (
 	LogError
 )
 
-// LogLine is one entry of the log
+// LogLine is one entry of the log. Msg is set when the window translates the
+// line; Text is its English rendering.
 type LogLine struct {
 	Level LogLevel
 	Text  string
+	Msg   *Message
 }
 
 // JobState is where a chapter's download is
@@ -66,20 +67,43 @@ const (
 // Total of volumeScale (its pages aren't known until it's packed).
 type Job struct {
 	Title string
+	// TitleMsg, StatusMsg and ReasonMsg are the texts the GUI wrote, as
+	// messages for the window; they sit beside the English Title, Status and Reason
+	TitleMsg *Message
 	// Tags is the release's language and group (" [en] [Alpha]"), kept apart
 	// from Title so a narrow row truncates the title and keeps them
-	Tags   string
-	Number float64
-	Total  int64
-	Done   int64
-	State  JobState
-	Reason string
+	Tags      string
+	Number    float64
+	Total     int64
+	Done      int64
+	State     JobState
+	Reason    string
+	ReasonMsg *Message
 	// Status is the bundle's or the volume's phase ("Downloading
 	// <chapter>", "Creating bundle..."); unused for single chapters
-	Status string
+	Status    string
+	StatusMsg *Message
 	// Volume is set on the row of a volume
 	Volume bool
 }
+
+// setTitle, setStatus and setReason set a row's text the GUI wrote, with its message
+func (j *Job) setTitle(m Message)  { j.Title, j.TitleMsg = m.Text, &m }
+func (j *Job) setStatus(m Message) { j.Status, j.StatusMsg = m.Text, &m }
+func (j *Job) setReason(m Message) { j.Reason, j.ReasonMsg = m.Text, &m }
+
+// setReasonErr sets a reason from an error: a shared one the window translates
+// keeps its message, any other shows as its text
+func (j *Job) setReasonErr(err error) {
+	if m := messageOf(err); m != nil {
+		j.setReason(*m)
+		return
+	}
+	j.Reason, j.ReasonMsg = err.Error(), nil
+}
+
+// clearStatus ends the row's phase
+func (j *Job) clearStatus() { j.Status, j.StatusMsg = "", nil }
 
 // RunInfo describes the run in progress, or the last one
 type RunInfo struct {
@@ -111,9 +135,28 @@ type Summary struct {
 	Bundled  bool
 	Bundle   string
 	Skipped  int
-	Failures []string
+	Failures []Failure
 	// Err is a bundle packing error
 	Err error
+}
+
+// Failure is a summary line: the release or volume it's about (Label, "" for
+// none) and Reason, with ReasonMsg when the window words the reason itself.
+type Failure struct {
+	Label     string
+	Reason    string
+	ReasonMsg *Message
+}
+
+// newFailure is a failure of label whose reason is err, keeping the message of
+// a shared error the window translates
+func newFailure(label string, err error) Failure {
+	return Failure{Label: label, Reason: err.Error(), ReasonMsg: messageOf(err)}
+}
+
+// windowFailure is a failure of label worded by the window: m is its message
+func windowFailure(label string, m Message) Failure {
+	return Failure{Label: label, Reason: m.Text, ReasonMsg: &m}
 }
 
 // runStats collects what the events report during a run, for the summary
@@ -121,7 +164,7 @@ type runStats struct {
 	saved    int
 	volumes  int
 	skipped  int
-	failures []string
+	failures []Failure
 	bundle   string
 	err      error
 }
@@ -191,6 +234,11 @@ type Controller struct {
 	listedVolumes int
 	// update is the newer release the update check found, nil when none
 	update *Update
+	// updateChecking is set while an update check runs (see claimUpdateCheck), so
+	// two checks don't start at once
+	updateChecking bool
+	// prefs are the app-only preferences, outside settings (see PrefsDTO)
+	prefs PrefsDTO
 	// attention is the browser window waiting for the user (a check to pass
 	// there), nil when none is or the user dismissed it
 	attention *browser.Attention
@@ -232,6 +280,7 @@ func NewController(settings *grabber.Settings, notifyFn func()) *Controller {
 		needsVisible: browser.NeedsVisible,
 		bringToFront: browser.BringToFront,
 		settings:     settings,
+		prefs:        defaultPrefs(),
 	}
 	notice.SetHandler(func(level notice.Level, msg string) {
 		lvl := LogInfo
@@ -250,7 +299,7 @@ func (c *Controller) onAttention(a browser.Attention) {
 	c.mu.Lock()
 	if a.Active {
 		c.attention = &a
-		c.appendLogLocked(LogWarn, a.Message())
+		c.appendMsgLocked(LogWarn, alertMessage(a))
 	} else {
 		c.attention = nil
 	}
@@ -258,15 +307,24 @@ func (c *Controller) onAttention(a browser.Attention) {
 	c.emit()
 }
 
-// BrowserAlert is the message of the browser window waiting for the user, ""
+// BrowserAlert is the alert of the browser window waiting for the user, nil
 // when none is
-func (c *Controller) BrowserAlert() string {
+func (c *Controller) BrowserAlert() *Message {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.attention == nil {
-		return ""
+		return nil
 	}
-	return c.attention.Message()
+	m := alertMessage(*c.attention)
+	return &m
+}
+
+// alertMessage is the browser's alert, in English as browser.Attention words it
+func alertMessage(a browser.Attention) Message {
+	if a.Browser != "" {
+		return msg("browser.alertNamed", map[string]any{"browser": a.Browser, "host": a.Host})
+	}
+	return msg("browser.alert", map[string]any{"host": a.Host})
 }
 
 // DismissBrowserAlert hides the alert; the window stays open, and the load
@@ -307,9 +365,26 @@ func (c *Controller) addLog(level LogLevel, text string) {
 	c.emit()
 }
 
+// addMsg is addLog for a translatable line
+func (c *Controller) addMsg(level LogLevel, m Message) {
+	c.mu.Lock()
+	c.appendMsgLocked(level, m)
+	c.mu.Unlock()
+	c.emit()
+}
+
 func (c *Controller) appendLogLocked(level LogLevel, text string) {
+	c.appendLineLocked(LogLine{Level: level, Text: text})
+}
+
+// appendMsgLocked is appendLogLocked for a translatable line
+func (c *Controller) appendMsgLocked(level LogLevel, m Message) {
+	c.appendLineLocked(LogLine{Level: level, Text: m.Text, Msg: &m})
+}
+
+func (c *Controller) appendLineLocked(line LogLine) {
 	c.logGen++
-	c.log = append(c.log, LogLine{Level: level, Text: text})
+	c.log = append(c.log, line)
 	if len(c.log) > maxLogLines {
 		c.log = c.log[len(c.log)-maxLogLines:]
 	}
@@ -334,6 +409,22 @@ func (c *Controller) Settings() grabber.Settings {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return *c.settings
+}
+
+// Prefs returns a copy of the app-only preferences
+func (c *Controller) Prefs() PrefsDTO {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.prefs
+}
+
+// SetPrefs applies fn to the preferences. Unlike Configure it's never refused,
+// as the preferences don't change a load or a run.
+func (c *Controller) SetPrefs(fn func(*PrefsDTO)) {
+	c.mu.Lock()
+	fn(&c.prefs)
+	c.mu.Unlock()
+	c.emit()
 }
 
 // Load identifies the site for url and fetches its title and chapter list.
@@ -526,7 +617,7 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	c.listedVolumes = core.ListedVolumes(series.Chapters)
 	c.volumesText = ""
 	c.resetResultsLocked()
-	c.appendLogLocked(LogInfo, fmt.Sprintf("Loaded %s: %d chapters", series.Title, len(series.Chapters)))
+	c.appendMsgLocked(LogInfo, msg("log.loaded", map[string]any{"title": series.Title, "count": len(series.Chapters)}))
 	return nil
 }
 
@@ -554,10 +645,10 @@ func (c *Controller) listingFor(url string, s *grabber.Settings, reuse grabber.S
 		var siteErrs []error
 		site, siteErrs = c.identify(url, s)
 		for _, err := range siteErrs {
-			c.addLog(LogWarn, "site check: "+err.Error())
+			c.addMsg(LogWarn, msg("log.siteCheck", map[string]any{"reason": err.Error()}))
 		}
 		if site == nil {
-			return nil, nil, errors.New("site not recognised")
+			return nil, nil, uiErr("errors.siteUnknown", nil, nil)
 		}
 	}
 
@@ -636,14 +727,14 @@ func (c *Controller) dropUnmatchedFilters(site grabber.Site, s *grabber.Settings
 	}
 	c.mu.Unlock()
 	if languageReset {
-		c.addLog(LogInfo, fallbackMessage("language", typedLanguage, language))
+		c.addMsg(LogInfo, fallbackMessage("language", typedLanguage, language))
 	}
 	if scanlatorReset {
-		c.addLog(LogInfo, fallbackMessage("scanlation group", typedScanlator, scanlator))
+		c.addMsg(LogInfo, fallbackMessage("group", typedScanlator, scanlator))
 	}
 
 	if languageDropped {
-		c.addLog(LogInfo, fallbackMessage("language", typedLanguage, ""))
+		c.addMsg(LogInfo, fallbackMessage("language", typedLanguage, ""))
 	}
 
 	return true, languageDropped
@@ -689,17 +780,24 @@ func listsValues(options *grabber.FilterOptions) bool {
 }
 
 // fallbackMessage is the log line for a filter that was reset, naming what
-// the load went on with instead
-func fallbackMessage(kind, value, fallback string) string {
-	shown := fmt.Sprintf("%q", fallback)
-	switch fallback {
-	case grabber.FilterAll:
-		shown = "all of them"
-	case "":
-		shown = "no filter"
+// the load went on with instead. kind is "language" or "group".
+func fallbackMessage(kind, value, fallback string) Message {
+	args := map[string]any{"value": value, "fallback": fallback}
+	group := kind == "group"
+	switch {
+	case fallback == grabber.FilterAll && group:
+		return msg("log.groupFallbackAll", args)
+	case fallback == grabber.FilterAll:
+		return msg("log.languageFallbackAll", args)
+	case fallback == "" && group:
+		return msg("log.groupFallbackNone", args)
+	case fallback == "":
+		return msg("log.languageFallbackNone", args)
+	case group:
+		return msg("log.groupFallbackValue", args)
+	default:
+		return msg("log.languageFallbackValue", args)
 	}
-
-	return fmt.Sprintf("%s %q isn't in this series, loading %s instead", kind, value, shown)
 }
 
 // Filter is what a filter's selector offers for the loaded series
@@ -1037,7 +1135,7 @@ func (c *Controller) SetSelectedMany(indices []int, on bool) error {
 	for _, i := range indices {
 		if i < 0 || i >= len(c.selected) {
 			c.mu.Unlock()
-			return fmt.Errorf("chapter %d is not in the list", i)
+			return uiErr("errors.chapterMissing", map[string]any{"index": i}, nil)
 		}
 	}
 	for _, i := range indices {
@@ -1131,7 +1229,7 @@ func (c *Controller) SetVolumes(text string) error {
 	// parts is Pack as's Merged, which has no box
 	if spec != nil && spec.Parts {
 		c.mu.Unlock()
-		return errors.New(`"parts" isn't a Volumes value: pick Merged under Pack as`)
+		return uiErr("errors.partsVolumes", nil, nil)
 	}
 	c.volumesText = strings.TrimSpace(text)
 	c.mu.Unlock()
@@ -1177,7 +1275,7 @@ func (c *Controller) Summary() *Summary {
 		return nil
 	}
 	s := *c.summary
-	s.Failures = append([]string(nil), c.summary.Failures...)
+	s.Failures = append([]Failure(nil), c.summary.Failures...)
 	return &s
 }
 
@@ -1198,11 +1296,11 @@ func (c *Controller) Start() error {
 	}
 	if c.series == nil {
 		c.mu.Unlock()
-		return errors.New("load a series first")
+		return uiErr("errors.loadFirst", nil, nil)
 	}
 	if c.filtersChanged() {
 		c.mu.Unlock()
-		return errors.New("the language or scanlator changed: reload the series first")
+		return uiErr("errors.filtersChanged", nil, nil)
 	}
 	// volume mode packs the Volumes box, which isn't saved with the options;
 	// a parts run has no box
@@ -1229,7 +1327,7 @@ func (c *Controller) Start() error {
 	}
 	if len(chapters) == 0 {
 		c.mu.Unlock()
-		return errors.New("select at least one chapter")
+		return uiErr("errors.selectOne", nil, nil)
 	}
 	rows := len(chapters)
 	if c.settings.Bundle {
@@ -1264,13 +1362,15 @@ func (c *Controller) Start() error {
 	c.stats = runStats{}
 	c.summary = nil
 	if c.settings.Bundle {
-		c.bundle = &Job{Title: "Bundle: chapters " + c.rng, Status: "Gathering info..."}
+		c.bundle = &Job{}
+		c.bundle.setTitle(msg("job.title.bundle", map[string]any{"range": c.rng}))
+		c.bundle.setStatus(msg("job.phase.gathering", nil))
 		c.jobs = append(c.jobs, c.bundle)
 	}
 	series := c.series
 	settings := c.settings
 	rng := c.rng
-	c.appendLogLocked(LogInfo, fmt.Sprintf("Downloading %d chapter(s) of %s", len(chapters), series.Title))
+	c.appendMsgLocked(LogInfo, msg("log.downloading", map[string]any{"count": len(chapters), "title": series.Title}))
 	c.mu.Unlock()
 	c.emit()
 
@@ -1309,22 +1409,25 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 	case err != nil && c.runinfo.Volumes && !errors.Is(err, context.Canceled):
 		// only the volumes check Start already ran can fail a volume run
 		s.Err = err
-		s.Failures = append(s.Failures, "volumes: "+err.Error())
-		c.appendLogLocked(LogError, "volumes: "+err.Error())
+		m := msg("log.volumesFailed", map[string]any{"reason": err.Error()})
+		s.Failures = append(s.Failures, windowFailure("", m))
+		c.appendMsgLocked(LogError, m)
 	case errors.Is(err, context.Canceled):
 		// a cancelled bundle is never packed: the chapters it never started
 		// would be silently missing from it
 		s.Cancelled = true
 	case err != nil:
 		s.Err = err
-		s.Failures = append(s.Failures, "packing bundle: "+err.Error())
-		c.appendLogLocked(LogError, "packing bundle: "+err.Error())
+		m := msg("log.packingBundle", map[string]any{"reason": err.Error()})
+		s.Failures = append(s.Failures, windowFailure("", m))
+		c.appendMsgLocked(LogError, m)
 	case c.bundle != nil && c.stats.saved == 0:
 		// core still packs an empty bundle when every chapter failed (as the
 		// CLI does), so the file it leaves behind is not a result
-		s.Err = errors.New("no chapter could be downloaded")
-		s.Failures = append(s.Failures, "packing bundle: no chapter could be downloaded")
-		c.appendLogLocked(LogError, "packing bundle: no chapter could be downloaded")
+		s.Err = uiErr("errors.noChapterDownloaded", nil, nil)
+		m := msg("log.bundleEmpty", nil)
+		s.Failures = append(s.Failures, windowFailure("", m))
+		c.appendMsgLocked(LogError, m)
 	default:
 		s.Bundle = file
 	}
@@ -1335,7 +1438,7 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 			c.bundle.State = JobDone
 			c.bundle.Done = c.bundle.Total
 		}
-		c.bundle.Status = ""
+		c.bundle.clearStatus()
 	}
 	c.summary = s
 	c.running = false
@@ -1355,7 +1458,7 @@ func (c *Controller) Cancel() {
 	first := cancel != nil && !c.cancelling
 	if first {
 		c.cancelling = true
-		c.appendLogLocked(LogInfo, "Cancelling: chapters already downloading will finish, no new ones start")
+		c.appendMsgLocked(LogInfo, msg("log.cancelling", nil))
 	}
 	c.mu.Unlock()
 	if first {
@@ -1440,8 +1543,8 @@ func (e events) BundleStart(pages int64) {
 	if c.bundle != nil {
 		c.bundle.Total = pages * (core.DownloadWeight + core.ArchiveWeight)
 		// a corrected total comes again mid-download, so keep the status a chapter set
-		if c.bundle.Status == "Gathering info..." {
-			c.bundle.Status = "Downloading..."
+		if c.bundle.StatusMsg != nil && c.bundle.StatusMsg.Key == "job.phase.gathering" {
+			c.bundle.setStatus(msg("job.phase.downloading", nil))
 		}
 	}
 	c.mu.Unlock()
@@ -1453,7 +1556,8 @@ func (e events) Fetching(listed grabber.Filterable) {
 	c.mu.Lock()
 	// a bundle or a volume has its own row
 	if c.bundle == nil && c.listedVol[listed] == nil {
-		j := &Job{Title: grabber.ChapterLabel(listed), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFetching, Status: "Fetching pages..."}
+		j := &Job{Title: grabber.ChapterLabel(listed), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFetching}
+		j.setStatus(msg("job.status.fetching", nil))
 		c.jobs = append(c.jobs, j)
 		c.fetching[listed] = j
 	}
@@ -1476,26 +1580,33 @@ func (e events) Fetched(listed grabber.Filterable, ch *grabber.Chapter) {
 
 // endRow marks the row of a chapter that ended before it started, or adds one
 // when it never had any. Callers hold mu.
-func (c *Controller) endRow(ch *grabber.Chapter, state JobState, reason string) {
+func (c *Controller) endRow(ch *grabber.Chapter, state JobState, reason Message) {
 	if j := c.byChap[ch]; j != nil {
-		j.State, j.Reason, j.Status = state, reason, ""
+		j.State = state
+		j.setReason(reason)
+		j.clearStatus()
 		return
 	}
-	c.jobs = append(c.jobs, &Job{Title: grabber.ChapterLabel(ch), Tags: c.releaseTags(ch), Number: ch.GetNumber(), State: state, Reason: reason})
+	j := &Job{Title: grabber.ChapterLabel(ch), Tags: c.releaseTags(ch), Number: ch.GetNumber(), State: state}
+	j.setReason(reason)
+	c.jobs = append(c.jobs, j)
 }
 
 func (e events) FetchFailed(listed grabber.Filterable, err error) {
 	c := e.c
 	c.mu.Lock()
-	msg := fmt.Sprintf("%s: %s", c.releaseLabel(listed), err)
-	c.stats.failures = append(c.stats.failures, msg)
+	c.stats.failures = append(c.stats.failures, newFailure(c.releaseLabel(listed), err))
 	if j := c.fetching[listed]; j != nil {
-		j.State, j.Reason, j.Status = JobFailed, err.Error(), ""
+		j.State = JobFailed
+		j.setReasonErr(err)
+		j.clearStatus()
 		delete(c.fetching, listed)
 	} else if c.bundle == nil && c.listedVol[listed] == nil {
-		c.jobs = append(c.jobs, &Job{Title: grabber.ChapterLabel(listed), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFailed, Reason: err.Error()})
+		j := &Job{Title: grabber.ChapterLabel(listed), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFailed}
+		j.setReasonErr(err)
+		c.jobs = append(c.jobs, j)
 	}
-	c.appendLogLocked(LogError, "error fetching "+msg)
+	c.appendMsgLocked(LogError, msg("log.errorFetching", map[string]any{"label": c.releaseLabel(listed), "reason": err.Error()}))
 	c.mu.Unlock()
 	c.emit()
 }
@@ -1505,9 +1616,9 @@ func (e events) Skipped(ch *grabber.Chapter) {
 	c.mu.Lock()
 	c.stats.skipped++
 	if c.bundle == nil && c.chapVol[ch] == nil {
-		c.endRow(ch, JobSkipped, "every page excluded by --skip-pages")
+		c.endRow(ch, JobSkipped, msg("job.reason.skipped", nil))
 	}
-	c.appendLogLocked(LogWarn, fmt.Sprintf("skipping %s: every page is excluded by --skip-pages", c.releaseLabel(ch)))
+	c.appendMsgLocked(LogWarn, msg("log.skipping", map[string]any{"label": c.releaseLabel(ch)}))
 	c.mu.Unlock()
 	c.emit()
 }
@@ -1515,12 +1626,12 @@ func (e events) Skipped(ch *grabber.Chapter) {
 func (e events) FilenameFailed(ch *grabber.Chapter, err error) {
 	c := e.c
 	c.mu.Lock()
-	msg := fmt.Sprintf("%s: filename: %s", c.releaseLabel(ch), err)
-	c.stats.failures = append(c.stats.failures, msg)
+	reason := msg("job.reason.filename", map[string]any{"reason": err.Error()})
+	c.stats.failures = append(c.stats.failures, windowFailure(c.releaseLabel(ch), reason))
 	if c.bundle == nil {
-		c.endRow(ch, JobFailed, "filename: "+err.Error())
+		c.endRow(ch, JobFailed, reason)
 	}
-	c.appendLogLocked(LogError, "error creating filename for "+msg)
+	c.appendMsgLocked(LogError, msg("log.errorFilename", map[string]any{"label": c.releaseLabel(ch), "reason": err.Error()}))
 	c.mu.Unlock()
 	c.emit()
 }
@@ -1529,15 +1640,16 @@ func (e events) Started(ch *grabber.Chapter) {
 	c := e.c
 	c.mu.Lock()
 	if c.bundle != nil {
-		c.bundle.Status = "Downloading " + c.releaseLabel(ch)
+		c.bundle.setStatus(msg("job.phase.downloadingLabel", map[string]any{"label": c.releaseLabel(ch)}))
 	} else if j := c.chapVol[ch]; j != nil {
 		// its row is too narrow for the chapter's title: the phase and
 		// percentage say enough. The bar moves with VolumeProgress.
-		j.Status = ""
+		j.clearStatus()
 	} else if j := c.byChap[ch]; j != nil {
 		// the row Fetching made becomes the downloading one
 		j.Total = ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight)
-		j.State, j.Status = JobDownloading, ""
+		j.State = JobDownloading
+		j.clearStatus()
 	} else {
 		// the CLI's bar: each page's download and archive steps
 		j := &Job{Title: grabber.ChapterLabel(ch), Tags: c.releaseTags(ch), Number: ch.GetNumber(), Total: ch.PagesCount * (core.DownloadWeight + core.ArchiveWeight), State: JobDownloading}
@@ -1552,7 +1664,7 @@ func (e events) Page(ch *grabber.Chapter, idx int, err error) {
 	c := e.c
 	c.mu.Lock()
 	if err != nil {
-		c.appendLogLocked(LogError, fmt.Sprintf("error downloading page %d of %s: %s", idx+1, c.releaseLabel(ch), err))
+		c.appendMsgLocked(LogError, msg("log.errorPage", map[string]any{"page": idx + 1, "label": c.releaseLabel(ch), "reason": err.Error()}))
 	} else if j := c.jobFor(ch); j != nil && !j.Volume && c.live(ch) {
 		// a volume's row moves with VolumeProgress instead
 		j.Done += core.DownloadWeight
@@ -1566,14 +1678,13 @@ func (e events) DownloadFailed(ch *grabber.Chapter, err error) {
 	c := e.c
 	c.mu.Lock()
 	c.failedC[ch] = true
-	msg := fmt.Sprintf("%s: %s", c.releaseLabel(ch), err)
-	c.stats.failures = append(c.stats.failures, msg)
+	c.stats.failures = append(c.stats.failures, newFailure(c.releaseLabel(ch), err))
 	// a volume goes on with its other chapters
 	if j := c.byChap[ch]; j != nil && c.bundle == nil {
 		j.State = JobFailed
-		j.Reason = "download: " + err.Error()
+		j.setReason(msg("job.reason.download", map[string]any{"reason": err.Error()}))
 	}
-	c.appendLogLocked(LogError, "error downloading "+msg)
+	c.appendMsgLocked(LogError, msg("log.errorDownload", map[string]any{"label": c.releaseLabel(ch), "reason": err.Error()}))
 	c.mu.Unlock()
 	c.emit()
 }
@@ -1594,13 +1705,13 @@ func (e events) Packed(ch *grabber.Chapter, name string, err error) {
 	c.mu.Lock()
 	j := c.byChap[ch]
 	if err != nil {
-		msg := fmt.Sprintf("%s: packing: %s", c.releaseLabel(ch), err)
-		c.stats.failures = append(c.stats.failures, msg)
+		reason := msg("job.reason.packing", map[string]any{"reason": err.Error()})
+		c.stats.failures = append(c.stats.failures, windowFailure(c.releaseLabel(ch), reason))
 		if j != nil {
 			j.State = JobFailed
-			j.Reason = "packing: " + err.Error()
+			j.setReason(reason)
 		}
-		c.appendLogLocked(LogError, msg)
+		c.appendMsgLocked(LogError, msg("log.packFailed", map[string]any{"label": c.releaseLabel(ch), "reason": err.Error()}))
 	} else {
 		c.stats.saved++
 		if j != nil {
@@ -1608,7 +1719,7 @@ func (e events) Packed(ch *grabber.Chapter, name string, err error) {
 			// the skipped pages were never counted, so the bar is exact only now
 			j.Done = j.Total
 		}
-		c.appendLogLocked(LogInfo, "saved "+name)
+		c.appendMsgLocked(LogInfo, msg("log.saved", map[string]any{"name": name}))
 	}
 	c.mu.Unlock()
 	c.emit()
@@ -1627,7 +1738,7 @@ func (e events) BundlePacking() {
 	c := e.c
 	c.mu.Lock()
 	if c.bundle != nil {
-		c.bundle.Status = "Creating bundle for chapters " + c.rng
+		c.bundle.setStatus(msg("job.phase.creatingBundle", map[string]any{"range": c.rng}))
 	}
 	c.mu.Unlock()
 	c.emit()
@@ -1645,21 +1756,23 @@ func (e events) BundleArchived(n int) {
 
 // volumeTitle is the row title of a volume: "Vol. 01 · chapters 1–7", or
 // "Chapter 19 · 2 parts" in a parts run. Callers hold mu.
-func (c *Controller) volumeTitle(v *core.Volume) string {
+func (c *Controller) volumeTitle(v *core.Volume) Message {
 	if c.runinfo.Parts {
-		return fmt.Sprintf("%s · %d parts", v.Label(), len(v.Chapters))
+		return msg("job.title.volumeParts", map[string]any{"volume": v.Label(), "count": len(v.Chapters)})
 	}
 	first, last := formatNumber(v.FirstNumber()), formatNumber(v.LastNumber())
 	if first == last {
-		return fmt.Sprintf("%s · chapter %s", v.Label(), first)
+		return msg("job.title.volumeChapter", map[string]any{"volume": v.Label(), "first": first})
 	}
-	return fmt.Sprintf("%s · chapters %s–%s", v.Label(), first, last)
+	return msg("job.title.volume", map[string]any{"volume": v.Label(), "first": first, "last": last})
 }
 
 func (e events) VolumeStart(v *core.Volume) {
 	c := e.c
 	c.mu.Lock()
-	j := &Job{Title: c.volumeTitle(v), Number: v.FirstNumber(), Total: volumeScale, State: JobDownloading, Status: "Waiting...", Volume: true}
+	j := &Job{Number: v.FirstNumber(), Total: volumeScale, State: JobDownloading, Volume: true}
+	j.setTitle(c.volumeTitle(v))
+	j.setStatus(msg("job.phase.waiting", nil))
 	if c.runinfo.Parts {
 		// one chapter's parts share its group and language
 		j.Tags = c.releaseTags(v.Chapters[0])
@@ -1687,7 +1800,7 @@ func (e events) VolumePacking(v *core.Volume) {
 	c.mu.Lock()
 	if j := c.byVolume[v]; j != nil {
 		j.State = JobArchiving
-		j.Status = "Packing..."
+		j.setStatus(msg("job.phase.packing", nil))
 	}
 	c.mu.Unlock()
 	c.emit()
@@ -1719,32 +1832,31 @@ func (e events) VolumePacked(v *core.Volume, name string, err error) {
 		// a cancelled run says so in its summary; the row only stops
 		if j != nil {
 			j.State = JobSkipped
-			j.Reason = "cancelled before all of its chapters started"
+			j.setReason(msg("job.reason.cancelled", nil))
 		}
 	case errors.Is(err, core.ErrSkippedVolume):
 		// its chapters were each counted as skipped already
 		if j != nil {
 			j.State = JobSkipped
-			j.Reason = err.Error()
+			j.setReasonErr(err)
 		}
 	case err != nil:
-		msg := fmt.Sprintf("%s: %s", label, err)
-		c.stats.failures = append(c.stats.failures, msg)
+		c.stats.failures = append(c.stats.failures, newFailure(label, err))
 		if j != nil {
 			j.State = JobFailed
-			j.Reason = err.Error()
+			j.setReasonErr(err)
 		}
-		c.appendLogLocked(LogError, "error packing "+msg)
+		c.appendMsgLocked(LogError, msg("log.errorPacking", map[string]any{"label": label, "reason": err.Error()}))
 	default:
 		c.stats.volumes++
 		if j != nil {
 			j.State = JobDone
 			j.Done = j.Total
 		}
-		c.appendLogLocked(LogInfo, "saved "+name)
+		c.appendMsgLocked(LogInfo, msg("log.saved", map[string]any{"name": name}))
 	}
 	if j != nil {
-		j.Status = ""
+		j.clearStatus()
 	}
 	c.mu.Unlock()
 	c.emit()

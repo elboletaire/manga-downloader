@@ -1,0 +1,26 @@
+{
+  "url": {
+    "label": "Series URL",
+    "placeholder": "Paste the link to a series or one of its chapters",
+    "clear": "Clear",
+    "clearLabel": "Clear the URL",
+    "paste": "Paste",
+    "pasteLabel": "Paste link from clipboard"
+  },
+  "load": {
+    "load": "Load",
+    "loading": "Loading…",
+    "reload": "Reload"
+  },
+  "filter": {
+    "heading": "Filter the list",
+    "language": "Language",
+    "scanlator": "Scanlator",
+    "any": "any",
+    "noLanguage": "This site has no language choice",
+    "noScanlator": "This site has no scanlation groups to choose from",
+    "notApplied": "Not applied yet",
+    "appliesAtOnce": "Picking one applies it at once",
+    "appliesOnLoad": "Applied when the series loads"
+  }
+}

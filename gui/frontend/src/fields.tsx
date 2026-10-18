@@ -4,6 +4,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { errorMessage } from './format';
+import { useI18n } from './i18n/react';
 
 interface TextFieldProps {
   label: string;
@@ -58,6 +59,7 @@ export function SelectField({ label, value, options, onChange, disabled, classNa
 /** A text option. Escape reverts to the committed value. */
 export function TextField(props: TextFieldProps) {
   const { label, value, onCommit, onError, placeholder, hint, disabled, mono, flagged, className, action } = props;
+  const { t } = useI18n();
   const [draft, setDraft] = useState(value);
   // the draft the last commit sent, until the backend pushes it back: Enter
   // commits and the blur that follows must not send it again
@@ -80,7 +82,7 @@ export function TextField(props: TextFieldProps) {
     onCommit(draft).catch((e: unknown) => {
       sent.current = null;
       setDraft(value);
-      onError(errorMessage(e));
+      onError(errorMessage(e, t));
     });
   };
 

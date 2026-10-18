@@ -1,0 +1,42 @@
+{
+  "status": {
+    "fetching": "Obteniendo páginas…",
+    "downloading": "descargando",
+    "archiving": "empaquetando",
+    "done": "completado",
+    "failed": "fallido: {{reason}}",
+    "skipped": "omitido: {{reason}}"
+  },
+  "short": {
+    "fetching": "Obteniendo páginas…",
+    "phase": "{{phase}} · {{percent}}",
+    "packing": "Empaquetando",
+    "downloading": "Descargando",
+    "done": "Guardado",
+    "failed": "Fallido",
+    "skipped": "Omitido"
+  },
+  "title": {
+    "bundle": "Paquete: capítulos {{range}}",
+    "volume": "{{volume}} · capítulos {{first}}–{{last}}",
+    "volumeChapter": "{{volume}} · capítulo {{first}}",
+    "volumeParts": "{{volume}} · {{count}} partes"
+  },
+  "phase": {
+    "gathering": "Obteniendo información…",
+    "downloading": "Descargando…",
+    "downloadingLabel": "Descargando {{label}}",
+    "creatingBundle": "Creando el paquete de los capítulos {{range}}",
+    "waiting": "Esperando…",
+    "packing": "Empaquetando…"
+  },
+  "reason": {
+    "cancelled": "cancelado antes de empezar todos sus capítulos",
+    "skipped": "todas las páginas excluidas por --skip-pages",
+    "download": "descarga: {{reason}}",
+    "packing": "empaquetado: {{reason}}",
+    "filename": "nombre de archivo: {{reason}}",
+    "locked": "capítulo bloqueado",
+    "emptyVolume": "no se pudo descargar ninguno de sus capítulos"
+  }
+}

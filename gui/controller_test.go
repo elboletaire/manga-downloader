@@ -432,8 +432,8 @@ func TestDownloadBundleWithFailure(t *testing.T) {
 	if s.Err != nil || s.Cancelled {
 		t.Fatalf("summary = %+v", s)
 	}
-	if len(s.Failures) != 1 || !strings.Contains(s.Failures[0], "Chapter 2") {
-		t.Errorf("failures = %v, want chapter 2", s.Failures)
+	if len(s.Failures) != 1 || !strings.Contains(s.Failures[0].Label, "Chapter 2") {
+		t.Errorf("failures = %+v, want chapter 2", s.Failures)
 	}
 	if s.Saved != 2 || s.Bundle == "" {
 		t.Errorf("saved %d, bundle %q; want 2 chapters and a file", s.Saved, s.Bundle)
@@ -818,6 +818,14 @@ func TestFetchingRowEndsBeforeStarted(t *testing.T) {
 			t.Errorf("jobs = %+v, want one failed row", jobs)
 		}
 	})
+	t.Run("fetch failed without a row", func(t *testing.T) {
+		c, e := newRun()
+		e.FetchFailed(listed, core.ErrLocked)
+		jobs := c.Jobs()
+		if len(jobs) != 1 || jobs[0].State != JobFailed || jobs[0].ReasonMsg == nil || jobs[0].ReasonMsg.Key != "job.reason.locked" {
+			t.Errorf("jobs = %+v, want one failed row with the locked reason", jobs)
+		}
+	})
 	t.Run("skipped", func(t *testing.T) {
 		c, e := newRun()
 		fetched := &grabber.Chapter{Title: "Chapter 5", Number: 5}
@@ -878,5 +886,187 @@ func TestCancelWhileFetchingEndsTheRow(t *testing.T) {
 	jobs := c.Jobs()
 	if len(jobs) != 1 || (jobs[0].State != JobDone && jobs[0].State != JobFailed) || jobs[0].Status != "" {
 		t.Errorf("jobs after the cancel = %+v, want one finished row", jobs)
+	}
+}
+
+// a line the window translates carries its message; Text is the English it
+// would have had before
+func TestLogLinesCarryTheirMessage(t *testing.T) {
+	ch := &grabber.Chapter{Title: "Chapter 5", Number: 5, Language: "en", PagesCount: 1}
+	boom := errors.New("boom")
+	cases := []struct {
+		name string
+		log  func(c *Controller)
+		key  string
+		text func(c *Controller) string
+	}{
+		{"cancel", func(c *Controller) {
+			c.cancel = func() {}
+			c.Cancel()
+		}, "log.cancelling", func(*Controller) string {
+			return "Cancelling: chapters already downloading will finish, no new ones start"
+		}},
+		{"error downloading", func(c *Controller) { events{c}.DownloadFailed(ch, boom) }, "log.errorDownload", func(c *Controller) string {
+			return "error downloading " + c.releaseLabel(ch) + ": boom"
+		}},
+		{"skipping", func(c *Controller) { events{c}.Skipped(ch) }, "log.skipping", func(c *Controller) string {
+			return "skipping " + c.releaseLabel(ch) + ": every page is excluded by --skip-pages"
+		}},
+		{"fallback", func(c *Controller) { c.addMsg(LogInfo, fallbackMessage("group", "Beta", "Alpha")) }, "log.groupFallbackValue", func(*Controller) string {
+			return `scanlation group "Beta" isn't in this series, loading "Alpha" instead`
+		}},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewController(&grabber.Settings{}, nil)
+			// the maps a run starts with, which the events write into
+			c.byChap = map[*grabber.Chapter]*Job{}
+			c.failedC = map[*grabber.Chapter]bool{}
+			tt.log(c)
+			log := c.Log()
+			last := log[len(log)-1]
+			if last.Msg == nil || last.Msg.Key != tt.key {
+				t.Fatalf("message = %+v, want key %q", last.Msg, tt.key)
+			}
+			if want := tt.text(c); last.Text != want || last.Msg.Text != want {
+				t.Errorf("Text = %q, Msg.Text = %q, want %q", last.Text, last.Msg.Text, want)
+			}
+		})
+	}
+}
+
+// the download's start and the load's count are plural in English, one or several
+func TestDownloadingLogIsPlural(t *testing.T) {
+	cases := []struct {
+		key  string
+		n    int
+		want string
+	}{
+		{"log.downloading", 1, "Downloading 1 chapter of X"},
+		{"log.downloading", 3, "Downloading 3 chapters of X"},
+		{"log.loaded", 1, "Loaded X: 1 chapter"},
+		{"log.loaded", 0, "Loaded X: 0 chapters"},
+	}
+	for _, c := range cases {
+		if got := msg(c.key, map[string]any{"count": c.n, "title": "X"}).Text; got != c.want {
+			t.Errorf("%s with %d: Text = %q, want %q", c.key, c.n, got, c.want)
+		}
+	}
+}
+
+// the row texts the GUI writes come with their messages, the upstream reasons
+// stay plain
+func TestJobRowsCarryTheirMessages(t *testing.T) {
+	c := NewController(&grabber.Settings{}, nil)
+	c.byChap = map[*grabber.Chapter]*Job{}
+	c.failedC = map[*grabber.Chapter]bool{}
+	c.byVolume = map[*core.Volume]*Job{}
+	c.listedVol = map[grabber.Filterable]*Job{}
+	c.chapVol = map[*grabber.Chapter]*Job{}
+	c.fetching = map[grabber.Filterable]*Job{}
+	e := events{c}
+	wantMsg := func(what string, m *Message, key, text string) {
+		t.Helper()
+		if m == nil || m.Key != key || m.Text != text {
+			t.Errorf("%s = %+v, want key %q and text %q", what, m, key, text)
+		}
+	}
+
+	skipped := &grabber.Chapter{Title: "Chapter 5", Number: 5, Language: "en", PagesCount: 1}
+	e.Skipped(skipped)
+	wantMsg("skipped reason", c.Jobs()[0].ReasonMsg, "job.reason.skipped", "every page excluded by --skip-pages")
+
+	failed := &grabber.Chapter{Title: "Chapter 6", Number: 6, Language: "en", PagesCount: 1}
+	e.Started(failed)
+	e.DownloadFailed(failed, errors.New("boom"))
+	row := c.Jobs()[1]
+	wantMsg("download reason", row.ReasonMsg, "job.reason.download", "download: boom")
+	if row.Reason != "download: boom" {
+		t.Errorf("Reason = %q, want the English text", row.Reason)
+	}
+
+	c.rng = "1-3"
+	c.bundle = &Job{}
+	e.BundlePacking()
+	wantMsg("bundle status", c.bundle.StatusMsg, "job.phase.creatingBundle", "Creating bundle for chapters 1-3")
+
+	v := &core.Volume{Number: 2, Chapters: grabber.Filterables{&grabber.Chapter{Number: 2, Title: "Chapter 2"}}}
+	e.VolumeStart(v)
+	vol := c.byVolume[v]
+	wantMsg("volume title", vol.TitleMsg, "job.title.volumeChapter", "Vol. 02 · chapter 2")
+	wantMsg("volume status", vol.StatusMsg, "job.phase.waiting", "Waiting…")
+	if vol.Title != "Vol. 02 · chapter 2" {
+		t.Errorf("Title = %q, want the English text", vol.Title)
+	}
+	e.VolumePacked(v, "", core.ErrSkippedVolume)
+	wantMsg("skipped volume reason", vol.ReasonMsg, "job.reason.skipped", "every page excluded by --skip-pages")
+
+	// a row that moves on from its message drops the message with its text
+	row.setStatus(msg("job.phase.waiting", nil))
+	row.clearStatus()
+	if row.StatusMsg != nil || row.Status != "" {
+		t.Errorf("after clearStatus: Status = %q, StatusMsg = %+v", row.Status, row.StatusMsg)
+	}
+	row.setReason(msg("job.reason.cancelled", nil))
+	row.setReasonErr(errors.New("plain"))
+	if row.ReasonMsg != nil || row.Reason != "plain" {
+		t.Errorf("after setReasonErr: Reason = %q, ReasonMsg = %+v", row.Reason, row.ReasonMsg)
+	}
+}
+
+// a shared sentinel keeps its message as a row's reason, any other error is plain
+func TestSetReasonErrTranslatesSharedSentinels(t *testing.T) {
+	cases := []struct {
+		err  error
+		key  string
+		text string
+	}{
+		{core.ErrLocked, "job.reason.locked", "locked chapter"},
+		{core.ErrEmptyVolume, "job.reason.emptyVolume", "none of its chapters could be downloaded"},
+		{core.ErrSkippedVolume, "job.reason.skipped", "every page excluded by --skip-pages"},
+	}
+	for _, c := range cases {
+		var j Job
+		j.setReasonErr(c.err)
+		if j.ReasonMsg == nil || j.ReasonMsg.Key != c.key || j.Reason != c.text {
+			t.Errorf("%v: reason = %q, message = %+v, want key %q", c.err, j.Reason, j.ReasonMsg, c.key)
+		}
+	}
+}
+
+// A failure line names its release apart from the reason; the reasons the
+// window words carry their message, and the ones from core stay plain text.
+func TestFailureLinesCarryTheirMessages(t *testing.T) {
+	c := NewController(&grabber.Settings{}, nil)
+	c.byChap = map[*grabber.Chapter]*Job{}
+	c.fetching = map[grabber.Filterable]*Job{}
+	c.failedC = map[*grabber.Chapter]bool{}
+	e := events{c}
+	ch := &grabber.Chapter{Title: "Chapter 5", Number: 5}
+
+	e.FilenameFailed(ch, errors.New("bad"))
+	e.Packed(ch, "", errors.New("disk full"))
+	e.DownloadFailed(ch, errors.New("boom"))
+
+	failures := c.stats.failures
+	if len(failures) != 3 {
+		t.Fatalf("failures = %+v, want 3", failures)
+	}
+	want := []struct {
+		reason string
+		key    string
+	}{
+		{"filename: bad", "job.reason.filename"},
+		{"packing: disk full", "job.reason.packing"},
+		{"boom", ""},
+	}
+	for i, w := range want {
+		f := failures[i]
+		if f.Label != c.releaseLabel(ch) || f.Reason != w.reason {
+			t.Errorf("failure %d = %+v, want release %q reason %q", i, f, c.releaseLabel(ch), w.reason)
+		}
+		if (f.ReasonMsg == nil) != (w.key == "") || (w.key != "" && f.ReasonMsg.Key != w.key) {
+			t.Errorf("failure %d message = %+v, want key %q", i, f.ReasonMsg, w.key)
+		}
 	}
 }

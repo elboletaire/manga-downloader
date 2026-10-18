@@ -48,6 +48,18 @@ func TestBrowserVisibleAutoForOtherSites(t *testing.T) {
 	}
 }
 
+// the alert names the browser only when it's known, and its English is the browser package's
+func TestAlertMessageNamesTheBrowser(t *testing.T) {
+	unnamed := browser.Attention{Active: true, Host: "example.com"}
+	if m := alertMessage(unnamed); m.Key != "browser.alert" || m.Text != unnamed.Message() {
+		t.Errorf("unnamed alert = %+v, want %q", m, unnamed.Message())
+	}
+	named := browser.Attention{Active: true, Host: "example.com", Browser: "Brave"}
+	if m := alertMessage(named); m.Key != "browser.alertNamed" || m.Text != named.Message() {
+		t.Errorf("named alert = %+v, want %q", m, named.Message())
+	}
+}
+
 func TestBrowserAlertLifecycle(t *testing.T) {
 	a, sink, _ := newTestApp(t, 2)
 	c := a.ctrl
@@ -64,6 +76,9 @@ func TestBrowserAlertLifecycle(t *testing.T) {
 	c.onAttention(att)
 	if got := a.State().BrowserAlert; got != att.Message() {
 		t.Fatalf("alert = %q, want %q", got, att.Message())
+	}
+	if m := a.State().BrowserAlertMsg; m == nil || m.Key != "browser.alertNamed" || m.Text != att.Message() {
+		t.Errorf("alert message = %+v, want browser.alertNamed", m)
 	}
 	log := c.Log()
 	if last := log[len(log)-1]; last.Level != LogWarn || last.Text != att.Message() {

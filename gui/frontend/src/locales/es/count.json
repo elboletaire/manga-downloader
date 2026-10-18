@@ -1,0 +1,18 @@
+{
+  "chapter_one": "{{count}} capítulo",
+  "chapter_other": "{{count}} capítulos",
+  "volume_one": "{{count}} volumen",
+  "volume_other": "{{count}} volúmenes",
+  "volumeFile_one": "{{count}} archivo de volumen",
+  "volumeFile_other": "{{count}} archivos de volumen",
+  "failed_one": "{{count}} fallido",
+  "failed_other": "{{count}} fallidos",
+  "skipped_one": "{{count}} omitido",
+  "skipped_other": "{{count}} omitidos",
+  "saved_one": "{{count}} guardado",
+  "saved_other": "{{count}} guardados",
+  "error_one": "{{count}} error",
+  "error_other": "{{count}} errores",
+  "warning_one": "{{count}} advertencia",
+  "warning_other": "{{count}} advertencias"
+}

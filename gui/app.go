@@ -34,8 +34,8 @@ const logTail = 500
 type sink interface {
 	// Emit sends an event to the frontend. It must not block for long.
 	Emit(event string, data any)
-	// ChooseDirectory shows the native folder picker, "" when cancelled
-	ChooseDirectory(defaultDir string) (string, error)
+	// ChooseDirectory shows the native folder picker titled title, "" when cancelled
+	ChooseDirectory(title, defaultDir string) (string, error)
 	// Close makes every later Emit a no-op; the window is going away
 	Close()
 }
@@ -57,6 +57,8 @@ type App struct {
 	// update check
 	tag     string
 	version string
+	// releaseAPI is where the update check asks for the latest release; a test seam
+	releaseAPI string
 	// updateCtx bounds the update check; cancelUpdate ends it at shutdown
 	updateCtx    context.Context
 	cancelUpdate context.CancelFunc
@@ -90,6 +92,7 @@ func newApp(ctrl *Controller, s sink, prefsPath, tag, version string) *App {
 		prefsPath:    prefsPath,
 		tag:          tag,
 		version:      version,
+		releaseAPI:   latestReleaseAPI,
 		updateCtx:    updateCtx,
 		cancelUpdate: cancelUpdate,
 		installed:    installedCopy(),
@@ -159,11 +162,17 @@ func (a *App) startup(ctx context.Context, rt *wailsRuntime) {
 	a.quit = func() { wruntime.Quit(ctx) }
 	go sweepUpdateDirs(os.TempDir())
 	a.launch()
-	// release builds only: a dev build has no release to compare with. The
-	// check runs behind the window, which is up already.
-	if a.tag != "" {
-		go a.ctrl.CheckUpdate(a.updateCtx, a.tag, latestReleaseAPI, updateClient)
+	// the check runs behind the window, which is up already
+	a.checkUpdates()
+}
+
+// checkUpdates starts the update check in the background, unless one is running, when
+// shouldCheckUpdates allows it
+func (a *App) checkUpdates() {
+	if !shouldCheckUpdates(a.tag, a.ctrl.Prefs()) || !a.ctrl.claimUpdateCheck() {
+		return
 	}
+	go a.ctrl.CheckUpdate(a.updateCtx, a.tag, a.releaseAPI, updateClient)
 }
 
 // shutdown stops the pushes before the window goes away, then cancels any run
@@ -180,13 +189,14 @@ func (a *App) shutdown(context.Context) {
 // State is everything the window shows except the chapter list, the
 // selection and the log, which have their own calls and events
 type State struct {
-	URL           string `json:"url"`
-	Loading       bool   `json:"loading"`
-	Loaded        bool   `json:"loaded"`
-	LoadError     string `json:"loadError"`
-	Title         string `json:"title"`
-	ChapterCount  int    `json:"chapterCount"`
-	HasDuplicates bool   `json:"hasDuplicates"`
+	URL           string   `json:"url"`
+	Loading       bool     `json:"loading"`
+	Loaded        bool     `json:"loaded"`
+	LoadError     string   `json:"loadError"`
+	LoadErrorMsg  *Message `json:"loadErrorMsg,omitempty"`
+	Title         string   `json:"title"`
+	ChapterCount  int      `json:"chapterCount"`
+	HasDuplicates bool     `json:"hasDuplicates"`
 	// HasGroupDuplicates is set when the list repeats a chapter number in one
 	// language with the groups telling the copies apart (see ChapterDTO.Group)
 	HasGroupDuplicates bool `json:"hasGroupDuplicates"`
@@ -202,6 +212,8 @@ type State struct {
 	Jobs            []JobDTO    `json:"jobs"`
 	Summary         *SummaryDTO `json:"summary"`
 	Options         OptionsDTO  `json:"options"`
+	// Prefs are the app-only preferences, which aren't options (see PrefsDTO)
+	Prefs PrefsDTO `json:"prefs"`
 	// Volumes is the Volumes box, used when the options pack as volumes
 	Volumes VolumesDTO `json:"volumes"`
 	// Languages and Scanlators are what the two filter selectors offer, null
@@ -219,6 +231,8 @@ type State struct {
 	// BrowserAlert is the message of a browser window waiting for the user,
 	// "" when none is
 	BrowserAlert string `json:"browserAlert"`
+	// BrowserAlertMsg is BrowserAlert as a message, when there's an alert
+	BrowserAlertMsg *Message `json:"browserAlertMsg,omitempty"`
 	// FilenameTemplateDefault is the template a blank option stands for, and
 	// FilenameTemplateWarning what is wrong with the current one, "" when nothing
 	FilenameTemplateDefault string `json:"filenameTemplateDefault"`
@@ -262,20 +276,32 @@ type RunDTO struct {
 // JobDTO is the progress of one chapter (or of the whole bundle)
 type JobDTO struct {
 	Title string `json:"title"`
+	// TitleMsg, ReasonMsg and StatusMsg are the texts the GUI wrote, as
+	// messages for the window; Title, Reason and Status stay in English
+	TitleMsg *Message `json:"titleMsg,omitempty"`
 	// Tags is the release's language and group, shown apart from the title
 	Tags   string  `json:"tags"`
 	Number float64 `json:"number"`
 	// Total and Done count pages: each page is downloaded and then archived,
 	// so Total is twice the page count. A volume's row, whose pages aren't
 	// known until it's packed, counts its progress out of a fixed Total.
-	Total  int64  `json:"total"`
-	Done   int64  `json:"done"`
-	State  string `json:"state"`
-	Reason string `json:"reason"`
+	Total     int64    `json:"total"`
+	Done      int64    `json:"done"`
+	State     string   `json:"state"`
+	Reason    string   `json:"reason"`
+	ReasonMsg *Message `json:"reasonMsg,omitempty"`
 	// Status is the bundle's or volume's current phase; empty for single chapters
-	Status string `json:"status"`
+	Status    string   `json:"status"`
+	StatusMsg *Message `json:"statusMsg,omitempty"`
 	// Volume is set on the row of a volume
 	Volume bool `json:"volume"`
+}
+
+// FailureDTO is a line of the run summary's failures
+type FailureDTO struct {
+	Label     string   `json:"label"`
+	Reason    string   `json:"reason"`
+	ReasonMsg *Message `json:"reasonMsg,omitempty"`
 }
 
 // SummaryDTO is the outcome of a finished run
@@ -285,13 +311,15 @@ type SummaryDTO struct {
 	Saved     int    `json:"saved"`
 	Volumes   int    `json:"volumes"`
 	// Parts is set when the volume files are chapters with their parts merged
-	Parts    bool     `json:"parts"`
-	Bundled  bool     `json:"bundled"`
-	Bundle   string   `json:"bundle"`
-	Skipped  int      `json:"skipped"`
-	Failures []string `json:"failures"`
+	Parts    bool         `json:"parts"`
+	Bundled  bool         `json:"bundled"`
+	Bundle   string       `json:"bundle"`
+	Skipped  int          `json:"skipped"`
+	Failures []FailureDTO `json:"failures"`
 	// Error is set when a bundle couldn't be written
 	Error string `json:"error"`
+	// ErrorMsg is Error as a message, when the window translates it
+	ErrorMsg *Message `json:"errorMsg,omitempty"`
 }
 
 // ChapterDTO is one row of the chapter list. Index is the position in the
@@ -318,10 +346,12 @@ type ChapterDTO struct {
 	Unnumbered bool `json:"unnumbered,omitempty"`
 }
 
-// LogDTO is one line of the log
+// LogDTO is one line of the log. Msg is set when the window translates the
+// line; Text stays the English text (for copying the log).
 type LogDTO struct {
-	Level string `json:"level"`
-	Text  string `json:"text"`
+	Level string   `json:"level"`
+	Text  string   `json:"text"`
+	Msg   *Message `json:"msg,omitempty"`
 }
 
 // State returns the window's state
@@ -343,12 +373,12 @@ func (a *App) State() State {
 		Jobs:               []JobDTO{},
 		Summary:            summaryDTO(c.Summary()),
 		Options:            optionsOf(c.Settings()),
+		Prefs:              c.Prefs(),
 		Version:            a.version,
 		ReleaseURL:         releaseURL(a.tag),
 		Update:             updateDTO(c.Update(), a.installed),
 
 		BrowserVisibleAuto: c.BrowserVisibleAuto(),
-		BrowserAlert:       c.BrowserAlert(),
 
 		FilenameTemplateDefault: packer.FilenameTemplateDefault,
 	}
@@ -362,19 +392,25 @@ func (a *App) State() State {
 	language, scanlator := c.Filters()
 	st.Languages, st.Scanlators = filterDTO(language), filterDTO(scanlator)
 	if err := c.LoadError(); err != nil {
-		st.LoadError = loadMessage(err)
+		st.LoadError, st.LoadErrorMsg = loadMessage(err)
+	}
+	if alert := c.BrowserAlert(); alert != nil {
+		st.BrowserAlert, st.BrowserAlertMsg = alert.Text, alert
 	}
 	for _, j := range c.Jobs() {
 		st.Jobs = append(st.Jobs, JobDTO{
-			Title:  j.Title,
-			Tags:   j.Tags,
-			Number: j.Number,
-			Total:  j.Total,
-			Done:   j.Done,
-			State:  jobStateName(j.State),
-			Reason: j.Reason,
-			Status: j.Status,
-			Volume: j.Volume,
+			Title:     j.Title,
+			TitleMsg:  j.TitleMsg,
+			Tags:      j.Tags,
+			Number:    j.Number,
+			Total:     j.Total,
+			Done:      j.Done,
+			State:     jobStateName(j.State),
+			Reason:    j.Reason,
+			ReasonMsg: j.ReasonMsg,
+			Status:    j.Status,
+			StatusMsg: j.StatusMsg,
+			Volume:    j.Volume,
 		})
 	}
 
@@ -418,7 +454,7 @@ func (a *App) Log() []LogDTO {
 	}
 	out := make([]LogDTO, 0, len(lines))
 	for _, l := range lines {
-		out = append(out, LogDTO{Level: logLevelName(l.Level), Text: l.Text})
+		out = append(out, LogDTO{Level: logLevelName(l.Level), Text: l.Text, Msg: l.Msg})
 	}
 
 	return out
@@ -440,7 +476,7 @@ func (a *App) Clear() error {
 func (a *App) Load(url string) error {
 	url = strings.TrimSpace(url)
 	if url == "" {
-		return errors.New("enter the URL of a series first")
+		return uiErr("errors.enterURL", nil, nil)
 	}
 	if err := a.ctrl.BeginLoad(url); err != nil {
 		return err
@@ -455,7 +491,7 @@ func (a *App) Load(url string) error {
 func (a *App) SetOptionsAndLoad(o OptionsDTO, url string) error {
 	url = strings.TrimSpace(url)
 	if url == "" {
-		return errors.New("enter the URL of a series first")
+		return uiErr("errors.enterURL", nil, nil)
 	}
 	if err := a.ctrl.ConfigureLoad(func(s *grabber.Settings) { applyOptions(s, o) }, url); err != nil {
 		return err
@@ -474,7 +510,7 @@ func (a *App) finishLoad(url string) {
 		// and must not leave the controls locked behind a load that never ends
 		defer func() {
 			if r := recover(); r != nil {
-				a.ctrl.abortLoad(fmt.Errorf("the site's parser failed: %v", r))
+				a.ctrl.abortLoad(uiErr("errors.parserFailed", map[string]any{"reason": fmt.Sprint(r)}, nil))
 			}
 			a.sink.Emit("chapters", a.Chapters())
 		}()
@@ -535,7 +571,35 @@ func (a *App) SetOptions(o OptionsDTO) error {
 	return nil
 }
 
-// save writes the current options to gui.json. A failure is logged rather than
+// SetUILanguage sets the window's language: "" follows the system, else en, es
+// or ca. It's never refused while busy, and is saved for the next run.
+func (a *App) SetUILanguage(lang string) error {
+	if !validUILanguage(lang) {
+		return uiErr("errors.unknownLanguage", map[string]any{"language": lang}, nil)
+	}
+	a.ctrl.SetPrefs(func(p *PrefsDTO) { p.UILanguage = lang })
+	a.save()
+
+	return nil
+}
+
+// SetCheckUpdates turns the update check at startup on or off. Turning it off
+// forgets the update found; turning it on checks now, unless a check is still
+// running. It's never refused while busy.
+func (a *App) SetCheckUpdates(on bool) error {
+	a.ctrl.SetPrefs(func(p *PrefsDTO) { p.CheckUpdates = on })
+	if on {
+		a.checkUpdates()
+	} else {
+		a.ctrl.ClearUpdate()
+	}
+	a.save()
+
+	return nil
+}
+
+// save writes the current options and preferences to gui.json. Both go in every
+// write, so one never erases the other. A failure is logged rather than
 // returned: the options still apply for this run.
 func (a *App) save() {
 	if a.prefsPath == "" {
@@ -543,20 +607,20 @@ func (a *App) save() {
 	}
 	a.saveMu.Lock()
 	defer a.saveMu.Unlock()
-	if err := saveOptions(a.prefsPath, optionsOf(a.ctrl.Settings())); err != nil {
-		a.ctrl.addLog(LogWarn, "could not save the options: "+err.Error())
+	if err := saveOptions(a.prefsPath, optionsOf(a.ctrl.Settings()), a.ctrl.Prefs()); err != nil {
+		a.ctrl.addMsg(LogWarn, msg("log.saveFailed", map[string]any{"reason": err.Error()}))
 	}
 }
 
-// ChooseFolder asks for the output folder with the native picker, starting at
-// the current one. A picked folder becomes the output folder; "" means the
+// ChooseFolder asks for the output folder with the native picker, titled title
+// and starting at the current one. A picked folder becomes the output folder; "" means the
 // picker was cancelled.
-func (a *App) ChooseFolder() (string, error) {
+func (a *App) ChooseFolder(title string) (string, error) {
 	if a.ctrl.Loading() || a.ctrl.Running() {
 		return "", errBusy
 	}
 	current := optionsOf(a.ctrl.Settings()).OutputDir
-	dir, err := a.sink.ChooseDirectory(existingDir(current))
+	dir, err := a.sink.ChooseDirectory(title, existingDir(current))
 	if err != nil || dir == "" {
 		return "", err
 	}
@@ -596,7 +660,7 @@ func (a *App) OpenFolder() error {
 		return err
 	}
 	if fi, err := os.Stat(abs); err != nil || !fi.IsDir() {
-		return fmt.Errorf("the folder %s doesn't exist", abs)
+		return uiErr("errors.folderMissing", map[string]any{"path": abs}, nil)
 	}
 
 	return openInFileManager(abs)
@@ -650,28 +714,28 @@ func (a *App) DismissBrowserAlert() {
 func (a *App) Update() error {
 	u := a.ctrl.Update()
 	if !a.installed || u == nil || u.Installer == nil || u.Sums == nil {
-		return errors.New("one-click update isn't available for this copy")
+		return uiErr("errors.updateUnavailable", nil, nil)
 	}
 	if !a.updating.CompareAndSwap(false, true) {
-		return errors.New("the update is already in progress")
+		return uiErr("errors.updateBusy", nil, nil)
 	}
 	defer a.updating.Store(false)
 	if a.ctrl.Running() {
-		return a.failUpdate(errors.New("wait for the download to finish, or cancel it, before updating"))
+		return a.failUpdate(uiErr("errors.updateWaitDownload", nil, nil))
 	}
 
-	a.ctrl.addLog(LogInfo, "Downloading the update "+u.Latest+"...")
+	a.ctrl.addMsg(LogInfo, msg("log.downloadingUpdate", map[string]any{"version": u.Latest}))
 	path, err := a.fetch(a.updateCtx, u.Installer, u.Sums)
 	if err != nil {
-		return a.failUpdate(fmt.Errorf("couldn't download the update: %w", err))
+		return a.failUpdate(uiErr("errors.updateDownload", map[string]any{"reason": err.Error()}, err))
 	}
 	if a.ctrl.Running() {
 		_ = removeUpdateDir(filepath.Dir(path))
-		return a.failUpdate(errors.New("a download started meanwhile: finish or cancel it, then update again"))
+		return a.failUpdate(uiErr("errors.updateMeanwhile", nil, nil))
 	}
 	if err := a.install(path); errors.Is(err, errNotRestarted) {
 		// installed already, so the files stay; only the restart is left to the user
-		err = a.failUpdate(fmt.Errorf("Updated to %s, but couldn't restart; open Manga Downloader again", u.Latest))
+		err = a.failUpdate(uiErr("errors.updateRestart", map[string]any{"version": u.Latest}, nil))
 		if a.quit != nil {
 			a.quit()
 		}
@@ -679,7 +743,7 @@ func (a *App) Update() error {
 		return err
 	} else if err != nil {
 		_ = removeUpdateDir(filepath.Dir(path))
-		return a.failUpdate(fmt.Errorf("couldn't start the installer: %w", err))
+		return a.failUpdate(uiErr("errors.updateInstaller", map[string]any{"reason": err.Error()}, err))
 	}
 	if a.quit != nil {
 		a.quit()
@@ -688,8 +752,14 @@ func (a *App) Update() error {
 	return nil
 }
 
+// failUpdate logs an update error in the window's language and returns it
 func (a *App) failUpdate(err error) error {
-	a.ctrl.addLog(LogError, err.Error())
+	var ue *uiError
+	if errors.As(err, &ue) {
+		a.ctrl.addMsg(LogError, ue.Message)
+	} else {
+		a.ctrl.addLog(LogError, err.Error())
+	}
 
 	return err
 }
@@ -734,34 +804,41 @@ func (r *wailsRuntime) Emit(event string, data any) {
 }
 
 // ChooseDirectory implements sink
-func (r *wailsRuntime) ChooseDirectory(defaultDir string) (string, error) {
+func (r *wailsRuntime) ChooseDirectory(title, defaultDir string) (string, error) {
 	ctx := r.context()
 	if ctx == nil {
-		return "", errors.New("the window isn't ready yet")
+		return "", uiErr("errors.notReady", nil, nil)
 	}
 
 	return wruntime.OpenDirectoryDialog(ctx, wruntime.OpenDialogOptions{
-		Title:                "Choose the output folder",
+		Title:                title,
 		DefaultDirectory:     defaultDir,
 		CanCreateDirectories: true,
 	})
 }
 
-// loadMessage turns a Load error into the line shown under the URL
-func loadMessage(err error) string {
+// loadMessage turns a Load error into the line shown under the URL: its text,
+// and its message when the GUI wrote the error
+func loadMessage(err error) (string, *Message) {
+	var ue *uiError
 	var titleErr *core.TitleError
 	var chaptersErr *core.ChaptersError
 	var noChapters *core.NoChaptersError
 	switch {
+	case errors.As(err, &ue):
+		m := ue.Message
+		return m.Text, &m
 	case errors.As(err, &titleErr):
-		return "Couldn't fetch the series title: " + titleErr.Err.Error()
+		m := msg("errors.loadTitle", map[string]any{"reason": titleErr.Err.Error()})
+		return m.Text, &m
 	case errors.As(err, &chaptersErr):
-		return "Couldn't fetch the chapter list: " + chaptersErr.Error()
+		m := msg("errors.loadChapters", map[string]any{"reason": chaptersErr.Error()})
+		return m.Text, &m
 	case errors.As(err, &noChapters):
-		return noChapters.Error()
+		return noChapters.Error(), nil
 	}
 
-	return err.Error()
+	return err.Error(), nil
 }
 
 // updateDTO converts an available update, nil when there's none
@@ -799,10 +876,14 @@ func summaryDTO(s *Summary) *SummaryDTO {
 		Bundled:   s.Bundled,
 		Bundle:    s.Bundle,
 		Skipped:   s.Skipped,
-		Failures:  append([]string{}, s.Failures...),
+		Failures:  []FailureDTO{},
+	}
+	for _, f := range s.Failures {
+		out.Failures = append(out.Failures, FailureDTO{Label: f.Label, Reason: f.Reason, ReasonMsg: f.ReasonMsg})
 	}
 	if s.Err != nil {
 		out.Error = s.Err.Error()
+		out.ErrorMsg = messageOf(s.Err)
 	}
 
 	return out

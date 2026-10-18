@@ -1,5 +1,5 @@
 diff --git a/gui/main.go b/gui/main.go
-index de7c7eb..bae143c 100644
+index a58fcc0..568149c 100644
 --- a/gui/main.go
 +++ b/gui/main.go
 @@ -17,6 +17,9 @@ import (
@@ -34,16 +34,16 @@ index de7c7eb..bae143c 100644
  		AssetServer:      &assetserver.Options{Assets: assets},
  		OnStartup: func(ctx context.Context) {
  			app.startup(ctx, rt)
-@@ -67,7 +75,7 @@ func main() {
- 		OnShutdown: app.shutdown,
- 		Bind:       []interface{}{app},
- 		Linux:      &linux.Options{Icon: appIcon},
--		Mac:        &mac.Options{}, // without it Wails disables the zoom button
-+		Mac:        shotMac(), // without it Wails disables the zoom button
+@@ -68,7 +76,7 @@ func main() {
+ 		ErrorFormatter: func(err error) any { return windowError(err) },
+ 		Bind:           []interface{}{app},
+ 		Linux:          &linux.Options{Icon: appIcon},
+-		Mac:            &mac.Options{}, // without it Wails disables the zoom button
++		Mac:            shotMac(), // without it Wails disables the zoom button
  	})
  	// OnShutdown already closed it; this covers a Run that failed or returned
  	// without calling it
-@@ -106,3 +114,30 @@ func versionString() string {
+@@ -109,3 +117,30 @@ func versionString() string {
  
  	return Version
  }

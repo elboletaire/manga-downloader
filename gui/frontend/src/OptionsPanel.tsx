@@ -3,22 +3,36 @@
 // controls can't overwrite each other's edits.
 
 import { browserSwitchOf } from './browserVisible';
-import { AVIF_EPUB_HINT, avifSwitchOf, convertFlagsOf, convertValueOf } from './convertImages';
+import { avifEpubHint, avifSwitchOf, convertFlagsOf, convertValueOf } from './convertImages';
 import { Check, Segmented, Switch, TextField } from './fields';
 import { errorMessage } from './format';
+import type { T as Translator } from './i18n';
+import { T, useI18n } from './i18n/react';
 import { FolderIcon, RefreshIcon } from './icons';
 import type { Options, PackAs, State } from './types';
 
-export const PACK_HINTS: Record<PackAs, string> = {
-  chapters: 'One file per chapter.',
-  parts: 'One file per chapter, with its parts merged into it. Chapters without parts get a file each as usual.',
-  volumes: 'One file per volume, set above the chapter list. Chapters outside every volume get a file each.',
-  bundle: 'The selected chapters in a single file.',
-};
+export function packHints(t: Translator): Record<PackAs, string> {
+  return {
+    chapters: t('options.packHint.chapters'),
+    parts: t('options.packHint.parts'),
+    volumes: t('options.packHint.volumes'),
+    bundle: t('options.packHint.bundle'),
+  };
+}
 
-/** The volumes hint when no series is loaded: the box isn't visible yet */
-export const VOLUMES_HINT_NOT_LOADED =
-  'One file per volume, set above the chapter list (when loaded). Chapters outside every volume get a file each.';
+/** The template's tokens, passed as values so they stay as written */
+const TEMPLATE_TOKENS = {
+  series: '{{.Series}}',
+  number: '{{.Number}}',
+  title: '{{.Title}}',
+  siteTitle: '{{.SiteTitle}}',
+  group: '{{.Group}}',
+  volume: '{{.Volume}}',
+  version: '{{.Version}}',
+  padded: '{{pad .Number 4}}',
+  volumeName: 'Series Vol. 01',
+  volumeGroupName: 'Series Vol. 01 [Group]',
+};
 
 interface Props {
   state: State;
@@ -28,11 +42,13 @@ interface Props {
 }
 
 export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Props) {
+  const { t } = useI18n();
   const o = state.options;
   const locked = state.loading || state.running;
   const flags = convertFlagsOf(o.convertImages);
   const avif = avifSwitchOf(flags, o.format);
-  const browser = browserSwitchOf(state);
+  const browser = browserSwitchOf(state, t);
+  const hints = packHints(t);
   const set = (patch: Partial<Options>) => {
     onOptions(patch).catch(() => undefined);
   };
@@ -41,43 +57,43 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
     <div className="options">
       {locked && (
         <p className="locked-note" role="status">
-          {state.running ? 'Options are locked while a download runs.' : 'Options are locked while the series loads.'}
+          {state.running ? t('options.locked.running') : t('options.locked.loading')}
         </p>
       )}
       <section className="opt-group" aria-labelledby="opt-save">
-        <h3 id="opt-save">Save</h3>
+        <h3 id="opt-save">{t('options.save.title')}</h3>
         <div className="field">
           <span className="label" id="folder-label">
-            Folder
+            {t('options.save.folder')}
           </span>
           <div className="folder">
             <span className="folder-path mono" title={o.outputDir} aria-labelledby="folder-label">
               <FolderIcon size={14} />
               {/* bdi + rtl keeps the end of a long path, the part that tells folders apart */}
               <span className="folder-text">
-                <bdi>{o.outputDir || 'Not set'}</bdi>
+                <bdi>{o.outputDir || t('options.save.notSet')}</bdi>
               </span>
             </span>
             <button
               type="button"
               className="btn small"
               disabled={locked}
-              onClick={() => onChooseFolder().catch((e) => onError(errorMessage(e)))}
+              onClick={() => onChooseFolder().catch((e) => onError(errorMessage(e, t)))}
             >
-              Browse…
+              {t('options.save.browse')}
             </button>
           </div>
         </div>
 
         <Segmented<Options['format']>
-          label="Format"
+          label={t('options.format.label')}
           value={o.format}
           disabled={locked}
           options={[
-            { value: 'cbz', label: 'CBZ' },
-            { value: 'cbr', label: 'CBR' },
-            { value: 'raw', label: 'Folder' },
-            { value: 'epub', label: 'EPUB' },
+            { value: 'cbz', label: t('options.format.cbz') },
+            { value: 'cbr', label: t('options.format.cbr') },
+            { value: 'raw', label: t('options.format.raw') },
+            { value: 'epub', label: t('options.format.epub') },
           ]}
           onChange={(format) => set({ format })}
         />
@@ -85,67 +101,65 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
         {o.format === 'epub' && (
           <div className="field-stack">
             <Segmented<Options['readingDirection']>
-              label="Reading direction"
+              label={t('options.readingDirection.label')}
               value={o.readingDirection}
               disabled={locked}
               options={[
-                { value: 'rtl', label: 'Right to left' },
-                { value: 'ltr', label: 'Left to right' },
+                { value: 'rtl', label: t('options.readingDirection.rtl') },
+                { value: 'ltr', label: t('options.readingDirection.ltr') },
               ]}
               onChange={(readingDirection) => set({ readingDirection })}
             />
-            <p className="hint">Which way the pages turn: manga reads right to left, webtoons and western comics left to right.</p>
+            <p className="hint">{t('options.readingDirection.hint')}</p>
           </div>
         )}
 
         <div className="field-stack">
           <Segmented<PackAs>
-            label="Pack as"
+            label={t('options.packAs.label')}
             value={o.packAs}
             disabled={locked}
             options={[
-              { value: 'chapters', label: 'Chapters' },
-              { value: 'parts', label: 'Merged' },
-              { value: 'volumes', label: 'Volumes' },
-              { value: 'bundle', label: 'One file' },
+              { value: 'chapters', label: t('options.packAs.chapters') },
+              { value: 'parts', label: t('options.packAs.parts') },
+              { value: 'volumes', label: t('options.packAs.volumes') },
+              { value: 'bundle', label: t('options.packAs.bundle') },
             ]}
             onChange={(packAs) => set({ packAs })}
           />
           <p className="hint">
-            {o.packAs === 'volumes' && !state.loaded ? VOLUMES_HINT_NOT_LOADED : PACK_HINTS[o.packAs]}
+            {o.packAs === 'volumes' && !state.loaded ? t('options.packHint.volumesNotLoaded') : hints[o.packAs]}
           </p>
         </div>
       </section>
 
       <section className="opt-group" aria-labelledby="opt-pages">
-        <h3 id="opt-pages">Pages</h3>
+        <h3 id="opt-pages">{t('options.pages.title')}</h3>
         <fieldset className="field" disabled={locked}>
-          <legend>Convert to JPEG</legend>
+          <legend>{t('options.pages.convert')}</legend>
           <div className="check-row">
             <Check
-              label="AVIF"
+              label={t('options.pages.avif')}
               checked={avif.checked}
               disabled={avif.disabled}
               onChange={(checked) => set({ convertImages: convertValueOf({ ...flags, avif: checked }) })}
             />
             <Check
-              label="WebP"
+              label={t('options.pages.webp')}
               checked={flags.webp}
               onChange={(webp) => set({ convertImages: convertValueOf({ ...flags, webp }) })}
             />
           </div>
-          <p className="hint">
-            {o.format === 'epub' ? AVIF_EPUB_HINT : "Most e-readers can't open AVIF; WebP is unreliable on e-ink."}
-          </p>
+          <p className="hint">{o.format === 'epub' ? avifEpubHint(t) : t('options.pages.convertHint')}</p>
         </fieldset>
 
         <TextField
-          label="Skip pages"
+          label={t('options.skipPages.label')}
           value={o.skipPages}
-          placeholder="e.g. 2,-1"
+          placeholder={t('options.skipPages.placeholder', { example: '2,-1' })}
           mono
           disabled={locked}
-          hint="Positions dropped from every chapter: 2 is the second page, -1 the last."
+          hint={t('options.skipPages.hint', { first: '2', last: '-1' })}
           onCommit={(skipPages) => onOptions({ skipPages })}
           onError={onError}
         />
@@ -153,30 +167,23 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
 
       <details className="opt-group advanced">
         <summary>
-          <h3>Advanced</h3>
+          <h3>{t('options.advanced.title')}</h3>
         </summary>
         <div className="opt-group-body">
           <TextField
-            label="Filename template"
+            label={t('options.template.label')}
             value={o.filenameTemplate}
             placeholder={state.filenameTemplateDefault}
             mono
             disabled={locked}
-            hint={
-              <>
-                Uses <code>{'{{.Series}}'}</code>, <code>{'{{.Number}}'}</code>, <code>{'{{.Title}}'}</code>,{' '}
-                <code>{'{{.SiteTitle}}'}</code>, <code>{'{{.Group}}'}</code>, <code>{'{{.Volume}}'}</code> and <code>{'{{.Version}}'}</code>;{' '}
-                <code>{'{{pad .Number 4}}'}</code> zero-pads a number. Left as is, volumes are named{' '}
-                <code>Series Vol. 01</code>, or <code>Series Vol. 01 [Group]</code> when their chapters share a group.
-              </>
-            }
+            hint={<T k="options.template.hint" values={TEMPLATE_TOKENS} />}
             action={
               o.filenameTemplate !== state.filenameTemplateDefault && (
                 <button
                   type="button"
                   className="btn ghost small icon-only"
-                  aria-label="Use default template"
-                  title="Use default template"
+                  aria-label={t('options.template.reset')}
+                  title={t('options.template.reset')}
                   disabled={locked}
                   onClick={() => set({ filenameTemplate: state.filenameTemplateDefault })}
                 >
@@ -193,7 +200,7 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
             </p>
           )}
           <Switch
-            label="Show the browser window"
+            label={t('options.browser.label')}
             description={browser.hint}
             checked={browser.checked}
             disabled={browser.disabled}

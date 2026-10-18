@@ -77,8 +77,9 @@ every browser the site cares about reads, so there are no PNG fallbacks.
 - `app-overview` is the full window (`02-loaded-{light,dark}.png`), at 1000 and
   1600 px wide: the hero.
 - `language-selector`, `chapter-list`, `volumes`, `parts` and `finished-run` are crops of the
-  2000 px originals in the repo's [`assets/screenshots/`](../assets/screenshots/),
-  at 600 and 1000 px wide.
+  2000 px lossless captures in `tools/screenshots/out/en/` (not committed; the
+  English README's WebPs in [`assets/screenshots/`](../assets/screenshots/) come from
+  the same captures), at 600 and 1000 px wide.
   They are cut to the part that matters, so they stay readable at the
   ~500 px they are shown at. `language-selector` keeps the window's rounded
   corners; the others are cut to the panel's own 1 px border box and radius
@@ -91,29 +92,37 @@ geometry is `WxH+X+Y` on the 2000x1390 original, with the window's top-left at
 (85,56), so `03-language-selector-*.png` crops to `740x960+85+56`, the
 left-hand part of the window with the Language dropdown open, stopping short of
 the range box. The
-panel crops start on the panel's border (`finished-run` at x=1259, the Activity
-panel's left edge, so no edge of the list shows in it):
+panel crops start on the panel's border (`finished-run` at x=1203, the Activity
+panel's left edge, so no edge of the list shows in it). The numbers assume the
+340 px sidebar at the 915 px capture width:
 
 | Crop                | Original                                | Geometry            |
 | ------------------- | --------------------------------------- | ------------------- |
 | `language-selector` | `03-language-selector-{light,dark}.png` | `740x960+85+56`     |
-| `chapter-list`      | `04-downloading-{light,dark}.png`       | `1118x787+117+405`  |
-| `volumes`           | `07-volumes-{light,dark}.png`           | `1118x787+117+405`  |
-| `parts`             | `12-parts-{light,dark}.png`             | `1118x787+117+405`  |
-| `finished-run`      | `05-done-{light,dark}.png`              | `624x787+1259+405`  |
+| `chapter-list`      | `04-downloading-{light,dark}.png`       | `1062x787+117+405`  |
+| `volumes`           | `07-volumes-{light,dark}.png`           | `1062x787+117+405`  |
+| `parts`             | `12-parts-{light,dark}.png`             | `1062x787+117+405`  |
+| `finished-run`      | `05-done-{light,dark}.png`              | `680x787+1203+405`  |
 
-To regenerate from the originals, run it with the repo's originals folder and an
-output folder, from `website/`:
+To regenerate from the originals, run it with the captures' folder (made by
+`tools/screenshots/capture-all.sh`, on macOS) and an output folder, from `website/`:
 
 ```bash
-build/crop-screenshots.sh ../assets/screenshots src/assets/screenshots
+build/crop-screenshots.sh ../tools/screenshots/out/en src/assets/screenshots
 ```
 
 The shadow widens each derivative beyond the crop plus its 56 px margin, so the
 `<img>` sizes in `index.html` come from the output, not from the geometry.
 
+Each translated app language has its own set in `src/assets/screenshots/<lang>/`
+(`es`, `ca`), made by `tools/screenshots/capture-all.sh --install` from
+`tools/screenshots/out/<lang>/`. The es and ca pages use a file from there when it
+exists, and the English one for any image that doesn't, so the site never shows
+a missing image. The crop geometry above assumes the panels sit where they do
+in English; a translated label that changes a panel's size needs its crop checked.
+
 The hero (`app-overview`) is not cropped. Its WebP derivatives come from
-`02-loaded-{light,dark}.png` with ImageMagick:
+`tools/screenshots/out/en/02-loaded-{light,dark}.png` with ImageMagick:
 
 ```bash
 magick IN.png -filter Lanczos -resize 1600x -strip -define webp:method=6 -quality 85 OUT-1600.webp

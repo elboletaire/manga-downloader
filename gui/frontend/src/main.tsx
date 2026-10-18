@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createWailsApi, type Api } from './api';
-import { App } from './App';
+import { Root } from './Root';
 import '@fontsource-variable/inter/wght.css';
 import './styles.css';
 
@@ -24,7 +24,7 @@ async function chooseApi(): Promise<Api> {
 function render(api: Api): void {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <App api={api} />
+      <Root api={api} />
     </StrictMode>,
   );
 }

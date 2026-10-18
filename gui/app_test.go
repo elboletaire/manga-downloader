@@ -5,7 +5,10 @@ package main
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -20,6 +23,7 @@ type fakeSink struct {
 	events []fakeEvent
 	pick   string
 	picked []string
+	titles []string
 }
 
 type fakeEvent struct {
@@ -35,10 +39,11 @@ func (f *fakeSink) Emit(event string, data any) {
 
 func (f *fakeSink) Close() {}
 
-func (f *fakeSink) ChooseDirectory(defaultDir string) (string, error) {
+func (f *fakeSink) ChooseDirectory(title, defaultDir string) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.picked = append(f.picked, defaultDir)
+	f.titles = append(f.titles, title)
 	return f.pick, nil
 }
 
@@ -142,9 +147,59 @@ func TestLoadMessageNamesTheFailingStep(t *testing.T) {
 		{errors.New("plain"), "plain"},
 	}
 	for _, c := range cases {
-		if got := loadMessage(c.err); got != c.want {
+		if got, _ := loadMessage(c.err); got != c.want {
 			t.Errorf("loadMessage(%T) = %q, want %q", c.err, got, c.want)
 		}
+	}
+}
+
+// a bundle's error is its summary's message, and a shared one keeps its key
+func TestSummaryErrorCarriesItsMessage(t *testing.T) {
+	s := summaryDTO(&Summary{Err: uiErr("errors.noChapterDownloaded", nil, nil)})
+	if s.ErrorMsg == nil || s.ErrorMsg.Key != "errors.noChapterDownloaded" || s.Error != "no chapter could be downloaded" {
+		t.Errorf("summary error = %q, message = %+v", s.Error, s.ErrorMsg)
+	}
+	if s := summaryDTO(&Summary{Err: errors.New("plain")}); s.ErrorMsg != nil {
+		t.Errorf("plain error got message %+v", s.ErrorMsg)
+	}
+}
+
+// a failure line's window wording travels as its message; a plain reason has none
+func TestSummaryFailuresCarryTheirMessage(t *testing.T) {
+	s := summaryDTO(&Summary{Failures: []Failure{
+		windowFailure("Chapter 5", msg("job.reason.packing", map[string]any{"reason": "disk full"})),
+		newFailure("Chapter 6", errors.New("boom")),
+	}})
+	packed, plain := s.Failures[0], s.Failures[1]
+	if packed.Label != "Chapter 5" || packed.Reason != "packing: disk full" || packed.ReasonMsg == nil ||
+		packed.ReasonMsg.Key != "job.reason.packing" {
+		t.Errorf("packing failure = %+v", packed)
+	}
+	if plain.Label != "Chapter 6" || plain.Reason != "boom" || plain.ReasonMsg != nil {
+		t.Errorf("plain failure = %+v", plain)
+	}
+	if empty := summaryDTO(&Summary{}); empty.Failures == nil {
+		t.Errorf("no failures sent as null, want an empty list")
+	}
+}
+
+// the load errors the window translates carry their key; the rest don't
+func TestLoadMessageCarriesItsKey(t *testing.T) {
+	cases := []struct {
+		err error
+		key string
+	}{
+		{&core.TitleError{Err: errors.New("boom")}, "errors.loadTitle"},
+		{&core.ChaptersError{Errs: []error{errors.New("boom")}}, "errors.loadChapters"},
+		{uiErr("errors.siteUnknown", nil, nil), "errors.siteUnknown"},
+	}
+	for _, c := range cases {
+		if _, m := loadMessage(c.err); m == nil || m.Key != c.key {
+			t.Errorf("loadMessage(%T) message = %+v, want key %q", c.err, m, c.key)
+		}
+	}
+	if _, m := loadMessage(errors.New("plain")); m != nil {
+		t.Errorf("a plain error got message %+v", m)
 	}
 }
 
@@ -263,6 +318,126 @@ func TestSetOptionsAppliesAndSaves(t *testing.T) {
 	}
 }
 
+// the prefs and the options share gui.json, so each setter must keep the other half
+func TestPrefSettersKeepEveryOption(t *testing.T) {
+	a, _, prefs := newTestApp(t, 1)
+	o := a.Options()
+	o.Format = "raw"
+	o.Language = "es"
+	o.ReadingDirection = "ltr"
+	if err := a.SetOptions(o); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.SetUILanguage("ca"); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.SetCheckUpdates(false); err != nil {
+		t.Fatal(err)
+	}
+	if got := a.Options(); got != o {
+		t.Errorf("options %+v after the pref setters, want %+v", got, o)
+	}
+	if got := loadPrefs(prefs); got != (PrefsDTO{UILanguage: "ca"}) {
+		t.Errorf("saved prefs %+v after the pref setters", got)
+	}
+
+	// and SetOptions keeps the prefs
+	o.Format = "epub"
+	if err := a.SetOptions(o); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadPrefs(prefs); got != (PrefsDTO{UILanguage: "ca"}) {
+		t.Errorf("saved prefs %+v after SetOptions", got)
+	}
+	saved := defaultSettings()
+	if err := loadOptions(prefs, saved); err != nil || optionsOf(*saved) != o {
+		t.Errorf("saved options %+v (%v) after SetOptions, want %+v", optionsOf(*saved), err, o)
+	}
+}
+
+func TestPrefSettersWorkWhileBusy(t *testing.T) {
+	a, _, prefs := newTestApp(t, 1)
+	if err := a.ctrl.BeginLoad("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	before := a.ctrl.Settings()
+	if err := a.SetUILanguage("es"); err != nil {
+		t.Errorf("SetUILanguage while loading = %v", err)
+	}
+	if err := a.SetCheckUpdates(false); err != nil {
+		t.Errorf("SetCheckUpdates while loading = %v", err)
+	}
+
+	if after := a.ctrl.Settings(); !reflect.DeepEqual(before, after) {
+		t.Errorf("the pref setters changed the settings:\n%+v\n%+v", before, after)
+	}
+	if st := a.State(); st.Prefs != (PrefsDTO{UILanguage: "es"}) {
+		t.Errorf("State().Prefs = %+v", st.Prefs)
+	}
+	if got := loadPrefs(prefs); got != (PrefsDTO{UILanguage: "es"}) {
+		t.Errorf("saved prefs %+v", got)
+	}
+}
+
+func TestTurningUpdatesOffClearsTheUpdate(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	a.ctrl.update = &Update{Latest: "v9.9.9"}
+	if err := a.SetCheckUpdates(false); err != nil {
+		t.Fatal(err)
+	}
+	if st := a.State(); st.Update != nil || st.Prefs.CheckUpdates {
+		t.Errorf("after turning updates off: update %+v, prefs %+v", st.Update, st.Prefs)
+	}
+}
+
+// a check still running when updates are turned off must not record its answer,
+// and turning them on again must check afresh
+func TestUpdateCheckFinishingAfterTurnOffIsDropped(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	gate := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-gate
+		_, _ = w.Write([]byte(`{"tag_name":"v1.13.0"}`))
+	}))
+	defer srv.Close()
+	a.tag, a.releaseAPI = "v1.12.0", srv.URL
+
+	if !a.ctrl.claimUpdateCheck() {
+		t.Fatal("no check was running yet")
+	}
+	done := make(chan struct{})
+	go func() {
+		a.ctrl.CheckUpdate(context.Background(), a.tag, a.releaseAPI, srv.Client())
+		close(done)
+	}()
+	if err := a.SetCheckUpdates(false); err != nil {
+		t.Fatal(err)
+	}
+	close(gate)
+	<-done
+	if u := a.ctrl.Update(); u != nil {
+		t.Fatalf("the answer of a check that ended after turning off was recorded: %+v", u)
+	}
+
+	if err := a.SetCheckUpdates(true); err != nil {
+		t.Fatal(err)
+	}
+	waitUntil(t, "the update check after turning updates on", func() bool { return a.State().Update != nil })
+	if got := a.State().Update.Latest; got != "v1.13.0" {
+		t.Errorf("update after turning updates on = %q", got)
+	}
+}
+
+func TestSetUILanguageRefusesAnUnknownLanguage(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	if err := a.SetUILanguage("fr"); err == nil {
+		t.Error("an unknown language was accepted")
+	}
+	if got := a.State().Prefs; got.UILanguage != "" {
+		t.Errorf("prefs %+v after a refused language", got)
+	}
+}
+
 func TestSetOptionsRefusedWhileBusy(t *testing.T) {
 	a, _, _ := newTestApp(t, 1)
 	if err := a.ctrl.BeginLoad("https://example.com/manga/test"); err != nil {
@@ -276,12 +451,15 @@ func TestSetOptionsRefusedWhileBusy(t *testing.T) {
 func TestChooseFolderSetsTheOutputFolder(t *testing.T) {
 	a, sink, prefs := newTestApp(t, 1)
 	sink.pick = t.TempDir()
-	got, err := a.ChooseFolder()
+	got, err := a.ChooseFolder("Choose the output folder")
 	if err != nil || got != sink.pick {
 		t.Fatalf("ChooseFolder = %q, %v", got, err)
 	}
 	if a.Options().OutputDir != sink.pick {
 		t.Errorf("output folder %q, want %q", a.Options().OutputDir, sink.pick)
+	}
+	if len(sink.titles) != 1 || sink.titles[0] != "Choose the output folder" {
+		t.Errorf("dialog titles = %q, want the one passed", sink.titles)
 	}
 	if loaded := defaultSettings(); loadOptions(prefs, loaded) != nil || loaded.OutputDir != sink.pick {
 		t.Errorf("the picked folder wasn't saved")
@@ -292,7 +470,7 @@ func TestChooseFolderCancelledKeepsTheFolder(t *testing.T) {
 	a, sink, _ := newTestApp(t, 1)
 	before := a.Options().OutputDir
 	sink.pick = ""
-	got, err := a.ChooseFolder()
+	got, err := a.ChooseFolder("Choose the output folder")
 	if err != nil || got != "" {
 		t.Fatalf("cancelled ChooseFolder = %q, %v", got, err)
 	}

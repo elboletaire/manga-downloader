@@ -15,20 +15,22 @@ Do it from a clean worktree off `origin/master`, at the commit the release will 
 
 | Asset | Source | Used in | Refresh |
 |---|---|---|---|
-| App screenshots, `assets/screenshots/{02..12}-*-{light,dark}.png` | `tools/screenshots/` | README | every release that changed the app's UI |
-| Website WebPs, `website/src/assets/screenshots/*.webp` | the PNGs above, cropped by `website/build/crop-screenshots.sh` | website | with the PNGs (`capture-all.sh --install` does it) |
+| App screenshots, `assets/screenshots/{02..13}-*-{light,dark}.webp` (English only, WebPs ~100-165 KB each) | `tools/screenshots/` (lossless PNGs in `out/`, not committed) | README | every release that changed the app's UI |
+| Website WebPs, `website/src/assets/screenshots/*.webp` and `{es,ca}/*.webp` (`SHOT_LANG=all`) | the lossless PNGs in `tools/screenshots/out/`, cropped by `website/build/crop-screenshots.sh` | website | with the screenshots (`capture-all.sh --install` does it) |
 | Terminal GIFs, `assets/demos/*.gif` (dark) and `*-light.gif` | `assets/demos/*.tape` and `*-light.tape` twins | README (`download`, `prompt`, `groups`, `bundle`, `volumes`), website (`download`, `bundle`, `volumes`, via raw GitHub URLs on `master`) | every release |
 | Brand rasters | `assets/brand/**.svg` | see "Brand" below | only when the brand changed |
 
 ## 1. App screenshots
 
-Prerequisites: Xcode command line tools (`swiftc`), `cliclick`, `pngquant`, ImageMagick (`magick`), python3, Node + pnpm and Wails' build needs (the app is built with `make build/gui`), and Accessibility and Screen Recording permissions for the terminal. The window must be frontmost and nothing may cover it while it runs; leave the Mac alone until it finishes. **The screen must be unlocked**: on a locked screen the app can't come to the front and the script stops with `couldn't bring pid … to the front`. That's why the shots go first, while the maintainer is at the Mac; the GIFs record headless and can run unattended afterwards.
+Prerequisites: Xcode command line tools (`swiftc`), `cliclick`, ImageMagick (`magick`), python3, Node + pnpm and Wails' build needs (the app is built with `make build/gui`), and Accessibility and Screen Recording permissions for the terminal. The window must be frontmost and nothing may cover it while it runs; leave the Mac alone until it finishes. **The screen must be unlocked**: on a locked screen the app can't come to the front and the script stops with `couldn't bring pid … to the front`. That's why the shots go first, while the maintainer is at the Mac; the GIFs record headless and can run unattended afterwards.
 
 ```bash
-tools/screenshots/capture-all.sh --install
+SHOT_LANG=all tools/screenshots/capture-all.sh --install
 ```
 
-It builds the app with `capture.patch` applied (and reverts it, whatever happens) and `VITE_MOCK=1`, so the mock scenarios in `gui/frontend/src/mock.ts` are used and no site is involved. It then captures the 12 shots in light and dark (the window's own appearance, not the system's), crops them to 2000x1390, quantizes with `pngquant`, and, with `--install`, copies them into `assets/screenshots/` and rebuilds the website's WebPs (`website/build/crop-screenshots.sh` for the crops, `magick` for the `app-overview` hero). Without `--install` the PNGs stay in `tools/screenshots/out/` for a look first. Details are in `tools/screenshots/README.md` and `website/README.md` ("Screenshots").
+This retakes all three app languages (en, es, ca) in one run; the website's es and ca pages use their own WebPs. The app is built once, then each language is captured in turn.
+
+It builds the app with `capture.patch` applied (and reverts it, whatever happens) and `VITE_MOCK=1`, so the mock scenarios in `gui/frontend/src/mock.ts` are used and no site is involved. For each language it then captures the 13 shots in light and dark (the window's own appearance, not the system's), crops them to 2000x1390, and keeps them as lossless PNGs in `tools/screenshots/out/<lang>/` (not committed). With `--install` it writes the README WebPs (English only, `-quality 90 -define webp:method=6`) into `assets/screenshots/`, and rebuilds the website's WebPs from the same `out/` PNGs for each language (es and ca into `<lang>/` folders) (`website/build/crop-screenshots.sh` for the crops, `magick` for the `app-overview` hero). Without `--install` the PNGs stay in `tools/screenshots/out/<lang>/` for a look first. Details are in `tools/screenshots/README.md` and `website/README.md` ("Screenshots").
 
 - **Update the mock's version constants first**: the shots show fixed versions, `RELEASE_VERSION_SHOT` and `UPDATE_VERSION_SHOT` in `gui/frontend/src/mock.ts` (and the tests in `mock.test.ts` that pin them). Bump both: the first to the version being released, the second kept above it (the `09-update` shot is the "newer release" one, and `11-update-prompt` shows both in the one-click dialog).
 - If a shot's layout changed (new control, different window content), check that the crop geometries still hold: the table in `website/README.md` and `website/build/crop-screenshots.sh`. Changing the crops means checking the `<img>` `width`/`height` in `website/index.html`, which come from the output.
@@ -62,9 +64,9 @@ Keep the copies identical to their sources (`cmp` them), and don't redraw anythi
 
 ## 4. Check before committing
 
-- Open a few frames or files and look: a GIF of each kind (start, middle, end), and the screenshots, a light and dark pair of each at least. No stray cursor, no half-drawn progress bar, no leftover terminal text, no grey (inactive) window, no wrong version, no real paths of the Mac in the shots (the `&shot` flag uses fixed ones).
+- Open a few frames or files and look: a GIF of each kind (start, middle, end), and the screenshots, a light and dark pair of each at least, in es and ca too (a translated label can overflow or move a panel, and the crops don't know). No stray cursor, no half-drawn progress bar, no leftover terminal text, no grey (inactive) window, no wrong version, no real paths of the Mac in the shots (the `&shot` flag uses fixed ones).
 - Light and dark pairs must show the same content and framing.
-- File sizes are in the usual range: GIFs 50-250 KB, PNGs ~190-230 KB, WebPs 13-100 KB. A big jump means a wrong size or a failed `pngquant`.
+- File sizes are in the usual range: GIFs 50-250 KB, README WebPs ~100-165 KB, website WebPs 13-100 KB. A big jump means a wrong size or a failed conversion.
 - `git status` lists only images (and the mock constant), and `capture.patch` is not applied (`git diff` shows no `gui/main.go` changes).
 - Website: `cd website && pnpm install && pnpm build` (and `pnpm test`) still pass.
 

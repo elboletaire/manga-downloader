@@ -1,0 +1,68 @@
+{
+  "locked": {
+    "running": "Options are locked while a download runs.",
+    "loading": "Options are locked while the series loads."
+  },
+  "save": {
+    "title": "Save",
+    "folder": "Folder",
+    "notSet": "Not set",
+    "browse": "Browse…"
+  },
+  "format": {
+    "label": "Format",
+    "cbz": "CBZ",
+    "cbr": "CBR",
+    "raw": "Folder",
+    "epub": "EPUB"
+  },
+  "readingDirection": {
+    "label": "Reading direction",
+    "rtl": "Right to left",
+    "ltr": "Left to right",
+    "hint": "Which way the pages turn: manga reads right to left, western comics left to right."
+  },
+  "packAs": {
+    "label": "Pack as",
+    "chapters": "Chapters",
+    "parts": "Merged",
+    "volumes": "Volumes",
+    "bundle": "One file"
+  },
+  "packHint": {
+    "chapters": "One file per chapter.",
+    "parts": "One file per chapter, with its parts merged into it. Chapters without parts get a file each as usual.",
+    "volumes": "One file per volume, set above the chapter list. Chapters outside every volume get a file each.",
+    "volumesNotLoaded": "One file per volume, set above the chapter list (when loaded). Chapters outside every volume get a file each.",
+    "bundle": "The selected chapters in a single file."
+  },
+  "pages": {
+    "title": "Pages",
+    "convert": "Convert to JPEG",
+    "avif": "AVIF",
+    "webp": "WebP",
+    "convertHint": "Most e-readers can't open AVIF; WebP is unreliable on e-ink.",
+    "avifEpub": "Always on for EPUB: readers can't show AVIF."
+  },
+  "skipPages": {
+    "label": "Skip pages",
+    "placeholder": "e.g. {{example}}",
+    "hint": "Positions dropped from every chapter: {{first}} is the second page, {{last}} the last."
+  },
+  "advanced": {
+    "title": "Advanced"
+  },
+  "template": {
+    "label": "Filename template",
+    "hint": "Uses <code>{{series}}</code>, <code>{{number}}</code>, <code>{{title}}</code>, <code>{{siteTitle}}</code>, <code>{{group}}</code>, <code>{{volume}}</code> and <code>{{version}}</code>; <code>{{padded}}</code> zero-pads a number. Left as is, volumes are named <code>{{volumeName}}</code>, or <code>{{volumeGroupName}}</code> when their chapters share a group.",
+    "reset": "Use default template"
+  },
+  "browser": {
+    "label": "Show the browser window",
+    "hint": "Rarely needed: the window opens by itself when a site asks for it.",
+    "auto": "Needed for this site: the window opens by itself."
+  },
+  "folder": {
+    "dialogTitle": "Choose the output folder"
+  }
+}

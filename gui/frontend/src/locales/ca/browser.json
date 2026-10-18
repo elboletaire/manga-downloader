@@ -1,0 +1,7 @@
+{
+  "title": "El navegador et necessita",
+  "dismiss": "Descarta",
+  "show": "Mostra la finestra del navegador",
+  "alert": "S'ha obert una finestra del navegador per superar una comprovació a {{host}}. Hi pot haver un captcha o un trencaclosques per resoldre; la descàrrega continua sola quan acabi.",
+  "alertNamed": "{{browser}} ha obert una finestra per superar una comprovació a {{host}}. Hi pot haver un captcha o un trencaclosques per resoldre; la descàrrega continua sola quan acabi."
+}

@@ -127,6 +127,13 @@ export const SlidersIcon = icon(
   </>,
 );
 
+export const GearIcon = icon(
+  <>
+    <path d="M18.54 9.49L21 10.09L21 13.91L18.54 14.51L18.39 14.85L19.72 17.01L17.01 19.72L14.85 18.39L14.51 18.54L13.91 21L10.09 21L9.49 18.54L9.15 18.39L6.99 19.72L4.28 17.01L5.61 14.85L5.46 14.51L3 13.91L3 10.09L5.46 9.49L5.61 9.15L4.28 6.99L6.99 4.28L9.15 5.61L9.49 5.46L10.09 3L13.91 3L14.51 5.46L14.85 5.61L17.01 4.28L19.72 6.99L18.39 9.15Z" />
+    <circle cx="12" cy="12" r="3" />
+  </>,
+);
+
 export const ActivityIcon = icon(<path d="M3 12h4l3 7 4-14 3 7h4" />);
 
 /** A spinner that inherits the text colour; it stops under reduced motion */

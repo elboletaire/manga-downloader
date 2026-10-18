@@ -26,10 +26,14 @@
 // (with update) makes the update one-click and opens its prompt on load, &shot
 // uses production release versions and a macOS output path (for screenshots),
 // and VITE_MOCK=1 at build time includes the mock in production builds (e.g.
-// for the screenshot capture build; set via Wails frontend env).
+// for the screenshot capture build; set via Wails frontend env). ?lang=en|es|ca
+// starts the window in that language, ?lang=system follows the browser's, and
+// without it the window is English, so screenshots and dev stay English. Under
+// multi the language filter shows that language and the list is in it, titled
+// from OP_TITLES; every fifth chapter also appears once in another language.
 //
 // &site= picks what the series lists for the two filters: multi (the default:
-// languages ca, en, es with All, Catalan shown by default, no groups), plus
+// languages ca, en, es with All, the window's language shown by default, no groups), plus
 // (Manga Plus: languages without All, the URL edition shown by default),
 // groups (groups with All, every group shown by default, each chapter listed
 // once per group, no languages), or none (both fields disabled: a typed value shows cleared, as
@@ -41,9 +45,10 @@
 // and never selects it, as the backend does.
 
 import type { Api, Unsubscribe } from './api';
-import type { Chapter, FilterChoice, Job, LogLine, Options, State, Summary, Update } from './types';
+import { createT, LANGS, resolveLanguage, type Lang, type LangPref, type Vars } from './i18n';
+import type { Chapter, FilterChoice, Job, LogLine, Message, Options, Prefs, State, Summary, Update } from './types';
 import { groupChapters, groupParts, listedVolumes, parseVolumes, siteVolumes } from './volumes';
-import { OP_CHAPTERS } from './mock-onepiece';
+import { OP_TITLES } from './mock-onepiece';
 
 const TEMPLATE_DEFAULT =
   '{{.Series}} {{.Number}} - {{.Title}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}';
@@ -56,8 +61,8 @@ export function templateWarning(templ: string): string {
   return t === '' || /\{\{-?\s*[^}]*\.(Number|Title|SiteTitle|Volume)\b/.test(t) ? '' : TEMPLATE_WARNING;
 }
 
-/** Total chapters in the Catalan One Piece feed (MangaDex, ch 598-1194) */
-const CHAPTERS = OP_CHAPTERS.length; // 597
+/** Total chapters in the One Piece feed (MangaDex, ch 598-1194) */
+const CHAPTERS = OP_TITLES.ca.length; // 597
 const PAGES = 12;
 // a page's steps while downloading and while archiving, as core's
 // DownloadWeight and ArchiveWeight: a bar fills 80% in the download
@@ -115,6 +120,8 @@ export interface MockSetup {
   epub: boolean;
   /** With the update scenario: one-click update, its prompt open on load */
   prompt: boolean;
+  /** The window's language preference the mock starts with */
+  uiLanguage: LangPref;
 }
 
 /** What the mock series offers for each filter; null when the site lists none */
@@ -131,14 +138,50 @@ interface MockOffers {
 }
 
 const OFFERS: Record<MockSite, MockOffers> = {
-  multi: { language: { values: ['ca', 'en', 'es'], all: true, current: 'ca' }, scanlator: null },
+  // multi's current language is the window's, see offersFor
+  multi: { language: { values: ['ca', 'en', 'es'], all: true, current: 'en' }, scanlator: null },
   plus: { language: { values: ['en', 'es'], all: false, current: 'en' }, scanlator: null },
   groups: { language: null, scanlator: { values: ['Alpha', 'Delta'], all: true, current: '' } },
   none: { language: null, scanlator: null },
 };
 
-const MOCK_ALERT =
-  "Brave opened a window to pass a check on check.example.com. There may be a captcha or puzzle to solve there; the download continues by itself once it's done.";
+/** A site's offers; multi shows the window's language, which its list is in */
+function offersFor(site: MockSite, lang: Lang): MockOffers {
+  const offers = OFFERS[site];
+  if (site !== 'multi' || offers.language === null) {
+    return offers;
+  }
+  return { ...offers, language: { ...offers.language, current: lang } };
+}
+
+const en = createT('en');
+
+/** A message as the Go side sends it: its key, its args, and the English text */
+function msgOf(key: string, args?: Vars): Message {
+  return args === undefined ? { key, text: en(key) } : { key, args, text: en(key, args) };
+}
+
+/** A rejection as the backend gives it: the message's JSON, which the window translates */
+const reject = (key: string, args?: Vars): string => JSON.stringify(msgOf(key, args));
+
+/** A job's phase: its status and its message, none when it has no phase */
+const phaseOf = (m?: Message) => ({ status: m?.text ?? '', statusMsg: m });
+
+/** A failed job's reason, with its message */
+const failedWith = (m: Message) => ({ reason: m.text, reasonMsg: m });
+
+/** The line for a filter that was reset, as the backend words it */
+function fallbackLine(kind: 'language' | 'group', value: string, fallback: string): Message {
+  const args = { value, fallback };
+  if (kind === 'group') {
+    if (fallback === 'all') return msgOf('log.groupFallbackAll', args);
+    return fallback === '' ? msgOf('log.groupFallbackNone', args) : msgOf('log.groupFallbackValue', args);
+  }
+  if (fallback === 'all') return msgOf('log.languageFallbackAll', args);
+  return fallback === '' ? msgOf('log.languageFallbackNone', args) : msgOf('log.languageFallbackValue', args);
+}
+
+const MOCK_ALERT = msgOf('browser.alertNamed', { browser: 'Brave', host: 'check.example.com' });
 
 const REPO = 'https://github.com/elboletaire/manga-downloader';
 const RELEASE_VERSION_DEV = 'v1.12.0';
@@ -154,6 +197,15 @@ function siteFrom(search: string): MockSite {
 function scenarioFrom(search: string): Scenario {
   const value = new URLSearchParams(search).get('scenario');
   return (SCENARIOS as readonly string[]).includes(value ?? '') ? (value as Scenario) : 'empty';
+}
+
+/** ?lang=system is the preference that follows the system; anything else but en, es or ca is English */
+function uiLanguageFrom(search: string): LangPref {
+  const value = new URLSearchParams(search).get('lang');
+  if (value === 'system') {
+    return '';
+  }
+  return (LANGS as readonly string[]).includes(value ?? '') ? (value as LangPref) : 'en';
 }
 
 /** The mock's whole setup from the page's query string */
@@ -175,6 +227,7 @@ export function mockSetupFrom(search: string): MockSetup {
     fetching: params.has('fetching'),
     epub: params.has('epub'),
     prompt: params.has('prompt'),
+    uiLanguage: uiLanguageFrom(search),
   };
 }
 
@@ -197,21 +250,27 @@ function defaultOptions(shot: boolean, epub: boolean): Options {
 }
 
 /**
- * Returns the newest `count` chapters from the One Piece Catalan dataset.
- * Volume 0 means not yet collected. With withLanguages, some chapters also
- * appear in English to simulate a multi-language listing.
+ * The newest `count` chapters, titled in `lang`. With withLanguages they are tagged with it, and every
+ * fifth also appears once in `other` (the two lists share their chapters, in order). Volume 0: not collected.
  */
-function mockChapters(count: number, withLanguages: boolean, withVolumes = true, withLocked = false): Chapter[] {
+function mockChapters(
+  count: number,
+  lang: Lang,
+  withLanguages: boolean,
+  other: Lang,
+  withVolumes = true,
+  withLocked = false,
+): Chapter[] {
   const list: Chapter[] = [];
-  const source =
-    count >= OP_CHAPTERS.length ? OP_CHAPTERS : OP_CHAPTERS.slice(OP_CHAPTERS.length - count);
-
-  for (const [number, catTitle, vol] of source) {
+  const rows = OP_TITLES[lang];
+  const otherRows = OP_TITLES[other];
+  for (let i = Math.max(0, rows.length - count); i < rows.length; i++) {
+    const [number, title, vol] = rows[i];
     const volume = withVolumes ? vol : 0;
     const locked = withLocked && isMockLocked(number);
-    list.push({ index: list.length, number, title: catTitle, language: withLanguages ? 'ca' : '', group: '', volume, locked });
+    list.push({ index: list.length, number, title, language: withLanguages ? lang : '', group: '', volume, locked });
     if (withLanguages && number % 5 === 0) {
-      list.push({ index: list.length, number, title: catTitle, language: 'en', group: '', volume, locked });
+      list.push({ index: list.length, number, title: otherRows[i][1], language: other, group: '', volume, locked });
     }
   }
   return list;
@@ -222,8 +281,9 @@ function mockChapters(count: number, withLanguages: boolean, withVolumes = true,
  * everything past chapter 4 locked but the second half of 19. The parts share
  * their chapter's One Piece title, plus their part, as the grabbers give them.
  */
-function partsChapters(): Chapter[] {
+function partsChapters(lang: Lang): Chapter[] {
   const list: Chapter[] = [];
+  const withPart = (title: string, part: string) => (title === '' ? part : `${title} ${part}`);
   const add = (number: number, title: string, locked: boolean, part?: string) =>
     list.push({
       index: list.length,
@@ -235,18 +295,21 @@ function partsChapters(): Chapter[] {
       locked,
       ...(part ? { part, wholeTitle: titleOf(number) } : {}),
     });
-  const newest = OP_CHAPTERS.slice(-20).map(([, title]) => title);
+  const newest = OP_TITLES[lang].slice(-20).map(([, title]) => title);
   const titleOf = (n: number) => newest[n - 1];
   add(1, titleOf(1), false);
   for (let n = 2; n <= 20; n++) {
-    add(n, `${titleOf(n)} Part 1`, n > 4, 'Part 1');
-    add(n, `${titleOf(n)} Part 2`, n > 4 && n !== 19, 'Part 2');
+    add(n, withPart(titleOf(n), 'Part 1'), n > 4, 'Part 1');
+    add(n, withPart(titleOf(n), 'Part 2'), n > 4 && n !== 19, 'Part 2');
   }
   return list;
 }
 
 /** The error a locked chapter fails with, as core.ErrLocked says it */
-const LOCKED_REASON = 'locked chapter';
+const LOCKED_REASON = msgOf('job.reason.locked');
+
+/** A chapter's job label: its title, or its number where the list has none */
+const labelOf = (c: Chapter) => (c.title === '' ? `Chapter ${c.number}` : c.title);
 
 /** Every 50th chapter is locked (a listing's coin lock), so a few show in dev. */
 function isMockLocked(number: number): boolean {
@@ -299,6 +362,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     fetching,
     epub,
     prompt,
+    uiLanguage,
   } = {
     scenario: 'empty' as Scenario,
     freeze: false,
@@ -314,13 +378,18 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     fetching: false,
     epub: false,
     prompt: false,
+    uiLanguage: 'en' as LangPref,
     ...(typeof setup === 'string' ? { scenario: setup } : setup),
   };
-  const offers = OFFERS[site];
+  // the window's language: the one a multi site shows and lists in
+  const uiLang = resolveLanguage(uiLanguage, typeof navigator === 'undefined' ? [] : navigator.languages);
+  const offers = offersFor(site, uiLang);
   const options = defaultOptions(shot, epub);
+  // the app preferences, kept as the backend keeps them in gui.json
+  const prefs: Prefs = { uiLanguage, checkUpdates: true };
   let url = '';
   let loading = false;
-  let loadError = '';
+  let loadError: Message | undefined;
   let loaded = false;
   let title = '';
   let chapters: Chapter[] = [];
@@ -346,7 +415,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   let timer: ReturnType<typeof setInterval> | undefined;
   // the loaded site needs the browser window, and the alert about it
   let browserAuto = false;
-  let browserAlert = '';
+  let browserAlert: Message | undefined;
 
   const stateBus = new Bus<State>();
   const chaptersBus = new Bus<Chapter[]>();
@@ -354,8 +423,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   const logBus = new Bus<LogLine[]>();
 
   const selectionOf = () => [...selected].sort((a, b) => a - b);
-  const pushLog = (level: LogLine['level'], text: string) => {
-    log = [...log, { level, text }].slice(-500);
+  const pushLog = (level: LogLine['level'], line: string | Message) => {
+    const entry: LogLine = typeof line === 'string' ? { level, text: line } : { level, text: line.text, msg: line };
+    log = [...log, entry].slice(-500);
     logBus.emit(log);
   };
   // what a filter's selector shows: the value the list was loaded with, else
@@ -372,10 +442,21 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     }
     return { values: [...offer.values], all: offer.all, selected };
   };
+  // the filter's language, else the site's current one (the window's where the site has no languages)
+  const listedLanguage = (): Lang => {
+    const offer = offers.language;
+    if (offer === null) return uiLang;
+    return (offer.values.includes(options.language) ? options.language : offer.current) as Lang;
+  };
+  // the language a list's repeated chapters are in: the site's first other one
+  const otherLanguage = (lang: Lang): Lang => {
+    const values: readonly string[] = offers.language?.values ?? LANGS;
+    return values.find((v) => v !== lang) as Lang;
+  };
   // a typed value the series doesn't offer falls back as the backend does: to
   // "all" where the site takes it, else to the site's current value, else to no
   // filter. A value that matches one ignoring case takes the listed spelling.
-  const fallbackFor = (kind: 'language' | 'scanlator', label: string): void => {
+  const fallbackFor = (kind: 'language' | 'scanlator', line: 'language' | 'group'): void => {
     const offer = offers[kind];
     const typed = options[kind];
     if (offer === null || typed === '' || typed === 'all') {
@@ -388,8 +469,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     }
     const fallback = offer.all ? 'all' : offer.current;
     options[kind] = fallback;
-    const shown = fallback === 'all' ? 'all of them' : fallback === '' ? 'no filter' : `"${fallback}"`;
-    pushLog('info', `${label} "${typed}" isn't in this series, loading ${shown} instead`);
+    pushLog('info', fallbackLine(line, typed, fallback));
   };
 
   const releaseVersion = shot ? RELEASE_VERSION_SHOT : RELEASE_VERSION_DEV;
@@ -402,7 +482,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     url,
     loading,
     loaded,
-    loadError,
+    loadError: loadError?.text ?? '',
+    loadErrorMsg: loadError,
     title,
     chapterCount: chapters.length,
     hasDuplicates: chapters.some((c) => c.language !== ''),
@@ -424,19 +505,24 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     volumes: { text: volumesText, site: volumesSite, listed: volumesListed },
     version: reportsRelease ? releaseVersion : 'v0.0.0-mock',
     releaseURL: reportsRelease ? `${REPO}/releases/tag/${releaseVersion}` : '',
-    update: isReleaseBuild(scenario)
-      ? {
-          latest: shot ? UPDATE_VERSION_SHOT : UPDATE_VERSION_DEV,
-          url: `${REPO}/releases/latest`,
-          oneClick: !shot || prompt,
-          ...(prompt && { prompt: true }),
-        }
-      : null,
+    // off hides the update; on brings it back
+    update:
+      isReleaseBuild(scenario) && prefs.checkUpdates
+        ? {
+            latest: shot ? UPDATE_VERSION_SHOT : UPDATE_VERSION_DEV,
+            url: `${REPO}/releases/latest`,
+            oneClick: !shot || prompt,
+            ...(prompt && { prompt: true }),
+          }
+        : null,
     browserVisibleAuto: browserAuto,
-    browserAlert,
+    browserAlert: browserAlert?.text ?? '',
+    browserAlertMsg: browserAlert,
     filenameTemplateDefault: TEMPLATE_DEFAULT,
     filenameTemplateWarning:
       options.packAs === 'chapters' || options.packAs === 'parts' ? templateWarning(options.filenameTemplate) : '',
+    // the wire omits uiLanguage when it follows the system, as gui.json does
+    prefs: prefs.uiLanguage === '' ? { checkUpdates: prefs.checkUpdates } : { ...prefs },
   });
   const push = () => stateBus.emit(snapshot());
 
@@ -445,12 +531,20 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     loaded = true;
     identified = true;
     fallbackFor('language', 'language');
-    fallbackFor('scanlator', 'scanlation group');
+    fallbackFor('scanlator', 'group');
     title = 'One Piece';
+    const lang = listedLanguage();
     chapters =
       withParts || scenario === 'parts'
-        ? partsChapters()
-        : mockChapters(chapterCount, dupes || url.includes('dupes') || options.language === 'all', !novolumes, locked);
+        ? partsChapters(lang)
+        : mockChapters(
+            chapterCount,
+            lang,
+            dupes || url.includes('dupes') || options.language === 'all',
+            otherLanguage(lang),
+            !novolumes,
+            locked,
+          );
     if (offers.scanlator !== null) {
       chapters = groupedChapters(chapters);
     }
@@ -461,7 +555,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     selected = new Set<number>();
     jobs = [];
     summary = null;
-    pushLog('info', `Loaded ${title}: ${chapters.length} chapters`);
+    pushLog('info', msgOf('log.loaded', { title, count: chapters.length }));
     chaptersBus.emit(chapters);
     selectionBus.emit([]);
     push();
@@ -474,7 +568,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     applied = { language: options.language, scanlator: options.scanlator };
     chapters = [];
     selected = new Set<number>();
-    loadError = "Couldn't fetch the chapter list: unexpected status 403 Forbidden";
+    loadError = msgOf('errors.loadChapters', { reason: 'unexpected status 403 Forbidden' });
     pushLog('error', loadError);
     chaptersBus.emit([]);
     selectionBus.emit([]);
@@ -490,7 +584,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       .filter((j) => j.state === 'done')
       .reduce((n, j) => n + (j.volume ? (volumeChapters.get(j.title) ?? 0) : 1), 0);
     const volumes = jobs.filter((j) => j.volume && j.state === 'done').length;
-    const failures = jobs.filter((j) => j.state === 'failed').map((j) => `${j.title}: ${j.reason}`);
+    const failures = jobs
+      .filter((j) => j.state === 'failed')
+      .map((j) => ({ label: j.title, reason: j.reason, reasonMsg: j.reasonMsg }));
     const skipped = jobs.filter((j) => j.state === 'skipped').length;
     const bundled = runBundle;
     summary = {
@@ -542,12 +638,15 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
           ...j,
           done,
           state: done >= j.total ? 'done' : fetched ? 'downloading' : 'archiving',
-          status:
+          ...phaseOf(
             done >= j.total
-              ? ''
+              ? undefined
               : fetched
-                ? `Downloading chapter ${Math.floor((done / downloadEnd(j.total)) * runChapters) + 1}...`
-                : 'Creating the bundle...',
+                ? msgOf('job.phase.downloadingLabel', {
+                    label: `Chapter ${Math.floor((done / downloadEnd(j.total)) * runChapters) + 1}`,
+                  })
+                : msgOf('job.phase.creatingBundle', { range: `1-${runChapters}` }),
+          ),
         },
       ];
       return done < j.total;
@@ -563,14 +662,14 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       movingVolumes++;
       const done = Math.min(j.total, j.done + ticks(5));
       if (done >= j.total) {
-        return { ...j, done, state: 'done', status: '' };
+        return { ...j, done, state: 'done', ...phaseOf() };
       }
       const packing = done >= downloadEnd(j.total);
       return {
         ...j,
         done,
         state: packing ? 'archiving' : 'downloading',
-        status: packing ? 'Packing...' : '',
+        ...phaseOf(packing ? msgOf('job.phase.packing') : undefined),
       };
     });
 
@@ -584,7 +683,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         return j;
       }
       fetchLeft.delete(j.title);
-      return { ...j, state: 'downloading', total: PAGES * STEPS_PER_PAGE, status: '' };
+      return { ...j, state: 'downloading', total: PAGES * STEPS_PER_PAGE, ...phaseOf() };
     });
 
     jobs = jobs.map((j, idx) => {
@@ -592,7 +691,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         return j;
       }
       if (fail && idx === 3 && j.done >= downloadEnd(j.total) / 2) {
-        return { ...j, state: 'failed', reason: 'download: page 5 returned 404 Not Found' };
+        return { ...j, state: 'failed', ...failedWith(msgOf('job.reason.download', { reason: 'page 5 returned 404 Not Found' })) };
       }
       // uneven speeds, so the rows don't move in lockstep
       const done = Math.min(j.total, j.done + ticks(1 + ((j.number * 7) % 4)));
@@ -612,19 +711,20 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
           jobs = [
             ...jobs,
             {
-              title: c.title,
+              title: labelOf(c),
               tags: '',
               number: c.number,
               total: 0,
               done: 0,
               state: 'failed',
-              reason: LOCKED_REASON,
+              reason: LOCKED_REASON.text,
+              reasonMsg: LOCKED_REASON,
               status: '',
               volume: false,
             },
           ];
         }
-        pushLog('error', `error fetching ${c.title}: ${LOCKED_REASON}`);
+        pushLog('error', msgOf('log.errorFetching', { label: labelOf(c), reason: LOCKED_REASON.text }));
         return true;
       }
       if (skip && jobs.filter((j) => !j.volume).length === 5) {
@@ -632,34 +732,35 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         jobs = [
           ...jobs,
           {
-            title: c.title,
+            title: labelOf(c),
             tags: '',
             number: c.number,
             total: 0,
             done: 0,
             state: 'skipped',
             reason: 'every page excluded by --skip-pages',
+            reasonMsg: msgOf('job.reason.skipped'),
             status: '',
             volume: false,
           },
         ];
-        pushLog('warn', `skipping ${c.title}: every page is excluded by --skip-pages`);
+        pushLog('warn', msgOf('log.skipping', { label: labelOf(c) }));
         return true;
       }
       if (fetching) {
-        fetchLeft.set(c.title, FETCH_TICKS);
+        fetchLeft.set(labelOf(c), FETCH_TICKS);
       }
       jobs = [
         ...jobs,
         {
-          title: c.title,
+          title: labelOf(c),
           tags: '',
           number: c.number,
           total: fetching ? 0 : PAGES * STEPS_PER_PAGE,
           done: 0,
           state: fetching ? 'fetching' : 'downloading',
           reason: '',
-          status: fetching ? 'Fetching pages...' : '',
+          ...phaseOf(fetching ? msgOf('job.status.fetching') : undefined),
           volume: false,
         },
       ];
@@ -691,17 +792,19 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       jobs = groups
         .filter((g) => g.chapters.length > 1)
         .map((g) => {
-          const title = `Chapter ${g.number} · ${g.chapters.length} parts`;
+          const titleMsg = msgOf('job.title.volumeParts', { volume: `Chapter ${g.number}`, count: g.chapters.length });
+          const title = titleMsg.text;
           volumeChapters.set(title, g.chapters.length);
           return {
             title,
+            titleMsg,
             tags: '',
             number: g.number,
             total: g.chapters.length * PAGES * STEPS_PER_PAGE,
             done: 0,
             state: 'downloading' as const,
             reason: '',
-            status: 'Waiting...',
+            ...phaseOf(msgOf('job.phase.waiting')),
             volume: true,
           };
         });
@@ -717,33 +820,40 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         const first = v.chapters[0].number;
         const last = v.chapters[v.chapters.length - 1].number;
         const vol = `Vol. ${String(v.number).padStart(2, '0')}`;
-        const title = first === last ? `${vol} · chapter ${first}` : `${vol} · chapters ${first}\u2013${last}`;
+        const titleMsg =
+          first === last
+            ? msgOf('job.title.volumeChapter', { volume: vol, first })
+            : msgOf('job.title.volume', { volume: vol, first, last });
+        const title = titleMsg.text;
         volumeChapters.set(title, v.chapters.length);
         return {
           title,
+          titleMsg,
           tags: '',
           number: first,
           total: v.chapters.length * PAGES * STEPS_PER_PAGE,
           done: 0,
           state: 'downloading' as const,
           reason: '',
-          status: 'Waiting...',
+          ...phaseOf(msgOf('job.phase.waiting')),
           volume: true,
         };
       });
       return;
     }
+    const bundleTitle = msgOf('job.title.bundle', { range: `1-${list.length}` });
     jobs = runBundle
       ? [
           {
-            title: `Bundle: chapters 1-${list.length}`,
+            title: bundleTitle.text,
+            titleMsg: bundleTitle,
             tags: '',
             number: 0,
             total: list.length * PAGES * STEPS_PER_PAGE,
             done: 0,
             state: 'downloading',
             reason: '',
-            status: 'Gathering info...',
+            ...phaseOf(msgOf('job.phase.gathering')),
             volume: false,
           },
         ]
@@ -773,7 +883,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     browserAlert = MOCK_ALERT;
     if (!freeze) {
       setTimeout(() => {
-        browserAlert = '';
+        browserAlert = undefined;
         finishLoad();
       }, 4000);
     }
@@ -788,7 +898,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     failLoad();
     log = [];
     pushLog('info', `Loading ${url}`);
-    pushLog('error', loadError);
+    if (loadError !== undefined) pushLog('error', loadError);
   } else if (scenario !== 'empty') {
     url = 'https://example.com/manga/one-piece';
     finishLoad();
@@ -808,7 +918,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     if (!shot) {
       pushLog(
         'warn',
-        'site check: timed out waiting for "li.list-group-item, img.PB0mN" at https://example.com/manga/the-cartographer-of-lost-harbours-collected-edition',
+        msgOf('log.siteCheck', {
+          reason: 'timed out waiting for "li.list-group-item, img.PB0mN" at https://example.com/manga/the-cartographer-of-lost-harbours-collected-edition',
+        }),
       );
     }
   }
@@ -832,7 +944,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   }
   if (scenario === 'volumes-running') {
     const picked = chapters.filter((c) => selected.has(c.index));
-    pushLog('info', `Downloading ${picked.length} chapter(s) of ${title}`);
+    pushLog('info', msgOf('log.downloading', { count: picked.length, title }));
     beginRun(picked);
     for (let i = 0; i < 12 && step(); i++) {
       // advancing
@@ -844,7 +956,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   if (scenario === 'running' || scenario === 'cancelling' || scenario === 'bundle' || scenario === 'done') {
     options.packAs = scenario === 'bundle' ? 'bundle' : 'chapters';
     const picked = chapters.filter((c) => selected.has(c.index)).slice(0, 12);
-    pushLog('info', `Downloading ${picked.length} chapter(s) of ${title}`);
+    pushLog('info', msgOf('log.downloading', { count: picked.length, title }));
     beginRun(picked);
     // run the simulation forward to an interesting point
     const steps = scenario === 'done' ? Infinity : scenario === 'bundle' ? 8 : 14;
@@ -853,7 +965,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     }
     if (scenario === 'cancelling') {
       cancelling = true;
-      pushLog('info', 'Cancelling: chapters already downloading will finish, no new ones start');
+      pushLog('info', msgOf('log.cancelling'));
     }
     if (scenario === 'done') {
       // a conversion warning on a chapter of the run (the second, 599 by default)
@@ -872,19 +984,19 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   async function startLoad(next: string): Promise<void> {
     const trimmed = next.trim();
     if (trimmed === '') {
-      throw 'enter the URL of a series first';
+      throw reject('errors.enterURL');
     }
     if (loading || running) {
-      throw 'a series is loading or a download is running';
+      throw reject('errors.busy');
     }
     url = trimmed;
-    loadError = '';
+    loadError = undefined;
     loading = true;
     browserAuto = trimmed.includes('check');
-    browserAlert = browserAuto ? MOCK_ALERT : '';
+    browserAlert = browserAuto ? MOCK_ALERT : undefined;
     push();
     await new Promise((resolve) => setTimeout(resolve, browserAuto ? 3000 : 400));
-    browserAlert = '';
+    browserAlert = undefined;
     if (trimmed.includes('unknown')) {
       failLoad();
       return;
@@ -911,21 +1023,21 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     },
     async setOptionsAndLoad(next, target) {
       if (loading || running) {
-        throw 'a series is loading or a download is running';
+        throw reject('errors.busy');
       }
       Object.assign(options, next);
       await startLoad(target);
     },
     async clear() {
       if (loading || running) {
-        throw 'a series is loading or a download is running';
+        throw reject('errors.busy');
       }
       url = '';
       loaded = false;
-      loadError = '';
+      loadError = undefined;
       identified = false;
       browserAuto = false;
-      browserAlert = '';
+      browserAlert = undefined;
       applied = { language: '', scanlator: '' };
       title = '';
       chapters = [];
@@ -941,7 +1053,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     },
     async setSelected(index, on) {
       if (loading || running) {
-        throw 'a series is loading or a download is running';
+        throw reject('errors.busy');
       }
       if (index < 0 || index >= chapters.length) {
         return;
@@ -956,10 +1068,10 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     },
     async setSelectedMany(indices, on) {
       if (loading || running) {
-        throw 'a series is loading or a download is running';
+        throw reject('errors.busy');
       }
       if (indices.some((index) => index < 0 || index >= chapters.length)) {
-        throw `chapter ${indices.find((index) => index < 0 || index >= chapters.length)} is not in the list`;
+        throw reject('errors.chapterMissing', { index: indices.find((index) => index < 0 || index >= chapters.length) as number });
       }
       for (const index of indices) {
         if (on) {
@@ -975,7 +1087,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     },
     async setAll(on) {
       if (loading || running) {
-        throw 'a series is loading or a download is running';
+        throw reject('errors.busy');
       }
       selected = new Set(on ? chapters.filter((c) => !c.locked).map((c) => c.index) : []);
       selectionBus.emit(selectionOf());
@@ -983,7 +1095,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     },
     async selectRange(text) {
       if (loading || running) {
-        throw 'a series is loading or a download is running';
+        throw reject('errors.busy');
       }
       const matched: number[] = [];
       for (const part of text
@@ -1010,14 +1122,14 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     },
     async setOptions(next) {
       if (loading || running) {
-        throw 'a series is loading or a download is running';
+        throw reject('errors.busy');
       }
       Object.assign(options, next);
       push();
     },
     async setVolumes(text) {
       if (loading || running) {
-        throw 'a series is loading or a download is running';
+        throw reject('errors.busy');
       }
       try {
         parseVolumes(text);
@@ -1029,7 +1141,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     },
     async chooseFolder() {
       if (loading || running) {
-        throw 'a series is loading or a download is running';
+        throw reject('errors.busy');
       }
       const picked = window.prompt('Output folder (mock dialog)', options.outputDir) ?? '';
       if (picked !== '') {
@@ -1049,17 +1161,17 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     },
     async start() {
       if (loading || running) {
-        throw 'a series is loading or a download is running';
+        throw reject('errors.busy');
       }
       if (!loaded) {
-        throw 'load a series first';
+        throw reject('errors.loadFirst');
       }
       if (options.language !== applied.language || options.scanlator !== applied.scanlator) {
-        throw 'the language or scanlator changed: reload the series first';
+        throw reject('errors.filtersChanged');
       }
       const picked = chapters.filter((c) => selected.has(c.index));
       if (picked.length === 0) {
-        throw 'select at least one chapter';
+        throw reject('errors.selectOne');
       }
       if (
         options.packAs === 'volumes' &&
@@ -1067,22 +1179,32 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         volumesListed === 0 &&
         volumesText === ''
       ) {
-        throw `the site doesn't say which volume these chapters are in; give the volumes as chapter ranges instead, e.g. "1-7/8-16"`;
+        throw reject('errors.noVolumes');
       }
-      pushLog('info', `Downloading ${picked.length} chapter(s) of ${title}`);
+      pushLog('info', msgOf('log.downloading', { count: picked.length, title }));
       simulateRun(picked);
     },
     async update() {
-      pushLog('info', 'Downloading the update ' + UPDATE_VERSION_DEV + '... (mock)');
+      pushLog('info', msgOf('log.downloadingUpdate', { version: UPDATE_VERSION_DEV }));
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      pushLog('error', `couldn't download the update: the mock has no installer`);
-      throw new Error('the mock has no installer');
+      const reason = 'the mock has no installer';
+      pushLog('error', msgOf('errors.updateDownload', { reason }));
+      throw reject('errors.updateDownload', { reason });
     },
     async showBrowser() {
       pushLog('info', 'would bring the browser window to the front (mock)');
     },
     async dismissBrowserAlert() {
-      browserAlert = '';
+      browserAlert = undefined;
+      push();
+    },
+    // like the backend's, never refused while a load or run is going on
+    async setUILanguage(pref) {
+      prefs.uiLanguage = pref;
+      push();
+    },
+    async setCheckUpdates(on) {
+      prefs.checkUpdates = on;
       push();
     },
     async cancel() {
@@ -1090,7 +1212,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
         return;
       }
       cancelling = true;
-      pushLog('info', 'Cancelling: chapters already downloading will finish, no new ones start');
+      pushLog('info', msgOf('log.cancelling'));
       push();
     },
 

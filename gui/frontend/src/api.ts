@@ -4,6 +4,7 @@
 
 import * as app from '../wailsjs/go/main/App';
 import { BrowserOpenURL, ClipboardGetText, EventsOn } from '../wailsjs/runtime/runtime';
+import type { LangPref } from './i18n';
 import type { Chapter, LogLine, Options, State } from './types';
 
 export type Unsubscribe = () => void;
@@ -30,8 +31,8 @@ export interface Api {
   setOptionsAndLoad(options: Options, url: string): Promise<void>;
   /** Sets the Volumes box ("1-7/8-16", "" for the site's own); rejects a value that doesn't parse */
   setVolumes(text: string): Promise<void>;
-  /** Native folder picker; resolves with "" when cancelled */
-  chooseFolder(): Promise<string>;
+  /** Asks for the output folder with the picker titled title; "" when cancelled */
+  chooseFolder(title: string): Promise<string>;
   openFolder(): Promise<void>;
   /** Opens the URL in the system's browser, never in the window */
   openURL(url: string): void;
@@ -45,6 +46,9 @@ export interface Api {
   showBrowser(): Promise<void>;
   /** Hides browserAlert; the window and the load waiting for it go on */
   dismissBrowserAlert(): Promise<void>;
+  /** Saves the window's language; '' follows the system. Takes effect at once in the window. */
+  setUILanguage(pref: LangPref): Promise<void>;
+  setCheckUpdates(on: boolean): Promise<void>;
 
   // Pushes. Each returns a function that stops the callback.
   onState(cb: (s: State) => void): Unsubscribe;
@@ -101,7 +105,7 @@ export function createWailsApi(): Api {
     setOptionsAndLoad: (options, url) =>
       app.SetOptionsAndLoad(options as unknown as Parameters<typeof app.SetOptionsAndLoad>[0], url),
     setVolumes: (text) => app.SetVolumes(text),
-    chooseFolder: () => app.ChooseFolder(),
+    chooseFolder: (title) => app.ChooseFolder(title),
     openFolder: () => app.OpenFolder(),
     openURL: (url) => BrowserOpenURL(url),
     // async, so a missing runtime rejects rather than throwing into the click
@@ -111,6 +115,8 @@ export function createWailsApi(): Api {
     update: () => app.Update(),
     showBrowser: () => app.ShowBrowser(),
     dismissBrowserAlert: () => app.DismissBrowserAlert(),
+    setUILanguage: (pref) => app.SetUILanguage(pref),
+    setCheckUpdates: (on) => app.SetCheckUpdates(on),
 
     onState: (cb) => state.subscribe(cb),
     onChapters: (cb) => chapters.subscribe(cb),

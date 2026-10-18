@@ -27,6 +27,7 @@
   --text: #1b1a18;
   --text-2: #55514b;
   --text-3: #736e67;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2355514b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
   --accent: #7c5ce0;
   --accent-hover: #6a4bd3;
@@ -77,6 +78,7 @@
     --text: #ececef;
     --text-2: #b4b4bc;
     --text-3: #8e8e98;
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23b4b4bc' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
     --accent: #a993ff;
     --accent-hover: #bba9ff;
@@ -1183,16 +1185,26 @@ code {
 
 .input:disabled {
   color: var(--text-3);
-  background: var(--sunken);
+  background-color: var(--sunken);
 }
 
 .input.flagged {
   border-color: var(--warning-solid);
-  background: var(--warning-soft);
+  background-color: var(--warning-soft);
 }
 
 .input.invalid {
   border-color: var(--danger);
+}
+
+/* a drawn chevron, so the arrow sits a fixed distance from the edge in every select */
+select.input {
+  appearance: none;
+  padding-right: 30px;
+  background-image: var(--chevron);
+  background-position: right 12px center;
+  background-size: 10px 6px;
+  background-repeat: no-repeat;
 }
 
 /* the box with a control inside its right end; the padding keeps text clear of it */
@@ -1200,16 +1212,30 @@ code {
   position: relative;
 }
 
+/* the padding clears the action: its 3px inset, its size and a 6px gap */
 .input-wrap > .input {
   display: block;
-  padding-right: 36px;
+  padding-right: 35px;
 }
 
+.input-wrap > .input.small {
+  padding-right: 31px;
+}
+
+/* 2px inside the border, square; the radius nests inside the input's */
 .input-action {
   position: absolute;
   top: 50%;
-  right: 2px;
+  right: 3px;
+  height: calc(100% - 6px);
+  aspect-ratio: 1;
   transform: translateY(-50%);
+}
+
+.input-wrap .input-action > .btn {
+  width: 100%;
+  height: 100%;
+  border-radius: calc(var(--radius-sm) - 2px);
 }
 
 .folder {
@@ -1261,8 +1287,12 @@ code {
   flex: 1;
   display: grid;
   place-items: center;
-  height: 28px;
+  min-height: 28px;
+  padding: 4px 0;
   border-radius: 7px;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: break-word;
   color: var(--text-2);
   font-weight: 550;
   cursor: pointer;
@@ -2124,16 +2154,30 @@ a.version:hover {
     display: none;
   }
 
-  .workspace {
-    grid-template-columns: minmax(0, 1fr) 312px;
-  }
-
   .toolbar-buttons .btn {
     padding: 0 7px;
   }
 
   .range-form .input {
-    width: 96px;
+    width: 112px;
+  }
+}
+
+/* on wide windows the range box takes the toolbar's free space, up to 400px */
+@media (min-width: 1041px) {
+  .range-form {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
+
+  .range-form .input-wrap {
+    flex: 1 1 128px;
+    min-width: 128px;
+    max-width: 400px;
+  }
+
+  .range-form .input {
+    width: 100%;
   }
 }
 
@@ -2209,4 +2253,90 @@ a.version:hover {
 
 .browser-alert p.update-error {
   color: var(--danger);
+}
+
+/* ---------- settings dialog ---------- */
+.settings-dialog {
+  width: min(460px, 100vw - 48px);
+  max-width: none;
+  max-height: calc(100vh - 48px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+  animation: pop-in 0.2s var(--ease);
+}
+
+.settings-dialog::backdrop {
+  background: rgb(20 18 15 / 45%);
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+}
+
+.settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: none;
+  padding: 14px 12px 4px 16px;
+}
+
+.settings-head h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.settings-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.settings-dialog .opt-group {
+  padding-top: 12px;
+}
+
+/* the heading above is the visible label; the select's label keeps the name for screen readers */
+.settings-dialog .opt-group .field > label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.settings-about {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  flex: none;
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.settings-about a {
+  color: var(--text-2);
+}
+
+.settings-about a:hover {
+  color: var(--text);
+}
+
+/* a line of its own under the links, smaller and quieter than them */
+.settings-about .settings-author {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-3);
 }

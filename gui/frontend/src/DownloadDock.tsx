@@ -3,6 +3,8 @@
 // progress and Cancel while it runs.
 
 import { useEffect, useMemo, useRef } from 'react';
+import type { T as Translator } from './i18n';
+import { T, useI18n } from './i18n/react';
 import { DownloadIcon, Spinner, XIcon } from './icons';
 import { downloadBlocker, downloadLabel, overallProgress } from './run';
 import type { Chapter, Options, PackAs, State } from './types';
@@ -19,6 +21,7 @@ interface Props {
 }
 
 export function DownloadDock({ state, error, chapters, selected, onStart, onCancel }: Props) {
+  const { t } = useI18n();
   // Download and Cancel are different buttons, so the focus moves to the other
   // one when the run starts or ends, rather than falling to the body
   const focused = useRef<'start' | 'cancel' | null>(null);
@@ -39,8 +42,8 @@ export function DownloadDock({ state, error, chapters, selected, onStart, onCanc
 
   // the label regroups the chapters, so it's kept across the progress ticks
   const label = useMemo(
-    () => downloadLabel(state, chapters, selected),
-    [state.selectedCount, state.options.packAs, state.volumes.text, chapters, selected],
+    () => downloadLabel(state, chapters, selected, t),
+    [state.selectedCount, state.options.packAs, state.volumes.text, chapters, selected, t],
   );
 
   if (state.running) {
@@ -53,24 +56,26 @@ export function DownloadDock({ state, error, chapters, selected, onStart, onCanc
             <span className="dock-title">
               <Spinner />
               {state.cancelling
-                ? 'Finishing the current chapters'
+                ? t('download.progress.finishing')
                 : state.run.bundle
-                  ? 'Building the bundle'
-                  : `${overall.finished} of ${overall.total} ${state.run.volumes ? 'files' : 'chapters'} done`}
+                  ? t('download.progress.bundle')
+                  : state.run.volumes
+                    ? t('download.progress.files', { done: overall.finished, total: overall.total })
+                    : t('download.progress.chapters', { done: overall.finished, total: overall.total })}
             </span>
             <span className="dock-pct">{pct}%</span>
           </div>
           <div
             className="bar big"
             role="progressbar"
-            aria-label="Overall progress"
+            aria-label={t('download.progress.label')}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={pct}
           >
             <span style={{ transform: `scaleX(${overall.fraction})` }} />
           </div>
-          {state.cancelling && <p className="hint">Chapters already downloading will finish; no new ones start.</p>}
+          {state.cancelling && <p className="hint">{t('download.progress.cancelHint')}</p>}
         </div>
         {/* aria-disabled, not disabled: a disabled button drops its focus, and Cancel's focus must survive to the run's end */}
         <button
@@ -86,7 +91,7 @@ export function DownloadDock({ state, error, chapters, selected, onStart, onCanc
             }
           }}
         >
-          <XIcon /> {state.cancelling ? 'Cancelling…' : 'Cancel'}
+          <XIcon /> {state.cancelling ? t('download.cancelling') : t('common.cancel')}
         </button>
         {error !== '' && (
           <p className="error-text small" role="alert">
@@ -97,15 +102,22 @@ export function DownloadDock({ state, error, chapters, selected, onStart, onCanc
     );
   }
 
-  const blocker = downloadBlocker(state);
+  const blocker = downloadBlocker(state, t);
   const o = state.options;
   return (
     <div className="dock">
       <p className="dock-dest" title={o.outputDir}>
-        {destination(o)} in{' '}
-        <span className="mono">
-          <bdi>{o.outputDir || '…'}</bdi>
-        </span>
+        <T
+          k="download.where"
+          values={{ what: destination(o, t), dir: o.outputDir || '…' }}
+          components={{
+            dir: (children) => (
+              <span className="mono">
+                <bdi>{children}</bdi>
+              </span>
+            ),
+          }}
+        />
       </p>
       <button
         type="button"
@@ -121,7 +133,7 @@ export function DownloadDock({ state, error, chapters, selected, onStart, onCanc
       </button>
       {error !== '' ? (
         <p className="error-text small" role="alert">
-          Can't download: {error}
+          {t('download.failed', { error })}
         </p>
       ) : (
         blocker !== '' && (
@@ -135,15 +147,31 @@ export function DownloadDock({ state, error, chapters, selected, onStart, onCanc
 }
 
 /** What the run writes, by format and Pack as, as the dock's first words */
-const DESTINATIONS: Record<Options['format'], Record<PackAs, string>> = {
-  cbz: { chapters: 'CBZ files', parts: 'CBZ files', volumes: 'A CBZ per volume', bundle: 'One CBZ' },
-  cbr: { chapters: 'CBR files', parts: 'CBR files', volumes: 'A CBR per volume', bundle: 'One CBR' },
-  epub: { chapters: 'EPUB files', parts: 'EPUB files', volumes: 'An EPUB per volume', bundle: 'One EPUB' },
-  raw: { chapters: 'Image folders', parts: 'Image folders', volumes: 'A folder per volume', bundle: 'One image folder' },
-};
+function destinations(t: Translator): Record<Options['format'], Record<PackAs, string>> {
+  const cbz = t('download.dest.cbzFiles');
+  const cbr = t('download.dest.cbrFiles');
+  const epub = t('download.dest.epubFiles');
+  const raw = t('download.dest.rawFiles');
+  return {
+    cbz: { chapters: cbz, parts: cbz, volumes: t('download.dest.cbzPerVolume'), bundle: t('download.dest.cbzBundle') },
+    cbr: { chapters: cbr, parts: cbr, volumes: t('download.dest.cbrPerVolume'), bundle: t('download.dest.cbrBundle') },
+    epub: {
+      chapters: epub,
+      parts: epub,
+      volumes: t('download.dest.epubPerVolume'),
+      bundle: t('download.dest.epubBundle'),
+    },
+    raw: {
+      chapters: raw,
+      parts: raw,
+      volumes: t('download.dest.rawPerVolume'),
+      bundle: t('download.dest.rawBundle'),
+    },
+  };
+}
 
 /** What the run writes, as the dock's first words */
-function destination(o: Options): string {
-  const byPack = DESTINATIONS[o.format];
-  return byPack?.[o.packAs] ?? byPack?.chapters ?? 'Files';
+function destination(o: Options, t: Translator): string {
+  const byPack = destinations(t)[o.format];
+  return byPack?.[o.packAs] ?? byPack?.chapters ?? t('download.dest.files');
 }

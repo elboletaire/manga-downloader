@@ -26,8 +26,8 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/02-loaded-dark.png">
-  <img alt="The Manga Downloader desktop app with a series loaded" src="assets/screenshots/02-loaded-light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/02-loaded-dark.webp">
+  <img alt="The Manga Downloader desktop app with a series loaded" src="assets/screenshots/02-loaded-light.webp">
 </picture>
 
 </div>
@@ -138,8 +138,15 @@ app's Homebrew cask is installed it keeps the link instead, since `brew upgrade`
 updates that copy.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/09-update-dark.png">
-  <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/09-update-light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/09-update-dark.webp">
+  <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/09-update-light.webp">
+</picture>
+
+The gear icon in the header (or Ctrl+, / ⌘,) opens Settings, where you pick the app's language (English, Español or Català). The same panel turns the update check on or off.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/13-settings-dark.webp">
+  <img alt="The Settings dialog, with the app's language and the update check" src="assets/screenshots/13-settings-light.webp">
 </picture>
 
 ### Command line
@@ -297,16 +304,16 @@ Open the app and follow these steps:
 1. **Paste the series' URL** into the box at the top (or use its *Paste*
    button). The app loads the series on its own, without a button.
 2. **Pick chapters** in the list. Type a range such as `1-10,12` and press
-   *Add range*, Shift+click to select a span, or use *All* and *None*. The
-   arrow keys and Space work too. Locked chapters (paid or members-only) show
+   Enter (or the + in the box), Shift+click to select a span, or use *All* and
+   *None*. The arrow keys and Space work too. Locked chapters (paid or members-only) show
    a lock and can't be selected.
 3. **Choose a language and a scanlation group** when the site offers them. The
    selectors tell you when a series has none, and picking one reloads the
    chapter list. Sites that support it also offer *All*.
 
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/03-language-selector-dark.png">
-     <img alt="The language selector open, with Catalan selected" src="assets/screenshots/03-language-selector-light.png">
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/03-language-selector-dark.webp">
+     <img alt="The language selector open, with English selected" src="assets/screenshots/03-language-selector-light.webp">
    </picture>
 
 4. **Set the options** in the *Options* tab: where the files go, the format
@@ -320,29 +327,29 @@ Open the app and follow these steps:
    way. The list is grouped by volume.
 
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.png">
-     <img alt="The Options tab with EPUB chosen, showing the format, reading direction and Pack as options" src="assets/screenshots/06-options-light.png">
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.webp">
+     <img alt="The Options tab with EPUB chosen, showing the format, reading direction and Pack as options" src="assets/screenshots/06-options-light.webp">
    </picture>
 
    When a site needs you at its browser window, an alert says so, with *Show the
    browser window* to bring it to the front and *Dismiss* to hide the alert.
 
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/08-browser-alert-dark.png">
-     <img alt="The app's alert saying the browser needs you, with Dismiss and Show the browser window buttons" src="assets/screenshots/08-browser-alert-light.png">
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/08-browser-alert-dark.webp">
+     <img alt="The app's alert saying the browser needs you, with Dismiss and Show the browser window buttons" src="assets/screenshots/08-browser-alert-light.webp">
    </picture>
 
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/07-volumes-dark.png">
-     <img alt="Packing by volume: the Volumes box above the chapter list, the list grouped by volume, and the Download button naming the volumes" src="assets/screenshots/07-volumes-light.png">
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/07-volumes-dark.webp">
+     <img alt="Packing by volume: the Volumes box above the chapter list, the list grouped by volume, and the Download button naming the volumes" src="assets/screenshots/07-volumes-light.webp">
    </picture>
 
    *Pack as → Merged* packs a chapter's parts (19-① and 19-②) into one file named
    after the chapter, and leaves the chapters without parts as one file each.
 
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/12-parts-dark.png">
-     <img alt="Pack as Merged: the chapter list with each chapter's parts grouped under it" src="assets/screenshots/12-parts-light.png">
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/12-parts-dark.webp">
+     <img alt="Pack as Merged: the chapter list with each chapter's parts grouped under it" src="assets/screenshots/12-parts-light.webp">
    </picture>
 
 5. **Press Download.** The *Activity* tab shows each chapter as it's fetched and
@@ -350,24 +357,24 @@ Open the app and follow these steps:
    new ones. A log is one click away in the status bar.
 
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/04-downloading-dark.png">
-     <img alt="A download in progress" src="assets/screenshots/04-downloading-light.png">
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/04-downloading-dark.webp">
+     <img alt="A download in progress" src="assets/screenshots/04-downloading-light.webp">
    </picture>
 
 6. **When it's done**, the summary shows what was downloaded. Press
    *Open folder* to go straight to the files.
 
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/05-done-dark.png">
-     <img alt="The finished download summary" src="assets/screenshots/05-done-light.png">
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/05-done-dark.webp">
+     <img alt="The finished download summary" src="assets/screenshots/05-done-light.webp">
    </picture>
 
    If a chapter fails, the summary names it and says why; the other chapters
    are still saved.
 
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/10-failed-dark.png">
-     <img alt="A finished download where one chapter failed, with the reason" src="assets/screenshots/10-failed-light.png">
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/10-failed-dark.webp">
+     <img alt="A finished download where one chapter failed, with the reason" src="assets/screenshots/10-failed-light.webp">
    </picture>
 
 The app saves your options to `gui.json` in the `manga-downloader` folder of
@@ -449,7 +456,7 @@ manga-downloader --format cbr [url] 1-8
 # plain image folders instead of CBZ files
 manga-downloader --format raw [url] 1-8
 
-# EPUB e-books, read left to right (webtoons and western comics)
+# EPUB e-books, read left to right (western comics)
 manga-downloader --format epub --reading-direction ltr [url] 1-8
 ~~~
 

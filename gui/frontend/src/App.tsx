@@ -12,25 +12,33 @@ import { BrowserAlert } from './BrowserAlert';
 import { ChapterPanel } from './ChapterPanel';
 import { DownloadDock } from './DownloadDock';
 import { errorMessage } from './format';
+import { say } from './i18n';
 import { ActivityIcon, SlidersIcon, Spinner } from './icons';
+import { useI18n } from './i18n/react';
 import { Mascot } from './Mascot';
 import { LogDrawer, StatusBar } from './LogPanel';
 import { createOptionsWriter } from './optionsWriter';
 import { OptionsPanel } from './OptionsPanel';
+import { SettingsDialog } from './SettingsDialog';
 import { SourceBar } from './SourceBar';
+import { isMac, shouldToggleSettings } from './settingsShortcut';
 import { tally } from './run';
-import type { Options } from './types';
+import type { Options, State } from './types';
 import { useWindow } from './useWindow';
 
 type Tab = 'options' | 'activity';
 
-export function App({ api }: { api: Api }) {
-  const { state, chapters, selected, log, failure } = useWindow(api);
+export function App({ api, initial }: { api: Api; initial?: State }) {
+  const { t } = useI18n();
+  const { state, chapters, selected, log, failure } = useWindow(api, initial);
   const [tab, setTab] = useState<Tab>('options');
   const [logOpen, setLogOpen] = useState(false);
   const [loadRefusal, setLoadRefusal] = useState('');
   const [actionError, setActionError] = useState('');
   const [optionError, setOptionError] = useState('');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const gear = useRef<HTMLButtonElement>(null);
+  const wasSettingsOpen = useRef(false);
   // options are written one at a time, each patch over the last set sent
   const [optionsWriter] = useState(() =>
     createOptionsWriter((options, load) =>
@@ -43,6 +51,35 @@ export function App({ api }: { api: Api }) {
       optionsWriter.pushed(state.options);
     }
   }, [state, optionsWriter]);
+
+  // the shortcut toggles the settings; the browser alert and the update dialog share a backdrop class
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // holding the keys repeats the keydown; only the first one toggles
+      if (e.repeat) return;
+      if (!shouldToggleSettings(e, isMac(), document.querySelector('.browser-alert-backdrop') !== null)) {
+        return;
+      }
+      e.preventDefault();
+      setSettingsOpen((open) => !open);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // the browser alert must not sit under the dialog's top layer, so it closes the dialog
+  const browserAlert = state?.browserAlert ?? '';
+  useEffect(() => {
+    if (browserAlert !== '') setSettingsOpen(false);
+  }, [browserAlert]);
+
+  // the gear takes the focus back once the dialog has gone, unless the browser alert took it
+  useEffect(() => {
+    if (wasSettingsOpen.current && !settingsOpen && browserAlert === '') {
+      gear.current?.focus();
+    }
+    wasSettingsOpen.current = settingsOpen;
+  }, [settingsOpen, browserAlert]);
 
   // a run that starts brings its progress into view, as does opening the
   // window on a run (or its outcome); the tab stays the user's to change
@@ -63,13 +100,13 @@ export function App({ api }: { api: Api }) {
     return (
       <main className="boot">
         <Mascot expression="soft" size={48} />
-        {failure !== '' ? (
+        {failure !== null ? (
           <p className="error-text" role="alert">
-            {failure}
+            {t('app.readFailed', { error: errorMessage(failure, t) })}
           </p>
         ) : (
           <p className="muted">
-            <Spinner /> Starting…
+            <Spinner /> {t('app.starting')}
           </p>
         )}
       </main>
@@ -81,16 +118,16 @@ export function App({ api }: { api: Api }) {
   const load = (target: string) => {
     setLoadRefusal('');
     setActionError('');
-    api.load(target).catch((e) => setLoadRefusal(errorMessage(e)));
+    api.load(target).catch((e) => setLoadRefusal(errorMessage(e, t)));
   };
   const clear = () => {
     setLoadRefusal('');
-    api.clear().catch((e) => setLoadRefusal(errorMessage(e)));
+    api.clear().catch((e) => setLoadRefusal(errorMessage(e, t)));
   };
   const setOptions = (patch: Partial<Options>) => {
     setOptionError('');
     return optionsWriter.patch(patch).catch((e: unknown) => {
-      setOptionError(errorMessage(e));
+      setOptionError(errorMessage(e, t));
       throw e;
     });
   };
@@ -99,7 +136,7 @@ export function App({ api }: { api: Api }) {
   const pickFilter = (patch: Partial<Options>) => {
     setOptionError('');
     return optionsWriter.patch(patch, state.url).catch((e: unknown) => {
-      setOptionError(errorMessage(e));
+      setOptionError(errorMessage(e, t));
     });
   };
   const counts = tally(state.jobs);
@@ -117,6 +154,9 @@ export function App({ api }: { api: Api }) {
         onError={setOptionError}
         loadRefusal={loadRefusal}
         optionError={optionError}
+        onOpenSettings={() => setSettingsOpen(true)}
+        settingsOpen={settingsOpen}
+        settingsRef={gear}
       />
 
       <main className="workspace">
@@ -134,23 +174,23 @@ export function App({ api }: { api: Api }) {
           onError={setActionError}
         />
 
-        <aside className="side" aria-label="Download">
-          <div className="tabs" role="tablist" aria-label="Side panel">
+        <aside className="side" aria-label={t('app.download')}>
+          <div className="tabs" role="tablist" aria-label={t('app.tabs.label')}>
             <TabButton id="options" tab={tab} onSelect={setTab}>
-              <SlidersIcon size={15} /> Options
+              <SlidersIcon size={15} /> {t('app.tabs.options')}
             </TabButton>
             <TabButton id="activity" tab={tab} onSelect={setTab}>
-              <ActivityIcon size={15} /> Activity
+              <ActivityIcon size={15} /> {t('app.tabs.activity')}
               {state.running ? (
-                <span className="tab-badge live" aria-label="running">
+                <span className="tab-badge live" aria-label={t('app.running')}>
                   <Spinner size={11} />
                 </span>
               ) : failed > 0 ? (
-                <span className="tab-badge danger" aria-label={`${failed} failed`}>
+                <span className="tab-badge danger" aria-label={t('count.failed', { count: failed })}>
                   {failed}
                 </span>
               ) : state.summary ? (
-                <span className="tab-badge success" aria-label="finished" />
+                <span className="tab-badge success" aria-label={t('app.finished')} />
               ) : null}
             </TabButton>
           </div>
@@ -169,7 +209,7 @@ export function App({ api }: { api: Api }) {
               onOptions={setOptions}
               onChooseFolder={async () => {
                 setOptionError('');
-                await api.chooseFolder();
+                await api.chooseFolder(t('options.folder.dialogTitle'));
               }}
               onError={setOptionError}
             />
@@ -185,7 +225,7 @@ export function App({ api }: { api: Api }) {
             <ActivityPanel
               state={state}
               onOpenFolder={() => {
-                api.openFolder().catch((e) => setActionError(errorMessage(e)));
+                api.openFolder().catch((e) => setActionError(errorMessage(e, t)));
               }}
             />
           </div>
@@ -197,19 +237,30 @@ export function App({ api }: { api: Api }) {
             selected={selected}
             onStart={() => {
               setActionError('');
-              api.start().catch((e) => setActionError(errorMessage(e)));
+              api.start().catch((e) => setActionError(errorMessage(e, t)));
             }}
             onCancel={() => {
-              api.cancel().catch((e) => setActionError(errorMessage(e)));
+              api.cancel().catch((e) => setActionError(errorMessage(e, t)));
             }}
           />
         </aside>
       </main>
 
+      {settingsOpen && (
+        <SettingsDialog
+          state={state}
+          onClose={() => setSettingsOpen(false)}
+          onCheckUpdates={(on) => {
+            api.setCheckUpdates(on).catch((e: unknown) => setOptionError(errorMessage(e, t)));
+          }}
+          onOpenURL={(url) => api.openURL(url)}
+          onError={setOptionError}
+        />
+      )}
       {logOpen && <LogDrawer log={log} onClose={() => setLogOpen(false)} />}
       {state.browserAlert !== '' && (
         <BrowserAlert
-          message={state.browserAlert}
+          message={say(t, state.browserAlertMsg, state.browserAlert)}
           onShow={() => {
             api.showBrowser().catch(() => undefined);
           }}

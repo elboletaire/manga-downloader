@@ -1,0 +1,43 @@
+{
+  "blocker": {
+    "loading": "Espera que acabi de carregar-se la sèrie.",
+    "notLoaded": "Carrega una sèrie per triar-ne els capítols.",
+    "stale": "Els filtres han canviat: torna a carregar la sèrie primer.",
+    "noChapters": "Selecciona almenys un capítol.",
+    "noVolumes": "El lloc no llista volums: indica'ls com a rangs de capítols, p. ex. {{example}}."
+  },
+  "label": {
+    "download": "Descarrega",
+    "chapters": "Descarrega {{chapters}}",
+    "bundle": "Descarrega {{chapters}} en un paquet",
+    "volumes": "Descarrega {{volumes}} ({{chapters}})",
+    "volumesAndChapters": "Descarrega {{volumes}} i {{chapters}}",
+    "partsMerged": "Descarrega {{chapters}}, amb les parts unides"
+  },
+  "dest": {
+    "cbzFiles": "Fitxers CBZ",
+    "cbzPerVolume": "Un CBZ per volum",
+    "cbzBundle": "Un CBZ",
+    "cbrFiles": "Fitxers CBR",
+    "cbrPerVolume": "Un CBR per volum",
+    "cbrBundle": "Un CBR",
+    "epubFiles": "Fitxers EPUB",
+    "epubPerVolume": "Un EPUB per volum",
+    "epubBundle": "Un EPUB",
+    "rawFiles": "Carpetes d'imatges",
+    "rawPerVolume": "Una carpeta per volum",
+    "rawBundle": "Una carpeta d'imatges",
+    "files": "Fitxers"
+  },
+  "where": "{{what}} a <dir>{{dir}}</dir>",
+  "progress": {
+    "label": "Progrés general",
+    "chapters": "{{done}} de {{total}} capítols acabats",
+    "files": "{{done}} de {{total}} fitxers acabats",
+    "bundle": "Creant el paquet",
+    "finishing": "Acabant els capítols en curs",
+    "cancelHint": "Els capítols que ja es descarreguen acabaran; no en començarà cap de nou."
+  },
+  "cancelling": "Cancel·lant…",
+  "failed": "No es pot descarregar: {{error}}"
+}

@@ -1,0 +1,31 @@
+{
+  "label": "Volúmenes",
+  "placeholder": "{{example}} (los volúmenes del sitio si está vacío)",
+  "title": "Rangos de capítulos, un grupo por volumen, separados por \"{{separator}}\". Empieza un grupo con \"{{prefix}}\" para dar el número de su volumen, p. ej. \"{{example}}\".",
+  "useSite": "Usar los volúmenes del sitio",
+  "summary": {
+    "own_one": "{{count}} volumen{{outside}}",
+    "own_other": "{{count}} volúmenes{{outside}}",
+    "none": "Ningún capítulo entra en estos volúmenes.",
+    "site": "Volúmenes del sitio: {{volumes}}{{outside}}",
+    "listed_one": "{{count}} volumen, tal como los organiza el sitio (no se pueden escribir como rangos de capítulos){{outside}}",
+    "listed_other": "{{count}} volúmenes, tal como los organiza el sitio (no se pueden escribir como rangos de capítulos){{outside}}",
+    "unlisted": "El sitio no lista volúmenes: indícalos como rangos de capítulos.",
+    "outside_one": ", {{count}} capítulo fuera de ellos",
+    "outside_other": ", {{count}} capítulos fuera de ellos"
+  },
+  "group": {
+    "volume": "Volumen {{number}}",
+    "loose": "Sin volumen"
+  },
+  "span": {
+    "none": "sin capítulos",
+    "one": "capítulo {{number}}",
+    "range": "capítulos {{first}}–{{last}}"
+  },
+  "parts": {
+    "chapter": "Capítulo {{number}}",
+    "count_one": "{{count}} parte",
+    "count_other": "{{count}} partes"
+  }
+}

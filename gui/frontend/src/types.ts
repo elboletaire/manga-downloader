@@ -1,6 +1,8 @@
 // Types of the data the Go App sends to the window. They mirror the JSON of
 // the DTOs in gui/app.go and gui/store.go; keep the two in step.
 
+import type { LangPref } from './i18n';
+
 export type JobState = 'fetching' | 'downloading' | 'archiving' | 'done' | 'failed' | 'skipped';
 
 export type LogLevel = 'info' | 'warn' | 'error';
@@ -32,8 +34,17 @@ export interface Run {
   rows: number;
 }
 
+/** A text the Go side sent with its key and args: translated by say() (see i18n), its text in English */
+export interface Message {
+  key: string;
+  args?: Record<string, unknown>;
+  text: string;
+}
+
 export interface Job {
   title: string;
+  /** The title as a message, when the GUI wrote it (a bundle's or a volume's) */
+  titleMsg?: Message;
   /** The release's language and group (" [en] [Alpha]"), shown apart from the title; empty when none */
   tags: string;
   number: number;
@@ -42,10 +53,22 @@ export interface Job {
   done: number;
   state: JobState;
   reason: string;
+  reasonMsg?: Message;
   /** The bundle's or volume's current phase; empty for single chapters */
   status: string;
+  statusMsg?: Message;
   /** The row of a volume rather than a chapter */
   volume: boolean;
+}
+
+/** A line of the run's failures: what failed, and why */
+export interface Failure {
+  /** The release or volume the line is about; "" when it names none */
+  label: string;
+  /** The reason in English, shown when the window has no message for it */
+  reason: string;
+  /** The reason as the window words it, when it has window words of its own */
+  reasonMsg?: Message;
 }
 
 export interface Summary {
@@ -59,9 +82,11 @@ export interface Summary {
   bundled: boolean;
   bundle: string;
   skipped: number;
-  failures: string[];
+  failures: Failure[];
   /** Set when a bundle couldn't be written */
   error: string;
+  /** error as a message, when the window translates it */
+  errorMsg?: Message;
 }
 
 /**
@@ -82,6 +107,8 @@ export interface State {
   loading: boolean;
   loaded: boolean;
   loadError: string;
+  /** loadError as a message, when the GUI wrote it */
+  loadErrorMsg?: Message;
   title: string;
   chapterCount: number;
   hasDuplicates: boolean;
@@ -114,10 +141,21 @@ export interface State {
   browserVisibleAuto: boolean;
   /** What to tell the user while the browser window waits for them; "" when it isn't */
   browserAlert: string;
+  /** browserAlert as a message */
+  browserAlertMsg?: Message;
   /** The filename template a blank option stands for */
   filenameTemplateDefault: string;
   /** What is wrong with options.filenameTemplate; "" when nothing */
   filenameTemplateWarning: string;
+  prefs: Prefs;
+}
+
+/** App-only preferences: what the CLI has no flag for, so they aren't Options */
+export interface Prefs {
+  /** The window's language; '' follows the system. Go omits it when empty, so it can be absent */
+  uiLanguage?: LangPref;
+  /** Check GitHub for a newer release at startup */
+  checkUpdates: boolean;
 }
 
 /** The Volumes box, used when the options pack as volumes */
@@ -164,5 +202,8 @@ export interface Chapter {
 
 export interface LogLine {
   level: LogLevel;
+  /** The English text: what copying the log gives, and what shows when the window can't translate msg */
   text: string;
+  /** The line as a translatable message, when the Go side sent one (see say() in i18n) */
+  msg?: Message;
 }
