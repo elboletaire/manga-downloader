@@ -69,13 +69,18 @@ ifeq ($(shell uname -s),Darwin)
 GUI_CGO = CGO_LDFLAGS="$(CGO_LDFLAGS) -framework UniformTypeIdentifiers"
 endif
 
-# the wails CLI, which the release builds with (install it with go install)
+# the wails CLI, which the release builds with: `make install/wails` installs
+# this version into GOBIN, and WAILS can point at another binary
 WAILS ?= wails
+WAILS_VERSION = v2.16.0
 # the Windows arch (the release builds amd64 and arm64)
 GOARCH ?= amd64
 # X.Y.Z for the Windows version resource, the installer and the bundle's
 # Info.plist, which wails reads from gui/wails.json. Empty leaves it alone.
 PRODUCT_VERSION ?=
+install/wails:
+	go install github.com/wailsapp/wails/v2/cmd/wails@$(WAILS_VERSION)
+
 # wails reads only gui/wails.json, so PRODUCT_VERSION is written there for the
 # build and the file is put back afterwards, even when the build fails
 WAILS_BUILD = cd gui && bak=$$(mktemp) && cp wails.json "$$bak" && { \
@@ -117,15 +122,32 @@ else
 	go test ${GOTAGS} -v ./...
 endif
 
-# gui/ is its own module, so ./... above never reaches it. The Go tests need
-# the frontend built (it's embedded) and the webview's headers, as build/gui does
+# gui/ is its own module, so ./... above never reaches it. The Go checks need
+# the frontend built (it's embedded) and the webview's headers, as build/gui does.
+# gui-test.yaml runs this target, so it's the whole GUI check, -race included
 test/gui: build/gui/frontend
-	cd gui && $(GUI_CGO) go test -tags $(GUI_GO_TAGS) ./...
+	cd gui && $(GUI_CGO) go vet -tags $(GUI_GO_TAGS) ./...
+	cd gui && $(GUI_CGO) go test -race -tags $(GUI_GO_TAGS) ./...
 	cd gui/frontend && pnpm test
+
+# the website (website/, Vite + TS): its dependencies come from the lock file
+install/website:
+	cd website && pnpm install --frozen-lockfile
+
+build/website: install/website
+	cd website && pnpm build
+
+test/website: install/website
+	cd website && pnpm test
 
 # the demo build's fake grabber is only built with the demo tag (see demo/README.md)
 test/demo:
 	go test -tags $(BUILD_TAGS),demo -count=1 ./demo/
+
+# checks that the archives hold images, not just exist: the smoke jobs run it on
+# each target's CBZs. FILES picks others, e.g. make verify-cbz FILES="a.cbz b.cbz"
+verify-cbz:
+	go run ./tools/verify-cbz $(or $(FILES),*.cbz)
 
 # one dependency per line, alphabetically sorted (grabber/html deliberately
 # last), so parallel site-support branches never edit the same line

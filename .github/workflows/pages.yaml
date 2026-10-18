@@ -27,9 +27,6 @@ jobs:
     # only successful runs of release-triggered builds deploy
     if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'release')
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: website
     steps:
       # scheduled and release runs build the latest release, not master; an empty
       # ref would make checkout fall back to master, so a failed lookup stops the run
@@ -57,11 +54,9 @@ jobs:
           cache: pnpm
           cache-dependency-path: website/pnpm-lock.yaml
 
-      - run: pnpm install --frozen-lockfile
+      - run: make test/website
 
-      - run: pnpm test
-
-      - run: pnpm build
+      - run: make build/website
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

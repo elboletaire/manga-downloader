@@ -22,6 +22,10 @@ make build            # clean + test + build unix binary (injects version via ld
 make build/all        # unix + windows binaries
 make build/demo       # the VHS tapes' binary, served from demo/series (demo tag, see demo/README.md)
 make test/demo        # the demo build's tests
+make build/gui/windows # the release's wails build (NSIS=1, GOARCH=arm64, PRODUCT_VERSION=1.2.3); needs `make install/wails`
+make test/gui         # the GUI's vet, race tests and frontend tests
+make build/website    # the website's dist/ (test/website runs its tests)
+make verify-cbz       # checks the CBZs in the directory hold images (FILES="a.cbz" to pick)
 GOOS=windows GOARCH=386 make build/release   # one release binary, built as release.yaml does
 make test             # go test -v ./... (uses richgo if installed)
 go test ./ranges -run TestParse   # run a single test
@@ -72,7 +76,7 @@ A release's group is a field of the chapter, never part of its title: `Chapter.G
 
 Some sites serve pages e-readers can't render — AVIF (atsu.moe, mistscans, mangalib) and WebP (unreliable on e-ink). `packer/convert.go` re-encodes to JPEG q90: AVIF by default, WebP opt-in (`avif,webp`), `none` disables both.
 
-- **The decoder is `github.com/gen2brain/avif` with `-tags nodynamic`** — libavif/dav1d as WASM under wazero, so `CGO_ENABLED=0` and the 8-way cross-compile matrix keep working (any cgo decoder is disqualified by that). The tag forces the embedded WASM instead of `dlopen`ing a system libavif. **It's set in one place, `BUILD_TAGS` in the `makefile`**: the binaries built by `release.yaml` (via `make build/release`), `release-gui.yaml` (via the `build/gui/<os>` targets, which pass the tags to `wails build`), the Dockerfiles (via `make build/unix`), and `gui-test.yaml` (tags from `make -s print-GUI_GO_TAGS`) all use it; the grabber smoke targets run plain `go run .` without the tag. Don't pass build flags from a workflow directly: without the tag the library silently tries a system libavif first, so a mismatch is easy to miss.
+- **The decoder is `github.com/gen2brain/avif` with `-tags nodynamic`** — libavif/dav1d as WASM under wazero, so `CGO_ENABLED=0` and the 8-way cross-compile matrix keep working (any cgo decoder is disqualified by that). The tag forces the embedded WASM instead of `dlopen`ing a system libavif. **It's set in one place, `BUILD_TAGS` in the `makefile`**: the binaries built by `release.yaml` (via `make build/release`), `release-gui.yaml` (via the `build/gui/<os>` targets, which pass the tags to `wails build`), the Dockerfiles (via `make build/unix`), and `gui-test.yaml` (via `make test/gui`) all use it; the grabber smoke targets run plain `go run .` without the tag. Don't pass build flags from a workflow directly: without the tag the library silently tries a system libavif first, so a mismatch is easy to miss.
 - **The seam is `namePages`, not `grabber.Page.Transform`**: a `Transform` error re-runs the download retry loop, so a decode failure would pointlessly refetch the page. `namePages` is also where extensions are assigned, so converting there makes the `.jpg` follow automatically.
 - **`flattenAlpha` composites onto white first**, because `jpeg.Encode` drops alpha rather than compositing — transparent margins would otherwise come out as solid black bars. Already-opaque images pass through untouched to keep `jpeg.Encode`'s fast path.
 - **A page that fails to convert keeps its original bytes *and* extension**, with a warning: `pack()` has no partial-success path, so erroring would lose the whole chapter (or bundle) over one page. The extension must never claim `.jpg` for non-JPEG bytes.

@@ -18,9 +18,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: website
     steps:
       - uses: actions/checkout@v4
 
@@ -34,8 +31,6 @@ jobs:
           cache: pnpm
           cache-dependency-path: website/pnpm-lock.yaml
 
-      - run: pnpm install --frozen-lockfile
+      - run: make test/website
 
-      - run: pnpm test
-
-      - run: pnpm build
+      - run: make build/website

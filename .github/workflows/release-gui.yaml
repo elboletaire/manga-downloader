@@ -51,7 +51,7 @@ jobs:
         cache: pnpm
         cache-dependency-path: gui/frontend/pnpm-lock.yaml
     - name: Install the Wails CLI
-      run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+      run: make install/wails
     - name: Build and package
       working-directory: gui
       run: |
@@ -98,7 +98,7 @@ jobs:
     - name: Install NSIS
       run: sudo apt-get update && sudo apt-get install -y nsis
     - name: Install the Wails CLI
-      run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+      run: make install/wails
     - name: Build and package
       working-directory: gui
       run: |
@@ -141,7 +141,7 @@ jobs:
         cache: pnpm
         cache-dependency-path: gui/frontend/pnpm-lock.yaml
     - name: Install the Wails CLI
-      run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+      run: make install/wails
     - name: Build the app bundle
       working-directory: gui
       run: |

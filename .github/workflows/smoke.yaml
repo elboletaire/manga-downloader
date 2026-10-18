@@ -452,7 +452,7 @@ jobs:
       - name: Verify CBZ contents
         run: |
           ls -la *.cbz
-          go run ./tools/verify-cbz *.cbz
+          make verify-cbz
 
       # One line per target for the status job below; skipped when cancelled.
       - name: Record result
