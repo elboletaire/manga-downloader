@@ -54,9 +54,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: website/pnpm-lock.yaml
 
-      - run: make test/website
-
-      - run: make build/website
+      - run: make check/website
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

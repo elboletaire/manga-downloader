@@ -17,19 +17,20 @@ These guides are not loaded with every session. Open the file when the task matc
 ## Commands
 
 ```bash
-make install          # go mod download
-make build            # clean + test + build unix binary (injects version via ldflags)
-make build/all        # unix + windows binaries
-make build/demo       # the VHS tapes' binary, served from demo/series (demo tag, see demo/README.md)
-make test/demo        # the demo build's tests
-make build/gui/windows # the release's wails build (NSIS=1, GOARCH=arm64, PRODUCT_VERSION=1.2.3); needs `make install/wails`
-make test/gui         # the GUI's vet, race tests and frontend tests
-make build/website    # the website's dist/ (test/website runs its tests)
-make verify-cbz       # checks the CBZs in the directory hold images (FILES="a.cbz" to pick)
+make install            # go mod download
+make build              # clean + test + build unix binary (injects version via ldflags)
+make build/all          # unix + windows binaries
+make build/demo         # the VHS tapes' binary, served from demo/series (demo tag, see demo/README.md)
+make test/demo          # the demo build's tests
+make build/gui/windows  # the release's wails build (NSIS=1, GOARCH=arm64, PRODUCT_VERSION=1.2.3); needs `make install/wails`
+make test/gui           # the GUI's vet, race tests and frontend tests
+make build/website      # the website's dist/ (test/website runs its tests)
+make check/website     # the website's tests, then its build, as CI runs them
+make verify-cbz         # checks the CBZs in the directory hold images (FILES="a.cbz" to pick)
 GOOS=windows GOARCH=386 make build/release   # one release binary, built as release.yaml does
-make test             # go test -v ./... (uses richgo if installed)
+make test               # go test -v ./... (uses richgo if installed)
 go test ./ranges -run TestParse   # run a single test
-make clean            # remove built binaries and *.cbz, *.cbr and *.epub files
+make clean              # remove built binaries and *.cbz, *.cbr and *.epub files
 ```
 
 Unit test coverage is thin; real verification is the makefile smoke targets, which download from live sites — run them selectively. `make grabber` runs everything, `make grabber/html` all `PlainHTML` sites, `make grabber/<site>` just one; check the archives with `tools/verify-cbz`, since a run can succeed with empty or junk CBZs.

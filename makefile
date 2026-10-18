@@ -73,8 +73,8 @@ endif
 # this version into GOBIN, and WAILS can point at another binary
 WAILS ?= wails
 WAILS_VERSION = v2.16.0
-# the Windows arch (the release builds amd64 and arm64)
-GOARCH ?= amd64
+# the arch of the windows and linux targets (the release builds amd64 and arm64)
+GOARCH ?= $(shell go env GOARCH)
 # X.Y.Z for the Windows version resource, the installer and the bundle's
 # Info.plist, which wails reads from gui/wails.json. Empty leaves it alone.
 PRODUCT_VERSION ?=
@@ -82,11 +82,11 @@ install/wails:
 	go install github.com/wailsapp/wails/v2/cmd/wails@$(WAILS_VERSION)
 
 # wails reads only gui/wails.json, so PRODUCT_VERSION is written there for the
-# build and the file is put back afterwards, even when the build fails
-WAILS_BUILD = cd gui && bak=$$(mktemp) && cp wails.json "$$bak" && { \
+# build, and a trap puts the file back on exit (Ctrl+C included)
+WAILS_BUILD = cd gui && bak=$$(mktemp) && cp wails.json "$$bak" && trap 'cp "$$bak" wails.json; rm -f "$$bak"' 0 && trap 'exit 130' INT TERM && { \
 	$(if $(PRODUCT_VERSION),sed 's/"productVersion": "0.0.0"/"productVersion": "$(PRODUCT_VERSION)"/' "$$bak" > wails.json &&) \
 	$(WAILS) build -platform $(WAILS_PLATFORM) -tags "$(GUI_TAGS)" -trimpath -skipbindings -m -nosyncgomod \
-	$(WAILS_FLAGS) -ldflags "$(GUI_LDFLAGS)"; st=$$?; cp "$$bak" wails.json; rm -f "$$bak"; exit $$st; }
+	$(WAILS_FLAGS) -ldflags "$(GUI_LDFLAGS)"; }
 
 # the frontend is embedded into the binary, so it has to exist before go builds
 build/gui/frontend:
@@ -96,10 +96,9 @@ build/gui: build/gui/frontend
 	cd gui && $(GUI_CGO) go build -trimpath -tags $(GUI_GO_TAGS) -ldflags="$(GUI_GO_LDFLAGS)" \
 		-o ../manga-downloader-gui .
 
-# the release's builds, through wails (what release-gui.yaml runs): they embed
-# the icon and manifest and link the Windows exe as a GUI app. Output goes to
-# gui/build/bin/ (manga-downloader-gui.exe, or the -installer.exe with NSIS=1).
-# wails builds the frontend itself, and needs Node and pnpm, as the release does.
+# the release's wails build (what release-gui.yaml runs), with the icon and
+# manifest embedded. Output: gui/build/bin/ (the -installer.exe with NSIS=1)
+# wails builds the frontend itself, as it does for the release
 build/gui/windows: WAILS_PLATFORM = windows/$(GOARCH)
 build/gui/windows: WAILS_FLAGS = $(if $(NSIS),-nsis)
 build/gui/windows:
@@ -139,6 +138,10 @@ build/website: install/website
 
 test/website: install/website
 	cd website && pnpm test
+
+# the tests, then the build, with one install: what website-test.yaml and pages.yaml run
+check/website: install/website
+	cd website && pnpm test && pnpm build
 
 # the demo build's fake grabber is only built with the demo tag (see demo/README.md)
 test/demo:
