@@ -987,7 +987,7 @@ to a minute.
 | [tanuki-manga.net](https://www.tanuki-manga.net) | Thai | 2026-10-18 |
 | [tarotscans.com](https://www.tarotscans.com) | Turkish | 2026-10-18 |
 | [tcbonepiecechapters.com](https://tcbonepiecechapters.com) | TCB Scans, former tcbscans.com | 2026-10-18 |
-| [team-shadowi.com](https://www.team-shadowi.com) \* |  | 2026-10-15 |
+| [team-shadowi.com](https://www.team-shadowi.com) \* |  | 2026-10-18 |
 | [templetoons.com](https://templetoons.com) \* | Temple Scan | 2026-10-15 |
 | [the-apothecary-diaries.com](https://the-apothecary-diaries.com) | The Apothecary Diaries | 2026-10-18 |
 | [tilkiscans.com](https://www.tilkiscans.com) | Turkish | 2026-10-18 |
