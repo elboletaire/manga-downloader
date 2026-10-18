@@ -146,11 +146,8 @@ func ParseRetryAfter(header string) time.Duration {
 // Timeouts that bound a dead server. None of them covers the body: a large
 // page on a slow CDN must still finish streaming.
 const (
-	// dialTimeout bounds establishing the TCP connection
-	dialTimeout = 15 * time.Second
-	// tlsHandshakeTimeout bounds the TLS handshake
-	tlsHandshakeTimeout = 15 * time.Second
-	// responseHeaderTimeout bounds the wait from sending the request to its first response header
+	dialTimeout           = 15 * time.Second
+	tlsHandshakeTimeout   = 15 * time.Second
 	responseHeaderTimeout = 30 * time.Second
 )
 
@@ -159,6 +156,8 @@ var transport = newTransport()
 
 // newTransport returns the transport requests go through, with the timeouts
 // above. ForceAttemptHTTP2 keeps HTTP/2, which a custom dialer would disable.
+// The pool limits match the largest --concurrency-pages; the pings evict an
+// HTTP/2 connection that died while idle, rather than failing every retry on it.
 func newTransport() *http.Transport {
 	return &http.Transport{
 		DisableCompression:    true,
@@ -166,6 +165,13 @@ func newTransport() *http.Transport {
 		DialContext:           (&net.Dialer{Timeout: dialTimeout}).DialContext,
 		TLSHandshakeTimeout:   tlsHandshakeTimeout,
 		ResponseHeaderTimeout: responseHeaderTimeout,
+		IdleConnTimeout:       90 * time.Second,
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   10,
+		HTTP2: &http.HTTP2Config{
+			SendPingTimeout: 15 * time.Second,
+			PingTimeout:     15 * time.Second,
+		},
 	}
 }
 
@@ -284,8 +290,8 @@ func doRequest(t string, params Params) (body io.ReadCloser, retryAfter time.Dur
 		// are transient enough to be worth another attempt
 		var uerr *url.Error
 		if errors.As(err, &uerr) && uerr.Timeout() {
-			// url.Error names the URL but not that it timed out
-			err = fmt.Errorf("timed out requesting %s: %w", uerr.URL, uerr.Err)
+			// url.Error names the URL, so this only adds that it timed out
+			err = fmt.Errorf("timed out: %w", uerr)
 		}
 		return nil, 0, true, err
 	}

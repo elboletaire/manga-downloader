@@ -494,7 +494,7 @@ func shortenHeaderTimeout(t *testing.T, d time.Duration) {
 }
 
 // hangingServer accepts connections and never answers, until the client gives
-// up (or the test ends). Every request but the ones after `answer` hangs.
+// up (or the test ends). With answer set, only the first request hangs.
 func hangingServer(t *testing.T, answer *int32) *httptest.Server {
 	t.Helper()
 	release := make(chan struct{})
