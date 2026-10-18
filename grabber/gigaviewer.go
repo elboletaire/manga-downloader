@@ -69,6 +69,8 @@ var (
 	gigaviewerInnerRe = regexp.MustCompile(`(?:第(` + gvKanji + `|` + gvDigits + `)|(` + gvDigits + `))` + gvBreak + `[話回章]`)
 	// gigaviewerBareRe is gigaviewerInnerRe anchored at the start of a title
 	gigaviewerBareRe = regexp.MustCompile(`^` + gigaviewerInnerRe.String())
+	// gigaviewerSubRe is a bracket's "第8-2話": part 2 of episode 8
+	gigaviewerSubRe = regexp.MustCompile(`^第(` + gvDigits + `)-(` + gvDigits + `)話$`)
 	// gigaviewerSymbolRe is the "≪＃432≫" and "最終話《＃432》" markers
 	gigaviewerSymbolRe = regexp.MustCompile(`^(?:最終話)?[《≪]＃([0-9０-９]+)[》≫]`)
 	// gigaviewerHashRe is the "#8" marker
@@ -268,9 +270,13 @@ func (g *Gigaviewer) fetchFeed() error {
 		if id == "" {
 			continue
 		}
-		title, number, part := gigaviewerTitle(item.Title, series)
+		title, number, part, numbered := gigaviewerTitle(item.Title, series)
 		if gigaviewerIsNotice(item.Title, number) {
 			continue
+		}
+		style := LabelNumbered
+		if !numbered {
+			style = LabelUnnumbered
 		}
 		chapters = append(chapters, &GigaviewerChapter{Chapter{
 			Title:    title,
@@ -278,7 +284,7 @@ func (g *Gigaviewer) fetchFeed() error {
 			ID:       id,
 			Locked:   !slices.Contains(freeIDs, id),
 			Language: "ja",
-			Label:    Label{Style: LabelNumbered, Part: part},
+			Label:    Label{Style: style, Part: part},
 		}})
 	}
 
@@ -349,17 +355,18 @@ func gigaviewerIsNotice(raw string, number float64) bool {
 }
 
 // gigaviewerTitle splits a feed title into its title (empty when it's only the
-// series name), number and part. The number must start the title, so a
-// subtitle's numbers are never read; a title without one is numbered 0.
-func gigaviewerTitle(raw, series string) (title string, number float64, part string) {
+// series name), number and part, and reports whether it found a number. The
+// number must start the title, so a subtitle's numbers are never read; a title
+// without one is kept whole and numbered 0.
+func gigaviewerTitle(raw, series string) (title string, number float64, part string, numbered bool) {
 	raw = cleanTitle(raw)
 	end, text, part, ok := gigaviewerMarker(raw)
 	if !ok {
-		return raw, 0, ""
+		return raw, 0, "", false
 	}
 	number, ok = gigaviewerNumberOf(text)
 	if !ok {
-		return raw, 0, ""
+		return raw, 0, "", false
 	}
 
 	title = cleanTitle(raw[end:])
@@ -371,7 +378,7 @@ func gigaviewerTitle(raw, series string) (title string, number float64, part str
 	if title == series {
 		title = ""
 	}
-	return title, number, part
+	return title, number, part, true
 }
 
 // gigaviewerSplitPart reads the "①" or "（2）" that follows an episode number as
@@ -400,6 +407,9 @@ func gigaviewerCircled(r rune) (string, bool) {
 func gigaviewerMarker(raw string) (end int, text, part string, ok bool) {
 	if loc := gigaviewerBracketRe.FindStringSubmatchIndex(raw); loc != nil {
 		inner := gigaviewerDigits.Replace(raw[loc[2]:loc[3]])
+		if m := gigaviewerSubRe.FindStringSubmatch(inner); m != nil {
+			return loc[1], m[1], m[2], true
+		}
 		_, text, ok := gigaviewerGroup(gigaviewerInnerRe, inner)
 		if !ok {
 			return 0, "", "", false

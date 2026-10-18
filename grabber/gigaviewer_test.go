@@ -166,7 +166,7 @@ func TestGigaviewerTitle(t *testing.T) {
 		{"最終話 さよならシナモン", "夫婦", "最終話 さよならシナモン", "", 0},
 	}
 	for _, c := range cases {
-		title, number, part := gigaviewerTitle(c.raw, c.series)
+		title, number, part, _ := gigaviewerTitle(c.raw, c.series)
 		if title != c.title || number != c.number || part != c.part {
 			t.Errorf("gigaviewerTitle(%q, %q) = %q, %v, %q; want %q, %v, %q",
 				c.raw, c.series, title, number, part, c.title, c.number, c.part)
@@ -174,10 +174,37 @@ func TestGigaviewerTitle(t *testing.T) {
 	}
 }
 
+// TestGigaviewerTitleNumbered reads whether a live feed title has a number: its
+// extras don't, while a numbered 0 and a split episode do
+func TestGigaviewerTitleNumbered(t *testing.T) {
+	const magcomi = "魔導具師ダリヤはうつむかない ～Dahliya Wilts No More～"
+	cases := []struct {
+		raw, series, title, part string
+		number                   float64
+		numbered                 bool
+	}{
+		{"第0話", magcomi, "", "", 0, true},
+		{"第39.5話「友と食卓」", magcomi, "「友と食卓」", "", 39.5, true},
+		{"[第8-2話] 読心貴族～男女比1：99世界の悪役令息～", "読心貴族～男女比1：99世界の悪役令息～", "", "2", 8, true},
+		{"[第8-1話] 読心貴族～男女比1：99世界の悪役令息～", "読心貴族～男女比1：99世界の悪役令息～", "", "1", 8, true},
+		{"予告編", magcomi, "予告編", "", 0, false},
+		{"特別編「父と娘の魔導具日常記録～小型洗濯機～」", magcomi, "特別編「父と娘の魔導具日常記録～小型洗濯機～」", "", 0, false},
+		{"[番外編16]忘却バッテリー", "忘却バッテリー", "[番外編16]忘却バッテリー", "", 0, false},
+		{"[特別イラスト] 転生ゴブリンだけど質問ある？", "転生ゴブリンだけど質問ある？", "[特別イラスト] 転生ゴブリンだけど質問ある？", "", 0, false},
+	}
+	for _, c := range cases {
+		title, number, part, numbered := gigaviewerTitle(c.raw, c.series)
+		if title != c.title || number != c.number || part != c.part || numbered != c.numbered {
+			t.Errorf("gigaviewerTitle(%q, %q) = %q, %v, %q, %v; want %q, %v, %q, %v",
+				c.raw, c.series, title, number, part, numbered, c.title, c.number, c.part, c.numbered)
+		}
+	}
+}
+
 // TestGigaviewerNotice checks which feed items are dropped as announcements or ads
 func TestGigaviewerNotice(t *testing.T) {
 	isNotice := func(raw string) bool {
-		_, number, _ := gigaviewerTitle(raw, "夫婦")
+		_, number, _, _ := gigaviewerTitle(raw, "夫婦")
 		return gigaviewerIsNotice(raw, number)
 	}
 	for _, title := range []string{"休載のお知らせ", "[休載イラスト] 聖母の断罪", "単行本告知イラスト", "更新日変更のお知らせ", "単行本第④巻のお知らせ", "[休載イラスト＋第2回人気投票企画]魔都精兵のスレイブ"} {
@@ -231,6 +258,58 @@ func TestGigaviewerFetchChapters(t *testing.T) {
 				t.Errorf("%s: chapter %d = number %v locked %v id %q label %q, want %v %v %q %q", url, i,
 					c.GetNumber(), LockedOf(c), c.ID, ChapterLabel(c), wantNumbers[i], wantLocked[i], wantIDs[i], wantLabels[i])
 			}
+		}
+	}
+}
+
+// gigaviewerExtrasFeedFixture is a series with a numbered 0 and extras that
+// carry no number, newest first
+const gigaviewerExtrasFeedFixture = `<?xml version="1.0"?>
+<rss version="2.0" xmlns:giga="https://gigaviewer.com">
+    <channel>
+        <title>マグコミ｜マッグガーデン発のWEBマンガサイト（魔導具師ダリヤはうつむかない ～Dahliya Wilts No More～）</title>
+        <item>
+            <title>予告編</title>
+            <link>https://magcomi.com/episode/4</link>
+        </item>
+        <item>
+            <title>第39.5話「友と食卓」</title>
+            <link>https://magcomi.com/episode/3</link>
+        </item>
+        <item>
+            <title>第0話</title>
+            <link>https://magcomi.com/episode/2</link>
+        </item>
+        <item>
+            <title>特別編「父と娘の魔導具日常記録～小型洗濯機～」</title>
+            <link>https://magcomi.com/episode/1</link>
+        </item>
+    </channel>
+</rss>`
+
+func TestGigaviewerFetchChaptersUnnumbered(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/rss/series/124" {
+			fmt.Fprint(w, gigaviewerExtrasFeedFixture)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer srv.Close()
+
+	g := NewGigaviewer(&Grabber{URL: srv.URL + "/rss/series/124", Settings: &Settings{}})
+	chapters, errs := g.FetchChapters()
+	if len(errs) != 0 || len(chapters) != 4 {
+		t.Fatalf("FetchChapters() = %d chapters, errs %v; want 4", len(chapters), errs)
+	}
+
+	// oldest first: the extras stay apart, the numbered 0 is a chapter of its own
+	wantUnnumbered := []bool{true, false, false, true}
+	wantLabels := []string{"特別編「父と娘の魔導具日常記録～小型洗濯機～」", "Chapter 0", "「友と食卓」", "予告編"}
+	for i, f := range chapters {
+		if Unnumbered(f) != wantUnnumbered[i] || ChapterLabel(f) != wantLabels[i] {
+			t.Errorf("chapter %d: unnumbered %v label %q, want %v %q",
+				i, Unnumbered(f), ChapterLabel(f), wantUnnumbered[i], wantLabels[i])
 		}
 	}
 }

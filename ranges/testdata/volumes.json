@@ -44,7 +44,8 @@
     { "name": "parts without a part sort by title", "chapters": [{ "number": 356, "title": "Berserk 356b", "group": "A", "language": "en" }, { "number": 356, "title": "Berserk 356a", "group": "A", "language": "en" }], "want": [[1, 0]] },
     { "name": "parts with one title keep the oldest first", "chapters": [{ "number": 7, "title": "Chapter 7", "group": "A", "language": "en" }, { "number": 7, "title": "Chapter 7", "group": "A", "language": "en" }], "want": [[1, 0]] },
     { "name": "numbered 0 parts merge", "chapters": [{ "number": 0, "part": "1", "group": "A", "language": "ja" }, { "number": 0, "part": "2", "group": "A", "language": "ja" }], "want": [[0, 1]] },
-    { "name": "unnumbered chapters stay apart", "chapters": [{ "number": 0, "title": "特別イラスト", "group": "A", "language": "ja", "unnumbered": true }, { "number": 0, "title": "単行本告知", "group": "A", "language": "ja", "unnumbered": true }], "want": [[0], [1]] }
+    { "name": "unnumbered chapters stay apart", "chapters": [{ "number": 0, "title": "特別イラスト", "group": "A", "language": "ja", "unnumbered": true }, { "number": 0, "title": "単行本告知", "group": "A", "language": "ja", "unnumbered": true }], "want": [[0], [1]] },
+    { "name": "GigaViewer extras stay apart from a numbered 0's parts", "chapters": [{ "number": 0, "title": "[番外編16]忘却バッテリー", "group": "A", "language": "ja", "unnumbered": true }, { "number": 0, "title": "予告編", "group": "A", "language": "ja", "unnumbered": true }, { "number": 0, "part": "1", "group": "A", "language": "ja" }, { "number": 0, "part": "2", "group": "A", "language": "ja" }], "want": [[0], [1], [2, 3]] }
   ],
   "partsTitle": [
     { "name": "parts share a title", "parts": [{ "part": "1", "title": "Un títol" }, { "part": "2", "title": "Un títol" }], "want": "Un títol" },
