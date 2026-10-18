@@ -1,7 +1,7 @@
 {
   "repo": "elboletaire/manga-downloader",
-  "generatedAt": "2026-10-18T17:02:49.111Z",
-  "snapshotAt": "2026-10-18T17:02:49.111Z",
+  "generatedAt": "2026-10-18T19:19:36.197Z",
+  "snapshotAt": "2026-10-18T19:19:36.197Z",
   "groups": [
     {
       "name": "app",
@@ -42,13 +42,13 @@
   ],
   "totals": {
     "groups": {
-      "app": 390,
-      "cli": 11829
+      "app": 396,
+      "cli": 11830
     },
-    "downloads": 12219,
+    "downloads": 12226,
     "stars": 271,
     "forks": 33,
-    "docker": 38948,
+    "docker": 39215,
     "counters": {
       "updates": {
         "downloads": 4,
@@ -5156,13 +5156,13 @@
     {
       "tag": "v1.20.0",
       "publishedAt": "2026-10-18T12:36:07Z",
-      "end": "2026-10-18T17:02:49.111Z",
-      "days": 0.18520961805555555,
+      "end": "2026-10-18T19:19:36.197Z",
+      "days": 0.28019903935185186,
       "epoch": 3,
       "prerelease": false,
       "groups": {
-        "app": 26,
-        "cli": 14
+        "app": 32,
+        "cli": 15
       },
       "counters": {
         "updates": {
@@ -5187,7 +5187,7 @@
           "name": "manga-downloader-gui-v1.20.0-linux-arm64.tar.gz",
           "label": "gui-linux-arm64",
           "group": "app",
-          "downloads": 1
+          "downloads": 2
         },
         {
           "name": "manga-downloader-gui-v1.20.0-SHA256SUMS.txt",
@@ -5199,19 +5199,19 @@
           "name": "manga-downloader-gui-v1.20.0-windows-amd64-installer.exe",
           "label": "Windows amd64 installer",
           "group": "app",
-          "downloads": 8
+          "downloads": 11
         },
         {
           "name": "manga-downloader-gui-v1.20.0-windows-amd64.zip",
           "label": "gui-windows-amd64",
           "group": "app",
-          "downloads": 3
+          "downloads": 4
         },
         {
           "name": "manga-downloader-gui-v1.20.0-windows-arm64-installer.exe",
           "label": "gui-windows-arm64-installer.exe",
           "group": "app",
-          "downloads": 4
+          "downloads": 5
         },
         {
           "name": "manga-downloader-gui-v1.20.0-windows-arm64.zip",
@@ -5301,13 +5301,13 @@
           "name": "manga-downloader-v1.20.0-windows-amd64.zip",
           "label": "windows-amd64",
           "group": "cli",
-          "downloads": 1
+          "downloads": 2
         },
         {
           "name": "manga-downloader-v1.20.0-windows-amd64.zip.md5",
           "label": "windows-amd64",
           "group": "ignored",
-          "downloads": 0
+          "downloads": 1
         },
         {
           "name": "manga-downloader-v1.20.0-windows-arm64.zip",
@@ -5462,21 +5462,21 @@
       "version": "v1.20.0",
       "label": "Multilingual",
       "start": "2026-10-18T12:36:07Z",
-      "end": "2026-10-18T17:02:49.111Z",
-      "days": 0.18520961805555555,
+      "end": "2026-10-18T19:19:36.197Z",
+      "days": 0.28019903935185186,
       "releases": 1,
       "firstTag": "v1.20.0",
       "lastTag": "v1.20.0",
       "groups": {
-        "app": 26,
-        "cli": 14
+        "app": 32,
+        "cli": 15
       },
-      "downloads": 40,
+      "downloads": 47,
       "avgPerDay": {
-        "app": 140.38147841869113,
-        "cli": 75.59002684083369
+        "app": 114.2045314431536,
+        "cli": 53.533374113978255
       },
-      "avgPerDayTotal": 215.97150525952483,
+      "avgPerDayTotal": 167.73790555713185,
       "medianPerDay": {
         "app": null,
         "cli": null
@@ -6882,7 +6882,7 @@
         44.68945484198396,
         57.91275793802802,
         68.59693900574987,
-        49.30414419314388
+        55.30414419314388
       ],
       "cli": [
         37.805456171735244,
@@ -8272,7 +8272,7 @@
         43.150089414767606,
         43.21507978818484,
         47.30393465260639,
-        26.337488102252642
+        27.337488102252642
       ]
     }
   },
@@ -8294,11 +8294,11 @@
       "date": "2026-10-18",
       "days": 1,
       "groups": {
-        "app": 90,
-        "cli": 56
+        "app": 96,
+        "cli": 57
       },
       "stars": 2,
-      "docker": 3411,
+      "docker": 3678,
       "counters": {
         "updates": 4
       }
@@ -13817,5 +13817,11 @@
       "date": "2026-10-18",
       "stars": 271
     }
-  ]
+  ],
+  "charts": {
+    "titles": true,
+    "stars": {},
+    "downloads-per-day": {},
+    "downloads-per-release": {}
+  }
 }
