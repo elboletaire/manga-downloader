@@ -322,3 +322,111 @@ func TestComiciTestSharesPageCache(t *testing.T) {
 		t.Errorf("markup check made %d requests after PlainHTML fetched the page, want 0", n)
 	}
 }
+
+// TestComiciURLShape gates the markup test: an episode or series path, with or
+// without one label segment before it, and nothing else
+func TestComiciURLShape(t *testing.T) {
+	tests := map[string]bool{
+		"https://comic-growl.com/series/842677db37980":                   true,
+		"https://comic-growl.com/series/842677db37980/1":                 true,
+		"https://comic-growl.com/episodes/c1ffef58c01d8":                 true,
+		"https://comics.comici.jp/comicbro/series/d2268717a79a6":         true,
+		"https://comics.comici.jp/comicbro/episodes/9dde81c98c6d9":       true,
+		"https://rimacomiplus.jp/digitalmargaret/series/d83eefaea85ab":   true,
+		"https://rimacomiplus.jp/digitalmargaret/episodes/ec5ffdacd42e0": true,
+		"https://comics.comici.jp/":                                      false,
+		"https://comics.comici.jp/comicbro":                              false,
+		"https://comics.comici.jp/comicbro/store_items/17300":            false,
+		"https://comics.comici.jp/series/list/up/1":                      false,
+		"https://comics.comici.jp/a/b/series/d2268717a79a6":              false,
+		"https://comics.comici.jp/comicbro/episodes/9dde81c98c6":         false,
+		"https://example.com/news/series/list":                           false,
+	}
+	for rawURL, want := range tests {
+		if got := comiciURLShape(rawURL); got != want {
+			t.Errorf("comiciURLShape(%q) = %v, want %v", rawURL, got, want)
+		}
+	}
+}
+
+// TestComiciTestLabelMarkup detects a prefixed series on a host not in
+// comiciDomains by its markup, and leaves an unrelated page with the same
+// markup but another shape alone
+func TestComiciTestLabelMarkup(t *testing.T) {
+	const page = `<title>テスト - 作者 | サイト</title><a href="https://comici.co.jp/">comici</a><div data-e2e="eli"></div>`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, page)
+	}))
+	defer srv.Close()
+
+	c := NewComiciByMarkup(&Grabber{URL: srv.URL + "/comicbro/series/eeeeeeeeeeeee", Settings: &Settings{}})
+	if ok, _ := c.Test(); !ok {
+		t.Error("expected a prefixed series with the Comici markup to match")
+	}
+	c = NewComiciByMarkup(&Grabber{URL: srv.URL + "/comicbro/store_items/17300", Settings: &Settings{}})
+	if ok, _ := c.Test(); ok {
+		t.Error("expected a store item with the Comici markup not to match")
+	}
+}
+
+// TestComiciFetchChaptersLabel reads a series whose paths carry a label, and
+// lists its episodes under the same prefix
+func TestComiciFetchChaptersLabel(t *testing.T) {
+	const listing = `<title>テスト - 作者 | サイト</title>
+<div data-e2e="eli"><a class="link" data-e2e="eliLnk" href="/digitalmargaret/episodes/aaaaaaaaaaaaa"></a><span data-e2e="eliTitle">第1話</span><span data-e2e="eliFreeBadge">無料</span></div>
+<div data-e2e="eli"><a class="link" data-e2e="eliLnk" href="/digitalmargaret/episodes/bbbbbbbbbbbbb"></a><span data-e2e="eliTitle">第2話</span></div>`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/digitalmargaret/series/eeeeeeeeeeeee/1" {
+			fmt.Fprint(w, listing)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer srv.Close()
+
+	c := NewComici(&Grabber{URL: srv.URL + "/digitalmargaret/series/eeeeeeeeeeeee", Settings: &Settings{}})
+	chapters, errs := c.FetchChapters()
+	if len(errs) != 0 || len(chapters) != 2 {
+		t.Fatalf("FetchChapters() = %d chapters, errs %v; want 2", len(chapters), errs)
+	}
+	wantIDs := []string{"aaaaaaaaaaaaa", "bbbbbbbbbbbbb"}
+	for i, want := range wantIDs {
+		if got := chapters[i].(*ComiciChapter).ID; got != want {
+			t.Errorf("chapter %d: ID %q, want %q", i, got, want)
+		}
+	}
+	if chapters[0].(*ComiciChapter).Locked || !chapters[1].(*ComiciChapter).Locked {
+		t.Error("expected only the episode without a free badge to be locked")
+	}
+}
+
+// TestComiciFetchChapterLabel fetches a prefixed episode: the viewer's content
+// ID is passed to the contentsInfo API along with its viewer ID
+func TestComiciFetchChapterLabel(t *testing.T) {
+	const episode = `<div id="comici-viewer" data-comici-viewer-id="viewer1" data-content-id="45"></div>`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/digitalmargaret/episodes/aaaaaaaaaaaaa":
+			fmt.Fprint(w, episode)
+		case "/api/book/contentsInfo":
+			q := r.URL.Query()
+			if q.Get("comici-viewer-id") != "viewer1" || q.Get("contentId") != "45" {
+				http.Error(w, `{"message":"bad contentId"}`, http.StatusBadRequest)
+				return
+			}
+			fmt.Fprint(w, `{"totalPages":2,"result":[{"imageUrl":"https://img.example/1.jpg"},{"imageUrl":"https://img.example/2.jpg"}]}`)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	c := NewComici(&Grabber{URL: srv.URL + "/digitalmargaret/series/eeeeeeeeeeeee", Settings: &Settings{}})
+	chapter, err := c.FetchChapter(&ComiciChapter{Chapter{Title: "第1話", ID: "aaaaaaaaaaaaa"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(chapter.Pages) != 2 || chapter.Pages[1].URL != "https://img.example/2.jpg" {
+		t.Errorf("FetchChapter() pages = %+v, want 2 pages", chapter.Pages)
+	}
+}
