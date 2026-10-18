@@ -183,10 +183,10 @@ describe('translated helpers', () => {
     expect(summarySentence({ ...base, saved: 1 }, es)).toBe('Se ha guardado 1 capítulo en /out.');
     expect(summarySentence({ ...base, saved: 2 }, es)).toBe('Se han guardado 2 capítulos en /out.');
     expect(summarySentence({ ...base, saved: 1, volumes: 1, parts: true }, es)).toBe(
-      'Se ha guardado 1 capítulo en /out, con 1 capítulo con las partes unidas.',
+      'Se ha guardado 1 capítulo en /out; 1 capítulo con las partes unidas.',
     );
     expect(summarySentence({ ...base, saved: 2, volumes: 2, parts: true }, es)).toBe(
-      'Se han guardado 2 capítulos en /out, con 2 capítulos con las partes unidas.',
+      'Se han guardado 2 capítulos en /out; 2 capítulos con las partes unidas.',
     );
     expect(summarySentence({ ...base, cancelled: true, saved: 1 }, es)).toBe(
       'Cancelado. 1 capítulo guardado antes de detenerse, en /out.',
