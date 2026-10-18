@@ -3,10 +3,12 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"math"
 	"math/rand"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -141,6 +143,32 @@ func ParseRetryAfter(header string) time.Duration {
 	return min(d, MaxRetryAfter)
 }
 
+// Timeouts that bound a dead server. None of them covers the body: a large
+// page on a slow CDN must still finish streaming.
+const (
+	// dialTimeout bounds establishing the TCP connection
+	dialTimeout = 15 * time.Second
+	// tlsHandshakeTimeout bounds the TLS handshake
+	tlsHandshakeTimeout = 15 * time.Second
+	// responseHeaderTimeout bounds the wait from sending the request to its first response header
+	responseHeaderTimeout = 30 * time.Second
+)
+
+// transport is shared by every request, so connections are pooled across them
+var transport = newTransport()
+
+// newTransport returns the transport requests go through, with the timeouts
+// above. ForceAttemptHTTP2 keeps HTTP/2, which a custom dialer would disable.
+func newTransport() *http.Transport {
+	return &http.Transport{
+		DisableCompression:    true,
+		ForceAttemptHTTP2:     true,
+		DialContext:           (&net.Dialer{Timeout: dialTimeout}).DialContext,
+		TLSHandshakeTimeout:   tlsHandshakeTimeout,
+		ResponseHeaderTimeout: responseHeaderTimeout,
+	}
+}
+
 // roundTripper, when set by SetRoundTripper, answers every request instead of
 // the network. The demo build uses it to serve the fake pages (see demo/).
 var roundTripper http.RoundTripper
@@ -203,7 +231,7 @@ func request(t string, params Params) (io.ReadCloser, error) {
 func doRequest(t string, params Params) (body io.ReadCloser, retryAfter time.Duration, retryable bool, err error) {
 	tr := roundTripper
 	if tr == nil {
-		tr = &http.Transport{DisableCompression: true}
+		tr = transport
 	}
 	client := &http.Client{Transport: tr}
 
@@ -254,6 +282,11 @@ func doRequest(t string, params Params) (body io.ReadCloser, retryAfter time.Dur
 	if err != nil {
 		// transport-level failures (connection reset, timeout, DNS hiccup)
 		// are transient enough to be worth another attempt
+		var uerr *url.Error
+		if errors.As(err, &uerr) && uerr.Timeout() {
+			// url.Error names the URL but not that it timed out
+			err = fmt.Errorf("timed out requesting %s: %w", uerr.URL, uerr.Err)
+		}
 		return nil, 0, true, err
 	}
 
