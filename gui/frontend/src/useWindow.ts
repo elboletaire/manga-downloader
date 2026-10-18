@@ -12,10 +12,9 @@ export interface WindowData {
 }
 
 /**
- * Keeps the window's data current. It subscribes before asking for snapshots,
- * so nothing is missed, and a snapshot never overwrites a pushed value that
- * arrived first: whichever is newer wins. `initial` is a state the caller has
- * already read, so the window doesn't ask for it again.
+ * Keeps the window's data current: it subscribes before asking for snapshots,
+ * and a snapshot never overwrites a pushed value that arrived first. `initial`
+ * is a State the caller already read.
  */
 export function useWindow(api: Api, initial?: State): WindowData & { failure: string | null } {
   const [data, setData] = useState<WindowData>({ state: initial ?? null, chapters: [], selected: [], log: [] });

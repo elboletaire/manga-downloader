@@ -31,7 +31,6 @@ export interface Api {
   setOptionsAndLoad(options: Options, url: string): Promise<void>;
   /** Sets the Volumes box ("1-7/8-16", "" for the site's own); rejects a value that doesn't parse */
   setVolumes(text: string): Promise<void>;
-  /** Native folder picker; resolves with "" when cancelled */
   /** Asks for the output folder with the picker titled title; "" when cancelled */
   chooseFolder(title: string): Promise<string>;
   openFolder(): Promise<void>;

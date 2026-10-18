@@ -21,7 +21,7 @@ the website's WebPs, for #248.
   lights and the active window's shadow.
 - **Export**: the 2000x1390 PNGs stay lossless in `out/` (not committed). The
   README's WebPs are made from them at `-quality 90 -define webp:method=6`
-  (~90–155 KB each), and so are the website's, with
+  (~100–165 KB each), and so are the website's, with
   `website/build/crop-screenshots.sh` and the ImageMagick line for the hero in
   `website/README.md`.
 
@@ -54,7 +54,7 @@ near `RELEASE_VERSION` in `mock.ts`.
   open native popup keeps the app from quitting, then SIGKILL if needed).
 - `crop.py`: 2054x1444 → 2000x1390.
 - `capture-all.sh [--install]`: all of the above for every shot and both
-  themes, then the export; `--install` writes the WebPs into
+  themes, then the export; `--install` writes the English WebPs into
   `assets/screenshots/` and regenerates the website's WebPs, both from `out/`.
   `SHOT_LANG` picks the language (see below).
 - `13-settings`: the Settings dialog, opened by clicking the header's gear
@@ -70,10 +70,10 @@ in turn after one build, which is what a release needs:
 SHOT_LANG=all tools/screenshots/capture-all.sh --install
 ```
 
-`--install` puts English in `assets/screenshots/` and the website's
-`src/assets/screenshots/`. `es` and `ca` go to a `<lang>/` folder in both, with
-their own WebPs (the crops and the hero, as for English). Without `--install`
-the PNGs stay in `out/<lang>/`.
+`--install` puts English's README WebPs in `assets/screenshots/` (the README is
+English-only), and every language's crops and hero in the website's
+`src/assets/screenshots/`: English at its root, `es` and `ca` in a `<lang>/`
+folder. Without `--install` the PNGs stay in `out/<lang>/`.
 
 A translated label that changes a panel's size needs its crop checked in
 `website/build/crop-screenshots.sh`: the crops assume the panels sit where they

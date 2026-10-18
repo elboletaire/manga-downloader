@@ -1602,7 +1602,9 @@ func (e events) FetchFailed(listed grabber.Filterable, err error) {
 		j.clearStatus()
 		delete(c.fetching, listed)
 	} else if c.bundle == nil && c.listedVol[listed] == nil {
-		c.jobs = append(c.jobs, &Job{Title: grabber.ChapterLabel(listed), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFailed, Reason: err.Error()})
+		j := &Job{Title: grabber.ChapterLabel(listed), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobFailed}
+		j.setReasonErr(err)
+		c.jobs = append(c.jobs, j)
 	}
 	c.appendMsgLocked(LogError, msg("log.errorFetching", map[string]any{"label": c.releaseLabel(listed), "reason": err.Error()}))
 	c.mu.Unlock()

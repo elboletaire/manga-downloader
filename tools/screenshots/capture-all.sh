@@ -7,8 +7,8 @@
 # usage: [SHOT_LANG=en|es|ca|all] tools/screenshots/capture-all.sh [--install]
 #   without --install the PNGs stay in tools/screenshots/out/<lang>/
 #   SHOT_LANG (default en) is the window's language, all for every one of them;
-#   --install writes en to assets/screenshots/ and the website's root, and es and
-#   ca to <lang>/ folders of both
+#   --install writes en's README WebPs to assets/screenshots/ (the README is
+#   English-only) and every language's website crops to the website's folders
 #
 # Needs: Xcode command line tools (swiftc), cliclick, ImageMagick (the WebPs and
 # the website crops), and python3. The terminal running it needs Accessibility
@@ -51,19 +51,20 @@ SCROLL='const o=document.querySelector(".options");let e=o;while(e&&e.scrollHeig
 # exists once the first volume has folded.
 FOLD='const f=()=>document.querySelector(".fold.open")?.click();f();setTimeout(f,400);'
 
-# --install: en goes to the README and website paths; es and ca to their own folders.
-# Both read the lossless PNGs in out/, never the WebPs they write.
+# --install: en's WebPs go to the README; every language gets its website crops, es and
+# ca in their own folders. All read the lossless PNGs in out/, never the WebPs they write.
 install_lang() {
-  local src=$HERE/out/$SHOT_LANG dest=$ROOT/assets/screenshots site=src/assets/screenshots
-  if [ "$SHOT_LANG" != en ]; then
-    dest=$dest/$SHOT_LANG
+  local src=$HERE/out/$SHOT_LANG site=src/assets/screenshots
+  if [ "$SHOT_LANG" = en ]; then
+    local dest=$ROOT/assets/screenshots
+    mkdir -p "$dest"
+    for png in "$src"/*.png; do
+      magick "$png" -strip -define webp:method=6 -quality 90 "$dest/$(basename "${png%.png}").webp"
+    done
+    echo "WebPs in $dest"
+  else
     site=$site/$SHOT_LANG
   fi
-  mkdir -p "$dest"
-  for png in "$src"/*.png; do
-    magick "$png" -strip -define webp:method=6 -quality 90 "$dest/$(basename "${png%.png}").webp"
-  done
-  echo "WebPs in $dest"
   # website: the crops (geometry in the script) and the hero, see website/README.md
   (
     cd "$ROOT/website"

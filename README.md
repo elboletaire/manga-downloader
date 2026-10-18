@@ -304,8 +304,8 @@ Open the app and follow these steps:
 1. **Paste the series' URL** into the box at the top (or use its *Paste*
    button). The app loads the series on its own, without a button.
 2. **Pick chapters** in the list. Type a range such as `1-10,12` and press
-   *Add range*, Shift+click to select a span, or use *All* and *None*. The
-   arrow keys and Space work too. Locked chapters (paid or members-only) show
+   Enter (or the + in the box), Shift+click to select a span, or use *All* and
+   *None*. The arrow keys and Space work too. Locked chapters (paid or members-only) show
    a lock and can't be selected.
 3. **Choose a language and a scanlation group** when the site offers them. The
    selectors tell you when a series has none, and picking one reloads the
@@ -313,7 +313,7 @@ Open the app and follow these steps:
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/03-language-selector-dark.webp">
-     <img alt="The language selector open, with Catalan selected" src="assets/screenshots/03-language-selector-light.webp">
+     <img alt="The language selector open, with English selected" src="assets/screenshots/03-language-selector-light.webp">
    </picture>
 
 4. **Set the options** in the *Options* tab: where the files go, the format

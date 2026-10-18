@@ -818,6 +818,14 @@ func TestFetchingRowEndsBeforeStarted(t *testing.T) {
 			t.Errorf("jobs = %+v, want one failed row", jobs)
 		}
 	})
+	t.Run("fetch failed without a row", func(t *testing.T) {
+		c, e := newRun()
+		e.FetchFailed(listed, core.ErrLocked)
+		jobs := c.Jobs()
+		if len(jobs) != 1 || jobs[0].State != JobFailed || jobs[0].ReasonMsg == nil || jobs[0].ReasonMsg.Key != "job.reason.locked" {
+			t.Errorf("jobs = %+v, want one failed row with the locked reason", jobs)
+		}
+	})
 	t.Run("skipped", func(t *testing.T) {
 		c, e := newRun()
 		fetched := &grabber.Chapter{Title: "Chapter 5", Number: 5}
@@ -990,6 +998,8 @@ func TestJobRowsCarryTheirMessages(t *testing.T) {
 	if vol.Title != "Vol. 02 · chapter 2" {
 		t.Errorf("Title = %q, want the English text", vol.Title)
 	}
+	e.VolumePacked(v, "", core.ErrSkippedVolume)
+	wantMsg("skipped volume reason", vol.ReasonMsg, "job.reason.skipped", "every page excluded by --skip-pages")
 
 	// a row that moves on from its message drops the message with its text
 	row.setStatus(msg("job.phase.waiting", nil))
@@ -1013,6 +1023,7 @@ func TestSetReasonErrTranslatesSharedSentinels(t *testing.T) {
 	}{
 		{core.ErrLocked, "job.reason.locked", "locked chapter"},
 		{core.ErrEmptyVolume, "job.reason.emptyVolume", "none of its chapters could be downloaded"},
+		{core.ErrSkippedVolume, "job.reason.skipped", "every page excluded by --skip-pages"},
 	}
 	for _, c := range cases {
 		var j Job

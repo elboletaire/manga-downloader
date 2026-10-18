@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { CATALOG, createT } from './i18n';
 import { I18nProvider } from './i18n/react';
-import { ChapterBox, ChapterPanel, ChapterTitle, RangeForm, partsCount } from './ChapterPanel';
+import { ChapterBox, ChapterPanel, ChapterTitle, RangeForm, canApplyRange, partsCount } from './ChapterPanel';
 import { createMockApi } from './mock';
 
 const LOCKED_HINT = createT('en')('chapters.locked');
@@ -51,6 +51,12 @@ describe('RangeForm', () => {
     expect(form('   ')).not.toContain('input-action');
     expect(form('1-10')).toContain(plus);
     expect(form('1-10')).toMatch(/<div class="input-wrap">.*<\/button><\/div><\/div>/);
+  });
+
+  it('applies Enter only when the box has a range in it', () => {
+    expect(canApplyRange('   ')).toBe(false);
+    expect(canApplyRange('')).toBe(false);
+    expect(canApplyRange('1-10')).toBe(true);
   });
 });
 

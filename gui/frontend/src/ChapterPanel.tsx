@@ -590,6 +590,11 @@ export function ChapterBox({ on, locked }: { on: boolean; locked: boolean }) {
   return <span className={`box${on ? ' on' : ''}${locked ? ' disabled' : ''}`} aria-hidden="true" />;
 }
 
+/** A range box with only blanks in it has nothing to apply, so Enter does nothing there */
+export function canApplyRange(text: string): boolean {
+  return text.trim() !== '';
+}
+
 /** The range box: Enter or the + inside it applies the range, and the + shows only once there's text */
 export function RangeForm({
   text,
@@ -610,7 +615,9 @@ export function RangeForm({
       className="range-form"
       onSubmit={(e) => {
         e.preventDefault();
-        onApply();
+        if (canApplyRange(text)) {
+          onApply();
+        }
       }}
     >
       <div className="input-wrap">
@@ -641,7 +648,6 @@ export function RangeForm({
     </form>
   );
 }
-
 
 /** A chapter's title, marked with a lock when the listing says it's locked */
 export function ChapterTitle({ title, locked }: { title: string; locked: boolean }) {

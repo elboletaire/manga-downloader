@@ -78,7 +78,7 @@ every browser the site cares about reads, so there are no PNG fallbacks.
   1600 px wide: the hero.
 - `language-selector`, `chapter-list`, `volumes`, `parts` and `finished-run` are crops of the
   2000 px lossless captures in `tools/screenshots/out/en/` (not committed; the
-  README's WebPs in [`assets/screenshots/`](../assets/screenshots/) come from
+  English README's WebPs in [`assets/screenshots/`](../assets/screenshots/) come from
   the same captures), at 600 and 1000 px wide.
   They are cut to the part that matters, so they stay readable at the
   ~500 px they are shown at. `language-selector` keeps the window's rounded

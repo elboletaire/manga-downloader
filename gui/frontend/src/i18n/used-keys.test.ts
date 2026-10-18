@@ -3,7 +3,7 @@ import { CATALOG } from './index';
 import { code } from './lintSource';
 
 // The app's sources, as text: there's no @types/node to read the disk with.
-// gui/*.go is not read here; msg_test.go already checks the Go side's keys.
+// The Go side's keys come from gui/*.go, read further down.
 const sources = import.meta.glob('../**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<
   string,
   string
