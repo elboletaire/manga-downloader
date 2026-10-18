@@ -274,7 +274,6 @@ grabber: \
 	grabber/tankouhentai \
 	grabber/tarotscans \
 	grabber/tcb \
-	grabber/teamshadowi \
 	grabber/templetoons \
 	grabber/tonarinoyj \
 	grabber/topcomicporno \
@@ -647,6 +646,8 @@ grabber/ichicomi:
 	go run . https://ichicomi.com/episode/12207421983348275548 2
 grabber/mangatimesquare:
 	go run . https://mangatime-square.com/episode/12207421983656601022 1
+# uses a real (headless) browser: the site is behind a cloudflare challenge
+# that plain HTTP gets a 403 on; the series' payload is in the rendered page
 grabber/teamshadowi:
 	go run . https://www.team-shadowi.com/series/the-regressed-mercenary-has-a-plan 98
 grabber/taiyo:
@@ -690,6 +691,7 @@ grabber/browser: \
 	grabber/natomanga \
 	grabber/setsuscans \
 	grabber/sushiscan \
+	grabber/teamshadowi \
 	grabber/toongod \
 	grabber/toonily
 

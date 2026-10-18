@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elboletaire/manga-downloader/http"
+	"github.com/elboletaire/manga-downloader/browser"
 )
 
 // Teamshadowi is a grabber for team-shadowi.com, a French scanlation site
@@ -134,10 +134,9 @@ func (t *Teamshadowi) fetchData() (*teamshadowiPublicData, error) {
 		return t.data, nil
 	}
 
-	body, err := http.GetText(http.RequestParams{
-		URL:     t.URL,
-		Referer: t.BaseUrl(),
-	})
+	// the site is behind a cloudflare challenge that plain HTTP gets a 403 on;
+	// /_next/ scripts only exist once the real page has rendered
+	body, err := browser.GetHTML(t.URL, `script[src*="/_next/"]`, 0)
 	if err != nil {
 		return nil, err
 	}
