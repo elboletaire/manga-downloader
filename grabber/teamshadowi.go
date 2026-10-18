@@ -26,6 +26,11 @@ type Teamshadowi struct {
 	data *teamshadowiPublicData
 }
 
+// headless never passes its Cloudflare challenge, so skip the doomed probe
+func init() {
+	browser.RequireVisible("team-shadowi.com")
+}
+
 func NewTeamshadowi(g *Grabber) *Teamshadowi {
 	return &Teamshadowi{Grabber: g}
 }
