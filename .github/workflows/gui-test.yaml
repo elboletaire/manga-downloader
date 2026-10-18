@@ -17,8 +17,8 @@ on:
 permissions:
   contents: read
 
-# The GUI's Go module embeds the frontend's build output, so the frontend is
-# built first. Linux needs the WebKitGTK headers, as in release-gui.yaml.
+# `make test/gui` builds the frontend first, as the GUI's Go module embeds its
+# output. Linux needs the WebKitGTK headers, as in release-gui.yaml.
 # The linux-install job checks packaging/linux/install.sh against a stub binary.
 jobs:
   test:
@@ -41,16 +41,8 @@ jobs:
         node-version: 22
         cache: pnpm
         cache-dependency-path: gui/frontend/pnpm-lock.yaml
-    - name: Test the frontend
-      working-directory: gui/frontend
-      run: pnpm install --frozen-lockfile && pnpm build && pnpm test
-    - name: Vet and test the Go app
-      working-directory: gui
-      run: |
-        set -euo pipefail
-        tags="$(make -s -C .. --no-print-directory print-GUI_GO_TAGS)"
-        go vet -tags "$tags" ./...
-        go test -race -tags "$tags" ./...
+    - name: Test the GUI
+      run: make test/gui
 
   linux-install:
     name: Linux install script

@@ -55,7 +55,7 @@ print-%: ; $(if $(filter undefined,$(origin $*)),$(error $* is not defined),$(in
 # the desktop app, deliberately not part of build: it needs the platform's
 # webview (WebKitGTK on Linux) and Node + pnpm for the frontend. It's written
 # next to the CLI, which is where `manga-downloader ui` looks for it.
-# GUI_TAGS and GUI_LDFLAGS are what release-gui.yaml hands to `wails build`,
+# GUI_TAGS and GUI_LDFLAGS are what the wails targets pass to `wails build`,
 # which adds the desktop,production tags (without them the app refuses to
 # start) and -s -w itself; plain go build gets them from GUI_GO_*. webkit2_41
 # is for current Linux distros; the other platforms ignore it.
@@ -69,6 +69,25 @@ ifeq ($(shell uname -s),Darwin)
 GUI_CGO = CGO_LDFLAGS="$(CGO_LDFLAGS) -framework UniformTypeIdentifiers"
 endif
 
+# the wails CLI, which the release builds with: `make install/wails` installs
+# this version into GOBIN, and WAILS can point at another binary
+WAILS ?= wails
+WAILS_VERSION = v2.16.0
+# the arch of the windows and linux targets (the release builds amd64 and arm64)
+GOARCH ?= $(shell go env GOARCH)
+# X.Y.Z for the Windows version resource, the installer and the bundle's
+# Info.plist, which wails reads from gui/wails.json. Empty leaves it alone.
+PRODUCT_VERSION ?=
+install/wails:
+	go install github.com/wailsapp/wails/v2/cmd/wails@$(WAILS_VERSION)
+
+# wails reads only gui/wails.json, so PRODUCT_VERSION is written there for the
+# build, and a trap puts the file back on exit (Ctrl+C included)
+WAILS_BUILD = cd gui && bak=$$(mktemp) && cp wails.json "$$bak" && trap 'cp "$$bak" wails.json; rm -f "$$bak"' 0 && trap 'exit 130' INT TERM && { \
+	$(if $(PRODUCT_VERSION),sed 's/"productVersion": "0.0.0"/"productVersion": "$(PRODUCT_VERSION)"/' "$$bak" > wails.json &&) \
+	$(WAILS) build -platform $(WAILS_PLATFORM) -tags "$(GUI_TAGS)" -trimpath -skipbindings -m -nosyncgomod \
+	$(WAILS_FLAGS) -ldflags "$(GUI_LDFLAGS)"; }
+
 # the frontend is embedded into the binary, so it has to exist before go builds
 build/gui/frontend:
 	cd gui/frontend && pnpm install --frozen-lockfile && pnpm build
@@ -77,12 +96,23 @@ build/gui: build/gui/frontend
 	cd gui && $(GUI_CGO) go build -trimpath -tags $(GUI_GO_TAGS) -ldflags="$(GUI_GO_LDFLAGS)" \
 		-o ../manga-downloader-gui .
 
-# cross-compiled from any host, without cgo: Wails' Windows webview is pure Go.
-# -H windowsgui keeps the console from opening behind the window. The release
-# uses `wails build` instead, which also embeds the icon and manifest.
-build/gui/windows: build/gui/frontend
-	cd gui && CGO_ENABLED=0 GOOS=windows go build -trimpath -tags $(GUI_GO_TAGS) \
-		-ldflags="$(GUI_GO_LDFLAGS) -H windowsgui" -o ../manga-downloader-gui.exe .
+# the release's wails build (what release-gui.yaml runs), with the icon and
+# manifest embedded. Output: gui/build/bin/ (the -installer.exe with NSIS=1)
+# wails builds the frontend itself, as it does for the release
+build/gui/windows: WAILS_PLATFORM = windows/$(GOARCH)
+build/gui/windows: WAILS_FLAGS = $(if $(NSIS),-nsis)
+build/gui/windows:
+	$(WAILS_BUILD)
+
+# gui/build/bin/manga-downloader-gui (WebKitGTK headers needed, see above)
+build/gui/linux: WAILS_PLATFORM = linux/$(GOARCH)
+build/gui/linux:
+	$(WAILS_BUILD)
+
+# gui/build/bin/Manga Downloader.app, universal (macOS only)
+build/gui/darwin: WAILS_PLATFORM = darwin/universal
+build/gui/darwin:
+	$(WAILS_BUILD)
 
 test:
 ifdef RICHGO
@@ -91,15 +121,36 @@ else
 	go test ${GOTAGS} -v ./...
 endif
 
-# gui/ is its own module, so ./... above never reaches it. The Go tests need
-# the frontend built (it's embedded) and the webview's headers, as build/gui does
+# gui/ is its own module, so ./... above never reaches it. The Go checks need
+# the frontend built (it's embedded) and the webview's headers, as build/gui does.
+# gui-test.yaml runs this target, so it's the whole GUI check, -race included
 test/gui: build/gui/frontend
-	cd gui && $(GUI_CGO) go test -tags $(GUI_GO_TAGS) ./...
+	cd gui && $(GUI_CGO) go vet -tags $(GUI_GO_TAGS) ./...
+	cd gui && $(GUI_CGO) go test -race -tags $(GUI_GO_TAGS) ./...
 	cd gui/frontend && pnpm test
+
+# the website (website/, Vite + TS): its dependencies come from the lock file
+install/website:
+	cd website && pnpm install --frozen-lockfile
+
+build/website: install/website
+	cd website && pnpm build
+
+test/website: install/website
+	cd website && pnpm test
+
+# the tests, then the build, with one install: what website-test.yaml and pages.yaml run
+check/website: install/website
+	cd website && pnpm test && pnpm build
 
 # the demo build's fake grabber is only built with the demo tag (see demo/README.md)
 test/demo:
 	go test -tags $(BUILD_TAGS),demo -count=1 ./demo/
+
+# checks that the archives hold images, not just exist: the smoke jobs run it on
+# each target's CBZs. FILES picks others, e.g. make verify-cbz FILES="a.cbz b.cbz"
+verify-cbz:
+	go run ./tools/verify-cbz $(or $(FILES),*.cbz)
 
 # one dependency per line, alphabetically sorted (grabber/html deliberately
 # last), so parallel site-support branches never edit the same line

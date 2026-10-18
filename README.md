@@ -1134,7 +1134,9 @@ Node 22, pnpm 10, and on Linux the WebKitGTK 4.1 and GTK 3 development headers
 
 ~~~bash
 make build/gui         # build ./manga-downloader-gui (frontend first)
-make build/gui/windows # cross-build manga-downloader-gui.exe, no cgo needed
+make build/gui/linux   # the release's wails build into gui/build/bin/ (also /windows, /darwin)
+make test/gui          # the GUI's vet, race tests and frontend tests
+make install/wails     # the wails CLI the release builds with
 ~~~
 
 ## A note on AI

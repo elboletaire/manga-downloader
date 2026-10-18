@@ -11,8 +11,8 @@ permissions:
 # platform's webview shows. Linux needs the WebKitGTK headers, so it's built on
 # native runners. Windows needs no cgo, so both its architectures are built
 # from one Linux runner, and macOS is built on a Mac for the universal binary.
-# The tags and ldflags come from the makefile, which takes the jobs' $TAG as its
-# TAG; `wails build` adds the desktop,production tags and -s -w itself.
+# Each job builds through the makefile's build/gui/<os> targets (wails, with the
+# tags and ldflags from the makefile, which takes the jobs' $TAG as its TAG).
 # The wailsjs/ bindings are committed, so the build doesn't need a webview to
 # generate them (-skipbindings). Windows arm64 is built too, so ARM Windows
 # doesn't run the amd64 build emulated. Each Windows arch also gets an NSIS
@@ -51,17 +51,12 @@ jobs:
         cache: pnpm
         cache-dependency-path: gui/frontend/pnpm-lock.yaml
     - name: Install the Wails CLI
-      run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+      run: make install/wails
     - name: Build and package
       working-directory: gui
       run: |
         set -euo pipefail
-        # the Windows version resource and the bundle's Info.plist take the version from wails.json
-        sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
-        tags="$(make -s -C .. --no-print-directory print-GUI_TAGS)"
-        ldflags="$(make -s -C .. --no-print-directory print-GUI_LDFLAGS)"
-        wails build -platform linux/${{ matrix.goarch }} -tags "$tags" -trimpath -skipbindings \
-          -m -nosyncgomod -ldflags "$ldflags"
+        make -C .. build/gui/linux GOARCH=${{ matrix.goarch }} PRODUCT_VERSION="${TAG#v}"
         name="manga-downloader-gui-$TAG-linux-${{ matrix.goarch }}"
         rm -rf "stage/$name" && mkdir -p "stage/$name"
         cp build/bin/manga-downloader-gui ../LICENSE "stage/$name/"
@@ -103,7 +98,7 @@ jobs:
     - name: Install NSIS
       run: sudo apt-get update && sudo apt-get install -y nsis
     - name: Install the Wails CLI
-      run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+      run: make install/wails
     - name: Build and package
       working-directory: gui
       run: |
@@ -113,14 +108,7 @@ jobs:
           echo "::error::the tag $TAG isn't a numeric X.Y.Z version, which the Windows installer needs"
           exit 1
         fi
-        # the Windows version resource, the installer's version and the bundle's Info.plist take the version from wails.json
-        sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
-        # wails embeds the icon and manifest from build/windows into the exe,
-        # and links it as a GUI app (no console window)
-        tags="$(make -s -C .. --no-print-directory print-GUI_TAGS)"
-        ldflags="$(make -s -C .. --no-print-directory print-GUI_LDFLAGS)"
-        wails build -platform windows/${{ matrix.goarch }} -tags "$tags" -trimpath -skipbindings \
-          -m -nosyncgomod -nsis -ldflags "$ldflags"
+        make -C .. build/gui/windows GOARCH=${{ matrix.goarch }} NSIS=1 PRODUCT_VERSION="${TAG#v}"
         name="manga-downloader-gui-$TAG-windows-${{ matrix.goarch }}"
         rm -rf "stage/$name" && mkdir -p "stage/$name"
         cp build/bin/manga-downloader-gui.exe ../LICENSE "stage/$name/"
@@ -153,19 +141,14 @@ jobs:
         cache: pnpm
         cache-dependency-path: gui/frontend/pnpm-lock.yaml
     - name: Install the Wails CLI
-      run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+      run: make install/wails
     - name: Build the app bundle
       working-directory: gui
       run: |
         set -euo pipefail
-        # the Windows version resource and the bundle's Info.plist take the version from wails.json
-        sed "s/\"productVersion\": \"0.0.0\"/\"productVersion\": \"${TAG#v}\"/" wails.json > wails.json.new && mv wails.json.new wails.json
         # a single universal target keeps the bundle's name as wails.json has
         # it ("Manga Downloader.app"), without an arch suffix
-        tags="$(make -s -C .. --no-print-directory print-GUI_TAGS)"
-        ldflags="$(make -s -C .. --no-print-directory print-GUI_LDFLAGS)"
-        wails build -platform darwin/universal -tags "$tags" -trimpath -skipbindings \
-          -m -nosyncgomod -ldflags "$ldflags"
+        make -C .. build/gui/darwin PRODUCT_VERSION="${TAG#v}"
         name="manga-downloader-gui-$TAG-darwin-universal"
         ditto -c -k --keepParent "build/bin/Manga Downloader.app" "$name.zip"
         gh release upload "$TAG" "$name.zip" --clobber
