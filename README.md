@@ -1000,7 +1000,7 @@ to a minute.
 | [topcomicporno.com](https://topcomicporno.com) | Spanish, mostly NSFW | 2026-10-18 |
 | [tortugaceviri.com](https://tortugaceviri.com) | Tortuga Çeviri | 2026-10-18 |
 | [tritinia.org](https://tritinia.org) | Tritinia Scans | 2026-10-18 |
-| [trmanga.com](https://trmanga.com) |  | 2026-10-15 |
+| [trmanga.com](https://trmanga.com) |  | 2026-10-18 |
 | [trmangaoku.com](https://trmangaoku.com) | Turkish | 2026-10-18 |
 | [truyentranhdammyy.site](https://truyentranhdammyy.site) | Vietnamese, mostly NSFW | 2026-10-18 |
 | [tsundoku.com.br](https://tsundoku.com.br) | Portuguese | 2026-10-18 |

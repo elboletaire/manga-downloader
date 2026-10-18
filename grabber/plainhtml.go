@@ -277,15 +277,13 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitle: ".chapternum",
 		SeriesLink:   "div.allc a, a.btn-back-enhanced",
 	},
-	// trmanga.com: Turkish webtoon site. Its chapter table is #chapters
-	// too, so this entry must sit before the #chapters ones below (they'd
-	// claim it with no chapter text). Rows are the links in the first
-	// column, labelled "#124 .Bölüm" (number first, see
-	// parseChapterNumber); the reader's images are lazy data-src
-	// attributes, except the first one which also carries a src.
+	// trmanga.com (v3 theme): its #chapters list must come before the meowing
+	// #chapters entries below. Rows are the <a> of each <li class="wt-ch">,
+	// whose "#126" number and "Bölüm" label read as "#126Bölüm".
 	{
-		Title:             "h1.movie__title",
-		Rows:              "tr.wt-ch-row td.ps-0 a",
+		Title:             "h1#wt-title",
+		Rows:              "ol#chapters > li.wt-ch[data-chapter] > a[href]",
+		Chapter:           "span.wt-ch-num, span.wt-ch-t",
 		ChapterTitleStrip: `^#?\d+(\.\d+)?\s*\.?\s*Bölüm$`,
 		Image:             "#images img.reader-img",
 	},

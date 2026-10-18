@@ -8,25 +8,29 @@ import (
 	"testing"
 )
 
-// trmangaSeriesHTML is a trimmed copy of a series page: the chapter table is
-// #chapters too (so the entry must come before the meowing #chapters ones),
-// each row's first column is the chapter link, and the other links of the row
-// (fansub, uploader) must not be read as chapters.
-const trmangaSeriesHTML = `<html><head><title>No Place · TRManga</title></head><body>
-<h1 class="movie__title h2">No Place for the Fake Princess</h1>
-<table class="table" id="chapters">
-<thead><tr><th>Bölüm</th><th>Fansub & Yükleyen</th><th>Tarih</th></tr></thead>
-<tbody>
-<tr class="fw-boldest font-size-lg wt-ch-row" data-chapter="2">
-<td class="ps-0"><div><a href="/webtoon/no-place-for-the-fake-princess/2">#2                               .Bölüm</a></div></td>
-<td class="text-end"><a class="text-black-50" href="/fansub/trwebtoon">TRwebtoon</a><a href="/@asoel">Asoel</a></td>
-</tr>
-<tr class="fw-boldest font-size-lg wt-ch-row" data-chapter="1">
-<td class="ps-0"><div><a href="/webtoon/no-place-for-the-fake-princess/1">#1                               .Bölüm</a></div></td>
-<td class="text-end"><a class="text-black-50" href="/fansub/trwebtoon">TRwebtoon</a></td>
-</tr>
-</tbody>
-</table>
+// trmangaSeriesHTML is a trimmed copy of a series page (theme v3): the chapter
+// list is #chapters too (so the entry must come before the meowing #chapters
+// ones), each row's <a> is the chapter link, and the fansub and uploader links
+// that follow it must not be read as chapters.
+const trmangaSeriesHTML = `<html lang="tr" data-trm-theme="v3"><head><title>No Place · TRManga</title></head><body>
+<h1 id="wt-title" class="text-3xl">No Place for the Fake Princess</h1>
+<ol id="chapters" class="divide-y">
+<li class="wt-ch" data-chapter="2" data-views="456">
+<a href="/webtoon/no-place-for-the-fake-princess/2">
+<span class="wt-ch-num tabular-nums">#2</span>
+<span class="wt-ch-t">Bölüm</span>
+<span class="badge badge-primary">Yeni</span>
+</a>
+<span class="wt-ch-m"><a href="/fansub/trwebtoon" title="Çeviri ekibi: TRwebtoon">TRwebtoon</a><a href="/@asoel" title="Yükleyen: Asoel">Asoel</a></span>
+</li>
+<li class="wt-ch" data-chapter="1" data-views="798">
+<a href="/webtoon/no-place-for-the-fake-princess/1">
+<span class="wt-ch-num tabular-nums">#1</span>
+<span class="wt-ch-t">Bölüm</span>
+</a>
+<span class="wt-ch-m"><a href="/fansub/trwebtoon" title="Çeviri ekibi: TRwebtoon">TRwebtoon</a></span>
+</li>
+</ol>
 </body></html>`
 
 // trmangaReaderHTML is a trimmed copy of a reader page: only the first page
@@ -56,7 +60,7 @@ func TestTrmanga(t *testing.T) {
 	if err != nil || !ok {
 		t.Fatalf("Test() = %v, %v; want the series to match", ok, err)
 	}
-	if m.site.Rows != "tr.wt-ch-row td.ps-0 a" {
+	if m.site.Rows != "ol#chapters > li.wt-ch[data-chapter] > a[href]" {
 		t.Errorf("Test() matched with selector %q, want the trmanga one (an earlier entry shadows it)", m.site.Rows)
 	}
 	if title, _ := m.FetchTitle(); title != "No Place for the Fake Princess" {
