@@ -1957,8 +1957,9 @@ SMOKE_EXCLUDE += comix mkissa templetoons mangafire
 # so a new site is one line there, minus SMOKE_EXCLUDE
 SMOKE_TARGETS = $(filter-out $(SMOKE_EXCLUDE) html,$(sort $(patsubst grabber/%,%,$(shell awk '/^grabber: \\/ || /^grabber\/html: \\/ {f = 1; next} f && /^\t/ {gsub(/[\\\t ]/, ""); print; next} {f = 0}' makefile))))
 
-# GNU timeout bounds each target; macOS has none, so its targets run unbounded
-SMOKE_TIMEOUT = $(if $(shell command -v timeout),timeout 300)
+# GNU timeout bounds each target at SMOKE_LIMIT seconds; macOS has none, so its targets run unbounded
+SMOKE_LIMIT ?= 300
+SMOKE_TIMEOUT = $(if $(shell command -v timeout),timeout $(SMOKE_LIMIT))
 # not $(MAKE) itself: a line naming it runs in full even under make -n
 SMOKE_MAKE = $(MAKE)
 
@@ -1983,26 +1984,32 @@ smoke:
 	[ -z "$$GITHUB_ACTIONS" ] || [ -z "$$GITHUB_STEP_SUMMARY" ] || printf '| site | result | reason |\n|---|---|---|\n' >> "$$GITHUB_STEP_SUMMARY"; \
 	for t in $$list; do \
 		touch $$stamp; sleep 1; \
-		log=$$(mktemp); \
-		[ -z "$$GITHUB_ACTIONS" ] || echo "::group::$$t"; \
-		{ $(SMOKE_TIMEOUT) $(SMOKE_MAKE) grabber/$$t && \
-			if find . -maxdepth 1 -name '*.cbz' -newer $$stamp | grep -q .; then \
-				find . -maxdepth 1 -name '*.cbz' -newer $$stamp -print0 | xargs -0 go run ./tools/verify-cbz; \
-			else echo "no CBZ written"; false; fi; \
-			echo $$? > $$rc; } 2>&1 | tee $$log; \
-		[ -z "$$GITHUB_ACTIONS" ] || echo "::endgroup::"; \
-		if [ "$$(cat $$rc)" = 0 ]; then r=pass; else r=fail; fails=$$((fails + 1)); fi; \
-		echo "$$t $$r" | tee -a $(SMOKE_RESULTS); \
-		if [ -n "$$GITHUB_ACTIONS" ]; then \
+		if [ -z "$$GITHUB_ACTIONS" ]; then \
+			if $(SMOKE_TIMEOUT) $(SMOKE_MAKE) grabber/$$t && find . -maxdepth 1 -name '*.cbz' -newer $$stamp | grep -q . && find . -maxdepth 1 -name '*.cbz' -newer $$stamp -print0 | xargs -0 go run ./tools/verify-cbz; then r=pass; else r=fail; fi; \
+		else \
+			log=$$(mktemp); \
+			echo "::group::$$t"; \
+			{ $(SMOKE_TIMEOUT) $(SMOKE_MAKE) grabber/$$t; echo $$? > $$rc; \
+				if [ "$$(cat $$rc)" = 0 ]; then \
+					if find . -maxdepth 1 -name '*.cbz' -newer $$stamp | grep -q .; then \
+						find . -maxdepth 1 -name '*.cbz' -newer $$stamp -print0 | xargs -0 go run ./tools/verify-cbz || echo 1 > $$rc; \
+					else echo "no CBZ written"; echo 1 > $$rc; fi; \
+				fi; } 2>&1 | tee $$log; \
+			echo "::endgroup::"; \
+			if [ "$$(cat $$rc)" = 0 ]; then r=pass; else r=fail; fi; \
 			if [ $$r = pass ]; then row="✅ pass | |"; else \
-				reason=$$(grep -E -v '^make(\[[0-9]+\])?: (\*\*\* \[.*\] Error [0-9]+|(Entering|Leaving) directory)|^exit status [0-9]+$$|^OK |^[[:space:]]*$$' $$log | tail -n 1); \
+				if [ "$$(cat $$rc)" = 124 ]; then reason="timed out after $(SMOKE_LIMIT)s"; else \
+					reason=$$(grep -E -v '^make(\[[0-9]+\])?: (\*\*\* \[.*\] Error [0-9]+|(Entering|Leaving) directory)|^exit status [0-9]+$$|^OK |^[[:space:]]*$$' $$log | tail -n 1); \
+				fi; \
 				[ -n "$$reason" ] || reason="no output"; \
 				printf '::error title=%s failed::%s\n' "$$t" "$$(printf '%s\n' "$$reason" | awk '{gsub(/%/, "%25"); gsub(/\r/, "%0D"); printf "%s", $$0}')"; \
 				row="❌ fail | $$(printf '%s\n' "$$reason" | sed 's/|/\\|/g') |"; \
 			fi; \
 			[ -z "$$GITHUB_STEP_SUMMARY" ] || echo "| $$t | $$row" >> "$$GITHUB_STEP_SUMMARY"; \
+			rm -f $$log; \
 		fi; \
-		rm -f $$log; \
+		[ $$r = pass ] || fails=$$((fails + 1)); \
+		echo "$$t $$r" | tee -a $(SMOKE_RESULTS); \
 		find . -maxdepth 1 -name '*.cbz' -newer $$stamp -delete; \
 	done; \
 	rm -f $$stamp $$rc; \
