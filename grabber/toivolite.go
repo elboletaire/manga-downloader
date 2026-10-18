@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -28,7 +29,6 @@ type ToivoLite struct {
 	// byMarkup also matches the hosts not in toivoLiteSites (NewToivoLiteByMarkup)
 	byMarkup    bool
 	chapters    Filterables
-	errs        []error
 	title       string
 	rootFetched bool
 }
@@ -96,8 +96,7 @@ func (t *ToivoLite) fetchRoot() error {
 	// h1.entry-title to avoid matching chapter page <h1> titles
 	t.title = strings.TrimSpace(doc.Find("h1.entry-title").Text())
 
-	entries, errs := toivoLiteChapterList(doc, t.BaseUrl())
-	t.errs = errs
+	entries := toivoLiteChapterList(doc, t.BaseUrl())
 
 	t.chapters = make(Filterables, 0, len(entries))
 	for _, e := range entries {
@@ -129,7 +128,7 @@ func (t *ToivoLite) FetchChapters() (Filterables, []error) {
 	if err := t.fetchRoot(); err != nil {
 		return nil, []error{err}
 	}
-	return t.chapters, t.errs
+	return t.chapters, nil
 }
 
 // FetchChapter fetches a chapter and returns its pages.
@@ -153,6 +152,11 @@ func (t *ToivoLite) FetchChapter(f Filterable) (*Chapter, error) {
 	pages, err := toivoLiteEntryContentPages(doc, ChapterLabel(f))
 	if err != nil {
 		return nil, err
+	}
+	// NoReferer applies to every image off the site's domain, since a CDN
+	// answers 403 to the site's Referer (mangafreak does)
+	for i := range pages {
+		pages[i].NoReferer = !toivoLiteSameSite(pages[i].URL, t.BaseUrl())
 	}
 
 	return &Chapter{
@@ -178,12 +182,34 @@ type toivoLiteChapterEntry struct {
 // ("The Apothecary Diaries, Chapter 63.2" → "63.2").
 var toivoLiteChapterNumRe = regexp.MustCompile(`(?i)chapter\s*(\d+(?:\.\d+)?)`)
 
+// toivoLiteColonNumRe reads the word and number before a colon, as in
+// "Tokyo Manji Revengers 204: Give me a Hand" (the word is "Revengers")
+var toivoLiteColonNumRe = regexp.MustCompile(`^(?:.*\s)?(\S+)\s(\d+(?:\.\d+)?):\s*(.*)$`)
+
+// toivoLiteColonNum reads a number written without the chapter word, returning
+// it with the title after the colon. "Volume 3: X" and the like are no chapter.
+func toivoLiteColonNum(raw string) (num, title string, ok bool) {
+	if strings.Contains(strings.ToLower(raw), "chapter") {
+		return "", "", false
+	}
+	m := toivoLiteColonNumRe.FindStringSubmatch(raw)
+	if m == nil {
+		return "", "", false
+	}
+	switch strings.ToLower(strings.TrimSuffix(m[1], ".")) {
+	case "volume", "vol", "season", "part", "arc":
+		return "", "", false
+	}
+	return m[2], m[3], true
+}
+
 // toivoLiteChapterList parses the "All Chapters" sidebar widget shared by
 // every Toivo Lite page. Numbers come from the link text ("Chapter 63.2"),
 // not the slug (which uses hyphens indistinguishable from WP duplicate-slug
 // suffixes). The selector scopes to the inner <ul> to avoid matching the
-// outer #Chapters_List <li> scaffold.
-func toivoLiteChapterList(doc *goquery.Document, baseURL string) (entries []toivoLiteChapterEntry, errs []error) {
+// outer #Chapters_List <li> scaffold. A post with no number (extras, specials)
+// is kept unnumbered rather than failing the list.
+func toivoLiteChapterList(doc *goquery.Document, baseURL string) (entries []toivoLiteChapterEntry) {
 	doc.Find("#Chapters_List .ceo_latest_comics_widget ul li").Each(func(i int, s *goquery.Selection) {
 		link := s.Find("a")
 		rawTitle := strings.TrimSpace(link.Text())
@@ -197,12 +223,10 @@ func toivoLiteChapterList(doc *goquery.Document, baseURL string) (entries []toiv
 		}
 
 		num, ok := toivoLiteChapterNum(rawTitle, u)
-		if !ok {
-			errs = append(errs, fmt.Errorf("could not parse chapter number from %q (%s)", rawTitle, u))
-			return
-		}
-
 		title, label := toivoLiteChapterTitle(rawTitle)
+		if !ok {
+			label = Label{Style: LabelUnnumbered}
+		}
 
 		entries = append(entries, toivoLiteChapterEntry{
 			Title:  title,
@@ -221,6 +245,9 @@ func toivoLiteChapterList(doc *goquery.Document, baseURL string) (entries []toiv
 func toivoLiteChapterTitle(raw string) (string, Label) {
 	idx := strings.Index(strings.ToLower(raw), "chapter")
 	if idx < 0 {
+		if num, title, ok := toivoLiteColonNum(raw); ok {
+			return title, Label{Style: LabelPrefixed, Number: num}
+		}
 		return raw, Label{}
 	}
 	if m := toivoLiteNumberOnlyRe.FindStringSubmatch(raw[idx+len("chapter"):]); m != nil {
@@ -238,6 +265,11 @@ func toivoLiteChapterNum(title, url string) (float64, bool) {
 	if m := toivoLiteChapterNumRe.FindStringSubmatch(title); m != nil {
 		if num, err := strconv.ParseFloat(m[1], 64); err == nil {
 			return num, true
+		}
+	}
+	if num, _, ok := toivoLiteColonNum(title); ok {
+		if n, err := strconv.ParseFloat(num, 64); err == nil {
+			return n, true
 		}
 	}
 	if num, _, ok := parseChapterSlugNum(url); ok {
@@ -258,7 +290,7 @@ func toivoLiteEntryContentPages(doc *goquery.Document, chapterTitle string) ([]P
 
 	var pages []Page
 	content.Find("img").Each(func(i int, s *goquery.Selection) {
-		src := strings.TrimSpace(s.AttrOr("src", ""))
+		src := toivoLitePageURL(s)
 		if src == "" {
 			return
 		}
@@ -273,4 +305,42 @@ func toivoLiteEntryContentPages(doc *goquery.Document, chapterTitle string) ([]P
 	}
 
 	return pages, nil
+}
+
+// toivoLiteMirrorRe is the wNN. label Toivo Lite sites put on their host
+var toivoLiteMirrorRe = regexp.MustCompile(`^w\d+\.`)
+
+// toivoLiteSameSite reports whether imageURL is on the site's own domain: the
+// site's host without its wNN. label, or a subdomain of it
+func toivoLiteSameSite(imageURL, siteURL string) bool {
+	host := toivoLiteHost(imageURL)
+	domain := toivoLiteMirrorRe.ReplaceAllString(toivoLiteHost(siteURL), "")
+	return host != "" && domain != "" && (host == domain || strings.HasSuffix(host, "."+domain))
+}
+
+// toivoLiteHost returns a URL's lowercase host, "" when it doesn't parse
+func toivoLiteHost(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+	return strings.ToLower(u.Hostname())
+}
+
+// toivoLiteLazyRe matches the placeholder GIFs of the lazy-load plugins
+// ("lazy_placeholder.gif", "a3-lazy-load/assets")
+var toivoLiteLazyRe = regexp.MustCompile(`(?i)lazy[_-](placeholder|load)`)
+
+// toivoLitePageURL returns a page image's real URL. Lazy readers keep a data:
+// URI or a placeholder GIF in src and the image in a data-* attribute, so those
+// win over src; "" when the image has nothing but placeholders.
+func toivoLitePageURL(s *goquery.Selection) string {
+	for _, attr := range []string{"data-src", "data-lazy-src", "src"} {
+		u := strings.TrimSpace(s.AttrOr(attr, ""))
+		if u == "" || strings.HasPrefix(u, "data:") || toivoLiteLazyRe.MatchString(u) {
+			continue
+		}
+		return u
+	}
+	return ""
 }
