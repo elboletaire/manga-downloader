@@ -173,7 +173,7 @@ func (c *ComicWalker) fetchWork() error {
 // comicWalkerTitle splits an episode title into its title (empty when there is
 // none), number and part: "第3話後編" is number 3, part "後編"
 func comicWalkerTitle(raw string) (title string, number float64, part string) {
-	title, number, part, _ = gigaviewerTitle(raw, "")
+	title, number, part, _ = gigaviewerTitle(raw, "", false)
 	// gigaviewerTitle takes the 前編 after a number as the title
 	if part == "" {
 		if p := comicWalkerPartRe.FindString(title); p != "" {
