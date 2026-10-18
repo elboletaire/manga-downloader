@@ -13,3 +13,6 @@ epochs:
 platforms:
   - { match: "*-windows-amd64-installer.exe", label: Windows amd64 installer }
 docker: elboletaire/manga-downloader
+charts:
+  stars: { from: 2024-01-01 }
+  downloads-per-day: { range: 90d }
