@@ -1303,7 +1303,7 @@ grabber/hanayume:
 grabber/harmonyscan:
 	go run . https://harmony-scan.fr/manga/shijou-saikyou-no-mahou-kenshi-f-rank-boukensha-ni-tensei-suru/ 31
 grabber/hayacomic:
-	go run . https://hayacomic.jp/series/1f90690bf7a3e 0
+	go run . https://hayacomic.jp/series/5f62ae8f75f3b 0
 grabber/hentaiscantrad:
 	go run . https://hentai-scantrad.org/manga/asmodeck-jeu-du-desir/ 18
 grabber/hentaiteca:
