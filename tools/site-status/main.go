@@ -39,6 +39,8 @@ var (
 	domainRe  = regexp.MustCompile(`[a-z0-9-]+(?:\.[a-z0-9-]+)+`)
 	dateRe    = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 	sectionRe = regexp.MustCompile(`(?i)^##\s+Supported sites\s*$`)
+	// "❌ failing since D", or with "(checked E)" once a run has seen it fail
+	failRe = regexp.MustCompile(`^❌ failing since (\d{4}-\d{2}-\d{2})(?: \(checked (\d{4}-\d{2}-\d{2})\))?$`)
 )
 
 func main() {
@@ -134,7 +136,7 @@ func listOldest(in io.Reader, out io.Writer, n int, readmePath, makefilePath str
 
 // oldest returns the n candidates whose rows were verified longest ago: never
 // checked first (a candidate with no row counts as never checked), then by
-// date, ties by name. A failing row is ordered by its "failing since" date.
+// date, ties by name. A failing row is ordered by when it was last checked.
 func oldest(readme string, hosts map[string]string, candidates []string, n int) ([]string, error) {
 	rows, err := readRows(strings.Split(readme, "\n"))
 	if err != nil {
@@ -146,7 +148,7 @@ func oldest(readme string, hosts map[string]string, candidates []string, n int) 
 		d := due{target: t}
 		if host, ok := hosts[t]; ok {
 			if ri := bestRow(host, rows); ri >= 0 {
-				d.date = verifiedDate(rows[ri].verified)
+				d.date = queueDate(rows[ri].verified)
 			}
 		}
 		dues = append(dues, d)
@@ -167,11 +169,26 @@ func oldest(readme string, hosts map[string]string, candidates []string, n int) 
 	return out, nil
 }
 
-// verifiedDate returns the day a "Last verified" cell dates, or "" for "—".
-func verifiedDate(cell string) string {
-	d := strings.TrimSpace(strings.TrimPrefix(cell, failPrefix))
-	if dateRe.MatchString(d) {
-		return d
+// queueDate returns the day that queues a "Last verified" cell for the rotation:
+// its date, a failing row's last check (its since date for the old form), or "".
+func queueDate(cell string) string {
+	c := strings.TrimSpace(cell)
+	if m := failRe.FindStringSubmatch(c); m != nil {
+		if m[2] != "" {
+			return m[2]
+		}
+		return m[1]
+	}
+	if dateRe.MatchString(c) {
+		return c
+	}
+	return ""
+}
+
+// failingSince returns the "failing since" date of a failing cell, or "".
+func failingSince(cell string) string {
+	if m := failRe.FindStringSubmatch(strings.TrimSpace(cell)); m != nil {
+		return m[1]
 	}
 	return ""
 }
@@ -353,17 +370,18 @@ func hasTarget(domains []string, hosts map[string]string) string {
 	return ""
 }
 
-// withVerified replaces the last cell of a table row, keeping an existing
-// "failing since" date while the site keeps failing.
+// withVerified replaces the last cell of a table row. A failure keeps the
+// "failing since" date of an earlier failure and refreshes the check date.
 func withVerified(line string, pass bool, date string) string {
 	m := rowRe.FindStringSubmatchIndex(line)
 	cell := line[m[10]:m[11]]
 	next := date
 	if !pass {
-		next = failPrefix + date
-		if strings.HasPrefix(cell, failPrefix) {
-			next = cell
+		since := failingSince(cell)
+		if since == "" {
+			since = date
 		}
+		next = fmt.Sprintf("%s%s (checked %s)", failPrefix, since, date)
 	}
 	return line[:m[10]] + next + line[m[11]:]
 }

@@ -24,10 +24,10 @@ export const EN_BADGE: BadgeLabels = { label: 'browser', srPrefix: 'needs a', ti
 // | [domain](url) \* | note | last verified |
 const ROW = /^\|\s*\[(.+?)\]\((\S+?)\)\s*(\\?\*)?\s*\|(.*)\|(.*)\|\s*$/
 
-/** Reads the "Last verified" cell: a date, "❌ failing since <date>" or anything else (unknown). */
+/** Reads the "Last verified" cell: a date, "❌ failing since <date>" (optionally "(checked <date>)") or anything else (unknown). */
 export function parseVerified(cell: string): Verified {
   const c = cell.trim()
-  const failing = /^❌\s*failing since (\d{4}-\d{2}-\d{2})$/.exec(c)
+  const failing = /^❌\s*failing since (\d{4}-\d{2}-\d{2})(?:\s*\(checked \d{4}-\d{2}-\d{2}\))?$/.exec(c)
   if (failing) return { status: 'failing', date: failing[1] }
   if (/^\d{4}-\d{2}-\d{2}$/.test(c)) return { status: 'ok', date: c }
   return { status: 'unknown' }
