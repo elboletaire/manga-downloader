@@ -4,12 +4,14 @@ package grabber
 
 import (
 	"encoding/json"
+	"errors"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
@@ -724,14 +726,117 @@ func (m PlainHTML) rowChapterNumber(s *goquery.Selection) (float64, bool) {
 	return checkRowChapterNumber(s, m.site)
 }
 
-// Ttitle returns the manga title
+// FetchTitle returns the manga title: pageTitle, else the URL's name (urlTitle).
+// It never returns "", so file names always carry a series title.
 func (m PlainHTML) FetchTitle() (string, error) {
+	if t := m.pageTitle(); t != "" {
+		return t, nil
+	}
+	return m.urlTitle()
+}
+
+// pageTitle returns the title the page gives itself: the Title selector's text,
+// else og:title and then <title> with the site's own name stripped. "" when
+// neither has one. FetchChapters strips it from chapter titles, so it never
+// takes a name from the URL.
+func (m PlainHTML) pageTitle() string {
 	title := m.doc.Find(m.site.Title)
 	if m.site.TitleNoise != "" {
 		title = title.Clone()
 		title.Find(m.site.TitleNoise).Remove()
 	}
-	return sanitizeTitle(textWithoutNoise(title)), nil
+	if t := sanitizeTitle(textWithoutNoise(title)); t != "" {
+		return t
+	}
+
+	siteName := m.doc.Find(`meta[property="og:site_name"]`).AttrOr("content", "")
+	for _, c := range []string{
+		m.doc.Find(`meta[property="og:title"]`).AttrOr("content", ""),
+		m.doc.Find("title").First().Text(),
+	} {
+		if t := stripSiteName(sanitizeTitle(c), siteName); t != "" {
+			return t
+		}
+	}
+	return ""
+}
+
+// urlTitle names a series that has no title on its page from its URL: the last
+// path segment ("/manga/one-piece/" is "One Piece"), else the host's
+// second-level label ("www.sxfmanga.net" is "sxfmanga"). It errors only when
+// there is no URL at all.
+func (m PlainHTML) urlTitle() (string, error) {
+	if m.Grabber == nil || m.URL == "" {
+		return "", errors.New("no series title on the page and no URL to name it from")
+	}
+	u, err := url.Parse(m.URL)
+	if err != nil {
+		return "", err
+	}
+
+	if segments := strings.Split(strings.Trim(u.Path, "/"), "/"); segments[len(segments)-1] != "" {
+		slug, err := url.PathUnescape(segments[len(segments)-1])
+		if err != nil {
+			slug = segments[len(segments)-1]
+		}
+		if name := humanizeSlug(slug); name != "" {
+			return name, nil
+		}
+	}
+
+	host := u.Hostname()
+	if host == "" {
+		return "", errors.New("no series title on the page and no host in its URL")
+	}
+	labels := strings.Split(host, ".")
+	if len(labels) > 1 {
+		return labels[len(labels)-2], nil
+	}
+	return host, nil
+}
+
+// slugExtRe is a page extension a slug can end in ("/series-name.html").
+var slugExtRe = regexp.MustCompile(`(?i)\.(html?|php)$`)
+
+// humanizeSlug turns "regression-del_tanque.html" into "Regression Del Tanque".
+// It returns "" for a bare number ("/12345/"), which names no series.
+func humanizeSlug(slug string) string {
+	slug = slugExtRe.ReplaceAllString(slug, "")
+	if digitsOnlyRe.MatchString(slug) {
+		return ""
+	}
+	words := strings.FieldsFunc(slug, func(r rune) bool { return r == '-' || r == '_' || unicode.IsSpace(r) })
+	for i, w := range words {
+		r, size := utf8.DecodeRuneInString(w)
+		words[i] = string(unicode.ToUpper(r)) + w[size:]
+	}
+	return strings.Join(words, " ")
+}
+
+var digitsOnlyRe = regexp.MustCompile(`^\d+$`)
+
+// siteSuffixRe and sitePrefixRe split a title at its last separator ("Series -
+// Site") or its first ("Site | Series"). The separator needs whitespace before
+// it (the suffix) or after it (the prefix), so "Spy-Family" is left whole.
+var (
+	siteSuffixRe = regexp.MustCompile(`^(.*\S)\s+[-–—|·:/]\s*(.+)$`)
+	sitePrefixRe = regexp.MustCompile(`^(.+?)\s*[-–—|·:/]\s+(.+)$`)
+)
+
+// stripSiteName drops the site's own name from a title, as a suffix or a
+// prefix, as og:site_name gives it. Any other title is returned as it is.
+func stripSiteName(title, siteName string) string {
+	siteName = sanitizeTitle(siteName)
+	if siteName == "" {
+		return title
+	}
+	if m := siteSuffixRe.FindStringSubmatch(title); m != nil && strings.EqualFold(sanitizeTitle(m[2]), siteName) {
+		return m[1]
+	}
+	if m := sitePrefixRe.FindStringSubmatch(title); m != nil && strings.EqualFold(sanitizeTitle(m[1]), siteName) {
+		return sanitizeTitle(m[2])
+	}
+	return title
 }
 
 // textWithoutNoise returns a selection's text with common non-title noise
@@ -970,7 +1075,7 @@ func parseChapterNumber(text string) (float64, bool) {
 // FetchChapters returns a slice of chapters, one per release: a row whose
 // upload sub-rows are set (Uploads) gives one chapter for each of them
 func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
-	seriesTitle, _ := m.FetchTitle()
+	seriesTitle := m.pageTitle()
 	var strip *regexp.Regexp
 	if m.site.ChapterTitleStrip != "" {
 		strip = regexp.MustCompile(m.site.ChapterTitleStrip)
