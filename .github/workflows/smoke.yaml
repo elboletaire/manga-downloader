@@ -30,7 +30,7 @@ jobs:
           - manganato
           - mangak
           - mgeko
-          - mangaball
+          # - mangaball  # 403 on GitHub's runners only; run it locally
           - mangadenizi
           - qimanga
           - aurorascans
@@ -209,7 +209,7 @@ jobs:
           - rawkuma
           - dynastyscans
           - mangaread
-          - mangasorigines
+          # - mangasorigines  # 403 on GitHub's runners only; run it locally
           - manhuaplus
           - manhwaonline
           - decadencescans
@@ -242,15 +242,15 @@ jobs:
           - scanvf
           - thunderscans
           - trmanga
-          - uzaymanga
+          # - uzaymanga  # 403 on GitHub's runners only; run it locally
           - violetscans
           - witchtoons
           - writerscans
           - mistscans
           - mangapark
-          - eldermanga
-          - eskimangalar
-          - limonmanga
+          # - eldermanga  # 403 on GitHub's runners only; run it locally
+          # - eskimangalar  # 403 on GitHub's runners only; run it locally
+          # - limonmanga  # 403 on GitHub's runners only; run it locally
           - ksgroupscans
           - manhwatop
           - mangazin
@@ -269,7 +269,7 @@ jobs:
           - kombatch
           - mundomanhwa
           - smuglo
-          - afroditscans
+          # - afroditscans  # 403 on GitHub's runners only; run it locally
           - hentai20
           - komikdewasa
           - mangadistrict
