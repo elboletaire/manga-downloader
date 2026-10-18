@@ -696,14 +696,14 @@ to a minute.
 | [animexnovel.com](https://www.animexnovel.com) | Portuguese, also novels | 2026-10-18 |
 | [anzmanga25.com](https://www.anzmanga25.com) | AnzManga, Spanish | 2026-10-18 |
 | [apcomics.org](https://apcomics.org) | English | 2026-10-18 |
-| [apenasuma-fa.blogspot.com](https://apenasuma-fa.blogspot.com) | Portuguese | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [apenasuma-fa.blogspot.com](https://apenasuma-fa.blogspot.com) | Portuguese | 2026-10-18 |
 | [apollcomics.es](https://apollcomics.es) | Spanish | 2026-10-18 |
 | [arbxcomix.com](https://arbxcomix.com) | Arabic, mostly NSFW | 2026-10-18 |
 | [archiviumbar.com](https://archiviumbar.com) | Spanish | 2026-10-18 |
 | [arcurafansub.com](https://arcurafansub.com) | Turkish | 2026-10-18 |
 | [arenascan.com](https://arenascan.com) |  | 2026-10-18 |
 | [arhentai.net](https://arhentai.net) | Arabic, mostly NSFW | 2026-10-18 |
-| [arlas.online](https://www.arlas.online) | Indonesian | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [arlas.online](https://www.arlas.online) | Indonesian | 2026-10-18 |
 | [arthurscan.xyz](https://arthurscan.xyz) | Portuguese | 2026-10-18 |
 | [artlapsa.com](https://artlapsa.com) | English, locked chapters skipped | 2026-10-18 |
 | [asacomi.jp](https://asacomi.jp) | Japanese (Comici), locked chapters skipped | 2026-10-18 |
@@ -759,10 +759,10 @@ to a minute.
 | [comirela.com](https://comirela.com) | Japanese (Comici) | 2026-10-18 |
 | [comix.to](https://comix.to) \* |  | 2026-10-15 |
 | [csmmangafree.com](https://www.csmmangafree.com) | English, single series | 2026-10-18 |
-| [cucumbermanga.com](https://cucumbermanga.com) | English | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [cucumbermanga.com](https://cucumbermanga.com) | English | 2026-10-18 |
 | [dandadanmangas.online](https://dandadanmangas.online) | English, single series | 2026-10-18 |
 | [danke.moe](https://danke.moe) | Danke fürs Lesen | 2026-10-18 |
-| [datgarscanlation.blogspot.com](https://datgarscanlation.blogspot.com) | Spanish | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [datgarscanlation.blogspot.com](https://datgarscanlation.blogspot.com) | Spanish | 2026-10-18 |
 | [decadencescans.com](https://reader.decadencescans.com) | Decadence Scans, slow image host | 2026-10-18 |
 | [deathtollscans.net](https://reader.deathtollscans.net) |  | 2026-10-18 |
 | [demonicscans.org](https://demonicscans.org) | MangaDemon / Demonic Scans | 2026-10-18 |
@@ -778,7 +778,7 @@ to a minute.
 | [dragontea.ink](https://dragontea.ink) \* |  | 2026-10-15 |
 | [dragontranslation.org](https://dragontranslation.org) | Spanish, mostly NSFW | 2026-10-18 |
 | [drakecomic.net](https://drakecomic.net) | Drake Scans, former drakecomic.org | 2026-10-18 |
-| [duoscanlators.blogspot.com](https://duoscanlators.blogspot.com) | Portuguese | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [duoscanlators.blogspot.com](https://duoscanlators.blogspot.com) | Portuguese | 2026-10-18 |
 | [dynasty-scans.com](https://dynasty-scans.com) | Dynasty Reader | 2026-10-18 |
 | [ecchi-doujin.com](https://ecchi-doujin.com) | Thai, mostly NSFW | 2026-10-18 |
 | [eldermanga.com](https://eldermanga.com) |  | 2026-10-18 |
@@ -799,7 +799,7 @@ to a minute.
 | [g-comi.jp](https://g-comi.jp) | Japanese (Comici), comic-medu.com redirects here | 2026-10-18 |
 | [gaiatoon.com](https://gaiatoon.com) | Turkish | 2026-10-18 |
 | [gakamangas.com](https://gakamangas.com) | English | 2026-10-18 |
-| [galaxscanlator.blogspot.com](https://galaxscanlator.blogspot.com) | Portuguese | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [galaxscanlator.blogspot.com](https://galaxscanlator.blogspot.com) | Portuguese | 2026-10-18 |
 | [gdscans.com](https://gdscans.com) | GalaxyDegenScans | 2026-10-18 |
 | [genztoons.org](https://genztoons.org) | Genz Toon, former genzupdates.com | 2026-10-18 |
 | [ghostoon.com](https://ghostoon.com) | Turkish, mostly NSFW | 2026-10-18 |
@@ -809,17 +809,17 @@ to a minute.
 | [gourmetsupremacy.com](https://gourmetsupremacy.com) | Gourmet Scans, free chapters only | 2026-10-18 |
 | [grabber.zone](https://grabber.zone) | Spanish | 2026-10-18 |
 | [grimscans.com](https://grimscans.com) | English, locked chapters skipped | 2026-10-18 |
-| [gutsberserk.com](https://www.gutsberserk.com) | English, single series | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [gutsberserk.com](https://www.gutsberserk.com) | English, single series | 2026-10-18 |
 | [guya.moe](https://guya.moe) | Guya, Kaguya-sama | 2026-10-18 |
 | [hachirumi.com](https://hachirumi.com) | Hachirumi, Guya instance, has an NSFW section | 2026-10-18 |
-| [hanamiheaven.org](https://hanamiheaven.org) | Portuguese, mostly NSFW | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [hanamiheaven.org](https://hanamiheaven.org) | Portuguese, mostly NSFW | 2026-10-18 |
 | [hanayume.com](https://hanayume.com) | Japanese (Comici), free episodes only | 2026-10-18 |
-| [hanmokkuscan.blogspot.com](https://hanmokkuscan.blogspot.com) | Portuguese | ❌ failing since 2026-10-18 (checked 2026-10-18) |
-| [harmony-scan.fr](https://harmony-scan.fr) | French | ❌ failing since 2026-10-18 (checked 2026-10-18) |
-| [hayacomic.jp](https://hayacomic.jp) | Japanese (Comici) | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [hanmokkuscan.blogspot.com](https://hanmokkuscan.blogspot.com) | Portuguese | 2026-10-18 |
+| [harmony-scan.fr](https://harmony-scan.fr) | French | 2026-10-18 |
+| [hayacomic.jp](https://hayacomic.jp) | Japanese (Comici) | 2026-10-18 |
 | [heavenly-delusion.com](https://heavenly-delusion.com) | Heavenly Delusion | 2026-10-18 |
 | [heavenmanga.com](https://heavenmanga.com) | Spanish | 2026-10-18 |
-| [heckscans.blogspot.com](https://heckscans.blogspot.com) | Portuguese | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [heckscans.blogspot.com](https://heckscans.blogspot.com) | Portuguese | 2026-10-18 |
 | [hentai-origines.com](https://hentai-origines.com) | French, mostly NSFW | 2026-10-18 |
 | [hentai-scantrad.org](https://hentai-scantrad.org) | French, mostly NSFW | 2026-10-18 |
 | [hentai1.io](https://hentai1.io) | English, mostly NSFW | 2026-10-18 |
@@ -1110,7 +1110,7 @@ to a minute.
 | [visorotaku.com](https://visorotaku.com) | Spanish | 2026-10-18 |
 | [vortexscans.org](https://vortexscans.org) |  | 2026-10-18 |
 | [w14.punchonemanga.com](https://w14.punchonemanga.com) | English, single series | 2026-10-18 |
-| [w2.dandadanmanga.net](https://w2.dandadanmanga.net) | English, single series | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [w2.dandadanmanga.net](https://w2.dandadanmanga.net) | English, single series | 2026-10-18 |
 | [w2.omniscient-readers-viewpoint.online](https://w2.omniscient-readers-viewpoint.online) | English, single series | 2026-10-18 |
 | [w2.ruridragon.com](https://w2.ruridragon.com) | English, single series | 2026-10-18 |
 | [w22.thebeginningaftertheendmanga.com](https://w22.thebeginningaftertheendmanga.com) | English, single series | 2026-10-18 |
