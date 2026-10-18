@@ -1198,6 +1198,16 @@ func TestPlainHTMLLazySVGAndThemeImages(t *testing.T) {
 	}
 }
 
+// an SVG page with no data-* alternative is still a page (SVG pages are accepted)
+func TestPlainHTMLSVGPageWithoutLazyAttr(t *testing.T) {
+	doc := docFromHTML(t, `<div class="reading-content"><img src="/x.svg" alt="p1"></div>`)
+	m := PlainHTML{Grabber: &Grabber{URL: "https://site.example/manga/x/1/"}, site: SiteSelector{Image: ".reading-content img"}}
+	ch := m.chapterFromDoc(&PlainHTMLChapter{}, doc)
+	if len(ch.Pages) != 1 || ch.Pages[0].URL != "https://site.example/x.svg" {
+		t.Errorf("pages = %+v, want one page at https://site.example/x.svg", ch.Pages)
+	}
+}
+
 // a placeholder with no real URL anywhere must not become a page, and a
 // scheme-relative URL takes the page's scheme
 func TestPlainHTMLPlaceholderAndSchemeRelative(t *testing.T) {

@@ -385,10 +385,8 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:        "img.page-image",
 		ChapterQuery: "style=list",
 	},
-	// visorotaku.com (Spanish): the mangavault rows below, but each row's
-	// text is "Capítulo N" followed by a page count, and the reader's pages
-	// are plain <img>s on its CDN (alt "... cap. N pág. P"), not mangavault's.
-	// Its ul carries divide-line, which the mangavault list doesn't.
+	// visorotaku.com (Spanish): mangavault's rows, but "Capítulo N" plus a page
+	// count, and plain <img>s on its CDN. Its ul carries divide-line.
 	{
 		Title:        "h1",
 		Rows:         `ul.divide-line a[href*="/leer/"]`,
@@ -1446,8 +1444,7 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 var lazyImageAttrs = []string{"data-src", "data-lazy-src", "data-lzl-src", "data-original"}
 
 // isLazyPlaceholder reports whether src stands in for a lazy-loaded page
-// rather than being one: a data: URI, an .svg (pages are never SVG) or a
-// placeholder or blank GIF.
+// rather than being one: a data: URI, an .svg or a placeholder or blank GIF.
 func isLazyPlaceholder(src string) bool {
 	if strings.HasPrefix(src, "data:") {
 		return true
@@ -1464,8 +1461,8 @@ func isLazyPlaceholder(src string) bool {
 }
 
 // lazyImageURL returns the page image of an <img>: its src, or when that is a
-// placeholder, the first lazy-load attribute holding a real URL. It returns ""
-// when neither does, so a placeholder is never taken for a page.
+// placeholder, the first lazy-load attribute holding a real URL. A data: src
+// with none is "" rather than a page; any other src is kept.
 func lazyImageURL(s *goquery.Selection) string {
 	src := strings.TrimSpace(s.AttrOr("src", ""))
 	if src != "" && !isLazyPlaceholder(src) {
@@ -1476,14 +1473,17 @@ func lazyImageURL(s *goquery.Selection) string {
 			return v
 		}
 	}
-	return ""
+	if strings.HasPrefix(src, "data:") {
+		return ""
+	}
+	return src
 }
 
 // decodedDataScripts returns the source of the page's base64 data: scripts,
 // where some themes ship their inline JS (themesia puts ts_reader there).
 func decodedDataScripts(doc *goquery.Document) string {
 	var js strings.Builder
-	doc.Find(`script[src^="data:"]`).Each(func(_ int, s *goquery.Selection) {
+	doc.Find(`script[src^="data:text/javascript"], script[src^="data:application/javascript"]`).Each(func(_ int, s *goquery.Selection) {
 		_, payload, ok := strings.Cut(s.AttrOr("src", ""), ";base64,")
 		if !ok {
 			return
@@ -1641,12 +1641,9 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		return imgs
 	}
 
-	// templetoons.com's reader (Next.js RSC streaming) embeds the page list
-	// as a flat JSON array inside a double-escaped JS string, i.e. the raw
-	// HTML literally contains `\"pages\":[\"https://...\",...]`. Extract it
-	// and unescape the `\"` delimiters. The array must start with a URL: an
-	// array of page objects (visorotaku's `{"id":…,"image_url":…}`) would
-	// otherwise yield its keys as pages.
+	// templetoons.com's reader embeds the page list as a double-escaped RSC
+	// array of URLs (`\"pages\":[\"https://...\"]`). Only URL arrays match: a
+	// page-object array (visorotaku) would otherwise yield its keys as pages.
 	re = regexp.MustCompile(`\\"pages\\":\[(\\"https?://[^\]]+)\]`)
 	matches = re.FindStringSubmatch(html)
 	if len(matches) > 1 {
@@ -1737,7 +1734,6 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 			imgs = append(imgs, "https://cdn.meowing.org/uploads/"+uid)
 			return
 		}
-		// maid.my.id keeps the real URL in data-lazy-src only
 		imgs = append(imgs, lazyImageURL(s))
 	})
 
