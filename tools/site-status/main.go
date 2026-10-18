@@ -137,10 +137,9 @@ func listOldest(in io.Reader, out io.Writer, n, offset int, readmePath, makefile
 	return nil
 }
 
-// oldest returns the n candidates whose rows were verified longest ago: never
-// checked first (a candidate with no row counts as never checked), then by
-// date, ties by name, each group of equal dates rotated by offset. A failing
-// row is ordered by when it was last checked.
+// oldest returns the n candidates verified longest ago: never checked (or with
+// no row) first, then by date (a failing row's last check), each group of equal
+// dates sorted by name and rotated by offset.
 func oldest(readme string, hosts map[string]string, candidates []string, n, offset int) ([]string, error) {
 	rows, err := readRows(strings.Split(readme, "\n"))
 	if err != nil {

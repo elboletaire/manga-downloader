@@ -302,6 +302,7 @@ func TestOldestOffset(t *testing.T) {
 		{8, 2, "a h d e b c f g"},
 		// the never-checked group stays first at any offset.
 		{2, 3, "h a"},
+		{8, -1, "h a e b c d g f"},
 	}
 	for _, c := range cases {
 		got, err := oldest(readme, hosts, cands, c.n, c.offset)
