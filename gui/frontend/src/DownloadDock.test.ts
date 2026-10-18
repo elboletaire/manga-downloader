@@ -34,7 +34,7 @@ describe('DownloadDock', () => {
     expect(es).toContain('Terminando los capítulos en curso');
     expect(es).toContain('Cancelando…');
     const ca = await render('ca', running);
-    expect(ca).toContain('0 de 4 capítols fets');
+    expect(ca).toContain('0 de 4 capítols acabats');
     expect(ca).toContain('Cancel·la');
   });
 

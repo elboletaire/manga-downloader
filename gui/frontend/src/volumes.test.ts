@@ -425,7 +425,7 @@ describe('volumesSummary', () => {
   it('says the summary in the language of the app', () => {
     expect(volumesSummary('1-7', '', 1, 1, 3, createT('es')).text).toBe('1 volumen, 3 capítulos fuera de ellos');
     expect(volumesSummary('', '61:598-603', 55, 55, 15, createT('ca'))).toEqual({
-      text: "Volums del lloc: 55, 15 capítols fora d'ells",
+      text: "Volums del lloc: 55, 15 capítols fora de cap volum",
       ranges: '61:598-603',
     });
   });

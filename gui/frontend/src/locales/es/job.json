@@ -1,6 +1,6 @@
 {
   "status": {
-    "fetching": "Obteniendo páginas...",
+    "fetching": "Obteniendo páginas…",
     "downloading": "descargando",
     "archiving": "empaquetando",
     "done": "completado",
@@ -23,12 +23,12 @@
     "volumeParts": "{{volume}} · {{count}} partes"
   },
   "phase": {
-    "gathering": "Obteniendo información...",
-    "downloading": "Descargando...",
+    "gathering": "Obteniendo información…",
+    "downloading": "Descargando…",
     "downloadingLabel": "Descargando {{label}}",
     "creatingBundle": "Creando el paquete de los capítulos {{range}}",
-    "waiting": "Esperando...",
-    "packing": "Empaquetando..."
+    "waiting": "Esperando…",
+    "packing": "Empaquetando…"
   },
   "reason": {
     "cancelled": "cancelado antes de empezar todos sus capítulos",

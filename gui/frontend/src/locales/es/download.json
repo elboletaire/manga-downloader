@@ -32,8 +32,8 @@
   "where": "{{what}} en <dir>{{dir}}</dir>",
   "progress": {
     "label": "Progreso general",
-    "chapters": "{{done}} de {{total}} capítulos listos",
-    "files": "{{done}} de {{total}} archivos listos",
+    "chapters": "{{done}} de {{total}} capítulos terminados",
+    "files": "{{done}} de {{total}} archivos terminados",
     "bundle": "Creando el paquete",
     "finishing": "Terminando los capítulos en curso",
     "cancelHint": "Los capítulos que ya se descargan terminarán; no empezará ninguno nuevo."

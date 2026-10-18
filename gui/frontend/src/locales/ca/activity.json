@@ -1,10 +1,10 @@
 {
   "emptyTitle": "Encara no s'ha descarregat res.",
-  "emptyHint": "Tria capítols i prem Descarrega: cada un apareix aquí mentre s'obté i s'empaqueta.",
+  "emptyHint": "Tria capítols i prem Descarrega: cadascun apareix aquí mentre s'obté i s'empaqueta.",
   "lastDownload": "Última descàrrega",
   "openFolder": "Obre la carpeta",
-  "skippedNote_one": "{{count}} capítol s'ha omès: l'opció d'ometre pàgines va excloure totes les pàgines.",
-  "skippedNote_other": "{{count}} capítols s'han omès: l'opció d'ometre pàgines va excloure totes les pàgines.",
+  "skippedNote_one": "{{count}} capítol s'ha omès: l'opció d'ometre pàgines ha exclòs totes les pàgines.",
+  "skippedNote_other": "{{count}} capítols s'han omès: l'opció d'ometre pàgines ha exclòs totes les pàgines.",
   "failedChapters": "Capítols fallits",
   "bundle": "Paquet",
   "chaptersInRun": "Capítols d'aquesta descàrrega",

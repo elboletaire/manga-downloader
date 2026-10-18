@@ -1,6 +1,6 @@
 {
-  "merged_one": "{{count}} capítol unit des de parts",
-  "merged_other": "{{count}} capítols units des de parts",
+  "merged_one": "{{count}} capítol amb les parts unides",
+  "merged_other": "{{count}} capítols amb les parts unides",
   "headline": {
     "cancelledNoBundle": "Cancel·lat, no s'ha escrit cap paquet",
     "cancelled": "Cancel·lat, {{saved}}",

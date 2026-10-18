@@ -1,10 +1,10 @@
 {
-  "enterURL": "introdueix primer la URL d'una sèrie",
+  "enterURL": "introdueix primer l'URL d'una sèrie",
   "busy": "s'està carregant una sèrie o hi ha una descàrrega en curs",
   "parserFailed": "l'analitzador del lloc ha fallat: {{reason}}",
   "unknownLanguage": "idioma desconegut \"{{language}}\"",
   "folderMissing": "la carpeta {{path}} no existeix",
-  "updateUnavailable": "l'actualització d'un clic no està disponible per a aquesta còpia",
+  "updateUnavailable": "l'actualització amb un clic no està disponible per a aquesta còpia",
   "updateBusy": "l'actualització ja és en curs",
   "updateWaitDownload": "espera que acabi la descàrrega, o cancel·la-la, abans d'actualitzar",
   "updateDownload": "no s'ha pogut descarregar l'actualització: {{reason}}",

@@ -32,11 +32,11 @@
   "where": "{{what}} a <dir>{{dir}}</dir>",
   "progress": {
     "label": "Progrés general",
-    "chapters": "{{done}} de {{total}} capítols fets",
-    "files": "{{done}} de {{total}} fitxers fets",
+    "chapters": "{{done}} de {{total}} capítols acabats",
+    "files": "{{done}} de {{total}} fitxers acabats",
     "bundle": "Creant el paquet",
     "finishing": "Acabant els capítols en curs",
-    "cancelHint": "Els capítols que ja es descarreguen acabaran; no n'començarà cap de nou."
+    "cancelHint": "Els capítols que ja es descarreguen acabaran; no en començarà cap de nou."
   },
   "cancelling": "Cancel·lant…",
   "failed": "No es pot descarregar: {{error}}"

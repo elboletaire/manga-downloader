@@ -1,6 +1,6 @@
 {
-  "merged_one": "{{count}} capítulo unido desde partes",
-  "merged_other": "{{count}} capítulos unidos desde partes",
+  "merged_one": "{{count}} capítulo con las partes unidas",
+  "merged_other": "{{count}} capítulos con las partes unidas",
   "headline": {
     "cancelledNoBundle": "Cancelado, no se ha escrito ningún paquete",
     "cancelled": "Cancelado, {{saved}}",
@@ -8,10 +8,10 @@
     "bundleSaved": "Se ha guardado {{bundle}}",
     "inVolumes": "{{saved}} en {{volumes}}",
     "mergedFromParts": "{{saved}}, {{merged}}",
-    "nothingSaved": "No se guardó nada"
+    "nothingSaved": "No se ha guardado nada"
   },
   "sentence": {
-    "cancelledNoBundle": "Cancelado. No se escribió ningún paquete.",
+    "cancelledNoBundle": "Cancelado. No se ha escrito ningún paquete.",
     "cancelledBeforeSaving": "Cancelado antes de guardar nada.",
     "savedBefore_one": "Cancelado. {{count}} capítulo guardado antes de detenerse, en {{dir}}.",
     "savedBefore_other": "Cancelado. {{count}} capítulos guardados antes de detenerse, en {{dir}}.",

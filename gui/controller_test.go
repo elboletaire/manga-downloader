@@ -994,7 +994,7 @@ func TestJobRowsCarryTheirMessages(t *testing.T) {
 	e.VolumeStart(v)
 	vol := c.byVolume[v]
 	wantMsg("volume title", vol.TitleMsg, "job.title.volumeChapter", "Vol. 02 · chapter 2")
-	wantMsg("volume status", vol.StatusMsg, "job.phase.waiting", "Waiting...")
+	wantMsg("volume status", vol.StatusMsg, "job.phase.waiting", "Waiting…")
 	if vol.Title != "Vol. 02 · chapter 2" {
 		t.Errorf("Title = %q, want the English text", vol.Title)
 	}

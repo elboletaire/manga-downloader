@@ -87,7 +87,7 @@ describe('say', () => {
 
   it('translates a message with its args', () => {
     const msg = { key: 'log.loaded', args: { title: 'Naruto', count: 2 }, text: 'Loaded Naruto: 2 chapters' };
-    expect(say(es, msg, 'Loaded Naruto: 2 chapters')).toBe('Cargado Naruto: 2 capítulos');
+    expect(say(es, msg, 'Loaded Naruto: 2 chapters')).toBe('Se ha cargado Naruto: 2 capítulos');
   });
 
   it('falls back to the message text for a key the catalog lacks', () => {

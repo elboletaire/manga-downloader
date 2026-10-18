@@ -1,6 +1,6 @@
 {
   "status": {
-    "fetching": "Fetching pages...",
+    "fetching": "Fetching pages…",
     "downloading": "downloading",
     "archiving": "archiving",
     "done": "done",
@@ -23,12 +23,12 @@
     "volumeParts": "{{volume}} · {{count}} parts"
   },
   "phase": {
-    "gathering": "Gathering info...",
-    "downloading": "Downloading...",
+    "gathering": "Gathering info…",
+    "downloading": "Downloading…",
     "downloadingLabel": "Downloading {{label}}",
     "creatingBundle": "Creating bundle for chapters {{range}}",
-    "waiting": "Waiting...",
-    "packing": "Packing..."
+    "waiting": "Waiting…",
+    "packing": "Packing…"
   },
   "reason": {
     "cancelled": "cancelled before all of its chapters started",

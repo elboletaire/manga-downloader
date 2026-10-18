@@ -2,6 +2,6 @@
   "title": "El navegador te necesita",
   "dismiss": "Descartar",
   "show": "Mostrar la ventana del navegador",
-  "alert": "Se abrió una ventana del navegador para superar una comprobación en {{host}}. Puede que haya un captcha o un rompecabezas que resolver allí; la descarga continúa sola cuando termine.",
-  "alertNamed": "{{browser}} abrió una ventana para superar una comprobación en {{host}}. Puede que haya un captcha o un rompecabezas que resolver allí; la descarga continúa sola cuando termine."
+  "alert": "Se ha abierto una ventana del navegador para superar una comprobación en {{host}}. Puede que haya un captcha o un rompecabezas que resolver allí; la descarga continúa sola cuando termine.",
+  "alertNamed": "{{browser}} ha abierto una ventana para superar una comprobación en {{host}}. Puede que haya un captcha o un rompecabezas que resolver allí; la descarga continúa sola cuando termine."
 }

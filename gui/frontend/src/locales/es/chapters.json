@@ -38,7 +38,7 @@
   "parts": {
     "whole": "capítulo entero",
     "partial": "{{selected}} de {{total}} partes",
-    "none": "Ningún capítulo de esta serie está dividido en partes, así que cada uno recibe su archivo habitual.",
+    "none": "Ningún capítulo de esta serie está dividido en partes, así que cada uno tiene su archivo, como de costumbre.",
     "partialHint": "Solo las partes seleccionadas van en su archivo"
   },
   "locked": "Bloqueado, así que no se puede seleccionar",

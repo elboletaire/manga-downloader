@@ -4,7 +4,7 @@
     "loading": "Les opcions estan bloquejades mentre es carrega la sèrie."
   },
   "save": {
-    "title": "Desa",
+    "title": "Desar",
     "folder": "Carpeta",
     "notSet": "Sense definir",
     "browse": "Examina…"
@@ -32,8 +32,8 @@
   "packHint": {
     "chapters": "Un fitxer per capítol.",
     "parts": "Un fitxer per capítol, amb les seves parts unides. Els capítols sense parts tenen un fitxer cadascun, com sempre.",
-    "volumes": "Un fitxer per volum, definit sobre la llista de capítols. Els capítols fora de tots els volums tenen un fitxer cadascun.",
-    "volumesNotLoaded": "Un fitxer per volum, definit sobre la llista de capítols (quan es carregui). Els capítols fora de tots els volums tenen un fitxer cadascun.",
+    "volumes": "Un fitxer per volum, definit sobre la llista de capítols. Els capítols que no són a cap volum tenen un fitxer cadascun.",
+    "volumesNotLoaded": "Un fitxer per volum, definit sobre la llista de capítols (quan es carregui). Els capítols que no són a cap volum tenen un fitxer cadascun.",
     "bundle": "Els capítols seleccionats en un paquet."
   },
   "pages": {

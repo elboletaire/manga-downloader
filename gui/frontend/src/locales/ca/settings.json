@@ -10,7 +10,7 @@
     "heading": "Actualitzacions",
     "check": "Cerca actualitzacions en obrir l'app",
     "hint": "Demana a GitHub l'última versió cada cop que s'obre l'app.",
-    "devHint": "Les versions de desenvolupament no busquen actualitzacions."
+    "devHint": "Les versions de desenvolupament no cerquen actualitzacions."
   },
   "about": {
     "version": "Manga Downloader {{version}}",

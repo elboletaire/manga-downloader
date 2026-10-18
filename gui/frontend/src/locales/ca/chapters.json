@@ -38,7 +38,7 @@
   "parts": {
     "whole": "capítol sencer",
     "partial": "{{selected}} de {{total}} parts",
-    "none": "Cap capítol d'aquesta sèrie no està dividit en parts, així que cada un rep el seu fitxer com sempre.",
+    "none": "Cap capítol d'aquesta sèrie no està dividit en parts, així que cadascun rep el seu fitxer com sempre.",
     "partialHint": "Només les parts seleccionades van al seu fitxer"
   },
   "locked": "Bloquejat, així que no es pot seleccionar",
@@ -47,8 +47,8 @@
     "group": "Alguns números apareixen una vegada per grup; l'etiqueta de grup els distingeix."
   },
   "hint": {
-    "volume": "Fes clic en un volum per triar tots els seus capítols · <kbd>←</kbd><kbd>→</kbd> plega · <kbd>Espai</kbd> commuta",
-    "part": "Fes clic en un capítol per triar totes les seves parts · <kbd>←</kbd><kbd>→</kbd> plega · <kbd>Espai</kbd> commuta",
-    "plain": "<kbd>Majús</kbd>+clic selecciona un tram · <kbd>↑</kbd><kbd>↓</kbd> moure · <kbd>Espai</kbd> commuta"
+    "volume": "Fes clic en un volum per triar tots els seus capítols · <kbd>←</kbd><kbd>→</kbd> plega · <kbd>Espai</kbd> alterna",
+    "part": "Fes clic en un capítol per triar totes les seves parts · <kbd>←</kbd><kbd>→</kbd> plega · <kbd>Espai</kbd> alterna",
+    "plain": "<kbd>Majús</kbd>+clic selecciona un tram · <kbd>↑</kbd><kbd>↓</kbd> moure · <kbd>Espai</kbd> alterna"
   }
 }

@@ -1,6 +1,6 @@
 {
   "status": {
-    "fetching": "Obtenint pàgines...",
+    "fetching": "Obtenint pàgines…",
     "downloading": "descarregant",
     "archiving": "empaquetant",
     "done": "fet",
@@ -23,12 +23,12 @@
     "volumeParts": "{{volume}} · {{count}} parts"
   },
   "phase": {
-    "gathering": "Obtenint informació...",
-    "downloading": "Descarregant...",
+    "gathering": "Obtenint informació…",
+    "downloading": "Descarregant…",
     "downloadingLabel": "Descarregant {{label}}",
     "creatingBundle": "Creant el paquet dels capítols {{range}}",
-    "waiting": "Esperant...",
-    "packing": "Empaquetant..."
+    "waiting": "Esperant…",
+    "packing": "Empaquetant…"
   },
   "reason": {
     "cancelled": "cancel·lat abans de començar tots els seus capítols",

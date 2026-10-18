@@ -12,7 +12,7 @@
   "loaded_other": "Loaded {{title}}: {{count}} chapters",
   "downloading_one": "Downloading {{count}} chapter of {{title}}",
   "downloading_other": "Downloading {{count}} chapters of {{title}}",
-  "downloadingUpdate": "Downloading the update {{version}}...",
+  "downloadingUpdate": "Downloading the update {{version}}…",
   "saveFailed": "could not save the options: {{reason}}",
   "siteCheck": "site check: {{reason}}",
   "languageFallbackAll": "language \"{{value}}\" isn't in this series, loading all of them instead",

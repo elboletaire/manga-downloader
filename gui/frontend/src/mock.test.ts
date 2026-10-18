@@ -728,7 +728,7 @@ describe('mock messages', () => {
       text: state.browserAlert,
     });
     expect(say(createT('es'), state.browserAlertMsg, state.browserAlert)).toContain(
-      'Brave abrió una ventana para superar una comprobación en check.example.com.',
+      'Brave ha abierto una ventana para superar una comprobación en check.example.com.',
     );
   });
 

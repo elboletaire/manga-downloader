@@ -141,7 +141,7 @@ describe('LogDrawer messages', () => {
       },
       { level: 'warn', text: 'site check: timed out' },
     ]);
-    expect(html).toContain('Cargado Naruto: 2 capítulos');
+    expect(html).toContain('Se ha cargado Naruto: 2 capítulos');
     expect(html).toContain('site check: timed out');
     expect(html).not.toContain('Loaded Naruto');
   });
