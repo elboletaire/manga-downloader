@@ -5,6 +5,7 @@ package grabber
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -36,10 +37,25 @@ type TcbChapter struct {
 	URL string
 }
 
-// tcbSeriesRe matches the series path of a Madara URL: /manga/, /gl/ (lilymanga.net),
-// /seri/ (webtoonia.fun) or /read-N/ (mangaowl.io), then the slug. The slug must end
+// tcbKnownSeriesRe matches a series under /manga/, /gl/, /seri/ or /read-N/, keeping
+// the folders before it (/en/manga/x/, WordPress in a subfolder). The slug must end
 // in a slash, so a chapter URL maps to its series.
-var tcbSeriesRe = regexp.MustCompile(`/((?:manga|gl|seri|read-\d+)/[^/]+)/`)
+var tcbKnownSeriesRe = regexp.MustCompile(`^https?://[^/]+/((?:[^/?#]+/)*?(?:manga|gl|seri|read-\d+)/[^/?#]+)/`)
+
+// tcbSeriesRe matches any other series path, /<seg>/<slug>/ (/comics/, /series/...).
+// The first segment can't be all digits, so a blog's /2026/09/post.html isn't one.
+var tcbSeriesRe = regexp.MustCompile(`^https?://[^/]+/((?:[^/?#]*[^/?#\d][^/?#]*)/[^/?#]+)/`)
+
+// tcbSeriesPath returns the series path of a Madara URL, or "" when it has none.
+// The known prefixes are tried first.
+func tcbSeriesPath(u string) string {
+	for _, re := range []*regexp.Regexp{tcbKnownSeriesRe, tcbSeriesRe} {
+		if m := re.FindStringSubmatch(u); m != nil {
+			return m[1]
+		}
+	}
+	return ""
+}
 
 // tcbMovedHostRe matches diamondfansub.com, which now redirects every series
 // and chapter page to webtoonia.fun (a chapter URL there lands on the series),
@@ -49,13 +65,13 @@ var tcbMovedHostRe = regexp.MustCompile(`(?i)^(https?://)(?:www\.)?(?:diamondfan
 // Test returns true if the URL is a compatible TCBScans URL
 func (t *Tcb) Test() (bool, error) {
 	t.URL = tcbMovedHostRe.ReplaceAllString(t.URL, "${1}webtoonia.fun/")
-	match := tcbSeriesRe.FindStringSubmatch(t.URL)
-	if match == nil {
+	series := tcbSeriesPath(t.URL)
+	if series == "" {
 		return false, nil
 	}
 
-	t.series = t.BaseUrl() + "/" + match[1] + "/"
-	uri, _ := url.JoinPath(t.BaseUrl(), match[1], "ajax", "chapters")
+	t.series = t.BaseUrl() + "/" + series + "/"
+	uri, _ := url.JoinPath(t.BaseUrl(), series, "ajax", "chapters")
 
 	rbody, err := http.Post(http.RequestParams{
 		URL:          uri,
@@ -63,6 +79,12 @@ func (t *Tcb) Test() (bool, error) {
 		DisableRetry: true, // identification probe: a 5xx means "not this site"
 	})
 	if err != nil {
+		// a status error declines quietly: with any path accepted, most such URLs
+		// aren't Madara at all, so a 404 here isn't a failure to report
+		var statusErr *http.StatusError
+		if errors.As(err, &statusErr) {
+			return false, nil
+		}
 		return false, err
 	}
 
@@ -418,6 +440,18 @@ func (t Tcb) fetchReaderPage(f Filterable, pageNum int, pageURL string) ([]Page,
 	return t.readerPageImages(f, pageNum, pageDoc), nil
 }
 
+// tcbImageURL returns a reader image's URL from the first lazy-load attribute
+// that holds one. src comes last, since lazy-loading plugins leave a data:
+// placeholder there (arthurscan's lzl plugin keeps the real URL in data-lzl-src).
+func tcbImageURL(s *goquery.Selection) string {
+	for _, attr := range []string{"data-src", "data-lazy-src", "data-lzl-src", "src"} {
+		if u := strings.TrimSpace(s.AttrOr(attr, "")); u != "" && !strings.HasPrefix(u, "data:") {
+			return u
+		}
+	}
+	return ""
+}
+
 // readerImage builds the page for an image URL found on reader page pageNum.
 func (t Tcb) readerImage(pageNum int, u string) Page {
 	if !strings.HasPrefix(u, "http") {
@@ -443,7 +477,7 @@ func (t Tcb) readerPageImages(f Filterable, pageNum int, pageDoc *goquery.Docume
 	}
 
 	pageDoc.Find("div.reading-content img").Each(func(i int, s *goquery.Selection) {
-		u := strings.TrimSpace(s.AttrOr("data-src", s.AttrOr("src", "")))
+		u := tcbImageURL(s)
 		if u == "" {
 			notice.Warn("page %d of %s has an image with no URL to fetch from", pageNum+1, ChapterLabel(f))
 			return
