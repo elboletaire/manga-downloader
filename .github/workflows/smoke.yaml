@@ -17,6 +17,11 @@ on:
         type: boolean
         default: false
 
+# one run at a time: each picks its batch from the dates the previous one wrote
+concurrency:
+  group: smoke
+  cancel-in-progress: false
+
 jobs:
   smoke:
     runs-on: ubuntu-latest
