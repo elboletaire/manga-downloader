@@ -40,7 +40,7 @@ var (
 	dateRe    = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 	sectionRe = regexp.MustCompile(`(?i)^##\s+Supported sites\s*$`)
 	// "❌ failing since D", or with "(checked E)" once a run has seen it fail
-	failRe = regexp.MustCompile(`^❌ failing since (\d{4}-\d{2}-\d{2})(?: \(checked (\d{4}-\d{2}-\d{2})\))?$`)
+	failRe = regexp.MustCompile(`^` + regexp.QuoteMeta(failPrefix) + `(\d{4}-\d{2}-\d{2})(?: \(checked (\d{4}-\d{2}-\d{2})\))?$`)
 )
 
 func main() {
