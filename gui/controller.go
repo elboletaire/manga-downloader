@@ -1682,7 +1682,11 @@ func (e events) DownloadFailed(ch *grabber.Chapter, err error) {
 	// a volume goes on with its other chapters
 	if j := c.byChap[ch]; j != nil && c.bundle == nil {
 		j.State = JobFailed
-		j.setReason(msg("job.reason.download", map[string]any{"reason": err.Error()}))
+		reason := msg("job.reason.download", map[string]any{"reason": err.Error()})
+		if m := messageOf(err); m != nil {
+			reason = *m
+		}
+		j.setReason(reason)
 	}
 	c.appendMsgLocked(LogError, msg("log.errorDownload", map[string]any{"label": c.releaseLabel(ch), "reason": err.Error()}))
 	c.mu.Unlock()

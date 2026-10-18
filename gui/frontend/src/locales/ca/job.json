@@ -37,6 +37,7 @@
     "packing": "empaquetat: {{reason}}",
     "filename": "nom de fitxer: {{reason}}",
     "locked": "capítol bloquejat",
-    "emptyVolume": "no s'ha pogut descarregar cap dels seus capítols"
+    "emptyVolume": "no s'ha pogut descarregar cap dels seus capítols",
+    "noPages": "no s'ha trobat cap pàgina"
   }
 }

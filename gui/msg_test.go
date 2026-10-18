@@ -178,6 +178,9 @@ func TestMessageOf(t *testing.T) {
 	if m := messageOf(fmt.Errorf("x: %w", core.ErrLocked)); m == nil || m.Key != "job.reason.locked" {
 		t.Errorf("wrapped ErrLocked = %+v, want job.reason.locked", m)
 	}
+	if m := messageOf(core.ErrNoPages); m == nil || m.Key != "job.reason.noPages" {
+		t.Errorf("ErrNoPages = %+v, want job.reason.noPages", m)
+	}
 }
 
 // messageKeyRE matches a literal key passed to msg or uiErr
