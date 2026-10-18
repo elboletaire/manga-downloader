@@ -1947,7 +1947,7 @@ SMOKE_RESULTS ?= smoke-results.txt
 # targets CI can't run, so they stay out of the rotation (check them locally)
 SMOKE_EXCLUDE =
 # 403 from GitHub's runners, while residential connections work
-SMOKE_EXCLUDE += mangaball mangalib silentquill bigsolo luascans hivetoons eldermanga eskimangalar limonmanga uzaymanga afroditscans mangasorigines
+SMOKE_EXCLUDE += mangaball mangalib silentquill bigsolo luascans hivetoons eldermanga eskimangalar limonmanga uzaymanga afroditscans mangasorigines dandadanmanga
 # Cloudflare-blocked, or rate-limited hard (429, or the app API)
 SMOKE_EXCLUDE += mangitto lilymanga mangaplus
 # headless-browser grabbers: a runner can't get past their challenges
@@ -1975,19 +1975,43 @@ smoke/list:
 
 # runs each smoke/list target: grabber/<t> must leave CBZs that tools/verify-cbz accepts.
 # Appends "<t> pass|fail" to SMOKE_RESULTS and exits 1 at the end if any failed.
+# On GitHub Actions each target is a log group, a failure an ::error and a row of $GITHUB_STEP_SUMMARY.
 smoke:
 	@list=$$($(SMOKE_PICK)) || exit 1; \
 	list=$$(echo "$$list" | $(SMOKE_SHARD)); \
-	stamp=$$(mktemp); fails=0; \
+	stamp=$$(mktemp); rc=$$(mktemp); fails=0; \
+	[ -z "$$GITHUB_ACTIONS" ] || [ -z "$$GITHUB_STEP_SUMMARY" ] || printf '| site | result | reason |\n|---|---|---|\n' >> "$$GITHUB_STEP_SUMMARY"; \
 	for t in $$list; do \
 		touch $$stamp; sleep 1; \
-		if $(SMOKE_TIMEOUT) $(SMOKE_MAKE) grabber/$$t && find . -maxdepth 1 -name '*.cbz' -newer $$stamp | grep -q . && find . -maxdepth 1 -name '*.cbz' -newer $$stamp -print0 | xargs -0 go run ./tools/verify-cbz; then \
-			r=pass; \
-		else \
-			r=fail; fails=$$((fails + 1)); \
-		fi; \
+		log=$$(mktemp); \
+		[ -z "$$GITHUB_ACTIONS" ] || echo "::group::$$t"; \
+		{ $(SMOKE_TIMEOUT) $(SMOKE_MAKE) grabber/$$t && \
+			if find . -maxdepth 1 -name '*.cbz' -newer $$stamp | grep -q .; then \
+				find . -maxdepth 1 -name '*.cbz' -newer $$stamp -print0 | xargs -0 go run ./tools/verify-cbz; \
+			else echo "no CBZ written"; false; fi; \
+			echo $$? > $$rc; } 2>&1 | tee $$log; \
+		[ -z "$$GITHUB_ACTIONS" ] || echo "::endgroup::"; \
+		if [ "$$(cat $$rc)" = 0 ]; then r=pass; else r=fail; fails=$$((fails + 1)); fi; \
 		echo "$$t $$r" | tee -a $(SMOKE_RESULTS); \
+		if [ -n "$$GITHUB_ACTIONS" ]; then \
+			if [ $$r = pass ]; then row="✅ pass | |"; else \
+				reason=$$(grep -E -v '^make(\[[0-9]+\])?: (\*\*\* \[.*\] Error [0-9]+|(Entering|Leaving) directory)|^exit status [0-9]+$$|^OK |^[[:space:]]*$$' $$log | tail -n 1); \
+				[ -n "$$reason" ] || reason="no output"; \
+				printf '::error title=%s failed::%s\n' "$$t" "$$(printf '%s\n' "$$reason" | awk '{gsub(/%/, "%25"); gsub(/\r/, "%0D"); printf "%s", $$0}')"; \
+				row="❌ fail | $$(printf '%s\n' "$$reason" | sed 's/|/\\|/g') |"; \
+			fi; \
+			[ -z "$$GITHUB_STEP_SUMMARY" ] || echo "| $$t | $$row" >> "$$GITHUB_STEP_SUMMARY"; \
+		fi; \
+		rm -f $$log; \
 		find . -maxdepth 1 -name '*.cbz' -newer $$stamp -delete; \
 	done; \
-	rm -f $$stamp; \
+	rm -f $$stamp $$rc; \
 	exit $$((fails > 0))
+
+# the overall result of a results file (smoke's SMOKE_RESULTS): the failing sites, then the count.
+# Written to $GITHUB_STEP_SUMMARY when set, else stdout: make smoke/summary RESULTS=results.all
+smoke/summary:
+	@test -n "$(RESULTS)" || { echo "usage: make smoke/summary RESULTS=results.all"; exit 2; }
+	@{ echo "## Site smoke tests"; echo; \
+	awk '$$2 == "fail" {print "- ❌ " $$1; f++} $$2 == "pass" {p++} END {if (f) print ""; print "✅ " p + 0 " passing, ❌ " f + 0 " failing"}' $(RESULTS); \
+	} >> $${GITHUB_STEP_SUMMARY:-/dev/stdout}
