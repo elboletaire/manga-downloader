@@ -225,6 +225,51 @@ jobs:
           - thebluelock
           - vinlandsaga
           - yaoiscan
+          - 1punchman
+          - apenasumafa
+          - arhentai
+          - arlas
+          - arthurscan
+          - bokunoheroacademia
+          - borutotwobluevortex
+          - comici
+          - datgarscanlation
+          - doujinxh
+          - duoscanlators
+          - grabberzone
+          - hanmokkuscan
+          - heckscans
+          - hunlightcomics
+          - inkapk
+          - jujutsukaisenonline
+          - kaijuno8chapters
+          - lectordarkroomfansub
+          - lectorhadeslatamtoon
+          - lepoytl
+          - ler999
+          - lonertl
+          - mangaailand
+          - mangaparktv
+          - marmota
+          - mikrokosmosfb
+          - ngamenkomik05
+          - omniscientreaderviewpoint
+          - punchman
+          - ragnarokscanlation
+          - rimacomiplus
+          - ruahapchanhday2
+          - samuraij5z
+          - shadowceviri
+          - shiyurasub
+          - snscoeurturkey
+          - solooscan
+          - spyxfamilymanga
+          - thetowerofgod
+          - tokyorevengers
+          - wolfscanbr
+          - xsanomanga
+          - yokaiteam
+          - yurimoonsub
           # Plain-HTML (goquery) scrapers
           - tcbscans
           - arenascan
@@ -379,6 +424,19 @@ jobs:
           - artlapsa
           - kitsunedawn
           - orionscans
+          - blmangafree
+          - bloomscans
+          - csmmangafree
+          - dandadanmanga
+          - dandadanmangas
+          - gachiakutas
+          - gutsberserk
+          - noxsubs
+          - readyagami
+          - sakamotodays
+          - scythescans
+          - sxfmanga
+          - visorotaku
           - 4porncomic
           - arcurafansub
           - auntmanhwa
