@@ -40,10 +40,11 @@ var comiciDomains = []string{
 var comiciMarkers = []string{"comici.co.jp", `data-e2e="eli"`}
 
 var (
-	// comiciEpisodeRe and comiciSeriesRe match the 13-character IDs of
-	// episodes and series
-	comiciEpisodeRe = regexp.MustCompile(`/episodes/([0-9a-f]{13})`)
-	comiciSeriesRe  = regexp.MustCompile(`/series/([0-9a-f]{13})`)
+	// comiciEpisodeRe and comiciSeriesRe match the path of an episode or series:
+	// an optional label segment ("/comicbro", on the portal and some publishers),
+	// then the 13-character ID
+	comiciEpisodeRe = regexp.MustCompile(`^(/[^/]+)?/episodes/([0-9a-f]{13})`)
+	comiciSeriesRe  = regexp.MustCompile(`^(/[^/]+)?/series/([0-9a-f]{13})`)
 	// comiciNumberRe is the number a title starts with: "第34話", "第一服" (a
 	// counter), "第七十一話", "EPISODE.01", "0話", "2-①" (a split episode), "#9.5",
 	// "＃1" or a bare "1"
@@ -111,27 +112,47 @@ func comiciURLShape(rawURL string) bool {
 	return err == nil && (comiciEpisodeRe.MatchString(u.Path) || comiciSeriesRe.MatchString(u.Path))
 }
 
+// label returns the label segment of the URL's path ("/comicbro" in
+// "/comicbro/series/…"), or "" when the path has none
+func (c *Comici) label() string {
+	u, err := url.Parse(c.URL)
+	if err != nil {
+		return ""
+	}
+	if m := comiciSeriesRe.FindStringSubmatch(u.Path); m != nil {
+		return m[1]
+	}
+	if m := comiciEpisodeRe.FindStringSubmatch(u.Path); m != nil {
+		return m[1]
+	}
+	return ""
+}
+
 // seriesIdentifier returns the series of the URL: a series URL names it, and an
 // episode page names it otherwise
 func (c *Comici) seriesIdentifier() (string, error) {
 	if c.seriesID != "" {
 		return c.seriesID, nil
 	}
-	if m := comiciSeriesRe.FindStringSubmatch(c.URL); m != nil {
-		c.seriesID = m[1]
+	u, err := url.Parse(c.URL)
+	if err != nil {
+		return "", err
+	}
+	if m := comiciSeriesRe.FindStringSubmatch(u.Path); m != nil {
+		c.seriesID = m[2]
 		return c.seriesID, nil
 	}
-	m := comiciEpisodeRe.FindStringSubmatch(c.URL)
+	m := comiciEpisodeRe.FindStringSubmatch(u.Path)
 	if m == nil {
 		return "", fmt.Errorf("comici: %s is neither an episode nor a series URL", c.URL)
 	}
-	doc, err := c.fetchDocument("/episodes/" + m[1])
+	doc, err := c.fetchDocument(m[1] + "/episodes/" + m[2])
 	if err != nil {
 		return "", err
 	}
 	c.seriesID = doc.Find("[data-series-id]").AttrOr("data-series-id", "")
 	if c.seriesID == "" {
-		return "", fmt.Errorf("comici: no series on episode %s", m[1])
+		return "", fmt.Errorf("comici: no series on episode %s", m[2])
 	}
 	return c.seriesID, nil
 }
@@ -168,7 +189,7 @@ func (c *Comici) fetchSeries() error {
 	var episodes []comiciEpisode
 	var title string
 	for page := 1; ; page++ {
-		doc, err := c.fetchDocument(fmt.Sprintf("/series/%s/%d", seriesID, page))
+		doc, err := c.fetchDocument(fmt.Sprintf("%s/series/%s/%d", c.label(), seriesID, page))
 		var statusErr *http.StatusError
 		if errors.As(err, &statusErr) && statusErr.Code == 404 {
 			break
@@ -184,14 +205,14 @@ func (c *Comici) fetchSeries() error {
 			break
 		}
 		items.Each(func(_ int, item *goquery.Selection) {
-			link := item.Find(`a[href^="/episodes/"]`).First()
+			link := item.Find(`a[href*="/episodes/"]`).First()
 			id := comiciEpisodeRe.FindStringSubmatch(link.AttrOr("href", ""))
 			if id == nil {
 				return
 			}
 			episodes = append(episodes, comiciEpisode{
 				raw:    item.Find(`[data-e2e="eliTitle"]`).First().Text(),
-				id:     id[1],
+				id:     id[2],
 				locked: !comiciIsFree(item),
 			})
 		})
@@ -299,7 +320,7 @@ func (c *Comici) FetchChapters() (Filterables, []error) {
 func (c *Comici) FetchChapter(f Filterable) (*Chapter, error) {
 	cchap := f.(*ComiciChapter)
 
-	doc, err := c.fetchDocument("/episodes/" + cchap.ID)
+	doc, err := c.fetchDocument(c.label() + "/episodes/" + cchap.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -308,12 +329,13 @@ func (c *Comici) FetchChapter(f Filterable) (*Chapter, error) {
 	if viewerID == "" {
 		return nil, fmt.Errorf("%s is paid, only free episodes can be downloaded", ChapterLabel(f))
 	}
+	contentID := viewer.AttrOr("data-content-id", "")
 
-	info, err := c.fetchPages(viewerID, 1)
+	info, err := c.fetchPages(viewerID, contentID, 1)
 	if err != nil {
 		return nil, err
 	}
-	info, err = c.fetchPages(viewerID, info.TotalPages)
+	info, err = c.fetchPages(viewerID, contentID, info.TotalPages)
 	if err != nil {
 		return nil, err
 	}
@@ -349,10 +371,15 @@ func (c *Comici) FetchChapter(f Filterable) (*Chapter, error) {
 	}, nil
 }
 
-// fetchPages asks the contentsInfo API for the pages of a viewer, up to page-to
-func (c *Comici) fetchPages(viewerID string, pageTo int) (*comiciPages, error) {
+// fetchPages asks the contentsInfo API for the pages of a viewer, up to page-to.
+// Some hosts' viewers also carry a content ID, which the API then requires.
+func (c *Comici) fetchPages(viewerID, contentID string, pageTo int) (*comiciPages, error) {
+	query := fmt.Sprintf("comici-viewer-id=%s&user-id=&page-from=0&page-to=%d", viewerID, pageTo)
+	if contentID != "" {
+		query += "&contentId=" + url.QueryEscape(contentID)
+	}
 	body, err := http.GetText(http.RequestParams{
-		URL:     fmt.Sprintf("%s/api/book/contentsInfo?comici-viewer-id=%s&user-id=&page-from=0&page-to=%d", c.BaseUrl(), viewerID, pageTo),
+		URL:     c.BaseUrl() + "/api/book/contentsInfo?" + query,
 		Referer: c.BaseUrl() + "/",
 	})
 	if err != nil {
