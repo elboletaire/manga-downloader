@@ -483,3 +483,100 @@ func TestRequestDefaultAccept(t *testing.T) {
 		t.Errorf("Accept = %q, want %q", accept, ImageAccept)
 	}
 }
+
+// shortenHeaderTimeout shrinks the shared transport's response-header timeout,
+// restoring it afterwards
+func shortenHeaderTimeout(t *testing.T, d time.Duration) {
+	t.Helper()
+	old := transport.ResponseHeaderTimeout
+	transport.ResponseHeaderTimeout = d
+	t.Cleanup(func() { transport.ResponseHeaderTimeout = old })
+}
+
+// hangingServer accepts connections and never answers, until the client gives
+// up (or the test ends). With answer set, only the first request hangs.
+func hangingServer(t *testing.T, answer *int32) *httptest.Server {
+	t.Helper()
+	release := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if answer != nil && atomic.AddInt32(answer, 1) > 1 {
+			io.WriteString(w, "ok")
+			return
+		}
+		select {
+		case <-r.Context().Done():
+		case <-release:
+		}
+	}))
+	t.Cleanup(srv.Close)
+	t.Cleanup(func() { close(release) })
+	return srv
+}
+
+// A server that never sends headers fails on the response-header timeout,
+// with an error that names the URL and says it timed out
+func TestRequestTimesOutWithoutHeaders(t *testing.T) {
+	shortenHeaderTimeout(t, 100*time.Millisecond)
+	srv := hangingServer(t, nil)
+
+	start := time.Now()
+	_, err := Get(RequestParams{URL: srv.URL, DisableRetry: true})
+	if err == nil {
+		t.Fatal("expected a timeout error")
+	}
+	if elapsed := time.Since(start); elapsed > 5*time.Second {
+		t.Errorf("took %v, want the header timeout to fire", elapsed)
+	}
+	if !strings.Contains(err.Error(), "timed out") || !strings.Contains(err.Error(), srv.URL) {
+		t.Errorf("error %q, want it to say it timed out and name %s", err, srv.URL)
+	}
+}
+
+// A timeout is a transport failure, so the retry loop tries again
+func TestRequestRetriesTimeout(t *testing.T) {
+	shortenRetries(t)
+	shortenHeaderTimeout(t, 100*time.Millisecond)
+
+	var calls int32
+	srv := hangingServer(t, &calls)
+
+	body, err := Get(RequestParams{URL: srv.URL})
+	if err != nil {
+		t.Fatalf("expected success on the retry, got %v", err)
+	}
+	body.Close()
+	if n := atomic.LoadInt32(&calls); n != 2 {
+		t.Errorf("server saw %d calls, want 2", n)
+	}
+}
+
+// Only the wait for headers is bounded: a body that keeps streaming past the
+// header timeout still arrives whole
+func TestRequestSlowBodyNotTimedOut(t *testing.T) {
+	shortenHeaderTimeout(t, 100*time.Millisecond)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.(http.Flusher).Flush()
+		for range 4 {
+			time.Sleep(150 * time.Millisecond)
+			io.WriteString(w, "chunk")
+			w.(http.Flusher).Flush()
+		}
+	}))
+	defer srv.Close()
+
+	body, err := Get(RequestParams{URL: srv.URL, DisableRetry: true})
+	if err != nil {
+		t.Fatalf("expected success, got %v", err)
+	}
+	defer body.Close()
+
+	got, err := io.ReadAll(body)
+	if err != nil {
+		t.Fatalf("reading the body: %v", err)
+	}
+	if want := strings.Repeat("chunk", 4); string(got) != want {
+		t.Errorf("body = %q, want %q", got, want)
+	}
+}
