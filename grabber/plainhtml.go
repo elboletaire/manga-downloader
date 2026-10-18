@@ -1021,12 +1021,21 @@ func isListingPath(urlStr string) bool {
 // chapterNumberRe matches a chapter number in a chapter title, accepting
 // "Chapter 10", "Ch. 10", "C. 10", "Cap. 10", the Spanish "Capítulo 10", the
 // Italian "Capitolo 10" and the French "Chapitre 10" (case insensitive).
-var chapterNumberRe = regexp.MustCompile(`(?i)\b(?:chapter|chapitre|cap(?:[ií]tulo|itolo)?|ch|c)\.?\s*(\d+\.?\d*)`)
+var chapterNumberRe = regexp.MustCompile(`(?i)\b(?:chapter|chapitre|rozdzia[łl]|chương|cap(?:[ií]tulo|itolo)?|ch|c)\.?\s*(\d+\.?\d*)`)
+
+// cyrillicChapterNumberRe matches the Russian "Глава 15" and Ukrainian
+// "Розділ 7". \b doesn't match before a Cyrillic letter, so they look for a
+// non-letter (or the start) before the word instead.
+var cyrillicChapterNumberRe = regexp.MustCompile(`(?i)(?:^|\P{L})(?:глава|розділ)\.?\s*(\d+\.?\d*)`)
 
 // volumeNumberRe matches a volume number ("Volume 18", "Vol. 2", the Spanish
 // "Volumen 3"), used as a fallback for sites that list volumes instead of
 // chapters (e.g. sushiscan).
 var volumeNumberRe = regexp.MustCompile(`(?i)\bvol(?:ume|umen)?\.?\s*(\d+\.?\d*)`)
+
+// cyrillicVolumeNumberRe is volumeNumberRe for the Russian "Том 2", with the
+// same lead-in as cyrillicChapterNumberRe
+var cyrillicVolumeNumberRe = regexp.MustCompile(`(?i)(?:^|\P{L})том\.?\s*(\d+\.?\d*)`)
 
 // urlChapterNumberRe is a last-resort fallback for rows whose visible text
 // carries no recognizable chapter/volume keyword (e.g. mangahub.io, whose
@@ -1050,6 +1059,9 @@ var thaiChapterNumberRe = regexp.MustCompile(`ตอน(?:ที่)?\s*(\d+\.?\
 func parseChapterNumber(text string) (float64, bool) {
 	match := chapterNumberRe.FindStringSubmatch(text)
 	if len(match) == 0 {
+		match = cyrillicChapterNumberRe.FindStringSubmatch(text)
+	}
+	if len(match) == 0 {
 		match = turkishChapterNumberRe.FindStringSubmatch(text)
 	}
 	if len(match) == 0 {
@@ -1061,6 +1073,9 @@ func parseChapterNumber(text string) (float64, bool) {
 	if len(match) == 0 {
 		// only checked as fallback so "Vol.2 Chapter 15" still prefers the chapter
 		match = volumeNumberRe.FindStringSubmatch(text)
+	}
+	if len(match) == 0 {
+		match = cyrillicVolumeNumberRe.FindStringSubmatch(text)
 	}
 	if len(match) == 0 {
 		return 0, false

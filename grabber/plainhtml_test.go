@@ -41,7 +41,15 @@ func TestParseChapterNumber(t *testing.T) {
 		{"İlk Bölüm", 0, false},       // turkish, no number
 		{"ตอนที่ 362", 362, true},     // thai (oremanga)
 		{"ตอน 12.5", 12.5, true},
-		{"Notice", 0, false}, // announcements have no number
+		{"Глава 15", 15, true},       // russian (yagami)
+		{"Том 2 Глава 15", 15, true}, // russian, volume before chapter
+		{"Глава 15.5", 15.5, true},   // russian decimal
+		{"ГЛАВА 15", 15, true},       // russian, uppercase
+		{"Том 2", 2, true},           // russian volume fallback
+		{"Розділ 7", 7, true},        // ukrainian
+		{"Rozdział 12", 12, true},    // polish
+		{"Chương 12", 12, true},      // vietnamese
+		{"Notice", 0, false},         // announcements have no number
 		{"", 0, false},
 	}
 
