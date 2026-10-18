@@ -261,7 +261,7 @@ var plainHTMLSelectors = []SiteSelector{
 		Chapter:      ".title a",
 		ChapterTitle: ".title a",
 		Link:         ".title a",
-		Image:        `img.open, img[class^="page-"]`,
+		Image:        `img.open, img[class^="page-"], .web_pictures img.web_img`,
 		SeriesLink:   "h1.tbtitle a",
 	},
 	// madarascans.net (formerly .com/.org, which now 301-redirect to .net):

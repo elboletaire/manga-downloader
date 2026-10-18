@@ -168,6 +168,15 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want:     []string{"https://a.co/1.png", "https://a.co/2.png"},
 		},
 		{
+			// read.yagami.me: the reader's own image markup, next to its icon imgs
+			name:     "yagami reader web_img pages (FoOlSlide entry)",
+			selector: `img.open, img[class^="page-"], .web_pictures img.web_img`,
+			html: `<html><body><img class="icon off" src="https://a.co/glyphish/off/181.png" />` +
+				`<div class="web_pictures"><img class="web_img" src="https://a.co/c/235/p01.png" oncontextmenu="return false"/>` +
+				`<img class="web_img" src="https://a.co/c/235/p02.png" oncontextmenu="return false"/></div></body></html>`,
+			want: []string{"https://a.co/c/235/p01.png", "https://a.co/c/235/p02.png"},
+		},
+		{
 			name:     "ritharscans.com Alpine.js x-data immersiveReader blob",
 			selector: "img",
 			html:     `<html><body><div x-data="immersiveReader({ pages: [{&quot;path&quot;:&quot;series\/webtoon\/abc\/chapters\/def\/001.jpg&quot;,&quot;width&quot;:1080}], baseLink: 'https://a.co/storage/' })"></div></body></html>`,
