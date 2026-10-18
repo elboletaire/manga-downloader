@@ -1458,8 +1458,7 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 	}
 
 	// the reader's encrypted payload says which pages are tile-scrambled
-	html, _ := doc.Html()
-	scrambles := lrsScrambles(html)
+	scrambles := lrsScrambles(doc.Find("script").Text())
 
 	for i, img := range pimages {
 		if img == "" || strings.HasPrefix(img, "data:") {

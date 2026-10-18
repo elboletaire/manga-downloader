@@ -10,6 +10,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"slices"
 	"testing"
 )
 
@@ -153,13 +154,18 @@ func TestLRSScrambles(t *testing.T) {
 	}
 }
 
-func TestLRSTransformKeepsUndecodablePage(t *testing.T) {
-	junk := []byte("not an image")
-	got, err := lrsTransform(lrsPage{cols: 2, rows: 2})(junk)
-	if err != nil {
-		t.Fatalf("lrsTransform() error = %v, want the page kept without a retry", err)
+func TestLRSTransformFailsUndecodablePage(t *testing.T) {
+	if _, err := lrsTransform(lrsPage{cols: 2, rows: 2})([]byte("not an image")); err == nil {
+		t.Error("lrsTransform() accepted bytes that aren't an image")
 	}
-	if !bytes.Equal(got, junk) {
-		t.Error("lrsTransform() changed a page it couldn't decode")
+}
+
+// the expected values come from the reader's own JS generator, run in node
+func TestLRSKnownAnswers(t *testing.T) {
+	if got := lrsPermutation(124, 0x154f05f8)[:8]; !slices.Equal(got, []int{33, 21, 88, 41, 18, 73, 2, 46}) {
+		t.Errorf("lrsPermutation() starts %v, want the reader's 33 21 88 41 18 73 2 46", got)
+	}
+	if got := lrsTurns(124, 0x0ec13738)[:12]; !slices.Equal(got, []int{2, 3, 0, 2, 2, 2, 2, 1, 0, 0, 0, 0}) {
+		t.Errorf("lrsTurns() starts %v, want the reader's 2 3 0 2 2 2 2 1 0 0 0 0", got)
 	}
 }

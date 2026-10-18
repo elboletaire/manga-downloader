@@ -16,15 +16,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elboletaire/manga-downloader/notice"
+	_ "golang.org/x/image/webp"
 )
 
-// Some reader pages (bloomscans) ship their chapter encrypted in an inline
-// script and draw each scrambled page into a canvas, cutting it into a grid of
-// tiles that the reader's JS shuffles and mirrors back into place. The payload
-// is XOR'd with a key the script derives itself, and each page's seeds sit in
-// its 20-hex key (the middle segment of its image URL), so both can be
-// reproduced here without a browser. Ported from the reader's stitchCanvas.
+// lrsPayloadRe matches the encrypted chapter payload of bloomscans-style
+// readers, whose scrambled pages carry their seeds in their 20-hex keys.
 var lrsPayloadRe = regexp.MustCompile(`var obs = atob\("([^"]+)"\);\s*var offset = (\d+);\s*var enc = "([^"]+)";`)
 
 // lrsPage is what the reader needs to undo one scrambled page
@@ -151,10 +147,9 @@ func lrsTurns(n int, seed uint32) []int {
 	return t
 }
 
-// lrsUnscramble undoes the tile scrambling of one page image and re-encodes it
-// as PNG, which keeps the tile edges exact. The tile grid comes from the
-// decoded image's size, as the reader's canvas does; a strip left over past
-// the last tile stays white.
+// lrsUnscramble undoes a page's tile grid and re-encodes it as PNG, which
+// keeps the tile edges exact. The grid follows the decoded size, as the
+// reader's canvas does.
 func lrsUnscramble(data []byte, p lrsPage) ([]byte, error) {
 	src, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
@@ -207,17 +202,9 @@ func lrsUnscramble(data []byte, p lrsPage) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// lrsTransform returns the Transform that undoes a page's scrambling. A page
-// that won't decode won't decode on a refetch either, so it's kept as it came
-// (with a warning), as namePages does for a failed conversion, instead of
-// retrying the download.
+// lrsTransform returns the Transform that undoes a page's scrambling
 func lrsTransform(p lrsPage) func([]byte) ([]byte, error) {
 	return func(data []byte) ([]byte, error) {
-		out, err := lrsUnscramble(data, p)
-		if err != nil {
-			notice.Warn("- warning: could not unscramble a page: %s (keeping it as it is)", err)
-			return data, nil
-		}
-		return out, nil
+		return lrsUnscramble(data, p)
 	}
 }
