@@ -360,7 +360,6 @@ grabber: \
 	grabber/piacomic \
 	grabber/plumacomics \
 	grabber/projectsuki \
-	grabber/punchman \
 	grabber/punchonemanga \
 	grabber/qimanga \
 	grabber/ragnarokscanlation \
@@ -1828,9 +1827,6 @@ grabber/ngamenkomik05:
 
 grabber/omniscientreaderviewpoint:
 	go run . https://w53.omniscientreaderviewpoint.com/ 300
-
-grabber/punchman:
-	go run . https://w20.1punchman.com/ 200
 
 grabber/ragnarokscanlation:
 	go run . https://ragnarokscanlation.org/series/mokushiroku-no-yonkishi/ 255
