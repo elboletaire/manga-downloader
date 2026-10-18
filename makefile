@@ -55,7 +55,7 @@ print-%: ; $(if $(filter undefined,$(origin $*)),$(error $* is not defined),$(in
 # the desktop app, deliberately not part of build: it needs the platform's
 # webview (WebKitGTK on Linux) and Node + pnpm for the frontend. It's written
 # next to the CLI, which is where `manga-downloader ui` looks for it.
-# GUI_TAGS and GUI_LDFLAGS are what release-gui.yaml hands to `wails build`,
+# GUI_TAGS and GUI_LDFLAGS are what the wails targets pass to `wails build`,
 # which adds the desktop,production tags (without them the app refuses to
 # start) and -s -w itself; plain go build gets them from GUI_GO_*. webkit2_41
 # is for current Linux distros; the other platforms ignore it.
@@ -69,6 +69,20 @@ ifeq ($(shell uname -s),Darwin)
 GUI_CGO = CGO_LDFLAGS="$(CGO_LDFLAGS) -framework UniformTypeIdentifiers"
 endif
 
+# the wails CLI, which the release builds with (install it with go install)
+WAILS ?= wails
+# the Windows arch (the release builds amd64 and arm64)
+GOARCH ?= amd64
+# X.Y.Z for the Windows version resource, the installer and the bundle's
+# Info.plist, which wails reads from gui/wails.json. Empty leaves it alone.
+PRODUCT_VERSION ?=
+# wails reads only gui/wails.json, so PRODUCT_VERSION is written there for the
+# build and the file is put back afterwards, even when the build fails
+WAILS_BUILD = cd gui && bak=$$(mktemp) && cp wails.json "$$bak" && { \
+	$(if $(PRODUCT_VERSION),sed 's/"productVersion": "0.0.0"/"productVersion": "$(PRODUCT_VERSION)"/' "$$bak" > wails.json &&) \
+	$(WAILS) build -platform $(WAILS_PLATFORM) -tags "$(GUI_TAGS)" -trimpath -skipbindings -m -nosyncgomod \
+	$(WAILS_FLAGS) -ldflags "$(GUI_LDFLAGS)"; st=$$?; cp "$$bak" wails.json; rm -f "$$bak"; exit $$st; }
+
 # the frontend is embedded into the binary, so it has to exist before go builds
 build/gui/frontend:
 	cd gui/frontend && pnpm install --frozen-lockfile && pnpm build
@@ -77,12 +91,24 @@ build/gui: build/gui/frontend
 	cd gui && $(GUI_CGO) go build -trimpath -tags $(GUI_GO_TAGS) -ldflags="$(GUI_GO_LDFLAGS)" \
 		-o ../manga-downloader-gui .
 
-# cross-compiled from any host, without cgo: Wails' Windows webview is pure Go.
-# -H windowsgui keeps the console from opening behind the window. The release
-# uses `wails build` instead, which also embeds the icon and manifest.
-build/gui/windows: build/gui/frontend
-	cd gui && CGO_ENABLED=0 GOOS=windows go build -trimpath -tags $(GUI_GO_TAGS) \
-		-ldflags="$(GUI_GO_LDFLAGS) -H windowsgui" -o ../manga-downloader-gui.exe .
+# the release's builds, through wails (what release-gui.yaml runs): they embed
+# the icon and manifest and link the Windows exe as a GUI app. Output goes to
+# gui/build/bin/ (manga-downloader-gui.exe, or the -installer.exe with NSIS=1).
+# wails builds the frontend itself, and needs Node and pnpm, as the release does.
+build/gui/windows: WAILS_PLATFORM = windows/$(GOARCH)
+build/gui/windows: WAILS_FLAGS = $(if $(NSIS),-nsis)
+build/gui/windows:
+	$(WAILS_BUILD)
+
+# gui/build/bin/manga-downloader-gui (WebKitGTK headers needed, see above)
+build/gui/linux: WAILS_PLATFORM = linux/$(GOARCH)
+build/gui/linux:
+	$(WAILS_BUILD)
+
+# gui/build/bin/Manga Downloader.app, universal (macOS only)
+build/gui/darwin: WAILS_PLATFORM = darwin/universal
+build/gui/darwin:
+	$(WAILS_BUILD)
 
 test:
 ifdef RICHGO
