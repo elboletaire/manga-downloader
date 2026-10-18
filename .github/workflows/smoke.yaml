@@ -81,6 +81,11 @@ jobs:
           path: results
           merge-multiple: true
 
+      - name: Summarise the results
+        run: |
+          cat results/*.txt > results.all
+          make smoke/summary RESULTS=results.all
+
       # master requires signed commits and linear history, which a pushed
       # bot commit can't meet; createCommitOnBranch makes GitHub sign it.
       - name: Update the README and commit it
@@ -88,7 +93,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           update() {
-            cat results/*.txt > results.all
             go run ./tools/site-status -results results.all -date "$(date -u +%F)"
           }
           commit() {
