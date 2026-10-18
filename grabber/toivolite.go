@@ -153,8 +153,8 @@ func (t *ToivoLite) FetchChapter(f Filterable) (*Chapter, error) {
 	if err != nil {
 		return nil, err
 	}
-	// an image on a CDN host may refuse the site's Referer (mangafreak answers
-	// 403 to it), so only the site's own images get one
+	// NoReferer applies to every image off the site's domain, since a CDN
+	// answers 403 to the site's Referer (mangafreak does)
 	for i := range pages {
 		pages[i].NoReferer = !toivoLiteSameSite(pages[i].URL, t.BaseUrl())
 	}
@@ -182,9 +182,26 @@ type toivoLiteChapterEntry struct {
 // ("The Apothecary Diaries, Chapter 63.2" → "63.2").
 var toivoLiteChapterNumRe = regexp.MustCompile(`(?i)chapter\s*(\d+(?:\.\d+)?)`)
 
-// toivoLiteColonNumRe reads a number written without the chapter word, as in
-// "Tokyo Manji Revengers 204: Give me a Hand": the number and the title.
-var toivoLiteColonNumRe = regexp.MustCompile(`^.*?\s(\d+(?:\.\d+)?):\s*(.*)$`)
+// toivoLiteColonNumRe reads the word and number before a colon, as in
+// "Tokyo Manji Revengers 204: Give me a Hand" (the word is "Revengers")
+var toivoLiteColonNumRe = regexp.MustCompile(`^(?:.*\s)?(\S+)\s(\d+(?:\.\d+)?):\s*(.*)$`)
+
+// toivoLiteColonNum reads a number written without the chapter word, returning
+// it with the title after the colon. "Volume 3: X" and the like are no chapter.
+func toivoLiteColonNum(raw string) (num, title string, ok bool) {
+	if strings.Contains(strings.ToLower(raw), "chapter") {
+		return "", "", false
+	}
+	m := toivoLiteColonNumRe.FindStringSubmatch(raw)
+	if m == nil {
+		return "", "", false
+	}
+	switch strings.ToLower(strings.TrimSuffix(m[1], ".")) {
+	case "volume", "vol", "season", "part", "arc":
+		return "", "", false
+	}
+	return m[2], m[3], true
+}
 
 // toivoLiteChapterList parses the "All Chapters" sidebar widget shared by
 // every Toivo Lite page. Numbers come from the link text ("Chapter 63.2"),
@@ -228,8 +245,8 @@ func toivoLiteChapterList(doc *goquery.Document, baseURL string) (entries []toiv
 func toivoLiteChapterTitle(raw string) (string, Label) {
 	idx := strings.Index(strings.ToLower(raw), "chapter")
 	if idx < 0 {
-		if m := toivoLiteColonNumRe.FindStringSubmatch(raw); m != nil {
-			return m[2], Label{Style: LabelPrefixed, Number: m[1]}
+		if num, title, ok := toivoLiteColonNum(raw); ok {
+			return title, Label{Style: LabelPrefixed, Number: num}
 		}
 		return raw, Label{}
 	}
@@ -250,9 +267,9 @@ func toivoLiteChapterNum(title, url string) (float64, bool) {
 			return num, true
 		}
 	}
-	if m := toivoLiteColonNumRe.FindStringSubmatch(title); m != nil {
-		if num, err := strconv.ParseFloat(m[1], 64); err == nil {
-			return num, true
+	if num, _, ok := toivoLiteColonNum(title); ok {
+		if n, err := strconv.ParseFloat(num, 64); err == nil {
+			return n, true
 		}
 	}
 	if num, _, ok := parseChapterSlugNum(url); ok {
@@ -290,24 +307,29 @@ func toivoLiteEntryContentPages(doc *goquery.Document, chapterTitle string) ([]P
 	return pages, nil
 }
 
-// toivoLiteSameSite reports whether two URLs share a domain, comparing the last
-// two labels of their hosts ("w20.1punchman.com" and "1punchman.com" do)
-func toivoLiteSameSite(a, b string) bool {
-	return toivoLiteDomain(a) == toivoLiteDomain(b)
+// toivoLiteMirrorRe is the wNN. label Toivo Lite sites put on their host
+var toivoLiteMirrorRe = regexp.MustCompile(`^w\d+\.`)
+
+// toivoLiteSameSite reports whether imageURL is on the site's own domain: the
+// site's host without its wNN. label, or a subdomain of it
+func toivoLiteSameSite(imageURL, siteURL string) bool {
+	host := toivoLiteHost(imageURL)
+	domain := toivoLiteMirrorRe.ReplaceAllString(toivoLiteHost(siteURL), "")
+	return host != "" && domain != "" && (host == domain || strings.HasSuffix(host, "."+domain))
 }
 
-// toivoLiteDomain returns the last two labels of a URL's host, "" when it has none
-func toivoLiteDomain(rawURL string) string {
+// toivoLiteHost returns a URL's lowercase host, "" when it doesn't parse
+func toivoLiteHost(rawURL string) string {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return ""
 	}
-	labels := strings.Split(u.Hostname(), ".")
-	if len(labels) > 2 {
-		labels = labels[len(labels)-2:]
-	}
-	return strings.Join(labels, ".")
+	return strings.ToLower(u.Hostname())
 }
+
+// toivoLiteLazyRe matches the placeholder GIFs of the lazy-load plugins
+// ("lazy_placeholder.gif", "a3-lazy-load/assets")
+var toivoLiteLazyRe = regexp.MustCompile(`(?i)lazy[_-](placeholder|load)`)
 
 // toivoLitePageURL returns a page image's real URL. Lazy readers keep a data:
 // URI or a placeholder GIF in src and the image in a data-* attribute, so those
@@ -315,7 +337,7 @@ func toivoLiteDomain(rawURL string) string {
 func toivoLitePageURL(s *goquery.Selection) string {
 	for _, attr := range []string{"data-src", "data-lazy-src", "src"} {
 		u := strings.TrimSpace(s.AttrOr(attr, ""))
-		if u == "" || strings.HasPrefix(u, "data:") || strings.Contains(strings.ToLower(u), "placeholder") {
+		if u == "" || strings.HasPrefix(u, "data:") || toivoLiteLazyRe.MatchString(u) {
 			continue
 		}
 		return u

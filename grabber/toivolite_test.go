@@ -53,6 +53,30 @@ func TestToivoLiteChapterNum(t *testing.T) {
 			ok:    true,
 		},
 		{
+			name:  "volume before a colon is no chapter",
+			title: "Volume 3: Foo",
+			url:   "https://example.com/announcement/",
+			ok:    false,
+		},
+		{
+			name:  "season before a colon is no chapter",
+			title: "Season 2: Return",
+			url:   "https://example.com/announcement/",
+			ok:    false,
+		},
+		{
+			name:  "part after the chapter word is no chapter number",
+			title: "Chapter Special Part 2: X",
+			url:   "https://example.com/announcement/",
+			ok:    false,
+		},
+		{
+			name:  "oneshot special after the chapter word is no chapter number",
+			title: "Chapter Oneshot Special 3: X",
+			url:   "https://example.com/announcement/",
+			ok:    false,
+		},
+		{
 			name:  "no number anywhere",
 			title: "Site Announcement",
 			url:   "https://example.com/announcement/",
@@ -91,6 +115,10 @@ func TestToivoLiteChapterTitle(t *testing.T) {
 		{"Tokyo Manji Revengers 204: Give Me a Hand", "Chapter 204 - Give Me a Hand", "Give Me a Hand"},
 		// No number: the title as is, unlabelled
 		{"Kaiju no 8 Ex – Kaiju no 8 Manga Online", "Kaiju no 8 Ex – Kaiju no 8 Manga Online", "Kaiju no 8 Ex – Kaiju no 8 Manga Online"},
+		// A volume, season or part before a colon is not a chapter number
+		{"Volume 3: Foo", "Volume 3: Foo", "Volume 3: Foo"},
+		{"Season 2: Return", "Season 2: Return", "Season 2: Return"},
+		{"Chapter Special Part 2: X", "Chapter Special Part 2: X", "Chapter Special Part 2: X"},
 	}
 	for _, tt := range tests {
 		title, label := toivoLiteChapterTitle(tt.raw)
@@ -215,6 +243,9 @@ const toivoLiteUnnumberedListHTML = `<!doctype html>
   <li><a href="https://w28.jujutsukaisen-online.com/manga/jujutsu-kaisen-modulo-chapter-25/">Jujutsu Kaisen Modulo &#8211; Chapter 25</a></li>
   <li><a href="https://w30.read-tokyorevengers.com/manga/tokyo-manji-revengers-chapter-12-1-extra-zero/">Tokyo Manji Revengers &#8211; Chapter 12.1 Extra Zero</a></li>
   <li><a href="https://w14.maid-sama.com/manga/chapter-oneshot-special-3/">Chapter Oneshot Special 3</a></li>
+  <li><a href="https://example.com/volume-3/">Volume 3: Foo</a></li>
+  <li><a href="https://example.com/season-2/">Season 2: Return</a></li>
+  <li><a href="https://example.com/special/">Chapter Special Part 2: X</a></li>
 </ul></div></div>
 </body></html>`
 
@@ -225,8 +256,8 @@ func TestToivoLiteChapterListUnnumbered(t *testing.T) {
 	}
 
 	entries := toivoLiteChapterList(doc, "https://example.com")
-	if len(entries) != 6 {
-		t.Fatalf("got %d entries, want 6", len(entries))
+	if len(entries) != 9 {
+		t.Fatalf("got %d entries, want 9", len(entries))
 	}
 
 	wantLabels := []string{
@@ -236,8 +267,11 @@ func TestToivoLiteChapterListUnnumbered(t *testing.T) {
 		"Chapter 25",
 		"Chapter 12.1 Extra Zero",
 		"Chapter Oneshot Special 3",
+		"Volume 3: Foo",
+		"Season 2: Return",
+		"Chapter Special Part 2: X",
 	}
-	wantNums := []float64{26, 0, 204, 25, 12.1, 0}
+	wantNums := []float64{26, 0, 204, 25, 12.1, 0, 0, 0, 0}
 	for i, e := range entries {
 		c := Chapter{Title: e.Title, Number: e.Number, Label: e.Label}
 		if got := ChapterLabel(c); got != wantLabels[i] {
@@ -402,22 +436,25 @@ func TestToivoLiteTest(t *testing.T) {
 }
 
 // TestToivoLiteSameSite checks the image hosts that get the site's Referer:
-// the site's own domain and its subdomains, not a CDN
+// the site's own domain and its subdomains, not a CDN or a look-alike domain
 func TestToivoLiteSameSite(t *testing.T) {
-	const site = "https://w20.1punchman.com/"
 	tests := []struct {
-		url  string
-		want bool
+		site, url string
+		want      bool
 	}{
-		{"https://1punchman.com/wp-content/uploads/a.png", true},
-		{"https://w10.1punchman.com/wp-content/uploads/a.png", true},
-		{"https://images.mangafreak.me/mangas/onepunch_man/a.jpg", false},
-		{"https://blogger.googleusercontent.com/img/b/a.jpg", false},
-		{"https://1punchman.com.evil.example/a.png", false},
+		{"https://w20.1punchman.com/", "https://1punchman.com/wp-content/uploads/a.png", true},
+		{"https://w20.1punchman.com/", "https://w10.1punchman.com/wp-content/uploads/a.png", true},
+		{"https://w20.1punchman.com/", "https://images.mangafreak.me/mangas/onepunch_man/a.jpg", false},
+		{"https://w20.1punchman.com/", "https://blogger.googleusercontent.com/img/b/a.jpg", false},
+		{"https://w20.1punchman.com/", "https://1punchman.com.evil.example/a.png", false},
+		{"https://w20.1punchman.com/", "https://xpunchman.com/a.png", false},
+		{"https://a.co.jp/", "https://b.co.jp/a.png", false},
+		{"https://a.co.jp/", "https://cdn.a.co.jp/a.png", true},
+		{"https://w28.a.co.jp/", "https://w5.a.co.jp/a.png", true},
 	}
 	for _, tt := range tests {
-		if got := toivoLiteSameSite(tt.url, site); got != tt.want {
-			t.Errorf("toivoLiteSameSite(%q, %q) = %v, want %v", tt.url, site, got, tt.want)
+		if got := toivoLiteSameSite(tt.url, tt.site); got != tt.want {
+			t.Errorf("toivoLiteSameSite(%q, %q) = %v, want %v", tt.url, tt.site, got, tt.want)
 		}
 	}
 }
