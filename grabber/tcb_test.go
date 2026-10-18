@@ -109,7 +109,7 @@ func TestTcbSeriesRe(t *testing.T) {
 		{"https://webtoonia.fun/seri/ask-bagimlisi/bolum-19/", "seri/ask-bagimlisi"},
 		{"https://mangaowl.io/read-1/beyond-the-limit/", "read-1/beyond-the-limit"},
 		{"https://mangaowl.io/read-1/beyond-the-limit/beyond-the-limit-chapter-54-5/", "read-1/beyond-the-limit"},
-		// any other first segment, from the TSV's Madara sites and others
+		// any other first segment
 		{"https://ragnarokscanlation.org/series/mokushiroku-no-yonkishi/", "series/mokushiroku-no-yonkishi"},
 		{"https://samurai.j5z.xyz/son/el-archimago-de-los-mil-elementos/", "son/el-archimago-de-los-mil-elementos"},
 		{"https://inkapk.net/obras/the-female-delinquent-set-her-eyes-on-me/", "obras/the-female-delinquent-set-her-eyes-on-me"},
@@ -120,7 +120,11 @@ func TestTcbSeriesRe(t *testing.T) {
 		{"https://grabber.zone/comics/sonic-bad-guys-espanol/", "comics/sonic-bad-guys-espanol"},
 		{"https://mangapark.tv/manhwa/desharow-mermaid/", "manhwa/desharow-mermaid"},
 		{"https://example.com/comics/foo/", "comics/foo"},
+		// a prefix before the known one is kept
+		{"https://x.com/en/manga/foo/", "en/manga/foo"},
+		{"https://x.com/blog/gl/a-love-hate-chord/", "blog/gl/a-love-hate-chord"},
 		// chapter URLs map to their series
+		{"https://x.com/en/manga/foo/chapter-1/", "en/manga/foo"},
 		{"https://lhtranslation.net/manga/gaikotsu-kishi-sama/chapter-1/", "manga/gaikotsu-kishi-sama"},
 		{"https://gdscans.com/manga/example/volume-10/chapter-50/", "manga/example"},
 		{"https://lilymanga.net/gl/a-love-hate-chord/episode-02/", "gl/a-love-hate-chord"},
@@ -137,17 +141,36 @@ func TestTcbSeriesRe(t *testing.T) {
 		{"https://example.com/foo/", ""},
 		{"https://example.com/", ""},
 		{"https://example.com/?comics/foo/", ""},
+		// a date path is a blog post, not a series
+		{"https://blog.example.com/2026/09/post.html", ""},
+		{"https://blog.example.com/2026/09/post/", ""},
+		{"https://blog.example.com/2026/09/", ""},
 	}
 
 	for _, tt := range tests {
-		match := tcbSeriesRe.FindStringSubmatch(tt.url)
-		got := ""
-		if match != nil {
-			got = match[1]
+		if got := tcbSeriesPath(tt.url); got != tt.series {
+			t.Errorf("tcbSeriesPath on %q: got %q, want %q", tt.url, got, tt.series)
 		}
-		if got != tt.series {
-			t.Errorf("tcbSeriesRe on %q: got %q, want %q", tt.url, got, tt.series)
-		}
+	}
+}
+
+// A prefixed series is probed under its prefix, and the series URL keeps it.
+func TestTcbTestKeepsSeriesPrefix(t *testing.T) {
+	const chaptersHTML = `<ul><li class="wp-manga-chapter"><a href="/en/manga/foo/chapter-1/">Chapter 1</a></li></ul>`
+	mux := http.NewServeMux()
+	mux.HandleFunc("/en/manga/foo/ajax/chapters", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(chaptersHTML))
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	tcb := NewTcb(&Grabber{URL: srv.URL + "/en/manga/foo/chapter-1/", Settings: &Settings{}})
+	ok, err := tcb.Test()
+	if err != nil || !ok {
+		t.Fatalf("Test() = %v, %v; want true", ok, err)
+	}
+	if want := srv.URL + "/en/manga/foo/"; tcb.series != want {
+		t.Errorf("series URL = %q, want %q", tcb.series, want)
 	}
 }
 
