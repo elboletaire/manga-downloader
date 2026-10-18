@@ -1,7 +1,7 @@
 {
   "repo": "elboletaire/manga-downloader",
-  "generatedAt": "2026-10-18T19:19:36.197Z",
-  "snapshotAt": "2026-10-18T19:19:36.197Z",
+  "generatedAt": "2026-10-18T19:43:53.533Z",
+  "snapshotAt": "2026-10-18T19:43:53.533Z",
   "groups": [
     {
       "name": "app",
@@ -48,7 +48,7 @@
     "downloads": 12226,
     "stars": 271,
     "forks": 33,
-    "docker": 39215,
+    "docker": 39278,
     "counters": {
       "updates": {
         "downloads": 4,
@@ -5156,8 +5156,8 @@
     {
       "tag": "v1.20.0",
       "publishedAt": "2026-10-18T12:36:07Z",
-      "end": "2026-10-18T19:19:36.197Z",
-      "days": 0.28019903935185186,
+      "end": "2026-10-18T19:43:53.533Z",
+      "days": 0.29706635416666666,
       "epoch": 3,
       "prerelease": false,
       "groups": {
@@ -5462,8 +5462,8 @@
       "version": "v1.20.0",
       "label": "Multilingual",
       "start": "2026-10-18T12:36:07Z",
-      "end": "2026-10-18T19:19:36.197Z",
-      "days": 0.28019903935185186,
+      "end": "2026-10-18T19:43:53.533Z",
+      "days": 0.29706635416666666,
       "releases": 1,
       "firstTag": "v1.20.0",
       "lastTag": "v1.20.0",
@@ -5473,10 +5473,10 @@
       },
       "downloads": 47,
       "avgPerDay": {
-        "app": 114.2045314431536,
-        "cli": 53.533374113978255
+        "app": 107.72004150307329,
+        "cli": 50.4937694545656
       },
-      "avgPerDayTotal": 167.73790555713185,
+      "avgPerDayTotal": 158.21381095763888,
       "medianPerDay": {
         "app": null,
         "cli": null
@@ -8298,7 +8298,7 @@
         "cli": 57
       },
       "stars": 2,
-      "docker": 3678,
+      "docker": 3741,
       "counters": {
         "updates": 4
       }

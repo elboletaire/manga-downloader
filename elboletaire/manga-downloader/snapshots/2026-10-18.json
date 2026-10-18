@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "date": "2026-10-18",
-  "takenAt": "2026-10-18T19:19:36.197Z",
+  "takenAt": "2026-10-18T19:43:53.533Z",
   "repo": {
     "stars": 271,
     "forks": 33,
@@ -10,7 +10,7 @@
   },
   "docker": {
     "image": "elboletaire/manga-downloader",
-    "pulls": 39215
+    "pulls": 39278
   },
   "releases": [
     {
