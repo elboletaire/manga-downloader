@@ -7,10 +7,9 @@ export const AUTO_LOAD_DELAY_MS = 200;
 
 /**
  * Whether text is an http(s) URL to a series: a dotted host with no empty
- * labels, and a path. Parsed with `new URL`, and nothing looser; a bare host
- * (`https://mangadex.org`) is not a series, so it doesn't load on its own.
+ * labels, and a path (a bare host only when pasted). Parsed with `new URL`.
  */
-export function isSeriesUrl(text: string): boolean {
+export function isSeriesUrl(text: string, { pasted = false }: { pasted?: boolean } = {}): boolean {
   // the scheme must be followed by `//` and then something that isn't a slash,
   // so `https:example.com` and `https:///example.com` are refused
   if (!/^https?:\/\/[^/]/i.test(text)) {
@@ -23,7 +22,7 @@ export function isSeriesUrl(text: string): boolean {
       (url.protocol === 'http:' || url.protocol === 'https:') &&
       labels.length > 1 &&
       labels.every(Boolean) &&
-      url.pathname.length > 1
+      (pasted || url.pathname.length > 1)
     );
   } catch {
     return false;
@@ -31,15 +30,17 @@ export function isSeriesUrl(text: string): boolean {
 }
 
 /**
- * Whether the value should load now. url is the series the backend holds,
- * set when a load starts, so it covers a loaded, a loading and a failed
- * load alike: the same URL is never loaded again on its own, and a failed
- * one only reloads when the user edits it or presses Load or Enter.
+ * Whether the value should load now. url is the series the backend holds, set
+ * when a load starts, so a loaded, loading or failed URL never reloads on its own.
  */
-export function shouldAutoLoad(value: string, state: { url: string; busy: boolean }): boolean {
+export function shouldAutoLoad(
+  value: string,
+  state: { url: string; busy: boolean },
+  { pasted = false }: { pasted?: boolean } = {},
+): boolean {
   if (state.busy) {
     return false;
   }
   const trimmed = value.trim();
-  return isSeriesUrl(trimmed) && trimmed !== state.url.trim();
+  return isSeriesUrl(trimmed, { pasted }) && trimmed !== state.url.trim();
 }

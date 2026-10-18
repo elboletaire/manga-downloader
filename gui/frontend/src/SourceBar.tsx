@@ -69,25 +69,28 @@ export function SourceBar({
     latest.current = { url: state.url, busy };
   }, [state.url, busy]);
   useEffect(() => () => clearTimeout(timer.current), []);
-  const changeUrl = (value: string) => {
+  // a pasted bare host may load on its own, a typed one waits for Load or Enter
+  // (see onPaste and shouldAutoLoad)
+  const pasting = useRef(false);
+  const changeUrl = (value: string, pasted = false) => {
     setTyped(value);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
-      if (shouldAutoLoad(value, latest.current)) {
+      if (shouldAutoLoad(value, latest.current, { pasted })) {
         onLoad(value.trim());
       }
     }, AUTO_LOAD_DELAY_MS);
   };
   const input = useRef<HTMLInputElement>(null);
-  // the pasted text goes through changeUrl like typed text, so it loads the same
-  // way; the field keeps the focus whether or not there was anything to paste
+  // the pasted text goes through changeUrl like typed text, marked as pasted; the
+  // field keeps the focus whether or not there was anything to paste
   const paste = () => {
     readClipboard()
       .then((text) => {
         const value = pasteValue(text);
         // text typed while the clipboard was read wins over the paste
         if (value !== '' && input.current?.value === '') {
-          changeUrl(value);
+          changeUrl(value, true);
         }
       })
       .catch(() => undefined)
@@ -139,7 +142,17 @@ export function SourceBar({
               aria-busy={busy}
               spellCheck={false}
               autoComplete="off"
-              onChange={(e) => changeUrl(e.target.value)}
+              onChange={(e) => {
+                changeUrl(e.target.value, pasting.current);
+                pasting.current = false;
+              }}
+              onPaste={() => {
+                pasting.current = true;
+                // a paste that changes nothing fires no change, so the mark is dropped after it
+                setTimeout(() => {
+                  pasting.current = false;
+                });
+              }}
               onFocus={(e) => e.currentTarget.select()}
             />
             {url !== '' && !busy && (
