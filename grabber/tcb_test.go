@@ -102,23 +102,41 @@ func TestTcbSeriesRe(t *testing.T) {
 		url    string
 		series string // empty when the URL must not match
 	}{
+		// the known prefixes
 		{"https://lhtranslation.net/manga/gaikotsu-kishi-sama/", "manga/gaikotsu-kishi-sama"},
 		{"https://lilymanga.net/gl/a-love-hate-chord/", "gl/a-love-hate-chord"},
 		{"https://mangalivre.to/manga/chainsaw-man-pt-br/", "manga/chainsaw-man-pt-br"},
 		{"https://webtoonia.fun/seri/ask-bagimlisi/bolum-19/", "seri/ask-bagimlisi"},
 		{"https://mangaowl.io/read-1/beyond-the-limit/", "read-1/beyond-the-limit"},
 		{"https://mangaowl.io/read-1/beyond-the-limit/beyond-the-limit-chapter-54-5/", "read-1/beyond-the-limit"},
-		{"https://example.com/read/foo/", ""},
-		{"https://example.com/read-x/foo/", ""},
+		// any other first segment, from the TSV's Madara sites and others
+		{"https://ragnarokscanlation.org/series/mokushiroku-no-yonkishi/", "series/mokushiroku-no-yonkishi"},
+		{"https://samurai.j5z.xyz/son/el-archimago-de-los-mil-elementos/", "son/el-archimago-de-los-mil-elementos"},
+		{"https://inkapk.net/obras/the-female-delinquent-set-her-eyes-on-me/", "obras/the-female-delinquent-set-her-eyes-on-me"},
+		{"https://doujinx-h.com/doujin/doraemon-bbm/", "doujin/doraemon-bbm"},
+		{"https://hunlightcomics.com/m/i-got-reincarnated-as-a-mid-boss/", "m/i-got-reincarnated-as-a-mid-boss"},
+		{"https://lectorhades.latamtoon.com/tmo/renacimiento-del-cultivador-urbano-inmortal/", "tmo/renacimiento-del-cultivador-urbano-inmortal"},
+		{"https://marmota.me/comic/ravage-2023/", "comic/ravage-2023"},
+		{"https://grabber.zone/comics/sonic-bad-guys-espanol/", "comics/sonic-bad-guys-espanol"},
+		{"https://mangapark.tv/manhwa/desharow-mermaid/", "manhwa/desharow-mermaid"},
+		{"https://example.com/comics/foo/", "comics/foo"},
+		// chapter URLs map to their series
 		{"https://lhtranslation.net/manga/gaikotsu-kishi-sama/chapter-1/", "manga/gaikotsu-kishi-sama"},
 		{"https://gdscans.com/manga/example/volume-10/chapter-50/", "manga/example"},
 		{"https://lilymanga.net/gl/a-love-hate-chord/episode-02/", "gl/a-love-hate-chord"},
+		{"https://grabber.zone/comics/sonic-bad-guys-espanol/chapter-3/", "comics/sonic-bad-guys-espanol"},
+		{"https://mangapark.tv/manhwa/desharow-mermaid/chapter-81/", "manhwa/desharow-mermaid"},
+		{"https://samurai.j5z.xyz/son/el-archimago-de-los-mil-elementos/capitulo-591/", "son/el-archimago-de-los-mil-elementos"},
+		// rejected: no slug, no trailing slash, or not a path at all
 		{"https://lilymanga.net/gl/a-love-hate-chord", ""},
 		{"https://lhtranslation.net/manga/", ""},
-		{"https://example.com/somanga/foo/", ""},
-		{"https://example.com/glimpse/foo/", ""},
-		{"https://example.com/comics/foo/", ""},
+		{"https://example.com/comics/", ""},
+		{"https://example.com/comics", ""},
+		{"https://example.com/comics/foo", ""},
+		{"https://example.com/comics/foo?page=2", ""},
+		{"https://example.com/foo/", ""},
 		{"https://example.com/", ""},
+		{"https://example.com/?comics/foo/", ""},
 	}
 
 	for _, tt := range tests {
@@ -130,6 +148,28 @@ func TestTcbSeriesRe(t *testing.T) {
 		if got != tt.series {
 			t.Errorf("tcbSeriesRe on %q: got %q, want %q", tt.url, got, tt.series)
 		}
+	}
+}
+
+// Test() claims a path of any shape only when Madara's list answers there; a
+// site without one (a 404 on the probe) is declined without an error.
+func TestTcbTestAnyPath(t *testing.T) {
+	const chaptersHTML = `<ul><li class="wp-manga-chapter"><a href="/comics/foo/chapter-1/">Chapter 1</a></li></ul>`
+	mux := http.NewServeMux()
+	mux.HandleFunc("/comics/foo/ajax/chapters", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(chaptersHTML))
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	ok, err := NewTcb(&Grabber{URL: srv.URL + "/comics/foo/chapter-1/", Settings: &Settings{}}).Test()
+	if err != nil || !ok {
+		t.Errorf("Test() on a Madara list at /comics/ = %v, %v; want true", ok, err)
+	}
+
+	ok, err = NewTcb(&Grabber{URL: srv.URL + "/tag/action/", Settings: &Settings{}}).Test()
+	if err != nil || ok {
+		t.Errorf("Test() on a path without a list = %v, %v; want false, no error", ok, err)
 	}
 }
 
@@ -509,5 +549,29 @@ func TestTcbFetchChaptersStrayMixed(t *testing.T) {
 		if strings.Contains(c.(*TcbChapter).ID, "growth-type") {
 			t.Errorf("stray row kept: %q", c.(*TcbChapter).ID)
 		}
+	}
+}
+
+// Lazy-loading plugins leave a data: placeholder in src and move the real URL to
+// a lazy attribute; a data: URL is never a page.
+func TestTcbImageURL(t *testing.T) {
+	const placeholder = "data:image/png;base64,iVBORw0KGgo="
+	tests := map[string]struct{ img, want string }{
+		"plain src":          {`<img src="https://x.com/1.jpg">`, "https://x.com/1.jpg"},
+		"data-src first":     {`<img src="` + placeholder + `" data-src="https://x.com/2.jpg">`, "https://x.com/2.jpg"},
+		"data-lzl-src":       {`<img src="` + placeholder + `" data-lzl-src="https://x.com/3.jpg">`, "https://x.com/3.jpg"},
+		"data-lazy-src":      {`<img src="` + placeholder + `" data-lazy-src="https://x.com/4.jpg">`, "https://x.com/4.jpg"},
+		"only a placeholder": {`<img src="` + placeholder + `">`, ""},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			doc, err := goquery.NewDocumentFromReader(strings.NewReader(tt.img))
+			if err != nil {
+				t.Fatalf("failed to parse fixture: %s", err)
+			}
+			if got := tcbImageURL(doc.Find("img")); got != tt.want {
+				t.Errorf("tcbImageURL() = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
