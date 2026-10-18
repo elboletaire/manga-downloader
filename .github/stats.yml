@@ -1,0 +1,15 @@
+# Config for the Stats workflow (elboletaire/github-stats-action).
+groups:
+  - { name: app, label: Desktop app, assets: "manga-downloader-gui-*" }
+  - { name: cli, label: CLI, assets: "manga-downloader-*" }
+ignore: ["*.md5", "*-SHA256SUMS.txt"]
+counters:
+  - { name: updates, label: In-app updates, assets: "manga-downloader-gui-*-SHA256SUMS.txt", from: v1.19.0 }
+epochs:
+  - { version: v1.0.0, label: 1.0 rewrite }
+  - { version: v1.11.0, label: First desktop app }
+  - { version: v1.18.0, label: Installer and updater }
+  - { version: v1.20.0, label: Multilingual }
+platforms:
+  - { match: "*-windows-amd64-installer.exe", label: Windows amd64 installer }
+docker: elboletaire/manga-downloader
