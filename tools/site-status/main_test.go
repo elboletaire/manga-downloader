@@ -168,3 +168,39 @@ func diffLines(a, b string) int {
 	}
 	return n
 }
+
+func TestOldest(t *testing.T) {
+	// alpha and orphan were never checked (a dash, or no row at all), gamma and
+	// gamma2 share a row verified 2026-01-01, beta is failing since 2026-09-01.
+	cands := []string{"beta", "gamma2", "orphan", "gamma", "alpha"}
+	got, err := oldest(testReadme, hosts(), cands, len(cands))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "alpha orphan gamma gamma2 beta"; strings.Join(got, " ") != want {
+		t.Errorf("got %v, want %s", got, want)
+	}
+	got, _ = oldest(testReadme, hosts(), cands, 3)
+	if want := "alpha orphan gamma"; strings.Join(got, " ") != want {
+		t.Errorf("first 3: got %v, want %s", got, want)
+	}
+}
+
+func TestListOldest(t *testing.T) {
+	dir := t.TempDir()
+	mk := dir + "/makefile"
+	rd := dir + "/README.md"
+	if err := os.WriteFile(mk, []byte(testMakefile), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(rd, []byte(testReadme), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var out strings.Builder
+	if err := listOldest(strings.NewReader("beta\n\n alpha \n"), &out, 5, rd, mk); err != nil {
+		t.Fatal(err)
+	}
+	if want := "alpha\nbeta\n"; out.String() != want {
+		t.Errorf("got %q, want %q", out.String(), want)
+	}
+}

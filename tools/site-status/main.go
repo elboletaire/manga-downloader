@@ -8,12 +8,19 @@
 // to a README row by the host of its first URL in the makefile; targets and
 // rows that don't map are reported, never guessed.
 //
+// With -oldest N it instead prints the N targets read from stdin whose rows
+// were verified longest ago, so the smoke rotation can pick them.
+//
 // Usage: go run ./tools/site-status -results FILE -date YYYY-MM-DD [-readme README.md] [-makefile makefile]
+//
+//	go run ./tools/site-status -oldest N [-readme README.md] [-makefile makefile] < targets
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"sort"
@@ -39,10 +46,19 @@ func main() {
 	date := flag.String("date", time.Now().UTC().Format("2006-01-02"), "date of the run (YYYY-MM-DD)")
 	readme := flag.String("readme", "README.md", "README to update in place")
 	makefile := flag.String("makefile", "makefile", "makefile holding the grabber/<target> recipes")
+	count := flag.Int("oldest", 0, "print the N stdin targets whose rows were verified longest ago")
 	flag.Parse()
 
+	if *count > 0 {
+		if err := listOldest(os.Stdin, os.Stdout, *count, *readme, *makefile); err != nil {
+			fmt.Fprintln(os.Stderr, "site-status:", err)
+			os.Exit(1)
+		}
+		return
+	}
 	if *results == "" || !dateRe.MatchString(*date) {
 		fmt.Fprintln(os.Stderr, "usage: site-status -results FILE -date YYYY-MM-DD [-readme FILE] [-makefile FILE]")
+		fmt.Fprintln(os.Stderr, "       site-status -oldest N [-readme FILE] [-makefile FILE] < targets")
 		os.Exit(2)
 	}
 	if err := run(*results, *date, *readme, *makefile); err != nil {
@@ -83,6 +99,81 @@ func run(resultsPath, date, readmePath, makefilePath string) error {
 		return nil
 	}
 	return os.WriteFile(readmePath, []byte(out), 0o644)
+}
+
+// listOldest writes the n candidate targets read from in (one per line) whose
+// rows were verified longest ago, one per line.
+func listOldest(in io.Reader, out io.Writer, n int, readmePath, makefilePath string) error {
+	var candidates []string
+	sc := bufio.NewScanner(in)
+	for sc.Scan() {
+		if t := strings.TrimSpace(sc.Text()); t != "" {
+			candidates = append(candidates, t)
+		}
+	}
+	if err := sc.Err(); err != nil {
+		return err
+	}
+	mb, err := os.ReadFile(makefilePath)
+	if err != nil {
+		return err
+	}
+	rd, err := os.ReadFile(readmePath)
+	if err != nil {
+		return err
+	}
+	targets, err := oldest(string(rd), targetHosts(string(mb)), candidates, n)
+	if err != nil {
+		return err
+	}
+	for _, t := range targets {
+		fmt.Fprintln(out, t)
+	}
+	return nil
+}
+
+// oldest returns the n candidates whose rows were verified longest ago: never
+// checked first (a candidate with no row counts as never checked), then by
+// date, ties by name. A failing row is ordered by its "failing since" date.
+func oldest(readme string, hosts map[string]string, candidates []string, n int) ([]string, error) {
+	rows, err := readRows(strings.Split(readme, "\n"))
+	if err != nil {
+		return nil, err
+	}
+	type due struct{ target, date string }
+	dues := make([]due, 0, len(candidates))
+	for _, t := range candidates {
+		d := due{target: t}
+		if host, ok := hosts[t]; ok {
+			if ri := bestRow(host, rows); ri >= 0 {
+				d.date = verifiedDate(rows[ri].verified)
+			}
+		}
+		dues = append(dues, d)
+	}
+	sort.Slice(dues, func(i, j int) bool {
+		if dues[i].date != dues[j].date {
+			return dues[i].date < dues[j].date
+		}
+		return dues[i].target < dues[j].target
+	})
+	if n > len(dues) {
+		n = len(dues)
+	}
+	out := make([]string, 0, n)
+	for _, d := range dues[:n] {
+		out = append(out, d.target)
+	}
+	return out, nil
+}
+
+// verifiedDate returns the day a "Last verified" cell dates, or "" for "—".
+func verifiedDate(cell string) string {
+	d := strings.TrimSpace(strings.TrimPrefix(cell, failPrefix))
+	if dateRe.MatchString(d) {
+		return d
+	}
+	return ""
 }
 
 // parseResults reads "target pass|fail" lines into target -> passed.
@@ -154,14 +245,16 @@ func matches(host, domain string) int {
 	return 0
 }
 
-// update returns the README with the verified column rewritten from results,
-// plus the targets and rows that couldn't be mapped.
-func update(readme string, hosts map[string]string, results map[string]bool, date string) (string, []string, error) {
-	lines := strings.Split(readme, "\n")
-	type row struct {
-		line    int
-		domains []string
-	}
+// row is a Supported sites table row: its line, the domains it answers to and
+// its "Last verified" cell.
+type row struct {
+	line     int
+	domains  []string
+	verified string
+}
+
+// readRows returns the rows of the Supported sites table.
+func readRows(lines []string) ([]row, error) {
 	var rows []row
 	inSection := false
 	for i, l := range lines {
@@ -176,11 +269,35 @@ func update(readme string, hosts map[string]string, results map[string]bool, dat
 			continue
 		}
 		if m := rowRe.FindStringSubmatch(l); m != nil {
-			rows = append(rows, row{i, rowDomains(m[1], m[2], m[4])})
+			rows = append(rows, row{i, rowDomains(m[1], m[2], m[4]), m[5]})
 		}
 	}
 	if len(rows) == 0 {
-		return "", nil, fmt.Errorf("README has no Supported sites table")
+		return nil, fmt.Errorf("README has no Supported sites table")
+	}
+	return rows, nil
+}
+
+// bestRow returns the index of the row whose domains fit host best, or -1.
+func bestRow(host string, rows []row) int {
+	best, bestScore := -1, 0
+	for ri, r := range rows {
+		for _, d := range r.domains {
+			if s := matches(host, d); s > bestScore {
+				best, bestScore = ri, s
+			}
+		}
+	}
+	return best
+}
+
+// update returns the README with the verified column rewritten from results,
+// plus the targets and rows that couldn't be mapped.
+func update(readme string, hosts map[string]string, results map[string]bool, date string) (string, []string, error) {
+	lines := strings.Split(readme, "\n")
+	rows, err := readRows(lines)
+	if err != nil {
+		return "", nil, err
 	}
 
 	// Per row: any failing target fails it; otherwise any passing one verifies it.
@@ -197,14 +314,7 @@ func update(readme string, hosts map[string]string, results map[string]bool, dat
 			unmapped = append(unmapped, "target "+t+" has no URL in the makefile")
 			continue
 		}
-		best, bestScore := -1, 0
-		for ri, r := range rows {
-			for _, d := range r.domains {
-				if s := matches(host, d); s > bestScore {
-					best, bestScore = ri, s
-				}
-			}
-		}
+		best := bestRow(host, rows)
 		if best < 0 {
 			unmapped = append(unmapped, "target "+t+" ("+host+") matches no README row")
 			continue
