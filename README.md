@@ -696,14 +696,14 @@ to a minute.
 | [animexnovel.com](https://www.animexnovel.com) | Portuguese, also novels | 2026-10-18 |
 | [anzmanga25.com](https://www.anzmanga25.com) | AnzManga, Spanish | 2026-10-18 |
 | [apcomics.org](https://apcomics.org) | English | 2026-10-18 |
-| [apenasuma-fa.blogspot.com](https://apenasuma-fa.blogspot.com) | Portuguese | 2026-10-18 |
+| [apenasuma-fa.blogspot.com](https://apenasuma-fa.blogspot.com) | Portuguese | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [apollcomics.es](https://apollcomics.es) | Spanish | 2026-10-18 |
 | [arbxcomix.com](https://arbxcomix.com) | Arabic, mostly NSFW | 2026-10-18 |
 | [archiviumbar.com](https://archiviumbar.com) | Spanish | 2026-10-18 |
 | [arcurafansub.com](https://arcurafansub.com) | Turkish | 2026-10-18 |
 | [arenascan.com](https://arenascan.com) |  | 2026-10-18 |
-| [arhentai.net](https://arhentai.net) | Arabic, mostly NSFW | ❌ failing since 2026-10-18 (checked 2026-10-18) |
-| [arlas.online](https://www.arlas.online) | Indonesian | 2026-10-18 |
+| [arhentai.net](https://arhentai.net) | Arabic, mostly NSFW | 2026-10-18 |
+| [arlas.online](https://www.arlas.online) | Indonesian | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [arthurscan.xyz](https://arthurscan.xyz) | Portuguese | 2026-10-18 |
 | [artlapsa.com](https://artlapsa.com) | English, locked chapters skipped | 2026-10-18 |
 | [asacomi.jp](https://asacomi.jp) | Japanese (Comici), locked chapters skipped | 2026-10-18 |
@@ -729,7 +729,7 @@ to a minute.
 | [bokunohero-academia.online](https://bokunohero-academia.online) | English, single series | 2026-10-18 |
 | [boruto2bluevortex.com](https://boruto2bluevortex.com) | English, single series | 2026-10-18 |
 | [bunmanga.com](https://bunmanga.com) | English | 2026-10-18 |
-| [bymichiby.com](https://bymichiby.com) | Spanish | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [bymichiby.com](https://bymichiby.com) | Spanish | 2026-10-18 |
 | [cafecomyaoi.com.br](https://cafecomyaoi.com.br) | Portuguese, mostly NSFW | 2026-10-18 |
 | [cat-300.com](https://cat-300.com) | Thai | 2026-10-18 |
 | [chainsawman-chapter.online](https://chainsawman-chapter.online) | Chainsaw Man | 2026-10-18 |
