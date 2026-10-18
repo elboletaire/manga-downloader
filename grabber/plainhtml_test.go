@@ -1174,3 +1174,89 @@ func TestRetryFlakyOptIn(t *testing.T) {
 		t.Error("a nil grabber must not opt in")
 	}
 }
+
+// TestFetchTitleFallback covers series pages whose Title selector finds
+// nothing: the title then comes from og:title or <title>, minus the site's
+// own name. The HTML is trimmed from the real pages.
+func TestFetchTitleFallback(t *testing.T) {
+	cases := []struct {
+		name    string
+		html    string
+		title   string
+		want    string
+		wantErr bool
+	}{
+		{
+			// bloomscans: the madarascans entry's h1.entry-title isn't on the page
+			name: "og:title with site suffix",
+			html: `<html><head>
+				<title>Matrimonio por venganza - BloomScans</title>
+				<meta property="og:title" content="Matrimonio por venganza - BloomScans" />
+				<meta property="og:site_name" content="BloomScans" />
+				</head><body><h1 class="lrs-title" itemprop="name">Matrimonio por venganza</h1></body></html>`,
+			title: "h1.entry-title",
+			want:  "Matrimonio por venganza",
+		},
+		{
+			// sxfmanga and gutsberserk: the h1 has no .post-title wrapper, and
+			// the site name is the series title itself
+			name: "og:title equal to site name",
+			html: `<html><head>
+				<title>Spy x Family Manga</title>
+				<meta property="og:title" content="Spy x Family Manga" />
+				<meta property="og:site_name" content="Spy x Family Manga" />
+				</head><body><h1>
+					Spy x Family Manga
+				</h1></body></html>`,
+			title: ".post-title h1",
+			want:  "Spy x Family Manga",
+		},
+		{
+			name: "<title> without og:title",
+			html: `<html><head><title>Some Series – Example Site</title>
+				<meta property="og:site_name" content="Example Site" /></head><body></body></html>`,
+			title: "h1",
+			want:  "Some Series",
+		},
+		{
+			// only the site's own name is a suffix; a dash in a title is not
+			name: "dash inside the title is kept",
+			html: `<html><head>
+				<meta property="og:title" content="Re:Zero - Starting Life" />
+				<meta property="og:site_name" content="Example Site" /></head><body></body></html>`,
+			title: "h1",
+			want:  "Re:Zero - Starting Life",
+		},
+		{
+			name: "Title selector wins over og:title",
+			html: `<html><head><meta property="og:title" content="Other - Site" />
+				<meta property="og:site_name" content="Site" /></head>
+				<body><h1 class="entry-title">Real Title</h1></body></html>`,
+			title: "h1.entry-title",
+			want:  "Real Title",
+		},
+		{
+			name:    "nothing to read is an error, not an empty title",
+			html:    `<html><body><p>no title here</p></body></html>`,
+			title:   "h1",
+			wantErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			m := PlainHTML{
+				doc:  docFromHTML(t, c.html),
+				site: SiteSelector{Title: c.title},
+			}
+
+			got, err := m.FetchTitle()
+			if (err != nil) != c.wantErr {
+				t.Fatalf("FetchTitle() error = %v, wantErr %v", err, c.wantErr)
+			}
+			if got != c.want {
+				t.Errorf("FetchTitle() = %q, want %q", got, c.want)
+			}
+		})
+	}
+}

@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"encoding/json"
+	"errors"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -724,14 +725,40 @@ func (m PlainHTML) rowChapterNumber(s *goquery.Selection) (float64, bool) {
 	return checkRowChapterNumber(s, m.site)
 }
 
-// Ttitle returns the manga title
+// FetchTitle returns the manga title: the Title selector's text, or when that
+// finds nothing, og:title and then <title> with the site's own name stripped.
+// It errors instead of returning "", since an empty title empties file names.
 func (m PlainHTML) FetchTitle() (string, error) {
 	title := m.doc.Find(m.site.Title)
 	if m.site.TitleNoise != "" {
 		title = title.Clone()
 		title.Find(m.site.TitleNoise).Remove()
 	}
-	return sanitizeTitle(textWithoutNoise(title)), nil
+	if t := sanitizeTitle(textWithoutNoise(title)); t != "" {
+		return t, nil
+	}
+
+	siteName := m.doc.Find(`meta[property="og:site_name"]`).AttrOr("content", "")
+	for _, c := range []string{
+		m.doc.Find(`meta[property="og:title"]`).AttrOr("content", ""),
+		m.doc.Find("title").First().Text(),
+	} {
+		if t := stripSiteName(sanitizeTitle(c), siteName); t != "" {
+			return t, nil
+		}
+	}
+	return "", errors.New("no series title found")
+}
+
+// stripSiteName drops a trailing " - Site Name" (or any of - – — | ·) when it
+// names the site, as og:site_name does. Any other title is returned as it is.
+func stripSiteName(title, siteName string) string {
+	siteName = sanitizeTitle(siteName)
+	if siteName == "" {
+		return title
+	}
+	re := regexp.MustCompile(`(?i)\s*[-–—|·]\s*` + regexp.QuoteMeta(siteName) + `$`)
+	return sanitizeTitle(re.ReplaceAllString(title, ""))
 }
 
 // textWithoutNoise returns a selection's text with common non-title noise
