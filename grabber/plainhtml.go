@@ -1457,6 +1457,10 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 		chapter.ID = listed.ID
 	}
 
+	// the reader's encrypted payload says which pages are tile-scrambled
+	html, _ := doc.Html()
+	scrambles := lrsScrambles(html)
+
 	for i, img := range pimages {
 		if img == "" || strings.HasPrefix(img, "data:") {
 			// this error is not critical and is not from our side, so just log it out
@@ -1477,6 +1481,9 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 			Number:     int64(i),
 			URL:        img,
 			RetryFlaky: m.retryFlaky(),
+		}
+		if s, ok := lrsFor(scrambles, img); ok {
+			page.Transform = lrsTransform(s)
 		}
 		chapter.Pages = append(chapter.Pages, page)
 	}

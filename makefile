@@ -1880,7 +1880,7 @@ grabber/blmangafree:
 	go run . https://ww5.blmangafree.com/ 200
 
 grabber/bloomscans:
-	go run . https://bloomscans.com/series/matrimonio-por-venganza/ 5
+	go run . https://bloomscans.com/series/vamos-de-compras/ 1
 
 grabber/csmmangafree:
 	go run . https://www.csmmangafree.com/ 60

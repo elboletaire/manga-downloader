@@ -731,7 +731,7 @@ to a minute.
 | [bigcomics.jp](https://bigcomics.jp) | Japanese, Big Comics (Comici) | 2026-10-18 |
 | [bigsolo.org](https://bigsolo.org) |  | 2026-10-15 |
 | [blackcloveronline.com](https://blackcloveronline.com) | Black Clover | 2026-10-18 |
-| [bloomscans.com](https://bloomscans.com) | Spanish | ❌ failing since 2026-10-18 (checked 2026-10-18) |
+| [bloomscans.com](https://bloomscans.com) | Spanish | 2026-10-18 |
 | [bluesolo.org](https://bluesolo.org) | Blue Solo, French scantrad | 2026-10-18 |
 | [bokunohero-academia.online](https://bokunohero-academia.online) | English, single series | 2026-10-18 |
 | [boruto2bluevortex.com](https://boruto2bluevortex.com) | English, single series | 2026-10-18 |
