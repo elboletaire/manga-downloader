@@ -702,12 +702,12 @@ to a minute.
 | [archiviumbar.com](https://archiviumbar.com) | Spanish | 2026-10-18 |
 | [arcurafansub.com](https://arcurafansub.com) | Turkish | 2026-10-18 |
 | [arenascan.com](https://arenascan.com) |  | 2026-10-18 |
-| [arhentai.net](https://arhentai.net) | Arabic, mostly NSFW | 2026-10-18 |
+| [arhentai.net](https://arhentai.net) | Arabic, mostly NSFW | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [arlas.online](https://www.arlas.online) | Indonesian | 2026-10-18 |
 | [arthurscan.xyz](https://arthurscan.xyz) | Portuguese | 2026-10-18 |
 | [artlapsa.com](https://artlapsa.com) | English, locked chapters skipped | 2026-10-18 |
 | [asacomi.jp](https://asacomi.jp) | Japanese (Comici), locked chapters skipped | 2026-10-18 |
-| [asialotuss.com](https://asialotuss.com) | Spanish | 2026-10-18 |
+| [asialotuss.com](https://asialotuss.com) | Spanish | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [asmotoon.com](https://asmotoon.com) \* | Asmodeus Scans | 2026-10-15 |
 | [asterscans.com](https://asterscans.com) | English | 2026-10-18 |
 | [asurascans.com](https://asurascans.com) | Asura Scans, former asuratoon.com | 2026-10-18 |
@@ -724,12 +724,12 @@ to a minute.
 | [bigcomics.jp](https://bigcomics.jp) | Japanese, Big Comics (Comici) | 2026-10-18 |
 | [bigsolo.org](https://bigsolo.org) |  | 2026-10-15 |
 | [blackcloveronline.com](https://blackcloveronline.com) | Black Clover | 2026-10-18 |
-| [bloomscans.com](https://bloomscans.com) | Spanish | 2026-10-18 |
+| [bloomscans.com](https://bloomscans.com) | Spanish | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [bluesolo.org](https://bluesolo.org) | Blue Solo, French scantrad | 2026-10-18 |
 | [bokunohero-academia.online](https://bokunohero-academia.online) | English, single series | 2026-10-18 |
 | [boruto2bluevortex.com](https://boruto2bluevortex.com) | English, single series | 2026-10-18 |
 | [bunmanga.com](https://bunmanga.com) | English | 2026-10-18 |
-| [bymichiby.com](https://bymichiby.com) | Spanish | 2026-10-18 |
+| [bymichiby.com](https://bymichiby.com) | Spanish | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [cafecomyaoi.com.br](https://cafecomyaoi.com.br) | Portuguese, mostly NSFW | 2026-10-18 |
 | [cat-300.com](https://cat-300.com) | Thai | 2026-10-18 |
 | [chainsawman-chapter.online](https://chainsawman-chapter.online) | Chainsaw Man | 2026-10-18 |
@@ -762,7 +762,7 @@ to a minute.
 | [cucumbermanga.com](https://cucumbermanga.com) | English | 2026-10-18 |
 | [dandadanmangas.online](https://dandadanmangas.online) | English, single series | 2026-10-18 |
 | [danke.moe](https://danke.moe) | Danke fürs Lesen | 2026-10-18 |
-| [datgarscanlation.blogspot.com](https://datgarscanlation.blogspot.com) | Spanish | 2026-10-18 |
+| [datgarscanlation.blogspot.com](https://datgarscanlation.blogspot.com) | Spanish | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [decadencescans.com](https://reader.decadencescans.com) | Decadence Scans, slow image host | 2026-10-18 |
 | [deathtollscans.net](https://reader.deathtollscans.net) |  | 2026-10-18 |
 | [demonicscans.org](https://demonicscans.org) | MangaDemon / Demonic Scans | 2026-10-18 |
@@ -777,8 +777,8 @@ to a minute.
 | [dragonballsupermanga.com](https://dragonballsupermanga.com) | English, single series, use a chapter URL | 2026-10-18 |
 | [dragontea.ink](https://dragontea.ink) \* |  | 2026-10-15 |
 | [dragontranslation.org](https://dragontranslation.org) | Spanish, mostly NSFW | 2026-10-18 |
-| [drakecomic.net](https://drakecomic.net) | Drake Scans, former drakecomic.org | 2026-10-15 |
-| [duoscanlators.blogspot.com](https://duoscanlators.blogspot.com) | Portuguese | 2026-10-18 |
+| [drakecomic.net](https://drakecomic.net) | Drake Scans, former drakecomic.org | 2026-10-18 |
+| [duoscanlators.blogspot.com](https://duoscanlators.blogspot.com) | Portuguese | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [dynasty-scans.com](https://dynasty-scans.com) | Dynasty Reader | 2026-10-18 |
 | [ecchi-doujin.com](https://ecchi-doujin.com) | Thai, mostly NSFW | 2026-10-18 |
 | [eldermanga.com](https://eldermanga.com) |  | 2026-10-18 |
@@ -1038,7 +1038,7 @@ to a minute.
 | [ruahapchanhday2.com](https://ruahapchanhday2.com) | Vietnamese | 2026-10-18 |
 | [ruyamanga2.com](https://www.ruyamanga2.com) | Rüya Manga, Turkish | 2026-10-18 |
 | [s2read.com](https://s2read.com) | English | 2026-10-18 |
-| [sacachispa.site](https://sacachispa.site) |  | 2026-10-15 |
+| [sacachispa.site](https://sacachispa.site) |  | 2026-10-18 |
 | [sakamotodays.com.lv](https://sakamotodays.com.lv) | English, single series | 2026-10-18 |
 | [samurai.j5z.xyz](https://samurai.j5z.xyz) | Spanish | 2026-10-18 |
 | [sanascans.com](https://sanascans.com) | Sana Scans | 2026-10-18 |
@@ -1096,7 +1096,7 @@ to a minute.
 | [tsundoku.com.br](https://tsundoku.com.br) | Portuguese | 2026-10-18 |
 | [turkcemanga.com](https://turkcemanga.com) | Turkce Manga, Turkish | 2026-10-18 |
 | [tvymanga3.com](https://tvymanga3.com) | Tv y Manga, Spanish | 2026-10-18 |
-| [twmanga.com](https://www.twmanga.com) | 包子漫画, baozimh.com mirror | 2026-10-15 |
+| [twmanga.com](https://www.twmanga.com) | 包子漫画, baozimh.com mirror | 2026-10-18 |
 | [uchuujinmangas.com](https://uchuujinmangas.com) | Spanish | 2026-10-18 |
 | [undertranslations.com](https://undertranslations.com) | Spanish | 2026-10-18 |
 | [utoon.us](https://www.utoon.us) | UToon, home of reset-scans' content | 2026-10-18 |
@@ -1110,7 +1110,7 @@ to a minute.
 | [visorotaku.com](https://visorotaku.com) | Spanish | 2026-10-18 |
 | [vortexscans.org](https://vortexscans.org) |  | 2026-10-18 |
 | [w14.punchonemanga.com](https://w14.punchonemanga.com) | English, single series | 2026-10-18 |
-| [w2.dandadanmanga.net](https://w2.dandadanmanga.net) | English, single series | 2026-10-18 |
+| [w2.dandadanmanga.net](https://w2.dandadanmanga.net) | English, single series | ❌ failing since 2026-10-18 (checked 2026-10-18) |
 | [w2.omniscient-readers-viewpoint.online](https://w2.omniscient-readers-viewpoint.online) | English, single series | 2026-10-18 |
 | [w2.ruridragon.com](https://w2.ruridragon.com) | English, single series | 2026-10-18 |
 | [w22.thebeginningaftertheendmanga.com](https://w22.thebeginningaftertheendmanga.com) | English, single series | 2026-10-18 |
