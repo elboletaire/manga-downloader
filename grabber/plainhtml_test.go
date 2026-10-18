@@ -41,7 +41,15 @@ func TestParseChapterNumber(t *testing.T) {
 		{"İlk Bölüm", 0, false},       // turkish, no number
 		{"ตอนที่ 362", 362, true},     // thai (oremanga)
 		{"ตอน 12.5", 12.5, true},
-		{"Notice", 0, false}, // announcements have no number
+		{"Глава 15", 15, true},       // russian (yagami)
+		{"Том 2 Глава 15", 15, true}, // russian, volume before chapter
+		{"Глава 15.5", 15.5, true},   // russian decimal
+		{"ГЛАВА 15", 15, true},       // russian, uppercase
+		{"Том 2", 2, true},           // russian volume fallback
+		{"Розділ 7", 7, true},        // ukrainian
+		{"Rozdział 12", 12, true},    // polish
+		{"Chương 12", 12, true},      // vietnamese
+		{"Notice", 0, false},         // announcements have no number
 		{"", 0, false},
 	}
 
@@ -158,6 +166,15 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			selector: "img.open",
 			html:     `<html><body><script>var pages = [{"id":1,"url":"https:\/\/a.co\/1.png","thumb_url":"https:\/\/a.co\/t1.png"},{"id":2,"url":"https:\/\/a.co\/2.png","thumb_url":"https:\/\/a.co\/t2.png"}]; var next_chapter = "https://a.co/next/";</script></body></html>`,
 			want:     []string{"https://a.co/1.png", "https://a.co/2.png"},
+		},
+		{
+			// read.yagami.me: the reader's own image markup, next to its icon imgs
+			name:     "yagami reader web_img pages (FoOlSlide entry)",
+			selector: `img.open, img[class^="page-"], .web_pictures img.web_img`,
+			html: `<html><body><img class="icon off" src="https://a.co/glyphish/off/181.png" />` +
+				`<div class="web_pictures"><img class="web_img" src="https://a.co/c/235/p01.png" oncontextmenu="return false"/>` +
+				`<img class="web_img" src="https://a.co/c/235/p02.png" oncontextmenu="return false"/></div></body></html>`,
+			want: []string{"https://a.co/c/235/p01.png", "https://a.co/c/235/p02.png"},
 		},
 		{
 			name:     "ritharscans.com Alpine.js x-data immersiveReader blob",
