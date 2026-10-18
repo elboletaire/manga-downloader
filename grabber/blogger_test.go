@@ -357,11 +357,15 @@ func TestZeistChapters(t *testing.T) {
 		feedEntry("Sin numero", "https://blog.test/none.html", ""),
 	}
 	chapters := zeistChapters(entries, "Tonikaku Kawaii", "es")
-	if len(chapters) != 3 {
-		t.Fatalf("got %d chapters, want 3", len(chapters))
+	if len(chapters) != 4 {
+		t.Fatalf("got %d chapters, want 4", len(chapters))
 	}
 	if n := chapters[2].(*BloggerChapter).Number; n != 2 {
 		t.Errorf("third chapter number = %v, want 2 (Chapter 02)", n)
+	}
+	// a post with no number is listed by its title, unnumbered
+	if last := chapters[3]; !Unnumbered(last) || ChapterLabel(last) != "Sin numero" {
+		t.Errorf("unnumbered post = %q (unnumbered %v), want %q", ChapterLabel(last), Unnumbered(last), "Sin numero")
 	}
 	first := chapters[0].(*BloggerChapter)
 	if first.Number != 362 || ChapterLabel(first) != "Chapter 362" || first.feed != "<img src='https://img.test/362.jpg'>" {
@@ -596,5 +600,42 @@ func TestBloggerZeistFallsBackToSearch(t *testing.T) {
 	chapters, errs := b.FetchChapters()
 	if len(errs) != 0 || len(chapters) != 1 || chapters[0].(*BloggerChapter).Number != 281 {
 		t.Fatalf("FetchChapters() = %d chapters, %v; want chapter 281", len(chapters), errs)
+	}
+}
+
+// TestBloggerDataLabelChapterList lists a ZeistManga-like template whose chapter
+// list names its label in data-labelchapter and carries no theme header; its
+// unnumbered post is kept by its title.
+func TestBloggerDataLabelChapterList(t *testing.T) {
+	series := bloggerFixture(t, "apenasuma_series.html", "")
+	var srv *httptest.Server
+	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/2024/06/eu-quero-ser-um-ator_15.html":
+			fmt.Fprint(w, series)
+		case "/feeds/posts/default/-/Eu quero ser um Ator":
+			fmt.Fprint(w, bloggerFixture(t, "apenasuma_label_feed.json", srv.URL))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	b := NewBlogger(&Grabber{URL: srv.URL + "/2024/06/eu-quero-ser-um-ator_15.html", Settings: &Settings{}})
+	if ok, err := b.Test(); err != nil || !ok || !b.zeist {
+		t.Fatalf("Test() = %v, %v, zeist %v; want a label-listed Blogger", ok, err, b.zeist)
+	}
+	if title, err := b.FetchTitle(); err != nil || title != "Eu quero ser um Ator" {
+		t.Errorf("FetchTitle() = %q, %v", title, err)
+	}
+	chapters, errs := b.FetchChapters()
+	if len(errs) != 0 || len(chapters) != 2 {
+		t.Fatalf("FetchChapters() = %d chapters, %v; want 2", len(chapters), errs)
+	}
+	if c := chapters[0].(*BloggerChapter); c.Number != 140 {
+		t.Errorf("first chapter = %v, want 140", c.Number)
+	}
+	if last := chapters[1]; !Unnumbered(last) || ChapterLabel(last) != "Epílogo" {
+		t.Errorf("unnumbered post = %q, want Epílogo unnumbered", ChapterLabel(last))
 	}
 }

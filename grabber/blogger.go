@@ -95,7 +95,7 @@ func (b *Blogger) Test() (bool, error) {
 	b.doc = doc
 	b.language = pageLanguage(doc)
 	b.query = query
-	b.zeist = zeistFingerprint.MatchString(body)
+	b.zeist = zeistFingerprint.MatchString(body) || doc.Find(zeistListSelector).Length() > 0
 
 	return true, nil
 }
@@ -301,6 +301,10 @@ func bloggerChapters(entries []bloggerEntry, query, lang string) (Filterables, s
 	return chapters, title
 }
 
+// zeistListSelector is the chapter list of a ZeistManga-like template that names
+// its label in data-labelchapter, without the theme header.
+const zeistListSelector = "div.chapter_get[data-labelchapter]"
+
 // zeistRunRe and zeistLabelRe match the label a ZeistManga script lists a
 // series' posts by: its widget call ("nPL.run('Name')") or a label variable.
 var (
@@ -325,6 +329,7 @@ func zeistLabels(doc *goquery.Document, query string) []string {
 
 	add(query)
 	add(doc.Find("#nextPrevJS[data-label], #nextPrevJSbottom[data-label]").First().AttrOr("data-label", ""))
+	add(doc.Find(zeistListSelector).First().AttrOr("data-labelchapter", ""))
 	doc.Find("script").Each(func(_ int, s *goquery.Selection) {
 		for _, re := range []*regexp.Regexp{zeistRunRe, zeistLabelRe} {
 			for _, m := range re.FindAllStringSubmatch(s.Text(), -1) {
@@ -369,20 +374,20 @@ func zeistChapters(entries []bloggerFeedEntry, label, lang string) Filterables {
 		if bloggerKey(e.Title.Value) == key {
 			continue
 		}
-		post, ok := readBloggerTitle(e.Title.Value)
-		if !ok {
-			continue
-		}
 
-		chapters = append(chapters, &BloggerChapter{
-			Chapter: Chapter{
-				Number:   post.Number,
-				Language: lang,
-				Label:    Label{Style: LabelNumbered, Part: post.Part},
-			},
-			URL:  e.alternateURL(),
-			feed: e.Content.Value,
-		})
+		chapter := &BloggerChapter{
+			Chapter: Chapter{Language: lang, Label: Label{Style: LabelUnnumbered}},
+			URL:     e.alternateURL(),
+			feed:    e.Content.Value,
+		}
+		// a post with no number ("Epílogo", "Oneshot") is listed by its title
+		if post, ok := readBloggerTitle(e.Title.Value); ok {
+			chapter.Number = post.Number
+			chapter.Label = Label{Style: LabelNumbered, Part: post.Part}
+		} else {
+			chapter.Title = strings.TrimSpace(e.Title.Value)
+		}
+		chapters = append(chapters, chapter)
 	}
 
 	return chapters
@@ -487,7 +492,8 @@ func bloggerPages(doc *goquery.Document, postURL *url.URL) []Page {
 		}
 	}
 
-	if pages := bloggerImages(doc.Find("#reader img"), postURL); len(pages) > 0 {
+	// the reader's own icons are SVG, never pages
+	if pages := bloggerImages(doc.Find("#reader img:not([src*='.svg'])"), postURL); len(pages) > 0 {
 		return pages
 	}
 	return bloggerImages(doc.Find(".check-box img[alt='']"), postURL)
