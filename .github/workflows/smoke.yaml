@@ -196,6 +196,35 @@ jobs:
           - yurionline
           - rawdex
           - mangaxhentai
+          - akanebanashimanga
+          - animexnovel
+          - arbxcomix
+          - berserkkmanga
+          - beyondtheataraxia
+          - bluelockmanga
+          - boruto2bluevortex
+          - demonslayermanga
+          - dragonballsupermanga
+          - galaxscanlator
+          - ichithewitch
+          - kaijunochapter
+          - kaliscan
+          - mangacrazy
+          - mrtenzus
+          - omniscientreadersviewpoint
+          - omniscientreadersviewpointt
+          - onepunchmanmanga
+          - onepunchmannmanga
+          - onlinechainsawmanmanga
+          - orvmanhwa
+          - plumacomics
+          - punchonemanga
+          - readkagura
+          - readspyxfamilymanga
+          - thebeginningaftertheendmanga
+          - thebluelock
+          - vinlandsaga
+          - yaoiscan
           # Plain-HTML (goquery) scrapers
           - tcbscans
           - arenascan
@@ -350,6 +379,33 @@ jobs:
           - artlapsa
           - kitsunedawn
           - orionscans
+          - 4porncomic
+          - arcurafansub
+          - auntmanhwa
+          - bacakomik
+          - bananascans
+          - doujinlc
+          - ecchidoujin
+          - hentaiorigines
+          - hentaivn
+          - kiryuu
+          - komikindoshop
+          - kumapoi
+          - leermanhwas
+          - legionscans
+          - mangamaniacs
+          - mangatellers
+          - manhuathai
+          - mhscans
+          - myreadingcomic
+          - narasininja
+          - novelcrow
+          - seinagi
+          - springtoons
+          - tenshimanga
+          - thaimanga
+          - tmomanhwa
+          - utsukushiibg
           # These sites block GitHub's datacenter IPs (403) but work fine
           # from residential connections — verified locally 2026-07-23.
           # Kept out of the matrix rather than hammering sites that don't
