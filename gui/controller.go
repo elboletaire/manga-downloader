@@ -1687,6 +1687,7 @@ func (e events) DownloadFailed(ch *grabber.Chapter, err error) {
 			reason = *m
 		}
 		j.setReason(reason)
+		j.clearStatus()
 	}
 	c.appendMsgLocked(LogError, msg("log.errorDownload", map[string]any{"label": c.releaseLabel(ch), "reason": err.Error()}))
 	c.mu.Unlock()
