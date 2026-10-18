@@ -15,4 +15,4 @@ platforms:
 docker: elboletaire/manga-downloader
 charts:
   stars: { from: 2024-01-01 }
-  downloads-per-day: { from: 2026-01-01 }
+  downloads-per-day: { range: 90d }
