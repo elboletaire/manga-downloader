@@ -37,6 +37,7 @@
     "packing": "packing: {{reason}}",
     "filename": "filename: {{reason}}",
     "locked": "locked chapter",
-    "emptyVolume": "none of its chapters could be downloaded"
+    "emptyVolume": "none of its chapters could be downloaded",
+    "noPages": "no pages found"
   }
 }

@@ -37,6 +37,7 @@
     "packing": "empaquetado: {{reason}}",
     "filename": "nombre de archivo: {{reason}}",
     "locked": "capítulo bloqueado",
-    "emptyVolume": "no se pudo descargar ninguno de sus capítulos"
+    "emptyVolume": "no se pudo descargar ninguno de sus capítulos",
+    "noPages": "no se ha encontrado ninguna página"
   }
 }

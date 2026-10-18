@@ -133,6 +133,7 @@ var sharedMessages = []struct {
 	{core.ErrLocked, "job.reason.locked"},
 	{core.ErrEmptyVolume, "job.reason.emptyVolume"},
 	{core.ErrSkippedVolume, "job.reason.skipped"},
+	{core.ErrNoPages, "job.reason.noPages"},
 }
 
 // messageOf is the message of err when the window translates it, nil otherwise

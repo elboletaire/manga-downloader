@@ -985,6 +985,12 @@ func TestJobRowsCarryTheirMessages(t *testing.T) {
 		t.Errorf("Reason = %q, want the English text", row.Reason)
 	}
 
+	// a chapter with no pages is a failed download with its own reason
+	empty := &grabber.Chapter{Title: "Chapter 7", Number: 7, Language: "en"}
+	e.Started(empty)
+	e.DownloadFailed(empty, core.ErrNoPages)
+	wantMsg("no pages reason", c.Jobs()[2].ReasonMsg, "job.reason.noPages", "no pages found")
+
 	c.rng = "1-3"
 	c.bundle = &Job{}
 	e.BundlePacking()
@@ -1024,6 +1030,7 @@ func TestSetReasonErrTranslatesSharedSentinels(t *testing.T) {
 		{core.ErrLocked, "job.reason.locked", "locked chapter"},
 		{core.ErrEmptyVolume, "job.reason.emptyVolume", "none of its chapters could be downloaded"},
 		{core.ErrSkippedVolume, "job.reason.skipped", "every page excluded by --skip-pages"},
+		{core.ErrNoPages, "job.reason.noPages", "no pages found"},
 	}
 	for _, c := range cases {
 		var j Job

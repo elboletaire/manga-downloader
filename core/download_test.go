@@ -629,6 +629,133 @@ func TestDownloadBundleWithFailingChapter(t *testing.T) {
 	}
 }
 
+// errorsByChapter records the DownloadFailed errors by chapter number, on top
+// of the recorder's events
+type errorsByChapter struct {
+	*recorder
+	mu   sync.Mutex
+	errs map[float64]error
+}
+
+func (e *errorsByChapter) DownloadFailed(c *grabber.Chapter, err error) {
+	e.mu.Lock()
+	e.errs[c.Number] = err
+	e.mu.Unlock()
+	e.recorder.DownloadFailed(c, err)
+}
+
+// a chapter the site fetches with no pages fails with ErrNoPages before anything
+// is downloaded or packed, and the rest of the run goes on
+func TestDownloadEmptyChapterFails(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 0},
+		fakeChapter{number: 2, pages: 1},
+	)
+	series, dir := newSeries(t, site, false)
+	ev := &errorsByChapter{recorder: &recorder{}, errs: map[float64]error{}}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", ev); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	if err := ev.errs[1]; !errors.Is(err, ErrNoPages) {
+		t.Errorf("chapter 1 failed with %v, want ErrNoPages", err)
+	}
+	if got := ev.count("started 1"); got != 0 {
+		t.Errorf("empty chapter was started: %q", ev.events)
+	}
+	if got := ev.count("packed "); got != 1 {
+		t.Errorf("want only chapter 2 packed: %q", ev.events)
+	}
+	if got := cbzFiles(t, dir); len(got) != 1 {
+		t.Errorf("wrote %q, want chapter 2's archive alone", got)
+	}
+}
+
+// --skip-pages emptying a chapter is still a skip, and a chapter that came
+// with no pages to begin with is still a failure
+func TestDownloadSkipEmptiedChapterIsNotAFailure(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 2},
+		fakeChapter{number: 2, pages: 0},
+	)
+	series, _ := newSeries(t, site, false)
+	ev := &errorsByChapter{recorder: &recorder{}, errs: map[float64]error{}}
+
+	skip := []ranges.Range{{Begin: 1, End: 2}}
+	if _, err := series.Download(context.Background(), listed(site), skip, "", ev); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	if got := strings.Join(ev.events, "|"); got != "skipped 1|download-failed 2" {
+		t.Errorf("events %q, want the skip of chapter 1 and the failure of chapter 2", got)
+	}
+	if _, ok := ev.errs[1]; ok {
+		t.Errorf("skipped chapter 1 failed: %v", ev.errs[1])
+	}
+	if !errors.Is(ev.errs[2], ErrNoPages) {
+		t.Errorf("chapter 2 failed with %v, want ErrNoPages", ev.errs[2])
+	}
+}
+
+// in bundle mode an empty chapter adds nothing to the bundle, which is packed
+// from the chapters that have pages
+func TestDownloadBundleWithEmptyChapter(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 0},
+		fakeChapter{number: 2, pages: 2},
+	)
+	series, dir := newSeries(t, site, true)
+	ev := &errorsByChapter{recorder: &recorder{}, errs: map[float64]error{}}
+
+	name, err := series.Download(context.Background(), listed(site), nil, "1-2", ev)
+	if err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	if !errors.Is(ev.errs[1], ErrNoPages) {
+		t.Errorf("chapter 1 failed with %v, want ErrNoPages", ev.errs[1])
+	}
+	if got := ev.lastBundleStart(t); got != 2 {
+		t.Errorf("bundle total %d, want chapter 2's 2 pages", got)
+	}
+	checkBundleTotal(t, ev.recorder)
+	if entries := zipEntries(t, filepath.Join(dir, name)); len(entries) != 2 {
+		t.Errorf("bundle holds %d entries, want chapter 2's 2 pages: %q", len(entries), entries)
+	}
+}
+
+// a volume with an empty chapter is packed from the others, and fails only
+// when none of its chapters has pages
+func TestDownloadVolumeWithEmptyChapter(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 0},
+		fakeChapter{number: 2, pages: 1},
+		fakeChapter{number: 3, pages: 0},
+		fakeChapter{number: 4, pages: 0},
+	)
+	series, dir := newSeries(t, site, false)
+	site.Settings.Volumes = "1-2/3-4"
+	ev := &errorsByChapter{recorder: &recorder{}, errs: map[float64]error{}}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", ev); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	if !errors.Is(ev.errs[1], ErrNoPages) {
+		t.Errorf("chapter 1 failed with %v, want ErrNoPages", ev.errs[1])
+	}
+	if got := ev.count("volume-packed 1 "); got != 1 {
+		t.Errorf("want volume 1 packed from chapter 2: %q", ev.events)
+	}
+	if got := ev.count("volume-failed 2 " + ErrEmptyVolume.Error()); got != 1 {
+		t.Errorf("want volume 2 failed as empty: %q", ev.events)
+	}
+	if got := cbzFiles(t, dir); len(got) != 1 {
+		t.Errorf("wrote %q, want volume 1's archive alone", got)
+	}
+}
+
 func TestDownloadCancelledBeforeStart(t *testing.T) {
 	site := newFakeSite(t, fakeChapter{number: 1, pages: 1})
 	series, dir := newSeries(t, site, true)

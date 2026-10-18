@@ -51,7 +51,8 @@ type Events interface {
 	// Page reports the outcome of one page: err is nil on success, and idx is
 	// the page's index in c.Pages
 	Page(c *grabber.Chapter, idx int, err error)
-	// DownloadFailed reports a chapter whose download was aborted
+	// DownloadFailed reports a chapter whose download was aborted, or that
+	// came with no pages to download (ErrNoPages)
 	DownloadFailed(c *grabber.Chapter, err error)
 	// Archived reports one page written to the chapter's archive (not bundle mode)
 	Archived(c *grabber.Chapter)
@@ -130,6 +131,10 @@ var ErrLocked = errors.New("locked chapter")
 // ErrSkippedVolume is the VolumePacked error of a volume whose chapters were
 // all skipped by --skip-pages: there's nothing to pack, and nothing failed
 var ErrSkippedVolume = errors.New("--skip-pages excludes every page of its chapters")
+
+// ErrNoPages is the DownloadFailed error of a chapter the site fetched with no
+// pages, which --skip-pages didn't empty (that one is Skipped)
+var ErrNoPages = errors.New("no pages found")
 
 // downloadShare and archiveShare are the parts of a volume's fraction that
 // its downloads and its archive fill: 0.8 and 0.2 with the weights above
@@ -431,6 +436,11 @@ loop:
 			if skipped > 0 && len(chapter.Pages) == 0 {
 				ev.Skipped(chapter)
 				skippedAll = true
+				return
+			}
+			// nothing to download or pack, so it fails here rather than in the packer
+			if len(chapter.Pages) == 0 {
+				ev.DownloadFailed(chapter, ErrNoPages)
 				return
 			}
 
