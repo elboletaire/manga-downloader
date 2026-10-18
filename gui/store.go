@@ -38,6 +38,8 @@ type PrefsDTO struct {
 	UILanguage string `json:"uiLanguage,omitempty"`
 	// CheckUpdates is whether the app checks for a newer release at startup
 	CheckUpdates bool `json:"checkUpdates"`
+	// SimpleStart is whether the window opens on the bare URL box, until a load starts
+	SimpleStart bool `json:"simpleStart"`
 }
 
 // guiFile is what gui.json holds: the options and the preferences, flat
@@ -48,7 +50,7 @@ type guiFile struct {
 
 // defaultPrefs are the preferences of a first run, and of any key gui.json leaves out
 func defaultPrefs() PrefsDTO {
-	return PrefsDTO{CheckUpdates: true}
+	return PrefsDTO{CheckUpdates: true, SimpleStart: true}
 }
 
 // validUILanguage reports whether lang is one the window is translated into, or

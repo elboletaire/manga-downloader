@@ -1,16 +1,19 @@
-// The window. Three bands, top to bottom, following the job's own order:
+// The window. A fresh start can open on the simple view, only the logo over the
+// URL box (startView.ts), which glides into the full one when a load starts.
+// The full view is three bands, top to bottom, following the job's own order:
 //
 //   source bar  what to fetch (URL, language and scanlator filters)
 //   workspace   the chapter list | a side panel with Options and Activity,
 //               and the Download action pinned under both tabs
 //   status bar  the latest log line (the full log opens as a drawer), version
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ActivityPanel } from './ActivityPanel';
 import type { Api } from './api';
 import { BrowserAlert } from './BrowserAlert';
 import { ChapterPanel } from './ChapterPanel';
 import { DownloadDock } from './DownloadDock';
+import { FLIP_MS, measure, play, prefersReducedMotion, type Box, type FlipMode } from './flip';
 import { errorMessage } from './format';
 import { say } from './i18n';
 import { ActivityIcon, SlidersIcon, Spinner } from './icons';
@@ -22,11 +25,15 @@ import { OptionsPanel } from './OptionsPanel';
 import { SettingsDialog } from './SettingsDialog';
 import { SourceBar } from './SourceBar';
 import { isMac, shouldToggleSettings } from './settingsShortcut';
+import { bootView, nextView, type View } from './startView';
 import { tally } from './run';
 import type { Options, State } from './types';
 import { useWindow } from './useWindow';
 
 type Tab = 'options' | 'activity';
+
+// how each shared element glides from the simple view (see flip.ts)
+const FLIP_MODES: Record<string, FlipMode> = { brand: 'scale', form: 'width', settings: 'move' };
 
 export function App({ api, initial }: { api: Api; initial?: State }) {
   const { t } = useI18n();
@@ -39,6 +46,15 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const gear = useRef<HTMLButtonElement>(null);
   const wasSettingsOpen = useRef(false);
+  // null until the first State, which picks the view the window opens on
+  const [view, setView] = useState<View | null>(null);
+  if (view === null && state !== null) {
+    setView(bootView(state));
+  }
+  // the rest of the window fades in while the shared elements glide (styles.css)
+  const [revealing, setRevealing] = useState(false);
+  const frame = useRef<HTMLDivElement>(null);
+  const flipFrom = useRef<Map<string, Box> | null>(null);
   // options are written one at a time, each patch over the last set sent
   const [optionsWriter] = useState(() =>
     createOptionsWriter((options, load) =>
@@ -96,7 +112,29 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
     wasRunning.current = running;
   }, [running, state === null]);
 
-  if (state === null) {
+  // a load starting leaves the simple view; the boxes are taken while it's still on screen
+  useEffect(() => {
+    if (state === null || view !== 'simple' || nextView(view, state) === 'simple') return;
+    const animate = frame.current !== null && !prefersReducedMotion();
+    flipFrom.current = animate ? measure(frame.current!) : null;
+    setRevealing(animate);
+    setView('full');
+  }, [state, view]);
+
+  // the full view is laid out but not painted yet: put the shared elements back, then let them glide
+  useLayoutEffect(() => {
+    const first = flipFrom.current;
+    if (view !== 'full' || first === null || frame.current === null) return;
+    flipFrom.current = null;
+    play(frame.current, first, FLIP_MODES);
+  }, [view]);
+  useEffect(() => {
+    if (!revealing) return;
+    const done = setTimeout(() => setRevealing(false), FLIP_MS + 300);
+    return () => clearTimeout(done);
+  }, [revealing]);
+
+  if (state === null || view === null) {
     return (
       <main className="boot">
         <Mascot expression="soft" size={48} />
@@ -143,7 +181,7 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
   const failed = state.summary && !state.running ? state.summary.failures.length : counts.failed;
 
   return (
-    <div className="app">
+    <div ref={frame} className={`app${view === 'simple' ? ' simple' : ''}${revealing ? ' revealing' : ''}`}>
       <SourceBar
         state={state}
         onLoad={load}
@@ -157,94 +195,97 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
         onOpenSettings={() => setSettingsOpen(true)}
         settingsOpen={settingsOpen}
         settingsRef={gear}
+        simple={view === 'simple'}
       />
 
-      <main className="workspace">
-        <ChapterPanel
-          state={state}
-          chapters={chapters}
-          selected={selected}
-          disabled={busy}
-          onToggle={(index, on) => api.setSelected(index, on)}
-          onToggleMany={(indices, on) => api.setSelectedMany(indices, on)}
-          onSetAll={(on) => api.setAll(on)}
-          onRange={(text) => api.selectRange(text)}
-          onVolumes={(text) => api.setVolumes(text)}
-          onReload={() => load(state.url)}
-          onError={setActionError}
-        />
-
-        <aside className="side" aria-label={t('app.download')}>
-          <div className="tabs" role="tablist" aria-label={t('app.tabs.label')}>
-            <TabButton id="options" tab={tab} onSelect={setTab}>
-              <SlidersIcon size={15} /> {t('app.tabs.options')}
-            </TabButton>
-            <TabButton id="activity" tab={tab} onSelect={setTab}>
-              <ActivityIcon size={15} /> {t('app.tabs.activity')}
-              {state.running ? (
-                <span className="tab-badge live" aria-label={t('app.running')}>
-                  <Spinner size={11} />
-                </span>
-              ) : failed > 0 ? (
-                <span className="tab-badge danger" aria-label={t('count.failed', { count: failed })}>
-                  {failed}
-                </span>
-              ) : state.summary ? (
-                <span className="tab-badge success" aria-label={t('app.finished')} />
-              ) : null}
-            </TabButton>
-          </div>
-
-          {/* both panels stay mounted, so each tab's aria-controls has a target */}
-          <div
-            className="side-body"
-            role="tabpanel"
-            id="panel-options"
-            aria-labelledby="tab-options"
-            tabIndex={0}
-            hidden={tab !== 'options'}
-          >
-            <OptionsPanel
-              state={state}
-              onOptions={setOptions}
-              onChooseFolder={async () => {
-                setOptionError('');
-                await api.chooseFolder(t('options.folder.dialogTitle'));
-              }}
-              onError={setOptionError}
-            />
-          </div>
-          <div
-            className="side-body"
-            role="tabpanel"
-            id="panel-activity"
-            aria-labelledby="tab-activity"
-            tabIndex={0}
-            hidden={tab !== 'activity'}
-          >
-            <ActivityPanel
-              state={state}
-              onOpenFolder={() => {
-                api.openFolder().catch((e) => setActionError(errorMessage(e, t)));
-              }}
-            />
-          </div>
-
-          <DownloadDock
+      {view === 'full' && (
+        <main className="workspace">
+          <ChapterPanel
             state={state}
-            error={actionError}
             chapters={chapters}
             selected={selected}
-            onStart={() => {
-              setActionError('');
-              api.start().catch((e) => setActionError(errorMessage(e, t)));
-            }}
-            onCancel={() => {
-              api.cancel().catch((e) => setActionError(errorMessage(e, t)));
-            }}
+            disabled={busy}
+            onToggle={(index, on) => api.setSelected(index, on)}
+            onToggleMany={(indices, on) => api.setSelectedMany(indices, on)}
+            onSetAll={(on) => api.setAll(on)}
+            onRange={(text) => api.selectRange(text)}
+            onVolumes={(text) => api.setVolumes(text)}
+            onReload={() => load(state.url)}
+            onError={setActionError}
           />
-        </aside>
-      </main>
+
+          <aside className="side" aria-label={t('app.download')}>
+            <div className="tabs" role="tablist" aria-label={t('app.tabs.label')}>
+              <TabButton id="options" tab={tab} onSelect={setTab}>
+                <SlidersIcon size={15} /> {t('app.tabs.options')}
+              </TabButton>
+              <TabButton id="activity" tab={tab} onSelect={setTab}>
+                <ActivityIcon size={15} /> {t('app.tabs.activity')}
+                {state.running ? (
+                  <span className="tab-badge live" aria-label={t('app.running')}>
+                    <Spinner size={11} />
+                  </span>
+                ) : failed > 0 ? (
+                  <span className="tab-badge danger" aria-label={t('count.failed', { count: failed })}>
+                    {failed}
+                  </span>
+                ) : state.summary ? (
+                  <span className="tab-badge success" aria-label={t('app.finished')} />
+                ) : null}
+              </TabButton>
+            </div>
+
+            {/* both panels stay mounted, so each tab's aria-controls has a target */}
+            <div
+              className="side-body"
+              role="tabpanel"
+              id="panel-options"
+              aria-labelledby="tab-options"
+              tabIndex={0}
+              hidden={tab !== 'options'}
+            >
+              <OptionsPanel
+                state={state}
+                onOptions={setOptions}
+                onChooseFolder={async () => {
+                  setOptionError('');
+                  await api.chooseFolder(t('options.folder.dialogTitle'));
+                }}
+                onError={setOptionError}
+              />
+            </div>
+            <div
+              className="side-body"
+              role="tabpanel"
+              id="panel-activity"
+              aria-labelledby="tab-activity"
+              tabIndex={0}
+              hidden={tab !== 'activity'}
+            >
+              <ActivityPanel
+                state={state}
+                onOpenFolder={() => {
+                  api.openFolder().catch((e) => setActionError(errorMessage(e, t)));
+                }}
+              />
+            </div>
+
+            <DownloadDock
+              state={state}
+              error={actionError}
+              chapters={chapters}
+              selected={selected}
+              onStart={() => {
+                setActionError('');
+                api.start().catch((e) => setActionError(errorMessage(e, t)));
+              }}
+              onCancel={() => {
+                api.cancel().catch((e) => setActionError(errorMessage(e, t)));
+              }}
+            />
+          </aside>
+        </main>
+      )}
 
       {settingsOpen && (
         <SettingsDialog
@@ -252,6 +293,9 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
           onClose={() => setSettingsOpen(false)}
           onCheckUpdates={(on) => {
             api.setCheckUpdates(on).catch((e: unknown) => setOptionError(errorMessage(e, t)));
+          }}
+          onSimpleStart={(on) => {
+            api.setSimpleStart(on).catch((e: unknown) => setOptionError(errorMessage(e, t)));
           }}
           onOpenURL={(url) => api.openURL(url)}
           onError={setOptionError}
@@ -269,16 +313,18 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
           }}
         />
       )}
-      <StatusBar
-        log={log}
-        version={state.version}
-        releaseURL={state.releaseURL}
-        update={state.update}
-        open={logOpen}
-        onToggle={() => setLogOpen((o) => !o)}
-        onOpenURL={(url) => api.openURL(url)}
-        onUpdate={() => api.update()}
-      />
+      {view === 'full' && (
+        <StatusBar
+          log={log}
+          version={state.version}
+          releaseURL={state.releaseURL}
+          update={state.update}
+          open={logOpen}
+          onToggle={() => setLogOpen((o) => !o)}
+          onOpenURL={(url) => api.openURL(url)}
+          onUpdate={() => api.update()}
+        />
+      )}
     </div>
   );
 }

@@ -156,6 +156,8 @@ export interface Prefs {
   uiLanguage?: LangPref;
   /** Check GitHub for a newer release at startup */
   checkUpdates: boolean;
+  /** Open on the simple view (logo and URL box) until a load starts */
+  simpleStart: boolean;
 }
 
 /** The Volumes box, used when the options pack as volumes */

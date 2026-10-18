@@ -6,6 +6,11 @@
     "heading": "Idioma",
     "systemOption": "Sistema ({{language}})"
   },
+  "start": {
+    "heading": "Pantalla de inicio",
+    "simple": "Abrir con la vista sencilla",
+    "hint": "Muestra solo el logotipo y la caja de la URL hasta que empieza a cargarse una serie."
+  },
   "updates": {
     "heading": "Actualizaciones",
     "check": "Buscar actualizaciones al abrir la app",

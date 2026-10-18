@@ -43,7 +43,7 @@ func TestOptionsSaveAndLoadRoundTrip(t *testing.T) {
 
 func TestPrefsSaveAndLoadRoundTrip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "gui.json")
-	want := PrefsDTO{UILanguage: "ca", CheckUpdates: false}
+	want := PrefsDTO{UILanguage: "ca", CheckUpdates: false, SimpleStart: false}
 	if err := saveOptions(path, OptionsDTO{Format: "raw"}, want); err != nil {
 		t.Fatal(err)
 	}
@@ -65,6 +65,23 @@ func TestLoadPrefsCheckUpdatesDefaultsToTrue(t *testing.T) {
 	}
 	if got := loadPrefs(path); got.CheckUpdates {
 		t.Error("an explicit false checkUpdates loaded as on")
+	}
+}
+
+// a gui.json from before the simple view opens on it; an explicit false stays off
+func TestLoadPrefsSimpleStartDefaultsToTrue(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	if err := os.WriteFile(path, []byte(`{"format":"cbz","checkUpdates":false}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadPrefs(path); !got.SimpleStart {
+		t.Error("a missing simpleStart loaded as off")
+	}
+	if err := os.WriteFile(path, []byte(`{"simpleStart":false}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadPrefs(path); got.SimpleStart {
+		t.Error("an explicit false simpleStart loaded as on")
 	}
 }
 

@@ -583,6 +583,15 @@ func (a *App) SetUILanguage(lang string) error {
 	return nil
 }
 
+// SetSimpleStart sets whether the window opens on the simple view. It's never
+// refused while busy, and takes effect at the next start.
+func (a *App) SetSimpleStart(on bool) error {
+	a.ctrl.SetPrefs(func(p *PrefsDTO) { p.SimpleStart = on })
+	a.save()
+
+	return nil
+}
+
 // SetCheckUpdates turns the update check at startup on or off. Turning it off
 // forgets the update found; turning it on checks now, unless a check is still
 // running. It's never refused while busy.

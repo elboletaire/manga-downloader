@@ -427,6 +427,91 @@ code,
   color: var(--danger);
 }
 
+/* ---------- simple view ---------- */
+
+/* a fresh start: the logo over the URL box, centred, with the settings under them.
+   App.tsx glides them into the source bar (flip.ts) when a load starts */
+.source {
+  transition:
+    background-color 0.48s var(--ease),
+    border-color 0.48s var(--ease);
+}
+
+/* the form's width is fixed while it glides, so the gear keeps to the right */
+.settings-btn {
+  margin-left: auto;
+}
+
+.app.simple {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.source.simple {
+  align-content: center;
+  padding: 24px 16px 12vh;
+  background: transparent;
+  border-bottom-color: transparent;
+}
+
+.source.simple .source-row {
+  flex-direction: column;
+  gap: 26px;
+}
+
+.source.simple .brand {
+  gap: 18px;
+}
+
+.source.simple .mascot-face {
+  width: 96px;
+  height: 96px;
+}
+
+/* shown on narrow windows too: here it's the page's title */
+.source.simple .brand-name {
+  display: block;
+}
+
+.source.simple .brand-name img {
+  height: 40px;
+}
+
+.source.simple .url-form {
+  flex: none;
+  width: min(640px, 100%);
+}
+
+.source.simple .url-box {
+  box-shadow: var(--shadow-md);
+  background: var(--surface);
+}
+
+.source.simple .url-box:focus-within {
+  box-shadow: var(--shadow-md), var(--ring);
+}
+
+.source.simple .settings-btn {
+  margin: -12px 0 0;
+}
+
+.source.simple .banner {
+  justify-self: center;
+  width: min(640px, 100%);
+}
+
+/* the rest of the full view comes in under the gliding source bar */
+.app.revealing .filter-row {
+  animation: slide-up 0.4s var(--ease) 0.18s both;
+}
+
+.app.revealing .workspace {
+  animation: slide-up 0.48s var(--ease) 0.12s both;
+}
+
+.app.revealing .statusbar {
+  animation: slide-up 0.48s var(--ease) 0.22s both;
+}
+
 /* ---------- workspace ---------- */
 
 .workspace {

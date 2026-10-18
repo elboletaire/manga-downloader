@@ -1,4 +1,4 @@
-// The settings dialog: the app-only preferences (language, update check) and
+// The settings dialog: the app-only preferences (language, start view, update check) and
 // the About footer. Controls apply at once, so there is no Save or Cancel.
 
 import { useEffect, useRef, type MouseEvent } from 'react';
@@ -13,6 +13,7 @@ interface Props {
   state: State;
   onClose: () => void;
   onCheckUpdates: (on: boolean) => void;
+  onSimpleStart: (on: boolean) => void;
   onOpenURL: (url: string) => void;
   onError: (msg: string) => void;
 }
@@ -32,7 +33,7 @@ export function websiteURL(lang: Lang): string {
   return `https://mangadownloader.cat/${WEBSITE_PATHS[lang]}`;
 }
 
-export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onError }: Props) {
+export function SettingsDialog({ state, onClose, onCheckUpdates, onSimpleStart, onOpenURL, onError }: Props) {
   const { t, pref, systemLang, lang, setLanguage } = useI18n();
   const dialog = useRef<HTMLDialogElement>(null);
   const devBuild = state.releaseURL === '';
@@ -98,6 +99,16 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onOpenURL, onEr
               value={pref}
               options={languageOptions}
               onChange={(value) => pick(value as LangPref)}
+            />
+          </section>
+
+          <section className="opt-group">
+            <h3>{t('settings.start.heading')}</h3>
+            <Switch
+              label={t('settings.start.simple')}
+              description={t('settings.start.hint')}
+              checked={state.prefs.simpleStart}
+              onChange={onSimpleStart}
             />
           </section>
 

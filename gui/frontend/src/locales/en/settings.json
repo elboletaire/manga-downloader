@@ -6,6 +6,11 @@
     "heading": "Language",
     "systemOption": "System ({{language}})"
   },
+  "start": {
+    "heading": "Start screen",
+    "simple": "Open with the simple view",
+    "hint": "Shows only the logo and the URL box until a series starts loading."
+  },
   "updates": {
     "heading": "Updates",
     "check": "Check for new versions at startup",

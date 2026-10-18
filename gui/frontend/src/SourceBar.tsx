@@ -38,6 +38,8 @@ interface Props {
   settingsOpen: boolean;
   /** The gear button, so the dialog can hand focus back to it when it closes */
   settingsRef?: Ref<HTMLButtonElement>;
+  /** The simple view: the logo over the URL box and the settings button, no filters */
+  simple?: boolean;
 }
 
 export function SourceBar({
@@ -53,6 +55,7 @@ export function SourceBar({
   onOpenSettings,
   settingsOpen,
   settingsRef,
+  simple = false,
 }: Props) {
   const { t } = useI18n();
   // null until the user types: the field shows the backend's URL until then
@@ -113,14 +116,16 @@ export function SourceBar({
   const settingsLabel = `${t('settings.open')} (${shortcutLabel(isMac())})`;
 
   return (
-    <header className="source">
+    <header className={`source${simple ? ' simple' : ''}`}>
+      {/* data-flip marks what glides from the simple view into place (flip.ts) */}
       <div className="source-row">
-        <div className="brand" title="Manga Downloader">
+        <div className="brand" title="Manga Downloader" data-flip="brand">
           <Mascot expression={expression} size={48} />
           <Wordmark />
         </div>
         <form
           className="url-form"
+          data-flip="form"
           onSubmit={(e) => {
             e.preventDefault();
             // Enter loads now, so the pending automatic load must not fire too
@@ -132,6 +137,8 @@ export function SourceBar({
             <LinkIcon className="url-icon" />
             <input
               ref={input}
+              // the simple view is only the URL box, so it starts in it
+              autoFocus={simple}
               type="url"
               className="url-input"
               aria-label={t('source.url.label')}
@@ -204,7 +211,8 @@ export function SourceBar({
         <button
           ref={settingsRef}
           type="button"
-          className="btn ghost icon-only settings-btn"
+          className={`btn ghost settings-btn${simple ? '' : ' icon-only'}`}
+          data-flip="settings"
           aria-label={settingsLabel}
           title={settingsLabel}
           aria-haspopup="dialog"
@@ -212,51 +220,54 @@ export function SourceBar({
           onClick={onOpenSettings}
         >
           <GearIcon />
+          {simple && <span>{t('settings.open')}</span>}
         </button>
       </div>
 
-      <div className="filter-row">
-        <span className="filter-label">{t('source.filter.heading')}</span>
-        <FilterField
-          kind="language"
-          label={t('source.filter.language')}
-          typed={state.options.language}
-          choice={state.languages}
-          control={filterControl(state, state.languages)}
-          loaded={state.loaded}
-          busy={busy}
-          flagged={languageStale}
-          onPick={(language) => pick({ language })}
-          onOptions={onOptions}
-          onError={onError}
-        />
-        <FilterField
-          kind="scanlator"
-          label={t('source.filter.scanlator')}
-          typed={state.options.scanlator}
-          choice={state.scanlators}
-          control={filterControl(state, state.scanlators)}
-          loaded={state.loaded}
-          busy={busy}
-          flagged={scanlatorStale}
-          onPick={(scanlator) => pick({ scanlator })}
-          onOptions={onOptions}
-          onError={onError}
-        />
-        {state.stale ? (
-          <div className="stale-note" role="status">
-            <AlertIcon />
-            <span>{t('source.filter.notApplied')}</span>
-            <button type="button" className="btn small warning" disabled={busy} onClick={() => onLoad(state.url)}>
-              <RefreshIcon /> {t('source.load.reload')}
-            </button>
-          </div>
-        ) : (
-          <span className="filter-hint">
-            {identified ? t('source.filter.appliesAtOnce') : t('source.filter.appliesOnLoad')}
-          </span>
-        )}
-      </div>
+      {!simple && (
+        <div className="filter-row">
+          <span className="filter-label">{t('source.filter.heading')}</span>
+          <FilterField
+            kind="language"
+            label={t('source.filter.language')}
+            typed={state.options.language}
+            choice={state.languages}
+            control={filterControl(state, state.languages)}
+            loaded={state.loaded}
+            busy={busy}
+            flagged={languageStale}
+            onPick={(language) => pick({ language })}
+            onOptions={onOptions}
+            onError={onError}
+          />
+          <FilterField
+            kind="scanlator"
+            label={t('source.filter.scanlator')}
+            typed={state.options.scanlator}
+            choice={state.scanlators}
+            control={filterControl(state, state.scanlators)}
+            loaded={state.loaded}
+            busy={busy}
+            flagged={scanlatorStale}
+            onPick={(scanlator) => pick({ scanlator })}
+            onOptions={onOptions}
+            onError={onError}
+          />
+          {state.stale ? (
+            <div className="stale-note" role="status">
+              <AlertIcon />
+              <span>{t('source.filter.notApplied')}</span>
+              <button type="button" className="btn small warning" disabled={busy} onClick={() => onLoad(state.url)}>
+                <RefreshIcon /> {t('source.load.reload')}
+              </button>
+            </div>
+          ) : (
+            <span className="filter-hint">
+              {identified ? t('source.filter.appliesAtOnce') : t('source.filter.appliesOnLoad')}
+            </span>
+          )}
+        </div>
+      )}
 
       {problem !== '' && !state.loading && (
         <div className="banner danger" role="alert">
