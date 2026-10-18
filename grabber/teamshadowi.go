@@ -134,9 +134,9 @@ func (t *Teamshadowi) fetchData() (*teamshadowiPublicData, error) {
 		return t.data, nil
 	}
 
-	// the site is behind a cloudflare challenge that plain HTTP gets a 403 on;
-	// /_next/ scripts only exist once the real page has rendered
-	body, err := browser.GetHTML(t.URL, `script[src*="/_next/"]`, 0)
+	// the site is behind a cloudflare challenge that plain HTTP gets a 403 on.
+	// Wait for the series title: WaitVisible never matches a <script> tag.
+	body, err := browser.GetHTML(t.URL, "main h1", 0)
 	if err != nil {
 		return nil, err
 	}
