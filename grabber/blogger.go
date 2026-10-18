@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -18,6 +19,8 @@ import (
 // Blogger is a grabber for sites published on Blogger, matched by markup so
 // clones work too. A series is the blog's search for its title (posts carry no
 // label per series), and a pasted chapter post resolves to it through its title.
+// ZeistManga themes are the exception: their posts are listed under the series'
+// label instead (see zeistLabels).
 type Blogger struct {
 	*Grabber
 	// doc is the page Test fetched, kept for resolving a chapter post.
@@ -25,7 +28,9 @@ type Blogger struct {
 	// language is the page's <html lang>, see pageLanguage.
 	language string
 	// query is the series search, as typed or read off the post title.
-	query    string
+	query string
+	// zeist is set for a ZeistManga theme, see zeistFingerprint.
+	zeist    bool
 	title    string
 	chapters Filterables
 	listed   bool
@@ -40,6 +45,9 @@ func NewBlogger(g *Grabber) *Blogger {
 type BloggerChapter struct {
 	Chapter
 	URL string
+	// feed is the post's content in the label feed (ZeistManga only), for a
+	// reader that fills its pages in by script.
+	feed string
 }
 
 // bloggerPostRe matches the default permalink of a post: /YYYY/MM/slug.html.
@@ -87,6 +95,7 @@ func (b *Blogger) Test() (bool, error) {
 	b.doc = doc
 	b.language = pageLanguage(doc)
 	b.query = query
+	b.zeist = zeistFingerprint.MatchString(body) || doc.Find(zeistListSelector).Length() > 0
 
 	return true, nil
 }
@@ -147,31 +156,27 @@ func bloggerPostTitle(doc *goquery.Document) (bloggerPost, bool) {
 	return bloggerPost{}, false
 }
 
-// list fetches the series' posts from the blog's search feed, once.
+// list fetches the series' posts once: from the label feeds of a ZeistManga
+// theme when one of its labels has chapter posts, else from the blog's search feed.
 func (b *Blogger) list() error {
 	if b.listed {
+		return nil
+	}
+	if b.zeist && b.listLabels() {
+		b.listed = true
 		return nil
 	}
 	if err := b.resolveSeriesURL(); err != nil {
 		return err
 	}
 
+	feed, err := b.readFeed("/feeds/posts/summary", url.Values{"q": {b.query}})
+	if err != nil {
+		return err
+	}
 	var entries []bloggerEntry
-	for start := 1; ; {
-		feed, err := b.fetchFeed(start)
-		if err != nil {
-			return err
-		}
-
-		total, _ := strconv.Atoi(feed.Feed.Total.Value)
-		for _, e := range feed.Feed.Entries {
-			entries = append(entries, bloggerEntry{Title: e.Title.Value, URL: e.alternateURL()})
-		}
-
-		start += len(feed.Feed.Entries)
-		if len(feed.Feed.Entries) == 0 || start > total {
-			break
-		}
+	for _, e := range feed {
+		entries = append(entries, bloggerEntry{Title: e.Title.Value, URL: e.alternateURL()})
 	}
 
 	b.chapters, b.title = bloggerChapters(entries, b.query, b.language)
@@ -181,6 +186,26 @@ func (b *Blogger) list() error {
 	b.listed = true
 
 	return nil
+}
+
+// readFeed reads every post of the JSON feed at path, with the given query.
+func (b *Blogger) readFeed(path string, query url.Values) ([]bloggerFeedEntry, error) {
+	var entries []bloggerFeedEntry
+	for start := 1; ; {
+		feed, err := b.fetchFeed(path, query, start)
+		if err != nil {
+			return nil, err
+		}
+
+		total, _ := strconv.Atoi(feed.Feed.Total.Value)
+		entries = append(entries, feed.Feed.Entries...)
+
+		start += len(feed.Feed.Entries)
+		if len(feed.Feed.Entries) == 0 || start > total {
+			break
+		}
+	}
+	return entries, nil
 }
 
 // bloggerFeed is the part of a Blogger JSON feed the grabber reads.
@@ -193,11 +218,15 @@ type bloggerFeed struct {
 	} `json:"feed"`
 }
 
-// bloggerFeedEntry is one post in a Blogger JSON feed.
+// bloggerFeedEntry is one post in a Blogger JSON feed. Only the full feeds
+// carry its content.
 type bloggerFeedEntry struct {
 	Title struct {
 		Value string `json:"$t"`
 	} `json:"title"`
+	Content struct {
+		Value string `json:"$t"`
+	} `json:"content"`
 	Links []struct {
 		Rel  string `json:"rel"`
 		Href string `json:"href"`
@@ -214,17 +243,15 @@ func (e bloggerFeedEntry) alternateURL() string {
 	return ""
 }
 
-// fetchFeed fetches one page of the series search feed, 150 posts at a time
-// (the most Blogger serves per request), starting at start-index.
-func (b *Blogger) fetchFeed(start int) (bloggerFeed, error) {
+// fetchFeed fetches one page of the JSON feed at path, 150 posts at a time (the
+// most Blogger serves per request), starting at start-index.
+func (b *Blogger) fetchFeed(path string, query url.Values, start int) (bloggerFeed, error) {
 	var feed bloggerFeed
 
-	feedURL := b.BaseUrl() + "/feeds/posts/summary?" + url.Values{
-		"alt":         {"json"},
-		"q":           {b.query},
-		"max-results": {"150"},
-		"start-index": {strconv.Itoa(start)},
-	}.Encode()
+	query.Set("alt", "json")
+	query.Set("max-results", "150")
+	query.Set("start-index", strconv.Itoa(start))
+	feedURL := b.BaseUrl() + path + "?" + query.Encode()
 
 	rbody, err := http.Get(http.RequestParams{
 		URL:     feedURL,
@@ -262,16 +289,108 @@ func bloggerChapters(entries []bloggerEntry, query, lang string) (Filterables, s
 		}
 
 		chapters = append(chapters, &BloggerChapter{
-			Chapter{
+			Chapter: Chapter{
 				Number:   post.Number,
 				Language: lang,
 				Label:    Label{Style: LabelNumbered, Part: post.Part},
 			},
-			e.URL,
+			URL: e.URL,
 		})
 	}
 
 	return chapters, title
+}
+
+// zeistListSelector is the chapter list of a ZeistManga-like template that names
+// its label in data-labelchapter, without the theme header.
+const zeistListSelector = "div.chapter_get[data-labelchapter]"
+
+// zeistRunRe and zeistLabelRe match the label a ZeistManga script lists a
+// series' posts by: its widget call ("nPL.run('Name')") or a label variable.
+var (
+	zeistRunRe   = regexp.MustCompile(`\b(?:nPL2?|clwd)\.run\(\s*['"]([^'"]+)['"]`)
+	zeistLabelRe = regexp.MustCompile(`\blabel\s*=\s*['"]([^'"]+)['"]`)
+	// zeistFingerprint matches the header comment of the ZeistManga theme, and of
+	// its AniManga fork, which lists its chapters the same way.
+	zeistFingerprint = regexp.MustCompile(`Name\s*:\s*(?:ZeistManga|AniManga)\b`)
+)
+
+// zeistLabels returns the labels a ZeistManga page may list its series' posts
+// by, most specific first: the search query, the chapter list's data-label, the
+// labels its scripts run with, and the series post's title.
+func zeistLabels(doc *goquery.Document, query string) []string {
+	var labels []string
+	add := func(label string) {
+		label = strings.TrimSpace(label)
+		if label != "" && !slices.Contains(labels, label) {
+			labels = append(labels, label)
+		}
+	}
+
+	add(query)
+	add(doc.Find("#nextPrevJS[data-label], #nextPrevJSbottom[data-label]").First().AttrOr("data-label", ""))
+	add(doc.Find(zeistListSelector).First().AttrOr("data-labelchapter", ""))
+	doc.Find("script").Each(func(_ int, s *goquery.Selection) {
+		for _, re := range []*regexp.Regexp{zeistRunRe, zeistLabelRe} {
+			for _, m := range re.FindAllStringSubmatch(s.Text(), -1) {
+				add(m[1])
+			}
+		}
+	})
+	// the series post's title, before the blog's name ("Juujika no Rokunin - Manga Ai-land")
+	if head, _, _ := strings.Cut(doc.Find(`meta[property="og:title"]`).AttrOr("content", ""), " - "); !bloggerNumberRe.MatchString(head) {
+		add(head)
+	}
+	add(bloggerSeriesPostTitle(doc))
+
+	return labels
+}
+
+// listLabels lists a ZeistManga series from the first of its labels with chapter
+// posts, naming it by that label. It reports false otherwise, or when a feed
+// fails, so the search feed gets its turn.
+func (b *Blogger) listLabels() bool {
+	for _, label := range zeistLabels(b.doc, b.query) {
+		entries, err := b.readFeed("/feeds/posts/default/-/"+url.PathEscape(label), url.Values{})
+		if err != nil {
+			continue
+		}
+		if chapters := zeistChapters(entries, label, b.language); len(chapters) > 0 {
+			b.chapters, b.title = chapters, label
+			return true
+		}
+	}
+	return false
+}
+
+// zeistChapters numbers a label's posts by their titles, which often name no
+// series ("Cap 362", "Chapter 02"), skipping the series' own post. Each post keeps
+// its feed content for the pages its reader fills in by script.
+func zeistChapters(entries []bloggerFeedEntry, label, lang string) Filterables {
+	key := bloggerKey(label)
+	chapters := Filterables{}
+
+	for _, e := range entries {
+		if bloggerKey(e.Title.Value) == key {
+			continue
+		}
+
+		chapter := &BloggerChapter{
+			Chapter: Chapter{Language: lang, Label: Label{Style: LabelUnnumbered}},
+			URL:     e.alternateURL(),
+			feed:    e.Content.Value,
+		}
+		// a post with no number ("Epílogo", "Oneshot") is listed by its title
+		if post, ok := readBloggerTitle(e.Title.Value); ok {
+			chapter.Number = post.Number
+			chapter.Label = Label{Style: LabelNumbered, Part: post.Part}
+		} else {
+			chapter.Title = strings.TrimSpace(e.Title.Value)
+		}
+		chapters = append(chapters, chapter)
+	}
+
+	return chapters
 }
 
 // bloggerPost is what a post title says: the series, the chapter number and
@@ -314,6 +433,13 @@ func stripKindWord(name string) string {
 // parseBloggerTitle reads "Blue Lock Manga 364 Parte 2 [Español]" or "Kenichi 2
 // | Manga 27". The chapter number is the last one, so "Kenichi 2" stays a name.
 func parseBloggerTitle(title string) (bloggerPost, bool) {
+	post, ok := readBloggerTitle(title)
+	return post, ok && post.Series != ""
+}
+
+// readBloggerTitle is parseBloggerTitle without the series name: a title that
+// is only a number ("Chapter 02") still gives its number, with an empty Series.
+func readBloggerTitle(title string) (bloggerPost, bool) {
 	var post bloggerPost
 
 	title = bloggerLeerRe.ReplaceAllString(title, "")
@@ -335,9 +461,6 @@ func parseBloggerTitle(title string) (bloggerPost, bool) {
 
 	post.Number = num
 	post.Series = stripKindWord(title[:last[0]])
-	if post.Series == "" {
-		return post, false
-	}
 
 	return post, true
 }
@@ -356,18 +479,34 @@ func bloggerKey(name string) string {
 
 // bloggerPages returns a chapter post's pages: Blogger's own decorations carry an
 // alt text, the uploaded pages alt="". Script-rendered templates keep the body in
-// a hidden textarea.
+// a hidden textarea or ZeistManga's #reader, and some wrap it in .check-box.
 func bloggerPages(doc *goquery.Document, postURL *url.URL) []Page {
 	if pages := bloggerImages(doc.Find("div.post-body img[alt='']"), postURL); len(pages) > 0 {
 		return pages
 	}
 
 	raw := doc.Find("textarea#zeist-raw-data").First().Text()
-	body, err := goquery.NewDocumentFromReader(strings.NewReader(raw))
+	if body, err := goquery.NewDocumentFromReader(strings.NewReader(raw)); err == nil {
+		if pages := bloggerImages(body.Find("img[alt='']"), postURL); len(pages) > 0 {
+			return pages
+		}
+	}
+
+	// the reader's own icons are SVG, never pages
+	if pages := bloggerImages(doc.Find("#reader img:not([src*='.svg'])"), postURL); len(pages) > 0 {
+		return pages
+	}
+	return bloggerImages(doc.Find(".check-box img[alt='']"), postURL)
+}
+
+// bloggerFeedPages returns the images in a post's feed content, for a reader
+// whose pages the page doesn't carry.
+func bloggerFeedPages(content string, postURL *url.URL) []Page {
+	body, err := goquery.NewDocumentFromReader(strings.NewReader(content))
 	if err != nil {
 		return nil
 	}
-	return bloggerImages(body.Find("img[alt='']"), postURL)
+	return bloggerImages(body.Find("img"), postURL)
 }
 
 // bloggerImages turns the src of each image into a numbered page.
@@ -432,6 +571,9 @@ func (b *Blogger) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	pages := bloggerPages(doc, postURL)
+	if len(pages) == 0 && bchap.feed != "" {
+		pages = bloggerFeedPages(bchap.feed, postURL)
+	}
 	if len(pages) == 0 {
 		return nil, fmt.Errorf("no pages found for %s", ChapterLabel(bchap))
 	}

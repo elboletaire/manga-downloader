@@ -1,0 +1,13 @@
+{
+ "version": "1.0",
+ "encoding": "UTF-8",
+ "feed": {
+  "openSearch$totalResults": {"$t": "3"},
+  "openSearch$startIndex": {"$t": "1"},
+  "entry": [
+   {"title": {"type": "text", "$t": "One Piece Manga 1196 [Español]"}, "link": [{"rel": "alternate", "type": "text/html", "href": "https://blog.test/2026/10/one-piece-manga-1196-espanol.html"}]},
+   {"title": {"type": "text", "$t": "One Piece Vol 115 SBS Español "}, "link": [{"rel": "alternate", "type": "text/html", "href": "https://blog.test/2024/01/one-piece-vol-115.html"}]},
+   {"title": {"type": "text", "$t": "Blue Lock Manga 364 [Español]"}, "link": [{"rel": "alternate", "type": "text/html", "href": "https://blog.test/2026/10/blue-lock-364.html"}]}
+  ]
+ }
+}

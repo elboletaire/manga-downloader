@@ -1,0 +1,53 @@
+{
+ "version": "1.0",
+ "encoding": "UTF-8",
+ "feed": {
+  "openSearch$totalResults": {
+   "$t": "3"
+  },
+  "openSearch$startIndex": {
+   "$t": "1"
+  },
+  "entry": [
+   {
+    "title": {
+     "type": "text",
+     "$t": "Eu Quero Ser Um Ator"
+    },
+    "link": [
+     {
+      "rel": "alternate",
+      "type": "text/html",
+      "href": "https://blog.test/2024/06/eu-quero-ser-um-ator_15.html"
+     }
+    ]
+   },
+   {
+    "title": {
+     "type": "text",
+     "$t": "Chapter 140"
+    },
+    "link": [
+     {
+      "rel": "alternate",
+      "type": "text/html",
+      "href": "https://blog.test/2025/09/chapter-140.html"
+     }
+    ]
+   },
+   {
+    "title": {
+     "type": "text",
+     "$t": "Epílogo"
+    },
+    "link": [
+     {
+      "rel": "alternate",
+      "type": "text/html",
+      "href": "https://blog.test/2025/10/epilogo.html"
+     }
+    ]
+   }
+  ]
+ }
+}
