@@ -11,3 +11,4 @@ manga-downloader-gui
 manga-downloader-gui.exe
 .pnpm-store/
 *.epub
+smoke-results.txt

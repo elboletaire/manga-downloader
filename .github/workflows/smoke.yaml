@@ -1,498 +1,33 @@
 name: Site smoke tests
 
-# Weekly run of the live-site smoke targets to detect layout/API changes on
-# supported sites. Each matrix entry downloads a real chapter and verifies the
-# resulting CBZ actually contains images.
-#
-# Only plain-HTTP grabbers are listed: browser-based sites (make grabber/browser
-# plus the headless-Chrome comix/mkissa/templetoons) need a real Chrome and
-# often an interactive Cloudflare challenge, which cannot work on a headless
-# datacenter runner, so they are intentionally excluded.
-#
+# Twice-weekly live-site smoke run: `make smoke` checks this run's targets, split
+# over eight shards (the makefile's smoke section says which and how).
 # A final job writes the results into the README's "Last verified" column.
 on:
   schedule:
-    - cron: "17 6 * * 1"
+    - cron: "17 6 * * 1,4"
   workflow_dispatch:
+    inputs:
+      targets:
+        description: "Space-separated targets to check instead of the rotation"
+        required: false
+        default: ""
+      all:
+        description: "Check every target, not the rotation"
+        type: boolean
+        default: false
 
 jobs:
-  grabber:
+  smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # about 14 targets per shard at up to 5 minutes each; `all` runs far more
+    timeout-minutes: ${{ inputs.all && 360 || 180 }}
     strategy:
       fail-fast: false
       matrix:
-        target:
-          # API / JSON / SSR / Madara grabbers (plain HTTP, no browser)
-          - inmanga
-          - mangadex
-          - mangabats
-          - manganato
-          - mangak
-          - mgeko
-          # - mangaball  # 403 on GitHub's runners only; run it locally
-          - mangadenizi
-          - qimanga
-          - aurorascans
-          - fanfox
-          - mangahere
-          - mangatown
-          - flamecomics
-          - weebcentral
-          - leercapitulo
-          - guya
-          - hachirumi
-          - danke
-          - atsumaru
-          - globalcomix
-          - bluesolo
-          - chainsawman
-          - fmteam
-          - apothecary
-          - jestful
-          - jojolands
-          - projectsuki
-          - roliascan
-          - taiyo
-          - stonescape
-          - utoon
-          - vortexscans
-          - azorafly
-          - genztoon
-          - heavenlydelusion
-          - heavenmanga
-          - kaynscan
-          - elftoon
-          - hijala
-          - mangataro
-          - zinmanga
-          - tcb
-          - webtoonia
-          - mangasushi
-          - mangaowl
-          - gdscans
-          - nijitranslations
-          - gourmetsupremacy
-          - anikiga
-          - tortugaceviri
-          - mangalivre
-          - tritinia
-          - 3asq
-          - webtoons
-          - naver
-          - animeallstar1
-          - animeallstar30
-          - blackcloveronline
-          - chainsawmannmanga
-          - dragonballmangaa
-          - jujutsukaisenmanga
-          - mangadelsiglotvmanga
-          - re-yume
-          - tvymanga3
-          - shonenjumpplus
-          - tonarinoyj
-          - comicdays
-          - kuragebunch
-          - magcomi
-          - comicgardo
-          - comiczenon
-          - comicaction
-          - comictrail
-          - comicwalker
-          - comicearthstar
-          - comicogyaaa
-          - sundaywebry
-          - comicseasons
-          - comicyours
-          - ourfeel
-          - feelweb
-          - ichicomi
-          - mangatimesquare
-          - championcross
-          - comicgrowl
-          - comicheros
-          - comicride
-          - comicryu
-          - takecomic
-          - bigcomics
-          - comicborder
-          - kansai
-          - younganimal
-          - hanayume
-          - asacomi
-          - kimicomi
-          - hayacomic
-          - piacomic
-          - mangalt
-          - youngchampion
-          - comicroombase
-          - bibibicomic
-          - jnbooks
-          - mangabang
-          - comirela
-          - gcomi
-          - mangabu
-          - nikkanspa
-          - mangazegra
-          - namicomic
-          - booklista
-          - magustoon
-          - nyxscans
-          - divascans
-          - valirscans
-          - ruridragon
-          - kaijimanga
-          - mahoushoujobu
-          - allporncomic
-          - apcomics
-          - bunmanga
-          - cafecomyaoi
-          - cocomic
-          - coffeemanga
-          - cucumbermanga
-          - dragontranslation
-          - euphoriascan
-          - gakamangas
-          - hanamiheaven
-          - harmonyscan
-          - hentaiscantrad
-          - hentaiteca
-          - hentaixcomic
-          - hentaixdickgirl
-          - hentaixyuri
-          - hhentai
-          - houseofotakusv2
-          - infrafandub
-          - inventariooculto
-          - kazokuden
-          - klikmanga
-          - kokomangas
-          - kamisama
-          - manga18free
-          - mangaforfree
-          - mangaforfreenet
-          - mangafree
-          - manhuahot
-          - manhuanext
-          - manhwaclub
-          - manhwanex
-          - manhwaonlinees
-          - manhwareads
-          - monopolymanhua
-          - montetaiscanlator
-          - nebulosascan
-          - nhaduong
-          - ninjacomics
-          - octopusmanga
-          - paradisebl
-          - seraphicdeviltry
-          - shinobiscans
-          - tankouhentai
-          - tarotscans
-          - topcomicporno
-          - trmangaoku
-          - truyentranhdammyy
-          - yaoihub
-          - yurionline
-          - rawdex
-          - mangaxhentai
-          - akanebanashimanga
-          - animexnovel
-          - arbxcomix
-          - berserkkmanga
-          - beyondtheataraxia
-          - bluelockmanga
-          - boruto2bluevortex
-          - demonslayermanga
-          - dragonballsupermanga
-          - galaxscanlator
-          - ichithewitch
-          - kaijunochapter
-          - kaliscan
-          - mangacrazy
-          - mrtenzus
-          - omniscientreadersviewpoint
-          - omniscientreadersviewpointt
-          - onepunchmanmanga
-          - onepunchmannmanga
-          - onlinechainsawmanmanga
-          - orvmanhwa
-          - plumacomics
-          - punchonemanga
-          - readkagura
-          - readspyxfamilymanga
-          - thebeginningaftertheendmanga
-          - thebluelock
-          - vinlandsaga
-          - yaoiscan
-          - 1punchman
-          - apenasumafa
-          - arhentai
-          - arlas
-          - arthurscan
-          - bokunoheroacademia
-          - borutotwobluevortex
-          - comici
-          - datgarscanlation
-          - doujinxh
-          - duoscanlators
-          - grabberzone
-          - hanmokkuscan
-          - heckscans
-          - hunlightcomics
-          - inkapk
-          - jujutsukaisenonline
-          - kaijuno8chapters
-          - lectordarkroomfansub
-          - lectorhadeslatamtoon
-          - lepoytl
-          - ler999
-          - lonertl
-          - mangaailand
-          - mangaparktv
-          - marmota
-          - mikrokosmosfb
-          - ngamenkomik05
-          - omniscientreaderviewpoint
-          - ragnarokscanlation
-          - rimacomiplus
-          - ruahapchanhday2
-          - samuraij5z
-          - shadowceviri
-          - shiyurasub
-          - snscoeurturkey
-          - solooscan
-          - spyxfamilymanga
-          - thetowerofgod
-          - tokyorevengers
-          - wolfscanbr
-          - xsanomanga
-          - yokaiteam
-          - yurimoonsub
-          # Plain-HTML (goquery) scrapers
-          - tcbscans
-          - arenascan
-          - asura
-          - zonatmo
-          - mangapill
-          - demonicscans
-          - mangakatana
-          - ravenscans
-          - rawkuma
-          - dynastyscans
-          - mangaread
-          # - mangasorigines  # 403 on GitHub's runners only; run it locally
-          - manhuaplus
-          - manhwaonline
-          - decadencescans
-          - mangalami
-          - deathtollscans
-          - evascans
-          - furyosociety
-          - komikindo
-          - komikmanga
-          - madaradex
-          - madarascans
-          - maid
-          - anzmanga25
-          - onma
-          - oremanga
-          - mangaberri
-          - kingofshojo
-          - komikstation
-          - mangavault
-          - mangaworld
-          - lagoonscans
-          - lelmanga
-          - lelscanfr
-          - lelscans
-          - mangasusuku
-          - rizzfables
-          - rokaricomics
-          - ritharscans
-          - sanascans
-          - scanvf
-          - thunderscans
-          - trmanga
-          # - uzaymanga  # 403 on GitHub's runners only; run it locally
-          - violetscans
-          - witchtoons
-          - writerscans
-          - mistscans
-          - mangapark
-          # - eldermanga  # 403 on GitHub's runners only; run it locally
-          # - eskimangalar  # 403 on GitHub's runners only; run it locally
-          # - limonmanga  # 403 on GitHub's runners only; run it locally
-          - ksgroupscans
-          - manhwatop
-          - mangazin
-          - turkcemanga
-          - yurionair
-          - adonisfansub
-          - nyraxmanga
-          - rackusreads
-          - mangaeclipse
-          - mangawow
-          - ruyamanga2
-          - natsuone
-          - noranofansub
-          - apollcomics
-          - fbsquadx
-          - kombatch
-          - mundomanhwa
-          - smuglo
-          # - afroditscans  # 403 on GitHub's runners only; run it locally
-          - hentai20
-          - komikdewasa
-          - mangadistrict
-          - manhwabuddy
-          - nabicix
-          - sektedoujin
-          - sereinscan
-          - ngomik
-          - 108read
-          - akazascans
-          - amangaplanet
-          - asialotuss
-          - asterscans
-          - athreascans
-          - bymichiby
-          - dojing
-          - flashmanga
-          - gaiatoon
-          - goddoujin
-          - godhman
-          - hentaidesi
-          - inumanga
-          - izanamiscans
-          - kanzenin
-          - komikmu
-          - manhwalist
-          - mangakimi
-          - mangastep
-          - mangatrend
-          - manhwadesu
-          - mihentai
-          - nekoproject
-          - nirvanamanga
-          - noromax02
-          - ntrmanga
-          - reapertrans
-          - rosyscans
-          - sasangeyou
-          - shijiescans
-          - singmanga
-          - slowmanga
-          - speedmanga
-          - tanukimanga
-          - toomtammanga
-          - toonhunter
-          - tsundoku
-          - uchuujinmangas
-          - undertranslations
-          - sodsaime
-          - archiviumbar
-          - cat300
-          - doodmanga
-          - doujindistrict
-          - ghostoon
-          - hentai1
-          - hotcabaretscan
-          - lectortaurus
-          - borutoexplorer
-          - linkmanga
-          - mangalc
-          - manhuabug
-          - manhwabreakup
-          - manhwahub
-          - mindafansub
-          - nocfsb
-          - pornhwaz
-          - richtoon
-          - s2read
-          - siikomik
-          - tilkiscans
-          - vermanhwa
-          - yakshacomics
-          - yaoiflix
-          - erisscans
-          - grimscans
-          - kewnscans
-          - nyanukafe
-          - timelesstoons
-          - artlapsa
-          - kitsunedawn
-          - orionscans
-          - blmangafree
-          - bloomscans
-          - csmmangafree
-          - dandadanmanga
-          - dandadanmangas
-          - gachiakutas
-          - gutsberserk
-          - noxsubs
-          - readyagami
-          - sakamotodays
-          - scythescans
-          - sxfmanga
-          - visorotaku
-          - 4porncomic
-          - arcurafansub
-          - auntmanhwa
-          - bacakomik
-          - bananascans
-          - doujinlc
-          - ecchidoujin
-          - hentaiorigines
-          - hentaivn
-          - kiryuu
-          - komikindoshop
-          - kumapoi
-          - leermanhwas
-          - legionscans
-          - mangamaniacs
-          - mangatellers
-          - manhuathai
-          - mhscans
-          - myreadingcomic
-          - narasininja
-          - novelcrow
-          - seinagi
-          - springtoons
-          - tenshimanga
-          - thaimanga
-          - tmomanhwa
-          - utsukushiibg
-          # These sites block GitHub's datacenter IPs (403) but work fine
-          # from residential connections — verified locally 2026-07-23.
-          # Kept out of the matrix rather than hammering sites that don't
-          # want automated traffic; smoke-test them locally instead.
-          # - mangalib     # 403 on series page
-          # - silentquill  # 403 on series page
-          # - bigsolo      # 403 on series page
-          # - luascans     # 403 on series page
-          # - hivetoons    # chapter list loads, image CDN 403s every page
-          # - mangitto     # whole domain Cloudflare-hard-blocked (403 "you
-          #                # have been blocked"), including residential IPs and
-          #                # real browsers — verified 2026-08-04. Grabber kept
-          #                # in case the block lifts; smoke-test locally.
-          # - mangafire    # now browser-based: the SPA signs every JSON API
-          #                # call with a per-session cloudflare-gated `vrf`
-          #                # token (plain HTTP → 403 "Missing token"), so the
-          #                # grabber renders the pages and intercepts the
-          #                # signed responses — excluded from the matrix like
-          #                # every other browser grabber. Run `make
-          #                # grabber/mangafire` locally.
-          # - templetoons  # now browser-based: plain HTTP is redirected to the
-          #                # site's own Turnstile /challenge page, which only a
-          #                # browser clears. Run `make grabber/templetoons` locally.
-          # - asmotoon     # now browser-based: cloudflare challenges plain HTTP
-          #                # and headless alike. Run `make grabber/asmotoon`
-          #                # locally.
-          # - teamshadowi  # now browser-based: cloudflare challenges plain HTTP
-          #                # (403). Run `make grabber/teamshadowi` locally.
-          # - lilymanga    # rate-limits hard (429 on the series path, even
-          #                # from residential IPs); smoke-test locally.
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    env:
+      TARGETS: ${{ inputs.targets }}
     steps:
       - uses: actions/checkout@v4
 
@@ -501,35 +36,27 @@ jobs:
         with:
           go-version: "1.26"
 
-      - name: Download chapters
-        run: make grabber/${{ matrix.target }}
-
-      # The downloader exits 0 even when chapters or pages fail to download,
-      # so check the archives actually contain images.
-      - name: Verify CBZ contents
+      # target names are lowercase letters, digits and hyphens, so nothing else reaches make
+      - name: Check this shard's targets
         run: |
-          ls -la *.cbz
-          make verify-cbz
+          case "$TARGETS" in
+            *[!a-z0-9\ -]*) echo "::error::targets takes lowercase names separated by spaces" >&2; exit 1 ;;
+          esac
+          make smoke SHARD=${{ matrix.shard }} SHARDS=8 SMOKE_RESULTS=shard-${{ matrix.shard }}.txt TARGETS="$TARGETS" ${{ inputs.all && 'SMOKE_COUNT=all' || '' }}
 
-      # One line per target for the status job below; skipped when cancelled.
-      - name: Record result
-        if: always() && job.status != 'cancelled'
-        run: |
-          mkdir -p result
-          if [ "${{ job.status }}" = success ]; then r=pass; else r=fail; fi
-          echo "${{ matrix.target }} $r" > result/${{ matrix.target }}.txt
-
+      # One "target pass|fail" line per target, for the status job below. Uploaded
+      # even when cancelled, so a long shard keeps the targets it finished.
       - name: Upload result
-        if: always() && job.status != 'cancelled'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: result-${{ matrix.target }}
-          path: result/${{ matrix.target }}.txt
+          name: result-shard-${{ matrix.shard }}
+          path: shard-${{ matrix.shard }}.txt
 
   # Writes the results into the README's "Last verified" column. Only the
   # default branch's runs do, so a manual run from a branch leaves it alone.
   status:
-    needs: grabber
+    needs: smoke
     if: ${{ !cancelled() && github.ref_name == github.event.repository.default_branch }}
     runs-on: ubuntu-latest
     timeout-minutes: 10

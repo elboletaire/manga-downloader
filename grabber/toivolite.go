@@ -14,7 +14,7 @@ import (
 )
 
 // toivoLiteSites lists the single-manga "Toivo Lite" WordPress sites. Add a
-// domain here plus makefile, smoke.yaml and README to support a new site.
+// domain here plus makefile and README to support a new site.
 // heavenly-delusion.com uses HeavenlyDelusion (sitemap-based, not the widget).
 var toivoLiteSites = []string{
 	"jojolandsmanga.com",

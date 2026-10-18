@@ -440,8 +440,9 @@ grabber/manganato:
 # per-session, cloudflare-challenge-gated vrf token, so we render the pages,
 # let them make the signed calls and intercept the responses; images then
 # download over plain HTTP. No --browser-visible needed, so not in the
-# grabber/browser group, but kept out of the CI smoke matrix like every other
-# browser grabber. Uses an old chapter (stable, not premium-gated like newest).
+# grabber/browser group, but kept out of the CI smoke rotation (SMOKE_EXCLUDE)
+# like every other browser grabber. Uses an old chapter (stable, not
+# premium-gated like newest).
 # The two runs cover both chapter-list pager shapes (#169): One Piece has the
 # windowed pager with "Next page" arrows; the second series is short enough
 # (3 pages) that the site renders numbered buttons only, and its chapter 1
@@ -1934,3 +1935,59 @@ site-status:
 	cat $$results; \
 	go run ./tools/site-status -results $$results -date $$(date -u +%F); \
 	rm -f $$results $$stamp
+
+# the rotation smoke.yaml runs twice a week: the SMOKE_COUNT targets verified
+# longest ago, split round-robin over SHARDS (TARGETS="a b" overrides it).
+# About a quarter of the list: every site comes round about every two weeks.
+SMOKE_COUNT ?= 110
+SHARD ?= 1
+SHARDS ?= 1
+SMOKE_RESULTS ?= smoke-results.txt
+
+# targets CI can't run, so they stay out of the rotation (check them locally)
+SMOKE_EXCLUDE =
+# 403 from GitHub's runners, while residential connections work
+SMOKE_EXCLUDE += mangaball mangalib silentquill bigsolo luascans hivetoons eldermanga eskimangalar limonmanga uzaymanga afroditscans mangasorigines
+# Cloudflare-blocked, or rate-limited hard (429, or the app API)
+SMOKE_EXCLUDE += mangitto lilymanga mangaplus
+# headless-browser grabbers: a runner can't get past their challenges
+SMOKE_EXCLUDE += comix mkissa templetoons mangafire
+
+# every target of the grabber and grabber/html aggregates, read from this file
+# so a new site is one line there, minus SMOKE_EXCLUDE
+SMOKE_TARGETS = $(filter-out $(SMOKE_EXCLUDE) html,$(sort $(patsubst grabber/%,%,$(shell awk '/^grabber: \\/ || /^grabber\/html: \\/ {f = 1; next} f && /^\t/ {gsub(/[\\\t ]/, ""); print; next} {f = 0}' makefile))))
+
+# GNU timeout bounds each target; macOS has none, so its targets run unbounded
+SMOKE_TIMEOUT = $(if $(shell command -v timeout),timeout 300)
+# not $(MAKE) itself: a line naming it runs in full even under make -n
+SMOKE_MAKE = $(MAKE)
+
+# the targets to check, one per line, before the shard split
+SMOKE_PICK = if [ -n "$(TARGETS)" ]; then printf '%s\n' $(TARGETS); \
+	elif [ "$(SMOKE_COUNT)" = all ]; then printf '%s\n' $(SMOKE_TARGETS); \
+	else printf '%s\n' $(SMOKE_TARGETS) | go run ./tools/site-status -oldest $(SMOKE_COUNT); fi
+# this shard's round-robin share of the lines on its stdin
+SMOKE_SHARD = awk -v n=$(SHARDS) -v s=$(SHARD) 'NF && (NR - 1) % n == s - 1'
+
+smoke/list:
+	@list=$$($(SMOKE_PICK)) || exit 1; \
+	echo "$$list" | $(SMOKE_SHARD)
+
+# runs each smoke/list target: grabber/<t> must leave CBZs that tools/verify-cbz accepts.
+# Appends "<t> pass|fail" to SMOKE_RESULTS and exits 1 at the end if any failed.
+smoke:
+	@list=$$($(SMOKE_PICK)) || exit 1; \
+	list=$$(echo "$$list" | $(SMOKE_SHARD)); \
+	stamp=$$(mktemp); fails=0; \
+	for t in $$list; do \
+		touch $$stamp; sleep 1; \
+		if $(SMOKE_TIMEOUT) $(SMOKE_MAKE) grabber/$$t && find . -maxdepth 1 -name '*.cbz' -newer $$stamp | grep -q . && find . -maxdepth 1 -name '*.cbz' -newer $$stamp -print0 | xargs -0 go run ./tools/verify-cbz; then \
+			r=pass; \
+		else \
+			r=fail; fails=$$((fails + 1)); \
+		fi; \
+		echo "$$t $$r" | tee -a $(SMOKE_RESULTS); \
+		find . -maxdepth 1 -name '*.cbz' -newer $$stamp -delete; \
+	done; \
+	rm -f $$stamp; \
+	exit $$((fails > 0))

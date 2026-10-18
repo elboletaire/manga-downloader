@@ -70,6 +70,7 @@ describe('parseVerified', () => {
   it('reads dates, failures and placeholders', () => {
     expect(parseVerified(' 2026-10-15 ')).toEqual({ status: 'ok', date: '2026-10-15' })
     expect(parseVerified('❌ failing since 2026-10-15')).toEqual({ status: 'failing', date: '2026-10-15' })
+    expect(parseVerified('❌ failing since 2026-10-15 (checked 2026-10-18)')).toEqual({ status: 'failing', date: '2026-10-15' })
     expect(parseVerified('—')).toEqual({ status: 'unknown' })
   })
 })

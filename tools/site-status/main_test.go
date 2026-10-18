@@ -79,9 +79,10 @@ func TestUpdate(t *testing.T) {
 	}
 	for _, want := range []string{
 		"| [alpha.com](https://alpha.com) |  | 2026-10-15 |",
-		"| [beta-site.online](https://beta-site.online) | Beta, Arabic | ❌ failing since 2026-09-01 |", // kept
+		// beta keeps its since date and gets this run's check.
+		"| [beta-site.online](https://beta-site.online) | Beta, Arabic | ❌ failing since 2026-09-01 (checked 2026-10-15) |",
 		// gamma and gamma2 share the row; one failing target fails it.
-		"| [gamma.net](https://gamma.net) \\* | Gamma, former old-gamma.org | ❌ failing since 2026-10-15 |",
+		"| [gamma.net](https://gamma.net) \\* | Gamma, former old-gamma.org | ❌ failing since 2026-10-15 (checked 2026-10-15) |",
 		"| [lonely.org](https://lonely.org) | | — |",
 	} {
 		if !strings.Contains(out, want) {
@@ -95,15 +96,15 @@ func TestUpdate(t *testing.T) {
 		}
 	}
 	// Everything but the three updated cells stays byte for byte.
-	if n := diffLines(testReadme, out); n != 2 {
-		t.Errorf("changed %d lines, want 2", n)
+	if n := diffLines(testReadme, out); n != 3 {
+		t.Errorf("changed %d lines, want 3", n)
 	}
 }
 
 func TestFailingSinceKeptThenCleared(t *testing.T) {
 	r := map[string]bool{"beta": false}
 	out, _, _ := update(testReadme, hosts(), r, "2026-10-15")
-	if !strings.Contains(out, "❌ failing since 2026-09-01 |") {
+	if !strings.Contains(out, "❌ failing since 2026-09-01 (checked 2026-10-15) |") {
 		t.Errorf("failing date not kept:\n%s", out)
 	}
 	out, _, _ = update(testReadme, hosts(), map[string]bool{"beta": true}, "2026-10-15")
@@ -167,4 +168,100 @@ func diffLines(a, b string) int {
 		}
 	}
 	return n
+}
+
+func TestOldest(t *testing.T) {
+	// alpha and orphan were never checked (a dash, or no row at all), gamma and
+	// gamma2 share a row verified 2026-01-01, beta is failing since 2026-09-01.
+	cands := []string{"beta", "gamma2", "orphan", "gamma", "alpha"}
+	got, err := oldest(testReadme, hosts(), cands, len(cands))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "alpha orphan gamma gamma2 beta"; strings.Join(got, " ") != want {
+		t.Errorf("got %v, want %s", got, want)
+	}
+	got, _ = oldest(testReadme, hosts(), cands, 3)
+	if want := "alpha orphan gamma"; strings.Join(got, " ") != want {
+		t.Errorf("first 3: got %v, want %s", got, want)
+	}
+}
+
+func TestListOldest(t *testing.T) {
+	dir := t.TempDir()
+	mk := dir + "/makefile"
+	rd := dir + "/README.md"
+	if err := os.WriteFile(mk, []byte(testMakefile), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(rd, []byte(testReadme), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var out strings.Builder
+	if err := listOldest(strings.NewReader("beta\n\n alpha \n"), &out, 5, rd, mk); err != nil {
+		t.Fatal(err)
+	}
+	if want := "alpha\nbeta\n"; out.String() != want {
+		t.Errorf("got %q, want %q", out.String(), want)
+	}
+}
+
+func TestCellStates(t *testing.T) {
+	row := func(cell string) string { return "| [x.com](https://x.com) |  | " + cell + " |" }
+	cases := []struct {
+		name, cell string
+		pass       bool
+		want       string
+	}{
+		{"first failure", "—", false, "❌ failing since 2026-10-18 (checked 2026-10-18)"},
+		{"first failure over a date", "2026-10-15", false, "❌ failing since 2026-10-18 (checked 2026-10-18)"},
+		{"still failing", "❌ failing since 2026-09-01 (checked 2026-10-04)", false, "❌ failing since 2026-09-01 (checked 2026-10-18)"},
+		{"old form still failing", "❌ failing since 2026-09-01", false, "❌ failing since 2026-09-01 (checked 2026-10-18)"},
+		{"recovery", "❌ failing since 2026-09-01 (checked 2026-10-04)", true, "2026-10-18"},
+	}
+	for _, c := range cases {
+		readme := "## Supported sites\n\n| Site | Notes | Last verified |\n| --- | --- | --- |\n" + row(c.cell) + "\n\n## Next\n"
+		out, _, err := update(readme, map[string]string{"x": "x.com"}, map[string]bool{"x": c.pass}, "2026-10-18")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(out, row(c.want)+"\n") {
+			t.Errorf("%s: want %q in\n%s", c.name, row(c.want), out)
+		}
+	}
+}
+
+func TestOldestByCheckedDate(t *testing.T) {
+	const mk = `
+grabber/a:
+	go run . https://a.com/x 1
+grabber/b:
+	go run . https://b.com/x 1
+grabber/c:
+	go run . https://c.com/x 1
+grabber/d:
+	go run . https://d.com/x 1
+grabber/e:
+	go run . https://e.com/x 1
+`
+	const readme = `## Supported sites
+
+| Site | Notes | Last verified |
+| --- | --- | --- |
+| [a.com](https://a.com) |  | — |
+| [b.com](https://b.com) |  | 2026-05-01 |
+| [c.com](https://c.com) |  | ❌ failing since 2026-01-01 (checked 2026-10-01) |
+| [d.com](https://d.com) |  | ❌ failing since 2026-03-01 (checked 2026-06-01) |
+| [e.com](https://e.com) |  | ❌ failing since 2026-04-01 |
+
+## Next
+`
+	// a: never checked; e: old form, queued by its since date; d: by its check.
+	got, err := oldest(readme, targetHosts(mk), []string{"c", "d", "e", "b", "a"}, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "a e b d c"; strings.Join(got, " ") != want {
+		t.Errorf("got %v, want %s", got, want)
+	}
 }
