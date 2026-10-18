@@ -1177,14 +1177,14 @@ func TestRetryFlakyOptIn(t *testing.T) {
 
 // TestFetchTitleFallback covers series pages whose Title selector finds
 // nothing: the title then comes from og:title or <title>, minus the site's
-// own name. The HTML is trimmed from the real pages.
+// own name, else from the series URL. The HTML is trimmed from the real pages.
 func TestFetchTitleFallback(t *testing.T) {
 	cases := []struct {
-		name    string
-		html    string
-		title   string
-		want    string
-		wantErr bool
+		name  string
+		url   string
+		html  string
+		title string
+		want  string
 	}{
 		{
 			// bloomscans: the madarascans entry's h1.entry-title isn't on the page
@@ -1236,10 +1236,34 @@ func TestFetchTitleFallback(t *testing.T) {
 			want:  "Real Title",
 		},
 		{
-			name:    "nothing to read is an error, not an empty title",
-			html:    `<html><body><p>no title here</p></body></html>`,
-			title:   "h1",
-			wantErr: true,
+			// a reader-less page with no title at all: the URL names the series
+			name:  "nothing on the page: last URL segment",
+			url:   "https://example.test/manga/regression-del-tanque/",
+			html:  `<html><body><p>no title here</p></body></html>`,
+			title: "h1",
+			want:  "Regression Del Tanque",
+		},
+		{
+			name:  "percent-encoded and underscored slug",
+			url:   "https://example.test/manga/one%20piece_extra/",
+			html:  `<html><body></body></html>`,
+			title: "h1",
+			want:  "One Piece Extra",
+		},
+		{
+			// a bare home page has no path segment: the host's second-level label
+			name:  "bare home page: host label",
+			url:   "https://www.sxfmanga.net/",
+			html:  `<html><body></body></html>`,
+			title: "h1",
+			want:  "sxfmanga",
+		},
+		{
+			name:  "subdomain host label",
+			url:   "https://w2.dandadanmanga.net/",
+			html:  `<html><body></body></html>`,
+			title: "h1",
+			want:  "dandadanmanga",
 		},
 	}
 
@@ -1249,14 +1273,25 @@ func TestFetchTitleFallback(t *testing.T) {
 				doc:  docFromHTML(t, c.html),
 				site: SiteSelector{Title: c.title},
 			}
+			if c.url != "" {
+				m.Grabber = &Grabber{URL: c.url}
+			}
 
 			got, err := m.FetchTitle()
-			if (err != nil) != c.wantErr {
-				t.Fatalf("FetchTitle() error = %v, wantErr %v", err, c.wantErr)
+			if err != nil {
+				t.Fatalf("FetchTitle() error = %v", err)
 			}
 			if got != c.want {
 				t.Errorf("FetchTitle() = %q, want %q", got, c.want)
 			}
 		})
+	}
+}
+
+func TestFetchTitleNoURLIsAnError(t *testing.T) {
+	// without a URL there is nothing to name the series from
+	m := PlainHTML{doc: docFromHTML(t, `<html><body></body></html>`), site: SiteSelector{Title: "h1"}}
+	if got, err := m.FetchTitle(); err == nil {
+		t.Errorf("FetchTitle() = %q, nil; want an error", got)
 	}
 }

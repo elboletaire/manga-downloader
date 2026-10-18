@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
@@ -725,9 +726,9 @@ func (m PlainHTML) rowChapterNumber(s *goquery.Selection) (float64, bool) {
 	return checkRowChapterNumber(s, m.site)
 }
 
-// FetchTitle returns the manga title: the Title selector's text, or when that
-// finds nothing, og:title and then <title> with the site's own name stripped.
-// It errors instead of returning "", since an empty title empties file names.
+// FetchTitle returns the manga title: the Title selector's text, else og:title
+// and <title> with the site's own name stripped, else the URL's name (urlTitle).
+// It never returns "", so file names always carry a series title.
 func (m PlainHTML) FetchTitle() (string, error) {
 	title := m.doc.Find(m.site.Title)
 	if m.site.TitleNoise != "" {
@@ -747,7 +748,51 @@ func (m PlainHTML) FetchTitle() (string, error) {
 			return t, nil
 		}
 	}
-	return "", errors.New("no series title found")
+	return m.urlTitle()
+}
+
+// urlTitle names a series that has no title on its page from its URL: the last
+// path segment ("/manga/one-piece/" is "One Piece"), else the host's
+// second-level label ("www.sxfmanga.net" is "sxfmanga"). It errors only when
+// there is no URL at all.
+func (m PlainHTML) urlTitle() (string, error) {
+	if m.Grabber == nil || m.URL == "" {
+		return "", errors.New("no series title on the page and no URL to name it from")
+	}
+	u, err := url.Parse(m.URL)
+	if err != nil {
+		return "", err
+	}
+
+	if segments := strings.Split(strings.Trim(u.Path, "/"), "/"); segments[len(segments)-1] != "" {
+		slug, err := url.PathUnescape(segments[len(segments)-1])
+		if err != nil {
+			slug = segments[len(segments)-1]
+		}
+		if name := humanizeSlug(slug); name != "" {
+			return name, nil
+		}
+	}
+
+	host := u.Hostname()
+	if host == "" {
+		return "", errors.New("no series title on the page and no host in its URL")
+	}
+	labels := strings.Split(host, ".")
+	if len(labels) > 1 {
+		return labels[len(labels)-2], nil
+	}
+	return host, nil
+}
+
+// humanizeSlug turns "regression-del_tanque" into "Regression Del Tanque".
+func humanizeSlug(slug string) string {
+	words := strings.FieldsFunc(slug, func(r rune) bool { return r == '-' || r == '_' || unicode.IsSpace(r) })
+	for i, w := range words {
+		r, size := utf8.DecodeRuneInString(w)
+		words[i] = string(unicode.ToUpper(r)) + w[size:]
+	}
+	return strings.Join(words, " ")
 }
 
 // stripSiteName drops a trailing " - Site Name" (or any of - – — | ·) when it
