@@ -6,10 +6,6 @@ on:
   schedule:
     - cron: "41 4 * * *"
   workflow_dispatch:
-    inputs:
-      import-old:
-        description: Path of an old-format snapshots/ layout on stats-data to import (`.` for the root); leave empty
-        default: ""
 
 permissions:
   contents: write
@@ -25,5 +21,3 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: elboletaire/github-stats-action@v0
-        with:
-          import-old: ${{ inputs.import-old }}
