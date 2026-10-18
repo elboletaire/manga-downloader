@@ -84,7 +84,7 @@ func TestRSCComicChapterPages(t *testing.T) {
 // series' full chapterCount independently; if the two disagree (a page
 // failed to load, or totalPages undercounts) FetchChapters must error
 // instead of silently returning a truncated-but-successful list — the same
-// failure class tanstackComic guards against for hivetoons/vortexscans
+// failure class TanstackComic guards against for hivetoons/vortexscans
 func TestRSCComicFetchChaptersGuardsIncompleteCount(t *testing.T) {
 	page := &rscComicSeriesPage{TotalPages: 1}
 	page.Series.Title = "T"

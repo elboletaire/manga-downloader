@@ -490,7 +490,7 @@ grabber/kaynscan:
 grabber/hivetoons:
 	go run . https://hivetoons.org/series/eleceed 200
 
-# azorafly is another tanstackComic site: the same chapter list sits in the
+# azorafly is another TanstackComic site: the same chapter list sits in the
 # seroval data, so a chapter well behind the newest ones proves it's read.
 grabber/azorafly:
 	go run . https://azorafly.com/series/a-ghostly-song 20
