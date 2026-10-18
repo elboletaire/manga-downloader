@@ -1,6 +1,4 @@
-// The window. A fresh start can open on the simple view, only the logo over the
-// URL box (startView.ts), which glides into the full one when a load starts.
-// The full view is three bands, top to bottom, following the job's own order:
+// The window. Three bands, top to bottom, following the job's own order:
 //
 //   source bar  what to fetch (URL, language and scanlator filters)
 //   workspace   the chapter list | a side panel with Options and Activity,
@@ -13,7 +11,7 @@ import type { Api } from './api';
 import { BrowserAlert } from './BrowserAlert';
 import { ChapterPanel } from './ChapterPanel';
 import { DownloadDock } from './DownloadDock';
-import { FLIP_MS, measure, play, prefersReducedMotion, type Box, type FlipMode } from './flip';
+import { glideMs, measure, play, prefersReducedMotion, type Box, type FlipMode } from './flip';
 import { errorMessage } from './format';
 import { say } from './i18n';
 import { ActivityIcon, SlidersIcon, Spinner } from './icons';
@@ -33,7 +31,7 @@ import { useWindow } from './useWindow';
 type Tab = 'options' | 'activity';
 
 // how each shared element glides from the simple view (see flip.ts)
-const FLIP_MODES: Record<string, FlipMode> = { brand: 'scale', form: 'width', settings: 'move' };
+const FLIP_MODES: Record<string, FlipMode> = { mascot: 'scale', wordmark: 'scale', form: 'width', settings: 'move' };
 
 export function App({ api, initial }: { api: Api; initial?: State }) {
   const { t } = useI18n();
@@ -130,7 +128,7 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
   }, [view]);
   useEffect(() => {
     if (!revealing) return;
-    const done = setTimeout(() => setRevealing(false), FLIP_MS + 300);
+    const done = setTimeout(() => setRevealing(false), glideMs() + 300);
     return () => clearTimeout(done);
   }, [revealing]);
 
@@ -313,18 +311,16 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
           }}
         />
       )}
-      {view === 'full' && (
-        <StatusBar
-          log={log}
-          version={state.version}
-          releaseURL={state.releaseURL}
-          update={state.update}
-          open={logOpen}
-          onToggle={() => setLogOpen((o) => !o)}
-          onOpenURL={(url) => api.openURL(url)}
-          onUpdate={() => api.update()}
-        />
-      )}
+      <StatusBar
+        log={log}
+        version={state.version}
+        releaseURL={state.releaseURL}
+        update={state.update}
+        open={logOpen}
+        onToggle={() => setLogOpen((o) => !o)}
+        onOpenURL={(url) => api.openURL(url)}
+        onUpdate={() => api.update()}
+      />
     </div>
   );
 }

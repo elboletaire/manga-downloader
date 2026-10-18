@@ -119,9 +119,9 @@ export function SourceBar({
     <header className={`source${simple ? ' simple' : ''}`}>
       {/* data-flip marks what glides from the simple view into place (flip.ts) */}
       <div className="source-row">
-        <div className="brand" title="Manga Downloader" data-flip="brand">
-          <Mascot expression={expression} size={48} />
-          <Wordmark />
+        <div className="brand" title="Manga Downloader">
+          <Mascot expression={expression} size={48} flip="mascot" />
+          <Wordmark flip="wordmark" />
         </div>
         <form
           className="url-form"

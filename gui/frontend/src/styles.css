@@ -53,6 +53,8 @@
   --radius: 12px;
   --radius-sm: 8px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* the simple view's glide into the full one (flip.ts reads it, in ms) */
+  --glide: 480ms;
 
   font-family: var(--font);
   font-size: 13px;
@@ -431,10 +433,11 @@ code,
 
 /* a fresh start: the logo over the URL box, centred, with the settings under them.
    App.tsx glides them into the source bar (flip.ts) when a load starts */
-.source {
+.app.revealing .source,
+.app.revealing .statusbar {
   transition:
-    background-color 0.48s var(--ease),
-    border-color 0.48s var(--ease);
+    background-color var(--glide) var(--ease),
+    border-color var(--glide) var(--ease);
 }
 
 /* the form's width is fixed while it glides, so the gear keeps to the right */
@@ -443,7 +446,13 @@ code,
 }
 
 .app.simple {
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+/* kept for the log and the update badge, but bare */
+.app.simple .statusbar {
+  background: transparent;
+  border-top-color: transparent;
 }
 
 .source.simple {
@@ -505,11 +514,7 @@ code,
 }
 
 .app.revealing .workspace {
-  animation: slide-up 0.48s var(--ease) 0.12s both;
-}
-
-.app.revealing .statusbar {
-  animation: slide-up 0.48s var(--ease) 0.22s both;
+  animation: slide-up var(--glide) var(--ease) 0.12s both;
 }
 
 /* ---------- workspace ---------- */

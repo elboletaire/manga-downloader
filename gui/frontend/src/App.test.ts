@@ -59,7 +59,8 @@ describe('App start view', () => {
     expect(html).toContain('<span>Settings</span>');
     expect(html).not.toContain('class="workspace"');
     expect(html).not.toContain('class="filter-row"');
-    expect(html).not.toContain('class="statusbar"');
+    // the status bar stays, bare, for the log and the update badge
+    expect(html).toContain('class="statusbar"');
   });
 
   it('opens on the full view with the pref off or a series loaded', async () => {

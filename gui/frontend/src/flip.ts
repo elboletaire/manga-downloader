@@ -32,8 +32,14 @@ export function invert(first: Box, last: Box, mode: FlipMode): { transform: stri
   return { transform: `translate(${dx}px, ${dy}px) scale(${first.height / last.height})` };
 }
 
-export const FLIP_MS = 480;
-const EASE = 'cubic-bezier(0.2, 0.7, 0.2, 1)';
+// the timing is styles.css's --glide and --ease, so the CSS and the glide stay in step
+const GLIDE = 'var(--glide) var(--ease)';
+
+/** The glide's length, read from --glide (ms) */
+export function glideMs(): number {
+  const ms = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--glide'));
+  return Number.isNaN(ms) ? 0 : ms;
+}
 
 /** Whether the user asked for less motion: the switch is instant then */
 export function prefersReducedMotion(): boolean {
@@ -51,12 +57,15 @@ export function measure(root: ParentNode): Map<string, Box> {
 
 /** Moves each element still marked under root from its box in `first` to where it is now */
 export function play(root: ParentNode, first: Map<string, Box>, modes: Record<string, FlipMode>): void {
+  const ms = glideMs();
   root.querySelectorAll<HTMLElement>('[data-flip]').forEach((el) => {
     const key = el.dataset.flip!;
     const from = first.get(key);
     if (from === undefined) return;
     const mode = modes[key] ?? 'move';
     const last = el.getBoundingClientRect();
+    // hidden in the full view (the wordmark on narrow windows): nothing to glide to
+    if (last.width === 0) return;
     const to = invert(from, last, mode);
     el.style.transition = 'none';
     el.style.transform = to.transform;
@@ -66,13 +75,13 @@ export function play(root: ParentNode, first: Map<string, Box>, modes: Record<st
     }
     // the read commits the inverted styles, so the transition starts from them
     void el.offsetWidth;
-    el.style.transition = `transform ${FLIP_MS}ms ${EASE}, width ${FLIP_MS}ms ${EASE}`;
+    el.style.transition = `transform ${GLIDE}, width ${GLIDE}`;
     el.style.transform = '';
     if (to.width !== undefined) {
       el.style.width = `${last.width}px`;
     }
     setTimeout(() => {
       el.style.transition = el.style.transform = el.style.flex = el.style.width = '';
-    }, FLIP_MS + 50);
+    }, ms + 50);
   });
 }
