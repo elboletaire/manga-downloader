@@ -9,11 +9,12 @@
 // rows that don't map are reported, never guessed.
 //
 // With -oldest N it instead prints the N targets read from stdin whose rows
-// were verified longest ago, so the smoke rotation can pick them.
+// were verified longest ago, so the smoke rotation can pick them (-offset K
+// rotates each group of equal dates, see oldest).
 //
 // Usage: go run ./tools/site-status -results FILE -date YYYY-MM-DD [-readme README.md] [-makefile makefile]
 //
-//	go run ./tools/site-status -oldest N [-readme README.md] [-makefile makefile] < targets
+//	go run ./tools/site-status -oldest N [-offset K] [-readme README.md] [-makefile makefile] < targets
 package main
 
 import (
@@ -23,6 +24,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -49,10 +51,11 @@ func main() {
 	readme := flag.String("readme", "README.md", "README to update in place")
 	makefile := flag.String("makefile", "makefile", "makefile holding the grabber/<target> recipes")
 	count := flag.Int("oldest", 0, "print the N stdin targets whose rows were verified longest ago")
+	offset := flag.Int("offset", 0, "with -oldest, start each group of equal dates K places on (wrapping)")
 	flag.Parse()
 
 	if *count > 0 {
-		if err := listOldest(os.Stdin, os.Stdout, *count, *readme, *makefile); err != nil {
+		if err := listOldest(os.Stdin, os.Stdout, *count, *offset, *readme, *makefile); err != nil {
 			fmt.Fprintln(os.Stderr, "site-status:", err)
 			os.Exit(1)
 		}
@@ -60,7 +63,7 @@ func main() {
 	}
 	if *results == "" || !dateRe.MatchString(*date) {
 		fmt.Fprintln(os.Stderr, "usage: site-status -results FILE -date YYYY-MM-DD [-readme FILE] [-makefile FILE]")
-		fmt.Fprintln(os.Stderr, "       site-status -oldest N [-readme FILE] [-makefile FILE] < targets")
+		fmt.Fprintln(os.Stderr, "       site-status -oldest N [-offset K] [-readme FILE] [-makefile FILE] < targets")
 		os.Exit(2)
 	}
 	if err := run(*results, *date, *readme, *makefile); err != nil {
@@ -105,7 +108,7 @@ func run(resultsPath, date, readmePath, makefilePath string) error {
 
 // listOldest writes the n candidate targets read from in (one per line) whose
 // rows were verified longest ago, one per line.
-func listOldest(in io.Reader, out io.Writer, n int, readmePath, makefilePath string) error {
+func listOldest(in io.Reader, out io.Writer, n, offset int, readmePath, makefilePath string) error {
 	var candidates []string
 	sc := bufio.NewScanner(in)
 	for sc.Scan() {
@@ -124,7 +127,7 @@ func listOldest(in io.Reader, out io.Writer, n int, readmePath, makefilePath str
 	if err != nil {
 		return err
 	}
-	targets, err := oldest(string(rd), targetHosts(string(mb)), candidates, n)
+	targets, err := oldest(string(rd), targetHosts(string(mb)), candidates, n, offset)
 	if err != nil {
 		return err
 	}
@@ -134,10 +137,10 @@ func listOldest(in io.Reader, out io.Writer, n int, readmePath, makefilePath str
 	return nil
 }
 
-// oldest returns the n candidates whose rows were verified longest ago: never
-// checked first (a candidate with no row counts as never checked), then by
-// date, ties by name. A failing row is ordered by when it was last checked.
-func oldest(readme string, hosts map[string]string, candidates []string, n int) ([]string, error) {
+// oldest returns the n candidates verified longest ago: never checked (or with
+// no row) first, then by date (a failing row's last check), each group of equal
+// dates sorted by name and rotated by offset.
+func oldest(readme string, hosts map[string]string, candidates []string, n, offset int) ([]string, error) {
 	rows, err := readRows(strings.Split(readme, "\n"))
 	if err != nil {
 		return nil, err
@@ -159,6 +162,14 @@ func oldest(readme string, hosts map[string]string, candidates []string, n int) 
 		}
 		return dues[i].target < dues[j].target
 	})
+	for i := 0; i < len(dues); {
+		j := i
+		for j < len(dues) && dues[j].date == dues[i].date {
+			j++
+		}
+		rotate(dues[i:j], offset)
+		i = j
+	}
 	if n > len(dues) {
 		n = len(dues)
 	}
@@ -167,6 +178,17 @@ func oldest(readme string, hosts map[string]string, candidates []string, n int) 
 		out = append(out, d.target)
 	}
 	return out, nil
+}
+
+// rotate moves the first offset mod len(group) items of group to its end.
+func rotate[T any](group []T, offset int) {
+	if len(group) == 0 {
+		return
+	}
+	k := ((offset % len(group)) + len(group)) % len(group)
+	slices.Reverse(group[:k])
+	slices.Reverse(group[k:])
+	slices.Reverse(group)
 }
 
 // queueDate returns the day that queues a "Last verified" cell for the rotation:

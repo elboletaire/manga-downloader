@@ -174,14 +174,14 @@ func TestOldest(t *testing.T) {
 	// alpha and orphan were never checked (a dash, or no row at all), gamma and
 	// gamma2 share a row verified 2026-01-01, beta is failing since 2026-09-01.
 	cands := []string{"beta", "gamma2", "orphan", "gamma", "alpha"}
-	got, err := oldest(testReadme, hosts(), cands, len(cands))
+	got, err := oldest(testReadme, hosts(), cands, len(cands), 0)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if want := "alpha orphan gamma gamma2 beta"; strings.Join(got, " ") != want {
 		t.Errorf("got %v, want %s", got, want)
 	}
-	got, _ = oldest(testReadme, hosts(), cands, 3)
+	got, _ = oldest(testReadme, hosts(), cands, 3, 0)
 	if want := "alpha orphan gamma"; strings.Join(got, " ") != want {
 		t.Errorf("first 3: got %v, want %s", got, want)
 	}
@@ -198,7 +198,7 @@ func TestListOldest(t *testing.T) {
 		t.Fatal(err)
 	}
 	var out strings.Builder
-	if err := listOldest(strings.NewReader("beta\n\n alpha \n"), &out, 5, rd, mk); err != nil {
+	if err := listOldest(strings.NewReader("beta\n\n alpha \n"), &out, 5, 0, rd, mk); err != nil {
 		t.Fatal(err)
 	}
 	if want := "alpha\nbeta\n"; out.String() != want {
@@ -257,11 +257,60 @@ grabber/e:
 ## Next
 `
 	// a: never checked; e: old form, queued by its since date; d: by its check.
-	got, err := oldest(readme, targetHosts(mk), []string{"c", "d", "e", "b", "a"}, 5)
+	got, err := oldest(readme, targetHosts(mk), []string{"c", "d", "e", "b", "a"}, 5, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if want := "a e b d c"; strings.Join(got, " ") != want {
 		t.Errorf("got %v, want %s", got, want)
+	}
+}
+
+func TestOldestOffset(t *testing.T) {
+	// a and h were never checked, b-e share one date and f-g another.
+	const readme = `## Supported sites
+
+| Site | Notes | Last verified |
+| --- | --- | --- |
+| [a.com](https://a.com) |  | — |
+| [h.com](https://h.com) |  | — |
+| [b.com](https://b.com) |  | 2026-05-01 |
+| [c.com](https://c.com) |  | 2026-05-01 |
+| [d.com](https://d.com) |  | 2026-05-01 |
+| [e.com](https://e.com) |  | 2026-05-01 |
+| [f.com](https://f.com) |  | 2026-06-01 |
+| [g.com](https://g.com) |  | 2026-06-01 |
+
+## Next
+`
+	hosts := map[string]string{}
+	var cands []string
+	for _, l := range []string{"a", "b", "c", "d", "e", "f", "g", "h"} {
+		hosts[l] = l + ".com"
+		cands = append([]string{l}, cands...)
+	}
+	cases := []struct {
+		n, offset int
+		want      string
+	}{
+		{8, 0, "a h b c d e f g"},
+		// each group rotates by its own size: the first of b-e moves to the back.
+		{8, 1, "h a c d e b g f"},
+		{3, 1, "h a c"},
+		// an offset past the group wraps: 5 is 1 in a group of two and of four.
+		{8, 5, "h a c d e b g f"},
+		{8, 2, "a h d e b c f g"},
+		// the never-checked group stays first at any offset.
+		{2, 3, "h a"},
+		{8, -1, "h a e b c d g f"},
+	}
+	for _, c := range cases {
+		got, err := oldest(readme, hosts, cands, c.n, c.offset)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Join(got, " ") != c.want {
+			t.Errorf("n=%d offset=%d: got %v, want %s", c.n, c.offset, got, c.want)
+		}
 	}
 }

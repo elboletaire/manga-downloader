@@ -1940,6 +1940,9 @@ site-status:
 # longest ago, split round-robin over SHARDS (TARGETS="a b" overrides it).
 # About a quarter of the list: every site comes round about every two weeks.
 SMOKE_COUNT ?= 110
+# runs on one day share a date, so each run skips the previous batch by SMOKE_COUNT
+# (GITHUB_RUN_NUMBER on Actions: the shards of one run agree, the next run moves on)
+SMOKE_OFFSET ?= $(GITHUB_RUN_NUMBER)
 SHARD ?= 1
 SHARDS ?= 1
 SMOKE_RESULTS ?= smoke-results.txt
@@ -1966,7 +1969,7 @@ SMOKE_MAKE = $(MAKE)
 # the targets to check, one per line, before the shard split
 SMOKE_PICK = if [ -n "$(TARGETS)" ]; then printf '%s\n' $(TARGETS); \
 	elif [ "$(SMOKE_COUNT)" = all ]; then printf '%s\n' $(SMOKE_TARGETS); \
-	else printf '%s\n' $(SMOKE_TARGETS) | go run ./tools/site-status -oldest $(SMOKE_COUNT); fi
+	else printf '%s\n' $(SMOKE_TARGETS) | go run ./tools/site-status -oldest $(SMOKE_COUNT) -offset $$(( $(or $(SMOKE_OFFSET),0) * $(SMOKE_COUNT) )); fi
 # this shard's round-robin share of the lines on its stdin
 SMOKE_SHARD = awk -v n=$(SHARDS) -v s=$(SHARD) 'NF && (NR - 1) % n == s - 1'
 
