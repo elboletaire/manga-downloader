@@ -1295,3 +1295,72 @@ func TestFetchTitleNoURLIsAnError(t *testing.T) {
 		t.Errorf("FetchTitle() = %q, nil; want an error", got)
 	}
 }
+
+// TestFetchTitleSiteNameAndSlugs covers the separators around a site's name,
+// slugs that end in a page extension, and slugs that are only a number.
+func TestFetchTitleSiteNameAndSlugs(t *testing.T) {
+	cases := []struct {
+		name     string
+		url      string
+		ogTitle  string
+		siteName string
+		want     string
+	}{
+		{name: "suffix with dash", ogTitle: "Some Series - Example Site", siteName: "Example Site", want: "Some Series"},
+		{name: "suffix with slash", ogTitle: "Some Series / Example Site", siteName: "Example Site", want: "Some Series"},
+		{name: "suffix with colon", ogTitle: "Some Series : Example Site", siteName: "Example Site", want: "Some Series"},
+		{name: "prefix form", ogTitle: "Example Site | Some Series", siteName: "Example Site", want: "Some Series"},
+		{name: "hyphenated site name", ogTitle: "Some Series - Manga-Site", siteName: "Manga-Site", want: "Some Series"},
+		// no whitespace before the dash: a word joined by a dash, not a suffix
+		{name: "dash without spaces is kept", ogTitle: "Spy-Family", siteName: "Family", want: "Spy-Family"},
+		{
+			name: "slug with .html", url: "https://example.test/manga/regression-del-tanque.html",
+			want: "Regression Del Tanque",
+		},
+		{
+			name: "slug with .php", url: "https://example.test/series.php/one-piece.php",
+			want: "One Piece",
+		},
+		{
+			// a numeric slug names no series: the host does
+			name: "all-digits slug falls back to the host", url: "https://www.sxfmanga.net/12345/",
+			want: "sxfmanga",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			html := `<html><head><meta property="og:title" content="` + c.ogTitle + `" />` +
+				`<meta property="og:site_name" content="` + c.siteName + `" /></head><body></body></html>`
+			m := PlainHTML{doc: docFromHTML(t, html), site: SiteSelector{Title: "h1"}}
+			if c.url != "" {
+				m.Grabber = &Grabber{URL: c.url}
+			}
+
+			got, err := m.FetchTitle()
+			if err != nil {
+				t.Fatalf("FetchTitle() error = %v", err)
+			}
+			if got != c.want {
+				t.Errorf("FetchTitle() = %q, want %q", got, c.want)
+			}
+		})
+	}
+}
+
+// TestPageTitleIgnoresURL keeps the URL's name out of pageTitle, which
+// FetchChapters strips chapter titles with: a slug or host label would cut
+// words that belong to a chapter's own title.
+func TestPageTitleIgnoresURL(t *testing.T) {
+	m := PlainHTML{
+		doc:     docFromHTML(t, `<html><body><p>no title</p></body></html>`),
+		site:    SiteSelector{Title: "h1"},
+		Grabber: &Grabber{URL: "https://www.sxfmanga.net/manga/regression-del-tanque/"},
+	}
+	if got := m.pageTitle(); got != "" {
+		t.Errorf("pageTitle() = %q, want \"\"", got)
+	}
+	if got, _ := m.FetchTitle(); got != "Regression Del Tanque" {
+		t.Errorf("FetchTitle() = %q, want %q", got, "Regression Del Tanque")
+	}
+}
