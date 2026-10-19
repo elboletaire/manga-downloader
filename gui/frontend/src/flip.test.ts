@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { invert } from './flip';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { invert, play, stop, type Box } from './flip';
 
 const box = (left: number, top: number, width: number, height: number) => ({ left, top, width, height });
 
@@ -22,5 +22,50 @@ describe('invert', () => {
     expect(invert(box(0, 0, 100, 30), box(500, 10, 28, 28), 'move')).toEqual({
       transform: 'translate(-464px, -9px)',
     });
+  });
+});
+
+describe('play and stop', () => {
+  // a fake element with the inline styles play() writes, laid out at (300, 40)
+  const element = () => ({
+    dataset: { flip: 'mascot' },
+    style: { transition: '', transform: '', flex: '', width: '' },
+    offsetWidth: 0,
+    getBoundingClientRect: () => box(300, 40, 100, 40),
+  });
+  const root = (el: ReturnType<typeof element>) => ({ querySelectorAll: () => [el] }) as unknown as ParentNode;
+  const first = new Map([['mascot', box(0, 0, 200, 80)]]);
+  const modes = { mascot: 'scale' as const };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.stubGlobal('document', { documentElement: {} });
+    vi.stubGlobal('getComputedStyle', () => ({ getPropertyValue: () => '480' }));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('a new glide is not cut short by the reset of the one before it', () => {
+    const el = element();
+    const r = root(el);
+    play(r, first, modes);
+    vi.advanceTimersByTime(400);
+    play(r, first, modes);
+    // the first glide's reset was due at 530ms; the second one's at 930ms
+    vi.advanceTimersByTime(200);
+    expect(el.style.transition).not.toBe('');
+    vi.advanceTimersByTime(400);
+    expect(el.style.transition).toBe('');
+  });
+
+  it('stop removes the inline styles of a glide still running', () => {
+    const el = element();
+    play(root(el), first, modes);
+    expect(el.style.transition).not.toBe('');
+    stop(root(el));
+    expect(el.style.transition).toBe('');
+    expect(el.style.transform).toBe('');
   });
 });

@@ -55,6 +55,9 @@ export function measure(root: ParentNode): Map<string, Box> {
   return boxes;
 }
 
+// each element's pending reset of its inline styles, so a new glide isn't cut short by the last one's
+const resets = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
+
 /** Moves each element still marked under root from its box in `first` to where it is now */
 export function play(root: ParentNode, first: Map<string, Box>, modes: Record<string, FlipMode>): void {
   const ms = glideMs();
@@ -80,8 +83,20 @@ export function play(root: ParentNode, first: Map<string, Box>, modes: Record<st
     if (to.width !== undefined) {
       el.style.width = `${last.width}px`;
     }
-    setTimeout(() => {
-      el.style.transition = el.style.transform = el.style.flex = el.style.width = '';
-    }, ms + 50);
+    clearTimeout(resets.get(el));
+    resets.set(
+      el,
+      setTimeout(() => {
+        el.style.transition = el.style.transform = el.style.flex = el.style.width = '';
+      }, ms + 50),
+    );
+  });
+}
+
+/** Ends a glide under root at once: the pending resets are dropped and the inline styles removed */
+export function stop(root: ParentNode): void {
+  root.querySelectorAll<HTMLElement>('[data-flip]').forEach((el) => {
+    clearTimeout(resets.get(el));
+    el.style.transition = el.style.transform = el.style.flex = el.style.width = '';
   });
 }

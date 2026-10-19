@@ -11,7 +11,7 @@ import type { Api } from './api';
 import { BrowserAlert } from './BrowserAlert';
 import { ChapterPanel } from './ChapterPanel';
 import { DownloadDock } from './DownloadDock';
-import { glideMs, measure, play, prefersReducedMotion, type Box, type FlipMode } from './flip';
+import { glideMs, measure, play, prefersReducedMotion, stop, type Box, type FlipMode } from './flip';
 import { errorMessage } from './format';
 import { say } from './i18n';
 import { ActivityIcon, SlidersIcon, Spinner } from './icons';
@@ -23,7 +23,7 @@ import { OptionsPanel } from './OptionsPanel';
 import { SettingsDialog } from './SettingsDialog';
 import { SourceBar } from './SourceBar';
 import { isMac, shouldToggleSettings } from './settingsShortcut';
-import { bootView, nextView, type View } from './startView';
+import { bootView, hasWork, nextView, type View } from './startView';
 import { tally } from './run';
 import type { Options, State } from './types';
 import { useWindow } from './useWindow';
@@ -110,13 +110,25 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
     wasRunning.current = running;
   }, [running, state === null]);
 
-  // a load starting leaves the simple view; the boxes are taken while it's still on screen
+  // the view follows the pref until a load starts; a switch to the full view glides, the
+  // boxes are taken while it's still on screen, and back to the simple one is instant
+  const started = useRef(false);
   useEffect(() => {
-    if (state === null || view !== 'simple' || nextView(view, state) === 'simple') return;
-    const animate = frame.current !== null && !prefersReducedMotion();
-    flipFrom.current = animate ? measure(frame.current!) : null;
-    setRevealing(animate);
-    setView('full');
+    if (state === null || view === null) return;
+    if (hasWork(state)) started.current = true;
+    const next = nextView(view, state, started.current);
+    if (next === view) return;
+    if (next === 'full') {
+      const animate = frame.current !== null && !prefersReducedMotion();
+      flipFrom.current = animate ? measure(frame.current!) : null;
+      setRevealing(animate);
+    } else {
+      // a glide still running stops where it is, so the next one measures the simple view as it is
+      flipFrom.current = null;
+      setRevealing(false);
+      if (frame.current !== null) stop(frame.current);
+    }
+    setView(next);
   }, [state, view]);
 
   // the full view is laid out but not painted yet: put the shared elements back, then let them glide

@@ -583,8 +583,8 @@ func (a *App) SetUILanguage(lang string) error {
 	return nil
 }
 
-// SetSimpleStart sets whether the window opens on the simple view. It's never
-// refused while busy, and takes effect at the next start.
+// SetSimpleStart sets whether the window shows the simple view while nothing is
+// loaded. It's never refused while busy; a load started keeps the full view.
 func (a *App) SetSimpleStart(on bool) error {
 	a.ctrl.SetPrefs(func(p *PrefsDTO) { p.SimpleStart = on })
 	a.save()
