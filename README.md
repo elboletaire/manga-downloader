@@ -142,7 +142,7 @@ updates that copy.
   <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/09-update-light.webp">
 </picture>
 
-The gear icon in the header (or Ctrl+, / ⌘,) opens Settings, where you pick the app's language (English, Español or Català). The same panel turns the update check on or off.
+The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español or Català) and whether the app opens with the simple start screen. The same panel turns the update check on or off.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/13-settings-dark.webp">
@@ -301,15 +301,19 @@ docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/01-start-dark.webp">
-  <img alt="The app's start screen: the logo over an empty URL box, with the settings button below it" src="assets/screenshots/01-start-light.webp">
+  <img alt="The app's start screen: the logo over an empty URL box with its Paste button, Load to its right and Settings below" src="assets/screenshots/01-start-light.webp">
 </picture>
 
-Open the app and follow these steps:
+The app opens on a simple start screen: the logo, the URL box with its *Paste*
+button, *Load* and *Settings*. *Settings* → *Start screen* → *Open with the
+simple view* turns it off, so the app opens on the full window instead. Then
+follow these steps:
 
-1. **Paste the series' URL** into the box at the top (or use its *Paste*
-   button). The app loads the series on its own, without a button. Until a
-   series loads, the window shows only the logo, that box and the settings button;
-   *Settings* → *Start screen* turns this simple view off.
+1. **Paste the series' URL** into the box (or use its *Paste* button). The
+   series loads on its own once you paste or stop typing; *Load* or Enter
+   loads it at once. The window then turns into the full app, with the URL box
+   at the top and the chapter list below, as in the screenshot at the top of
+   this page.
 2. **Pick chapters** in the list. Type a range such as `1-10,12` and press
    Enter (or the + in the box), Shift+click to select a span, or use *All* and
    *None*. The arrow keys and Space work too. Locked chapters (paid or members-only) show
