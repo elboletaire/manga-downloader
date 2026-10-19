@@ -70,6 +70,10 @@ export function SetSelectedMany(arg1, arg2) {
   return window['go']['main']['App']['SetSelectedMany'](arg1, arg2);
 }
 
+export function SetSimpleStart(arg1) {
+  return window['go']['main']['App']['SetSimpleStart'](arg1);
+}
+
 export function SetUILanguage(arg1) {
   return window['go']['main']['App']['SetUILanguage'](arg1);
 }

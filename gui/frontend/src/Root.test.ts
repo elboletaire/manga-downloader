@@ -36,11 +36,11 @@ const windowIn = (state: State) =>
 
 describe('Root', () => {
   it('renders nothing before the first State, so no system language shows first', () => {
-    expect(renderToStaticMarkup(createElement(Root, { api: createMockApi({ uiLanguage: 'ca' }) }))).toBe('');
+    expect(renderToStaticMarkup(createElement(Root, { api: createMockApi({ uiLanguage: 'ca', simpleStart: false }) }))).toBe('');
   });
 
   it('gives the window the saved language from the first snapshot', async () => {
-    const watched = collect(createMockApi({ uiLanguage: 'ca' }));
+    const watched = collect(createMockApi({ uiLanguage: 'ca', simpleStart: false }));
     await settle();
     expect(watched.states).toHaveLength(1);
     expect(windowIn(watched.states[0])).toContain('Comença amb una sèrie');
@@ -48,7 +48,7 @@ describe('Root', () => {
   });
 
   it('switches the language when a push carries a new one', async () => {
-    const api = createMockApi({ uiLanguage: 'ca' });
+    const api = createMockApi({ uiLanguage: 'ca', simpleStart: false });
     const watched = collect(api);
     await settle();
     await api.setUILanguage('es');

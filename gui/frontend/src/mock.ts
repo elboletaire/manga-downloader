@@ -25,6 +25,7 @@
 // fetching), &epub starts the output as EPUB, &prompt
 // (with update) makes the update one-click and opens its prompt on load, &shot
 // uses production release versions and a macOS output path (for screenshots),
+// &nosimple turns the simpleStart pref off (an empty window opens on the full view),
 // and VITE_MOCK=1 at build time includes the mock in production builds (e.g.
 // for the screenshot capture build; set via Wails frontend env). ?lang=en|es|ca
 // starts the window in that language, ?lang=system follows the browser's, and
@@ -120,6 +121,8 @@ export interface MockSetup {
   epub: boolean;
   /** With the update scenario: one-click update, its prompt open on load */
   prompt: boolean;
+  /** The simpleStart pref: an empty window opens on the simple view (off with &nosimple) */
+  simpleStart: boolean;
   /** The window's language preference the mock starts with */
   uiLanguage: LangPref;
 }
@@ -227,6 +230,7 @@ export function mockSetupFrom(search: string): MockSetup {
     fetching: params.has('fetching'),
     epub: params.has('epub'),
     prompt: params.has('prompt'),
+    simpleStart: !params.has('nosimple'),
     uiLanguage: uiLanguageFrom(search),
   };
 }
@@ -362,6 +366,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     fetching,
     epub,
     prompt,
+    simpleStart,
     uiLanguage,
   } = {
     scenario: 'empty' as Scenario,
@@ -378,6 +383,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     fetching: false,
     epub: false,
     prompt: false,
+    simpleStart: true,
     uiLanguage: 'en' as LangPref,
     ...(typeof setup === 'string' ? { scenario: setup } : setup),
   };
@@ -386,7 +392,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   const offers = offersFor(site, uiLang);
   const options = defaultOptions(shot, epub);
   // the app preferences, kept as the backend keeps them in gui.json
-  const prefs: Prefs = { uiLanguage, checkUpdates: true };
+  const prefs: Prefs = { uiLanguage, checkUpdates: true, simpleStart };
   let url = '';
   let loading = false;
   let loadError: Message | undefined;
@@ -522,7 +528,10 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     filenameTemplateWarning:
       options.packAs === 'chapters' || options.packAs === 'parts' ? templateWarning(options.filenameTemplate) : '',
     // the wire omits uiLanguage when it follows the system, as gui.json does
-    prefs: prefs.uiLanguage === '' ? { checkUpdates: prefs.checkUpdates } : { ...prefs },
+    prefs:
+      prefs.uiLanguage === ''
+        ? { checkUpdates: prefs.checkUpdates, simpleStart: prefs.simpleStart }
+        : { ...prefs },
   });
   const push = () => stateBus.emit(snapshot());
 
@@ -1205,6 +1214,10 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     },
     async setCheckUpdates(on) {
       prefs.checkUpdates = on;
+      push();
+    },
+    async setSimpleStart(on) {
+      prefs.simpleStart = on;
       push();
     },
     async cancel() {

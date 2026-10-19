@@ -57,6 +57,7 @@ near `RELEASE_VERSION` in `mock.ts`.
   themes, then the export; `--install` writes the English WebPs into
   `assets/screenshots/` and regenerates the website's WebPs, both from `out/`.
   `SHOT_LANG` picks the language (see below).
+- `01-start`: the empty window on the simple view (`simpleStart` is on by default in the mock).
 - `13-settings`: the Settings dialog, opened by clicking the header's gear
   (`.settings-btn`) on the loaded mock.
 

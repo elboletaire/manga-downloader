@@ -299,10 +299,17 @@ docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
 
 ## Using the desktop app
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/01-start-dark.webp">
+  <img alt="The app's start screen: the logo over an empty URL box, with the settings button below it" src="assets/screenshots/01-start-light.webp">
+</picture>
+
 Open the app and follow these steps:
 
 1. **Paste the series' URL** into the box at the top (or use its *Paste*
-   button). The app loads the series on its own, without a button.
+   button). The app loads the series on its own, without a button. Until a
+   series loads, the window shows only the logo, that box and the settings button;
+   *Settings* → *Start screen* turns this simple view off.
 2. **Pick chapters** in the list. Type a range such as `1-10,12` and press
    Enter (or the + in the box), Shift+click to select a span, or use *All* and
    *None*. The arrow keys and Space work too. Locked chapters (paid or members-only) show

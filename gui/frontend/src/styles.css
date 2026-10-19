@@ -53,6 +53,8 @@
   --radius: 12px;
   --radius-sm: 8px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* the simple view's glide into the full one (flip.ts reads it, in ms) */
+  --glide: 480ms;
 
   font-family: var(--font);
   font-size: 13px;
@@ -425,6 +427,126 @@ code,
 .banner.danger {
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+/* ---------- simple view ---------- */
+
+/* a fresh start: the logo over the URL box, centred, with the settings under them.
+   App.tsx glides them into the source bar (flip.ts) when a load starts */
+.app.revealing .source,
+.app.revealing .statusbar {
+  transition:
+    background-color var(--glide) var(--ease),
+    border-color var(--glide) var(--ease);
+}
+
+/* the form's width is fixed while it glides, so the gear keeps to the right */
+.settings-btn {
+  margin-left: auto;
+}
+
+.app.simple {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+/* kept for the log and the update badge, but bare */
+.app.simple .statusbar {
+  background: transparent;
+  border-top-color: transparent;
+}
+
+.source.simple {
+  align-content: center;
+  padding: 24px 16px 12vh;
+  background: transparent;
+  border-bottom-color: transparent;
+}
+
+.source.simple .source-row {
+  flex-direction: column;
+  gap: 26px;
+}
+
+.source.simple .brand {
+  gap: 18px;
+}
+
+.source.simple .mascot-face {
+  width: 96px;
+  height: 96px;
+}
+
+/* shown on narrow windows too: here it's the page's title */
+.source.simple .brand-name {
+  display: block;
+}
+
+/* the lettering shrinks on narrow windows rather than pushing the logo and the box off the axis */
+.source.simple .brand-name {
+  min-width: 0;
+}
+
+.source.simple .brand-name img {
+  width: 100%;
+  height: 40px;
+  object-fit: contain;
+}
+
+/* Load sits right of the box, outside the centring: the form leaves it room on the left,
+   so the box (and the logo and gear above and below) stays on the window's axis */
+.source.simple {
+  --load-room: 104px;
+}
+
+.source.simple .url-form {
+  flex: none;
+  width: min(calc(640px + var(--load-room)), calc(100% - var(--load-room)));
+  margin-left: var(--load-room);
+  /* its width is set above, so the box's text doesn't widen the window */
+  contain: inline-size;
+}
+
+.source.simple .url-box {
+  box-shadow: var(--shadow-md);
+  background: var(--surface);
+}
+
+.source.simple .url-box:focus-within {
+  box-shadow: var(--shadow-md), var(--ring);
+}
+
+.source.simple .settings-btn {
+  margin: -12px 0 0;
+}
+
+.source.simple .banner {
+  justify-self: center;
+  width: min(640px, 100%);
+}
+
+/* too narrow for Load beside the box: it goes under the box, centred */
+@media (max-width: 480px) {
+  .source.simple {
+    --load-room: 0px;
+  }
+
+  .source.simple .url-form {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .source.simple .url-box {
+    flex-basis: 100%;
+  }
+}
+
+/* the rest of the full view comes in under the gliding source bar */
+.app.revealing .filter-row {
+  animation: slide-up 0.4s var(--ease) 0.18s both;
+}
+
+.app.revealing .workspace {
+  animation: slide-up var(--glide) var(--ease) 0.12s both;
 }
 
 /* ---------- workspace ---------- */

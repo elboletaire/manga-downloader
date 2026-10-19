@@ -216,6 +216,7 @@ export namespace main {
 	export class PrefsDTO {
 	    uiLanguage?: string;
 	    checkUpdates: boolean;
+	    simpleStart: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new PrefsDTO(source);
@@ -225,6 +226,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.uiLanguage = source["uiLanguage"];
 	        this.checkUpdates = source["checkUpdates"];
+	        this.simpleStart = source["simpleStart"];
 	    }
 	}
 	export class RunDTO {

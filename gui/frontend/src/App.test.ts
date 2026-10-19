@@ -29,7 +29,7 @@ describe('App boot screen', () => {
 
 describe('App with the first snapshot', () => {
   it('renders the snapshot it is given, in the saved language, with no boot screen', async () => {
-    const initial = await createMockApi({ uiLanguage: 'ca' }).state();
+    const initial = await createMockApi({ uiLanguage: 'ca', simpleStart: false }).state();
     const html = renderToStaticMarkup(
       createElement(
         I18nProvider,
@@ -39,5 +39,38 @@ describe('App with the first snapshot', () => {
     );
     expect(html).toContain('Comença amb una sèrie');
     expect(html).not.toContain('Iniciant…');
+  });
+});
+
+describe('App start view', () => {
+  const render = (initial: Awaited<ReturnType<Api['state']>>) =>
+    renderToStaticMarkup(
+      createElement(
+        I18nProvider,
+        { pref: 'en', persist: async () => {}, systemLanguages: ['fr-FR'] },
+        createElement(App, { api: {} as Api, initial }),
+      ),
+    );
+
+  it('opens an empty window on the simple view: the URL box and settings, nothing else', async () => {
+    const html = render(await createMockApi('empty').state());
+    expect(html).toContain('class="app simple"');
+    expect(html).toContain('class="url-input"');
+    expect(html).toContain('<span>Settings</span>');
+    expect(html).not.toContain('class="workspace"');
+    expect(html).not.toContain('class="filter-row"');
+    // the status bar stays, bare, for the log and the update badge
+    expect(html).toContain('class="statusbar"');
+  });
+
+  it('opens on the full view with the pref off or a series loaded', async () => {
+    for (const initial of [
+      await createMockApi({ simpleStart: false }).state(),
+      await createMockApi('loaded').state(),
+    ]) {
+      const html = render(initial);
+      expect(html).toContain('class="app"');
+      expect(html).toContain('class="workspace"');
+    }
   });
 });

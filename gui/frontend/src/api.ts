@@ -49,6 +49,8 @@ export interface Api {
   /** Saves the window's language; '' follows the system. Takes effect at once in the window. */
   setUILanguage(pref: LangPref): Promise<void>;
   setCheckUpdates(on: boolean): Promise<void>;
+  /** Saves whether the window opens on the simple view; takes effect at the next start */
+  setSimpleStart(on: boolean): Promise<void>;
 
   // Pushes. Each returns a function that stops the callback.
   onState(cb: (s: State) => void): Unsubscribe;
@@ -117,6 +119,7 @@ export function createWailsApi(): Api {
     dismissBrowserAlert: () => app.DismissBrowserAlert(),
     setUILanguage: (pref) => app.SetUILanguage(pref),
     setCheckUpdates: (on) => app.SetCheckUpdates(on),
+    setSimpleStart: (on) => app.SetSimpleStart(on),
 
     onState: (cb) => state.subscribe(cb),
     onChapters: (cb) => chapters.subscribe(cb),

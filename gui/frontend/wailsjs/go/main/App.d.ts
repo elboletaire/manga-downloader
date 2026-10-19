@@ -36,6 +36,8 @@ export function SetSelected(arg1:number,arg2:boolean):Promise<void>;
 
 export function SetSelectedMany(arg1:Array<number>,arg2:boolean):Promise<void>;
 
+export function SetSimpleStart(arg1:boolean):Promise<void>;
+
 export function SetUILanguage(arg1:string):Promise<void>;
 
 export function SetVolumes(arg1:string):Promise<void>;

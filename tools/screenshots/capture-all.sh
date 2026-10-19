@@ -85,6 +85,7 @@ for SHOT_LANG in $LANGS; do
   mkdir -p "$raw"
   for theme in light dark; do
     shot() { ./shot.sh "$raw/$1-$theme.png" $theme "$2&lang=$SHOT_LANG" 4 "${3:-}"; }
+    shot 01-start '?mock&scenario=empty&freeze&shot'
     shot 02-loaded '?mock&scenario=loaded&freeze&shot'
     ./shot-select.sh "$raw/03-language-selector-$theme.png" $theme
     shot 04-downloading '?mock&scenario=running&freeze&shot'

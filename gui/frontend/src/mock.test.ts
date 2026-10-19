@@ -494,8 +494,10 @@ describe('mockSetupFrom', () => {
       fetching: false,
       epub: false,
       prompt: false,
+      simpleStart: true,
       uiLanguage: 'en',
     });
+    expect(mockSetupFrom('?nosimple').simpleStart).toBe(false);
     expect(mockSetupFrom('?novolumes').novolumes).toBe(true);
     expect(mockSetupFrom('?parts').parts).toBe(true);
     expect(mockSetupFrom('?chapters=nope').chapters).toBeGreaterThan(100);
@@ -689,7 +691,7 @@ describe('mockSetupFrom language', () => {
 
 describe('mock app preferences', () => {
   it('starts with the language it was set up with', async () => {
-    expect((await createMockApi('empty').state()).prefs).toEqual({ uiLanguage: 'en', checkUpdates: true });
+    expect((await createMockApi('empty').state()).prefs).toEqual({ uiLanguage: 'en', checkUpdates: true, simpleStart: true });
     expect((await createMockApi({ uiLanguage: 'es' }).state()).prefs.uiLanguage).toBe('es');
   });
 

@@ -8,13 +8,16 @@ import type { State } from './types';
 
 const persist = async () => undefined;
 
-type Overrides = Partial<{ releaseURL: string; prefs: { uiLanguage: LangPref; checkUpdates: boolean } }>;
+type Overrides = Partial<{
+  releaseURL: string;
+  prefs: { uiLanguage: LangPref; checkUpdates: boolean; simpleStart: boolean };
+}>;
 
 function state(overrides: Overrides = {}) {
   return {
     version: 'v1.18.0',
     releaseURL: 'https://github.com/elboletaire/manga-downloader/releases/tag/v1.18.0',
-    prefs: { uiLanguage: '', checkUpdates: true },
+    prefs: { uiLanguage: '', checkUpdates: true, simpleStart: true },
     ...overrides,
   } as unknown as State;
 }
@@ -28,12 +31,16 @@ function render(pref: LangPref, s: State, systemLanguages = ['fr-FR']) {
         state: s,
         onClose: () => undefined,
         onCheckUpdates: () => undefined,
+        onSimpleStart: () => undefined,
         onOpenURL: () => undefined,
         onError: () => undefined,
       }),
     ),
   );
 }
+
+// the update switch is the last one; the simple view's comes before it
+const updateSwitch = (html: string) => html.match(/<input[^>]*role="switch"[^>]*>/g)?.at(-1) ?? '';
 
 describe('SettingsDialog', () => {
   it('names each language in itself as an option, whatever the UI language', () => {
@@ -60,9 +67,18 @@ describe('SettingsDialog', () => {
     expect(render('', state())).not.toContain('<option value="en" selected="">');
   });
 
+  it('shows the simple view switch as the pref says', () => {
+    const first = (html: string) => html.match(/<input[^>]*role="switch"[^>]*>/)?.[0] ?? '';
+    const on = render('en', state());
+    expect(on).toContain('Open with the simple view');
+    expect(first(on)).toContain('checked=""');
+    const off = render('en', state({ prefs: { uiLanguage: '', checkUpdates: true, simpleStart: false } }));
+    expect(first(off)).not.toContain('checked=""');
+  });
+
   it('shows the update switch off and disabled with the dev hint when there is no release URL', () => {
     const html = render('en', state({ releaseURL: '' }));
-    const input = html.match(/<input[^>]*role="switch"[^>]*>/)?.[0] ?? '';
+    const input = updateSwitch(html);
     expect(html).toContain('Development builds don&#x27;t check for updates.');
     expect(html).not.toContain('Asks GitHub for the latest release');
     expect(input).toContain('disabled=""');
@@ -71,7 +87,7 @@ describe('SettingsDialog', () => {
 
   it('enables the update switch with its hint on a release build', () => {
     const html = render('en', state());
-    const input = html.match(/<input[^>]*role="switch"[^>]*>/)?.[0] ?? '';
+    const input = updateSwitch(html);
     expect(html).toContain('Asks GitHub for the latest release each time the app opens.');
     expect(html).not.toContain('Development builds');
     expect(input).not.toContain('disabled=""');

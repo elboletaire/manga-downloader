@@ -337,7 +337,7 @@ func TestPrefSettersKeepEveryOption(t *testing.T) {
 	if got := a.Options(); got != o {
 		t.Errorf("options %+v after the pref setters, want %+v", got, o)
 	}
-	if got := loadPrefs(prefs); got != (PrefsDTO{UILanguage: "ca"}) {
+	if got := loadPrefs(prefs); got != (PrefsDTO{UILanguage: "ca", SimpleStart: true}) {
 		t.Errorf("saved prefs %+v after the pref setters", got)
 	}
 
@@ -346,7 +346,7 @@ func TestPrefSettersKeepEveryOption(t *testing.T) {
 	if err := a.SetOptions(o); err != nil {
 		t.Fatal(err)
 	}
-	if got := loadPrefs(prefs); got != (PrefsDTO{UILanguage: "ca"}) {
+	if got := loadPrefs(prefs); got != (PrefsDTO{UILanguage: "ca", SimpleStart: true}) {
 		t.Errorf("saved prefs %+v after SetOptions", got)
 	}
 	saved := defaultSettings()
@@ -371,11 +371,31 @@ func TestPrefSettersWorkWhileBusy(t *testing.T) {
 	if after := a.ctrl.Settings(); !reflect.DeepEqual(before, after) {
 		t.Errorf("the pref setters changed the settings:\n%+v\n%+v", before, after)
 	}
-	if st := a.State(); st.Prefs != (PrefsDTO{UILanguage: "es"}) {
+	if st := a.State(); st.Prefs != (PrefsDTO{UILanguage: "es", SimpleStart: true}) {
 		t.Errorf("State().Prefs = %+v", st.Prefs)
 	}
-	if got := loadPrefs(prefs); got != (PrefsDTO{UILanguage: "es"}) {
+	if got := loadPrefs(prefs); got != (PrefsDTO{UILanguage: "es", SimpleStart: true}) {
 		t.Errorf("saved prefs %+v", got)
+	}
+}
+
+func TestSetSimpleStartIsSavedAndKeepsTheOptions(t *testing.T) {
+	a, _, prefs := newTestApp(t, 1)
+	if err := a.ctrl.BeginLoad("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	o := a.Options()
+	if err := a.SetSimpleStart(false); err != nil {
+		t.Errorf("SetSimpleStart while loading = %v", err)
+	}
+	if st := a.State(); st.Prefs != (PrefsDTO{CheckUpdates: true}) {
+		t.Errorf("State().Prefs = %+v", st.Prefs)
+	}
+	if got := loadPrefs(prefs); got.SimpleStart {
+		t.Errorf("saved prefs %+v", got)
+	}
+	if got := a.Options(); got != o {
+		t.Errorf("options %+v after SetSimpleStart, want %+v", got, o)
 	}
 }
 

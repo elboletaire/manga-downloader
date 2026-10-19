@@ -22,7 +22,7 @@ const SMALL_BELOW = 48;
  * way the brand's README snippet does. It's decorative: the text beside it
  * names the app.
  */
-export function Mascot({ expression, size }: { expression: Expression; size: number }) {
+export function Mascot({ expression, size, flip }: { expression: Expression; size: number; flip?: string }) {
   const happy = expression === 'happy';
   const small = size < SMALL_BELOW;
   // below 48px Happy is Soft's face (mark-small is the same for both)
@@ -30,7 +30,7 @@ export function Mascot({ expression, size }: { expression: Expression; size: num
   const dark = small ? smallMarkDark : happy ? happyMarkDark : softMarkDark;
 
   return (
-    <picture className="mascot">
+    <picture className="mascot" data-flip={flip}>
       <source media="(prefers-color-scheme: dark)" srcSet={dark} />
       {/* keyed by expression, so a change plays the entrance again */}
       <img key={expression} className="mascot-face" src={light} width={size} height={size} alt="" aria-hidden="true" />
@@ -39,9 +39,10 @@ export function Mascot({ expression, size }: { expression: Expression; size: num
 }
 
 /** The brand's "manga downloader" lettering, themed like the mascot; hidden on narrow windows */
-export function Wordmark() {
+/** flip marks it for the simple view's glide (flip.ts) */
+export function Wordmark({ flip }: { flip?: string }) {
   return (
-    <picture className="brand-name">
+    <picture className="brand-name" data-flip={flip}>
       <source media="(prefers-color-scheme: dark)" srcSet={wordmarkDark} />
       <img src={wordmark} height={20} alt="Manga Downloader" />
     </picture>
