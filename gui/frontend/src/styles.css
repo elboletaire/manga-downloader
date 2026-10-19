@@ -481,13 +481,29 @@ code,
   display: block;
 }
 
+/* the lettering shrinks on narrow windows rather than pushing the logo and the box off the axis */
+.source.simple .brand-name {
+  min-width: 0;
+}
+
 .source.simple .brand-name img {
+  width: 100%;
   height: 40px;
+  object-fit: contain;
+}
+
+/* Load sits right of the box, outside the centring: the form leaves it room on the left,
+   so the box (and the logo and gear above and below) stays on the window's axis */
+.source.simple {
+  --load-room: 104px;
 }
 
 .source.simple .url-form {
   flex: none;
-  width: min(640px, 100%);
+  width: min(calc(640px + var(--load-room)), calc(100% - var(--load-room)));
+  margin-left: var(--load-room);
+  /* its width is set above, so the box's text doesn't widen the window */
+  contain: inline-size;
 }
 
 .source.simple .url-box {
@@ -506,6 +522,22 @@ code,
 .source.simple .banner {
   justify-self: center;
   width: min(640px, 100%);
+}
+
+/* too narrow for Load beside the box: it goes under the box, centred */
+@media (max-width: 480px) {
+  .source.simple {
+    --load-room: 0px;
+  }
+
+  .source.simple .url-form {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .source.simple .url-box {
+    flex-basis: 100%;
+  }
 }
 
 /* the rest of the full view comes in under the gliding source bar */
