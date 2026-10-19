@@ -1437,6 +1437,9 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	authorizeMadaradex(doc)
+	if err := authenticateReader(doc, mchap.URL); err != nil {
+		notice.Warn("- warning: could not authenticate the reader of %s, its pages may be refused: %s", ChapterLabel(f), err)
+	}
 
 	return m.chapterFromDoc(f, doc), nil
 }
