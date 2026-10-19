@@ -927,7 +927,6 @@ grabber/html: \
 	grabber/bacakomik \
 	grabber/bananascans \
 	grabber/blmangafree \
-	grabber/bloomscans \
 	grabber/borutoexplorer \
 	grabber/bymichiby \
 	grabber/cat300 \
@@ -1878,9 +1877,6 @@ grabber/yurimoonsub:
 
 grabber/blmangafree:
 	go run . https://ww5.blmangafree.com/ 200
-
-grabber/bloomscans:
-	go run . https://bloomscans.com/series/matrimonio-por-venganza/ 5
 
 grabber/csmmangafree:
 	go run . https://www.csmmangafree.com/ 60
