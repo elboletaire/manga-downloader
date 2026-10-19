@@ -76,6 +76,13 @@ English-only), and every language's crops and hero in the website's
 `src/assets/screenshots/`: English at its root, `es` and `ca` in a `<lang>/`
 folder. Without `--install` the PNGs stay in `out/<lang>/`.
 
+`SHOTS` retakes only the shots named, for a change that touched one or two of
+them; the website's crops are left alone then, since they need every source:
+
+```bash
+SHOTS="01-start 13-settings" tools/screenshots/capture-all.sh --install
+```
+
 A translated label that changes a panel's size needs its crop checked in
 `website/build/crop-screenshots.sh`: the crops assume the panels sit where they
 do in English, which holds only while the window size is fixed. The Language

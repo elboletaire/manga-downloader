@@ -146,7 +146,7 @@ The gear icon (below the URL box on the start screen, in the header of the full 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/13-settings-dark.webp">
-  <img alt="The Settings dialog, with the app's language and the update check" src="assets/screenshots/13-settings-light.webp">
+  <img alt="The Settings dialog, with the app's language, the start screen and the update check" src="assets/screenshots/13-settings-light.webp">
 </picture>
 
 ### Command line

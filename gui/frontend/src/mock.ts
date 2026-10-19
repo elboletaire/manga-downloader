@@ -188,9 +188,9 @@ const MOCK_ALERT = msgOf('browser.alertNamed', { browser: 'Brave', host: 'check.
 
 const REPO = 'https://github.com/elboletaire/manga-downloader';
 const RELEASE_VERSION_DEV = 'v1.12.0';
-const RELEASE_VERSION_SHOT = 'v1.20.0';
+const RELEASE_VERSION_SHOT = 'v1.21.0';
 const UPDATE_VERSION_DEV = 'v1.13.0';
-const UPDATE_VERSION_SHOT = 'v1.21.0';
+const UPDATE_VERSION_SHOT = 'v1.22.0';
 
 function siteFrom(search: string): MockSite {
   const value = new URLSearchParams(search).get('site');
