@@ -639,3 +639,26 @@ func TestBloggerDataLabelChapterList(t *testing.T) {
 		t.Errorf("unnumbered post = %q, want Epílogo unnumbered", ChapterLabel(last))
 	}
 }
+
+// TestBloggerReportsFetchError checks that a chapter post Blogger answers 429 to
+// is reported once, with its own error, rather than a bare "not recognised"
+func TestBloggerReportsFetchError(t *testing.T) {
+	const path = "/2026/10/one-piece-manga-1196-espanol.html"
+	srv, hits := newCountingServer(t, func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "too many requests", http.StatusTooManyRequests)
+	})
+
+	site, errs := NewSite(srv.URL+path, &Settings{})
+	if site != nil {
+		t.Fatalf("IdentifySite() = %T, want nil", site)
+	}
+	if n := hits.count(path); n != 1 {
+		t.Errorf("GET %s made %d requests, want 1", path, n)
+	}
+	if len(errs) != 1 {
+		t.Fatalf("IdentifySite() errs = %v, want exactly one", errs)
+	}
+	if !strings.Contains(errs[0].Error(), "429") {
+		t.Errorf("IdentifySite() error = %v, want the 429", errs[0])
+	}
+}

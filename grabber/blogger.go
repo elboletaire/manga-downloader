@@ -81,7 +81,7 @@ func (b *Blogger) Test() (bool, error) {
 
 	body, err := b.identifyPage(b.URL)
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
