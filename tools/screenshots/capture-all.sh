@@ -4,9 +4,10 @@
 # README and website WebPs from them.
 # macOS only: it captures the real window with screencapture. See README.md.
 #
-# usage: [SHOT_LANG=en|es|ca|all] tools/screenshots/capture-all.sh [--install]
+# usage: [SHOT_LANG=en|es|ca|all] [SHOTS="01-start 13-settings"] tools/screenshots/capture-all.sh [--install]
 #   without --install the PNGs stay in tools/screenshots/out/<lang>/
 #   SHOT_LANG (default en) is the window's language, all for every one of them;
+#   SHOTS (default all) retakes only the shots named, and leaves the website's crops alone;
 #   --install writes en's README WebPs to assets/screenshots/ (the README is
 #   English-only) and every language's website crops to the website's folders
 #
@@ -26,6 +27,8 @@ case $SHOT_LANG in
   *) echo "SHOT_LANG must be en, es, ca or all" >&2; exit 2 ;;
 esac
 export SHOT_LANG # shot-select.sh reads it
+SHOTS=${SHOTS:-}
+want() { [ -z "$SHOTS" ] || [[ " $SHOTS " == *" $1 "* ]]; }
 
 # helpers: window ids and bounds by pid
 mkdir -p bin
@@ -65,6 +68,10 @@ install_lang() {
   else
     site=$site/$SHOT_LANG
   fi
+  if [ -n "$SHOTS" ]; then
+    echo "SHOTS set: website crops left as they are"
+    return
+  fi
   # website: the crops (geometry in the script) and the hero, see website/README.md
   (
     cd "$ROOT/website"
@@ -84,10 +91,10 @@ for SHOT_LANG in $LANGS; do
   raw=$WORK/raw/$SHOT_LANG
   mkdir -p "$raw"
   for theme in light dark; do
-    shot() { ./shot.sh "$raw/$1-$theme.png" $theme "$2&lang=$SHOT_LANG" 4 "${3:-}"; }
+    shot() { want "$1" || return 0; ./shot.sh "$raw/$1-$theme.png" $theme "$2&lang=$SHOT_LANG" 4 "${3:-}"; }
     shot 01-start '?mock&scenario=empty&freeze&shot'
     shot 02-loaded '?mock&scenario=loaded&freeze&shot'
-    ./shot-select.sh "$raw/03-language-selector-$theme.png" $theme
+    ! want 03-language-selector || ./shot-select.sh "$raw/03-language-selector-$theme.png" $theme
     shot 04-downloading '?mock&scenario=running&freeze&shot'
     shot 05-done '?mock&scenario=done&freeze&shot'
     shot 06-options '?mock&scenario=loaded&freeze&shot&epub' "$SCROLL"
