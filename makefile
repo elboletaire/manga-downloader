@@ -1949,6 +1949,8 @@ SMOKE_EXCLUDE =
 SMOKE_EXCLUDE += mangaball mangalib silentquill bigsolo luascans hivetoons eldermanga eskimangalar limonmanga uzaymanga afroditscans mangasorigines dandadanmanga
 # Cloudflare-blocked, or rate-limited hard (429, or the app API)
 SMOKE_EXCLUDE += mangitto lilymanga mangaplus
+# 429, reset, 530 or a non-blog page from GitHub's runners, while they pass locally
+SMOKE_EXCLUDE += ler999 lonertl mangaailand mangadelsiglotvmanga mangabats legionscans asialotuss
 # headless-browser grabbers: a runner can't get past their challenges
 SMOKE_EXCLUDE += comix mkissa templetoons mangafire
 
