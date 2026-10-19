@@ -261,7 +261,13 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		}
 	}
 
-	return nil, append(errs, markupErrs...)
+	// the markup testers share PlainHTML's cached fetch error, so each message once
+	for _, err := range markupErrs {
+		if !slices.ContainsFunc(errs, func(e error) bool { return e.Error() == err.Error() }) {
+			errs = append(errs, err)
+		}
+	}
+	return nil, errs
 }
 
 // pageLanguage returns the primary subtag of the page's <html lang>, lowercased
