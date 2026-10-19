@@ -11,7 +11,7 @@ import type { Api } from './api';
 import { BrowserAlert } from './BrowserAlert';
 import { ChapterPanel } from './ChapterPanel';
 import { DownloadDock } from './DownloadDock';
-import { glideMs, measure, play, prefersReducedMotion, type Box, type FlipMode } from './flip';
+import { glideMs, measure, play, prefersReducedMotion, stop, type Box, type FlipMode } from './flip';
 import { errorMessage } from './format';
 import { say } from './i18n';
 import { ActivityIcon, SlidersIcon, Spinner } from './icons';
@@ -122,6 +122,11 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
       const animate = frame.current !== null && !prefersReducedMotion();
       flipFrom.current = animate ? measure(frame.current!) : null;
       setRevealing(animate);
+    } else {
+      // a glide still running stops where it is, so the next one measures the simple view as it is
+      flipFrom.current = null;
+      setRevealing(false);
+      if (frame.current !== null) stop(frame.current);
     }
     setView(next);
   }, [state, view]);

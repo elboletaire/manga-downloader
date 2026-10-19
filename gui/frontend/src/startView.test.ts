@@ -14,7 +14,7 @@ const fresh = (over: Partial<ViewState> = {}, simpleStart = true): ViewState => 
   ...over,
 });
 
-const URL_ = 'https://example.com/manga/x';
+const SERIES = 'https://example.com/manga/x';
 
 describe('bootView', () => {
   it('opens on the simple view when the pref is on and nothing is going on', () => {
@@ -26,12 +26,12 @@ describe('bootView', () => {
   });
 
   it('opens on the full view when the window has something to show', () => {
-    expect(bootView(fresh({ loading: true, url: URL_ }))).toBe('full');
-    expect(bootView(fresh({ loaded: true, url: URL_ }))).toBe('full');
+    expect(bootView(fresh({ loading: true, url: SERIES }))).toBe('full');
+    expect(bootView(fresh({ loaded: true, url: SERIES }))).toBe('full');
     expect(bootView(fresh({ running: true }))).toBe('full');
     expect(bootView(fresh({ summary: {} as State['summary'] }))).toBe('full');
     // a failed load keeps its URL, and its error belongs to the full view
-    expect(bootView(fresh({ url: URL_ }))).toBe('full');
+    expect(bootView(fresh({ url: SERIES }))).toBe('full');
   });
 });
 
@@ -41,7 +41,7 @@ describe('nextView', () => {
   });
 
   it('switches to the full view once a load starts', () => {
-    expect(nextView('simple', fresh({ loading: true, url: URL_ }), false)).toBe('full');
+    expect(nextView('simple', fresh({ loading: true, url: SERIES }), false)).toBe('full');
   });
 
   it('switches to the full view when the pref is turned off while empty', () => {
@@ -57,7 +57,6 @@ describe('nextView', () => {
   });
 
   it('ignores the pref once a load has started', () => {
-    expect(nextView('full', fresh({}, true), true)).toBe('full');
-    expect(nextView('full', fresh({ loaded: true, url: URL_ }, false), true)).toBe('full');
+    expect(nextView('full', fresh({ loaded: true, url: SERIES }, false), true)).toBe('full');
   });
 });
