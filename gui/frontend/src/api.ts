@@ -49,7 +49,7 @@ export interface Api {
   /** Saves the window's language; '' follows the system. Takes effect at once in the window. */
   setUILanguage(pref: LangPref): Promise<void>;
   setCheckUpdates(on: boolean): Promise<void>;
-  /** Saves whether the window opens on the simple view; takes effect at the next start */
+  /** Saves whether the window shows the simple view while nothing is loaded; a load started keeps the full one */
   setSimpleStart(on: boolean): Promise<void>;
 
   // Pushes. Each returns a function that stops the callback.
