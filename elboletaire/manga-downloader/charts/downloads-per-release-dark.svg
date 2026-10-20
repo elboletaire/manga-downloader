@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300" role="img" aria-labelledby="title desc">
 <title id="title">Downloads per release</title>
-<desc id="desc">Downloads per release: 45 releases, stacked by group.</desc>
+<desc id="desc">Downloads per release: 46 releases, stacked by group.</desc>
 <rect x="0.5" y="0.5" width="799" height="299" rx="12" fill="#1a1a19" stroke="#33343a"/>
 <g font-family='"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif' font-size="11" fill="#c3c2b7" style="font-variant-numeric:tabular-nums">
 <text x="24" y="32" fill="#f0efec" font-size="16" font-weight="600">Downloads per release</text>
@@ -17,90 +17,92 @@
 <text x="50.0" y="162.7" fill="#a09f98" text-anchor="end">4K</text>
 <line x1="60.0" x2="776.0" y1="112.0" y2="112.0" stroke="#2a2b2e"/>
 <text x="50.0" y="116.0" fill="#a09f98" text-anchor="end">6K</text>
-<line x1="298.7" x2="298.7" y1="96.0" y2="252.0" stroke="#33343a" stroke-width="1"><title>v1.0.0 1.0 rewrite</title></line>
-<circle cx="298.7" cy="96.0" r="2.5" fill="#a09f98"/>
-<text x="305.7" y="100.0" fill="#c3c2b7">v1.0.0 1.0 rewrite</text>
-<line x1="537.3" x2="537.3" y1="96.0" y2="252.0" stroke="#33343a" stroke-width="1"><title>v1.11.0 First desktop app</title></line>
-<circle cx="537.3" cy="96.0" r="2.5" fill="#a09f98"/>
-<text x="544.3" y="100.0" fill="#c3c2b7">v1.11.0 First desktop app</text>
-<line x1="696.4" x2="696.4" y1="82.0" y2="252.0" stroke="#33343a" stroke-width="1"><title>v1.18.0 Installer and updater</title></line>
-<circle cx="696.4" cy="82.0" r="2.5" fill="#a09f98"/>
-<text x="689.4" y="86.0" fill="#c3c2b7" text-anchor="end">v1.18.0 Installer and updater</text>
-<line x1="744.2" x2="744.2" y1="68.0" y2="252.0" stroke="#33343a" stroke-width="1"><title>v1.20.0 Multilingual</title></line>
-<circle cx="744.2" cy="68.0" r="2.5" fill="#a09f98"/>
-<text x="737.2" y="72.0" fill="#c3c2b7" text-anchor="end">v1.20.0 Multilingual</text>
-<path d="M61.0 252.0V252.0Q61.0 251.0 62.0 251.0H73.9Q74.9 251.0 74.9 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.1, CLI: 33</title></path>
-<path d="M76.9 252.0V252.0Q76.9 251.0 77.9 251.0H89.8Q90.8 251.0 90.8 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.2, CLI: 35</title></path>
-<path d="M92.8 252.0V252.0Q92.8 251.0 93.8 251.0H105.7Q106.7 251.0 106.7 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.3, CLI: 42</title></path>
-<path d="M108.7 252.0V252.0Q108.7 251.0 109.7 251.0H121.6Q122.6 251.0 122.6 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.4, CLI: 40</title></path>
-<path d="M124.6 252.0V252.0Q124.6 251.0 125.6 251.0H137.6Q138.6 251.0 138.6 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.5, CLI: 42</title></path>
-<path d="M140.6 252.0V252.0Q140.6 250.9 141.6 250.9H153.4Q154.5 250.9 154.5 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.6, CLI: 46</title></path>
-<path d="M156.5 252.0V252.0Q156.5 250.8 157.7 250.8H169.1Q170.4 250.8 170.4 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.7, CLI: 53</title></path>
-<path d="M172.4 252.0V252.0Q172.4 250.3 174.1 250.3H184.5Q186.3 250.3 186.3 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.8, CLI: 75</title></path>
-<path d="M188.3 252.0V252.0Q188.3 250.5 189.8 250.5H200.7Q202.2 250.5 202.2 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.9, CLI: 65</title></path>
-<path d="M204.2 252.0V248.5Q204.2 244.5 208.2 244.5H214.1Q218.1 244.5 218.1 248.5V252.0Z" fill="#dd5f2f"><title>v0.0.10, CLI: 323</title></path>
-<path d="M220.1 252.0V252.0Q220.1 250.1 222.0 250.1H232.1Q234.0 250.1 234.0 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.11, CLI: 81</title></path>
-<path d="M236.0 252.0V240.8Q236.0 236.8 240.0 236.8H245.9Q249.9 236.8 249.9 240.8V252.0Z" fill="#dd5f2f"><title>v0.0.12, CLI: 653</title></path>
-<path d="M251.9 252.0V137.9Q251.9 133.9 255.9 133.9H261.8Q265.8 133.9 265.8 137.9V252.0Z" fill="#dd5f2f"><title>v0.0.13, CLI: 5060</title></path>
-<path d="M267.8 252.0V240.1Q267.8 236.1 271.8 236.1H277.8Q281.8 236.1 281.8 240.1V252.0Z" fill="#dd5f2f"><title>v0.0.14, CLI: 683</title></path>
-<path d="M283.8 252.0V192.8Q283.8 188.8 287.8 188.8H293.7Q297.7 188.8 297.7 192.8V252.0Z" fill="#dd5f2f"><title>v0.0.15, CLI: 2708</title></path>
-<path d="M299.7 252.0V252.0Q299.7 251.0 300.7 251.0H312.6Q313.6 251.0 313.6 252.0V252.0Z" fill="#dd5f2f"><title>v1.0.0, CLI: 22</title></path>
-<path d="M315.6 252.0V252.0Q315.6 251.0 316.6 251.0H328.5Q329.5 251.0 329.5 252.0V252.0Z" fill="#dd5f2f"><title>v1.1.0, CLI: 20</title></path>
-<path d="M331.5 252.0V252.0Q331.5 251.0 332.5 251.0H344.4Q345.4 251.0 345.4 252.0V252.0Z" fill="#dd5f2f"><title>v1.1.1, CLI: 16</title></path>
-<path d="M347.4 252.0V252.0Q347.4 251.0 348.4 251.0H360.3Q361.3 251.0 361.3 252.0V252.0Z" fill="#dd5f2f"><title>v1.2.0, CLI: 26</title></path>
-<path d="M363.3 252.0V252.0Q363.3 251.0 364.3 251.0H376.2Q377.2 251.0 377.2 252.0V252.0Z" fill="#dd5f2f"><title>v1.3.0, CLI: 29</title></path>
-<path d="M379.2 252.0V252.0Q379.2 251.0 380.2 251.0H392.1Q393.1 251.0 393.1 252.0V252.0Z" fill="#dd5f2f"><title>v1.4.0, CLI: 22</title></path>
-<path d="M395.1 252.0V252.0Q395.1 248.8 398.3 248.8H405.9Q409.0 248.8 409.0 252.0V252.0Z" fill="#dd5f2f"><title>v1.4.1, CLI: 136</title></path>
-<path d="M411.0 252.0V252.0Q411.0 249.7 413.4 249.7H422.6Q425.0 249.7 425.0 252.0V252.0Z" fill="#dd5f2f"><title>v1.5.0, CLI: 100</title></path>
-<path d="M427.0 252.0V252.0Q427.0 249.8 429.1 249.8H438.7Q440.9 249.8 440.9 252.0V252.0Z" fill="#dd5f2f"><title>v1.6.0, CLI: 94</title></path>
-<path d="M442.9 252.0V252.0Q442.9 251.0 443.9 251.0H455.8Q456.8 251.0 456.8 252.0V252.0Z" fill="#dd5f2f"><title>v1.6.1, CLI: 37</title></path>
-<path d="M458.8 252.0V252.0Q458.8 249.0 461.7 249.0H469.7Q472.7 249.0 472.7 252.0V252.0Z" fill="#dd5f2f"><title>v1.7.0, CLI: 127</title></path>
-<path d="M474.7 252.0V252.0Q474.7 248.1 478.6 248.1H484.7Q488.6 248.1 488.6 252.0V252.0Z" fill="#dd5f2f"><title>v1.7.1, CLI: 169</title></path>
-<path d="M490.6 252.0V252.0Q490.6 251.0 491.6 251.0H503.5Q504.5 251.0 504.5 252.0V252.0Z" fill="#dd5f2f"><title>v1.8.0, CLI: 37</title></path>
-<path d="M506.5 252.0V241.0Q506.5 237.0 510.5 237.0H516.4Q520.4 237.0 520.4 241.0V252.0Z" fill="#dd5f2f"><title>v1.9.0, CLI: 644</title></path>
-<path d="M522.4 252.0V252.0Q522.4 250.3 524.1 250.3H534.6Q536.3 250.3 536.3 252.0V252.0Z" fill="#dd5f2f"><title>v1.10.0, CLI: 73</title></path>
-<path d="M538.3 252.0V251.0H552.2V252.0Z" fill="#4189ea"><title>v1.11.0, Desktop app: 5</title></path>
-<path d="M538.3 250.9V250.9Q538.3 249.9 539.3 249.9H551.2Q552.2 249.9 552.2 250.9V250.9Z" fill="#dd5f2f"><title>v1.11.0, CLI: 8</title></path>
-<path d="M554.2 252.0V251.0H568.2V252.0Z" fill="#4189ea"><title>v1.11.1, Desktop app: 31</title></path>
-<path d="M554.2 250.3V250.3Q554.2 249.3 555.2 249.3H567.2Q568.2 249.3 568.2 250.3V250.3Z" fill="#dd5f2f"><title>v1.11.1, CLI: 46</title></path>
-<path d="M570.2 252.0V251.0H584.1V252.0Z" fill="#4189ea"><title>v1.12.0, Desktop app: 9</title></path>
-<path d="M570.2 250.8V250.8Q570.2 249.8 571.2 249.8H583.1Q584.1 249.8 584.1 250.8V250.8Z" fill="#dd5f2f"><title>v1.12.0, CLI: 10</title></path>
-<path d="M586.1 252.0V251.0H600.0V252.0Z" fill="#4189ea"><title>v1.13.0, Desktop app: 18</title></path>
-<path d="M586.1 250.6V250.6Q586.1 249.6 587.1 249.6H599.0Q600.0 249.6 600.0 250.6V250.6Z" fill="#dd5f2f"><title>v1.13.0, CLI: 17</title></path>
-<path d="M602.0 252.0V251.0H615.9V252.0Z" fill="#4189ea"><title>v1.14.0, Desktop app: 38</title></path>
-<path d="M602.0 250.1V250.1Q602.0 249.1 603.0 249.1H614.9Q615.9 249.1 615.9 250.1V250.1Z" fill="#dd5f2f"><title>v1.14.0, CLI: 40</title></path>
-<path d="M617.9 252.0V251.0H631.8V252.0Z" fill="#4189ea"><title>v1.15.0, Desktop app: 29</title></path>
-<path d="M617.9 250.3V250.3Q617.9 249.3 618.9 249.3H630.8Q631.8 249.3 631.8 250.3V250.3Z" fill="#dd5f2f"><title>v1.15.0, CLI: 21</title></path>
-<path d="M633.8 252.0V251.0H647.7V252.0Z" fill="#4189ea"><title>v1.15.1, Desktop app: 35</title></path>
-<path d="M633.8 250.2V250.2Q633.8 249.2 634.8 249.2H646.7Q647.7 249.2 647.7 250.2V250.2Z" fill="#dd5f2f"><title>v1.15.1, CLI: 27</title></path>
-<path d="M649.7 252.0V251.0H663.6V252.0Z" fill="#4189ea"><title>v1.16.0, Desktop app: 7</title></path>
-<path d="M649.7 250.8V250.8Q649.7 249.8 650.7 249.8H662.6Q663.6 249.8 663.6 250.8V250.8Z" fill="#dd5f2f"><title>v1.16.0, CLI: 14</title></path>
-<path d="M665.6 252.0V251.0H679.5V252.0Z" fill="#4189ea"><title>v1.16.1, Desktop app: 42</title></path>
-<path d="M665.6 250.0V250.0Q665.6 249.0 666.6 249.0H678.5Q679.5 249.0 679.5 250.0V250.0Z" fill="#dd5f2f"><title>v1.16.1, CLI: 38</title></path>
-<path d="M681.5 252.0V251.0H695.4V252.0Z" fill="#4189ea"><title>v1.17.0, Desktop app: 48</title></path>
-<path d="M681.5 249.9V249.9Q681.5 248.9 682.5 248.9H694.4Q695.4 248.9 695.4 249.9V249.9Z" fill="#dd5f2f"><title>v1.17.0, CLI: 37</title></path>
-<path d="M697.4 252.0V251.0H711.4V252.0Z" fill="#4189ea"><title>v1.18.0, Desktop app: 54</title></path>
-<path d="M697.4 249.7V249.7Q697.4 248.7 698.4 248.7H710.4Q711.4 248.7 711.4 249.7V249.7Z" fill="#dd5f2f"><title>v1.18.0, CLI: 34</title></path>
-<path d="M713.4 252.0V251.0H727.3V252.0Z" fill="#4189ea"><title>v1.19.0, Desktop app: 14</title></path>
-<path d="M713.4 250.7V250.7Q713.4 249.7 714.4 249.7H726.3Q727.3 249.7 727.3 250.7V250.7Z" fill="#dd5f2f"><title>v1.19.0, CLI: 14</title></path>
-<path d="M729.3 252.0V251.0H743.2V252.0Z" fill="#4189ea"><title>v1.19.1, Desktop app: 34</title></path>
-<path d="M729.3 250.2V250.2Q729.3 249.2 730.3 249.2H742.2Q743.2 249.2 743.2 250.2V250.2Z" fill="#dd5f2f"><title>v1.19.1, CLI: 18</title></path>
-<path d="M745.2 252.0V251.0H759.1V252.0Z" fill="#4189ea"><title>v1.20.0, Desktop app: 35</title></path>
-<path d="M745.2 250.2V250.2Q745.2 249.2 746.2 249.2H758.1Q759.1 249.2 759.1 250.2V250.2Z" fill="#dd5f2f"><title>v1.20.0, CLI: 15</title></path>
-<path d="M761.1 252.0V251.0H775.0V252.0Z" fill="#4189ea"><title>v1.20.1, Desktop app: 31</title></path>
-<path d="M761.1 250.3V250.3Q761.1 249.3 762.1 249.3H774.0Q775.0 249.3 775.0 250.3V250.3Z" fill="#dd5f2f"><title>v1.20.1, CLI: 18</title></path>
-<text x="768.0" y="242.9" fill="#f0efec" text-anchor="middle" font-size="12" font-weight="600">49</text>
-<text x="68.0" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.1</text>
-<text x="131.6" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.5</text>
-<text x="195.2" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.9</text>
-<text x="258.9" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.13</text>
-<text x="322.5" y="272.0" fill="#a09f98" text-anchor="middle">v1.1.0</text>
-<text x="386.2" y="272.0" fill="#a09f98" text-anchor="middle">v1.4.0</text>
-<text x="449.8" y="272.0" fill="#a09f98" text-anchor="middle">v1.6.1</text>
-<text x="513.5" y="272.0" fill="#a09f98" text-anchor="middle">v1.9.0</text>
-<text x="577.1" y="272.0" fill="#a09f98" text-anchor="middle">v1.12.0</text>
-<text x="640.8" y="272.0" fill="#a09f98" text-anchor="middle">v1.15.1</text>
-<text x="704.4" y="272.0" fill="#a09f98" text-anchor="middle">v1.18.0</text>
-<text x="768.0" y="272.0" fill="#a09f98" text-anchor="middle">v1.20.1</text>
+<line x1="293.5" x2="293.5" y1="96.0" y2="252.0" stroke="#33343a" stroke-width="1"><title>v1.0.0 1.0 rewrite</title></line>
+<circle cx="293.5" cy="96.0" r="2.5" fill="#a09f98"/>
+<text x="300.5" y="100.0" fill="#c3c2b7">v1.0.0 1.0 rewrite</text>
+<line x1="527.0" x2="527.0" y1="96.0" y2="252.0" stroke="#33343a" stroke-width="1"><title>v1.11.0 First desktop app</title></line>
+<circle cx="527.0" cy="96.0" r="2.5" fill="#a09f98"/>
+<text x="534.0" y="100.0" fill="#c3c2b7">v1.11.0 First desktop app</text>
+<line x1="682.6" x2="682.6" y1="82.0" y2="252.0" stroke="#33343a" stroke-width="1"><title>v1.18.0 Installer and updater</title></line>
+<circle cx="682.6" cy="82.0" r="2.5" fill="#a09f98"/>
+<text x="675.6" y="86.0" fill="#c3c2b7" text-anchor="end">v1.18.0 Installer and updater</text>
+<line x1="729.3" x2="729.3" y1="68.0" y2="252.0" stroke="#33343a" stroke-width="1"><title>v1.20.0 Multilingual</title></line>
+<circle cx="729.3" cy="68.0" r="2.5" fill="#a09f98"/>
+<text x="722.3" y="72.0" fill="#c3c2b7" text-anchor="end">v1.20.0 Multilingual</text>
+<path d="M61.0 252.0V252.0Q61.0 251.0 62.0 251.0H73.6Q74.6 251.0 74.6 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.1, CLI: 33</title></path>
+<path d="M76.6 252.0V252.0Q76.6 251.0 77.6 251.0H89.1Q90.1 251.0 90.1 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.2, CLI: 35</title></path>
+<path d="M92.1 252.0V252.0Q92.1 251.0 93.1 251.0H104.7Q105.7 251.0 105.7 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.3, CLI: 42</title></path>
+<path d="M107.7 252.0V252.0Q107.7 251.0 108.7 251.0H120.3Q121.3 251.0 121.3 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.4, CLI: 40</title></path>
+<path d="M123.3 252.0V252.0Q123.3 251.0 124.3 251.0H135.8Q136.8 251.0 136.8 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.5, CLI: 42</title></path>
+<path d="M138.8 252.0V252.0Q138.8 250.9 139.9 250.9H151.3Q152.4 250.9 152.4 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.6, CLI: 46</title></path>
+<path d="M154.4 252.0V252.0Q154.4 250.8 155.6 250.8H166.7Q168.0 250.8 168.0 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.7, CLI: 53</title></path>
+<path d="M170.0 252.0V252.0Q170.0 250.3 171.7 250.3H181.8Q183.5 250.3 183.5 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.8, CLI: 75</title></path>
+<path d="M185.5 252.0V252.0Q185.5 250.5 187.0 250.5H197.6Q199.1 250.5 199.1 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.9, CLI: 65</title></path>
+<path d="M201.1 252.0V248.5Q201.1 244.5 205.1 244.5H210.7Q214.7 244.5 214.7 248.5V252.0Z" fill="#dd5f2f"><title>v0.0.10, CLI: 323</title></path>
+<path d="M216.7 252.0V252.0Q216.7 250.1 218.5 250.1H228.3Q230.2 250.1 230.2 252.0V252.0Z" fill="#dd5f2f"><title>v0.0.11, CLI: 81</title></path>
+<path d="M232.2 252.0V240.8Q232.2 236.8 236.2 236.8H241.8Q245.8 236.8 245.8 240.8V252.0Z" fill="#dd5f2f"><title>v0.0.12, CLI: 653</title></path>
+<path d="M247.8 252.0V137.9Q247.8 133.9 251.8 133.9H257.3Q261.3 133.9 261.3 137.9V252.0Z" fill="#dd5f2f"><title>v0.0.13, CLI: 5060</title></path>
+<path d="M263.3 252.0V240.1Q263.3 236.1 267.3 236.1H272.9Q276.9 236.1 276.9 240.1V252.0Z" fill="#dd5f2f"><title>v0.0.14, CLI: 683</title></path>
+<path d="M278.9 252.0V192.8Q278.9 188.8 282.9 188.8H288.5Q292.5 188.8 292.5 192.8V252.0Z" fill="#dd5f2f"><title>v0.0.15, CLI: 2708</title></path>
+<path d="M294.5 252.0V252.0Q294.5 251.0 295.5 251.0H307.0Q308.0 251.0 308.0 252.0V252.0Z" fill="#dd5f2f"><title>v1.0.0, CLI: 22</title></path>
+<path d="M310.0 252.0V252.0Q310.0 251.0 311.0 251.0H322.6Q323.6 251.0 323.6 252.0V252.0Z" fill="#dd5f2f"><title>v1.1.0, CLI: 20</title></path>
+<path d="M325.6 252.0V252.0Q325.6 251.0 326.6 251.0H338.2Q339.2 251.0 339.2 252.0V252.0Z" fill="#dd5f2f"><title>v1.1.1, CLI: 16</title></path>
+<path d="M341.2 252.0V252.0Q341.2 251.0 342.2 251.0H353.7Q354.7 251.0 354.7 252.0V252.0Z" fill="#dd5f2f"><title>v1.2.0, CLI: 26</title></path>
+<path d="M356.7 252.0V252.0Q356.7 251.0 357.7 251.0H369.3Q370.3 251.0 370.3 252.0V252.0Z" fill="#dd5f2f"><title>v1.3.0, CLI: 29</title></path>
+<path d="M372.3 252.0V252.0Q372.3 251.0 373.3 251.0H384.9Q385.9 251.0 385.9 252.0V252.0Z" fill="#dd5f2f"><title>v1.4.0, CLI: 22</title></path>
+<path d="M387.9 252.0V252.0Q387.9 248.8 391.0 248.8H398.3Q401.4 248.8 401.4 252.0V252.0Z" fill="#dd5f2f"><title>v1.4.1, CLI: 136</title></path>
+<path d="M403.4 252.0V252.0Q403.4 249.7 405.8 249.7H414.7Q417.0 249.7 417.0 252.0V252.0Z" fill="#dd5f2f"><title>v1.5.0, CLI: 100</title></path>
+<path d="M419.0 252.0V252.0Q419.0 249.8 421.2 249.8H430.4Q432.6 249.8 432.6 252.0V252.0Z" fill="#dd5f2f"><title>v1.6.0, CLI: 94</title></path>
+<path d="M434.6 252.0V252.0Q434.6 251.0 435.6 251.0H447.1Q448.1 251.0 448.1 252.0V252.0Z" fill="#dd5f2f"><title>v1.6.1, CLI: 37</title></path>
+<path d="M450.1 252.0V252.0Q450.1 249.0 453.1 249.0H460.7Q463.7 249.0 463.7 252.0V252.0Z" fill="#dd5f2f"><title>v1.7.0, CLI: 127</title></path>
+<path d="M465.7 252.0V252.0Q465.7 248.1 469.6 248.1H475.3Q479.3 248.1 479.3 252.0V252.0Z" fill="#dd5f2f"><title>v1.7.1, CLI: 169</title></path>
+<path d="M481.3 252.0V252.0Q481.3 251.0 482.3 251.0H493.8Q494.8 251.0 494.8 252.0V252.0Z" fill="#dd5f2f"><title>v1.8.0, CLI: 37</title></path>
+<path d="M496.8 252.0V241.0Q496.8 237.0 500.8 237.0H506.4Q510.4 237.0 510.4 241.0V252.0Z" fill="#dd5f2f"><title>v1.9.0, CLI: 644</title></path>
+<path d="M512.4 252.0V252.0Q512.4 250.3 514.1 250.3H524.3Q526.0 250.3 526.0 252.0V252.0Z" fill="#dd5f2f"><title>v1.10.0, CLI: 73</title></path>
+<path d="M528.0 252.0V251.0H541.5V252.0Z" fill="#4189ea"><title>v1.11.0, Desktop app: 5</title></path>
+<path d="M528.0 250.9V250.9Q528.0 249.9 529.0 249.9H540.5Q541.5 249.9 541.5 250.9V250.9Z" fill="#dd5f2f"><title>v1.11.0, CLI: 8</title></path>
+<path d="M543.5 252.0V251.0H557.1V252.0Z" fill="#4189ea"><title>v1.11.1, Desktop app: 31</title></path>
+<path d="M543.5 250.3V250.3Q543.5 249.3 544.5 249.3H556.1Q557.1 249.3 557.1 250.3V250.3Z" fill="#dd5f2f"><title>v1.11.1, CLI: 46</title></path>
+<path d="M559.1 252.0V251.0H572.7V252.0Z" fill="#4189ea"><title>v1.12.0, Desktop app: 9</title></path>
+<path d="M559.1 250.8V250.8Q559.1 249.8 560.1 249.8H571.7Q572.7 249.8 572.7 250.8V250.8Z" fill="#dd5f2f"><title>v1.12.0, CLI: 10</title></path>
+<path d="M574.7 252.0V251.0H588.2V252.0Z" fill="#4189ea"><title>v1.13.0, Desktop app: 18</title></path>
+<path d="M574.7 250.6V250.6Q574.7 249.6 575.7 249.6H587.2Q588.2 249.6 588.2 250.6V250.6Z" fill="#dd5f2f"><title>v1.13.0, CLI: 17</title></path>
+<path d="M590.2 252.0V251.0H603.8V252.0Z" fill="#4189ea"><title>v1.14.0, Desktop app: 38</title></path>
+<path d="M590.2 250.1V250.1Q590.2 249.1 591.2 249.1H602.8Q603.8 249.1 603.8 250.1V250.1Z" fill="#dd5f2f"><title>v1.14.0, CLI: 40</title></path>
+<path d="M605.8 252.0V251.0H619.3V252.0Z" fill="#4189ea"><title>v1.15.0, Desktop app: 29</title></path>
+<path d="M605.8 250.3V250.3Q605.8 249.3 606.8 249.3H618.3Q619.3 249.3 619.3 250.3V250.3Z" fill="#dd5f2f"><title>v1.15.0, CLI: 21</title></path>
+<path d="M621.3 252.0V251.0H634.9V252.0Z" fill="#4189ea"><title>v1.15.1, Desktop app: 35</title></path>
+<path d="M621.3 250.2V250.2Q621.3 249.2 622.3 249.2H633.9Q634.9 249.2 634.9 250.2V250.2Z" fill="#dd5f2f"><title>v1.15.1, CLI: 27</title></path>
+<path d="M636.9 252.0V251.0H650.5V252.0Z" fill="#4189ea"><title>v1.16.0, Desktop app: 7</title></path>
+<path d="M636.9 250.8V250.8Q636.9 249.8 637.9 249.8H649.5Q650.5 249.8 650.5 250.8V250.8Z" fill="#dd5f2f"><title>v1.16.0, CLI: 14</title></path>
+<path d="M652.5 252.0V251.0H666.0V252.0Z" fill="#4189ea"><title>v1.16.1, Desktop app: 42</title></path>
+<path d="M652.5 250.0V250.0Q652.5 249.0 653.5 249.0H665.0Q666.0 249.0 666.0 250.0V250.0Z" fill="#dd5f2f"><title>v1.16.1, CLI: 38</title></path>
+<path d="M668.0 252.0V251.0H681.6V252.0Z" fill="#4189ea"><title>v1.17.0, Desktop app: 48</title></path>
+<path d="M668.0 249.9V249.9Q668.0 248.9 669.0 248.9H680.6Q681.6 248.9 681.6 249.9V249.9Z" fill="#dd5f2f"><title>v1.17.0, CLI: 37</title></path>
+<path d="M683.6 252.0V251.0H697.2V252.0Z" fill="#4189ea"><title>v1.18.0, Desktop app: 54</title></path>
+<path d="M683.6 249.7V249.7Q683.6 248.7 684.6 248.7H696.2Q697.2 248.7 697.2 249.7V249.7Z" fill="#dd5f2f"><title>v1.18.0, CLI: 34</title></path>
+<path d="M699.2 252.0V251.0H712.7V252.0Z" fill="#4189ea"><title>v1.19.0, Desktop app: 14</title></path>
+<path d="M699.2 250.7V250.7Q699.2 249.7 700.2 249.7H711.7Q712.7 249.7 712.7 250.7V250.7Z" fill="#dd5f2f"><title>v1.19.0, CLI: 14</title></path>
+<path d="M714.7 252.0V251.0H728.3V252.0Z" fill="#4189ea"><title>v1.19.1, Desktop app: 34</title></path>
+<path d="M714.7 250.2V250.2Q714.7 249.2 715.7 249.2H727.3Q728.3 249.2 728.3 250.2V250.2Z" fill="#dd5f2f"><title>v1.19.1, CLI: 18</title></path>
+<path d="M730.3 252.0V251.0H743.9V252.0Z" fill="#4189ea"><title>v1.20.0, Desktop app: 36</title></path>
+<path d="M730.3 250.2V250.2Q730.3 249.2 731.3 249.2H742.9Q743.9 249.2 743.9 250.2V250.2Z" fill="#dd5f2f"><title>v1.20.0, CLI: 15</title></path>
+<path d="M745.9 252.0V251.0H759.4V252.0Z" fill="#4189ea"><title>v1.20.1, Desktop app: 33</title></path>
+<path d="M745.9 250.2V250.2Q745.9 249.2 746.9 249.2H758.4Q759.4 249.2 759.4 250.2V250.2Z" fill="#dd5f2f"><title>v1.20.1, CLI: 20</title></path>
+<path d="M761.4 252.0V251.0H775.0V252.0Z" fill="#4189ea"><title>v1.21.0, Desktop app: 59</title></path>
+<path d="M761.4 249.6V249.6Q761.4 248.6 762.4 248.6H774.0Q775.0 248.6 775.0 249.6V249.6Z" fill="#dd5f2f"><title>v1.21.0, CLI: 25</title></path>
+<text x="768.2" y="242.0" fill="#f0efec" text-anchor="middle" font-size="12" font-weight="600">84</text>
+<text x="67.8" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.1</text>
+<text x="130.0" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.5</text>
+<text x="192.3" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.9</text>
+<text x="254.6" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.13</text>
+<text x="316.8" y="272.0" fill="#a09f98" text-anchor="middle">v1.1.0</text>
+<text x="379.1" y="272.0" fill="#a09f98" text-anchor="middle">v1.4.0</text>
+<text x="441.3" y="272.0" fill="#a09f98" text-anchor="middle">v1.6.1</text>
+<text x="503.6" y="272.0" fill="#a09f98" text-anchor="middle">v1.9.0</text>
+<text x="565.9" y="272.0" fill="#a09f98" text-anchor="middle">v1.12.0</text>
+<text x="628.1" y="272.0" fill="#a09f98" text-anchor="middle">v1.15.1</text>
+<text x="690.4" y="272.0" fill="#a09f98" text-anchor="middle">v1.18.0</text>
+<text x="752.7" y="272.0" fill="#a09f98" text-anchor="middle">v1.20.1</text>
 </g>
 </svg>
