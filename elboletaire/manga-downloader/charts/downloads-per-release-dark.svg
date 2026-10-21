@@ -51,7 +51,7 @@
 <path d="M356.7 252.0V252.0Q356.7 251.0 357.7 251.0H369.3Q370.3 251.0 370.3 252.0V252.0Z" fill="#dd5f2f"><title>v1.3.0, CLI: 29</title></path>
 <path d="M372.3 252.0V252.0Q372.3 251.0 373.3 251.0H384.9Q385.9 251.0 385.9 252.0V252.0Z" fill="#dd5f2f"><title>v1.4.0, CLI: 22</title></path>
 <path d="M387.9 252.0V252.0Q387.9 248.8 391.0 248.8H398.3Q401.4 248.8 401.4 252.0V252.0Z" fill="#dd5f2f"><title>v1.4.1, CLI: 136</title></path>
-<path d="M403.4 252.0V252.0Q403.4 249.7 405.8 249.7H414.7Q417.0 249.7 417.0 252.0V252.0Z" fill="#dd5f2f"><title>v1.5.0, CLI: 100</title></path>
+<path d="M403.4 252.0V252.0Q403.4 249.6 405.8 249.6H414.6Q417.0 249.6 417.0 252.0V252.0Z" fill="#dd5f2f"><title>v1.5.0, CLI: 101</title></path>
 <path d="M419.0 252.0V252.0Q419.0 249.8 421.2 249.8H430.4Q432.6 249.8 432.6 252.0V252.0Z" fill="#dd5f2f"><title>v1.6.0, CLI: 94</title></path>
 <path d="M434.6 252.0V252.0Q434.6 251.0 435.6 251.0H447.1Q448.1 251.0 448.1 252.0V252.0Z" fill="#dd5f2f"><title>v1.6.1, CLI: 37</title></path>
 <path d="M450.1 252.0V252.0Q450.1 249.0 453.1 249.0H460.7Q463.7 249.0 463.7 252.0V252.0Z" fill="#dd5f2f"><title>v1.7.0, CLI: 127</title></path>
@@ -68,7 +68,7 @@
 <path d="M574.7 252.0V251.0H588.2V252.0Z" fill="#4189ea"><title>v1.13.0, Desktop app: 18</title></path>
 <path d="M574.7 250.6V250.6Q574.7 249.6 575.7 249.6H587.2Q588.2 249.6 588.2 250.6V250.6Z" fill="#dd5f2f"><title>v1.13.0, CLI: 17</title></path>
 <path d="M590.2 252.0V251.0H603.8V252.0Z" fill="#4189ea"><title>v1.14.0, Desktop app: 38</title></path>
-<path d="M590.2 250.1V250.1Q590.2 249.1 591.2 249.1H602.8Q603.8 249.1 603.8 250.1V250.1Z" fill="#dd5f2f"><title>v1.14.0, CLI: 40</title></path>
+<path d="M590.2 250.1V250.1Q590.2 249.1 591.2 249.1H602.8Q603.8 249.1 603.8 250.1V250.1Z" fill="#dd5f2f"><title>v1.14.0, CLI: 41</title></path>
 <path d="M605.8 252.0V251.0H619.3V252.0Z" fill="#4189ea"><title>v1.15.0, Desktop app: 29</title></path>
 <path d="M605.8 250.3V250.3Q605.8 249.3 606.8 249.3H618.3Q619.3 249.3 619.3 250.3V250.3Z" fill="#dd5f2f"><title>v1.15.0, CLI: 21</title></path>
 <path d="M621.3 252.0V251.0H634.9V252.0Z" fill="#4189ea"><title>v1.15.1, Desktop app: 35</title></path>
@@ -88,10 +88,10 @@
 <path d="M730.3 252.0V251.0H743.9V252.0Z" fill="#4189ea"><title>v1.20.0, Desktop app: 36</title></path>
 <path d="M730.3 250.2V250.2Q730.3 249.2 731.3 249.2H742.9Q743.9 249.2 743.9 250.2V250.2Z" fill="#dd5f2f"><title>v1.20.0, CLI: 15</title></path>
 <path d="M745.9 252.0V251.0H759.4V252.0Z" fill="#4189ea"><title>v1.20.1, Desktop app: 33</title></path>
-<path d="M745.9 250.2V250.2Q745.9 249.2 746.9 249.2H758.4Q759.4 249.2 759.4 250.2V250.2Z" fill="#dd5f2f"><title>v1.20.1, CLI: 20</title></path>
-<path d="M761.4 252.0V251.0H775.0V252.0Z" fill="#4189ea"><title>v1.21.0, Desktop app: 59</title></path>
-<path d="M761.4 249.6V249.6Q761.4 248.6 762.4 248.6H774.0Q775.0 248.6 775.0 249.6V249.6Z" fill="#dd5f2f"><title>v1.21.0, CLI: 25</title></path>
-<text x="768.2" y="242.0" fill="#f0efec" text-anchor="middle" font-size="12" font-weight="600">84</text>
+<path d="M745.9 250.2V250.2Q745.9 249.2 746.9 249.2H758.4Q759.4 249.2 759.4 250.2V250.2Z" fill="#dd5f2f"><title>v1.20.1, CLI: 21</title></path>
+<path d="M761.4 252.0V250.5H775.0V252.0Z" fill="#4189ea"><title>v1.21.0, Desktop app: 108</title></path>
+<path d="M761.4 248.5V248.5Q761.4 247.5 762.4 247.5H774.0Q775.0 247.5 775.0 248.5V248.5Z" fill="#dd5f2f"><title>v1.21.0, CLI: 36</title></path>
+<text x="768.2" y="240.6" fill="#f0efec" text-anchor="middle" font-size="12" font-weight="600">144</text>
 <text x="67.8" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.1</text>
 <text x="130.0" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.5</text>
 <text x="192.3" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.9</text>
