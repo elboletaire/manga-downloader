@@ -816,7 +816,7 @@ to a minute.
 | [globalcomix.com](https://globalcomix.com) | Western comics, free issues only | 2026-10-22 |
 | [god-doujin.com](https://god-doujin.com) | Thai, mostly NSFW | 2026-10-22 |
 | [godhman.net](https://www.godhman.net) | Thai | 2026-10-22 |
-| [gourmetsupremacy.com](https://gourmetsupremacy.com) | Gourmet Scans, free chapters only | ❌ failing since 2026-10-22 (checked 2026-10-22) |
+| [gourmetsupremacy.com](https://gourmetsupremacy.com) | Gourmet Scans, free chapters only | 2026-10-22 |
 | [grabber.zone](https://grabber.zone) | Spanish | 2026-10-22 |
 | [grimscans.com](https://grimscans.com) | English, locked chapters skipped | 2026-10-22 |
 | [gutsberserk.com](https://www.gutsberserk.com) | English, single series | 2026-10-22 |
