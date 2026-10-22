@@ -43,7 +43,7 @@
 <path d="M232.2 252.0V240.8Q232.2 236.8 236.2 236.8H241.8Q245.8 236.8 245.8 240.8V252.0Z" fill="#dd5f2f"><title>v0.0.12, CLI: 653</title></path>
 <path d="M247.8 252.0V137.9Q247.8 133.9 251.8 133.9H257.3Q261.3 133.9 261.3 137.9V252.0Z" fill="#dd5f2f"><title>v0.0.13, CLI: 5060</title></path>
 <path d="M263.3 252.0V240.1Q263.3 236.1 267.3 236.1H272.9Q276.9 236.1 276.9 240.1V252.0Z" fill="#dd5f2f"><title>v0.0.14, CLI: 683</title></path>
-<path d="M278.9 252.0V192.8Q278.9 188.8 282.9 188.8H288.5Q292.5 188.8 292.5 192.8V252.0Z" fill="#dd5f2f"><title>v0.0.15, CLI: 2708</title></path>
+<path d="M278.9 252.0V192.8Q278.9 188.8 282.9 188.8H288.5Q292.5 188.8 292.5 192.8V252.0Z" fill="#dd5f2f"><title>v0.0.15, CLI: 2709</title></path>
 <path d="M294.5 252.0V252.0Q294.5 251.0 295.5 251.0H307.0Q308.0 251.0 308.0 252.0V252.0Z" fill="#dd5f2f"><title>v1.0.0, CLI: 22</title></path>
 <path d="M310.0 252.0V252.0Q310.0 251.0 311.0 251.0H322.6Q323.6 251.0 323.6 252.0V252.0Z" fill="#dd5f2f"><title>v1.1.0, CLI: 20</title></path>
 <path d="M325.6 252.0V252.0Q325.6 251.0 326.6 251.0H338.2Q339.2 251.0 339.2 252.0V252.0Z" fill="#dd5f2f"><title>v1.1.1, CLI: 16</title></path>
@@ -89,9 +89,9 @@
 <path d="M730.3 250.2V250.2Q730.3 249.2 731.3 249.2H742.9Q743.9 249.2 743.9 250.2V250.2Z" fill="#dd5f2f"><title>v1.20.0, CLI: 15</title></path>
 <path d="M745.9 252.0V251.0H759.4V252.0Z" fill="#4189ea"><title>v1.20.1, Desktop app: 33</title></path>
 <path d="M745.9 250.2V250.2Q745.9 249.2 746.9 249.2H758.4Q759.4 249.2 759.4 250.2V250.2Z" fill="#dd5f2f"><title>v1.20.1, CLI: 21</title></path>
-<path d="M761.4 252.0V250.5H775.0V252.0Z" fill="#4189ea"><title>v1.21.0, Desktop app: 108</title></path>
-<path d="M761.4 248.5V248.5Q761.4 247.5 762.4 247.5H774.0Q775.0 247.5 775.0 248.5V248.5Z" fill="#dd5f2f"><title>v1.21.0, CLI: 36</title></path>
-<text x="768.2" y="240.6" fill="#f0efec" text-anchor="middle" font-size="12" font-weight="600">144</text>
+<path d="M761.4 252.0V249.5H775.0V252.0Z" fill="#4189ea"><title>v1.21.0, Desktop app: 149</title></path>
+<path d="M761.4 247.5V247.5Q761.4 246.5 762.4 246.5H774.0Q775.0 246.5 775.0 247.5V247.5Z" fill="#dd5f2f"><title>v1.21.0, CLI: 56</title></path>
+<text x="768.2" y="239.2" fill="#f0efec" text-anchor="middle" font-size="12" font-weight="600">205</text>
 <text x="67.8" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.1</text>
 <text x="130.0" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.5</text>
 <text x="192.3" y="272.0" fill="#a09f98" text-anchor="middle">v0.0.9</text>
