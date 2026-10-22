@@ -877,7 +877,7 @@ to a minute.
 | [komikmanga.com](https://komikmanga.com) | MangaReader, English | 2026-10-19 |
 | [komikmu.top](https://komikmu.top) | Indonesian | 2026-10-19 |
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-19 |
-| [komiku.org](https://komiku.org) | Indonesian | — |
+| [komiku.org](https://komiku.org) | Indonesian | 2026-10-22 |
 | [ksgroupscans.com](https://ksgroupscans.com) | KSGroupScans | 2026-10-19 |
 | [kumapoi.info](https://kumapoi.info) | Indonesian, mostly NSFW, doujinshi | 2026-10-19 |
 | [kuragebunch.com](https://kuragebunch.com) | Japanese, Kurage Bunch (GigaViewer) | 2026-10-19 |
