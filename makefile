@@ -976,6 +976,7 @@ grabber/html: \
 	grabber/komikmanga \
 	grabber/komikmu \
 	grabber/komikstation \
+	grabber/komiku \
 	grabber/gourmetsupremacy \
 	grabber/kumapoi \
 	grabber/lagoonscans \
@@ -1479,6 +1480,8 @@ grabber/kitsunedawn:
 	go run . https://kitsunedawn.com/series/51df2977-a425-46ea-b5b5-785c4f1c9509 9
 grabber/komikmu:
 	go run . https://komikmu.top/komik/komikus-fasik/ 6
+grabber/komiku:
+	go run . https://komiku.org/manga/albus-changes-the-world/ 103
 grabber/lectortaurus:
 	go run . https://lectortaurus.com/manga/regresion-del-tanque-clase-sss/ 4
 grabber/linkmanga:
