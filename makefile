@@ -743,7 +743,7 @@ grabber/sundaywebry:
 grabber/comicseasons:
 	go run . https://comic-seasons.com/episode/12207421983368290655 0
 grabber/comicyours:
-	go run . https://comic-y-ours.com/episode/12207421983368565943 56
+	go run . https://comic-y-ours.com/episode/12207421983368565943 1
 # Comici, the viewer of several publishers: an episode URL downloads its whole series
 grabber/championcross:
 	go run . https://championcross.jp/episodes/02c083f070a2e 1
@@ -1949,7 +1949,7 @@ SMOKE_RESULTS ?= smoke-results.txt
 # targets CI can't run, so they stay out of the rotation (check them locally)
 SMOKE_EXCLUDE =
 # 403 from GitHub's runners, while residential connections work
-SMOKE_EXCLUDE += mangaball mangalib silentquill bigsolo luascans hivetoons eldermanga eskimangalar limonmanga uzaymanga afroditscans mangasorigines dandadanmanga
+SMOKE_EXCLUDE += mangaball mangalib silentquill bigsolo luascans hivetoons eldermanga eskimangalar limonmanga uzaymanga afroditscans mangasorigines dandadanmanga gutsberserk hanamiheaven
 # Cloudflare-blocked, or rate-limited hard (429, or the app API)
 SMOKE_EXCLUDE += mangitto lilymanga mangaplus
 # 429, reset, 530 or a non-blog page from GitHub's runners, while they pass locally

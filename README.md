@@ -739,7 +739,7 @@ to a minute.
 | [bokunohero-academia.online](https://bokunohero-academia.online) | English, single series | 2026-10-22 |
 | [boruto2bluevortex.com](https://boruto2bluevortex.com) | English, single series | 2026-10-22 |
 | [bunmanga.com](https://bunmanga.com) | English | 2026-10-22 |
-| [bymichiby.com](https://bymichiby.com) | Spanish | ❌ failing since 2026-10-22 (checked 2026-10-22) |
+| [bymichiby.com](https://bymichiby.com) | Spanish | 2026-10-22 |
 | [cafecomyaoi.com.br](https://cafecomyaoi.com.br) | Portuguese, mostly NSFW | 2026-10-22 |
 | [cat-300.com](https://cat-300.com) | Thai | 2026-10-22 |
 | [chainsawman-chapter.online](https://chainsawman-chapter.online) | Chainsaw Man | 2026-10-22 |
@@ -758,7 +758,7 @@ to a minute.
 | [comic-seasons.com](https://comic-seasons.com) | Japanese, Seasons (GigaViewer) | 2026-10-22 |
 | [comic-trail.com](https://comic-trail.com) | Japanese, Comic Trail (GigaViewer) | 2026-10-22 |
 | [comic-walker.com](https://comic-walker.com) | Japanese, KadoComi (KADOKAWA) | 2026-10-22 |
-| [comic-y-ours.com](https://comic-y-ours.com) | Japanese, Comic Y-Ours (GigaViewer) | ❌ failing since 2026-10-22 (checked 2026-10-22) |
+| [comic-y-ours.com](https://comic-y-ours.com) | Japanese, Comic Y-Ours (GigaViewer) | 2026-10-22 |
 | [comic-zenon.com](https://comic-zenon.com) | Japanese, Comic Zenon (GigaViewer) | 2026-10-22 |
 | [comic.j-nbooks.jp](https://comic.j-nbooks.jp) | Japanese (Comici) | 2026-10-19 |
 | [comic.naver.com](https://comic.naver.com) | Naver Webtoon, Korean, free episodes only | 2026-10-18 |
@@ -810,7 +810,7 @@ to a minute.
 | [gaiatoon.com](https://gaiatoon.com) | Turkish | 2026-10-22 |
 | [gakamangas.com](https://gakamangas.com) | English | 2026-10-22 |
 | [galaxscanlator.blogspot.com](https://galaxscanlator.blogspot.com) | Portuguese | 2026-10-19 |
-| [gdscans.com](https://gdscans.com) | GalaxyDegenScans | ❌ failing since 2026-10-22 (checked 2026-10-22) |
+| [gdscans.com](https://gdscans.com) | GalaxyDegenScans | 2026-10-22 |
 | [genztoons.org](https://genztoons.org) | Genz Toon, former genzupdates.com | 2026-10-22 |
 | [ghostoon.com](https://ghostoon.com) | Turkish, mostly NSFW | 2026-10-22 |
 | [globalcomix.com](https://globalcomix.com) | Western comics, free issues only | 2026-10-22 |
@@ -819,10 +819,10 @@ to a minute.
 | [gourmetsupremacy.com](https://gourmetsupremacy.com) | Gourmet Scans, free chapters only | ❌ failing since 2026-10-22 (checked 2026-10-22) |
 | [grabber.zone](https://grabber.zone) | Spanish | 2026-10-22 |
 | [grimscans.com](https://grimscans.com) | English, locked chapters skipped | 2026-10-22 |
-| [gutsberserk.com](https://www.gutsberserk.com) | English, single series | ❌ failing since 2026-10-22 (checked 2026-10-22) |
+| [gutsberserk.com](https://www.gutsberserk.com) | English, single series | 2026-10-22 |
 | [guya.moe](https://guya.moe) | Guya, Kaguya-sama | 2026-10-22 |
 | [hachirumi.com](https://hachirumi.com) | Hachirumi, Guya instance, has an NSFW section | 2026-10-22 |
-| [hanamiheaven.org](https://hanamiheaven.org) | Portuguese, mostly NSFW | ❌ failing since 2026-10-22 (checked 2026-10-22) |
+| [hanamiheaven.org](https://hanamiheaven.org) | Portuguese, mostly NSFW | 2026-10-22 |
 | [hanayume.com](https://hanayume.com) | Japanese (Comici), free episodes only | 2026-10-22 |
 | [hanmokkuscan.blogspot.com](https://hanmokkuscan.blogspot.com) | Portuguese | 2026-10-19 |
 | [harmony-scan.fr](https://harmony-scan.fr) | French | 2026-10-18 |
