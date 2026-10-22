@@ -16,3 +16,4 @@ docker: elboletaire/manga-downloader
 charts:
   stars: { from: 2024-01-01 }
   downloads-per-day: { range: 90d }
+  downloads-per-release: { from: 2026-10-10 }   # v1.11.0, the first desktop app
