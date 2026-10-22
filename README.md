@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[465 supported sites](#supported-sites)**, from big aggregators to small
+- **[466 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -685,7 +685,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 465 supported sites</b></summary>
+<summary><b>Show all 466 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -877,6 +877,7 @@ to a minute.
 | [komikmanga.com](https://komikmanga.com) | MangaReader, English | 2026-10-19 |
 | [komikmu.top](https://komikmu.top) | Indonesian | 2026-10-19 |
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-19 |
+| [komiku.org](https://komiku.org) | Indonesian | — |
 | [ksgroupscans.com](https://ksgroupscans.com) | KSGroupScans | 2026-10-19 |
 | [kumapoi.info](https://kumapoi.info) | Indonesian, mostly NSFW, doujinshi | 2026-10-19 |
 | [kuragebunch.com](https://kuragebunch.com) | Japanese, Kurage Bunch (GigaViewer) | 2026-10-19 |

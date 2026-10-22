@@ -481,6 +481,17 @@ var plainHTMLSelectors = []SiteSelector{
 		SeriesLink:       `#chapnav a[href*="/manga/"], .coverz a[href*="/series/"]`,
 		FollowSeriesLink: true,
 	},
+	// komiku.org (Indonesian): the series page lists every chapter in
+	// #Daftar_Chapter, one row per chapter with no pagination. The reader's
+	// promo and ad <img>s carry no klazy class, so Image takes only the page
+	// images, and the reader links back to the series via /manga/.
+	{
+		Title:      `#Judul h1 span[itemprop="name"]`,
+		Rows:       "#Daftar_Chapter td.judulseries a",
+		Chapter:    `span[itemprop="name"]`,
+		Image:      "#Baca_Komik img.klazy",
+		SeriesLink: `a[href*="/manga/"]`,
+	},
 }
 
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)
