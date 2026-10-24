@@ -8,7 +8,7 @@ import { localizeScreenshots } from './build/screenshots.ts'
 import { parseSites, renderSites } from './build/sites.ts'
 import { themeScript } from './src/theme.ts'
 import { LANG_INFO, LANG_KEY, LANGS, redirectTarget, type Lang } from './src/lang.ts'
-import { fetchStats, renderStats, downloadsBadgeEndpoint, dockerPullsBadgeEndpoint, type Stats } from './build/stats.ts'
+import { fetchStats, renderStats, type Stats } from './build/stats.ts'
 
 // Where the site is served from: the custom domain at its root. Without one,
 // GitHub Pages serves a project site under /<repo>/ (BASE_PATH=/manga-downloader/).
@@ -161,21 +161,10 @@ function siteData(): Plugin[] {
           if (file === readmePath || file.startsWith(localesDir)) server.ws.send({ type: 'full-reload' })
         })
       },
-      async generateBundle() {
+      generateBundle() {
         // Crawl files, generated so they follow SITE_URL.
         this.emitFile({ type: 'asset', fileName: 'robots.txt', source: `User-agent: *\nAllow: /\n\nSitemap: ${siteURL}sitemap.xml\n` })
         this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemap() })
-        // Badge endpoint JSON files for shields.io — only emitted when stats loaded successfully.
-        statsPromise ??= fetchStats()
-        const statsObj = await statsPromise
-        const dlBadge = downloadsBadgeEndpoint(statsObj)
-        if (dlBadge) {
-          this.emitFile({ type: 'asset', fileName: 'badges/downloads.json', source: JSON.stringify(dlBadge) })
-        }
-        const dockerBadge = dockerPullsBadgeEndpoint(statsObj)
-        if (dockerBadge) {
-          this.emitFile({ type: 'asset', fileName: 'badges/docker-pulls.json', source: JSON.stringify(dockerBadge) })
-        }
       },
       // "pre": runs before Vite parses the page for scripts and assets, in dev and build.
       transformIndexHtml: {
