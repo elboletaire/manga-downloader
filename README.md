@@ -1229,7 +1229,12 @@ conventions.
 
 <div align="center">
 
-[![Star history chart][star history]][stargazers]
+<a href="https://github.com/elboletaire/manga-downloader/stargazers">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/elboletaire/manga-downloader/stats-data/elboletaire/manga-downloader/charts/stars-dark.svg">
+    <img alt="Star history chart" src="https://raw.githubusercontent.com/elboletaire/manga-downloader/stats-data/elboletaire/manga-downloader/charts/stars-light.svg">
+  </picture>
+</a>
 
 </div>
 
@@ -1257,7 +1262,5 @@ conventions.
 [faq-unsupported]: https://mangadownloader.cat/#faq-unsupported
 [homebrew]: https://brew.sh
 [issues]: https://github.com/elboletaire/manga-downloader/issues
-[stargazers]: https://github.com/elboletaire/manga-downloader/stargazers
-[star history]: https://raw.githubusercontent.com/elboletaire/manga-downloader/star-tracker-data/charts/star-history.svg
 [go template]: https://pkg.go.dev/text/template
 [docker hub]: https://hub.docker.com/r/elboletaire/manga-downloader
