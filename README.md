@@ -9,6 +9,7 @@
 [![Go Reference][go reference badge]][go reference]
 [![GitHub release][release badge]][releases]
 [![GitHub downloads][downloads badge]][releases]
+[![GitHub stars][stars badge]][stargazers]
 [![Docker Pulls][pulls badge]][docker hub]
 [![License][license badge]][license]
 
@@ -70,6 +71,8 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 ## Installation
 
 ### Desktop app
+
+[![Desktop app downloads][app downloads badge]][releases]
 
 The easiest way is the [website][website], which picks the right download for
 your system. Or download the `manga-downloader-gui` asset for your system from
@@ -150,6 +153,8 @@ The gear icon (below the URL box on the start screen, in the header of the full 
 </picture>
 
 ### Command line
+
+[![CLI downloads][cli downloads badge]][releases]
 
 #### Homebrew
 
@@ -262,6 +267,8 @@ You only need to do this once.
 </details>
 
 #### Docker
+
+[![Docker Pulls][pulls badge]][docker hub]
 
 ~~~bash
 docker run --rm -it -v "$PWD:/downloads" elboletaire/manga-downloader [url] [chapters]
@@ -1238,10 +1245,13 @@ conventions.
 
 </div>
 
-[downloads badge]: https://img.shields.io/endpoint?url=https%3A%2F%2Fmangadownloader.cat%2Fbadges%2Fdownloads.json&color=%234cb70e
+[downloads badge]: https://raw.githubusercontent.com/elboletaire/manga-downloader/stats-data/elboletaire/manga-downloader/badges/downloads.svg
+[app downloads badge]: https://raw.githubusercontent.com/elboletaire/manga-downloader/stats-data/elboletaire/manga-downloader/badges/downloads-app.svg
+[cli downloads badge]: https://raw.githubusercontent.com/elboletaire/manga-downloader/stats-data/elboletaire/manga-downloader/badges/downloads-cli.svg
+[stars badge]: https://raw.githubusercontent.com/elboletaire/manga-downloader/stats-data/elboletaire/manga-downloader/badges/stars.svg
 [go reference badge]: https://pkg.go.dev/badge/github.com/elboletaire/manga-downloader.svg
 [release badge]: https://img.shields.io/github/release/elboletaire/manga-downloader.svg
-[pulls badge]: https://img.shields.io/endpoint?url=https%3A%2F%2Fmangadownloader.cat%2Fbadges%2Fdocker-pulls.json
+[pulls badge]: https://raw.githubusercontent.com/elboletaire/manga-downloader/stats-data/elboletaire/manga-downloader/badges/docker-pulls.svg
 [license badge]: https://img.shields.io/github/license/elboletaire/manga-downloader?color=green
 [tests badge]: https://github.com/elboletaire/manga-downloader/actions/workflows/test.yaml/badge.svg?branch=master
 [tests]: https://github.com/elboletaire/manga-downloader/actions/workflows/test.yaml
@@ -1249,6 +1259,7 @@ conventions.
 
 [license]: ./LICENSE
 [releases]: https://github.com/elboletaire/manga-downloader/releases
+[stargazers]: https://github.com/elboletaire/manga-downloader/stargazers
 [website]: https://mangadownloader.cat
 [faq]: https://mangadownloader.cat/#faq
 [faq-smartscreen]: https://mangadownloader.cat/#faq-smartscreen

@@ -218,45 +218,6 @@ async function fetchDockerPulls(fetchFn: typeof fetch): Promise<number | null> {
 }
 
 /**
- * shields.io endpoint JSON schema (v1).
- * https://shields.io/badges/endpoint-badge
- */
-export interface BadgeEndpoint {
-  schemaVersion: 1
-  label: string
-  message: string
-  color: string
-}
-
-/**
- * Build a shields.io endpoint JSON object for total GitHub downloads.
- * Returns null when stats are unavailable (avoids publishing a "0" badge).
- */
-export function downloadsBadgeEndpoint(stats: Stats | null): BadgeEndpoint | null {
-  if (!stats) return null
-  return {
-    schemaVersion: 1,
-    label: 'downloads',
-    message: compact(stats.total),
-    color: 'blue',
-  }
-}
-
-/**
- * Build a shields.io endpoint JSON object for Docker Hub pulls.
- * Returns null when stats are unavailable or dockerPulls is null.
- */
-export function dockerPullsBadgeEndpoint(stats: Stats | null): BadgeEndpoint | null {
-  if (!stats || stats.dockerPulls === null) return null
-  return {
-    schemaVersion: 1,
-    label: 'docker pulls',
-    message: compact(stats.dockerPulls),
-    color: 'blue',
-  }
-}
-
-/**
  * Render stats to HTML strings for template replacement.
  * Returns a record mapping placeholder names to HTML strings.
  */
