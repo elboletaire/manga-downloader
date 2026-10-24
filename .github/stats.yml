@@ -18,3 +18,5 @@ charts:
   stars@full: { title: false, height: 400 }     # the whole history, for github-stats-action's README
   downloads-per-day: { range: 90d }
   downloads-per-release: { from: 2026-10-10 }   # v1.11.0, the first desktop app
+badges:
+  downloads: { color: "#4cb70e" }               # the green the README badge always had
