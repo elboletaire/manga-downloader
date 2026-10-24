@@ -1,16 +1,16 @@
 {
   "schema": 1,
   "date": "2026-10-24",
-  "takenAt": "2026-10-24T09:04:24.903Z",
+  "takenAt": "2026-10-24T14:04:56.353Z",
   "repo": {
-    "stars": 281,
+    "stars": 282,
     "forks": 33,
     "watchers": 3,
     "openIssues": 2
   },
   "docker": {
     "image": "elboletaire/manga-downloader",
-    "pulls": 41900
+    "pulls": 42006
   },
   "releases": [
     {
@@ -20,7 +20,7 @@
       "assets": [
         {
           "name": "manga-downloader-gui-v1.21.1-darwin-universal.zip",
-          "downloads": 14
+          "downloads": 19
         },
         {
           "name": "manga-downloader-gui-v1.21.1-linux-amd64.tar.gz",
@@ -32,19 +32,19 @@
         },
         {
           "name": "manga-downloader-gui-v1.21.1-SHA256SUMS.txt",
-          "downloads": 4
+          "downloads": 5
         },
         {
           "name": "manga-downloader-gui-v1.21.1-windows-amd64-installer.exe",
-          "downloads": 60
+          "downloads": 66
         },
         {
           "name": "manga-downloader-gui-v1.21.1-windows-amd64.zip",
-          "downloads": 21
+          "downloads": 25
         },
         {
           "name": "manga-downloader-gui-v1.21.1-windows-arm64-installer.exe",
-          "downloads": 5
+          "downloads": 6
         },
         {
           "name": "manga-downloader-gui-v1.21.1-windows-arm64.zip",
@@ -52,7 +52,7 @@
         },
         {
           "name": "manga-downloader-v1.21.1-darwin-amd64.tar.gz",
-          "downloads": 3
+          "downloads": 4
         },
         {
           "name": "manga-downloader-v1.21.1-darwin-amd64.tar.gz.md5",
@@ -76,7 +76,7 @@
         },
         {
           "name": "manga-downloader-v1.21.1-linux-amd64.tar.gz",
-          "downloads": 7
+          "downloads": 9
         },
         {
           "name": "manga-downloader-v1.21.1-linux-amd64.tar.gz.md5",
@@ -104,11 +104,11 @@
         },
         {
           "name": "manga-downloader-v1.21.1-windows-amd64.zip",
-          "downloads": 35
+          "downloads": 40
         },
         {
           "name": "manga-downloader-v1.21.1-windows-amd64.zip.md5",
-          "downloads": 26
+          "downloads": 27
         },
         {
           "name": "manga-downloader-v1.21.1-windows-arm64.zip",
