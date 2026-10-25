@@ -1,0 +1,33 @@
+name: Worker testing
+
+# pushes to master, plus pull requests: a PR branch would otherwise run twice
+on:
+  push:
+    branches: [master]
+    paths:
+      - "worker/**"
+      - "makefile"
+      - ".github/workflows/worker-test.yaml"
+  pull_request:
+    paths:
+      - "worker/**"
+      - "makefile"
+      - ".github/workflows/worker-test.yaml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: worker/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: worker/pnpm-lock.yaml
+
+      - run: make test/worker
