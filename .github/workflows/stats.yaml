@@ -4,7 +4,9 @@ name: Stats
 # the `stats-data` branch (never master), and rebuilds the dashboard there.
 on:
   schedule:
-    - cron: "41 4 * * *"
+    # late in the day, so the partial current day is nearly whole; GitHub delays
+    # scheduled runs by hours, and this still lands before midnight UTC
+    - cron: "41 17 * * *"
   workflow_dispatch:
 
 permissions:
