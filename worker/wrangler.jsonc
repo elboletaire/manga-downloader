@@ -3,6 +3,7 @@
   "name": "manga-downloader-updates",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
+  "workers_dev": true,
   // Requests carry IPs: no request logs, ever.
   "observability": { "enabled": false },
   "durable_objects": {

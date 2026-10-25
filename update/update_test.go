@@ -68,6 +68,21 @@ func TestLatestFallsBackOnABadWorkerBody(t *testing.T) {
 	}
 }
 
+func TestLatestFallsBackWhenTheWorkerIsUnreachable(t *testing.T) {
+	// A closed server refuses the connection, as an unresolvable or down host does
+	down := answer(t, http.StatusOK, "", false)
+	down.Close()
+	gh := answer(t, http.StatusOK, `{"tag_name":"v2.0.0"}`, true)
+
+	got, err := Source{Worker: down.URL, GitHub: gh.URL, HTTP: gh.Client()}.Latest(context.Background(), "cli", "v1.12.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != `{"tag_name":"v2.0.0"}` {
+		t.Errorf("Latest = %s, want GitHub's answer after the Worker refused the connection", got)
+	}
+}
+
 func TestLatestFallsBackOnATimeout(t *testing.T) {
 	prev := timeout
 	timeout = 20 * time.Millisecond

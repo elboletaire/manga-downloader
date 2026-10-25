@@ -57,13 +57,24 @@ pnpm exec wrangler login        # or export CLOUDFLARE_API_TOKEN and CLOUDFLARE_
 pnpm exec wrangler deploy
 ```
 
-After that, `worker-deploy.yaml` deploys on every push to master that touches `worker/` (or the makefile or that workflow), and it can be run by hand from master. It runs `make test/worker` first, then `make deploy/worker`.
+After that, `worker-deploy.yaml` deploys on every push to master that touches `worker/` (or that workflow), and it can be run by hand from master. It runs `make test/worker` first, then `make deploy/worker`.
 It needs two repository secrets:
 
 - `CLOUDFLARE_API_TOKEN`: a token from the "Edit Cloudflare Workers" template, scoped to the one account.
 - `CLOUDFLARE_ACCOUNT_ID`: the account's ID.
 
 The Analytics Engine dataset is created on the first write, so it needs no setup.
+
+## Custom domain (`api.mangadownloader.cat`)
+
+The apps ask `https://api.mangadownloader.cat`, which isn't routed yet because the zone isn't active. `workers_dev` stays on, so `manga-downloader-updates.elboletaire.workers.dev` keeps working.
+Once the zone is active, add this to `wrangler.jsonc` (next to `workers_dev`) and deploy:
+
+```jsonc
+"routes": [{ "pattern": "api.mangadownloader.cat", "custom_domain": true }]
+```
+
+Until then the apps fall back to GitHub, so the missing route costs nothing but the count.
 
 ## Querying the counts
 

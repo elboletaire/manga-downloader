@@ -19,7 +19,7 @@ import (
 
 const (
 	// BaseURL is the update Worker, which answers GitHub's latest-release JSON
-	BaseURL = "https://manga-downloader-updates.elboletaire.workers.dev"
+	BaseURL = "https://api.mangadownloader.cat"
 	// GitHubLatestURL is the fallback, the newest release as the GitHub API reports it
 	GitHubLatestURL = "https://api.github.com/repos/elboletaire/manga-downloader/releases/latest"
 )
