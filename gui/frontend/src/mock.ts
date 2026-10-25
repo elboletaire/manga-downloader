@@ -31,8 +31,8 @@
 // starts the window in that language, ?lang=system follows the browser's, and
 // without it the window is English, so screenshots and dev stay English. Under
 // multi the language filter shows that language and the list is in it, titled
-// from OP_TITLES; every fifth chapter also appears once in another language. Under ja the
-// titles are Japanese where OP_TITLES_JA has them (the screenshots' chapters), English elsewhere.
+// from OP_TITLES; every fifth chapter also appears once in another language. A list in ja
+// (multi's ja, or the window's on a site without languages) is titled from OP_TITLES_JA where it has one.
 //
 // &site= picks what the series lists for the two filters: multi (the default:
 // languages ca, en, es with All, the window's language shown by default, no groups), plus
@@ -143,7 +143,7 @@ interface MockOffers {
 
 const OFFERS: Record<MockSite, MockOffers> = {
   // multi's current language is the window's, see offersFor
-  multi: { language: { values: ['ca', 'en', 'es'], all: true, current: 'en' }, scanlator: null },
+  multi: { language: { values: ['ca', 'en', 'es', 'ja'], all: true, current: 'en' }, scanlator: null },
   plus: { language: { values: ['en', 'es'], all: false, current: 'en' }, scanlator: null },
   groups: { language: null, scanlator: { values: ['Alpha', 'Delta'], all: true, current: '' } },
   none: { language: null, scanlator: null },
@@ -575,10 +575,10 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     identified = true;
     fallbackFor('language', 'language');
     fallbackFor('scanlator', 'group');
-    // the ja window's series is named in Latin letters, its chapters in Japanese where OP_TITLES_JA has them
-    const japanese = uiLang === 'ja';
-    title = japanese ? 'ONE PIECE' : 'One Piece';
     const lang = listedLanguage();
+    // a ja list is titled in Japanese where OP_TITLES_JA has it, and its series is named in Latin letters
+    const japanese = lang === 'ja';
+    title = japanese ? 'ONE PIECE' : 'One Piece';
     chapters =
       withParts || scenario === 'parts'
         ? partsChapters(lang, japanese)
