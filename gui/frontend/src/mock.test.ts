@@ -334,6 +334,18 @@ describe('createMockApi', () => {
     expect(chapters[0].volume).toBe(0);
   });
 
+  it('titles the chapters in Japanese under the ja window, English where the set has none', async () => {
+    const api = createMockApi({ uiLanguage: 'ja' });
+    await api.load('https://example.com/series/a');
+    const chapters = await api.chapters();
+    const titleOf = (n: number) => chapters.find((c) => c.number === n)!.title;
+    expect(titleOf(598)).toBe('２年後');
+    expect(titleOf(1194)).toBe('万物は変わりゆく');
+    // 633 is not in the Japanese set, so it keeps its English title
+    expect(titleOf(633)).toBe('Friend or Foe');
+    expect((await api.state()).title).toBe('ONE PIECE');
+  });
+
   it('assigns real volume numbers from the dataset', async () => {
     const api = createMockApi({ chapters: 30 });
     await api.load('https://example.com/series/a');
@@ -521,7 +533,7 @@ describe('mockSetupFrom', () => {
 });
 
 describe('mock filters', () => {
-  it('lists chapters in Japanese UI, whose titles are the English ones, on every site', async () => {
+  it('lists chapters in Japanese UI, titled on every site', async () => {
     for (const site of ['multi', 'plus', 'groups', 'none'] as const) {
       const api = createMockApi({ scenario: 'loaded', site, uiLanguage: 'ja' });
       const titles = (await api.chapters()).map((c) => c.title);
