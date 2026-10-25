@@ -45,11 +45,11 @@
     "avifEpub": "Always on for EPUB: readers can't show AVIF.",
     "compress": {
       "label": "Compress pages",
-      "hint": "Pages become JPEG when that's smaller, to shrink the file. JPEG pages only shrink at a lower quality."
+      "hint": "Saves pages as JPEG when that makes them smaller. JPEG pages only shrink at a lower JPEG quality, set under Advanced."
     },
     "quality": {
       "label": "JPEG quality",
-      "hint": "From 1 to 100: used for every page converted to JPEG.",
+      "hint": "From 1 to 100: used for every page saved as JPEG, by Convert to JPEG or Compress pages. Lower means smaller files.",
       "invalid": "Enter a whole number from 1 to 100."
     }
   },

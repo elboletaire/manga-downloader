@@ -367,7 +367,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz, cbr, raw (a folder with the images) or epub")
 	rootCmd.Flags().StringVar(&settings.ReadingDirection, "reading-direction", packer.ReadingDirectionRTL, `direction pages turn in epub files: "rtl" for manga, "ltr" for western comics`)
 	rootCmd.Flags().StringVar(&settings.ConvertImages, "convert-images", grabber.ConvertImagesDefault, `comma-separated source image formats to convert to jpeg for e-reader compatibility: "avif", "webp" or "none"`)
-	rootCmd.Flags().BoolVar(&settings.Compress, "compress", false, "re-encode pages to jpeg when that's smaller, to shrink the file (all but gif; jpeg pages only shrink at a lower --jpeg-quality), keeping the original otherwise")
+	rootCmd.Flags().BoolVar(&settings.Compress, "compress", false, "re-encode pages (all but gif) to jpeg when that's smaller, keeping the original otherwise; jpeg pages only shrink at a lower --jpeg-quality")
 	rootCmd.Flags().IntVar(&settings.JPEGQuality, "jpeg-quality", grabber.JPEGQualityDefault, "quality (1-100) of the jpeg pages made by --convert-images and --compress")
 	rootCmd.Flags().StringVar(&settings.Volumes, "volumes", "", `pack one file per volume: "auto" uses the site's volumes, "parts" packs the parts of a chapter into one file named after it, or give chapter ranges, one group per volume ("1-7/8-16"), "N:" giving a group's number ("16:112-114"); chapters outside every volume are packed on their own`)
 	rootCmd.Flags().BoolVar(&settings.BrowserVisible, "browser-visible", false, "always show the browser window; rarely needed, as it opens on its own for sites that need it")

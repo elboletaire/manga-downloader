@@ -45,11 +45,11 @@
     "avifEpub": "Sempre activat per a EPUB: els lectors no mostren AVIF.",
     "compress": {
       "label": "Comprimeix pàgines",
-      "hint": "Les pàgines passen a JPEG quan això ocupa menys, per reduir el fitxer. Les pàgines JPEG només baixen de mida amb una qualitat més baixa."
+      "hint": "Desa les pàgines en JPEG si així ocupen menys. Les pàgines JPEG només es redueixen abaixant la qualitat JPEG (a Avançat)."
     },
     "quality": {
       "label": "Qualitat JPEG",
-      "hint": "De l'1 al 100: s'usa a cada pàgina convertida a JPEG.",
+      "hint": "De l'1 al 100: s'aplica a cada pàgina desada en JPEG, per Converteix a JPEG o Comprimeix pàgines. Com més baixa, menys ocupen les pàgines.",
       "invalid": "Escriu un nombre enter de l'1 al 100."
     }
   },
