@@ -42,8 +42,10 @@ export class UpdateState extends DurableObject {
     return { day, hash: hex(new Uint8Array(digest)) };
   }
 
+  // Runs at midnight UTC. A request that already started today's salt keeps it.
   async alarm(): Promise<void> {
-    await this.ctx.storage.delete("salt");
+    const salt = await this.ctx.storage.get<Salt>("salt");
+    if (salt && salt.day !== new Date().toISOString().slice(0, 10)) await this.ctx.storage.delete("salt");
   }
 
   // Serves the cached GitHub release, and the last good copy when GitHub fails; null if there is none.

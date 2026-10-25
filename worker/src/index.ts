@@ -46,9 +46,7 @@ export default {
           ],
           doubles: [1],
         });
-      } catch {
-        // Dropped: the release below still goes out.
-      }
+      } catch {}
     }
 
     const release = await state.latest();

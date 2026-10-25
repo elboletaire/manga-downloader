@@ -199,8 +199,18 @@ describe("daily salt", () => {
     const nextMidnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
     expect(await runInDurableObject(stub(), (_, state) => state.storage.getAlarm())).toBe(nextMidnight);
 
+    // The alarm runs after midnight, so the stored salt is yesterday's by then.
+    await runInDurableObject(stub(), (_, state) => state.storage.put("salt", { day: "1999-01-01", value: "old" }));
     expect(await runDurableObjectAlarm(stub())).toBe(true);
     expect(await runInDurableObject(stub(), (_, state) => state.storage.get("salt"))).toBeUndefined();
+  });
+
+  it("keeps today's salt when the midnight alarm lands after a request already started the day", async () => {
+    await latest();
+    const salt = await runInDurableObject(stub(), (_, state) => state.storage.get("salt"));
+
+    expect(await runDurableObjectAlarm(stub())).toBe(true);
+    expect(await runInDurableObject(stub(), (_, state) => state.storage.get("salt"))).toEqual(salt);
   });
 
   it("never stores or records the raw IP", async () => {
