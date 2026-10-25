@@ -335,8 +335,8 @@ code {
   }
 }
 
-/* the label overflows its pill below this width (iPhone 11–14 and the like) */
-@media (max-width: 450px) {
+/* the label overflows its pill below this width, with four languages in the switcher */
+@media (max-width: 490px) {
   .nav-github span {
     display: none;
   }
