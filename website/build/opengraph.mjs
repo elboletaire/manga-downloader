@@ -50,6 +50,23 @@ function tagline(lang) {
   return title.charAt(0).toUpperCase() + title.slice(1)
 }
 
+// The master's arrow stroke in its own box: the path's bbox grown by half the stroke, for the round caps.
+const ARROW_BOX = '341.93 399.54 35.8 15.14'
+function arrow() {
+  const svg = readFileSync(master, 'utf8')
+  const start = svg.indexOf('<path fill="none" stroke="#4A4466"')
+  if (start < 0) throw new Error('opengraph: the master SVG has no tagline arrow')
+  const path = svg.slice(start, svg.indexOf('/>', start) + 2)
+  return `<svg class="arrow" viewBox="${ARROW_BOX}" width="35.8" height="15.14" aria-hidden="true">${path}</svg>`
+}
+
+// The tagline with the master's arrow in place of the "→" character.
+function taglineHtml(lang) {
+  const parts = tagline(lang).split('→')
+  if (parts.length !== 2) throw new Error(`opengraph: ${lang} tagline needs exactly one arrow`)
+  return escapeHtml(parts[0].trim()) + arrow() + escapeHtml(parts[1].trim())
+}
+
 function page(lang, art) {
   const fonts = lang === 'ja' ? FONTS.ja : FONTS.latin
   const chips = JSON.parse(readFileSync(chipsFile, 'utf8'))[lang]
@@ -64,7 +81,7 @@ function page(lang, art) {
     '%TAGLINE_WEIGHT%': String(fonts.tagline.weight),
     '%CHIP_FONT%': fonts.chip,
     '%ARTWORK%': art,
-    '%TAGLINE%': escapeHtml(tagline(lang)),
+    '%TAGLINE%': taglineHtml(lang),
     '%CHIPS%': chips.map((chip) => `<span class="chip"><span class="dot"></span>${escapeHtml(chip)}</span>`).join(''),
   }
   return Object.entries(replacements).reduce((out, [key, value]) => out.split(key).join(value), html)

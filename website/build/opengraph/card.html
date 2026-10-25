@@ -24,14 +24,22 @@
       .tagline {
         position: absolute;
         left: 92px;
-        top: 389px;
+        top: 386.5px;
         margin: 0;
         font-family: %TAGLINE_FONT%;
         font-weight: %TAGLINE_WEIGHT%;
-        font-size: 33px;
+        font-size: 33.3px;
         line-height: 1.2;
         color: #4a4466;
         white-space: nowrap;
+      }
+      .arrow {
+        display: inline-block;
+        vertical-align: middle;
+        margin: 0 8px 0 9px;
+        overflow: visible;
+        position: relative;
+        top: -1.5px;
       }
       .chips {
         position: absolute;
@@ -86,7 +94,7 @@
       const MAX_WIDTH = 700;
       document.fonts.ready.then(() => {
         const tagline = document.querySelector('.tagline');
-        for (let size = 33; size > 18 && tagline.getBoundingClientRect().width > MAX_WIDTH; size -= 0.5) {
+        for (let size = 33.3; size > 18 && tagline.getBoundingClientRect().width > MAX_WIDTH; size -= 0.5) {
           tagline.style.fontSize = size + 'px';
         }
       });
