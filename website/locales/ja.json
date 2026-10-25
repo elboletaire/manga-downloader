@@ -1,0 +1,233 @@
+{
+  "meta": {
+    "title": "manga downloader: 漫画をダウンロードしてCBZ・EPUBに、電子書籍リーダー対応",
+    "description_one": "無料のデスクトップアプリとCLI。MangaDexほか{{count}}サイトの漫画を、Kobo・KOReader・漫画アプリで読めるCBZ、CBR、EPUBファイルにダウンロードできます。Windows、macOS、Linux対応。",
+    "description_other": "無料のデスクトップアプリとCLI。MangaDexほか{{count}}サイトの漫画を、Kobo・KOReader・漫画アプリで読めるCBZ、CBR、EPUBファイルにダウンロードできます。Windows、macOS、Linux対応。",
+    "socialTitle": "manga downloader: 漫画の章 → 電子書籍リーダー対応のCBZ・EPUB",
+    "socialDescription_one": "MangaDexほか{{count}}サイトの漫画を、電子書籍リーダーや漫画アプリで読めるCBZ、CBR、EPUBファイルにダウンロード。デスクトップアプリとCLI、無料のオープンソース。",
+    "socialDescription_other": "MangaDexほか{{count}}サイトの漫画を、電子書籍リーダーや漫画アプリで読めるCBZ、CBR、EPUBファイルにダウンロード。デスクトップアプリとCLI、無料のオープンソース。",
+    "imageAlt": "manga downloaderのマスコット、猫の形をした開いた本。キャッチコピー「漫画の章 → 電子書籍リーダー対応のCBZ・EPUB」と並んでいます。",
+    "jsonLdDescription_one": "MangaDexほか{{count}}サイトの漫画の章をダウンロードし、電子書籍リーダーや漫画アプリ向けのCBZ、CBR、EPUBファイルにまとめる、デスクトップアプリとコマンドラインツール。",
+    "jsonLdDescription_other": "MangaDexほか{{count}}サイトの漫画の章をダウンロードし、電子書籍リーダーや漫画アプリ向けのCBZ、CBR、EPUBファイルにまとめる、デスクトップアプリとコマンドラインツール。",
+    "features": {
+      "downloads": "MangaDexや他の多くの対応サイトから漫画の章をダウンロード",
+      "packs": "電子書籍リーダーや漫画アプリ向けに、章をCBZ、CBR、EPUBファイルにまとめる",
+      "apps": "デスクトップアプリとコマンドラインツール"
+    }
+  },
+  "common": {
+    "desktopApp": "デスクトップアプリ",
+    "commandLine": "コマンドライン"
+  },
+  "nav": {
+    "skip": "本文へ移動",
+    "brand": "manga downloader、ページ上部へ戻る",
+    "main": "メイン",
+    "desktop": "アプリ",
+    "cli": "CLI",
+    "sites": "対応サイト",
+    "faq": "よくある質問",
+    "language": "言語"
+  },
+  "hero": {
+    "eyebrow": "v1.11から：Windows、macOS、Linux向けのデスクトップアプリ",
+    "title": "漫画をダウンロード <span class=\"arrow\">→</span> <span class=\"accent\">電子書籍リーダー対応のCBZ・EPUB</span>",
+    "lede_one": "MangaDexや対応する他の{{count}}サイトのリンクを貼り付けて、章を選ぶだけ。電子書籍リーダーや漫画アプリでオフライン閲覧できる、きれいなCBZ、CBR、EPUBファイルが手に入ります。",
+    "lede_other": "MangaDexや対応する他の{{count}}サイトのリンクを貼り付けて、章を選ぶだけ。電子書籍リーダーや漫画アプリでオフライン閲覧できる、きれいなCBZ、CBR、EPUBファイルが手に入ります。",
+    "downloadLabel": "デスクトップアプリをダウンロード",
+    "downloadDetail": "Windows、macOS、Linux向け",
+    "otherPlatforms": "他のプラットフォーム",
+    "sourceCode": "ソースコード",
+    "highlights": "主な特徴",
+    "chips": {
+      "sites_one": "{{count}}サイト",
+      "sites_other": "{{count}}サイト",
+      "formats": "CBZ、CBR、EPUB、または画像のまま",
+      "ereader": "電子書籍リーダー対応",
+      "apps": "デスクトップアプリ + CLI",
+      "free": "無料のオープンソース"
+    }
+  },
+  "desktop": {
+    "newTag": "v1.11から",
+    "title": "CLIの機能すべてを、ウィンドウで",
+    "lede": "ターミナルも、覚えるフラグも不要。同じダウンローダーを、Windows、macOS、Linuxのネイティブウィンドウで。",
+    "overviewAlt": "シリーズを読み込んだデスクトップアプリ。タイトルと章の一覧で24章が選択され、その横に「Options」タブが開いている。",
+    "pasteTitle": "リンクを貼るだけ",
+    "pasteText": "シリーズのURLを貼り付けると、アプリがタイトル、表紙、章をすぐに読み込みます。「読み込む」ボタンも、章のリンクを1つずつコピーする手間もありません。",
+    "pickTitle": "章は好きなように選ぶ",
+    "pickText": "<code>1-10,12,15-20</code> のような範囲を入力するか、章をクリックしてからShiftキーを押しながら別の章をクリックすると、間のすべての章を選択できます。",
+    "chapterListAlt": "ダウンロード中の章一覧：選択した章が、ダウンロードの間はロックされている。",
+    "volumesTitle": "巻ごとに1ファイル",
+    "volumesText": "各巻を、それぞれ1つのCBZ、CBR、EPUBにまとめます。章はサイトが示す巻ごとにまとめられますが、<code>1-7/8-16</code> のように自分でグループを指定することもできます。",
+    "volumesAlt": "章一覧を巻ごとにまとめた表示。各巻で選択された数が表示されている。",
+    "partsTitle": "章ごとに1ファイル、パートは結合",
+    "partsText": "サイトによっては章がパートに分かれています。アプリで「結合」を選ぶか、コマンドラインで <code>--volumes parts</code> を使うと、パートを章の名前の1つのファイルにまとめます。パートのない章はそのままです。",
+    "partsAlt": "各章のパートを章の下にまとめて表示した一覧。一部は折りたたまれている。",
+    "languageTitle": "言語も翻訳グループも選べる",
+    "languageText": "シリーズが複数の言語で提供されていたり、複数の翻訳グループが手がけていたりする場合も、アプリは実際に提供されている選択肢だけを表示するので、コードを推測する必要はありません。",
+    "languageAlt": "言語のドロップダウンが開いていて、Englishが選ばれている。",
+    "watchTitle": "進行状況を見守る",
+    "watchText": "章ごとのリアルタイムの進行状況。システムのフォルダー選択画面で選んだフォルダーにファイルが届いていきます。最後の章が終われば完了です。",
+    "themeTitle": "ライトかダーク",
+    "themeText": "アプリはシステムのテーマに従うので、夜の読書も目に優しいままです。",
+    "finishedAlt": "Activityパネルで完了した実行の表示：12章すべてが出力フォルダーに保存され、フォルダーを開くボタンがある。"
+  },
+  "downloads": {
+    "title": "すべてのダウンロード",
+    "intro": "最新リリースは<a href=\"{{repo}}/releases/latest\" data-release-tag>GitHubで</a>。どれを選べばよいかわからない場合、ほとんどのPCはx64、Macはユニバーサル版を選んでください。",
+    "legacy32": "32ビット（旧版）",
+    "windowsInstaller": "デスクトップアプリ：インストーラー",
+    "windowsPortable": "デスクトップアプリ：ポータブル版（zip）",
+    "bit32": "32ビット",
+    "appleSilicon": "Apple silicon",
+    "foot": "ビルドには署名がないため、WindowsとmacOSでは初回に警告が表示されます。<a href=\"#faq-smartscreen\">通過する方法はこちら</a>。"
+  },
+  "cli": {
+    "title": "バイナリ1つ、依存関係なし",
+    "lede": "ランタイムも設定ファイルも不要。スクリプト、サーバー、ターミナルを常用する人に最適です。",
+    "installTitle": "インストール",
+    "windowsText": "<strong>PowerShell</strong> に次を貼り付けます。ユーザーのフォルダーにインストールされ、<code>PATH</code> に追加されます。管理者権限は不要です。もう一度実行すると更新されます。",
+    "binaryTitle": "ビルド済みバイナリ",
+    "binaryText": "システムに合ったアーカイブを<a href=\"#downloads\">ダウンロード</a>ページから取得し、展開して実行してください：",
+    "binaryFoot": "<code>/usr/local/bin</code> など <code>PATH</code> の通ったフォルダーに移動すると、どこからでも実行できます。",
+    "brewText": "macOSとLinuxでは、<code>elboletaire/tap</code> タップから。<code>brew upgrade</code> で最新に保てます。",
+    "brewFoot": "これはコマンドラインツールだけです。macOSでデスクトップアプリを入手するには：",
+    "dockerText": "ファイルはマウントされたフォルダーに保存されます。<span class=\"site-badge\">ブラウザー</span>のタグが付いたサイトには <code>:browser</code> イメージを使ってください。",
+    "useTitle": "使ってみる",
+    "example1": "マンガの目次ページを指定し、欲しい章を選びます：",
+    "example2": "英語の章だけを、1つのファイルにまとめる（既定はCBZ）：",
+    "example2Language": "en",
+    "example3": "電子ペーパー端末向けの厳しめの設定。AVIFとWebPのページを両方JPEGに変換します：",
+    "example4": "すべての章から、クレジットページと最後のページを除きます：",
+    "downloadGifAlt": "ターミナルの録画：manga-downloaderが One Piece の8章を同時にダウンロードし、それぞれに進行バーが表示されている。",
+    "downloadGifCaption": "8章を並行してダウンロード。",
+    "bundleGifAlt": "ターミナルの録画：同じ章を --bundle を付けてダウンロードし、1つのCBZファイルにまとめている。",
+    "bundleGifCaption": "<code>--bundle</code> を付けると、1つのファイルにまとまります。",
+    "volumesGifAlt": "ターミナルの録画：manga-downloaderが --volumes auto を付けて Horimiya の13章をダウンロードし、巻ごとに1つのCBZファイルにまとめている。",
+    "volumesGifCaption": "または <code>--volumes auto</code> で、巻ごとに1ファイル。",
+    "more": "すべてのフラグは<a href=\"{{repo}}#using-the-command-line\">使い方ガイド</a>にあります（英語）。または <code>manga-downloader help</code> を実行してください。"
+  },
+  "features": {
+    "kicker": "機能",
+    "title": "読むために作られた、面倒な設定は不要",
+    "ereaderTitle": "電子書籍リーダーに優しい",
+    "ereaderText": "AVIFのページは自動でJPEGに変換されるので、Kobo、KOReader、Calibreで真っ白に表示されることがありません。WebPも、指定すれば変換します。",
+    "cbzTitle": "CBZ、CBR、EPUB、または画像のまま",
+    "cbzText": "章ごとに1つのCBZ、CBR、EPUB。自分でまとめたい場合は <code>--format raw</code> で画像フォルダーのまま出力できます。",
+    "bundlesTitle": "バンドル",
+    "bundlesText": "<code>--bundle</code> は、1つの編全体を1つのファイルにまとめます。内部には章ごとのフォルダーが入ります。",
+    "rangesTitle": "章の範囲指定",
+    "rangesText": "<code>1,3,5-10</code> と指定すれば、その章だけをダウンロードします。追いつくには、足りない分だけをダウンロードすれば済みます。クレジットページは <code>--skip-pages</code> で飛ばせます。",
+    "cloudflareTitle": "Cloudflareにも対応",
+    "cloudflareText": "JavaScriptが必要なサイトや、Cloudflareの背後にあるサイトは、お使いのChrome、Chromium、Brave、Edgeで処理されます。「Verify you are human」のチェックも代わりに入れてくれます。",
+    "dockerTitle": "Dockerイメージ",
+    "dockerText": "通常のサイト向けの小さなイメージと、残りのサイト向けにChromiumと仮想ディスプレイを含む <code>:browser</code> イメージ。",
+    "languagesTitle": "言語と翻訳グループ",
+    "languagesText": "<code>--language</code> で言語を、サイトに複数のバージョンがあるときは <code>--scanlator</code> で翻訳グループを選べます。",
+    "namesTitle": "ファイル名を自分で決める",
+    "namesText": "<code>{{filenameTemplate}}</code> のようなテンプレートで、ファイル名を好きに決められます。名前が重なった場合はバージョンの接尾辞が付き、上書きされることはありません。"
+  },
+  "sites": {
+    "kicker": "対応サイト",
+    "title_one": "{{count}}サイト、そして増加中",
+    "title_other": "{{count}}サイト、そして増加中",
+    "lede": "大手のアグリゲーターから小さな翻訳グループまで。同じプラットフォームで作られた他のサイトも、リストにない場合でも動くことが多いです。動かないサイトがあれば、<a href=\"{{repo}}/issues\">issueを作成</a>してください。",
+    "filterLabel": "サイトを絞り込む",
+    "filterPlaceholder": "サイトを検索（例：mangadex、scans）",
+    "browserOnly": "ブラウザーが必要なサイトのみ",
+    "legend_one": "<span class=\"site-badge\">ブラウザー</span>のタグが付いたサイト（{{count}}件）には、Chrome、Chromium、Brave、Edgeのいずれかのインストールが必要です。manga downloaderが自動で開き、サイトが必要とするときだけウィンドウを表示します。",
+    "legend_other": "<span class=\"site-badge\">ブラウザー</span>のタグが付いたサイト（{{count}}件）には、Chrome、Chromium、Brave、Edgeのいずれかのインストールが必要です。manga downloaderが自動で開き、サイトが必要とするときだけウィンドウを表示します。",
+    "emptyText": "<strong>まだリストにありません。</strong>ひとまず試してみてください。同じプラットフォームのサイトは、そのまま動くことがよくあります。動かなければ、<a href=\"{{repo}}/issues/new\">リクエストしてください</a>。",
+    "badge": {
+      "label": "ブラウザー",
+      "srPrefix": "ブラウザーが必要",
+      "title": "Chrome、Chromium、Brave、Edgeのいずれかが必要"
+    },
+    "verified": {
+      "on": "{{date}}に確認済み",
+      "failing": "{{date}}から失敗中",
+      "unknown": "未確認"
+    }
+  },
+  "faq": {
+    "kicker": "よくある質問",
+    "title": "うまくいかないとき",
+    "smartscreenQ": "Windowsに「Windows によって PC が保護されました」と表示される",
+    "smartscreenA": "SmartScreenによる表示です。アプリに署名がないためフラグが立つだけです。<strong>詳細情報</strong>をクリックし、次に<strong>実行</strong>をクリックしてください。Windowsは選択を覚えます。",
+    "gatekeeperQ": "macOSで開けない",
+    "gatekeeperA": "Gatekeeperは、署名のないアプリを初回にブロックします。一度開こうとして警告を閉じ、次に<strong>システム設定 → プライバシーとセキュリティ</strong>を開いて下にスクロールし、<strong>セキュリティ</strong>の<strong>このまま開く</strong>をクリックしてください。もう一度開いて確認します。必要なのは一度だけで、アプリもコマンドラインツールも同じです。",
+    "exeQ": "<code>manga-downloader.exe</code> をダブルクリックすると、一瞬ウィンドウが開くだけ",
+    "exeA": "それはコマンドラインツールで、ターミナルから実行するものです。<a href=\"#install\">PowerShellのワンライナー</a>でインストールしてそこから実行するか、クリックで使いたい場合は<a href=\"#desktop\">デスクトップアプリ</a>を入手してください。",
+    "paywallQ": "最新の章が空でダウンロードされる、または見つからない",
+    "paywallA": "多くのサイトでは最新の章が有料の裏に置かれており、ページは普通に見えることが多いです。少し古い章を試して、サイトが動いていることを確認してください。",
+    "oldQ": "古い章が見つからない、または章の範囲が最初の章より前から始まるという警告が出る",
+    "oldA": "サイトは古い章を削除することがよくあります。manga downloaderは、サイトがまだ表示している章しかダウンロードできません。",
+    "browserQ": "ブラウザーのウィンドウがポップアップする",
+    "browserA": "<a href=\"#sites\">一覧</a>で<span class=\"site-badge\">ブラウザー</span>のタグが付いたサイトでは、これは想定どおりです。サイトがCloudflareのチャレンジや独自のキャプチャを表示したときにウィンドウが開き、対応が必要かもしれないときに通知されます。チェックボックスは自動でクリックされますが、一部のチャレンジはご自身で解いていただく必要があります。その後はダウンロードが自動で続きます。アプリでは、ブラウザーの対応が必要だという通知が表示されます。<em>ブラウザーのウィンドウを表示</em>で前面に出し、<em>閉じる</em>で通知を隠せます。最初からウィンドウを開いておくには、<code>--browser-visible</code> を使うか、アプリの<em>オプション › 詳細設定</em>にある<em>ブラウザーのウィンドウを表示</em>を使ってください。",
+    "nobrowserQ": "ブラウザーが見つからない",
+    "nobrowserA": "<span class=\"site-badge\">ブラウザー</span>のタグが付いたサイトには、通常の場所にGoogle Chrome、Chromium、Brave、Edgeのいずれかのインストールが必要です。ほかのChromium系ブラウザーを使うには、<code>MANGA_DOWNLOADER_BROWSER</code> に実行ファイルのフルパス（または <code>PATH</code> 上のコマンド）を設定してください。例：<code>MANGA_DOWNLOADER_BROWSER=/usr/bin/brave-browser</code>。コマンドラインでもアプリでも使えます。アプリの場合は、起動する環境に設定してください。",
+    "ereaderQ": "電子書籍リーダーでページが表示されない",
+    "ereaderA": "サイトがWebP画像を配信している可能性があります。<code>--convert-images avif,webp</code> を付けて章をダウンロードし直してください。アプリでは、<em>JPEGに変換</em>の下の<em>WebP</em>にチェックを入れてください。",
+    "unsupportedQ": "使いたいサイトに対応していない",
+    "unsupportedA": "まずは試してみてください。リストにあるサイトと同じプラットフォームで作られたサイトは、うまく動くことがよくあります。動かなければ、<a href=\"{{repo}}/issues\">issueを作成</a>するか、プルリクエストを送ってください。"
+  },
+  "theme": {
+    "label": "テーマ",
+    "system": "システム",
+    "light": "ライト",
+    "dark": "ダーク"
+  },
+  "footer": {
+    "license": "無料のオープンソース、<a href=\"{{repo}}/blob/master/LICENSE\">AGPL-3.0ライセンス</a>のもとで提供。",
+    "madeBy": "作成者：<a href=\"{{author}}\">elboletaire</a>。",
+    "nav": "プロジェクト",
+    "releases": "リリース",
+    "issue": "問題を報告"
+  },
+  "languageBanner": {
+    "en": {
+      "text": "This page is also in English",
+      "link": "Read in English",
+      "close": "Close"
+    },
+    "es": {
+      "text": "Esta página también está en español",
+      "link": "Ver en español",
+      "close": "Cerrar"
+    },
+    "ca": {
+      "text": "Aquesta pàgina també és en català",
+      "link": "Llegeix-la en català",
+      "close": "Tanca"
+    },
+    "ja": {
+      "text": "このページは日本語でもご覧いただけます",
+      "link": "日本語で読む",
+      "close": "閉じる"
+    }
+  },
+  "runtime": {
+    "download": {
+      "generic": "デスクトップアプリをダウンロード",
+      "genericDetail": "下のダウンロードから、お使いのシステムを選んでください",
+      "forOS": "{{os}}版をダウンロード",
+      "latest": "GitHubの最新リリース",
+      "desktopApp": "デスクトップアプリ {{tag}}"
+    },
+    "copy": {
+      "label": "コマンドをコピー",
+      "done": "コピーしました"
+    },
+    "sites": {
+      "all_one": "{{count}}サイト",
+      "all_other": "{{count}}サイト",
+      "filtered_one": "{{count}}サイト中{{shown}}件",
+      "filtered_other": "{{count}}サイト中{{shown}}件"
+    }
+  },
+  "stats": {
+    "downloads": "ダウンロード数",
+    "dockerPulls": "Dockerのpull数"
+  }
+}

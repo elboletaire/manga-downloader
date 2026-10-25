@@ -7,7 +7,7 @@ manual run (dispatched from `master`, the only branch the Pages environment
 deploys from) covers urgent fixes, and the daily stats refresh rebuilds the
 latest release.
 
-One static page per language (English at `/`, Spanish at `/es/`, Catalan at `/ca/`): Vite and TypeScript, no UI framework. Everything is in
+One static page per language (English at `/`, Spanish at `/es/`, Catalan at `/ca/`, Japanese at `/ja/`): Vite and TypeScript, no UI framework. Everything is in
 the built HTML, so it works and indexes without JavaScript; the script only
 picks the right download for the visitor's OS, filters the sites list and adds
 copy buttons. The page text is translated at build time with i18next.
@@ -115,9 +115,10 @@ The shadow widens each derivative beyond the crop plus its 56 px margin, so the
 `<img>` sizes in `index.html` come from the output, not from the geometry.
 
 Each translated app language has its own set in `src/assets/screenshots/<lang>/`
-(`es`, `ca`), made by `tools/screenshots/capture-all.sh --install` from
+(`es`, `ca`; `ja` has none yet), made by `tools/screenshots/capture-all.sh --install` from
 `tools/screenshots/out/<lang>/`. The es and ca pages use a file from there when it
-exists, and the English one for any image that doesn't, so the site never shows
+exists, and the English one for any image that doesn't (so ja shows English
+screenshots until its set is taken), so the site never shows
 a missing image. The crop geometry above assumes the panels sit where they do
 in English; a translated label that changes a panel's size needs its crop checked.
 
@@ -138,11 +139,11 @@ the hero text is the LCP element.
 
 ## Languages
 
-Strings live in `locales/{en,es,ca}.json` (i18next JSON v4: nested keys, `_one`/`_other` plurals, `{{var}}`). The same format will be used by the GUI's react-i18next and by Weblate.
+Strings live in `locales/{en,es,ca,ja}.json` (i18next JSON v4: nested keys, `_one`/`_other` plurals, `{{var}}`). The same format will be used by the GUI's react-i18next and by Weblate.
 
 `index.html` is the template. `{{t:key}}` inserts HTML, `{{a:key}}` attribute-escaped text, `{{j:key}}` JSON-escaped text, and an optional `:sites|others|browsers` picks the plural count.
 
-The `site-data` plugin renders it with i18next at build time. `es/index.html` and `ca/index.html` are stubs it replaces.
+The `site-data` plugin renders it with i18next at build time. `es/`, `ca/` and `ja/` `index.html` are stubs it replaces.
 
 Asset URLs in the template must be root-absolute (`/src/...`).
 
@@ -155,6 +156,11 @@ The build also emits `404.html` (no script, `noindex`, the site's stylesheet) fo
 Each page gets `hreflang` alternates (plus `x-default` pointing to English), `og:locale` and its alternates, and its own canonical URL. `sitemap.xml` lists all three pages.
 
 Tests check that every locale has en's keys, placeholders and tags.
+
+Japanese uses Murecho (body) and M PLUS Rounded 1c (headings), loaded from
+`@fontsource` in `main.ts`. Their stacks are set under `:root:lang(ja)` in
+`styles.css`, so the other pages never reference those font files. Only the
+weight 700 of M PLUS Rounded 1c is shipped: headings asking for 600 get it.
 
 The supported-sites notes stay in English.
 

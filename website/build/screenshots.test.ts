@@ -27,6 +27,10 @@ describe('localizeScreenshots', () => {
     expect(asked.every((url) => url.startsWith('/src/assets/screenshots/es/'))).toBe(true)
   })
 
+  it('serves the English screenshots to a language with no folder yet', () => {
+    expect(localizeScreenshots(html, 'ja', () => false)).toBe(html)
+  })
+
   it('leaves the English page untouched, even when the files exist', () => {
     expect(localizeScreenshots(html, 'en', () => true)).toBe(html)
   })

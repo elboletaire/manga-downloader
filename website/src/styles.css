@@ -51,6 +51,14 @@
   color-scheme: light dark;
 }
 
+/* Japanese pages only: the Japanese faces come after the Latin ones here. On the
+   other pages they'd be pulled in by the arrow glyph, so they stay out of the stack. */
+:root:lang(ja) {
+  --font-ui: 'Inter Variable', 'Murecho Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fredoka Variable', 'M PLUS Rounded 1c', var(--font-ui);
+  word-break: auto-phrase;
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --bg: var(--night);
@@ -473,10 +481,29 @@ body:has(.lang-banner:not([hidden])) {
   color: var(--text);
 }
 
+/* Japanese has no letter-spacing or caps, and its lines need more air than Latin ones. */
+:lang(ja) body {
+  line-height: 1.8;
+}
+
+:lang(ja) h1,
+:lang(ja) h2,
+:lang(ja) .kicker,
+:lang(ja) .platform-kind,
+:lang(ja) .site-badge {
+  letter-spacing: 0;
+}
+
 /* "Capítulos de manga →" is ~20% longer than "Manga chapters →": 10% smaller
    keeps it on one line at every width, as the English title is */
 .hero h1:lang(es) {
   font-size: clamp(2.16rem, 4.68vw, 3.69rem);
+}
+
+/* Full-width glyphs are wider than Latin ones: at this size the accent breaks after 対応 instead of inside it. */
+.hero h1:lang(ja) {
+  font-size: clamp(2.1rem, 4.4vw, 3.5rem);
+  line-height: 1.25;
 }
 
 .hero h1 .arrow {

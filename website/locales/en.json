@@ -200,6 +200,11 @@
       "text": "Aquesta pàgina també és en català",
       "link": "Llegeix-la en català",
       "close": "Tanca"
+    },
+    "ja": {
+      "text": "このページは日本語でもご覧いただけます",
+      "link": "日本語で読む",
+      "close": "閉じる"
     }
   },
   "runtime": {

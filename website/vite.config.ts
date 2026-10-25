@@ -185,6 +185,7 @@ function notFoundPage(stylesheet: string): string {
         <li><a href="${base}">English</a></li>
         <li><a href="${base}es/" lang="es">Español</a></li>
         <li><a href="${base}ca/" lang="ca">Català</a></li>
+        <li><a href="${base}ja/" lang="ja">日本語</a></li>
       </ul>
     </main>
   </body>
@@ -269,7 +270,7 @@ export default defineConfig({
     // Never inline assets as data: URIs. Firefox doesn't render the SVG data:
     // URI in the dark <picture> source, so the hero mascot disappeared there.
     assetsInlineLimit: 0,
-    // One page per language; es/ and ca/ index.html are stubs rendered from index.html.
+    // One page per language; es/, ca/ and ja/ index.html are stubs rendered from index.html.
     rolldownOptions: {
       input: Object.fromEntries(LANGS.map((l) => [l, path.join(root, LANG_INFO[l].path, 'index.html')])),
     },
