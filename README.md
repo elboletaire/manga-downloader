@@ -48,7 +48,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[466 supported sites](#supported-sites)**, from big aggregators to small
+- **[467 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -692,7 +692,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 466 supported sites</b></summary>
+<summary><b>Show all 467 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -1105,6 +1105,7 @@ to a minute.
 | [toongod.org](https://www.toongod.org) \* |  | 2026-10-15 |
 | [toonhunter.com](https://toonhunter.com) | Thai, mostly NSFW | 2026-10-18 |
 | [toonily.com](https://toonily.com) \* |  | 2026-10-15 |
+| [toonz.to](https://toonz.to) \* |  | 2026-10-25 |
 | [topcomicporno.com](https://topcomicporno.com) | Spanish, mostly NSFW | 2026-10-18 |
 | [tortugaceviri.com](https://tortugaceviri.com) | Tortuga Çeviri | 2026-10-18 |
 | [tritinia.org](https://tritinia.org) | Tritinia Scans | 2026-10-18 |

@@ -818,10 +818,15 @@ grabber/browser: \
 	grabber/sushiscan \
 	grabber/teamshadowi \
 	grabber/toongod \
-	grabber/toonily
+	grabber/toonily \
+	grabber/toonz
 
 grabber/toonily:
 	go run . --browser-visible https://toonily.com/serie/the-beginning-after-the-end-ea2130e6/ 244
+# uses a real (visible) browser: the Turnstile challenge never passes headless,
+# and the reader mounts its pages on scroll, so the pages come from the payload
+grabber/toonz:
+	go run . https://toonz.to/manhwa/just-because-youre-hungry-doesnt-mean-you-can-eat-anything 2
 
 grabber/toongod:
 	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
@@ -1955,7 +1960,7 @@ SMOKE_EXCLUDE += mangitto lilymanga mangaplus
 # 429, reset, 530 or a non-blog page from GitHub's runners, while they pass locally
 SMOKE_EXCLUDE += ler999 lonertl mangaailand mangadelsiglotvmanga mangabats legionscans asialotuss
 # headless-browser grabbers: a runner can't get past their challenges
-SMOKE_EXCLUDE += comix mkissa templetoons mangafire
+SMOKE_EXCLUDE += comix mkissa templetoons mangafire toonz
 
 # every target of the grabber and grabber/html aggregates, read from this file
 # so a new site is one line there, minus SMOKE_EXCLUDE
