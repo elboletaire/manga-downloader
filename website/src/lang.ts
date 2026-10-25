@@ -7,11 +7,11 @@ export type Lang = (typeof LANGS)[number]
 /** localStorage key holding the language the visitor picked in the switcher (or closed the banner on). */
 export const LANG_KEY = 'md:lang'
 
-export const LANG_INFO: Record<Lang, { name: string; ogLocale: string; path: string }> = {
-  en: { name: 'English', ogLocale: 'en_US', path: '' },
-  es: { name: 'Español', ogLocale: 'es_ES', path: 'es/' },
-  ca: { name: 'Català', ogLocale: 'ca_ES', path: 'ca/' },
-  ja: { name: '日本語', ogLocale: 'ja_JP', path: 'ja/' },
+export const LANG_INFO: Record<Lang, { name: string; ogLocale: string; path: string; ogImage: string }> = {
+  en: { name: 'English', ogLocale: 'en_US', path: '', ogImage: 'opengraph.png' },
+  es: { name: 'Español', ogLocale: 'es_ES', path: 'es/', ogImage: 'opengraph-es.png' },
+  ca: { name: 'Català', ogLocale: 'ca_ES', path: 'ca/', ogImage: 'opengraph-ca.png' },
+  ja: { name: '日本語', ogLocale: 'ja_JP', path: 'ja/', ogImage: 'opengraph-ja.png' },
 }
 
 /**
