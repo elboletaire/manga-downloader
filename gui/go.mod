@@ -6,8 +6,8 @@ replace github.com/elboletaire/manga-downloader => ../
 
 require (
 	github.com/elboletaire/manga-downloader v0.0.0-00010101000000-000000000000
-	github.com/wailsapp/wails/v2 v2.16.0
-	golang.org/x/sys v0.48.0
+	github.com/wailsapp/wails/v2 v2.17.0
+	golang.org/x/sys v0.49.0
 )
 
 require (
@@ -21,6 +21,7 @@ require (
 	github.com/ebitengine/purego v0.10.1 // indirect
 	github.com/elboletaire/go-rar v0.2.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
 	github.com/gen2brain/avif v0.6.0 // indirect
 	github.com/go-json-experiment/json v0.0.0-20260623181947-01eb4420fa68 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
@@ -48,7 +49,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/wailsapp/go-webview2 v1.0.22 // indirect
-	github.com/wailsapp/mimetype v1.4.1 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/image v0.44.0 // indirect
 	golang.org/x/net v0.60.0 // indirect
