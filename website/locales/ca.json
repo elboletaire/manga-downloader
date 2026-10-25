@@ -42,10 +42,10 @@
     "chips": {
       "sites_one": "{{count}} lloc",
       "sites_other": "{{count}} llocs",
-      "formats": "CBZ, CBR, EPUB o imatges soltes",
-      "ereader": "A punt per al lector electrònic",
-      "apps": "Aplicació d'escriptori + CLI",
-      "free": "Gratuït i de codi obert"
+      "formats": "CBZ, CBR, EPUB o imatges",
+      "ereader": "Per a lectors electrònics",
+      "apps": "Escriptori + CLI",
+      "free": "Lliure i gratuït"
     }
   },
   "desktop": {

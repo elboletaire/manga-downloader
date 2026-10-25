@@ -42,10 +42,10 @@
     "chips": {
       "sites_one": "{{count}} sitio",
       "sites_other": "{{count}} sitios",
-      "formats": "CBZ, CBR, EPUB o imágenes sueltas",
-      "ereader": "Listo para tu e-reader",
-      "apps": "App de escritorio + CLI",
-      "free": "Gratis y de código abierto"
+      "formats": "CBZ, CBR, EPUB o imágenes",
+      "ereader": "Para tu e-reader",
+      "apps": "Escritorio + CLI",
+      "free": "Libre y gratuito"
     }
   },
   "desktop": {

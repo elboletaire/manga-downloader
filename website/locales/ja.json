@@ -42,9 +42,9 @@
     "chips": {
       "sites_one": "{{count}}サイト",
       "sites_other": "{{count}}サイト",
-      "formats": "CBZ、CBR、EPUB、または画像のまま",
+      "formats": "CBZ・CBR・EPUB・画像",
       "ereader": "電子書籍リーダー対応",
-      "apps": "デスクトップアプリ+CLI",
+      "apps": "アプリ+CLI",
       "free": "無料・オープンソース"
     }
   },
