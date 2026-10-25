@@ -140,8 +140,8 @@ app's Homebrew cask is installed it keeps the link instead, since `brew upgrade`
 updates that copy.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/09-update-dark.webp">
-  <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/09-update-light.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/10-update-dark.webp">
+  <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/10-update-light.webp">
 </picture>
 
 The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español, Català or 日本語) and whether the app opens with the simple start screen. The same panel turns the update check on or off.
@@ -352,8 +352,8 @@ follow these steps:
    browser window* to bring it to the front and *Dismiss* to hide the alert.
 
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/08-browser-alert-dark.webp">
-     <img alt="The app's alert saying the browser needs you, with Dismiss and Show the browser window buttons" src="assets/screenshots/08-browser-alert-light.webp">
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/09-browser-alert-dark.webp">
+     <img alt="The app's alert saying the browser needs you, with Dismiss and Show the browser window buttons" src="assets/screenshots/09-browser-alert-light.webp">
    </picture>
 
    <picture>
@@ -365,8 +365,8 @@ follow these steps:
    after the chapter, and leaves the chapters without parts as one file each.
 
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/12-parts-dark.webp">
-     <img alt="Pack as Merged: the chapter list with each chapter's parts grouped under it" src="assets/screenshots/12-parts-light.webp">
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/08-parts-dark.webp">
+     <img alt="Pack as Merged: the chapter list with each chapter's parts grouped under it" src="assets/screenshots/08-parts-light.webp">
    </picture>
 
 5. **Press Download.** The *Activity* tab shows each chapter as it's fetched and
@@ -390,8 +390,8 @@ follow these steps:
    are still saved.
 
    <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/10-failed-dark.webp">
-     <img alt="A finished download where one chapter failed, with the reason" src="assets/screenshots/10-failed-light.webp">
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/11-failed-dark.webp">
+     <img alt="A finished download where one chapter failed, with the reason" src="assets/screenshots/11-failed-light.webp">
    </picture>
 
 The app saves your options to `gui.json` in the `manga-downloader` folder of

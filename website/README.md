@@ -101,7 +101,7 @@ panel's left edge, so no edge of the list shows in it). The numbers assume the
 | `language-selector` | `03-language-selector-{light,dark}.png` | `740x960+85+56`     |
 | `chapter-list`      | `04-downloading-{light,dark}.png`       | `1062x787+117+405`  |
 | `volumes`           | `07-volumes-{light,dark}.png`           | `1062x787+117+405`  |
-| `parts`             | `12-parts-{light,dark}.png`             | `1062x787+117+405`  |
+| `parts`             | `08-parts-{light,dark}.png`             | `1062x787+117+405`  |
 | `finished-run`      | `05-done-{light,dark}.png`              | `680x787+1203+405`  |
 
 To regenerate from the originals, run it with the captures' folder (made by

@@ -99,11 +99,11 @@ for SHOT_LANG in $LANGS; do
     shot 05-done '?mock&scenario=done&freeze&shot'
     shot 06-options '?mock&scenario=loaded&freeze&shot&epub' "$SCROLL"
     shot 07-volumes '?mock&scenario=volumes&freeze&shot' "$FOLD"
-    shot 12-parts '?mock&scenario=parts&freeze&shot' "$FOLD"
-    shot 08-browser-alert '?mock&scenario=check&freeze&shot'
-    shot 09-update '?mock&scenario=update&freeze&shot'
-    shot 10-failed '?mock&scenario=done&freeze&fail&shot'
-    shot 11-update-prompt '?mock&scenario=update&freeze&shot&prompt'
+    shot 08-parts '?mock&scenario=parts&freeze&shot' "$FOLD"
+    shot 09-browser-alert '?mock&scenario=check&freeze&shot'
+    shot 10-update '?mock&scenario=update&freeze&shot'
+    shot 11-failed '?mock&scenario=done&freeze&fail&shot'
+    shot 12-update-prompt '?mock&scenario=update&freeze&shot&prompt'
     shot 13-settings '?mock&scenario=loaded&freeze&shot' 'document.querySelector(".settings-btn")?.click()'
   done
 
