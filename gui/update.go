@@ -46,16 +46,16 @@ func releaseURL(tag string) string {
 // it's never logged in the window, where it would hide the status bar's line
 // on every offline start.
 func (c *Controller) CheckUpdate(ctx context.Context, current string, src update.Source) {
-	update, err := checkUpdate(ctx, current, src)
+	found, err := checkUpdate(ctx, current, src)
 	if err != nil && ctx.Err() == nil {
 		log.Printf("couldn't check for updates: %v", err)
 	}
 	c.mu.Lock()
 	c.updateChecking = false
 	// turned off while it ran: the answer is dropped
-	recorded := c.prefs.CheckUpdates && update != nil
+	recorded := c.prefs.CheckUpdates && found != nil
 	if recorded {
-		c.update = update
+		c.update = found
 	}
 	c.mu.Unlock()
 	if recorded {
@@ -112,16 +112,16 @@ func checkUpdate(ctx context.Context, current string, src update.Source) (*Updat
 	if err != nil {
 		return nil, err
 	}
-	update, err := newerRelease(current, latest)
-	if update != nil {
-		update.Installer = pickAsset(assets, packageName(latest, runtime.GOARCH))
-		update.Sums = pickAsset(assets, sumsName(latest))
-		if update.Sums == nil {
-			update.Installer = nil
+	found, err := newerRelease(current, latest)
+	if found != nil {
+		found.Installer = pickAsset(assets, packageName(latest, runtime.GOARCH))
+		found.Sums = pickAsset(assets, sumsName(latest))
+		if found.Sums == nil {
+			found.Installer = nil
 		}
 	}
 
-	return update, err
+	return found, err
 }
 
 // fetchLatestRelease reads the tag and the assets of the release the update

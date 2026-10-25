@@ -14,7 +14,7 @@
   "updates": {
     "heading": "Actualitzacions",
     "check": "Cerca actualitzacions en obrir l'app",
-    "hint": "Consulta l'última versió cada cop que s'obre l'app i compta l'ús de manera anònima.",
+    "hint": "Cerca l'última versió cada cop que s'obre l'app i compta les persones usuàries diàries sense desar la teva IP.",
     "devHint": "Les versions de desenvolupament no cerquen actualitzacions."
   },
   "about": {
