@@ -42,7 +42,16 @@
     "avif": "AVIF",
     "webp": "WebP",
     "convertHint": "La majoria de lectors electrònics no obren AVIF; WebP no és fiable en tinta electrònica.",
-    "avifEpub": "Sempre activat per a EPUB: els lectors no mostren AVIF."
+    "avifEpub": "Sempre activat per a EPUB: els lectors no mostren AVIF.",
+    "compress": {
+      "label": "Comprimeix pàgines",
+      "hint": "Desa les pàgines en JPEG si així ocupen menys. Les pàgines JPEG només es redueixen abaixant la qualitat JPEG (a Avançat)."
+    },
+    "quality": {
+      "label": "Qualitat JPEG",
+      "hint": "De l'1 al 100: s'aplica a cada pàgina desada en JPEG, per Converteix a JPEG o Comprimeix pàgines. Com més baixa, menys ocupen les pàgines.",
+      "invalid": "Escriu un nombre enter de l'1 al 100."
+    }
   },
   "skipPages": {
     "label": "Omet pàgines",

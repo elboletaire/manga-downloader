@@ -20,6 +20,10 @@ const (
 	// there's nothing to lose. WebP is left alone unless asked for, since
 	// phone readers handle it fine and transcoding costs quality and size.
 	ConvertImagesDefault = ConvertAVIF
+	// JPEGQualityDefault is the quality pages are re-encoded at. The stdlib
+	// default (75) visibly muddies the screentones and small lettering that
+	// make up most of a manga page.
+	JPEGQualityDefault = 90
 )
 
 // ConvertFormats is the set of source image formats to transcode to JPEG when

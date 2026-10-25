@@ -26,6 +26,8 @@ type OptionsDTO struct {
 	Language         string `json:"language"`
 	Scanlator        string `json:"scanlator"`
 	ConvertImages    string `json:"convertImages"`
+	JPEGQuality      int    `json:"jpegQuality"`
+	Compress         bool   `json:"compress"`
 	SkipPages        string `json:"skipPages"`
 	FilenameTemplate string `json:"filenameTemplate"`
 	BrowserVisible   bool   `json:"browserVisible"`
@@ -117,6 +119,7 @@ func defaultSettings() *grabber.Settings {
 		Format:           packer.FormatCBZ,
 		ReadingDirection: packer.ReadingDirectionRTL,
 		ConvertImages:    grabber.ConvertImagesDefault,
+		JPEGQuality:      grabber.JPEGQualityDefault,
 		FilenameTemplate: packer.FilenameTemplateDefault,
 		OutputDir:        defaultOutputDir(),
 	}
@@ -146,6 +149,8 @@ func optionsOf(s grabber.Settings) OptionsDTO {
 		Language:         s.Language,
 		Scanlator:        s.Scanlator,
 		ConvertImages:    s.ConvertImages,
+		JPEGQuality:      s.JPEGQuality,
+		Compress:         s.Compress,
 		SkipPages:        s.SkipPages,
 		FilenameTemplate: s.FilenameTemplate,
 		BrowserVisible:   s.BrowserVisible,
@@ -162,6 +167,8 @@ func applyOptions(s *grabber.Settings, o OptionsDTO) {
 	s.Language = o.Language
 	s.Scanlator = o.Scanlator
 	s.ConvertImages = o.ConvertImages
+	s.JPEGQuality = o.JPEGQuality
+	s.Compress = o.Compress
 	s.SkipPages = o.SkipPages
 	s.FilenameTemplate = o.FilenameTemplate
 	s.BrowserVisible = o.BrowserVisible
@@ -233,6 +240,11 @@ func loadOptions(path string, s *grabber.Settings) error {
 	if _, err := grabber.ParseConvertFormats(o.ConvertImages); err != nil {
 		notice.Warn("ignoring the saved convert-images %q, using %q: %v", o.ConvertImages, grabber.ConvertImagesDefault, err)
 		o.ConvertImages = grabber.ConvertImagesDefault
+	}
+	// the range core.Validate enforces at Start, so a saved 0 falls back now
+	if o.JPEGQuality < 1 || o.JPEGQuality > 100 {
+		notice.Warn("ignoring the saved jpeg-quality %d, using %d", o.JPEGQuality, grabber.JPEGQualityDefault)
+		o.JPEGQuality = grabber.JPEGQualityDefault
 	}
 	applyOptions(s, o)
 

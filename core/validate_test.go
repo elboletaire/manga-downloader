@@ -34,7 +34,7 @@ func TestValidateFormatAndReadingDirection(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &grabber.Settings{Format: tt.format, ReadingDirection: tt.direction, ConvertImages: grabber.ConvertImagesDefault}
+			s := &grabber.Settings{Format: tt.format, ReadingDirection: tt.direction, ConvertImages: grabber.ConvertImagesDefault, JPEGQuality: grabber.JPEGQualityDefault}
 			_, err := Validate(s)
 			if tt.setting == "" {
 				if err != nil {
@@ -51,7 +51,7 @@ func TestValidateFormatAndReadingDirection(t *testing.T) {
 }
 
 func TestValidateNormalizesReadingDirection(t *testing.T) {
-	s := &grabber.Settings{Format: packer.FormatEPUB, ReadingDirection: " LTR ", ConvertImages: grabber.ConvertImagesDefault}
+	s := &grabber.Settings{Format: packer.FormatEPUB, ReadingDirection: " LTR ", ConvertImages: grabber.ConvertImagesDefault, JPEGQuality: grabber.JPEGQualityDefault}
 	if _, err := Validate(s); err != nil {
 		t.Fatalf("Validate() = %v, want ok", err)
 	}
@@ -61,11 +61,35 @@ func TestValidateNormalizesReadingDirection(t *testing.T) {
 }
 
 func TestValidateNormalizesFormat(t *testing.T) {
-	s := &grabber.Settings{Format: " EPUB ", ConvertImages: grabber.ConvertImagesDefault}
+	s := &grabber.Settings{Format: " EPUB ", ConvertImages: grabber.ConvertImagesDefault, JPEGQuality: grabber.JPEGQualityDefault}
 	if _, err := Validate(s); err != nil {
 		t.Fatalf("Validate() = %v, want ok", err)
 	}
 	if s.Format != packer.FormatEPUB {
 		t.Errorf("format %q, want the normalised %q the packer reads", s.Format, packer.FormatEPUB)
+	}
+}
+
+func TestValidateJPEGQuality(t *testing.T) {
+	for _, tt := range []struct {
+		quality int
+		ok      bool
+	}{
+		{1, true},
+		{grabber.JPEGQualityDefault, true},
+		{100, true},
+		{0, false},
+		{-5, false},
+		{101, false},
+	} {
+		s := &grabber.Settings{Format: packer.FormatCBZ, ConvertImages: grabber.ConvertImagesDefault, JPEGQuality: tt.quality}
+		_, err := Validate(s)
+		if (err == nil) != tt.ok {
+			t.Errorf("Validate(jpeg quality %d) = %v, want ok %v", tt.quality, err, tt.ok)
+		}
+		var se *SettingError
+		if err != nil && (!errors.As(err, &se) || se.Setting != "jpeg-quality") {
+			t.Errorf("Validate(jpeg quality %d): %v is not a jpeg-quality SettingError", tt.quality, err)
+		}
 	}
 }

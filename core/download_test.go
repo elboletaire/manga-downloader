@@ -234,6 +234,7 @@ func newFakeSite(t *testing.T, chapters ...fakeChapter) *fakeSite {
 				FilenameTemplate: packer.FilenameTemplateDefault,
 				Format:           packer.FormatCBZ,
 				ConvertImages:    grabber.ConvertImagesDefault,
+				JPEGQuality:      grabber.JPEGQualityDefault,
 			},
 		},
 		chapters: chapters,

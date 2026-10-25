@@ -10,6 +10,8 @@ const base: Options = {
   language: '',
   scanlator: '',
   convertImages: 'avif',
+  jpegQuality: 90,
+  compress: false,
   skipPages: '',
   filenameTemplate: '{{.Series}}',
   browserVisible: false,

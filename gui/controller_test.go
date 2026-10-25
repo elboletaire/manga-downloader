@@ -137,6 +137,7 @@ func newTestController(t *testing.T, bundle bool, gate chan struct{}, chapters .
 		MaxConcurrency:   grabber.MaxConcurrency{Chapters: 2, Pages: 2},
 		Format:           "cbz",
 		ConvertImages:    "none",
+		JPEGQuality:      grabber.JPEGQualityDefault,
 		FilenameTemplate: "{{.Series}} {{.Number}} - {{.Title}}",
 		OutputDir:        dir,
 	}

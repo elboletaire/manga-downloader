@@ -247,6 +247,8 @@ function defaultOptions(shot: boolean, epub: boolean): Options {
     language: '',
     scanlator: '',
     convertImages: 'avif',
+    jpegQuality: 90,
+    compress: false,
     skipPages: '',
     filenameTemplate: TEMPLATE_DEFAULT,
     browserVisible: false,

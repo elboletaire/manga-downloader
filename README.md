@@ -533,8 +533,21 @@ manga-downloader --convert-images avif,webp [url] 1-10   # strict e-ink setup
 manga-downloader --convert-images none [url] 1-10        # keep pages untouched
 ~~~
 
-JPEG, PNG and GIF pages are never re-encoded. If a page fails to convert, it's
-kept as it was and a warning is shown, so the rest of the chapter isn't lost.
+JPEG, PNG and GIF pages are never re-encoded by `--convert-images`. If a page
+fails to convert, it's kept as it was and a warning is shown, so the rest of the
+chapter isn't lost.
+
+`--compress` is for file size instead: it re-encodes JPEG, PNG, WebP and AVIF
+pages to JPEG, but only when the JPEG comes out smaller, and keeps the original
+otherwise (flat artwork is often smaller as a PNG). GIF pages are left alone,
+since re-encoding one keeps only its first frame. It works with any
+`--convert-images` value, and doesn't resize pages. A format `--convert-images`
+asks for is always converted, whatever the size.
+
+`--jpeg-quality` (1-100, default 90) sets the quality of every page written as
+JPEG, by `--convert-images` and `--compress` alike. JPEG pages only shrink
+noticeably at a lower quality, so `--compress --jpeg-quality 70` is the setting
+to try on a JPEG-heavy site; at 90 most of them come out bigger and are kept.
 
 EPUB is the exception, since readers can't show AVIF at all: AVIF pages are
 always converted for it, even with `--convert-images none`. A page an EPUB can't
@@ -547,7 +560,8 @@ is left out with a warning instead of being kept.
 > `windows-32bit-legacy`), so use `--convert-images none` there if speed
 > matters.
 
-The desktop app offers the same choice as two checkboxes, *AVIF* and *WebP*.
+The desktop app offers the same choices: the *AVIF* and *WebP* checkboxes, a
+*Compress pages* switch, and a *JPEG quality* field under Advanced.
 With EPUB, AVIF is always converted, so its box is ticked and can't be changed.
 
 ### Skipping pages
@@ -674,7 +688,9 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--filename-template` | `-t`  | Template for the file names                              | see above      |
 | `--language`          | `-l`  | Only download the specified language                     | site default   |
 | `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)  | `all`          |
-| `--convert-images`    |       | Formats to convert to JPEG: `avif`, `webp` or `none`     | `avif`         |
+| `--convert-images`    |       | Formats to JPEG: `avif`, `webp` or `none`                | `avif`         |
+| `--compress`          |       | Re-encode pages to JPEG when that's smaller (not GIF)    | off            |
+| `--jpeg-quality`      |       | JPEG quality of re-encoded pages (1-100); lower shrinks JPEG pages more | `90`           |
 | `--skip-pages`        |       | Pages to exclude from every chapter (`-1` is the last)   | none           |
 | `--concurrency`       | `-c`  | Number of chapters downloaded at once (max 5)            | 5              |
 | `--concurrency-pages` | `-C`  | Number of pages downloaded at once per chapter (max 10)  | 10             |

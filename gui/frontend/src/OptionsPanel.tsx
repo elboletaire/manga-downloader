@@ -153,6 +153,14 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
           <p className="hint">{o.format === 'epub' ? avifEpubHint(t) : t('options.pages.convertHint')}</p>
         </fieldset>
 
+        <Switch
+          label={t('options.pages.compress.label')}
+          description={t('options.pages.compress.hint')}
+          checked={o.compress}
+          disabled={locked}
+          onChange={(compress) => set({ compress })}
+        />
+
         <TextField
           label={t('options.skipPages.label')}
           value={o.skipPages}
@@ -199,6 +207,21 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
               {state.filenameTemplateWarning}
             </p>
           )}
+          <TextField
+            label={t('options.pages.quality.label')}
+            value={String(o.jpegQuality)}
+            mono
+            disabled={locked}
+            hint={t('options.pages.quality.hint')}
+            onCommit={(text) => {
+              const quality = Number(text);
+              if (!Number.isInteger(quality) || quality < 1 || quality > 100) {
+                return Promise.reject(new Error(t('options.pages.quality.invalid')));
+              }
+              return onOptions({ jpegQuality: quality });
+            }}
+            onError={onError}
+          />
           <Switch
             label={t('options.browser.label')}
             description={browser.hint}

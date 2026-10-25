@@ -20,6 +20,10 @@ export interface Options {
   scanlator: string;
   /** Comma-separated: "avif", "avif,webp", "webp" or "none". See convertImages.ts. */
   convertImages: string;
+  /** The quality (1-100) pages re-encoded to JPEG are written at, by convertImages and compress */
+  jpegQuality: number;
+  /** Re-encodes PNG pages to JPEG when that's smaller */
+  compress: boolean;
   skipPages: string;
   filenameTemplate: string;
   browserVisible: boolean;
