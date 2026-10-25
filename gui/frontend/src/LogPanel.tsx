@@ -24,6 +24,18 @@ interface BarProps {
   onUpdate: () => Promise<void>;
 }
 
+// the update's link: a one-click update opens its dialog, any other opens the release
+export function updateClick(update: Update, openDialog: () => void, openURL: (url: string) => void) {
+  return (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (update.oneClick) {
+      openDialog();
+    } else {
+      openURL(update.url);
+    }
+  };
+}
+
 export function StatusBar({ log, version, releaseURL, update, open, onToggle, onOpenURL, onUpdate }: BarProps) {
   const { t } = useI18n();
   const [updateOpen, setUpdateOpen] = useState(update?.prompt === true);
@@ -33,6 +45,8 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
     e.preventDefault();
     onOpenURL(url);
   };
+
+  const onUpdateClick = update ? updateClick(update, () => setUpdateOpen(true), onOpenURL) : undefined;
 
   const lastLine = log.length > 0 ? log[log.length - 1] : undefined;
   let warns = 0;
@@ -80,14 +94,7 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
           <a
             className="update-badge warning"
             href={update.url}
-            onClick={
-              update.oneClick
-                ? (e) => {
-                    e.preventDefault();
-                    setUpdateOpen(true);
-                  }
-                : openLink(update.url)
-            }
+            onClick={onUpdateClick}
             title={t('log.updateAvailable', { latest: update.latest })}
             aria-label={t('log.updateAvailable', { latest: update.latest })}
           >
@@ -98,7 +105,16 @@ export function StatusBar({ log, version, releaseURL, update, open, onToggle, on
             </svg>
           </a>
         )}
-        {releaseURL !== '' ? (
+        {update ? (
+          <a
+            className="version"
+            href={update.url}
+            onClick={onUpdateClick}
+            title={t('log.updateAvailable', { latest: update.latest })}
+          >
+            {version}
+          </a>
+        ) : releaseURL !== '' ? (
           <a className="version" href={releaseURL} onClick={openLink(releaseURL)} title={t('log.versionRelease')}>
             {version}
           </a>
