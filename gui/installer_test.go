@@ -132,7 +132,7 @@ func TestCheckUpdatePicksThePackageAndNeedsSums(t *testing.T) {
 	}
 
 	srv, _ := releaseServer(t, http.StatusOK, release(pkg, sumsName("v2.0.0")))
-	got, err := checkUpdate(context.Background(), "v1.12.0", srv.URL, srv.Client())
+	got, err := checkUpdate(context.Background(), "v1.12.0", testSource(srv))
 	if err != nil || got == nil {
 		t.Fatalf("checkUpdate = %+v, %v", got, err)
 	}
@@ -141,7 +141,7 @@ func TestCheckUpdatePicksThePackageAndNeedsSums(t *testing.T) {
 	}
 
 	srv, _ = releaseServer(t, http.StatusOK, release(pkg))
-	got, err = checkUpdate(context.Background(), "v1.12.0", srv.URL, srv.Client())
+	got, err = checkUpdate(context.Background(), "v1.12.0", testSource(srv))
 	if err != nil || got == nil {
 		t.Fatalf("checkUpdate = %+v, %v", got, err)
 	}

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/elboletaire/manga-downloader/update"
 )
 
 func TestNewerRelease(t *testing.T) {
@@ -71,10 +72,15 @@ func releaseServer(t *testing.T, status int, body string) (*httptest.Server, *ht
 	return srv, &seen
 }
 
+// testSource asks srv for the Worker's answer and GitHub's alike
+func testSource(srv *httptest.Server) update.Source {
+	return update.Source{Worker: srv.URL, GitHub: srv.URL, HTTP: srv.Client()}
+}
+
 func TestCheckUpdateFetchesTheLatestTag(t *testing.T) {
 	srv, seen := releaseServer(t, http.StatusOK, `{"tag_name":"v2.0.0","name":"x"}`)
 
-	got, err := checkUpdate(context.Background(), "v1.12.0", srv.URL, srv.Client())
+	got, err := checkUpdate(context.Background(), "v1.12.0", testSource(srv))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +108,7 @@ func TestCheckUpdateErrors(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			srv, _ := releaseServer(t, tc.status, tc.body)
-			if got, err := checkUpdate(context.Background(), "v1.12.0", srv.URL, srv.Client()); err == nil || got != nil {
+			if got, err := checkUpdate(context.Background(), "v1.12.0", testSource(srv)); err == nil || got != nil {
 				t.Errorf("checkUpdate = %+v, %v; want no update and an error", got, err)
 			}
 		})
@@ -114,7 +120,7 @@ func TestCheckUpdateRecordsTheUpdateAndStaysSilentOnFailure(t *testing.T) {
 	c := NewController(&grabber.Settings{}, func() { notified++ })
 
 	srv, _ := releaseServer(t, http.StatusOK, `{"tag_name":"v1.13.0"}`)
-	c.CheckUpdate(context.Background(), "v1.12.0", srv.URL, srv.Client())
+	c.CheckUpdate(context.Background(), "v1.12.0", testSource(srv))
 	if u := c.Update(); u == nil || u.Latest != "v1.13.0" {
 		t.Fatalf("Update() = %+v, want a minor update to v1.13.0", u)
 	}
@@ -125,7 +131,7 @@ func TestCheckUpdateRecordsTheUpdateAndStaysSilentOnFailure(t *testing.T) {
 	failing, _ := releaseServer(t, http.StatusInternalServerError, "")
 	c = NewController(&grabber.Settings{}, func() { notified++ })
 	notified = 0
-	c.CheckUpdate(context.Background(), "v1.12.0", failing.URL, failing.Client())
+	c.CheckUpdate(context.Background(), "v1.12.0", testSource(failing))
 	if u := c.Update(); u != nil {
 		t.Errorf("Update() = %+v after a failed check, want nil", u)
 	}
@@ -141,7 +147,7 @@ func TestCheckUpdateStopsWithItsContext(t *testing.T) {
 	srv, _ := releaseServer(t, http.StatusOK, `{"tag_name":"v2.0.0"}`)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if got, err := checkUpdate(ctx, "v1.12.0", srv.URL, srv.Client()); err == nil || got != nil {
+	if got, err := checkUpdate(ctx, "v1.12.0", testSource(srv)); err == nil || got != nil {
 		t.Errorf("checkUpdate with a cancelled context = %+v, %v; want no update and an error", got, err)
 	}
 }
@@ -192,7 +198,7 @@ func TestStateCarriesTheReleaseAndTheUpdate(t *testing.T) {
 	}
 
 	srv, _ := releaseServer(t, http.StatusOK, `{"tag_name":"v2.0.0"}`)
-	c.CheckUpdate(context.Background(), "v1.12.0", srv.URL, srv.Client())
+	c.CheckUpdate(context.Background(), "v1.12.0", testSource(srv))
 	want := UpdateDTO{Latest: "v2.0.0", URL: latestReleasePage}
 	if st := a.State(); st.Update == nil || *st.Update != want {
 		t.Errorf("State().Update = %+v, want %+v", st.Update, want)

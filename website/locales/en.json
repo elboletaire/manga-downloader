@@ -169,7 +169,9 @@
     "ereaderQ": "Pages don't show up on my e-reader",
     "ereaderA": "The site probably serves WebP images. Download the chapters again with <code>--convert-images avif,webp</code>. In the app, tick <em>WebP</em> under <em>Convert to JPEG</em>.",
     "unsupportedQ": "My site isn't supported",
-    "unsupportedA": "Try it anyway: sites built on the same platforms as listed ones often work. If it doesn't, <a href=\"{{repo}}/issues\">open an issue</a> or send a pull request."
+    "unsupportedA": "Try it anyway: sites built on the same platforms as listed ones often work. If it doesn't, <a href=\"{{repo}}/issues\">open an issue</a> or send a pull request.",
+    "dataQ": "Does the app send anything?",
+    "dataA": "Only the update check. It asks our server for the latest release and sends the app (desktop or command line), its version, your operating system and architecture. The server runs on Cloudflare, which sees your IP address like any web host. We don't store it: only a hash of it, salted with a key that's deleted every day, to count daily users. Once the key is deleted, the hash can't be linked to your IP. The command line checks only when you run <code>version</code> or <code>--version</code>. To stop the check, turn off <em>Check for new versions at startup</em> in the app's Settings, or set <code>MANGA_DOWNLOADER_NO_UPDATE_CHECK=1</code> for the command line."
   },
   "theme": {
     "label": "Theme",

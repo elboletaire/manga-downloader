@@ -89,7 +89,7 @@ describe('SettingsDialog', () => {
   it('enables the update switch with its hint on a release build', () => {
     const html = render('en', state());
     const input = updateSwitch(html);
-    expect(html).toContain('Asks GitHub for the latest release each time the app opens.');
+    expect(html).toContain('Checks for the latest release each time the app opens, and counts anonymous usage.');
     expect(html).not.toContain('Development builds');
     expect(input).not.toContain('disabled=""');
     expect(input).toContain('checked=""');

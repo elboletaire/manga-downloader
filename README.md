@@ -144,7 +144,7 @@ updates that copy.
   <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/10-update-light.webp">
 </picture>
 
-The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español, Català or 日本語) and whether the app opens with the simple start screen. The same panel turns the update check on or off.
+The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español, Català or 日本語) and whether the app opens with the simple start screen. The same panel turns the update check on or off. The check asks our update server for the latest release, sending the app, its version, your OS and architecture. The server runs on Cloudflare, which sees the IP address like any web host; only a hash of it, salted with a key deleted daily, is kept, to count daily users.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/13-settings-dark.webp">
@@ -697,7 +697,7 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--browser-visible`   |       | Always show the browser window (rarely needed)           | off            |
 | `--version`           | `-v`  | Show version information                                 |                |
 
-Run `manga-downloader help` to list them in your terminal.
+Run `manga-downloader help` to list them in your terminal. `version` (and `--version`) checks for a newer release too; set `MANGA_DOWNLOADER_NO_UPDATE_CHECK=1` to skip it.
 
 Some sites cap the concurrency lower, because their image servers refuse
 requests that come too fast; a lower value still applies there. Pages refused

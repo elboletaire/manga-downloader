@@ -18,6 +18,7 @@ import (
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/packer"
+	"github.com/elboletaire/manga-downloader/update"
 	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -57,8 +58,8 @@ type App struct {
 	// update check
 	tag     string
 	version string
-	// releaseAPI is where the update check asks for the latest release; a test seam
-	releaseAPI string
+	// updateSource is where the update check asks for the latest release; a test seam
+	updateSource update.Source
 	// updateCtx bounds the update check; cancelUpdate ends it at shutdown
 	updateCtx    context.Context
 	cancelUpdate context.CancelFunc
@@ -92,7 +93,7 @@ func newApp(ctrl *Controller, s sink, prefsPath, tag, version string) *App {
 		prefsPath:    prefsPath,
 		tag:          tag,
 		version:      version,
-		releaseAPI:   latestReleaseAPI,
+		updateSource: update.Default,
 		updateCtx:    updateCtx,
 		cancelUpdate: cancelUpdate,
 		installed:    installedCopy(),
@@ -172,7 +173,7 @@ func (a *App) checkUpdates() {
 	if !shouldCheckUpdates(a.tag, a.ctrl.Prefs()) || !a.ctrl.claimUpdateCheck() {
 		return
 	}
-	go a.ctrl.CheckUpdate(a.updateCtx, a.tag, a.releaseAPI, updateClient)
+	go a.ctrl.CheckUpdate(a.updateCtx, a.tag, a.updateSource)
 }
 
 // shutdown stops the pushes before the window goes away, then cancels any run

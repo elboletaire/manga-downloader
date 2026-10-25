@@ -14,7 +14,7 @@
   "updates": {
     "heading": "Updates",
     "check": "Check for new versions at startup",
-    "hint": "Asks GitHub for the latest release each time the app opens.",
+    "hint": "Checks for the latest release each time the app opens, and counts anonymous usage.",
     "devHint": "Development builds don't check for updates."
   },
   "about": {

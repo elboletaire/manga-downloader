@@ -6,26 +6,17 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"runtime"
-	"strconv"
-	"strings"
-	"time"
+
+	"github.com/elboletaire/manga-downloader/update"
 )
 
 const (
 	repoURL = "https://github.com/elboletaire/manga-downloader"
-	// latestReleaseAPI is the newest release, as the GitHub API reports it
-	latestReleaseAPI = "https://api.github.com/repos/elboletaire/manga-downloader/releases/latest"
 	// latestReleasePage is where the window links an available update
 	latestReleasePage = repoURL + "/releases/latest"
 )
-
-// updateClient bounds the update check, which runs in the background
-var updateClient = &http.Client{Timeout: 10 * time.Second}
 
 // Update is a release newer than the running build
 type Update struct {
@@ -54,8 +45,8 @@ func releaseURL(tag string) string {
 // stops when ctx is cancelled. A failure goes to stderr and leaves no update:
 // it's never logged in the window, where it would hide the status bar's line
 // on every offline start.
-func (c *Controller) CheckUpdate(ctx context.Context, current, apiURL string, client *http.Client) {
-	update, err := checkUpdate(ctx, current, apiURL, client)
+func (c *Controller) CheckUpdate(ctx context.Context, current string, src update.Source) {
+	update, err := checkUpdate(ctx, current, src)
 	if err != nil && ctx.Err() == nil {
 		log.Printf("couldn't check for updates: %v", err)
 	}
@@ -116,8 +107,8 @@ func (c *Controller) Update() *Update {
 
 // checkUpdate returns the release newer than current, nil when current is the
 // newest one
-func checkUpdate(ctx context.Context, current, apiURL string, client *http.Client) (*Update, error) {
-	latest, assets, err := fetchLatestRelease(ctx, apiURL, client)
+func checkUpdate(ctx context.Context, current string, src update.Source) (*Update, error) {
+	latest, assets, err := fetchLatestRelease(ctx, current, src)
 	if err != nil {
 		return nil, err
 	}
@@ -133,29 +124,19 @@ func checkUpdate(ctx context.Context, current, apiURL string, client *http.Clien
 	return update, err
 }
 
-// fetchLatestRelease reads the tag and the assets of the release the API
-// reports as the latest
-func fetchLatestRelease(ctx context.Context, apiURL string, client *http.Client) (string, []Asset, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
+// fetchLatestRelease reads the tag and the assets of the release the update
+// source reports as the latest
+func fetchLatestRelease(ctx context.Context, current string, src update.Source) (string, []Asset, error) {
+	body, err := src.Latest(ctx, "gui", current)
 	if err != nil {
 		return "", nil, err
-	}
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("User-Agent", "manga-downloader-gui")
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return "", nil, fmt.Errorf("GitHub answered %s", resp.Status)
 	}
 
 	var release struct {
 		TagName string  `json:"tag_name"`
 		Assets  []Asset `json:"assets"`
 	}
-	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&release); err != nil {
+	if err := json.Unmarshal(body, &release); err != nil {
 		return "", nil, err
 	}
 	if release.TagName == "" {
@@ -168,56 +149,10 @@ func fetchLatestRelease(ctx context.Context, apiURL string, client *http.Client)
 // newerRelease returns the update to latest when it's newer than current, nil
 // otherwise
 func newerRelease(current, latest string) (*Update, error) {
-	cur, err := parseSemver(current)
-	if err != nil {
+	newer, err := update.Newer(current, latest)
+	if err != nil || !newer {
 		return nil, err
-	}
-	lat, err := parseSemver(latest)
-	if err != nil {
-		return nil, err
-	}
-	if !lat.after(cur) {
-		return nil, nil
 	}
 
 	return &Update{Latest: latest}, nil
-}
-
-// semver is a MAJOR.MINOR.PATCH version
-type semver [3]int
-
-// parseSemver reads "v1.2.3" (the v is optional). A pre-release or build suffix
-// is dropped, so "v1.2.3-rc.1" counts as 1.2.3 and isn't newer than it. So does
-// a git describe name past a tag, "v1.2.3-3-gabc": it's 1.2.3 plus commits.
-func parseSemver(tag string) (semver, error) {
-	s := strings.TrimPrefix(tag, "v")
-	if i := strings.IndexAny(s, "-+"); i >= 0 {
-		s = s[:i]
-	}
-	parts := strings.Split(s, ".")
-	if len(parts) != 3 {
-		return semver{}, fmt.Errorf("%q isn't MAJOR.MINOR.PATCH", tag)
-	}
-
-	var v semver
-	for i, p := range parts {
-		n, err := strconv.Atoi(p)
-		if err != nil || n < 0 {
-			return semver{}, fmt.Errorf("%q isn't MAJOR.MINOR.PATCH", tag)
-		}
-		v[i] = n
-	}
-
-	return v, nil
-}
-
-// after reports whether v is a later version than w
-func (v semver) after(w semver) bool {
-	for i := range v {
-		if v[i] != w[i] {
-			return v[i] > w[i]
-		}
-	}
-
-	return false
 }
