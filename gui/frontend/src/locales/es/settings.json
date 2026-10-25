@@ -21,6 +21,7 @@
     "version": "Manga Downloader {{version}}",
     "website": "Sitio web",
     "issues": "Informar de un problema",
+    "kofi": "Apóyame en Ko-fi",
     "madeBy": "Hecho con amor por <author>{{author}}</author> · © {{years}} · <license>{{license}}</license>"
   }
 }

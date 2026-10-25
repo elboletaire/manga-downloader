@@ -3,7 +3,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { LANGS, type LangPref } from './i18n';
 import { I18nProvider } from './i18n/react';
-import { LICENSE_URL, SettingsDialog, websiteURL } from './SettingsDialog';
+import { KOFI_URL, LICENSE_URL } from './links';
+import { SettingsDialog, websiteURL } from './SettingsDialog';
 import type { State } from './types';
 
 const persist = async () => undefined;
@@ -101,6 +102,15 @@ describe('SettingsDialog', () => {
     for (const lang of LANGS) {
       const html = render(lang, state());
       expect(html, lang).toContain(`${lines[lang]} ${author} · © 2023–2026 · ${license}`);
+    }
+  });
+
+  it('links the Ko-fi page with its cup, named in each language', () => {
+    const names = { en: 'Support me on Ko-fi', es: 'Apóyame en Ko-fi', ca: 'Dona&#x27;m suport a Ko-fi' };
+    for (const lang of LANGS) {
+      const html = render(lang, state());
+      expect(html, lang).toContain(`<a class="kofi" href="${KOFI_URL}"`);
+      expect(html, lang).toContain(names[lang]);
     }
   });
 

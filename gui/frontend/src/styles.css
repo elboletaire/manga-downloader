@@ -2151,6 +2151,29 @@ a.version:hover {
   gap: 6px;
 }
 
+/* the Ko-fi cup in Ko-fi's own orange; its padding (cancelled by the margin) widens the hit area */
+.version-group .kofi {
+  display: flex;
+  padding: 3px;
+  margin: -3px 0 -3px 2px;
+  /* the version's digits sit above its line box's middle, so the cup follows them */
+  position: relative;
+  top: -1px;
+  color: #ff6433;
+  transition: transform 0.15s var(--ease);
+}
+
+.version-group .kofi:hover,
+.version-group .kofi:focus-visible {
+  transform: scale(1.35) rotate(-12deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .version-group .kofi {
+    transition: none;
+  }
+}
+
 /* the "!" that flags a newer release */
 .update-badge {
   display: block;
@@ -2483,6 +2506,16 @@ a.version:hover {
 
 .settings-about a:hover {
   color: var(--text);
+}
+
+.settings-about a.kofi {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settings-about a.kofi svg {
+  color: #ff6433;
 }
 
 /* a line of its own under the links, smaller and quieter than them */
