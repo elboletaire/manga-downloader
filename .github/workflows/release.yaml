@@ -24,7 +24,7 @@ jobs:
             goarch: "386"
             asset_name: manga-downloader-${{ github.event.release.tag_name }}-windows-32bit-legacy
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Get short version and tag
       run: |
         echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
@@ -97,7 +97,7 @@ jobs:
     - name: No tap token
       if: env.HAS_TAP_TOKEN != 'true'
       run: echo "::notice::HOMEBREW_TAP_TOKEN isn't set, so the Homebrew tap wasn't updated"
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       if: env.HAS_TAP_TOKEN == 'true'
       with:
         path: manga-downloader
@@ -105,7 +105,7 @@ jobs:
           packaging/homebrew
           scripts
         persist-credentials: false
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       if: env.HAS_TAP_TOKEN == 'true'
       with:
         repository: elboletaire/homebrew-tap

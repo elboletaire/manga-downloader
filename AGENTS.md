@@ -4,7 +4,7 @@ Guidance for coding agents working in this repository.
 
 ## Project
 
-Go CLI (cobra) that downloads manga chapters from supported websites and packs them into CBZ, CBR or EPUB files, plus a Wails desktop app in `gui/` (see the `gui` skill). Module: `github.com/elboletaire/manga-downloader`, targeting Go 1.26.0 (the `go` directive in `go.mod` and `gui/go.mod`, pinned by CI's test and smoke workflows).
+Go CLI (cobra) that downloads manga chapters from supported websites and packs them into CBZ, CBR or EPUB files, plus a Wails desktop app in `gui/` (see the `gui` skill). Module: `github.com/elboletaire/manga-downloader`, targeting Go 1.26 (the `go` directive in `go.mod` and `gui/go.mod` is the minimum, 1.26.0; every workflow builds with the newest 1.26 patch through `go-version: "1.26"` and `check-latest`).
 
 ## On-demand guides
 

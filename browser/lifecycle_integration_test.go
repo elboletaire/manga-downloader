@@ -336,14 +336,14 @@ func TestIntegrationClosesPopupTabs(t *testing.T) {
 	}
 }
 
-// countPopupsFrom registers a ListenTarget on ctx and returns an atomic counter
+// countPopupsFrom listens to ctx's target events and returns an atomic counter
 // that increments each time a popup page target whose OpenerID is ctx's tab is created.
 func countPopupsFrom(ctx context.Context) *atomic.Int32 {
 	var n atomic.Int32
 	c := chromedp.FromContext(ctx)
 	tabID := c.Target.TargetID
-	chromedp.ListenTarget(ctx, func(ev any) {
-		if e, ok := ev.(*target.EventTargetCreated); ok && isPopupOf(e.TargetInfo, tabID) {
+	listen(chromedp.Events(ctx, target.TargetCreated), func(e target.EventTargetCreated) {
+		if isPopupOf(e.TargetInfo, tabID) {
 			n.Add(1)
 		}
 	})
@@ -369,12 +369,7 @@ func waitPageTargets(t *testing.T, b *instance, n int, deadline time.Duration) b
 	end := time.Now().Add(deadline)
 	for time.Now().Before(end) {
 		ctx, cancel := context.WithTimeout(b.ctx, 5*time.Second)
-		var infos []*target.Info
-		err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
-			var e error
-			infos, e = target.GetTargets().Do(ctx)
-			return e
-		}))
+		infos, err := chromedp.Targets(ctx)
 		cancel()
 		if err != nil {
 			t.Logf("listing targets: %v", err)
@@ -400,15 +395,10 @@ func clickAt(t *testing.T, b *instance, x, y float64) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(b.ctx, 5*time.Second)
 	defer cancel()
-	err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
-		for _, typ := range []input.MouseType{input.MousePressed, input.MouseReleased} {
-			ev := input.DispatchMouseEvent(typ, x, y).WithButton(input.Left).WithClickCount(1)
-			if err := ev.Do(ctx); err != nil {
-				return err
-			}
-		}
-		return nil
-	}))
+	err := chromedp.Do(ctx,
+		send(input.DispatchMouseEvent, input.DispatchMouseEventParams{Type: input.DispatchMouseEventTypeMousePressed, X: x, Y: y, Button: input.MouseButtonLeft, ClickCount: 1}),
+		send(input.DispatchMouseEvent, input.DispatchMouseEventParams{Type: input.DispatchMouseEventTypeMouseReleased, X: x, Y: y, Button: input.MouseButtonLeft, ClickCount: 1}),
+	)
 	if err != nil {
 		t.Fatalf("clicking at (%v, %v): %v", x, y, err)
 	}

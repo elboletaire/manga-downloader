@@ -12,7 +12,6 @@ import (
 
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/emulation"
-	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/cdproto/target"
 	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/notice"
@@ -62,7 +61,7 @@ func launchChrome(abort context.Context, headed bool) (*instance, error) {
 	})
 
 	// starting the browser eagerly gives a nicer error when chrome is missing
-	if err := chromedp.Run(browserCtx); err != nil {
+	if err := chromedp.Do(browserCtx); err != nil {
 		unwatch()
 		browserStop()
 		allocCancel()
@@ -89,22 +88,20 @@ func launchChrome(abort context.Context, headed bool) (*instance, error) {
 	var noticeOnce sync.Once
 	// Target events (like EventTargetCreated for popups opened by window.open)
 	// come through the tab's session, so they must be listened to via
-	// ListenTarget, not ListenBrowser. This mirrors chromedp's own WaitNewTarget.
-	chromedp.ListenTarget(browserCtx, func(ev any) {
-		if e, ok := ev.(*target.EventTargetCreated); ok && isPopupOf(e.TargetInfo, tabID) {
+	// Events, not BrowserEvents. This mirrors chromedp's own WaitNewTarget.
+	listen(chromedp.Events(browserCtx, target.TargetCreated), func(e target.EventTargetCreated) {
+		if isPopupOf(e.TargetInfo, tabID) {
 			go closePopup(browserCtx, e.TargetInfo.TargetID, &noticeOnce)
 		}
 	})
-	chromedp.ListenBrowser(browserCtx, func(ev any) {
-		switch e := ev.(type) {
-		case *target.EventTargetDestroyed:
-			if e.TargetID == tabID {
-				lose()
-			}
-		case *target.EventTargetCrashed:
-			if e.TargetID == tabID {
-				lose()
-			}
+	listen(chromedp.BrowserEvents(browserCtx, target.TargetDestroyed), func(e target.EventTargetDestroyed) {
+		if e.TargetID == tabID {
+			lose()
+		}
+	})
+	listen(chromedp.BrowserEvents(browserCtx, target.TargetCrashed), func(e target.EventTargetCrashed) {
+		if e.TargetID == tabID {
+			lose()
 		}
 	})
 
@@ -159,32 +156,35 @@ func launchChrome(abort context.Context, headed bool) (*instance, error) {
 func hideHeadless(browserCtx context.Context) {
 	ctx, cancel := context.WithTimeout(browserCtx, 10*time.Second)
 	defer cancel()
-	_ = chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
-		var ua string
-		if err := chromedp.Evaluate(`navigator.userAgent`, &ua).Do(ctx); err != nil {
+	_ = chromedp.Do(ctx, chromedp.Func(func(ctx context.Context, t *chromedp.Target) error {
+		ua, err := chromedp.Evaluate[string](`navigator.userAgent`)(ctx, t)
+		if err != nil {
 			return err
 		}
 		if !strings.Contains(ua, "Headless") {
 			return nil
 		}
-		override := emulation.SetUserAgentOverride(strings.ReplaceAll(ua, "HeadlessChrome", "Chrome"))
+		override := emulation.SetUserAgentOverrideParams{UserAgent: strings.ReplaceAll(ua, "HeadlessChrome", "Chrome")}
 		// an override without metadata empties the client hints, and
 		// about:blank doesn't expose them (not a secure context), so they're
 		// read from an internal page
 		var md *emulation.UserAgentMetadata
-		err := chromedp.Run(ctx,
+		err = chromedp.Do(ctx,
 			chromedp.Navigate("chrome://version"),
-			chromedp.Evaluate(clientHintsJS, &md, func(p *runtime.EvaluateParams) *runtime.EvaluateParams {
-				return p.WithAwaitPromise(true)
+			chromedp.Func(func(ctx context.Context, t *chromedp.Target) error {
+				var err error
+				md, err = chromedp.Evaluate[*emulation.UserAgentMetadata](clientHintsJS, chromedp.EvalAwaitPromise)(ctx, t)
+				return err
 			}),
 			chromedp.Navigate("about:blank"),
 		)
 		if err == nil && md != nil {
 			unheadBrands(md.Brands)
 			unheadBrands(md.FullVersionList)
-			override = override.WithUserAgentMetadata(md)
+			override.UserAgentMetadata = md
 		}
-		return override.Do(ctx)
+		_, err = cdp.Call(ctx, t, emulation.SetUserAgentOverride, override)
+		return err
 	}))
 }
 
@@ -236,8 +236,8 @@ func isPopupOf(ti *target.Info, ourTab target.ID) bool {
 const popupClosedNotice = "Closed a pop-up tab."
 
 // closePopup closes a popup tab opened by the page and emits a short notice,
-// once per browser through noticeOnce. target.CloseTarget must be sent via the
-// browser executor (cdp.WithExecutor with c.Browser), not the tab executor:
+// once per browser through noticeOnce. target.CloseTarget must be sent to the
+// browser (c.Browser), not the tab:
 // Target.Execute refuses CommandCloseTarget and tells the caller to cancel the
 // target's context or use chromedp.Cancel — but for a popup we didn't open, we
 // have no chromedp context for it. Best-effort: errors (e.g. the tab was
@@ -249,7 +249,7 @@ func closePopup(browserCtx context.Context, popupID target.ID, noticeOnce *sync.
 	}
 	ctx, cancel := context.WithTimeout(browserCtx, 3*time.Second)
 	defer cancel()
-	err := target.CloseTarget(popupID).Do(cdp.WithExecutor(ctx, c.Browser))
+	_, err := cdp.Call(ctx, c.Browser, target.CloseTarget, target.CloseTargetParams{TargetID: popupID})
 	if err == nil {
 		noticeOnce.Do(func() { notice.Info(popupClosedNotice) })
 	}

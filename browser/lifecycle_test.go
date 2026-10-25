@@ -514,7 +514,7 @@ func TestVisibleRetryRunsTheInitScriptAgain(t *testing.T) {
 	t.Cleanup(func() { renderPage = prev })
 
 	var inits []string
-	renderPage = func(ctx context.Context, h hooks, url, waitSelector, init string, _ []chromedp.Action) (string, error) {
+	renderPage = func(ctx context.Context, h hooks, url, waitSelector, init string, _ []chromedp.Action[chromedp.Void]) (string, error) {
 		inits = append(inits, init)
 		if len(inits) == 1 {
 			return "", challenge(ctx, h)

@@ -72,7 +72,7 @@ endif
 # the wails CLI, which the release builds with: `make install/wails` installs
 # this version into GOBIN, and WAILS can point at another binary
 WAILS ?= wails
-WAILS_VERSION = v2.16.0
+WAILS_VERSION = v2.17.0
 # the arch of the windows and linux targets (the release builds amd64 and arm64)
 GOARCH ?= $(shell go env GOARCH)
 # X.Y.Z for the Windows version resource, the installer and the bundle's

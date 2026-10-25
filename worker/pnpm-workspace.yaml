@@ -1,0 +1,6 @@
+overrides:
+  undici@<7.30.1: ^7.30.1
+  zod@<4.6.6: ^4.6.6
+allowBuilds:
+  esbuild: false
+  workerd: false
