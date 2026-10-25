@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300" role="img" aria-labelledby="title desc">
 <title id="title">Downloads per release</title>
-<desc id="desc">Downloads per release: 17 releases, stacked by group.</desc>
+<desc id="desc">Downloads per release: 18 releases, stacked by group.</desc>
 <style>.gs-rise{animation:gs-rise 1.1s ease-out backwards;transform-box:fill-box;transform-origin:bottom}@keyframes gs-rise{from{transform:scaleY(0)}to{transform:scaleY(1)}}.gs-fade{animation:gs-fade .5s ease-out backwards}@keyframes gs-fade{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion: reduce){.gs-rise,.gs-fade{animation:none!important}}</style>
 <rect x="0.5" y="0.5" width="799" height="299" rx="12" fill="#fcfcfb" stroke="#dcdedf"/>
 <g font-family='"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif' font-size="11" fill="#52514e" style="font-variant-numeric:tabular-nums">
@@ -12,39 +12,42 @@
 <text x="754.4" y="32.0" fill="#52514e" font-size="12">CLI</text>
 <line x1="60.0" x2="776.0" y1="252.0" y2="252.0" stroke="#dcdedf"/>
 <text x="50.0" y="256.0" fill="#6f6e69" text-anchor="end">0</text>
-<line x1="60.0" x2="776.0" y1="205.3" y2="205.3" stroke="#e8eaeb"/>
-<text x="50.0" y="209.3" fill="#6f6e69" text-anchor="end">100</text>
-<line x1="60.0" x2="776.0" y1="158.7" y2="158.7" stroke="#e8eaeb"/>
-<text x="50.0" y="162.7" fill="#6f6e69" text-anchor="end">200</text>
+<line x1="60.0" x2="776.0" y1="217.0" y2="217.0" stroke="#e8eaeb"/>
+<text x="50.0" y="221.0" fill="#6f6e69" text-anchor="end">100</text>
+<line x1="60.0" x2="776.0" y1="182.0" y2="182.0" stroke="#e8eaeb"/>
+<text x="50.0" y="186.0" fill="#6f6e69" text-anchor="end">200</text>
+<line x1="60.0" x2="776.0" y1="147.0" y2="147.0" stroke="#e8eaeb"/>
+<text x="50.0" y="151.0" fill="#6f6e69" text-anchor="end">300</text>
 <line x1="60.0" x2="776.0" y1="112.0" y2="112.0" stroke="#e8eaeb"/>
-<text x="50.0" y="116.0" fill="#6f6e69" text-anchor="end">300</text>
-<g class="gs-fade" style="animation-delay:1600ms"><line x1="60.0" x2="60.0" y1="96.0" y2="252.0" stroke="#dcdedf" stroke-width="1"><title>v1.11.0 First desktop app</title></line><circle cx="60.0" cy="96.0" r="2.5" fill="#6f6e69"/><text x="67.0" y="100.0" fill="#52514e">v1.11.0 First desktop app</text><line x1="481.2" x2="481.2" y1="96.0" y2="252.0" stroke="#dcdedf" stroke-width="1"><title>v1.18.0 Installer and updater</title></line><circle cx="481.2" cy="96.0" r="2.5" fill="#6f6e69"/><text x="488.2" y="100.0" fill="#52514e">v1.18.0 Installer and updater</text><line x1="607.5" x2="607.5" y1="82.0" y2="252.0" stroke="#dcdedf" stroke-width="1"><title>v1.20.0 Multilingual</title></line><circle cx="607.5" cy="82.0" r="2.5" fill="#6f6e69"/><text x="614.5" y="86.0" fill="#52514e">v1.20.0 Multilingual</text></g>
-<g class="gs-rise"><path d="M69.1 252.0V250.7H93.1V252.0Z" fill="#2a6ddc"><title>v1.11.0, Desktop app: 5</title></path><path d="M69.1 248.7V248.7Q69.1 245.9 71.8 245.9H90.3Q93.1 245.9 93.1 248.7V248.7Z" fill="#e5642e"><title>v1.11.0, CLI: 8</title></path></g>
-<g class="gs-rise" style="animation-delay:29ms"><path d="M111.2 252.0V238.5H135.2V252.0Z" fill="#2a6ddc"><title>v1.11.1, Desktop app: 31</title></path><path d="M111.2 236.5V220.1Q111.2 216.1 115.2 216.1H131.2Q135.2 216.1 135.2 220.1V236.5Z" fill="#e5642e"><title>v1.11.1, CLI: 46</title></path></g>
-<g class="gs-rise" style="animation-delay:59ms"><path d="M153.3 252.0V248.8H177.3V252.0Z" fill="#2a6ddc"><title>v1.12.0, Desktop app: 9</title></path><path d="M153.3 246.8V246.8Q153.3 243.1 157.0 243.1H173.6Q177.3 243.1 177.3 246.8V246.8Z" fill="#e5642e"><title>v1.12.0, CLI: 10</title></path></g>
-<g class="gs-rise" style="animation-delay:88ms"><path d="M195.4 252.0V244.6H219.4V252.0Z" fill="#2a6ddc"><title>v1.13.0, Desktop app: 18</title></path><path d="M195.4 242.6V239.7Q195.4 235.7 199.4 235.7H215.4Q219.4 235.7 219.4 239.7V242.6Z" fill="#e5642e"><title>v1.13.0, CLI: 17</title></path></g>
-<g class="gs-rise" style="animation-delay:118ms"><path d="M237.5 252.0V235.3H261.5V252.0Z" fill="#2a6ddc"><title>v1.14.0, Desktop app: 38</title></path><path d="M237.5 233.3V219.1Q237.5 215.1 241.5 215.1H257.5Q261.5 215.1 261.5 219.1V233.3Z" fill="#e5642e"><title>v1.14.0, CLI: 41</title></path></g>
-<g class="gs-rise" style="animation-delay:147ms"><path d="M279.6 252.0V239.5H303.6V252.0Z" fill="#2a6ddc"><title>v1.15.0, Desktop app: 29</title></path><path d="M279.6 237.5V232.7Q279.6 228.7 283.6 228.7H299.6Q303.6 228.7 303.6 232.7V237.5Z" fill="#e5642e"><title>v1.15.0, CLI: 21</title></path></g>
-<g class="gs-rise" style="animation-delay:176ms"><path d="M321.8 252.0V236.7H345.8V252.0Z" fill="#2a6ddc"><title>v1.15.1, Desktop app: 35</title></path><path d="M321.8 234.7V227.1Q321.8 223.1 325.8 223.1H341.8Q345.8 223.1 345.8 227.1V234.7Z" fill="#e5642e"><title>v1.15.1, CLI: 27</title></path></g>
-<g class="gs-rise" style="animation-delay:206ms"><path d="M363.9 252.0V249.7H387.9V252.0Z" fill="#2a6ddc"><title>v1.16.0, Desktop app: 7</title></path><path d="M363.9 247.7V246.2Q363.9 242.2 367.9 242.2H383.9Q387.9 242.2 387.9 246.2V247.7Z" fill="#e5642e"><title>v1.16.0, CLI: 14</title></path></g>
-<g class="gs-rise" style="animation-delay:235ms"><path d="M406.0 252.0V233.4H430.0V252.0Z" fill="#2a6ddc"><title>v1.16.1, Desktop app: 42</title></path><path d="M406.0 231.4V218.7Q406.0 214.7 410.0 214.7H426.0Q430.0 214.7 430.0 218.7V231.4Z" fill="#e5642e"><title>v1.16.1, CLI: 38</title></path></g>
-<g class="gs-rise" style="animation-delay:265ms"><path d="M448.1 252.0V230.6H472.1V252.0Z" fill="#2a6ddc"><title>v1.17.0, Desktop app: 48</title></path><path d="M448.1 228.6V216.3Q448.1 212.3 452.1 212.3H468.1Q472.1 212.3 472.1 216.3V228.6Z" fill="#e5642e"><title>v1.17.0, CLI: 37</title></path></g>
-<g class="gs-rise" style="animation-delay:294ms"><path d="M490.2 252.0V227.8H514.2V252.0Z" fill="#2a6ddc"><title>v1.18.0, Desktop app: 54</title></path><path d="M490.2 225.8V214.9Q490.2 210.9 494.2 210.9H510.2Q514.2 210.9 514.2 214.9V225.8Z" fill="#e5642e"><title>v1.18.0, CLI: 34</title></path></g>
-<g class="gs-rise" style="animation-delay:324ms"><path d="M532.4 252.0V246.5H556.4V252.0Z" fill="#2a6ddc"><title>v1.19.0, Desktop app: 14</title></path><path d="M532.4 244.5V242.9Q532.4 238.9 536.4 238.9H552.4Q556.4 238.9 556.4 242.9V244.5Z" fill="#e5642e"><title>v1.19.0, CLI: 14</title></path></g>
-<g class="gs-rise" style="animation-delay:353ms"><path d="M574.5 252.0V237.1H598.5V252.0Z" fill="#2a6ddc"><title>v1.19.1, Desktop app: 34</title></path><path d="M574.5 235.1V231.7Q574.5 227.7 578.5 227.7H594.5Q598.5 227.7 598.5 231.7V235.1Z" fill="#e5642e"><title>v1.19.1, CLI: 18</title></path></g>
-<g class="gs-rise" style="animation-delay:382ms"><path d="M616.6 252.0V236.2H640.6V252.0Z" fill="#2a6ddc"><title>v1.20.0, Desktop app: 36</title></path><path d="M616.6 234.2V232.2Q616.6 228.2 620.6 228.2H636.6Q640.6 228.2 640.6 232.2V234.2Z" fill="#e5642e"><title>v1.20.0, CLI: 15</title></path></g>
-<g class="gs-rise" style="animation-delay:412ms"><path d="M658.7 252.0V237.6H682.7V252.0Z" fill="#2a6ddc"><title>v1.20.1, Desktop app: 33</title></path><path d="M658.7 235.6V230.8Q658.7 226.8 662.7 226.8H678.7Q682.7 226.8 682.7 230.8V235.6Z" fill="#e5642e"><title>v1.20.1, CLI: 21</title></path></g>
-<g class="gs-rise" style="animation-delay:441ms"><path d="M700.8 252.0V176.9H724.8V252.0Z" fill="#2a6ddc"><title>v1.21.0, Desktop app: 163</title></path><path d="M700.8 174.9V151.5Q700.8 147.5 704.8 147.5H720.8Q724.8 147.5 724.8 151.5V174.9Z" fill="#e5642e"><title>v1.21.0, CLI: 61</title></path></g>
-<g class="gs-rise" style="animation-delay:471ms"><path d="M742.9 252.0V166.2H766.9V252.0Z" fill="#2a6ddc"><title>v1.21.1, Desktop app: 186</title></path><path d="M742.9 164.2V133.3Q742.9 129.3 746.9 129.3H762.9Q766.9 129.3 766.9 133.3V164.2Z" fill="#e5642e"><title>v1.21.1, CLI: 77</title></path></g>
-<g class="gs-fade" style="animation-delay:1600ms"><text x="754.9" y="121.3" fill="#0b0b0b" text-anchor="middle" font-size="12" font-weight="600">263</text></g>
-<text x="81.1" y="272.0" fill="#6f6e69" text-anchor="middle">v1.11.0</text>
-<text x="165.3" y="272.0" fill="#6f6e69" text-anchor="middle">v1.12.0</text>
-<text x="249.5" y="272.0" fill="#6f6e69" text-anchor="middle">v1.14.0</text>
-<text x="333.8" y="272.0" fill="#6f6e69" text-anchor="middle">v1.15.1</text>
-<text x="418.0" y="272.0" fill="#6f6e69" text-anchor="middle">v1.16.1</text>
-<text x="502.2" y="272.0" fill="#6f6e69" text-anchor="middle">v1.18.0</text>
-<text x="586.5" y="272.0" fill="#6f6e69" text-anchor="middle">v1.19.1</text>
-<text x="670.7" y="272.0" fill="#6f6e69" text-anchor="middle">v1.20.1</text>
-<text x="754.9" y="272.0" fill="#6f6e69" text-anchor="middle">v1.21.1</text>
+<text x="50.0" y="116.0" fill="#6f6e69" text-anchor="end">400</text>
+<g class="gs-fade" style="animation-delay:1600ms"><line x1="60.0" x2="60.0" y1="96.0" y2="252.0" stroke="#dcdedf" stroke-width="1"><title>v1.11.0 First desktop app</title></line><circle cx="60.0" cy="96.0" r="2.5" fill="#6f6e69"/><text x="67.0" y="100.0" fill="#52514e">v1.11.0 First desktop app</text><line x1="457.8" x2="457.8" y1="96.0" y2="252.0" stroke="#dcdedf" stroke-width="1"><title>v1.18.0 Installer and updater</title></line><circle cx="457.8" cy="96.0" r="2.5" fill="#6f6e69"/><text x="464.8" y="100.0" fill="#52514e">v1.18.0 Installer and updater</text><line x1="577.1" x2="577.1" y1="82.0" y2="252.0" stroke="#dcdedf" stroke-width="1"><title>v1.20.0 Multilingual</title></line><circle cx="577.1" cy="82.0" r="2.5" fill="#6f6e69"/><text x="584.1" y="86.0" fill="#52514e">v1.20.0 Multilingual</text></g>
+<g class="gs-rise"><path d="M67.9 252.0V251.0H91.9V252.0Z" fill="#2a6ddc"><title>v1.11.0, Desktop app: 5</title></path><path d="M67.9 249.3V249.3Q67.9 247.4 69.7 247.4H90.1Q91.9 247.4 91.9 249.3V249.3Z" fill="#e5642e"><title>v1.11.0, CLI: 8</title></path></g>
+<g class="gs-rise" style="animation-delay:28ms"><path d="M107.7 252.0V242.2H131.7V252.0Z" fill="#2a6ddc"><title>v1.11.1, Desktop app: 31</title></path><path d="M107.7 240.2V229.1Q107.7 225.1 111.7 225.1H127.7Q131.7 225.1 131.7 229.1V240.2Z" fill="#e5642e"><title>v1.11.1, CLI: 46</title></path></g>
+<g class="gs-rise" style="animation-delay:56ms"><path d="M147.4 252.0V249.8H171.4V252.0Z" fill="#2a6ddc"><title>v1.12.0, Desktop app: 9</title></path><path d="M147.4 247.8V247.8Q147.4 245.3 149.9 245.3H168.9Q171.4 245.3 171.4 247.8V247.8Z" fill="#e5642e"><title>v1.12.0, CLI: 10</title></path></g>
+<g class="gs-rise" style="animation-delay:83ms"><path d="M187.2 252.0V246.7H211.2V252.0Z" fill="#2a6ddc"><title>v1.13.0, Desktop app: 18</title></path><path d="M187.2 244.7V243.8Q187.2 239.8 191.2 239.8H207.2Q211.2 239.8 211.2 243.8V244.7Z" fill="#e5642e"><title>v1.13.0, CLI: 17</title></path></g>
+<g class="gs-rise" style="animation-delay:111ms"><path d="M227.0 252.0V239.7H251.0V252.0Z" fill="#2a6ddc"><title>v1.14.0, Desktop app: 38</title></path><path d="M227.0 237.7V228.3Q227.0 224.3 231.0 224.3H247.0Q251.0 224.3 251.0 228.3V237.7Z" fill="#e5642e"><title>v1.14.0, CLI: 41</title></path></g>
+<g class="gs-rise" style="animation-delay:139ms"><path d="M266.8 252.0V242.8H290.8V252.0Z" fill="#2a6ddc"><title>v1.15.0, Desktop app: 29</title></path><path d="M266.8 240.8V238.5Q266.8 234.5 270.8 234.5H286.8Q290.8 234.5 290.8 238.5V240.8Z" fill="#e5642e"><title>v1.15.0, CLI: 21</title></path></g>
+<g class="gs-rise" style="animation-delay:167ms"><path d="M306.6 252.0V240.8H330.6V252.0Z" fill="#2a6ddc"><title>v1.15.1, Desktop app: 35</title></path><path d="M306.6 238.8V234.3Q306.6 230.3 310.6 230.3H326.6Q330.6 230.3 330.6 234.3V238.8Z" fill="#e5642e"><title>v1.15.1, CLI: 27</title></path></g>
+<g class="gs-rise" style="animation-delay:194ms"><path d="M346.3 252.0V250.6H370.3V252.0Z" fill="#2a6ddc"><title>v1.16.0, Desktop app: 7</title></path><path d="M346.3 248.6V248.6Q346.3 244.7 350.2 244.7H366.4Q370.3 244.7 370.3 248.6V248.6Z" fill="#e5642e"><title>v1.16.0, CLI: 14</title></path></g>
+<g class="gs-rise" style="animation-delay:222ms"><path d="M386.1 252.0V238.3H410.1V252.0Z" fill="#2a6ddc"><title>v1.16.1, Desktop app: 42</title></path><path d="M386.1 236.3V228.0Q386.1 224.0 390.1 224.0H406.1Q410.1 224.0 410.1 228.0V236.3Z" fill="#e5642e"><title>v1.16.1, CLI: 38</title></path></g>
+<g class="gs-rise" style="animation-delay:250ms"><path d="M425.9 252.0V236.2H449.9V252.0Z" fill="#2a6ddc"><title>v1.17.0, Desktop app: 48</title></path><path d="M425.9 234.2V226.3Q425.9 222.3 429.9 222.3H445.9Q449.9 222.3 449.9 226.3V234.2Z" fill="#e5642e"><title>v1.17.0, CLI: 37</title></path></g>
+<g class="gs-rise" style="animation-delay:278ms"><path d="M465.7 252.0V234.1H489.7V252.0Z" fill="#2a6ddc"><title>v1.18.0, Desktop app: 54</title></path><path d="M465.7 232.1V225.2Q465.7 221.2 469.7 221.2H485.7Q489.7 221.2 489.7 225.2V232.1Z" fill="#e5642e"><title>v1.18.0, CLI: 34</title></path></g>
+<g class="gs-rise" style="animation-delay:306ms"><path d="M505.4 252.0V248.1H529.4V252.0Z" fill="#2a6ddc"><title>v1.19.0, Desktop app: 14</title></path><path d="M505.4 246.1V246.1Q505.4 242.2 509.3 242.2H525.5Q529.4 242.2 529.4 246.1V246.1Z" fill="#e5642e"><title>v1.19.0, CLI: 14</title></path></g>
+<g class="gs-rise" style="animation-delay:333ms"><path d="M545.2 252.0V241.1H569.2V252.0Z" fill="#2a6ddc"><title>v1.19.1, Desktop app: 34</title></path><path d="M545.2 239.1V237.8Q545.2 233.8 549.2 233.8H565.2Q569.2 233.8 569.2 237.8V239.1Z" fill="#e5642e"><title>v1.19.1, CLI: 18</title></path></g>
+<g class="gs-rise" style="animation-delay:361ms"><path d="M585.0 252.0V240.4H609.0V252.0Z" fill="#2a6ddc"><title>v1.20.0, Desktop app: 36</title></path><path d="M585.0 238.4V238.2Q585.0 234.2 589.0 234.2H605.0Q609.0 234.2 609.0 238.2V238.4Z" fill="#e5642e"><title>v1.20.0, CLI: 15</title></path></g>
+<g class="gs-rise" style="animation-delay:389ms"><path d="M624.8 252.0V241.4H648.8V252.0Z" fill="#2a6ddc"><title>v1.20.1, Desktop app: 33</title></path><path d="M624.8 239.4V237.1Q624.8 233.1 628.8 233.1H644.8Q648.8 233.1 648.8 237.1V239.4Z" fill="#e5642e"><title>v1.20.1, CLI: 21</title></path></g>
+<g class="gs-rise" style="animation-delay:417ms"><path d="M664.6 252.0V195.9H688.6V252.0Z" fill="#2a6ddc"><title>v1.21.0, Desktop app: 163</title></path><path d="M664.6 193.9V177.6Q664.6 173.6 668.6 173.6H684.6Q688.6 173.6 688.6 177.6V193.9Z" fill="#e5642e"><title>v1.21.0, CLI: 61</title></path></g>
+<g class="gs-rise" style="animation-delay:444ms"><path d="M704.3 252.0V174.6H728.3V252.0Z" fill="#2a6ddc"><title>v1.21.1, Desktop app: 224</title></path><path d="M704.3 172.6V147.2Q704.3 143.2 708.3 143.2H724.3Q728.3 143.2 728.3 147.2V172.6Z" fill="#e5642e"><title>v1.21.1, CLI: 87</title></path></g>
+<g class="gs-rise" style="animation-delay:472ms"><path d="M744.1 252.0V247.4H768.1V252.0Z" fill="#2a6ddc"><title>v1.22.0, Desktop app: 16</title></path><path d="M744.1 245.4V241.3Q744.1 237.3 748.1 237.3H764.1Q768.1 237.3 768.1 241.3V245.4Z" fill="#e5642e"><title>v1.22.0, CLI: 26</title></path></g>
+<g class="gs-fade" style="animation-delay:1600ms"><text x="756.1" y="229.3" fill="#0b0b0b" text-anchor="middle" font-size="12" font-weight="600">42</text></g>
+<text x="79.9" y="272.0" fill="#6f6e69" text-anchor="middle">v1.11.0</text>
+<text x="159.4" y="272.0" fill="#6f6e69" text-anchor="middle">v1.12.0</text>
+<text x="239.0" y="272.0" fill="#6f6e69" text-anchor="middle">v1.14.0</text>
+<text x="318.6" y="272.0" fill="#6f6e69" text-anchor="middle">v1.15.1</text>
+<text x="398.1" y="272.0" fill="#6f6e69" text-anchor="middle">v1.16.1</text>
+<text x="477.7" y="272.0" fill="#6f6e69" text-anchor="middle">v1.18.0</text>
+<text x="557.2" y="272.0" fill="#6f6e69" text-anchor="middle">v1.19.1</text>
+<text x="636.8" y="272.0" fill="#6f6e69" text-anchor="middle">v1.20.1</text>
+<text x="716.3" y="272.0" fill="#6f6e69" text-anchor="middle">v1.21.1</text>
 </g>
 </svg>
