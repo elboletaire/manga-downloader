@@ -8,7 +8,8 @@
     "bundleSaved": "S'ha desat {{bundle}}",
     "inVolumes": "{{saved}} en {{volumes}}",
     "mergedFromParts": "{{saved}}, {{merged}}",
-    "nothingSaved": "No s'ha desat res"
+    "nothingSaved": "No s'ha desat res",
+    "separator": ", "
   },
   "sentence": {
     "cancelledNoBundle": "Cancel·lat. No s'ha escrit cap paquet.",

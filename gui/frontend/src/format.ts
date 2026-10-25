@@ -39,7 +39,7 @@ export function summaryHeadline(s: Summary, t: T): string {
     parts.push(t('count.skipped', { count: s.skipped }));
   }
 
-  return parts.length === 0 ? t('summary.headline.nothingSaved') : parts.join(', ');
+  return parts.length === 0 ? t('summary.headline.nothingSaved') : parts.join(t('summary.headline.separator'));
 }
 
 /** The one sentence that says where a finished run's chapters went */

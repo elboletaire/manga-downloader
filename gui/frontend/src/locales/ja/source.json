@@ -1,9 +1,9 @@
 {
   "url": {
-    "label": "シリーズのURL",
-    "placeholder": "シリーズまたはその話のリンクを貼り付けてください",
-    "clear": "消去",
-    "clearLabel": "URLを消去",
+    "label": "作品のURL",
+    "placeholder": "作品またはその話のリンクを貼り付けてください",
+    "clear": "クリア",
+    "clearLabel": "URLをクリア",
     "paste": "貼り付け",
     "pasteLabel": "クリップボードのリンクを貼り付け"
   },
@@ -13,7 +13,7 @@
     "reload": "再読み込み"
   },
   "filter": {
-    "heading": "一覧を絞り込む",
+    "heading": "絞り込み",
     "language": "言語",
     "scanlator": "翻訳グループ",
     "any": "指定なし",
@@ -21,6 +21,6 @@
     "noScanlator": "このサイトには選べる翻訳グループがありません",
     "notApplied": "まだ適用されていません",
     "appliesAtOnce": "選ぶとすぐに適用されます",
-    "appliesOnLoad": "シリーズの読み込み時に適用されます"
+    "appliesOnLoad": "作品の読み込み時に適用されます"
   }
 }

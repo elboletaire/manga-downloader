@@ -36,6 +36,13 @@ describe('summaryHeadline', () => {
     expect(summaryHeadline(base, en)).toBe('Nothing was saved');
   });
 
+  it('joins the parts with the separator of the language', () => {
+    const ja = createT('ja');
+    expect(summaryHeadline({ ...base, saved: 12, volumes: 3, failures: [{ label: '', reason: 'x' }] }, ja)).toBe(
+      '12件保存（3巻）、1件失敗',
+    );
+  });
+
   it('describes a volume run', () => {
     expect(summaryHeadline({ ...base, saved: 12, volumes: 2 }, en)).toBe('12 saved in 2 volumes');
     expect(summarySentence({ ...base, saved: 12, volumes: 1 }, en)).toBe(

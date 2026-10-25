@@ -2,7 +2,7 @@
   "status": {
     "fetching": "ページを取得中…",
     "downloading": "ダウンロード中",
-    "archiving": "まとめ中",
+    "archiving": "書き出し中",
     "done": "完了",
     "failed": "失敗: {{reason}}",
     "skipped": "スキップ: {{reason}}"
@@ -10,31 +10,31 @@
   "short": {
     "fetching": "ページを取得中…",
     "phase": "{{phase}} · {{percent}}",
-    "packing": "まとめ中",
+    "packing": "書き出し中",
     "downloading": "ダウンロード中",
     "done": "保存済み",
     "failed": "失敗",
     "skipped": "スキップ"
   },
   "title": {
-    "bundle": "1ファイル: {{range}}話",
-    "volume": "{{volume}} · {{first}}～{{last}}話",
-    "volumeChapter": "{{volume}} · {{first}}話",
+    "bundle": "まとめファイル: 第{{range}}話",
+    "volume": "{{volume}} · 第{{first}}～{{last}}話",
+    "volumeChapter": "{{volume}} · 第{{first}}話",
     "volumeParts": "{{volume}} · {{count}}パート"
   },
   "phase": {
     "gathering": "情報を取得中…",
     "downloading": "ダウンロード中…",
     "downloadingLabel": "{{label}}をダウンロード中",
-    "creatingBundle": "{{range}}話を1ファイルにまとめています",
+    "creatingBundle": "第{{range}}話を1ファイルにまとめています",
     "waiting": "待機中…",
-    "packing": "まとめ中…"
+    "packing": "書き出し中…"
   },
   "reason": {
     "cancelled": "すべての話が始まる前にキャンセルされました",
-    "skipped": "--skip-pages ですべてのページが除外されました",
+    "skipped": "--skip-pagesですべてのページが除外されました",
     "download": "ダウンロード: {{reason}}",
-    "packing": "まとめ: {{reason}}",
+    "packing": "書き出し: {{reason}}",
     "filename": "ファイル名: {{reason}}",
     "locked": "ロック中の話",
     "emptyVolume": "どの話もダウンロードできませんでした",

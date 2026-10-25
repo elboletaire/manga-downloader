@@ -8,7 +8,8 @@
     "bundleSaved": "Saved {{bundle}}",
     "inVolumes": "{{saved}} in {{volumes}}",
     "mergedFromParts": "{{saved}}, {{merged}}",
-    "nothingSaved": "Nothing was saved"
+    "nothingSaved": "Nothing was saved",
+    "separator": ", "
   },
   "sentence": {
     "cancelledNoBundle": "Cancelled. No bundle was written.",

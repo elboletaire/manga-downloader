@@ -1250,6 +1250,17 @@ code,
   letter-spacing: normal;
 }
 
+/* Japanese breaks between any two characters: phrases stay whole, and short labels don't wrap */
+:lang(ja) {
+  word-break: auto-phrase;
+}
+
+:lang(ja) .segmented label,
+:lang(ja) .tab,
+:lang(ja) .group {
+  white-space: nowrap;
+}
+
 .advanced {
   display: block;
 }

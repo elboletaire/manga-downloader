@@ -1,7 +1,7 @@
 {
   "locked": {
-    "running": "ダウンロードの実行中はオプションをロックしています。",
-    "loading": "シリーズの読み込み中はオプションをロックしています。"
+    "running": "ダウンロード中はオプションを変更できません。",
+    "loading": "作品の読み込み中はオプションを変更できません。"
   },
   "save": {
     "title": "保存",
@@ -25,7 +25,7 @@
   "packAs": {
     "label": "まとめ方",
     "chapters": "話ごと",
-    "parts": "パートを結合",
+    "parts": "結合",
     "volumes": "巻ごと",
     "bundle": "1ファイル"
   },
@@ -33,7 +33,7 @@
     "chapters": "話ごとに1ファイルを作成します。",
     "parts": "話ごとに1ファイルを作成し、そのパートを結合します。パートのない話は通常どおり1ファイルずつになります。",
     "volumes": "巻ごとに1ファイルを作成します（巻は話の一覧の上で指定します）。どの巻にも含まれない話は1ファイルずつになります。",
-    "volumesNotLoaded": "巻ごとに1ファイルを作成します（シリーズの読み込み後に指定できます）。どの巻にも含まれない話は1ファイルずつになります。",
+    "volumesNotLoaded": "巻ごとに1ファイルを作成します（作品の読み込み後に指定できます）。どの巻にも含まれない話は1ファイルずつになります。",
     "bundle": "選択した話を1つのファイルにまとめます。"
   },
   "pages": {
@@ -49,21 +49,21 @@
     },
     "quality": {
       "label": "JPEG品質",
-      "hint": "1から100まで。JPEGで保存されるすべてのページに使われます（「JPEGに変換」と「ページを圧縮」の両方）。小さいほどファイルも小さくなります。",
+      "hint": "1から100まで。JPEGで保存されるすべてのページに使われます（「JPEGに変換」と「ページを圧縮」の両方）。値が小さいほどファイルも小さくなります。",
       "invalid": "1から100までの整数を入力してください。"
     }
   },
   "skipPages": {
     "label": "除外するページ",
     "placeholder": "例: {{example}}",
-    "hint": "すべての話から除外する位置です。{{first}} は2ページ目、{{last}} は最後のページを指します。"
+    "hint": "すべての話から除外する位置です。{{first}}は2ページ目、{{last}}は最後のページを指します。"
   },
   "advanced": {
     "title": "詳細設定"
   },
   "template": {
     "label": "ファイル名のテンプレート",
-    "hint": "<code>{{series}}</code>、<code>{{number}}</code>、<code>{{title}}</code>、<code>{{siteTitle}}</code>、<code>{{group}}</code>、<code>{{volume}}</code>、<code>{{version}}</code> が使えます。<code>{{padded}}</code> は番号を0埋めします。そのままの場合、巻は <code>{{volumeName}}</code>、その話が同じグループなら <code>{{volumeGroupName}}</code> の名前になります。",
+    "hint": "<code>{{series}}</code>、<code>{{number}}</code>、<code>{{title}}</code>、<code>{{siteTitle}}</code>、<code>{{group}}</code>、<code>{{volume}}</code>、<code>{{version}}</code> が使えます。<code>{{padded}}</code> は番号を0埋めします。既定のままなら、巻は <code>{{volumeName}}</code>、その話がすべて同じグループの場合は <code>{{volumeGroupName}}</code> という名前になります。",
     "reset": "既定のテンプレートを使う"
   },
   "browser": {
