@@ -33,7 +33,7 @@ body:
         happens with the [latest
         release](https://github.com/elboletaire/manga-downloader/releases/latest)
         first: sites change constantly and fixes ship often.
-      placeholder: e.g. v1.14.0
+      placeholder: e.g. v23.0.0
     validations:
       required: true
   - type: textarea
