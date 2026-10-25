@@ -536,8 +536,9 @@ manga-downloader --convert-images none [url] 1-10        # keep pages untouched
 
 JPEG and GIF pages are never re-encoded by default. `png` converts PNG pages
 too, but only when the JPEG comes out smaller (flat artwork often is already
-smaller as a PNG). `all` converts every page that isn't JPEG, PNG included, and
-leaves animated GIFs alone, since converting one would keep only its first frame.
+smaller as a PNG). `all` converts every page that isn't JPEG or GIF (PNG still only
+when its JPEG is smaller); GIFs are left alone since converting an animated one keeps
+only its first frame.
 `--jpeg-quality` (1-100, default 90) sets the quality of every page written as
 JPEG. If a page fails to convert, it's kept as it was and a warning is shown, so
 the rest of the chapter isn't lost.

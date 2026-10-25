@@ -258,12 +258,9 @@ func titleBeyondNumber(title string, number float64) string {
 	return title
 }
 
-// namePages names a chapter's pages sequentially (000.jpg, 001.png, ...),
-// restarting at 000 for each call, with extensions detected from the image
-// bytes. Pages whose format is listed in formats are transcoded to JPEG at
-// quality first, so e-readers that can't render AVIF (or WebP) still get a
-// readable archive. format is the output format: an EPUB leaves out the pages
-// it can't show, and ArchiveEPUB warns about each of them.
+// namePages names a chapter's pages sequentially (000.jpg, 001.png, ...) by
+// their sniffed formats, transcoding those in formats to JPEG at quality so
+// e-readers can show them. format is the output: EPUB drops the pages it can't show.
 func namePages(pages []*downloader.File, formats grabber.ConvertFormats, quality int, format string) []File {
 	named := make([]File, len(pages))
 	for i, page := range pages {

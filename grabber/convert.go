@@ -16,8 +16,8 @@ const (
 	// ConvertPNG is converted only when the JPEG comes out smaller, since
 	// PNG is readable everywhere and a bigger JPEG would just cost quality
 	ConvertPNG = "png"
-	// ConvertAll converts every page that isn't already JPEG, except animated
-	// GIF (see Has)
+	// ConvertAll converts every page that isn't JPEG or GIF (see Has), since
+	// converting an animated GIF would keep only its first frame
 	ConvertAll = "all"
 	// ConvertImagesNone disables conversion entirely, keeping every page in
 	// the format the site served it in
@@ -40,17 +40,15 @@ type ConvertFormats map[string]bool
 // an unset value simply converts nothing.
 func (c ConvertFormats) Has(format string) bool {
 	if c[ConvertAll] {
-		// animated GIF stays as it is: converting keeps only its first frame
+		// GIF stays as it is: converting an animated one keeps only its first frame
 		return format != "jpg" && format != "gif"
 	}
 	return c[format]
 }
 
-// ParseConvertFormats parses the --convert-images value: a comma separated
-// list of source formats to convert to JPEG ("avif", "avif,webp", "png"), "all"
-// for every format but JPEG and GIF, or "none" (or an empty string) to disable
-// conversion. Formats e-readers already handle (jpg/gif) are rejected rather
-// than silently accepted, since converting them would be a lossy downgrade.
+// ParseConvertFormats parses --convert-images: a comma separated list of formats
+// to convert to JPEG ("avif,webp"), "all" (all but JPEG and GIF) or "none" (or "").
+// jpg/gif are rejected, not accepted, since converting them is a lossy downgrade.
 func ParseConvertFormats(value string) (ConvertFormats, error) {
 	formats := ConvertFormats{}
 

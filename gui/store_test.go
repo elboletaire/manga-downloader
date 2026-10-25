@@ -253,6 +253,31 @@ func TestLoadOptionsRejectsJPEGQualityFallsBackToDefault(t *testing.T) {
 	}
 }
 
+func TestLoadOptionsOldFileKeepsDefaultJPEGQuality(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	if err := os.WriteFile(path, []byte(`{"format":"raw"}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var warnings []string
+	notice.SetHandler(func(level notice.Level, msg string) {
+		if level == notice.LevelWarn {
+			warnings = append(warnings, msg)
+		}
+	})
+	defer notice.SetHandler(nil)
+
+	s := defaultSettings()
+	if err := loadOptions(path, s); err != nil {
+		t.Fatal(err)
+	}
+	if s.JPEGQuality != 90 {
+		t.Errorf("jpeg-quality %d, want the default 90", s.JPEGQuality)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("got warnings %q, want none", warnings)
+	}
+}
+
 func TestLoadOptionsRejectsReadingDirectionFallsBackToDefault(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "gui.json")
 	if err := os.WriteFile(path, []byte(`{"readingDirection":"ttb","format":"epub"}`), 0600); err != nil {
