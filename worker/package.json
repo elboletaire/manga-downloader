@@ -15,5 +15,11 @@
     "vitest": "^5.0.5",
     "wrangler": "^4.152.0"
   },
-  "packageManager": "pnpm@10.32.1"
+  "packageManager": "pnpm@10.32.1",
+  "pnpm": {
+    "overrides": {
+      "undici@<7.30.1": "^7.30.1",
+      "zod@<4.6.6": "^4.6.6"
+    }
+  }
 }
