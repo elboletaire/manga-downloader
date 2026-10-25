@@ -10,5 +10,5 @@
     "bindings": [{ "name": "UPDATE_STATE", "class_name": "UpdateState" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["UpdateState"] }],
-  "analytics_engine_datasets": [{ "binding": "UPDATE_CHECKS", "dataset": "update_checks" }]
+  "analytics_engine_datasets": [{ "binding": "UPDATE_CHECKS", "dataset": "manga_downloader_checks" }]
 }

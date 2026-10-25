@@ -14,7 +14,7 @@
 
 ## What is recorded
 
-One Analytics Engine data point per `GET` (dataset `update_checks`):
+One Analytics Engine data point per `GET` (dataset `manga_downloader_checks`):
 
 | Field | Value |
 | --- | --- |
@@ -83,7 +83,7 @@ Analytics Engine SQL runs through the API, with a token that can read Analytics:
 ```sh
 curl -s "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/analytics_engine/sql" \
   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-  --data "SELECT blob5 AS day, count(DISTINCT index1) AS uniques, sum(_sample_interval) AS checks FROM update_checks GROUP BY day ORDER BY day DESC LIMIT 30"
+  --data "SELECT blob5 AS day, count(DISTINCT index1) AS uniques, sum(_sample_interval) AS checks FROM manga_downloader_checks GROUP BY day ORDER BY day DESC LIMIT 30"
 ```
 
 `uniques` is distinct salted hashes per day. A hash changes at midnight UTC, so a user counts once per day, not once overall.
