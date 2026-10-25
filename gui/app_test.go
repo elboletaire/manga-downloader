@@ -420,14 +420,14 @@ func TestUpdateCheckFinishingAfterTurnOffIsDropped(t *testing.T) {
 		_, _ = w.Write([]byte(`{"tag_name":"v1.13.0"}`))
 	}))
 	defer srv.Close()
-	a.tag, a.releaseAPI = "v1.12.0", srv.URL
+	a.tag, a.updateSource = "v1.12.0", testSource(srv)
 
 	if !a.ctrl.claimUpdateCheck() {
 		t.Fatal("no check was running yet")
 	}
 	done := make(chan struct{})
 	go func() {
-		a.ctrl.CheckUpdate(context.Background(), a.tag, a.releaseAPI, srv.Client())
+		a.ctrl.CheckUpdate(context.Background(), a.tag, a.updateSource)
 		close(done)
 	}()
 	if err := a.SetCheckUpdates(false); err != nil {

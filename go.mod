@@ -16,7 +16,6 @@ require (
 	github.com/ivanpirog/coloredcobra v1.0.1
 	github.com/mattn/go-runewidth v0.0.30
 	github.com/spf13/cobra v1.6.1
-	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e
 	golang.org/x/image v0.44.0
 	golang.org/x/sys v0.47.0
 	golang.org/x/term v0.43.0
@@ -39,9 +38,6 @@ require (
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
-	github.com/google/go-github v17.0.0+incompatible // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
