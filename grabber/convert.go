@@ -8,17 +8,11 @@ import (
 )
 
 // Source image formats that can be transcoded to JPEG when packing, plus the
-// "all" and "none" values. The format names match the extensions packer's
-// sniffing reports, so no translation table is needed between the two.
+// "none" opt-out. The format names match the extensions packer's sniffing
+// reports, so no translation table is needed between the two.
 const (
 	ConvertAVIF = "avif"
 	ConvertWebP = "webp"
-	// ConvertPNG is converted only when the JPEG comes out smaller, since
-	// PNG is readable everywhere and a bigger JPEG would just cost quality
-	ConvertPNG = "png"
-	// ConvertAll converts every page that isn't JPEG or GIF (see Has), since
-	// converting an animated GIF would keep only its first frame
-	ConvertAll = "all"
 	// ConvertImagesNone disables conversion entirely, keeping every page in
 	// the format the site served it in
 	ConvertImagesNone = "none"
@@ -39,16 +33,14 @@ type ConvertFormats map[string]bool
 // Has reports whether the given format should be converted. It's nil-safe, so
 // an unset value simply converts nothing.
 func (c ConvertFormats) Has(format string) bool {
-	if c[ConvertAll] {
-		// GIF stays as it is: converting an animated one keeps only its first frame
-		return format != "jpg" && format != "gif"
-	}
 	return c[format]
 }
 
-// ParseConvertFormats parses --convert-images: a comma separated list of formats
-// to convert to JPEG ("avif,webp"), "all" (all but JPEG and GIF) or "none" (or "").
-// jpg/gif are rejected, not accepted, since converting them is a lossy downgrade.
+// ParseConvertFormats parses the --convert-images value: a comma separated
+// list of source formats to convert to JPEG ("avif", "avif,webp"), or "none"
+// (or an empty string) to disable conversion. Formats e-readers already
+// handle (jpg/png/gif) are rejected rather than silently accepted, since
+// converting them would be a lossy downgrade for no compatibility gain.
 func ParseConvertFormats(value string) (ConvertFormats, error) {
 	formats := ConvertFormats{}
 
@@ -62,7 +54,7 @@ func ParseConvertFormats(value string) (ConvertFormats, error) {
 		format := strings.ToLower(strings.TrimSpace(token))
 
 		switch format {
-		case ConvertAVIF, ConvertWebP, ConvertPNG, ConvertAll:
+		case ConvertAVIF, ConvertWebP:
 			formats[format] = true
 		case ConvertImagesNone:
 			// "none" is exclusive: pairing it with a format contradicts itself
@@ -70,7 +62,7 @@ func ParseConvertFormats(value string) (ConvertFormats, error) {
 				return nil, fmt.Errorf("invalid --convert-images value %q, %q cannot be combined with other formats", value, ConvertImagesNone)
 			}
 		default:
-			return nil, fmt.Errorf("invalid --convert-images format %q, valid formats are %q, %q, %q, %q or %q", token, ConvertAVIF, ConvertWebP, ConvertPNG, ConvertAll, ConvertImagesNone)
+			return nil, fmt.Errorf("invalid --convert-images format %q, valid formats are %q, %q or %q", token, ConvertAVIF, ConvertWebP, ConvertImagesNone)
 		}
 	}
 

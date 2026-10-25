@@ -27,6 +27,7 @@ type OptionsDTO struct {
 	Scanlator        string `json:"scanlator"`
 	ConvertImages    string `json:"convertImages"`
 	JPEGQuality      int    `json:"jpegQuality"`
+	Compress         bool   `json:"compress"`
 	SkipPages        string `json:"skipPages"`
 	FilenameTemplate string `json:"filenameTemplate"`
 	BrowserVisible   bool   `json:"browserVisible"`
@@ -149,6 +150,7 @@ func optionsOf(s grabber.Settings) OptionsDTO {
 		Scanlator:        s.Scanlator,
 		ConvertImages:    s.ConvertImages,
 		JPEGQuality:      s.JPEGQuality,
+		Compress:         s.Compress,
 		SkipPages:        s.SkipPages,
 		FilenameTemplate: s.FilenameTemplate,
 		BrowserVisible:   s.BrowserVisible,
@@ -166,6 +168,7 @@ func applyOptions(s *grabber.Settings, o OptionsDTO) {
 	s.Scanlator = o.Scanlator
 	s.ConvertImages = o.ConvertImages
 	s.JPEGQuality = o.JPEGQuality
+	s.Compress = o.Compress
 	s.SkipPages = o.SkipPages
 	s.FilenameTemplate = o.FilenameTemplate
 	s.BrowserVisible = o.BrowserVisible

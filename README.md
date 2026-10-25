@@ -530,18 +530,20 @@ so converting it is opt-in:
 
 ~~~bash
 manga-downloader --convert-images avif,webp [url] 1-10   # strict e-ink setup
-manga-downloader --convert-images all --jpeg-quality 85 [url] 1-10   # smallest files
 manga-downloader --convert-images none [url] 1-10        # keep pages untouched
 ~~~
 
-JPEG and GIF pages are never re-encoded by default. `png` converts PNG pages
-too, but only when the JPEG comes out smaller (flat artwork often is already
-smaller as a PNG). `all` converts every page that isn't JPEG or GIF (PNG still only
-when its JPEG is smaller); GIFs are left alone since converting an animated one keeps
-only its first frame.
+JPEG, PNG and GIF pages are never re-encoded by `--convert-images`. If a page
+fails to convert, it's kept as it was and a warning is shown, so the rest of the
+chapter isn't lost.
+
+`--compress` is for file size instead: it re-encodes PNG pages to JPEG, but only
+when the JPEG comes out smaller, and keeps the PNG otherwise (flat artwork is often
+smaller as a PNG). It leaves JPEG, WebP, AVIF and GIF pages alone, works with any
+`--convert-images` value, and doesn't resize pages.
+
 `--jpeg-quality` (1-100, default 90) sets the quality of every page written as
-JPEG. If a page fails to convert, it's kept as it was and a warning is shown, so
-the rest of the chapter isn't lost.
+JPEG, by `--convert-images` and `--compress` alike.
 
 EPUB is the exception, since readers can't show AVIF at all: AVIF pages are
 always converted for it, even with `--convert-images none`. A page an EPUB can't
@@ -554,8 +556,8 @@ is left out with a warning instead of being kept.
 > `windows-32bit-legacy`), so use `--convert-images none` there if speed
 > matters.
 
-The desktop app offers the same choice as checkboxes, *AVIF*, *WebP*, *PNG* and
-*Every format but JPEG and GIF* (which locks the others), and a *JPEG quality* field.
+The desktop app offers the same choices: the *AVIF* and *WebP* checkboxes, a
+*Compress pages* switch, and a *JPEG quality* field under Advanced.
 With EPUB, AVIF is always converted, so its box is ticked and can't be changed.
 
 ### Skipping pages
@@ -682,8 +684,9 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--filename-template` | `-t`  | Template for the file names                              | see above      |
 | `--language`          | `-l`  | Only download the specified language                     | site default   |
 | `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)  | `all`          |
-| `--convert-images`    |       | Formats to JPEG: `avif`, `webp`, `png`, `all`, `none`    | `avif`         |
-| `--jpeg-quality`      |       | JPEG quality of converted pages (1-100)                  | `90`           |
+| `--convert-images`    |       | Formats to JPEG: `avif`, `webp` or `none`                | `avif`         |
+| `--compress`          |       | Re-encode PNG pages to JPEG when that's smaller          | off            |
+| `--jpeg-quality`      |       | JPEG quality of re-encoded pages (1-100)                 | `90`           |
 | `--skip-pages`        |       | Pages to exclude from every chapter (`-1` is the last)   | none           |
 | `--concurrency`       | `-c`  | Number of chapters downloaded at once (max 5)            | 5              |
 | `--concurrency-pages` | `-C`  | Number of pages downloaded at once per chapter (max 10)  | 10             |

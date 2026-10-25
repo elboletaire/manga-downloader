@@ -41,10 +41,12 @@
     "convert": "Convert to JPEG",
     "avif": "AVIF",
     "webp": "WebP",
-    "png": "PNG",
-    "all": "Every format but JPEG and GIF",
     "convertHint": "Most e-readers can't open AVIF; WebP is unreliable on e-ink.",
     "avifEpub": "Always on for EPUB: readers can't show AVIF.",
+    "compress": {
+      "label": "Compress pages",
+      "hint": "PNG pages become JPEG when that's smaller, to shrink the file."
+    },
     "quality": {
       "label": "JPEG quality",
       "hint": "From 1 to 100: used for every page converted to JPEG.",

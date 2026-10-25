@@ -1,15 +1,12 @@
-// The window shows "convert images" as checkboxes, but the setting is one
+// The window shows "convert images" as two checkboxes, but the setting is one
 // comma-separated string (see grabber.ParseConvertFormats in Go). These map
-// between the two, so a saved value of any of the valid strings loads.
+// between the two, so a saved value of any of the four valid strings loads.
 
 import type { T } from './i18n';
 
 export interface ConvertFlags {
   avif: boolean;
   webp: boolean;
-  png: boolean;
-  /** Every format but JPEG and GIF: the other boxes stay ticked and locked */
-  all: boolean;
 }
 
 /** The checkboxes for a setting value. Unknown tokens are ignored. */
@@ -18,24 +15,23 @@ export function convertFlagsOf(value: string): ConvertFlags {
     .split(',')
     .map((t) => t.trim().toLowerCase())
     .filter((t) => t !== '');
-  const all = tokens.includes('all');
 
-  return {
-    avif: all || tokens.includes('avif'),
-    webp: all || tokens.includes('webp'),
-    png: all || tokens.includes('png'),
-    all,
-  };
+  return { avif: tokens.includes('avif'), webp: tokens.includes('webp') };
 }
 
 /** The setting value for the checkboxes; neither checked is "none". */
 export function convertValueOf(flags: ConvertFlags): string {
-  if (flags.all) {
-    return 'all';
+  if (flags.avif && flags.webp) {
+    return 'avif,webp';
   }
-  const formats = [flags.avif ? 'avif' : '', flags.webp ? 'webp' : '', flags.png ? 'png' : ''].filter((f) => f !== '');
+  if (flags.avif) {
+    return 'avif';
+  }
+  if (flags.webp) {
+    return 'webp';
+  }
 
-  return formats.length > 0 ? formats.join(',') : 'none';
+  return 'none';
 }
 
 /** Shown under the AVIF box while the format is EPUB, which always converts it */

@@ -41,10 +41,12 @@
     "convert": "Converteix a JPEG",
     "avif": "AVIF",
     "webp": "WebP",
-    "png": "PNG",
-    "all": "Tots els formats menys JPEG i GIF",
     "convertHint": "La majoria de lectors electrònics no obren AVIF; WebP no és fiable en tinta electrònica.",
     "avifEpub": "Sempre activat per a EPUB: els lectors no mostren AVIF.",
+    "compress": {
+      "label": "Comprimeix pàgines",
+      "hint": "Les pàgines PNG passen a JPEG quan això ocupa menys, per reduir el fitxer."
+    },
     "quality": {
       "label": "Qualitat JPEG",
       "hint": "De l'1 al 100: s'usa a cada pàgina convertida a JPEG.",

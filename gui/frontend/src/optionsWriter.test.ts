@@ -11,6 +11,7 @@ const base: Options = {
   scanlator: '',
   convertImages: 'avif',
   jpegQuality: 90,
+  compress: false,
   skipPages: '',
   filenameTemplate: '{{.Series}}',
   browserVisible: false,

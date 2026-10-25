@@ -43,7 +43,7 @@ func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, pr
 			Labels:           map[string]string{epubSingleFolder: chapterLabel(chapter.Chapter)},
 		}
 	}
-	return pack(outputdir, format, s.GetFilenameTemplate(), releaseName(chapter.Chapter), NewChapterFileTemplateParts(title, chapter.Chapter), namePages(chapter.Files, pageFormats(format, s.GetConvertImages()), s.GetJPEGQuality(), format), info, progress)
+	return pack(outputdir, format, s.GetFilenameTemplate(), releaseName(chapter.Chapter), NewChapterFileTemplateParts(title, chapter.Chapter), namePages(chapter.Files, pageFormats(format, s.GetConvertImages(), s.GetCompress()), s.GetJPEGQuality(), format), info, progress)
 }
 
 // PackBundle packs a bundle of downloaded chapters, grouping each chapter's
@@ -52,7 +52,7 @@ func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, pr
 func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter, rng string, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()
-	files, labels := chapterFolders(chapters, format, s.GetConvertImages(), s.GetJPEGQuality())
+	files, labels := chapterFolders(chapters, format, s)
 	var info EPUBInfo
 	if format == FormatEPUB {
 		info = EPUBInfo{Series: title, Identity: "bundle " + memberKeys(chapters), ReadingDirection: s.GetReadingDirection(), Labels: labels}
@@ -79,7 +79,7 @@ func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*Downlo
 		listed[i] = c.Chapter
 	}
 	format := s.GetFormat()
-	files, labels := chapterFolders(chapters, format, s.GetConvertImages(), s.GetJPEGQuality())
+	files, labels := chapterFolders(chapters, format, s)
 	var info EPUBInfo
 	if format == FormatEPUB {
 		info = EPUBInfo{
@@ -99,7 +99,7 @@ func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*Downlo
 func PackParts(outputdir string, s grabber.Site, chapters []*DownloadedChapter, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()
-	files, labels := chapterFolders(chapters, format, s.GetConvertImages(), s.GetJPEGQuality())
+	files, labels := chapterFolders(chapters, format, s)
 	number := formatChapterNumber(chapters[0].GetNumber())
 	var info EPUBInfo
 	if format == FormatEPUB {
@@ -141,16 +141,23 @@ func releaseName(c *grabber.Chapter) string {
 
 // pageFormats returns the source formats to convert pages from for the output
 // format. EPUB readers can't show AVIF, so it's always converted for EPUB,
-// whatever --convert-images says; the other formats use it as given.
-func pageFormats(format string, formats grabber.ConvertFormats) grabber.ConvertFormats {
-	if format != FormatEPUB || formats.Has(grabber.ConvertAVIF) {
+// whatever --convert-images says. --compress adds PNG, which namePages keeps
+// when its JPEG isn't smaller. The given formats are never modified.
+func pageFormats(format string, formats grabber.ConvertFormats, compress bool) grabber.ConvertFormats {
+	if format != FormatEPUB && !compress {
 		return formats
 	}
-	forced := grabber.ConvertFormats{grabber.ConvertAVIF: true}
+	pages := grabber.ConvertFormats{}
 	for f := range formats {
-		forced[f] = true
+		pages[f] = true
 	}
-	return forced
+	if format == FormatEPUB {
+		pages[grabber.ConvertAVIF] = true
+	}
+	if compress {
+		pages["png"] = true
+	}
+	return pages
 }
 
 // chapterKey tells a chapter's releases apart: number, language and chapter ID, or else
@@ -193,10 +200,10 @@ func memberKeys(chapters []*DownloadedChapter) string {
 // chapterFolders names the pages of several chapters for one archive, each
 // chapter in its own folder (Chapter 0001/000.jpg, ...). It also returns the
 // chapters' labels by folder, for the EPUB table of contents.
-func chapterFolders(chapters []*DownloadedChapter, format string, convert grabber.ConvertFormats, quality int) ([]File, map[string]string) {
+func chapterFolders(chapters []*DownloadedChapter, format string, s grabber.Site) ([]File, map[string]string) {
 	files := []File{}
 	labels := map[string]string{}
-	formats := pageFormats(format, convert)
+	formats := pageFormats(format, s.GetConvertImages(), s.GetCompress())
 	// Several chapters can share a number (a site re-releasing the same chapter,
 	// or two genuinely distinct chapters both numbered, e.g. a pair of
 	// season-finale entries). Each chapter gets its own "Chapter 0001/" folder
@@ -220,7 +227,7 @@ func chapterFolders(chapters []*DownloadedChapter, format string, convert grabbe
 		usedLabels[label]++
 		labels[folder] = label
 
-		for _, page := range namePages(chapter.Files, formats, quality, format) {
+		for _, page := range namePages(chapter.Files, formats, s.GetJPEGQuality(), format) {
 			files = append(files, File{
 				Name: fmt.Sprintf("%s/%s", folder, page.Name),
 				Data: page.Data,
@@ -258,9 +265,12 @@ func titleBeyondNumber(title string, number float64) string {
 	return title
 }
 
-// namePages names a chapter's pages sequentially (000.jpg, 001.png, ...) by
-// their sniffed formats, transcoding those in formats to JPEG at quality so
-// e-readers can show them. format is the output: EPUB drops the pages it can't show.
+// namePages names a chapter's pages sequentially (000.jpg, 001.png, ...),
+// restarting at 000 for each call, with extensions detected from the image
+// bytes. Pages whose format is listed in formats are transcoded to JPEG at
+// quality first, so e-readers that can't render AVIF (or WebP) still get a
+// readable archive. format is the output format: an EPUB leaves out the pages
+// it can't show, and ArchiveEPUB warns about each of them.
 func namePages(pages []*downloader.File, formats grabber.ConvertFormats, quality int, format string) []File {
 	named := make([]File, len(pages))
 	for i, page := range pages {

@@ -122,6 +122,7 @@ func (f *fakeSite) GetConvertImages() grabber.ConvertFormats {
 	return f.convert
 }
 func (f *fakeSite) GetJPEGQuality() int { return grabber.JPEGQualityDefault }
+func (f *fakeSite) GetCompress() bool   { return false }
 func (f *fakeSite) GetMaxConcurrency() grabber.MaxConcurrency {
 	return grabber.MaxConcurrency{Chapters: 1, Pages: 1}
 }

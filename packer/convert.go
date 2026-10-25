@@ -29,8 +29,8 @@ var decodeImage = func(data []byte) (image.Image, error) {
 }
 
 // convertToJPEG decodes an image and re-encodes it as JPEG at the given
-// quality, so pages served in formats e-readers can't display (AVIF, WebP,
-// PNG when asked for) end up in an archive they can actually open.
+// quality, so pages served in formats dedicated e-readers can't display (AVIF,
+// and optionally WebP) end up in an archive they can actually open.
 func convertToJPEG(data []byte, quality int) ([]byte, error) {
 	img, err := decodeImage(data)
 	if err != nil {

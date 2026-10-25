@@ -25,6 +25,7 @@ func TestOptionsSaveAndLoadRoundTrip(t *testing.T) {
 		Scanlator:        "group",
 		ConvertImages:    "avif,webp",
 		JPEGQuality:      85,
+		Compress:         true,
 		SkipPages:        "2,-1",
 		FilenameTemplate: "{{.Series}} {{.Number}}",
 		BrowserVisible:   true,
@@ -253,7 +254,7 @@ func TestLoadOptionsRejectsJPEGQualityFallsBackToDefault(t *testing.T) {
 	}
 }
 
-func TestLoadOptionsOldFileKeepsDefaultJPEGQuality(t *testing.T) {
+func TestLoadOptionsOldFileKeepsDefaults(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "gui.json")
 	if err := os.WriteFile(path, []byte(`{"format":"raw"}`), 0600); err != nil {
 		t.Fatal(err)
@@ -272,6 +273,9 @@ func TestLoadOptionsOldFileKeepsDefaultJPEGQuality(t *testing.T) {
 	}
 	if s.JPEGQuality != 90 {
 		t.Errorf("jpeg-quality %d, want the default 90", s.JPEGQuality)
+	}
+	if s.Compress {
+		t.Error("a missing compress loaded as on, want off")
 	}
 	if len(warnings) != 0 {
 		t.Errorf("got warnings %q, want none", warnings)

@@ -204,13 +204,10 @@ func TestNamePagesConvertsListedFormats(t *testing.T) {
 		{"webp is kept when not listed", webpHeader, grabber.ConvertFormats{grabber.ConvertAVIF: true}, "000.webp", true},
 		// a jpeg page must never be re-encoded, that's generation loss for nothing
 		{"jpeg is never re-encoded", realJpeg, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}, "000.jpg", true},
-		// a png is only converted when that's listed, and then only when the JPEG is smaller
+		// a png is only converted when --compress lists it (pageFormats adds "png"), and then only when the JPEG is smaller
 		{"png is never converted when not listed", flatPng, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}, "000.png", true},
-		{"png is kept when its jpeg is bigger", flatPng, grabber.ConvertFormats{grabber.ConvertPNG: true}, "000.png", true},
-		{"png is converted when its jpeg is smaller", noisyPng, grabber.ConvertFormats{grabber.ConvertPNG: true}, "000.jpg", false},
-		// "all" covers every format but jpeg and gif
-		{"all converts avif", realAvif, grabber.ConvertFormats{grabber.ConvertAll: true}, "000.jpg", false},
-		{"all keeps jpeg", realJpeg, grabber.ConvertFormats{grabber.ConvertAll: true}, "000.jpg", true},
+		{"png is kept when its jpeg is bigger", flatPng, grabber.ConvertFormats{"png": true}, "000.png", true},
+		{"png is converted when its jpeg is smaller", noisyPng, grabber.ConvertFormats{"png": true}, "000.jpg", false},
 	}
 
 	for _, c := range cases {

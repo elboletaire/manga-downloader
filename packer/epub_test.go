@@ -365,23 +365,27 @@ func TestArchiveEPUBProgressPerPage(t *testing.T) {
 
 func TestPageFormatsConvertsAVIFForEPUB(t *testing.T) {
 	tests := []struct {
-		format string
-		in     grabber.ConvertFormats
-		want   grabber.ConvertFormats
+		format   string
+		in       grabber.ConvertFormats
+		compress bool
+		want     grabber.ConvertFormats
 	}{
-		{FormatEPUB, grabber.ConvertFormats{}, grabber.ConvertFormats{grabber.ConvertAVIF: true}},
-		{FormatEPUB, grabber.ConvertFormats{grabber.ConvertWebP: true}, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}},
-		{FormatCBZ, grabber.ConvertFormats{}, grabber.ConvertFormats{}},
-		{FormatRaw, grabber.ConvertFormats{grabber.ConvertWebP: true}, grabber.ConvertFormats{grabber.ConvertWebP: true}},
+		{FormatEPUB, grabber.ConvertFormats{}, false, grabber.ConvertFormats{grabber.ConvertAVIF: true}},
+		{FormatEPUB, grabber.ConvertFormats{grabber.ConvertWebP: true}, false, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}},
+		{FormatCBZ, grabber.ConvertFormats{}, false, grabber.ConvertFormats{}},
+		{FormatRaw, grabber.ConvertFormats{grabber.ConvertWebP: true}, false, grabber.ConvertFormats{grabber.ConvertWebP: true}},
+		// compress adds png to whatever the output converts, whatever the format
+		{FormatCBZ, grabber.ConvertFormats{}, true, grabber.ConvertFormats{"png": true}},
+		{FormatEPUB, grabber.ConvertFormats{}, true, grabber.ConvertFormats{grabber.ConvertAVIF: true, "png": true}},
 	}
 	for _, tt := range tests {
-		if got := pageFormats(tt.format, tt.in); !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("pageFormats(%q, %v) = %v, want %v", tt.format, tt.in, got, tt.want)
+		if got := pageFormats(tt.format, tt.in, tt.compress); !reflect.DeepEqual(got, tt.want) {
+			t.Errorf("pageFormats(%q, %v, %v) = %v, want %v", tt.format, tt.in, tt.compress, got, tt.want)
 		}
 	}
 	// the caller's set is left alone
 	in := grabber.ConvertFormats{}
-	pageFormats(FormatEPUB, in)
+	pageFormats(FormatEPUB, in, true)
 	if len(in) != 0 {
 		t.Errorf("pageFormats changed its input: %v", in)
 	}
