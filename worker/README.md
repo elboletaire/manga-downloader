@@ -65,13 +65,13 @@ It needs two repository secrets:
 
 The Analytics Engine dataset is created on the first write, so it needs no setup.
 
-## Custom domain (`api.mangadownloader.cat`)
+## Custom domain (`releases.mangadownloader.cat`)
 
-The apps ask `https://api.mangadownloader.cat`, which isn't routed yet because the zone isn't active. `workers_dev` stays on, so `manga-downloader-updates.elboletaire.workers.dev` keeps working.
+The apps ask `https://releases.mangadownloader.cat`, which isn't routed yet because the zone isn't active. `workers_dev` stays on, so `manga-downloader-updates.elboletaire.workers.dev` keeps working.
 Once the zone is active, add this to `wrangler.jsonc` (next to `workers_dev`) and deploy:
 
 ```jsonc
-"routes": [{ "pattern": "api.mangadownloader.cat", "custom_domain": true }]
+"routes": [{ "pattern": "releases.mangadownloader.cat", "custom_domain": true }]
 ```
 
 Until then the apps fall back to GitHub, so the missing route costs nothing but the count.
