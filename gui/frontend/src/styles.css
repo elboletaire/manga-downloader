@@ -1260,6 +1260,11 @@ code,
   white-space: nowrap;
 }
 
+/* 単一ファイル fills its pill at the minimum width; keep a little air around it */
+:lang(ja) .segmented label {
+  padding-inline: 4px;
+}
+
 .advanced {
   display: block;
 }

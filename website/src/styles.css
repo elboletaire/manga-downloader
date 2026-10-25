@@ -317,6 +317,13 @@ code {
   letter-spacing: 0.02em;
 }
 
+/* four languages leave the logo little room on the narrowest phones */
+@media (max-width: 400px) {
+  .site-nav .lang-switch a {
+    padding: 5px 6px;
+  }
+}
+
 .site-nav .lang-switch a[aria-current='page'] {
   background: var(--accent-soft);
   color: var(--accent-text);
