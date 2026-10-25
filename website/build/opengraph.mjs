@@ -1,7 +1,7 @@
 // Renders the per-language social cards (1280x640) from the master SVG and card.html.
 // Usage from website/: node build/opengraph.mjs [--out DIR] [lang...] (default: es ca ja).
 import { execFileSync } from 'node:child_process'
-import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -52,12 +52,15 @@ function tagline(lang) {
 
 // The master's arrow stroke in its own box: the path's bbox grown by half the stroke, for the round caps.
 const ARROW_BOX = '341.93 399.54 35.8 15.14'
+const ARROW_D = 'M343.33 407.11H376.33M370.16 400.94L376.33 407.11L370.16 413.28'
 function arrow() {
   const svg = readFileSync(master, 'utf8')
   const start = svg.indexOf('<path fill="none" stroke="#4A4466"')
-  if (start < 0) throw new Error('opengraph: the master SVG has no tagline arrow')
-  const path = svg.slice(start, svg.indexOf('/>', start) + 2)
-  return `<svg class="arrow" viewBox="${ARROW_BOX}" width="35.8" height="15.14" aria-hidden="true">${path}</svg>`
+  const end = start < 0 ? -1 : svg.indexOf('/>', start)
+  if (end < 0) throw new Error('opengraph: the master SVG has no tagline arrow; update the markers')
+  const element = svg.slice(start, end + 2)
+  if (!element.includes(`d="${ARROW_D}"`)) throw new Error('opengraph: the master arrow changed; update ARROW_BOX and ARROW_D')
+  return `<svg class="arrow" viewBox="${ARROW_BOX}" width="35.8" height="15.14" aria-hidden="true">${element}</svg>`
 }
 
 // The tagline with the master's arrow in place of the "→" character.
@@ -111,14 +114,16 @@ function screenshot(htmlFile, pngFile) {
   )
 }
 
+// ImageMagick is required: the cards are palettised to 256 colours to keep them near 70 KB.
 function shrink(pngFile, target) {
   try {
     execFileSync('magick', [pngFile, '-strip', '-colors', '256', '-dither', 'None', '-define', 'png:compression-level=9', target], { stdio: 'ignore' })
-  } catch {
-    copyFileSync(pngFile, target)
+  } catch (error) {
+    throw new Error(`opengraph: ImageMagick (magick) is required to write ${target}: ${error.message}`, { cause: error })
   }
 }
 
+if (!existsSync(outDir)) throw new Error(`opengraph: no output folder ${outDir}`)
 const work = mkdtempSync(path.join(tmpdir(), 'og-cards-'))
 try {
   const art = artwork()
@@ -128,7 +133,6 @@ try {
     writeFileSync(htmlFile, page(lang, art))
     screenshot(htmlFile, rawPng)
     const target = path.join(outDir, `opengraph-${lang}.png`)
-    if (!existsSync(outDir)) throw new Error(`opengraph: no output folder ${outDir}`)
     shrink(rawPng, target)
     console.log(`wrote ${target}`)
   }
