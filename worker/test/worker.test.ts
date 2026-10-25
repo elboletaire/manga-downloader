@@ -1,4 +1,4 @@
-import { env, runInDurableObject } from "cloudflare:test";
+import { env, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import worker from "../src/index";
 import { CACHE_TTL_MS } from "../src/state";
@@ -74,6 +74,31 @@ describe("GitHub release lookup", () => {
     expect(await upstream(() => Promise.reject(new TypeError("network down")))).toBe(RELEASE);
   });
 
+  it("waits a minute before asking GitHub again after a failed refresh", async () => {
+    await upstream(ok(RELEASE));
+    await expireCache();
+    expect(await upstream(fail)).toBe(RELEASE);
+    expect(await upstream(ok(NEWER))).toBe(RELEASE);
+
+    await expireCache();
+    expect(await upstream(ok(NEWER))).toBe(NEWER);
+  });
+
+  it("shares one GitHub request between concurrent callers", async () => {
+    const counts = await runInDurableObject(stub(), async (instance) => {
+      let calls = 0;
+      const slow = async () => {
+        calls++;
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return new Response('{"tag_name":"v23.0.0"}');
+      };
+      const bodies = await Promise.all([instance.latest(slow), instance.latest(slow), instance.latest(slow)]);
+      return { calls, bodies };
+    });
+    expect(counts.calls).toBe(1);
+    expect(counts.bodies).toEqual(['{"tag_name":"v23.0.0"}', '{"tag_name":"v23.0.0"}', '{"tag_name":"v23.0.0"}']);
+  });
+
   it("returns null when GitHub fails and nothing is cached", async () => {
     expect(await upstream(fail)).toBeNull();
   });
@@ -117,6 +142,27 @@ describe("GET /v1/latest", () => {
   });
 });
 
+describe("recording failures", () => {
+  beforeEach(() => primeCache(RELEASE));
+
+  it("still answers when the data point can't be written", async () => {
+    const broken = { ...testEnv, UPDATE_CHECKS: { writeDataPoint: () => { throw new Error("binding down"); } } } as Cloudflare.Env;
+    const res = await worker.fetch(new Request(`${BASE}/v1/latest`), broken);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(RELEASE);
+  });
+
+  it("still answers when the salt can't be read", async () => {
+    const broken = {
+      ...testEnv,
+      UPDATE_STATE: { getByName: () => ({ identify: async () => { throw new Error("do down"); }, latest: async () => RELEASE }) },
+    } as unknown as Cloudflare.Env;
+    const res = await worker.fetch(new Request(`${BASE}/v1/latest`), broken);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(RELEASE);
+  });
+});
+
 describe("daily salt", () => {
   beforeEach(() => primeCache(RELEASE));
 
@@ -145,6 +191,16 @@ describe("daily salt", () => {
 
     const stored = await runInDurableObject(stub(), (_, state) => state.storage.list());
     expect(JSON.stringify([...stored.entries()])).not.toContain(oldSalt);
+  });
+
+  it("drops the salt at the next UTC midnight, even without traffic", async () => {
+    await latest();
+    const now = new Date();
+    const nextMidnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+    expect(await runInDurableObject(stub(), (_, state) => state.storage.getAlarm())).toBe(nextMidnight);
+
+    expect(await runDurableObjectAlarm(stub())).toBe(true);
+    expect(await runInDurableObject(stub(), (_, state) => state.storage.get("salt"))).toBeUndefined();
   });
 
   it("never stores or records the raw IP", async () => {

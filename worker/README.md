@@ -24,7 +24,11 @@ One Analytics Engine data point per `GET` (dataset `update_checks`):
 | `double1` | `1` |
 
 The salt is 32 random bytes, created on the first request of each UTC day and held in the Durable Object.
-The first request of a new day overwrites yesterday's salt, so the old one is gone and its hashes can't be matched to new ones.
+The first request of a new day overwrites yesterday's salt, and an alarm set for the next UTC midnight deletes it even without traffic.
+So the code never keeps a salt past its day, and hashes from different days can't be linked.
+
+Honest limit: SQLite-backed Durable Objects keep about 30 days of point-in-time recovery, so the account owner could restore a deleted salt from there.
+The deletion is what the code does, not an unrecoverable erase.
 
 **Not recorded:** the IP itself, any other header, the User-Agent, the path or query beyond the four fields above, request logs.
 Observability is disabled in `wrangler.jsonc`, and the code never logs requests, headers, IPs or the salt.
@@ -39,22 +43,27 @@ Observability is disabled in `wrangler.jsonc`, and the code never logs requests,
 ## Tests and local run
 
 ```sh
-pnpm install
-pnpm test        # vitest in workerd, no network: GitHub is stubbed
-pnpm typecheck
-pnpm dev         # wrangler dev on localhost, local bindings only
+make test/worker   # from the repo root: install, pnpm test, pnpm typecheck (what CI runs)
+pnpm test          # in worker/: vitest in workerd, no network, GitHub is stubbed
+pnpm dev           # wrangler dev on localhost, local bindings only
 ```
 
 ## Deploy
 
-Deploys are manual. CI only runs the tests.
+The first deploy is by hand, from `worker/`, so the Durable Object namespace (from the migration) exists before CI touches it:
 
 ```sh
-pnpm exec wrangler login        # or CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID
+pnpm exec wrangler login        # or export CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID
 pnpm exec wrangler deploy
 ```
 
-The first deploy creates the Durable Object namespace (from the migration) and the Analytics Engine dataset (created on its first write).
+After that, `worker-deploy.yaml` deploys on every push to master that touches `worker/` (or the makefile or that workflow), and it can be run by hand from master. It runs `make test/worker` first, then `make deploy/worker`.
+It needs two repository secrets:
+
+- `CLOUDFLARE_API_TOKEN`: a token from the "Edit Cloudflare Workers" template, scoped to the one account.
+- `CLOUDFLARE_ACCOUNT_ID`: the account's ID.
+
+The Analytics Engine dataset is created on the first write, so it needs no setup.
 
 ## Querying the counts
 

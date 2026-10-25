@@ -143,6 +143,17 @@ test/website: install/website
 check/website: install/website
 	cd website && pnpm test && pnpm build
 
+install/worker:
+	cd worker && pnpm install --frozen-lockfile
+
+# the update-check Worker's tests and typecheck, as worker-test.yaml runs them
+test/worker: install/worker
+	cd worker && pnpm test && pnpm typecheck
+
+# the Worker's deploy, run by worker-deploy.yaml after its tests (needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID)
+deploy/worker: install/worker
+	cd worker && pnpm exec wrangler deploy
+
 # the demo build's fake grabber is only built with the demo tag (see demo/README.md)
 test/demo:
 	go test -tags $(BUILD_TAGS),demo -count=1 ./demo/

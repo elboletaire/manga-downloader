@@ -32,18 +32,23 @@ export default {
 
     const state = env.UPDATE_STATE.getByName("updates");
     if (request.method === "GET") {
-      const { day, hash } = await state.identify(request.headers.get("CF-Connecting-IP") ?? "");
-      env.UPDATE_CHECKS.writeDataPoint({
-        indexes: [hash],
-        blobs: [
-          param(url.searchParams.get("client")),
-          param(url.searchParams.get("version")),
-          param(url.searchParams.get("os")),
-          param(url.searchParams.get("arch")),
-          day,
-        ],
-        doubles: [1],
-      });
+      // Recording must never fail the update check, so errors are dropped on purpose.
+      try {
+        const { day, hash } = await state.identify(request.headers.get("CF-Connecting-IP") ?? "");
+        env.UPDATE_CHECKS.writeDataPoint({
+          indexes: [hash],
+          blobs: [
+            param(url.searchParams.get("client")),
+            param(url.searchParams.get("version")),
+            param(url.searchParams.get("os")),
+            param(url.searchParams.get("arch")),
+            day,
+          ],
+          doubles: [1],
+        });
+      } catch {
+        // Dropped: the release below still goes out.
+      }
     }
 
     const release = await state.latest();
