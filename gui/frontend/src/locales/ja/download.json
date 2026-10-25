@@ -1,0 +1,43 @@
+{
+  "blocker": {
+    "loading": "シリーズの読み込みが終わるまでお待ちください。",
+    "notLoaded": "シリーズを読み込んで話を選択してください。",
+    "stale": "絞り込みが変わりました。先にシリーズを読み込み直してください。",
+    "noChapters": "話を1つ以上選択してください。",
+    "noVolumes": "サイトは巻を示していません。話の範囲で入力してください（例: {{example}}）。"
+  },
+  "label": {
+    "download": "ダウンロード",
+    "chapters": "{{chapters}}をダウンロード",
+    "bundle": "{{chapters}}を1ファイルでダウンロード",
+    "volumes": "{{volumes}}をダウンロード（{{chapters}}）",
+    "volumesAndChapters": "{{volumes}}と{{chapters}}をダウンロード",
+    "partsMerged": "{{chapters}}をダウンロード（パートを結合）"
+  },
+  "dest": {
+    "cbzFiles": "CBZファイル",
+    "cbzPerVolume": "巻ごとのCBZ",
+    "cbzBundle": "1つのCBZ",
+    "cbrFiles": "CBRファイル",
+    "cbrPerVolume": "巻ごとのCBR",
+    "cbrBundle": "1つのCBR",
+    "epubFiles": "EPUBファイル",
+    "epubPerVolume": "巻ごとのEPUB",
+    "epubBundle": "1つのEPUB",
+    "rawFiles": "画像フォルダー",
+    "rawPerVolume": "巻ごとのフォルダー",
+    "rawBundle": "1つの画像フォルダー",
+    "files": "ファイル"
+  },
+  "where": "{{what}}、保存先: <dir>{{dir}}</dir>",
+  "progress": {
+    "label": "全体の進行状況",
+    "chapters": "全{{total}}話中{{done}}話が完了",
+    "files": "全{{total}}ファイル中{{done}}ファイルが完了",
+    "bundle": "1ファイルにまとめています",
+    "finishing": "ダウンロード中の話を完了させています",
+    "cancelHint": "ダウンロード中の話は完了させ、新しい話は開始しません。"
+  },
+  "cancelling": "キャンセル中…",
+  "failed": "ダウンロードできません: {{error}}"
+}

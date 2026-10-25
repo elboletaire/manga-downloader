@@ -521,6 +521,17 @@ describe('mockSetupFrom', () => {
 });
 
 describe('mock filters', () => {
+  it('lists chapters in Japanese UI, whose titles are the English ones, on every site', async () => {
+    for (const site of ['multi', 'plus', 'groups', 'none'] as const) {
+      const api = createMockApi({ scenario: 'loaded', site, uiLanguage: 'ja' });
+      const titles = (await api.chapters()).map((c) => c.title);
+      expect(titles.length, site).toBeGreaterThan(0);
+      expect(titles.every((t) => t !== ''), site).toBe(true);
+    }
+    const ja = createMockApi({ scenario: 'loaded', site: 'multi', uiLanguage: 'ja' });
+    expect((await ja.state()).languages?.selected).toBe('en');
+  });
+
   it('offers the languages of the site, and none for a site without them', async () => {
     const multi = createMockApi({ scenario: 'loaded', site: 'multi' });
     // multi site: ca, en, es with All; the window's language (English by default) is shown
@@ -684,6 +695,7 @@ describe('mockSetupFrom language', () => {
     expect(mockSetupFrom('?mock').uiLanguage).toBe('en');
     expect(mockSetupFrom('?mock&lang=es').uiLanguage).toBe('es');
     expect(mockSetupFrom('?lang=ca').uiLanguage).toBe('ca');
+    expect(mockSetupFrom('?lang=ja').uiLanguage).toBe('ja');
     expect(mockSetupFrom('?lang=system').uiLanguage).toBe('');
     expect(mockSetupFrom('?lang=fr').uiLanguage).toBe('en');
   });

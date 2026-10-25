@@ -1,0 +1,18 @@
+{
+  "chapter_one": "{{count}}話",
+  "chapter_other": "{{count}}話",
+  "volume_one": "{{count}}巻",
+  "volume_other": "{{count}}巻",
+  "volumeFile_one": "{{count}}巻ファイル",
+  "volumeFile_other": "{{count}}巻ファイル",
+  "failed_one": "{{count}}件失敗",
+  "failed_other": "{{count}}件失敗",
+  "skipped_one": "{{count}}件スキップ",
+  "skipped_other": "{{count}}件スキップ",
+  "saved_one": "{{count}}件保存",
+  "saved_other": "{{count}}件保存",
+  "error_one": "{{count}}件のエラー",
+  "error_other": "{{count}}件のエラー",
+  "warning_one": "{{count}}件の警告",
+  "warning_other": "{{count}}件の警告"
+}

@@ -87,6 +87,15 @@ func TestLoadPrefsSimpleStartDefaultsToTrue(t *testing.T) {
 	}
 }
 
+func TestValidUILanguage(t *testing.T) {
+	cases := map[string]bool{"": true, "en": true, "es": true, "ca": true, "ja": true, "fr": false, "JA": false}
+	for lang, want := range cases {
+		if got := validUILanguage(lang); got != want {
+			t.Errorf("validUILanguage(%q) = %v, want %v", lang, got, want)
+		}
+	}
+}
+
 func TestLoadPrefsUnknownUILanguageFollowsTheSystem(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "gui.json")
 	if err := os.WriteFile(path, []byte(`{"uiLanguage":"fr"}`), 0600); err != nil {

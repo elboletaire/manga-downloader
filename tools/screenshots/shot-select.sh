@@ -4,7 +4,7 @@
 # (cliclick); WebKit draws the popup inside the window, so one capture holds
 # both. The pointer moves, but screencapture -l leaves the cursor out.
 #
-# usage: [SHOT_LANG=en|es|ca] shot-select.sh OUT.png light|dark
+# usage: [SHOT_LANG=en|es|ca|ja] shot-select.sh OUT.png light|dark
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 . "$HERE/lib.sh"

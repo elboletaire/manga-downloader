@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { CATALOG, createT, createTemplate, fill, loadCatalog, resolveLanguage, say } from './index';
+import { CATALOG, createT, createTemplate, fill, LANG_INFO, loadCatalog, resolveLanguage, say } from './index';
 
 describe('resolveLanguage', () => {
   it('takes the saved language over the system', () => {
     expect(resolveLanguage('es', ['ca-ES'])).toBe('es');
+    expect(resolveLanguage('ja', ['en-US'])).toBe('ja');
   });
 
   it('follows the system by primary subtag, first supported wins', () => {
     expect(resolveLanguage('', ['ca-ES-valencia'])).toBe('ca');
     expect(resolveLanguage('', ['fr-FR', 'es-MX', 'en-US'])).toBe('es');
     expect(resolveLanguage('', ['EN-gb'])).toBe('en');
+    expect(resolveLanguage('', ['ja-JP', 'en-US'])).toBe('ja');
   });
 
   it('falls back to English when nothing is supported', () => {
@@ -64,6 +66,13 @@ describe('createT', () => {
     expect(createT('ca')('count.chapter', { count: 2 })).toBe('2 capítols');
     expect(createT('en')('count.chapter', { count: 1 })).toBe('1 chapter');
     expect(CATALOG.en?.['common.close']).toBe('Close');
+  });
+
+  it('translates into Japanese, whose one plural form is _other', () => {
+    expect(createT('ja')('common.close')).toBe('閉じる');
+    expect(createT('ja')('count.chapter', { count: 1 })).toBe('1話');
+    expect(createT('ja')('count.chapter', { count: 12 })).toBe('12話');
+    expect(LANG_INFO.ja.name).toBe('日本語');
   });
 
   it('builds the catalog from namespace files, nested keys included', () => {

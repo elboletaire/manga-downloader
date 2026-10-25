@@ -1,0 +1,54 @@
+{
+  "section": "話一覧",
+  "empty": {
+    "title": "シリーズを選んで始めましょう",
+    "paste": "上のバーにシリーズのリンクを貼り付けてください（貼り付けボタンも使えます）。どの話のリンクでも構いません。",
+    "listed": "その話の一覧がここに表示されます。リーダーに保存したい話を選べます。"
+  },
+  "loading": {
+    "asking": "{{host}} に話の一覧を問い合わせています…",
+    "fetching": "話の一覧を取得しています…"
+  },
+  "failed": {
+    "title": "このシリーズを読み込めませんでした",
+    "hint": "リンクをブラウザーで開いてシリーズが表示されるか確認してください。Cloudflareの確認があるサイトでは、オプションの詳細設定にある<em>ブラウザーウィンドウを表示</em>が必要な場合があります。",
+    "retry": "再試行"
+  },
+  "reloading": "再読み込み中…",
+  "splitParts_one": "{{count}}話がパートに分割",
+  "splitParts_other": "{{count}}話がパートに分割",
+  "selected": "<strong>{{selected}}</strong>話を選択中（全{{total}}話）",
+  "selectAll": "すべて選択",
+  "selectNone": "選択を解除",
+  "addRange": "範囲を選択に追加",
+  "rangeLabel": "選択に追加する話の範囲",
+  "rangeNone": "その範囲に当てはまる話はありません。",
+  "rangeAdded_one": "{{count}}話を追加しました。",
+  "rangeAdded_other": "{{count}}話を追加しました。",
+  "listLabel": "{{title}}の話",
+  "noneSelected": "選択なし",
+  "group": {
+    "selected_one": "{{count}}話選択中",
+    "selected_other": "{{count}}話選択中",
+    "aria": "{{label}} · {{detail}}、全{{total}}話中{{selected}}話を選択",
+    "ariaFolded": "{{label}} · {{detail}}、全{{total}}話中{{selected}}話を選択、折りたたみ中",
+    "fold": "{{label}}を折りたたむ",
+    "unfold": "{{label}}を展開"
+  },
+  "parts": {
+    "whole": "話全体",
+    "partial": "{{total}}パート中{{selected}}パート",
+    "none": "このシリーズはパートに分かれていないため、どの話も通常どおり1つのファイルになります。",
+    "partialHint": "選択したパートだけがそのファイルに含まれます"
+  },
+  "locked": "ロック中のため選択できません",
+  "duplicates": {
+    "language": "同じ番号の話が言語ごとに並んでいます。言語のタグで区別できます。",
+    "group": "同じ番号の話が翻訳グループごとに並んでいます。グループのタグで区別できます。"
+  },
+  "hint": {
+    "volume": "巻をクリックするとその巻の話をすべて選択します · <kbd>←</kbd><kbd>→</kbd> で折りたたみ · <kbd>Space</kbd> で切り替え",
+    "part": "話をクリックするとそのパートをすべて選択します · <kbd>←</kbd><kbd>→</kbd> で折りたたみ · <kbd>Space</kbd> で切り替え",
+    "plain": "<kbd>Shift</kbd>+クリックで範囲を選択 · <kbd>↑</kbd><kbd>↓</kbd> で移動 · <kbd>Space</kbd> で切り替え"
+  }
+}

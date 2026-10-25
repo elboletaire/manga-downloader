@@ -27,7 +27,7 @@
 // uses production release versions and a macOS output path (for screenshots),
 // &nosimple turns the simpleStart pref off (an empty window opens on the full view),
 // and VITE_MOCK=1 at build time includes the mock in production builds (e.g.
-// for the screenshot capture build; set via Wails frontend env). ?lang=en|es|ca
+// for the screenshot capture build; set via Wails frontend env). ?lang=en|es|ca|ja
 // starts the window in that language, ?lang=system follows the browser's, and
 // without it the window is English, so screenshots and dev stay English. Under
 // multi the language filter shows that language and the list is in it, titled
@@ -154,7 +154,8 @@ function offersFor(site: MockSite, lang: Lang): MockOffers {
   if (site !== 'multi' || offers.language === null) {
     return offers;
   }
-  return { ...offers, language: { ...offers.language, current: lang } };
+  const current = offers.language.values.includes(lang) ? lang : offers.language.current;
+  return { ...offers, language: { ...offers.language, current } };
 }
 
 const en = createT('en');
@@ -202,7 +203,7 @@ function scenarioFrom(search: string): Scenario {
   return (SCENARIOS as readonly string[]).includes(value ?? '') ? (value as Scenario) : 'empty';
 }
 
-/** ?lang=system is the preference that follows the system; anything else but en, es or ca is English */
+/** ?lang=system is the preference that follows the system; anything else but en, es, ca or ja is English */
 function uiLanguageFrom(search: string): LangPref {
   const value = new URLSearchParams(search).get('lang');
   if (value === 'system') {
@@ -255,6 +256,11 @@ function defaultOptions(shot: boolean, epub: boolean): Options {
   };
 }
 
+/** The One Piece titles in a language; the dataset has no Japanese, so ja gets the English ones. */
+function titlesIn(lang: Lang): (typeof OP_TITLES)['en'] {
+  return Object.hasOwn(OP_TITLES, lang) ? OP_TITLES[lang as keyof typeof OP_TITLES] : OP_TITLES.en;
+}
+
 /**
  * The newest `count` chapters, titled in `lang`. With withLanguages they are tagged with it, and every
  * fifth also appears once in `other` (the two lists share their chapters, in order). Volume 0: not collected.
@@ -268,8 +274,8 @@ function mockChapters(
   withLocked = false,
 ): Chapter[] {
   const list: Chapter[] = [];
-  const rows = OP_TITLES[lang];
-  const otherRows = OP_TITLES[other];
+  const rows = titlesIn(lang);
+  const otherRows = titlesIn(other);
   for (let i = Math.max(0, rows.length - count); i < rows.length; i++) {
     const [number, title, vol] = rows[i];
     const volume = withVolumes ? vol : 0;
@@ -301,7 +307,7 @@ function partsChapters(lang: Lang): Chapter[] {
       locked,
       ...(part ? { part, wholeTitle: titleOf(number) } : {}),
     });
-  const newest = OP_TITLES[lang].slice(-20).map(([, title]) => title);
+  const newest = titlesIn(lang).slice(-20).map(([, title]) => title);
   const titleOf = (n: number) => newest[n - 1];
   add(1, titleOf(1), false);
   for (let n = 2; n <= 20; n++) {

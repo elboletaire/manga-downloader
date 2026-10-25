@@ -36,7 +36,7 @@ type OptionsDTO struct {
 // PrefsDTO are the app-only preferences, which the CLI has no flag for, so they
 // stay out of grabber.Settings. gui.json stores them next to OptionsDTO.
 type PrefsDTO struct {
-	// UILanguage is the window's language: "" follows the system, else en, es or ca
+	// UILanguage is the window's language: "" follows the system, else en, es, ca or ja
 	UILanguage string `json:"uiLanguage,omitempty"`
 	// CheckUpdates is whether the app checks for a newer release at startup
 	CheckUpdates bool `json:"checkUpdates"`
@@ -59,7 +59,7 @@ func defaultPrefs() PrefsDTO {
 // "" for the system's
 func validUILanguage(lang string) bool {
 	switch lang {
-	case "", "en", "es", "ca":
+	case "", "en", "es", "ca", "ja":
 		return true
 	}
 

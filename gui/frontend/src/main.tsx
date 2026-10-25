@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { createWailsApi, type Api } from './api';
 import { Root } from './Root';
 import '@fontsource-variable/inter/wght.css';
+import '@fontsource-variable/murecho/wght.css';
 import './styles.css';
 
 // Inside the Go app window.go is set and the real backend answers. In a plain

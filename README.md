@@ -144,7 +144,7 @@ updates that copy.
   <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/09-update-light.webp">
 </picture>
 
-The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español or Català) and whether the app opens with the simple start screen. The same panel turns the update check on or off.
+The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español, Català or 日本語) and whether the app opens with the simple start screen. The same panel turns the update check on or off.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/13-settings-dark.webp">

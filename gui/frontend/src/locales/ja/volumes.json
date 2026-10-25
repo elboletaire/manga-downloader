@@ -1,0 +1,31 @@
+{
+  "label": "巻",
+  "placeholder": "{{example}}（空ならサイトの巻）",
+  "title": "話の範囲を巻ごとに「{{separator}}」で区切って入力します。グループの先頭に「{{prefix}}」を付けると巻番号を指定できます。例: 「{{example}}」",
+  "useSite": "サイトの巻を使う",
+  "summary": {
+    "own_one": "{{count}}巻{{outside}}",
+    "own_other": "{{count}}巻{{outside}}",
+    "none": "この巻に当てはまる話はありません。",
+    "site": "サイトの巻: {{volumes}}{{outside}}",
+    "listed_one": "{{count}}巻（サイトの分類どおり。話の範囲としては書き表せません）{{outside}}",
+    "listed_other": "{{count}}巻（サイトの分類どおり。話の範囲としては書き表せません）{{outside}}",
+    "unlisted": "サイトは巻を示していません。話の範囲で入力してください。",
+    "outside_one": "、巻の外の{{count}}話",
+    "outside_other": "、巻の外の{{count}}話"
+  },
+  "group": {
+    "volume": "第{{number}}巻",
+    "loose": "巻に含まれない話"
+  },
+  "span": {
+    "none": "話なし",
+    "one": "{{number}}話",
+    "range": "{{first}}～{{last}}話"
+  },
+  "parts": {
+    "chapter": "第{{number}}話",
+    "count_one": "{{count}}パート",
+    "count_other": "{{count}}パート"
+  }
+}
