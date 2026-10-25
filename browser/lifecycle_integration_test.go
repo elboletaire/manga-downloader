@@ -336,7 +336,7 @@ func TestIntegrationClosesPopupTabs(t *testing.T) {
 	}
 }
 
-// countPopupsFrom registers a ListenTarget on ctx and returns an atomic counter
+// countPopupsFrom listens to ctx's target events and returns an atomic counter
 // that increments each time a popup page target whose OpenerID is ctx's tab is created.
 func countPopupsFrom(ctx context.Context) *atomic.Int32 {
 	var n atomic.Int32

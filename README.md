@@ -1220,7 +1220,7 @@ make build     # test and build ./manga-downloader
 
 The desktop app is a [Wails](https://wails.io) app: a Go program showing a
 React frontend in the system's webview. It needs Go 1.26 or newer (`gui/go.mod`),
-Node 22, pnpm 10, and on Linux the WebKitGTK 4.1 and GTK 3 development headers
+Node 22, pnpm 12, and on Linux the WebKitGTK 4.1 and GTK 3 development headers
 (`libgtk-3-dev libwebkit2gtk-4.1-dev` on Debian and Ubuntu):
 
 ~~~bash
