@@ -18,7 +18,7 @@ import (
 func versionSource(t *testing.T, body string) update.Source {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Query().Get("client") != "cli" {
+		if r.URL.Path == "/v1/latest" && r.URL.Query().Get("client") != "cli" {
 			t.Errorf("client = %q, want cli", r.URL.Query().Get("client"))
 		}
 		_, _ = w.Write([]byte(body))

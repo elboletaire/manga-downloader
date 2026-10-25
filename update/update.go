@@ -6,6 +6,7 @@ package update
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -44,10 +45,10 @@ var Default = Source{Worker: BaseURL, GitHub: GitHubLatestURL}
 
 // Latest returns the latest release's JSON, as GitHub's API answers it. client
 // is "cli" or "gui", version the running build's. Any failure of the Worker
-// (an error, a timeout, a non-200 answer) asks GitHub instead.
+// (an error, a timeout, a non-200 answer, a body without a tag) asks GitHub instead.
 func (s Source) Latest(ctx context.Context, client, version string) ([]byte, error) {
 	body, err := s.get(ctx, latestURL(s.Worker, client, version))
-	if err == nil {
+	if err == nil && hasTag(body) {
 		return body, nil
 	}
 	if ctx.Err() != nil {
@@ -83,11 +84,21 @@ func (s Source) get(ctx context.Context, address string) ([]byte, error) {
 	return io.ReadAll(io.LimitReader(resp.Body, maxBody))
 }
 
-// latestURL is the Worker's latest-release URL, with the client, its version and the platform
+// hasTag reports whether body is a release JSON with a tag_name
+func hasTag(body []byte) bool {
+	var release struct {
+		TagName string `json:"tag_name"`
+	}
+
+	return json.Unmarshal(body, &release) == nil && release.TagName != ""
+}
+
+// latestURL is the Worker's latest-release URL, with the client, its version
+// without the "v" tag prefix, and the platform
 func latestURL(base, client, version string) string {
 	q := url.Values{}
 	q.Set("client", client)
-	q.Set("version", version)
+	q.Set("version", strings.TrimPrefix(version, "v"))
 	q.Set("os", runtime.GOOS)
 	q.Set("arch", runtime.GOARCH)
 

@@ -52,6 +52,22 @@ func TestLatestFallsBackOnAFailedWorker(t *testing.T) {
 	}
 }
 
+func TestLatestFallsBackOnABadWorkerBody(t *testing.T) {
+	for name, body := range map[string]string{"garbage": "<html>", "empty": "", "no tag": `{"name":"x"}`} {
+		t.Run(name, func(t *testing.T) {
+			worker := answer(t, http.StatusOK, body, true)
+			gh := answer(t, http.StatusOK, `{"tag_name":"v2.0.0"}`, true)
+			got, err := Source{Worker: worker.URL, GitHub: gh.URL, HTTP: worker.Client()}.Latest(context.Background(), "cli", "v1.12.0")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(got) != `{"tag_name":"v2.0.0"}` {
+				t.Errorf("Latest = %s, want GitHub's answer after a bad Worker body", got)
+			}
+		})
+	}
+}
+
 func TestLatestFallsBackOnATimeout(t *testing.T) {
 	prev := timeout
 	timeout = 20 * time.Millisecond
@@ -89,14 +105,14 @@ func TestWorkerQueryParams(t *testing.T) {
 			t.Errorf("path = %s, want /v1/latest", r.URL.Path)
 		}
 		q = r.URL.Query()
-		_, _ = w.Write([]byte(`{}`))
+		_, _ = w.Write([]byte(`{"tag_name":"v23.0.0"}`))
 	}))
 	t.Cleanup(worker.Close)
 
 	if _, err := (Source{Worker: worker.URL, GitHub: worker.URL, HTTP: worker.Client()}).Latest(context.Background(), "gui", "v23.0.0"); err != nil {
 		t.Fatal(err)
 	}
-	want := map[string]string{"client": "gui", "version": "v23.0.0", "os": runtime.GOOS, "arch": runtime.GOARCH}
+	want := map[string]string{"client": "gui", "version": "23.0.0", "os": runtime.GOOS, "arch": runtime.GOARCH}
 	for k, v := range want {
 		if len(q[k]) != 1 || q[k][0] != v {
 			t.Errorf("query %s = %v, want %q", k, q[k], v)
