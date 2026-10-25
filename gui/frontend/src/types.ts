@@ -18,7 +18,7 @@ export interface Options {
   packAs: PackAs;
   language: string;
   scanlator: string;
-  /** Comma-separated: "avif", "avif,webp" or "none". See convertImages.ts. */
+  /** Comma-separated: "avif", "avif,webp", "webp" or "none". See convertImages.ts. */
   convertImages: string;
   /** The quality (1-100) pages re-encoded to JPEG are written at, by convertImages and compress */
   jpegQuality: number;

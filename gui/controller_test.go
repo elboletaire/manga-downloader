@@ -698,7 +698,7 @@ func TestEventsNameTheReleaseWhenCopiesNeedAGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, nil)
+			c := NewController(&grabber.Settings{}, nil)
 			c.hasGroupDuplicates = tt.groupDupes
 			// the maps a run starts with, which the events write into
 			c.byChap = map[*grabber.Chapter]*Job{}
@@ -803,7 +803,7 @@ func TestFetchingRowBecomesTheDownloadingOne(t *testing.T) {
 // A chapter that ends before it starts ends its fetching row, not a second one.
 func TestFetchingRowEndsBeforeStarted(t *testing.T) {
 	newRun := func() (*Controller, events) {
-		c := NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, nil)
+		c := NewController(&grabber.Settings{}, nil)
 		c.byChap = map[*grabber.Chapter]*Job{}
 		c.fetching = map[grabber.Filterable]*Job{}
 		return c, events{c}
@@ -851,7 +851,7 @@ func TestFetchingRowEndsBeforeStarted(t *testing.T) {
 
 // The fetched chapter's title can differ from the listing's, and the row takes it.
 func TestFetchedRowTakesFetchedTitle(t *testing.T) {
-	c := NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, nil)
+	c := NewController(&grabber.Settings{}, nil)
 	c.byChap = map[*grabber.Chapter]*Job{}
 	c.fetching = map[grabber.Filterable]*Job{}
 	e := events{c}
@@ -919,7 +919,7 @@ func TestLogLinesCarryTheirMessage(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			c := NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, nil)
+			c := NewController(&grabber.Settings{}, nil)
 			// the maps a run starts with, which the events write into
 			c.byChap = map[*grabber.Chapter]*Job{}
 			c.failedC = map[*grabber.Chapter]bool{}
@@ -958,7 +958,7 @@ func TestDownloadingLogIsPlural(t *testing.T) {
 // the row texts the GUI writes come with their messages, the upstream reasons
 // stay plain
 func TestJobRowsCarryTheirMessages(t *testing.T) {
-	c := NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, nil)
+	c := NewController(&grabber.Settings{}, nil)
 	c.byChap = map[*grabber.Chapter]*Job{}
 	c.failedC = map[*grabber.Chapter]bool{}
 	c.byVolume = map[*core.Volume]*Job{}
@@ -1045,7 +1045,7 @@ func TestSetReasonErrTranslatesSharedSentinels(t *testing.T) {
 // A failure line names its release apart from the reason; the reasons the
 // window words carry their message, and the ones from core stay plain text.
 func TestFailureLinesCarryTheirMessages(t *testing.T) {
-	c := NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, nil)
+	c := NewController(&grabber.Settings{}, nil)
 	c.byChap = map[*grabber.Chapter]*Job{}
 	c.fetching = map[grabber.Filterable]*Job{}
 	c.failedC = map[*grabber.Chapter]bool{}

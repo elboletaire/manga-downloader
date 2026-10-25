@@ -140,9 +140,8 @@ func releaseName(c *grabber.Chapter) string {
 }
 
 // pageFormats returns the source formats to convert pages from for the output
-// format. EPUB readers can't show AVIF, so it's always converted for EPUB,
-// whatever --convert-images says. --compress adds PNG, which namePages keeps
-// when its JPEG isn't smaller. The given formats are never modified.
+// format. EPUB always converts AVIF, whatever --convert-images says, and
+// --compress adds PNG, which namePages keeps when its JPEG isn't smaller.
 func pageFormats(format string, formats grabber.ConvertFormats, compress bool) grabber.ConvertFormats {
 	if format != FormatEPUB && !compress {
 		return formats
