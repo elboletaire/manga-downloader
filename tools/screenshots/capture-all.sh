@@ -4,7 +4,7 @@
 # README and website WebPs from them.
 # macOS only: it captures the real window with screencapture. See README.md.
 #
-# usage: [SHOT_LANG=en|es|ca|all] [SHOTS="01-start 13-settings"] tools/screenshots/capture-all.sh [--install]
+# usage: [SHOT_LANG=en|es|ca|ja|all] [SHOTS="01-start 13-settings"] tools/screenshots/capture-all.sh [--install]
 #   without --install the PNGs stay in tools/screenshots/out/<lang>/
 #   SHOT_LANG (default en) is the window's language, all for every one of them;
 #   SHOTS (default all) retakes only the shots named, and leaves the website's crops alone;
@@ -22,9 +22,9 @@ cd "$HERE"
 
 SHOT_LANG=${SHOT_LANG:-en}
 case $SHOT_LANG in
-  en | es | ca) LANGS=$SHOT_LANG ;;
-  all) LANGS="en es ca" ;;
-  *) echo "SHOT_LANG must be en, es, ca or all" >&2; exit 2 ;;
+  en | es | ca | ja) LANGS=$SHOT_LANG ;;
+  all) LANGS="en es ca ja" ;;
+  *) echo "SHOT_LANG must be en, es, ca, ja or all" >&2; exit 2 ;;
 esac
 export SHOT_LANG # shot-select.sh reads it
 SHOTS=${SHOTS:-}
@@ -54,8 +54,8 @@ SCROLL='const o=document.querySelector(".options");let e=o;while(e&&e.scrollHeig
 # exists once the first volume has folded.
 FOLD='const f=()=>document.querySelector(".fold.open")?.click();f();setTimeout(f,400);'
 
-# --install: en's WebPs go to the README; every language gets its website crops, es and
-# ca in their own folders. All read the lossless PNGs in out/, never the WebPs they write.
+# --install: en's WebPs go to the README; every language gets its website crops, es, ca
+# and ja in their own folders. All read the lossless PNGs in out/, never the WebPs they write.
 install_lang() {
   local src=$HERE/out/$SHOT_LANG site=src/assets/screenshots
   if [ "$SHOT_LANG" = en ]; then
@@ -99,11 +99,11 @@ for SHOT_LANG in $LANGS; do
     shot 05-done '?mock&scenario=done&freeze&shot'
     shot 06-options '?mock&scenario=loaded&freeze&shot&epub' "$SCROLL"
     shot 07-volumes '?mock&scenario=volumes&freeze&shot' "$FOLD"
-    shot 12-parts '?mock&scenario=parts&freeze&shot' "$FOLD"
-    shot 08-browser-alert '?mock&scenario=check&freeze&shot'
-    shot 09-update '?mock&scenario=update&freeze&shot'
-    shot 10-failed '?mock&scenario=done&freeze&fail&shot'
-    shot 11-update-prompt '?mock&scenario=update&freeze&shot&prompt'
+    shot 08-parts '?mock&scenario=parts&freeze&shot' "$FOLD"
+    shot 09-browser-alert '?mock&scenario=check&freeze&shot'
+    shot 10-update '?mock&scenario=update&freeze&shot'
+    shot 11-failed '?mock&scenario=done&freeze&fail&shot'
+    shot 12-update-prompt '?mock&scenario=update&freeze&shot&prompt'
     shot 13-settings '?mock&scenario=loaded&freeze&shot' 'document.querySelector(".settings-btn")?.click()'
   done
 

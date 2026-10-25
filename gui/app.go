@@ -571,8 +571,8 @@ func (a *App) SetOptions(o OptionsDTO) error {
 	return nil
 }
 
-// SetUILanguage sets the window's language: "" follows the system, else en, es
-// or ca. It's never refused while busy, and is saved for the next run.
+// SetUILanguage sets the window's language: "" follows the system, else en, es,
+// ca or ja. It's never refused while busy, and is saved for the next run.
 func (a *App) SetUILanguage(lang string) error {
 	if !validUILanguage(lang) {
 		return uiErr("errors.unknownLanguage", map[string]any{"language": lang}, nil)

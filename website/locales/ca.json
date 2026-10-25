@@ -30,7 +30,6 @@
     "language": "Idioma"
   },
   "hero": {
-    "eyebrow": "Des de la v1.11: aplicació d'escriptori per a Windows, macOS i Linux",
     "title": "Descarrega manga <span class=\"arrow\">→</span> <span class=\"accent\">CBZ i EPUB a&nbsp;punt per llegir</span>",
     "lede_one": "Enganxa un enllaç de MangaDex o de {{count}} lloc compatible més, tria els capítols i aconsegueix fitxers CBZ, CBR o EPUB nets per llegir sense connexió al teu lector electrònic o a la teva aplicació de còmics preferida.",
     "lede_other": "Enganxa un enllaç de MangaDex o de qualsevol dels altres {{count}} llocs compatibles, tria els capítols i aconsegueix fitxers CBZ, CBR o EPUB nets per llegir sense connexió al teu lector electrònic o a la teva aplicació de còmics preferida.",
@@ -42,10 +41,10 @@
     "chips": {
       "sites_one": "{{count}} lloc",
       "sites_other": "{{count}} llocs",
-      "formats": "CBZ, CBR, EPUB o imatges soltes",
-      "ereader": "A punt per al lector electrònic",
-      "apps": "Aplicació d'escriptori + CLI",
-      "free": "Gratuït i de codi obert"
+      "formats": "CBZ, CBR, EPUB o imatges",
+      "ereader": "Per a lectors electrònics",
+      "apps": "Escriptori + CLI",
+      "free": "Lliure i gratuït"
     }
   },
   "desktop": {
@@ -200,6 +199,11 @@
       "text": "Aquesta pàgina també és en català",
       "link": "Llegeix-la en català",
       "close": "Tanca"
+    },
+    "ja": {
+      "text": "このページは日本語でもご覧いただけます",
+      "link": "日本語で読む",
+      "close": "閉じる"
     }
   },
   "runtime": {

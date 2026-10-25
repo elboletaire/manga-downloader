@@ -1,0 +1,29 @@
+{
+  "merged_one": "パートから結合した{{count}}話",
+  "merged_other": "パートから結合した{{count}}話",
+  "headline": {
+    "cancelledNoBundle": "キャンセル、まとめファイルは未作成",
+    "cancelled": "キャンセル、{{saved}}",
+    "bundleFailed": "まとめファイルを作成できませんでした",
+    "bundleSaved": "{{bundle}}を保存",
+    "inVolumes": "{{saved}}（{{volumes}}）",
+    "mergedFromParts": "{{saved}}、{{merged}}",
+    "nothingSaved": "何も保存されませんでした",
+    "separator": "、"
+  },
+  "sentence": {
+    "cancelledNoBundle": "キャンセルしました。まとめファイルは作成されていません。",
+    "cancelledBeforeSaving": "保存する前にキャンセルしました。",
+    "savedBefore_one": "キャンセルしました。停止するまでに{{count}}話を{{dir}}に保存しました。",
+    "savedBefore_other": "キャンセルしました。停止するまでに{{count}}話を{{dir}}に保存しました。",
+    "bundleFailed": "まとめファイルを作成できませんでした。",
+    "bundleSaved": "{{bundle}}を{{dir}}に保存しました（{{chapters}}）。",
+    "mergedFromParts_one": "{{count}}話を{{dir}}に保存しました（{{merged}}）。",
+    "mergedFromParts_other": "{{count}}話を{{dir}}に保存しました（{{merged}}）。",
+    "volumeFiles_one": "{{count}}話を{{dir}}に保存しました（{{files}}）。",
+    "volumeFiles_other": "{{count}}話を{{dir}}に保存しました（{{files}}）。",
+    "saved_one": "{{count}}話を{{dir}}に保存しました。",
+    "saved_other": "{{count}}話を{{dir}}に保存しました。",
+    "nothingSaved": "何も保存されませんでした。"
+  }
+}

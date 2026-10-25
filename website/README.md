@@ -7,7 +7,7 @@ manual run (dispatched from `master`, the only branch the Pages environment
 deploys from) covers urgent fixes, and the daily stats refresh rebuilds the
 latest release.
 
-One static page per language (English at `/`, Spanish at `/es/`, Catalan at `/ca/`): Vite and TypeScript, no UI framework. Everything is in
+One static page per language (English at `/`, Spanish at `/es/`, Catalan at `/ca/`, Japanese at `/ja/`): Vite and TypeScript, no UI framework. Everything is in
 the built HTML, so it works and indexes without JavaScript; the script only
 picks the right download for the visitor's OS, filters the sites list and adds
 copy buttons. The page text is translated at build time with i18next.
@@ -16,7 +16,7 @@ copy buttons. The page text is translated at build time with i18next.
 
 ```bash
 pnpm install
-pnpm dev       # http://localhost:5173/manga-downloader/ (also serves /es/ and /ca/)
+pnpm dev       # http://localhost:5173/manga-downloader/ (also serves /es/, /ca/ and /ja/)
 pnpm test      # vitest
 pnpm build     # typecheck + build to dist/
 pnpm preview   # serve dist/
@@ -101,7 +101,7 @@ panel's left edge, so no edge of the list shows in it). The numbers assume the
 | `language-selector` | `03-language-selector-{light,dark}.png` | `740x960+85+56`     |
 | `chapter-list`      | `04-downloading-{light,dark}.png`       | `1062x787+117+405`  |
 | `volumes`           | `07-volumes-{light,dark}.png`           | `1062x787+117+405`  |
-| `parts`             | `12-parts-{light,dark}.png`             | `1062x787+117+405`  |
+| `parts`             | `08-parts-{light,dark}.png`             | `1062x787+117+405`  |
 | `finished-run`      | `05-done-{light,dark}.png`              | `680x787+1203+405`  |
 
 To regenerate from the originals, run it with the captures' folder (made by
@@ -115,9 +115,10 @@ The shadow widens each derivative beyond the crop plus its 56 px margin, so the
 `<img>` sizes in `index.html` come from the output, not from the geometry.
 
 Each translated app language has its own set in `src/assets/screenshots/<lang>/`
-(`es`, `ca`), made by `tools/screenshots/capture-all.sh --install` from
-`tools/screenshots/out/<lang>/`. The es and ca pages use a file from there when it
-exists, and the English one for any image that doesn't, so the site never shows
+(`es`, `ca`; `ja` has none yet), made by `tools/screenshots/capture-all.sh --install` from
+`tools/screenshots/out/<lang>/`. The es, ca and ja pages use a file from there when it
+exists, and the English one for any image that doesn't (so ja shows English
+screenshots until its set is taken), so the site never shows
 a missing image. The crop geometry above assumes the panels sit where they do
 in English; a translated label that changes a panel's size needs its crop checked.
 
@@ -138,11 +139,11 @@ the hero text is the LCP element.
 
 ## Languages
 
-Strings live in `locales/{en,es,ca}.json` (i18next JSON v4: nested keys, `_one`/`_other` plurals, `{{var}}`). The same format will be used by the GUI's react-i18next and by Weblate.
+Strings live in `locales/{en,es,ca,ja}.json` (i18next JSON v4: nested keys, `_one`/`_other` plurals, `{{var}}`). The same format will be used by the GUI's react-i18next and by Weblate.
 
 `index.html` is the template. `{{t:key}}` inserts HTML, `{{a:key}}` attribute-escaped text, `{{j:key}}` JSON-escaped text, and an optional `:sites|others|browsers` picks the plural count.
 
-The `site-data` plugin renders it with i18next at build time. `es/index.html` and `ca/index.html` are stubs it replaces.
+The `site-data` plugin renders it with i18next at build time. `es/`, `ca/` and `ja/` `index.html` are stubs it replaces.
 
 Asset URLs in the template must be root-absolute (`/src/...`).
 
@@ -152,9 +153,15 @@ Every page offers the others in a hidden banner per language (`languageBanner` i
 
 The build also emits `404.html` (no script, `noindex`, the site's stylesheet) for GitHub Pages to serve on missing paths.
 
-Each page gets `hreflang` alternates (plus `x-default` pointing to English), `og:locale` and its alternates, and its own canonical URL. `sitemap.xml` lists all three pages.
+Each page gets `hreflang` alternates (plus `x-default` pointing to English), `og:locale` and its alternates, and its own canonical URL. `sitemap.xml` lists all four pages.
 
 Tests check that every locale has en's keys, placeholders and tags.
+
+Japanese uses Murecho (body) and M PLUS Rounded 1c (headings), imported from
+`@fontsource` by `src/japanese-fonts.css`. The site-data plugin links that file on
+the ja page only, through the `<!-- fonts:ja -->` placeholder in `index.html`, so the
+other pages never load those font files. Their stacks are set under `:root:lang(ja)` in
+`styles.css`. Only the weight 700 of M PLUS Rounded 1c is shipped: headings asking for 600 get it.
 
 The supported-sites notes stay in English.
 

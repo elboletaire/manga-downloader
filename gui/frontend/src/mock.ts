@@ -27,11 +27,12 @@
 // uses production release versions and a macOS output path (for screenshots),
 // &nosimple turns the simpleStart pref off (an empty window opens on the full view),
 // and VITE_MOCK=1 at build time includes the mock in production builds (e.g.
-// for the screenshot capture build; set via Wails frontend env). ?lang=en|es|ca
+// for the screenshot capture build; set via Wails frontend env). ?lang=en|es|ca|ja
 // starts the window in that language, ?lang=system follows the browser's, and
 // without it the window is English, so screenshots and dev stay English. Under
 // multi the language filter shows that language and the list is in it, titled
-// from OP_TITLES; every fifth chapter also appears once in another language.
+// from OP_TITLES; every fifth chapter also appears once in another language. A list in ja
+// (multi's ja, or the window's on a site without languages) is titled from OP_TITLES_JA where it has one.
 //
 // &site= picks what the series lists for the two filters: multi (the default:
 // languages ca, en, es with All, the window's language shown by default, no groups), plus
@@ -49,7 +50,7 @@ import type { Api, Unsubscribe } from './api';
 import { createT, LANGS, resolveLanguage, type Lang, type LangPref, type Vars } from './i18n';
 import type { Chapter, FilterChoice, Job, LogLine, Message, Options, Prefs, State, Summary, Update } from './types';
 import { groupChapters, groupParts, listedVolumes, parseVolumes, siteVolumes } from './volumes';
-import { OP_TITLES } from './mock-onepiece';
+import { OP_TITLES, OP_TITLES_JA } from './mock-onepiece';
 
 const TEMPLATE_DEFAULT =
   '{{.Series}} {{.Number}} - {{.Title}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}';
@@ -142,7 +143,7 @@ interface MockOffers {
 
 const OFFERS: Record<MockSite, MockOffers> = {
   // multi's current language is the window's, see offersFor
-  multi: { language: { values: ['ca', 'en', 'es'], all: true, current: 'en' }, scanlator: null },
+  multi: { language: { values: ['ca', 'en', 'es', 'ja'], all: true, current: 'en' }, scanlator: null },
   plus: { language: { values: ['en', 'es'], all: false, current: 'en' }, scanlator: null },
   groups: { language: null, scanlator: { values: ['Alpha', 'Delta'], all: true, current: '' } },
   none: { language: null, scanlator: null },
@@ -154,7 +155,8 @@ function offersFor(site: MockSite, lang: Lang): MockOffers {
   if (site !== 'multi' || offers.language === null) {
     return offers;
   }
-  return { ...offers, language: { ...offers.language, current: lang } };
+  const current = offers.language.values.includes(lang) ? lang : offers.language.current;
+  return { ...offers, language: { ...offers.language, current } };
 }
 
 const en = createT('en');
@@ -188,9 +190,9 @@ const MOCK_ALERT = msgOf('browser.alertNamed', { browser: 'Brave', host: 'check.
 
 const REPO = 'https://github.com/elboletaire/manga-downloader';
 const RELEASE_VERSION_DEV = 'v1.12.0';
-const RELEASE_VERSION_SHOT = 'v1.21.0';
+const RELEASE_VERSION_SHOT = 'v23.0.0';
 const UPDATE_VERSION_DEV = 'v1.13.0';
-const UPDATE_VERSION_SHOT = 'v1.22.0';
+const UPDATE_VERSION_SHOT = 'v23.0.1';
 
 function siteFrom(search: string): MockSite {
   const value = new URLSearchParams(search).get('site');
@@ -202,7 +204,7 @@ function scenarioFrom(search: string): Scenario {
   return (SCENARIOS as readonly string[]).includes(value ?? '') ? (value as Scenario) : 'empty';
 }
 
-/** ?lang=system is the preference that follows the system; anything else but en, es or ca is English */
+/** ?lang=system is the preference that follows the system; anything else but en, es, ca or ja is English */
 function uiLanguageFrom(search: string): LangPref {
   const value = new URLSearchParams(search).get('lang');
   if (value === 'system') {
@@ -255,6 +257,16 @@ function defaultOptions(shot: boolean, epub: boolean): Options {
   };
 }
 
+/** The One Piece titles in a language; the dataset has no Japanese, so ja gets the English ones. */
+function titlesIn(lang: Lang): (typeof OP_TITLES)['en'] {
+  return Object.hasOwn(OP_TITLES, lang) ? OP_TITLES[lang as keyof typeof OP_TITLES] : OP_TITLES.en;
+}
+
+/** A chapter's title: its Japanese one under the ja window where OP_TITLES_JA has it, else as given */
+function titleIn(number: number, title: string, japanese: boolean): string {
+  return japanese ? (OP_TITLES_JA[number] ?? title) : title;
+}
+
 /**
  * The newest `count` chapters, titled in `lang`. With withLanguages they are tagged with it, and every
  * fifth also appears once in `other` (the two lists share their chapters, in order). Volume 0: not collected.
@@ -266,17 +278,35 @@ function mockChapters(
   other: Lang,
   withVolumes = true,
   withLocked = false,
+  japanese = false,
 ): Chapter[] {
   const list: Chapter[] = [];
-  const rows = OP_TITLES[lang];
-  const otherRows = OP_TITLES[other];
+  const rows = titlesIn(lang);
+  const otherRows = titlesIn(other);
   for (let i = Math.max(0, rows.length - count); i < rows.length; i++) {
     const [number, title, vol] = rows[i];
     const volume = withVolumes ? vol : 0;
     const locked = withLocked && isMockLocked(number);
-    list.push({ index: list.length, number, title, language: withLanguages ? lang : '', group: '', volume, locked });
+    const shown = titleIn(number, title, japanese);
+    list.push({
+      index: list.length,
+      number,
+      title: shown,
+      language: withLanguages ? lang : '',
+      group: '',
+      volume,
+      locked,
+    });
     if (withLanguages && number % 5 === 0) {
-      list.push({ index: list.length, number, title: otherRows[i][1], language: other, group: '', volume, locked });
+      list.push({
+        index: list.length,
+        number,
+        title: titleIn(number, otherRows[i][1], japanese),
+        language: other,
+        group: '',
+        volume,
+        locked,
+      });
     }
   }
   return list;
@@ -287,7 +317,7 @@ function mockChapters(
  * everything past chapter 4 locked but the second half of 19. The parts share
  * their chapter's One Piece title, plus their part, as the grabbers give them.
  */
-function partsChapters(lang: Lang): Chapter[] {
+function partsChapters(lang: Lang, japanese = false): Chapter[] {
   const list: Chapter[] = [];
   const withPart = (title: string, part: string) => (title === '' ? part : `${title} ${part}`);
   const add = (number: number, title: string, locked: boolean, part?: string) =>
@@ -301,7 +331,9 @@ function partsChapters(lang: Lang): Chapter[] {
       locked,
       ...(part ? { part, wholeTitle: titleOf(number) } : {}),
     });
-  const newest = OP_TITLES[lang].slice(-20).map(([, title]) => title);
+  const newest = titlesIn(lang)
+    .slice(-20)
+    .map(([number, title]) => titleIn(number, title, japanese));
   const titleOf = (n: number) => newest[n - 1];
   add(1, titleOf(1), false);
   for (let n = 2; n <= 20; n++) {
@@ -543,11 +575,13 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     identified = true;
     fallbackFor('language', 'language');
     fallbackFor('scanlator', 'group');
-    title = 'One Piece';
     const lang = listedLanguage();
+    // a ja list is titled in Japanese where OP_TITLES_JA has it, and its series is named in Latin letters
+    const japanese = lang === 'ja';
+    title = japanese ? 'ONE PIECE' : 'One Piece';
     chapters =
       withParts || scenario === 'parts'
-        ? partsChapters(lang)
+        ? partsChapters(lang, japanese)
         : mockChapters(
             chapterCount,
             lang,
@@ -555,6 +589,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
             otherLanguage(lang),
             !novolumes,
             locked,
+            japanese,
           );
     if (offers.scanlator !== null) {
       chapters = groupedChapters(chapters);

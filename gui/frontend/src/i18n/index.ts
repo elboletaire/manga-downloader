@@ -1,7 +1,7 @@
 // The desktop app's languages and translator. Catalogs are the JSON files in
 // locales/<lang>/<namespace>.json, flattened to `namespace.key` keys.
 
-export const LANGS = ['en', 'es', 'ca'] as const;
+export const LANGS = ['en', 'es', 'ca', 'ja'] as const;
 export type Lang = (typeof LANGS)[number];
 
 /** The saved preference: '' follows the system. */
@@ -12,6 +12,7 @@ export const LANG_INFO: Record<Lang, { name: string }> = {
   en: { name: 'English' },
   es: { name: 'Español' },
   ca: { name: 'Català' },
+  ja: { name: '日本語' },
 };
 
 export type Vars = Record<string, string | number>;

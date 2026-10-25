@@ -1,0 +1,27 @@
+{
+  "title": "設定",
+  "open": "設定",
+  "close": "閉じる",
+  "language": {
+    "heading": "言語",
+    "systemOption": "システム（{{language}}）"
+  },
+  "start": {
+    "heading": "起動時の画面",
+    "simple": "シンプル表示で起動",
+    "hint": "作品の読み込みが始まるまで、ロゴとURL欄だけを表示します。"
+  },
+  "updates": {
+    "heading": "アップデート",
+    "check": "起動時にアップデートを確認",
+    "hint": "起動するたびに、GitHubに最新のリリースを問い合わせます。",
+    "devHint": "開発版ではアップデートを確認しません。"
+  },
+  "about": {
+    "version": "Manga Downloader {{version}}",
+    "website": "ウェブサイト",
+    "issues": "問題を報告",
+    "kofi": "Ko-fiで応援する",
+    "madeBy": "作者: <author>{{author}}</author> · © {{years}} · <license>{{license}}</license>"
+  }
+}

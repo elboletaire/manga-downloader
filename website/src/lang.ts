@@ -1,7 +1,7 @@
 // Languages the site is published in, and the language a visitor prefers
 // (`preferredLang`, which main.ts uses to offer their page in a banner).
 
-export const LANGS = ['en', 'es', 'ca'] as const
+export const LANGS = ['en', 'es', 'ca', 'ja'] as const
 export type Lang = (typeof LANGS)[number]
 
 /** localStorage key holding the language the visitor picked in the switcher (or closed the banner on). */
@@ -11,6 +11,7 @@ export const LANG_INFO: Record<Lang, { name: string; ogLocale: string; path: str
   en: { name: 'English', ogLocale: 'en_US', path: '' },
   es: { name: 'Español', ogLocale: 'es_ES', path: 'es/' },
   ca: { name: 'Català', ogLocale: 'ca_ES', path: 'ca/' },
+  ja: { name: '日本語', ogLocale: 'ja_JP', path: 'ja/' },
 }
 
 /**

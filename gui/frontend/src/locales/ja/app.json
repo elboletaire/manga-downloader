@@ -1,0 +1,12 @@
+{
+  "starting": "起動中…",
+  "readFailed": "ウィンドウの状態を読み込めませんでした: {{error}}",
+  "tabs": {
+    "label": "サイドパネル",
+    "options": "オプション",
+    "activity": "アクティビティ"
+  },
+  "download": "ダウンロード",
+  "running": "実行中",
+  "finished": "完了"
+}

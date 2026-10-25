@@ -95,8 +95,14 @@ describe('SettingsDialog', () => {
     expect(input).toContain('checked=""');
   });
 
+  it('renders the dialog in Japanese, with the language picked', () => {
+    const html = render('ja', state());
+    expect(html).toContain('<h2 id="settings-title">設定</h2>');
+    expect(html).toContain('<option value="ja" selected="">日本語</option>');
+  });
+
   it('links the author alias and the license, untranslated, in each language', () => {
-    const lines = { en: 'Made with love by', es: 'Hecho con amor por', ca: 'Fet amb amor per' };
+    const lines = { en: 'Made with love by', es: 'Hecho con amor por', ca: 'Fet amb amor per', ja: '作者:' };
     const author = '<a href="https://github.com/elboletaire">elboletaire</a>';
     const license = `<a href="${LICENSE_URL}">AGPL-3.0</a>`;
     for (const lang of LANGS) {
@@ -106,7 +112,12 @@ describe('SettingsDialog', () => {
   });
 
   it('links the Ko-fi page with its cup, named in each language', () => {
-    const names = { en: 'Support me on Ko-fi', es: 'Apóyame en Ko-fi', ca: 'Dona&#x27;m suport a Ko-fi' };
+    const names = {
+      en: 'Support me on Ko-fi',
+      es: 'Apóyame en Ko-fi',
+      ca: 'Dona&#x27;m suport a Ko-fi',
+      ja: 'Ko-fiで応援する',
+    };
     for (const lang of LANGS) {
       const html = render(lang, state());
       expect(html, lang).toContain(`<a class="kofi" href="${KOFI_URL}"`);
@@ -126,5 +137,6 @@ describe('websiteURL', () => {
     expect(websiteURL('en')).toBe('https://mangadownloader.cat/');
     expect(websiteURL('es')).toBe('https://mangadownloader.cat/es/');
     expect(websiteURL('ca')).toBe('https://mangadownloader.cat/ca/');
+    expect(websiteURL('ja')).toBe('https://mangadownloader.cat/ja/');
   });
 });

@@ -4,7 +4,7 @@
 # (cliclick); WebKit draws the popup inside the window, so one capture holds
 # both. The pointer moves, but screencapture -l leaves the cursor out.
 #
-# usage: [SHOT_LANG=en|es|ca] shot-select.sh OUT.png light|dark
+# usage: [SHOT_LANG=en|es|ca|ja] shot-select.sh OUT.png light|dark
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 . "$HERE/lib.sh"
@@ -17,9 +17,11 @@ focus $pid
 sleep 3
 read -r id _ X Y _ _ < <("$HERE/bin/winall" $pid | awk '$2==0')
 # the Language select, in points from the window's top-left (title bar
-# included): its centre in the 2x capture, less crop.py's 85/56 px margin, /2
+# included): its centre in the 2x capture, less crop.py's 85/56 px margin, /2.
+# Japanese's shorter filter labels put it further left
+case ${SHOT_LANG:-en} in ja) sx=165 ;; *) sx=265 ;; esac
 focus $pid
-cliclick "c:$((X + 265)),$((Y + 114))"
+cliclick "c:$((X + sx)),$((Y + 114))"
 sleep 1.2
 screencapture -x -l "$id" "$1"
 stop $pid

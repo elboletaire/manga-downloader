@@ -43,5 +43,5 @@ for theme in light dark; do
   crop chapter-list "$theme" "04-downloading-$theme.png" 1062x787+117+405 $CARD_RADIUS
   crop finished-run "$theme" "05-done-$theme.png" 680x787+1203+405 $CARD_RADIUS
   crop volumes "$theme" "07-volumes-$theme.png" 1062x787+117+405 $CARD_RADIUS
-  crop parts "$theme" "12-parts-$theme.png" 1062x787+117+405 $CARD_RADIUS
+  crop parts "$theme" "08-parts-$theme.png" 1062x787+117+405 $CARD_RADIUS
 done

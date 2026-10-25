@@ -36,8 +36,8 @@ binary:
 
 The mock is built in with `VITE_MOCK=1` (production builds leave it out), and
 every query adds `&shot`: the release version, a macOS folder path and no debug
-line in `update`. `&fail` is only used for `10-failed`, and `&prompt` (with the
-`update` scenario) for `11-update-prompt`: it makes the update one-click and
+line in `update`. `&fail` is only used for `11-failed`, and `&prompt` (with the
+`update` scenario) for `12-update-prompt`: it makes the update one-click and
 opens its dialog. When the app's version moves on, update the `&shot` constants
 near `RELEASE_VERSION` in `mock.ts`.
 
@@ -63,8 +63,8 @@ near `RELEASE_VERSION` in `mock.ts`.
 
 ## Languages
 
-`SHOT_LANG` (`en`, `es`, `ca` or `all`, default `en`) sets the window's
-language, as `&lang=` on every shot query (see `mock.ts`). `all` runs the three
+`SHOT_LANG` (`en`, `es`, `ca`, `ja` or `all`, default `en`) sets the window's
+language, as `&lang=` on every shot query (see `mock.ts`). `all` runs the four
 in turn after one build, which is what a release needs:
 
 ```bash
@@ -73,7 +73,7 @@ SHOT_LANG=all tools/screenshots/capture-all.sh --install
 
 `--install` puts English's README WebPs in `assets/screenshots/` (the README is
 English-only), and every language's crops and hero in the website's
-`src/assets/screenshots/`: English at its root, `es` and `ca` in a `<lang>/`
+`src/assets/screenshots/`: English at its root, `es`, `ca` and `ja` in a `<lang>/`
 folder. Without `--install` the PNGs stay in `out/<lang>/`.
 
 `SHOTS` retakes only the shots named, for a change that touched one or two of

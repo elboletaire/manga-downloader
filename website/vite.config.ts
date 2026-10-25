@@ -137,6 +137,7 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
   // Translated screenshots where their WebP exists, else the English one.
   return localizeScreenshots(html, lang, (url) => existsSync(path.join(root, url)))
     .replace('<!-- theme:init -->', () => themeScript())
+    .replace('<!-- fonts:ja -->', () => (lang === 'ja' ? '<link rel="stylesheet" href="/src/japanese-fonts.css" />' : ''))
     .replace('<!-- i18n:alternates -->', () => alternates())
     .replace('<!-- i18n:og-alternates -->', () => ogAlternates(lang))
     .replace('<!-- i18n:switcher -->', () => switcher(lang))
@@ -185,6 +186,7 @@ function notFoundPage(stylesheet: string): string {
         <li><a href="${base}">English</a></li>
         <li><a href="${base}es/" lang="es">Español</a></li>
         <li><a href="${base}ca/" lang="ca">Català</a></li>
+        <li><a href="${base}ja/" lang="ja">日本語</a></li>
       </ul>
     </main>
   </body>
@@ -207,8 +209,8 @@ function siteData(): Plugin[] {
         // Crawl files, generated so they follow SITE_URL.
         this.emitFile({ type: 'asset', fileName: 'robots.txt', source: `User-agent: *\nAllow: /\n\nSitemap: ${siteURL}sitemap.xml\n` })
         this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemap() })
-        // The stylesheet's hashed name is only known from the bundle.
-        const stylesheet = Object.keys(bundle).find((f) => f.endsWith('.css'))
+        // The stylesheet's hashed name is only known from the bundle; the main entry's is named main.css.
+        const stylesheet = Object.entries(bundle).find(([, chunk]) => (chunk as { names?: string[] }).names?.includes('main.css'))?.[0]
         if (!stylesheet) throw new Error('site-data: no stylesheet for 404.html')
         this.emitFile({ type: 'asset', fileName: '404.html', source: notFoundPage(stylesheet) })
       },
@@ -251,11 +253,10 @@ function siteData(): Plugin[] {
       transformIndexHtml: {
         order: 'post',
         handler(html) {
-          const link = html.match(/<link rel="stylesheet"[^>]*>/)?.[0]
-          if (!link) return html
-          return html
-            .replace(link, '')
-            .replace(/(<meta name="viewport"[^>]*\/>)/, `$1\n    ${link}`)
+          const links = html.match(/<link rel="stylesheet"[^>]*>/g)
+          if (!links) return html
+          const rest = links.reduce((out, link) => out.replace(link, () => ''), html)
+          return rest.replace(/(<meta name="viewport"[^>]*\/>)/, (viewport) => `${viewport}\n    ${links.join('\n    ')}`)
         },
       },
     },
@@ -269,7 +270,7 @@ export default defineConfig({
     // Never inline assets as data: URIs. Firefox doesn't render the SVG data:
     // URI in the dark <picture> source, so the hero mascot disappeared there.
     assetsInlineLimit: 0,
-    // One page per language; es/ and ca/ index.html are stubs rendered from index.html.
+    // One page per language; es/, ca/ and ja/ index.html are stubs rendered from index.html.
     rolldownOptions: {
       input: Object.fromEntries(LANGS.map((l) => [l, path.join(root, LANG_INFO[l].path, 'index.html')])),
     },

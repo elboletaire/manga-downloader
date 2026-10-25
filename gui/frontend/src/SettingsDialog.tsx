@@ -25,7 +25,7 @@ const AUTHOR_URL = 'https://github.com/elboletaire';
 // the years of the source files' copyright headers
 const YEARS = '2023–2026';
 
-const WEBSITE_PATHS: Record<Lang, string> = { en: '', es: 'es/', ca: 'ca/' };
+const WEBSITE_PATHS: Record<Lang, string> = { en: '', es: 'es/', ca: 'ca/', ja: 'ja/' };
 
 /** The project's website in a language: English at the root, the others under their own path */
 export function websiteURL(lang: Lang): string {

@@ -14,6 +14,9 @@ describe('preferredLang', () => {
     [['fr-FR', 'en-GB'], null, 'en'],
     [['de', 'fr'], null, null],
     [[], null, null],
+    [['ja-JP', 'en'], null, 'ja'],
+    [['en-US', 'ja'], null, 'en'],
+    [['ja'], 'en', null],
     [['es'], 'en', null],
     [['ca'], 'es', null],
   ] as const)('%j with stored %s gives %s', (languages, stored, want) => {

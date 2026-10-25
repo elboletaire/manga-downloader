@@ -51,6 +51,14 @@
   color-scheme: light dark;
 }
 
+/* Japanese pages only: the Japanese faces come after the Latin ones here. On the
+   other pages they'd be pulled in by the arrow glyph, so they stay out of the stack. */
+:root:lang(ja) {
+  --font-ui: 'Inter Variable', 'Murecho Variable', 'Hiragino Sans', 'Yu Gothic UI', Meiryo, 'Noto Sans CJK JP', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fredoka Variable', 'M PLUS Rounded 1c', var(--font-ui);
+  word-break: auto-phrase;
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --bg: var(--night);
@@ -309,6 +317,13 @@ code {
   letter-spacing: 0.02em;
 }
 
+/* four languages leave the logo little room on the narrowest phones */
+@media (max-width: 400px) {
+  .site-nav .lang-switch a {
+    padding: 5px 6px;
+  }
+}
+
 .site-nav .lang-switch a[aria-current='page'] {
   background: var(--accent-soft);
   color: var(--accent-text);
@@ -320,8 +335,8 @@ code {
   }
 }
 
-/* the label overflows its pill below this width (iPhone 11–14 and the like) */
-@media (max-width: 450px) {
+/* the label overflows its pill below this width, with four languages in the switcher */
+@media (max-width: 490px) {
   .nav-github span {
     display: none;
   }
@@ -458,25 +473,37 @@ body:has(.lang-banner:not([hidden])) {
   box-shadow: var(--shadow);
 }
 
-.eyebrow-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--mint);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mint) 25%, transparent);
-  flex: none;
-}
-
 .hero h1 {
   font-size: clamp(2.4rem, 5.2vw, 4.1rem);
   line-height: 1.04;
   color: var(--text);
 }
 
-/* "Capítulos de manga →" is ~20% longer than "Manga chapters →": 10% smaller
-   keeps it on one line at every width, as the English title is */
-.hero h1:lang(es) {
+/* Japanese has no letter-spacing or caps, and its lines need more air than Latin ones. */
+:lang(ja) body {
+  line-height: 1.8;
+}
+
+:lang(ja) h1,
+:lang(ja) h2,
+:lang(ja) .kicker,
+:lang(ja) .platform-kind,
+:lang(ja) .site-badge,
+:lang(ja) .tag {
+  letter-spacing: 0;
+}
+
+/* "Descarga manga →" and "Descarrega manga →" run longer than "Download manga →":
+   10% smaller keeps their titles to as many lines as the English one */
+.hero h1:lang(es),
+.hero h1:lang(ca) {
   font-size: clamp(2.16rem, 4.68vw, 3.69rem);
+}
+
+/* Full-width glyphs are wider than Latin ones: at this size the accent breaks after 対応 instead of inside it. */
+.hero h1:lang(ja) {
+  font-size: clamp(2.1rem, 4.4vw, 3.5rem);
+  line-height: 1.25;
 }
 
 .hero h1 .arrow {
