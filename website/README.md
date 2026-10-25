@@ -16,7 +16,7 @@ copy buttons. The page text is translated at build time with i18next.
 
 ```bash
 pnpm install
-pnpm dev       # http://localhost:5173/manga-downloader/ (also serves /es/ and /ca/)
+pnpm dev       # http://localhost:5173/manga-downloader/ (also serves /es/, /ca/ and /ja/)
 pnpm test      # vitest
 pnpm build     # typecheck + build to dist/
 pnpm preview   # serve dist/
@@ -116,7 +116,7 @@ The shadow widens each derivative beyond the crop plus its 56 px margin, so the
 
 Each translated app language has its own set in `src/assets/screenshots/<lang>/`
 (`es`, `ca`; `ja` has none yet), made by `tools/screenshots/capture-all.sh --install` from
-`tools/screenshots/out/<lang>/`. The es and ca pages use a file from there when it
+`tools/screenshots/out/<lang>/`. The es, ca and ja pages use a file from there when it
 exists, and the English one for any image that doesn't (so ja shows English
 screenshots until its set is taken), so the site never shows
 a missing image. The crop geometry above assumes the panels sit where they do
@@ -153,14 +153,15 @@ Every page offers the others in a hidden banner per language (`languageBanner` i
 
 The build also emits `404.html` (no script, `noindex`, the site's stylesheet) for GitHub Pages to serve on missing paths.
 
-Each page gets `hreflang` alternates (plus `x-default` pointing to English), `og:locale` and its alternates, and its own canonical URL. `sitemap.xml` lists all three pages.
+Each page gets `hreflang` alternates (plus `x-default` pointing to English), `og:locale` and its alternates, and its own canonical URL. `sitemap.xml` lists all four pages.
 
 Tests check that every locale has en's keys, placeholders and tags.
 
-Japanese uses Murecho (body) and M PLUS Rounded 1c (headings), loaded from
-`@fontsource` in `main.ts`. Their stacks are set under `:root:lang(ja)` in
-`styles.css`, so the other pages never reference those font files. Only the
-weight 700 of M PLUS Rounded 1c is shipped: headings asking for 600 get it.
+Japanese uses Murecho (body) and M PLUS Rounded 1c (headings), imported from
+`@fontsource` by `src/japanese-fonts.css`. The site-data plugin links that file on
+the ja page only, through the `<!-- fonts:ja -->` placeholder in `index.html`, so the
+other pages never load those font files. Their stacks are set under `:root:lang(ja)` in
+`styles.css`. Only the weight 700 of M PLUS Rounded 1c is shipped: headings asking for 600 get it.
 
 The supported-sites notes stay in English.
 

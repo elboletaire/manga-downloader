@@ -115,7 +115,7 @@
     "ereaderText": "AVIFのページは自動でJPEGに変換されるので、Kobo、KOReader、Calibreで真っ白に表示されることがありません。WebPも、指定すれば変換します。",
     "cbzTitle": "CBZ、CBR、EPUB、または画像のまま",
     "cbzText": "話ごとに1つのCBZ、CBR、EPUB。自分でまとめたい場合は <code>--format raw</code> で画像フォルダーのまま出力できます。",
-    "bundlesTitle": "バンドル",
+    "bundlesTitle": "まとめファイル",
     "bundlesText": "<code>--bundle</code> は、ひとつの編をまるごと1つのファイルにまとめます。中には話ごとのフォルダーが入ります。",
     "rangesTitle": "話の範囲指定",
     "rangesText": "<code>1,3,5-10</code> と指定すれば、その話だけをダウンロードします。続きを追うときも、未読の分だけで済みます。クレジットページは <code>--skip-pages</code> で飛ばせます。",

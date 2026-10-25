@@ -1256,8 +1256,7 @@ code,
 }
 
 :lang(ja) .segmented label,
-:lang(ja) .tab,
-:lang(ja) .group {
+:lang(ja) .tab {
   white-space: nowrap;
 }
 
