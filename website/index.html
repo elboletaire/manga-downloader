@@ -3,7 +3,6 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- i18n:detect -->
     <title>{{a:meta.title}}</title>
     <meta name="description" content="{{a:meta.description:others}}" />
     <link rel="canonical" href="%PAGE_URL%" />
@@ -46,6 +45,12 @@
         "url": "%PAGE_URL%",
         "inLanguage": "%PAGE_LANG%",
         "image": "%SITE_URL%opengraph.png",
+        "screenshot": "%SCREENSHOT%",
+        "featureList": [
+          "{{j:meta.features.downloads}}",
+          "{{j:meta.features.packs}}",
+          "{{j:meta.features.apps}}"
+        ],
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Windows, macOS, Linux",
         "downloadUrl": "https://github.com/elboletaire/manga-downloader/releases/latest",
@@ -55,6 +60,14 @@
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "author": { "@type": "Person", "name": "elboletaire", "url": "https://github.com/elboletaire" },
         "sameAs": ["https://github.com/elboletaire/manga-downloader"]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "manga downloader",
+        "url": "%SITE_URL%"
       }
     </script>
 
@@ -74,6 +87,7 @@
   </head>
   <body>
     <a class="skip-link" href="#main">{{t:nav.skip}}</a>
+    <!-- i18n:banners -->
 
     <header class="site-header">
       <div class="container header-inner">

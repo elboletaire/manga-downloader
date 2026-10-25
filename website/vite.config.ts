@@ -7,7 +7,7 @@ import { defineConfig, type Plugin } from 'vite'
 import { localizeScreenshots } from './build/screenshots.ts'
 import { parseSites, renderSites } from './build/sites.ts'
 import { themeScript } from './src/theme.ts'
-import { LANG_INFO, LANG_KEY, LANGS, redirectTarget, type Lang } from './src/lang.ts'
+import { LANG_INFO, LANGS, type Lang } from './src/lang.ts'
 import { fetchStats, renderStats, type Stats } from './build/stats.ts'
 
 // Where the site is served from: the custom domain at its root. Without one,
@@ -45,14 +45,20 @@ function pageLang(filename: string): Lang {
   return lang
 }
 
-/** English page only: first-time visitors who prefer Spanish or Catalan go to their page, once. */
-function detectScript(): string {
-  return (
-    '<script>(function(){try{' +
-    `var t=(${redirectTarget.toString()})(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||""],localStorage.getItem(${JSON.stringify(LANG_KEY)}));` +
-    `if(t)location.replace(${JSON.stringify(base)}+t+"/"+location.search+location.hash)` +
-    '}catch(e){}})()</script>'
-  )
+/** Hidden banners, one per other language: main.ts shows the one matching the visitor's preferred language. */
+function banners(lang: Lang, t: (key: string) => string): string {
+  return LANGS.filter((l) => l !== lang)
+    .map((l) => {
+      const text = t(`languageBanner.${l}.text`)
+      return (
+        `<aside class="lang-banner" lang="${l}" data-lang-banner="${l}" aria-label="${escapeAttr(text)}" hidden>` +
+        `<p>${text} <a href="${base}${LANG_INFO[l].path}">${t(`languageBanner.${l}.link`)}</a></p>` +
+        `<button type="button" class="lang-banner-close" data-lang-banner-close aria-label="${escapeAttr(t(`languageBanner.${l}.close`))}">` +
+        '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
+        '</button></aside>'
+      )
+    })
+    .join('')
 }
 
 function alternates(): string {
@@ -78,10 +84,11 @@ function switcher(lang: Lang): string {
 }
 
 function sitemap(): string {
+  const lastmod = new Date().toISOString().slice(0, 10)
   const alts = [...LANGS.map((l) => [l, pageURL(l)]), ['x-default', pageURL('en')]]
     .map(([l, href]) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${href}" />`)
     .join('\n')
-  const urls = LANGS.map((l) => `  <url>\n    <loc>${pageURL(l)}</loc>\n${alts}\n  </url>`).join('\n')
+  const urls = LANGS.map((l) => `  <url>\n    <loc>${pageURL(l)}</loc>\n    <lastmod>${lastmod}</lastmod>\n${alts}\n  </url>`).join('\n')
   return (
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n' +
@@ -130,10 +137,10 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
   // Translated screenshots where their WebP exists, else the English one.
   return localizeScreenshots(html, lang, (url) => existsSync(path.join(root, url)))
     .replace('<!-- theme:init -->', () => themeScript())
-    .replace('<!-- i18n:detect -->', () => (lang === 'en' ? detectScript() : ''))
     .replace('<!-- i18n:alternates -->', () => alternates())
     .replace('<!-- i18n:og-alternates -->', () => ogAlternates(lang))
     .replace('<!-- i18n:switcher -->', () => switcher(lang))
+    .replace('<!-- i18n:banners -->', () => banners(lang, (key) => t(key)))
     .replace('<!-- i18n:runtime -->', () => `<script type="application/json" id="i18n-runtime">${runtime}</script>`)
     .replace('<!-- release:data -->', () => (releaseData ? `<script type="application/json" id="latest-release">${releaseData}</script>` : ''))
     .replace('<!-- sites:list -->', () => renderSites(sites, badge, verified, lang))
@@ -150,7 +157,42 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
     .replaceAll('%SITE_URL%', siteURL)
 }
 
-/** Renders every language's page from index.html, plus robots.txt and sitemap.xml. */
+/** Served by GitHub Pages for any missing path: kept out of search, with the site's styles and theme, no page script. */
+function notFoundPage(stylesheet: string): string {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Page not found · manga downloader</title>
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="${base}favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="${base}${stylesheet}" />
+    ${themeScript()}
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="${base}">manga downloader</a>
+      </div>
+    </header>
+    <main class="container not-found">
+      <p class="eyebrow">404</p>
+      <h1>Page not found</h1>
+      <p class="lede">This page doesn't exist or has moved. Pick a language to start again.</p>
+      <ul class="not-found-links">
+        <li><a href="${base}">English</a></li>
+        <li><a href="${base}es/" lang="es">Español</a></li>
+        <li><a href="${base}ca/" lang="ca">Català</a></li>
+      </ul>
+    </main>
+  </body>
+</html>
+`
+}
+
+/** Renders every language's page from index.html, plus robots.txt, sitemap.xml and 404.html. */
 function siteData(): Plugin[] {
   return [
     {
@@ -161,10 +203,14 @@ function siteData(): Plugin[] {
           if (file === readmePath || file.startsWith(localesDir)) server.ws.send({ type: 'full-reload' })
         })
       },
-      generateBundle() {
+      generateBundle(_options, bundle) {
         // Crawl files, generated so they follow SITE_URL.
         this.emitFile({ type: 'asset', fileName: 'robots.txt', source: `User-agent: *\nAllow: /\n\nSitemap: ${siteURL}sitemap.xml\n` })
         this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemap() })
+        // The stylesheet's hashed name is only known from the bundle.
+        const stylesheet = Object.keys(bundle).find((f) => f.endsWith('.css'))
+        if (!stylesheet) throw new Error('site-data: no stylesheet for 404.html')
+        this.emitFile({ type: 'asset', fileName: '404.html', source: notFoundPage(stylesheet) })
       },
       // "pre": runs before Vite parses the page for scripts and assets, in dev and build.
       transformIndexHtml: {
@@ -185,7 +231,16 @@ function siteData(): Plugin[] {
         const preloads = fonts
           .map((f) => `<link rel="preload" href="${base}${f}" as="font" type="font/woff2" crossorigin />`)
           .join('\n    ')
-        return html.replace('<!-- font-preloads -->', () => preloads)
+        // The page's own hero WebP (translated when it exists), by its hashed name in the bundle; dev keeps the placeholder.
+        const lang = html.match(/<html lang="([^"]+)"/)?.[1] ?? 'en'
+        const hero = (source: string) =>
+          Object.entries(ctx.bundle ?? {}).find(([, f]) => 'originalFileNames' in f && f.originalFileNames.includes(source))?.[0]
+        const screenshot =
+          hero(`src/assets/screenshots/${lang}/app-overview-light-1600.webp`) ??
+          hero('src/assets/screenshots/app-overview-light-1600.webp')
+        return html
+          .replace('<!-- font-preloads -->', () => preloads)
+          .replace('%SCREENSHOT%', () => (screenshot ? siteURL + screenshot : '%SCREENSHOT%'))
       },
     },
     {

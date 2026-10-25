@@ -148,7 +148,9 @@ Asset URLs in the template must be root-absolute (`/src/...`).
 
 Strings that scripts write live under `runtime` and are embedded as JSON (`#i18n-runtime`). `src/i18n.ts` formats them without i18next.
 
-The English page carries an inline script (`redirectTarget` in `src/lang.ts`). It sends a first-time visitor whose preferred language is Spanish or Catalan to that page once. A language picked in the header switcher is saved in `localStorage` (`md:lang`) and turns this off.
+Every page offers the others in a hidden banner per language (`languageBanner` in the locales), which `main.ts` shows when the visitor's first preferred language (`preferredLang` in `src/lang.ts`) is published and differs from the page's. Nothing redirects, so every URL stays put for search engines. Closing the banner or following its link saves the choice in `localStorage` (`md:lang`), as the header switcher does, and turns the banner off.
+
+The build also emits `404.html` (no script, `noindex`, the site's stylesheet) for GitHub Pages to serve on missing paths.
 
 Each page gets `hreflang` alternates (plus `x-default` pointing to English), `og:locale` and its alternates, and its own canonical URL. `sitemap.xml` lists all three pages.
 
@@ -158,7 +160,7 @@ The supported-sites notes stay in English.
 
 The download statistics in the hero section (numbers and labels like "downloads", "Docker pulls") live under `stats.*` in each locale file. The compact numbers (`11K+`) stay in that notation across all languages, even though `Intl.NumberFormat('compact')` would produce language-specific text like "11 mil"; see `build/stats.ts`.
 
-To add a language: add it to `LANGS`/`LANG_INFO`, create `locales/xx.json` and an `xx/index.html` stub, and extend `redirectTarget` if it should auto-redirect.
+To add a language: add it to `LANGS`/`LANG_INFO`, create `locales/xx.json` and an `xx/index.html` stub, and add its `languageBanner` entry to every locale file.
 
 ## Another domain
 

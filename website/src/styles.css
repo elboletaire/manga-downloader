@@ -333,6 +333,70 @@ code {
   }
 }
 
+/* language banner ------------------------------------------------------- */
+
+/* Fixed to the bottom, out of the flow, so showing it after first paint doesn't move the page. */
+.lang-banner {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px max(var(--gutter), env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left));
+  border-top: 1px solid var(--border);
+  /* --accent-soft is translucent in dark mode, so tint an opaque base */
+  background: linear-gradient(var(--accent-soft), var(--accent-soft)), var(--bg);
+  box-shadow: var(--shadow);
+  font-size: 0.92rem;
+}
+
+.lang-banner[hidden] {
+  display: none;
+}
+
+/* Room at the end of the page so the banner never covers the footer */
+body:has(.lang-banner:not([hidden])) {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+
+.lang-banner p {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+}
+
+.lang-banner a {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.lang-banner-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.lang-banner-close:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--text);
+}
+
+.lang-banner-close:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+}
+
 /* hero ------------------------------------------------------------------ */
 
 .hero {
@@ -1599,6 +1663,42 @@ code {
   .theme-switch span {
     padding: 7px 12px;
   }
+}
+
+/* 404 ------------------------------------------------------------------ */
+
+.not-found {
+  padding-block: clamp(56px, 12vw, 120px);
+  text-align: center;
+}
+
+.not-found h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+}
+
+.not-found .lede {
+  margin-inline: auto;
+}
+
+.not-found-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.not-found-links a {
+  padding: 10px 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-text);
+  font-weight: 600;
+  text-decoration: none;
 }
 
 /* motion ------------------------------------------------------------------ */

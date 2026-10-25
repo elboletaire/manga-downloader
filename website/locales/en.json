@@ -8,7 +8,12 @@
     "socialDescription_other": "Download manga from MangaDex and {{count}} other sites as CBZ, CBR or EPUB files for your e-reader or comic app. A desktop app and a CLI, free and open source.",
     "imageAlt": "The manga downloader mascot, a cat-shaped open book, next to the tagline: Manga chapters → reader-ready CBZ & EPUB.",
     "jsonLdDescription_one": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other site and packs them into CBZ, CBR or EPUB files for e-readers and comic apps.",
-    "jsonLdDescription_other": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other sites and packs them into CBZ, CBR or EPUB files for e-readers and comic apps."
+    "jsonLdDescription_other": "A desktop app and command line tool that downloads manga chapters from MangaDex and {{count}} other sites and packs them into CBZ, CBR or EPUB files for e-readers and comic apps.",
+    "features": {
+      "downloads": "Downloads manga chapters from MangaDex and many other supported sites",
+      "packs": "Packs chapters into CBZ, CBR or EPUB files for e-readers and comic apps",
+      "apps": "A desktop app and a command line tool"
+    }
   },
   "common": {
     "desktopApp": "Desktop app",
@@ -26,9 +31,9 @@
   },
   "hero": {
     "eyebrow": "Since v1.11: a desktop app for Windows, macOS and Linux",
-    "title": "Manga chapters <span class=\"arrow\">→</span> <span class=\"accent\">reader&#8209;ready CBZ &amp; EPUB</span>",
-    "lede_one": "Paste a link from MangaDex or {{count}} other supported site, pick your chapters, and get clean CBZ, CBR or EPUB files that open on your e-reader or in your favourite comic app.",
-    "lede_other": "Paste a link from MangaDex or any of {{count}} other supported sites, pick your chapters, and get clean CBZ, CBR or EPUB files that open on your e-reader or in your favourite comic app.",
+    "title": "Download manga <span class=\"arrow\">→</span> <span class=\"accent\">reader&#8209;ready CBZ &amp; EPUB</span>",
+    "lede_one": "Paste a link from MangaDex or {{count}} other supported site, pick your chapters, and get clean CBZ, CBR or EPUB files to read offline on your e-reader or in your favourite comic app.",
+    "lede_other": "Paste a link from MangaDex or any of {{count}} other supported sites, pick your chapters, and get clean CBZ, CBR or EPUB files to read offline on your e-reader or in your favourite comic app.",
     "downloadLabel": "Download the desktop app",
     "downloadDetail": "For Windows, macOS and Linux",
     "otherPlatforms": "Other platforms",
@@ -179,6 +184,23 @@
     "nav": "Project",
     "releases": "Releases",
     "issue": "Report an issue"
+  },
+  "languageBanner": {
+    "en": {
+      "text": "This page is also in English",
+      "link": "Read in English",
+      "close": "Close"
+    },
+    "es": {
+      "text": "Esta página también está en español",
+      "link": "Ver en español",
+      "close": "Cerrar"
+    },
+    "ca": {
+      "text": "Aquesta pàgina també és en català",
+      "link": "Llegeix-la en català",
+      "close": "Tanca"
+    }
   },
   "runtime": {
     "download": {
