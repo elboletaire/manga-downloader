@@ -56,6 +56,7 @@ Each tape has a light twin (`OneHalfLight` instead of `OneHalfDark`, otherwise t
 The brand rasters are not part of a normal release refresh; redo them only when `assets/brand/` changed, per `assets/brand/brand.md` and the `gui` skill:
 
 - `assets/brand/social/opengraph.png` (from `opengraph.svg`, 1280x640), copied to `website/public/opengraph.png`.
+- `website/public/opengraph-{es,ca,ja}.png`, the localized social cards: whenever the master changes, regenerate them with `node build/opengraph.mjs` from `website/` (needs Chromium and ImageMagick; see `website/README.md`).
 - The favicon and PWA PNGs in `website/public/` (from `assets/brand/favicon/`) and the website's copies of the SVGs in `website/src/assets/brand/`.
 - The app icons in `gui/build/` (`appicon.png`, `windows/icon.ico`, `linux/icon.png`) from `assets/brand/app/appicon.svg`.
 - The README header SVGs are used directly, nothing to render.

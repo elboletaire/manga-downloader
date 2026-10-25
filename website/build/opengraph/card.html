@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="%LANG%">
+  <head>
+    <meta charset="utf-8" />
+    <title>%TITLE%</title>
+    %STYLESHEETS%
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 1280px;
+        height: 640px;
+        overflow: hidden;
+      }
+      body {
+        position: relative;
+        background: #f8f5ff;
+      }
+      .art {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+      .tagline {
+        position: absolute;
+        left: 92px;
+        top: 386.5px;
+        margin: 0;
+        font-family: %TAGLINE_FONT%;
+        font-weight: %TAGLINE_WEIGHT%;
+        font-size: 33.3px;
+        line-height: 1.2;
+        color: #4a4466;
+        white-space: nowrap;
+      }
+      .arrow {
+        display: inline-block;
+        vertical-align: middle;
+        margin: 0 8px 0 9px;
+        overflow: visible;
+        position: relative;
+        top: -1.5px;
+      }
+      .chips {
+        position: absolute;
+        left: 87px;
+        top: 473px;
+        display: flex;
+        gap: 12px;
+      }
+      .chip {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 56px;
+        box-sizing: border-box;
+        padding: 0 22px 0 19px;
+        border: 2px solid #ded4fb;
+        border-radius: 28px;
+        background: #fff;
+        color: #1e1a33;
+        font-family: %CHIP_FONT%;
+        font-weight: 500;
+        font-size: 27px;
+        line-height: 1;
+        white-space: nowrap;
+      }
+      .dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        flex: none;
+      }
+      .chip:nth-child(1) .dot {
+        background: #7c5ce0;
+      }
+      .chip:nth-child(2) .dot {
+        background: #2fb892;
+      }
+      .chip:nth-child(3) .dot {
+        background: #f06a97;
+      }
+      .chip:nth-child(4) .dot {
+        background: #1e1a33;
+      }
+    </style>
+  </head>
+  <body>
+    %ARTWORK%
+    <p class="tagline">%TAGLINE%</p>
+    <div class="chips">%CHIPS%</div>
+    <script>
+      // Shrinks the tagline until it fits the column left of the mascot.
+      const MAX_WIDTH = 700;
+      document.fonts.ready.then(() => {
+        const tagline = document.querySelector('.tagline');
+        for (let size = 33.3; size > 18 && tagline.getBoundingClientRect().width > MAX_WIDTH; size -= 0.5) {
+          tagline.style.fontSize = size + 'px';
+        }
+      });
+    </script>
+  </body>
+</html>

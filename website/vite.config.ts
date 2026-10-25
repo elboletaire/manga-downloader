@@ -155,6 +155,7 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
     .replaceAll('%PAGE_LANG%', lang)
     .replaceAll('%PAGE_URL%', pageURL(lang))
     .replaceAll('%OG_LOCALE%', LANG_INFO[lang].ogLocale)
+    .replaceAll('%OG_IMAGE%', siteURL + LANG_INFO[lang].ogImage)
     .replaceAll('%SITE_URL%', siteURL)
 }
 

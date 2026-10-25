@@ -48,6 +48,16 @@ pnpm preview   # serve dist/
   release if one was published since the build.
 - **Brand assets**: copied from the approved brand kit into `src/assets/brand/`
   and `public/` (favicons, `opengraph.png`). Don't redraw them.
+- **Social cards**: each language's `og:image`, `twitter:image` and JSON-LD image
+  point to its own card (`%OG_IMAGE%`, from `ogImage` in `LANG_INFO`). English keeps
+  the brand's `public/opengraph.png`; es, ca and ja are `public/opengraph-<lang>.png`,
+  committed and rendered offline by `build/opengraph.mjs` from the master SVG
+  (minus its tagline and chips, which the script sets as text from `build/opengraph/card.html`,
+  `chips.json` and each locale's `meta.socialTitle`). Regenerate after changing one with
+  `node build/opengraph.mjs` (default: es ca ja; `--out DIR` to compare, and `en` renders
+  the English card through the same template). It needs Chromium (`CHROME` env var,
+  default `chromium`), and ImageMagick for the 256-colour PNG. Each card's `imageAlt`
+  quotes its tagline, so update that with the locale.
 - **Terminal GIFs**: referenced from `assets/demos/` on `master` via raw GitHub URLs,
   lazy-loaded. Each GIF has a `-light` twin (`download-light.gif`), shown in light
   mode; the plain GIF is the dark one, shown when the theme is dark.

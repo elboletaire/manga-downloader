@@ -6,7 +6,7 @@
     "socialTitle": "manga downloader：漫画のチャプター → 電子書籍リーダー対応のCBZ・EPUB",
     "socialDescription_one": "MangaDexほか{{count}}サイトの漫画を、電子書籍リーダーや漫画アプリで読めるCBZ、CBR、EPUBファイルにダウンロード。デスクトップアプリとCLI。無料でオープンソースです。",
     "socialDescription_other": "MangaDexほか{{count}}サイトの漫画を、電子書籍リーダーや漫画アプリで読めるCBZ、CBR、EPUBファイルにダウンロード。デスクトップアプリとCLI。無料でオープンソースです。",
-    "imageAlt": "manga downloaderのマスコット、猫の形をした開いた本。キャッチコピー「Manga chapters → reader-ready CBZ & EPUB」と並んでいる。",
+    "imageAlt": "manga downloaderのマスコット、猫の形をした開いた本。キャッチコピー「漫画のチャプター → 電子書籍リーダー対応のCBZ・EPUB」と並んでいる。",
     "jsonLdDescription_one": "MangaDexほか{{count}}サイトの漫画の話をダウンロードし、電子書籍リーダーや漫画アプリ向けのCBZ、CBR、EPUBファイルにまとめる、デスクトップアプリとコマンドラインツール。",
     "jsonLdDescription_other": "MangaDexほか{{count}}サイトの漫画の話をダウンロードし、電子書籍リーダーや漫画アプリ向けのCBZ、CBR、EPUBファイルにまとめる、デスクトップアプリとコマンドラインツール。",
     "features": {
