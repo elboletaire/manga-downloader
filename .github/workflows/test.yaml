@@ -23,3 +23,28 @@ jobs:
       # the demo build's fake grabber only builds with the demo tag
       - name: Test the demo tapes' fake grabber
         run: make test/demo
+
+  # the update-check Worker, as website-test.yaml runs the website
+  worker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: worker/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: worker/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm test
+
+      - run: pnpm typecheck
