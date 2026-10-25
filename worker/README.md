@@ -67,14 +67,7 @@ The Analytics Engine dataset is created on the first write, so it needs no setup
 
 ## Custom domain (`releases.mangadownloader.cat`)
 
-The apps ask `https://releases.mangadownloader.cat`, which isn't routed yet because the zone isn't active. `workers_dev` stays on, so `manga-downloader-updates.elboletaire.workers.dev` keeps working.
-Once the zone is active, add this to `wrangler.jsonc` (next to `workers_dev`) and deploy:
-
-```jsonc
-"routes": [{ "pattern": "releases.mangadownloader.cat", "custom_domain": true }]
-```
-
-Until then the apps fall back to GitHub, so the missing route costs nothing but the count.
+The apps ask `https://releases.mangadownloader.cat`, a Workers custom domain set in `wrangler.jsonc` (`routes`), so a deploy creates its DNS record and certificate. `workers_dev` stays on, so `manga-downloader-updates.elboletaire.workers.dev` keeps working too.
 
 ## Querying the counts
 
