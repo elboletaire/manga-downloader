@@ -30,7 +30,6 @@
     "language": "Idioma"
   },
   "hero": {
-    "eyebrow": "Des de la v1.11: aplicació d'escriptori per a Windows, macOS i Linux",
     "title": "Descarrega manga <span class=\"arrow\">→</span> <span class=\"accent\">CBZ i EPUB a&nbsp;punt per llegir</span>",
     "lede_one": "Enganxa un enllaç de MangaDex o de {{count}} lloc compatible més, tria els capítols i aconsegueix fitxers CBZ, CBR o EPUB nets per llegir sense connexió al teu lector electrònic o a la teva aplicació de còmics preferida.",
     "lede_other": "Enganxa un enllaç de MangaDex o de qualsevol dels altres {{count}} llocs compatibles, tria els capítols i aconsegueix fitxers CBZ, CBR o EPUB nets per llegir sense connexió al teu lector electrònic o a la teva aplicació de còmics preferida.",

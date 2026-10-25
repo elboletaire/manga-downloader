@@ -30,7 +30,6 @@
     "language": "言語"
   },
   "hero": {
-    "eyebrow": "v1.11から：Windows、macOS、Linux向けのデスクトップアプリ",
     "title": "漫画をダウンロード <span class=\"arrow\">→</span> <span class=\"accent\">電子書籍リーダー対応のCBZ・EPUB</span>",
     "lede_one": "MangaDexやほか{{count}}の対応サイトのリンクを貼り付けて、話を選ぶだけ。電子書籍リーダーや漫画アプリでオフライン閲覧できる、そのまま読めるCBZ、CBR、EPUBファイルが手に入ります。",
     "lede_other": "MangaDexやほか{{count}}の対応サイトのリンクを貼り付けて、話を選ぶだけ。電子書籍リーダーや漫画アプリでオフライン閲覧できる、そのまま読めるCBZ、CBR、EPUBファイルが手に入ります。",

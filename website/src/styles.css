@@ -473,15 +473,6 @@ body:has(.lang-banner:not([hidden])) {
   box-shadow: var(--shadow);
 }
 
-.eyebrow-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--mint);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mint) 25%, transparent);
-  flex: none;
-}
-
 .hero h1 {
   font-size: clamp(2.4rem, 5.2vw, 4.1rem);
   line-height: 1.04;
@@ -502,9 +493,10 @@ body:has(.lang-banner:not([hidden])) {
   letter-spacing: 0;
 }
 
-/* "Capítulos de manga →" is ~20% longer than "Manga chapters →": 10% smaller
-   keeps it on one line at every width, as the English title is */
-.hero h1:lang(es) {
+/* "Descarga manga →" and "Descarrega manga →" run longer than "Download manga →":
+   10% smaller keeps their titles to as many lines as the English one */
+.hero h1:lang(es),
+.hero h1:lang(ca) {
   font-size: clamp(2.16rem, 4.68vw, 3.69rem);
 }
 

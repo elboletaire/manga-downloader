@@ -30,7 +30,6 @@
     "language": "Language"
   },
   "hero": {
-    "eyebrow": "Since v1.11: a desktop app for Windows, macOS and Linux",
     "title": "Download manga <span class=\"arrow\">→</span> <span class=\"accent\">reader&#8209;ready CBZ &amp; EPUB</span>",
     "lede_one": "Paste a link from MangaDex or {{count}} other supported site, pick your chapters, and get clean CBZ, CBR or EPUB files to read offline on your e-reader or in your favourite comic app.",
     "lede_other": "Paste a link from MangaDex or any of {{count}} other supported sites, pick your chapters, and get clean CBZ, CBR or EPUB files to read offline on your e-reader or in your favourite comic app.",
