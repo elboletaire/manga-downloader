@@ -7,6 +7,7 @@ import (
 	"errors"
 	"image"
 	"image/color"
+	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"math/rand"
@@ -51,6 +52,18 @@ func pngBytes(t *testing.T, img image.Image) []byte {
 	buf := &bytes.Buffer{}
 	if err := png.Encode(buf, img); err != nil {
 		t.Fatalf("encoding the png fixture: %s", err)
+	}
+
+	return buf.Bytes()
+}
+
+// gifBytes encodes img as GIF, for the cases that check --compress leaves one alone
+func gifBytes(t *testing.T, img image.Image) []byte {
+	t.Helper()
+
+	buf := &bytes.Buffer{}
+	if err := gif.Encode(buf, img, nil); err != nil {
+		t.Fatalf("encoding the gif fixture: %s", err)
 	}
 
 	return buf.Bytes()
@@ -191,27 +204,27 @@ func TestNamePagesConvertsListedFormats(t *testing.T) {
 	webpHeader := []byte("RIFF\x00\x00\x00\x00WEBPVP8 stub")
 
 	cases := []struct {
-		name     string
-		page     []byte
-		formats  grabber.ConvertFormats
-		wantName string
+		name        string
+		page        []byte
+		always      grabber.ConvertFormats
+		whenSmaller grabber.ConvertFormats
+		wantName    string
 		// wantUntouched asserts the page bytes went in and came out identical,
 		// which an extension-only assertion can't catch
 		wantUntouched bool
 	}{
-		{"avif is converted when listed", realAvif, grabber.ConvertFormats{grabber.ConvertAVIF: true}, "000.jpg", false},
-		{"avif is kept when not listed", realAvif, grabber.ConvertFormats{}, "000.avif", true},
-		{"webp is kept when not listed", webpHeader, grabber.ConvertFormats{grabber.ConvertAVIF: true}, "000.webp", true},
-		// a jpeg page must never be re-encoded, that's generation loss for nothing
-		{"jpeg is never re-encoded", realJpeg, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}, "000.jpg", true},
-		// a png is only converted when --compress lists it (pageFormats adds "png"), and then only when the JPEG is smaller
-		{"png is never converted when not listed", flatPng, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}, "000.png", true},
-		{"png is kept when its jpeg is bigger", flatPng, grabber.ConvertFormats{"png": true}, "000.png", true},
-		{"png is converted when its jpeg is smaller", noisyPng, grabber.ConvertFormats{"png": true}, "000.jpg", false},
+		{"avif is converted when listed", realAvif, grabber.ConvertFormats{grabber.ConvertAVIF: true}, nil, "000.jpg", false},
+		{"avif is kept when not listed", realAvif, grabber.ConvertFormats{}, nil, "000.avif", true},
+		{"webp is kept when not listed", webpHeader, grabber.ConvertFormats{grabber.ConvertAVIF: true}, nil, "000.webp", true},
+		// without --compress a jpeg page is never re-encoded, that's generation loss for nothing
+		{"jpeg is never re-encoded when not compressing", realJpeg, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}, nil, "000.jpg", true},
+		{"png is never converted when not listed", flatPng, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}, nil, "000.png", true},
+		{"png is kept when its jpeg is bigger", flatPng, nil, grabber.ConvertFormats{"png": true}, "000.png", true},
+		{"png is converted when its jpeg is smaller", noisyPng, nil, grabber.ConvertFormats{"png": true}, "000.jpg", false},
 	}
 
 	for _, c := range cases {
-		named := namePages([]*downloader.File{{Data: c.page}}, c.formats, grabber.JPEGQualityDefault, FormatCBZ)
+		named := namePages([]*downloader.File{{Data: c.page}}, c.always, c.whenSmaller, grabber.JPEGQualityDefault, FormatCBZ)
 
 		if len(named) != 1 {
 			t.Fatalf("%s: namePages returned %d files, want 1", c.name, len(named))
@@ -222,6 +235,129 @@ func TestNamePagesConvertsListedFormats(t *testing.T) {
 		if untouched := bytes.Equal(named[0].Data, c.page); untouched != c.wantUntouched {
 			t.Errorf("%s: page bytes untouched = %v, want %v", c.name, untouched, c.wantUntouched)
 		}
+	}
+}
+
+// TestNamePagesCompressJPEG pins that --compress re-encodes JPEG pages at the
+// quality given, keeping the original when the re-encode isn't smaller
+func TestNamePagesCompressJPEG(t *testing.T) {
+	_, whenSmaller := pageFormats(FormatCBZ, grabber.ConvertFormats{}, true)
+
+	noisy := jpegBytes(t, noisyImage(64, 64))
+	named := namePages([]*downloader.File{{Data: noisy}}, nil, whenSmaller, 40, FormatCBZ)
+	if named[0].Name != "000.jpg" || bytes.Equal(named[0].Data, noisy) {
+		t.Errorf("a jpeg at quality 40 was named %q (untouched %v), want it re-encoded to 000.jpg",
+			named[0].Name, bytes.Equal(named[0].Data, noisy))
+	}
+	if len(named[0].Data) >= len(noisy) {
+		t.Errorf("re-encoded jpeg is %d bytes, want it smaller than the %d-byte original", len(named[0].Data), len(noisy))
+	}
+
+	smooth := jpegBytes(t, gradientImage(64, 64))
+	named = namePages([]*downloader.File{{Data: smooth}}, nil, whenSmaller, 95, FormatCBZ)
+	if named[0].Name != "000.jpg" || !bytes.Equal(named[0].Data, smooth) {
+		t.Errorf("a jpeg whose re-encode at quality 95 is bigger was named %q (untouched %v), want the original kept",
+			named[0].Name, bytes.Equal(named[0].Data, smooth))
+	}
+}
+
+// TestNamePagesCompressFormats pins which formats --compress re-encodes: every
+// one but GIF, and each only when its JPEG isn't bigger
+func TestNamePagesCompressFormats(t *testing.T) {
+	_, whenSmaller := pageFormats(FormatCBZ, grabber.ConvertFormats{}, true)
+
+	// flat art is much smaller as AVIF or PNG than as JPEG, so these are kept
+	flatAvif := avifBytes(t, flatImage(64, 64))
+	flatPng := pngBytes(t, flatImage(64, 64))
+	if got := extFromContent(flatAvif); got != "avif" {
+		t.Fatalf("avif fixture sniffs as %q, want avif", got)
+	}
+
+	named := namePages([]*downloader.File{{Data: flatAvif}}, nil, whenSmaller, grabber.JPEGQualityDefault, FormatCBZ)
+	if named[0].Name != "000.avif" || !bytes.Equal(named[0].Data, flatAvif) {
+		t.Errorf("a flat avif under --compress was named %q, want the original 000.avif kept", named[0].Name)
+	}
+
+	named = namePages([]*downloader.File{{Data: flatPng}}, nil, whenSmaller, grabber.JPEGQualityDefault, FormatCBZ)
+	if named[0].Name != "000.png" || !bytes.Equal(named[0].Data, flatPng) {
+		t.Errorf("a flat png under --compress was named %q, want the original 000.png kept", named[0].Name)
+	}
+
+	// tinyWebP is lossless and tiny, so its JPEG comes out bigger
+	named = namePages([]*downloader.File{{Data: tinyWebP}}, nil, whenSmaller, grabber.JPEGQualityDefault, FormatCBZ)
+	if named[0].Name != "000.webp" || !bytes.Equal(named[0].Data, tinyWebP) {
+		t.Errorf("a tiny webp under --compress was named %q, want the original 000.webp kept", named[0].Name)
+	}
+
+	gif := gifBytes(t, flatImage(64, 64))
+	named = namePages([]*downloader.File{{Data: gif}}, nil, whenSmaller, grabber.JPEGQualityDefault, FormatCBZ)
+	if named[0].Name != "000.gif" || !bytes.Equal(named[0].Data, gif) {
+		t.Errorf("a gif under --compress was named %q, want it left alone as 000.gif", named[0].Name)
+	}
+}
+
+// TestNamePagesCompressWebPWhenSmaller pins that a webp re-encoded by --compress
+// is written as JPEG when smaller. The decoder is stubbed: the test webp is
+// too small to ever compress, and the routing is what's under test here.
+func TestNamePagesCompressWebPWhenSmaller(t *testing.T) {
+	original := decodeImage
+	defer func() { decodeImage = original }()
+	decodeImage = func([]byte) (image.Image, error) {
+		return noisyImage(64, 64), nil
+	}
+
+	// a webp header followed by padding, so the page is bigger than its JPEG
+	page := append([]byte("RIFF\x00\x00\x00\x00WEBPVP8 "), make([]byte, 100000)...)
+	_, whenSmaller := pageFormats(FormatCBZ, grabber.ConvertFormats{}, true)
+
+	named := namePages([]*downloader.File{{Data: page}}, nil, whenSmaller, grabber.JPEGQualityDefault, FormatCBZ)
+	if named[0].Name != "000.jpg" {
+		t.Errorf("a webp that shrinks under --compress was named %q, want 000.jpg", named[0].Name)
+	}
+}
+
+// TestNamePagesConvertImagesWinsOverCompress pins the precedence: a format
+// --convert-images (or EPUB's AVIF) asks for is always converted, even when
+// the JPEG is bigger, and only the formats --compress alone adds keep their
+// original when it is
+func TestNamePagesConvertImagesWinsOverCompress(t *testing.T) {
+	flatAvif := avifBytes(t, flatImage(64, 64))
+
+	always, whenSmaller := pageFormats(FormatCBZ, grabber.ConvertFormats{grabber.ConvertAVIF: true}, true)
+	if !always.Has(grabber.ConvertAVIF) || whenSmaller.Has(grabber.ConvertAVIF) {
+		t.Fatalf("avif with convert-images and compress: always %v, whenSmaller %v, want avif only in always", always, whenSmaller)
+	}
+
+	named := namePages([]*downloader.File{{Data: flatAvif}}, always, whenSmaller, grabber.JPEGQualityDefault, FormatCBZ)
+	if named[0].Name != "000.jpg" {
+		t.Errorf("avif with convert-images and compress named %q, want it converted to 000.jpg", named[0].Name)
+	}
+
+	// EPUB converts AVIF whatever --convert-images says, so --compress doesn't keep it either
+	always, whenSmaller = pageFormats(FormatEPUB, grabber.ConvertFormats{}, true)
+	named = namePages([]*downloader.File{{Data: flatAvif}}, always, whenSmaller, grabber.JPEGQualityDefault, FormatEPUB)
+	if named[0].Name != "000.jpg" {
+		t.Errorf("avif for EPUB with compress named %q, want it converted to 000.jpg", named[0].Name)
+	}
+}
+
+// TestNamePagesCompressWithoutConvertImages pins that --convert-images none
+// still lets --compress shrink pages
+func TestNamePagesCompressWithoutConvertImages(t *testing.T) {
+	noisyPng := pngBytes(t, noisyImage(64, 64))
+
+	formats, err := grabber.ParseConvertFormats("none")
+	if err != nil {
+		t.Fatalf("parsing none: %s", err)
+	}
+	always, whenSmaller := pageFormats(FormatCBZ, formats, true)
+	if len(always) != 0 {
+		t.Errorf("none converts %v, want nothing always converted", always)
+	}
+
+	named := namePages([]*downloader.File{{Data: noisyPng}}, always, whenSmaller, grabber.JPEGQualityDefault, FormatCBZ)
+	if named[0].Name != "000.jpg" {
+		t.Errorf("a noisy png under none + compress named %q, want 000.jpg", named[0].Name)
 	}
 }
 
@@ -270,7 +406,7 @@ func TestNamePagesConvertsWebP(t *testing.T) {
 		t.Fatalf("fixture sniffs as %q, want %q", got, "webp")
 	}
 
-	named := namePages([]*downloader.File{{Data: tinyWebP}}, grabber.ConvertFormats{grabber.ConvertWebP: true}, grabber.JPEGQualityDefault, FormatCBZ)
+	named := namePages([]*downloader.File{{Data: tinyWebP}}, grabber.ConvertFormats{grabber.ConvertWebP: true}, nil, grabber.JPEGQualityDefault, FormatCBZ)
 
 	if named[0].Name != "000.jpg" {
 		t.Errorf("page named %q, want %q", named[0].Name, "000.jpg")
@@ -289,7 +425,7 @@ func TestNamePagesKeepsOriginalOnConversionFailure(t *testing.T) {
 	// sniffs as avif, but there's nothing decodable behind the header
 	page := append([]byte{0x00, 0x00, 0x00, 0x1c, 'f', 't', 'y', 'p', 'a', 'v', 'i', 'f'}, []byte("truncated")...)
 
-	named := namePages([]*downloader.File{{Data: page}}, grabber.ConvertFormats{grabber.ConvertAVIF: true}, grabber.JPEGQualityDefault, FormatCBZ)
+	named := namePages([]*downloader.File{{Data: page}}, grabber.ConvertFormats{grabber.ConvertAVIF: true}, nil, grabber.JPEGQualityDefault, FormatCBZ)
 
 	if named[0].Name != "000.avif" {
 		t.Errorf("page named %q, want %q", named[0].Name, "000.avif")

@@ -365,22 +365,26 @@ func TestArchiveEPUBProgressPerPage(t *testing.T) {
 
 func TestPageFormatsConvertsAVIFForEPUB(t *testing.T) {
 	tests := []struct {
-		format   string
-		in       grabber.ConvertFormats
-		compress bool
-		want     grabber.ConvertFormats
+		format      string
+		in          grabber.ConvertFormats
+		compress    bool
+		wantAlways  grabber.ConvertFormats
+		wantSmaller grabber.ConvertFormats
 	}{
-		{FormatEPUB, grabber.ConvertFormats{}, false, grabber.ConvertFormats{grabber.ConvertAVIF: true}},
-		{FormatEPUB, grabber.ConvertFormats{grabber.ConvertWebP: true}, false, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}},
-		{FormatCBZ, grabber.ConvertFormats{}, false, grabber.ConvertFormats{}},
-		{FormatRaw, grabber.ConvertFormats{grabber.ConvertWebP: true}, false, grabber.ConvertFormats{grabber.ConvertWebP: true}},
-		// compress adds png to whatever the output converts, whatever the format
-		{FormatCBZ, grabber.ConvertFormats{}, true, grabber.ConvertFormats{"png": true}},
-		{FormatEPUB, grabber.ConvertFormats{}, true, grabber.ConvertFormats{grabber.ConvertAVIF: true, "png": true}},
+		{FormatEPUB, grabber.ConvertFormats{}, false, grabber.ConvertFormats{grabber.ConvertAVIF: true}, grabber.ConvertFormats{}},
+		{FormatEPUB, grabber.ConvertFormats{grabber.ConvertWebP: true}, false, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}, grabber.ConvertFormats{}},
+		{FormatCBZ, grabber.ConvertFormats{}, false, grabber.ConvertFormats{}, grabber.ConvertFormats{}},
+		{FormatRaw, grabber.ConvertFormats{grabber.ConvertWebP: true}, false, grabber.ConvertFormats{grabber.ConvertWebP: true}, grabber.ConvertFormats{}},
+		// compress adds every format but gif to whenSmaller, whatever the format
+		{FormatCBZ, grabber.ConvertFormats{}, true, grabber.ConvertFormats{}, grabber.ConvertFormats{"jpg": true, "png": true, "webp": true, "avif": true}},
+		{FormatEPUB, grabber.ConvertFormats{}, true, grabber.ConvertFormats{grabber.ConvertAVIF: true}, grabber.ConvertFormats{"jpg": true, "png": true, "webp": true}},
+		// a format --convert-images already converts stays always, not whenSmaller
+		{FormatCBZ, grabber.ConvertFormats{grabber.ConvertAVIF: true}, true, grabber.ConvertFormats{grabber.ConvertAVIF: true}, grabber.ConvertFormats{"jpg": true, "png": true, "webp": true}},
 	}
 	for _, tt := range tests {
-		if got := pageFormats(tt.format, tt.in, tt.compress); !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("pageFormats(%q, %v, %v) = %v, want %v", tt.format, tt.in, tt.compress, got, tt.want)
+		always, whenSmaller := pageFormats(tt.format, tt.in, tt.compress)
+		if !reflect.DeepEqual(always, tt.wantAlways) || !reflect.DeepEqual(whenSmaller, tt.wantSmaller) {
+			t.Errorf("pageFormats(%q, %v, %v) = %v, %v, want %v, %v", tt.format, tt.in, tt.compress, always, whenSmaller, tt.wantAlways, tt.wantSmaller)
 		}
 	}
 	// the caller's set is left alone
@@ -593,14 +597,14 @@ func TestNamePagesEPUBWarnsOncePerFailedPage(t *testing.T) {
 	// an AVIF that won't convert is left out by ArchiveEPUB, which warns about
 	// it: namePages stays quiet rather than warning twice
 	avif := append([]byte{0x00, 0x00, 0x00, 0x1c, 'f', 't', 'y', 'p', 'a', 'v', 'i', 'f'}, []byte("truncated")...)
-	namePages([]*downloader.File{{Data: avif}}, formats, grabber.JPEGQualityDefault, FormatEPUB)
+	namePages([]*downloader.File{{Data: avif}}, formats, nil, grabber.JPEGQualityDefault, FormatEPUB)
 	if len(*warnings) != 0 {
 		t.Errorf("an AVIF failure warned %d times for EPUB, want none: %q", len(*warnings), *warnings)
 	}
 
 	// a WebP EPUB can show keeps its original, which is still a warning
 	webp := append([]byte("RIFF\x00\x00\x00\x00WEBPVP8 "), []byte("truncated")...)
-	named := namePages([]*downloader.File{{Data: webp}}, formats, grabber.JPEGQualityDefault, FormatEPUB)
+	named := namePages([]*downloader.File{{Data: webp}}, formats, nil, grabber.JPEGQualityDefault, FormatEPUB)
 	if len(*warnings) != 1 || named[0].Name != "000.webp" {
 		t.Errorf("a WebP failure: %d warnings, named %q; want one warning and 000.webp", len(*warnings), named[0].Name)
 	}

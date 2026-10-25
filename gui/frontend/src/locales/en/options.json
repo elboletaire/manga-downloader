@@ -45,7 +45,7 @@
     "avifEpub": "Always on for EPUB: readers can't show AVIF.",
     "compress": {
       "label": "Compress pages",
-      "hint": "PNG pages become JPEG when that's smaller, to shrink the file."
+      "hint": "Pages become JPEG when that's smaller, to shrink the file. JPEG pages only shrink at a lower quality."
     },
     "quality": {
       "label": "JPEG quality",

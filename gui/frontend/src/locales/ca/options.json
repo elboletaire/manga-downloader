@@ -45,7 +45,7 @@
     "avifEpub": "Sempre activat per a EPUB: els lectors no mostren AVIF.",
     "compress": {
       "label": "Comprimeix pàgines",
-      "hint": "Les pàgines PNG passen a JPEG quan això ocupa menys, per reduir el fitxer."
+      "hint": "Les pàgines passen a JPEG quan això ocupa menys, per reduir el fitxer. Les pàgines JPEG només baixen de mida amb una qualitat més baixa."
     },
     "quality": {
       "label": "Qualitat JPEG",
