@@ -1,0 +1,4 @@
+/* Linked only by the Japanese page (site-data plugin), so other pages never load these files. */
+@import '@fontsource-variable/murecho/wght.css';
+/* Headings ask for 600, which this static family lacks: 700 is the nearest heavier weight. */
+@import '@fontsource/m-plus-rounded-1c/700.css';

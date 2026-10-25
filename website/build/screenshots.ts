@@ -6,8 +6,6 @@ const DIR = '/src/assets/screenshots/'
 /**
  * Points each `/src/assets/screenshots/<name>.webp` in `html` at `<lang>/<name>.webp`
  * when `exists` says that URL is there. The English page is returned as it is.
- * A language without a folder yet (ja, until its captures are taken on macOS)
- * gets the English WebP for every image, through the same check.
  */
 export function localizeScreenshots(html: string, lang: string, exists: (url: string) => boolean): string {
   if (lang === 'en') return html

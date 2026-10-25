@@ -137,6 +137,7 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
   // Translated screenshots where their WebP exists, else the English one.
   return localizeScreenshots(html, lang, (url) => existsSync(path.join(root, url)))
     .replace('<!-- theme:init -->', () => themeScript())
+    .replace('<!-- fonts:ja -->', () => (lang === 'ja' ? '<link rel="stylesheet" href="/src/japanese-fonts.css" />' : ''))
     .replace('<!-- i18n:alternates -->', () => alternates())
     .replace('<!-- i18n:og-alternates -->', () => ogAlternates(lang))
     .replace('<!-- i18n:switcher -->', () => switcher(lang))

@@ -1,9 +1,6 @@
 // Progressive enhancement only: the page works fully without this script.
 import '@fontsource-variable/inter/wght.css'
 import '@fontsource-variable/fredoka/wght.css'
-import '@fontsource-variable/murecho/wght.css'
-// Display headings are 600 in styles.css, which this static family lacks: 700 is the nearest heavier weight.
-import '@fontsource/m-plus-rounded-1c/700.css'
 import './styles.css'
 import { EN_RUNTIME, plural, type RuntimeStrings } from './i18n'
 import { LANG_KEY, preferredLang, withHash } from './lang'

@@ -490,7 +490,8 @@ body:has(.lang-banner:not([hidden])) {
 :lang(ja) h2,
 :lang(ja) .kicker,
 :lang(ja) .platform-kind,
-:lang(ja) .site-badge {
+:lang(ja) .site-badge,
+:lang(ja) .tag {
   letter-spacing: 0;
 }
 
