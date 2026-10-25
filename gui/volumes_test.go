@@ -328,7 +328,7 @@ func TestDownloadPartsRows(t *testing.T) {
 
 // a chapter's merged parts are named as the chapter, not as a volume
 func TestVolumeTitleParts(t *testing.T) {
-	c := NewController(&grabber.Settings{}, nil)
+	c := NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, nil)
 	v := &core.Volume{Number: 2, Chapters: grabber.Filterables{
 		&grabber.Chapter{Number: 2, Title: "Chapter 2 Part 1"},
 		&grabber.Chapter{Number: 2, Title: "Chapter 2 Part 2"},

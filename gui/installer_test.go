@@ -342,7 +342,7 @@ func TestAppUpdate(t *testing.T) {
 	inst := asset("installer.exe", 5)
 	sums := asset("SHA256SUMS.txt", 3)
 	newTest := func(installed bool, installer, sums *Asset) (*App, *[]string) {
-		c := NewController(&grabber.Settings{}, nil)
+		c := NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, nil)
 		c.update = &Update{Latest: "v2.0.0", Installer: installer, Sums: sums}
 		a := newApp(c, &fakeSink{}, "", "v1.0.0", "v1.0.0")
 		a.installed = installed

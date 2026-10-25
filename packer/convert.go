@@ -19,11 +19,6 @@ import (
 	_ "golang.org/x/image/webp"
 )
 
-// jpegQuality is the quality pages are re-encoded at. The stdlib default (75)
-// visibly muddies the screentones and small lettering that make up most of a
-// manga page.
-const jpegQuality = 90
-
 // decodeImage decodes an encoded image, picking the decoder from its magic
 // bytes. It's the single seam every decoder is reached through, so the AVIF
 // backend can be swapped in one place (and stubbed out in tests), same as
@@ -33,17 +28,17 @@ var decodeImage = func(data []byte) (image.Image, error) {
 	return img, err
 }
 
-// convertToJPEG decodes an image and re-encodes it as JPEG, so pages served in
-// formats dedicated e-readers can't display (AVIF, and optionally WebP) end up
-// in an archive they can actually open.
-func convertToJPEG(data []byte) ([]byte, error) {
+// convertToJPEG decodes an image and re-encodes it as JPEG at the given
+// quality, so pages served in formats e-readers can't display (AVIF, WebP,
+// PNG when asked for) end up in an archive they can actually open.
+func convertToJPEG(data []byte, quality int) ([]byte, error) {
 	img, err := decodeImage(data)
 	if err != nil {
 		return nil, fmt.Errorf("decoding image: %w", err)
 	}
 
 	buf := &bytes.Buffer{}
-	if err := jpeg.Encode(buf, flattenAlpha(img), &jpeg.Options{Quality: jpegQuality}); err != nil {
+	if err := jpeg.Encode(buf, flattenAlpha(img), &jpeg.Options{Quality: quality}); err != nil {
 		return nil, fmt.Errorf("encoding jpeg: %w", err)
 	}
 

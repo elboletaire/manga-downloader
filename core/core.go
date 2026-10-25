@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -17,9 +18,9 @@ import (
 )
 
 // SettingError reports a setting that failed validation. Setting is the flag
-// name ("format", "reading-direction", "convert-images", "volumes",
-// "skip-pages" or, for a volume file's name, "filename-template") and Value
-// the raw input.
+// name ("format", "reading-direction", "convert-images", "jpeg-quality",
+// "volumes", "skip-pages" or, for a volume file's name, "filename-template")
+// and Value the raw input.
 type SettingError struct {
 	Setting string
 	Value   string
@@ -60,6 +61,9 @@ func Validate(s *grabber.Settings) ([]ranges.Range, error) {
 
 	if _, err := grabber.ParseConvertFormats(s.ConvertImages); err != nil {
 		return nil, &SettingError{Setting: "convert-images", Value: s.ConvertImages, Err: err}
+	}
+	if s.JPEGQuality < 1 || s.JPEGQuality > 100 {
+		return nil, &SettingError{Setting: "jpeg-quality", Value: strconv.Itoa(s.JPEGQuality), Err: errors.New("must be between 1 and 100")}
 	}
 
 	if _, err := ParseVolumes(s.Volumes); err != nil {

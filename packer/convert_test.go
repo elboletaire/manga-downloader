@@ -9,6 +9,7 @@ import (
 	"image/color"
 	"image/jpeg"
 	"image/png"
+	"math/rand"
 	"testing"
 
 	"github.com/elboletaire/manga-downloader/downloader"
@@ -55,6 +56,31 @@ func pngBytes(t *testing.T, img image.Image) []byte {
 	return buf.Bytes()
 }
 
+// flatImage is one colour, which PNG packs to a few bytes: its JPEG, with
+// headers and tables, comes out bigger
+func flatImage(w, h int) *image.NRGBA {
+	img := image.NewNRGBA(image.Rect(0, 0, w, h))
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			img.SetNRGBA(x, y, color.NRGBA{R: 200, G: 200, B: 200, A: 255})
+		}
+	}
+	return img
+}
+
+// noisyImage is pseudo-random pixels, which PNG can't compress at all, so its
+// JPEG comes out smaller. Seeded, so the fixture is the same on every run.
+func noisyImage(w, h int) *image.NRGBA {
+	rnd := rand.New(rand.NewSource(1))
+	img := image.NewNRGBA(image.Rect(0, 0, w, h))
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			img.SetNRGBA(x, y, color.NRGBA{R: uint8(rnd.Intn(256)), G: uint8(rnd.Intn(256)), B: uint8(rnd.Intn(256)), A: 255})
+		}
+	}
+	return img
+}
+
 func jpegBytes(t *testing.T, img image.Image) []byte {
 	t.Helper()
 
@@ -67,7 +93,7 @@ func jpegBytes(t *testing.T, img image.Image) []byte {
 }
 
 func TestConvertToJPEG(t *testing.T) {
-	data, err := convertToJPEG(avifBytes(t, gradientImage(16, 16)))
+	data, err := convertToJPEG(avifBytes(t, gradientImage(16, 16)), grabber.JPEGQualityDefault)
 	if err != nil {
 		t.Fatalf("convertToJPEG returned an unexpected error: %s", err)
 	}
@@ -105,7 +131,7 @@ func TestConvertToJPEGFlattensTransparencyOntoWhite(t *testing.T) {
 
 	// encoded as png rather than avif: the lossy avif encoder doesn't preserve
 	// the sharp transparent/opaque split faithfully enough to assert on
-	data, err := convertToJPEG(pngBytes(t, img))
+	data, err := convertToJPEG(pngBytes(t, img), grabber.JPEGQualityDefault)
 	if err != nil {
 		t.Fatalf("convertToJPEG returned an unexpected error: %s", err)
 	}
@@ -136,9 +162,29 @@ func TestFlattenAlphaPreservesOpaqueImage(t *testing.T) {
 	}
 }
 
+// TestConvertToJPEGQuality pins that the quality is what the encoder gets:
+// a lower one gives a smaller file, so a --jpeg-quality change is visible
+func TestConvertToJPEGQuality(t *testing.T) {
+	page := pngBytes(t, noisyImage(64, 64))
+
+	low, err := convertToJPEG(page, 10)
+	if err != nil {
+		t.Fatalf("convertToJPEG at quality 10 returned an unexpected error: %s", err)
+	}
+	high, err := convertToJPEG(page, 95)
+	if err != nil {
+		t.Fatalf("convertToJPEG at quality 95 returned an unexpected error: %s", err)
+	}
+
+	if len(low) >= len(high) {
+		t.Errorf("quality 10 gave %d bytes, quality 95 gave %d, want the lower quality smaller", len(low), len(high))
+	}
+}
+
 func TestNamePagesConvertsListedFormats(t *testing.T) {
 	realAvif := avifBytes(t, gradientImage(16, 16))
-	realPng := pngBytes(t, gradientImage(4, 4))
+	flatPng := pngBytes(t, flatImage(64, 64))
+	noisyPng := pngBytes(t, noisyImage(64, 64))
 	realJpeg := jpegBytes(t, gradientImage(4, 4))
 	// enough of a header for the sniffing to report "webp"; it's never decoded
 	// in the cases below, which is exactly what's being asserted
@@ -158,11 +204,17 @@ func TestNamePagesConvertsListedFormats(t *testing.T) {
 		{"webp is kept when not listed", webpHeader, grabber.ConvertFormats{grabber.ConvertAVIF: true}, "000.webp", true},
 		// a jpeg page must never be re-encoded, that's generation loss for nothing
 		{"jpeg is never re-encoded", realJpeg, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}, "000.jpg", true},
-		{"png is never converted", realPng, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}, "000.png", true},
+		// a png is only converted when that's listed, and then only when the JPEG is smaller
+		{"png is never converted when not listed", flatPng, grabber.ConvertFormats{grabber.ConvertAVIF: true, grabber.ConvertWebP: true}, "000.png", true},
+		{"png is kept when its jpeg is bigger", flatPng, grabber.ConvertFormats{grabber.ConvertPNG: true}, "000.png", true},
+		{"png is converted when its jpeg is smaller", noisyPng, grabber.ConvertFormats{grabber.ConvertPNG: true}, "000.jpg", false},
+		// "all" covers every format but jpeg and gif
+		{"all converts avif", realAvif, grabber.ConvertFormats{grabber.ConvertAll: true}, "000.jpg", false},
+		{"all keeps jpeg", realJpeg, grabber.ConvertFormats{grabber.ConvertAll: true}, "000.jpg", true},
 	}
 
 	for _, c := range cases {
-		named := namePages([]*downloader.File{{Data: c.page}}, c.formats, FormatCBZ)
+		named := namePages([]*downloader.File{{Data: c.page}}, c.formats, grabber.JPEGQualityDefault, FormatCBZ)
 
 		if len(named) != 1 {
 			t.Fatalf("%s: namePages returned %d files, want 1", c.name, len(named))
@@ -221,7 +273,7 @@ func TestNamePagesConvertsWebP(t *testing.T) {
 		t.Fatalf("fixture sniffs as %q, want %q", got, "webp")
 	}
 
-	named := namePages([]*downloader.File{{Data: tinyWebP}}, grabber.ConvertFormats{grabber.ConvertWebP: true}, FormatCBZ)
+	named := namePages([]*downloader.File{{Data: tinyWebP}}, grabber.ConvertFormats{grabber.ConvertWebP: true}, grabber.JPEGQualityDefault, FormatCBZ)
 
 	if named[0].Name != "000.jpg" {
 		t.Errorf("page named %q, want %q", named[0].Name, "000.jpg")
@@ -240,7 +292,7 @@ func TestNamePagesKeepsOriginalOnConversionFailure(t *testing.T) {
 	// sniffs as avif, but there's nothing decodable behind the header
 	page := append([]byte{0x00, 0x00, 0x00, 0x1c, 'f', 't', 'y', 'p', 'a', 'v', 'i', 'f'}, []byte("truncated")...)
 
-	named := namePages([]*downloader.File{{Data: page}}, grabber.ConvertFormats{grabber.ConvertAVIF: true}, FormatCBZ)
+	named := namePages([]*downloader.File{{Data: page}}, grabber.ConvertFormats{grabber.ConvertAVIF: true}, grabber.JPEGQualityDefault, FormatCBZ)
 
 	if named[0].Name != "000.avif" {
 		t.Errorf("page named %q, want %q", named[0].Name, "000.avif")
@@ -259,7 +311,7 @@ func TestConvertToJPEGDecodeError(t *testing.T) {
 		return nil, sentinel
 	}
 
-	if _, err := convertToJPEG([]byte("whatever")); !errors.Is(err, sentinel) {
+	if _, err := convertToJPEG([]byte("whatever"), grabber.JPEGQualityDefault); !errors.Is(err, sentinel) {
 		t.Errorf("convertToJPEG error = %v, want it to wrap %v", err, sentinel)
 	}
 }

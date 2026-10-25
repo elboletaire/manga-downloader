@@ -106,7 +106,7 @@ func TestCheckUpdateErrors(t *testing.T) {
 
 func TestCheckUpdateRecordsTheUpdateAndStaysSilentOnFailure(t *testing.T) {
 	notified := 0
-	c := NewController(&grabber.Settings{}, func() { notified++ })
+	c := NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, func() { notified++ })
 
 	srv, _ := releaseServer(t, http.StatusOK, `{"tag_name":"v1.13.0"}`)
 	c.CheckUpdate(context.Background(), "v1.12.0", srv.URL, srv.Client())
@@ -118,7 +118,7 @@ func TestCheckUpdateRecordsTheUpdateAndStaysSilentOnFailure(t *testing.T) {
 	}
 
 	failing, _ := releaseServer(t, http.StatusInternalServerError, "")
-	c = NewController(&grabber.Settings{}, func() { notified++ })
+	c = NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, func() { notified++ })
 	notified = 0
 	c.CheckUpdate(context.Background(), "v1.12.0", failing.URL, failing.Client())
 	if u := c.Update(); u != nil {
@@ -161,7 +161,7 @@ func TestShouldCheckUpdates(t *testing.T) {
 }
 
 func TestUpdateCheckStartsOncePerSession(t *testing.T) {
-	c := NewController(&grabber.Settings{}, nil)
+	c := NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, nil)
 	if !c.claimUpdateCheck() {
 		t.Fatal("the first check was refused")
 	}
@@ -180,7 +180,7 @@ func TestReleaseURL(t *testing.T) {
 }
 
 func TestStateCarriesTheReleaseAndTheUpdate(t *testing.T) {
-	c := NewController(&grabber.Settings{}, nil)
+	c := NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, nil)
 	a := newApp(c, &fakeSink{}, "", "v1.12.0", "v1.12.0")
 	if st := a.State(); st.ReleaseURL != releaseURL("v1.12.0") || st.Update != nil {
 		t.Fatalf("State() before a check = %q, %+v", st.ReleaseURL, st.Update)
@@ -193,7 +193,7 @@ func TestStateCarriesTheReleaseAndTheUpdate(t *testing.T) {
 		t.Errorf("State().Update = %+v, want %+v", st.Update, want)
 	}
 
-	dev := newApp(NewController(&grabber.Settings{}, nil), &fakeSink{}, "", "", "abc123")
+	dev := newApp(NewController(&grabber.Settings{JPEGQuality: grabber.JPEGQualityDefault}, nil), &fakeSink{}, "", "", "abc123")
 	if st := dev.State(); st.ReleaseURL != "" {
 		t.Errorf("a dev build's ReleaseURL = %q, want none", st.ReleaseURL)
 	}

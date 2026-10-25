@@ -75,13 +75,14 @@ A release's group is a field of the chapter, never part of its title: `Chapter.G
 
 ### Page conversion (`--convert-images`, #155)
 
-Some sites serve pages e-readers can't render — AVIF (atsu.moe, mistscans, mangalib) and WebP (unreliable on e-ink). `packer/convert.go` re-encodes to JPEG q90: AVIF by default, WebP opt-in (`avif,webp`), `none` disables both.
+Some sites serve pages e-readers can't render — AVIF (atsu.moe, mistscans, mangalib) and WebP (unreliable on e-ink). `packer/convert.go` re-encodes to JPEG at `--jpeg-quality` (default 90): AVIF by default, WebP and PNG opt-in (`avif,webp,png`), `all` every format but JPEG and GIF, `none` disables them all.
 
 - **The decoder is `github.com/gen2brain/avif` with `-tags nodynamic`** — libavif/dav1d as WASM under wazero, so `CGO_ENABLED=0` and the 8-way cross-compile matrix keep working (any cgo decoder is disqualified by that). The tag forces the embedded WASM instead of `dlopen`ing a system libavif. **It's set in one place, `BUILD_TAGS` in the `makefile`**: the binaries built by `release.yaml` (via `make build/release`), `release-gui.yaml` (via the `build/gui/<os>` targets, which pass the tags to `wails build`), the Dockerfiles (via `make build/unix`), and `gui-test.yaml` (via `make test/gui`) all use it; the grabber smoke targets run plain `go run .` without the tag. Don't pass build flags from a workflow directly: without the tag the library silently tries a system libavif first, so a mismatch is easy to miss.
 - **The seam is `namePages`, not `grabber.Page.Transform`**: a `Transform` error re-runs the download retry loop, so a decode failure would pointlessly refetch the page. `namePages` is also where extensions are assigned, so converting there makes the `.jpg` follow automatically.
 - **`flattenAlpha` composites onto white first**, because `jpeg.Encode` drops alpha rather than compositing — transparent margins would otherwise come out as solid black bars. Already-opaque images pass through untouched to keep `jpeg.Encode`'s fast path.
 - **A page that fails to convert keeps its original bytes *and* extension**, with a warning: `pack()` has no partial-success path, so erroring would lose the whole chapter (or bundle) over one page. The extension must never claim `.jpg` for non-JPEG bytes.
-- **`tools/verify-cbz` is what actually proves conversion happened in CI**, precisely because that failure is non-fatal: it rejects `.avif` entries (`-allow-avif` for `--convert-images=none` archives) and checks entry names against sniffed content.
+- **PNG is converted only when the JPEG is smaller** (`namePages`), since it's readable everywhere and a bigger JPEG is only a quality loss. `all` leaves animated GIF alone: `convertToJPEG` decodes the first frame, which would silently drop the rest.
+- **`tools/verify-cbz` is what actually proves conversion happened in CI**, precisely because that failure is non-fatal: it rejects `.avif` entries (`-allow-avif` for `--convert-images=none` archives) and checks entry names against sniffed content. It doesn't reject PNG, so a `png`/`all` archive keeps its smaller PNG pages.
 - The WebP test fixture is a real file inlined as bytes (`x/image/webp` is decode-only, and Go has no test-only dependency scope), which also pins the load-bearing blank import in `convert.go`.
 
 ### Page skipping (`--skip-pages`)

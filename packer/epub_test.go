@@ -589,14 +589,14 @@ func TestNamePagesEPUBWarnsOncePerFailedPage(t *testing.T) {
 	// an AVIF that won't convert is left out by ArchiveEPUB, which warns about
 	// it: namePages stays quiet rather than warning twice
 	avif := append([]byte{0x00, 0x00, 0x00, 0x1c, 'f', 't', 'y', 'p', 'a', 'v', 'i', 'f'}, []byte("truncated")...)
-	namePages([]*downloader.File{{Data: avif}}, formats, FormatEPUB)
+	namePages([]*downloader.File{{Data: avif}}, formats, grabber.JPEGQualityDefault, FormatEPUB)
 	if len(*warnings) != 0 {
 		t.Errorf("an AVIF failure warned %d times for EPUB, want none: %q", len(*warnings), *warnings)
 	}
 
 	// a WebP EPUB can show keeps its original, which is still a warning
 	webp := append([]byte("RIFF\x00\x00\x00\x00WEBPVP8 "), []byte("truncated")...)
-	named := namePages([]*downloader.File{{Data: webp}}, formats, FormatEPUB)
+	named := namePages([]*downloader.File{{Data: webp}}, formats, grabber.JPEGQualityDefault, FormatEPUB)
 	if len(*warnings) != 1 || named[0].Name != "000.webp" {
 		t.Errorf("a WebP failure: %d warnings, named %q; want one warning and 000.webp", len(*warnings), named[0].Name)
 	}

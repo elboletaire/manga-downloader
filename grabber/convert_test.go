@@ -12,13 +12,15 @@ func TestParseConvertFormats(t *testing.T) {
 	}{
 		{"avif", []string{"avif"}, false},
 		{"avif,webp", []string{"avif", "webp"}, false},
+		{"png", []string{"png"}, false},
+		{"all", []string{"all"}, false},
+		{"avif,png", []string{"avif", "png"}, false},
 		{"  AVIF , WebP ", []string{"avif", "webp"}, false}, // trimmed and lowercased
 		{"avif,avif", []string{"avif"}, false},              // duplicates are set semantics
 		{"none", nil, false},
 		{"", nil, false},
 		// already e-reader friendly, converting them would be a lossy downgrade
 		{"jpg", nil, true},
-		{"png", nil, true},
 		{"gif", nil, true},
 		{"bogus", nil, true},
 		// "none" is exclusive: combining it with a format is a contradiction
@@ -49,6 +51,26 @@ func TestParseConvertFormats(t *testing.T) {
 			if !got.Has(format) {
 				t.Errorf("ParseConvertFormats(%q) = %v, missing %q", c.in, got, format)
 			}
+		}
+	}
+}
+
+// TestConvertFormatsAllCoversEveryFormatButJPEGAndGIF pins what "all" means:
+// animated GIF is left alone because converting it keeps only its first frame
+func TestConvertFormatsAllCoversEveryFormatButJPEGAndGIF(t *testing.T) {
+	formats, err := ParseConvertFormats("all")
+	if err != nil {
+		t.Fatalf("ParseConvertFormats(all) returned an unexpected error: %s", err)
+	}
+
+	for _, format := range []string{"avif", "webp", "png"} {
+		if !formats.Has(format) {
+			t.Errorf("all should convert %q", format)
+		}
+	}
+	for _, format := range []string{"jpg", "gif"} {
+		if formats.Has(format) {
+			t.Errorf("all should leave %q alone", format)
 		}
 	}
 }

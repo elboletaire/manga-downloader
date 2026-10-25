@@ -191,6 +191,7 @@ export namespace main {
 	    language: string;
 	    scanlator: string;
 	    convertImages: string;
+	    jpegQuality: number;
 	    skipPages: string;
 	    filenameTemplate: string;
 	    browserVisible: boolean;
@@ -208,6 +209,7 @@ export namespace main {
 	        this.language = source["language"];
 	        this.scanlator = source["scanlator"];
 	        this.convertImages = source["convertImages"];
+	        this.jpegQuality = source["jpegQuality"];
 	        this.skipPages = source["skipPages"];
 	        this.filenameTemplate = source["filenameTemplate"];
 	        this.browserVisible = source["browserVisible"];

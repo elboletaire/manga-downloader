@@ -43,9 +43,12 @@ type Settings struct {
 	// Only EPUB output reads it
 	ReadingDirection string
 	// ConvertImages is the comma separated list of source image formats to
-	// transcode to JPEG when packing ("avif", "avif,webp" or "none"), so pages
-	// served in formats e-readers can't display end up readable
+	// transcode to JPEG when packing ("avif", "avif,webp", "png", "all" or
+	// "none"), so pages served in formats e-readers can't display end up readable
 	ConvertImages string
+	// JPEGQuality is the quality (1-100) every page re-encoded to JPEG is
+	// written at, whichever format it came from
+	JPEGQuality int
 	// Range is the range to be downloaded (in string, i.e. "1-10,23,45-50")
 	Range string
 	// Volumes packs one file per volume instead of one per chapter: either
@@ -111,6 +114,8 @@ type Site interface {
 	// GetConvertImages returns the set of source image formats to transcode to
 	// JPEG when packing
 	GetConvertImages() ConvertFormats
+	// GetJPEGQuality returns the quality pages are re-encoded to JPEG at
+	GetJPEGQuality() int
 	// GetMaxConcurrency returns the max concurrency for the site
 	GetMaxConcurrency() MaxConcurrency
 	// GetPreferredLanguage returns the preferred language for the site
@@ -351,6 +356,12 @@ func (g Grabber) GetReadingDirection() string {
 func (g Grabber) GetConvertImages() ConvertFormats {
 	formats, _ := ParseConvertFormats(g.Settings.ConvertImages)
 	return formats
+}
+
+// GetJPEGQuality returns the quality pages are re-encoded to JPEG at. It's
+// validated at startup like ConvertImages.
+func (g Grabber) GetJPEGQuality() int {
+	return g.Settings.JPEGQuality
 }
 
 // NewSite returns a new site based on the passed url

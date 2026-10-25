@@ -24,6 +24,7 @@ func TestOptionsSaveAndLoadRoundTrip(t *testing.T) {
 		Language:         "es",
 		Scanlator:        "group",
 		ConvertImages:    "avif,webp",
+		JPEGQuality:      85,
 		SkipPages:        "2,-1",
 		FilenameTemplate: "{{.Series}} {{.Number}}",
 		BrowserVisible:   true,
@@ -222,6 +223,33 @@ func TestLoadOptionsRejectsConvertImagesFallsBackToDefault(t *testing.T) {
 	}
 	if _, err := grabber.ParseConvertFormats(s.ConvertImages); err != nil {
 		t.Errorf("the fallback is rejected by the parser: %v", err)
+	}
+}
+
+// a jpeg-quality outside 1-100 (a saved 0, say) falls back to the default
+// with a warning, instead of failing at Start
+func TestLoadOptionsRejectsJPEGQualityFallsBackToDefault(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	if err := os.WriteFile(path, []byte(`{"jpegQuality":0,"format":"raw"}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var warnings []string
+	notice.SetHandler(func(level notice.Level, msg string) {
+		if level == notice.LevelWarn {
+			warnings = append(warnings, msg)
+		}
+	})
+	defer notice.SetHandler(nil)
+
+	s := defaultSettings()
+	if err := loadOptions(path, s); err != nil {
+		t.Fatalf("an invalid jpeg-quality is not a load error: %v", err)
+	}
+	if s.JPEGQuality != grabber.JPEGQualityDefault {
+		t.Errorf("jpeg-quality %d, want the default %d", s.JPEGQuality, grabber.JPEGQualityDefault)
+	}
+	if len(warnings) != 1 {
+		t.Errorf("got %d warnings, want 1: %q", len(warnings), warnings)
 	}
 }
 

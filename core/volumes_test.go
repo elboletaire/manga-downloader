@@ -301,7 +301,7 @@ func TestValidateVolumes(t *testing.T) {
 		{"1-7", true, false},
 	}
 	for _, tt := range tests {
-		s := &grabber.Settings{Format: packer.FormatCBZ, ConvertImages: grabber.ConvertImagesDefault, Volumes: tt.volumes, Bundle: tt.bundle}
+		s := &grabber.Settings{Format: packer.FormatCBZ, ConvertImages: grabber.ConvertImagesDefault, JPEGQuality: grabber.JPEGQualityDefault, Volumes: tt.volumes, Bundle: tt.bundle}
 		_, err := Validate(s)
 		if (err == nil) != tt.ok {
 			t.Errorf("Validate(volumes %q, bundle %v) = %v, want ok %v", tt.volumes, tt.bundle, err, tt.ok)

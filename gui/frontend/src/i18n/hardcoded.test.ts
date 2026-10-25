@@ -33,6 +33,9 @@ const RETURNED_VALUES: Record<string, string> = {
   'avif,webp': 'a convert-images setting, the value the options file stores',
   avif: 'a convert-images setting, the value the options file stores',
   webp: 'a convert-images setting, the value the options file stores',
+  'avif,webp,png': 'a convert-images setting, the value the options file stores',
+  png: 'a convert-images setting, the value the options file stores',
+  all: 'a convert-images setting, the value the options file stores',
   none: 'a convert-images setting, the value the options file stores',
 };
 

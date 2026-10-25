@@ -141,17 +141,45 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
             <Check
               label={t('options.pages.avif')}
               checked={avif.checked}
-              disabled={avif.disabled}
+              disabled={avif.disabled || flags.all}
               onChange={(checked) => set({ convertImages: convertValueOf({ ...flags, avif: checked }) })}
             />
             <Check
               label={t('options.pages.webp')}
               checked={flags.webp}
+              disabled={flags.all}
               onChange={(webp) => set({ convertImages: convertValueOf({ ...flags, webp }) })}
+            />
+            <Check
+              label={t('options.pages.png')}
+              checked={flags.png}
+              disabled={flags.all}
+              onChange={(png) => set({ convertImages: convertValueOf({ ...flags, png }) })}
+            />
+            <Check
+              label={t('options.pages.all')}
+              checked={flags.all}
+              onChange={(all) => set({ convertImages: convertValueOf({ ...flags, all }) })}
             />
           </div>
           <p className="hint">{o.format === 'epub' ? avifEpubHint(t) : t('options.pages.convertHint')}</p>
         </fieldset>
+
+        <TextField
+          label={t('options.pages.quality.label')}
+          value={String(o.jpegQuality)}
+          mono
+          disabled={locked}
+          hint={t('options.pages.quality.hint')}
+          onCommit={(text) => {
+            const quality = Number(text);
+            if (!Number.isInteger(quality) || quality < 1 || quality > 100) {
+              return Promise.reject(new Error(t('options.pages.quality.invalid')));
+            }
+            return onOptions({ jpegQuality: quality });
+          }}
+          onError={onError}
+        />
 
         <TextField
           label={t('options.skipPages.label')}

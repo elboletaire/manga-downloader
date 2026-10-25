@@ -41,8 +41,15 @@
     "convert": "Convertir a JPEG",
     "avif": "AVIF",
     "webp": "WebP",
+    "png": "PNG",
+    "all": "Todos los formatos menos JPEG y GIF",
     "convertHint": "La mayoría de lectores electrónicos no abren AVIF; WebP no es fiable en tinta electrónica.",
-    "avifEpub": "Siempre activado para EPUB: los lectores no muestran AVIF."
+    "avifEpub": "Siempre activado para EPUB: los lectores no muestran AVIF.",
+    "quality": {
+      "label": "Calidad JPEG",
+      "hint": "De 1 a 100: se usa en cada página convertida a JPEG.",
+      "invalid": "Escribe un número entero del 1 al 100."
+    }
   },
   "skipPages": {
     "label": "Omitir páginas",
