@@ -6,7 +6,6 @@
 </picture>
 
 [![Tests][tests badge]][tests]
-[![Go Reference][go reference badge]][go reference]
 [![GitHub release][release badge]][releases]
 [![GitHub downloads][downloads badge]][releases]
 [![GitHub stars][stars badge]][stargazers]
@@ -1266,13 +1265,11 @@ conventions.
 [app downloads badge]: https://raw.githubusercontent.com/elboletaire/manga-downloader/stats-data/elboletaire/manga-downloader/badges/downloads-app.svg
 [cli downloads badge]: https://raw.githubusercontent.com/elboletaire/manga-downloader/stats-data/elboletaire/manga-downloader/badges/downloads-cli.svg
 [stars badge]: https://raw.githubusercontent.com/elboletaire/manga-downloader/stats-data/elboletaire/manga-downloader/badges/stars.svg
-[go reference badge]: https://pkg.go.dev/badge/github.com/elboletaire/manga-downloader.svg
 [release badge]: https://img.shields.io/github/release/elboletaire/manga-downloader.svg
 [pulls badge]: https://raw.githubusercontent.com/elboletaire/manga-downloader/stats-data/elboletaire/manga-downloader/badges/docker-pulls.svg
 [license badge]: https://img.shields.io/github/license/elboletaire/manga-downloader?color=green
 [tests badge]: https://github.com/elboletaire/manga-downloader/actions/workflows/test.yaml/badge.svg?branch=master
 [tests]: https://github.com/elboletaire/manga-downloader/actions/workflows/test.yaml
-[go reference]: https://pkg.go.dev/github.com/elboletaire/manga-downloader
 
 [license]: ./LICENSE
 [releases]: https://github.com/elboletaire/manga-downloader/releases
