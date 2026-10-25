@@ -1197,7 +1197,7 @@ listed. If one doesn't, [open an issue][issues] or send a pull request.
 
 ## Troubleshooting
 
-The [FAQ on the website][faq] has the answers (also in Spanish and Catalan):
+The [FAQ on the website][faq] has the answers (also in Spanish, Catalan and Japanese):
 
 - [Windows says "Windows protected your PC"][faq-smartscreen]
 - [macOS won't open it][faq-gatekeeper]
