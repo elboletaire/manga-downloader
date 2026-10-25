@@ -209,8 +209,8 @@ function siteData(): Plugin[] {
         // Crawl files, generated so they follow SITE_URL.
         this.emitFile({ type: 'asset', fileName: 'robots.txt', source: `User-agent: *\nAllow: /\n\nSitemap: ${siteURL}sitemap.xml\n` })
         this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemap() })
-        // The stylesheet's hashed name is only known from the bundle.
-        const stylesheet = Object.keys(bundle).find((f) => f.endsWith('.css'))
+        // The stylesheet's hashed name is only known from the bundle; the main entry's is named main.css.
+        const stylesheet = Object.entries(bundle).find(([, chunk]) => (chunk as { names?: string[] }).names?.includes('main.css'))?.[0]
         if (!stylesheet) throw new Error('site-data: no stylesheet for 404.html')
         this.emitFile({ type: 'asset', fileName: '404.html', source: notFoundPage(stylesheet) })
       },
@@ -253,11 +253,10 @@ function siteData(): Plugin[] {
       transformIndexHtml: {
         order: 'post',
         handler(html) {
-          const link = html.match(/<link rel="stylesheet"[^>]*>/)?.[0]
-          if (!link) return html
-          return html
-            .replace(link, '')
-            .replace(/(<meta name="viewport"[^>]*\/>)/, `$1\n    ${link}`)
+          const links = html.match(/<link rel="stylesheet"[^>]*>/g)
+          if (!links) return html
+          const rest = links.reduce((out, link) => out.replace(link, () => ''), html)
+          return rest.replace(/(<meta name="viewport"[^>]*\/>)/, (viewport) => `${viewport}\n    ${links.join('\n    ')}`)
         },
       },
     },
