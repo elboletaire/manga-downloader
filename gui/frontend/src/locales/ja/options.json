@@ -27,11 +27,11 @@
     "chapters": "話ごと",
     "parts": "結合",
     "volumes": "巻ごと",
-    "bundle": "1ファイル"
+    "bundle": "単一ファイル"
   },
   "packHint": {
     "chapters": "話ごとに1ファイルを作成します。",
-    "parts": "話ごとに1ファイルを作成し、そのパートを結合します。パートのない話は通常どおり1ファイルずつになります。",
+    "parts": "話ごとに1ファイルを作成し、パートは結合して1つにします。",
     "volumes": "巻ごとに1ファイルを作成します（巻は話の一覧の上で指定します）。どの巻にも含まれない話は1ファイルずつになります。",
     "volumesNotLoaded": "巻ごとに1ファイルを作成します（作品の読み込み後に指定できます）。どの巻にも含まれない話は1ファイルずつになります。",
     "bundle": "選択した話を1つのファイルにまとめます。"
@@ -63,12 +63,12 @@
   },
   "template": {
     "label": "ファイル名のテンプレート",
-    "hint": "<code>{{series}}</code>、<code>{{number}}</code>、<code>{{title}}</code>、<code>{{siteTitle}}</code>、<code>{{group}}</code>、<code>{{volume}}</code>、<code>{{version}}</code> が使えます。<code>{{padded}}</code> は番号を0埋めします。既定のままなら、巻は <code>{{volumeName}}</code>、その話がすべて同じグループの場合は <code>{{volumeGroupName}}</code> という名前になります。",
+    "hint": "<code>{{series}}</code>、<code>{{number}}</code>、<code>{{title}}</code>、<code>{{siteTitle}}</code>、<code>{{group}}</code>、<code>{{volume}}</code>、<code>{{version}}</code> が使えます。<code>{{padded}}</code> は番号を0埋めします。既定のままなら、巻は <code>{{volumeName}}</code>、収録する話がすべて同じ翻訳グループの場合は <code>{{volumeGroupName}}</code> という名前になります。",
     "reset": "既定のテンプレートを使う"
   },
   "browser": {
     "label": "ブラウザーウィンドウを表示",
-    "hint": "ほとんど必要ありません。サイトが求めた場合は、ウィンドウが自動的に開きます。",
+    "hint": "通常は不要です。必要なサイトでは、ウィンドウが自動的に開きます。",
     "auto": "このサイトでは必要です。ウィンドウが自動的に開きます。"
   },
   "folder": {

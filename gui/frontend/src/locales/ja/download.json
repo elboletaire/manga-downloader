@@ -29,7 +29,7 @@
     "rawBundle": "1つの画像フォルダー",
     "files": "ファイル"
   },
-  "where": "{{what}}、保存先: <dir>{{dir}}</dir>",
+  "where": "{{what}}を<dir>{{dir}}</dir>に保存",
   "progress": {
     "label": "全体の進行状況",
     "chapters": "全{{total}}話中{{done}}話が完了",

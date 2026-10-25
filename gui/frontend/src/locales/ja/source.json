@@ -1,7 +1,7 @@
 {
   "url": {
     "label": "作品のURL",
-    "placeholder": "作品またはその話のリンクを貼り付けてください",
+    "placeholder": "作品または話のリンクを貼り付けてください",
     "clear": "クリア",
     "clearLabel": "URLをクリア",
     "paste": "貼り付け",

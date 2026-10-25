@@ -1,6 +1,6 @@
 {
   "title": "アップデートがあります",
-  "body": "{{brand}} {{latest}}が利用できます（現在のバージョンは{{current}}）。",
+  "body": "{{brand}} {{latest}}が利用可能です（現在は{{current}}）。",
   "later": "後で",
   "releaseNotes": "リリースノート",
   "now": "今すぐアップデート",

@@ -31,7 +31,7 @@
     "packing": "書き出し中…"
   },
   "reason": {
-    "cancelled": "すべての話が始まる前にキャンセルされました",
+    "cancelled": "一部の話を開始する前にキャンセルされました",
     "skipped": "--skip-pagesですべてのページが除外されました",
     "download": "ダウンロード: {{reason}}",
     "packing": "書き出し: {{reason}}",
