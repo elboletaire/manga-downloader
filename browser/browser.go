@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"iter"
 	"net/url"
 	"strings"
 	"sync"
@@ -30,7 +31,6 @@ import (
 	"github.com/chromedp/cdproto/input"
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/cdproto/page"
-	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 	"github.com/elboletaire/manga-downloader/http"
 )
@@ -160,8 +160,8 @@ const scrollSettleSteps = 3
 // GetHTML only captures the handful of pages near the top; stepping a
 // viewport at a time mounts every one of them, where bigger jumps skip some.
 func GetHTMLWithScroll(url, waitSelector string, s Scroll, timeout time.Duration) (string, error) {
-	return getHTML(url, waitSelector, timeout, s.Init, []chromedp.Action{chromedp.ActionFunc(func(ctx context.Context) error {
-		return scroll(ctx, s)
+	return getHTML(url, waitSelector, timeout, s.Init, []chromedp.Action[chromedp.Void]{chromedp.Func(func(ctx context.Context, t *chromedp.Target) error {
+		return scroll(ctx, t, s)
 	})})
 }
 
@@ -184,13 +184,13 @@ func scrollStepJS(s Scroll) string {
 }
 
 // scroll steps through the page as described by s
-func scroll(ctx context.Context, s Scroll) error {
+func scroll(ctx context.Context, t *chromedp.Target, s Scroll) error {
 	js := scrollStepJS(s)
 	atBottom := 0
 	// no step cap: afterRenderTimeout bounds a page that keeps growing
 	for {
-		var state string
-		if err := chromedp.Evaluate(js, &state).Do(ctx); err != nil {
+		state, err := chromedp.Evaluate[string](js)(ctx, t)
+		if err != nil {
 			return err
 		}
 		switch state {
@@ -204,7 +204,7 @@ func scroll(ctx context.Context, s Scroll) error {
 		default:
 			atBottom = 0
 		}
-		if err := chromedp.Sleep(s.Pause).Do(ctx); err != nil {
+		if _, err := chromedp.Sleep(s.Pause)(ctx, t); err != nil {
 			return err
 		}
 	}
@@ -254,16 +254,14 @@ func GetReaderHTML(seriesURL, tabSelector, paginationSelector, linkSelector, img
 // readerHTML is GetReaderHTML's single attempt
 func readerHTML(ctx context.Context, h hooks, seriesURL, tabSelector, paginationSelector, linkSelector, imgSelector, urlSubstr string) (string, error) {
 	if NetLog != nil {
-		chromedp.ListenTarget(ctx, func(ev interface{}) {
-			if resp, ok := ev.(*network.EventResponseReceived); ok {
-				NetLog(resp.Response.URL, int(resp.Response.Status), resp.Response.MimeType)
-			}
+		listen(chromedp.Events(ctx, network.ResponseReceived), func(resp network.EventResponseReceived) {
+			NetLog(resp.Response.URL, int(resp.Response.Status), resp.Response.MimeType)
 		})
 	}
 
-	if err := chromedp.Run(ctx,
+	if err := chromedp.Do(ctx,
 		chromedp.Navigate(seriesURL),
-		chromedp.WaitVisible("body", chromedp.ByQuery),
+		chromedp.WaitVisible(chromedp.CSS("body")),
 		chromedp.Sleep(2*time.Second),
 	); err != nil {
 		return "", fmt.Errorf("opening chapter list: %w", err)
@@ -274,15 +272,15 @@ func readerHTML(ctx context.Context, h hooks, seriesURL, tabSelector, pagination
 	// click landing; retry a couple of times rather than dismissing once
 	tabSelectedJS := fmt.Sprintf(`(function(){var e=document.querySelector(%q);return !!e&&e.getAttribute('aria-selected')==='true';})()`, tabSelector)
 	for attempt := 0; attempt < 3; attempt++ {
-		if err := chromedp.Run(ctx,
-			chromedp.Evaluate(dismissModalJS, nil),
-			chromedp.Click(tabSelector, chromedp.ByQuery),
+		if err := chromedp.Do(ctx,
+			chromedp.Evaluate[chromedp.Void](dismissModalJS),
+			chromedp.Click(chromedp.CSS(tabSelector)),
 			chromedp.Sleep(time.Second),
 		); err != nil {
 			return "", fmt.Errorf("opening chapter list: %w", err)
 		}
-		var selected bool
-		if err := chromedp.Run(ctx, chromedp.Evaluate(tabSelectedJS, &selected)); err != nil {
+		selected, err := chromedp.Run(ctx, chromedp.Evaluate[bool](tabSelectedJS))
+		if err != nil {
 			return "", fmt.Errorf("opening chapter list: %w", err)
 		}
 		if selected {
@@ -297,8 +295,8 @@ func readerHTML(ctx context.Context, h hooks, seriesURL, tabSelector, pagination
 	// click through pagination pages until the target chapter link shows up
 	linkExistsJS := fmt.Sprintf(`!!document.querySelector(%q)`, linkSelector)
 	for i := 0; i < 10; i++ {
-		var exists bool
-		if err := chromedp.Run(ctx, chromedp.Evaluate(linkExistsJS, &exists)); err != nil {
+		exists, err := chromedp.Run(ctx, chromedp.Evaluate[bool](linkExistsJS))
+		if err != nil {
 			return "", err
 		}
 		if exists {
@@ -308,21 +306,21 @@ func readerHTML(ctx context.Context, h hooks, seriesURL, tabSelector, pagination
 			`(function(){var b=document.querySelectorAll(%q);if(b[%d]){b[%d].click();return true;}return false;})()`,
 			paginationSelector, i, i,
 		)
-		var clicked bool
-		if err := chromedp.Run(ctx, chromedp.Evaluate(clickPageJS, &clicked)); err != nil {
+		clicked, err := chromedp.Run(ctx, chromedp.Evaluate[bool](clickPageJS))
+		if err != nil {
 			return "", err
 		}
 		if !clicked {
 			return "", fmt.Errorf("chapter link not found on the page (and no more pagination pages to try)")
 		}
-		if err := chromedp.Run(ctx, chromedp.Sleep(800*time.Millisecond)); err != nil {
+		if err := chromedp.Do(ctx, chromedp.Sleep(800*time.Millisecond)); err != nil {
 			return "", err
 		}
 	}
 
-	if err := chromedp.Run(ctx,
-		chromedp.Evaluate(dismissModalJS, nil),
-		chromedp.Click(linkSelector, chromedp.ByQuery),
+	if err := chromedp.Do(ctx,
+		chromedp.Evaluate[chromedp.Void](dismissModalJS),
+		chromedp.Click(chromedp.CSS(linkSelector)),
 		chromedp.Sleep(1500*time.Millisecond),
 	); err != nil {
 		return "", fmt.Errorf("opening chapter reader: %w", err)
@@ -340,8 +338,8 @@ func readerHTML(ctx context.Context, h hooks, seriesURL, tabSelector, pagination
 	// the middle of an already-resolved (tall) page image
 	const maxScrolls = 200 // safety cap for very long chapters
 	for i := 0; i < maxScrolls; i++ {
-		var count int
-		if err := chromedp.Run(ctx, chromedp.Evaluate(matchedCountJS, &count)); err != nil {
+		count, err := chromedp.Run(ctx, chromedp.Evaluate[int](matchedCountJS))
+		if err != nil {
 			return "", err
 		}
 		if count == prev && count > 0 {
@@ -353,26 +351,19 @@ func readerHTML(ctx context.Context, h hooks, seriesURL, tabSelector, pagination
 			stable = 0
 		}
 		prev = count
-		if err := chromedp.Run(ctx,
-			chromedp.Evaluate(`window.scrollBy(0, window.innerHeight)`, nil),
+		if err := chromedp.Do(ctx,
+			chromedp.Evaluate[chromedp.Void](`window.scrollBy(0, window.innerHeight)`),
 			chromedp.Sleep(700*time.Millisecond),
 		); err != nil {
 			return "", err
 		}
 	}
 
-	var html string
-	if err := chromedp.Run(ctx,
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			node, err := dom.GetDocument().Do(ctx)
-			if err != nil {
-				return err
-			}
-			html, err = dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
-			return err
-		}),
-		chromedp.ActionFunc(harvestSession),
-	); err != nil {
+	html, err := chromedp.Run(ctx, documentHTML)
+	if err != nil {
+		return "", err
+	}
+	if err := chromedp.Do(ctx, chromedp.Func(harvestSession)); err != nil {
 		return "", err
 	}
 
@@ -437,11 +428,7 @@ func captureAPI(ctx context.Context, h hooks, pageURL, waitSelector, urlSubstr, 
 		cmu     sync.Mutex
 		entries []entry
 	)
-	chromedp.ListenTarget(ctx, func(ev interface{}) {
-		resp, ok := ev.(*network.EventResponseReceived)
-		if !ok {
-			return
-		}
+	listen(chromedp.Events(ctx, network.ResponseReceived), func(resp network.EventResponseReceived) {
 		if NetLog != nil {
 			NetLog(resp.Response.URL, int(resp.Response.Status), resp.Response.MimeType)
 		}
@@ -452,11 +439,11 @@ func captureAPI(ctx context.Context, h hooks, pageURL, waitSelector, urlSubstr, 
 		}
 	})
 
-	nav := []chromedp.Action{network.Enable(), chromedp.Navigate(pageURL)}
+	nav := []chromedp.Action[chromedp.Void]{send(network.Enable, network.EnableParams{}), chromedp.Navigate(pageURL)}
 	if waitSelector != "" {
-		nav = append(nav, chromedp.WaitVisible(waitSelector, chromedp.ByQuery))
+		nav = append(nav, chromedp.WaitVisible(chromedp.CSS(waitSelector)))
 	}
-	if err := chromedp.Run(ctx, nav...); err != nil {
+	if err := chromedp.Do(ctx, nav...); err != nil {
 		if ctx.Err() != nil && waitSelector != "" {
 			return nil, nil, &challengeError{url: pageURL, selector: waitSelector}
 		}
@@ -480,10 +467,8 @@ func captureAPI(ctx context.Context, h hooks, pageURL, waitSelector, urlSubstr, 
 	var setupResult json.RawMessage
 	if setupJS != "" {
 		before := count()
-		var raw string
-		if err := chromedp.Run(ctx, chromedp.Evaluate(setupJS, &raw, func(p *runtime.EvaluateParams) *runtime.EvaluateParams {
-			return p.WithAwaitPromise(true)
-		})); err != nil {
+		raw, err := chromedp.Run(ctx, chromedp.Evaluate[string](setupJS, chromedp.EvalAwaitPromise))
+		if err != nil {
 			return nil, nil, err
 		}
 		wait, result, err := parseSetup(raw)
@@ -503,8 +488,8 @@ func captureAPI(ctx context.Context, h hooks, pageURL, waitSelector, urlSubstr, 
 		)
 		for i := 0; i < maxClicks; i++ {
 			before := count()
-			var status string
-			if err := chromedp.Run(ctx, chromedp.Evaluate(clickJS, &status)); err != nil {
+			status, err := chromedp.Run(ctx, chromedp.Evaluate[string](clickJS))
+			if err != nil {
 				return nil, nil, err
 			}
 			if status != "clicked" {
@@ -518,7 +503,7 @@ func captureAPI(ctx context.Context, h hooks, pageURL, waitSelector, urlSubstr, 
 	}
 
 	// harvest cookies + UA so image downloads reuse the browser session
-	_ = chromedp.Run(ctx, chromedp.ActionFunc(harvestSession))
+	_ = chromedp.Do(ctx, chromedp.Func(harvestSession))
 
 	cmu.Lock()
 	defer cmu.Unlock()
@@ -526,10 +511,10 @@ func captureAPI(ctx context.Context, h hooks, pageURL, waitSelector, urlSubstr, 
 	for _, e := range entries {
 		id := e.id
 		var body []byte
-		_ = chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
-			b, berr := network.GetResponseBody(id).Do(ctx)
+		_ = chromedp.Do(ctx, chromedp.Func(func(ctx context.Context, t *chromedp.Target) error {
+			res, berr := cdp.Call(ctx, t, network.GetResponseBody, network.GetResponseBodyParams{RequestID: id})
 			if berr == nil {
-				body = b
+				body = res.Body
 			}
 			return nil
 		}))
@@ -566,7 +551,7 @@ func waitForGrowth(ctx context.Context, count func() int, baseline int) bool {
 		if time.Now().After(deadline) {
 			return false
 		}
-		if err := chromedp.Run(ctx, chromedp.Sleep(200*time.Millisecond)); err != nil {
+		if err := chromedp.Do(ctx, chromedp.Sleep(200*time.Millisecond)); err != nil {
 			return count() > baseline
 		}
 	}
@@ -576,7 +561,7 @@ func waitForGrowth(ctx context.Context, count func() int, baseline int) bool {
 // url in a headless browser and, if the wait selector times out (typically a
 // cloudflare/JS challenge), transparently reopens a visible window and
 // retries.
-func getHTML(url, waitSelector string, timeout time.Duration, init string, afterWait []chromedp.Action) (string, error) {
+func getHTML(url, waitSelector string, timeout time.Duration, init string, afterWait []chromedp.Action[chromedp.Void]) (string, error) {
 	abort := lock()
 	defer mu.Unlock()
 
@@ -597,7 +582,7 @@ var renderPage = render
 // first tab in front and hiding the page). init, if any, runs in every new
 // document before its own scripts, for this navigation only. afterWait, if
 // any, runs once waitSelector matches, before the snapshot.
-func render(ctx context.Context, h hooks, url, waitSelector, init string, afterWait []chromedp.Action) (string, error) {
+func render(ctx context.Context, h hooks, url, waitSelector, init string, afterWait []chromedp.Action[chromedp.Void]) (string, error) {
 	// cancel at once on a 429/5xx document, not after the selector times out
 	rctx, stop := context.WithCancel(ctx)
 	defer stop()
@@ -606,42 +591,34 @@ func render(ctx context.Context, h hooks, url, waitSelector, init string, afterW
 	if c := chromedp.FromContext(ctx); c != nil && c.Target != nil {
 		main = cdp.FrameID(c.Target.TargetID)
 	}
-	chromedp.ListenTarget(ctx, func(ev interface{}) {
-		resp, ok := ev.(*network.EventResponseReceived)
-		if !ok {
-			return
-		}
+	listen(chromedp.Events(ctx, network.ResponseReceived), func(resp network.EventResponseReceived) {
 		if NetLog != nil {
 			NetLog(resp.Response.URL, int(resp.Response.Status), resp.Response.MimeType)
 		}
-		if e := statusFromResponse(resp, main); e != nil && bad.CompareAndSwap(nil, e) {
+		if e := statusFromResponse(&resp, main); e != nil && bad.CompareAndSwap(nil, e) {
 			stop()
 		}
 	})
 
 	if init != "" {
-		var id page.ScriptIdentifier
-		if err := chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
-			var err error
-			id, err = page.AddScriptToEvaluateOnNewDocument(init).Do(ctx)
-			return err
-		})); err != nil {
+		id, err := chromedp.Run(ctx, addScript(init))
+		if err != nil {
 			return "", err
 		}
 		// the tab is reused, so the script mustn't outlive this page. A
 		// failed removal is fine: after any failure the browser is discarded.
-		defer chromedp.Run(ctx, page.RemoveScriptToEvaluateOnNewDocument(id))
+		defer chromedp.Do(ctx, send(page.RemoveScriptToEvaluateOnNewDocument, page.RemoveScriptToEvaluateOnNewDocumentParams{Identifier: id}))
 	}
 
 	var html string
-	actions := []chromedp.Action{
+	actions := []chromedp.Action[chromedp.Void]{
 		chromedp.Navigate(url),
 	}
 	if waitSelector != "" {
-		actions = append(actions, chromedp.WaitVisible(waitSelector, chromedp.ByQuery))
+		actions = append(actions, chromedp.WaitVisible(chromedp.CSS(waitSelector)))
 	}
 	matched := false
-	actions = append(actions, chromedp.ActionFunc(func(context.Context) error {
+	actions = append(actions, chromedp.Func(func(context.Context, *chromedp.Target) error {
 		matched = true
 		h.rendered()
 		// what follows (scrolling, settling) gets its own budget, so it
@@ -654,18 +631,15 @@ func render(ctx context.Context, h hooks, url, waitSelector, init string, afterW
 		actions = append(actions, chromedp.Sleep(settle))
 	}
 	actions = append(actions,
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			node, err := dom.GetDocument().Do(ctx)
-			if err != nil {
-				return err
-			}
-			html, err = dom.GetOuterHTML().WithNodeID(node.NodeID).Do(ctx)
+		chromedp.Func(func(ctx context.Context, t *chromedp.Target) error {
+			var err error
+			html, err = documentHTML(ctx, t)
 			return err
 		}),
-		chromedp.ActionFunc(harvestSession),
+		chromedp.Func(harvestSession),
 	)
 
-	if err := chromedp.Run(rctx, actions...); err != nil {
+	if err := chromedp.Do(rctx, actions...); err != nil {
 		if e := bad.Load(); e != nil {
 			return "", e
 		}
@@ -716,7 +690,6 @@ func startChallengeClicker(ctx context.Context) {
 // the left edge. Clicking a stale or wrong spot is harmless — the poller just
 // tries again on the next tick, and stops matching once the real page loads.
 func clickChallenge(ctx context.Context) {
-	var box []float64
 	js := `(() => {
 		if (!/just a moment|verify|attention required/i.test(document.title) &&
 			!document.querySelector('#challenge-stage, #challenge-form')) return null;
@@ -728,16 +701,15 @@ func clickChallenge(ctx context.Context) {
 		}
 		return null;
 	})()`
-	if err := chromedp.Run(ctx, chromedp.Evaluate(js, &box)); err != nil || len(box) < 4 {
+	box, err := chromedp.Run(ctx, chromedp.Evaluate[[]float64](js))
+	if err != nil || len(box) < 4 {
 		return
 	}
 	x, y := box[0]+30, box[1]+box[3]/2
-	_ = chromedp.Run(ctx,
-		input.DispatchMouseEvent(input.MouseMoved, x, y),
-		input.DispatchMouseEvent(input.MousePressed, x, y).
-			WithButton(input.Left).WithClickCount(1),
-		input.DispatchMouseEvent(input.MouseReleased, x, y).
-			WithButton(input.Left).WithClickCount(1),
+	_ = chromedp.Do(ctx,
+		send(input.DispatchMouseEvent, input.DispatchMouseEventParams{Type: input.DispatchMouseEventTypeMouseMoved, X: x, Y: y}),
+		send(input.DispatchMouseEvent, input.DispatchMouseEventParams{Type: input.DispatchMouseEventTypeMousePressed, X: x, Y: y, Button: input.MouseButtonLeft, ClickCount: 1}),
+		send(input.DispatchMouseEvent, input.DispatchMouseEventParams{Type: input.DispatchMouseEventTypeMouseReleased, X: x, Y: y, Button: input.MouseButtonLeft, ClickCount: 1}),
 	)
 }
 
@@ -749,19 +721,59 @@ func hostOf(raw string) string {
 	return raw
 }
 
+// listen calls fn with each event of events, in a goroutine, until the
+// subscription ends with its context. It's ListenTarget for the iterators of
+// chromedp.Events.
+func listen[E any](events iter.Seq2[E, error], fn func(E)) {
+	go func() {
+		for e, err := range events {
+			if err != nil {
+				return
+			}
+			fn(e)
+		}
+	}()
+}
+
+// send makes an action that sends a protocol command and drops its result
+func send[P, R any](cmd cdp.Command[P, R], params P) chromedp.Action[chromedp.Void] {
+	return func(ctx context.Context, t *chromedp.Target) (chromedp.Void, error) {
+		_, err := cdp.Call(ctx, t, cmd, params)
+		return chromedp.Void{}, err
+	}
+}
+
+// addScript makes an action that adds source to run in every new document
+// of the tab, and returns its identifier
+func addScript(source string) chromedp.Action[page.ScriptIdentifier] {
+	return func(ctx context.Context, t *chromedp.Target) (page.ScriptIdentifier, error) {
+		res, err := cdp.Call(ctx, t, page.AddScriptToEvaluateOnNewDocument, page.AddScriptToEvaluateOnNewDocumentParams{Source: source})
+		return res.Identifier, err
+	}
+}
+
+// documentHTML returns the HTML of the whole document of the tab
+func documentHTML(ctx context.Context, t *chromedp.Target) (string, error) {
+	doc, err := cdp.Call(ctx, t, dom.GetDocument, dom.GetDocumentParams{})
+	if err != nil {
+		return "", err
+	}
+	res, err := cdp.Call(ctx, t, dom.GetOuterHTML, dom.GetOuterHTMLParams{NodeID: doc.Root.NodeID})
+	return res.OuterHTML, err
+}
+
 // harvestSession copies the browser cookies and user agent into the http
 // package, so image downloads can go through fast plain HTTP requests
-func harvestSession(ctx context.Context) error {
-	var ua string
-	if err := chromedp.Evaluate(`navigator.userAgent`, &ua).Do(ctx); err == nil && ua != "" {
+func harvestSession(ctx context.Context, t *chromedp.Target) error {
+	if ua, err := chromedp.Evaluate[string](`navigator.userAgent`)(ctx, t); err == nil && ua != "" {
 		http.SetUserAgent(ua)
 	}
 
-	cookies, err := network.GetCookies().Do(ctx)
+	res, err := cdp.Call(ctx, t, network.GetCookies, network.GetCookiesParams{})
 	if err != nil {
 		return nil // cookies are best-effort, don't fail the whole fetch
 	}
-	for _, c := range cookies {
+	for _, c := range res.Cookies {
 		http.SetCookie(strings.TrimPrefix(c.Domain, "."), c.Name, c.Value)
 	}
 

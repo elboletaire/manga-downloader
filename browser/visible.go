@@ -11,6 +11,7 @@ import (
 	"time"
 
 	cdpbrowser "github.com/chromedp/cdproto/browser"
+	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
 )
@@ -193,12 +194,13 @@ func BringToFront() {
 func bringToFront(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	_ = chromedp.Run(ctx, chromedp.ActionFunc(func(ctx context.Context) error {
+	_ = chromedp.Do(ctx, chromedp.Func(func(ctx context.Context, t *chromedp.Target) error {
 		// a minimized window has to be restored before it can come forward
-		if id, bounds, err := cdpbrowser.GetWindowForTarget().Do(ctx); err == nil && needsRestore(bounds) {
-			_ = cdpbrowser.SetWindowBounds(id, &cdpbrowser.Bounds{WindowState: cdpbrowser.WindowStateNormal}).Do(ctx)
+		if win, err := cdp.Call(ctx, t, cdpbrowser.GetWindowForTarget, cdpbrowser.GetWindowForTargetParams{}); err == nil && needsRestore(win.Bounds) {
+			_, _ = cdp.Call(ctx, t, cdpbrowser.SetWindowBounds, cdpbrowser.SetWindowBoundsParams{WindowID: win.WindowID, Bounds: &cdpbrowser.Bounds{WindowState: cdpbrowser.WindowStateNormal}})
 		}
-		return page.BringToFront().Do(ctx)
+		_, err := cdp.Call(ctx, t, page.BringToFront, cdp.Empty{})
+		return err
 	}))
 }
 
