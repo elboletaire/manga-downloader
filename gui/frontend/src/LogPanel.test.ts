@@ -1,8 +1,8 @@
-import { createElement } from 'react';
+import { createElement, type MouseEvent } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { I18nProvider } from './i18n/react';
-import { LogDrawer, StatusBar } from './LogPanel';
+import { LogDrawer, StatusBar, updateClick } from './LogPanel';
 import type { LogLine, Update } from './types';
 
 const RELEASE = 'https://github.com/elboletaire/manga-downloader/releases/tag/v1.12.0';
@@ -54,6 +54,47 @@ describe('StatusBar version', () => {
     expect(html).not.toContain('Update to');
     // the dialog opens on click, so it isn't in the first render
     expect(html).not.toContain('alertdialog');
+  });
+});
+
+describe('StatusBar version with an update', () => {
+  const LATEST = 'https://github.com/elboletaire/manga-downloader/releases/latest';
+
+  it('titles the version like the update badge and links it to the update', () => {
+    const html = bar({ update: { latest: 'v1.13.0', url: LATEST, oneClick: false } });
+    expect(html).toContain(`<a class="version" href="${LATEST}" title="Update available: v1.13.0">v1.12.0</a>`);
+  });
+
+  it('keeps the release link of a build with no update', () => {
+    const html = bar({ update: null });
+    expect(html).toContain(`<a class="version" href="${RELEASE}" title="This version&#x27;s release">v1.12.0</a>`);
+  });
+
+  it('makes a dev build clickable when an update is pending', () => {
+    const html = bar({ releaseURL: '', update: { latest: 'v1.13.0', url: LATEST, oneClick: false } });
+    expect(html).toContain(`<a class="version" href="${LATEST}"`);
+  });
+});
+
+describe('updateClick', () => {
+  const event = { preventDefault: () => undefined } as unknown as MouseEvent<HTMLAnchorElement>;
+
+  it('opens the update dialog for a one-click update, not the page', () => {
+    const dialog: string[] = [];
+    const opened: string[] = [];
+    const update = { latest: 'v1.18.0', url: 'https://example.com/latest', oneClick: true };
+    updateClick(update, () => dialog.push('dialog'), (url) => opened.push(url))(event);
+    expect(dialog).toEqual(['dialog']);
+    expect(opened).toEqual([]);
+  });
+
+  it('opens update.url when the update is not one-click', () => {
+    const dialog: string[] = [];
+    const opened: string[] = [];
+    const update = { latest: 'v1.13.0', url: 'https://example.com/latest', oneClick: false };
+    updateClick(update, () => dialog.push('dialog'), (url) => opened.push(url))(event);
+    expect(dialog).toEqual([]);
+    expect(opened).toEqual(['https://example.com/latest']);
   });
 });
 
