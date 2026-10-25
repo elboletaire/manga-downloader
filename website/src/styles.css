@@ -37,11 +37,16 @@
   --code-bg: var(--night);
   --code-text: var(--moon);
   --shadow: 0 1px 2px rgb(30 26 51 / 4%), 0 8px 24px -12px rgb(30 26 51 / 14%);
-  --shadow-lg: 0 2px 4px rgb(30 26 51 / 4%), 0 24px 48px -24px rgb(91 63 196 / 28%);
+  --shadow-lg:
+    0 2px 4px rgb(30 26 51 / 4%), 0 24px 48px -24px rgb(91 63 196 / 28%);
 
-  --font-ui: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Fredoka Variable', var(--font-ui);
-  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --font-ui:
+    "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, sans-serif;
+  --font-display: "Fredoka Variable", var(--font-ui);
+  --font-mono:
+    ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, Consolas,
+    monospace;
 
   --radius: 18px;
   --radius-sm: 12px;
@@ -54,13 +59,16 @@
 /* Japanese pages only: the Japanese faces come after the Latin ones here. On the
    other pages they'd be pulled in by the arrow glyph, so they stay out of the stack. */
 :root:lang(ja) {
-  --font-ui: 'Inter Variable', 'Murecho Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Fredoka Variable', 'M PLUS Rounded 1c', var(--font-ui);
+  --font-ui:
+    "Inter Variable", "Murecho Variable", "Hiragino Sans", "Yu Gothic UI",
+    Meiryo, "Noto Sans CJK JP", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  --font-display: "Fredoka Variable", "M PLUS Rounded 1c", var(--font-ui);
   word-break: auto-phrase;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
+  :root:not([data-theme="light"]) {
     --bg: var(--night);
     --bg-tint: #1b1733;
     --surface: #211c3d;
@@ -85,7 +93,7 @@
   }
 }
 
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   --bg: var(--night);
   --bg-tint: #1b1733;
   --surface: #211c3d;
@@ -110,7 +118,7 @@
   color-scheme: dark;
 }
 
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   color-scheme: light;
 }
 
@@ -324,7 +332,7 @@ code {
   }
 }
 
-.site-nav .lang-switch a[aria-current='page'] {
+.site-nav .lang-switch a[aria-current="page"] {
   background: var(--accent-soft);
   color: var(--accent-text);
 }
@@ -360,10 +368,13 @@ code {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px max(var(--gutter), env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left));
+  padding: 10px max(var(--gutter), env(safe-area-inset-right))
+    calc(10px + env(safe-area-inset-bottom))
+    max(var(--gutter), env(safe-area-inset-left));
   border-top: 1px solid var(--border);
   /* --accent-soft is translucent in dark mode, so tint an opaque base */
-  background: linear-gradient(var(--accent-soft), var(--accent-soft)), var(--bg);
+  background:
+    linear-gradient(var(--accent-soft), var(--accent-soft)), var(--bg);
   box-shadow: var(--shadow);
   font-size: 0.92rem;
 }
@@ -417,7 +428,12 @@ body:has(.lang-banner:not([hidden])) {
 .hero {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, var(--bg-tint) 0%, var(--bg-tint) 70%, var(--bg) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--bg-tint) 0%,
+    var(--bg-tint) 70%,
+    var(--bg) 100%
+  );
   padding-block: clamp(40px, 7vw, 88px) clamp(40px, 6vw, 72px);
 }
 
@@ -546,13 +562,17 @@ body:has(.lang-banner:not([hidden])) {
   border-radius: 999px;
   font-weight: 600;
   text-decoration: none;
-  transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .button-primary {
   background: var(--accent);
   color: var(--on-accent);
-  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--violet) 70%, transparent);
+  box-shadow: 0 10px 24px -10px
+    color-mix(in srgb, var(--violet) 70%, transparent);
 }
 
 .button-primary:hover {
@@ -1009,12 +1029,13 @@ body:has(.lang-banner:not([hidden])) {
   color: var(--accent-text);
 }
 
-.platform a[data-state='ready']::before {
-  content: '';
+.platform a[data-state="ready"]::before {
+  content: "";
   width: 14px;
   height: 14px;
   background: currentColor;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
 }
 
 .platform-stats {
@@ -1111,7 +1132,7 @@ body:has(.lang-banner:not([hidden])) {
 }
 
 .code pre::before {
-  content: '$ ';
+  content: "$ ";
   color: var(--violet-soft);
   user-select: none;
 }
@@ -1296,12 +1317,12 @@ body:has(.lang-banner:not([hidden])) {
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .feature:nth-child(4n + 3) .feature-icon {
+  :root:not([data-theme="light"]) .feature:nth-child(4n + 3) .feature-icon {
     color: var(--pink);
   }
 }
 
-:root[data-theme='dark'] .feature:nth-child(4n + 3) .feature-icon {
+:root[data-theme="dark"] .feature:nth-child(4n + 3) .feature-icon {
   color: var(--pink);
 }
 
@@ -1466,16 +1487,16 @@ body:has(.lang-banner:not([hidden])) {
   font-weight: 700;
 }
 
-.site-verified[data-verified='ok'] .site-mark {
+.site-verified[data-verified="ok"] .site-mark {
   color: var(--success-text);
 }
 
-.site-verified[data-verified='failing'] {
+.site-verified[data-verified="failing"] {
   color: var(--danger-text);
   font-weight: 600;
 }
 
-.site-verified[data-verified='unknown'] {
+.site-verified[data-verified="unknown"] {
   opacity: 0.8;
 }
 
@@ -1567,7 +1588,7 @@ body:has(.lang-banner:not([hidden])) {
 }
 
 .faq summary::after {
-  content: '';
+  content: "";
   flex: none;
   width: 10px;
   height: 10px;

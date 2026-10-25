@@ -4,18 +4,20 @@
  * and mint / amber / rose kept strictly for outcomes. Inter is bundled (no
  * network) so the type looks the same on every OS; system fonts would put
  * Nimbus or Arial on some Linux desktops, whose metrics misalign controls.
- * Murecho comes after Inter for the Japanese UI: Inter has no kana or kanji.
+ * Murecho comes after Inter for the Japanese UI (Inter has no kana or kanji), then
+ * the OSes' Japanese fonts for the few kanji Murecho lacks (舵, for one).
  */
 
 :root {
   color-scheme: light dark;
 
   --font:
-    'Inter Variable', 'Murecho Variable', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', Ubuntu, Cantarell,
-    'Helvetica Neue', sans-serif;
+    "Inter Variable", "Murecho Variable", "Hiragino Sans", "Yu Gothic UI",
+    Meiryo, "Noto Sans CJK JP", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   --mono:
-    ui-monospace, 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono', 'JetBrains Mono', Menlo, Consolas, 'Liberation Mono',
-    monospace;
+    ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", "JetBrains Mono",
+    Menlo, Consolas, "Liberation Mono", monospace;
 
   --bg: #f4f3f0;
   --surface: #ffffff;
@@ -59,7 +61,7 @@
 
   font-family: var(--font);
   font-size: 13px;
-  font-feature-settings: 'cv11', 'ss03';
+  font-feature-settings: "cv11", "ss03";
   line-height: 1.45;
   color: var(--text);
   background: var(--bg);
@@ -787,7 +789,7 @@ code,
 }
 
 .box.on::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 4.25px;
   top: 1.25px;
@@ -805,7 +807,7 @@ code,
 
 /* some of a volume's chapters are picked: a dash, as a native mixed checkbox */
 .box.some::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 2.5px;
   top: 5.5px;
@@ -1081,7 +1083,12 @@ code,
 .skeleton {
   display: block;
   border-radius: 5px;
-  background: linear-gradient(90deg, var(--hover) 0%, var(--border) 50%, var(--hover) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--hover) 0%,
+    var(--border) 50%,
+    var(--hover) 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }
@@ -1157,7 +1164,7 @@ code,
 }
 
 .tab.on::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 14px;
   right: 14px;
@@ -1291,7 +1298,7 @@ code,
 }
 
 .advanced summary::before {
-  content: '';
+  content: "";
   width: 6px;
   height: 6px;
   margin: 0 3px 0 2px;
@@ -1535,7 +1542,7 @@ fieldset:disabled .segmented label {
 }
 
 .switch::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 2px;
   left: 2px;
@@ -1814,7 +1821,7 @@ fieldset:disabled .check {
 }
 
 .job-queued .job-icon::before {
-  content: '';
+  content: "";
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -1996,12 +2003,12 @@ fieldset:disabled .check {
   background: var(--hover);
 }
 
-.btn:active:not(:disabled):not([aria-disabled='true']) {
+.btn:active:not(:disabled):not([aria-disabled="true"]) {
   transform: translateY(1px);
 }
 
 .btn:disabled,
-.btn[aria-disabled='true'] {
+.btn[aria-disabled="true"] {
   cursor: default;
   opacity: 0.5;
 }
@@ -2073,7 +2080,7 @@ fieldset:disabled .check {
   border-color: color-mix(in srgb, var(--danger) 45%, var(--border-strong));
 }
 
-.btn.danger-outline:hover:not(:disabled):not([aria-disabled='true']) {
+.btn.danger-outline:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--danger-soft);
 }
 
