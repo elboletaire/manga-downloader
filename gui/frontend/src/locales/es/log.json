@@ -8,6 +8,7 @@
   "updateAvailable": "Actualización disponible: {{latest}}",
   "version": "Versión",
   "versionRelease": "Publicación de esta versión",
+  "supportKofi": "Invítame a un café en Ko-fi",
   "loaded_one": "Se ha cargado {{title}}: {{count}} capítulo",
   "loaded_other": "Se ha cargado {{title}}: {{count}} capítulos",
   "downloading_one": "Descargando {{count}} capítulo de {{title}}",

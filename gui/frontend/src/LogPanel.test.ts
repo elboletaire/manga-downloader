@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { I18nProvider } from './i18n/react';
 import { LogDrawer, StatusBar, updateClick } from './LogPanel';
+import { KOFI_URL } from './links';
 import type { LogLine, Update } from './types';
 
 const RELEASE = 'https://github.com/elboletaire/manga-downloader/releases/tag/v1.12.0';
@@ -33,7 +34,7 @@ describe('StatusBar version', () => {
 
   it('shows a dev build as plain text, without a link', () => {
     const html = bar({ releaseURL: '' });
-    expect(html).not.toContain('href=');
+    expect(html).not.toContain('<a class="version"');
     expect(html).toContain('<span class="version" title="Version">v1.12.0</span>');
   });
 
@@ -95,6 +96,15 @@ describe('updateClick', () => {
     updateClick(update, () => dialog.push('dialog'), (url) => opened.push(url))(event);
     expect(dialog).toEqual([]);
     expect(opened).toEqual(['https://example.com/latest']);
+  });
+});
+
+describe('StatusBar Ko-fi link', () => {
+  it('shows the cup after the version, titled and labelled', () => {
+    const html = bar();
+    expect(html).toContain(`href="${KOFI_URL}"`);
+    expect(html).toContain('aria-label="Buy me a coffee on Ko-fi"');
+    expect(html.indexOf(`href="${KOFI_URL}"`)).toBeGreaterThan(html.indexOf('class="version"'));
   });
 });
 

@@ -6,7 +6,8 @@ import { errorMessage } from './format';
 import { LANG_INFO, LANGS, type Lang, type LangPref } from './i18n';
 import { T, useI18n } from './i18n/react';
 import { SelectField, Switch } from './fields';
-import { XIcon } from './icons';
+import { KofiIcon, XIcon } from './icons';
+import { ISSUES_URL, KOFI_URL, LICENSE_URL, linkClick } from './links';
 import type { State } from './types';
 
 interface Props {
@@ -18,9 +19,7 @@ interface Props {
   onError: (msg: string) => void;
 }
 
-const ISSUES_URL = 'https://github.com/elboletaire/manga-downloader/issues';
 const LICENSE = 'AGPL-3.0';
-export const LICENSE_URL = 'https://github.com/elboletaire/manga-downloader/blob/master/LICENSE';
 const AUTHOR = 'elboletaire';
 const AUTHOR_URL = 'https://github.com/elboletaire';
 // the years of the source files' copyright headers
@@ -60,10 +59,7 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onSimpleStart, 
     if (pressedBackdrop.current && e.target === e.currentTarget) onClose();
   };
 
-  const link = (url: string) => (e: MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    onOpenURL(url);
-  };
+  const link = (url: string) => linkClick(url, onOpenURL);
 
   // the endonyms stay untranslated; System names the language it resolves to
   const languageOptions = [
@@ -137,6 +133,10 @@ export function SettingsDialog({ state, onClose, onCheckUpdates, onSimpleStart, 
           </a>
           <a href={ISSUES_URL} onClick={link(ISSUES_URL)}>
             {t('settings.about.issues')}
+          </a>
+          <a className="kofi" href={KOFI_URL} onClick={link(KOFI_URL)}>
+            <KofiIcon size={16} />
+            {t('settings.about.kofi')}
           </a>
           <p className="settings-author">
             <T

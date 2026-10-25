@@ -17,6 +17,8 @@ var (
 	Version = "develop"
 )
 
+const kofiURL = "https://ko-fi.com/elboletaire"
+
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:   "version",
@@ -43,9 +45,7 @@ func showVersion() {
 	res, err := latest.Check(vcheck, Tag)
 	if err != nil {
 		fmt.Printf("Error checking for updates: %s\n", err)
-		return
-	}
-	if res.Outdated {
+	} else if res.Outdated {
 		fmt.Printf(
 			"%s Download latest (%s) from:\n%s\n",
 			color.HiRedString("App is outdated."),
@@ -55,6 +55,7 @@ func showVersion() {
 	} else {
 		fmt.Printf("%s\n", color.GreenString("App is up to date."))
 	}
+	fmt.Println(color.HiBlackString("Enjoying it? Buy me a coffee: %s", kofiURL))
 }
 
 func init() {

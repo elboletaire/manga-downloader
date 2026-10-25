@@ -21,6 +21,7 @@
     "version": "Manga Downloader {{version}}",
     "website": "Lloc web",
     "issues": "Informa d'un problema",
+    "kofi": "Dona'm suport a Ko-fi",
     "madeBy": "Fet amb amor per <author>{{author}}</author> · © {{years}} · <license>{{license}}</license>"
   }
 }
