@@ -3,7 +3,7 @@ import '@fontsource-variable/inter/wght.css'
 import '@fontsource-variable/fredoka/wght.css'
 import './styles.css'
 import { EN_RUNTIME, plural, type RuntimeStrings } from './i18n'
-import { LANG_KEY, withHash } from './lang'
+import { LANG_KEY, preferredLang, withHash } from './lang'
 import { forcedTheme, parseTheme, schemeMedia, THEME_KEY, type Theme } from './theme'
 import {
   LATEST_RELEASE_API,
@@ -227,7 +227,7 @@ function enhanceSites(): void {
   update()
 }
 
-/** Remembers the language picked in the header, so the English page stops redirecting. */
+/** Remembers the language picked in the header; the stored choice turns the language banner off. */
 function rememberLanguage(): void {
   for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-lang]')) {
     link.addEventListener('click', () => {
@@ -238,6 +238,38 @@ function rememberLanguage(): void {
       }
     })
   }
+}
+
+/**
+ * Offers the page in the visitor's preferred language as a banner, never a redirect.
+ * Closing it or following its link counts as the visitor's choice.
+ */
+function languageBanner(): void {
+  let stored: string | null = null
+  try {
+    stored = localStorage.getItem(LANG_KEY)
+  } catch {
+    // Storage disabled: the banner shows on every visit.
+  }
+  const languages = navigator.languages.length ? navigator.languages : [navigator.language]
+  const target = preferredLang(languages, stored)
+  if (!target || target === LANG) return
+  const banner = document.querySelector<HTMLElement>(`[data-lang-banner="${target}"]`)
+  if (!banner) return
+
+  const remember = (lang: string) => {
+    try {
+      localStorage.setItem(LANG_KEY, lang)
+    } catch {
+      // Storage disabled: the banner comes back on the next visit.
+    }
+  }
+  banner.hidden = false
+  banner.querySelector('a')!.addEventListener('click', () => remember(target))
+  banner.querySelector('[data-lang-banner-close]')!.addEventListener('click', () => {
+    remember(LANG)
+    banner.hidden = true
+  })
 }
 
 /** Keeps the language links pointing at the current #section (ids match across languages), so new-tab opens carry it too. */
@@ -316,6 +348,7 @@ enhanceSites()
 openTargetedDetails()
 window.addEventListener('hashchange', openTargetedDetails)
 rememberLanguage()
+languageBanner()
 syncLanguageLinks()
 window.addEventListener('hashchange', syncLanguageLinks)
 void enhanceDownload()
