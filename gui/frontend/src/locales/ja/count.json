@@ -7,6 +7,8 @@
   "volumeFile_other": "{{count}}巻分のファイル",
   "failed_one": "{{count}}件失敗",
   "failed_other": "{{count}}件失敗",
+  "existing_one": "{{count}}件は既に保存済み",
+  "existing_other": "{{count}}件は既に保存済み",
   "skipped_one": "{{count}}件スキップ",
   "skipped_other": "{{count}}件スキップ",
   "saved_one": "{{count}}件保存",

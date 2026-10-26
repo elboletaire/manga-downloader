@@ -7,6 +7,8 @@
   "volumeFile_other": "{{count}} fitxers de volum",
   "failed_one": "{{count}} fallit",
   "failed_other": "{{count}} fallits",
+  "existing_one": "{{count}} ja descarregat",
+  "existing_other": "{{count}} ja descarregats",
   "skipped_one": "{{count}} omès",
   "skipped_other": "{{count}} omesos",
   "saved_one": "{{count}} desat",

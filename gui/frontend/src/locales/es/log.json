@@ -27,6 +27,7 @@
   "bundleEmpty": "creando el paquete: no se pudo descargar ningún capítulo",
   "cancelling": "Cancelando: los capítulos que ya se descargan terminarán; no empezará ninguno nuevo",
   "errorFetching": "error al obtener {{label}}: {{reason}}",
+  "exists": "omitiendo {{name}}: ya está en la carpeta",
   "skipping": "omitiendo {{label}}: todas sus páginas están excluidas por --skip-pages",
   "errorFilename": "error al crear el nombre de {{label}}: nombre de archivo: {{reason}}",
   "errorPage": "error al descargar la página {{page}} de {{label}}: {{reason}}",

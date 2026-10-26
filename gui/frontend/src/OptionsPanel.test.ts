@@ -103,6 +103,30 @@ describe('AVIF under Convert to JPEG', () => {
   });
 });
 
+describe('Skip existing files', () => {
+  // the switch's input, as rendered after its label
+  function skipExistingInput(markup: string): string {
+    const at = markup.indexOf('>Skip existing files<');
+    return at < 0 ? '' : (markup.slice(at).match(/<input[^>]*>/) ?? [''])[0];
+  }
+
+  it('sits in the save group under the folder, off by default, with its hint', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    const markup = options(base);
+    expect(markup).toContain(en('options.skipExisting.hint').replace("'", '&#x27;'));
+    expect(markup.indexOf('>Skip existing files<')).toBeGreaterThan(markup.indexOf('id="opt-save"'));
+    expect(markup.indexOf('>Skip existing files<')).toBeLessThan(markup.indexOf('>Format<'));
+    expect(skipExistingInput(markup)).not.toMatch(/checked=""/);
+  });
+
+  it('is checked when the option is on, and locked while a run goes', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    const on: State = { ...base, options: { ...base.options, skipExisting: true } };
+    expect(skipExistingInput(options(on))).toMatch(/checked=""/);
+    expect(skipExistingInput(options({ ...on, running: true }))).toMatch(/disabled=""/);
+  });
+});
+
 describe('Filename template', () => {
   it('offers the reset button only when the template differs from the default', async () => {
     const base = await createMockApi({ scenario: 'empty', freeze: true }).state();

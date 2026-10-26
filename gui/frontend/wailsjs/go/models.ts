@@ -194,6 +194,7 @@ export namespace main {
 	    jpegQuality: number;
 	    compress: boolean;
 	    skipPages: string;
+	    skipExisting: boolean;
 	    filenameTemplate: string;
 	    browserVisible: boolean;
 	
@@ -213,6 +214,7 @@ export namespace main {
 	        this.jpegQuality = source["jpegQuality"];
 	        this.compress = source["compress"];
 	        this.skipPages = source["skipPages"];
+	        this.skipExisting = source["skipExisting"];
 	        this.filenameTemplate = source["filenameTemplate"];
 	        this.browserVisible = source["browserVisible"];
 	    }
@@ -292,6 +294,7 @@ export namespace main {
 	    bundled: boolean;
 	    bundle: string;
 	    skipped: number;
+	    existing: number;
 	    failures: FailureDTO[];
 	    error: string;
 	    errorMsg?: Message;
@@ -310,6 +313,7 @@ export namespace main {
 	        this.bundled = source["bundled"];
 	        this.bundle = source["bundle"];
 	        this.skipped = source["skipped"];
+	        this.existing = source["existing"];
 	        this.failures = this.convertValues(source["failures"], FailureDTO);
 	        this.error = source["error"];
 	        this.errorMsg = this.convertValues(source["errorMsg"], Message);

@@ -3,6 +3,8 @@
   "emptyHint": "Elige capítulos y pulsa Descargar: cada uno aparece aquí mientras se obtiene y se empaqueta.",
   "lastDownload": "Última descarga",
   "openFolder": "Abrir carpeta",
+  "existingNote_one": "{{count}} capítulo ya estaba en la carpeta, así que se ha dejado fuera.",
+  "existingNote_other": "{{count}} capítulos ya estaban en la carpeta, así que se han dejado fuera.",
   "skippedNote_one": "{{count}} capítulo se ha omitido: la opción de omitir páginas ha excluido todas las páginas.",
   "skippedNote_other": "{{count}} capítulos se han omitido: la opción de omitir páginas ha excluido todas las páginas.",
   "failedChapters": "Capítulos fallidos",

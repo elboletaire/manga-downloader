@@ -27,6 +27,7 @@
   "bundleEmpty": "creant el paquet: no s'ha pogut descarregar cap capítol",
   "cancelling": "Cancel·lant: els capítols que ja es descarreguen acabaran; no en començarà cap de nou",
   "errorFetching": "error en obtenir {{label}}: {{reason}}",
+  "exists": "s'omet {{name}}: ja és a la carpeta",
   "skipping": "s'omet {{label}}: totes les pàgines estan excloses per --skip-pages",
   "errorFilename": "error en crear el nom de {{label}}: nom de fitxer: {{reason}}",
   "errorPage": "error en descarregar la pàgina {{page}} de {{label}}: {{reason}}",

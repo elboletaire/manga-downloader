@@ -11,6 +11,7 @@ const clean = (over: Partial<Summary> = {}): Summary => ({
   bundled: false,
   bundle: '',
   skipped: 0,
+  existing: 0,
   failures: [],
   error: '',
   ...over,

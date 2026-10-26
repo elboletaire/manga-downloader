@@ -9,6 +9,10 @@
     "notSet": "Not set",
     "browse": "Browse…"
   },
+  "skipExisting": {
+    "label": "Skip existing files",
+    "hint": "Chapters whose file is already in the folder aren't downloaded again. Delete a broken file to get it again."
+  },
   "format": {
     "label": "Format",
     "cbz": "CBZ",

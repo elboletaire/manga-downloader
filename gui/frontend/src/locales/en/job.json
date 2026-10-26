@@ -38,6 +38,7 @@
     "filename": "filename: {{reason}}",
     "locked": "locked chapter",
     "emptyVolume": "none of its chapters could be downloaded",
+    "exists": "{{name}} already exists",
     "noPages": "no pages found"
   }
 }

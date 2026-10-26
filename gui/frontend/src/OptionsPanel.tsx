@@ -85,6 +85,14 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
           </div>
         </div>
 
+        <Switch
+          label={t('options.skipExisting.label')}
+          description={t('options.skipExisting.hint')}
+          checked={o.skipExisting}
+          disabled={locked}
+          onChange={(skipExisting) => set({ skipExisting })}
+        />
+
         <Segmented<Options['format']>
           label={t('options.format.label')}
           value={o.format}

@@ -53,7 +53,8 @@ const (
 	JobDone
 	// JobFailed is a chapter that couldn't be fetched, downloaded or packed
 	JobFailed
-	// JobSkipped is a chapter whose pages were all excluded by --skip-pages
+	// JobSkipped is a chapter whose pages were all excluded by --skip-pages, or
+	// whose file is already in the output folder (--skip-existing)
 	JobSkipped
 	// JobFetching is a chapter whose page list is being fetched, before any
 	// page is known
@@ -132,9 +133,13 @@ type Summary struct {
 	Parts bool
 	// Bundled is set in bundle mode, where Bundle is the bundle's filename
 	// (empty when none was written)
-	Bundled  bool
-	Bundle   string
-	Skipped  int
+	Bundled bool
+	Bundle  string
+	Skipped int
+	// Existing counts the chapters left out because their file was already in
+	// the output folder (--skip-existing), kept apart from Skipped; a bundle
+	// that was already there counts all its chapters
+	Existing int
 	Failures []Failure
 	// Err is a bundle packing error
 	Err error
@@ -164,6 +169,7 @@ type runStats struct {
 	saved    int
 	volumes  int
 	skipped  int
+	existing int
 	failures []Failure
 	bundle   string
 	err      error
@@ -1405,6 +1411,7 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 		Volumes:  c.stats.volumes,
 		Parts:    c.runinfo.Parts,
 		Skipped:  c.stats.skipped,
+		Existing: c.stats.existing,
 		Failures: c.stats.failures,
 	}
 	switch {
@@ -1418,6 +1425,14 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 		// a cancelled bundle is never packed: the chapters it never started
 		// would be silently missing from it
 		s.Cancelled = true
+	case errors.Is(err, core.ErrExists):
+		// the bundle is named by Download's file; none of its chapters was fetched
+		s.Existing = c.runinfo.Chapters
+		m := msg("job.reason.exists", map[string]any{"name": file})
+		if c.bundle != nil {
+			c.bundle.setReason(m)
+		}
+		c.appendMsgLocked(LogInfo, msg("log.exists", map[string]any{"name": file}))
 	case err != nil:
 		s.Err = err
 		m := msg("log.packingBundle", map[string]any{"reason": err.Error()})
@@ -1434,11 +1449,14 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 		s.Bundle = file
 	}
 	if c.bundle != nil {
-		if s.Bundle == "" {
-			c.bundle.State = JobFailed
-		} else {
+		switch {
+		case s.Bundle != "":
 			c.bundle.State = JobDone
 			c.bundle.Done = c.bundle.Total
+		case errors.Is(err, core.ErrExists):
+			c.bundle.State = JobSkipped
+		default:
+			c.bundle.State = JobFailed
 		}
 		c.bundle.clearStatus()
 	}
@@ -1621,6 +1639,33 @@ func (e events) Skipped(ch *grabber.Chapter) {
 		c.endRow(ch, JobSkipped, msg("job.reason.skipped", nil))
 	}
 	c.appendMsgLocked(LogWarn, msg("log.skipping", map[string]any{"label": c.releaseLabel(ch)}))
+	c.mu.Unlock()
+	c.emit()
+}
+
+// Exists is a chapter left out because its file is already in the output folder.
+// Its row is the one Fetching made, or the fetched chapter's (after the
+// re-check), or a new one when the check ran before any fetch.
+func (e events) Exists(listed grabber.Filterable, name string) {
+	c := e.c
+	c.mu.Lock()
+	c.stats.existing++
+	reason := msg("job.reason.exists", map[string]any{"name": name})
+	j := c.fetching[listed]
+	if ch, ok := listed.(*grabber.Chapter); j == nil && ok {
+		j = c.byChap[ch]
+	}
+	if j != nil {
+		j.State = JobSkipped
+		j.setReason(reason)
+		j.clearStatus()
+		delete(c.fetching, listed)
+	} else if c.bundle == nil {
+		j = &Job{Title: grabber.ChapterLabel(listed), Tags: c.releaseTags(listed), Number: listed.GetNumber(), State: JobSkipped}
+		j.setReason(reason)
+		c.jobs = append(c.jobs, j)
+	}
+	c.appendMsgLocked(LogInfo, msg("log.exists", map[string]any{"name": name}))
 	c.mu.Unlock()
 	c.emit()
 }
@@ -1847,6 +1892,14 @@ func (e events) VolumePacked(v *core.Volume, name string, err error) {
 			j.State = JobSkipped
 			j.setReasonErr(err)
 		}
+	case errors.Is(err, core.ErrExists):
+		// its file is already there, so none of its chapters was fetched
+		c.stats.existing += len(v.Chapters)
+		if j != nil {
+			j.State = JobSkipped
+			j.setReason(msg("job.reason.exists", map[string]any{"name": name}))
+		}
+		c.appendMsgLocked(LogInfo, msg("log.exists", map[string]any{"name": name}))
 	case err != nil:
 		c.stats.failures = append(c.stats.failures, newFailure(label, err))
 		if j != nil {

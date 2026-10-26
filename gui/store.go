@@ -29,6 +29,7 @@ type OptionsDTO struct {
 	JPEGQuality      int    `json:"jpegQuality"`
 	Compress         bool   `json:"compress"`
 	SkipPages        string `json:"skipPages"`
+	SkipExisting     bool   `json:"skipExisting"`
 	FilenameTemplate string `json:"filenameTemplate"`
 	BrowserVisible   bool   `json:"browserVisible"`
 }
@@ -152,6 +153,7 @@ func optionsOf(s grabber.Settings) OptionsDTO {
 		JPEGQuality:      s.JPEGQuality,
 		Compress:         s.Compress,
 		SkipPages:        s.SkipPages,
+		SkipExisting:     s.SkipExisting,
 		FilenameTemplate: s.FilenameTemplate,
 		BrowserVisible:   s.BrowserVisible,
 	}
@@ -170,6 +172,7 @@ func applyOptions(s *grabber.Settings, o OptionsDTO) {
 	s.JPEGQuality = o.JPEGQuality
 	s.Compress = o.Compress
 	s.SkipPages = o.SkipPages
+	s.SkipExisting = o.SkipExisting
 	s.FilenameTemplate = o.FilenameTemplate
 	s.BrowserVisible = o.BrowserVisible
 }

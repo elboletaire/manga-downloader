@@ -27,6 +27,7 @@ func TestOptionsSaveAndLoadRoundTrip(t *testing.T) {
 		JPEGQuality:      85,
 		Compress:         true,
 		SkipPages:        "2,-1",
+		SkipExisting:     true,
 		FilenameTemplate: "{{.Series}} {{.Number}}",
 		BrowserVisible:   true,
 	}
@@ -288,6 +289,21 @@ func TestLoadOptionsOldFileKeepsDefaults(t *testing.T) {
 	}
 	if len(warnings) != 0 {
 		t.Errorf("got warnings %q, want none", warnings)
+	}
+}
+
+func TestLoadOptionsMissingSkipExistingIsOff(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	if err := os.WriteFile(path, []byte(`{"format":"cbz"}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	s := defaultSettings()
+	if err := loadOptions(path, s); err != nil {
+		t.Fatal(err)
+	}
+	if s.SkipExisting {
+		t.Error("a missing skipExisting loaded as on, want off")
 	}
 }
 

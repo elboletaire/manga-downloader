@@ -3,6 +3,8 @@
   "emptyHint": "Tria capítols i prem Descarrega: cadascun apareix aquí mentre s'obté i s'empaqueta.",
   "lastDownload": "Última descàrrega",
   "openFolder": "Obre la carpeta",
+  "existingNote_one": "{{count}} capítol ja era a la carpeta, així que s'ha deixat fora.",
+  "existingNote_other": "{{count}} capítols ja eren a la carpeta, així que s'han deixat fora.",
   "skippedNote_one": "{{count}} capítol s'ha omès: l'opció d'ometre pàgines ha exclòs totes les pàgines.",
   "skippedNote_other": "{{count}} capítols s'han omès: l'opció d'ometre pàgines ha exclòs totes les pàgines.",
   "failedChapters": "Capítols fallits",

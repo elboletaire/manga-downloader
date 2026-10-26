@@ -7,6 +7,8 @@
   "volumeFile_other": "{{count}} archivos de volumen",
   "failed_one": "{{count}} fallido",
   "failed_other": "{{count}} fallidos",
+  "existing_one": "{{count}} ya descargado",
+  "existing_other": "{{count}} ya descargados",
   "skipped_one": "{{count}} omitido",
   "skipped_other": "{{count}} omitidos",
   "saved_one": "{{count}} guardado",

@@ -252,6 +252,7 @@ function defaultOptions(shot: boolean, epub: boolean): Options {
     jpegQuality: 90,
     compress: false,
     skipPages: '',
+    skipExisting: false,
     filenameTemplate: TEMPLATE_DEFAULT,
     browserVisible: false,
   };
@@ -644,6 +645,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       bundled,
       bundle: bundled && !cancelling ? `${title} 1-${runChapters}${EXTENSIONS[options.format]}` : '',
       skipped,
+      // the mock has no files on disk to skip
+      existing: 0,
       failures,
       error: '',
     };
