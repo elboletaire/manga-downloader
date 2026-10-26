@@ -1505,19 +1505,20 @@ fieldset:disabled .segmented label {
   opacity: 0.55;
 }
 
+/* the label and the toggle share a row; the hint takes the full width below */
 .switch-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.switch-text {
   display: grid;
   gap: 2px;
 }
 
-.switch-text label {
+.switch-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.switch-head label {
   font-weight: 550;
   cursor: pointer;
 }
