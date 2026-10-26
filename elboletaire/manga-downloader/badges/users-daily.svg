@@ -1,12 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="86" height="20" role="img" aria-label="daily users: 4">
-<title>daily users: 4</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="138" height="20" role="img" aria-label="avg daily users (7d): 4">
+<title>avg daily users (7d): 4</title>
 <linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>
-<clipPath id="r"><rect width="86" height="20" rx="3" fill="#fff"/></clipPath>
-<g clip-path="url(#r)"><rect width="69" height="20" fill="#555"/><rect x="69" width="17" height="20" fill="#0e7490"/><rect width="86" height="20" fill="url(#s)"/></g>
+<clipPath id="r"><rect width="138" height="20" rx="3" fill="#fff"/></clipPath>
+<g clip-path="url(#r)"><rect width="121" height="20" fill="#555"/><rect x="121" width="17" height="20" fill="#0e7490"/><rect width="138" height="20" fill="url(#s)"/></g>
 <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
-<text aria-hidden="true" x="34.5" y="15" fill="#010101" fill-opacity=".3" textLength="59.4">daily users</text>
-<text aria-hidden="true" x="77.5" y="15" fill="#010101" fill-opacity=".3" textLength="7">4</text>
-<text x="34.5" y="14" textLength="59.4">daily users</text>
-<text x="77.5" y="14" textLength="7">4</text>
+<text aria-hidden="true" x="60.5" y="15" fill="#010101" fill-opacity=".3" textLength="111">avg daily users (7d)</text>
+<text aria-hidden="true" x="129.5" y="15" fill="#010101" fill-opacity=".3" textLength="7">4</text>
+<text x="60.5" y="14" textLength="111">avg daily users (7d)</text>
+<text x="129.5" y="14" textLength="7">4</text>
 </g>
 </svg>

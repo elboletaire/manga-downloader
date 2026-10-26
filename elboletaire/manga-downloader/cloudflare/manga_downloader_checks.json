@@ -2,6 +2,6 @@
 "schema": 1,
 "dataset": "manga_downloader_checks",
 "days": [
-  {"date":"2026-10-25","users":4,"events":8,"by":{"client":{"gui":{"users":4,"events":8}},"version":{"23.0.0":{"users":4,"events":8}},"os":{"darwin":{"users":4,"events":6},"windows":{"users":1,"events":2}},"arch":{"arm64":{"users":4,"events":6},"amd64":{"users":1,"events":2}}}}
+  {"date":"2026-10-25","users":4,"events":8,"by":{"client":{"gui":{"users":4,"events":8}},"version":{"23.0.0":{"users":4,"events":8}},"os":{"darwin":{"users":4,"events":6},"windows":{"users":1,"events":2}},"arch":{"arm64":{"users":4,"events":6},"amd64":{"users":1,"events":2}},"lang":{"":{"users":4,"events":8}},"syslang":{"":{"users":4,"events":8}},"syslang-cli":{}}}
 ]
 }
