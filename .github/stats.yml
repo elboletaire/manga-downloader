@@ -33,5 +33,7 @@ cloudflare:
     version: { column: blob2, label: Version, kind: semver, released: true }   # drops test builds of unreleased versions
     os:      { column: blob3, label: OS }
     arch:    { column: blob4, label: Arch }
-    lang:    { column: blob6, label: App language }      # en, es, ca, ja or system; "" from the CLI and older apps
-    syslang: { column: blob7, label: System language }   # the CLI when it knows the locale; the app only when it follows the system
+    lang:        { column: blob6, label: App language, chart: true }   # en, es, ca, ja or system
+    # supported: the app's translations; add a language when it ships
+    syslang:     { column: blob7, label: System language (app), where: { client: gui }, locale: true, supported: [en, es, ca, ja] }   # only when the app follows the system
+    syslang-cli: { column: blob7, label: System language (CLI), where: { client: cli }, locale: true, supported: [en, es, ca, ja] }
