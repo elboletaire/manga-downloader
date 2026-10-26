@@ -944,7 +944,7 @@ func TestEPUBIdentifierTellsKindsApart(t *testing.T) {
 	if err != nil {
 		t.Fatalf("PackSingle: %v", err)
 	}
-	volumeName, err := PackVolume(dirs["volume"], site, 5, chapters, progress)
+	volumeName, err := PackVolume(dirs["volume"], site, 5, "", chapters, progress)
 	if err != nil {
 		t.Fatalf("PackVolume: %v", err)
 	}
@@ -986,17 +986,17 @@ func TestPackVolumeEPUB(t *testing.T) {
 	}
 
 	dir := t.TempDir()
-	name, err := PackVolume(dir, site, 2, chapters, func(page, progress int) {})
+	name, err := PackVolume(dir, site, 2, "", chapters, func(page, progress int) {})
 	if err != nil {
 		t.Fatalf("PackVolume: %v", err)
 	}
-	if name != "Test Series Vol. 02.epub" {
+	if name != "Test Series Vol. 02 (1-2).epub" {
 		t.Errorf("name = %q, want the volume's name", name)
 	}
 
 	_, contents := readEPUB(t, filepath.Join(dir, name))
 	opf := readOPF(t, contents)
-	if opf.Metadata.Title != "Test Series Vol. 02" {
+	if opf.Metadata.Title != "Test Series Vol. 02 (1-2)" {
 		t.Errorf("title = %q, want the file name", opf.Metadata.Title)
 	}
 	if got := metaValue(opf.Metadata.Metas, "belongs-to-collection"); got != "Test Series" {
@@ -1130,7 +1130,7 @@ func TestEPUBIdentifierEditionsDiffer(t *testing.T) {
 
 	volume := func(c *DownloadedChapter) string {
 		return identityOf(t, func(dir string, site *fakeSite) (string, error) {
-			return PackVolume(dir, site, 1, []*DownloadedChapter{c}, func(page, progress int) {})
+			return PackVolume(dir, site, 1, "", []*DownloadedChapter{c}, func(page, progress int) {})
 		})
 	}
 	if volume(plain) == volume(group) {
@@ -1144,7 +1144,7 @@ func TestEPUBIdentifierVolumeMembers(t *testing.T) {
 	second := []*DownloadedChapter{editionChapter(t, 3, "C"), editionChapter(t, 4, "D")}
 	idOf := func(chapters []*DownloadedChapter) string {
 		return identityOf(t, func(dir string, site *fakeSite) (string, error) {
-			return PackVolume(dir, site, 2, chapters, func(page, progress int) {})
+			return PackVolume(dir, site, 2, "", chapters, func(page, progress int) {})
 		})
 	}
 	if idOf(first) == idOf(second) {
@@ -1169,7 +1169,7 @@ func identifiersOf(t *testing.T, c *DownloadedChapter) [3]string {
 			return PackBundle(dir, site, []*DownloadedChapter{c}, "1", progress)
 		}),
 		identityOf(t, func(dir string, site *fakeSite) (string, error) {
-			return PackVolume(dir, site, 1, []*DownloadedChapter{c}, progress)
+			return PackVolume(dir, site, 1, "", []*DownloadedChapter{c}, progress)
 		}),
 	}
 }

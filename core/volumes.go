@@ -273,6 +273,49 @@ func siteRangesFaithful(text string, chapters grabber.Filterables) bool {
 	return true
 }
 
+// volumeRangeText writes the packed numbers as the runs they form in the listing
+// ("1-10,13-28", "1,3" when 2 failed). A repeated listed number is one slot, and a
+// listed number not packed breaks the run; "" when a packed number isn't listed.
+func volumeRangeText(listing grabber.Filterables, packed []float64) string {
+	in := make(map[float64]bool, len(packed))
+	for _, n := range packed {
+		in[n] = true
+	}
+	var slots []float64
+	listed := make(map[float64]bool, len(listing))
+	for _, chap := range listing {
+		if n := chap.GetNumber(); !listed[n] {
+			listed[n] = true
+			slots = append(slots, n)
+		}
+	}
+	for n := range in {
+		if !listed[n] {
+			return ""
+		}
+	}
+
+	var runs []string
+	var run *ranges.Range
+	for _, n := range slots {
+		if !in[n] {
+			if run != nil {
+				runs = append(runs, run.String())
+				run = nil
+			}
+			continue
+		}
+		if run == nil {
+			run = &ranges.Range{Begin: n}
+		}
+		run.End = n
+	}
+	if run != nil {
+		runs = append(runs, run.String())
+	}
+	return strings.Join(runs, ",")
+}
+
 // ListedVolumes is how many volumes the site files chapters under, 0 when
 // none does
 func ListedVolumes(chapters grabber.Filterables) int {

@@ -71,10 +71,10 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 	}, files, info, progress)
 }
 
-// PackVolume packs the downloaded chapters of a volume into one file, laid
-// out as a bundle is (a folder per chapter), and named with VolumeTemplate.
-// chapters must be sorted by number.
-func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*DownloadedChapter, progress func(page, progress int)) (string, error) {
+// PackVolume packs the downloaded chapters of a volume into one file, laid out as a
+// bundle is, and named with VolumeTemplate. rng is the name's range, see
+// NewVolumeFileTemplateParts; chapters must be sorted by number.
+func PackVolume(outputdir string, s grabber.Site, volume int, rng string, chapters []*DownloadedChapter, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
 	listed := make([]*grabber.Chapter, len(chapters))
 	for i, c := range chapters {
@@ -93,7 +93,7 @@ func PackVolume(outputdir string, s grabber.Site, volume int, chapters []*Downlo
 		}
 	}
 	return pack(outputdir, format, VolumeTemplate(s.GetFilenameTemplate()), "volume "+strconv.Itoa(volume),
-		NewVolumeFileTemplateParts(title, volume, listed), files, info, progress)
+		NewVolumeFileTemplateParts(title, volume, rng, listed), files, info, progress)
 }
 
 // PackParts packs a chapter's parts, in the order given (their part order), into
