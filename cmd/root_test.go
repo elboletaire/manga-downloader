@@ -18,6 +18,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/elboletaire/manga-downloader/packer"
 	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 )
@@ -263,14 +264,14 @@ func TestBundleRowEndsWithStatus(t *testing.T) {
 		{nil, "done"},
 		{fmt.Errorf("disk full"), "failed"},
 	} {
-		m := newProgressModel("Series", "", true, false, false, true)
+		m := newProgressModel("Series", "1-83", true, false, false, true)
 		m.width = 80
 		for _, msg := range []tea.Msg{bundleStartMsg{total: 5}, bundlePackingMsg{}, downloadDoneMsg{err: tc.err}} {
 			next, _ := m.Update(msg)
 			m = next.(progressModel)
 		}
 		row := ansi.Strip(m.renderBundleRow())
-		if !strings.HasPrefix(row, "Series - all chapters") || !strings.HasSuffix(strings.TrimSpace(row), tc.want) {
+		if !strings.HasPrefix(row, "Series - chapters 1-83") || !strings.HasSuffix(strings.TrimSpace(row), tc.want) {
 			t.Errorf("err %v: row %q, want it titled and ending in %q", tc.err, row, tc.want)
 		}
 	}
@@ -1093,5 +1094,25 @@ func TestGetRangesArgAll(t *testing.T) {
 		if got := getRangesArg(args); !strings.EqualFold(got, "all") {
 			t.Errorf("getRangesArg(%q) = %q, want all", args, got)
 		}
+	}
+}
+
+// the prompt and the all argument name a bundle of every chapter after its
+// range, as a typed range would be: "Series 1-83 - bundle", with no double space
+func TestAllChaptersRangeNamesTheBundle(t *testing.T) {
+	var chapters grabber.Filterables
+	for n := 1; n <= 83; n++ {
+		chapters = append(chapters, &grabber.Chapter{Number: float64(n)})
+	}
+	rngs, text := allChaptersRanges(chapters)
+	if text != "1-83" || len(rngs) != 1 || rngs[0].Begin != 1 || rngs[0].End != 83 {
+		t.Fatalf("ranges %v and text %q, want 1-83", rngs, text)
+	}
+	name, err := packer.BundleName("Series", packer.FilenameTemplateDefault, packer.FormatCBZ, text, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if name != "Series 1-83 - bundle.cbz" {
+		t.Errorf("bundle named %q, want %q", name, "Series 1-83 - bundle.cbz")
 	}
 }

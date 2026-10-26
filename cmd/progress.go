@@ -802,9 +802,6 @@ func (m progressModel) volumeOf(c grabber.Filterable) *core.Volume {
 // bundleTitle is the bundle row's title: the series and the range it packs,
 // like the chapter and volume rows' "Series - Chapter 1"
 func (m progressModel) bundleTitle() string {
-	if m.bundleRange == "" {
-		return m.seriesTitle + " - all chapters"
-	}
 	return m.seriesTitle + " - chapters " + m.bundleRange
 }
 

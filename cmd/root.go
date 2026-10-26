@@ -139,9 +139,7 @@ func Run(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		rngs = []ranges.Range{core.AllChaptersRange(chapters)}
-		// names the bundle as a typed range would, instead of leaving a gap
-		settings.Range = rngs[0].String()
+		rngs, settings.Range = allChaptersRanges(chapters)
 	} else {
 		// ranges parsing
 		settings.Range = getRangesArg(args)
@@ -494,6 +492,13 @@ func toMetaFunc(c *color.Color) func(string) string {
 
 // allChaptersLabel is the prompt for downloading every listed chapter, which
 // says how many of them the listing marks as locked
+// allChaptersRanges returns the range of every listed chapter and its text, which
+// names a bundle of them as a typed range would
+func allChaptersRanges(chapters grabber.Filterables) ([]ranges.Range, string) {
+	rngs := []ranges.Range{core.AllChaptersRange(chapters)}
+	return rngs, rngs[0].String()
+}
+
 func allChaptersLabel(chapters grabber.Filterables) string {
 	label := fmt.Sprintf("Do you want to download all %d chapters", len(chapters))
 	locked := 0

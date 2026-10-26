@@ -346,14 +346,14 @@ follow these steps:
    </picture>
 
 4. **Set the options** in the *Options* tab: where the files go, the format
-   (CBZ, CBR, Folder or EPUB; EPUB adds a *Reading direction*), *Pack as*
-   (a file per chapter, per volume, or one for everything), *Convert to JPEG*
-   for AVIF and WebP pages, pages to skip, and *Skip existing files*. Under *Advanced* are the file
-   name template and *Show the browser window*, which you rarely need: a site
-   that needs the window opens it by itself. Packing by volume adds a *Volumes*
-   box above the chapter list. It starts empty, which packs the site's volumes;
-   a line under it offers them as chapter ranges when they can be written that
-   way. The list is grouped by volume.
+   (CBZ, CBR, Folder or EPUB; EPUB adds a *Reading direction*), *Pack as* (a
+   file per chapter, per volume, or one for everything), *Convert to JPEG* for
+   AVIF and WebP pages, pages to skip, and *Skip existing files*. Under
+   *Advanced* are the file name template and *Show the browser window*, which
+   you rarely need: a site that needs the window opens it by itself. Packing by
+   volume adds a *Volumes* box above the chapter list. It starts empty, which
+   packs the site's volumes; a line under it offers them as chapter ranges when
+   they can be written that way. The list is grouped by volume.
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.webp">
@@ -628,7 +628,7 @@ release.
 
 `--skip-existing` leaves out a chapter, volume or bundle whose file is already
 in the output folder, before its pages are fetched. It checks the name the
-first try gets (without the ` v2` suffix), costs no request, and never deletes
+first try gets (without the ` v2` suffix), usually costs no request, and never deletes
 or overwrites anything, so a broken or partial file has to be deleted to
 download it again. It assumes the template tells chapters apart: a template
 that names only the series would skip every chapter after the first. To keep a
@@ -705,26 +705,26 @@ A URL points at one edition, and `--language` downloads another one instead
 
 ### Options
 
-| Flag                  | Short | Description                                              | Default        |
-| --------------------- | ----- | -------------------------------------------------------- | -------------- |
-| `--output-dir`        | `-o`  | Folder to write the downloaded files to                  | current folder |
-| `--bundle`            | `-b`  | Bundle all chapters into a single file                   | off            |
-| `--volumes`           |       | One file per volume: `auto`, `parts`, `1-7/8-16`         | off            |
-| `--format`            | `-f`  | Output format: `cbz`, `cbr`, `raw` or `epub`             | `cbz`          |
-| `--reading-direction` |       | Page turn direction for EPUB: `rtl` (manga) or `ltr`     | `rtl`          |
-| `--filename-template` | `-t`  | Template for the file names                              | see above      |
-| `--language`          | `-l`  | Only download the specified language                     | site default   |
-| `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)  | `all`          |
-| `--convert-images`    |       | Formats to JPEG: `avif`, `webp` or `none`                | `avif`         |
-| `--compress`          |       | Re-encode pages to JPEG when that's smaller (not GIF)    | off            |
+| Flag                  | Short | Description                                                    | Default        |
+| --------------------- | ----- | -------------------------------------------------------------- | -------------- |
+| `--output-dir`        | `-o`  | Folder to write the downloaded files to                        | current folder |
+| `--bundle`            | `-b`  | Bundle all chapters into a single file                         | off            |
+| `--volumes`           |       | One file per volume: `auto`, `parts`, `1-7/8-16`               | off            |
+| `--format`            | `-f`  | Output format: `cbz`, `cbr`, `raw` or `epub`                   | `cbz`          |
+| `--reading-direction` |       | Page turn direction for EPUB: `rtl` (manga) or `ltr`           | `rtl`          |
+| `--filename-template` | `-t`  | Template for the file names                                    | see above      |
+| `--language`          | `-l`  | Only download the specified language                           | site default   |
+| `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)        | `all`          |
+| `--convert-images`    |       | Formats to JPEG: `avif`, `webp` or `none`                      | `avif`         |
+| `--compress`          |       | Re-encode pages to JPEG when that's smaller (not GIF)          | off            |
 | `--jpeg-quality`      |       | JPEG quality of re-encoded pages (1-100); lower shrinks JPEG pages more | `90`           |
-| `--skip-pages`        |       | Pages to exclude from every chapter (`-1` is the last)   | none           |
-| `--skip-existing`     |       | Skip chapters whose file is already in the output folder | off            |
-| `--concurrency`       | `-c`  | Number of chapters downloaded at once (max 5)            | 5              |
-| `--concurrency-pages` | `-C`  | Number of pages downloaded at once per chapter (max 10)  | 10             |
-| `--retry`             | `-r`  | Retries per failed page (max 3, `0` disables retrying)   | 1              |
-| `--browser-visible`   |       | Always show the browser window (rarely needed)           | off            |
-| `--version`           | `-v`  | Show version information                                 |                |
+| `--skip-pages`        |       | Pages to exclude from every chapter (`-1` is the last)         | none           |
+| `--skip-existing`     |       | Skip chapters, volumes or bundles already in the output folder | off            |
+| `--concurrency`       | `-c`  | Number of chapters downloaded at once (max 5)                  | 5              |
+| `--concurrency-pages` | `-C`  | Number of pages downloaded at once per chapter (max 10)        | 10             |
+| `--retry`             | `-r`  | Retries per failed page (max 3, `0` disables retrying)         | 1              |
+| `--browser-visible`   |       | Always show the browser window (rarely needed)                 | off            |
+| `--version`           | `-v`  | Show version information                                       |                |
 
 Run `manga-downloader help` to list them in your terminal. `version` (and `--version`) checks for a newer release too; set `MANGA_DOWNLOADER_NO_UPDATE_CHECK=1` to skip it.
 
