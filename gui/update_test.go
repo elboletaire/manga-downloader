@@ -211,6 +211,7 @@ func TestShouldCheckUpdates(t *testing.T) {
 	}{
 		{"", on, false},
 		{"", off, false},
+		{"develop", on, false},
 		{"v1.12.0", off, false},
 		{"v1.12.0", on, true},
 	}

@@ -111,9 +111,9 @@ func (c *Controller) claimUpdateCheck() bool {
 }
 
 // shouldCheckUpdates is whether the update check runs: never for a dev build
-// (no tag), nor when the user turned it off
+// (no release tag, e.g. the makefile's "develop"), nor when the user turned it off
 func shouldCheckUpdates(tag string, prefs PrefsDTO) bool {
-	return tag != "" && prefs.CheckUpdates
+	return update.IsRelease(tag) && prefs.CheckUpdates
 }
 
 // Update is the newer release the update check found, nil when there's none or
