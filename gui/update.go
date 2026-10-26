@@ -8,7 +8,6 @@ import (
 	"errors"
 	"log"
 	"runtime"
-	"strings"
 
 	"github.com/elboletaire/manga-downloader/update"
 )
@@ -30,9 +29,6 @@ type Update struct {
 	// Sums is the release's checksums asset, which Installer is verified against
 	Sums *Asset
 }
-
-// systemLocaleLen caps the system's locale the window reports; a BCP 47 tag is far shorter
-const systemLocaleLen = 35
 
 // releaseURL is the GitHub page of the release a build was made from, "" when
 // the build has no release tag
@@ -70,13 +66,10 @@ func (c *Controller) CheckUpdate(ctx context.Context, current string, src update
 	}
 }
 
-// SetSystemLocale stores the system's raw locale, as the window reports it, for
-// the update check. It's trimmed and capped, and doesn't notify: it isn't in State.
+// SetSystemLocale stores the system's locale, as the window reports it, normalized
+// for the update check. It doesn't notify: it isn't in State.
 func (c *Controller) SetSystemLocale(locale string) {
-	locale = strings.TrimSpace(locale)
-	if r := []rune(locale); len(r) > systemLocaleLen {
-		locale = string(r[:systemLocaleLen])
-	}
+	locale = update.NormalizeLocale(locale)
 	c.mu.Lock()
 	c.systemLocale = locale
 	c.mu.Unlock()

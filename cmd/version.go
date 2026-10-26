@@ -60,7 +60,7 @@ func updateStatus(ctx context.Context, current string, src update.Source) string
 	if !update.IsRelease(current) {
 		return "Development build, no release to compare with.\n"
 	}
-	body, err := src.Latest(ctx, update.Check{Client: "cli", Version: current})
+	body, err := src.Latest(ctx, update.Check{Client: "cli", Version: current, SystemLang: update.SystemLocale()})
 	if err != nil {
 		return fmt.Sprintf("Error checking for updates: %s\n", err)
 	}

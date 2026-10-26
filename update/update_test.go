@@ -126,7 +126,11 @@ func TestWorkerQueryParams(t *testing.T) {
 			Check{Client: "gui", Version: "v23.0.0", Lang: "ja"},
 			map[string]string{"client": "gui", "version": "23.0.0", "lang": "ja"},
 		},
-		"cli sends no language": {
+		"cli sends its system language, never a UI one": {
+			Check{Client: "cli", Version: "v23.0.0", SystemLang: "de-DE"},
+			map[string]string{"client": "cli", "version": "23.0.0", "syslang": "de-DE"},
+		},
+		"cli with no system language": {
 			Check{Client: "cli", Version: "v23.0.0"},
 			map[string]string{"client": "cli", "version": "23.0.0"},
 		},

@@ -51,7 +51,7 @@ type Check struct {
 	Version string
 	// Lang is the desktop app's UI language, "" when the caller sends none
 	Lang string
-	// SystemLang is the system's raw locale, "" when the caller doesn't send one
+	// SystemLang is the system's locale, normalized (see NormalizeLocale), "" when the caller doesn't send one
 	SystemLang string
 }
 

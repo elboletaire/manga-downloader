@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -194,15 +193,13 @@ func TestUpdateCheckSendsTheLanguage(t *testing.T) {
 	}
 }
 
-func TestSetSystemLocaleTrimsAndCaps(t *testing.T) {
+func TestSetSystemLocaleNormalizes(t *testing.T) {
 	c := NewController(&grabber.Settings{}, nil)
-	c.SetSystemLocale("  fr-FR  ")
-	if got := c.systemLocale; got != "fr-FR" {
-		t.Errorf("systemLocale = %q, want the trimmed locale", got)
-	}
-	c.SetSystemLocale(strings.Repeat("é", 50))
-	if got := []rune(c.systemLocale); len(got) != systemLocaleLen {
-		t.Errorf("systemLocale has %d runes, want %d", len(got), systemLocaleLen)
+	for in, want := range map[string]string{"  fr-FR  ": "fr-FR", "ca_ES.UTF-8@valencia": "ca-ES", "C": ""} {
+		c.SetSystemLocale(in)
+		if got := c.systemLocale; got != want {
+			t.Errorf("SetSystemLocale(%q): systemLocale = %q, want %q", in, got, want)
+		}
 	}
 }
 

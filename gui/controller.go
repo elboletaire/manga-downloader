@@ -239,7 +239,7 @@ type Controller struct {
 	updateChecking bool
 	// prefs are the app-only preferences, outside settings (see PrefsDTO)
 	prefs PrefsDTO
-	// systemLocale is the system's raw locale, as the window reported it (see SetSystemLocale)
+	// systemLocale is the system's locale, as the window reported it, normalized (see SetSystemLocale)
 	systemLocale string
 	// attention is the browser window waiting for the user (a check to pass
 	// there), nil when none is or the user dismissed it

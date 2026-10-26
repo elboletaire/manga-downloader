@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -45,6 +46,26 @@ func TestUpdateStatus(t *testing.T) {
 				t.Errorf("updateStatus = %q, want %q", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestUpdateStatusSendsTheSystemLocale(t *testing.T) {
+	t.Setenv("LC_ALL", "")
+	t.Setenv("LC_MESSAGES", "")
+	t.Setenv("LANG", "fr_FR.UTF-8")
+	var q url.Values
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		q = r.URL.Query()
+		_, _ = w.Write([]byte(`{"tag_name":"v23.0.0"}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	updateStatus(context.Background(), "v1.22.0", update.Source{Worker: srv.URL, GitHub: srv.URL, HTTP: srv.Client()})
+	if got := q.Get("syslang"); got != "fr-FR" {
+		t.Errorf("syslang = %q, want fr-FR", got)
+	}
+	if _, ok := q["lang"]; ok {
+		t.Errorf("lang sent = %q, want none, the CLI has no UI language", q.Get("lang"))
 	}
 }
 

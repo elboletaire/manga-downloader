@@ -34,4 +34,4 @@ cloudflare:
     os:      { column: blob3, label: OS }
     arch:    { column: blob4, label: Arch }
     lang:    { column: blob6, label: App language }      # en, es, ca, ja or system; "" from the CLI and older apps
-    syslang: { column: blob7, label: System language }   # only when the app follows the system
+    syslang: { column: blob7, label: System language }   # the CLI always; the app only when it follows the system
