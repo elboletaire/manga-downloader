@@ -22,7 +22,7 @@ One Analytics Engine data point per `GET` (dataset `manga_downloader_checks`):
 | `blob1`–`blob4` | `client`, `version`, `os`, `arch` (clamped as above) |
 | `blob5` | UTC date, `YYYY-MM-DD` |
 | `blob6` | the app's UI language setting (`lang`: `en`, `es`, `ca`, `ja` or `system`), clamped as above, `""` when not sent |
-| `blob7` | the system's locale (`syslang`, e.g. `fr-FR`), sent by the CLI always and by the app only with `lang=system`, clamped as above, `""` when not sent |
+| `blob7` | the system's locale (`syslang`, e.g. `fr-FR`), sent by the CLI when it knows the locale and by the app only with `lang=system`, clamped as above, `""` when not sent |
 | `double1` | `1` |
 
 The salt is 32 random bytes, created on the first request of each UTC day and held in the Durable Object.

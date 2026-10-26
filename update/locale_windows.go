@@ -2,18 +2,10 @@
 
 package update
 
-import (
-	"syscall"
-	"unsafe"
-)
-
-// localeNameMax is LOCALE_NAME_MAX_LENGTH, the room a locale name needs with its NUL
-const localeNameMax = 85
-
-var getUserDefaultLocaleName = syscall.NewLazyDLL("kernel32.dll").NewProc("GetUserDefaultLocaleName")
+import "golang.org/x/sys/windows"
 
 // SystemLocale is the user's locale, normalized (see NormalizeLocale): the environment's
-// when it names one (Git Bash, MSYS), else Windows' own user locale
+// when it names one (Git Bash, MSYS), else the display language Windows prefers
 func SystemLocale() string {
 	if l := NormalizeLocale(envLocale()); l != "" {
 		return l
@@ -22,13 +14,12 @@ func SystemLocale() string {
 	return NormalizeLocale(windowsLocale())
 }
 
-// windowsLocale asks Windows for the user's locale name, "" when it can't say
+// windowsLocale is the first UI language Windows prefers for the user, "" when it can't say
 func windowsLocale() string {
-	buf := make([]uint16, localeNameMax)
-	n, _, _ := getUserDefaultLocaleName.Call(uintptr(unsafe.Pointer(&buf[0])), uintptr(len(buf)))
-	if n == 0 {
+	langs, err := windows.GetUserPreferredUILanguages(windows.MUI_LANGUAGE_NAME)
+	if err != nil || len(langs) == 0 {
 		return ""
 	}
 
-	return syscall.UTF16ToString(buf)
+	return langs[0]
 }

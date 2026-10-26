@@ -4,36 +4,61 @@ package update
 
 import (
 	"os"
-	"regexp"
 	"strings"
 )
 
-// localeRe is a language, then up to two more subtags (script, region), as BCP 47 has them
-var localeRe = regexp.MustCompile(`^[a-z]{2,3}(-[a-z0-9]{1,8}){0,2}$`)
-
-// NormalizeLocale trims a locale such as "es_ES.UTF-8" or "ca_ES@valencia" to a
-// BCP 47 tag such as "es-ES", at most three subtags. It returns "" for C, POSIX
-// and anything that isn't a language tag.
+// NormalizeLocale trims a locale such as "es_ES.UTF-8", "ca_ES@valencia" or
+// "de-DE_phoneb" (Windows' sort suffix) to a BCP 47 tag such as "es-ES": a
+// language, then an optional script and region, and nothing after them. It
+// returns "" for C, POSIX and anything without a language.
 func NormalizeLocale(s string) string {
 	s = strings.TrimSpace(s)
 	if i := strings.IndexAny(s, ".@"); i >= 0 {
 		s = s[:i]
 	}
-	s = strings.ToLower(strings.ReplaceAll(s, "_", "-"))
-	if !localeRe.MatchString(s) {
+	parts := strings.Split(strings.ToLower(strings.ReplaceAll(s, "_", "-")), "-")
+	if !isAlpha(parts[0], 2, 3) {
 		return ""
 	}
-	parts := strings.Split(s, "-")
-	for i, p := range parts[1:] {
-		switch len(p) {
-		case 2:
-			parts[i+1] = strings.ToUpper(p)
-		case 4:
-			parts[i+1] = strings.ToUpper(p[:1]) + p[1:]
+	out := []string{parts[0]}
+	rest := parts[1:]
+	if len(rest) > 0 && isAlpha(rest[0], 4, 4) {
+		out = append(out, strings.ToUpper(rest[0][:1])+rest[0][1:])
+		rest = rest[1:]
+	}
+	if len(rest) > 0 && (isAlpha(rest[0], 2, 2) || isDigits(rest[0], 3)) {
+		out = append(out, strings.ToUpper(rest[0]))
+	}
+
+	return strings.Join(out, "-")
+}
+
+// isAlpha reports whether s is between lo and hi ASCII letters long
+func isAlpha(s string, lo, hi int) bool {
+	if len(s) < lo || len(s) > hi {
+		return false
+	}
+	for _, r := range s {
+		if r < 'a' || r > 'z' {
+			return false
 		}
 	}
 
-	return strings.Join(parts, "-")
+	return true
+}
+
+// isDigits reports whether s is exactly n ASCII digits long
+func isDigits(s string, n int) bool {
+	if len(s) != n {
+		return false
+	}
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+
+	return true
 }
 
 // envLocale is the first set of LC_ALL, LC_MESSAGES and LANG, unnormalized.
