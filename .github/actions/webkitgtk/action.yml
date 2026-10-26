@@ -1,0 +1,29 @@
+name: Install WebKitGTK
+description: Installs the WebKitGTK and GTK headers, from cached .debs when the runner image hasn't changed
+runs:
+  using: composite
+  steps:
+  - id: image
+    shell: bash
+    run: echo "key=webkitgtk-$ImageOS-$ImageVersion-$(uname -m)" >> "$GITHUB_OUTPUT"
+  - id: restore
+    uses: actions/cache/restore@v6
+    with:
+      path: ~/webkitgtk-debs
+      key: ${{ steps.image.outputs.key }}
+  # installed through apt either way, so dpkg sets up the .so symlinks the linker needs
+  - shell: bash
+    run: |
+      if [ "${{ steps.restore.outputs.cache-hit }}" = true ] && sudo apt-get install -y ~/webkitgtk-debs/*.deb; then
+        exit 0
+      fi
+      sudo apt-get update -o Acquire::Retries=3
+      sudo apt-get install -y --download-only -o Acquire::Retries=3 libgtk-3-dev libwebkit2gtk-4.1-dev
+      mkdir -p ~/webkitgtk-debs
+      find /var/cache/apt/archives -maxdepth 1 -name "*.deb" -exec cp {} ~/webkitgtk-debs/ \;
+      sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+  - if: steps.restore.outputs.cache-hit != 'true'
+    uses: actions/cache/save@v6
+    with:
+      path: ~/webkitgtk-debs
+      key: ${{ steps.image.outputs.key }}
