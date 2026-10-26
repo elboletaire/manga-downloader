@@ -173,10 +173,12 @@ grabber: \
 	grabber/anikiga \
 	grabber/animeallstar1 \
 	grabber/animeallstar30 \
+	grabber/animeshinigami \
 	grabber/animexnovel \
 	grabber/apcomics \
 	grabber/apenasumafa \
 	grabber/apothecary \
+	grabber/aquareader \
 	grabber/arbxcomix \
 	grabber/arhentai \
 	grabber/arlas \
@@ -224,10 +226,12 @@ grabber: \
 	grabber/comiczenon \
 	grabber/comirela \
 	grabber/comix \
+	grabber/covendasbruxonas \
 	grabber/cucumbermanga \
 	grabber/danke \
 	grabber/datgarscanlation \
 	grabber/demonslayermanga \
+	grabber/diamondfansub \
 	grabber/divascans \
 	grabber/doujinxh \
 	grabber/dragonballmangaa \
@@ -258,6 +262,7 @@ grabber: \
 	grabber/heavenlydelusion \
 	grabber/heavenmanga \
 	grabber/heckscans \
+	grabber/hentai20lol \
 	grabber/hentaiscantrad \
 	grabber/hentaiteca \
 	grabber/hentaixcomic \
@@ -270,10 +275,12 @@ grabber: \
 	grabber/hunlightcomics \
 	grabber/ichicomi \
 	grabber/ichithewitch \
+	grabber/imanevilgod \
 	grabber/infrafandub \
 	grabber/inkapk \
 	grabber/inmanga \
 	grabber/inventariooculto \
+	grabber/jellycomics \
 	grabber/jnbooks \
 	grabber/jestful \
 	grabber/jojolands \
@@ -287,8 +294,11 @@ grabber: \
 	grabber/kansai \
 	grabber/kaynscan \
 	grabber/kazokuden \
+	grabber/kencomics \
+	grabber/keroscans \
 	grabber/kimicomi \
 	grabber/klikmanga \
+	grabber/kmansin09 \
 	grabber/kokomangas \
 	grabber/ksgroupscans \
 	grabber/kuragebunch \
@@ -300,14 +310,17 @@ grabber: \
 	grabber/ler999 \
 	grabber/lilymanga \
 	grabber/lonertl \
+	grabber/lovesjane \
 	grabber/luascans \
 	grabber/magcomi \
 	grabber/magustoon \
 	grabber/mahoushoujobu \
+	grabber/maidsama \
 	grabber/mangaailand \
 	grabber/mangabang \
 	grabber/mangacrazy \
 	grabber/mangaparktv \
+	grabber/mangatop \
 	grabber/mangazegra \
 	grabber/manga18free \
 	grabber/mangaball \
@@ -337,12 +350,14 @@ grabber: \
 	grabber/mangitto \
 	grabber/manhuahot \
 	grabber/manhuanext \
+	grabber/manhwa68 \
 	grabber/manhwaonlinees \
 	grabber/manhwaclub \
 	grabber/manhwanex \
 	grabber/manhwareads \
 	grabber/manhwatop \
 	grabber/marmota \
+	grabber/mehentai \
 	grabber/mgeko \
 	grabber/mikrokosmosfb \
 	grabber/mkissa \
@@ -365,9 +380,12 @@ grabber: \
 	grabber/onepunchmanmanga \
 	grabber/onepunchmannmanga \
 	grabber/onlinechainsawmanmanga \
+	grabber/orchisasia \
 	grabber/orvmanhwa \
 	grabber/ourfeel \
 	grabber/paradisebl \
+	grabber/paritehaber \
+	grabber/petrotechsociety \
 	grabber/piacomic \
 	grabber/plumacomics \
 	grabber/projectsuki \
@@ -384,6 +402,7 @@ grabber: \
 	grabber/ruridragon \
 	grabber/sacachispa \
 	grabber/samuraij5z \
+	grabber/scanpinkrosa \
 	grabber/seraphicdeviltry \
 	grabber/shadowceviri \
 	grabber/shinobiscans \
@@ -402,9 +421,12 @@ grabber: \
 	grabber/templetoons \
 	grabber/thebeginningaftertheendmanga \
 	grabber/thebluelock \
+	grabber/thegirlfromrandomchatting \
 	grabber/thetowerofgod \
 	grabber/tokyorevengers \
 	grabber/tonarinoyj \
+	grabber/toongodcc \
+	grabber/toonizy \
 	grabber/topcomicporno \
 	grabber/tortugaceviri \
 	grabber/trmangaoku \
@@ -427,6 +449,7 @@ grabber: \
 	grabber/yokaiteam \
 	grabber/younganimal \
 	grabber/youngchampion \
+	grabber/yurilab \
 	grabber/yurimoonsub \
 	grabber/yurionline \
 	grabber/yurionair \
@@ -922,6 +945,86 @@ grabber/noranofansub:
 grabber/smuglo:
 	go run . https://manga.smuglo.li/series/aikatsu-secret-story/ 4
 
+# Madara sites matched by the generic Tcb grabber (same ajax/chapters endpoint)
+grabber/aquareader:
+	go run . https://aquareader.org/manga/reality-quest/reality-quest/ 227
+grabber/lovesjane:
+	go run . https://lovesjane.site/manga/confession-agent/ 31
+grabber/manhwa68:
+	go run . https://manhwa68.com/manga/simple-yet-sexy/ 133
+grabber/orchisasia:
+	go run . https://www.orchisasia.org/comic/i-declare-vengeance/ 36
+grabber/petrotechsociety:
+	go run . https://www.petrotechsociety.org/manga/a-hellish-arrangement/ 15
+grabber/paritehaber:
+	go run . https://www.paritehaber.com/manga/devoured-the-serpent-and-the-pomegranate/ 31
+grabber/mangatop:
+	go run . https://mangatop.org/series/magic-emperor/ 927
+grabber/toonizy:
+	go run . https://toonizy.com/webtoon/folklore-thingy/00/ 60
+grabber/covendasbruxonas:
+	go run . https://covendasbruxonas.com/bruxonas/manga/bolo-de-cereja/ 59
+grabber/yurilab:
+	go run . https://yurilab.top/series/kanna-no-nichijou-kobayashi-san-chi-no-maid-dragon/ 6
+grabber/diamondfansub:
+	go run . https://diamondfansub.com/seri/kis-kalesindeki-esir-kiz/ 65
+grabber/animeshinigami:
+	go run . https://www.animeshinigami.com/manga/enter-the-other-world-reloaded/ 114
+grabber/kmansin09:
+	go run . https://kmansin09.top/manga/zhi-chui-jiao-shi/ 245
+grabber/jellycomics:
+	go run . https://jellycomics.online/truyen/linh-vuc-bong-toi-2/ 59
+grabber/mehentai:
+	go run . https://mehentai.live/truyen/yeu-anh-rat-nhieu 9
+# Blogger, keiyoushi-style and single-series WordPress sites, matched by markup
+grabber/scanpinkrosa:
+	go run . https://scanpinkrosa.blogspot.com/2026/02/a-jornada-de-uma-elfa-negra-com-poderes.html 9
+grabber/keroscans:
+	go run . https://keroscans.net/series/comic/my-beloved-daughter-is-a-villainess 10
+grabber/kencomics:
+	go run . https://kencomics.com/series/till-i-send-you-to-hell 65
+grabber/toongodcc:
+	go run . https://toongod.cc/webtoon/yuan-zun/ 5
+grabber/hentai20lol:
+	go run . https://hentai20.lol/manga/scumbag/ 25
+grabber/imanevilgod:
+	go run . https://imanevilgod.com/im-an-evil-god-manhua-chapter-567/ 567
+grabber/thegirlfromrandomchatting:
+	go run . https://thegirlfromrandomchatting.com/manga/the-girl-from-random-chatting-chapter-351/ 351
+grabber/maidsama:
+	go run . https://w14.maid-sama.com/manga/maid-sama-chapter-85-2/ 85
+# PlainHTML sites: themesia readers and FoOlSlide
+grabber/violetmanga:
+	go run . https://violetmanga.com/the-saintess-is-captive-to-forbidden-love-chapter-1/ 1
+grabber/celestialmoonscan:
+	go run . https://celestialmoonscan.es/sobrevivir-como-la-esposa-de-un-asesino-en-serie-capitulo-17/ 17
+grabber/rakuentranslations:
+	go run . https://rakuentranslations.com/isekai-ntr-sensou-capitulo-2/ 2
+grabber/komikdewasamom:
+	go run . https://komikdewasa.mom/rumah-bordil-pelacur-chapter-90/ 90
+grabber/komiktap:
+	go run . https://komiktap.info/manga/inaka-no-inshuu-tanemomi-sama/ 4
+grabber/lianscans:
+	go run . https://www.lianscans.com/manga/tada-de-wa-dakaremasen/ 61
+grabber/doujin69:
+	go run . https://doujin69.com/doujin/secret-class/ 319
+grabber/doujinmoon:
+	go run . https://doujinmoon.com/manga/wireless-onahole/ 125
+grabber/finmanga:
+	go run . https://www.fin-manga.com/vengeance-named-love-%e0%b8%95%e0%b8%ad%e0%b8%99%e0%b8%97%e0%b8%b5%e0%b9%88-91/ 91
+grabber/gomanga:
+	go run . https://www.go-manga.com/absolute-sword-sense-%e0%b8%95%e0%b8%ad%e0%b8%99%e0%b8%97%e0%b8%b5%e0%b9%88-205/ 205
+grabber/manganeko:
+	go run . https://manga-neko.com/a-rank-party-wo-ridatsu-shita-ore-wa-moto-oshiego-tachi-to-meikyuu-shinbu-wo-mezasu-%e0%b8%95%e0%b8%ad%e0%b8%99%e0%b8%97%e0%b8%b5%e0%b9%88-156/ 156
+grabber/zenithscans:
+	go run . https://zenithscans.com/son-seviye-kahramanin-donusu-bolum-142/ 142
+grabber/tumanga:
+	go run . https://tumanga.net/manga/bl-motel/ 89.5
+grabber/seinagies:
+	go run . https://online.seinagi.org.es/series/to_aru_kagaku_no_railgun/ 131
+grabber/nifteam:
+	go run . https://read-nifteam.info/slide/series/one-piece-nif/ 1195
+
 grabber/html: \
 	grabber/108read \
 	grabber/4porncomic \
@@ -946,6 +1049,7 @@ grabber/html: \
 	grabber/borutoexplorer \
 	grabber/bymichiby \
 	grabber/cat300 \
+	grabber/celestialmoonscan \
 	grabber/csmmangafree \
 	grabber/dandadanmanga \
 	grabber/dandadanmangas \
@@ -954,8 +1058,10 @@ grabber/html: \
 	grabber/demonicscans \
 	grabber/dojing \
 	grabber/doodmanga \
+	grabber/doujin69 \
 	grabber/doujindistrict \
 	grabber/doujinlc \
+	grabber/doujinmoon \
 	grabber/dynastyscans \
 	grabber/ecchidoujin \
 	grabber/eldermanga \
@@ -963,6 +1069,7 @@ grabber/html: \
 	grabber/eskimangalar \
 	grabber/evascans \
 	grabber/fbsquadx \
+	grabber/finmanga \
 	grabber/flashmanga \
 	grabber/furyosociety \
 	grabber/gachiakutas \
@@ -970,6 +1077,7 @@ grabber/html: \
 	grabber/ghostoon \
 	grabber/goddoujin \
 	grabber/godhman \
+	grabber/gomanga \
 	grabber/grimscans \
 	grabber/gutsberserk \
 	grabber/hentai1 \
@@ -987,11 +1095,13 @@ grabber/html: \
 	grabber/kitsunedawn \
 	grabber/kombatch \
 	grabber/komikdewasa \
+	grabber/komikdewasamom \
 	grabber/komikindo \
 	grabber/komikindoshop \
 	grabber/komikmanga \
 	grabber/komikmu \
 	grabber/komikstation \
+	grabber/komiktap \
 	grabber/komiku \
 	grabber/gourmetsupremacy \
 	grabber/kumapoi \
@@ -1001,6 +1111,7 @@ grabber/html: \
 	grabber/legionscans \
 	grabber/lelmanga \
 	grabber/lelscanfr \
+	grabber/lianscans \
 	grabber/limonmanga \
 	grabber/linkmanga \
 	grabber/madaradex \
@@ -1014,6 +1125,7 @@ grabber/html: \
 	grabber/mangakimi \
 	grabber/mangalami \
 	grabber/mangamaniacs \
+	grabber/manganeko \
 	grabber/mangapill \
 	grabber/mangaread \
 	grabber/mangasorigines \
@@ -1045,6 +1157,7 @@ grabber/html: \
 	grabber/natsuone \
 	grabber/nekoproject \
 	grabber/ngomik \
+	grabber/nifteam \
 	grabber/nirvanamanga \
 	grabber/nocfsb \
 	grabber/noranofansub \
@@ -1059,6 +1172,7 @@ grabber/html: \
 	grabber/orionscans \
 	grabber/pornhwaz \
 	grabber/rackusreads \
+	grabber/rakuentranslations \
 	grabber/ravenscans \
 	grabber/rawkuma \
 	grabber/readyagami \
@@ -1076,6 +1190,7 @@ grabber/html: \
 	grabber/scanvf \
 	grabber/scythescans \
 	grabber/seinagi \
+	grabber/seinagies \
 	grabber/sektedoujin \
 	grabber/sereinscan \
 	grabber/shijiescans \
@@ -1099,17 +1214,19 @@ grabber/html: \
 	grabber/toonhunter \
 	grabber/trmanga \
 	grabber/tsundoku \
+	grabber/tumanga \
 	grabber/uchuujinmangas \
 	grabber/undertranslations \
 	grabber/utsukushiibg \
 	grabber/uzaymanga \
 	grabber/vermanhwa \
-	grabber/violetscans \
+	grabber/violetmanga \
 	grabber/visorotaku \
 	grabber/writerscans \
 	grabber/sodsaime \
 	grabber/yakshacomics \
 	grabber/yaoiflix \
+	grabber/zenithscans \
 	grabber/zonatmo
 
 grabber/tcbscans:
@@ -1237,8 +1354,6 @@ grabber/oremanga:
 	go run . https://www.oremanga.net/series/blue-lock/ 300
 grabber/thunderscans:
 	go run . https://en-thunderscans.com/comics/full-time-awakening/ 108
-grabber/violetscans:
-	go run . https://violetscans.org/comics/after-all-ill-marry-you/ 21
 # a free, early episode (episode_no 2 is Season 1 Ep. 1, 52 pages); the
 # list is paginated, so this also walks the whole episode list
 grabber/webtoons:
