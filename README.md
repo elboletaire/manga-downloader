@@ -646,6 +646,11 @@ folder up to date, run it from cron:
 0 6 * * * manga-downloader --skip-existing -o ~/Manga/Series "<series url>" all
 ~~~
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/skip-existing.gif">
+  <img alt="The command line downloading five chapters, then the same series with --skip-existing: the five are listed as skipped and three new ones are downloaded" src="assets/demos/skip-existing-light.gif">
+</picture>
+
 Volume files (`--volumes`) get their own default name while the template is
 left as is:
 

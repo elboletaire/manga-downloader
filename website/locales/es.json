@@ -108,6 +108,8 @@
     "bundleGifCaption": "Añade <code>--bundle</code> y acaban todos en un solo archivo.",
     "volumesGifAlt": "Grabación de terminal: manga-downloader descarga trece capítulos de Horimiya con --volumes auto, empaquetados en un archivo CBZ por tomo.",
     "volumesGifCaption": "O <code>--volumes auto</code> para un archivo por tomo.",
+    "skipExistingGifAlt": "Grabación de terminal: manga-downloader descarga cinco capítulos de Horimiya y, después, vuelve a ejecutarse con --skip-existing: los cinco aparecen como omitidos y se descargan tres nuevos.",
+    "skipExistingGifCaption": "Vuelve a ejecutarlo con <code>--skip-existing</code> y solo se descargan los capítulos nuevos.",
     "more": "Tienes todas las opciones en la <a href=\"{{repo}}#using-the-command-line\">guía de uso</a> (en inglés), o ejecuta <code>manga-downloader help</code>."
   },
   "features": {

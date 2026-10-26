@@ -17,7 +17,7 @@ Do it from a clean worktree off `origin/master`, at the commit the release will 
 |---|---|---|---|
 | App screenshots, `assets/screenshots/{01..14}-*-{light,dark}.webp` (English only, WebPs ~100-165 KB each) | `tools/screenshots/` (lossless PNGs in `out/`, not committed) | README | every release that changed the app's UI |
 | Website WebPs, `website/src/assets/screenshots/*.webp` and `{es,ca,ja}/*.webp` (`SHOT_LANG=all`) | the lossless PNGs in `tools/screenshots/out/`, cropped by `website/build/crop-screenshots.sh` | website | with the screenshots (`capture-all.sh --install` does it) |
-| Terminal GIFs, `assets/demos/*.gif` (dark) and `*-light.gif` | `assets/demos/*.tape` and `*-light.tape` twins | README (`download`, `prompt`, `groups`, `bundle`, `volumes`), website (`download`, `bundle`, `volumes`, via raw GitHub URLs on `master`) | every release |
+| Terminal GIFs, `assets/demos/*.gif` (dark) and `*-light.gif` | `assets/demos/*.tape` and `*-light.tape` twins | README (`download`, `prompt`, `groups`, `bundle`, `volumes`, `skip-existing`), website (`download`, `bundle`, `volumes`, `skip-existing`, via raw GitHub URLs on `master`) | every release |
 | Brand rasters | `assets/brand/**.svg` | see "Brand" below | only when the brand changed |
 
 ## 1. App screenshots
