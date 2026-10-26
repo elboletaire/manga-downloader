@@ -5,24 +5,26 @@
 <rect x="0.5" y="0.5" width="799" height="299" rx="12" fill="#fcfcfb" stroke="#dcdedf"/>
 <g font-family='"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif' font-size="11" fill="#52514e" style="font-variant-numeric:tabular-nums">
 <text x="24" y="32" fill="#0b0b0b" font-size="16" font-weight="600">Downloads per day</text>
-<text x="24.0" y="50.0" fill="#6f6e69" font-size="12">Estimated, spread over each release&apos;s live window (measured needs 14 days, have 9 days)</text>
+<text x="24.0" y="50.0" fill="#6f6e69" font-size="12">Estimated, spread over each release&apos;s live window (measured needs 14 days, have 10 days)</text>
 <circle cx="633.2" cy="28.0" r="4" fill="#2a6ddc"/>
 <text x="643.2" y="32.0" fill="#52514e" font-size="12">Desktop app</text>
 <circle cx="744.4" cy="28.0" r="4" fill="#e5642e"/>
 <text x="754.4" y="32.0" fill="#52514e" font-size="12">CLI</text>
 <line x1="60.0" x2="776.0" y1="252.0" y2="252.0" stroke="#dcdedf"/>
 <text x="50.0" y="256.0" fill="#6f6e69" text-anchor="end">0</text>
-<line x1="60.0" x2="776.0" y1="194.7" y2="194.7" stroke="#e8eaeb"/>
-<text x="50.0" y="198.7" fill="#6f6e69" text-anchor="end">50</text>
-<line x1="60.0" x2="776.0" y1="137.3" y2="137.3" stroke="#e8eaeb"/>
-<text x="50.0" y="141.3" fill="#6f6e69" text-anchor="end">100</text>
+<line x1="60.0" x2="776.0" y1="209.0" y2="209.0" stroke="#e8eaeb"/>
+<text x="50.0" y="213.0" fill="#6f6e69" text-anchor="end">50</text>
+<line x1="60.0" x2="776.0" y1="166.0" y2="166.0" stroke="#e8eaeb"/>
+<text x="50.0" y="170.0" fill="#6f6e69" text-anchor="end">100</text>
+<line x1="60.0" x2="776.0" y1="123.0" y2="123.0" stroke="#e8eaeb"/>
+<text x="50.0" y="127.0" fill="#6f6e69" text-anchor="end">150</text>
 <line x1="60.0" x2="776.0" y1="80.0" y2="80.0" stroke="#e8eaeb"/>
-<text x="50.0" y="84.0" fill="#6f6e69" text-anchor="end">150</text>
-<text x="60.0" y="272.0" fill="#6f6e69">Sep 26</text>
-<text x="232.8" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 3</text>
-<text x="430.3" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 11</text>
-<text x="603.2" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 18</text>
-<text x="776.0" y="272.0" fill="#6f6e69" text-anchor="end">Oct 25</text>
-<g class="gs-wipe"><path d="M60.0 252.0L381.0 252.0L405.7 245.7L430.3 180.5L455.0 212.2L479.7 211.2L504.4 216.0L529.1 200.8L553.8 185.6L578.5 173.3L603.2 176.6L627.9 191.7L652.6 193.1L677.2 193.1L701.9 184.5L726.6 167.0L751.3 167.0L776.0 167.0L776.0 252.0L751.3 252.0L726.6 252.0L701.9 252.0L677.2 252.0L652.6 252.0L627.9 252.0L603.2 252.0L578.5 252.0L553.8 252.0L529.1 252.0L504.4 252.0L479.7 252.0L455.0 252.0L430.3 252.0L405.7 252.0L381.0 252.0L60.0 252.0Z" fill="#2a6ddc" fill-opacity="0.18"/><path d="M60.0 252.0L381.0 252.0L405.7 245.7L430.3 180.5L455.0 212.2L479.7 211.2L504.4 216.0L529.1 200.8L553.8 185.6L578.5 173.3L603.2 176.6L627.9 191.7L652.6 193.1L677.2 193.1L701.9 184.5L726.6 167.0L751.3 167.0L776.0 167.0" fill="none" stroke="#2a6ddc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M60.0 230.9L331.6 230.9L356.3 227.1L381.0 213.8L405.7 198.6L430.3 91.7L455.0 169.9L479.7 181.2L504.4 181.9L529.1 151.3L553.8 136.0L578.5 119.1L603.2 140.5L627.9 161.1L652.6 171.1L677.2 171.1L701.9 158.8L726.6 134.0L751.3 134.0L776.0 114.4L776.0 167.0L751.3 167.0L726.6 167.0L701.9 184.5L677.2 193.1L652.6 193.1L627.9 191.7L603.2 176.6L578.5 173.3L553.8 185.6L529.1 200.8L504.4 216.0L479.7 211.2L455.0 212.2L430.3 180.5L405.7 245.7L381.0 252.0L356.3 252.0L331.6 252.0L60.0 252.0Z" fill="#e5642e" fill-opacity="0.18"/><path d="M60.0 230.9L331.6 230.9L356.3 227.1L381.0 213.8L405.7 198.6L430.3 91.7L455.0 169.9L479.7 181.2L504.4 181.9L529.1 151.3L553.8 136.0L578.5 119.1L603.2 140.5L627.9 161.1L652.6 171.1L677.2 171.1L701.9 158.8L726.6 134.0L751.3 134.0L776.0 114.4" fill="none" stroke="#e5642e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></g>
+<text x="50.0" y="84.0" fill="#6f6e69" text-anchor="end">200</text>
+<text x="60.0" y="272.0" fill="#6f6e69">Sep 27</text>
+<text x="232.8" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 4</text>
+<text x="430.3" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 12</text>
+<text x="603.2" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 19</text>
+<text x="776.0" y="272.0" fill="#6f6e69" text-anchor="end">Oct 26</text>
+<g class="gs-wipe"><path d="M60.0 252.0L356.3 252.0L381.0 247.3L405.7 198.4L430.3 222.2L455.0 221.4L479.7 225.0L504.4 213.6L529.1 202.2L553.8 193.0L578.5 195.4L603.2 206.8L627.9 207.9L652.6 207.9L677.2 201.3L701.9 188.3L726.6 188.3L751.3 171.1L776.0 240.8L776.0 252.0L751.3 252.0L726.6 252.0L701.9 252.0L677.2 252.0L652.6 252.0L627.9 252.0L603.2 252.0L578.5 252.0L553.8 252.0L529.1 252.0L504.4 252.0L479.7 252.0L455.0 252.0L430.3 252.0L405.7 252.0L381.0 252.0L356.3 252.0L60.0 252.0Z" fill="#2a6ddc" fill-opacity="0.18"/><path d="M60.0 252.0L356.3 252.0L381.0 247.3L405.7 198.4L430.3 222.2L455.0 221.4L479.7 225.0L504.4 213.6L529.1 202.2L553.8 193.0L578.5 195.4L603.2 206.8L627.9 207.9L652.6 207.9L677.2 201.3L701.9 188.3L726.6 188.3L751.3 171.1L776.0 240.8" fill="none" stroke="#2a6ddc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path d="M60.0 236.2L306.9 236.2L331.6 233.4L356.3 223.4L381.0 212.0L405.7 131.8L430.3 190.4L455.0 198.9L479.7 199.4L504.4 176.5L529.1 165.0L553.8 152.3L578.5 168.4L603.2 183.8L627.9 191.3L652.6 191.3L677.2 182.1L701.9 163.5L726.6 163.5L751.3 118.8L776.0 219.2L776.0 240.8L751.3 171.1L726.6 188.3L701.9 188.3L677.2 201.3L652.6 207.9L627.9 207.9L603.2 206.8L578.5 195.4L553.8 193.0L529.1 202.2L504.4 213.6L479.7 225.0L455.0 221.4L430.3 222.2L405.7 198.4L381.0 247.3L356.3 252.0L331.6 252.0L306.9 252.0L60.0 252.0Z" fill="#e5642e" fill-opacity="0.18"/><path d="M60.0 236.2L306.9 236.2L331.6 233.4L356.3 223.4L381.0 212.0L405.7 131.8L430.3 190.4L455.0 198.9L479.7 199.4L504.4 176.5L529.1 165.0L553.8 152.3L578.5 168.4L603.2 183.8L627.9 191.3L652.6 191.3L677.2 182.1L701.9 163.5L726.6 163.5L751.3 118.8L776.0 219.2" fill="none" stroke="#e5642e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></g>
 </g>
 </svg>
