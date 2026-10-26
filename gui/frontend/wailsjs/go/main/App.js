@@ -74,6 +74,10 @@ export function SetSimpleStart(arg1) {
   return window['go']['main']['App']['SetSimpleStart'](arg1);
 }
 
+export function SetSystemLocale(arg1) {
+  return window['go']['main']['App']['SetSystemLocale'](arg1);
+}
+
 export function SetUILanguage(arg1) {
   return window['go']['main']['App']['SetUILanguage'](arg1);
 }

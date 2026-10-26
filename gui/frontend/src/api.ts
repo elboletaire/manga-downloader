@@ -48,6 +48,8 @@ export interface Api {
   dismissBrowserAlert(): Promise<void>;
   /** Saves the window's language; '' follows the system. Takes effect at once in the window. */
   setUILanguage(pref: LangPref): Promise<void>;
+  /** Gives the backend the system's raw locale for the update check; the first report starts it */
+  setSystemLocale(locale: string): Promise<void>;
   setCheckUpdates(on: boolean): Promise<void>;
   /** Saves whether the window shows the simple view while nothing is loaded; a load started keeps the full one */
   setSimpleStart(on: boolean): Promise<void>;
@@ -118,6 +120,7 @@ export function createWailsApi(): Api {
     showBrowser: () => app.ShowBrowser(),
     dismissBrowserAlert: () => app.DismissBrowserAlert(),
     setUILanguage: (pref) => app.SetUILanguage(pref),
+    setSystemLocale: (locale) => app.SetSystemLocale(locale),
     setCheckUpdates: (on) => app.SetCheckUpdates(on),
     setSimpleStart: (on) => app.SetSimpleStart(on),
 

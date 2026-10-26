@@ -1,11 +1,11 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Api } from './api';
 import { App } from './App';
 import { I18nProvider } from './i18n/react';
 import { createMockApi } from './mock';
-import { prefOf, Root, watchState } from './Root';
+import { prefOf, reportSystemLocale, Root, systemLocale, watchState } from './Root';
 import type { State } from './types';
 
 // lets the snapshot and any pushed State settle
@@ -33,6 +33,25 @@ const windowIn = (state: State) =>
       createElement(App, { api: {} as Api, initial: state }),
     ),
   );
+
+describe('reportSystemLocale', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('reports the first of the system languages, once', () => {
+    vi.stubGlobal('navigator', { languages: ['fr-FR', 'en-US'], language: 'fr-FR' });
+    const setSystemLocale = vi.fn(async () => {});
+    reportSystemLocale({ setSystemLocale } as unknown as Api);
+    expect(setSystemLocale).toHaveBeenCalledTimes(1);
+    expect(setSystemLocale).toHaveBeenCalledWith('fr-FR');
+  });
+
+  it('falls back to navigator.language when there are no languages', () => {
+    vi.stubGlobal('navigator', { language: 'ca-ES' });
+    expect(systemLocale()).toBe('ca-ES');
+  });
+});
 
 describe('Root', () => {
   it('renders nothing before the first State, so no system language shows first', () => {

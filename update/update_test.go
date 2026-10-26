@@ -31,7 +31,7 @@ func TestLatestUsesTheWorkerWhenItAnswers(t *testing.T) {
 	gh := answer(t, http.StatusOK, `{"tag_name":"v2.0.0"}`, false)
 	worker := answer(t, http.StatusOK, `{"tag_name":"v1.13.0"}`, true)
 
-	got, err := Source{Worker: worker.URL, GitHub: gh.URL, HTTP: worker.Client()}.Latest(context.Background(), "cli", "v1.12.0")
+	got, err := Source{Worker: worker.URL, GitHub: gh.URL, HTTP: worker.Client()}.Latest(context.Background(), Check{Client: "cli", Version: "v1.12.0"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestLatestUsesTheWorkerWhenItAnswers(t *testing.T) {
 func TestLatestFallsBackOnAFailedWorker(t *testing.T) {
 	worker := answer(t, http.StatusInternalServerError, "", true)
 	gh := answer(t, http.StatusOK, `{"tag_name":"v2.0.0"}`, true)
-	got, err := Source{Worker: worker.URL, GitHub: gh.URL, HTTP: worker.Client()}.Latest(context.Background(), "gui", "v1.12.0")
+	got, err := Source{Worker: worker.URL, GitHub: gh.URL, HTTP: worker.Client()}.Latest(context.Background(), Check{Client: "gui", Version: "v1.12.0"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func TestLatestFallsBackOnABadWorkerBody(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			worker := answer(t, http.StatusOK, body, true)
 			gh := answer(t, http.StatusOK, `{"tag_name":"v2.0.0"}`, true)
-			got, err := Source{Worker: worker.URL, GitHub: gh.URL, HTTP: worker.Client()}.Latest(context.Background(), "cli", "v1.12.0")
+			got, err := Source{Worker: worker.URL, GitHub: gh.URL, HTTP: worker.Client()}.Latest(context.Background(), Check{Client: "cli", Version: "v1.12.0"})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -74,7 +74,7 @@ func TestLatestFallsBackWhenTheWorkerIsUnreachable(t *testing.T) {
 	down.Close()
 	gh := answer(t, http.StatusOK, `{"tag_name":"v2.0.0"}`, true)
 
-	got, err := Source{Worker: down.URL, GitHub: gh.URL, HTTP: gh.Client()}.Latest(context.Background(), "cli", "v1.12.0")
+	got, err := Source{Worker: down.URL, GitHub: gh.URL, HTTP: gh.Client()}.Latest(context.Background(), Check{Client: "cli", Version: "v1.12.0"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +94,7 @@ func TestLatestFallsBackOnATimeout(t *testing.T) {
 	t.Cleanup(slow.Close)
 	gh := answer(t, http.StatusOK, `{"tag_name":"v2.0.0"}`, true)
 
-	got, err := Source{Worker: slow.URL, GitHub: gh.URL, HTTP: slow.Client()}.Latest(context.Background(), "cli", "v1.12.0")
+	got, err := Source{Worker: slow.URL, GitHub: gh.URL, HTTP: slow.Client()}.Latest(context.Background(), Check{Client: "cli", Version: "v1.12.0"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,33 +108,57 @@ func TestLatestStopsWithItsContext(t *testing.T) {
 	worker := answer(t, http.StatusInternalServerError, "", true)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, err := (Source{Worker: worker.URL, GitHub: gh.URL, HTTP: worker.Client()}).Latest(ctx, "cli", "v1.12.0"); err == nil {
+	if _, err := (Source{Worker: worker.URL, GitHub: gh.URL, HTTP: worker.Client()}).Latest(ctx, Check{Client: "cli", Version: "v1.12.0"}); err == nil {
 		t.Error("Latest with a cancelled context returned no error")
 	}
 }
 
 func TestWorkerQueryParams(t *testing.T) {
-	var q map[string][]string
-	worker := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/v1/latest" {
-			t.Errorf("path = %s, want /v1/latest", r.URL.Path)
-		}
-		q = r.URL.Query()
-		_, _ = w.Write([]byte(`{"tag_name":"v23.0.0"}`))
-	}))
-	t.Cleanup(worker.Close)
+	cases := map[string]struct {
+		check Check
+		want  map[string]string
+	}{
+		"gui following the system": {
+			Check{Client: "gui", Version: "v23.0.0", Lang: "system", SystemLang: "fr-FR"},
+			map[string]string{"client": "gui", "version": "23.0.0", "lang": "system", "syslang": "fr-FR"},
+		},
+		"gui in a chosen language": {
+			Check{Client: "gui", Version: "v23.0.0", Lang: "ja"},
+			map[string]string{"client": "gui", "version": "23.0.0", "lang": "ja"},
+		},
+		"cli sends no language": {
+			Check{Client: "cli", Version: "v23.0.0"},
+			map[string]string{"client": "cli", "version": "23.0.0"},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var q map[string][]string
+			worker := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/v1/latest" {
+					t.Errorf("path = %s, want /v1/latest", r.URL.Path)
+				}
+				q = r.URL.Query()
+				_, _ = w.Write([]byte(`{"tag_name":"v23.0.0"}`))
+			}))
+			t.Cleanup(worker.Close)
 
-	if _, err := (Source{Worker: worker.URL, GitHub: worker.URL, HTTP: worker.Client()}).Latest(context.Background(), "gui", "v23.0.0"); err != nil {
-		t.Fatal(err)
-	}
-	want := map[string]string{"client": "gui", "version": "23.0.0", "os": runtime.GOOS, "arch": runtime.GOARCH}
-	for k, v := range want {
-		if len(q[k]) != 1 || q[k][0] != v {
-			t.Errorf("query %s = %v, want %q", k, q[k], v)
-		}
-	}
-	if len(q) != len(want) {
-		t.Errorf("query = %v, want only %v", q, want)
+			if _, err := (Source{Worker: worker.URL, GitHub: worker.URL, HTTP: worker.Client()}).Latest(context.Background(), tc.check); err != nil {
+				t.Fatal(err)
+			}
+			want := map[string]string{"os": runtime.GOOS, "arch": runtime.GOARCH}
+			for k, v := range tc.want {
+				want[k] = v
+			}
+			for k, v := range want {
+				if len(q[k]) != 1 || q[k][0] != v {
+					t.Errorf("query %s = %v, want %q", k, q[k], v)
+				}
+			}
+			if len(q) != len(want) {
+				t.Errorf("query = %v, want only %v", q, want)
+			}
+		})
 	}
 }
 

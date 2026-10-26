@@ -8,6 +8,7 @@ import (
 	"errors"
 	"log"
 	"runtime"
+	"strings"
 
 	"github.com/elboletaire/manga-downloader/update"
 )
@@ -30,6 +31,9 @@ type Update struct {
 	Sums *Asset
 }
 
+// systemLocaleLen caps the system's locale the window reports; a BCP 47 tag is far shorter
+const systemLocaleLen = 35
+
 // releaseURL is the GitHub page of the release a build was made from, "" when
 // the build has no release tag
 func releaseURL(tag string) string {
@@ -46,7 +50,10 @@ func releaseURL(tag string) string {
 // it's never logged in the window, where it would hide the status bar's line
 // on every offline start.
 func (c *Controller) CheckUpdate(ctx context.Context, current string, src update.Source) {
-	found, err := checkUpdate(ctx, current, src)
+	c.mu.Lock()
+	check := updateCheck(current, c.prefs, c.systemLocale)
+	c.mu.Unlock()
+	found, err := checkUpdate(ctx, check, src)
 	if err != nil && ctx.Err() == nil {
 		log.Printf("couldn't check for updates: %v", err)
 	}
@@ -61,6 +68,30 @@ func (c *Controller) CheckUpdate(ctx context.Context, current string, src update
 	if recorded {
 		c.emit()
 	}
+}
+
+// SetSystemLocale stores the system's raw locale, as the window reports it, for
+// the update check. It's trimmed and capped, and doesn't notify: it isn't in State.
+func (c *Controller) SetSystemLocale(locale string) {
+	locale = strings.TrimSpace(locale)
+	if r := []rune(locale); len(r) > systemLocaleLen {
+		locale = string(r[:systemLocaleLen])
+	}
+	c.mu.Lock()
+	c.systemLocale = locale
+	c.mu.Unlock()
+}
+
+// updateCheck is what the update check tells the Worker: the app's language, or
+// "system" with the system's locale when the app follows the system
+func updateCheck(current string, prefs PrefsDTO, systemLocale string) update.Check {
+	check := update.Check{Client: "gui", Version: current, Lang: prefs.UILanguage}
+	if prefs.UILanguage == "" {
+		check.Lang = "system"
+		check.SystemLang = systemLocale
+	}
+
+	return check
 }
 
 // ClearUpdate forgets the update the check found, so the window stops offering it,
@@ -105,14 +136,14 @@ func (c *Controller) Update() *Update {
 	return &u
 }
 
-// checkUpdate returns the release newer than current, nil when current is the
-// newest one
-func checkUpdate(ctx context.Context, current string, src update.Source) (*Update, error) {
-	latest, assets, err := fetchLatestRelease(ctx, current, src)
+// checkUpdate returns the release newer than the check's version, nil when that
+// is the newest one
+func checkUpdate(ctx context.Context, check update.Check, src update.Source) (*Update, error) {
+	latest, assets, err := fetchLatestRelease(ctx, check, src)
 	if err != nil {
 		return nil, err
 	}
-	found, err := newerRelease(current, latest)
+	found, err := newerRelease(check.Version, latest)
 	if found != nil {
 		found.Installer = pickAsset(assets, packageName(latest, runtime.GOARCH))
 		found.Sums = pickAsset(assets, sumsName(latest))
@@ -126,8 +157,8 @@ func checkUpdate(ctx context.Context, current string, src update.Source) (*Updat
 
 // fetchLatestRelease reads the tag and the assets of the release the update
 // source reports as the latest
-func fetchLatestRelease(ctx context.Context, current string, src update.Source) (string, []Asset, error) {
-	body, err := src.Latest(ctx, "gui", current)
+func fetchLatestRelease(ctx context.Context, check update.Check, src update.Source) (string, []Asset, error) {
+	body, err := src.Latest(ctx, check)
 	if err != nil {
 		return "", nil, err
 	}

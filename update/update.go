@@ -43,11 +43,23 @@ type Source struct {
 // Default is the production source
 var Default = Source{Worker: BaseURL, GitHub: GitHubLatestURL}
 
-// Latest returns the latest release's JSON, as GitHub's API answers it. client
-// is "cli" or "gui", version the running build's. Any failure of the Worker
-// (an error, a timeout, a non-200 answer, a body without a tag) asks GitHub instead.
-func (s Source) Latest(ctx context.Context, client, version string) ([]byte, error) {
-	body, err := s.get(ctx, latestURL(s.Worker, client, version))
+// Check is what the latest-release request tells the Worker about the caller
+type Check struct {
+	// Client is "cli" or "gui"
+	Client string
+	// Version is the running build's version, with or without the "v" tag prefix
+	Version string
+	// Lang is the desktop app's UI language, "" when the caller sends none
+	Lang string
+	// SystemLang is the system's raw locale, "" when the caller doesn't send one
+	SystemLang string
+}
+
+// Latest returns the latest release's JSON, as GitHub's API answers it. Any
+// failure of the Worker (an error, a timeout, a non-200 answer, a body without
+// a tag) asks GitHub instead.
+func (s Source) Latest(ctx context.Context, c Check) ([]byte, error) {
+	body, err := s.get(ctx, latestURL(s.Worker, c))
 	if err == nil && hasTag(body) {
 		return body, nil
 	}
@@ -94,13 +106,19 @@ func hasTag(body []byte) bool {
 }
 
 // latestURL is the Worker's latest-release URL, with the client, its version
-// without the "v" tag prefix, and the platform
-func latestURL(base, client, version string) string {
+// without the "v" tag prefix, the platform, and the language when there is one
+func latestURL(base string, c Check) string {
 	q := url.Values{}
-	q.Set("client", client)
-	q.Set("version", strings.TrimPrefix(version, "v"))
+	q.Set("client", c.Client)
+	q.Set("version", strings.TrimPrefix(c.Version, "v"))
 	q.Set("os", runtime.GOOS)
 	q.Set("arch", runtime.GOARCH)
+	if c.Lang != "" {
+		q.Set("lang", c.Lang)
+	}
+	if c.SystemLang != "" {
+		q.Set("syslang", c.SystemLang)
+	}
 
 	return base + "/v1/latest?" + q.Encode()
 }

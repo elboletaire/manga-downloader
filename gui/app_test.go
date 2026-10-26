@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -445,6 +446,32 @@ func TestUpdateCheckFinishingAfterTurnOffIsDropped(t *testing.T) {
 	waitUntil(t, "the update check after turning updates on", func() bool { return a.State().Update != nil })
 	if got := a.State().Update.Latest; got != "v1.13.0" {
 		t.Errorf("update after turning updates on = %q", got)
+	}
+}
+
+// the startup check waits for the window's first locale report, and only the
+// first report starts it
+func TestStartupCheckWaitsForTheSystemLocale(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	var requests atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		_, _ = w.Write([]byte(`{"tag_name":"v1.13.0"}`))
+	}))
+	defer srv.Close()
+	a.tag, a.updateSource = "v1.12.0", testSource(srv)
+
+	time.Sleep(10 * time.Millisecond)
+	if n := requests.Load(); n != 0 {
+		t.Fatalf("%d update requests before the window reported its locale", n)
+	}
+
+	a.SetSystemLocale("fr-FR")
+	waitUntil(t, "the startup update check", func() bool { return a.State().Update != nil })
+	a.SetSystemLocale("de-DE")
+	time.Sleep(10 * time.Millisecond)
+	if n := requests.Load(); n != 1 {
+		t.Errorf("%d update requests after two locale reports, want 1", n)
 	}
 }
 

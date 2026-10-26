@@ -1249,6 +1249,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       prefs.uiLanguage = pref;
       push();
     },
+    // the backend's update check takes the system's locale; the mock makes no check
+    async setSystemLocale() {},
     async setCheckUpdates(on) {
       prefs.checkUpdates = on;
       push();
