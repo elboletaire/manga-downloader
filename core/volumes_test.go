@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"sync/atomic"
@@ -751,4 +752,95 @@ type failureRecorder struct {
 func (r *failureRecorder) DownloadFailed(c *grabber.Chapter, err error) {
 	r.err = err
 	r.recorder.DownloadFailed(c, err)
+}
+
+// between lists the whole numbers from to to
+func between(from, to int) []float64 {
+	var out []float64
+	for n := from; n <= to; n++ {
+		out = append(out, float64(n))
+	}
+	return out
+}
+
+// TestVolumeRangeText writes the packed chapters as the runs they form in the listing
+func TestVolumeRangeText(t *testing.T) {
+	tests := []struct {
+		name    string
+		listing []float64
+		packed  []float64
+		want    string
+	}{
+		{"typed gap", between(1, 28), append(between(1, 10), between(13, 28)...), "1-10,13-28"},
+		{"site has no 11-12", append(between(1, 10), between(13, 28)...), append(between(1, 10), between(13, 28)...), "1-28"},
+		{"failed middle chapter", between(1, 3), []float64{1, 3}, "1,3"},
+		{"decimals", []float64{1, 2, 3, 7.5, 8}, []float64{1, 2, 3, 7.5}, "1-7.5"},
+		{"decimal after a gap", []float64{1, 2, 3, 4, 7.5}, []float64{1, 2, 3, 7.5}, "1-3,7.5"},
+		{"one chapter", between(1, 12), []float64{12}, "12"},
+		{"two languages share a number", []float64{1, 2, 2, 3}, []float64{1, 2, 3}, "1-3"},
+		{"packed chapter not listed", []float64{1, 2}, []float64{1, 5}, ""},
+		{"nothing packed", []float64{1, 2}, nil, ""},
+	}
+	for _, tt := range tests {
+		var listing grabber.Filterables
+		for _, n := range tt.listing {
+			listing = append(listing, &grabber.Chapter{Number: n})
+		}
+		var packed []*grabber.Chapter
+		for _, n := range tt.packed {
+			packed = append(packed, &grabber.Chapter{Number: n})
+		}
+		if got := volumeRangeText(listing, packed); got != tt.want {
+			t.Errorf("%s: volumeRangeText = %q, want %q", tt.name, got, tt.want)
+		}
+	}
+}
+
+// TestDownloadVolumeRangeName names the volume file by the runs it packed
+func TestDownloadVolumeRangeName(t *testing.T) {
+	tests := []struct {
+		name     string
+		chapters []fakeChapter
+		volumes  string
+		fail     float64
+		want     []string
+	}{
+		// 11 and 12 are listed but outside the volume, so each is a file of its own
+		{"typed gap", fakeRange(1, 28), "1-10,13-28", 0, []string{
+			"Test Series 11 - Chapter 11.cbz", "Test Series 12 - Chapter 12.cbz", "Test Series Vol. 01 (1-10,13-28).cbz",
+		}},
+		{"site has no 11-12", fakeRange(1, 28, 11, 12), "1-28", 0, []string{"Test Series Vol. 01 (1-28).cbz"}},
+		{"failed middle chapter", fakeRange(1, 3), "1-3", 2, []string{"Test Series Vol. 01 (1,3).cbz"}},
+	}
+	for _, tt := range tests {
+		chapters := slices.Clone(tt.chapters)
+		for i := range chapters {
+			if chapters[i].number == tt.fail {
+				chapters[i].failFetch = map[int]bool{1: true}
+			}
+		}
+		site := newFakeSite(t, chapters...)
+		series, dir := newSeries(t, site, false)
+		site.Settings.Volumes = tt.volumes
+		series.Chapters = listed(site)
+
+		if _, err := series.Download(context.Background(), listed(site), nil, "", &recorder{}); err != nil {
+			t.Fatalf("%s: %v", tt.name, err)
+		}
+		if files := basenames(cbzFiles(t, dir)); !reflect.DeepEqual(files, tt.want) {
+			t.Errorf("%s: wrote %q, want %q", tt.name, files, tt.want)
+		}
+	}
+}
+
+// fakeRange returns one-page chapters from to to, without the skipped numbers
+func fakeRange(from, to int, skip ...int) []fakeChapter {
+	var out []fakeChapter
+	for n := from; n <= to; n++ {
+		if slices.Contains(skip, n) {
+			continue
+		}
+		out = append(out, fakeChapter{number: float64(n), pages: 1})
+	}
+	return out
 }

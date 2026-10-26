@@ -555,6 +555,13 @@ func (s *Series) packVolume(r *volumeRun, outDir string, ev Events) {
 		}
 	}
 
+	// the name's range is the runs the packed chapters form in the full listing
+	packed := make([]*grabber.Chapter, len(dc))
+	for i, d := range dc {
+		packed[i] = d.Chapter
+	}
+	rng := volumeRangeText(s.Chapters, packed)
+
 	pages := 0
 	for _, d := range dc {
 		pages += len(d.Files)
@@ -568,7 +575,7 @@ func (s *Series) packVolume(r *volumeRun, outDir string, ev Events) {
 	if r.v.Parts {
 		name, err = packer.PackParts(outDir, s.Site, dc, progress)
 	} else {
-		name, err = packer.PackVolume(outDir, s.Site, r.v.Number, dc, progress)
+		name, err = packer.PackVolume(outDir, s.Site, r.v.Number, rng, dc, progress)
 	}
 	ev.VolumePacked(r.v, name, err)
 }

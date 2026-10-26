@@ -42,7 +42,7 @@ func TestVolumeTemplateDefaults(t *testing.T) {
 		}
 	}
 
-	parts := NewVolumeFileTemplateParts("Series", 1, []*grabber.Chapter{{Number: 1, Group: "Alpha"}})
+	parts := NewVolumeFileTemplateParts("Series", 1, "", []*grabber.Chapter{{Number: 1, Group: "Alpha"}})
 	got, err := NewFilenameFromTemplate(VolumeTemplate(FilenameTemplateDefault), parts)
 	if err != nil {
 		t.Fatal(err)
@@ -73,7 +73,7 @@ func TestVolumeGroupIsShared(t *testing.T) {
 		{"mixed", []*grabber.Chapter{{Number: 1, Group: "Alpha"}, {Number: 2, Group: "Delta"}}, ""},
 	}
 	for _, tt := range tests {
-		parts := NewVolumeFileTemplateParts("Series", 1, tt.chapters)
+		parts := NewVolumeFileTemplateParts("Series", 1, "", tt.chapters)
 		if parts.Group != tt.want {
 			t.Errorf("%s: Group %q, want %q", tt.name, parts.Group, tt.want)
 		}

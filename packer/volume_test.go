@@ -30,7 +30,7 @@ func TestVolumeFilenames(t *testing.T) {
 		{"volume only", "v{{.Volume}}", 3, chapters, 1, "v3"},
 	}
 	for _, tt := range tests {
-		parts := NewVolumeFileTemplateParts("One/Piece", tt.volume, tt.chapters)
+		parts := NewVolumeFileTemplateParts("One/Piece", tt.volume, "", tt.chapters)
 		parts.Version = tt.version
 		got, err := NewFilenameFromTemplate(VolumeTemplate(tt.template), parts)
 		if err != nil {
@@ -88,7 +88,7 @@ func TestGroupInFilenameTemplates(t *testing.T) {
 		{"no group", ungrouped, "Series []"},
 	}
 	for _, c := range cases {
-		parts := NewVolumeFileTemplateParts("Series", 1, c.chapters)
+		parts := NewVolumeFileTemplateParts("Series", 1, "", c.chapters)
 		got, err := NewFilenameFromTemplate("{{.Series}} [{{.Group}}]", parts)
 		if err != nil {
 			t.Fatalf("%s: %v", c.name, err)
@@ -109,7 +109,7 @@ func TestPackVolume(t *testing.T) {
 	dir := t.TempDir()
 	for _, want := range []string{"Test Series Vol. 02 (1-2).cbz", "Test Series Vol. 02 (1-2) v2.cbz"} {
 		pages := 0
-		name, err := PackVolume(dir, site, 2, chapters, func(page, _ int) { pages += page })
+		name, err := PackVolume(dir, site, 2, "", chapters, func(page, _ int) { pages += page })
 		if err != nil {
 			t.Fatalf("PackVolume: %v", err)
 		}
@@ -122,6 +122,31 @@ func TestPackVolume(t *testing.T) {
 		names := entryNames(t, filepath.Join(dir, name))
 		if wantNames := []string{"Chapter 0001/000.jpg", "Chapter 0001/001.jpg", "Chapter 0002/000.jpg"}; !reflect.DeepEqual(names, wantNames) {
 			t.Errorf("entries = %v, want %v", names, wantNames)
+		}
+	}
+}
+
+// TestVolumeRangeName checks that rng is the volume's number as written, and
+// that an empty one falls back to the first and last chapter
+func TestVolumeRangeName(t *testing.T) {
+	chapters := []*grabber.Chapter{{Number: 1}, {Number: 2}, {Number: 13}}
+	tests := []struct {
+		name string
+		rng  string
+		want string
+	}{
+		{"explicit range", "1-2,13", "Series Vol. 01 (1-2,13)"},
+		{"explicit single chapter", "1", "Series Vol. 01 (1)"},
+		{"fallback to first and last", "", "Series Vol. 01 (1-13)"},
+	}
+	for _, tt := range tests {
+		parts := NewVolumeFileTemplateParts("Series", 1, tt.rng, chapters)
+		got, err := NewFilenameFromTemplate(FilenameVolumeTemplateDefault, parts)
+		if err != nil {
+			t.Fatalf("%s: %v", tt.name, err)
+		}
+		if got != tt.want {
+			t.Errorf("%s: got %q, want %q", tt.name, got, tt.want)
 		}
 	}
 }

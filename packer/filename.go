@@ -130,11 +130,12 @@ func NewChapterFileTemplateParts(title string, chapter *grabber.Chapter) Filenam
 }
 
 // NewVolumeFileTemplateParts returns the FilenameTemplateParts of a volume
-// file: Volume is its number, Number the chapters it holds ("1-7") and Title
-// "Vol. 01", for templates written with chapters in mind
-func NewVolumeFileTemplateParts(title string, volume int, chapters []*grabber.Chapter) FilenameTemplateParts {
-	number := ""
-	if len(chapters) > 0 {
+// file: Volume is its number, Number the chapters it holds ("1-10,13-28", as
+// rng writes them) and Title "Vol. 01", for templates written with chapters in
+// mind. An empty rng gives the first and last chapter ("1-7")
+func NewVolumeFileTemplateParts(title string, volume int, rng string, chapters []*grabber.Chapter) FilenameTemplateParts {
+	number := rng
+	if number == "" && len(chapters) > 0 {
 		first, last := chapters[0].GetNumber(), chapters[len(chapters)-1].GetNumber()
 		number = formatChapterNumber(first)
 		if last != first {
