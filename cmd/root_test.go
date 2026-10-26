@@ -793,7 +793,6 @@ func TestReleaseLabelInMessages(t *testing.T) {
 			os.Stderr = prevErr
 			out, _ := io.ReadAll(r)
 			want := "- error fetching " + tt.want + ": boom\n" +
-				"- skipping " + tt.want + ": --skip-pages excludes all of its pages\n" +
 				"- error downloading page 3 of " + tt.want + ": boom\n"
 			if got := string(out); got != want {
 				t.Errorf("output = %q, want %q", got, want)

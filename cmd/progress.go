@@ -899,13 +899,11 @@ func (e *bubbleEvents) FetchFailed(listed grabber.Filterable, err error) {
 	e.prog.Send(chapterEndedMsg{chapter: listed, status: "failed"})
 }
 
+// Skipped and Exists only mark the row: it reads "skipped", so a line would repeat it
 func (e *bubbleEvents) Skipped(c *grabber.Chapter) {
-	e.println(color.YellowString(
-		"- skipping %s: --skip-pages excludes all of its pages", core.ReleaseLabel(c, e.showLang, e.showGroup)))
 	e.prog.Send(chapterEndedMsg{chapter: c, status: "skipped"})
 }
 
-// Exists only marks the row: it already reads "skipped", so a line would repeat it
 func (e *bubbleEvents) Exists(listed grabber.Filterable, _ string) {
 	e.prog.Send(chapterExistsMsg{listed: listed})
 }
@@ -977,9 +975,8 @@ func (e *bubbleEvents) VolumeProgress(v *core.Volume, fraction float64) {
 }
 
 func (e *bubbleEvents) VolumePacked(v *core.Volume, name string, err error) {
-	if errors.Is(err, core.ErrSkippedVolume) {
-		e.println(color.YellowString("- skipping %s: %s", v.Label(), err.Error()))
-	} else if err != nil && !errors.Is(err, core.ErrExists) {
+	// a skipped volume's row says so; only a real failure gets a line
+	if err != nil && !errors.Is(err, core.ErrSkippedVolume) && !errors.Is(err, core.ErrExists) {
 		e.println(color.RedString("- error packing %s: %s", v.Label(), err.Error()))
 	}
 	e.prog.Send(volumePackedMsg{volume: v, err: err})
