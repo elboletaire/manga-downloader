@@ -223,6 +223,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewManganeloByMarkup(g),
 		NewToivoLiteByMarkup(g),
 		NewPizzaReaderByMarkup(g),
+		NewMangaHub(g),
 		plainHTML,
 		NewTcb(g),
 		NewJestful(g),

@@ -136,39 +136,6 @@ var browserSelectors = []BrowserSiteSelector{
 		ImageWait:       "#readerarea img",
 		SeriesPathDepth: 2,
 	},
-	// mangahub.io: behind a cloudflare managed challenge that a visible
-	// browser clears in a few seconds; images are served from a plain CDN
-	// (imgx.mghcdn.com) and download fine via plain HTTP with just a
-	// referer, no cookies needed. Chapter rows use CSS-module-hashed class
-	// names (subject to change on redeploys), so we key off the stable
-	// Bootstrap "list-group-item" class instead and pull the chapter number
-	// straight out of the row's text (it contains "#1188"). Each row
-	// actually holds TWO (sometimes three) anchors pointing at the same
-	// chapter: the real slug-based link, plus one-or-more duplicate
-	// "title=Chapter" links (an internal numeric-id URL, order relative to
-	// the real link isn't stable) that appear to be a hover/prefetch
-	// artifact. Both/all render identical text, so an untargeted Chapter
-	// selector (or none, falling back to the whole row) concatenates them
-	// into a doubled title. The duplicates are the only anchors carrying a
-	// title attribute, so ":not([title])" reliably isolates the real one.
-	{
-		SiteSelector: SiteSelector{
-			Title:        "h1",
-			Rows:         "li.list-group-item",
-			Chapter:      "a:not([title])",
-			ChapterTitle: "a:not([title])",
-			Link:         "a:not([title])",
-			Image:        "img.PB0mN",
-		},
-		Domains:      []string{"mangahub.io"},
-		ChaptersWait: "li.list-group-item",
-		ImageWait:    "img.PB0mN",
-		// the reader appends page <img> tags progressively; without this,
-		// GetHTML returns as soon as the first one shows up and later
-		// pages are missing (a 16-page chapter yielded only 6 without it)
-		Settle:          5 * time.Second,
-		SeriesPathDepth: 2,
-	},
 	// manhuatop.org: Madara wordpress theme behind a cloudflare challenge,
 	// usually needs --browser-visible. Its reader wraps real pages in
 	// div.reading-content img#image-N, but also throws in a decorative
