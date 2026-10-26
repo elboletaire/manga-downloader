@@ -1013,3 +1013,85 @@ func TestChapterRowTakesFetchedTitle(t *testing.T) {
 		t.Errorf("row %q, want the fetched chapter's title", row)
 	}
 }
+
+// A chapter the output directory already holds gets a row ending "skipped",
+// whether it's skipped before its fetch (its listing entry gets the row) or
+// after it (the fetched chapter's row is reused)
+func TestChapterRowSkippedWhenItExists(t *testing.T) {
+	listed := &grabber.Chapter{Title: "Chapter 0001"}
+	fetched := &grabber.Chapter{Title: "Chapter 0001", PagesCount: 10}
+	m := newProgressModel("Series", "", false, false, false, true)
+	m.width = 80
+	send := func(msg tea.Msg) {
+		next, _ := m.Update(msg)
+		m = next.(progressModel)
+	}
+
+	send(chapterExistsMsg{listed: listed})
+	if len(m.states) != 1 || len(m.chapters) != 1 {
+		t.Fatalf("%d states and %d rows, want one row for the listing entry", len(m.states), len(m.chapters))
+	}
+	if row := strings.TrimRight(ansi.Strip(m.renderChapterRow(m.states[listed])), " "); !strings.HasSuffix(row, "skipped") {
+		t.Errorf("row %q, want it to end skipped", row)
+	}
+
+	m = newProgressModel("Series", "", false, false, false, true)
+	m.width = 80
+	send(chapterFetchingMsg{listed: listed})
+	send(chapterFetchedMsg{listed: listed, chapter: fetched})
+	send(chapterExistsMsg{listed: fetched})
+	if len(m.states) != 1 || len(m.chapters) != 1 {
+		t.Fatalf("%d states and %d rows, want the fetching row reused", len(m.states), len(m.chapters))
+	}
+	if s := m.states[fetched]; s == nil || s.status != "skipped" {
+		t.Errorf("row after the fetch = %+v, want skipped", s)
+	}
+}
+
+// A bundle or a volume whose file already exists ends "skipped", with an empty bar
+func TestBundleAndVolumeSkippedWhenTheyExist(t *testing.T) {
+	m := newProgressModel("Series", "1-2", true, false, false, true)
+	m.width = 80
+	next, _ := m.Update(downloadDoneMsg{err: core.ErrExists})
+	m = next.(progressModel)
+	if m.bundleStatus != "skipped" {
+		t.Fatalf("bundle status %q, want skipped", m.bundleStatus)
+	}
+	if row := strings.TrimRight(ansi.Strip(m.renderBundleRow()), " "); !strings.HasSuffix(row, "skipped") {
+		t.Errorf("bundle row %q, want it to end skipped", row)
+	}
+
+	m = newProgressModel("Series", "", false, false, false, true)
+	listed := &grabber.Chapter{Title: "Chapter 0001"}
+	v := &core.Volume{Number: 1, Chapters: grabber.Filterables{listed}}
+	next, _ = m.Update(volumeStartMsg{volume: v, chCount: 1})
+	next, _ = next.Update(volumePackedMsg{volume: v, err: core.ErrExists})
+	m = next.(progressModel)
+	if vs := m.volStates[v]; vs == nil || vs.status != "skipped" {
+		t.Errorf("volume state %+v, want skipped", vs)
+	}
+}
+
+// The plain output names the file a skipped chapter would have written, and
+// the release it's for
+func TestPlainExistsNamesTheFile(t *testing.T) {
+	var buf bytes.Buffer
+	prevOut, prevNoColor := color.Output, color.NoColor
+	color.Output, color.NoColor = &buf, true
+	t.Cleanup(func() { color.Output, color.NoColor = prevOut, prevNoColor })
+
+	chapter := &grabber.Chapter{Title: "Chapter 5", Number: 5, Group: "Group A"}
+	plainEvents{showGroup: true}.Exists(chapter, "Series 5 - Chapter 5 [Group A].cbz")
+	if want := "- skipping Chapter 5 [Group A]: Series 5 - Chapter 5 [Group A].cbz already exists\n"; buf.String() != want {
+		t.Errorf("output = %q, want %q", buf.String(), want)
+	}
+}
+
+// the ranges argument "all" is read the same whichever side of the URL it's on
+func TestGetRangesArgAll(t *testing.T) {
+	for _, args := range [][]string{{"https://example.com/manga/x", "all"}, {"all", "https://example.com/manga/x"}} {
+		if got := getRangesArg(args); !strings.EqualFold(got, "all") {
+			t.Errorf("getRangesArg(%q) = %q, want all", args, got)
+		}
+	}
+}

@@ -50,6 +50,8 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 - **[553 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
+- **Keep a folder up to date**: `--skip-existing` leaves out the chapters you
+  already have, so a scheduled run only fetches the new ones.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
   show up blank on Kobo, KOReader or Calibre (WebP too, if you ask).
 - **Flexible output**: one file per chapter, one per volume (`--volumes`), or a
@@ -346,7 +348,7 @@ follow these steps:
 4. **Set the options** in the *Options* tab: where the files go, the format
    (CBZ, CBR, Folder or EPUB; EPUB adds a *Reading direction*), *Pack as*
    (a file per chapter, per volume, or one for everything), *Convert to JPEG*
-   for AVIF and WebP pages, and pages to skip. Under *Advanced* are the file
+   for AVIF and WebP pages, pages to skip, and *Skip existing files*. Under *Advanced* are the file
    name template and *Show the browser window*, which you rarely need: a site
    that needs the window opens it by itself. Packing by volume adds a *Volumes*
    box above the chapter list. It starts empty, which packs the site's volumes;
@@ -424,7 +426,9 @@ manga-downloader [flags] [url] [chapters]
   The URL of a single chapter works too: it resolves to the whole series.
 - `chapters` is a comma-separated list of numbers and ranges, such as
   `1,3,5-10`. If you leave it out, the tool asks whether to download every
-  chapter. The answer defaults to "no".
+  chapter. The answer defaults to "no". Write `all` instead to download every
+  chapter without the question, as cron jobs and Docker runs without a
+  terminal need.
   Chapters the site marks as locked (coins, early access or members-only) are skipped,
   with a line saying which.
 
@@ -622,6 +626,18 @@ still gets the suffix when names collide: the second file is `X v2`, the third
 `X v3`, and so on, so `{{.Series}} {{.Number}} [{{.Group}}]` never overwrites a
 release.
 
+`--skip-existing` leaves out a chapter, volume or bundle whose file is already
+in the output folder, before its pages are fetched. It checks the name the
+first try gets (without the ` v2` suffix), costs no request, and never deletes
+or overwrites anything, so a broken or partial file has to be deleted to
+download it again. It assumes the template tells chapters apart: a template
+that names only the series would skip every chapter after the first. To keep a
+folder up to date, run it from cron:
+
+~~~bash
+0 6 * * * manga-downloader --skip-existing -o ~/Manga/Series "<series url>" all
+~~~
+
 Volume files (`--volumes`) get their own default name while the template is
 left as is:
 
@@ -703,6 +719,7 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--compress`          |       | Re-encode pages to JPEG when that's smaller (not GIF)    | off            |
 | `--jpeg-quality`      |       | JPEG quality of re-encoded pages (1-100); lower shrinks JPEG pages more | `90`           |
 | `--skip-pages`        |       | Pages to exclude from every chapter (`-1` is the last)   | none           |
+| `--skip-existing`     |       | Skip chapters whose file is already in the output folder | off            |
 | `--concurrency`       | `-c`  | Number of chapters downloaded at once (max 5)            | 5              |
 | `--concurrency-pages` | `-C`  | Number of pages downloaded at once per chapter (max 10)  | 10             |
 | `--retry`             | `-r`  | Retries per failed page (max 3, `0` disables retrying)   | 1              |

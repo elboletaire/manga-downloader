@@ -27,6 +27,9 @@ type Grabber struct {
 type Settings struct {
 	// Bundle is a flag to indicate if the chapters should be bundled into a single file
 	Bundle bool
+	// SkipExisting skips a chapter, volume or bundle whose file is already in
+	// the output directory, before its pages are fetched
+	SkipExisting bool
 	// MaxConcurrency determines max download concurrency
 	MaxConcurrency MaxConcurrency
 	// Language is the preferred language for downloading chapters

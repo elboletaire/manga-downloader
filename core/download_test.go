@@ -53,7 +53,10 @@ func (r *recorder) BundleStart(pages int64) { r.add("bundle-start %d", pages) }
 func (r *recorder) FetchFailed(l grabber.Filterable, _ error) {
 	r.add("fetch-failed %g", l.GetNumber())
 }
-func (r *recorder) Skipped(c *grabber.Chapter)                 { r.add("skipped %g", c.Number) }
+func (r *recorder) Skipped(c *grabber.Chapter) { r.add("skipped %g", c.Number) }
+func (r *recorder) Exists(l grabber.Filterable, name string) {
+	r.add("exists %g %s", l.GetNumber(), name)
+}
 func (r *recorder) FilenameFailed(c *grabber.Chapter, _ error) { r.add("filename-failed %g", c.Number) }
 func (r *recorder) Started(c *grabber.Chapter)                 { r.add("started %g", c.Number) }
 func (r *recorder) Page(c *grabber.Chapter, idx int, err error) {
@@ -84,6 +87,10 @@ func (r *recorder) VolumeProgress(v *Volume, f float64) {
 	r.add("volume-progress %d %.3f", v.Number, f)
 }
 func (r *recorder) VolumePacked(v *Volume, name string, err error) {
+	if errors.Is(err, ErrExists) {
+		r.add("volume-exists %d", v.Number)
+		return
+	}
 	if err != nil {
 		r.add("volume-failed %d %v", v.Number, err)
 		return
@@ -1001,4 +1008,191 @@ func indexOf(events []string, e string) int {
 		}
 	}
 	return -1
+}
+
+// writeExisting puts an old file where a download would write name, dated an
+// hour back so a rewrite would show, and returns its path
+func writeExisting(t *testing.T, dir, name string) (string, time.Time) {
+	t.Helper()
+	path := filepath.Join(dir, name)
+	if err := os.WriteFile(path, []byte("old"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	past := time.Now().Add(-time.Hour).Truncate(time.Second)
+	if err := os.Chtimes(path, past, past); err != nil {
+		t.Fatal(err)
+	}
+	return path, past
+}
+
+// with --skip-existing a chapter whose file is in the output directory is
+// skipped before its pages are fetched, and its file is left as it is
+func TestDownloadSkipExistingChapter(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 2},
+		fakeChapter{number: 2, pages: 1},
+	)
+	series, dir := newSeries(t, site, false)
+	site.Settings.SkipExisting = true
+	path, past := writeExisting(t, dir, "Test Series 1 - Chapter 1.cbz")
+	rec := &recorder{}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+
+	want := "exists 1 Test Series 1 - Chapter 1.cbz|started 2|page 2 0|archived 2|packed 2"
+	if got := strings.Join(rec.events, "|"); got != want {
+		t.Errorf("events:\n got %q\nwant %q", got, want)
+	}
+	if n := site.served[1]; n != 0 {
+		t.Errorf("chapter 1 fetched %d times, want none", n)
+	}
+	if info, err := os.Stat(path); err != nil || info.ModTime().Unix() != past.Unix() {
+		t.Errorf("existing file was touched: %v", err)
+	}
+	if data, _ := os.ReadFile(path); string(data) != "old" {
+		t.Errorf("existing file was rewritten: %q", data)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "Test Series 2 - Chapter 2.cbz")); err != nil {
+		t.Errorf("chapter 2 not packed: %v", err)
+	}
+}
+
+// without --skip-existing the same file gets a copy with a " v2" suffix
+func TestDownloadSkipExistingOffWritesACopy(t *testing.T) {
+	site := newFakeSite(t, fakeChapter{number: 1, pages: 1})
+	series, dir := newSeries(t, site, false)
+	path, _ := writeExisting(t, dir, "Test Series 1 - Chapter 1.cbz")
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", &recorder{}); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "Test Series 1 - Chapter 1 v2.cbz")); err != nil {
+		t.Errorf("no v2 copy written: %v", err)
+	}
+	if data, _ := os.ReadFile(path); string(data) != "old" {
+		t.Errorf("existing file was rewritten: %q", data)
+	}
+}
+
+// raw output is a folder, which --skip-existing finds the same way
+func TestDownloadSkipExistingRawFolder(t *testing.T) {
+	site := newFakeSite(t, fakeChapter{number: 1, pages: 1})
+	series, dir := newSeries(t, site, false)
+	site.Settings.Format = packer.FormatRaw
+	site.Settings.SkipExisting = true
+	if err := os.Mkdir(filepath.Join(dir, "Test Series 1 - Chapter 1"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	rec := &recorder{}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+	if want := "exists 1 Test Series 1 - Chapter 1"; strings.Join(rec.events, "|") != want {
+		t.Errorf("events %q, want %q", rec.events, want)
+	}
+	if site.fetches != 0 {
+		t.Errorf("FetchChapter called %d times, want none", site.fetches)
+	}
+}
+
+// a volume whose file is in the output directory is reported as existing with
+// its chapters unfetched, and the chapters outside every volume are still packed
+func TestDownloadSkipExistingVolume(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 1, volume: 1},
+		fakeChapter{number: 2, pages: 1, volume: 1},
+		fakeChapter{number: 3, pages: 1},
+	)
+	series, dir := newSeries(t, site, false)
+	site.Settings.Volumes = "auto"
+	site.Settings.SkipExisting = true
+	writeExisting(t, dir, "Test Series Vol. 01 (1-2).cbz")
+	rec := &recorder{}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+	want := "volume-start 1|volume-exists 1|started 3|page 3 0|archived 3|packed 3"
+	if got := strings.Join(rec.events, "|"); got != want {
+		t.Errorf("events:\n got %q\nwant %q", got, want)
+	}
+	if site.served[1] != 0 || site.served[2] != 0 {
+		t.Errorf("the volume's chapters were fetched: %v", site.served)
+	}
+}
+
+// the parts of a chapter are skipped as their file, named as the chapter, is found
+func TestDownloadSkipExistingParts(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 19, part: "1", pages: 1, group: "A"},
+		fakeChapter{number: 19, part: "2", pages: 2, group: "A"},
+		fakeChapter{number: 20, pages: 1, group: "A"},
+	)
+	series, dir := newSeries(t, site, false)
+	site.Settings.Volumes = "parts"
+	site.Settings.SkipExisting = true
+	writeExisting(t, dir, "Test Series 19 - Chapter 19 [A].cbz")
+	rec := &recorder{}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+	if rec.count("volume-exists ") != 1 {
+		t.Errorf("want the parts reported as existing: %q", rec.events)
+	}
+	if site.served[19] != 0 {
+		t.Errorf("the parts were fetched %d times, want none", site.served[19])
+	}
+	if rec.count("packed 20") != 1 {
+		t.Errorf("chapter 20 not packed: %q", rec.events)
+	}
+}
+
+// a bundle whose file is in the output directory is not fetched at all, and
+// Download says so with ErrExists instead of a bundle-start
+func TestDownloadSkipExistingBundle(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 2},
+		fakeChapter{number: 2, pages: 2},
+	)
+	series, dir := newSeries(t, site, true)
+	site.Settings.SkipExisting = true
+	writeExisting(t, dir, "Test Series 1-2 - bundle.cbz")
+	rec := &recorder{}
+
+	name, err := series.Download(context.Background(), listed(site), nil, "1-2", rec)
+	if !errors.Is(err, ErrExists) {
+		t.Fatalf("Download error %v, want ErrExists", err)
+	}
+	if name != "Test Series 1-2 - bundle.cbz" {
+		t.Errorf("Download named %q", name)
+	}
+	if site.fetches != 0 || len(rec.events) != 0 {
+		t.Errorf("fetched %d times, events %q; want neither", site.fetches, rec.events)
+	}
+}
+
+// the listing can name a chapter differently from the fetched chapter, so the
+// file is looked for again once the chapter is fetched, before it's downloaded
+func TestDownloadSkipExistingNameAfterFetch(t *testing.T) {
+	site := newFakeSite(t, fakeChapter{number: 1, pages: 1})
+	series, dir := newSeries(t, site, false)
+	// the listing has no title, the fetched chapter's is "Chapter 1"
+	site.Settings.FilenameTemplate = "{{.Series}} {{.Number}} {{.SiteTitle}}"
+	site.Settings.SkipExisting = true
+	writeExisting(t, dir, "Test Series 1 Chapter 1.cbz")
+	rec := &recorder{}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+	if got := strings.Join(rec.events, "|"); got != "exists 1 Test Series 1 Chapter 1.cbz" {
+		t.Errorf("events %q", got)
+	}
+	if site.served[1] != 1 {
+		t.Errorf("chapter fetched %d times, want once", site.served[1])
+	}
 }
