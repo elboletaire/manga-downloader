@@ -786,11 +786,7 @@ func TestVolumeRangeText(t *testing.T) {
 		for _, n := range tt.listing {
 			listing = append(listing, &grabber.Chapter{Number: n})
 		}
-		var packed []*grabber.Chapter
-		for _, n := range tt.packed {
-			packed = append(packed, &grabber.Chapter{Number: n})
-		}
-		if got := volumeRangeText(listing, packed); got != tt.want {
+		if got := volumeRangeText(listing, tt.packed); got != tt.want {
 			t.Errorf("%s: volumeRangeText = %q, want %q", tt.name, got, tt.want)
 		}
 	}

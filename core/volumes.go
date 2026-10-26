@@ -273,15 +273,13 @@ func siteRangesFaithful(text string, chapters grabber.Filterables) bool {
 	return true
 }
 
-// volumeRangeText writes the chapters a volume packed as the runs they form in
-// the listing ("1-10,13-28", or "1,3" when 2 failed). A number listed more than
-// once (one entry per language) is one slot, and a listed number the volume
-// didn't pack breaks the run. It's "" when a packed chapter isn't listed, so
-// the caller falls back to the first and last chapter.
-func volumeRangeText(listing grabber.Filterables, packed []*grabber.Chapter) string {
+// volumeRangeText writes the packed numbers as the runs they form in the listing
+// ("1-10,13-28", "1,3" when 2 failed). A repeated listed number is one slot, and a
+// listed number not packed breaks the run; "" when a packed number isn't listed.
+func volumeRangeText(listing grabber.Filterables, packed []float64) string {
 	in := make(map[float64]bool, len(packed))
-	for _, c := range packed {
-		in[c.GetNumber()] = true
+	for _, n := range packed {
+		in[n] = true
 	}
 	var slots []float64
 	listed := make(map[float64]bool, len(listing))
