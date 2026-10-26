@@ -13,6 +13,7 @@ WINDOW_RADIUS=9
 CARD_RADIUS=24 # the app's panels, measured on the 2000 px originals
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
+made=0 # crops written, so an empty or wrong SRC fails
 
 # crop NAME THEME ORIGINAL WxH+X+Y RADIUS (roundrectangle takes the corner ellipse's diameter)
 # A panel's geometry is its 1 px border box, so no window background is left around it.
@@ -40,6 +41,7 @@ crop() {
     magick "$base.png" -filter Lanczos -resize "${width}x" -strip \
       -define webp:method=6 -quality 85 "$OUT/$name-$theme-$width.webp"
   done
+  made=$((made + 1))
 }
 
 # The panel geometry assumes the 340 px sidebar at the 915 px capture width.
@@ -51,3 +53,8 @@ for theme in light dark; do
   crop parts "$theme" "08-parts-$theme.png" 1062x787+117+405 $CARD_RADIUS
   crop skip-existing "$theme" "14-skip-existing-$theme.png" 680x787+1203+405 $CARD_RADIUS
 done
+
+if [ "$made" -eq 0 ]; then
+  echo "no crop made: none of the originals are in $SRC" >&2
+  exit 1
+fi

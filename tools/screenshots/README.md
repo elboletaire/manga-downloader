@@ -38,8 +38,9 @@ The mock is built in with `VITE_MOCK=1` (production builds leave it out), and
 every query adds `&shot`: the release version, a macOS folder path and no debug
 line in `update`. `&fail` is only used for `11-failed`, and `&prompt` (with the
 `update` scenario) for `12-update-prompt`: it makes the update one-click and
-opens its dialog. `&exists` (with `done`) is only used for `14-skip-existing`. When the app's version moves on, update the `&shot` constants
-near `RELEASE_VERSION` in `mock.ts`.
+opens its dialog. `&exists` (with `done`) is only used for
+`14-skip-existing`. When the app's version moves on, update the `&shot`
+constants near `RELEASE_VERSION` in `mock.ts`.
 
 ## Files
 
@@ -60,7 +61,9 @@ near `RELEASE_VERSION` in `mock.ts`.
 - `01-start`: the empty window on the simple view (`simpleStart` is on by default in the mock).
 - `13-settings`: the Settings dialog, opened by clicking the header's gear
   (`.settings-btn`) on the loaded mock.
-- `14-skip-existing`: the finished run with three chapters already in the folder (`&exists` with `done`), the Activity panel's "already in the folder" note.
+- `14-skip-existing`: the finished run with two chapters already in the
+  folder (`&exists` with `done`), the Activity panel's "already in the folder"
+  note.
 
 ## Languages
 
