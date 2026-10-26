@@ -17,8 +17,8 @@ const ALLOWED: Record<string, string> = {
   AVIF: 'an image format, named as the options name it',
   WebP: 'an image format, named as the options name it',
   JPEG: 'an image format, named as the options name it',
-  'Series Vol. 01': 'a sample file name, as the filename template previews its output',
-  'Series Vol. 01 [Group]': 'a sample file name, as the filename template previews its output',
+  'Series Vol. 01 (1-7)': 'a sample file name, as the filename template previews its output',
+  'Series Vol. 01 (1-7) [Group]': 'a sample file name, as the filename template previews its output',
   'Could not start the app: ${String(err)}':
     "main.tsx's fallback, shown only when the app can't start at all, before the catalog is there",
 };

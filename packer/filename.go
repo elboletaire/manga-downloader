@@ -44,10 +44,10 @@ const FilenameTemplateDefault = "{{.Series}} {{.Number}} - {{.Title}}{{if .Group
 // still saved in gui.json files, so it's still treated as the default
 const filenameTemplateLegacyDefault = "{{.Series}} {{.Number}} - {{.Title}}{{if gt .Version 1}} v{{.Version}}{{end}}"
 
-// FilenameVolumeTemplateDefault is the template volume files (--volumes) are
-// named with while --filename-template is left at its default, which names
-// chapters and would read oddly on a volume
-const FilenameVolumeTemplateDefault = `{{.Series}} Vol. {{printf "%02d" .Volume}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}`
+// FilenameVolumeTemplateDefault names volume files (--volumes) while
+// --filename-template is the chapter default, which would read oddly on a
+// volume; the chapter range tells two groupings of one volume number apart
+const FilenameVolumeTemplateDefault = `{{.Series}} Vol. {{printf "%02d" .Volume}} ({{.Number}}){{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}`
 
 // MigrateFilenameTemplate returns FilenameTemplateDefault in place of the legacy
 // default a saved template may still hold, and templ otherwise

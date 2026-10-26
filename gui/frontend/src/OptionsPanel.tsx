@@ -30,8 +30,8 @@ const TEMPLATE_TOKENS = {
   volume: '{{.Volume}}',
   version: '{{.Version}}',
   padded: '{{pad .Number 4}}',
-  volumeName: 'Series Vol. 01',
-  volumeGroupName: 'Series Vol. 01 [Group]',
+  volumeName: 'Series Vol. 01 (1-7)',
+  volumeGroupName: 'Series Vol. 01 (1-7) [Group]',
 };
 
 interface Props {

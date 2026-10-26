@@ -352,10 +352,10 @@ func TestDownloadVolumes(t *testing.T) {
 		// each chapter is half of its volume's download share (0.8), whatever its pages
 		"volume-chapter 1 1", "started 1", "page 1 0", "volume-progress 1 0.200", "page 1 1", "volume-progress 1 0.400", "downloaded 1",
 		"volume-chapter 1 2", "started 2", "page 2 0", "volume-progress 1 0.800", "downloaded 2",
-		"volume-packing 1", "volume-progress 1 0.867", "volume-progress 1 0.933", "volume-progress 1 1.000", "volume-packed 1 Test Series Vol. 01.cbz",
+		"volume-packing 1", "volume-progress 1 0.867", "volume-progress 1 0.933", "volume-progress 1 1.000", "volume-packed 1 Test Series Vol. 01 (1-2).cbz",
 		"volume-chapter 2 3", "started 3", "page 3 0", "volume-progress 2 0.400", "downloaded 3",
 		"volume-chapter 2 4", "started 4", "page 4 0", "volume-progress 2 0.800", "downloaded 4",
-		"volume-packing 2", "volume-progress 2 0.900", "volume-progress 2 1.000", "volume-packed 2 Test Series Vol. 02.cbz",
+		"volume-packing 2", "volume-progress 2 0.900", "volume-progress 2 1.000", "volume-packed 2 Test Series Vol. 02 (3-4).cbz",
 		"started 5", "page 5 0", "archived 5", "packed 5",
 	}
 	if strings.Join(rec.events, "|") != strings.Join(want, "|") {
@@ -363,10 +363,10 @@ func TestDownloadVolumes(t *testing.T) {
 	}
 
 	files := basenames(cbzFiles(t, dir))
-	if wantFiles := []string{"Test Series 5 - Chapter 5.cbz", "Test Series Vol. 01.cbz", "Test Series Vol. 02.cbz"}; !reflect.DeepEqual(files, wantFiles) {
+	if wantFiles := []string{"Test Series 5 - Chapter 5.cbz", "Test Series Vol. 01 (1-2).cbz", "Test Series Vol. 02 (3-4).cbz"}; !reflect.DeepEqual(files, wantFiles) {
 		t.Errorf("wrote %q, want %q", files, wantFiles)
 	}
-	entries := zipEntries(t, filepath.Join(dir, "Test Series Vol. 01.cbz"))
+	entries := zipEntries(t, filepath.Join(dir, "Test Series Vol. 01 (1-2).cbz"))
 	if wantEntries := []string{"Chapter 0001/000.png", "Chapter 0001/001.png", "Chapter 0002/000.png"}; !reflect.DeepEqual(entries, wantEntries) {
 		t.Errorf("volume 1 holds %q, want %q", entries, wantEntries)
 	}
@@ -534,10 +534,10 @@ func TestDownloadVolumesFailingChapters(t *testing.T) {
 	if rec.count("volume-packing 2") != 0 {
 		t.Errorf("empty volume 2 was packed: %q", rec.events)
 	}
-	if files := basenames(cbzFiles(t, dir)); !reflect.DeepEqual(files, []string{"Test Series Vol. 01.cbz"}) {
+	if files := basenames(cbzFiles(t, dir)); !reflect.DeepEqual(files, []string{"Test Series Vol. 01 (2).cbz"}) {
 		t.Errorf("wrote %q, want volume 1 alone", files)
 	}
-	if entries := zipEntries(t, filepath.Join(dir, "Test Series Vol. 01.cbz")); !reflect.DeepEqual(entries, []string{"Chapter 0002/000.png"}) {
+	if entries := zipEntries(t, filepath.Join(dir, "Test Series Vol. 01 (2).cbz")); !reflect.DeepEqual(entries, []string{"Chapter 0002/000.png"}) {
 		t.Errorf("volume 1 holds %q", entries)
 	}
 }

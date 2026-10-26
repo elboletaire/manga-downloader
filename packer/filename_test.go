@@ -47,7 +47,7 @@ func TestVolumeTemplateDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != "Series Vol. 01 [Alpha]" {
+	if got != "Series Vol. 01 (1) [Alpha]" {
 		t.Errorf("volume with group: got %q", got)
 	}
 }

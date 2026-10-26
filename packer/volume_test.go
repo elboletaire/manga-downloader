@@ -21,10 +21,10 @@ func TestVolumeFilenames(t *testing.T) {
 		version  int
 		want     string
 	}{
-		{"default", FilenameTemplateDefault, 1, chapters, 1, "One/Piece Vol. 01"},
-		{"unset template", "", 12, chapters, 1, "One/Piece Vol. 12"},
-		{"three digits", "", 123, chapters, 1, "One/Piece Vol. 123"},
-		{"duplicate", FilenameTemplateDefault, 1, chapters, 2, "One/Piece Vol. 01 v2"},
+		{"default", FilenameTemplateDefault, 1, chapters, 1, "One/Piece Vol. 01 (1-7.5)"},
+		{"unset template", "", 12, chapters, 1, "One/Piece Vol. 12 (1-7.5)"},
+		{"three digits", "", 123, chapters, 1, "One/Piece Vol. 123 (1-7.5)"},
+		{"duplicate", FilenameTemplateDefault, 1, chapters, 2, "One/Piece Vol. 01 (1-7.5) v2"},
 		{"user template", "{{.Series}} {{.Number}} - {{.Title}}", 3, chapters, 1, "One_Piece 1-7.5 - Vol. 03"},
 		{"single chapter", "{{.Number}}", 3, chapters[:1], 1, "1"},
 		{"volume only", "v{{.Volume}}", 3, chapters, 1, "v3"},
@@ -107,7 +107,7 @@ func TestPackVolume(t *testing.T) {
 	}
 
 	dir := t.TempDir()
-	for _, want := range []string{"Test Series Vol. 02.cbz", "Test Series Vol. 02 v2.cbz"} {
+	for _, want := range []string{"Test Series Vol. 02 (1-2).cbz", "Test Series Vol. 02 (1-2) v2.cbz"} {
 		pages := 0
 		name, err := PackVolume(dir, site, 2, chapters, func(page, _ int) { pages += page })
 		if err != nil {

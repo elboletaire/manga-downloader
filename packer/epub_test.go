@@ -990,13 +990,13 @@ func TestPackVolumeEPUB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("PackVolume: %v", err)
 	}
-	if name != "Test Series Vol. 02.epub" {
+	if name != "Test Series Vol. 02 (1-2).epub" {
 		t.Errorf("name = %q, want the volume's name", name)
 	}
 
 	_, contents := readEPUB(t, filepath.Join(dir, name))
 	opf := readOPF(t, contents)
-	if opf.Metadata.Title != "Test Series Vol. 02" {
+	if opf.Metadata.Title != "Test Series Vol. 02 (1-2)" {
 		t.Errorf("title = %q, want the file name", opf.Metadata.Title)
 	}
 	if got := metaValue(opf.Metadata.Metas, "belongs-to-collection"); got != "Test Series" {

@@ -502,12 +502,13 @@ volume, separated by slashes, in the chapter range syntax:
 manga-downloader --volumes 1-7/8-16 [url] 1-20
 ~~~
 
-That writes `Series Vol. 01.cbz` and `Series Vol. 02.cbz` (`.cbr` with
-`--format cbr`, `.epub` with `--format epub`), with a folder per chapter
-inside, and chapters 17 to 20, outside every volume, one file each. The
-chapters argument still picks what's downloaded: a volume packs the chapters
-of it you asked for. A group can give its volume number with `N:`, and the
-groups after it count on from there:
+That writes `Series Vol. 01 (1-7).cbz` and `Series Vol. 02 (8-16).cbz` (`.cbr`
+with `--format cbr`, `.epub` with `--format epub`), with a folder per chapter
+inside. The chapter range in parentheses tells two groupings of one volume
+number apart, so they don't collide. Chapters 17 to 20, outside every volume, get one
+file each. The chapters argument still picks what's downloaded: a volume packs
+the chapters of it you asked for. A group can give its volume number with `N:`,
+and the groups after it count on from there:
 
 ~~~bash
 manga-downloader --volumes 16:112-114/115-118 [url] 112-118
@@ -624,7 +625,7 @@ Volume files (`--volumes`) get their own default name while the template is
 left as is:
 
 ~~~
-{{.Series}} Vol. {{printf "%02d" .Volume}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
+{{.Series}} Vol. {{printf "%02d" .Volume}} ({{.Number}}){{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
 ~~~
 
 A custom template names them too, with `{{.Number}}` being the volume's
