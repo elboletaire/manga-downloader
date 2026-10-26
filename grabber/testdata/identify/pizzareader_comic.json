@@ -1,0 +1,125 @@
+{
+ "comic": {
+  "id": null,
+  "title": "Area no Kishi",
+  "slug": "area-no-kishi",
+  "chapters": [
+   {
+    "id": null,
+    "full_title": "Vol.31 Ch.260 - Una serie spaventosa di passaggi",
+    "title": "Una serie spaventosa di passaggi",
+    "volume": 31,
+    "chapter": 260,
+    "subchapter": null,
+    "full_chapter": "[IT] Vol.31 Ch.260",
+    "views": 6254,
+    "rating": "7.33",
+    "download_link": "https://www.mediafire.com/file/yro5flbkv7ku9p1/Cap+260+Completo.rar/file",
+    "language": "it",
+    "teams": [
+     {
+      "name": "LupiTeam",
+      "url": "https://lupiteam.net/"
+     },
+     null
+    ],
+    "updated_at": "2025-10-25T08:35:03.000000Z",
+    "published_on": "2020-08-17T00:29:39.000000Z",
+    "hidden": 0,
+    "licensed": 0,
+    "slug_lang_vol_ch_sub": "it-31-260-N",
+    "url": "/read/area-no-kishi/it/vol/31/ch/260",
+    "chapter_download": "/download/area-no-kishi/it/vol/31/ch/260",
+    "volume_download": null,
+    "pdf": "/pdf/area-no-kishi/it/vol/31/ch/260"
+   },
+   {
+    "id": null,
+    "full_title": "Vol.30 Ch.257.5 - Capitolo extra: Problemi per la Nadeshiko!",
+    "title": "Capitolo extra: Problemi per la Nadeshiko!",
+    "volume": 30,
+    "chapter": 257,
+    "subchapter": 5,
+    "full_chapter": "[IT] Vol.30 Ch.257.5",
+    "views": 2306,
+    "rating": "3.00",
+    "download_link": "https://www.mediafire.com/file/galqmjxgefpfeza/Cap_257%2C5_Completo.rar/file",
+    "language": "it",
+    "teams": [
+     {
+      "name": "LupiTeam",
+      "url": "https://lupiteam.net/"
+     },
+     null
+    ],
+    "updated_at": "2024-10-04T16:20:56.000000Z",
+    "published_on": "2020-07-05T20:06:05.000000Z",
+    "hidden": 0,
+    "licensed": 0,
+    "slug_lang_vol_ch_sub": "it-30-257-5",
+    "url": "/read/area-no-kishi/it/vol/30/ch/257/sub/5",
+    "chapter_download": "/download/area-no-kishi/it/vol/30/ch/257/sub/5",
+    "volume_download": null,
+    "pdf": "/pdf/area-no-kishi/it/vol/30/ch/257/sub/5"
+   },
+   {
+    "id": null,
+    "full_title": "Capitoli precedenti",
+    "title": "Capitoli precedenti",
+    "volume": null,
+    "chapter": null,
+    "subchapter": null,
+    "full_chapter": "[IT] ",
+    "views": 4704,
+    "rating": "7.60",
+    "download_link": "https://downloads.lupiteam.net/comic/area-no-kishi",
+    "language": "it",
+    "teams": [
+     {
+      "name": "LupiTeam",
+      "url": "https://lupiteam.net/"
+     },
+     null
+    ],
+    "updated_at": "2026-03-23T23:45:07.000000Z",
+    "published_on": "2016-11-04T15:30:00.000000Z",
+    "hidden": 0,
+    "licensed": 0,
+    "slug_lang_vol_ch_sub": "it-N-N-N",
+    "url": "/read/area-no-kishi/it",
+    "chapter_download": "/download/area-no-kishi/it",
+    "volume_download": null,
+    "pdf": "/pdf/area-no-kishi/it"
+   },
+   {
+    "id": null,
+    "full_title": "Ch.1 - One Shot",
+    "title": "One Shot",
+    "volume": null,
+    "chapter": 1,
+    "subchapter": null,
+    "full_chapter": "[IT] Ch.1",
+    "views": 16148,
+    "rating": "6.88",
+    "download_link": "https://www.mediafire.com/file/8msjjekq44b77sy/DNSOS.zip/file",
+    "language": "it",
+    "teams": [
+     {
+      "name": "LupiTeam",
+      "url": "https://lupiteam.net/"
+     },
+     null
+    ],
+    "updated_at": "2026-08-09T10:37:15.000000Z",
+    "published_on": "2020-04-16T18:49:17.000000Z",
+    "hidden": 0,
+    "licensed": 0,
+    "slug_lang_vol_ch_sub": "it-N-1-N",
+    "url": "/read/death-note/it/ch/1",
+    "chapter_download": "/download/death-note/it/ch/1",
+    "volume_download": null,
+    "pdf": "/pdf/death-note/it/ch/1"
+   }
+  ]
+ }
+}

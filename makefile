@@ -252,6 +252,7 @@ grabber: \
 	grabber/genztoon \
 	grabber/globalcomix \
 	grabber/grabberzone \
+	grabber/gtothegreatsite \
 	grabber/guya \
 	grabber/hachirumi \
 	grabber/hanamiheaven \
@@ -271,6 +272,7 @@ grabber: \
 	grabber/hhentai \
 	grabber/hijala \
 	grabber/hivetoons \
+	grabber/hniscantrad \
 	grabber/houseofotakusv2 \
 	grabber/hunlightcomics \
 	grabber/ichicomi \
@@ -312,12 +314,14 @@ grabber: \
 	grabber/lonertl \
 	grabber/lovesjane \
 	grabber/luascans \
+	grabber/lupiteam \
 	grabber/magcomi \
 	grabber/magustoon \
 	grabber/mahoushoujobu \
 	grabber/maidsama \
 	grabber/mangaailand \
 	grabber/mangabang \
+	grabber/mangacorporation \
 	grabber/mangacrazy \
 	grabber/mangaparktv \
 	grabber/mangatop \
@@ -386,6 +390,7 @@ grabber: \
 	grabber/paradisebl \
 	grabber/paritehaber \
 	grabber/petrotechsociety \
+	grabber/phoenixscans \
 	grabber/piacomic \
 	grabber/plumacomics \
 	grabber/projectsuki \
@@ -432,6 +437,7 @@ grabber: \
 	grabber/trmangaoku \
 	grabber/truyentranhdammyy \
 	grabber/turkcemanga \
+	grabber/tuttoanimemanga \
 	grabber/tvymanga3 \
 	grabber/tritinia \
 	grabber/utoon \
@@ -640,6 +646,24 @@ grabber/lilymanga:
 
 grabber/flamecomics:
 	go run . https://flamecomics.xyz/series/154 104
+
+grabber/gtothegreatsite:
+	go run . https://reader.gtothegreatsite.net/comics/angel-densetsu 30
+
+grabber/hniscantrad:
+	go run . https://hni-scantrad.net/comics/buyuden 120
+
+grabber/lupiteam:
+	go run . https://lupiteam.net/comics/one-piece 1150
+
+grabber/mangacorporation:
+	go run . https://manga-corporation.com/comics/grand-blue 100
+
+grabber/phoenixscans:
+	go run . https://www.phoenixscans.com/comics/baby-steps 300
+
+grabber/tuttoanimemanga:
+	go run . https://tuttoanimemanga.net/comics/12_principe 70
 
 # reader pages only show one page at a time; images are fetched per-page from
 # an obfuscated (packed js) chapterfun.ashx endpoint, so this is its own
