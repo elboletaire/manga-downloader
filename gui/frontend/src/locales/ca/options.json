@@ -11,7 +11,7 @@
   },
   "skipExisting": {
     "label": "Omet els fitxers existents",
-    "hint": "Els capítols amb el fitxer ja a la carpeta no es tornen a descarregar. Esborra un fitxer malmès per tornar-lo a descarregar."
+    "hint": "Els fitxers que ja són a la carpeta no es tornen a descarregar. Esborra un fitxer malmès per tornar-lo a descarregar."
   },
   "format": {
     "label": "Format",

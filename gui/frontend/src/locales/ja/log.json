@@ -27,7 +27,7 @@
   "bundleEmpty": "まとめファイルの書き出し: どの話もダウンロードできませんでした",
   "cancelling": "キャンセル中: ダウンロード中の話は完了させ、新しい話は開始しません",
   "errorFetching": "{{label}}の取得エラー: {{reason}}",
-  "exists": "{{name}}をスキップ: フォルダに既にあります",
+  "exists": "{{name}}をスキップ: フォルダーにすでにあります",
   "skipping": "{{label}}をスキップ: --skip-pagesですべてのページが除外されています",
   "errorFilename": "{{label}}のファイル名エラー: {{reason}}",
   "errorPage": "{{label}}のページ{{page}}のダウンロードエラー: {{reason}}",

@@ -11,7 +11,7 @@
   },
   "skipExisting": {
     "label": "Omitir archivos existentes",
-    "hint": "Los capítulos cuyo archivo ya está en la carpeta no se vuelven a descargar. Borra un archivo dañado para volver a descargarlo."
+    "hint": "Los archivos que ya están en la carpeta no se vuelven a descargar. Borra un archivo dañado para volver a descargarlo."
   },
   "format": {
     "label": "Formato",
