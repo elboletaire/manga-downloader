@@ -22,7 +22,6 @@ badges:
   downloads: { color: "#4cb70e" }               # the green the README badge always had
 # Update checks the app and CLI send to the Worker (v23.0.0 on); AE keeps 3 months, the data branch keeps the rest.
 cloudflare:
-  account-id: dd4d00309618abe546348e4b9cc7a893
   dataset: manga_downloader_checks
   label: Update checks
   day: blob5
