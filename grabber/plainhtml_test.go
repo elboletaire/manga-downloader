@@ -1463,3 +1463,74 @@ func TestPageTitleIgnoresURL(t *testing.T) {
 		t.Errorf("FetchTitle() = %q, want %q", got, "Regression Del Tanque")
 	}
 }
+
+func TestAdultGateAction(t *testing.T) {
+	base := "https://lector.lolivault.net/series/a_mi_joven_esposa_y_yo/"
+	gate := `<form action="/series/a_mi_joven_esposa_y_yo/" method="post"><div style="display:none">
+<input type="hidden" name="adult" value="true" /></div><input type="submit" value="Continue" /></form>`
+	cases := []struct {
+		name   string
+		html   string
+		want   string
+		wantOK bool
+	}{
+		{"gate form posts to its action", gate, base, true},
+		{"no form, no gate", `<div class="list"><a href="/x">x</a></div>`, "", false},
+		{"form without the adult field", `<form action="/search/"><input name="search"></form>`, "", false},
+		{"gate posting to another host", `<form action="https://elsewhere.example/series/a_mi_joven_esposa_y_yo/" method="post"><input type="hidden" name="adult" value="true" /></form>`, "", false},
+		{"adult field that isn't hidden", `<form action="/series/a_mi_joven_esposa_y_yo/"><input type="text" name="adult" value="true" /></form>`, "", false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			doc, err := goquery.NewDocumentFromReader(strings.NewReader(c.html))
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, ok := adultGateAction(doc, base)
+			if ok != c.wantOK || got != c.want {
+				t.Errorf("adultGateAction() = %q, %v; want %q, %v", got, ok, c.want, c.wantOK)
+			}
+		})
+	}
+}
+
+// TestPlainHTMLAdultGate checks that Test() confirms a mature-content gate with
+// a POST, and only when the gate's action stays on the page's host.
+func TestPlainHTMLAdultGate(t *testing.T) {
+	const series = `<div class="list"><div class="element"><div class="title"><a href="/read/a_mi/es/0/9/">Capítulo 9</a></div></div></div>`
+	cases := []struct {
+		name      string
+		action    string
+		wantPosts int32
+		wantMatch bool
+	}{
+		{"confirmed on the same host", "/series/a_mi/", 1, true},
+		{"not confirmed on another host", "https://elsewhere.example/series/a_mi/", 0, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var posts atomic.Int32
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method == http.MethodPost && r.PostFormValue("adult") == "true" {
+					posts.Add(1)
+					fmt.Fprintf(w, "<html><body>%s</body></html>", series)
+					return
+				}
+				fmt.Fprintf(w, `<html><body><form action=%q method="post"><input type="hidden" name="adult" value="true" /></form></body></html>`, c.action)
+			}))
+			defer srv.Close()
+
+			m := NewPlainHTML(&Grabber{URL: srv.URL + "/series/a_mi/"})
+			ok, err := m.Test()
+			if err != nil {
+				t.Fatalf("Test() error = %v", err)
+			}
+			if ok != c.wantMatch {
+				t.Errorf("Test() = %v, want %v", ok, c.wantMatch)
+			}
+			if got := posts.Load(); got != c.wantPosts {
+				t.Errorf("POSTs = %d, want %d", got, c.wantPosts)
+			}
+		})
+	}
+}

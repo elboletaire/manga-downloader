@@ -473,16 +473,37 @@ grabber: \
 	grabber/zinmanga \
 	grabber/html
 
+grabber/fenixproject:
+	go run . https://fenixproject.website/manga/em-louvor-a-sua-sobrevivencia/ 1
+
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
 
 # note: use a language without an official publisher (i.e. not es/en/fr...):
 # licensed translations get replaced by pageless mangaplus stubs on mangadex
+grabber/lavascans:
+	go run . https://lavascans.com/manga/superstar-from-age-0/ 107
+
+grabber/lolivault:
+	go run . https://lector.lolivault.net/series/a_mi_joven_esposa_y_yo/ 9
+
+grabber/manga18fx:
+	go run . https://manga18fx.com/manga/regressed-warriors-female-dominance 50
+
+grabber/manga18me:
+	go run . https://manga18.me/manga/obey-the-dirty-rules-of-this-neighborhood 20
+
+grabber/mangadass:
+	go run . https://mangadass.com/manga/sweet-ruin-uncensored 10
+
 grabber/mangadex:
 	go run . https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f/one-piece --language ca 1187 --bundle
 
 grabber/mangabats:
 	go run . https://www.mangabats.com/manga/after-the-possessor-left 30
+
+grabber/mangadna:
+	go run . https://mangadna.com/manga/omniscient-readers-viewpoint 300
 
 grabber/manganato:
 	go run . https://www.manganato.gg/manga/apotheosis 2
@@ -510,6 +531,18 @@ grabber/fanfox:
 grabber/mangak:
 	go run . https://mangak.io/nano-machine 150
 
+grabber/manhwa18cc:
+	go run . https://manhwa18.cc/webtoon/the-meek-cat 20
+
+grabber/manhwa18tx:
+	go run . https://manhwa18tx.com/manhwa/taming-a-female-bully/ 10
+
+grabber/manhwaddict:
+	go run . https://manhwaddict.com/manga/taming-a-female-bully/ 80
+
+grabber/manhwagalaxy:
+	go run . https://manhwagalaxy.com/manhwa/dirty-talk-raw/ 70
+
 grabber/mgeko:
 	go run . https://www.mgeko.cc/manga/solo-leveling-mg1/ 198
 grabber/mangaball:
@@ -523,6 +556,9 @@ grabber/mangadenizi:
 # Any chapter of this series is free; an old one keeps the target stable.
 grabber/mangaplus:
 	go run . https://mangaplus.shueisha.co.jp/titles/100274 67
+
+grabber/pzykosis:
+	go run . https://lector.pzykosis666hfansub.com/series/monster_musume_no_iru_nichijou/ 54
 
 grabber/qimanga:
 	go run . https://qimanga.com/series/4190634673-eleceed 2
@@ -552,6 +588,39 @@ grabber/mangitto:
 	go run . https://mangtto.com/manga/chainsaw-man 232
 grabber/projectsuki:
 	go run . https://projectsuki.com/book/159270 233
+
+grabber/read7deadlysins:
+	go run . https://ww8.read7deadlysins.com/manga/nanatsu-no-taizai-seven-days 5
+
+grabber/readberserk:
+	go run . https://readberserk.com/manga/berserk/ 380
+
+grabber/readchainsawman:
+	go run . https://ww6.readchainsawman.com/manga/chainsaw-man/ 231
+
+grabber/readfairytail:
+	go run . https://ww9.readfairytail.com/manga/fairy-tail 300
+
+grabber/readjujutsukaisen:
+	go run . https://ww6.readjujutsukaisen.com/manga/jujutsu-kaisen/ 250
+
+grabber/readkingdom:
+	go run . https://ww6.readkingdom.com/manga/kingdom-official-version 100
+
+grabber/readonepiece:
+	go run . https://ww13.readonepiece.com/manga/one-piece/ 1190
+
+grabber/readopm:
+	go run . https://ww7.readopm.com/manga/one-punch-man/ 241
+
+grabber/readsnk:
+	go run . https://ww12.readsnk.com/manga/shingeki-no-kyojin/ 139
+
+grabber/readsololeveling:
+	go run . https://ww4.readsololeveling.org/manga/solo-leveling-ragnarok/ 40
+
+grabber/seinagiadulto:
+	go run . https://adulto.seinagi.org.es/series/petitx/ 4
 
 grabber/tcb:
 	go run . https://lhtranslation.net/manga/gaikotsu-kishi-sama-tadaima-isekai-e-o-dekake-chuu/ 71
@@ -594,6 +663,9 @@ grabber/mundomanhwa:
 # under "<title> N" titles, which the PlainHTML li.wp-manga-chapter entry
 # can't number, so PlainHTML declines it and the Tcb grabber reads the full
 # ajax/chapters list instead.
+grabber/tokyoghoulre:
+	go run . https://ww12.tokyoghoulre.com/manga/tokyo-ghoul 50
+
 grabber/tortugaceviri:
 	go run . https://tortugaceviri.com/manga/berserk/ 326
 
@@ -863,6 +935,9 @@ grabber/bigcomics:
 	go run . https://bigcomics.jp/series/7e7e188909a6e 1
 grabber/kansai:
 	go run . https://kansai.mag-garden.co.jp/series/dfadc73bc5c8d 1
+grabber/yaoiscanme:
+	go run . https://yaoiscan.me/read/biting-the-tiger/ 10
+
 grabber/younganimal:
 	go run . https://younganimal.com/series/7ad02dc9743d0 1
 grabber/ourfeel:
@@ -1134,6 +1209,7 @@ grabber/html: \
 	grabber/eskimangalar \
 	grabber/evascans \
 	grabber/fbsquadx \
+	grabber/fenixproject \
 	grabber/finmanga \
 	grabber/flashmanga \
 	grabber/furyosociety \
@@ -1171,6 +1247,7 @@ grabber/html: \
 	grabber/gourmetsupremacy \
 	grabber/kumapoi \
 	grabber/lagoonscans \
+	grabber/lavascans \
 	grabber/lectortaurus \
 	grabber/leermanhwas \
 	grabber/legionscans \
@@ -1179,9 +1256,14 @@ grabber/html: \
 	grabber/lianscans \
 	grabber/limonmanga \
 	grabber/linkmanga \
+	grabber/lolivault \
 	grabber/madaradex \
 	grabber/madarascans \
 	grabber/maid \
+	grabber/manga18fx \
+	grabber/manga18me \
+	grabber/mangadass \
+	grabber/mangadna \
 	grabber/mangalc \
 	grabber/mangaberri \
 	grabber/mangadistrict \
@@ -1205,9 +1287,13 @@ grabber/html: \
 	grabber/manhuabug \
 	grabber/manhuaplus \
 	grabber/manhuathai \
+	grabber/manhwa18cc \
+	grabber/manhwa18tx \
 	grabber/manhwabreakup \
 	grabber/manhwabuddy \
+	grabber/manhwaddict \
 	grabber/manhwadesu \
+	grabber/manhwagalaxy \
 	grabber/manhwahub \
 	grabber/manhwalist \
 	grabber/manhwaonline \
@@ -1236,10 +1322,21 @@ grabber/html: \
 	grabber/oremanga \
 	grabber/orionscans \
 	grabber/pornhwaz \
+	grabber/pzykosis \
 	grabber/rackusreads \
 	grabber/rakuentranslations \
 	grabber/ravenscans \
 	grabber/rawkuma \
+	grabber/read7deadlysins \
+	grabber/readberserk \
+	grabber/readchainsawman \
+	grabber/readfairytail \
+	grabber/readjujutsukaisen \
+	grabber/readkingdom \
+	grabber/readonepiece \
+	grabber/readopm \
+	grabber/readsnk \
+	grabber/readsololeveling \
 	grabber/readyagami \
 	grabber/reapertrans \
 	grabber/richtoon \
@@ -1255,6 +1352,7 @@ grabber/html: \
 	grabber/scanvf \
 	grabber/scythescans \
 	grabber/seinagi \
+	grabber/seinagiadulto \
 	grabber/seinagies \
 	grabber/sektedoujin \
 	grabber/sereinscan \
@@ -1275,6 +1373,7 @@ grabber/html: \
 	grabber/tilkiscans \
 	grabber/timelesstoons \
 	grabber/tmomanhwa \
+	grabber/tokyoghoulre \
 	grabber/toomtammanga \
 	grabber/toonhunter \
 	grabber/trmanga \
@@ -1291,6 +1390,7 @@ grabber/html: \
 	grabber/sodsaime \
 	grabber/yakshacomics \
 	grabber/yaoiflix \
+	grabber/yaoiscanme \
 	grabber/zenithscans \
 	grabber/zonatmo
 
