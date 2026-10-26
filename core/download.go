@@ -420,8 +420,9 @@ loop:
 		if ctx.Err() != nil {
 			break loop
 		}
-		// checked before a slot is taken, so a skipped chapter costs no request
-		if skipExisting && !bundle {
+		// checked before a slot is taken, so a skipped chapter costs no request;
+		// a volume's chapters are skipped only with their volume, see above
+		if skipExisting && !bundle && volumeOf[chap] == nil {
 			if name, err := packer.ChapterName(s.Title, s.Site.GetFilenameTemplate(), format, grabber.ChapterOf(chap)); err == nil && packer.Exists(outDir, name) {
 				ev.Exists(chap, name)
 				continue

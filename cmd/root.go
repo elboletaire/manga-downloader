@@ -272,11 +272,11 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(0)
 	}
 
-	// a saved bundle's row already says done, like the chapters'
 	if errors.Is(res.err, core.ErrExists) {
 		yellow("- skipping the bundle: %s already exists", res.file)
 		exit(0)
 	}
+	// a saved bundle's row already says done, like the chapters'
 	if res.err != nil {
 		red(res.err.Error())
 		exit(1)

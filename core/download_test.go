@@ -1196,3 +1196,33 @@ func TestDownloadSkipExistingNameAfterFetch(t *testing.T) {
 		t.Errorf("chapter fetched %d times, want once", site.served[1])
 	}
 }
+
+// a per-chapter file that exists doesn't skip a volume's chapter: the volume is
+// still downloaded and packed, and nothing reports the chapter as existing
+func TestDownloadSkipExistingVolumeChapterFileDoesNotSkip(t *testing.T) {
+	site := newFakeSite(t,
+		fakeChapter{number: 1, pages: 1, volume: 1},
+		fakeChapter{number: 2, pages: 1, volume: 1},
+	)
+	series, dir := newSeries(t, site, false)
+	site.Settings.Volumes = "auto"
+	site.Settings.SkipExisting = true
+	writeExisting(t, dir, "Test Series 1 - Chapter 1.cbz")
+	rec := &recorder{}
+
+	if _, err := series.Download(context.Background(), listed(site), nil, "", rec); err != nil {
+		t.Fatalf("Download: %v", err)
+	}
+	if n := rec.count("exists "); n != 0 {
+		t.Errorf("%d exists events for a volume's chapters, want none: %q", n, rec.events)
+	}
+	if site.served[1] != 1 || site.served[2] != 1 {
+		t.Errorf("volume's chapters fetched %v, want each once", site.served)
+	}
+	if rec.count("volume-packed 1 Test Series Vol. 01 (1-2).cbz") != 1 {
+		t.Errorf("volume not packed: %q", rec.events)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "Test Series Vol. 01 (1-2).cbz")); err != nil {
+		t.Errorf("volume file missing: %v", err)
+	}
+}
