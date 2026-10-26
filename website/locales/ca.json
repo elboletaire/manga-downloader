@@ -70,7 +70,10 @@
     "watchText": "Progrés en directe de cada capítol, mentre els fitxers van arribant a la carpeta que has triat amb el selector de carpetes del sistema. Quan acaba l'últim, ja ho tens tot.",
     "themeTitle": "Clar o fosc",
     "themeText": "L'aplicació segueix el tema del sistema, perquè les sessions de lectura de matinada no et cansin la vista.",
-    "finishedAlt": "Una descàrrega acabada al tauler Activity: els dotze capítols desats a la carpeta de destinació, amb un botó per obrir-la."
+    "finishedAlt": "Una descàrrega acabada al tauler Activity: els dotze capítols desats a la carpeta de destinació, amb un botó per obrir-la.",
+    "skipExistingTitle": "Només el que falta",
+    "skipExistingText": "Un capítol, volum o paquet que ja és a la carpeta s'omet abans de descarregar res, així que tornar a executar una descàrrega només porta els capítols nous. A la línia d'ordres és <code>--skip-existing</code>.",
+    "skipExistingAlt": "El tauler Activity després d'una descàrrega en què dos capítols ja eren a la carpeta i surten com a omesos."
   },
   "downloads": {
     "title": "Totes les descàrregues",

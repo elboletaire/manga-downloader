@@ -79,14 +79,14 @@ extra requests, no visible flash measured).
 
 ## Screenshots
 
-The desktop app section shows five captures from `src/assets/screenshots/`,
+The desktop app section shows six captures from `src/assets/screenshots/`,
 each in a light and a dark version. A `<picture>` swaps the dark ones in with
 `prefers-color-scheme` (or the theme switch), and Vite fingerprints them into `dist`. WebP only, which
 every browser the site cares about reads, so there are no PNG fallbacks.
 
 - `app-overview` is the full window (`02-loaded-{light,dark}.png`), at 1000 and
   1600 px wide: the hero.
-- `language-selector`, `chapter-list`, `volumes`, `parts` and `finished-run` are crops of the
+- `language-selector`, `chapter-list`, `volumes`, `parts`, `finished-run` and `skip-existing` are crops of the
   2000 px lossless captures in `tools/screenshots/out/en/` (not committed; the
   English README's WebPs in [`assets/screenshots/`](../assets/screenshots/) come from
   the same captures), at 600 and 1000 px wide.
@@ -113,6 +113,7 @@ panel's left edge, so no edge of the list shows in it). The numbers assume the
 | `volumes`           | `07-volumes-{light,dark}.png`           | `1062x787+117+405`  |
 | `parts`             | `08-parts-{light,dark}.png`             | `1062x787+117+405`  |
 | `finished-run`      | `05-done-{light,dark}.png`              | `680x787+1203+405`  |
+| `skip-existing`     | `14-skip-existing-{light,dark}.png`     | `680x787+1203+405`  |
 
 To regenerate from the originals, run it with the captures' folder (made by
 `tools/screenshots/capture-all.sh`, on macOS) and an output folder, from `website/`:
@@ -120,6 +121,9 @@ To regenerate from the originals, run it with the captures' folder (made by
 ```bash
 build/crop-screenshots.sh ../tools/screenshots/out/en src/assets/screenshots
 ```
+
+A crop whose original isn't in the folder is skipped with a notice, so a single retaken
+shot can be cropped alone (see `tools/screenshots/README.md`).
 
 The shadow widens each derivative beyond the crop plus its 56 px margin, so the
 `<img>` sizes in `index.html` come from the output, not from the geometry.

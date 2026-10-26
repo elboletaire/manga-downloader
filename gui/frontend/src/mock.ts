@@ -20,7 +20,9 @@
 // some chapters locked (see below), &fail makes
 // the fourth chapter fail halfway and &skip makes the sixth one come out
 // skipped, every page excluded by --skip-pages (both off by default; every run
-// saves every chapter without them), &fetching has each chapter's row spend its
+// saves every chapter without them), &exists (with done) leaves two chapters
+// out as already in the folder, counted apart in the summary, and
+// &fetching has each chapter's row spend its
 // first few ticks fetching its page list (frozen, the newest rows are still
 // fetching), &epub starts the output as EPUB, &prompt
 // (with update) makes the update one-click and opens its prompt on load, &shot
@@ -72,6 +74,8 @@ const DOWNLOAD_WEIGHT = 4;
 const ARCHIVE_WEIGHT = 1;
 const STEPS_PER_PAGE = DOWNLOAD_WEIGHT + ARCHIVE_WEIGHT;
 const TICK_MS = 160;
+// the rows (0-based, in run order) that the done scenario's &exists leaves out as already in the folder
+const EXISTS_AT = [2, 5];
 
 const SCENARIOS = [
   'empty',
@@ -112,6 +116,8 @@ export interface MockSetup {
   fail: boolean;
   /** The sixth chapter comes out skipped (every page excluded by --skip-pages) */
   skip: boolean;
+  /** With done, two chapters come out skipped because their files are already in the folder */
+  exists: boolean;
   /** Every 50th chapter is listed as locked */
   locked: boolean;
   /** Use production release versions and a macOS output path (for screenshots) */
@@ -227,6 +233,7 @@ export function mockSetupFrom(search: string): MockSetup {
     parts: params.has('parts'),
     fail: params.has('fail'),
     skip: params.has('skip'),
+    exists: params.has('exists'),
     locked: params.has('locked'),
     shot: params.has('shot'),
     fetching: params.has('fetching'),
@@ -396,6 +403,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     parts: withParts,
     fail,
     skip,
+    exists,
     locked,
     shot,
     fetching,
@@ -413,6 +421,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     parts: false,
     fail: false,
     skip: false,
+    exists: false,
     locked: false,
     shot: false,
     fetching: false,
@@ -452,6 +461,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
   let runRows = 0;
   let jobs: Job[] = [];
   let summary: Summary | null = null;
+  // the chapters of the run that &exists left out as already in the folder
+  let existing = 0;
   let log: LogLine[] = [];
   let timer: ReturnType<typeof setInterval> | undefined;
   // the loaded site needs the browser window, and the alert about it
@@ -634,7 +645,8 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     const failures = jobs
       .filter((j) => j.state === 'failed')
       .map((j) => ({ label: j.title, reason: j.reason, reasonMsg: j.reasonMsg }));
-    const skipped = jobs.filter((j) => j.state === 'skipped').length;
+    // as the backend, the chapters left out as already in the folder are not skipped
+    const skipped = jobs.filter((j) => j.state === 'skipped' && j.reasonMsg?.key !== 'job.reason.exists').length;
     const bundled = runBundle;
     summary = {
       dir: options.outputDir,
@@ -645,8 +657,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       bundled,
       bundle: bundled && !cancelling ? `${title} 1-${runChapters}${EXTENSIONS[options.format]}` : '',
       skipped,
-      // the mock has no files on disk to skip
-      existing: 0,
+      existing,
       failures,
       error: '',
     };
@@ -830,6 +841,7 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     runParts = options.packAs === 'parts';
     summary = null;
     pending = [...list];
+    existing = 0;
     volumeChapters = new Map();
     fetchLeft.clear();
     runRows = runBundle ? 1 : list.length;
@@ -1021,6 +1033,22 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       const warned = picked[1] ?? picked[0];
       if (warned !== undefined) {
         pushLog('warn', `Chapter ${warned.number}: page 7 is AVIF but could not be converted; kept as is`);
+      }
+      if (exists) {
+        // as the backend's Exists event: a row left out before its fetch, named after the file in the folder
+        EXISTS_AT.forEach((at) => {
+          const c = picked[at];
+          if (c === undefined) {
+            return;
+          }
+          const name = `${title} ${c.number} - ${labelOf(c)}${EXTENSIONS[options.format]}`;
+          const reasonMsg = msgOf('job.reason.exists', { name });
+          jobs = jobs.map((j, i) =>
+            i === at ? { ...j, total: 0, done: 0, state: 'skipped', reason: reasonMsg.text, reasonMsg, ...phaseOf() } : j,
+          );
+          pushLog('info', msgOf('log.exists', { name }));
+          existing++;
+        });
       }
       finishRun();
     } else if (!freeze) {

@@ -70,7 +70,10 @@
     "watchText": "Progreso en directo de cada capítulo, mientras los archivos van llegando a la carpeta que elegiste con el selector de carpetas de tu sistema. Cuando acaba el último, ya lo tienes todo.",
     "themeTitle": "Claro u oscuro",
     "themeText": "La app sigue el tema de tu sistema, así que tus sesiones de lectura nocturnas no te cansan la vista.",
-    "finishedAlt": "Una descarga terminada en el panel Activity: los doce capítulos guardados en la carpeta de destino, con un botón para abrirla."
+    "finishedAlt": "Una descarga terminada en el panel Activity: los doce capítulos guardados en la carpeta de destino, con un botón para abrirla.",
+    "skipExistingTitle": "Solo lo que falta",
+    "skipExistingText": "Un capítulo, volumen o paquete que ya esté en la carpeta se omite antes de descargar nada, así que volver a lanzar una descarga solo trae los capítulos nuevos. En la línea de comandos es <code>--skip-existing</code>.",
+    "skipExistingAlt": "El panel Activity tras una descarga en la que dos capítulos ya estaban en la carpeta y aparecen como omitidos."
   },
   "downloads": {
     "title": "Todas las descargas",

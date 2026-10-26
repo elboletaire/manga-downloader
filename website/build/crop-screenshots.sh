@@ -22,6 +22,11 @@ crop() {
   local rest=${geo#*x}
   local h=${rest%%+*}
   local base="$TMP/$name-$theme"
+  # a shot that wasn't retaken (SHOTS in capture-all.sh) keeps its crop as it is
+  if [ ! -f "$SRC/$original" ]; then
+    echo "skipping $name-$theme: $original is not in $SRC" >&2
+    return 0
+  fi
 
   magick "$SRC/$original" -crop "$geo" +repage "$base-crop.png"
   magick -size "${w}x${h}" xc:none -fill white \
@@ -44,4 +49,5 @@ for theme in light dark; do
   crop finished-run "$theme" "05-done-$theme.png" 680x787+1203+405 $CARD_RADIUS
   crop volumes "$theme" "07-volumes-$theme.png" 1062x787+117+405 $CARD_RADIUS
   crop parts "$theme" "08-parts-$theme.png" 1062x787+117+405 $CARD_RADIUS
+  crop skip-existing "$theme" "14-skip-existing-$theme.png" 680x787+1203+405 $CARD_RADIUS
 done

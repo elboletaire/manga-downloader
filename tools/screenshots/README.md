@@ -38,7 +38,7 @@ The mock is built in with `VITE_MOCK=1` (production builds leave it out), and
 every query adds `&shot`: the release version, a macOS folder path and no debug
 line in `update`. `&fail` is only used for `11-failed`, and `&prompt` (with the
 `update` scenario) for `12-update-prompt`: it makes the update one-click and
-opens its dialog. When the app's version moves on, update the `&shot` constants
+opens its dialog. `&exists` (with `done`) is only used for `14-skip-existing`. When the app's version moves on, update the `&shot` constants
 near `RELEASE_VERSION` in `mock.ts`.
 
 ## Files
@@ -60,6 +60,7 @@ near `RELEASE_VERSION` in `mock.ts`.
 - `01-start`: the empty window on the simple view (`simpleStart` is on by default in the mock).
 - `13-settings`: the Settings dialog, opened by clicking the header's gear
   (`.settings-btn`) on the loaded mock.
+- `14-skip-existing`: the finished run with three chapters already in the folder (`&exists` with `done`), the Activity panel's "already in the folder" note.
 
 ## Languages
 
@@ -77,10 +78,17 @@ English-only), and every language's crops and hero in the website's
 folder. Without `--install` the PNGs stay in `out/<lang>/`.
 
 `SHOTS` retakes only the shots named, for a change that touched one or two of
-them; the website's crops are left alone then, since they need every source:
+them. The website's crops and hero are made from the shots taken, and the
+others keep their crops on the site; the README's WebPs are only the shots taken too:
 
 ```bash
 SHOTS="01-start 13-settings" tools/screenshots/capture-all.sh --install
+```
+
+A new shot reaches the website and the README this way, without retaking the rest:
+
+```bash
+SHOTS=14-skip-existing SHOT_LANG=all tools/screenshots/capture-all.sh --install
 ```
 
 A translated label that changes a panel's size needs its crop checked in

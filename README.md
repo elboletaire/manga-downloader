@@ -406,6 +406,14 @@ follow these steps:
      <img alt="A finished download where one chapter failed, with the reason" src="assets/screenshots/11-failed-light.webp">
    </picture>
 
+   With *Skip existing files*, a chapter whose file is already in the folder is
+   left out before anything is fetched, and the summary says how many were there.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/14-skip-existing-dark.webp">
+     <img alt="A finished download where two chapters were already in the folder, listed as skipped" src="assets/screenshots/14-skip-existing-light.webp">
+   </picture>
+
 The app saves your options to `gui.json` in the `manga-downloader` folder of
 your user config folder (the same place as the Manga Plus secret, see
 [below](#environment-variables)), so they're still there the next time you open
