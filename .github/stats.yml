@@ -10,6 +10,7 @@ epochs:
   - { version: v1.11.0, label: First desktop app }
   - { version: v1.18.0, label: Installer and updater }
   - { version: v1.20.0, label: Multilingual }
+  - { version: v23.0.0, label: Volume versions and Japanese }
 platforms:
   - { match: "*-windows-amd64-installer.exe", label: Windows amd64 installer }
 docker: elboletaire/manga-downloader
