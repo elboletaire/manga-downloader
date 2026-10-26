@@ -136,6 +136,15 @@ var plainHTMLSelectors = []SiteSelector{
 		Link:         ".chapter a",
 		Image:        "#imgs img",
 	},
+	// hentaimanga.me: a custom reader (not Madara) with pages in .reader-pages.
+	// Placed before the entry below, whose rows match here too but whose Image doesn't.
+	{
+		Title:   "h1",
+		Rows:    "li[data-chapter-item]",
+		Link:    "a",
+		Chapter: "a",
+		Image:   ".reader-pages img",
+	},
 	// rawkuma.net: raw (Japanese) manga, Kiru WordPress theme. The reader
 	// page's full page list is server-rendered as plain <img src="..."> tags
 	// inside a `[data-image-data]` section, so no browser is needed. Plain

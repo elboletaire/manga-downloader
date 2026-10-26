@@ -103,6 +103,11 @@ func (t *Tcb) Test() (bool, error) {
 	// would pick up those volume headers (and their empty list-wrapper <li>)
 	// as bogus duplicate chapters alongside the real ones.
 	t.chaps = body.Find("li.wp-manga-chapter")
+	if t.chaps.Length() > 0 {
+		if t.chaps, err = t.fetchListingPages(uri, t.chaps, tcbLastPage(body)); err != nil {
+			return false, err
+		}
+	}
 	if t.chaps.Length() == 0 {
 		// Some installs answer with the series page, which names the manga id
 		// admin-ajax.php needs.
@@ -117,6 +122,63 @@ func (t *Tcb) Test() (bool, error) {
 }
 
 var tcbMangaIDRe = regexp.MustCompile(`"manga_id":"(\d+)"`)
+
+// tcbMaxListingPages caps how many pages of a chapter list are read.
+const tcbMaxListingPages = 100
+
+// tcbPageRe matches the ?t=N page links of a paginated chapter list.
+var tcbPageRe = regexp.MustCompile(`[?&]t=(\d+)`)
+
+// tcbLastPage returns the last page of a chapter list's pager, 0 or 1 when the list
+// has none (a single request answers it all).
+func tcbLastPage(body *goquery.Document) int {
+	last := 0
+	body.Find("div.pagination a[href]").Each(func(_ int, a *goquery.Selection) {
+		if m := tcbPageRe.FindStringSubmatch(a.AttrOr("href", "")); m != nil {
+			if n, err := strconv.Atoi(m[1]); err == nil && n > last {
+				last = n
+			}
+		}
+	})
+	return last
+}
+
+// fetchListingPages adds the rows of pages 2 to last of a paginated chapter list
+// (?t=N on the ajax endpoint), stopping early at a page with no new chapter.
+func (t *Tcb) fetchListingPages(uri string, rows *goquery.Selection, last int) (*goquery.Selection, error) {
+	seen := map[string]bool{}
+	rows.Each(func(_ int, s *goquery.Selection) {
+		seen[s.Find("a").AttrOr("href", "")] = true
+	})
+	for page := 2; page <= min(last, tcbMaxListingPages); page++ {
+		rbody, err := http.Post(http.RequestParams{
+			URL:          fmt.Sprintf("%s?t=%d", uri, page),
+			Referer:      t.BaseUrl(),
+			DisableRetry: true,
+		})
+		if err != nil {
+			return nil, err
+		}
+		doc, err := goquery.NewDocumentFromReader(rbody)
+		rbody.Close()
+		if err != nil {
+			return nil, err
+		}
+		added := doc.Find("li.wp-manga-chapter").FilterFunction(func(_ int, s *goquery.Selection) bool {
+			href := s.Find("a").AttrOr("href", "")
+			if seen[href] {
+				return false
+			}
+			seen[href] = true
+			return true
+		})
+		if added.Length() == 0 {
+			break
+		}
+		rows = rows.AddSelection(added)
+	}
+	return rows, nil
+}
 
 // fetchAdminAjaxChapters reads the list through admin-ajax.php for the Madara
 // installs whose ajax/chapters endpoint doesn't return it.
@@ -156,17 +218,65 @@ func (t *Tcb) FetchTitle() (string, error) {
 		return "", err
 	}
 
+	t.title = tcbSeriesTitle(body, t.BaseUrl())
+	return t.title, nil
+}
+
+// tcbSeriesTitle reads a series' name off its page, skipping the site's logo heading,
+// then falls back to the breadcrumb or JSON-LD headline of themes without one.
+func tcbSeriesTitle(body *goquery.Document, base string) string {
 	// Madara prints rank badges inside the h1 and indents its text; some themes
 	// add a summary h1 outside .post-title, so never join them.
 	h1 := body.Find(".post-title h1").First()
 	if h1.Length() == 0 {
-		h1 = body.Find("h1").First()
+		h1 = body.Find("h1").FilterFunction(func(_ int, s *goquery.Selection) bool {
+			return !tcbIsSiteRoot(s.Closest("a").AttrOr("href", ""), base)
+		}).First()
 	}
-	h1 = h1.Clone()
-	h1.Find(".manga-title-badges").Remove()
-	t.title = sanitizeTitle(h1.Text())
+	if h1.Length() > 0 {
+		h1 = h1.Clone()
+		h1.Find(".manga-title-badges").Remove()
+		if title := sanitizeTitle(h1.Text()); title != "" {
+			return title
+		}
+	}
+	if crumb := sanitizeTitle(body.Find("ol.breadcrumb > li").Last().Text()); crumb != "" {
+		return crumb
+	}
+	return tcbHeadlineTitle(body)
+}
 
-	return t.title, nil
+// tcbIsSiteRoot reports whether a link points at the site's home page: "/", or
+// the base URL with or without its www. prefix. An empty or fragment link isn't.
+func tcbIsSiteRoot(href, base string) bool {
+	u, err := url.Parse(href)
+	if err != nil {
+		return false
+	}
+	if u.Host == "" {
+		return u.Path == "/"
+	}
+	b, err := url.Parse(base)
+	if err != nil {
+		return false
+	}
+	same := strings.TrimPrefix(u.Hostname(), "www.") == strings.TrimPrefix(b.Hostname(), "www.")
+	return same && strings.Trim(u.Path, "/") == "" && u.RawQuery == ""
+}
+
+// tcbHeadlineTitle returns the headline of the first JSON-LD block that has one.
+func tcbHeadlineTitle(body *goquery.Document) string {
+	var title string
+	body.Find(`script[type="application/ld+json"]`).EachWithBreak(func(_ int, s *goquery.Selection) bool {
+		var ld struct {
+			Headline string `json:"headline"`
+		}
+		if json.Unmarshal([]byte(s.Text()), &ld) == nil {
+			title = sanitizeTitle(ld.Headline)
+		}
+		return title == ""
+	})
+	return title
 }
 
 // tcbStrayChapterRe matches a chapter slug that names its series before "-chapter-".
@@ -291,13 +401,13 @@ func tcbVolume(row *goquery.Selection) int {
 
 // tcbReaderTypeError rejects Madara chapters that aren't images: the reader
 // wrapper's chapter-type-* class marks videos (anime) and novels, which have
-// no pages to pack.
+// no pages to pack. A text reader without prose is a comic, though.
 func tcbReaderTypeError(doc *goquery.Document, title string) error {
 	class := doc.Find(".reading-content-wrap").First().AttrOr("class", "")
 	switch {
 	case strings.Contains(class, "chapter-type-video"):
 		return fmt.Errorf("%s is a video, not a manga chapter", title)
-	case strings.Contains(class, "chapter-type-text"):
+	case strings.Contains(class, "chapter-type-text") && tcbHasProse(doc):
 		return fmt.Errorf("%s is a novel chapter, not a manga chapter", title)
 	}
 	return nil
@@ -440,11 +550,28 @@ func (t Tcb) fetchReaderPage(f Filterable, pageNum int, pageURL string) ([]Page,
 	return t.readerPageImages(f, pageNum, pageDoc), nil
 }
 
+// tcbHasProse reports whether a text reader still has prose once its images,
+// scripts and Madara's warning box are removed, so a novel with an illustration
+// stays a novel. Readers without .reading-content are read as a whole.
+func tcbHasProse(doc *goquery.Document) bool {
+	content := doc.Find(".reading-content").First()
+	if content.Length() == 0 {
+		content = doc.Find(".reading-content-wrap").First()
+	}
+	content = content.Clone()
+	content.Find("script, style, input, img, canvas, .chapter-warning").Remove()
+	return strings.TrimSpace(content.Text()) != ""
+}
+
+// tcbPageSelector matches the page elements of a reader: its images, or the
+// canvases some themes paint pages on, whose URL is data-page-url.
+const tcbPageSelector = "div.reading-content img, div.reading-content canvas[data-page-url]"
+
 // tcbImageURL returns a reader image's URL from the first lazy-load attribute
 // that holds one. src comes last, since lazy-loading plugins leave a data:
 // placeholder there (arthurscan's lzl plugin keeps the real URL in data-lzl-src).
 func tcbImageURL(s *goquery.Selection) string {
-	for _, attr := range []string{"data-src", "data-lazy-src", "data-lzl-src", "src"} {
+	for _, attr := range []string{"data-src", "data-lazy-src", "data-lzl-src", "src", "data-page-url"} {
 		if u := strings.TrimSpace(s.AttrOr(attr, "")); u != "" && !strings.HasPrefix(u, "data:") {
 			return u
 		}
@@ -476,7 +603,7 @@ func (t Tcb) readerPageImages(f Filterable, pageNum int, pageDoc *goquery.Docume
 		return pages
 	}
 
-	pageDoc.Find("div.reading-content img").Each(func(i int, s *goquery.Selection) {
+	pageDoc.Find(tcbPageSelector).Each(func(i int, s *goquery.Selection) {
 		u := tcbImageURL(s)
 		if u == "" {
 			notice.Warn("page %d of %s has an image with no URL to fetch from", pageNum+1, ChapterLabel(f))

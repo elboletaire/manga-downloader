@@ -231,6 +231,7 @@ grabber: \
 	grabber/cucumbermanga \
 	grabber/danke \
 	grabber/datgarscanlation \
+	grabber/deatte5 \
 	grabber/demonslayermanga \
 	grabber/diamondfansub \
 	grabber/divascans \
@@ -246,7 +247,9 @@ grabber: \
 	grabber/feelweb \
 	grabber/flamecomics \
 	grabber/fmteam \
+	grabber/frieren \
 	grabber/galaxscanlator \
+	grabber/garciamanga \
 	grabber/gcomi \
 	grabber/gakamangas \
 	grabber/gdscans \
@@ -327,6 +330,7 @@ grabber: \
 	grabber/mangafoxfun \
 	grabber/mangaheronl \
 	grabber/mangahub \
+	grabber/mangaisekaithai \
 	grabber/mangakakalotfun \
 	grabber/manganelme \
 	grabber/mangaonlinefun \
@@ -365,6 +369,7 @@ grabber: \
 	grabber/manhuahot \
 	grabber/manhuanext \
 	grabber/manhwa68 \
+	grabber/manhwaden \
 	grabber/manhwaonlinees \
 	grabber/manhwaclub \
 	grabber/manhwanex \
@@ -410,11 +415,13 @@ grabber: \
 	grabber/ragnarokscanlation \
 	grabber/rawdex \
 	grabber/re-yume \
+	grabber/readhunters \
 	grabber/readkagura \
 	grabber/readspyxfamilymanga \
 	grabber/rimacomiplus \
 	grabber/roliascan \
 	grabber/ruahapchanhday2 \
+	grabber/rubycomics \
 	grabber/ruridragon \
 	grabber/sacachispa \
 	grabber/samuraij5z \
@@ -632,6 +639,21 @@ grabber/mangasushi:
 # Madara under /read-N/ (not /manga/), matched by the generic Tcb grabber
 grabber/mangaowl:
 	go run . https://mangaowl.io/read-1/beyond-the-limit/ 1
+# more Madara sites, matched by the generic Tcb grabber (no code changes)
+grabber/mangaisekaithai:
+	go run . https://www.mangaisekaithai.net/manga/isekai-koushoku-musou-roku-isekai-tensei-no-chie-to-chikara-wo-tada-hitasura-xxxx-suru-tame-ni-tsukau/ 58.1
+grabber/garciamanga:
+	go run . https://garciamanga.com/manga/boruto-english/ 16
+grabber/manhwaden:
+	go run . https://www.manhwaden.com/manga/hwanhyeol/ 6
+grabber/readhunters:
+	go run . https://readhunters.xyz/read/a-flor-que-empunhava-uma-espada/ 53
+grabber/rubycomics:
+	go run . https://rubycomics.net/manga/love-by-mistake/ 1
+grabber/deatte5:
+	go run . https://www.deatte5.com/manga/deatte_5_byou_de_battle/ 242
+grabber/frieren:
+	go run . https://ww5.frieren.online/manga/sousou-no-frieren/ 147
 # a Madara site whose reader encrypts the page list (wp-manga-chapter-images-protection)
 grabber/gourmetsupremacy:
 	go run . https://gourmetsupremacy.com/project/hikikomori-princess-marriage/ 10,10.5
@@ -683,7 +705,7 @@ grabber/tritinia:
 # Arabic Madara wordpress site (3asq.org redirects here), matched by the
 # generic Tcb grabber with no code changes
 grabber/3asq:
-	go run . https://3asq.online/manga/berserk/ 6
+	go run . https://3asq.online/manga/berserk/ 338
 
 # WordPress category of chapter posts (plain HTTP), matched by markup and read
 # through the REST API; 1195 rather than the newest chapter, which may still be a teaser
@@ -1116,6 +1138,10 @@ grabber/jellycomics:
 	go run . https://jellycomics.online/truyen/linh-vuc-bong-toi-2/ 59
 grabber/mehentai:
 	go run . https://mehentai.live/truyen/yeu-anh-rat-nhieu 9
+# a custom reader (not Madara): PlainHTML matches its li[data-chapter-item] rows
+grabber/hentaimanga:
+	go run . https://hentaimanga.me/manga/the-cheat-code-hitter-fucks-them-all/ 15
+
 # Blogger, keiyoushi-style and single-series WordPress sites, matched by markup
 grabber/scanpinkrosa:
 	go run . https://scanpinkrosa.blogspot.com/2026/02/a-jornada-de-uma-elfa-negra-com-poderes.html 9
@@ -1224,6 +1250,7 @@ grabber/html: \
 	grabber/hentai1 \
 	grabber/hentai20 \
 	grabber/hentaidesi \
+	grabber/hentaimanga \
 	grabber/hentaiorigines \
 	grabber/hentaivn \
 	grabber/hotcabaretscan \
