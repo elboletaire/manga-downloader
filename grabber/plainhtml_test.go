@@ -1534,3 +1534,56 @@ func TestPlainHTMLAdultGate(t *testing.T) {
 		})
 	}
 }
+
+// hentaimanga.me's reader: the pages are plain <img>s with relative src in
+// .reader-pages, after a logo outside it.
+func TestPlainHTMLHentaimangaReader(t *testing.T) {
+	var entry SiteSelector
+	for _, s := range plainHTMLSelectors {
+		if s.Rows == "li[data-chapter-item]" {
+			entry = s
+			break
+		}
+	}
+	if entry.Image == "" {
+		t.Fatal("no li[data-chapter-item] entry")
+	}
+	doc := docFromHTML(t, `<a href="/"><img src="/assets/images/logo.png" alt="Site"></a>
+<div class="reader-pages"><img src="/assets/images/chapters/x/chapter-1/0001.jpg" alt="x page 1"><img src="/assets/images/chapters/x/chapter-1/0002.jpg" alt="x page 2"></div>`)
+	m := PlainHTML{Grabber: &Grabber{URL: "https://hentaimanga.me/manga/x/chapter-1/"}, site: entry}
+	ch := m.chapterFromDoc(&PlainHTMLChapter{}, doc)
+	var got []string
+	for _, p := range ch.Pages {
+		got = append(got, p.URL)
+	}
+	want := []string{
+		"https://hentaimanga.me/assets/images/chapters/x/chapter-1/0001.jpg",
+		"https://hentaimanga.me/assets/images/chapters/x/chapter-1/0002.jpg",
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("pages = %v, want %v", got, want)
+	}
+}
+
+// hentaimanga.me's entry must win over the rawkuma one on a page whose rows
+// match both, since its Image is the only one that finds these pages.
+func TestPlainHTMLHentaimangaWinsSharedRows(t *testing.T) {
+	const seriesPath = "/manga/x/"
+	mux := http.NewServeMux()
+	mux.HandleFunc(seriesPath, func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`<html><body><h1>X</h1><div id="chapter-list">
+<li data-chapter-item data-chapter-number="2"><a href="/manga/x/chapter-2/"><span>Chapter 2</span></a></li>
+<li data-chapter-item data-chapter-number="1"><a href="/manga/x/chapter-1/"><span>Chapter 1</span></a></li>
+</div></body></html>`))
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	m := NewPlainHTML(&Grabber{URL: srv.URL + seriesPath, Settings: &Settings{}})
+	if ok, err := m.Test(); err != nil || !ok {
+		t.Fatalf("Test() = %v, %v; want the series to match", ok, err)
+	}
+	if m.site.Rows != "li[data-chapter-item]" {
+		t.Errorf("Test() matched with selector %q, want li[data-chapter-item]", m.site.Rows)
+	}
+}

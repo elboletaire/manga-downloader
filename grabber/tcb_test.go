@@ -307,9 +307,12 @@ func TestTcbChapterNumber(t *testing.T) {
 
 func TestTcbFetchChapterRejectsNonMangaReaders(t *testing.T) {
 	for name, tc := range map[string]struct{ html, want string }{
-		"video": {`<div class="reading-content-wrap chapter-type-video"><iframe src="https://mega.nz/embed/x"></iframe></div>`, "Ep 1 is a video, not a manga chapter"},
-		"text":  {`<div class="reading-content-wrap chapter-type-text"><p>Once upon a time</p></div>`, "Ep 1 is a novel chapter, not a manga chapter"},
-		"manga": {`<div class="reading-content-wrap chapter-type-manga"><div class="reading-content"><img id="image-0" data-src="/a.png"></div></div>`, ""},
+		"video":                              {`<div class="reading-content-wrap chapter-type-video"><iframe src="https://mega.nz/embed/x"></iframe></div>`, "Ep 1 is a video, not a manga chapter"},
+		"text":                               {`<div class="reading-content-wrap chapter-type-text"><p>Once upon a time</p></div>`, "Ep 1 is a novel chapter, not a manga chapter"},
+		"text with images":                   {`<div class="reading-content-wrap chapter-type-text"><div class="reading-content"><div class="text-left"><img data-src="/a.jpg"></div></div></div>`, ""},
+		"text with a warning box and images": {`<div class="reading-content-wrap chapter-type-text"><div class="reading-content"><div class="chapter-warning alert">COPYRIGHT TO: x</div><div class="text-left"><img data-src="/a.jpg"></div></div></div>`, ""},
+		"text with an illustration":          {`<div class="reading-content-wrap chapter-type-text"><div class="reading-content"><p>Once upon a time</p><img data-src="/a.jpg"></div></div>`, "Ep 1 is a novel chapter, not a manga chapter"},
+		"manga":                              {`<div class="reading-content-wrap chapter-type-manga"><div class="reading-content"><img id="image-0" data-src="/a.png"></div></div>`, ""},
 	} {
 		t.Run(name, func(t *testing.T) {
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -585,6 +588,7 @@ func TestTcbImageURL(t *testing.T) {
 		"data-lzl-src":       {`<img src="` + placeholder + `" data-lzl-src="https://x.com/3.jpg">`, "https://x.com/3.jpg"},
 		"data-lazy-src":      {`<img src="` + placeholder + `" data-lazy-src="https://x.com/4.jpg">`, "https://x.com/4.jpg"},
 		"only a placeholder": {`<img src="` + placeholder + `">`, ""},
+		"canvas page":        {`<canvas class="protected-chapter-canvas" data-page-url="https://x.com/5.webp">`, "https://x.com/5.webp"},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -592,9 +596,99 @@ func TestTcbImageURL(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to parse fixture: %s", err)
 			}
-			if got := tcbImageURL(doc.Find("img")); got != tt.want {
+			if got := tcbImageURL(doc.Find("img, canvas")); got != tt.want {
 				t.Errorf("tcbImageURL() = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestTcbSeriesTitle(t *testing.T) {
+	for name, tc := range map[string]struct{ html, want string }{
+		"post-title beats other h1s":    {`<h1>Hero</h1><div class="post-title"><h1>Real</h1></div>`, "Real"},
+		"logo h1 is skipped":            {`<a href="https://x.test/"><h1><span>Site</span></h1></a><script type="application/ld+json">{"headline": "Series"}</script>`, "Series"},
+		"breadcrumb without h1":         {`<ol class="breadcrumb"><li><a>Home</a></li><li><a>Series</a></li></ol>`, "Series"},
+		"json-ld headline":              {`<script type="application/ld+json">{"@type": "Article", "headline": "Series"}</script>`, "Series"},
+		"relative root logo is skipped": {`<a href="/"><h1>Site</h1></a><script type="application/ld+json">{"headline": "Series"}</script>`, "Series"},
+		"www root logo is skipped":      {`<a href="https://www.x.test/"><h1>Site</h1></a><script type="application/ld+json">{"headline": "Series"}</script>`, "Series"},
+		"fragment link is not a root":   {`<a href="#"><h1>Series</h1></a>`, "Series"},
+		"broken json-ld is ignored":     {"<script type=\"application/ld+json\">{\"headline\": \"bad\nline\"}</script>", ""},
+	} {
+		t.Run(name, func(t *testing.T) {
+			doc, err := goquery.NewDocumentFromReader(strings.NewReader(tc.html))
+			if err != nil {
+				t.Fatalf("failed to parse fixture: %s", err)
+			}
+			if got := tcbSeriesTitle(doc, "https://x.test"); got != tc.want {
+				t.Errorf("tcbSeriesTitle() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// tcbListPage renders one page of a paginated ajax/chapters response: chapters
+// from..to (newest first), and the pager linking pages 1 to last.
+func tcbListPage(from, to, last int) string {
+	var sb strings.Builder
+	for n := from; n >= to; n-- {
+		fmt.Fprintf(&sb, `<li class="wp-manga-chapter"><a href="https://x.test/manga/x/chapter-%d/">Chapter %d</a></li>`, n, n)
+	}
+	sb.WriteString(`<div class="pagination">`)
+	for p := 1; p <= last; p++ {
+		fmt.Fprintf(&sb, `<span class="page page-%d"><a href="/?t=%d" data-page="%d">%d</a></span>`, p, p, p, p)
+	}
+	sb.WriteString(`</div>`)
+	return sb.String()
+}
+
+// The walk reads pages 2 to the pager's last, and stops at the first page that
+// adds no new chapter (page 3 repeats page 2), so page 4 is never requested.
+func TestTcbTestWalksPaginatedChapters(t *testing.T) {
+	var requests atomic.Int32
+	pages := map[string]string{
+		"":  tcbListPage(10, 6, 4),
+		"1": tcbListPage(10, 6, 4),
+		"2": tcbListPage(5, 1, 4),
+		"3": tcbListPage(5, 1, 4),
+		"4": tcbListPage(0, 0, 4),
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/manga/x/ajax/chapters", func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		_, _ = w.Write([]byte(pages[r.URL.Query().Get("t")]))
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	tcb := NewTcb(&Grabber{URL: srv.URL + "/manga/x/", Settings: &Settings{}})
+	if ok, err := tcb.Test(); err != nil || !ok {
+		t.Fatalf("Test() = %v, %v; want the series to match", ok, err)
+	}
+	if n := tcb.chaps.Length(); n != 10 {
+		t.Errorf("Test() kept %d chapter rows, want 10 across pages 1 and 2", n)
+	}
+	// the probe (page 1), then pages 2 and 3; page 4 stays unread
+	if n := requests.Load(); n != 3 {
+		t.Errorf("made %d ajax requests, want 3 (the probe, pages 2 and 3)", n)
+	}
+}
+
+// A list without a pager is answered by its single request.
+func TestTcbTestUnpaginatedChaptersOneRequest(t *testing.T) {
+	var requests atomic.Int32
+	mux := http.NewServeMux()
+	mux.HandleFunc("/manga/x/ajax/chapters", func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		_, _ = w.Write([]byte(tcbListPage(3, 1, 0)))
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	tcb := NewTcb(&Grabber{URL: srv.URL + "/manga/x/", Settings: &Settings{}})
+	if ok, err := tcb.Test(); err != nil || !ok {
+		t.Fatalf("Test() = %v, %v; want the series to match", ok, err)
+	}
+	if n := tcb.chaps.Length(); n != 3 || requests.Load() != 1 {
+		t.Errorf("kept %d rows in %d requests, want 3 in 1", n, requests.Load())
 	}
 }
