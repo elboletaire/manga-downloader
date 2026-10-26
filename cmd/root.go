@@ -140,6 +140,8 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 
 		rngs = []ranges.Range{core.AllChaptersRange(chapters)}
+		// names the bundle as a typed range would, instead of leaving a gap
+		settings.Range = rngs[0].String()
 	} else {
 		// ranges parsing
 		settings.Range = getRangesArg(args)
