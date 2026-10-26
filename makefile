@@ -166,6 +166,7 @@ verify-cbz:
 # one dependency per line, alphabetically sorted (grabber/html deliberately
 # last), so parallel site-support branches never edit the same line
 grabber: \
+	grabber/1manga \
 	grabber/1punchman \
 	grabber/3asq \
 	grabber/akanebanashimanga \
@@ -323,7 +324,16 @@ grabber: \
 	grabber/mangabang \
 	grabber/mangacorporation \
 	grabber/mangacrazy \
+	grabber/mangafoxfun \
+	grabber/mangaheronl \
+	grabber/mangahub \
+	grabber/mangakakalotfun \
+	grabber/manganelme \
+	grabber/mangaonlinefun \
+	grabber/mangapandaonl \
 	grabber/mangaparktv \
+	grabber/mangareadersite \
+	grabber/mangatodayfun \
 	grabber/mangatop \
 	grabber/mangazegra \
 	grabber/manga18free \
@@ -381,6 +391,7 @@ grabber: \
 	grabber/omniscientreadersviewpoint \
 	grabber/omniscientreadersviewpointt \
 	grabber/omniscientreaderviewpoint \
+	grabber/onemangainfo \
 	grabber/onepunchmanmanga \
 	grabber/onepunchmannmanga \
 	grabber/onlinechainsawmanmanga \
@@ -665,6 +676,39 @@ grabber/phoenixscans:
 grabber/tuttoanimemanga:
 	go run . https://tuttoanimemanga.net/comics/12_principe 70
 
+grabber/mangahub:
+	go run . https://mangahub.io/manga/one-piece_142 1188
+
+grabber/1manga:
+	go run . https://1manga.co/manga/red-storm_111 470
+
+grabber/mangakakalotfun:
+	go run . https://mangakakalot.fun/manga/red-storm_111 470
+
+grabber/manganelme:
+	go run . https://manganel.me/manga/academy-genius-swordsman 150
+
+grabber/mangaonlinefun:
+	go run . https://mangaonline.fun/manga/red-storm_107 470
+
+grabber/mangatodayfun:
+	go run . https://mangatoday.fun/manga/red-storm_107 470
+
+grabber/onemangainfo:
+	go run . https://onemanga.info/manga/academy-genius-swordsman 150
+
+grabber/mangareadersite:
+	go run . https://mangareader.site/manga/red-storm_111 470
+
+grabber/mangapandaonl:
+	go run . https://mangapanda.onl/manga/red-storm_119 470
+
+grabber/mangafoxfun:
+	go run . https://mangafox.fun/manga/toaru-ossan-no-vrmmo-katsudouki 110
+
+grabber/mangaheronl:
+	go run . https://mangahere.onl/manga/red-storm_114 470
+
 # reader pages only show one page at a time; images are fetched per-page from
 # an obfuscated (packed js) chapterfun.ashx endpoint, so this is its own
 # grabber rather than a PlainHTML selector
@@ -867,7 +911,6 @@ grabber/browser: \
 	grabber/asmotoon \
 	grabber/dragontea \
 	grabber/kappabeast \
-	grabber/mangahub \
 	grabber/mangakakalot \
 	grabber/manhuatop \
 	grabber/manhuaus \
@@ -916,8 +959,6 @@ grabber/natomanga:
 grabber/manhuaus:
 	go run . --browser-visible https://manhuaus.com/manga/solo-leveling-ragnarok/ 68
 
-grabber/mangahub:
-	go run . --browser-visible https://mangahub.io/manga/one-piece_142 1188
 grabber/manhuatop:
 	go run . --browser-visible https://manhuatop.org/manhua/chronicles-of-the-martial-gods-return/ 168
 grabber/setsuscans:

@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[510 supported sites](#supported-sites)**, from big aggregators to small
+- **[520 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -707,13 +707,14 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 510 supported sites</b></summary>
+<summary><b>Show all 520 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
 | --- | --- | --- |
 | [02.ngomik.cc](https://02.ngomik.cc) | Indonesian | 2026-10-26 |
 | [108read.com](https://www.108read.com) | Thai | 2026-10-18 |
+| [1manga.co](https://1manga.co) | 1Manga, English | 2026-10-26 |
 | [1punchman.com](https://1punchman.com) | English, single series | 2026-10-18 |
 | [2.komikindo.shop](https://2.komikindo.shop) | Indonesian, mostly NSFW, unrelated to komikindo.ch | 2026-10-19 |
 | [3asq.online](https://3asq.online) | Arabic, former 3asq.org | 2026-10-18 |
@@ -972,10 +973,13 @@ to a minute.
 | [mangafire.to](https://mangafire.to) \* |  | 2026-10-15 |
 | [mangaforfree.com](https://mangaforfree.com) | English | 2026-10-19 |
 | [mangaforfree.net](https://mangaforfree.net) | multilingual, mostly NSFW | 2026-10-19 |
+| [mangafox.fun](https://mangafox.fun) | MangaFox, English | 2026-10-26 |
 | [mangafree.info](https://mangafree.info) | English | 2026-10-19 |
 | [mangahere.cc](https://www.mangahere.cc) | MangaHere | 2026-10-19 |
-| [mangahub.io](https://mangahub.io) \* |  | 2026-10-15 |
+| [mangahere.onl](https://mangahere.onl) | MangaHere, English | 2026-10-26 |
+| [mangahub.io](https://mangahub.io) |  | 2026-10-26 |
 | [mangak.io](https://mangak.io) | MangaK, former mangabuddy.com | 2026-10-19 |
+| [mangakakalot.fun](https://mangakakalot.fun) | MangaKakalot, English | 2026-10-26 |
 | [mangakakalot.gg](https://www.mangakakalot.gg) \* | MangaKakalot | 2026-10-15 |
 | [mangakatana.com](https://mangakatana.com) |  | 2026-10-19 |
 | [mangakimi.com](https://www.mangakimi.com) | Thai | 2026-10-19 |
@@ -985,12 +989,16 @@ to a minute.
 | [mangalt.jp](https://mangalt.jp) | Japanese (Comici) | 2026-10-19 |
 | [mangamaniacs.org](https://mangamaniacs.org) | English, mostly NSFW, yaoi | 2026-10-19 |
 | [manganato.gg](https://www.manganato.gg) \* | MangaNato | 2026-10-19 |
+| [manganel.me](https://manganel.me) | MangaNel, English | 2026-10-26 |
+| [mangaonline.fun](https://mangaonline.fun) | MangaOnline, English | 2026-10-26 |
 | [mangaowl.io](https://mangaowl.io) | English | 2026-10-19 |
+| [mangapanda.onl](https://mangapanda.onl) | MangaPanda, English | 2026-10-26 |
 | [mangapark.cc](https://mangapark.cc) | MangaPark | 2026-10-19 |
 | [mangapark.tv](https://mangapark.tv) | English, unrelated to mangapark.cc | 2026-10-19 |
 | [mangapill.com](https://mangapill.com) |  | 2026-10-19 |
 | [mangaplus.shueisha.co.jp](https://mangaplus.shueisha.co.jp) | Manga Plus, Shueisha's official reader | 2026-10-15 |
 | [mangaread.org](https://www.mangaread.org) |  | 2026-10-19 |
+| [mangareader.site](https://mangareader.site) | MangaReader, English | 2026-10-26 |
 | [mangas-origines.fr](https://mangas-origines.fr) | French | 2026-10-18 |
 | [mangaspa.nikkan-spa.jp](https://mangaspa.nikkan-spa.jp) | Japanese (Comici), mostly NSFW | ❌ failing since 2026-10-26 (checked 2026-10-26) |
 | [mangastep.com](https://mangastep.com) | Thai | 2026-10-19 |
@@ -998,6 +1006,7 @@ to a minute.
 | [mangasusuku.com](https://mangasusuku.com) | Indonesian, mostly NSFW | 2026-10-19 |
 | [mangataro.org](https://mangataro.org) |  | 2026-10-19 |
 | [mangatime-square.com](https://mangatime-square.com) | Japanese, Mangatime Square (GigaViewer) | 2026-10-19 |
+| [mangatoday.fun](https://mangatoday.fun) | MangaToday, English | 2026-10-26 |
 | [mangatop.org](https://mangatop.org) | English | 2026-10-26 |
 | [mangatown.com](https://www.mangatown.com) |  | 2026-10-19 |
 | [mangatrend.org](https://mangatrend.org) | English | 2026-10-19 |
@@ -1062,6 +1071,7 @@ to a minute.
 | [nyxscans.com](https://nyxscans.com) | English, locked chapters skipped | 2026-10-26 |
 | [octopusmanga.com](https://octopusmanga.com) | English | 2026-10-26 |
 | [omniscientreadersviewpointt.com](https://omniscientreadersviewpointt.com) | English, single series, use a chapter URL | 2026-10-26 |
+| [onemanga.info](https://onemanga.info) | OneManga, English | 2026-10-26 |
 | [onepunchmannmanga.com](https://onepunchmannmanga.com) | English, single series, use a chapter URL | 2026-10-26 |
 | [online.seinagi.org.es](https://online.seinagi.org.es) | Spanish | 2026-10-26 |
 | [onlinechainsawmanmanga.us](https://onlinechainsawmanmanga.us) | English, single series, use a chapter URL | 2026-10-26 |

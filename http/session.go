@@ -39,6 +39,22 @@ func SetCookie(domain, name, value string) {
 	session.cookies[domain][name] = value
 }
 
+// SessionCookie returns the value of a cookie the session holds for host, from
+// the server's Set-Cookie or SetCookie, or "" when there is none
+func SessionCookie(host, name string) string {
+	session.RLock()
+	defer session.RUnlock()
+	for domain, cookies := range session.cookies {
+		if host != domain && !strings.HasSuffix(host, "."+domain) {
+			continue
+		}
+		if value, ok := cookies[name]; ok {
+			return value
+		}
+	}
+	return ""
+}
+
 // sessionUserAgent returns the harvested user agent, or fallback if none
 func sessionUserAgent(fallback string) string {
 	session.RLock()
