@@ -132,6 +132,8 @@ func TestIdentifySiteOrder(t *testing.T) {
 		routes map[string]string
 		// want is a typed nil of the grabber expected to win, or nil for none
 		want Site
+		// rows is the Rows selector of the PlainHTML entry expected to win, when set
+		rows string
 	}{
 		{
 			name:   "themesia series page",
@@ -248,6 +250,56 @@ func TestIdentifySiteOrder(t *testing.T) {
 				"/series/r2311170-all-hail-the-sect-leader":              "rizzfables_series.html",
 			},
 			want: (*PlainHTML)(nil),
+		},
+		{
+			name:   "mangacatalog series page",
+			origin: "https://ww13.readonepiece.com",
+			path:   "/manga/one-piece/",
+			routes: map[string]string{
+				"/manga/one-piece/": "mangacatalog_series.html",
+			},
+			want: (*PlainHTML)(nil),
+			rows: `div.grid-cols-4 a.font-bold.mb-1[href*="/chapter/"]`,
+		},
+		{
+			name:   "yiimadara series page",
+			origin: "https://manga18fx.com",
+			path:   "/manga/regressed-warriors-female-dominance",
+			routes: map[string]string{
+				"/manga/regressed-warriors-female-dominance": "yiimadara_series.html",
+			},
+			want: (*PlainHTML)(nil),
+			rows: `a.chapter-name, div.list-items li.item > a[href*="/chapter-"]`,
+		},
+		{
+			name:   "lavascans series page",
+			origin: "https://lavascans.com",
+			path:   "/manga/superstar-from-age-0/",
+			routes: map[string]string{
+				"/manga/superstar-from-age-0/": "lavascans_series.html",
+			},
+			want: (*PlainHTML)(nil),
+			rows: `a.ch-main-anchor[href*="-chapter-"]`,
+		},
+		{
+			name:   "readopm series page",
+			origin: "https://ww7.readopm.com",
+			path:   "/manga/one-punch-man/",
+			routes: map[string]string{
+				"/manga/one-punch-man/": "readopm_series.html",
+			},
+			want: (*PlainHTML)(nil),
+			rows: `table.table-borderless tbody tr:has(a[href*="/chapter/"])`,
+		},
+		{
+			name:   "fenixproject series page",
+			origin: "https://fenixproject.website",
+			path:   "/manga/em-louvor-a-sua-sobrevivencia/",
+			routes: map[string]string{
+				"/manga/em-louvor-a-sua-sobrevivencia/": "fenixproject_series.html",
+			},
+			want: (*PlainHTML)(nil),
+			rows: `div[id^="chapter-card-"] > a[href*="/capitulo-"]`,
 		},
 		// matched by the earlier mangareader entry, which shares its li[data-num] rows
 		{
@@ -480,6 +532,9 @@ func TestIdentifySiteOrder(t *testing.T) {
 			}
 			if got, want := reflect.TypeOf(site), reflect.TypeOf(c.want); got != want {
 				t.Fatalf("IdentifySite() = %v, want %v", got, want)
+			}
+			if p, ok := site.(*PlainHTML); ok && c.rows != "" && p.site.Rows != c.rows {
+				t.Fatalf("PlainHTML matched rows %q, want %q", p.site.Rows, c.rows)
 			}
 		})
 	}

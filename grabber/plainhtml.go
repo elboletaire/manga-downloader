@@ -492,6 +492,49 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:      "#Baca_Komik img.klazy",
 		SeriesLink: `a[href*="/manga/"]`,
 	},
+	// mangacatalog network (readonepiece, readsnk, ...): grid rows of
+	// a.font-bold links, and reader pages as img.js-page
+	{
+		Title: "h1.my-3",
+		Rows:  `div.grid-cols-4 a.font-bold.mb-1[href*="/chapter/"]`,
+		Image: "img.js-page",
+	},
+	// the network's table theme (readopm, readberserk): the number is in the
+	// row's first cell
+	{
+		Title:        "h2 > span",
+		Rows:         `table.table-borderless tbody tr:has(a[href*="/chapter/"])`,
+		Chapter:      "td:first-child",
+		ChapterTitle: "td:first-child",
+		Link:         "a",
+		Image:        `img[alt*=" Page "]`,
+	},
+	// yiimadara and yiimanga themes (manga18fx, mangadna, manhwa18tx, ...): rows
+	// are a.chapter-name (manhwa18tx: li.item links) with a date after the number
+	{
+		Title:             "h1",
+		TitleNoise:        "span",
+		Rows:              `a.chapter-name, div.list-items li.item > a[href*="/chapter-"]`,
+		ChapterTitleStrip: `\s*\d{1,2} \w{3} \d{2}$`,
+		Image:             `img[alt*=" Page "]`,
+	},
+	// fenixproject.website (Phoenix LiveView): the number is only in the reader's
+	// URL, so NumberRe reads it
+	{
+		Title:    "h1",
+		Rows:     `div[id^="chapter-card-"] > a[href*="/capitulo-"]`,
+		NumberRe: `/capitulo-(\d+(?:\.\d+)?)`,
+		Image:    "#reader-pages img",
+	},
+	// lavascans.com (Arabic, custom theme): paid rows carry a lock icon in
+	// span.ch-num
+	{
+		Title:   "h1",
+		Rows:    `a.ch-main-anchor[href*="-chapter-"]`,
+		Chapter: "span.ch-num",
+		Image:   "img.ts-image-minimal",
+		Locked:  "i.fa-lock",
+	},
 }
 
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)
@@ -579,6 +622,23 @@ func (m *PlainHTML) Test() (bool, error) {
 	m.doc, err = goquery.NewDocumentFromReader(strings.NewReader(body))
 	if err != nil {
 		return false, err
+	}
+
+	// a mature-content gate hides the series until its form is posted; the
+	// answer's session cookie then opens the readers too
+	if action, ok := adultGateAction(m.doc, m.URL); ok {
+		body, err = http.PostText(http.RequestParams{
+			URL:          action,
+			Form:         url.Values{"adult": {"true"}},
+			DisableRetry: true,
+		})
+		if err != nil {
+			return false, err
+		}
+		m.doc, err = goquery.NewDocumentFromReader(strings.NewReader(body))
+		if err != nil {
+			return false, err
+		}
 	}
 
 	// Order matters: some selectors share markup, and shadowing is intentional.
@@ -982,6 +1042,23 @@ func seriesURLCandidates(doc *goquery.Document, pageURL string, selectors []Site
 	}
 
 	return unique
+}
+
+// adultGateAction returns where a mature-content gate form posts its
+// confirmation (FoOlSlide's hidden adult=true field), and whether there is one.
+// The action must stay on the page's host, so a gate can't send the request elsewhere.
+func adultGateAction(doc *goquery.Document, pageURL string) (string, bool) {
+	form := doc.Find(`form:has(input[type="hidden"][name="adult"][value="true"])`).First()
+	if form.Length() == 0 {
+		return "", false
+	}
+	base, _ := url.Parse(pageURL)
+	action := resolveURLRelative(form.AttrOr("action", pageURL), base)
+	target, err := url.Parse(action)
+	if action == "" || err != nil || base == nil || target.Host != base.Host {
+		return "", false
+	}
+	return action, true
 }
 
 // resolveURLRelative resolves a potentially relative URL against a base URL.
@@ -1557,7 +1634,8 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		urls := regexp.MustCompile(`"([^"]+)"`).FindAllStringSubmatch(matches[1], -1)
 		imgs := []string{}
 		for _, u := range urls {
-			imgs = append(imgs, strings.ReplaceAll(u[1], `\/`, `/`))
+			// also \uXXXX escapes, for non-ASCII file names
+			imgs = append(imgs, unescapeJSString(u[1]))
 		}
 		return imgs
 	}
