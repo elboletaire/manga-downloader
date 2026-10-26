@@ -23,3 +23,5 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: elboletaire/github-stats-action@v1
+        with:
+          cloudflare-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}

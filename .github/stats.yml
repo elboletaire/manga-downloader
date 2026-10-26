@@ -4,7 +4,7 @@ groups:
   - { name: cli, label: CLI, assets: "manga-downloader-*" }
 ignore: ["*.md5", "*-SHA256SUMS.txt"]
 counters:
-  - { name: updates, label: In-app updates, assets: "manga-downloader-gui-*-SHA256SUMS.txt", from: v1.19.0 }
+  - { name: updates, label: In-app updates, assets: "manga-downloader-gui-*-SHA256SUMS.txt", from: v1.19.0, per-user: true }
 epochs:
   - { version: v1.0.0, label: 1.0 rewrite }
   - { version: v1.11.0, label: First desktop app }
@@ -20,3 +20,16 @@ charts:
   downloads-per-release: { from: 2026-10-10 }   # v1.11.0, the first desktop app
 badges:
   downloads: { color: "#4cb70e" }               # the green the README badge always had
+# Update checks the app and CLI send to the Worker (v23.0.0 on); AE keeps 3 months, the data branch keeps the rest.
+cloudflare:
+  account-id: dd4d00309618abe546348e4b9cc7a893
+  dataset: manga_downloader_checks
+  label: Update checks
+  day: blob5
+  primary: { client: gui }                      # the CLI only checks on --version, so it isn't usage
+  note: The CLI only checks on --version, so CLI checks aren't usage; users are approximate daily counts.
+  dimensions:
+    client:  { column: blob1, label: App vs CLI, values: { gui: App, cli: CLI } }
+    version: { column: blob2, label: Version, kind: semver, released: true }   # drops test builds of unreleased versions
+    os:      { column: blob3, label: OS }
+    arch:    { column: blob4, label: Arch }
