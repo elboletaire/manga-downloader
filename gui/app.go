@@ -63,6 +63,8 @@ type App struct {
 	// updateCtx bounds the update check; cancelUpdate ends it at shutdown
 	updateCtx    context.Context
 	cancelUpdate context.CancelFunc
+	// startupCheck starts the check once, at the window's first SetSystemLocale
+	startupCheck sync.Once
 	interval     time.Duration
 	// installed is whether this exe is an installed copy (the Windows
 	// installer's, the Linux install.sh's), which can update itself; the
@@ -163,8 +165,14 @@ func (a *App) startup(ctx context.Context, rt *wailsRuntime) {
 	a.quit = func() { wruntime.Quit(ctx) }
 	go sweepUpdateDirs(os.TempDir())
 	a.launch()
-	// the check runs behind the window, which is up already
-	a.checkUpdates()
+}
+
+// SetSystemLocale is called by the window once it's up, with the system's
+// locale. The first call starts the startup update check, which waits for it
+// so the check can tell the Worker about the system's language.
+func (a *App) SetSystemLocale(locale string) {
+	a.ctrl.SetSystemLocale(locale)
+	a.startupCheck.Do(a.checkUpdates)
 }
 
 // checkUpdates starts the update check in the background, unless one is running, when

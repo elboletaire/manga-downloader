@@ -80,7 +80,7 @@ func testSource(srv *httptest.Server) update.Source {
 func TestCheckUpdateFetchesTheLatestTag(t *testing.T) {
 	srv, seen := releaseServer(t, http.StatusOK, `{"tag_name":"v2.0.0","name":"x"}`)
 
-	got, err := checkUpdate(context.Background(), "v1.12.0", testSource(srv))
+	got, err := checkUpdate(context.Background(), update.Check{Client: "gui", Version: "v1.12.0"}, testSource(srv))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +108,7 @@ func TestCheckUpdateErrors(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			srv, _ := releaseServer(t, tc.status, tc.body)
-			if got, err := checkUpdate(context.Background(), "v1.12.0", testSource(srv)); err == nil || got != nil {
+			if got, err := checkUpdate(context.Background(), update.Check{Client: "gui", Version: "v1.12.0"}, testSource(srv)); err == nil || got != nil {
 				t.Errorf("checkUpdate = %+v, %v; want no update and an error", got, err)
 			}
 		})
@@ -147,8 +147,58 @@ func TestCheckUpdateStopsWithItsContext(t *testing.T) {
 	srv, _ := releaseServer(t, http.StatusOK, `{"tag_name":"v2.0.0"}`)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if got, err := checkUpdate(ctx, "v1.12.0", testSource(srv)); err == nil || got != nil {
+	if got, err := checkUpdate(ctx, update.Check{Client: "gui", Version: "v1.12.0"}, testSource(srv)); err == nil || got != nil {
 		t.Errorf("checkUpdate with a cancelled context = %+v, %v; want no update and an error", got, err)
+	}
+}
+
+// the update check tells the Worker the window's language, and the system's
+// locale only when the app follows the system
+func TestUpdateCheckSendsTheLanguage(t *testing.T) {
+	var h http.Header
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h = r.Header.Clone()
+		_, _ = w.Write([]byte(`{"tag_name":"v1.12.0"}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	cases := []struct {
+		pref, locale string
+		want         map[string]string
+		absent       []string
+	}{
+		{pref: "", locale: "fr-FR", want: map[string]string{"X-MD-Lang": "system", "X-MD-Syslang": "fr-FR"}},
+		{pref: "", locale: "", want: map[string]string{"X-MD-Lang": "system"}, absent: []string{"X-MD-Syslang"}},
+		{pref: "ja", locale: "fr-FR", want: map[string]string{"X-MD-Lang": "ja"}, absent: []string{"X-MD-Syslang"}},
+	}
+	for _, tc := range cases {
+		c := NewController(&grabber.Settings{}, nil)
+		c.SetPrefs(func(p *PrefsDTO) { p.UILanguage = tc.pref })
+		c.SetSystemLocale(tc.locale)
+		c.CheckUpdate(context.Background(), "v1.11.0", testSource(srv))
+		for k, v := range tc.want {
+			if got := h.Get(k); got != v {
+				t.Errorf("pref %q, locale %q: %s = %q, want %q", tc.pref, tc.locale, k, got, v)
+			}
+		}
+		for _, k := range tc.absent {
+			if h.Get(k) != "" {
+				t.Errorf("pref %q: %s sent, want none", tc.pref, k)
+			}
+		}
+		if h.Get("X-MD-Client") != "gui" {
+			t.Errorf("X-MD-Client = %q, want gui", h.Get("X-MD-Client"))
+		}
+	}
+}
+
+func TestSetSystemLocaleNormalizes(t *testing.T) {
+	c := NewController(&grabber.Settings{}, nil)
+	for in, want := range map[string]string{"  fr-FR  ": "fr-FR", "ca_ES.UTF-8@valencia": "ca-ES", "C": ""} {
+		c.SetSystemLocale(in)
+		if got := c.systemLocale; got != want {
+			t.Errorf("SetSystemLocale(%q): systemLocale = %q, want %q", in, got, want)
+		}
 	}
 }
 

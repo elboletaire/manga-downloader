@@ -448,6 +448,33 @@ func TestUpdateCheckFinishingAfterTurnOffIsDropped(t *testing.T) {
 	}
 }
 
+// the first locale report starts the startup check, sending that locale, and a
+// later report starts nothing
+func TestStartupCheckStartsOnTheFirstLocaleReport(t *testing.T) {
+	a, _, _ := newTestApp(t, 1)
+	var mu sync.Mutex
+	var syslangs []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		syslangs = append(syslangs, r.Header.Get("X-MD-Syslang"))
+		mu.Unlock()
+		_, _ = w.Write([]byte(`{"tag_name":"v1.13.0"}`))
+	}))
+	defer srv.Close()
+	a.tag, a.updateSource = "v1.12.0", testSource(srv)
+
+	a.SetSystemLocale("fr-FR")
+	waitUntil(t, "the startup update check", func() bool { return a.State().Update != nil })
+	a.SetSystemLocale("de-DE")
+	time.Sleep(10 * time.Millisecond)
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(syslangs) != 1 || syslangs[0] != "fr-FR" {
+		t.Errorf("update requests sent syslang %q, want one request with fr-FR", syslangs)
+	}
+}
+
 func TestSetUILanguageRefusesAnUnknownLanguage(t *testing.T) {
 	a, _, _ := newTestApp(t, 1)
 	if err := a.SetUILanguage("fr"); err == nil {

@@ -144,7 +144,7 @@ updates that copy.
   <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/10-update-light.webp">
 </picture>
 
-The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español, Català or 日本語) and whether the app opens with the simple start screen. The same panel turns the update check on or off. The check asks our update server for the latest release, sending the app, its version, your OS and architecture. If our server doesn't answer, the app asks GitHub directly instead. The server runs on Cloudflare, which sees the IP address like any web host; only a hash of it, salted with a key deleted daily, is kept, to count daily users.
+The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español, Català or 日本語) and whether the app opens with the simple start screen. The same panel turns the update check on or off. The check asks our update server for the latest release, sending the app, its version, your OS and architecture, and the app's language (with your system's language when the app follows the system). The command line sends your system's language too. If our server doesn't answer, the app asks GitHub directly instead. The server runs on Cloudflare, which sees the IP address like any web host; only a hash of it, salted with a key deleted daily, is kept, to count daily users.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/13-settings-dark.webp">

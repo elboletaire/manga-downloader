@@ -5,6 +5,14 @@ import type { LangPref } from './i18n';
 import { I18nProvider } from './i18n/react';
 import type { State } from './types';
 
+/** The system's raw locale as the browser reports it: its first language, else its language */
+export const systemLocale = (): string => navigator.languages?.[0] || navigator.language || '';
+
+/** Tells the backend the system's locale once; its update check waits for this report */
+export function reportSystemLocale(api: Api): void {
+  void api.setSystemLocale(systemLocale());
+}
+
 /** The language a State asks for; gui.json omits uiLanguage when it follows the system */
 export const prefOf = (state: State): LangPref => state.prefs.uiLanguage ?? '';
 
@@ -51,6 +59,7 @@ export function Root({ api }: { api: Api }) {
   // undefined until a State is known; null when the first snapshot can't be read
   const [latest, setLatest] = useState<State | null | undefined>(undefined);
   useEffect(() => watchState(api, { onState: setLatest, onFailure: () => setLatest(null) }), [api]);
+  useEffect(() => reportSystemLocale(api), [api]);
   const persist = useCallback((next: LangPref) => api.setUILanguage(next), [api]);
 
   if (latest === undefined) return null;

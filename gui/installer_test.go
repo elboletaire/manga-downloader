@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/elboletaire/manga-downloader/update"
 )
 
 func asset(name string, size int64) Asset {
@@ -132,7 +133,7 @@ func TestCheckUpdatePicksThePackageAndNeedsSums(t *testing.T) {
 	}
 
 	srv, _ := releaseServer(t, http.StatusOK, release(pkg, sumsName("v2.0.0")))
-	got, err := checkUpdate(context.Background(), "v1.12.0", testSource(srv))
+	got, err := checkUpdate(context.Background(), update.Check{Client: "gui", Version: "v1.12.0"}, testSource(srv))
 	if err != nil || got == nil {
 		t.Fatalf("checkUpdate = %+v, %v", got, err)
 	}
@@ -141,7 +142,7 @@ func TestCheckUpdatePicksThePackageAndNeedsSums(t *testing.T) {
 	}
 
 	srv, _ = releaseServer(t, http.StatusOK, release(pkg))
-	got, err = checkUpdate(context.Background(), "v1.12.0", testSource(srv))
+	got, err = checkUpdate(context.Background(), update.Check{Client: "gui", Version: "v1.12.0"}, testSource(srv))
 	if err != nil || got == nil {
 		t.Fatalf("checkUpdate = %+v, %v", got, err)
 	}
