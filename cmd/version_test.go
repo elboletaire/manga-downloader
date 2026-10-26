@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -19,8 +18,8 @@ import (
 func versionSource(t *testing.T, body string) update.Source {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/v1/latest" && r.URL.Query().Get("client") != "cli" {
-			t.Errorf("client = %q, want cli", r.URL.Query().Get("client"))
+		if r.URL.Path == "/v1/latest" && r.Header.Get("X-MD-Client") != "cli" {
+			t.Errorf("X-MD-Client = %q, want cli", r.Header.Get("X-MD-Client"))
 		}
 		_, _ = w.Write([]byte(body))
 	}))
@@ -53,19 +52,19 @@ func TestUpdateStatusSendsTheSystemLocale(t *testing.T) {
 	t.Setenv("LC_ALL", "")
 	t.Setenv("LC_MESSAGES", "")
 	t.Setenv("LANG", "fr_FR.UTF-8")
-	var q url.Values
+	var h http.Header
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		q = r.URL.Query()
+		h = r.Header.Clone()
 		_, _ = w.Write([]byte(`{"tag_name":"v23.0.0"}`))
 	}))
 	t.Cleanup(srv.Close)
 
 	updateStatus(context.Background(), "v1.22.0", update.Source{Worker: srv.URL, GitHub: srv.URL, HTTP: srv.Client()})
-	if got := q.Get("syslang"); got != "fr-FR" {
-		t.Errorf("syslang = %q, want fr-FR", got)
+	if got := h.Get("X-MD-Syslang"); got != "fr-FR" {
+		t.Errorf("X-MD-Syslang = %q, want fr-FR", got)
 	}
-	if _, ok := q["lang"]; ok {
-		t.Errorf("lang sent = %q, want none, the CLI has no UI language", q.Get("lang"))
+	if h.Get("X-MD-Lang") != "" {
+		t.Errorf("X-MD-Lang sent = %q, want none, the CLI has no UI language", h.Get("X-MD-Lang"))
 	}
 }
 

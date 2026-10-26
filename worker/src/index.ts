@@ -18,9 +18,13 @@ const text = (body: string, status: number, headers: HeadersInit = {}) =>
   new Response(body, { status, headers: { "Content-Type": "text/plain; charset=utf-8", ...headers } });
 
 // Drops anything outside the charset, so a crafted value can't pollute the dataset.
-// `missing` is what an empty value records: "" means "not sent" for the language params.
-const param = (value: string | null, missing = "unknown") =>
+// `missing` is what an empty value records: "" means "not sent" for the language fields.
+const clean = (value: string | null, missing = "unknown") =>
   (value ?? "").replace(/[^A-Za-z0-9._-]/g, "").slice(0, MAX_PARAM_LENGTH) || missing;
+
+// The X-MD-* header wins; the query param of the same name serves clients older than the headers.
+const field = (request: Request, url: URL, name: string, missing = "unknown") =>
+  clean(request.headers.get(`X-MD-${name}`) || url.searchParams.get(name.toLowerCase()), missing);
 
 export default {
   async fetch(request: Request, env: Cloudflare.Env): Promise<Response> {
@@ -39,13 +43,13 @@ export default {
         env.UPDATE_CHECKS.writeDataPoint({
           indexes: [hash],
           blobs: [
-            param(url.searchParams.get("client")),
-            param(url.searchParams.get("version")),
-            param(url.searchParams.get("os")),
-            param(url.searchParams.get("arch")),
+            field(request, url, "Client"),
+            field(request, url, "Version"),
+            field(request, url, "OS"),
+            field(request, url, "Arch"),
             day,
-            param(url.searchParams.get("lang"), ""),
-            param(url.searchParams.get("syslang"), ""),
+            field(request, url, "Lang", ""),
+            field(request, url, "Syslang", ""),
           ],
           doubles: [1],
         });

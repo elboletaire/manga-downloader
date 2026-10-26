@@ -161,6 +161,51 @@ describe("GET /v1/latest", () => {
   });
 });
 
+describe("the check's fields as headers", () => {
+  beforeEach(() => primeCache(RELEASE));
+
+  const withHeaders = (headers: Record<string, string>, query = "") =>
+    worker.fetch(new Request(`${BASE}/v1/latest${query}`, { headers: { "CF-Connecting-IP": IP, ...headers } }), testEnv);
+
+  it("records the X-MD-* headers", async () => {
+    await withHeaders({
+      "X-MD-Client": "gui",
+      "X-MD-Version": "23.0.1",
+      "X-MD-OS": "linux",
+      "X-MD-Arch": "amd64",
+      "X-MD-Lang": "system",
+      "X-MD-Syslang": "fr-FR",
+    });
+    expect(points[0].blobs?.slice(0, 4)).toEqual(["gui", "23.0.1", "linux", "amd64"]);
+    expect(points[0].blobs?.slice(5)).toEqual(["system", "fr-FR"]);
+  });
+
+  it("still records the query params of older clients", async () => {
+    await latest("client=cli&version=23.0.0&os=linux&arch=amd64&syslang=de-DE");
+    expect(points[0].blobs?.slice(0, 4)).toEqual(["cli", "23.0.0", "linux", "amd64"]);
+    expect(points[0].blobs?.slice(5)).toEqual(["", "de-DE"]);
+  });
+
+  it("prefers a header over the query param of the same name", async () => {
+    await withHeaders({ "X-MD-Client": "cli", "X-MD-Version": "23.0.1", "X-MD-Lang": "ja" }, "?client=gui&version=23.0.0&lang=en&os=linux&arch=amd64");
+    expect(points[0].blobs?.slice(0, 2)).toEqual(["cli", "23.0.1"]);
+    expect(points[0].blobs?.[5]).toBe("ja");
+    expect(points[0].blobs?.slice(2, 4)).toEqual(["linux", "amd64"]);
+  });
+
+  it("sanitises and clamps the headers like the params", async () => {
+    await withHeaders({ "X-MD-Client": "a".repeat(40), "X-MD-Syslang": "pt BR/x" });
+    expect(points[0].blobs?.[0]).toBe("a".repeat(32));
+    expect(points[0].blobs?.[6]).toBe("ptBRx");
+  });
+
+  it("records 'unknown' or '' for absent headers and params", async () => {
+    await withHeaders({});
+    expect(points[0].blobs?.slice(0, 4)).toEqual(["unknown", "unknown", "unknown", "unknown"]);
+    expect(points[0].blobs?.slice(5)).toEqual(["", ""]);
+  });
+});
+
 describe("recording failures", () => {
   beforeEach(() => primeCache(RELEASE));
 

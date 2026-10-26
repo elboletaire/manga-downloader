@@ -6,7 +6,6 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/elboletaire/manga-downloader/grabber"
@@ -156,9 +155,9 @@ func TestCheckUpdateStopsWithItsContext(t *testing.T) {
 // the update check tells the Worker the window's language, and the system's
 // locale only when the app follows the system
 func TestUpdateCheckSendsTheLanguage(t *testing.T) {
-	var q url.Values
+	var h http.Header
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		q = r.URL.Query()
+		h = r.Header.Clone()
 		_, _ = w.Write([]byte(`{"tag_name":"v1.12.0"}`))
 	}))
 	t.Cleanup(srv.Close)
@@ -168,9 +167,9 @@ func TestUpdateCheckSendsTheLanguage(t *testing.T) {
 		want         map[string]string
 		absent       []string
 	}{
-		{pref: "", locale: "fr-FR", want: map[string]string{"lang": "system", "syslang": "fr-FR"}},
-		{pref: "", locale: "", want: map[string]string{"lang": "system"}, absent: []string{"syslang"}},
-		{pref: "ja", locale: "fr-FR", want: map[string]string{"lang": "ja"}, absent: []string{"syslang"}},
+		{pref: "", locale: "fr-FR", want: map[string]string{"X-MD-Lang": "system", "X-MD-Syslang": "fr-FR"}},
+		{pref: "", locale: "", want: map[string]string{"X-MD-Lang": "system"}, absent: []string{"X-MD-Syslang"}},
+		{pref: "ja", locale: "fr-FR", want: map[string]string{"X-MD-Lang": "ja"}, absent: []string{"X-MD-Syslang"}},
 	}
 	for _, tc := range cases {
 		c := NewController(&grabber.Settings{}, nil)
@@ -178,17 +177,17 @@ func TestUpdateCheckSendsTheLanguage(t *testing.T) {
 		c.SetSystemLocale(tc.locale)
 		c.CheckUpdate(context.Background(), "v1.11.0", testSource(srv))
 		for k, v := range tc.want {
-			if got := q.Get(k); got != v {
+			if got := h.Get(k); got != v {
 				t.Errorf("pref %q, locale %q: %s = %q, want %q", tc.pref, tc.locale, k, got, v)
 			}
 		}
 		for _, k := range tc.absent {
-			if _, ok := q[k]; ok {
+			if h.Get(k) != "" {
 				t.Errorf("pref %q: %s sent, want none", tc.pref, k)
 			}
 		}
-		if q.Get("client") != "gui" {
-			t.Errorf("client = %q, want gui", q.Get("client"))
+		if h.Get("X-MD-Client") != "gui" {
+			t.Errorf("X-MD-Client = %q, want gui", h.Get("X-MD-Client"))
 		}
 	}
 }

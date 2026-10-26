@@ -456,7 +456,7 @@ func TestStartupCheckStartsOnTheFirstLocaleReport(t *testing.T) {
 	var syslangs []string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
-		syslangs = append(syslangs, r.URL.Query().Get("syslang"))
+		syslangs = append(syslangs, r.Header.Get("X-MD-Syslang"))
 		mu.Unlock()
 		_, _ = w.Write([]byte(`{"tag_name":"v1.13.0"}`))
 	}))

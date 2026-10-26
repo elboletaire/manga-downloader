@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"runtime"
 	"strconv"
 	"strings"
@@ -59,7 +58,7 @@ type Check struct {
 // failure of the Worker (an error, a timeout, a non-200 answer, a body without
 // a tag) asks GitHub instead.
 func (s Source) Latest(ctx context.Context, c Check) ([]byte, error) {
-	body, err := s.get(ctx, latestURL(s.Worker, c))
+	body, err := s.get(ctx, s.Worker+"/v1/latest", c.headers())
 	if err == nil && hasTag(body) {
 		return body, nil
 	}
@@ -67,11 +66,12 @@ func (s Source) Latest(ctx context.Context, c Check) ([]byte, error) {
 		return nil, ctx.Err()
 	}
 
-	return s.get(ctx, s.GitHub)
+	return s.get(ctx, s.GitHub, nil)
 }
 
-// get returns the body of a 200 answer to url, within timeout
-func (s Source) get(ctx context.Context, address string) ([]byte, error) {
+// get returns the body of a 200 answer to url, within timeout. extra headers go
+// only with this request, so the GitHub fallback never carries the Worker's.
+func (s Source) get(ctx context.Context, address string, extra http.Header) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, address, nil)
@@ -80,6 +80,9 @@ func (s Source) get(ctx context.Context, address string) ([]byte, error) {
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "manga-downloader")
+	for k, v := range extra {
+		req.Header[k] = v
+	}
 	client := s.HTTP
 	if client == nil {
 		client = http.DefaultClient
@@ -105,22 +108,22 @@ func hasTag(body []byte) bool {
 	return json.Unmarshal(body, &release) == nil && release.TagName != ""
 }
 
-// latestURL is the Worker's latest-release URL, with the client, its version
-// without the "v" tag prefix, the platform, and the language when there is one
-func latestURL(base string, c Check) string {
-	q := url.Values{}
-	q.Set("client", c.Client)
-	q.Set("version", strings.TrimPrefix(c.Version, "v"))
-	q.Set("os", runtime.GOOS)
-	q.Set("arch", runtime.GOARCH)
+// headers are the Worker's X-MD-* headers for c: the client, its version
+// without the "v" tag prefix, the platform, and the languages when there are any
+func (c Check) headers() http.Header {
+	h := http.Header{}
+	h.Set("X-MD-Client", c.Client)
+	h.Set("X-MD-Version", strings.TrimPrefix(c.Version, "v"))
+	h.Set("X-MD-OS", runtime.GOOS)
+	h.Set("X-MD-Arch", runtime.GOARCH)
 	if c.Lang != "" {
-		q.Set("lang", c.Lang)
+		h.Set("X-MD-Lang", c.Lang)
 	}
 	if c.SystemLang != "" {
-		q.Set("syslang", c.SystemLang)
+		h.Set("X-MD-Syslang", c.SystemLang)
 	}
 
-	return base + "/v1/latest?" + q.Encode()
+	return h
 }
 
 // IsRelease reports whether version is a release's MAJOR.MINOR.PATCH tag, not a

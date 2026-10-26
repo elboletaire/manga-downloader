@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 )
@@ -113,36 +114,37 @@ func TestLatestStopsWithItsContext(t *testing.T) {
 	}
 }
 
-func TestWorkerQueryParams(t *testing.T) {
+func TestWorkerHeaders(t *testing.T) {
 	cases := map[string]struct {
 		check Check
 		want  map[string]string
 	}{
 		"gui following the system": {
 			Check{Client: "gui", Version: "v23.0.0", Lang: "system", SystemLang: "fr-FR"},
-			map[string]string{"client": "gui", "version": "23.0.0", "lang": "system", "syslang": "fr-FR"},
+			map[string]string{"X-MD-Client": "gui", "X-MD-Version": "23.0.0", "X-MD-Lang": "system", "X-MD-Syslang": "fr-FR"},
 		},
 		"gui in a chosen language": {
 			Check{Client: "gui", Version: "v23.0.0", Lang: "ja"},
-			map[string]string{"client": "gui", "version": "23.0.0", "lang": "ja"},
+			map[string]string{"X-MD-Client": "gui", "X-MD-Version": "23.0.0", "X-MD-Lang": "ja"},
 		},
 		"cli sends its system language, never a UI one": {
 			Check{Client: "cli", Version: "v23.0.0", SystemLang: "de-DE"},
-			map[string]string{"client": "cli", "version": "23.0.0", "syslang": "de-DE"},
+			map[string]string{"X-MD-Client": "cli", "X-MD-Version": "23.0.0", "X-MD-Syslang": "de-DE"},
 		},
 		"cli with no system language": {
 			Check{Client: "cli", Version: "v23.0.0"},
-			map[string]string{"client": "cli", "version": "23.0.0"},
+			map[string]string{"X-MD-Client": "cli", "X-MD-Version": "23.0.0"},
 		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			var q map[string][]string
+			var h http.Header
+			var rawQuery string
 			worker := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.URL.Path != "/v1/latest" {
 					t.Errorf("path = %s, want /v1/latest", r.URL.Path)
 				}
-				q = r.URL.Query()
+				h, rawQuery = r.Header.Clone(), r.URL.RawQuery
 				_, _ = w.Write([]byte(`{"tag_name":"v23.0.0"}`))
 			}))
 			t.Cleanup(worker.Close)
@@ -150,19 +152,44 @@ func TestWorkerQueryParams(t *testing.T) {
 			if _, err := (Source{Worker: worker.URL, GitHub: worker.URL, HTTP: worker.Client()}).Latest(context.Background(), tc.check); err != nil {
 				t.Fatal(err)
 			}
-			want := map[string]string{"os": runtime.GOOS, "arch": runtime.GOARCH}
+			if rawQuery != "" {
+				t.Errorf("query = %q, want none", rawQuery)
+			}
+			want := map[string]string{"X-Md-Os": runtime.GOOS, "X-Md-Arch": runtime.GOARCH}
 			for k, v := range tc.want {
-				want[k] = v
+				want[http.CanonicalHeaderKey(k)] = v
 			}
 			for k, v := range want {
-				if len(q[k]) != 1 || q[k][0] != v {
-					t.Errorf("query %s = %v, want %q", k, q[k], v)
+				if got := h.Get(k); got != v {
+					t.Errorf("header %s = %q, want %q", k, got, v)
 				}
 			}
-			if len(q) != len(want) {
-				t.Errorf("query = %v, want only %v", q, want)
+			for k := range h {
+				if _, ok := want[k]; strings.HasPrefix(k, "X-Md-") && !ok {
+					t.Errorf("header %s sent, want none", k)
+				}
 			}
 		})
+	}
+}
+
+func TestGitHubFallbackCarriesNoWorkerHeaders(t *testing.T) {
+	worker := answer(t, http.StatusInternalServerError, "", true)
+	var h http.Header
+	gh := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h = r.Header.Clone()
+		_, _ = w.Write([]byte(`{"tag_name":"v2.0.0"}`))
+	}))
+	t.Cleanup(gh.Close)
+
+	check := Check{Client: "gui", Version: "v1.12.0", Lang: "ja", SystemLang: "fr-FR"}
+	if _, err := (Source{Worker: worker.URL, GitHub: gh.URL, HTTP: worker.Client()}).Latest(context.Background(), check); err != nil {
+		t.Fatal(err)
+	}
+	for k := range h {
+		if strings.HasPrefix(http.CanonicalHeaderKey(k), "X-Md-") {
+			t.Errorf("GitHub request sent %s, want no X-MD-* header", k)
+		}
 	}
 }
 
