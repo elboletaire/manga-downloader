@@ -18,7 +18,7 @@
 
 </div>
 
-Manga Downloader downloads manga chapters from MangaDex and more than 400 other sites and
+Manga Downloader downloads manga chapters from MangaDex and more than 500 other sites and
 packs them into CBZ, CBR or EPUB files, ready to read on your e-reader or in
 your favorite comic app. It comes as a **desktop app** for Windows, macOS and
 Linux, and as a **command line tool** for scripts, servers and Docker.
@@ -1271,7 +1271,7 @@ make install/wails     # the wails CLI the release builds with
 
 AI tools have changed what this project can be. For years, manga-downloader
 gained maybe one site a year. With AI, it grew a desktop app and went from 10
-supported sites to over 400 in a matter of days.
+supported sites to over 500 in a matter of days.
 
 It isn't "vibe coded", though. Its foundations, the way sites are plugged in
 and how chapters are fetched and packed, are the ones I wrote by hand long
