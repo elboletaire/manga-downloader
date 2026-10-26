@@ -15,7 +15,7 @@ README is shared with Fastlight and is edited in the tap by hand.
 
 | Path | What |
 |---|---|
-| `tap/Formula/manga-downloader.rb` | The CLI formula. `version`, `url` and `sha256` name the last release this copy was checked against; the release workflow sets them in the tap. |
+| `tap/Formula/manga-downloader.rb` | The CLI formula. `version`, `url` and `sha256` name the last release this copy was checked against; the release workflow sets them in the tap. It also installs bash, zsh and fish completions, generated from the binary at install time. |
 | `tap/Casks/manga-downloader-app.rb` | The desktop app cask, same idea. Its token is `manga-downloader-app`, so it doesn't share the formula's name. Its `binary` stanza puts `manga-downloader-gui` on `PATH`, where `manga-downloader ui` looks for it. It doesn't depend on the formula: Homebrew 7 trusts only the cask being installed, so the formula's build would fail, and the app runs without the CLI anyway. Its `conflicts_with` keeps it from being installed next to the alias below, since both install the same app. |
 | `tap/Casks/manga-downloader.rb` | The old token of the desktop app, kept as a deprecated alias. It's a copy of the cask above with the token `manga-downloader`, a `deprecate!` stanza and a caveat that says how to switch. Installs of it keep getting updates while they hear about the rename. Delete it, and its loop entry in `release-gui.yaml`, after a few releases, once installs have moved. |
 | `../../scripts/update-homebrew.sh` | Sets `version` and every `sha256` in a formula or cask, from the release assets in a directory. |

@@ -33,9 +33,11 @@ class MangaDownloader < Formula
 
   def install
     bin.install "manga-downloader"
+    generate_completions_from_executable(bin/"manga-downloader", "completion")
   end
 
   test do
     assert_match "Usage:", shell_output("#{bin}/manga-downloader --help")
+    assert_match "manga-downloader", shell_output("#{bin}/manga-downloader completion bash")
   end
 end

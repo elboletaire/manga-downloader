@@ -164,7 +164,8 @@ brew install elboletaire/tap/manga-downloader
 ~~~
 
 Homebrew doesn't quarantine the command line tool, so there's no Gatekeeper
-step on macOS. `brew upgrade manga-downloader` updates it.
+step on macOS. `brew upgrade manga-downloader` updates it. Completions for
+bash, zsh and fish are installed as well.
 
 This installs only the command line tool. On macOS, the
 [desktop app](#desktop-app) is a separate cask, `manga-downloader-app`. Install
@@ -192,6 +193,15 @@ build is named `windows-32bit-legacy`.
 
 To run it from any folder, move the binary to a folder in your `PATH`, such as
 `/usr/local/bin` on Linux and macOS.
+
+`manga-downloader completion bash|zsh|fish|powershell` prints a shell
+completion script. For zsh, for example:
+
+~~~bash
+manga-downloader completion zsh > "${fpath[1]}/_manga-downloader"
+~~~
+
+`manga-downloader completion --help` explains how to set up the other shells.
 
 <details open>
 <summary><b>Windows</b>: step-by-step setup</summary>
