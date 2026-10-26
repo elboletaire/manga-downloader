@@ -9,7 +9,7 @@
 
 - `200` with GitHub's release JSON, byte-for-byte, as `application/json`.
 - `502` when GitHub fails and nothing is cached. Clients fall back to GitHub directly, so this is never fatal for them.
-- Missing or odd params are fine: each one keeps `[A-Za-z0-9._-]` characters, is cut to 32, and becomes `unknown` when empty.
+- Missing or odd params are fine: each one keeps `[A-Za-z0-9._-]` characters, is cut to 32, and becomes `unknown` when empty (`lang` and `syslang`: `""`).
 - `HEAD` answers like `GET` without a body and without counting. `OPTIONS` gets `204`. Other methods get `405`, other paths `404`.
 
 ## What is recorded
@@ -32,7 +32,7 @@ So the code never keeps a salt past its day, and hashes from different days can'
 Honest limit: SQLite-backed Durable Objects keep about 30 days of point-in-time recovery, so the account owner could restore a deleted salt from there.
 The deletion is what the code does, not an unrecoverable erase.
 
-**Not recorded:** the IP itself, any other header, the User-Agent, the path or query beyond the four fields above, request logs.
+**Not recorded:** the IP itself, any other header, the User-Agent, the path or query beyond the six fields above, request logs.
 Observability is disabled in `wrangler.jsonc`, and the code never logs requests, headers, IPs or the salt.
 
 ## Layout

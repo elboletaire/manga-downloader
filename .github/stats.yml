@@ -33,3 +33,5 @@ cloudflare:
     version: { column: blob2, label: Version, kind: semver, released: true }   # drops test builds of unreleased versions
     os:      { column: blob3, label: OS }
     arch:    { column: blob4, label: Arch }
+    lang:    { column: blob6, label: App language }      # en, es, ca, ja or system; "" from the CLI and older apps
+    syslang: { column: blob7, label: System language }   # only when the app follows the system
