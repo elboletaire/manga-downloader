@@ -1271,7 +1271,7 @@ make install/wails     # the wails CLI the release builds with
 
 AI tools have changed what this project can be. For years, manga-downloader
 gained maybe one site a year. With AI, it grew a desktop app and went from 10
-supported sites to over 500 in a matter of days.
+supported sites to over 400 in a matter of days.
 
 It isn't "vibe coded", though. Its foundations, the way sites are plugged in
 and how chapters are fetched and packed, are the ones I wrote by hand long
