@@ -759,7 +759,7 @@ to a minute.
 | [bigcomics.jp](https://bigcomics.jp) | Japanese, Big Comics (Comici) | 2026-10-22 |
 | [bigsolo.org](https://bigsolo.org) |  | 2026-10-15 |
 | [blackcloveronline.com](https://blackcloveronline.com) | Black Clover | 2026-10-22 |
-| [bluesolo.org](https://bluesolo.org) | Blue Solo, French scantrad | 2026-10-22 |
+| [bluesolo.org](https://bluesolo.org) | Blue Solo, French scantrad | 2026-10-26 |
 | [bokunohero-academia.online](https://bokunohero-academia.online) | English, single series | 2026-10-22 |
 | [boruto2bluevortex.com](https://boruto2bluevortex.com) | English, single series | 2026-10-22 |
 | [bunmanga.com](https://bunmanga.com) | English | 2026-10-22 |
@@ -834,7 +834,7 @@ to a minute.
 | [fin-manga.com](https://www.fin-manga.com) | Thai, some adult titles | 2026-10-26 |
 | [flamecomics.xyz](https://flamecomics.xyz) | Flame Comics, former Flame Scans | 2026-10-22 |
 | [flash-manga.net](https://www.flash-manga.net) | Thai | 2026-10-22 |
-| [fmteam.fr](https://fmteam.fr) |  | 2026-10-22 |
+| [fmteam.fr](https://fmteam.fr) |  | 2026-10-26 |
 | [furyosociety.com](https://furyosociety.com) |  | 2026-10-22 |
 | [g-comi.jp](https://g-comi.jp) | Japanese (Comici), comic-medu.com redirects here | ❌ failing since 2026-10-22 (checked 2026-10-22) |
 | [gaiatoon.com](https://gaiatoon.com) | Turkish | 2026-10-22 |

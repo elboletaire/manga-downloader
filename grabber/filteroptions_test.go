@@ -180,36 +180,6 @@ func TestRoliascanLanguageOptions(t *testing.T) {
 	}
 }
 
-func TestBluesoloLanguageOptions(t *testing.T) {
-	mux := http.NewServeMux()
-	respond(mux, "/api/comics/frieren", `{"comic":{"title":"Frieren","chapters":[`+
-		`{"chapter":1,"title":"","language":"fr","licensed":0,"url":"/read/frieren/fr/ch/1"},`+
-		`{"chapter":1,"title":"","language":"en","licensed":0,"url":"/read/frieren/en/ch/1"},`+
-		`{"chapter":2,"title":"","language":"de","licensed":1,"url":"/read/frieren/de/ch/2"}]}}`)
-	srv := serve(t, mux)
-
-	cases := []struct {
-		lang  string
-		chaps int
-	}{
-		{"", 2},
-		{FilterAll, 2},
-		{"en", 1},
-	}
-	for _, c := range cases {
-		b := NewBluesolo(&Grabber{URL: srv.URL + "/comics/frieren", Settings: &Settings{Language: c.lang}})
-		chapters, errs := b.FetchChapters()
-		if len(errs) > 0 {
-			t.Fatalf("FetchChapters(%q) errors = %v", c.lang, errs)
-		}
-		if len(chapters) != c.chaps {
-			t.Errorf("FetchChapters(%q) returned %d chapters, want %d", c.lang, len(chapters), c.chaps)
-		}
-		// the licensed German chapter can't be read, so it isn't offered either
-		assertFilterOptions(t, "bluesolo "+c.lang, b.LanguageOptions(), []string{"fr", "en"}, true, "")
-	}
-}
-
 func TestFmteamLanguageOptions(t *testing.T) {
 	mux := http.NewServeMux()
 	respond(mux, "/api/comics/batuque", `{"comic":{"title":"Batuque","chapters":[`+

@@ -110,22 +110,34 @@ func TestPizzaReaderFetchChaptersFields(t *testing.T) {
 }
 
 // TestPizzaReaderLanguageFilter checks that --language keeps one language's
-// chapters, and that LanguageOptions lists every language the series has
+// chapters, and that LanguageOptions offers only the languages of the readable
+// ones: a licensed German row is listed, but neither offered nor kept
 func TestPizzaReaderLanguageFilter(t *testing.T) {
 	feed := pizzaReaderFeedFixture(t, func(f *pizzaReaderFeed) {
 		f.Comic.Chapters[2].Language = "en"
+		f.Comic.Chapters[3].Language = "de"
+		f.Comic.Chapters[3].Licensed = 1
 	})
-	base := &Grabber{URL: pizzaReaderOrigin + "/comics/area-no-kishi", Settings: &Settings{Language: "en"}}
-	p := &PizzaReader{Grabber: base, feed: feed}
 
-	chapters, _ := p.FetchChapters()
-	if len(chapters) != 1 || chapters[0].(*PizzaReaderChapter).Language != "en" {
-		t.Fatalf("language en kept %d chapters, want the one English chapter", len(chapters))
+	cases := []struct {
+		lang  string
+		chaps int
+	}{
+		{"", 4},
+		{FilterAll, 4},
+		{"en", 1},
 	}
+	for _, c := range cases {
+		p := &PizzaReader{Grabber: &Grabber{URL: pizzaReaderOrigin + "/comics/area-no-kishi", Settings: &Settings{Language: c.lang}}, feed: feed}
 
-	opts := p.LanguageOptions()
-	if len(opts.Values) != 2 || !opts.All {
-		t.Errorf("LanguageOptions() = %+v, want it and en", opts)
+		chapters, errs := p.FetchChapters()
+		if len(errs) > 0 {
+			t.Fatalf("FetchChapters(%q) errors = %v", c.lang, errs)
+		}
+		if len(chapters) != c.chaps {
+			t.Errorf("FetchChapters(%q) returned %d chapters, want %d", c.lang, len(chapters), c.chaps)
+		}
+		assertFilterOptions(t, "pizzareader "+c.lang, p.LanguageOptions(), []string{"it", "en"}, true, "")
 	}
 }
 

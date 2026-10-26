@@ -212,7 +212,6 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewFanfox(g),
 		NewFlamecomics(g),
 		NewQimanga(g),
-		NewBluesolo(g),
 		NewLuascans(g),
 		NewProjectsuki(g),
 		NewHeavenManga(g),

@@ -64,7 +64,7 @@ func (p *PizzaReader) resolveSeriesURL() {
 }
 
 // pizzaReaderComicRe matches a series URL's path, /comics/{slug}
-var pizzaReaderComicRe = regexp.MustCompile(`^/comics/([^/]+)`)
+var pizzaReaderComicRe = regexp.MustCompile(`(?i)^/comics/([^/]+)`)
 
 // fetchComic fetches and caches the series feed. Licensed chapters are listed
 // only when asked for, as the reader asks, so they can be marked locked.
@@ -111,7 +111,7 @@ func (p *PizzaReader) FetchTitle() (string, error) {
 	return sanitizeTitle(feed.Comic.Title), nil
 }
 
-// LanguageOptions lists the languages the series' chapters are in
+// LanguageOptions lists the languages of the chapters that can be read
 func (p *PizzaReader) LanguageOptions() FilterOptions {
 	feed, err := p.fetchComic()
 	if err != nil {
@@ -120,7 +120,9 @@ func (p *PizzaReader) LanguageOptions() FilterOptions {
 
 	var languages []string
 	for _, c := range feed.Comic.Chapters {
-		languages = append(languages, c.Language)
+		if c.Licensed == 0 {
+			languages = append(languages, c.Language)
+		}
 	}
 
 	return FilterOptions{
