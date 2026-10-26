@@ -905,9 +905,8 @@ func (e *bubbleEvents) Skipped(c *grabber.Chapter) {
 	e.prog.Send(chapterEndedMsg{chapter: c, status: "skipped"})
 }
 
-func (e *bubbleEvents) Exists(listed grabber.Filterable, name string) {
-	e.println(color.YellowString(
-		"- skipping %s: %s already exists", core.ReleaseLabel(listed, e.showLang, e.showGroup), name))
+// Exists only marks the row: it already reads "skipped", so a line would repeat it
+func (e *bubbleEvents) Exists(listed grabber.Filterable, _ string) {
 	e.prog.Send(chapterExistsMsg{listed: listed})
 }
 
@@ -980,9 +979,7 @@ func (e *bubbleEvents) VolumeProgress(v *core.Volume, fraction float64) {
 func (e *bubbleEvents) VolumePacked(v *core.Volume, name string, err error) {
 	if errors.Is(err, core.ErrSkippedVolume) {
 		e.println(color.YellowString("- skipping %s: %s", v.Label(), err.Error()))
-	} else if errors.Is(err, core.ErrExists) {
-		e.println(color.YellowString("- skipping %s: %s already exists", v.Label(), name))
-	} else if err != nil {
+	} else if err != nil && !errors.Is(err, core.ErrExists) {
 		e.println(color.RedString("- error packing %s: %s", v.Label(), err.Error()))
 	}
 	e.prog.Send(volumePackedMsg{volume: v, err: err})
