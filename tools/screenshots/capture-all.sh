@@ -102,7 +102,7 @@ for SHOT_LANG in $LANGS; do
     shot 11-failed '?mock&scenario=done&freeze&fail&shot'
     shot 12-update-prompt '?mock&scenario=update&freeze&shot&prompt'
     shot 13-settings '?mock&scenario=loaded&freeze&shot' 'document.querySelector(".settings-btn")?.click()'
-    shot 14-skip-existing '?mock&scenario=done&freeze&shot&exists'
+    shot 14-skip-existing '?mock&scenario=running&freeze&shot&exists'
   done
 
   # 2054x1444 -> 2000x1390, kept as lossless PNGs (the WebPs and crops are made from them)

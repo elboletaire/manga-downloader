@@ -73,7 +73,7 @@
     "finishedAlt": "Una descarga terminada en el panel Activity: los doce capítulos guardados en la carpeta de destino, con un botón para abrirla.",
     "skipExistingTitle": "Solo lo que falta",
     "skipExistingText": "Un capítulo, volumen o paquete que ya esté en la carpeta se omite antes de descargar nada, así que volver a lanzar una descarga solo trae los capítulos nuevos. En la línea de comandos es <code>--skip-existing</code>.",
-    "skipExistingAlt": "El panel Activity tras una descarga en la que dos capítulos ya estaban en la carpeta y aparecen como omitidos."
+    "skipExistingAlt": "El panel Activity durante una descarga en la que los dos primeros capítulos ya estaban en la carpeta y aparecen como omitidos, mientras se descargan los demás."
   },
   "downloads": {
     "title": "Todas las descargas",

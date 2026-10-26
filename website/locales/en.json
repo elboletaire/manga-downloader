@@ -73,7 +73,7 @@
     "finishedAlt": "A finished run in the Activity panel: all twelve chapters saved to the output folder, with a button to open it.",
     "skipExistingTitle": "Only what's missing",
     "skipExistingText": "A chapter, volume or bundle already in the folder is skipped before anything is fetched, so running a download again picks up new chapters only. On the command line it's <code>--skip-existing</code>.",
-    "skipExistingAlt": "The Activity panel after a run where two chapters were already in the folder, listed as skipped."
+    "skipExistingAlt": "The Activity panel during a download where the first two chapters were already in the folder, listed as skipped, while the others download."
   },
   "downloads": {
     "title": "All downloads",

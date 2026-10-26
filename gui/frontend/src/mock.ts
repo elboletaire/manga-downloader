@@ -20,8 +20,8 @@
 // some chapters locked (see below), &fail makes
 // the fourth chapter fail halfway and &skip makes the sixth one come out
 // skipped, every page excluded by --skip-pages (both off by default; every run
-// saves every chapter without them), &exists (with done) leaves two chapters
-// out as already in the folder, counted apart in the summary, and
+// saves every chapter without them), &exists (with running or done) leaves the first two chapters
+// out as already in the folder, at the top and counted apart in the summary, and
 // &fetching has each chapter's row spend its
 // first few ticks fetching its page list (frozen, the newest rows are still
 // fetching), &epub starts the output as EPUB, &prompt
@@ -74,8 +74,8 @@ const DOWNLOAD_WEIGHT = 4;
 const ARCHIVE_WEIGHT = 1;
 const STEPS_PER_PAGE = DOWNLOAD_WEIGHT + ARCHIVE_WEIGHT;
 const TICK_MS = 160;
-// the rows (0-based, in run order) that the done scenario's &exists leaves out as already in
-// the folder: the first two, so they show above the summary card in the activity panel
+// the rows (0-based, in run order) that &exists leaves out as already in the folder: the
+// first two, so they show at the top of the activity panel
 const EXISTS_AT = [0, 1];
 
 const SCENARIOS = [
@@ -117,7 +117,7 @@ export interface MockSetup {
   fail: boolean;
   /** The sixth chapter comes out skipped (every page excluded by --skip-pages) */
   skip: boolean;
-  /** With done, two chapters come out skipped because their files are already in the folder */
+  /** With running or done, the first two chapters come out skipped because their files are already in the folder */
   exists: boolean;
   /** Every 50th chapter is listed as locked */
   locked: boolean;
@@ -833,6 +833,36 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     );
   }
 
+  /** &exists: the chapters at EXISTS_AT come out as already in the folder, as rows before any fetch */
+  function leaveOutExisting(list: Chapter[]): void {
+    for (const at of EXISTS_AT) {
+      const c = list[at];
+      if (c === undefined) {
+        continue;
+      }
+      const name = `${title} ${c.number} - ${labelOf(c)}${EXTENSIONS[options.format]}`;
+      const reasonMsg = msgOf('job.reason.exists', { name });
+      pending = pending.filter((p) => p !== c);
+      jobs = [
+        ...jobs,
+        {
+          title: labelOf(c),
+          tags: '',
+          number: c.number,
+          total: 0,
+          done: 0,
+          state: 'skipped',
+          reason: reasonMsg.text,
+          reasonMsg,
+          ...phaseOf(),
+          volume: false,
+        },
+      ];
+      pushLog('info', msgOf('log.exists', { name }));
+      existing++;
+    }
+  }
+
   function beginRun(list: Chapter[]): void {
     running = true;
     cancelling = false;
@@ -1020,6 +1050,9 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
     const picked = chapters.filter((c) => selected.has(c.index)).slice(0, 12);
     pushLog('info', msgOf('log.downloading', { count: picked.length, title }));
     beginRun(picked);
+    if (exists && (scenario === 'running' || scenario === 'done')) {
+      leaveOutExisting(picked);
+    }
     // run the simulation forward to an interesting point
     const steps = scenario === 'done' ? Infinity : scenario === 'bundle' ? 8 : 14;
     for (let i = 0; i < steps && step(); i++) {
@@ -1030,26 +1063,11 @@ export function createMockApi(setup: Scenario | Partial<MockSetup> = 'empty'): A
       pushLog('info', msgOf('log.cancelling'));
     }
     if (scenario === 'done') {
-      // a conversion warning on a chapter of the run (the second, 599 by default)
-      const warned = picked[1] ?? picked[0];
+      // a conversion warning on a chapter of the run (the second, 599 by default), one that is saved
+      const kept = picked.filter((_, i) => !exists || !EXISTS_AT.includes(i));
+      const warned = kept[1] ?? kept[0];
       if (warned !== undefined) {
         pushLog('warn', `Chapter ${warned.number}: page 7 is AVIF but could not be converted; kept as is`);
-      }
-      if (exists) {
-        // as the backend's Exists event: a row left out before its fetch, named after the file in the folder
-        EXISTS_AT.forEach((at) => {
-          const c = picked[at];
-          if (c === undefined) {
-            return;
-          }
-          const name = `${title} ${c.number} - ${labelOf(c)}${EXTENSIONS[options.format]}`;
-          const reasonMsg = msgOf('job.reason.exists', { name });
-          jobs = jobs.map((j, i) =>
-            i === at ? { ...j, total: 0, done: 0, state: 'skipped', reason: reasonMsg.text, reasonMsg, ...phaseOf() } : j,
-          );
-          pushLog('info', msgOf('log.exists', { name }));
-          existing++;
-        });
       }
       finishRun();
     } else if (!freeze) {

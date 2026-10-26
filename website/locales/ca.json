@@ -73,7 +73,7 @@
     "finishedAlt": "Una descàrrega acabada al tauler Activity: els dotze capítols desats a la carpeta de destinació, amb un botó per obrir-la.",
     "skipExistingTitle": "Només el que falta",
     "skipExistingText": "Un capítol, volum o paquet que ja és a la carpeta s'omet abans de descarregar res, així que tornar a executar una descàrrega només porta els capítols nous. A la línia d'ordres és <code>--skip-existing</code>.",
-    "skipExistingAlt": "El tauler Activity després d'una descàrrega en què dos capítols ja eren a la carpeta i surten com a omesos."
+    "skipExistingAlt": "El tauler Activity durant una descàrrega en què els dos primers capítols ja eren a la carpeta i surten com a omesos, mentre es descarreguen els altres."
   },
   "downloads": {
     "title": "Totes les descàrregues",

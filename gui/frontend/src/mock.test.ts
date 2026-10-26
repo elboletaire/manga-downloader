@@ -148,6 +148,17 @@ describe('createMockApi', () => {
     expect(state.summary!.saved).toBe(state.run.chapters - 2);
   });
 
+  it('starts a running download with the first two chapters already in the folder, the rest in progress', async () => {
+    const state = await createMockApi({ scenario: 'running', freeze: true, exists: true }).state();
+    const existing = state.jobs.filter((j) => j.reasonMsg?.key === 'job.reason.exists');
+    expect(existing).toHaveLength(2);
+    expect(state.jobs.slice(0, 2).every((j) => j.state === 'skipped')).toBe(true);
+    // the skipped rows are the top two, and nothing after them is left out
+    expect(state.jobs.slice(2).some((j) => j.state === 'skipped')).toBe(false);
+    expect(state.jobs.slice(2).some((j) => j.state === 'downloading')).toBe(true);
+    expect(state.running).toBe(true);
+  });
+
   it('has no chapter already in the folder without the exists flag', async () => {
     const state = await createMockApi({ scenario: 'done' }).state();
     expect(state.summary!.existing).toBe(0);

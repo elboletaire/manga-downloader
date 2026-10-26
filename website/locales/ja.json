@@ -73,7 +73,7 @@
     "finishedAlt": "Activityパネルで完了した実行の表示：12話すべてが出力フォルダーに保存され、フォルダーを開くボタンがある。",
     "skipExistingTitle": "足りない分だけ",
     "skipExistingText": "フォルダーにすでにある話、巻、まとめファイルは、何も取得する前にスキップされます。そのため、ダウンロードをもう一度実行しても新しい話だけが追加されます。コマンドラインでは <code>--skip-existing</code> です。",
-    "skipExistingAlt": "2話がフォルダーにすでにあり、スキップとして表示された実行後のActivityパネル。"
+    "skipExistingAlt": "最初の2話はフォルダーにすでにあり、スキップとして表示され、残りの話はダウンロード中のActivityパネル。"
   },
   "downloads": {
     "title": "すべてのダウンロード",

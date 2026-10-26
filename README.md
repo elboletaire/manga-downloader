@@ -357,7 +357,7 @@ follow these steps:
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.webp">
-     <img alt="The Options tab with EPUB chosen, showing the format, reading direction and Pack as options" src="assets/screenshots/06-options-light.webp">
+     <img alt="The Options tab with EPUB chosen, showing the Skip existing files switch above the format, reading direction and Pack as options" src="assets/screenshots/06-options-light.webp">
    </picture>
 
    When a site needs you at its browser window, an alert says so, with *Show the
@@ -407,11 +407,12 @@ follow these steps:
    </picture>
 
    With *Skip existing files*, a chapter whose file is already in the folder is
-   left out before anything is fetched, and the summary says how many were there.
+   left out before anything is fetched: it shows as skipped in the Activity tab,
+   and the summary says how many were there.
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/14-skip-existing-dark.webp">
-     <img alt="A finished download where two chapters were already in the folder, listed as skipped" src="assets/screenshots/14-skip-existing-light.webp">
+     <img alt="A download in progress where the first two chapters were already in the folder, listed as skipped, while the others download" src="assets/screenshots/14-skip-existing-light.webp">
    </picture>
 
 The app saves your options to `gui.json` in the `manga-downloader` folder of
