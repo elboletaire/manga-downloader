@@ -2,9 +2,16 @@
 # Crops the showcase screenshots from the 2000 px originals and writes WebP
 # derivatives at 1000 and 600 px wide. See README.md ("Screenshots").
 #
-# usage: build/crop-screenshots.sh ORIGINALS_DIR OUT_DIR
+# usage: build/crop-screenshots.sh [--allow-empty] ORIGINALS_DIR OUT_DIR
+#   --allow-empty: a run with nothing to crop is fine (a partial retake of
+#   shots that have no crop), instead of the error an empty or wrong dir gets
 set -euo pipefail
 
+ALLOW_EMPTY=0
+if [ "${1:-}" = --allow-empty ]; then
+  ALLOW_EMPTY=1
+  shift
+fi
 SRC=$1
 OUT=$2
 mkdir -p "$OUT"
@@ -54,7 +61,7 @@ for theme in light dark; do
   crop skip-existing "$theme" "14-skip-existing-$theme.png" 680x787+1203+405 $CARD_RADIUS
 done
 
-if [ "$made" -eq 0 ]; then
+if [ "$made" -eq 0 ] && [ "$ALLOW_EMPTY" -eq 0 ]; then
   echo "no crop made: none of the originals are in $SRC" >&2
   exit 1
 fi

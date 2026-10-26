@@ -72,7 +72,8 @@ install_lang() {
   (
     cd "$ROOT/website"
     mkdir -p "$site"
-    build/crop-screenshots.sh "$src" "$site"
+    # a partial retake may hold only shots without a crop, which isn't an error then
+    build/crop-screenshots.sh ${SHOTS:+--allow-empty} "$src" "$site"
     for theme in light dark; do
       [ -f "$src/02-loaded-$theme.png" ] || continue
       for width in 1600 1000; do

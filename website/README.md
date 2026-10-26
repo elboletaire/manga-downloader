@@ -123,7 +123,9 @@ build/crop-screenshots.sh ../tools/screenshots/out/en src/assets/screenshots
 ```
 
 A crop whose original isn't in the folder is skipped with a notice, so a single retaken
-shot can be cropped alone (see `tools/screenshots/README.md`).
+shot can be cropped alone (see `tools/screenshots/README.md`). A run that crops nothing
+fails, as an empty or wrong folder would, unless it's given `--allow-empty`, which the
+capture script passes for a partial retake (a shot without a crop, such as the Options one).
 
 The shadow widens each derivative beyond the crop plus its 56 px margin, so the
 `<img>` sizes in `index.html` come from the output, not from the geometry.
