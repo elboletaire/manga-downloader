@@ -5,7 +5,7 @@
     "cancelledNoBundle": "キャンセル、まとめファイルは未作成",
     "cancelled": "キャンセル、{{saved}}",
     "bundleFailed": "まとめファイルを作成できませんでした",
-    "bundleExists": "すでに保存済み",
+    "bundleExists": "ダウンロード済み",
     "bundleSaved": "{{bundle}}を保存",
     "inVolumes": "{{saved}}（{{volumes}}）",
     "mergedFromParts": "{{saved}}、{{merged}}",

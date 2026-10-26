@@ -34,7 +34,7 @@ var rootCmd = &cobra.Command{
 
 	Long: `With manga-downloader you can easily convert/download web based mangas to CBZ, CBR or EPUB files.
 
-You only need to specify the URL of the manga and the chapters you want to download as a range, or "all" for every chapter (without the question asked when the range is left out).
+You only need to specify the URL of the manga and the chapters you want to download as a range, or "all" for every chapter, without the question you get when the range is left out.
 
 You can use either a series/index URL or a chapter URL; chapter URLs are automatically resolved to the series.`,
 	Example: colorizeHelp(`  manga-downloader https://inmanga.com/ver/manga/Fire-Punch/17748683-8986-4628-934a-e94a47fe5d59
@@ -388,7 +388,7 @@ func init() {
 	// -1` works just like `--skip-pages=-1`. A shorthand wouldn't: "-S-1"
 	// would have to be spelled that way, with no space
 	rootCmd.Flags().StringVar(&settings.SkipPages, "skip-pages", "", `pages to exclude from every chapter, as a range ("2", "2,5-7"); negative positions count from the end of each chapter, so "-1" is its last page`)
-	rootCmd.Flags().BoolVar(&settings.SkipExisting, "skip-existing", false, "skip the chapters, volumes and bundles whose file is already in the output directory, without fetching them; nothing is deleted or overwritten, so a broken file has to be deleted to download it again")
+	rootCmd.Flags().BoolVar(&settings.SkipExisting, "skip-existing", false, "skip the chapters, volumes and bundles whose file is already in the output directory, without fetching them; nothing is deleted or overwritten, so to download a broken file again, delete it first")
 	rootCmd.Flags().BoolP("version", "v", false, "show version information (alias of the version command)")
 	// set as persistent, so version command does not complain about the -o flag set via docker
 	rootCmd.PersistentFlags().StringVarP(&settings.OutputDir, "output-dir", "o", "./", "output directory for the downloaded files")

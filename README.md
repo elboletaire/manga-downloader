@@ -637,9 +637,9 @@ release.
 
 `--skip-existing` leaves out a chapter, volume or bundle whose file is already
 in the output folder, before its pages are fetched. It checks the name the
-first try gets (without the ` v2` suffix), usually costs no request, and never deletes
-or overwrites anything, so a broken or partial file has to be deleted to
-download it again. It assumes the template tells chapters apart: a template
+first try gets (without the ` v2` suffix), usually costs no request, and never
+deletes or overwrites anything: to download a broken or partial file again,
+delete it first. It assumes the template tells chapters apart: a template
 that names only the series would skip every chapter after the first. To keep a
 folder up to date, run it from cron:
 
