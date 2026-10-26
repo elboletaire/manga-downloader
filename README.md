@@ -47,7 +47,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 **Desktop app and command line**
 
-- **[504 supported sites](#supported-sites)**, from big aggregators to small
+- **[510 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
@@ -707,7 +707,7 @@ to a minute.
 ## Supported sites
 
 <details>
-<summary><b>Show all 504 supported sites</b></summary>
+<summary><b>Show all 510 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -875,6 +875,7 @@ to a minute.
 | [heros-web.com](https://heros-web.com) | Japanese, Hero's Web (Comici) | ❌ failing since 2026-10-22 (checked 2026-10-22) |
 | [hhentai.fr](https://hhentai.fr) | French, mostly NSFW | 2026-10-18 |
 | [hivetoons.org](https://hivetoons.org) | HiveToons, VoidScans | 2026-10-15 |
+| [hni-scantrad.net](https://hni-scantrad.net) | HNI-scantrad, French and English | 2026-10-26 |
 | [hotcabaretscan.com](https://hotcabaretscan.com) | Portuguese | 2026-10-18 |
 | [houseofotakusv2.xyz](https://houseofotakusv2.xyz) | Spanish | 2026-10-18 |
 | [hunlightcomics.com](https://hunlightcomics.com) | English | 2026-10-19 |
@@ -942,6 +943,7 @@ to a minute.
 | [loner-tl.blogspot.com](https://loner-tl.blogspot.com) | Arabic | 2026-10-19 |
 | [lovesjane.site](https://lovesjane.site) | English | 2026-10-26 |
 | [luacomic.org](https://luacomic.org) | LuaScans | 2026-10-15 |
+| [lupiteam.net](https://lupiteam.net) | LupiTeam, Italian | 2026-10-26 |
 | [m1.manhwalist.my.id](https://m1.manhwalist.my.id) | Indonesian | 2026-10-18 |
 | [madaradex.org](https://madaradex.org) | some adult titles | 2026-10-19 |
 | [madarascans.net](https://madarascans.net) | former madarascans.org/.com | 2026-10-19 |
@@ -950,6 +952,7 @@ to a minute.
 | [mahoushoujobu.com](https://mahoushoujobu.com) | English | 2026-10-19 |
 | [maid.my.id](https://www.maid.my.id) |  | 2026-10-19 |
 | [manga-ai-land.blogspot.com](https://manga-ai-land.blogspot.com) | Arabic | 2026-10-19 |
+| [manga-corporation.com](https://manga-corporation.com) | Manga-Corporation, French | 2026-10-26 |
 | [manga-lc.net](https://manga-lc.net) | Thai | 2026-10-19 |
 | [manga-neko.com](https://manga-neko.com) | Thai, some adult titles | 2026-10-26 |
 | [manga-zegra.com](https://manga-zegra.com) | Japanese (Comici) | 2026-10-19 |
@@ -1071,6 +1074,7 @@ to a minute.
 | [paradise-bl.com](https://paradise-bl.com) | Arabic | 2026-10-26 |
 | [paritehaber.com](https://www.paritehaber.com) | English, mostly NSFW | 2026-10-26 |
 | [petrotechsociety.org](https://www.petrotechsociety.org) | English, mostly NSFW | 2026-10-26 |
+| [phoenixscans.com](https://www.phoenixscans.com) | Phoenix Scans, Italian | 2026-10-26 |
 | [piacomic.jp](https://piacomic.jp) | Japanese (Comici) | ❌ failing since 2026-10-26 (checked 2026-10-26) |
 | [plumacomics.com](https://plumacomics.com) | Portuguese | ❌ failing since 2026-10-26 (checked 2026-10-26) |
 | [pornhwaz.com](https://www.pornhwaz.com) | English, mostly NSFW | 2026-10-26 |
@@ -1086,6 +1090,7 @@ to a minute.
 | [re-yume.my.id](https://www.re-yume.my.id) | Re-Yume, Indonesian | 2026-10-19 |
 | [read-nifteam.info](https://read-nifteam.info) | Italian | 2026-10-26 |
 | [read.yagami.me](https://read.yagami.me) | Russian | ❌ failing since 2026-10-26 (checked 2026-10-26) |
+| [reader.gtothegreatsite.net](https://reader.gtothegreatsite.net) | GTO The Great Site, Italian | 2026-10-26 |
 | [reader.mangatellers.gr](https://reader.mangatellers.gr) | Greek | 2026-10-19 |
 | [reader.seinagi.org.es](https://reader.seinagi.org.es) | English | 2026-10-26 |
 | [readkagura.com](https://readkagura.com) | English, single series | 2026-10-26 |
@@ -1163,6 +1168,7 @@ to a minute.
 | [tsundoku.com.br](https://tsundoku.com.br) | Portuguese | 2026-10-18 |
 | [tumanga.net](https://tumanga.net) | Spanish | 2026-10-26 |
 | [turkcemanga.com](https://turkcemanga.com) | Turkce Manga, Turkish | 2026-10-18 |
+| [tuttoanimemanga.net](https://tuttoanimemanga.net) | TuttoAnimeManga, Italian | 2026-10-26 |
 | [tvymanga3.com](https://tvymanga3.com) | Tv y Manga, Spanish | 2026-10-18 |
 | [twmanga.com](https://www.twmanga.com) | 包子漫画, baozimh.com mirror | 2026-10-22 |
 | [uchuujinmangas.com](https://uchuujinmangas.com) | Spanish | 2026-10-18 |

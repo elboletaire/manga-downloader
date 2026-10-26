@@ -222,6 +222,15 @@ func TestIdentifySiteOrder(t *testing.T) {
 			want: (*PlainHTML)(nil),
 		},
 		{
+			name:   "pizzareader series page",
+			origin: "https://lupiteam.net",
+			path:   "/comics/area-no-kishi",
+			routes: map[string]string{
+				"/comics/area-no-kishi": "pizzareader_series.html",
+			},
+			want: (*PizzaReader)(nil),
+		},
+		{
 			name:   "rizzfables series page",
 			origin: "https://rizzfables.com",
 			path:   "/series/r2311170-all-hail-the-sect-leader",
