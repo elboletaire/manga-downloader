@@ -15,6 +15,7 @@ import (
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
 	"github.com/elboletaire/manga-downloader/http"
+	"github.com/elboletaire/manga-downloader/packer"
 )
 
 const (
@@ -217,13 +218,41 @@ func TestNameFormatTruncatesDecimals(t *testing.T) {
 	}
 	site := newSite(&grabber.Grabber{Settings: &grabber.Settings{}}, data)
 	chapters, _ := site.FetchChapters()
+	listed := chapters[0].(*grabber.Chapter)
+	// MangaDex truncates the number the same way, in the listing and the fetch
+	if listed.Title != "Chapter 0010 Extra" || listed.Number != 10.5 {
+		t.Errorf("listed title = %q, number = %v", listed.Title, listed.Number)
+	}
 	chapter, err := site.FetchChapter(chapters[0])
 	if err != nil {
 		t.Fatal(err)
 	}
-	// MangaDex truncates the number the same way
-	if chapter.Title != "Chapter 0010 Extra" || chapter.Number != 10.5 {
-		t.Errorf("title = %q, number = %v", chapter.Title, chapter.Number)
+	if chapter.Title != listed.Title || chapter.Number != 10.5 {
+		t.Errorf("fetched title = %q, number = %v", chapter.Title, chapter.Number)
+	}
+}
+
+// the file a chapter is named, and skipped by, comes from its listing entry
+// before the fetch, so it has to match the fetched chapter's name for every
+// series the demo serves
+func TestListedChapterNamesAsFetched(t *testing.T) {
+	for _, data := range loaded(t) {
+		site := newSite(&grabber.Grabber{Settings: &grabber.Settings{}}, data)
+		chapters, errs := site.FetchChapters()
+		if len(errs) > 0 {
+			t.Fatalf("%v: %v", data.URLs, errs)
+		}
+		for _, listed := range chapters {
+			fetched, err := site.FetchChapter(listed)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want, _ := packer.ChapterName("Series", packer.FilenameTemplateDefault, "cbz", grabber.ChapterOf(fetched))
+			got, _ := packer.ChapterName("Series", packer.FilenameTemplateDefault, "cbz", grabber.ChapterOf(listed))
+			if got != want {
+				t.Errorf("%v: listed chapter %v is named %q, fetched %q", data.URLs, listed.GetNumber(), got, want)
+			}
+		}
 	}
 }
 

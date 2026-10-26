@@ -106,7 +106,7 @@ Scanlation groups reserve pages for credits/ads (tcbscans: always page 2, often 
 
 - **One source of names**: `packer.ChapterName`, `VolumeName`, `PartsName` and `BundleName` build the version-1 name from the same `namedFile` the `Pack*` functions render with, so a change to how a file is named has to go through those, or the check and the packed file drift apart.
 - **Events**: a chapter gets `Events.Exists(listed, name)` before its fetch, with its listing entry, and again after the fetch when the name only came out then, with the fetched chapter. A volume is `VolumeStart` then `VolumePacked(v, name, ErrExists)`, and a bundle makes `Download` return `(name, ErrExists)` before the totals pass, so neither fetches anything.
-- **Name drift**: the listing and the fetch can name one chapter differently (a grabber sets its label style or volume only at fetch), hence the second check. A volume is checked from its listed chapters only, so when one of them fails its packed name can differ and the volume is written again as a ` v2` copy.
+- **Name drift**: a grabber must list a chapter with the title, label and groups its fetch gives it (`TestListedChapterNamesAsFetched` in `demo`, mangadex's listing label), or the pre-check never matches and every chapter costs a fetch; the second check is the safety net for a grabber that still drifts. A volume is checked from its listed chapters only, so when one of them fails its packed name can differ and the volume is written again as a ` v2` copy.
 - **Raw output** is a folder; `packer.Exists` (`os.Stat`) finds it like a file. Nothing is deleted or overwritten, so a broken file has to be removed by hand.
 
 ### EPUB output (`--format epub`)

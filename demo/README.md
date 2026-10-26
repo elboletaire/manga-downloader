@@ -15,8 +15,8 @@ rebuild with `make build/unix` before using it for real.
   `languages` when the series is translated into several, which turns on the
   `--language` filter). A chapter has `number`, `title`, `language`, `id`,
   `pages` (a count), and optionally `volume`, `groups` and `locked`.
-  `nameFormat` is the title a fetched chapter gets, from its whole number and
-  listed title, for the sites whose chapter page names it differently.
+  `nameFormat` is the title a chapter gets, listed and fetched alike, from its
+  whole number and listed title, for the sites that name it that way.
 - `pages.go`: the page URLs live on `demo.invalid`, which a transport
   (`http.SetRoundTripper`) answers with one small placeholder JPEG, after a delay
   between 1.2s and 4.8s, fixed per URL. It refuses every other host.
