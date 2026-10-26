@@ -74,8 +74,9 @@ const DOWNLOAD_WEIGHT = 4;
 const ARCHIVE_WEIGHT = 1;
 const STEPS_PER_PAGE = DOWNLOAD_WEIGHT + ARCHIVE_WEIGHT;
 const TICK_MS = 160;
-// the rows (0-based, in run order) that the done scenario's &exists leaves out as already in the folder
-const EXISTS_AT = [2, 7];
+// the rows (0-based, in run order) that the done scenario's &exists leaves out as already in
+// the folder: the first two, so they show above the summary card in the activity panel
+const EXISTS_AT = [0, 1];
 
 const SCENARIOS = [
   'empty',
