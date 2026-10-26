@@ -149,24 +149,24 @@ export function Switch({ label, description, checked, disabled, onChange }: Swit
   const id = useId();
   return (
     <div className="switch-row">
-      <div className="switch-head">
+      <div className="switch-text">
         <label htmlFor={id}>{label}</label>
-        <input
-          id={id}
-          type="checkbox"
-          role="switch"
-          className="switch"
-          checked={checked}
-          disabled={disabled}
-          aria-describedby={description ? `${id}-desc` : undefined}
-          onChange={(e) => onChange(e.target.checked)}
-        />
+        {description && (
+          <p className="hint" id={`${id}-desc`}>
+            {description}
+          </p>
+        )}
       </div>
-      {description && (
-        <p className="hint" id={`${id}-desc`}>
-          {description}
-        </p>
-      )}
+      <input
+        id={id}
+        type="checkbox"
+        role="switch"
+        className="switch"
+        checked={checked}
+        disabled={disabled}
+        aria-describedby={description ? `${id}-desc` : undefined}
+        onChange={(e) => onChange(e.target.checked)}
+      />
     </div>
   );
 }
