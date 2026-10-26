@@ -134,11 +134,30 @@ describe("GET /v1/latest", () => {
     expect(points[0].blobs?.slice(0, 4)).toEqual(["unknown", "unknown", "unknown", "unknown"]);
   });
 
-  it("records the UTC day as the last blob and one as the double", async () => {
+  it("records the UTC day as the fifth blob and one as the double", async () => {
     await primeCache(RELEASE);
     await latest();
     expect(points[0].blobs?.[4]).toBe(today());
     expect(points[0].doubles).toEqual([1]);
+  });
+
+  it("records the app's language and the system locale as blobs 6 and 7", async () => {
+    await primeCache(RELEASE);
+    await latest("client=gui&version=23.0.0&os=linux&arch=amd64&lang=system&syslang=zh-Hant-TW");
+    expect(points[0].blobs?.slice(5)).toEqual(["system", "zh-Hant-TW"]);
+  });
+
+  it("records '' for a missing language, so it isn't mistaken for 'unknown'", async () => {
+    await primeCache(RELEASE);
+    await latest("client=cli&version=23.0.0&os=linux&arch=amd64");
+    expect(points[0].blobs?.slice(5)).toEqual(["", ""]);
+  });
+
+  it("clamps and sanitises the language params like the others", async () => {
+    await primeCache(RELEASE);
+    // "e<n>" is 4 characters and keeps "en" once the brackets are dropped, so 20 of them clamp to 16 pairs.
+    await latest(`client=gui&lang=${encodeURIComponent("e<n>".repeat(20))}&syslang=${encodeURIComponent("pt BR/x")}`);
+    expect(points[0].blobs?.slice(5)).toEqual(["en".repeat(16), "ptBRx"]);
   });
 });
 

@@ -18,8 +18,9 @@ const text = (body: string, status: number, headers: HeadersInit = {}) =>
   new Response(body, { status, headers: { "Content-Type": "text/plain; charset=utf-8", ...headers } });
 
 // Drops anything outside the charset, so a crafted value can't pollute the dataset.
-const param = (value: string | null) =>
-  (value ?? "").replace(/[^A-Za-z0-9._-]/g, "").slice(0, MAX_PARAM_LENGTH) || "unknown";
+// `missing` is what an empty value records: "" means "not sent" for the language params.
+const param = (value: string | null, missing = "unknown") =>
+  (value ?? "").replace(/[^A-Za-z0-9._-]/g, "").slice(0, MAX_PARAM_LENGTH) || missing;
 
 export default {
   async fetch(request: Request, env: Cloudflare.Env): Promise<Response> {
@@ -43,6 +44,8 @@ export default {
             param(url.searchParams.get("os")),
             param(url.searchParams.get("arch")),
             day,
+            param(url.searchParams.get("lang"), ""),
+            param(url.searchParams.get("syslang"), ""),
           ],
           doubles: [1],
         });
