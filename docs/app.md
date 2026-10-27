@@ -15,7 +15,7 @@ follow these steps:
 1. **Paste the series' URL** into the box (or use its *Paste* button). The
    series loads on its own once you paste or stop typing; *Load* or Enter
    loads it at once. The window then turns into the full app, with the URL box
-   at the top and the chapter list below, as below.
+   at the top and the chapter list below it:
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/02-loaded-dark.webp">
@@ -107,7 +107,7 @@ follow these steps:
 
 The app saves your options to `gui.json` in the `manga-downloader` folder of
 your user config folder (the same place as the Manga Plus secret, see
-[below](cli.md#environment-variables)), so they're still there the next time you open
+the [command line guide](cli.md#environment-variables)), so they're still there the next time you open
 it. Files go to your Downloads folder (or your home folder, if there isn't one)
 unless you choose another folder.
 

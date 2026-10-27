@@ -36,7 +36,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 - **[553 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
-- **Paste a URL and it loads**: the series, its chapters and the languages and
+- In the app, **paste a URL and it loads**: the series, its chapters and the languages and
   scanlation groups it offers appear on their own.
 - **Pick what you need**: chapter ranges such as `1,3,5-10`, Shift+click or
   select all in the app. Language and scanlation group filters cover sites that
@@ -49,8 +49,8 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
   single bundled file (`--bundle`), as CBZ (the default) or CBR comics
   (`--format cbr`), EPUB e-books (`--format epub`), or plain image folders
   (`--format raw`), named from a template.
-- **Skipping pages** such as credits or ads.
-- **Live progress**: every chapter shows up as it's fetched and packed, with a
+- **Skip pages** such as credits or ads (`--skip-pages`).
+- In the app, **live progress**: every chapter shows up as it's fetched and packed, with a
   summary and an *Open folder* button when it's done.
 - **JavaScript and Cloudflare-protected sites** are handled by driving a local
   Chromium-based browser, which clicks "Verify you are human" checkboxes for you.
@@ -303,13 +303,13 @@ docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
   <img alt="The app's start screen: the logo over an empty URL box with its Paste button, Load to its right and Settings below" src="assets/screenshots/01-start-light.webp">
 </picture>
 
-Paste a URL and it loads. Pick chapters with the range box, Shift+click or *All*, choose the language and scanlation group when the site offers them, set the folder, format and packing in *Options*, then press *Download*. The *Activity* tab shows progress, and the summary opens the folder.
+Paste a URL and it loads. Pick chapters with the range box, Shift+click or *All*, choose the language and scanlation group when the site offers them, set the folder, format and packing in *Options*, then press *Download*. The *Activity* tab shows progress, and the summary's *Open folder* button takes you to the files.
 
 The [desktop app guide](docs/app.md) walks through every step and option, with screenshots.
 
 The app saves your options to `gui.json` in the `manga-downloader` folder of
 your user config folder (the same place as the Manga Plus secret, see
-[below](docs/cli.md#environment-variables)), so they're still there the next time you open
+the [command line guide](docs/cli.md#environment-variables)), so they're still there the next time you open
 it. Files go to your Downloads folder (or your home folder, if there isn't one)
 unless you choose another folder.
 
@@ -354,11 +354,6 @@ manga-downloader --skip-existing -o ~/Manga/Series [url] all
 ~~~
 
 `manga-downloader help` lists every flag. The [command line guide](docs/cli.md) covers them all: languages and scanlation groups, bundles and volumes, image conversion, skipping pages, skipping existing files, file name templates and environment variables.
-
-Some sites cap the concurrency lower, because their image servers refuse
-requests that come too fast; a lower value still applies there. Pages refused
-for coming too fast (a 429) are retried after the wait the server asks for, up
-to a minute.
 
 ## Supported sites
 
