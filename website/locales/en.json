@@ -110,7 +110,7 @@
     "volumesGifCaption": "Or <code>--volumes auto</code> for one file per volume.",
     "skipExistingGifAlt": "Terminal recording: manga-downloader downloads five Horimiya chapters, then runs again with --skip-existing: the five are listed as skipped and three new ones are downloaded.",
     "skipExistingGifCaption": "Run it again with <code>--skip-existing</code> and only the new chapters are fetched.",
-    "more": "Every flag is in the <a href=\"{{repo}}#using-the-command-line\">usage guide</a>, or run <code>manga-downloader help</code>."
+    "more": "Every flag is in the <a href=\"{{repo}}/blob/master/docs/cli.md\">usage guide</a>, or run <code>manga-downloader help</code>."
   },
   "features": {
     "kicker": "Features",

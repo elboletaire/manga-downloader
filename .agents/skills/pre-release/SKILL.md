@@ -15,9 +15,9 @@ Do it from a clean worktree off `origin/master`, at the commit the release will 
 
 | Asset | Source | Used in | Refresh |
 |---|---|---|---|
-| App screenshots, `assets/screenshots/{01..14}-*-{light,dark}.webp` (English only, WebPs ~100-165 KB each) | `tools/screenshots/` (lossless PNGs in `out/`, not committed) | README | every release that changed the app's UI |
+| App screenshots, `assets/screenshots/{01..14}-*-{light,dark}.webp` (English only, WebPs ~100-165 KB each) | `tools/screenshots/` (lossless PNGs in `out/`, not committed) | README and `docs/` | every release that changed the app's UI |
 | Website WebPs, `website/src/assets/screenshots/*.webp` and `{es,ca,ja}/*.webp` (`SHOT_LANG=all`) | the lossless PNGs in `tools/screenshots/out/`, cropped by `website/build/crop-screenshots.sh` | website | with the screenshots (`capture-all.sh --install` does it) |
-| Terminal GIFs, `assets/demos/*.gif` (dark) and `*-light.gif` | `assets/demos/*.tape` and `*-light.tape` twins | README (`download`, `prompt`, `groups`, `bundle`, `volumes`, `skip-existing`), website (`download`, `bundle`, `volumes`, `skip-existing`, via raw GitHub URLs on `master`) | every release |
+| Terminal GIFs, `assets/demos/*.gif` (dark) and `*-light.gif` | `assets/demos/*.tape` and `*-light.tape` twins | README (`download`), `docs/cli.md` (`prompt`, `groups`, `bundle`, `volumes`, `skip-existing`), website (`download`, `bundle`, `volumes`, `skip-existing`, via raw GitHub URLs on `master`) | every release |
 | Brand rasters | `assets/brand/**.svg` | see "Brand" below | only when the brand changed |
 
 ## 1. App screenshots
@@ -34,7 +34,7 @@ It builds the app with `capture.patch` applied (and reverts it, whatever happens
 
 - **Update the mock's version constants first**: the shots show fixed versions, `RELEASE_VERSION_SHOT` and `UPDATE_VERSION_SHOT` in `gui/frontend/src/mock.ts` (and the tests in `mock.test.ts` that pin them). Bump both: the first to the version being released, the second kept above it (the `10-update` shot is the "newer release" one, and `12-update-prompt` shows both in the one-click dialog).
 - If a shot's layout changed (new control, different window content), check that the crop geometries still hold: the table in `website/README.md` and `website/build/crop-screenshots.sh`. Changing the crops means checking the `<img>` `width`/`height` in `website/index.html`, which come from the output.
-- New or removed screenshots also mean `capture-all.sh`, the README and `website/index.html`.
+- New or removed screenshots also mean `capture-all.sh`, the README, `docs/app.md` and `website/index.html`.
 
 ## 2. Terminal GIFs
 
