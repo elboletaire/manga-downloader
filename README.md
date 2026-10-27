@@ -84,7 +84,7 @@ the [releases page][releases]:
   brew install --cask elboletaire/tap/manga-downloader-app
   ~~~
 
-  For `manga-downloader ui` too, install the [command line tool](#homebrew) as well.
+  For `manga-downloader ui`, install the [command line tool](#homebrew) as well.
 
   If you installed the app under its old name, `manga-downloader`, run
   `brew uninstall --cask manga-downloader` first.
@@ -132,7 +132,7 @@ updates that copy.
   <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/10-update-light.webp">
 </picture>
 
-The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language, the start screen and the update check. See [the app's guide](docs/app.md#settings-and-the-update-check) for what the update check sends.
+The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español, Català or 日本語), the start screen and the update check. See [the app's guide](docs/app.md#settings-and-the-update-check) for what the update check sends.
 
 ### Command line
 
@@ -308,10 +308,10 @@ Paste a URL and it loads. Pick chapters with the range box, Shift+click or *All*
 The [desktop app guide](docs/app.md) walks through every step and option, with screenshots.
 
 The app saves your options to `gui.json` in the `manga-downloader` folder of
-your user config folder (the same place as the Manga Plus secret, see
-the [command line guide](docs/cli.md#environment-variables)), so they're still there the next time you open
-it. Files go to your Downloads folder (or your home folder, if there isn't one)
-unless you choose another folder.
+your user config folder (the same place as the Manga Plus secret, see the
+[command line guide](docs/cli.md#environment-variables)), so they're still
+there the next time you open it. Files go to your Downloads folder (or your
+home folder, if there isn't one) unless you choose another folder.
 
 The app uses the command line's defaults for concurrency and retries.
 Sites whose image servers limit the request rate get lower limits
@@ -339,6 +339,8 @@ Arguments aren't positional, so `manga-downloader 1-50 [url]` works too.
   <source media="(prefers-color-scheme: dark)" srcset="assets/demos/download.gif">
   <img alt="The command line downloading eight chapters at once, with the range typed before the URL, each chapter with its own progress bar" src="assets/demos/download-light.gif">
 </picture>
+
+A few of its flags:
 
 ~~~bash
 # one language, where the site lists several

@@ -106,10 +106,10 @@ follow these steps:
    </picture>
 
 The app saves your options to `gui.json` in the `manga-downloader` folder of
-your user config folder (the same place as the Manga Plus secret, see
-the [command line guide](cli.md#environment-variables)), so they're still there the next time you open
-it. Files go to your Downloads folder (or your home folder, if there isn't one)
-unless you choose another folder.
+your user config folder (the same place as the Manga Plus secret, see the
+[command line guide](cli.md#environment-variables)), so they're still there
+the next time you open it. Files go to your Downloads folder (or your home
+folder, if there isn't one) unless you choose another folder.
 
 The app uses the command line's defaults for concurrency and retries.
 Sites whose image servers limit the request rate get lower limits
