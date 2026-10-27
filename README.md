@@ -105,10 +105,15 @@ the [releases page][releases]:
   desktops already have; `install.sh` tells you how to get it if it's
   missing.
 
+> [!NOTE]
 > **macOS** doesn't sign the app, so Gatekeeper blocks its first launch: allow it
 > once under *System Settings → Privacy & Security* ([FAQ][faq-gatekeeper]).
 >
-> **Windows** may show SmartScreen's *"Windows protected your PC"* for the installer or the app, for the same reason: click **More info** → **Run anyway** ([FAQ][faq-smartscreen]). The app also needs the Microsoft Edge WebView2 runtime, which Windows 11 and current Windows 10 already have; without it, the app offers to install it on first launch.
+> **Windows** may show SmartScreen's *"Windows protected your PC"* for the
+> installer or the app, for the same reason: click **More info** → **Run anyway**
+> ([FAQ][faq-smartscreen]). The app also needs the Microsoft Edge WebView2
+> runtime, which Windows 11 and current Windows 10 already have; without it, the
+> app offers to install it on first launch.
 
 If the desktop app sits next to the command line tool or is on your `PATH` (the
 Homebrew cask and the Linux `install.sh` put it there), `manga-downloader ui`
