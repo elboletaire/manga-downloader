@@ -52,11 +52,11 @@ Then:
 - **The two selector lists are the source of truth for which sites are covered** — they drift constantly, so read them rather than any list in these guides.
 - Dedicated grabbers exist where selectors can't work: `inmanga`, `mangadex` (API-based, language-aware), `manganelo` (mangabats + mangakakalot + natomanga + manganato.gg: the DOM renders only the newest 50 chapters, the full list comes from a paginated JSON API), `mangafire` (browser-driven, see `browser.md`), `mangak`, `qimanga`, `tcb` (Madara), `leercapitulo`, `teamshadowi`, `baozimh`, `atsumaru`, `mkissa`, `fanfox`, `mangatown` (the mangahere family without chapterfun.ashx: one HTML document per reader page, count from `total_pages`; m. host and chapter URLs are rewritten to the www series URL), `webtoons` (episode list from the m.webtoons.com `/api/v1/{webtoon|canvas}/{titleNo}/episodes` cursor API with pageSize=1000, HTML list walk as fallback; canvas ids only answer on the canvas route; the image CDN 403s without a webtoons.com Referer; free episodes only, since locked ones aren't listed on the web), and others.
 
-The baozimh and Manga Plus notes live in `sites.md`, under "Per-grabber notes".
+The baozimh, Manga Plus and comix.to notes live in `sites.md`, under "Per-grabber notes" (read the comix.to one before touching that grabber: it breaks often).
 
 ## Reference files
 
 - `patterns.md`: reader patterns for images that aren't plain `<img src>` (`ts_reader`, FoOlSlide, `${uid}` templates, TanStack/seroval, Next.js RSC, P.A.C.K.E.R., infinite-scroll readers). Read when a reader's images aren't in the HTML.
 - `browser.md`: the `browser` package (chromedp, Cloudflare clearance, the challenge clicker, container flags, `tools/probe`). Read before writing a browser-driven grabber or when a site is Cloudflare-gated.
 - `rules.md`: hard-won rules on paywalls, chapter lists, titles, selector scoping and CBZ verification. Read before writing selectors, when a chapter list looks short or stops at a round number, when a run "succeeds" with bad archives, or when a browser wait selector passes too early.
-- `sites.md`: sites that moved, or that we deliberately don't support, plus per-grabber notes (`baozimh`, `mangaplus`). Read when a site stops working or before starting on a requested site.
+- `sites.md`: sites that moved, or that we deliberately don't support, plus per-grabber notes (`baozimh`, `mangaplus`, `comix`). Read when a site stops working or before starting on a requested site.
