@@ -36,24 +36,23 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 - **[553 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
-- In the app, **paste a URL and it loads**: the series, its chapters and the languages and
-  scanlation groups it offers appear on their own.
-- **Pick what you need**: chapter ranges such as `1,3,5-10`, Shift+click or
-  select all in the app. Language and scanlation group filters cover sites that
-  host several versions of a chapter.
+- In the app, **paste a URL and it loads**: the series, its chapters and the
+  languages and scanlation groups it offers appear on their own.
+- **Pick what you need**: chapter ranges such as `1,3,5-10` (Shift+click or
+  *All* in the app), and the language or scanlation group you want, on sites
+  that host several versions of a chapter.
 - **Keep a folder up to date**: `--skip-existing` leaves out the chapters you
   already have, so a scheduled run only fetches the new ones.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
   show up blank on Kobo, KOReader or Calibre (WebP too, if you ask).
-- **Flexible output**: one file per chapter, one per volume (`--volumes`), or a
-  single bundled file (`--bundle`), as CBZ (the default) or CBR comics
-  (`--format cbr`), EPUB e-books (`--format epub`), or plain image folders
-  (`--format raw`), named from a template.
+- **Flexible output**: one file per chapter, per volume or for everything, as
+  CBZ, CBR, EPUB or plain image folders, named from a template.
 - **Skip pages** such as credits or ads (`--skip-pages`).
-- In the app, **live progress**: every chapter shows up as it's fetched and packed, with a
-  summary and an *Open folder* button when it's done.
-- **JavaScript and Cloudflare-protected sites** are handled by driving a local
-  Chromium-based browser, which clicks "Verify you are human" checkboxes for you.
+- In the app, **live progress**: every chapter shows up as it's fetched and
+  packed, with a summary and an *Open folder* button when it's done.
+- **Sites that need a browser** (JavaScript or Cloudflare) work too: the tool
+  drives a Chromium-based browser you already have and clicks the "Verify you
+  are human" box for you.
 - **Concurrent downloads** with retries.
 - **Command line**: a single binary with no runtime, no dependencies and no
   config file, plus Docker images.
@@ -67,15 +66,14 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 [![Desktop app downloads][app downloads badge]][releases]
 
 The easiest way is the [website][website], which picks the right download for
-your system. Or download the `manga-downloader-gui` asset for your system from
-the [releases page][releases]:
+your system. Or get it from the [releases page][releases]:
 
 - **Windows**: `manga-downloader-gui-<tag>-windows-amd64-installer.exe`, or
   `-windows-arm64-installer.exe` for ARM devices such as Snapdragon laptops. It
-  installs for your user alone (`%LOCALAPPDATA%\Programs\Manga Downloader`),
-  or for everyone in `C:\Program Files\Manga Downloader` if you run it as
-  administrator, and adds a Start menu shortcut. For a portable copy, use the `.zip` of the same name instead: unzip
-  it and run `manga-downloader-gui.exe`.
+  installs for your user alone (`%LOCALAPPDATA%\Programs\Manga Downloader`), or
+  for everyone (`C:\Program Files\Manga Downloader`) when run as administrator,
+  and adds a Start menu shortcut. For a portable copy, use the `.zip` of the
+  same name instead: unzip it and run `manga-downloader-gui.exe`.
 - **macOS**: `manga-downloader-gui-<tag>-darwin-universal.zip`. Unzip it and move
   `Manga Downloader.app` wherever you like. Or install it with
   [Homebrew][homebrew], which also puts `manga-downloader-gui` on your `PATH`:
@@ -84,8 +82,6 @@ the [releases page][releases]:
   brew install --cask elboletaire/tap/manga-downloader-app
   ~~~
 
-  For `manga-downloader ui`, install the [command line tool](#homebrew) as well.
-
   If you installed the app under its old name, `manga-downloader`, run
   `brew uninstall --cask manga-downloader` first.
 
@@ -93,7 +89,7 @@ the [releases page][releases]:
   `-linux-arm64.tar.gz`. Extract it and run `install.sh` to add the app to
   your applications menu. It installs for your user only, into `~/.local`,
   with no root needed. Run it again to update, or with `--uninstall` to
-  remove it (with the same `XDG_DATA_HOME`, if you set one):
+  remove it (set the same `XDG_DATA_HOME`, if you used one):
 
   ~~~bash
   tar -xzf manga-downloader-gui-<tag>-linux-amd64.tar.gz
@@ -119,7 +115,10 @@ If the desktop app sits next to the command line tool or is on your `PATH` (the
 Homebrew cask and the Linux `install.sh` put it there), `manga-downloader ui`
 opens it. On Windows, double-clicking `manga-downloader.exe` does the same.
 
-The app checks for a newer release at startup and offers to update itself; Settings (the gear icon, or Ctrl+, / ⌘,) has the app's language (English, Español, Català or 日本語), the start screen and the update check. The [app guide](docs/app.md#settings-and-the-update-check) has the details, including what the check sends.
+The app checks for a newer release when it starts and offers to update itself.
+Settings (the gear icon, or Ctrl+, / ⌘,) turns that off and sets the app's
+language; the [app guide](docs/app.md#settings-and-the-update-check) says what
+the check sends.
 
 ### Command line
 
@@ -137,15 +136,18 @@ Homebrew doesn't quarantine the command line tool, so there's no Gatekeeper
 step on macOS. `brew upgrade manga-downloader` updates it. Completions for
 bash, zsh and fish are installed as well.
 
-This installs only the command line tool. On macOS, the
-[desktop app](#desktop-app) is a separate cask, `manga-downloader-app`. Install
-it as well to get `manga-downloader ui` working, or both at once:
+That's the command line tool alone; the [desktop app](#desktop-app) is the
+`manga-downloader-app` cask. Install both and `manga-downloader ui` opens the
+app:
 
 ~~~bash
 brew install elboletaire/tap/manga-downloader elboletaire/tap/manga-downloader-app
 ~~~
 
 #### Prebuilt binary
+
+Builds are published for Linux, macOS and Windows on amd64 and arm64, plus
+32-bit builds for Linux and Windows (the latter named `windows-32bit-legacy`).
 
 Download the archive for your system from the [releases page][releases], extract
 it and run the binary:
@@ -156,10 +158,6 @@ it and run the binary:
 
 To verify the download, check it against `manga-downloader-<tag>-SHA256SUMS.txt`
 from the same release: `sha256sum -c --ignore-missing manga-downloader-<tag>-SHA256SUMS.txt`.
-
-Builds are published for Linux, macOS and Windows on amd64 and arm64 (Windows
-arm64 included), plus 32-bit builds for Linux and Windows. The Windows 32-bit
-build is named `windows-32bit-legacy`.
 
 To run it from any folder, move the binary to a folder in your `PATH`, such as
 `/usr/local/bin` on Linux and macOS.
@@ -178,10 +176,8 @@ manga-downloader completion zsh > "${fpath[1]}/_manga-downloader"
 <br>
 
 > [!IMPORTANT]
-> Manga Downloader is a command line tool, so run it from a terminal, as shown
-> below. Double-clicking `manga-downloader.exe` opens the desktop app when the
-> app is next to it or on your `PATH`. Without it, the window only shows the help
-> and waits for Enter.
+> This is the command line tool, so run it from a terminal as shown below:
+> double-clicking `manga-downloader.exe` only shows the help ([FAQ][faq-exe]).
 
 1. Open **PowerShell**: press the Start button, type `PowerShell` and press
    <kbd>Enter</kbd>.
@@ -217,18 +213,18 @@ it, and copy `manga-downloader.exe` to `C:\Windows\System32`. Windows asks for
 administrator permission. After that, `manga-downloader` works in any terminal.
 
 > [!WARNING]
-> This works, but it isn't the best place for the program: it needs
-> administrator rights and mixes it with Windows' own files. To update or
-> uninstall it, you have to go back to that folder and replace or delete the
-> file yourself.
+> It works, but `System32` is Windows' own folder: it needs administrator
+> rights, and updating or uninstalling means replacing or deleting the file
+> there yourself.
 
-If SmartScreen shows *"Windows protected your PC"*, click **More info** → **Run anyway** ([why][faq-smartscreen]).
-
-</details>
+If SmartScreen shows *"Windows protected your PC"*, click **More info** →
+**Run anyway** ([why][faq-smartscreen]).
 
 </details>
 
-On macOS, Gatekeeper blocks the unsigned binary the first time: allow it once under *System Settings → Privacy & Security*, as the [FAQ explains][faq-gatekeeper].
+</details>
+
+On macOS, Gatekeeper blocks the unsigned binary the first time: allow it once under *System Settings → Privacy & Security* ([FAQ][faq-gatekeeper]).
 
 #### Docker
 
@@ -238,13 +234,8 @@ On macOS, Gatekeeper blocks the unsigned binary the first time: allow it once un
 docker run --rm -it -v "$PWD:/downloads" elboletaire/manga-downloader [url] [chapters]
 ~~~
 
-Files are written to the mounted `/downloads` folder. They're owned by
-`USER_ID`/`GROUP_ID`, which both default to `1000`. If your user has a
-different ID, pass it with
-`-e USER_ID=$(id -u) -e GROUP_ID=$(id -g)`.
-
-`:latest` and `:browser` follow releases. The current development version is
-`:master` (and `:master-browser`).
+Files are written to the mounted `/downloads` folder, owned by user and group
+`1000`; if yours differ, add `-e USER_ID=$(id -u) -e GROUP_ID=$(id -g)`.
 
 The default image has no browser. For sites marked with `*`, use the `:browser`
 image, which ships Chromium and a virtual display:
@@ -253,13 +244,16 @@ image, which ships Chromium and a virtual display:
 docker run --rm -it -v "$PWD:/downloads" elboletaire/manga-downloader:browser [url] [chapters]
 ~~~
 
+`:latest` and `:browser` follow releases; `:master` and `:master-browser` are
+the development version.
+
 <details>
 <summary>Showing the browser window on your own display</summary>
 <br>
 
 The `:browser` image passes Cloudflare challenges on its own. If a challenge
-needs a real person, its window opens by itself, so forward your display to see
-it on your Linux desktop. You may need to run `xhost +local:` first:
+needs a real person, the browser window opens by itself, so forward your display
+to see it on your Linux desktop. You may need to run `xhost +local:` first:
 
 ~~~bash
 docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
@@ -278,19 +272,14 @@ Not installed yet? Get it from the [website][website], or see
   <img alt="The app's start screen: the logo over an empty URL box with its Paste button, Load to its right and Settings below" src="assets/screenshots/01-start-light.webp">
 </picture>
 
-Paste a URL and it loads. Pick chapters with the range box, Shift+click or *All*, choose the language and scanlation group when the site offers them, set the folder, format and packing in *Options*, then press *Download*. The *Activity* tab shows progress, and the summary's *Open folder* button takes you to the files.
+Paste a URL and it loads. Pick chapters with the range box, Shift+click or
+*All*, choose the language and scanlation group when the site offers them, set
+the folder, format and packing in *Options*, then press *Download*. The
+*Activity* tab shows progress, and the summary's *Open folder* button takes you
+to the files. Files go to your Downloads folder unless you choose another, and
+your options are remembered for next time.
 
 The [desktop app guide](docs/app.md) walks through every step and option, with screenshots.
-
-The app saves your options to `gui.json` in the `manga-downloader` folder of
-your user config folder (the same place as the Manga Plus secret, see the
-[command line guide](docs/cli.md#environment-variables)), so they're still
-there the next time you open it. Files go to your Downloads folder (or your
-home folder, if there isn't one) unless you choose another folder.
-
-The app uses the command line's defaults for concurrency and retries.
-Sites whose image servers limit the request rate get lower limits
-automatically, in both the app and the command line.
 
 ## Using the command line - [guide](docs/cli.md)
 
@@ -302,13 +291,8 @@ manga-downloader [flags] [url] [chapters]
 
 - `url` is the manga's **index page**, the page that lists all its chapters.
   The URL of a single chapter works too: it resolves to the whole series.
-- `chapters` is a comma-separated list of numbers and ranges, such as
-  `1,3,5-10`. If you leave it out, the tool asks whether to download every
-  chapter. The answer defaults to "no". Write `all` instead to download every
-  chapter without the question, as cron jobs and Docker runs without a
-  terminal need.
-  Chapters the site marks as locked (coins, early access or members-only) are skipped,
-  with a line saying which.
+- `chapters` is a list of numbers and ranges, such as `1,3,5-10`, or `all`.
+  Leave it out and the tool asks before downloading the whole series.
 
 Arguments aren't positional, so `manga-downloader 1-50 [url]` works too.
 
@@ -332,7 +316,10 @@ manga-downloader --format epub [url] 1-8
 manga-downloader --skip-existing -o ~/Manga/Series [url] all
 ~~~
 
-`manga-downloader help` lists every flag. The [command line guide](docs/cli.md) covers them all: languages and scanlation groups, bundles and volumes, image conversion, skipping pages, skipping existing files, file name templates and environment variables.
+`manga-downloader help` lists every flag; the [command line guide](docs/cli.md)
+explains them: languages and scanlation groups, bundles and volumes, image
+conversion, skipping pages, skipping existing files, file name templates and
+environment variables.
 
 ## Supported sites
 
