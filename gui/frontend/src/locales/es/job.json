@@ -38,6 +38,7 @@
     "filename": "nombre de archivo: {{reason}}",
     "locked": "capítulo bloqueado",
     "emptyVolume": "no se pudo descargar ninguno de sus capítulos",
+    "exists": "{{name}} ya existe",
     "noPages": "no se ha encontrado ninguna página"
   }
 }

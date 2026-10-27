@@ -38,6 +38,7 @@
     "filename": "ファイル名: {{reason}}",
     "locked": "ロック中の話",
     "emptyVolume": "どの話もダウンロードできませんでした",
+    "exists": "{{name}}はすでに存在します",
     "noPages": "ページが見つかりません"
   }
 }

@@ -184,6 +184,31 @@ func (c Chapter) label() Label {
 	return c.Label
 }
 
+// chapter is the Chapter a listing entry embeds, see ChapterOf
+func (c Chapter) chapter() Chapter {
+	return c
+}
+
+// ChapterOf returns a listed chapter as a Chapter, for the names that are built
+// from one. A listing entry that embeds a Chapter gives a copy of it; any other
+// Filterable is built from its getters, which is all a name needs.
+func ChapterOf(f Filterable) *Chapter {
+	if c, ok := f.(interface{ chapter() Chapter }); ok {
+		chapter := c.chapter()
+		return &chapter
+	}
+	groups := GroupsOf(f)
+	return &Chapter{
+		Title:  f.GetTitle(),
+		Number: f.GetNumber(),
+		Group:  joinGroups(groups),
+		Groups: groups,
+		Volume: VolumeOf(f),
+		Locked: LockedOf(f),
+		Label:  labelOf(f),
+	}
+}
+
 // Unnumbered reports whether a listed chapter has no number the site gives it
 // (its Number is 0, or its position in the list, as mangapark numbers them), so
 // it must not be grouped by number

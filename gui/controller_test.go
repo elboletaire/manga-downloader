@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -469,6 +470,167 @@ func TestSkipPagesSkipsWholeChapter(t *testing.T) {
 	if len(files) != 0 {
 		t.Errorf("skipped chapters still wrote %v", files)
 	}
+}
+
+// readOutput maps each file in dir to its content
+func readOutput(t *testing.T, dir string) map[string]string {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := map[string]string{}
+	for _, e := range entries {
+		raw, err := os.ReadFile(filepath.Join(dir, e.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		out[e.Name()] = string(raw)
+	}
+	return out
+}
+
+// a chapter whose file is already in the folder is skipped before its pages
+// are fetched, and its file is left as it is
+func TestSkipExistingSkipsChapterWithItsFile(t *testing.T) {
+	c, _, dir := newTestController(t, false, nil, chapters(2, 1)...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	c.SetAll(true)
+	if err := c.Start(); err != nil {
+		t.Fatal(err)
+	}
+	waitFinished(t, c)
+	first := readOutput(t, dir)
+	if len(first) != 2 {
+		t.Fatalf("first run wrote %d files, want 2", len(first))
+	}
+	// the first run's files are the ones a second run finds in the folder
+	for name := range first {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte("kept"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := c.Configure(func(s *grabber.Settings) { s.SkipExisting = true }); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Start(); err != nil {
+		t.Fatal(err)
+	}
+	s := waitFinished(t, c)
+	if s.Existing != 2 || s.Saved != 0 || s.Skipped != 0 || len(s.Failures) != 0 {
+		t.Errorf("summary = %+v, want 2 existing and nothing saved", s)
+	}
+	after := readOutput(t, dir)
+	if len(after) != len(first) {
+		t.Errorf("files = %v, want the same %d", after, len(first))
+	}
+	for name := range first {
+		if after[name] != "kept" {
+			t.Errorf("%s was changed, want it untouched", name)
+		}
+	}
+}
+
+// a bundle whose file is already in the folder is skipped as a whole
+func TestSkipExistingSkipsBundleWithItsFile(t *testing.T) {
+	c, _, dir := newTestController(t, true, nil, chapters(2, 1)...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	c.SetAll(true)
+	if err := c.Start(); err != nil {
+		t.Fatal(err)
+	}
+	first := waitFinished(t, c)
+	if first.Bundle == "" {
+		t.Fatalf("first run wrote no bundle: %+v", first)
+	}
+	before := readOutput(t, dir)
+
+	if err := c.Configure(func(s *grabber.Settings) { s.SkipExisting = true }); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Start(); err != nil {
+		t.Fatal(err)
+	}
+	s := waitFinished(t, c)
+	if s.Err != nil || s.Existing != 2 || s.Bundle != "" || s.Saved != 0 {
+		t.Errorf("summary = %+v, want the bundle skipped with its 2 chapters", s)
+	}
+	jobs := c.Jobs()
+	if len(jobs) != 1 || jobs[0].State != JobSkipped || jobs[0].ReasonMsg == nil || jobs[0].ReasonMsg.Key != "job.reason.exists" {
+		t.Errorf("bundle job = %+v, want one skipped row for the existing file", jobs)
+	}
+	if after := readOutput(t, dir); !reflect.DeepEqual(after, before) {
+		t.Errorf("files = %v, want %v untouched", after, before)
+	}
+}
+
+// the events of an existing file: a row from its listing, one from the fetch
+// when the name only came out then, and a volume's row with its chapters counted
+func TestExistsRows(t *testing.T) {
+	newRun := func() (*Controller, events) {
+		c := NewController(&grabber.Settings{}, nil)
+		c.byChap = map[*grabber.Chapter]*Job{}
+		c.failedC = map[*grabber.Chapter]bool{}
+		c.byVolume = map[*core.Volume]*Job{}
+		c.listedVol = map[grabber.Filterable]*Job{}
+		c.chapVol = map[*grabber.Chapter]*Job{}
+		c.fetching = map[grabber.Filterable]*Job{}
+		return c, events{c}
+	}
+	checkReason := func(what string, j Job) {
+		t.Helper()
+		if j.State != JobSkipped || j.ReasonMsg == nil || j.ReasonMsg.Key != "job.reason.exists" || j.Reason != "a.cbz already exists" {
+			t.Errorf("%s = %+v, want a skipped row for a.cbz", what, j)
+		}
+	}
+
+	t.Run("before the fetch", func(t *testing.T) {
+		c, e := newRun()
+		e.Exists(&grabber.Chapter{Title: "Chapter 5", Number: 5}, "a.cbz")
+		jobs := c.Jobs()
+		if len(jobs) != 1 {
+			t.Fatalf("jobs = %+v, want one row", jobs)
+		}
+		checkReason("row", jobs[0])
+		if c.stats.existing != 1 {
+			t.Errorf("existing = %d, want 1", c.stats.existing)
+		}
+	})
+	t.Run("after the fetch", func(t *testing.T) {
+		c, e := newRun()
+		listed := &grabber.Chapter{Title: "Chapter 5", Number: 5}
+		fetched := &grabber.Chapter{Title: "Chapter 5", Number: 5}
+		e.Fetching(listed)
+		e.Fetched(listed, fetched)
+		e.Exists(fetched, "a.cbz")
+		jobs := c.Jobs()
+		if len(jobs) != 1 {
+			t.Fatalf("jobs = %+v, want the fetching row only", jobs)
+		}
+		checkReason("row", jobs[0])
+	})
+	t.Run("volume", func(t *testing.T) {
+		c, e := newRun()
+		v := &core.Volume{Number: 2, Chapters: grabber.Filterables{
+			&grabber.Chapter{Number: 2, Title: "Chapter 2"},
+			&grabber.Chapter{Number: 3, Title: "Chapter 3"},
+		}}
+		e.VolumeStart(v)
+		e.VolumePacked(v, "a.cbz", core.ErrExists)
+		jobs := c.Jobs()
+		if len(jobs) != 1 || !jobs[0].Volume {
+			t.Fatalf("jobs = %+v, want the volume's row", jobs)
+		}
+		checkReason("volume", jobs[0])
+		if c.stats.existing != 2 || c.stats.volumes != 0 || len(c.stats.failures) != 0 {
+			t.Errorf("stats = %+v, want 2 existing and nothing failed", c.stats)
+		}
+	})
 }
 
 func TestCancelStartsNoNewChapters(t *testing.T) {

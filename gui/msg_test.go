@@ -181,6 +181,9 @@ func TestMessageOf(t *testing.T) {
 	if m := messageOf(core.ErrNoPages); m == nil || m.Key != "job.reason.noPages" {
 		t.Errorf("ErrNoPages = %+v, want job.reason.noPages", m)
 	}
+	if m := messageOf(core.ErrExists); m == nil || m.Key != "job.reason.exists" {
+		t.Errorf("ErrExists = %+v, want job.reason.exists", m)
+	}
 }
 
 // messageKeyRE matches a literal key passed to msg or uiErr

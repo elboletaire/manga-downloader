@@ -15,6 +15,7 @@ const summary: Summary = {
   bundled: false,
   bundle: '',
   skipped: 0,
+  existing: 0,
   failures: [],
   error: '',
 };
@@ -75,6 +76,13 @@ describe('ActivityPanel', () => {
     );
     expect(html).toContain('no se pudo descargar ningún capítulo');
     expect(html).not.toContain('no chapter could be downloaded');
+  });
+
+  it('notes the chapters that were already in the folder', () => {
+    const html = render({ running: false, summary: { ...summary, existing: 2 }, jobs: [] });
+    expect(html).toContain('2 chapters were already in the folder, so they were left out.');
+    expect(html).not.toContain('were skipped');
+    expect(render({ running: false, summary, jobs: [] })).not.toContain('already in the folder');
   });
 
   it('shows a volume row and its reason in Spanish', () => {

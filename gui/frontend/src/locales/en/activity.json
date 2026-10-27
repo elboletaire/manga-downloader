@@ -3,6 +3,8 @@
   "emptyHint": "Pick chapters and press Download: each one shows up here as it's fetched and packed.",
   "lastDownload": "Last download",
   "openFolder": "Open folder",
+  "existingNote_one": "{{count}} chapter was already in the folder, so it was left out.",
+  "existingNote_other": "{{count}} chapters were already in the folder, so they were left out.",
   "skippedNote_one": "{{count}} chapter was skipped: the skip-pages option excluded every page.",
   "skippedNote_other": "{{count}} chapters were skipped: the skip-pages option excluded every page.",
   "failedChapters": "Failed chapters",

@@ -25,6 +25,8 @@ export interface Options {
   /** Re-encodes PNG pages to JPEG when that's smaller */
   compress: boolean;
   skipPages: string;
+  /** Leaves out the chapters, volumes and bundles whose file is already in the folder */
+  skipExisting: boolean;
   filenameTemplate: string;
   browserVisible: boolean;
 }
@@ -86,6 +88,8 @@ export interface Summary {
   bundled: boolean;
   bundle: string;
   skipped: number;
+  /** Chapters left out because their file was already in the folder */
+  existing: number;
   failures: Failure[];
   /** Set when a bundle couldn't be written */
   error: string;

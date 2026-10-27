@@ -70,7 +70,10 @@
     "watchText": "Live progress for every chapter, with the files landing in the folder you picked through your system's own folder dialog. When the last one's done, so are you.",
     "themeTitle": "Light or dark",
     "themeText": "The app follows your system theme, so late-night reading sessions stay easy on the eyes.",
-    "finishedAlt": "A finished run in the Activity panel: all twelve chapters saved to the output folder, with a button to open it."
+    "finishedAlt": "A finished run in the Activity panel: all twelve chapters saved to the output folder, with a button to open it.",
+    "skipExistingTitle": "Only what's missing",
+    "skipExistingText": "A chapter, volume or bundle already in the folder is skipped before anything is fetched, so running a download again only picks up the new chapters. On the command line it's <code>--skip-existing</code>.",
+    "skipExistingAlt": "The Activity panel during a download where the first two chapters were already in the folder, listed as skipped, while the others download."
   },
   "downloads": {
     "title": "All downloads",
@@ -105,6 +108,8 @@
     "bundleGifCaption": "Add <code>--bundle</code> and they end up in a single file.",
     "volumesGifAlt": "Terminal recording: manga-downloader downloads thirteen Horimiya chapters with --volumes auto, packed into one CBZ file per volume.",
     "volumesGifCaption": "Or <code>--volumes auto</code> for one file per volume.",
+    "skipExistingGifAlt": "Terminal recording: manga-downloader downloads five Horimiya chapters, then runs again with --skip-existing: the five are listed as skipped and three new ones are downloaded.",
+    "skipExistingGifCaption": "Run it again with <code>--skip-existing</code> and only the new chapters are fetched.",
     "more": "Every flag is in the <a href=\"{{repo}}#using-the-command-line\">usage guide</a>, or run <code>manga-downloader help</code>."
   },
   "features": {

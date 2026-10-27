@@ -64,6 +64,11 @@ function SummaryCard({ summary, onOpenFolder }: { summary: Summary; onOpenFolder
           {t('activity.skippedNote', { count: summary.skipped })}
         </p>
       )}
+      {summary.existing > 0 && (
+        <p className="muted small">
+          {t('activity.existingNote', { count: summary.existing })}
+        </p>
+      )}
       {summary.failures.length > 0 && (
         <ul className="failures" aria-label={t('activity.failedChapters')}>
           {summary.failures.map((f, i) => (

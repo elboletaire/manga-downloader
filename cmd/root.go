@@ -34,7 +34,7 @@ var rootCmd = &cobra.Command{
 
 	Long: `With manga-downloader you can easily convert/download web based mangas to CBZ, CBR or EPUB files.
 
-You only need to specify the URL of the manga and the chapters you want to download as a range.
+You only need to specify the URL of the manga and the chapters you want to download as a range, or "all" for every chapter, without the question you get when the range is left out.
 
 You can use either a series/index URL or a chapter URL; chapter URLs are automatically resolved to the series.`,
 	Example: colorizeHelp(`  manga-downloader https://inmanga.com/ver/manga/Fire-Punch/17748683-8986-4628-934a-e94a47fe5d59
@@ -125,17 +125,21 @@ func Run(cmd *cobra.Command, args []string) {
 	chapters := series.Chapters
 
 	var rngs []ranges.Range
+	// "all" as the ranges argument is the answer yes to the prompt below, for non-interactive runs
+	allRequested := strings.EqualFold(getRangesArg(args), "all")
 	// true only if the user typed a range; distinguishes it from the
 	// synthesised "everything" range below
-	rangeRequested := len(args) > 1
-	// ranges argument is not provided
-	if len(args) == 1 {
-		if err := confirmAll(allChaptersLabel(chapters)); err != nil {
-			yellow("Canceled by user")
-			exit(0)
+	rangeRequested := len(args) > 1 && !allRequested
+	// ranges argument is not provided, or is "all"
+	if len(args) == 1 || allRequested {
+		if len(args) == 1 {
+			if err := confirmAll(allChaptersLabel(chapters)); err != nil {
+				yellow("Canceled by user")
+				exit(0)
+			}
 		}
 
-		rngs = []ranges.Range{core.AllChaptersRange(chapters)}
+		rngs, settings.Range = allChaptersRanges(chapters)
 	} else {
 		// ranges parsing
 		settings.Range = getRangesArg(args)
@@ -183,6 +187,10 @@ func Run(cmd *cobra.Command, args []string) {
 		ev := plainEvents{showLang: showLanguage, showGroup: showGroup}
 		bundleFile, err := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
 		if !settings.Bundle {
+			exit(0)
+		}
+		if errors.Is(err, core.ErrExists) {
+			yellow("- skipping the bundle: %s already exists", bundleFile)
 			exit(0)
 		}
 		if err != nil {
@@ -264,7 +272,10 @@ func Run(cmd *cobra.Command, args []string) {
 		exit(0)
 	}
 
-	// a saved bundle's row already says done, like the chapters'
+	// the bundle's row already says skipped or done, like the chapters'
+	if errors.Is(res.err, core.ErrExists) {
+		exit(0)
+	}
 	if res.err != nil {
 		red(res.err.Error())
 		exit(1)
@@ -377,6 +388,7 @@ func init() {
 	// -1` works just like `--skip-pages=-1`. A shorthand wouldn't: "-S-1"
 	// would have to be spelled that way, with no space
 	rootCmd.Flags().StringVar(&settings.SkipPages, "skip-pages", "", `pages to exclude from every chapter, as a range ("2", "2,5-7"); negative positions count from the end of each chapter, so "-1" is its last page`)
+	rootCmd.Flags().BoolVar(&settings.SkipExisting, "skip-existing", false, "skip the chapters, volumes and bundles whose file is already in the output directory, without fetching them; nothing is deleted or overwritten, so to download a broken file again, delete it first")
 	rootCmd.Flags().BoolP("version", "v", false, "show version information (alias of the version command)")
 	// set as persistent, so version command does not complain about the -o flag set via docker
 	rootCmd.PersistentFlags().StringVarP(&settings.OutputDir, "output-dir", "o", "./", "output directory for the downloaded files")
@@ -479,6 +491,13 @@ func toMetaFunc(c *color.Color) func(string) string {
 
 // allChaptersLabel is the prompt for downloading every listed chapter, which
 // says how many of them the listing marks as locked
+// allChaptersRanges returns the range of every listed chapter and its text, which
+// names a bundle of them as a typed range would
+func allChaptersRanges(chapters grabber.Filterables) ([]ranges.Range, string) {
+	rngs := []ranges.Range{core.AllChaptersRange(chapters)}
+	return rngs, rngs[0].String()
+}
+
 func allChaptersLabel(chapters grabber.Filterables) string {
 	label := fmt.Sprintf("Do you want to download all %d chapters", len(chapters))
 	locked := 0

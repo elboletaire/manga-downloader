@@ -24,6 +24,7 @@ const base: Summary = {
   bundled: false,
   bundle: '',
   skipped: 0,
+  existing: 0,
   failures: [],
   error: '',
 };
@@ -130,6 +131,21 @@ describe('errorMessage', () => {
 describe('summarySentence', () => {
   it('says a cancelled run saved nothing', () => {
     expect(summarySentence({ ...base, cancelled: true }, en)).toBe('Cancelled before anything was saved.');
+  });
+
+  it('says a bundle already in the folder was not downloaded', () => {
+    const bundled = { ...base, bundled: true, existing: 3 };
+    expect(summaryHeadline(bundled, en)).toBe('Already downloaded');
+    expect(summarySentence(bundled, en)).toBe('The bundle was already in /out, so nothing was downloaded.');
+    expect(summaryHeadline(bundled, es)).toBe('Ya descargado');
+  });
+});
+
+describe('summary headline with existing files', () => {
+  it('counts the chapters already in the folder', () => {
+    expect(summaryHeadline({ ...base, saved: 2, existing: 3 }, en)).toBe('2 saved, 3 already downloaded');
+    expect(summaryHeadline({ ...base, existing: 1 }, en)).toBe('1 already downloaded');
+    expect(summaryHeadline({ ...base, existing: 2 }, es)).toBe('2 ya descargados');
   });
 });
 

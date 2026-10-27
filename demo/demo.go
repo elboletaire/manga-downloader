@@ -30,8 +30,9 @@ type series struct {
 	// Languages are the ones the series is translated into. Set, they make the
 	// site filter by --language and list them; unset, the site is single-language
 	Languages []string `json:"languages"`
-	// NameFormat, if set, is the title a fetched chapter gets, formatted with
-	// its number truncated to a whole one, as MangaDex does ("Chapter %04d %s")
+	// NameFormat, if set, is the title a chapter gets, listed and fetched alike,
+	// formatted with its number truncated to a whole one, as MangaDex does
+	// ("Chapter %04d %s")
 	NameFormat string    `json:"nameFormat"`
 	Chapters   []chapter `json:"chapters"`
 }
@@ -142,9 +143,13 @@ func (s *site) FetchChapters() (grabber.Filterables, []error) {
 		if filter && c.Language != lang {
 			continue
 		}
+		title := c.Title
+		if s.data.NameFormat != "" {
+			title = fmt.Sprintf(s.data.NameFormat, int64(c.Number), c.Title)
+		}
 		listed := &grabber.Chapter{
 			Number:     c.Number,
-			Title:      c.Title,
+			Title:      title,
 			Language:   c.Language,
 			PagesCount: int64(c.Pages),
 			Volume:     c.Volume,
@@ -162,9 +167,6 @@ func (s *site) FetchChapter(f grabber.Filterable) (*grabber.Chapter, error) {
 	listed := f.(*grabber.Chapter)
 
 	chapter := *listed
-	if s.data.NameFormat != "" {
-		chapter.Title = fmt.Sprintf(s.data.NameFormat, int64(listed.Number), listed.Title)
-	}
 	for n := 1; n <= int(listed.PagesCount); n++ {
 		chapter.Pages = append(chapter.Pages, grabber.Page{Number: int64(n), URL: pageURL(listed.ID, n)})
 	}

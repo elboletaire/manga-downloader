@@ -282,3 +282,47 @@ func isMessageOrPattern(call *ast.CallExpr) bool {
 	}
 	return false
 }
+
+// ChapterOf gives a listing entry's own chapter, and builds one from the getters
+// of a listed chapter that doesn't embed a Chapter
+func TestChapterOf(t *testing.T) {
+	type entry struct {
+		Chapter
+		extra string
+	}
+	embedded := entry{Chapter: Chapter{Number: 3, Title: "Three", Volume: 2, Label: Label{Style: LabelNumberFirst}, Group: "Alpha"}}
+	got := ChapterOf(embedded)
+	if got == &embedded.Chapter {
+		t.Error("ChapterOf returned the listing's own chapter, not a copy")
+	}
+	if got.Number != 3 || got.Title != "Three" || got.Volume != 2 || got.Label.Style != LabelNumberFirst || got.Group != "Alpha" {
+		t.Errorf("embedded: got %+v", *got)
+	}
+
+	bare := &Chapter{Number: 4, Title: "Four", Volume: 1}
+	if got := ChapterOf(bare); got.Number != 4 || got.Title != "Four" || got.Volume != 1 {
+		t.Errorf("bare: got %+v", *got)
+	}
+
+	fake := fakeListed{number: 5, title: "Five", groups: []string{"Alpha", "Delta"}, volume: 6}
+	got = ChapterOf(fake)
+	if got.Number != 5 || got.Title != "Five" || got.Volume != 6 {
+		t.Errorf("fake: got %+v", *got)
+	}
+	if got.Group != "Alpha, Delta" || len(got.Groups) != 2 || got.Groups[1] != "Delta" {
+		t.Errorf("fake groups: got %q %q", got.Group, got.Groups)
+	}
+}
+
+// fakeListed is a listed chapter that doesn't embed a Chapter
+type fakeListed struct {
+	number float64
+	title  string
+	groups []string
+	volume int
+}
+
+func (f fakeListed) GetNumber() float64  { return f.number }
+func (f fakeListed) GetTitle() string    { return f.title }
+func (f fakeListed) GetGroups() []string { return f.groups }
+func (f fakeListed) GetVolume() int      { return f.volume }

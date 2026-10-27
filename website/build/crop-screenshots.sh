@@ -2,9 +2,16 @@
 # Crops the showcase screenshots from the 2000 px originals and writes WebP
 # derivatives at 1000 and 600 px wide. See README.md ("Screenshots").
 #
-# usage: build/crop-screenshots.sh ORIGINALS_DIR OUT_DIR
+# usage: build/crop-screenshots.sh [--allow-empty] ORIGINALS_DIR OUT_DIR
+#   --allow-empty: a run with nothing to crop is fine (a partial retake of
+#   shots that have no crop), instead of the error an empty or wrong dir gets
 set -euo pipefail
 
+ALLOW_EMPTY=0
+if [ "${1:-}" = --allow-empty ]; then
+  ALLOW_EMPTY=1
+  shift
+fi
 SRC=$1
 OUT=$2
 mkdir -p "$OUT"
@@ -13,6 +20,7 @@ WINDOW_RADIUS=9
 CARD_RADIUS=24 # the app's panels, measured on the 2000 px originals
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
+made=0 # crops written, so an empty or wrong SRC fails
 
 # crop NAME THEME ORIGINAL WxH+X+Y RADIUS (roundrectangle takes the corner ellipse's diameter)
 # A panel's geometry is its 1 px border box, so no window background is left around it.
@@ -22,6 +30,11 @@ crop() {
   local rest=${geo#*x}
   local h=${rest%%+*}
   local base="$TMP/$name-$theme"
+  # a shot that wasn't retaken (SHOTS in capture-all.sh) keeps its crop as it is
+  if [ ! -f "$SRC/$original" ]; then
+    echo "skipping $name-$theme: $original is not in $SRC" >&2
+    return 0
+  fi
 
   magick "$SRC/$original" -crop "$geo" +repage "$base-crop.png"
   magick -size "${w}x${h}" xc:none -fill white \
@@ -35,6 +48,7 @@ crop() {
     magick "$base.png" -filter Lanczos -resize "${width}x" -strip \
       -define webp:method=6 -quality 85 "$OUT/$name-$theme-$width.webp"
   done
+  made=$((made + 1))
 }
 
 # The panel geometry assumes the 340 px sidebar at the 915 px capture width.
@@ -44,4 +58,10 @@ for theme in light dark; do
   crop finished-run "$theme" "05-done-$theme.png" 680x787+1203+405 $CARD_RADIUS
   crop volumes "$theme" "07-volumes-$theme.png" 1062x787+117+405 $CARD_RADIUS
   crop parts "$theme" "08-parts-$theme.png" 1062x787+117+405 $CARD_RADIUS
+  crop skip-existing "$theme" "14-skip-existing-$theme.png" 680x787+1203+405 $CARD_RADIUS
 done
+
+if [ "$made" -eq 0 ] && [ "$ALLOW_EMPTY" -eq 0 ]; then
+  echo "no crop made: none of the originals are in $SRC" >&2
+  exit 1
+fi

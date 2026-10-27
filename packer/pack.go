@@ -45,7 +45,8 @@ func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, pr
 	}
 	always, whenSmaller := pageFormats(format, s.GetConvertImages(), s.GetCompress())
 	files := namePages(chapter.Files, always, whenSmaller, s.GetJPEGQuality(), format)
-	return pack(outputdir, format, s.GetFilenameTemplate(), releaseName(chapter.Chapter), NewChapterFileTemplateParts(title, chapter.Chapter), files, info, progress)
+	f := chapterFile(title, s.GetFilenameTemplate(), chapter.Chapter)
+	return pack(outputdir, format, f.template, releaseName(chapter.Chapter), f.parts, files, info, progress)
 }
 
 // PackBundle packs a bundle of downloaded chapters, grouping each chapter's
@@ -59,16 +60,8 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 	if format == FormatEPUB {
 		info = EPUBInfo{Series: title, Identity: "bundle " + memberKeys(chapters), ReadingDirection: s.GetReadingDirection(), Labels: labels}
 	}
-	listed := make([]*grabber.Chapter, len(chapters))
-	for i, c := range chapters {
-		listed[i] = c.Chapter
-	}
-	return pack(outputdir, format, s.GetFilenameTemplate(), "the bundle", FilenameTemplateParts{
-		Series: title,
-		Number: rng,
-		Title:  "bundle",
-		Group:  sharedGroup(listed),
-	}, files, info, progress)
+	f := bundleFile(title, s.GetFilenameTemplate(), rng, chaptersOf(chapters))
+	return pack(outputdir, format, f.template, "the bundle", f.parts, files, info, progress)
 }
 
 // PackVolume packs the downloaded chapters of a volume into one file, laid out as a
@@ -76,10 +69,6 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 // NewVolumeFileTemplateParts; chapters must be sorted by number.
 func PackVolume(outputdir string, s grabber.Site, volume int, rng string, chapters []*DownloadedChapter, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
-	listed := make([]*grabber.Chapter, len(chapters))
-	for i, c := range chapters {
-		listed[i] = c.Chapter
-	}
 	format := s.GetFormat()
 	files, labels := chapterFolders(chapters, format, s)
 	var info EPUBInfo
@@ -92,8 +81,8 @@ func PackVolume(outputdir string, s grabber.Site, volume int, rng string, chapte
 			Labels:           labels,
 		}
 	}
-	return pack(outputdir, format, VolumeTemplate(s.GetFilenameTemplate()), "volume "+strconv.Itoa(volume),
-		NewVolumeFileTemplateParts(title, volume, rng, listed), files, info, progress)
+	f := volumeFile(title, s.GetFilenameTemplate(), volume, rng, chaptersOf(chapters))
+	return pack(outputdir, format, f.template, "volume "+strconv.Itoa(volume), f.parts, files, info, progress)
 }
 
 // PackParts packs a chapter's parts, in the order given (their part order), into
@@ -113,19 +102,128 @@ func PackParts(outputdir string, s grabber.Site, chapters []*DownloadedChapter, 
 			Labels:           labels,
 		}
 	}
+	f := partsFile(title, s.GetFilenameTemplate(), chaptersOf(chapters))
+	return pack(outputdir, format, f.template, "chapter "+number, f.parts, files, info, progress)
+}
+
+// chaptersOf returns the chapters of downloaded ones, in the same order
+func chaptersOf(chapters []*DownloadedChapter) []*grabber.Chapter {
+	listed := make([]*grabber.Chapter, len(chapters))
+	for i, c := range chapters {
+		listed[i] = c.Chapter
+	}
+	return listed
+}
+
+// namedFile is how a file is named: the template it renders and the parts it
+// renders with. The Pack* functions and the name helpers share it, so a name
+// given before packing is the one packing gives.
+type namedFile struct {
+	template string
+	parts    FilenameTemplateParts
+}
+
+// chapterFile names a chapter's file, as PackSingle does
+func chapterFile(title, template string, c *grabber.Chapter) namedFile {
+	return namedFile{template, NewChapterFileTemplateParts(title, c)}
+}
+
+// volumeFile names a volume's file, with VolumeTemplate as PackVolume does
+func volumeFile(title, template string, volume int, rng string, chapters []*grabber.Chapter) namedFile {
+	return namedFile{VolumeTemplate(template), NewVolumeFileTemplateParts(title, volume, rng, chapters)}
+}
+
+// partsFile names a chapter's merged parts with the chapter's template, as PackParts does
+func partsFile(title, template string, chapters []*grabber.Chapter) namedFile {
 	chapter := mergedChapter(chapters)
-	return pack(outputdir, format, s.GetFilenameTemplate(), "chapter "+number,
-		NewChapterFileTemplateParts(title, &chapter), files, info, progress)
+	return namedFile{template, NewChapterFileTemplateParts(title, &chapter)}
+}
+
+// bundleFile names a bundle's file, as PackBundle does
+func bundleFile(title, template, rng string, chapters []*grabber.Chapter) namedFile {
+	return namedFile{template, FilenameTemplateParts{
+		Series: title,
+		Number: rng,
+		Title:  "bundle",
+		Group:  sharedGroup(chapters),
+	}}
+}
+
+// ChapterName returns the name PackSingle gives a chapter's first try, with its
+// extension and without a " v2" suffix. It fails when the template does.
+func ChapterName(title, template, format string, c *grabber.Chapter) (string, error) {
+	f := chapterFile(title, template, c)
+	return FirstName(format, f.template, f.parts)
+}
+
+// VolumeName returns the name PackVolume gives a volume's first try, as
+// ChapterName does
+func VolumeName(title, template, format string, volume int, rng string, chapters []*grabber.Chapter) (string, error) {
+	f := volumeFile(title, template, volume, rng, chapters)
+	return FirstName(format, f.template, f.parts)
+}
+
+// PartsName returns the name PackParts gives a chapter's parts' first try, as
+// ChapterName does
+func PartsName(title, template, format string, chapters []*grabber.Chapter) (string, error) {
+	f := partsFile(title, template, chapters)
+	return FirstName(format, f.template, f.parts)
+}
+
+// BundleName returns the name PackBundle gives a bundle's first try, as
+// ChapterName does
+func BundleName(title, template, format, rng string, chapters []*grabber.Chapter) (string, error) {
+	f := bundleFile(title, template, rng, chapters)
+	return FirstName(format, f.template, f.parts)
+}
+
+// FirstName returns the output name of a file's first try, the one without a
+// " v2" suffix, with its extension (none for raw output)
+func FirstName(format, template string, parts FilenameTemplateParts) (string, error) {
+	filename, err := renderName(template, parts, 1)
+	if err != nil {
+		return "", err
+	}
+	return outputName(format, filename), nil
+}
+
+// Exists reports whether name is already in outDir: a file, or the folder of
+// raw output
+func Exists(outDir, name string) bool {
+	_, err := os.Stat(filepath.Join(outDir, name))
+	return err == nil
+}
+
+// renderName returns the filename a template gives the try-th attempt at a
+// file, without its extension
+func renderName(template string, parts FilenameTemplateParts, attempt int) (string, error) {
+	parts.Version = attempt
+	return NewFilenameFromTemplate(template, parts)
+}
+
+// outputName adds the extension of format to a filename: none for raw output,
+// which is a folder
+func outputName(format, filename string) string {
+	switch format {
+	case FormatRaw:
+		return filename
+	case FormatEPUB:
+		return filename + ".epub"
+	case FormatCBR:
+		return filename + ".cbr"
+	default:
+		return filename + ".cbz"
+	}
 }
 
 // mergedChapter is the chapter a merged file is named after: the parts' shared
 // title without their parts, else the chapter's number alone, as a numbered chapter
-func mergedChapter(chapters []*DownloadedChapter) grabber.Chapter {
+func mergedChapter(chapters []*grabber.Chapter) grabber.Chapter {
 	parts := make(grabber.Filterables, len(chapters))
-	for i, d := range chapters {
-		parts[i] = d.Chapter
+	for i, c := range chapters {
+		parts[i] = c
 	}
-	chapter := *chapters[0].Chapter
+	chapter := *chapters[0]
 	chapter.Title = grabber.PartsTitle(parts)
 	chapter.Label.Part = ""
 	chapter.Label.Style = grabber.LabelNumbered
@@ -324,8 +422,7 @@ func pack(outputdir, format, template, label string, parts FilenameTemplateParts
 		if attempt > maxPackAttempts {
 			return "", fmt.Errorf("- error saving file for %s: no free name after %d tries", label, maxPackAttempts)
 		}
-		parts.Version = attempt
-		filename, err := NewFilenameFromTemplate(template, parts)
+		filename, err := renderName(template, parts, attempt)
 		if err != nil {
 			return "", fmt.Errorf("- error creating filename for %s: %s", label, err.Error())
 		}
@@ -335,19 +432,15 @@ func pack(outputdir, format, template, label string, parts FilenameTemplateParts
 			filename = fmt.Sprintf("%s v%d", base, attempt)
 		}
 
-		var name string
+		name := outputName(format, filename)
 		if format == FormatRaw {
-			name = filename
 			err = SaveRaw(filepath.Join(outputdir, name), files, progress)
 		} else if format == FormatEPUB {
-			name = filename + ".epub"
 			info.Title = filename
 			err = ArchiveEPUB(filepath.Join(outputdir, name), info, files, progress)
 		} else if format == FormatCBR {
-			name = filename + ".cbr"
 			err = ArchiveCBR(filepath.Join(outputdir, name), files, progress)
 		} else {
-			name = filename + ".cbz"
 			err = ArchiveCBZ(filepath.Join(outputdir, name), files, progress)
 		}
 

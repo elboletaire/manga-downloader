@@ -4,11 +4,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -180,6 +182,36 @@ func TestSummaryFailuresCarryTheirMessage(t *testing.T) {
 	}
 	if empty := summaryDTO(&Summary{}); empty.Failures == nil {
 		t.Errorf("no failures sent as null, want an empty list")
+	}
+}
+
+// the chapters left out for an existing file are counted apart from the skipped ones
+func TestSummaryCountsExisting(t *testing.T) {
+	s := summaryDTO(&Summary{Existing: 3, Skipped: 1})
+	if s.Existing != 3 || s.Skipped != 1 {
+		t.Errorf("existing %d, skipped %d; want 3 and 1", s.Existing, s.Skipped)
+	}
+	raw, err := json.Marshal(s)
+	if err != nil || !strings.Contains(string(raw), `"existing":3`) {
+		t.Errorf("summary JSON = %s (%v), want the existing key", raw, err)
+	}
+}
+
+// skipExisting is saved with the options like the other switches
+func TestSetOptionsSavesSkipExisting(t *testing.T) {
+	a, _, prefs := newTestApp(t, 1)
+	o := a.Options()
+	o.SkipExisting = true
+	if err := a.SetOptions(o); err != nil {
+		t.Fatal(err)
+	}
+
+	saved := defaultSettings()
+	if err := loadOptions(prefs, saved); err != nil {
+		t.Fatal(err)
+	}
+	if !saved.SkipExisting {
+		t.Errorf("saved skipExisting is off, want on")
 	}
 }
 

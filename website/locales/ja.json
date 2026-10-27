@@ -70,7 +70,10 @@
     "watchText": "話ごとのリアルタイムの進行状況。システムのフォルダー選択画面で選んだフォルダーにファイルが保存されていきます。最後の話が終われば完了です。",
     "themeTitle": "ライトでもダークでも",
     "themeText": "アプリはシステムのテーマに従うので、夜の読書も目に優しいままです。",
-    "finishedAlt": "Activityパネルで完了した実行の表示：12話すべてが出力フォルダーに保存され、フォルダーを開くボタンがある。"
+    "finishedAlt": "Activityパネルで完了した実行の表示：12話すべてが出力フォルダーに保存され、フォルダーを開くボタンがある。",
+    "skipExistingTitle": "足りない分だけ",
+    "skipExistingText": "フォルダーにすでにある話、巻、まとめファイルは、何も取得する前にスキップされます。そのため、もう一度実行すれば新しい話だけがダウンロードされます。コマンドラインでは <code>--skip-existing</code> です。",
+    "skipExistingAlt": "ダウンロード中のActivityパネル：最初の2話はすでにフォルダーにあったためスキップと表示され、残りの話はダウンロード中。"
   },
   "downloads": {
     "title": "すべてのダウンロード",
@@ -105,6 +108,8 @@
     "bundleGifCaption": "<code>--bundle</code> を付けると、1つのファイルにまとまります。",
     "volumesGifAlt": "ターミナルの録画：manga-downloaderが--volumes autoを付けて『ホリミヤ』の13話をダウンロードし、巻ごとに1つのCBZファイルにまとめている。",
     "volumesGifCaption": "または <code>--volumes auto</code> で、巻ごとに1ファイル。",
+    "skipExistingGifAlt": "ターミナルの録画：manga-downloaderが『ホリミヤ』の5話をダウンロードし、続けて--skip-existingを付けて再実行している。5話はスキップと表示され、新たに3話がダウンロードされる。",
+    "skipExistingGifCaption": "<code>--skip-existing</code> を付けて再実行すると、新しい話だけを取得します。",
     "more": "すべてのフラグは<a href=\"{{repo}}#using-the-command-line\">使い方ガイド</a>にあります（英語）。または <code>manga-downloader help</code> を実行してください。"
   },
   "features": {

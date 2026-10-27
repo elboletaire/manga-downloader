@@ -133,6 +133,7 @@ var sharedMessages = []struct {
 	{core.ErrLocked, "job.reason.locked"},
 	{core.ErrEmptyVolume, "job.reason.emptyVolume"},
 	{core.ErrSkippedVolume, "job.reason.skipped"},
+	{core.ErrExists, "job.reason.exists"},
 	{core.ErrNoPages, "job.reason.noPages"},
 }
 

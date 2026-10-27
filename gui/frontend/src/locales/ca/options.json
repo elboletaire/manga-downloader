@@ -9,6 +9,10 @@
     "notSet": "Sense definir",
     "browse": "Examina…"
   },
+  "skipExisting": {
+    "label": "Omet els fitxers existents",
+    "hint": "Els fitxers que ja són a la carpeta no es tornen a descarregar. Si vols tornar a descarregar un fitxer malmès, esborra'l primer."
+  },
   "format": {
     "label": "Format",
     "cbz": "CBZ",

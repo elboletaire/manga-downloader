@@ -7,7 +7,7 @@
 # usage: [SHOT_LANG=en|es|ca|ja|all] [SHOTS="01-start 13-settings"] tools/screenshots/capture-all.sh [--install]
 #   without --install the PNGs stay in tools/screenshots/out/<lang>/
 #   SHOT_LANG (default en) is the window's language, all for every one of them;
-#   SHOTS (default all) retakes only the shots named, and leaves the website's crops alone;
+#   SHOTS (default all) retakes only the shots named, and the website's crops only for those;
 #   --install writes en's README WebPs to assets/screenshots/ (the README is
 #   English-only) and every language's website crops to the website's folders
 #
@@ -68,16 +68,14 @@ install_lang() {
   else
     site=$site/$SHOT_LANG
   fi
-  if [ -n "$SHOTS" ]; then
-    echo "SHOTS set: website crops left as they are"
-    return
-  fi
-  # website: the crops (geometry in the script) and the hero, see website/README.md
+  # website: the crops (geometry in the script, only those whose originals were taken) and the hero, see website/README.md
   (
     cd "$ROOT/website"
     mkdir -p "$site"
-    build/crop-screenshots.sh "$src" "$site"
+    # a partial retake may hold only shots without a crop, which isn't an error then
+    build/crop-screenshots.sh ${SHOTS:+--allow-empty} "$src" "$site"
     for theme in light dark; do
+      [ -f "$src/02-loaded-$theme.png" ] || continue
       for width in 1600 1000; do
         magick "$src/02-loaded-$theme.png" -filter Lanczos -resize "${width}x" -strip \
           -define webp:method=6 -quality 85 "$site/app-overview-$theme-$width.webp"
@@ -105,6 +103,7 @@ for SHOT_LANG in $LANGS; do
     shot 11-failed '?mock&scenario=done&freeze&fail&shot'
     shot 12-update-prompt '?mock&scenario=update&freeze&shot&prompt'
     shot 13-settings '?mock&scenario=loaded&freeze&shot' 'document.querySelector(".settings-btn")?.click()'
+    shot 14-skip-existing '?mock&scenario=running&freeze&shot&exists'
   done
 
   # 2054x1444 -> 2000x1390, kept as lossless PNGs (the WebPs and crops are made from them)

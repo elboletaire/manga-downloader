@@ -27,6 +27,7 @@
   "bundleEmpty": "packing bundle: no chapter could be downloaded",
   "cancelling": "Cancelling: chapters already downloading will finish, no new ones start",
   "errorFetching": "error fetching {{label}}: {{reason}}",
+  "exists": "skipping {{name}}: it's already in the folder",
   "skipping": "skipping {{label}}: every page is excluded by --skip-pages",
   "errorFilename": "error creating filename for {{label}}: filename: {{reason}}",
   "errorPage": "error downloading page {{page}} of {{label}}: {{reason}}",

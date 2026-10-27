@@ -324,6 +324,7 @@ type SummaryDTO struct {
 	Bundled  bool         `json:"bundled"`
 	Bundle   string       `json:"bundle"`
 	Skipped  int          `json:"skipped"`
+	Existing int          `json:"existing"`
 	Failures []FailureDTO `json:"failures"`
 	// Error is set when a bundle couldn't be written
 	Error string `json:"error"`
@@ -894,6 +895,7 @@ func summaryDTO(s *Summary) *SummaryDTO {
 		Bundled:   s.Bundled,
 		Bundle:    s.Bundle,
 		Skipped:   s.Skipped,
+		Existing:  s.Existing,
 		Failures:  []FailureDTO{},
 	}
 	for _, f := range s.Failures {

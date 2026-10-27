@@ -3,6 +3,8 @@
   "emptyHint": "話を選んで「ダウンロード」を押すと、取得して保存した話が順にここに表示されます。",
   "lastDownload": "前回のダウンロード",
   "openFolder": "フォルダーを開く",
+  "existingNote_one": "{{count}}話はフォルダーにすでにあったため、対象から外しました。",
+  "existingNote_other": "{{count}}話はフォルダーにすでにあったため、対象から外しました。",
   "skippedNote_one": "{{count}}話はスキップされました。「除外するページ」の設定ですべてのページが除外されたためです。",
   "skippedNote_other": "{{count}}話はスキップされました。「除外するページ」の設定ですべてのページが除外されたためです。",
   "failedChapters": "失敗した話",

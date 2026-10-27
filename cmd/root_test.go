@@ -18,6 +18,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/elboletaire/manga-downloader/core"
 	"github.com/elboletaire/manga-downloader/grabber"
+	"github.com/elboletaire/manga-downloader/packer"
 	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 )
@@ -263,14 +264,14 @@ func TestBundleRowEndsWithStatus(t *testing.T) {
 		{nil, "done"},
 		{fmt.Errorf("disk full"), "failed"},
 	} {
-		m := newProgressModel("Series", "", true, false, false, true)
+		m := newProgressModel("Series", "1-83", true, false, false, true)
 		m.width = 80
 		for _, msg := range []tea.Msg{bundleStartMsg{total: 5}, bundlePackingMsg{}, downloadDoneMsg{err: tc.err}} {
 			next, _ := m.Update(msg)
 			m = next.(progressModel)
 		}
 		row := ansi.Strip(m.renderBundleRow())
-		if !strings.HasPrefix(row, "Series - all chapters") || !strings.HasSuffix(strings.TrimSpace(row), tc.want) {
+		if !strings.HasPrefix(row, "Series - chapters 1-83") || !strings.HasSuffix(strings.TrimSpace(row), tc.want) {
 			t.Errorf("err %v: row %q, want it titled and ending in %q", tc.err, row, tc.want)
 		}
 	}
@@ -792,7 +793,6 @@ func TestReleaseLabelInMessages(t *testing.T) {
 			os.Stderr = prevErr
 			out, _ := io.ReadAll(r)
 			want := "- error fetching " + tt.want + ": boom\n" +
-				"- skipping " + tt.want + ": --skip-pages excludes all of its pages\n" +
 				"- error downloading page 3 of " + tt.want + ": boom\n"
 			if got := string(out); got != want {
 				t.Errorf("output = %q, want %q", got, want)
@@ -1011,5 +1011,107 @@ func TestChapterRowTakesFetchedTitle(t *testing.T) {
 	}
 	if row := ansi.Strip(m.renderChapterRow(m.states[fetched])); !strings.Contains(row, "Series - Chapter 0001 Market") {
 		t.Errorf("row %q, want the fetched chapter's title", row)
+	}
+}
+
+// A chapter the output directory already holds gets a row ending "skipped",
+// whether it's skipped before its fetch (its listing entry gets the row) or
+// after it (the fetched chapter's row is reused)
+func TestChapterRowSkippedWhenItExists(t *testing.T) {
+	listed := &grabber.Chapter{Title: "Chapter 0001"}
+	fetched := &grabber.Chapter{Title: "Chapter 0001", PagesCount: 10}
+	m := newProgressModel("Series", "", false, false, false, true)
+	m.width = 80
+	send := func(msg tea.Msg) {
+		next, _ := m.Update(msg)
+		m = next.(progressModel)
+	}
+
+	send(chapterExistsMsg{listed: listed})
+	if len(m.states) != 1 || len(m.chapters) != 1 {
+		t.Fatalf("%d states and %d rows, want one row for the listing entry", len(m.states), len(m.chapters))
+	}
+	if row := strings.TrimRight(ansi.Strip(m.renderChapterRow(m.states[listed])), " "); !strings.HasSuffix(row, "skipped") {
+		t.Errorf("row %q, want it to end skipped", row)
+	}
+
+	m = newProgressModel("Series", "", false, false, false, true)
+	m.width = 80
+	send(chapterFetchingMsg{listed: listed})
+	send(chapterFetchedMsg{listed: listed, chapter: fetched})
+	send(chapterExistsMsg{listed: fetched})
+	if len(m.states) != 1 || len(m.chapters) != 1 {
+		t.Fatalf("%d states and %d rows, want the fetching row reused", len(m.states), len(m.chapters))
+	}
+	if s := m.states[fetched]; s == nil || s.status != "skipped" {
+		t.Errorf("row after the fetch = %+v, want skipped", s)
+	}
+}
+
+// A bundle or a volume whose file already exists ends "skipped", with an empty bar
+func TestBundleAndVolumeSkippedWhenTheyExist(t *testing.T) {
+	m := newProgressModel("Series", "1-2", true, false, false, true)
+	m.width = 80
+	next, _ := m.Update(downloadDoneMsg{err: core.ErrExists})
+	m = next.(progressModel)
+	if m.bundleStatus != "skipped" {
+		t.Fatalf("bundle status %q, want skipped", m.bundleStatus)
+	}
+	if row := strings.TrimRight(ansi.Strip(m.renderBundleRow()), " "); !strings.HasSuffix(row, "skipped") {
+		t.Errorf("bundle row %q, want it to end skipped", row)
+	}
+
+	m = newProgressModel("Series", "", false, false, false, true)
+	listed := &grabber.Chapter{Title: "Chapter 0001"}
+	v := &core.Volume{Number: 1, Chapters: grabber.Filterables{listed}}
+	next, _ = m.Update(volumeStartMsg{volume: v, chCount: 1})
+	next, _ = next.Update(volumePackedMsg{volume: v, err: core.ErrExists})
+	m = next.(progressModel)
+	if vs := m.volStates[v]; vs == nil || vs.status != "skipped" {
+		t.Errorf("volume state %+v, want skipped", vs)
+	}
+}
+
+// The plain output names the file a skipped chapter would have written, and
+// the release it's for
+func TestPlainExistsNamesTheFile(t *testing.T) {
+	var buf bytes.Buffer
+	prevOut, prevNoColor := color.Output, color.NoColor
+	color.Output, color.NoColor = &buf, true
+	t.Cleanup(func() { color.Output, color.NoColor = prevOut, prevNoColor })
+
+	chapter := &grabber.Chapter{Title: "Chapter 5", Number: 5, Group: "Group A"}
+	plainEvents{showGroup: true}.Exists(chapter, "Series 5 - Chapter 5 [Group A].cbz")
+	if want := "- skipping Chapter 5 [Group A]: Series 5 - Chapter 5 [Group A].cbz already exists\n"; buf.String() != want {
+		t.Errorf("output = %q, want %q", buf.String(), want)
+	}
+}
+
+// the ranges argument "all" is read the same whichever side of the URL it's on
+func TestGetRangesArgAll(t *testing.T) {
+	for _, args := range [][]string{{"https://example.com/manga/x", "all"}, {"all", "https://example.com/manga/x"}} {
+		if got := getRangesArg(args); !strings.EqualFold(got, "all") {
+			t.Errorf("getRangesArg(%q) = %q, want all", args, got)
+		}
+	}
+}
+
+// the prompt and the all argument name a bundle of every chapter after its
+// range, as a typed range would be: "Series 1-83 - bundle", with no double space
+func TestAllChaptersRangeNamesTheBundle(t *testing.T) {
+	var chapters grabber.Filterables
+	for n := 1; n <= 83; n++ {
+		chapters = append(chapters, &grabber.Chapter{Number: float64(n)})
+	}
+	rngs, text := allChaptersRanges(chapters)
+	if text != "1-83" || len(rngs) != 1 || rngs[0].Begin != 1 || rngs[0].End != 83 {
+		t.Fatalf("ranges %v and text %q, want 1-83", rngs, text)
+	}
+	name, err := packer.BundleName("Series", packer.FilenameTemplateDefault, packer.FormatCBZ, text, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if name != "Series 1-83 - bundle.cbz" {
+		t.Errorf("bundle named %q, want %q", name, "Series 1-83 - bundle.cbz")
 	}
 }

@@ -13,6 +13,7 @@ const base: Options = {
   jpegQuality: 90,
   compress: false,
   skipPages: '',
+  skipExisting: false,
   filenameTemplate: '{{.Series}}',
   browserVisible: false,
 };

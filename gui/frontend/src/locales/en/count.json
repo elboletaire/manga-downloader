@@ -7,6 +7,8 @@
   "volumeFile_other": "{{count}} volume files",
   "failed_one": "{{count}} failed",
   "failed_other": "{{count}} failed",
+  "existing_one": "{{count}} already downloaded",
+  "existing_other": "{{count}} already downloaded",
   "skipped_one": "{{count}} skipped",
   "skipped_other": "{{count}} skipped",
   "saved_one": "{{count}} saved",

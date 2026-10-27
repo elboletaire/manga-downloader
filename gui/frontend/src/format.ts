@@ -18,6 +18,9 @@ export function summaryHeadline(s: Summary, t: T): string {
   if (s.bundled && s.bundle !== '') {
     return t('summary.headline.bundleSaved', { bundle: s.bundle });
   }
+  if (s.bundled && s.existing > 0) {
+    return t('summary.headline.bundleExists');
+  }
 
   const parts: string[] = [];
   if (s.saved > 0) {
@@ -37,6 +40,9 @@ export function summaryHeadline(s: Summary, t: T): string {
   }
   if (s.skipped > 0) {
     parts.push(t('count.skipped', { count: s.skipped }));
+  }
+  if (s.existing > 0) {
+    parts.push(t('count.existing', { count: s.existing }));
   }
 
   return parts.length === 0 ? t('summary.headline.nothingSaved') : parts.join(t('summary.headline.separator'));
@@ -62,6 +68,9 @@ export function summarySentence(s: Summary, t: T): string {
       dir: s.dir,
       chapters: t('count.chapter', { count: s.saved }),
     });
+  }
+  if (s.bundled && s.existing > 0) {
+    return t('summary.sentence.bundleExists', { dir: s.dir });
   }
   if (s.saved > 0 && s.volumes > 0 && s.parts) {
     return t('summary.sentence.mergedFromParts', {

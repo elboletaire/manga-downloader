@@ -136,6 +136,35 @@ describe('createMockApi', () => {
     expect(state.summary!.saved).toBe(state.run.chapters - 1);
   });
 
+  it('leaves two chapters out as already in the folder with exists, counted apart from skipped', async () => {
+    const state = await createMockApi({ scenario: 'done', exists: true }).state();
+    const existing = state.jobs.filter((j) => j.reasonMsg?.key === 'job.reason.exists');
+    expect(existing).toHaveLength(2);
+    expect(existing.every((j) => j.state === 'skipped')).toBe(true);
+    expect(existing[0].reason).toMatch(/\.cbz already exists$/);
+    expect(state.summary!.existing).toBe(2);
+    expect(state.summary!.skipped).toBe(0);
+    // the chapters left out are not saved, the rest are
+    expect(state.summary!.saved).toBe(state.run.chapters - 2);
+  });
+
+  it('starts a running download with the first two chapters already in the folder, the rest in progress', async () => {
+    const state = await createMockApi({ scenario: 'running', freeze: true, exists: true }).state();
+    const existing = state.jobs.filter((j) => j.reasonMsg?.key === 'job.reason.exists');
+    expect(existing).toHaveLength(2);
+    expect(state.jobs.slice(0, 2).every((j) => j.state === 'skipped')).toBe(true);
+    // the skipped rows are the top two, and nothing after them is left out
+    expect(state.jobs.slice(2).some((j) => j.state === 'skipped')).toBe(false);
+    expect(state.jobs.slice(2).some((j) => j.state === 'downloading')).toBe(true);
+    expect(state.running).toBe(true);
+  });
+
+  it('has no chapter already in the folder without the exists flag', async () => {
+    const state = await createMockApi({ scenario: 'done' }).state();
+    expect(state.summary!.existing).toBe(0);
+    expect(state.jobs.some((j) => j.reasonMsg?.key === 'job.reason.exists')).toBe(false);
+  });
+
   it('has no skipped chapter without the skip flag', async () => {
     const state = await createMockApi('done').state();
     expect(state.jobs.some((j) => j.state === 'skipped')).toBe(false);
@@ -501,6 +530,7 @@ describe('mockSetupFrom', () => {
       parts: false,
       fail: false,
       skip: false,
+      exists: false,
       locked: false,
       shot: false,
       fetching: false,
@@ -515,6 +545,7 @@ describe('mockSetupFrom', () => {
     expect(mockSetupFrom('?chapters=nope').chapters).toBeGreaterThan(100);
     expect(mockSetupFrom('?fail').fail).toBe(true);
     expect(mockSetupFrom('?skip').skip).toBe(true);
+    expect(mockSetupFrom('?exists').exists).toBe(true);
     expect(mockSetupFrom('?locked').locked).toBe(true);
     expect(mockSetupFrom('?shot').shot).toBe(true);
     expect(mockSetupFrom('?prompt').prompt).toBe(true);

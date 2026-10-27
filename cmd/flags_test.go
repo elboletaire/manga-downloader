@@ -23,3 +23,22 @@ func TestSkipPagesTakesNegativePositions(t *testing.T) {
 		}
 	}
 }
+
+// --skip-existing is off unless the flag is given
+func TestSkipExistingFlag(t *testing.T) {
+	flags := rootCmd.Flags()
+	t.Cleanup(func() {
+		settings.SkipExisting = false
+		flags.Lookup("skip-existing").Changed = false
+	})
+
+	if settings.SkipExisting {
+		t.Fatal("SkipExisting is on before the flag")
+	}
+	if err := flags.Parse([]string{"--skip-existing"}); err != nil {
+		t.Fatal(err)
+	}
+	if !settings.SkipExisting {
+		t.Error("--skip-existing didn't set SkipExisting")
+	}
+}

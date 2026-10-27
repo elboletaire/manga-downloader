@@ -37,6 +37,10 @@ type chapterFetchedMsg struct {
 	listed  grabber.Filterable
 	chapter *grabber.Chapter
 }
+
+// chapterExistsMsg ends a chapter whose file is already in the output directory
+// (--skip-existing), by its listing entry, or by the fetched chapter when its name came out after the fetch
+type chapterExistsMsg struct{ listed grabber.Filterable }
 type pageSuccessMsg struct{ chapter *grabber.Chapter }
 type downloadFailedMsg struct{ chapter *grabber.Chapter }
 
@@ -367,6 +371,18 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case chapterExistsMsg:
+		// a chapter skipped before its fetch has no row yet, so it gets one, as chapterFetchingMsg gives
+		s := m.states[msg.listed]
+		if s == nil {
+			_, barW, _ := btLayout(m.width)
+			rawTitle, tags := chapterTitle(m.seriesTitle, msg.listed, m.showLang, m.showGroup)
+			s = &barState{rawTitle: rawTitle, tags: tags, bar: m.makeBar(barW)}
+			m.states[msg.listed] = s
+			m.chapters = append(m.chapters, msg.listed)
+		}
+		s.status = "skipped"
+
 	case chapterStartedMsg:
 		if m.bundle {
 			return m, nil
@@ -514,7 +530,7 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if vs == nil {
 			return m, nil
 		}
-		if errors.Is(msg.err, core.ErrSkippedVolume) {
+		if errors.Is(msg.err, core.ErrSkippedVolume) || errors.Is(msg.err, core.ErrExists) {
 			vs.status = "skipped"
 			return m, nil
 		}
@@ -531,7 +547,9 @@ func (m progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.done = true
 		if m.bundle {
 			m.bundleStatus = "done"
-			if msg.err != nil {
+			if errors.Is(msg.err, core.ErrExists) {
+				m.bundleStatus = "skipped"
+			} else if msg.err != nil {
 				m.bundleStatus = "failed"
 				_, barW, _ := btLayout(m.width)
 				m.bundleFailBar = makeDangerBar(barW)
@@ -739,6 +757,8 @@ func (m progressModel) renderVolumeRow(vs *volumeBarState) string {
 			vs.failBar.SetWidth(barW)
 		}
 		barStr = vs.failBar.ViewAs(vs.fraction)
+	case vs.status == "skipped":
+		barStr = vs.bar.ViewAs(0)
 	case m.done || vs.status == "done":
 		barStr = vs.bar.ViewAs(1.0)
 	default:
@@ -782,9 +802,6 @@ func (m progressModel) volumeOf(c grabber.Filterable) *core.Volume {
 // bundleTitle is the bundle row's title: the series and the range it packs,
 // like the chapter and volume rows' "Series - Chapter 1"
 func (m progressModel) bundleTitle() string {
-	if m.bundleRange == "" {
-		return m.seriesTitle + " - all chapters"
-	}
 	return m.seriesTitle + " - chapters " + m.bundleRange
 }
 
@@ -818,6 +835,8 @@ func (m progressModel) renderBundleRow() string {
 			m.bundleFailBar.SetWidth(barW)
 		}
 		barStr = m.bundleFailBar.ViewAs(safePercent(m.bundleCurrent, m.bundleTotal))
+	case m.bundleStatus == "skipped":
+		barStr = m.bundleBar.ViewAs(0)
 	case m.done && m.bundleCurrent < m.bundleTotal:
 		// core packs the bundle without the chapters that failed, so it's
 		// done but short of the total: show how far it got, not a full bar
@@ -880,10 +899,13 @@ func (e *bubbleEvents) FetchFailed(listed grabber.Filterable, err error) {
 	e.prog.Send(chapterEndedMsg{chapter: listed, status: "failed"})
 }
 
+// Skipped and Exists only mark the row: it reads "skipped", so a line would repeat it
 func (e *bubbleEvents) Skipped(c *grabber.Chapter) {
-	e.println(color.YellowString(
-		"- skipping %s: --skip-pages excludes all of its pages", core.ReleaseLabel(c, e.showLang, e.showGroup)))
 	e.prog.Send(chapterEndedMsg{chapter: c, status: "skipped"})
+}
+
+func (e *bubbleEvents) Exists(listed grabber.Filterable, _ string) {
+	e.prog.Send(chapterExistsMsg{listed: listed})
 }
 
 func (e *bubbleEvents) FilenameFailed(c *grabber.Chapter, err error) {
@@ -953,9 +975,8 @@ func (e *bubbleEvents) VolumeProgress(v *core.Volume, fraction float64) {
 }
 
 func (e *bubbleEvents) VolumePacked(v *core.Volume, name string, err error) {
-	if errors.Is(err, core.ErrSkippedVolume) {
-		e.println(color.YellowString("- skipping %s: %s", v.Label(), err.Error()))
-	} else if err != nil {
+	// a skipped volume's row says so; only a real failure gets a line
+	if err != nil && !errors.Is(err, core.ErrSkippedVolume) && !errors.Is(err, core.ErrExists) {
 		e.println(color.RedString("- error packing %s: %s", v.Label(), err.Error()))
 	}
 	e.prog.Send(volumePackedMsg{volume: v, err: err})
@@ -987,6 +1008,10 @@ func (p plainEvents) FetchFailed(listed grabber.Filterable, err error) {
 
 func (p plainEvents) Skipped(c *grabber.Chapter) {
 	yellow("- skipping %s: --skip-pages excludes all of its pages", core.ReleaseLabel(c, p.showLang, p.showGroup))
+}
+
+func (p plainEvents) Exists(listed grabber.Filterable, name string) {
+	yellow("- skipping %s: %s already exists", core.ReleaseLabel(listed, p.showLang, p.showGroup), name)
 }
 
 func (p plainEvents) FilenameFailed(c *grabber.Chapter, err error) {
@@ -1026,9 +1051,13 @@ func (plainEvents) VolumePacking(v *core.Volume) {
 
 func (plainEvents) VolumeProgress(*core.Volume, float64) {}
 
-func (plainEvents) VolumePacked(v *core.Volume, _ string, err error) {
+func (plainEvents) VolumePacked(v *core.Volume, name string, err error) {
 	if errors.Is(err, core.ErrSkippedVolume) {
 		yellow("- skipping %s: %s", v.Label(), err.Error())
+		return
+	}
+	if errors.Is(err, core.ErrExists) {
+		yellow("- skipping %s: %s already exists", v.Label(), name)
 		return
 	}
 	if err != nil {

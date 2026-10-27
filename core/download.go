@@ -37,6 +37,10 @@ type Events interface {
 	FetchFailed(listed grabber.Filterable, err error)
 	// Skipped reports a chapter whose pages were all excluded by --skip-pages
 	Skipped(c *grabber.Chapter)
+	// Exists reports a chapter whose file, named name, is already in the output
+	// directory (--skip-existing), before its pages are fetched (with its listing
+	// entry) or after the fetch when the name only came out then (fetched chapter)
+	Exists(listed grabber.Filterable, name string)
 	// FilenameFailed reports a chapter whose filename couldn't be built
 	FilenameFailed(c *grabber.Chapter, err error)
 	// Fetching reports a chapter whose page list is about to be fetched, then
@@ -103,6 +107,7 @@ type NoEvents struct{}
 func (NoEvents) BundleStart(int64)                            {}
 func (NoEvents) FetchFailed(grabber.Filterable, error)        {}
 func (NoEvents) Skipped(*grabber.Chapter)                     {}
+func (NoEvents) Exists(grabber.Filterable, string)            {}
 func (NoEvents) FilenameFailed(*grabber.Chapter, error)       {}
 func (NoEvents) Fetching(grabber.Filterable)                  {}
 func (NoEvents) Fetched(grabber.Filterable, *grabber.Chapter) {}
@@ -131,6 +136,11 @@ var ErrLocked = errors.New("locked chapter")
 // ErrSkippedVolume is the VolumePacked error of a volume whose chapters were
 // all skipped by --skip-pages: there's nothing to pack, and nothing failed
 var ErrSkippedVolume = errors.New("--skip-pages excludes every page of its chapters")
+
+// ErrExists is the VolumePacked or Download error of a volume or bundle whose
+// file is already in the output directory, with --skip-existing. Nothing is
+// fetched or written for it, and nothing failed.
+var ErrExists = errors.New("already exists in the output directory")
 
 // ErrNoPages is the DownloadFailed error of a chapter the site fetched with no
 // pages, which --skip-pages didn't empty (that one is Skipped)
@@ -293,6 +303,8 @@ func (s *Series) Download(ctx context.Context, chapters grabber.Filterables, ski
 	// settings are read once, here, rather than from the goroutines below
 	bundle := s.settings.Bundle
 	outDir := s.settings.OutputDir
+	skipExisting := s.settings.SkipExisting
+	format := s.Site.GetFormat()
 
 	// the volume each chapter goes into, nil when packed on its own
 	var volumeOf map[grabber.Filterable]*volumeRun
@@ -318,13 +330,35 @@ func (s *Series) Download(ctx context.Context, chapters grabber.Filterables, ski
 				return "", &SettingError{Setting: "filename-template", Value: templ, Err: err}
 			}
 			volumeOf = map[grabber.Filterable]*volumeRun{}
+			// the chapters of the volumes already in the output directory, which aren't fetched
+			existing := map[grabber.Filterable]bool{}
 			for _, v := range volumes {
+				if skipExisting {
+					if name, err := s.volumeName(v); err == nil && packer.Exists(outDir, name) {
+						ev.VolumeStart(v)
+						ev.VolumePacked(v, name, ErrExists)
+						for _, chap := range v.Chapters {
+							existing[chap] = true
+						}
+						continue
+					}
+				}
 				r := newVolumeRun(v, ev)
 				runs = append(runs, r)
 				for _, chap := range v.Chapters {
 					volumeOf[chap] = r
 				}
 			}
+			if len(existing) > 0 {
+				chapters = chapters.Filter(func(c grabber.Filterable) bool { return !existing[c] })
+			}
+		}
+	}
+
+	// a bundle already in the output directory is skipped before anything is fetched
+	if bundle && skipExisting {
+		if name, err := s.bundleName(chapters, rng); err == nil && packer.Exists(outDir, name) {
+			return name, ErrExists
 		}
 	}
 
@@ -386,6 +420,14 @@ loop:
 		if ctx.Err() != nil {
 			break loop
 		}
+		// checked before a slot is taken, so a skipped chapter costs no request;
+		// a volume's chapters are skipped only with their volume, see above
+		if skipExisting && !bundle && volumeOf[chap] == nil {
+			if name, err := packer.ChapterName(s.Title, s.Site.GetFilenameTemplate(), format, grabber.ChapterOf(chap)); err == nil && packer.Exists(outDir, name) {
+				ev.Exists(chap, name)
+				continue
+			}
+		}
 		select {
 		case <-ctx.Done():
 			break loop
@@ -444,13 +486,17 @@ loop:
 				return
 			}
 
-			// the name itself is only needed by the packer, which builds it
-			// again; this is the check that the template works for the
-			// chapter. A volume's chapters are named by their volume instead,
-			// whose template was checked up front.
+			// the name checks the template works for the chapter, and its file (the
+			// listing may name it differently); a volume's chapters are named by their
+			// volume, whose template was checked up front
 			if run == nil {
-				if _, err := packer.NewFilenameFromTemplate(s.Site.GetFilenameTemplate(), packer.NewChapterFileTemplateParts(s.Title, chapter)); err != nil {
+				name, err := packer.ChapterName(s.Title, s.Site.GetFilenameTemplate(), format, chapter)
+				if err != nil {
 					ev.FilenameFailed(chapter, err)
+					return
+				}
+				if skipExisting && !bundle && packer.Exists(outDir, name) {
+					ev.Exists(chapter, name)
 					return
 				}
 			}
@@ -535,6 +581,35 @@ func fillVolume(chapter *grabber.Chapter, listed grabber.Filterable) {
 	if chapter.Volume == 0 {
 		chapter.Volume = grabber.VolumeOf(listed)
 	}
+}
+
+// volumeName names v's file as packVolume or packParts will, from its listed chapters
+func (s *Series) volumeName(v *Volume) (string, error) {
+	templ, format := s.Site.GetFilenameTemplate(), s.Site.GetFormat()
+	chapters := listedChapters(v.Chapters)
+	if v.Parts {
+		return packer.PartsName(s.Title, templ, format, chapters)
+	}
+	// the range the volume gets once every listed chapter of it is packed
+	numbers := make([]float64, len(v.Chapters))
+	for i, chap := range v.Chapters {
+		numbers[i] = chap.GetNumber()
+	}
+	return packer.VolumeName(s.Title, templ, format, v.Number, volumeRangeText(s.Chapters, numbers), chapters)
+}
+
+// bundleName names the bundle's file as PackBundle will, from the listed chapters it's given
+func (s *Series) bundleName(chapters grabber.Filterables, rng string) (string, error) {
+	return packer.BundleName(s.Title, s.Site.GetFilenameTemplate(), s.Site.GetFormat(), rng, listedChapters(chapters))
+}
+
+// listedChapters gives listed chapters as Chapters, the form packer names files from
+func listedChapters(chapters grabber.Filterables) []*grabber.Chapter {
+	out := make([]*grabber.Chapter, len(chapters))
+	for i, c := range chapters {
+		out[i] = grabber.ChapterOf(c)
+	}
+	return out
 }
 
 // packVolume packs a volume whose chapters are all done, or reports it empty
