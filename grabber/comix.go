@@ -117,13 +117,17 @@ const comixPreloadJS = `try{for(const k of["reader.default.v3","reader.webtoon.v
 	`localStorage.setItem(k,JSON.stringify(v))}}catch(e){}`
 
 // comixReaderScroll preloads every page, scrolling the reader as a fallback,
-// until every slot has its img mounted
+// until every slot has its img mounted. The reader mounts a page only once it
+// has downloaded, so Progress counts the mounted slots.
 var comixReaderScroll = browser.Scroll{
 	Container: ".rpage-main",
 	Done: `(function(){var s=document.querySelectorAll("` + comixSlotSelector + `");` +
 		`if(!s.length)return false;` +
 		`for(var i=0;i<s.length;i++)if(!s[i].querySelector('` + comixImageSelector + `'))return false;` +
 		`return true})()`,
+	Progress: `(function(){var s=document.querySelectorAll("` + comixSlotSelector + `"),n=0;` +
+		`for(var i=0;i<s.length;i++)if(s[i].querySelector('` + comixImageSelector + `'))n++;` +
+		`return n})()`,
 	Pause: comixReaderScrollPause,
 	Init:  comixPreloadJS,
 }

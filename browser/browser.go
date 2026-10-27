@@ -141,6 +141,9 @@ type Scroll struct {
 	// Done is a JS expression that's true once everything lazy has mounted.
 	// Empty, or never true, stops at the bottom instead.
 	Done string
+	// Progress is a JS number that grows as lazy content mounts; set, a scroll
+	// at the bottom waits until it stalls for scrollStall, not scrollSettleSteps.
+	Progress string
 	// Pause is the wait after each step
 	Pause time.Duration
 	// Init, if set, is JS run in every frame and document of the
@@ -149,9 +152,13 @@ type Scroll struct {
 	Init string
 }
 
-// scrollSettleSteps is how many steps a scroll keeps waiting at the bottom
-// for Done before giving up on it, so the last pages can still mount
+// scrollSettleSteps is how many steps a scroll at the bottom keeps waiting for
+// Done before giving up, when Progress is empty, so the last pages can mount
 const scrollSettleSteps = 3
+
+// scrollStall is how long a scroll with Progress keeps waiting at the bottom
+// without Progress growing, so a reader that mounts lazily still gets time
+const scrollStall = 5 * time.Second
 
 // GetHTMLWithScroll is like GetHTML, but after waitSelector matches it scrolls
 // the page down one viewport at a time until s.Done holds or the bottom is
@@ -165,40 +172,89 @@ func GetHTMLWithScroll(url, waitSelector string, s Scroll, timeout time.Duration
 	})})
 }
 
+// scrollStep is what one scrollStepJS call reports: the state ("done",
+// "bottom" or "scrolled") and the Progress value read before it scrolled
+type scrollStep struct {
+	State    string  `json:"state"`
+	Progress float64 `json:"progress"`
+}
+
 // scrollStepJS returns the JS for one scroll step: it checks done first,
 // then scrolls the container a viewport down (instantly: a smooth scroll
 // gets cut short by the next step) and reports whether it was already at
-// the bottom
+// the bottom, as a scrollStep
 func scrollStepJS(s Scroll) string {
 	done := "false"
 	if s.Done != "" {
 		done = s.Done
 	}
+	progress := "0"
+	if s.Progress != "" {
+		progress = s.Progress
+	}
 	return fmt.Sprintf(`(function(){
-		if (%s) return "done";
+		var progress = Number(%s) || 0;
+		if (%s) return JSON.stringify({state: "done", progress: progress});
 		var el = (%q && document.querySelector(%q)) || document.scrollingElement || document.documentElement;
 		var bottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
 		el.scrollBy({top: el.clientHeight, behavior: "instant"});
-		return bottom ? "bottom" : "scrolled";
-	})()`, done, s.Container, s.Container)
+		return JSON.stringify({state: bottom ? "bottom" : "scrolled", progress: progress});
+	})()`, progress, done, s.Container, s.Container)
+}
+
+// parseScrollStep decodes the string scrollStepJS returns
+func parseScrollStep(raw string) (scrollStep, error) {
+	var step scrollStep
+	if err := json.Unmarshal([]byte(raw), &step); err != nil {
+		return step, fmt.Errorf("scroll step %q: %w", raw, err)
+	}
+	return step, nil
+}
+
+// stallStart returns when the stall clock (re)starts after a step: now if
+// progress grew or the scroll just reached the bottom, else still grew
+func stallStart(grew time.Time, progressGrew, arrived bool, now time.Time) time.Time {
+	if progressGrew || arrived {
+		return now
+	}
+	return grew
+}
+
+// scrollStops says whether a scroll at the bottom gives up: after
+// scrollSettleSteps steps there, or, when progress is tracked, once it has
+// not grown for scrollStall
+func scrollStops(tracked bool, atBottom int, stalled time.Duration) bool {
+	if tracked {
+		return stalled >= scrollStall
+	}
+	return atBottom > scrollSettleSteps
 }
 
 // scroll steps through the page as described by s
 func scroll(ctx context.Context, t *chromedp.Target, s Scroll) error {
 	js := scrollStepJS(s)
 	atBottom := 0
+	var progress float64
+	grew := time.Now()
 	// no step cap: afterRenderTimeout bounds a page that keeps growing
 	for {
-		state, err := chromedp.Evaluate[string](js)(ctx, t)
+		raw, err := chromedp.Evaluate[string](js)(ctx, t)
 		if err != nil {
 			return err
 		}
-		switch state {
+		step, err := parseScrollStep(raw)
+		if err != nil {
+			return err
+		}
+		arrived := step.State == "bottom" && atBottom == 0
+		grew = stallStart(grew, step.Progress > progress, arrived, time.Now())
+		progress = max(progress, step.Progress)
+		switch step.State {
 		case "done":
 			return nil
 		case "bottom":
 			atBottom++
-			if atBottom > scrollSettleSteps {
+			if scrollStops(s.Progress != "", atBottom, time.Since(grew)) {
 				return nil
 			}
 		default:
