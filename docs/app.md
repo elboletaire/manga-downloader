@@ -117,6 +117,18 @@ automatically, in both the app and the command line.
 
 ## Settings and the update check
 
+When a newer release is out, a yellow *!* next to the version in the status bar
+links to it. On the Windows installer's copy, the Linux install script's copy and
+a macOS copy you can write to, it opens a dialog that updates the app in one
+click, after checking the download against the release's checksums. While the
+app's Homebrew cask is installed it keeps the link instead, since `brew upgrade`
+updates that copy.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/10-update-dark.webp">
+  <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="../assets/screenshots/10-update-light.webp">
+</picture>
+
 The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español, Català or 日本語) and whether the app opens with the simple start screen. The same panel turns the update check on or off. The check asks our update server for the latest release, sending the app, its version, your OS and architecture, and the app's language (with your system's language when the app follows the system). The command line sends your system's language too. If our server doesn't answer, the app asks GitHub directly instead. The server runs on Cloudflare, which sees the IP address like any web host; only a hash of it, salted with a key deleted daily, is kept, to count daily users.
 
 <picture>

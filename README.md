@@ -14,7 +14,7 @@
 
 ⭐ If you like this project, star it on GitHub!
 
-[Website][website] • [Features](#features) • [Installation](#installation) • [Desktop app](#using-the-desktop-app) • [Command line](#using-the-command-line) • [Supported sites](#supported-sites) • [Troubleshooting](#troubleshooting)
+[Website][website] • [Features](#features) • [Installation](#installation) • [Desktop app](#using-the-desktop-app---guide) • [Command line](#using-the-command-line---guide) • [Supported sites](#supported-sites) • [Troubleshooting](#troubleshooting)
 
 </div>
 
@@ -105,34 +105,16 @@ the [releases page][releases]:
   desktops already have; `install.sh` tells you how to get it if it's
   missing.
 
-> [!NOTE]
-> **macOS** doesn't sign the app, so Gatekeeper blocks its first launch. Allow it
-> under *System Settings → Privacy & Security* with **Open Anyway**. You only
-> need to do this once.
+> **macOS** doesn't sign the app, so Gatekeeper blocks its first launch: allow it
+> once under *System Settings → Privacy & Security* ([FAQ][faq-gatekeeper]).
 >
-> **Windows** needs the Microsoft Edge WebView2 runtime. Windows 11 and current
-> Windows 10 already have it; without it, the app offers to download and install it on first launch.
-> If SmartScreen shows *"Windows protected your PC"* when you run the installer
-> or the app, click **More info** → **Run anyway**: the file is only flagged
-> because it isn't signed.
+> **Windows** may show SmartScreen's *"Windows protected your PC"* for the installer or the app, for the same reason: click **More info** → **Run anyway** ([FAQ][faq-smartscreen]). The app also needs the Microsoft Edge WebView2 runtime, which Windows 11 and current Windows 10 already have; without it, the app offers to install it on first launch.
 
 If the desktop app sits next to the command line tool or is on your `PATH` (the
 Homebrew cask and the Linux `install.sh` put it there), `manga-downloader ui`
 opens it. On Windows, double-clicking `manga-downloader.exe` does the same.
 
-When a newer release is out, a yellow *!* next to the version in the status bar
-links to it. On the Windows installer's copy, the Linux install script's copy and
-a macOS copy you can write to, it opens a dialog that updates the app in one
-click, after checking the download against the release's checksums. While the
-app's Homebrew cask is installed it keeps the link instead, since `brew upgrade`
-updates that copy.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/10-update-dark.webp">
-  <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/10-update-light.webp">
-</picture>
-
-The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español, Català or 日本語), the start screen and the update check. See [the app's guide](docs/app.md#settings-and-the-update-check) for what the update check sends.
+The app checks for a newer release at startup and offers to update itself; Settings (the gear icon, or Ctrl+, / ⌘,) has the app's language (English, Español, Català or 日本語), the start screen and the update check. The [app guide](docs/app.md#settings-and-the-update-check) has the details, including what the check sends.
 
 ### Command line
 
@@ -235,28 +217,13 @@ administrator permission. After that, `manga-downloader` works in any terminal.
 > uninstall it, you have to go back to that folder and replace or delete the
 > file yourself.
 
-If Windows SmartScreen shows *"Windows protected your PC"*, the binary is only
-flagged because it isn't signed. Click **More info** → **Run anyway**.
+If SmartScreen shows *"Windows protected your PC"*, click **More info** → **Run anyway** ([why][faq-smartscreen]).
 
 </details>
 
 </details>
 
-<details>
-<summary><b>macOS</b>: allowing an unsigned binary</summary>
-<br>
-
-The binary isn't signed, so Gatekeeper blocks it the first time you run it:
-
-1. Run `./manga-downloader` once and dismiss the warning.
-2. Open **System Settings** → **Privacy & Security**, scroll down to
-   **Security**, and click **Open Anyway** next to the *manga-downloader*
-   message.
-3. Run `./manga-downloader` again and confirm the dialog.
-
-You only need to do this once.
-
-</details>
+On macOS, Gatekeeper blocks the unsigned binary the first time: allow it once under *System Settings → Privacy & Security*, as the [FAQ explains][faq-gatekeeper].
 
 #### Docker
 
@@ -296,7 +263,7 @@ docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
 
 </details>
 
-## Using the desktop app
+## Using the desktop app - [guide](docs/app.md)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/01-start-dark.webp">
@@ -317,7 +284,7 @@ The app uses the command line's defaults for concurrency and retries.
 Sites whose image servers limit the request rate get lower limits
 automatically, in both the app and the command line.
 
-## Using the command line
+## Using the command line - [guide](docs/cli.md)
 
 ~~~bash
 manga-downloader [flags] [url] [chapters]
