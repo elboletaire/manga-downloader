@@ -41,8 +41,8 @@
 <g class="gs-rise" style="animation-delay:405ms"><path d="M644.7 252.0V242.2H668.7V252.0Z" fill="#2a6ddc"><title>v1.22.0, Desktop app: 31</title></path><path d="M644.7 240.2V235.0Q644.7 231.0 648.7 231.0H664.7Q668.7 231.0 668.7 235.0V240.2Z" fill="#e5642e"><title>v1.22.0, CLI: 29</title></path></g>
 <g class="gs-rise" style="animation-delay:429ms"><path d="M678.8 252.0V248.1H702.8V252.0Z" fill="#2a6ddc"><title>v23.0.0, Desktop app: 14</title></path><path d="M678.8 246.1V245.8Q678.8 241.8 682.8 241.8H698.8Q702.8 241.8 702.8 245.8V246.1Z" fill="#e5642e"><title>v23.0.0, CLI: 15</title></path></g>
 <g class="gs-rise" style="animation-delay:452ms"><path d="M712.9 252.0V232.7H736.9V252.0Z" fill="#2a6ddc"><title>v23.0.1, Desktop app: 58</title></path><path d="M712.9 230.7V225.6Q712.9 221.6 716.9 221.6H732.9Q736.9 221.6 736.9 225.6V230.7Z" fill="#e5642e"><title>v23.0.1, CLI: 29</title></path></g>
-<g class="gs-rise" style="animation-delay:476ms"><path d="M747.0 252.0V244.9H771.0V252.0Z" fill="#2a6ddc"><title>v23.1.0, Desktop app: 23</title></path><path d="M747.0 242.9V242.3Q747.0 238.3 751.0 238.3H767.0Q771.0 238.3 771.0 242.3V242.9Z" fill="#e5642e"><title>v23.1.0, CLI: 16</title></path></g>
-<g class="gs-fade" style="animation-delay:1600ms"><text x="759.0" y="230.3" fill="#0b0b0b" text-anchor="middle" font-size="12" font-weight="600">39</text></g>
+<g class="gs-rise" style="animation-delay:476ms"><path d="M747.0 252.0V241.4H771.0V252.0Z" fill="#2a6ddc"><title>v23.1.0, Desktop app: 33</title></path><path d="M747.0 239.4V238.5Q747.0 234.5 751.0 234.5H767.0Q771.0 234.5 771.0 238.5V239.4Z" fill="#e5642e"><title>v23.1.0, CLI: 17</title></path></g>
+<g class="gs-fade" style="animation-delay:1600ms"><text x="759.0" y="226.5" fill="#0b0b0b" text-anchor="middle" font-size="12" font-weight="600">50</text></g>
 <text x="77.0" y="272.0" fill="#6f6e69" text-anchor="middle">v1.11.0</text>
 <text x="145.2" y="272.0" fill="#6f6e69" text-anchor="middle">v1.12.0</text>
 <text x="213.4" y="272.0" fill="#6f6e69" text-anchor="middle">v1.14.0</text>

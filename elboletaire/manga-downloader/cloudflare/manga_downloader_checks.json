@@ -2,6 +2,7 @@
 "schema": 1,
 "dataset": "manga_downloader_checks",
 "days": [
-  {"date":"2026-10-25","users":4,"events":8,"by":{"client":{"gui":{"users":4,"events":8}},"version":{"23.0.0":{"users":4,"events":8}},"os":{"darwin":{"users":4,"events":6},"windows":{"users":1,"events":2}},"arch":{"arm64":{"users":4,"events":6},"amd64":{"users":1,"events":2}},"lang":{"":{"users":4,"events":8}},"syslang":{"":{"users":4,"events":8}},"syslang-cli":{}}}
+  {"date":"2026-10-25","users":4,"events":8,"by":{"client":{"gui":{"users":4,"events":8}},"version":{"23.0.0":{"users":4,"events":8}},"os":{"darwin":{"users":4,"events":6},"windows":{"users":1,"events":2}},"arch":{"arm64":{"users":4,"events":6},"amd64":{"users":1,"events":2}},"lang":{"":{"users":4,"events":8}},"syslang":{"":{"users":4,"events":8}},"syslang-cli":{}}},
+  {"date":"2026-10-26","users":48,"events":80,"by":{"client":{"cli":{"users":2,"events":2},"gui":{"users":46,"events":78}},"version":{"23.0.0":{"users":3,"events":6},"23.1.0":{"users":17,"events":24},"23.0.1":{"users":32,"events":50}},"os":{"linux":{"users":9,"events":12},"darwin":{"users":4,"events":8},"windows":{"users":36,"events":60}},"arch":{"arm64":{"users":5,"events":9},"amd64":{"users":44,"events":71}},"lang":{"":{"users":35,"events":58},"ca":{"users":1,"events":2},"system":{"users":15,"events":20}},"syslang":{"vi":{"users":1,"events":1},"es":{"users":1,"events":1},"":{"users":33,"events":58},"en-US":{"users":8,"events":11},"es-419":{"users":1,"events":2},"tr":{"users":1,"events":1},"en-GB":{"users":1,"events":2},"ca-ES":{"users":1,"events":1},"en-IN":{"users":1,"events":1}},"syslang-cli":{"en-US":{"users":2,"events":2}}}}
 ]
 }
