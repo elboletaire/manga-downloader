@@ -61,7 +61,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Installation
 
-### Desktop app
+### Installing the desktop app
 
 [![Desktop app downloads][app downloads badge]][releases]
 
@@ -120,7 +120,7 @@ Settings (the gear icon, or Ctrl+, / ⌘,) turns that off and sets the app's
 language; the [app guide](docs/app.md#settings-and-the-update-check) says what
 the check sends.
 
-### Command line
+### Installing the command line tool
 
 [![CLI downloads][cli downloads badge]][releases]
 
@@ -136,7 +136,7 @@ Homebrew doesn't quarantine the command line tool, so there's no Gatekeeper
 step on macOS. `brew upgrade manga-downloader` updates it. Completions for
 bash, zsh and fish are installed as well.
 
-That's the command line tool alone; the [desktop app](#desktop-app) is the
+That's the command line tool alone; the [desktop app](#installing-the-desktop-app) is the
 `manga-downloader-app` cask. Install both and `manga-downloader ui` opens the
 app:
 
@@ -266,7 +266,7 @@ docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
 ## Using the desktop app - [guide](docs/app.md)
 
 Not installed yet? Get it from the [website][website], or see
-[Installation](#desktop-app).
+[Installation](#installing-the-desktop-app).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/01-start-dark.webp">
@@ -284,7 +284,7 @@ The [desktop app guide](docs/app.md) walks through every step and option, with s
 
 ## Using the command line - [guide](docs/cli.md)
 
-Not installed yet? See [Installation](#command-line).
+Not installed yet? See [Installation](#installing-the-command-line-tool).
 
 ~~~bash
 manga-downloader [flags] [url] [chapters]

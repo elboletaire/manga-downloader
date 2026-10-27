@@ -1,6 +1,7 @@
 # Desktop app guide
 
-For installing the app see the [README](../README.md#desktop-app).
+How to use the app, step by step, with its settings and the update check at the
+end. For installing it see the [README](../README.md#installing-the-desktop-app).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/01-start-dark.webp">
@@ -8,9 +9,8 @@ For installing the app see the [README](../README.md#desktop-app).
 </picture>
 
 The app opens on a simple start screen: the logo, the URL box with its *Paste*
-button, *Load* and *Settings*. *Settings* → *Start screen* → *Open with the
-simple view* turns it off, so the app opens on the full window instead. Then
-follow these steps:
+button, *Load* and *Settings*. (To open on the full window instead, turn off
+*Open with the simple view* under *Settings* → *Start screen*.) From there:
 
 1. **Paste the series' URL** into the box (or use its *Paste* button). The
    series loads on its own once you paste or stop typing; *Load* or Enter
@@ -35,28 +35,27 @@ follow these steps:
      <img alt="The language selector open, with English selected" src="../assets/screenshots/03-language-selector-light.webp">
    </picture>
 
-4. **Set the options** in the *Options* tab: where the files go, the format
-   (CBZ, CBR, Folder or EPUB; EPUB adds a *Reading direction*), *Pack as* (a
-   file per chapter, per volume, or one for everything), *Convert to JPEG* for
-   AVIF and WebP pages, pages to skip, and *Skip existing files*. Under
-   *Advanced* are the file name template and *Show the browser window*, which
-   you rarely need: a site that needs the window opens it by itself. Packing by
-   volume adds a *Volumes* box above the chapter list. It starts empty, which
-   packs the site's volumes; a line under it offers them as chapter ranges when
-   they can be written that way. The list is grouped by volume.
+4. **Set the options** in the *Options* tab: the folder the files go to,
+   *Skip existing files* (chapters already in the folder aren't downloaded
+   again), the format (CBZ, CBR, Folder or EPUB; EPUB adds a *Reading
+   direction*) and *Pack as*: *Chapters* (a file each), *Merged* (a chapter's
+   parts in one file), *Volumes* (a file per volume) or *One file* (everything
+   together). Under *Pages*, *Convert to JPEG* ticks *AVIF* (on by default,
+   and always on for EPUB, since readers can't show it) and *WebP*, and
+   *Compress pages* saves a page as JPEG when that makes it smaller. *Skip
+   pages* drops positions from every chapter (`2`, or `-1` for the last page).
+   Under *Advanced* are the *Filename template*, the *JPEG quality* of every
+   page saved as JPEG, and *Show the browser window*, which you rarely need: a
+   site that needs the window opens it by itself.
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/06-options-dark.webp">
      <img alt="The Options tab with EPUB chosen, showing the Skip existing files switch above the format, reading direction and Pack as options" src="../assets/screenshots/06-options-light.webp">
    </picture>
 
-   When a site needs you at its browser window, an alert says so, with *Show the
-   browser window* to bring it to the front and *Dismiss* to hide the alert.
-
-   <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/09-browser-alert-dark.webp">
-     <img alt="The app's alert saying the browser needs you, with Dismiss and Show the browser window buttons" src="../assets/screenshots/09-browser-alert-light.webp">
-   </picture>
+   *Pack as → Volumes* adds a *Volumes* box above the chapter list. Left empty,
+   it packs the site's own volumes; a line under it offers them as chapter
+   ranges when they can be written that way, and the list is grouped by volume.
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/07-volumes-dark.webp">
@@ -69,6 +68,15 @@ follow these steps:
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/08-parts-dark.webp">
      <img alt="Pack as Merged: the chapter list with each chapter's parts grouped under it" src="../assets/screenshots/08-parts-light.webp">
+   </picture>
+
+   When a site's browser window needs you (a captcha or a puzzle to solve), an
+   alert says so, with *Show the browser window* to bring it to the front and
+   *Dismiss* to hide the alert.
+
+   <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/09-browser-alert-dark.webp">
+     <img alt="The app's alert saying the browser needs you, with Dismiss and Show the browser window buttons" src="../assets/screenshots/09-browser-alert-light.webp">
    </picture>
 
 5. **Press Download.** The *Activity* tab shows each chapter as it's fetched and
@@ -106,32 +114,42 @@ follow these steps:
    </picture>
 
 The app saves your options to `gui.json` in the `manga-downloader` folder of
-your user config folder (the same place as the Manga Plus secret, see the
-[command line guide](cli.md#environment-variables)), so they're still there
-the next time you open it. Files go to your Downloads folder (or your home
-folder, if there isn't one) unless you choose another folder.
+your user config folder (`~/.config` on Linux, `~/Library/Application Support`
+on macOS, `%AppData%` on Windows), so they're still there the next time you
+open it. Files go to your Downloads folder (or your home folder, if there isn't
+one) unless you choose another folder.
 
-The app uses the command line's defaults for concurrency and retries.
-Sites whose image servers limit the request rate get lower limits
-automatically, in both the app and the command line.
+The app downloads up to five chapters at once, ten pages each, and retries a
+failed page once, the command line's defaults; there's no setting for them.
+Sites whose image servers limit the request rate get lower limits on their own.
 
 ## Settings and the update check
 
+The gear icon (below the URL box on the start screen, in the header of the full
+app) or Ctrl+, / ⌘, opens Settings: the app's language (English, Español,
+Català or 日本語), whether it opens with the simple start screen, and whether it
+checks for new versions at startup.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/13-settings-dark.webp">
+  <img alt="The Settings dialog, with the app's language, the start screen and the update check" src="../assets/screenshots/13-settings-light.webp">
+</picture>
+
 When a newer release is out, a yellow *!* next to the version in the status bar
-links to it. On the Windows installer's copy, the Linux install script's copy and
-a macOS copy you can write to, it opens a dialog that updates the app in one
-click, after checking the download against the release's checksums. While the
-app's Homebrew cask is installed it keeps the link instead, since `brew upgrade`
-updates that copy.
+links to it. If the app was installed by the Windows installer or the Linux
+`install.sh`, or on macOS sits in a folder you can write to, the *!* opens a
+dialog instead that updates the app in one click, after checking the download
+against the release's checksums. The Homebrew cask's copy keeps the link, since
+`brew upgrade` updates it.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/10-update-dark.webp">
   <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="../assets/screenshots/10-update-light.webp">
 </picture>
 
-The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español, Català or 日本語) and whether the app opens with the simple start screen. The same panel turns the update check on or off. The check asks our update server for the latest release, sending the app, its version, your OS and architecture, and the app's language (with your system's language when the app follows the system). The command line sends your system's language too. If our server doesn't answer, the app asks GitHub directly instead. The server runs on Cloudflare, which sees the IP address like any web host; only a hash of it, salted with a key deleted daily, is kept, to count daily users.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/13-settings-dark.webp">
-  <img alt="The Settings dialog, with the app's language, the start screen and the update check" src="../assets/screenshots/13-settings-light.webp">
-</picture>
+The check asks our update server for the latest release, telling it the
+program, its version, your OS and architecture, and the app's language (plus
+your system's language when the app follows it). If our server doesn't answer,
+the app asks GitHub directly. The server runs on Cloudflare, which sees your IP
+address like any web host; only a hash of it, salted with a key deleted daily,
+is kept, to count daily users.

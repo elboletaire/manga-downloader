@@ -1,6 +1,10 @@
 # Command line guide
 
-Every flag and behaviour of `manga-downloader`. For installing it see the [README](../README.md#command-line).
+Every flag and behaviour of `manga-downloader`, with the [table of all
+flags](#options) at the end. For installing it see the
+[README](../README.md#installing-the-command-line-tool).
+
+## Usage
 
 ~~~bash
 manga-downloader [flags] [url] [chapters]
@@ -9,16 +13,15 @@ manga-downloader [flags] [url] [chapters]
 - `url` is the manga's **index page**, the page that lists all its chapters.
   The URL of a single chapter works too: it resolves to the whole series.
 - `chapters` is a comma-separated list of numbers and ranges, such as
-  `1,3,5-10`. If you leave it out, the tool asks whether to download every
-  chapter. The answer defaults to "no". Write `all` instead to download every
-  chapter without the question, as cron jobs and Docker runs without a
-  terminal need.
-  Chapters the site marks as locked (coins, early access or members-only) are skipped,
-  with a line saying which.
+  `1,3,5-10`, or `all` for every chapter. Leave it out and the tool asks
+  whether to download the whole series, defaulting to "no"; `all` skips the
+  question, as cron jobs and Docker runs without a terminal need.
 
 Arguments aren't positional, so `manga-downloader 1-50 [url]` works too.
+Chapters the site marks as locked (coins, early access or members-only) are
+skipped, with a line saying which.
 
-Leave the range out and it asks before downloading the whole series:
+Without a range, the question looks like this:
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="../assets/demos/prompt.gif">
@@ -54,7 +57,17 @@ suffix (`v2`, `v3`…), in no particular group order.
   <img alt="The command line downloading a series with several scanlation groups per chapter, with the group in brackets after each title and a long title cut with an ellipsis, then again with --scanlator keeping one group's releases" src="../assets/demos/groups-light.gif">
 </picture>
 
+Manga Plus publishes **one edition per language**, and their chapter lists
+differ: some list the whole series, others only a handful of chapters. A URL
+points at one edition, and `--language` downloads another one instead
+(`--language en` on a Spanish URL downloads the English edition).
+
 ## Bundling and output format
+
+`--bundle` packs every chapter you asked for into one file, with a folder per
+chapter inside, and `--format` picks what's written: CBZ (the default), CBR,
+EPUB, or `raw` for plain image folders. EPUB pages turn right to left unless
+`--reading-direction ltr` says otherwise.
 
 ~~~bash
 # all chapters in a single CBZ, one folder per chapter inside it
@@ -91,7 +104,7 @@ inside. The parentheses list the chapters in the file as runs of the site's list
 (`(1-10,13-28)` when 11 and 12 aren't in the volume, `(1,3)` when 2 failed), so
 two groupings of one volume number don't collide. Chapters 17 to 20, outside
 every volume, get one file each. The chapters argument still picks what's
-downloaded: a volume packs the chapters of it you asked for. A group can give
+downloaded: a volume holds only the chapters of it you asked for. A group can give
 its volume number with `N:`, and the groups after it count on from there:
 
 ~~~bash
@@ -154,10 +167,6 @@ is left out with a warning instead of being kept.
 > `windows-32bit-legacy`), so use `--convert-images none` there if speed
 > matters.
 
-The desktop app offers the same choices: the *AVIF* and *WebP* checkboxes, a
-*Compress pages* switch, and a *JPEG quality* field under Advanced.
-With EPUB, AVIF is always converted, so its box is ticked and can't be changed.
-
 ## Skipping pages
 
 Scanlation groups often reserve a page or two of every chapter for their own
@@ -198,12 +207,19 @@ Use `--filename-template` to change file names. It takes a
 {{.Series}} {{.Number}} - {{.Title}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
 ~~~
 
-`{{.Version}}` is a counter that's added when two files would have the same
-name, and `{{.Volume}}` is the volume number (0 when the site doesn't say);
-`{{printf "%02d" .Volume}}` pads it. A template that leaves `{{.Version}}` out
-still gets the suffix when names collide: the second file is `X v2`, the third
-`X v3`, and so on, so `{{.Series}} {{.Number}} [{{.Group}}]` never overwrites a
-release.
+`{{.Title}}` is the chapter's label: its title, or `Chapter 12` when the site
+gives none. `{{.SiteTitle}}` is the site's own title alone, empty when it gives
+none and for a volume or a bundle.
+
+`{{.Group}}` is the scanlation group that made the release (empty when the site
+doesn't say). A volume or a bundle gets its group only when all of its chapters
+were made by the same one, so mixed groups leave it empty.
+
+`{{.Version}}` counts the files that would share a name, so the second one is
+`X v2`, the third `X v3`, and so on. A template that leaves it out still gets
+the suffix when names collide, so `{{.Series}} {{.Number}} [{{.Group}}]` never
+overwrites a release. `{{.Volume}}` is the volume number (0 when the site
+doesn't say); `{{printf "%02d" .Volume}}` pads it.
 
 Volume files (`--volumes`) get their own default name while the template is
 left as is:
@@ -215,33 +231,23 @@ left as is:
 A custom template names them too, with `{{.Number}}` being the runs the volume
 holds (`1-7`, or `1-10,13-28` when it has a gap) and `{{.Title}}` `Vol. 01`.
 
-`{{.Title}}` is the chapter's label: its title, or `Chapter 12` when the site
-gives none. `{{.SiteTitle}}` is the site's own title alone, empty when it gives
-none and for a volume or a bundle.
-
 `pad` zero-pads a number's whole part and keeps its decimals: `{{pad .Number 4}}`
-is `0005` for chapter 5 and `0010.5` for 10.5. MangaDex chapters used to be
-named with a padded label; this template names per-chapter MangaDex downloads
-that way again (with `Capítulo` in place of `Chapter` for InManga), except that
-decimal chapters keep their real number (`0010.5`). Like any custom template,
-it also names `--volumes` files, and in the app it applies to every site:
+is `0005` for chapter 5 and `0010.5` for 10.5. This template, for instance,
+names chapters with a padded label, the way older versions named MangaDex
+downloads (with `Capítulo` in place of `Chapter` for InManga):
 
 ~~~
 {{.Series}} {{.Number}} - Chapter {{pad .Number 4}}{{if .SiteTitle}} {{.SiteTitle}}{{end}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
 ~~~
 
-`{{.Group}}` is the scanlation group that made the release (empty when the site
-doesn't say). A volume or a bundle gets its group only when all of its chapters
-were made by the same one, so mixed groups leave it empty.
-
 ## Skipping existing files
 
 `--skip-existing` leaves out a chapter, volume or bundle whose file is already
-in the output folder, before its pages are fetched. It checks the name the
-first try gets (without the ` v2` suffix), usually costs no request, and never
-deletes or overwrites anything: to download a broken or partial file again,
-delete it first. It assumes the template tells chapters apart: a template
-that names only the series would skip every chapter after the first. To keep a
+in the output folder, before its pages are fetched. It looks for the file's
+plain name (without a ` v2` suffix), usually without a request to the site, and
+never deletes or overwrites anything: to download a broken or partial file
+again, delete it first. It assumes the template tells chapters apart: one that
+names only the series would skip every chapter after the first. To keep a
 folder up to date, run it from cron:
 
 ~~~bash
@@ -255,9 +261,10 @@ folder up to date, run it from cron:
 
 ## Environment variables
 
-| Variable           | Description                                    |
-| ------------------ | ---------------------------------------------- |
-| `MANGAPLUS_SECRET` | Anonymous device secret to use for Manga Plus |
+| Variable                           | Description                                             |
+| ---------------------------------- | ------------------------------------------------------- |
+| `MANGAPLUS_SECRET`                 | Anonymous device secret to use for Manga Plus           |
+| `MANGA_DOWNLOADER_NO_UPDATE_CHECK` | `1` skips the update check of `version` and `--version` |
 
 **Manga Plus** answers the complete chapter list only to an app client, which
 authenticates with an anonymous device secret. manga-downloader registers one
@@ -284,10 +291,13 @@ docker run --rm -it -v "$PWD:/downloads" \
     elboletaire/manga-downloader [url] [chapters]
 ~~~
 
-Manga Plus also publishes **one edition per language**, and their chapter
-lists differ: some list the whole series, others only a handful of chapters.
-A URL points at one edition, and `--language` downloads another one instead
-(`--language en` on a Spanish URL downloads the English edition).
+`manga-downloader version` (and `--version`) prints the version and checks for
+a newer release, asking our update server with the program, its version, your
+OS and architecture, and your system's language. If the server doesn't answer,
+it asks GitHub directly. The server runs on Cloudflare, which sees your IP
+address like any web host; only a hash of it, salted with a key deleted daily,
+is kept, to count daily users. Set `MANGA_DOWNLOADER_NO_UPDATE_CHECK=1` to skip
+the check.
 
 ## Options
 
@@ -298,7 +308,7 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--volumes`           |       | One file per volume: `auto`, `parts`, `1-7/8-16`               | off            |
 | `--format`            | `-f`  | Output format: `cbz`, `cbr`, `raw` or `epub`                   | `cbz`          |
 | `--reading-direction` |       | Page turn direction for EPUB: `rtl` (manga) or `ltr`           | `rtl`          |
-| `--filename-template` | `-t`  | Template for the file names                                    | see above      |
+| `--filename-template` | `-t`  | Template for the file names                                    | [see File names](#file-names) |
 | `--language`          | `-l`  | Only download the specified language                           | site default   |
 | `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)        | `all`          |
 | `--convert-images`    |       | Formats to JPEG: `avif`, `webp` or `none`                      | `avif`         |
@@ -312,7 +322,7 @@ A URL points at one edition, and `--language` downloads another one instead
 | `--browser-visible`   |       | Always show the browser window (rarely needed)                 | off            |
 | `--version`           | `-v`  | Show version information                                       |                |
 
-Run `manga-downloader help` to list them in your terminal. `version` (and `--version`) checks for a newer release too; set `MANGA_DOWNLOADER_NO_UPDATE_CHECK=1` to skip it.
+Run `manga-downloader help` to list them in your terminal.
 
 Some sites cap the concurrency lower, because their image servers refuse
 requests that come too fast; a lower value still applies there. Pages refused
