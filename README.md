@@ -224,7 +224,8 @@ If SmartScreen shows *"Windows protected your PC"*, click **More info** →
 
 </details>
 
-On macOS, Gatekeeper blocks the unsigned binary the first time: allow it once under *System Settings → Privacy & Security* ([FAQ][faq-gatekeeper]).
+On macOS, Gatekeeper blocks the unsigned binary the first time: allow it once
+under *System Settings → Privacy & Security* ([FAQ][faq-gatekeeper]).
 
 #### Docker
 
