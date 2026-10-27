@@ -270,6 +270,9 @@ docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
 
 ## Using the desktop app - [guide](docs/app.md)
 
+Not installed yet? Get it from the [website][website], or see
+[Installation](#desktop-app).
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/01-start-dark.webp">
   <img alt="The app's start screen: the logo over an empty URL box with its Paste button, Load to its right and Settings below" src="assets/screenshots/01-start-light.webp">
@@ -290,6 +293,8 @@ Sites whose image servers limit the request rate get lower limits
 automatically, in both the app and the command line.
 
 ## Using the command line - [guide](docs/cli.md)
+
+Not installed yet? See [Installation](#command-line).
 
 ~~~bash
 manga-downloader [flags] [url] [chapters]
