@@ -110,7 +110,7 @@
     "volumesGifCaption": "O <code>--volumes auto</code> per a un fitxer per volum.",
     "skipExistingGifAlt": "Enregistrament del terminal: manga-downloader descarrega cinc capítols de Horimiya i després s'executa de nou amb --skip-existing: els cinc apareixen com a omesos i se'n descarreguen tres de nous.",
     "skipExistingGifCaption": "Torna a executar-ho amb <code>--skip-existing</code> i només es descarreguen els capítols nous.",
-    "more": "Tens totes les opcions a la <a href=\"{{repo}}#using-the-command-line\">guia d'ús</a> (en anglès), o executa <code>manga-downloader help</code>."
+    "more": "Tens totes les opcions a la <a href=\"{{repo}}/blob/master/docs/cli.md\">guia d'ús</a> (en anglès), o executa <code>manga-downloader help</code>."
   },
   "features": {
     "kicker": "Característiques",

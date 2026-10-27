@@ -110,7 +110,7 @@
     "volumesGifCaption": "または <code>--volumes auto</code> で、巻ごとに1ファイル。",
     "skipExistingGifAlt": "ターミナルの録画：manga-downloaderが『ホリミヤ』の5話をダウンロードし、続けて--skip-existingを付けて再実行している。5話はスキップと表示され、新たに3話がダウンロードされる。",
     "skipExistingGifCaption": "<code>--skip-existing</code> を付けて再実行すると、新しい話だけを取得します。",
-    "more": "すべてのフラグは<a href=\"{{repo}}#using-the-command-line\">使い方ガイド</a>にあります（英語）。または <code>manga-downloader help</code> を実行してください。"
+    "more": "すべてのフラグは<a href=\"{{repo}}/blob/master/docs/cli.md\">使い方ガイド</a>にあります（英語）。または <code>manga-downloader help</code> を実行してください。"
   },
   "features": {
     "kicker": "機能",

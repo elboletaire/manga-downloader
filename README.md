@@ -14,7 +14,7 @@
 
 ⭐ If you like this project, star it on GitHub!
 
-[Website][website] • [Features](#features) • [Installation](#installation) • [Desktop app](#using-the-desktop-app) • [Command line](#using-the-command-line) • [Supported sites](#supported-sites) • [Troubleshooting](#troubleshooting)
+[Website][website] • [Features](#features) • [Installation](#installation) • [Desktop app](#using-the-desktop-app---guide) • [Command line](#using-the-command-line---guide) • [Supported sites](#supported-sites) • [Troubleshooting](#troubleshooting)
 
 </div>
 
@@ -34,70 +34,52 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-**Desktop app**
-
-- **Paste a URL and it loads**: the series, its chapters and the languages and
-  scanlation groups it offers appear on their own.
-- **Pick what you need**: type a range such as `1-10,12`, Shift+click a span,
-  or select all, then choose the language and scanlation group the series has.
-- **Live progress**: every chapter shows up as it's fetched and packed, with a
-  summary and an *Open folder* button when it's done.
-- **Native folder picker**, and a window that follows your system's light or
-  dark theme.
-
-**Desktop app and command line**
-
 - **[553 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
-- **Chapter ranges** such as `1,3,5-10`, so you download only what's missing.
+- In the app, **paste a URL and it loads**: the series, its chapters and the
+  languages and scanlation groups it offers appear on their own.
+- **Pick what you need**: chapter ranges such as `1,3,5-10` (Shift+click or
+  *All* in the app), and the language or scanlation group you want, on sites
+  that host several versions of a chapter.
 - **Keep a folder up to date**: `--skip-existing` leaves out the chapters you
   already have, so a scheduled run only fetches the new ones.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
   show up blank on Kobo, KOReader or Calibre (WebP too, if you ask).
-- **Flexible output**: one file per chapter, one per volume (`--volumes`), or a
-  single bundled file (`--bundle`), as CBZ (the default) or CBR comics
-  (`--format cbr`), EPUB e-books (`--format epub`), or plain image folders
-  (`--format raw`), named from a template.
-- **Language and scanlation group filters** for sites that host several versions
-  of a chapter, and **skipping pages** such as credits or ads.
+- **Flexible output**: one file per chapter, per volume or for everything, as
+  CBZ, CBR, EPUB or plain image folders, named from a template.
+- **Skip pages** such as credits or ads (`--skip-pages`).
+- In the app, **live progress**: every chapter shows up as it's fetched and
+  packed, with a summary and an *Open folder* button when it's done.
+- **Sites that need a browser** (JavaScript or Cloudflare) work too: the tool
+  drives a Chromium-based browser you already have and clicks the "Verify you
+  are human" box for you.
 - **Concurrent downloads** with retries.
-- **JavaScript and Cloudflare-protected sites** are handled by driving a local
-  Chromium-based browser, which clicks "Verify you are human" checkboxes for you.
-
-**Command line**
-
-- **A single binary** with no runtime, no dependencies and no config file, plus
-  Docker images.
+- **Command line**: a single binary with no runtime, no dependencies and no
+  config file, plus Docker images.
+- **Desktop app**: native folder picker, and a window that follows your system's
+  light or dark theme.
 
 ## Installation
 
-### Desktop app
+### Installing the desktop app
 
 [![Desktop app downloads][app downloads badge]][releases]
 
 The easiest way is the [website][website], which picks the right download for
-your system. Or download the `manga-downloader-gui` asset for your system from
-the [releases page][releases]:
+your system. Or get it from the [releases page][releases]:
 
 - **Windows**: `manga-downloader-gui-<tag>-windows-amd64-installer.exe`, or
   `-windows-arm64-installer.exe` for ARM devices such as Snapdragon laptops. It
-  installs for your user alone (`%LOCALAPPDATA%\Programs\Manga Downloader`),
-  or for everyone in `C:\Program Files\Manga Downloader` if you run it as
-  administrator, and adds a Start menu shortcut. For a portable copy, use the `.zip` of the same name instead: unzip
-  it and run `manga-downloader-gui.exe`.
+  installs for your user alone (`%LOCALAPPDATA%\Programs\Manga Downloader`), or
+  for everyone (`C:\Program Files\Manga Downloader`) when run as administrator,
+  and adds a Start menu shortcut. For a portable copy, use the `.zip` of the
+  same name instead: unzip it and run `manga-downloader-gui.exe`.
 - **macOS**: `manga-downloader-gui-<tag>-darwin-universal.zip`. Unzip it and move
   `Manga Downloader.app` wherever you like. Or install it with
   [Homebrew][homebrew], which also puts `manga-downloader-gui` on your `PATH`:
 
   ~~~bash
   brew install --cask elboletaire/tap/manga-downloader-app
-  ~~~
-
-  This installs only the app. For `manga-downloader ui` too, install it together
-  with the [command line tool](#homebrew):
-
-  ~~~bash
-  brew install elboletaire/tap/manga-downloader elboletaire/tap/manga-downloader-app
   ~~~
 
   If you installed the app under its old name, `manga-downloader`, run
@@ -107,7 +89,7 @@ the [releases page][releases]:
   `-linux-arm64.tar.gz`. Extract it and run `install.sh` to add the app to
   your applications menu. It installs for your user only, into `~/.local`,
   with no root needed. Run it again to update, or with `--uninstall` to
-  remove it (with the same `XDG_DATA_HOME`, if you set one):
+  remove it (set the same `XDG_DATA_HOME`, if you used one):
 
   ~~~bash
   tar -xzf manga-downloader-gui-<tag>-linux-amd64.tar.gz
@@ -120,40 +102,25 @@ the [releases page][releases]:
   missing.
 
 > [!NOTE]
-> **macOS** doesn't sign the app, so Gatekeeper blocks its first launch. Allow it
-> under *System Settings → Privacy & Security* with **Open Anyway**. You only
-> need to do this once.
+> **macOS** doesn't sign the app, so Gatekeeper blocks its first launch: allow it
+> once under *System Settings → Privacy & Security* ([FAQ][faq-gatekeeper]).
 >
-> **Windows** needs the Microsoft Edge WebView2 runtime. Windows 11 and current
-> Windows 10 already have it; without it, the app offers to download and install it on first launch.
-> If SmartScreen shows *"Windows protected your PC"* when you run the installer
-> or the app, click **More info** → **Run anyway**: the file is only flagged
-> because it isn't signed.
+> **Windows** may show SmartScreen's *"Windows protected your PC"* for the
+> installer or the app, for the same reason: click **More info** → **Run anyway**
+> ([FAQ][faq-smartscreen]). The app also needs the Microsoft Edge WebView2
+> runtime, which Windows 11 and current Windows 10 already have; without it, the
+> app offers to install it on first launch.
 
 If the desktop app sits next to the command line tool or is on your `PATH` (the
 Homebrew cask and the Linux `install.sh` put it there), `manga-downloader ui`
 opens it. On Windows, double-clicking `manga-downloader.exe` does the same.
 
-When a newer release is out, a yellow *!* next to the version in the status bar
-links to it. On the Windows installer's copy, the Linux install script's copy and
-a macOS copy you can write to, it opens a dialog that updates the app in one
-click, after checking the download against the release's checksums. While the
-app's Homebrew cask is installed it keeps the link instead, since `brew upgrade`
-updates that copy.
+The app checks for a newer release when it starts and offers to update itself.
+Settings (the gear icon, or Ctrl+, / ⌘,) turns that off and sets the app's
+language; the [app guide](docs/app.md#settings-and-the-update-check) says what
+the check sends.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/10-update-dark.webp">
-  <img alt="The status bar with a yellow exclamation mark next to the version, linking to a newer release" src="assets/screenshots/10-update-light.webp">
-</picture>
-
-The gear icon (below the URL box on the start screen, in the header of the full app) or Ctrl+, / ⌘, opens Settings, where you pick the app's language (English, Español, Català or 日本語) and whether the app opens with the simple start screen. The same panel turns the update check on or off. The check asks our update server for the latest release, sending the app, its version, your OS and architecture, and the app's language (with your system's language when the app follows the system). The command line sends your system's language too. If our server doesn't answer, the app asks GitHub directly instead. The server runs on Cloudflare, which sees the IP address like any web host; only a hash of it, salted with a key deleted daily, is kept, to count daily users.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/13-settings-dark.webp">
-  <img alt="The Settings dialog, with the app's language, the start screen and the update check" src="assets/screenshots/13-settings-light.webp">
-</picture>
-
-### Command line
+### Installing the command line tool
 
 [![CLI downloads][cli downloads badge]][releases]
 
@@ -169,15 +136,18 @@ Homebrew doesn't quarantine the command line tool, so there's no Gatekeeper
 step on macOS. `brew upgrade manga-downloader` updates it. Completions for
 bash, zsh and fish are installed as well.
 
-This installs only the command line tool. On macOS, the
-[desktop app](#desktop-app) is a separate cask, `manga-downloader-app`. Install
-it as well to get `manga-downloader ui` working, or both at once:
+That's the command line tool alone; the [desktop app](#installing-the-desktop-app) is the
+`manga-downloader-app` cask. Install both and `manga-downloader ui` opens the
+app:
 
 ~~~bash
 brew install elboletaire/tap/manga-downloader elboletaire/tap/manga-downloader-app
 ~~~
 
 #### Prebuilt binary
+
+Builds are published for Linux, macOS and Windows on amd64 and arm64, plus
+32-bit builds for Linux and Windows (the latter named `windows-32bit-legacy`).
 
 Download the archive for your system from the [releases page][releases], extract
 it and run the binary:
@@ -188,10 +158,6 @@ it and run the binary:
 
 To verify the download, check it against `manga-downloader-<tag>-SHA256SUMS.txt`
 from the same release: `sha256sum -c --ignore-missing manga-downloader-<tag>-SHA256SUMS.txt`.
-
-Builds are published for Linux, macOS and Windows on amd64 and arm64 (Windows
-arm64 included), plus 32-bit builds for Linux and Windows. The Windows 32-bit
-build is named `windows-32bit-legacy`.
 
 To run it from any folder, move the binary to a folder in your `PATH`, such as
 `/usr/local/bin` on Linux and macOS.
@@ -210,10 +176,8 @@ manga-downloader completion zsh > "${fpath[1]}/_manga-downloader"
 <br>
 
 > [!IMPORTANT]
-> Manga Downloader is a command line tool, so run it from a terminal, as shown
-> below. Double-clicking `manga-downloader.exe` opens the desktop app when the
-> app is next to it or on your `PATH`. Without it, the window only shows the help
-> and waits for Enter.
+> This is the command line tool, so run it from a terminal as shown below:
+> double-clicking `manga-downloader.exe` only shows the help ([FAQ][faq-exe]).
 
 1. Open **PowerShell**: press the Start button, type `PowerShell` and press
    <kbd>Enter</kbd>.
@@ -249,33 +213,19 @@ it, and copy `manga-downloader.exe` to `C:\Windows\System32`. Windows asks for
 administrator permission. After that, `manga-downloader` works in any terminal.
 
 > [!WARNING]
-> This works, but it isn't the best place for the program: it needs
-> administrator rights and mixes it with Windows' own files. To update or
-> uninstall it, you have to go back to that folder and replace or delete the
-> file yourself.
+> It works, but `System32` is Windows' own folder: it needs administrator
+> rights, and updating or uninstalling means replacing or deleting the file
+> there yourself.
 
-If Windows SmartScreen shows *"Windows protected your PC"*, the binary is only
-flagged because it isn't signed. Click **More info** → **Run anyway**.
-
-</details>
+If SmartScreen shows *"Windows protected your PC"*, click **More info** →
+**Run anyway** ([why][faq-smartscreen]).
 
 </details>
 
-<details>
-<summary><b>macOS</b>: allowing an unsigned binary</summary>
-<br>
-
-The binary isn't signed, so Gatekeeper blocks it the first time you run it:
-
-1. Run `./manga-downloader` once and dismiss the warning.
-2. Open **System Settings** → **Privacy & Security**, scroll down to
-   **Security**, and click **Open Anyway** next to the *manga-downloader*
-   message.
-3. Run `./manga-downloader` again and confirm the dialog.
-
-You only need to do this once.
-
 </details>
+
+On macOS, Gatekeeper blocks the unsigned binary the first time: allow it once
+under *System Settings → Privacy & Security* ([FAQ][faq-gatekeeper]).
 
 #### Docker
 
@@ -285,13 +235,8 @@ You only need to do this once.
 docker run --rm -it -v "$PWD:/downloads" elboletaire/manga-downloader [url] [chapters]
 ~~~
 
-Files are written to the mounted `/downloads` folder. They're owned by
-`USER_ID`/`GROUP_ID`, which both default to `1000`. If your user has a
-different ID, pass it with
-`-e USER_ID=$(id -u) -e GROUP_ID=$(id -g)`.
-
-`:latest` and `:browser` follow releases. The current development version is
-`:master` (and `:master-browser`).
+Files are written to the mounted `/downloads` folder, owned by user and group
+`1000`; if yours differ, add `-e USER_ID=$(id -u) -e GROUP_ID=$(id -g)`.
 
 The default image has no browser. For sites marked with `*`, use the `:browser`
 image, which ships Chromium and a virtual display:
@@ -300,13 +245,16 @@ image, which ships Chromium and a virtual display:
 docker run --rm -it -v "$PWD:/downloads" elboletaire/manga-downloader:browser [url] [chapters]
 ~~~
 
+`:latest` and `:browser` follow releases; `:master` and `:master-browser` are
+the development version.
+
 <details>
 <summary>Showing the browser window on your own display</summary>
 <br>
 
 The `:browser` image passes Cloudflare challenges on its own. If a challenge
-needs a real person, its window opens by itself, so forward your display to see
-it on your Linux desktop. You may need to run `xhost +local:` first:
+needs a real person, the browser window opens by itself, so forward your display
+to see it on your Linux desktop. You may need to run `xhost +local:` first:
 
 ~~~bash
 docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
@@ -315,117 +263,28 @@ docker run --rm -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
 
 </details>
 
-## Using the desktop app
+## Using the desktop app - [guide](docs/app.md)
+
+Not installed yet? Get it from the [website][website], or see
+[Installation](#installing-the-desktop-app).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/01-start-dark.webp">
   <img alt="The app's start screen: the logo over an empty URL box with its Paste button, Load to its right and Settings below" src="assets/screenshots/01-start-light.webp">
 </picture>
 
-The app opens on a simple start screen: the logo, the URL box with its *Paste*
-button, *Load* and *Settings*. *Settings* → *Start screen* → *Open with the
-simple view* turns it off, so the app opens on the full window instead. Then
-follow these steps:
+Paste a URL and it loads. Pick chapters with the range box, Shift+click or
+*All*, choose the language and scanlation group when the site offers them, set
+the folder, format and packing in *Options*, then press *Download*. The
+*Activity* tab shows progress, and the summary's *Open folder* button takes you
+to the files. Files go to your Downloads folder unless you choose another, and
+your options are remembered for next time.
 
-1. **Paste the series' URL** into the box (or use its *Paste* button). The
-   series loads on its own once you paste or stop typing; *Load* or Enter
-   loads it at once. The window then turns into the full app, with the URL box
-   at the top and the chapter list below, as in the screenshot at the top of
-   this page.
-2. **Pick chapters** in the list. Type a range such as `1-10,12` and press
-   Enter (or the + in the box), Shift+click to select a span, or use *All* and
-   *None*. The arrow keys and Space work too. Locked chapters (paid or members-only) show
-   a lock and can't be selected.
-3. **Choose a language and a scanlation group** when the site offers them. The
-   selectors tell you when a series has none, and picking one reloads the
-   chapter list. Sites that support it also offer *All*.
+The [desktop app guide](docs/app.md) walks through every step and option, with screenshots.
 
-   <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/03-language-selector-dark.webp">
-     <img alt="The language selector open, with English selected" src="assets/screenshots/03-language-selector-light.webp">
-   </picture>
+## Using the command line - [guide](docs/cli.md)
 
-4. **Set the options** in the *Options* tab: where the files go, the format
-   (CBZ, CBR, Folder or EPUB; EPUB adds a *Reading direction*), *Pack as* (a
-   file per chapter, per volume, or one for everything), *Convert to JPEG* for
-   AVIF and WebP pages, pages to skip, and *Skip existing files*. Under
-   *Advanced* are the file name template and *Show the browser window*, which
-   you rarely need: a site that needs the window opens it by itself. Packing by
-   volume adds a *Volumes* box above the chapter list. It starts empty, which
-   packs the site's volumes; a line under it offers them as chapter ranges when
-   they can be written that way. The list is grouped by volume.
-
-   <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/06-options-dark.webp">
-     <img alt="The Options tab with EPUB chosen, showing the Skip existing files switch above the format, reading direction and Pack as options" src="assets/screenshots/06-options-light.webp">
-   </picture>
-
-   When a site needs you at its browser window, an alert says so, with *Show the
-   browser window* to bring it to the front and *Dismiss* to hide the alert.
-
-   <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/09-browser-alert-dark.webp">
-     <img alt="The app's alert saying the browser needs you, with Dismiss and Show the browser window buttons" src="assets/screenshots/09-browser-alert-light.webp">
-   </picture>
-
-   <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/07-volumes-dark.webp">
-     <img alt="Packing by volume: the Volumes box above the chapter list, the list grouped by volume, and the Download button naming the volumes" src="assets/screenshots/07-volumes-light.webp">
-   </picture>
-
-   *Pack as → Merged* packs a chapter's parts (19-① and 19-②) into one file named
-   after the chapter, and leaves the chapters without parts as one file each.
-
-   <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/08-parts-dark.webp">
-     <img alt="Pack as Merged: the chapter list with each chapter's parts grouped under it" src="assets/screenshots/08-parts-light.webp">
-   </picture>
-
-5. **Press Download.** The *Activity* tab shows each chapter as it's fetched and
-   packed. *Cancel* lets the chapters already downloading finish, and starts no
-   new ones. A log is one click away in the status bar.
-
-   <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/04-downloading-dark.webp">
-     <img alt="A download in progress" src="assets/screenshots/04-downloading-light.webp">
-   </picture>
-
-6. **When it's done**, the summary shows what was downloaded. Press
-   *Open folder* to go straight to the files.
-
-   <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/05-done-dark.webp">
-     <img alt="The finished download summary" src="assets/screenshots/05-done-light.webp">
-   </picture>
-
-   If a chapter fails, the summary names it and says why; the other chapters
-   are still saved.
-
-   <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/11-failed-dark.webp">
-     <img alt="A finished download where one chapter failed, with the reason" src="assets/screenshots/11-failed-light.webp">
-   </picture>
-
-   With *Skip existing files*, a chapter whose file is already in the folder is
-   left out before anything is fetched: it shows as skipped in the Activity tab,
-   and the summary says how many were there.
-
-   <picture>
-     <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/14-skip-existing-dark.webp">
-     <img alt="A download in progress where the first two chapters were already in the folder, listed as skipped, while the others download" src="assets/screenshots/14-skip-existing-light.webp">
-   </picture>
-
-The app saves your options to `gui.json` in the `manga-downloader` folder of
-your user config folder (the same place as the Manga Plus secret, see
-[below](#environment-variables)), so they're still there the next time you open
-it. Files go to your Downloads folder (or your home folder, if there isn't one)
-unless you choose another folder.
-
-The app uses the command line's defaults for concurrency and retries.
-Sites whose image servers limit the request rate get lower limits
-automatically, in both the app and the command line.
-
-## Using the command line
+Not installed yet? See [Installation](#installing-the-command-line-tool).
 
 ~~~bash
 manga-downloader [flags] [url] [chapters]
@@ -433,13 +292,8 @@ manga-downloader [flags] [url] [chapters]
 
 - `url` is the manga's **index page**, the page that lists all its chapters.
   The URL of a single chapter works too: it resolves to the whole series.
-- `chapters` is a comma-separated list of numbers and ranges, such as
-  `1,3,5-10`. If you leave it out, the tool asks whether to download every
-  chapter. The answer defaults to "no". Write `all` instead to download every
-  chapter without the question, as cron jobs and Docker runs without a
-  terminal need.
-  Chapters the site marks as locked (coins, early access or members-only) are skipped,
-  with a line saying which.
+- `chapters` is a list of numbers and ranges, such as `1,3,5-10`, or `all`.
+  Leave it out and the tool asks before downloading the whole series.
 
 Arguments aren't positional, so `manga-downloader 1-50 [url]` works too.
 
@@ -448,304 +302,25 @@ Arguments aren't positional, so `manga-downloader 1-50 [url]` works too.
   <img alt="The command line downloading eight chapters at once, with the range typed before the URL, each chapter with its own progress bar" src="assets/demos/download-light.gif">
 </picture>
 
-Leave the range out and it asks before downloading the whole series:
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/prompt.gif">
-  <img alt="The command line asking whether to download every chapter of a series, then downloading them" src="assets/demos/prompt-light.gif">
-</picture>
-
-### Language and scanlation group
-
-Some sites, such as MangaDex, list each chapter once per language. Use
-`--language` to download only one of them:
+A few of its flags:
 
 ~~~bash
-manga-downloader --language es https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f 1-10
-~~~
-
-On sites that list several languages, `--language all` downloads every one of them.
-
-Some sites host several scanlation groups' versions of the same chapter. By
-default every release is kept, and each one is told apart by its group: the
-chapter list shows the group, and `{{.Group}}` in `--filename-template` names
-it. Use `--scanlator <name>` to keep only one group's releases (the name is
-matched ignoring case; an unknown one lists the groups the series has), or
-`--scanlator all` for every group, which is the same as the default. Releases
-that name no group are left out whenever a group is selected.
-
-The default file name adds the release's group in brackets when it names one
-(`One Piece 5 - Chapter 5 [Alpha]`), so each release keeps its own file. A
-template without `{{.Group}}` only tells the releases apart by a version
-suffix (`v2`, `v3`…), in no particular group order.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/groups.gif">
-  <img alt="The command line downloading a series with several scanlation groups per chapter, with the group in brackets after each title and a long title cut with an ellipsis, then again with --scanlator keeping one group's releases" src="assets/demos/groups-light.gif">
-</picture>
-
-### Bundling and output format
-
-~~~bash
-# all chapters in a single CBZ, one folder per chapter inside it
+# one language, where the site lists several
+manga-downloader --language es [url] 1-10
+# one file per volume, as the site files them
+manga-downloader --volumes auto [url] 1-20
+# everything in a single file
 manga-downloader --bundle [url] 1-8
-
-# CBR archives instead of CBZ files, for readers that prefer RAR
-manga-downloader --format cbr [url] 1-8
-
-# plain image folders instead of CBZ files
-manga-downloader --format raw [url] 1-8
-
-# EPUB e-books, read left to right (western comics)
-manga-downloader --format epub --reading-direction ltr [url] 1-8
+# EPUB instead of CBZ
+manga-downloader --format epub [url] 1-8
+# only the chapters not in the folder yet, no questions asked
+manga-downloader --skip-existing -o ~/Manga/Series [url] all
 ~~~
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/bundle.gif">
-  <img alt="The same chapters downloaded with --bundle, packed into a single CBZ file" src="assets/demos/bundle-light.gif">
-</picture>
-
-### Volumes
-
-`--volumes` packs one file per volume. `auto` uses the volumes the site files
-chapters under (not every site lists them); otherwise give the chapters of each
-volume, separated by slashes, in the chapter range syntax:
-
-~~~bash
-manga-downloader --volumes 1-7/8-16 [url] 1-20
-~~~
-
-That writes `Series Vol. 01 (1-7).cbz` and `Series Vol. 02 (8-16).cbz` (`.cbr`
-with `--format cbr`, `.epub` with `--format epub`), with a folder per chapter
-inside. The parentheses list the chapters in the file as runs of the site's list
-(`(1-10,13-28)` when 11 and 12 aren't in the volume, `(1,3)` when 2 failed), so
-two groupings of one volume number don't collide. Chapters 17 to 20, outside
-every volume, get one file each. The chapters argument still picks what's
-downloaded: a volume packs the chapters of it you asked for. A group can give
-its volume number with `N:`, and the groups after it count on from there:
-
-~~~bash
-manga-downloader --volumes 16:112-114/115-118 [url] 112-118
-~~~
-
-That's volumes 16 and 17. An empty group also skips a number (`1-7//20-30` has
-no volume 2), and `--volumes` can't be combined with `--bundle`.
-
-`parts` packs the parts of a chapter (the releases sharing its number, group and language,
-like 19-① and 19-②) into one file named after the chapter, with a folder per part:
-
-~~~bash
-manga-downloader --volumes parts [url] 18-19
-~~~
-
-That writes `Series 19 - Chapter 19 [Group].cbz` next to the chapters without parts.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/volumes.gif">
-  <img alt="The command line downloading thirteen chapters with --volumes auto, packed into one CBZ file per volume" src="assets/demos/volumes-light.gif">
-</picture>
-
-### Image conversion
-
-Most e-readers can't display AVIF, so a chapter with AVIF pages looks empty on
-the device even though the download succeeded. **AVIF pages are converted to
-JPEG by default.** WebP renders fine in phone apps but is unreliable on e-ink,
-so converting it is opt-in:
-
-~~~bash
-manga-downloader --convert-images avif,webp [url] 1-10   # strict e-ink setup
-manga-downloader --convert-images none [url] 1-10        # keep pages untouched
-~~~
-
-JPEG, PNG and GIF pages are never re-encoded by `--convert-images`. If a page
-fails to convert, it's kept as it was and a warning is shown, so the rest of the
-chapter isn't lost.
-
-`--compress` is for file size instead: it re-encodes JPEG, PNG, WebP and AVIF
-pages to JPEG, but only when the JPEG comes out smaller, and keeps the original
-otherwise (flat artwork is often smaller as a PNG). GIF pages are left alone,
-since re-encoding one keeps only its first frame. It works with any
-`--convert-images` value, and doesn't resize pages. A format `--convert-images`
-asks for is always converted, whatever the size.
-
-`--jpeg-quality` (1-100, default 90) sets the quality of every page written as
-JPEG, by `--convert-images` and `--compress` alike. JPEG pages only shrink
-noticeably at a lower quality, so `--compress --jpeg-quality 70` is the setting
-to try on a JPEG-heavy site; at 90 most of them come out bigger and are kept.
-
-EPUB is the exception, since readers can't show AVIF at all: AVIF pages are
-always converted for it, even with `--convert-images none`. A page an EPUB can't
-show (anything but JPEG, PNG, GIF or WebP, such as an AVIF that failed to convert)
-is left out with a warning instead of being kept.
-
-> [!NOTE]
-> The AVIF decoder is embedded as WebAssembly, so you don't need to install any
-> system library. It's slower on the 32-bit builds (`linux-386` and
-> `windows-32bit-legacy`), so use `--convert-images none` there if speed
-> matters.
-
-The desktop app offers the same choices: the *AVIF* and *WebP* checkboxes, a
-*Compress pages* switch, and a *JPEG quality* field under Advanced.
-With EPUB, AVIF is always converted, so its box is ticked and can't be changed.
-
-### Skipping pages
-
-Scanlation groups often reserve a page or two of every chapter for their own
-credits or ads. `--skip-pages` drops them, using the same range syntax as the
-chapter argument, applied to each chapter's pages:
-
-~~~bash
-manga-downloader --skip-pages 2 [url] 1100-1110       # just the credits page
-manga-downloader --skip-pages 2,5-7 [url] 1100-1110   # several at once
-~~~
-
-Pages count from 1, and **negative positions count backwards from the end of
-the chapter**: `-1` is its last page, `-3--1` the last three. They're resolved
-per chapter, so `-1` means each chapter's own last page however long it is:
-
-~~~bash
-manga-downloader --skip-pages 2,-1 [url] 1100-1110    # one at each end
-~~~
-
-The pages are dropped **before** they're downloaded, so they cost no time or
-bandwidth, and a page that's broken on the site's end can't fail the chapter
-around it — which is the only way to download a chapter whose page 404s.
-
-The archive is still numbered `000`, `001`, … in order, with no holes left by
-the skipped pages. A position the chapter doesn't have is ignored.
-
-> [!TIP]
-> Both `--skip-pages -1` and `--skip-pages=-1` work: the value right after the
-> flag is taken verbatim, dash and all. Use the `=` form if a shell or a
-> wrapper script trips on the leading dash.
-
-### File names
-
-Use `--filename-template` to change file names. It takes a
-[Go text/template][go template] string, and the default is:
-
-~~~
-{{.Series}} {{.Number}} - {{.Title}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
-~~~
-
-`{{.Version}}` is a counter that's added when two files would have the same
-name, and `{{.Volume}}` is the volume number (0 when the site doesn't say);
-`{{printf "%02d" .Volume}}` pads it. A template that leaves `{{.Version}}` out
-still gets the suffix when names collide: the second file is `X v2`, the third
-`X v3`, and so on, so `{{.Series}} {{.Number}} [{{.Group}}]` never overwrites a
-release.
-
-`--skip-existing` leaves out a chapter, volume or bundle whose file is already
-in the output folder, before its pages are fetched. It checks the name the
-first try gets (without the ` v2` suffix), usually costs no request, and never
-deletes or overwrites anything: to download a broken or partial file again,
-delete it first. It assumes the template tells chapters apart: a template
-that names only the series would skip every chapter after the first. To keep a
-folder up to date, run it from cron:
-
-~~~bash
-0 6 * * * manga-downloader --skip-existing -o ~/Manga/Series "<series url>" all
-~~~
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/demos/skip-existing.gif">
-  <img alt="The command line downloading five chapters, then the same series with --skip-existing: the five are listed as skipped and three new ones are downloaded" src="assets/demos/skip-existing-light.gif">
-</picture>
-
-Volume files (`--volumes`) get their own default name while the template is
-left as is:
-
-~~~
-{{.Series}} Vol. {{printf "%02d" .Volume}} ({{.Number}}){{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
-~~~
-
-A custom template names them too, with `{{.Number}}` being the runs the volume
-holds (`1-7`, or `1-10,13-28` when it has a gap) and `{{.Title}}` `Vol. 01`.
-
-`{{.Title}}` is the chapter's label: its title, or `Chapter 12` when the site
-gives none. `{{.SiteTitle}}` is the site's own title alone, empty when it gives
-none and for a volume or a bundle.
-
-`pad` zero-pads a number's whole part and keeps its decimals: `{{pad .Number 4}}`
-is `0005` for chapter 5 and `0010.5` for 10.5. MangaDex chapters used to be
-named with a padded label; this template names per-chapter MangaDex downloads
-that way again (with `Capítulo` in place of `Chapter` for InManga), except that
-decimal chapters keep their real number (`0010.5`). Like any custom template,
-it also names `--volumes` files, and in the app it applies to every site:
-
-~~~
-{{.Series}} {{.Number}} - Chapter {{pad .Number 4}}{{if .SiteTitle}} {{.SiteTitle}}{{end}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
-~~~
-
-`{{.Group}}` is the scanlation group that made the release (empty when the site
-doesn't say). A volume or a bundle gets its group only when all of its chapters
-were made by the same one, so mixed groups leave it empty.
-
-### Environment variables
-
-| Variable           | Description                                    |
-| ------------------ | ---------------------------------------------- |
-| `MANGAPLUS_SECRET` | Anonymous device secret to use for Manga Plus |
-
-**Manga Plus** answers the complete chapter list only to an app client, which
-authenticates with an anonymous device secret. manga-downloader registers one
-on first use and caches it in `manga-downloader/mangaplus-secret` inside your
-user config folder (`$XDG_CONFIG_HOME` or `~/.config` on Linux,
-`~/Library/Application Support` on macOS, `%AppData%` on Windows): no account is
-ever needed. Secrets are 32 lowercase hexadecimal characters, and anything that
-isn't one is treated as absent — so exporting a malformed `MANGAPLUS_SECRET`,
-or deleting the cached file, makes the next run register a fresh device, as
-does a cached secret the API stops accepting. Export a valid
-`MANGAPLUS_SECRET` to reuse a secret registered elsewhere, such as the one of a
-device with your Manga Plus subscription.
-
-In **Docker**, the cached secret lives inside the container and is lost with
-it, so every run registers a new device. To keep one, either pass it with
-`-e MANGAPLUS_SECRET=...`, or mount your own config folder so the container
-shares the secret of your local install (create the folder first, or Docker
-creates it owned by root):
-
-~~~bash
-mkdir -p ~/.config/manga-downloader
-docker run --rm -it -v "$PWD:/downloads" \
-    -v ~/.config/manga-downloader:/home/manga/.config/manga-downloader \
-    elboletaire/manga-downloader [url] [chapters]
-~~~
-
-Manga Plus also publishes **one edition per language**, and their chapter
-lists differ: some list the whole series, others only a handful of chapters.
-A URL points at one edition, and `--language` downloads another one instead
-(`--language en` on a Spanish URL downloads the English edition).
-
-### Options
-
-| Flag                  | Short | Description                                                    | Default        |
-| --------------------- | ----- | -------------------------------------------------------------- | -------------- |
-| `--output-dir`        | `-o`  | Folder to write the downloaded files to                        | current folder |
-| `--bundle`            | `-b`  | Bundle all chapters into a single file                         | off            |
-| `--volumes`           |       | One file per volume: `auto`, `parts`, `1-7/8-16`               | off            |
-| `--format`            | `-f`  | Output format: `cbz`, `cbr`, `raw` or `epub`                   | `cbz`          |
-| `--reading-direction` |       | Page turn direction for EPUB: `rtl` (manga) or `ltr`           | `rtl`          |
-| `--filename-template` | `-t`  | Template for the file names                                    | see above      |
-| `--language`          | `-l`  | Only download the specified language                           | site default   |
-| `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)        | `all`          |
-| `--convert-images`    |       | Formats to JPEG: `avif`, `webp` or `none`                      | `avif`         |
-| `--compress`          |       | Re-encode pages to JPEG when that's smaller (not GIF)          | off            |
-| `--jpeg-quality`      |       | JPEG quality of re-encoded pages (1-100); lower shrinks JPEG pages more | `90`           |
-| `--skip-pages`        |       | Pages to exclude from every chapter (`-1` is the last)         | none           |
-| `--skip-existing`     |       | Skip chapters, volumes or bundles already in the output folder | off            |
-| `--concurrency`       | `-c`  | Number of chapters downloaded at once (max 5)                  | 5              |
-| `--concurrency-pages` | `-C`  | Number of pages downloaded at once per chapter (max 10)        | 10             |
-| `--retry`             | `-r`  | Retries per failed page (max 3, `0` disables retrying)         | 1              |
-| `--browser-visible`   |       | Always show the browser window (rarely needed)                 | off            |
-| `--version`           | `-v`  | Show version information                                       |                |
-
-Run `manga-downloader help` to list them in your terminal. `version` (and `--version`) checks for a newer release too; set `MANGA_DOWNLOADER_NO_UPDATE_CHECK=1` to skip it.
-
-Some sites cap the concurrency lower, because their image servers refuse
-requests that come too fast; a lower value still applies there. Pages refused
-for coming too fast (a 429) are retried after the wait the server asks for, up
-to a minute.
+`manga-downloader help` lists every flag; the [command line guide](docs/cli.md)
+explains them: languages and scanlation groups, bundles and volumes, image
+conversion, skipping pages, skipping existing files, file name templates and
+environment variables.
 
 ## Supported sites
 
@@ -1416,5 +991,4 @@ conventions.
 [faq-unsupported]: https://mangadownloader.cat/#faq-unsupported
 [homebrew]: https://brew.sh
 [issues]: https://github.com/elboletaire/manga-downloader/issues
-[go template]: https://pkg.go.dev/text/template
 [docker hub]: https://hub.docker.com/r/elboletaire/manga-downloader

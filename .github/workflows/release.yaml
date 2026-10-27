@@ -39,7 +39,7 @@ jobs:
         binary_name: "manga-downloader"
         # empty (the default name) for every target but windows/386, see the matrix
         asset_name: ${{ matrix.asset_name }}
-        extra_files: LICENSE README.md
+        extra_files: LICENSE README.md docs
         # the makefile holds the build flags (tags, -trimpath, ldflags). The
         # action runs make with GOOS/GOARCH set, ignores build_flags/ldflags,
         # and packs ./manga-downloader(.exe), which build/release writes.

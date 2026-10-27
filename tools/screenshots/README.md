@@ -1,6 +1,6 @@
 # Desktop-app screenshots
 
-What took the screenshots in `assets/screenshots/` (WebP, for the README) and
+What took the screenshots in `assets/screenshots/` (WebP, for the README and `docs/`) and
 the website's WebPs, for #248.
 
 ## How they were taken
