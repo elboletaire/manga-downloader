@@ -830,7 +830,7 @@ grabber/leercapitulo:
 	go run . https://www.leercapitulo.co/manga/0cj9hhn6di/kingdom/ 883
 
 grabber/lelscans:
-	go run . https://lelscans.net/lecture-en-ligne-one-piece 1100
+	go run . https://lelscan.net/lecture-en-ligne-one-piece 1100
 
 grabber/guya:
 	go run . https://guya.moe/read/manga/Kaguya-Wants-To-Be-Confessed-To/ 281

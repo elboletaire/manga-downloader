@@ -15,7 +15,7 @@ import (
 func lelScansReaderPage(chapter string, page, pages int) string {
 	var pager strings.Builder
 	for n := 1; n <= pages; n++ {
-		fmt.Fprintf(&pager, `<a href="https://lelscans.net/scan-one-piece/%s/%d">%d</a>`, chapter, n, n)
+		fmt.Fprintf(&pager, `<a href="https://lelscan.net/scan-one-piece/%s/%d">%d</a>`, chapter, n, n)
 	}
 	return fmt.Sprintf(`<html><body><div id="navigation">%s</div>
 		<div id="image"><a href="/scan-one-piece/%s/%d"><img src="/mangas/one-piece/%s/%02d.jpg?v=1"></a></div>
@@ -24,10 +24,10 @@ func lelScansReaderPage(chapter string, page, pages int) string {
 
 func TestLelScansTest(t *testing.T) {
 	cases := map[string]bool{
-		"https://lelscans.net/lecture-en-ligne-one-piece": true,
-		"https://www.lelscans.net/scan-one-piece/1100":    true,
-		"https://lelscanfr.com/manga/one-piece":           false,
-		"https://example.com/lecture-en-ligne-one-piece":  false,
+		"https://lelscan.net/lecture-en-ligne-one-piece": true,
+		"https://www.lelscan.net/scan-one-piece/1100":    true,
+		"https://lelscanfr.com/manga/one-piece":          false,
+		"https://example.com/lecture-en-ligne-one-piece": false,
 	}
 	for url, want := range cases {
 		got, err := NewLelScans(&Grabber{URL: url}).Test()
@@ -42,9 +42,9 @@ func TestLelScansTest(t *testing.T) {
 
 func TestLelScansFetchChapters(t *testing.T) {
 	series := `<html><body><h1>Lecture en ligne One Piece scan</h1>
-		<select><option value="https://lelscans.net/scan-one-piece/1195" selected>1195</option>
-		<option value="https://lelscans.net/scan-one-piece/686.5">686.5</option>
-		<option value="https://lelscans.net/scan-one-piece/680">680</option></select>
+		<select><option value="https://lelscan.net/scan-one-piece/1195" selected>1195</option>
+		<option value="https://lelscan.net/scan-one-piece/686.5">686.5</option>
+		<option value="https://lelscan.net/scan-one-piece/680">680</option></select>
 		<select></select></body></html>`
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/lecture-en-ligne-one-piece" {
@@ -104,8 +104,8 @@ func TestLelScansFetchChapter(t *testing.T) {
 
 func TestLelScansResolveSeriesURL(t *testing.T) {
 	reader := `<html><body><div itemscope>
-		<a href="https://lelscans.net/index.php" itemprop="url"><span>Lelscan</span></a>
-		<a href="https://lelscans.net/lecture-en-ligne-one-piece" itemprop="url"><span>One Piece</span></a>
+		<a href="https://lelscan.net/index.php" itemprop="url"><span>Lelscan</span></a>
+		<a href="https://lelscan.net/lecture-en-ligne-one-piece" itemprop="url"><span>One Piece</span></a>
 		</div></body></html>`
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(reader))
@@ -116,7 +116,7 @@ func TestLelScansResolveSeriesURL(t *testing.T) {
 	if err := m.resolveSeriesURL(); err != nil {
 		t.Fatalf("resolveSeriesURL() error = %v", err)
 	}
-	if want := "https://lelscans.net/lecture-en-ligne-one-piece"; m.URL != want {
+	if want := "https://lelscan.net/lecture-en-ligne-one-piece"; m.URL != want {
 		t.Errorf("resolveSeriesURL() URL = %q, want %q", m.URL, want)
 	}
 }

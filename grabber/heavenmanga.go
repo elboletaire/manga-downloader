@@ -22,7 +22,7 @@ type HeavenManga struct {
 }
 
 // heavenMangaSlugRe captures the slug of a series URL (/manga/{slug}, with an
-// optional numeric suffix). Reader URLs (/manga/leer/{id}) match too, see heavenMangaSlug
+// optional numeric suffix). Reader URLs (/manga/ver/{id}) match too, see heavenMangaSlug
 var heavenMangaSlugRe = regexp.MustCompile(`^https?://[^/]+/manga/([^/?#]+)(?:/\d+)?/?(?:[?#].*)?$`)
 
 // heavenMangaPageRe matches each page of the reader, which the server ships
@@ -43,10 +43,10 @@ type HeavenMangaChapter struct {
 }
 
 // heavenMangaSlug returns the series slug of a series or reader URL, "" for
-// anything else. The reader lives under /manga/leer/, which is no series.
+// anything else. The reader lives under /manga/ver/ (was /manga/leer/), which is no series.
 func heavenMangaSlug(rawURL string) string {
 	match := heavenMangaSlugRe.FindStringSubmatch(rawURL)
-	if len(match) < 2 || match[1] == "leer" {
+	if len(match) < 2 || match[1] == "ver" || match[1] == "leer" {
 		return ""
 	}
 	return match[1]
@@ -171,7 +171,7 @@ func (m *HeavenManga) FetchChapters() (chapters Filterables, errs []error) {
 				ID:     id,
 				Label:  Label{Style: LabelNumbered},
 			},
-			m.BaseUrl() + "/manga/leer/" + id,
+			m.BaseUrl() + "/manga/ver/" + id,
 		}
 		if group := sanitizeTitle(doc.Find("span.greenSpan").Text()); group != "" && group != heavenMangaNoGroup {
 			chapter.SetGroups(group)

@@ -12,7 +12,7 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// LelScans is a grabber for lelscans.net (French, a small custom reader). The
+// LelScans is a grabber for lelscan.net (French, a small custom reader). The
 // series page lists every chapter in a dropdown, and the reader shows one page
 // per URL (/scan-{slug}/{chapter}/{page}), so each page is fetched for its image.
 type LelScans struct {
@@ -32,13 +32,13 @@ type LelScansChapter struct {
 	URL string
 }
 
-// Test returns true if the URL is a lelscans.net URL
+// Test returns true if the URL is a lelscan.net URL
 func (m *LelScans) Test() (bool, error) {
 	u, err := url.Parse(m.URL)
 	if err != nil {
 		return false, err
 	}
-	return strings.TrimPrefix(u.Hostname(), "www.") == "lelscans.net", nil
+	return strings.TrimPrefix(u.Hostname(), "www.") == "lelscan.net", nil
 }
 
 // resolveSeriesURL turns a reader URL into its series URL, read from the

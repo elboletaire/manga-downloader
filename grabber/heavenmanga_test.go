@@ -13,7 +13,7 @@ func TestHeavenMangaTest(t *testing.T) {
 	cases := map[string]bool{
 		"https://heavenmanga.com/manga/black-clover":     true,
 		"https://www.heavenmanga.com/manga/black-clover": true,
-		"https://heavenmanga.com/manga/leer/633695":      true,
+		"https://heavenmanga.com/manga/ver/633695":       true,
 		"https://example.com/manga/black-clover":         false,
 	}
 	for url, want := range cases {
@@ -37,6 +37,7 @@ func TestHeavenMangaSlug(t *testing.T) {
 		{"https://heavenmanga.com/manga/cambiarias-tu-novia/34", "cambiarias-tu-novia"},
 		{"https://heavenmanga.com/manga/black-clover?x=1", "black-clover"},
 		// reader pages are not series
+		{"https://heavenmanga.com/manga/ver/633695", ""},
 		{"https://heavenmanga.com/manga/leer/633695", ""},
 		{"https://heavenmanga.com/adulto", ""},
 	}
@@ -82,7 +83,7 @@ func heavenMangaTestServer(t *testing.T, rows []heavenMangaRow, readers map[stri
 // chapter's number, the reader link and the uploader's label
 func heavenMangaRowHTML(number, label string) string {
 	return `<div class="panel panel-default c_panel"><h3 class="h-inherit"> ` + number + ` </h3>` +
-		`<a href="https://heavenmanga.com/manga/leer/1"><i>Leer</i></a>` +
+		`<a href="https://heavenmanga.com/manga/ver/1"><i>Ver</i></a>` +
 		`<span class="pull-right greenSpan">` + label + `</span></div>`
 }
 
@@ -120,7 +121,7 @@ func TestHeavenMangaFetchChapters(t *testing.T) {
 			t.Errorf("chapter %d = {ID %q, number %v, group %q}, want {%q, %v, %q}",
 				i, c.ID, c.GetNumber(), c.Group, w.id, w.number, w.group)
 		}
-		if c.URL != srv.URL+"/manga/leer/"+w.id {
+		if c.URL != srv.URL+"/manga/ver/"+w.id {
 			t.Errorf("chapter %d URL = %q", i, c.URL)
 		}
 	}
@@ -131,11 +132,11 @@ func TestHeavenMangaFetchChapter(t *testing.T) {
 	reader := `<script>$('#lector').konekomangareader('setup',{'pages': 2,
 		"pages":[{"npage": 1, "imgURL": "https:\/\/blogger.example\/img\/a\/s16000\/0001.webp"},` +
 		`{"npage": 2, "imgURL": "https:\/\/blogger.example\/img\/b\/s16000\/0002.webp"}]});</script>`
-	srv := heavenMangaTestServer(t, nil, map[string]string{"/manga/leer/10": reader})
+	srv := heavenMangaTestServer(t, nil, map[string]string{"/manga/ver/10": reader})
 
 	listed := &HeavenMangaChapter{
 		Chapter: Chapter{Number: 2, Title: "Chapter 2", ID: "10"},
-		URL:     srv.URL + "/manga/leer/10",
+		URL:     srv.URL + "/manga/ver/10",
 	}
 	listed.SetGroups("Ronin Fansub")
 
