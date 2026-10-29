@@ -43,7 +43,7 @@ type HeavenMangaChapter struct {
 }
 
 // heavenMangaSlug returns the series slug of a series or reader URL, "" for
-// anything else. The reader lives under /manga/ver/ (was /manga/leer/), which is no series.
+// anything else. The reader lives under /manga/ver/, which is no series.
 func heavenMangaSlug(rawURL string) string {
 	match := heavenMangaSlugRe.FindStringSubmatch(rawURL)
 	if len(match) < 2 || match[1] == "ver" || match[1] == "leer" {

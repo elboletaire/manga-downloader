@@ -396,7 +396,7 @@ environment variables.
 | [comic-days.com](https://comic-days.com) | Japanese, Comic DAYS (GigaViewer) | 2026-10-29 |
 | [comic-earthstar.com](https://comic-earthstar.com) | Japanese, Comic Earth Star (GigaViewer) | 2026-10-22 |
 | [comic-gardo.com](https://comic-gardo.com) | Japanese, Comic Gardo (GigaViewer) | 2026-10-29 |
-| [comic-growl.com](https://comic-growl.com) | Japanese, Comic Growl (Comici) | ❌ failing since 2026-10-29 (checked 2026-10-29) |
+| [comic-growl.com](https://comic-growl.com) | Japanese, Comic Growl (Comici) | 2026-10-22 |
 | [comic-ogyaaa.com](https://comic-ogyaaa.com) | Japanese, Comic Ogyaaa (GigaViewer) | 2026-10-22 |
 | [comic-room-base.com](https://comic-room-base.com) | Japanese (Comici) | 2026-10-22 |
 | [comic-ryu.jp](https://comic-ryu.jp) | Japanese, Comic Ryu (Comici) | ❌ failing since 2026-10-22 (checked 2026-10-22) |
@@ -559,8 +559,8 @@ environment variables.
 | [leitor.borutoexplorer.com.br](https://leitor.borutoexplorer.com.br) | Portuguese | 2026-10-22 |
 | [leitor.kamisama.com.br](https://leitor.kamisama.com.br) | Portuguese | 2026-10-19 |
 | [lelmanga.com](https://www.lelmanga.com) | French | 2026-10-29 |
-| [lelscanfr.com](https://www.lelscanfr.com) | French | 2026-10-29 |
 | [lelscan.net](https://lelscan.net) | French | 2026-10-29 |
+| [lelscanfr.com](https://www.lelscanfr.com) | French | 2026-10-29 |
 | [lepoytl.my.id](https://www.lepoytl.my.id) | Indonesian | 2026-10-29 |
 | [ler999.blogspot.com](https://ler999.blogspot.com) | Portuguese | 2026-10-19 |
 | [lhtranslation.net](https://lhtranslation.net) | LHTranslation | 2026-10-26 |
