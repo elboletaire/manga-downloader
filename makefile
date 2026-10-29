@@ -1686,7 +1686,7 @@ grabber/manhuahot:
 grabber/manhuanext:
 	go run . https://manhuanext.com/manga/the-ultimate-prodigy/ 8
 grabber/manhwaonlinees:
-	go run . https://manhwa-online.com/manga/dear-00-3/ 16
+	go run . https://manhwa-online.com/manga/dear-00-4/ 16
 grabber/manhwaclub:
 	go run . https://manhwaclub.net/manga/soeun-04/ 76
 grabber/manhwanex:
