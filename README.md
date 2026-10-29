@@ -422,7 +422,7 @@ environment variables.
 | [deatte5.com](https://www.deatte5.com) | English | 2026-10-26 |
 | [decadencescans.com](https://reader.decadencescans.com) | Decadence Scans, slow image host | 2026-10-22 |
 | [deathtollscans.net](https://reader.deathtollscans.net) |  | 2026-10-22 |
-| [demonicscans.org](https://demonicscans.org) | MangaDemon / Demonic Scans | 2026-10-22 |
+| [demonicscans.org](https://demonicscans.org) | MangaDemon / Demonic Scans | 2026-10-29 |
 | [demonslayermanga.us.com](https://demonslayermanga.us.com) | English, single series, use a chapter URL | 2026-10-22 |
 | [diamondfansub.com](https://diamondfansub.com) | Turkish | 2026-10-26 |
 | [divascans.org](https://divascans.org) | English, locked chapters skipped | 2026-10-22 |
@@ -538,7 +538,7 @@ environment variables.
 | [komikdewasa.art](https://komikdewasa.art) | Indonesian, mostly NSFW | 2026-10-29 |
 | [komikdewasa.mom](https://komikdewasa.mom) | Indonesian, mostly NSFW | 2026-10-26 |
 | [komikindo.ch](https://komikindo.ch) |  | 2026-10-29 |
-| [komikmanga.com](https://komikmanga.com) | MangaReader, English | ❌ failing since 2026-10-29 (checked 2026-10-29) |
+| [komikmanga.com](https://komikmanga.com) | MangaReader, English | 2026-10-29 |
 | [komikmu.top](https://komikmu.top) | Indonesian | 2026-10-29 |
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-29 |
 | [komiktap.info](https://komiktap.info) | Indonesian, mostly NSFW | 2026-10-26 |
@@ -599,9 +599,9 @@ environment variables.
 | [mangadenizi.net](https://www.mangadenizi.net) |  | 2026-10-19 |
 | [mangadex.org](https://mangadex.org) | MangaDex | 2026-10-19 |
 | [mangadistrict.com](https://mangadistrict.com) | English, mostly NSFW | 2026-10-19 |
-| [mangadna.com](https://mangadna.com) | English, mature | 2026-10-26 |
+| [mangadna.com](https://mangadna.com) | English, mature | 2026-10-29 |
 | [mangaeclipse.com](https://mangaeclipse.com) | Manga Eclipse | 2026-10-19 |
-| [mangafire.to](https://mangafire.to) \* |  | 2026-10-15 |
+| [mangafire.to](https://mangafire.to) \* |  | 2026-10-29 |
 | [mangaforfree.com](https://mangaforfree.com) | English | 2026-10-19 |
 | [mangaforfree.net](https://mangaforfree.net) | multilingual, mostly NSFW | 2026-10-19 |
 | [mangafox.fun](https://mangafox.fun) | MangaFox, English | 2026-10-26 |
@@ -609,7 +609,7 @@ environment variables.
 | [mangahere.cc](https://www.mangahere.cc) | MangaHere | 2026-10-19 |
 | [mangahere.onl](https://mangahere.onl) | MangaHere, English | 2026-10-26 |
 | [mangahub.io](https://mangahub.io) |  | 2026-10-26 |
-| [mangaisekaithai.net](https://www.mangaisekaithai.net) | Thai | 2026-10-26 |
+| [mangaisekaithai.net](https://www.mangaisekaithai.net) | Thai | 2026-10-29 |
 | [mangak.io](https://mangak.io) | MangaK, former mangabuddy.com | 2026-10-19 |
 | [mangakakalot.fun](https://mangakakalot.fun) | MangaKakalot, English | 2026-10-26 |
 | [mangakakalot.gg](https://www.mangakakalot.gg) \* | MangaKakalot | 2026-10-15 |
@@ -623,7 +623,7 @@ environment variables.
 | [manganato.gg](https://www.manganato.gg) \* | MangaNato | 2026-10-19 |
 | [manganel.me](https://manganel.me) | MangaNel, English | 2026-10-26 |
 | [mangaonline.fun](https://mangaonline.fun) | MangaOnline, English | 2026-10-26 |
-| [mangaowl.io](https://mangaowl.io) | English | 2026-10-19 |
+| [mangaowl.io](https://mangaowl.io) | English | 2026-10-29 |
 | [mangapanda.onl](https://mangapanda.onl) | MangaPanda, English | 2026-10-26 |
 | [mangapark.cc](https://mangapark.cc) | MangaPark | 2026-10-19 |
 | [mangapark.tv](https://mangapark.tv) | English, unrelated to mangapark.cc | 2026-10-19 |
@@ -634,7 +634,7 @@ environment variables.
 | [mangas-origines.fr](https://mangas-origines.fr) | French | 2026-10-18 |
 | [mangaspa.nikkan-spa.jp](https://mangaspa.nikkan-spa.jp) | Japanese (Comici), mostly NSFW | ❌ failing since 2026-10-26 (checked 2026-10-26) |
 | [mangastep.com](https://mangastep.com) | Thai | 2026-10-19 |
-| [mangasushi.org](https://mangasushi.org) |  | 2026-10-19 |
+| [mangasushi.org](https://mangasushi.org) |  | 2026-10-29 |
 | [mangasusuku.com](https://mangasusuku.com) | Indonesian, mostly NSFW | 2026-10-29 |
 | [mangataro.org](https://mangataro.org) |  | 2026-10-19 |
 | [mangatime-square.com](https://mangatime-square.com) | Japanese, Mangatime Square (GigaViewer) | 2026-10-19 |
@@ -655,7 +655,7 @@ environment variables.
 | [manhuathai.com](https://www.manhuathai.com) | Thai | 2026-10-19 |
 | [manhuatop.org](https://manhuatop.org) \* |  | 2026-10-15 |
 | [manhuaus.com](https://manhuaus.com) \* |  | 2026-10-15 |
-| [manhwa-online.com](https://manhwa-online.com) | Spanish | ❌ failing since 2026-10-29 (checked 2026-10-29) |
+| [manhwa-online.com](https://manhwa-online.com) | Spanish | 2026-10-29 |
 | [manhwa18.cc](https://manhwa18.cc) | English, mature | 2026-10-26 |
 | [manhwa18tx.com](https://manhwa18tx.com) | English, mature | 2026-10-26 |
 | [manhwa68.com](https://manhwa68.com) | English, mostly NSFW | 2026-10-26 |
@@ -663,7 +663,7 @@ environment variables.
 | [manhwabuddy.com](https://manhwabuddy.com) | English, raws | 2026-10-29 |
 | [manhwaclub.net](https://manhwaclub.net) | multilingual | 2026-10-29 |
 | [manhwaddict.com](https://manhwaddict.com) | English, mature | 2026-10-26 |
-| [manhwaden.com](https://www.manhwaden.com) | English | 2026-10-26 |
+| [manhwaden.com](https://www.manhwaden.com) | English | 2026-10-29 |
 | [manhwadesu.wiki](https://manhwadesu.wiki) | Indonesian, mostly NSFW | 2026-10-29 |
 | [manhwagalaxy.com](https://manhwagalaxy.com) | English, mature | 2026-10-26 |
 | [manhwahub.to](https://manhwahub.to) | English, mostly NSFW | ❌ failing since 2026-10-29 (checked 2026-10-29) |
@@ -741,7 +741,7 @@ environment variables.
 | [reader.gtothegreatsite.net](https://reader.gtothegreatsite.net) | GTO The Great Site, Italian | 2026-10-26 |
 | [reader.mangatellers.gr](https://reader.mangatellers.gr) | Greek | 2026-10-19 |
 | [reader.seinagi.org.es](https://reader.seinagi.org.es) | English | 2026-10-26 |
-| [readhunters.xyz](https://readhunters.xyz) | Portuguese | 2026-10-26 |
+| [readhunters.xyz](https://readhunters.xyz) | Portuguese | 2026-10-29 |
 | [readkagura.com](https://readkagura.com) | English, single series | 2026-10-26 |
 | [readspyxfamilymanga.com](https://readspyxfamilymanga.com) | English, single series, use a chapter URL | 2026-10-26 |
 | [reapertrans.com](https://reapertrans.com) | Thai | 2026-10-26 |
@@ -856,7 +856,7 @@ environment variables.
 | [ww1.the-blue-lock.com](https://ww1.the-blue-lock.com) | English, single series, use a chapter URL | 2026-10-26 |
 | [ww12.readsnk.com](https://ww12.readsnk.com) | English | 2026-10-26 |
 | [ww12.tokyoghoulre.com](https://ww12.tokyoghoulre.com) | English | 2026-10-26 |
-| [ww13.readonepiece.com](https://ww13.readonepiece.com) | English | 2026-10-26 |
+| [ww13.readonepiece.com](https://ww13.readonepiece.com) | English | 2026-10-29 |
 | [ww4.readsololeveling.org](https://ww4.readsololeveling.org/manga/solo-leveling-ragnarok/) | English | 2026-10-26 |
 | [ww5.blmangafree.com](https://ww5.blmangafree.com) | English, single series | 2026-10-22 |
 | [ww6.readchainsawman.com](https://ww6.readchainsawman.com) | English | 2026-10-26 |
@@ -866,7 +866,7 @@ environment variables.
 | [ww8.read7deadlysins.com](https://ww8.read7deadlysins.com) | English | 2026-10-26 |
 | [ww9.readfairytail.com](https://ww9.readfairytail.com) | English | 2026-10-26 |
 | [www2.gachiakutas.com](https://www2.gachiakutas.com) | English, single series | 2026-10-22 |
-| [xn--l3c0azab5a2gta.com](https://www.xn--l3c0azab5a2gta.com) | Thai | ❌ failing since 2026-10-26 (checked 2026-10-26) |
+| [xn--l3c0azab5a2gta.com](https://www.xn--l3c0azab5a2gta.com) | Thai | 2026-10-29 |
 | [xsano-manga.com](https://www.xsano-manga.com) | Arabic | 2026-10-19 |
 | [yakshacomics.com](https://yakshacomics.com) | English | 2026-10-29 |
 | [yaoiflix.fit](https://yaoiflix.fit) | Turkish, mostly NSFW | ❌ failing since 2026-10-29 (checked 2026-10-29) |
