@@ -75,8 +75,8 @@ func (t *Tcb) Test() (bool, error) {
 
 	rbody, err := http.Post(http.RequestParams{
 		URL:          uri,
-		Referer:      t.BaseUrl(),
-		DisableRetry: true, // identification probe: a 5xx means "not this site"
+		Referer:      t.series, // some sites answer a decoy row to any other referer
+		DisableRetry: true,     // identification probe: a 5xx means "not this site"
 	})
 	if err != nil {
 		// a status error declines quietly: with any path accepted, most such URLs
@@ -153,7 +153,7 @@ func (t *Tcb) fetchListingPages(uri string, rows *goquery.Selection, last int) (
 	for page := 2; page <= min(last, tcbMaxListingPages); page++ {
 		rbody, err := http.Post(http.RequestParams{
 			URL:          fmt.Sprintf("%s?t=%d", uri, page),
-			Referer:      t.BaseUrl(),
+			Referer:      t.series,
 			DisableRetry: true,
 		})
 		if err != nil {

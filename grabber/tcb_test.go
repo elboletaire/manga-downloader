@@ -174,6 +174,32 @@ func TestTcbTestKeepsSeriesPrefix(t *testing.T) {
 	}
 }
 
+// Some Madara sites answer a single notice row unless the ajax call's Referer
+// is the series page, as their own script sends it.
+func TestTcbTestSendsSeriesReferer(t *testing.T) {
+	const notice = `<ul><li class="wp-manga-chapter"><a href="/manga/foo/notice/">Notice</a></li></ul>`
+	const chaptersHTML = `<ul><li class="wp-manga-chapter"><a href="/manga/foo/chapter-1/">Chapter 1</a></li></ul>`
+	mux := http.NewServeMux()
+	mux.HandleFunc("/manga/foo/ajax/chapters", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.Header.Get("Referer"), "/manga/foo/") {
+			_, _ = w.Write([]byte(chaptersHTML))
+			return
+		}
+		_, _ = w.Write([]byte(notice))
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	tcb := NewTcb(&Grabber{URL: srv.URL + "/manga/foo/chapter-1/", Settings: &Settings{}})
+	ok, err := tcb.Test()
+	if err != nil || !ok {
+		t.Fatalf("Test() = %v, %v; want true", ok, err)
+	}
+	if n := tcb.chaps.Length(); n != 1 {
+		t.Errorf("listed %d chapters, want the 1 behind the series referer", n)
+	}
+}
+
 // Test() claims a path of any shape only when Madara's list answers there; a
 // site without one (a 404 on the probe) is declined without an error.
 func TestTcbTestAnyPath(t *testing.T) {
