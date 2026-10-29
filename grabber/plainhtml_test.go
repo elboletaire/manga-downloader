@@ -538,8 +538,8 @@ func TestFetchChaptersTitles(t *testing.T) {
 	}
 }
 
-// TestFetchChaptersStripsReleaseDate covers the shared demonicscans/komikmanga
-// entry, whose chapter rows end in the release date.
+// TestFetchChaptersStripsReleaseDate covers the demonicscans entry,
+// whose chapter rows end in the release date.
 func TestFetchChaptersStripsReleaseDate(t *testing.T) {
 	html := `<html><body><h1>Series</h1><div id="chapters-list">
 		<li><a href="https://example.com/chapter/1">Chapter 52.1 <span>2026-06-02</span></a></li>

@@ -306,6 +306,7 @@ grabber: \
 	grabber/klikmanga \
 	grabber/kmansin09 \
 	grabber/kokomangas \
+	grabber/komikmanga \
 	grabber/ksgroupscans \
 	grabber/kuragebunch \
 	grabber/lectordarkroomfansub \
@@ -596,6 +597,7 @@ grabber/chainsawman:
 # use a chapter with price 0 (recent chapters are often premium/paywalled)
 grabber/luascans:
 	go run . https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement 56
+
 grabber/omegascans:
 	go run . https://omegascans.org/series/capitalist-harem 10
 
@@ -1274,7 +1276,6 @@ grabber/html: \
 	grabber/komikdewasamom \
 	grabber/komikindo \
 	grabber/komikindoshop \
-	grabber/komikmanga \
 	grabber/komikmu \
 	grabber/komikstation \
 	grabber/komiktap \
