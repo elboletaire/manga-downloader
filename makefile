@@ -1824,7 +1824,7 @@ grabber/manhwabreakup:
 grabber/manhwadesu:
 	go run . https://manhwadesu.wiki/komik/wireless-onahole/ 62
 grabber/manhwahub:
-	go run . https://manhwahub.to/manhwa/someone-stop-her/ 58
+	go run . https://manhwahub.to/manhwa/someone-stop-her/ 110
 grabber/manhwalist:
 	go run . https://m1.manhwalist.my.id/manga/lookism/ 623
 grabber/mihentai:
