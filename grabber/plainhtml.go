@@ -113,9 +113,8 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:      "img.js-page",
 		SeriesLink: `a[data-hotkey="m"]`,
 	},
-	// demonicscans.org and komikmanga.com share the list markup; the latter
-	// has .reader-page images, no reader <h1> (.reader-back) and rows that
-	// end in the release date.
+	// demonicscans.org: a list of chapter rows ending in the release date,
+	// read from .reader-page or .imgholder images.
 	{
 		Title:             "h1",
 		Rows:              "#chapters-list li",
