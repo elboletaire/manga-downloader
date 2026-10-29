@@ -394,11 +394,11 @@ grabber: \
 	grabber/ninjacomics \
 	grabber/nyxscans \
 	grabber/octopusmanga \
+	grabber/omegascans \
 	grabber/omniscientreadersviewpoint \
 	grabber/omniscientreadersviewpointt \
 	grabber/omniscientreaderviewpoint \
 	grabber/onemangainfo \
-	grabber/omegascans \
 	grabber/onepunchmanmanga \
 	grabber/onepunchmannmanga \
 	grabber/onlinechainsawmanmanga \

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"regexp"
 
@@ -13,8 +14,9 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Manhwa18 is a grabber for manhwa18.net, an Inertia.js site: the series and reader
-// pages carry their chapters and page images as JSON in the `#app` root's data-page attribute.
+// Manhwa18 is a grabber for manhwa18.net, an Inertia.js site: the series and
+// reader pages carry their chapters and page images as JSON in the `#app`
+// root's data-page attribute.
 type Manhwa18 struct {
 	*Grabber
 	series *manhwa18Page
@@ -45,7 +47,7 @@ func (m *Manhwa18) resolveSeriesURL() error {
 		return err
 	}
 
-	if series := manhwa18SeriesRe.FindString(uri.Path); series != "" && series != uri.Path {
+	if series := manhwa18SeriesRe.FindString(uri.Path); series != "" {
 		uri.Path = series
 		uri.RawQuery = ""
 		uri.Fragment = ""
@@ -159,6 +161,12 @@ func (m *Manhwa18) fetchInertia(uri string) (*manhwa18Page, error) {
 	}
 	defer body.Close()
 
+	return decodeManhwa18Page(body, uri)
+}
+
+// decodeManhwa18Page decodes the data-page JSON of the Inertia page read from
+// body, which uri names in its errors
+func decodeManhwa18Page(body io.Reader, uri string) (*manhwa18Page, error) {
 	doc, err := goquery.NewDocumentFromReader(body)
 	if err != nil {
 		return nil, err

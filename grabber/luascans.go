@@ -27,7 +27,8 @@ type Luascans struct {
 	seriesPage string
 }
 
-// luascansMarkers are the keys a series page of the platform carries in its React Server Components payload
+// luascansMarkers are the keys a series page's React Server Components
+// payload carries on the platform
 var luascansMarkers = []string{"self.__next_f.push", `series_id\":`, `series_type\":\"Comic\"`}
 
 // luascansSeriesRe is the URL shape of a series or chapter on the platform
@@ -56,18 +57,41 @@ func (l *Luascans) Test() (bool, error) {
 	if re.MatchString(l.URL) {
 		return true, nil
 	}
-	uri, err := url.Parse(l.URL)
-	if err != nil || !l.byMarkup || !luascansSeriesRe.MatchString(uri.Path) {
+	if !l.byMarkup {
 		return false, nil
 	}
-	// a chapter page has no series payload, so the series page is checked
-	series := *uri
-	if i := strings.Index(series.Path, "/chapter-"); i >= 0 {
-		series.Path = series.Path[:i]
+	seriesURL, ok := luascansMarkupURL(l.URL)
+	if !ok {
+		return false, nil
 	}
-	series.RawQuery = ""
-	series.Fragment = ""
-	return pageHasMarkup(l.Grabber, series.String(), luascansMarkers...), nil
+	return pageHasMarkup(l.Grabber, seriesURL, luascansMarkers...), nil
+}
+
+// luascansMarkupURL returns the series page whose markup identifies the
+// platform for a series or chapter URL, and false for any other URL
+func luascansMarkupURL(rawURL string) (string, bool) {
+	uri, err := url.Parse(rawURL)
+	if err != nil || !luascansSeriesRe.MatchString(uri.Path) {
+		return "", false
+	}
+	// a chapter page has no series payload, so the series page is checked
+	luascansStripChapter(uri)
+	uri.RawQuery = ""
+	uri.Fragment = ""
+	return uri.String(), true
+}
+
+// luascansStripChapter cuts a chapter URL back to its series, dropping the
+// query and fragment too, and reports whether the URL was a chapter one
+func luascansStripChapter(uri *url.URL) bool {
+	idx := strings.Index(uri.Path, "/chapter-")
+	if idx < 0 {
+		return false
+	}
+	uri.Path = uri.Path[:idx]
+	uri.RawQuery = ""
+	uri.Fragment = ""
+	return true
 }
 
 // apiBase returns the base URL of the chapters API, which every site of the
@@ -87,12 +111,7 @@ func (l *Luascans) resolveSeriesURL() error {
 		return err
 	}
 
-	// Chapter URLs have /chapter- in the path; strip everything from /chapter- onward
-	if strings.Contains(parsed.Path, "/chapter-") {
-		idx := strings.Index(parsed.Path, "/chapter-")
-		parsed.Path = parsed.Path[:idx]
-		parsed.RawQuery = ""
-		parsed.Fragment = ""
+	if luascansStripChapter(parsed) {
 		l.URL = parsed.String()
 	}
 
@@ -263,23 +282,12 @@ func (l *Luascans) FetchChapter(f Filterable) (*Chapter, error) {
 		ID:       lchap.Slug,
 	}
 
-	// scoped under the reader's own div.container (the only element in the
-	// page with that exact class) to avoid also matching the site's footer
-	// logo, which sits in an unrelated div sharing the same flex/center
-	// utility classes; omegascans.org marks its pages with data-fallback-index
-	doc.Find("div.container > div.flex.flex-col.justify-center.items-center > img, img[data-fallback-index]").Each(func(i int, s *goquery.Selection) {
-		src := s.AttrOr("src", "")
-		if src == "" {
-			src = s.AttrOr("data-src", "")
-		}
-		if src == "" {
-			return
-		}
+	for i, src := range luascansPageURLs(doc) {
 		chapter.Pages = append(chapter.Pages, Page{
 			Number: int64(i + 1),
 			URL:    src,
 		})
-	})
+	}
 	chapter.PagesCount = int64(len(chapter.Pages))
 
 	if chapter.PagesCount == 0 {
@@ -287,6 +295,24 @@ func (l *Luascans) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	return chapter, nil
+}
+
+// luascansPageURLs returns the page images of a reader page, in order. It's
+// scoped under div.container so the footer logo isn't matched; omegascans.org
+// marks its pages with data-fallback-index instead
+func luascansPageURLs(doc *goquery.Document) []string {
+	var srcs []string
+	doc.Find("div.container > div.flex.flex-col.justify-center.items-center > img, img[data-fallback-index]").Each(func(i int, s *goquery.Selection) {
+		src := s.AttrOr("src", "")
+		if src == "" {
+			src = s.AttrOr("data-src", "")
+		}
+		if src != "" {
+			srcs = append(srcs, src)
+		}
+	})
+
+	return srcs
 }
 
 // seriesSlug returns the series slug from the URL (i.e. "one-piece" for

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 func TestLuascansSeriesSlug(t *testing.T) {
@@ -367,5 +369,57 @@ func TestLuascansAPIBase(t *testing.T) {
 		if err != nil || got != want {
 			t.Errorf("apiBase(%q) = %q, %v, want %q", input, got, err, want)
 		}
+	}
+}
+
+func TestLuascansMarkupURL(t *testing.T) {
+	cases := []struct {
+		url    string
+		want   string
+		wantOK bool
+	}{
+		{"https://omegascans.org/series/capitalist-harem", "https://omegascans.org/series/capitalist-harem", true},
+		{"https://omegascans.org/series/capitalist-harem/chapter-17?x=1#y", "https://omegascans.org/series/capitalist-harem", true},
+		{"https://www.example.com/series/a/chapter-2/", "https://www.example.com/series/a", true},
+		{"https://omegascans.org/series/", "", false},
+		{"https://omegascans.org/", "", false},
+		{"https://omegascans.org/browse/x", "", false},
+	}
+	for _, c := range cases {
+		got, ok := luascansMarkupURL(c.url)
+		if ok != c.wantOK || got != c.want {
+			t.Errorf("luascansMarkupURL(%q) = %q, %v, want %q, %v", c.url, got, ok, c.want, c.wantOK)
+		}
+	}
+}
+
+func TestLuascansTestDeclinesWithoutFetch(t *testing.T) {
+	// the by-markup check fetches a page, so these must decline before any request
+	declines := []*Luascans{
+		{Grabber: &Grabber{URL: "https://unknown.example/series/a"}},
+		NewLuascansByMarkup(&Grabber{URL: "https://unknown.example/"}),
+	}
+	for _, l := range declines {
+		if ok, err := l.Test(); ok || err != nil {
+			t.Errorf("Test(%q) = %v, %v, want false, nil", l.URL, ok, err)
+		}
+	}
+}
+
+func TestLuascansPageURLs(t *testing.T) {
+	page := `<html><body>
+<footer><div class="flex flex-col justify-center items-center"><img src="https://media.example/logo.png"></div></footer>
+<div class="container"><div class="flex flex-col justify-center items-center">
+<img src="https://media.example/1.jpg"><img data-src="https://media.example/2.jpg"><img src="">
+</div></div>
+<div class="relative flex w-full justify-center select-none"><img src="https://media.example/3.jpg" data-fallback-index="0"></div>
+</body></html>`
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(page))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"https://media.example/1.jpg", "https://media.example/2.jpg", "https://media.example/3.jpg"}
+	if got := luascansPageURLs(doc); !reflect.DeepEqual(got, want) {
+		t.Errorf("luascansPageURLs() = %v, want %v", got, want)
 	}
 }
