@@ -217,6 +217,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewFlamecomics(g),
 		NewQimanga(g),
 		NewLuascans(g),
+		NewManhwa18(g),
 		NewProjectsuki(g),
 		NewHeavenManga(g),
 		NewLelScans(g),
@@ -224,6 +225,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		// selectors can't claim a clone. They share one fetch of the page
 		NewTanstackComicByMarkup(g),
 		NewRSCComicByMarkup(g),
+		NewLuascansByMarkup(g),
 		NewManganeloByMarkup(g),
 		NewToivoLiteByMarkup(g),
 		NewPizzaReaderByMarkup(g),

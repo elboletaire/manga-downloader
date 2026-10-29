@@ -368,6 +368,7 @@ grabber: \
 	grabber/mangitto \
 	grabber/manhuahot \
 	grabber/manhuanext \
+	grabber/manhwa18net \
 	grabber/manhwa68 \
 	grabber/manhwaden \
 	grabber/manhwaonlinees \
@@ -397,6 +398,7 @@ grabber: \
 	grabber/omniscientreadersviewpointt \
 	grabber/omniscientreaderviewpoint \
 	grabber/onemangainfo \
+	grabber/omegascans \
 	grabber/onepunchmanmanga \
 	grabber/onepunchmannmanga \
 	grabber/onlinechainsawmanmanga \
@@ -544,6 +546,9 @@ grabber/manhwa18cc:
 grabber/manhwa18tx:
 	go run . https://manhwa18tx.com/manhwa/taming-a-female-bully/ 10
 
+grabber/manhwa18net:
+	go run . https://manhwa18.net/manga/my-lewd-college-friends 30
+
 grabber/manhwaddict:
 	go run . https://manhwaddict.com/manga/taming-a-female-bully/ 80
 
@@ -591,6 +596,9 @@ grabber/chainsawman:
 # use a chapter with price 0 (recent chapters are often premium/paywalled)
 grabber/luascans:
 	go run . https://luacomic.org/series/even-today-the-ranker-dreams-of-retirement 56
+grabber/omegascans:
+	go run . https://omegascans.org/series/capitalist-harem 10
+
 grabber/mangitto:
 	go run . https://mangtto.com/manga/chainsaw-man 232
 grabber/projectsuki:

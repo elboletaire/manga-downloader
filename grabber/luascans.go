@@ -9,25 +9,38 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Luascans is a grabber for luacomic.org: it's a Next.js site whose reader
-// pages are server-rendered plain HTML (page images are regular <img> tags),
-// but the series page only ships the newest chapters and lazy-loads the full
-// chapters list client-side from a JSON API, keyed by a numeric series id
-// embedded in the series page's React Server Components payload.
+// Luascans is a grabber for the Next.js platform behind luacomic.org and omegascans.org:
+// reader pages are plain HTML, and the chapters list comes from a JSON API keyed by a
+// series id that the series page's React Server Components payload carries.
 type Luascans struct {
 	*Grabber
+	// byMarkup also detects the hosts not in the domain list (NewLuascansByMarkup)
+	byMarkup   bool
 	title      string
 	seriesID   string
 	seriesPage string
 }
 
+// luascansMarkers are the keys a series page of the platform carries in its React Server Components payload
+var luascansMarkers = []string{"self.__next_f.push", `series_id\":`, `series_type\":\"Comic\"`}
+
+// luascansSeriesRe is the URL shape of a series or chapter on the platform
+var luascansSeriesRe = regexp.MustCompile(`^/series/[^/]+`)
+
 func NewLuascans(g *Grabber) *Luascans {
 	return &Luascans{Grabber: g}
+}
+
+// NewLuascansByMarkup returns a Luascans grabber that also matches a series or
+// chapter URL on any host whose page has the platform's markup.
+func NewLuascansByMarkup(g *Grabber) *Luascans {
+	return &Luascans{Grabber: g, byMarkup: true}
 }
 
 // LuascansChapter represents a Luascans Chapter
@@ -36,10 +49,35 @@ type LuascansChapter struct {
 	Slug string
 }
 
-// Test returns true if the URL is a luacomic.org URL
+// Test returns true if the URL is a luacomic.org URL. The by-markup instance
+// also fetches a series or chapter URL on another host, once, to check its markup.
 func (l *Luascans) Test() (bool, error) {
 	re := regexp.MustCompile(`luacomic\.org`)
-	return re.MatchString(l.URL), nil
+	if re.MatchString(l.URL) {
+		return true, nil
+	}
+	uri, err := url.Parse(l.URL)
+	if err != nil || !l.byMarkup || !luascansSeriesRe.MatchString(uri.Path) {
+		return false, nil
+	}
+	// a chapter page has no series payload, so the series page is checked
+	series := *uri
+	if i := strings.Index(series.Path, "/chapter-"); i >= 0 {
+		series.Path = series.Path[:i]
+	}
+	series.RawQuery = ""
+	series.Fragment = ""
+	return pageHasMarkup(l.Grabber, series.String(), luascansMarkers...), nil
+}
+
+// apiBase returns the base URL of the chapters API, which every site of the
+// platform serves from api.{host}
+func (l *Luascans) apiBase() (string, error) {
+	uri, err := url.Parse(l.URL)
+	if err != nil {
+		return "", err
+	}
+	return "https://api." + strings.TrimPrefix(uri.Host, "www."), nil
 }
 
 // resolveSeriesURL converts chapter URLs (/series/{slug}/chapter-{n}...) to series URLs (/series/{slug}).
@@ -89,6 +127,11 @@ func (l *Luascans) FetchChapters() (Filterables, []error) {
 		return nil, []error{err}
 	}
 
+	api, err := l.apiBase()
+	if err != nil {
+		return nil, []error{err}
+	}
+
 	seriesID, err := l.fetchSeriesID()
 	if err != nil {
 		return nil, []error{err}
@@ -97,7 +140,8 @@ func (l *Luascans) FetchChapters() (Filterables, []error) {
 	return walkLuascansChapters(func(page int) (string, error) {
 		return http.GetText(http.RequestParams{
 			URL: fmt.Sprintf(
-				"https://api.luacomic.org/chapter/query?page=%d&perPage=200&query=&order=desc&series_id=%s",
+				"%s/chapter/query?page=%d&perPage=200&query=&order=desc&series_id=%s",
+				api,
 				page,
 				seriesID,
 			),
@@ -174,13 +218,19 @@ func parseLuascansChaptersPage(body string) (chapters []*LuascansChapter, feed l
 				Number: number,
 				Title:  c.Name,
 				ID:     c.Slug,
-				Locked: c.Price > 0,
+				Locked: luascansLocked(c.Price, c.FreeAt),
 			},
 			c.Slug,
 		})
 	}
 
 	return chapters, feed, nil
+}
+
+// luascansLocked reports a paid chapter still before its free date. A site
+// that lists no free date locks every priced chapter
+func luascansLocked(price float64, freeAt *time.Time) bool {
+	return price > 0 && (freeAt == nil || freeAt.After(time.Now()))
 }
 
 // FetchChapter fetches a chapter and its pages
@@ -216,8 +266,8 @@ func (l *Luascans) FetchChapter(f Filterable) (*Chapter, error) {
 	// scoped under the reader's own div.container (the only element in the
 	// page with that exact class) to avoid also matching the site's footer
 	// logo, which sits in an unrelated div sharing the same flex/center
-	// utility classes
-	doc.Find("div.container > div.flex.flex-col.justify-center.items-center > img").Each(func(i int, s *goquery.Selection) {
+	// utility classes; omegascans.org marks its pages with data-fallback-index
+	doc.Find("div.container > div.flex.flex-col.justify-center.items-center > img, img[data-fallback-index]").Each(func(i int, s *goquery.Selection) {
 		src := s.AttrOr("src", "")
 		if src == "" {
 			src = s.AttrOr("data-src", "")
@@ -311,5 +361,7 @@ type luascansChaptersFeed struct {
 		Slug string `json:"chapter_slug"`
 		// coin price, 0 once the chapter is free
 		Price float64 `json:"price"`
+		// when a priced chapter becomes free, null or absent on sites that don't list it
+		FreeAt *time.Time `json:"free_at"`
 	} `json:"data"`
 }

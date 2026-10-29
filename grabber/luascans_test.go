@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestLuascansSeriesSlug(t *testing.T) {
@@ -329,5 +330,42 @@ func TestParseLuascansChaptersPageLocked(t *testing.T) {
 	}
 	if len(chapters) != 2 || !LockedOf(chapters[0]) || LockedOf(chapters[1]) {
 		t.Errorf("chapters = %+v, want [locked free]", chapters)
+	}
+}
+
+func TestLuascansLocked(t *testing.T) {
+	past := time.Now().Add(-time.Hour)
+	future := time.Now().Add(time.Hour)
+	cases := []struct {
+		name   string
+		price  float64
+		freeAt *time.Time
+		want   bool
+	}{
+		{"free chapter", 0, nil, false},
+		{"priced, no free date", 12, nil, true},
+		{"priced, free date ahead", 12, &future, true},
+		{"priced, free date passed", 12, &past, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := luascansLocked(c.price, c.freeAt); got != c.want {
+				t.Errorf("luascansLocked(%v, %v) = %v, want %v", c.price, c.freeAt, got, c.want)
+			}
+		})
+	}
+}
+
+func TestLuascansAPIBase(t *testing.T) {
+	cases := map[string]string{
+		"https://luacomic.org/series/a":         "https://api.luacomic.org",
+		"https://www.omegascans.org/series/a/b": "https://api.omegascans.org",
+	}
+	for input, want := range cases {
+		l := &Luascans{Grabber: &Grabber{URL: input}}
+		got, err := l.apiBase()
+		if err != nil || got != want {
+			t.Errorf("apiBase(%q) = %q, %v, want %q", input, got, err, want)
+		}
 	}
 }

@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[553 supported sites](#supported-sites)**, from big aggregators to small
+- **[555 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -325,7 +325,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 553 supported sites</b></summary>
+<summary><b>Show all 555 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -570,7 +570,7 @@ environment variables.
 | [linkmanga.com](https://linkmanga.com) | English | 2026-10-29 |
 | [loner-tl.blogspot.com](https://loner-tl.blogspot.com) | Arabic | 2026-10-19 |
 | [lovesjane.site](https://lovesjane.site) | English | 2026-10-29 |
-| [luacomic.org](https://luacomic.org) | LuaScans | 2026-10-15 |
+| [luacomic.org](https://luacomic.org) | LuaScans | 2026-10-29 |
 | [lupiteam.net](https://lupiteam.net) | LupiTeam, Italian | 2026-10-26 |
 | [m1.manhwalist.my.id](https://m1.manhwalist.my.id) | Indonesian | ❌ failing since 2026-10-29 (checked 2026-10-29) |
 | [madaradex.org](https://madaradex.org) | some adult titles | 2026-10-29 |
@@ -657,6 +657,7 @@ environment variables.
 | [manhuaus.com](https://manhuaus.com) \* |  | 2026-10-15 |
 | [manhwa-online.com](https://manhwa-online.com) | Spanish | 2026-10-29 |
 | [manhwa18.cc](https://manhwa18.cc) | English, mature | 2026-10-26 |
+| [manhwa18.net](https://manhwa18.net) | English, mature | 2026-10-29 |
 | [manhwa18tx.com](https://manhwa18tx.com) | English, mature | 2026-10-26 |
 | [manhwa68.com](https://manhwa68.com) | English, mostly NSFW | 2026-10-29 |
 | [manhwabreakup.com](https://www.manhwabreakup.com) | Thai | 2026-10-19 |
@@ -707,6 +708,7 @@ environment variables.
 | [nyraxmanga.com](https://nyraxmanga.com) | Nyrax, some adult titles | 2026-10-29 |
 | [nyxscans.com](https://nyxscans.com) | English, locked chapters skipped | 2026-10-26 |
 | [octopusmanga.com](https://octopusmanga.com) | English | 2026-10-26 |
+| [omegascans.org](https://omegascans.org) | English, some chapters paid | 2026-10-29 |
 | [omniscientreadersviewpointt.com](https://omniscientreadersviewpointt.com) | English, single series, use a chapter URL | 2026-10-26 |
 | [onemanga.info](https://onemanga.info) | OneManga, English | 2026-10-26 |
 | [onepunchmannmanga.com](https://onepunchmannmanga.com) | English, single series, use a chapter URL | 2026-10-26 |
