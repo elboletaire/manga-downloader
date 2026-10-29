@@ -175,28 +175,41 @@ func TestTcbTestKeepsSeriesPrefix(t *testing.T) {
 }
 
 // Some Madara sites answer a single notice row unless the ajax call's Referer
-// is the series page, as their own script sends it.
+// is the series page, as their own script sends it. Page 2 of the list is read
+// the same way.
 func TestTcbTestSendsSeriesReferer(t *testing.T) {
+	const series = "/manga/foo/"
 	const notice = `<ul><li class="wp-manga-chapter"><a href="/manga/foo/notice/">Notice</a></li></ul>`
-	const chaptersHTML = `<ul><li class="wp-manga-chapter"><a href="/manga/foo/chapter-1/">Chapter 1</a></li></ul>`
+	const page1 = `<ul><li class="wp-manga-chapter"><a href="/manga/foo/chapter-2/">Chapter 2</a></li></ul>` +
+		`<div class="pagination"><a href="/manga/foo/ajax/chapters/?t=2">2</a></div>`
+	const page2 = `<ul><li class="wp-manga-chapter"><a href="/manga/foo/chapter-1/">Chapter 1</a></li></ul>`
 	mux := http.NewServeMux()
-	mux.HandleFunc("/manga/foo/ajax/chapters", func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.Header.Get("Referer"), "/manga/foo/") {
-			_, _ = w.Write([]byte(chaptersHTML))
+	mux.HandleFunc("/manga/foo/ajax/chapters/", func(w http.ResponseWriter, r *http.Request) {
+		if !strings.HasSuffix(r.Header.Get("Referer"), series) {
+			_, _ = w.Write([]byte(notice))
 			return
 		}
-		_, _ = w.Write([]byte(notice))
+		if r.URL.Query().Get("t") == "2" {
+			_, _ = w.Write([]byte(page2))
+			return
+		}
+		_, _ = w.Write([]byte(page1))
 	})
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
 
-	tcb := NewTcb(&Grabber{URL: srv.URL + "/manga/foo/chapter-1/", Settings: &Settings{}})
+	tcb := NewTcb(&Grabber{URL: srv.URL + series + "chapter-1/", Settings: &Settings{}})
 	ok, err := tcb.Test()
 	if err != nil || !ok {
 		t.Fatalf("Test() = %v, %v; want true", ok, err)
 	}
-	if n := tcb.chaps.Length(); n != 1 {
-		t.Errorf("listed %d chapters, want the 1 behind the series referer", n)
+	var hrefs []string
+	tcb.chaps.Each(func(_ int, s *goquery.Selection) {
+		hrefs = append(hrefs, s.Find("a").AttrOr("href", ""))
+	})
+	want := []string{"/manga/foo/chapter-2/", "/manga/foo/chapter-1/"}
+	if strings.Join(hrefs, " ") != strings.Join(want, " ") {
+		t.Errorf("listed %v, want %v (the notice row and the Referer-less page must not show)", hrefs, want)
 	}
 }
 
