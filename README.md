@@ -538,7 +538,7 @@ environment variables.
 | [komikdewasa.art](https://komikdewasa.art) | Indonesian, mostly NSFW | 2026-10-29 |
 | [komikdewasa.mom](https://komikdewasa.mom) | Indonesian, mostly NSFW | 2026-10-26 |
 | [komikindo.ch](https://komikindo.ch) |  | 2026-10-29 |
-| [komikmanga.com](https://komikmanga.com) | MangaReader, English | 2026-10-29 |
+| [komikmanga.com](https://komikmanga.com) | English, Indonesian UI | 2026-10-29 |
 | [komikmu.top](https://komikmu.top) | Indonesian | 2026-10-29 |
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-29 |
 | [komiktap.info](https://komiktap.info) | Indonesian, mostly NSFW | 2026-10-26 |

@@ -12,10 +12,8 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Komikmanga is a grabber for komikmanga.com: a SvelteKit site whose series
-// page renders only the first chapters. The chapter list, the title and the
-// page images come from its JSON API under /api/v1, the list paginated with a
-// cursor.
+// Komikmanga reads komikmanga.com (SvelteKit) through its /api/v1 JSON API;
+// the series page renders only the first chapters.
 type Komikmanga struct {
 	*Grabber
 }
@@ -105,8 +103,9 @@ func (k *Komikmanga) FetchTitle() (string, error) {
 // komikmangaChaptersFeed is one page of the series' chapter list
 type komikmangaChaptersFeed struct {
 	Items []struct {
-		ID     int64  `json:"id"`
-		Number string `json:"number"`
+		ID          int64  `json:"id"`
+		Number      string `json:"number"`
+		IsAvailable bool   `json:"is_available"`
 	} `json:"items"`
 	NextCursor string `json:"next_cursor"`
 	HasMore    bool   `json:"has_more"`
@@ -151,6 +150,7 @@ func (k *Komikmanga) FetchChapters() (chapters Filterables, errs []error) {
 				Chapter{
 					Number: num,
 					ID:     id,
+					Locked: !item.IsAvailable,
 					Label:  Label{Style: LabelNumbered, Number: item.Number},
 				},
 			})
