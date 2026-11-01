@@ -5,7 +5,7 @@
 <rect x="0.5" y="0.5" width="799" height="299" rx="12" fill="#fcfcfb" stroke="#dcdedf"/>
 <g font-family='"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif' font-size="11" fill="#52514e" style="font-variant-numeric:tabular-nums">
 <text x="24" y="32" fill="#0b0b0b" font-size="16" font-weight="600">Downloads per day</text>
-<text x="24.0" y="50.0" fill="#6f6e69" font-size="12">Measured, change between daily snapshots (15 days)</text>
+<text x="24.0" y="50.0" fill="#6f6e69" font-size="12">Measured, change between daily snapshots (16 days)</text>
 <circle cx="633.2" cy="28.0" r="4" fill="#2a6ddc"/>
 <text x="643.2" y="32.0" fill="#52514e" font-size="12">Desktop app</text>
 <circle cx="744.4" cy="28.0" r="4" fill="#e5642e"/>
@@ -18,25 +18,26 @@
 <text x="50.0" y="141.3" fill="#6f6e69" text-anchor="end">400</text>
 <line x1="60.0" x2="776.0" y1="80.0" y2="80.0" stroke="#e8eaeb"/>
 <text x="50.0" y="84.0" fill="#6f6e69" text-anchor="end">600</text>
-<text x="83.9" y="272.0" fill="#6f6e69">Oct 17</text>
-<text x="274.8" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 21</text>
-<text x="418.0" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 24</text>
-<text x="608.9" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 28</text>
-<text x="752.1" y="272.0" fill="#6f6e69" text-anchor="end">Oct 31</text>
-<g class="gs-rise"><path d="M71.9 252.0V234.7H95.9V252.0Z" fill="#2a6ddc"><title>2026-10-17, Desktop app: 64</title></path><path d="M71.9 232.7V225.9Q71.9 221.9 75.9 221.9H91.9Q95.9 221.9 95.9 225.9V232.7Z" fill="#e5642e"><title>2026-10-17, CLI: 41</title></path></g>
-<g class="gs-rise" style="animation-delay:33ms"><path d="M119.6 252.0V225.5H143.6V252.0Z" fill="#2a6ddc"><title>2026-10-18, Desktop app: 96</title></path><path d="M119.6 223.5V212.1Q119.6 208.1 123.6 208.1H139.6Q143.6 208.1 143.6 212.1V223.5Z" fill="#e5642e"><title>2026-10-18, CLI: 57</title></path></g>
-<g class="gs-rise" style="animation-delay:67ms"><path d="M167.3 252.0V243.3H191.3V252.0Z" fill="#2a6ddc"><title>2026-10-19, Desktop app: 34</title></path><path d="M167.3 241.3V241.1Q167.3 237.1 171.3 237.1H187.3Q191.3 237.1 191.3 241.1V241.3Z" fill="#e5642e"><title>2026-10-19, CLI: 18</title></path></g>
-<g class="gs-rise" style="animation-delay:100ms"><path d="M215.1 252.0V235.2H239.1V252.0Z" fill="#2a6ddc"><title>2026-10-20, Desktop app: 62</title></path><path d="M215.1 233.2V230.5Q215.1 226.5 219.1 226.5H235.1Q239.1 226.5 239.1 230.5V233.2Z" fill="#e5642e"><title>2026-10-20, CLI: 27</title></path></g>
-<g class="gs-rise" style="animation-delay:133ms"><path d="M262.8 252.0V239.0H286.8V252.0Z" fill="#2a6ddc"><title>2026-10-21, Desktop app: 49</title></path><path d="M262.8 237.0V237.0Q262.8 233.9 265.8 233.9H283.8Q286.8 233.9 286.8 237.0V237.0Z" fill="#e5642e"><title>2026-10-21, CLI: 14</title></path></g>
-<g class="gs-rise" style="animation-delay:167ms"><path d="M310.5 252.0V241.2H334.5V252.0Z" fill="#2a6ddc"><title>2026-10-22, Desktop app: 41</title></path><path d="M310.5 239.2V238.2Q310.5 234.2 314.5 234.2H330.5Q334.5 234.2 334.5 238.2V239.2Z" fill="#e5642e"><title>2026-10-22, CLI: 21</title></path></g>
-<g class="gs-rise" style="animation-delay:200ms"><path d="M358.3 252.0V234.1H382.3V252.0Z" fill="#2a6ddc"><title>2026-10-23, Desktop app: 66</title></path><path d="M358.3 232.1V229.3Q358.3 225.3 362.3 225.3H378.3Q382.3 225.3 382.3 229.3V232.1Z" fill="#e5642e"><title>2026-10-23, CLI: 27</title></path></g>
-<g class="gs-rise" style="animation-delay:233ms"><path d="M406.0 252.0V223.8H430.0V252.0Z" fill="#2a6ddc"><title>2026-10-24, Desktop app: 102</title></path><path d="M406.0 221.8V212.7Q406.0 208.7 410.0 208.7H426.0Q430.0 208.7 430.0 212.7V221.8Z" fill="#e5642e"><title>2026-10-24, CLI: 49</title></path></g>
-<g class="gs-rise" style="animation-delay:267ms"><path d="M453.7 252.0V226.3H477.7V252.0Z" fill="#2a6ddc"><title>2026-10-25, Desktop app: 93</title></path><path d="M453.7 224.3V217.3Q453.7 213.3 457.7 213.3H473.7Q477.7 213.3 477.7 217.3V224.3Z" fill="#e5642e"><title>2026-10-25, CLI: 42</title></path></g>
-<g class="gs-rise" style="animation-delay:300ms"><path d="M501.5 252.0V222.9H525.5V252.0Z" fill="#2a6ddc"><title>2026-10-26, Desktop app: 105</title></path><path d="M501.5 220.9V207.6Q501.5 203.6 505.5 203.6H521.5Q525.5 203.6 525.5 207.6V220.9Z" fill="#e5642e"><title>2026-10-26, CLI: 64</title></path></g>
-<g class="gs-rise" style="animation-delay:333ms"><path d="M549.2 252.0V232.4H573.2V252.0Z" fill="#2a6ddc"><title>2026-10-27, Desktop app: 72</title></path><path d="M549.2 230.4V227.6Q549.2 223.6 553.2 223.6H569.2Q573.2 223.6 573.2 227.6V230.4Z" fill="#e5642e"><title>2026-10-27, CLI: 27</title></path></g>
-<g class="gs-rise" style="animation-delay:367ms"><path d="M596.9 252.0V235.5H620.9V252.0Z" fill="#2a6ddc"><title>2026-10-28, Desktop app: 61</title></path><path d="M596.9 233.5V233.5Q596.9 232.2 598.2 232.2H619.6Q620.9 232.2 620.9 233.5V233.5Z" fill="#e5642e"><title>2026-10-28, CLI: 8</title></path></g>
-<g class="gs-rise" style="animation-delay:400ms"><path d="M644.7 252.0V241.0H668.7V252.0Z" fill="#2a6ddc"><title>2026-10-29, Desktop app: 42</title></path><path d="M644.7 239.0V239.0Q644.7 237.1 646.5 237.1H666.8Q668.7 237.1 668.7 239.0V239.0Z" fill="#e5642e"><title>2026-10-29, CLI: 10</title></path></g>
-<g class="gs-rise" style="animation-delay:433ms"><path d="M692.4 252.0V191.4H716.4V252.0Z" fill="#2a6ddc"><title>2026-10-30, Desktop app: 215</title></path><path d="M692.4 189.4V87.2Q692.4 83.2 696.4 83.2H712.4Q716.4 83.2 716.4 87.2V189.4Z" fill="#e5642e"><title>2026-10-30, CLI: 374</title></path></g>
-<g class="gs-rise" style="animation-delay:467ms"><path d="M740.1 252.0V232.9H764.1V252.0Z" fill="#2a6ddc"><title>2026-10-31, Desktop app: 70</title></path><path d="M740.1 230.9V230.9Q740.1 229.1 742.0 229.1H762.3Q764.1 229.1 764.1 230.9V230.9Z" fill="#e5642e"><title>2026-10-31, CLI: 10</title></path></g>
+<text x="82.4" y="272.0" fill="#6f6e69">Oct 17</text>
+<text x="261.4" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 21</text>
+<text x="440.4" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 25</text>
+<text x="574.6" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 28</text>
+<text x="753.6" y="272.0" fill="#6f6e69" text-anchor="end">Nov 1</text>
+<g class="gs-rise"><path d="M70.4 252.0V234.7H94.4V252.0Z" fill="#2a6ddc"><title>2026-10-17, Desktop app: 64</title></path><path d="M70.4 232.7V225.9Q70.4 221.9 74.4 221.9H90.4Q94.4 221.9 94.4 225.9V232.7Z" fill="#e5642e"><title>2026-10-17, CLI: 41</title></path></g>
+<g class="gs-rise" style="animation-delay:31ms"><path d="M115.1 252.0V225.5H139.1V252.0Z" fill="#2a6ddc"><title>2026-10-18, Desktop app: 96</title></path><path d="M115.1 223.5V212.1Q115.1 208.1 119.1 208.1H135.1Q139.1 208.1 139.1 212.1V223.5Z" fill="#e5642e"><title>2026-10-18, CLI: 57</title></path></g>
+<g class="gs-rise" style="animation-delay:63ms"><path d="M159.9 252.0V243.3H183.9V252.0Z" fill="#2a6ddc"><title>2026-10-19, Desktop app: 34</title></path><path d="M159.9 241.3V241.1Q159.9 237.1 163.9 237.1H179.9Q183.9 237.1 183.9 241.1V241.3Z" fill="#e5642e"><title>2026-10-19, CLI: 18</title></path></g>
+<g class="gs-rise" style="animation-delay:94ms"><path d="M204.6 252.0V235.2H228.6V252.0Z" fill="#2a6ddc"><title>2026-10-20, Desktop app: 62</title></path><path d="M204.6 233.2V230.5Q204.6 226.5 208.6 226.5H224.6Q228.6 226.5 228.6 230.5V233.2Z" fill="#e5642e"><title>2026-10-20, CLI: 27</title></path></g>
+<g class="gs-rise" style="animation-delay:125ms"><path d="M249.4 252.0V239.0H273.4V252.0Z" fill="#2a6ddc"><title>2026-10-21, Desktop app: 49</title></path><path d="M249.4 237.0V237.0Q249.4 233.9 252.4 233.9H270.4Q273.4 233.9 273.4 237.0V237.0Z" fill="#e5642e"><title>2026-10-21, CLI: 14</title></path></g>
+<g class="gs-rise" style="animation-delay:156ms"><path d="M294.1 252.0V241.2H318.1V252.0Z" fill="#2a6ddc"><title>2026-10-22, Desktop app: 41</title></path><path d="M294.1 239.2V238.2Q294.1 234.2 298.1 234.2H314.1Q318.1 234.2 318.1 238.2V239.2Z" fill="#e5642e"><title>2026-10-22, CLI: 21</title></path></g>
+<g class="gs-rise" style="animation-delay:188ms"><path d="M338.9 252.0V234.1H362.9V252.0Z" fill="#2a6ddc"><title>2026-10-23, Desktop app: 66</title></path><path d="M338.9 232.1V229.3Q338.9 225.3 342.9 225.3H358.9Q362.9 225.3 362.9 229.3V232.1Z" fill="#e5642e"><title>2026-10-23, CLI: 27</title></path></g>
+<g class="gs-rise" style="animation-delay:219ms"><path d="M383.6 252.0V223.8H407.6V252.0Z" fill="#2a6ddc"><title>2026-10-24, Desktop app: 102</title></path><path d="M383.6 221.8V212.7Q383.6 208.7 387.6 208.7H403.6Q407.6 208.7 407.6 212.7V221.8Z" fill="#e5642e"><title>2026-10-24, CLI: 49</title></path></g>
+<g class="gs-rise" style="animation-delay:250ms"><path d="M428.4 252.0V226.3H452.4V252.0Z" fill="#2a6ddc"><title>2026-10-25, Desktop app: 93</title></path><path d="M428.4 224.3V217.3Q428.4 213.3 432.4 213.3H448.4Q452.4 213.3 452.4 217.3V224.3Z" fill="#e5642e"><title>2026-10-25, CLI: 42</title></path></g>
+<g class="gs-rise" style="animation-delay:281ms"><path d="M473.1 252.0V222.9H497.1V252.0Z" fill="#2a6ddc"><title>2026-10-26, Desktop app: 105</title></path><path d="M473.1 220.9V207.6Q473.1 203.6 477.1 203.6H493.1Q497.1 203.6 497.1 207.6V220.9Z" fill="#e5642e"><title>2026-10-26, CLI: 64</title></path></g>
+<g class="gs-rise" style="animation-delay:313ms"><path d="M517.9 252.0V232.4H541.9V252.0Z" fill="#2a6ddc"><title>2026-10-27, Desktop app: 72</title></path><path d="M517.9 230.4V227.6Q517.9 223.6 521.9 223.6H537.9Q541.9 223.6 541.9 227.6V230.4Z" fill="#e5642e"><title>2026-10-27, CLI: 27</title></path></g>
+<g class="gs-rise" style="animation-delay:344ms"><path d="M562.6 252.0V235.5H586.6V252.0Z" fill="#2a6ddc"><title>2026-10-28, Desktop app: 61</title></path><path d="M562.6 233.5V233.5Q562.6 232.2 563.9 232.2H585.3Q586.6 232.2 586.6 233.5V233.5Z" fill="#e5642e"><title>2026-10-28, CLI: 8</title></path></g>
+<g class="gs-rise" style="animation-delay:375ms"><path d="M607.4 252.0V241.0H631.4V252.0Z" fill="#2a6ddc"><title>2026-10-29, Desktop app: 42</title></path><path d="M607.4 239.0V239.0Q607.4 237.1 609.2 237.1H629.5Q631.4 237.1 631.4 239.0V239.0Z" fill="#e5642e"><title>2026-10-29, CLI: 10</title></path></g>
+<g class="gs-rise" style="animation-delay:406ms"><path d="M652.1 252.0V191.4H676.1V252.0Z" fill="#2a6ddc"><title>2026-10-30, Desktop app: 215</title></path><path d="M652.1 189.4V87.2Q652.1 83.2 656.1 83.2H672.1Q676.1 83.2 676.1 87.2V189.4Z" fill="#e5642e"><title>2026-10-30, CLI: 374</title></path></g>
+<g class="gs-rise" style="animation-delay:438ms"><path d="M696.9 252.0V232.9H720.9V252.0Z" fill="#2a6ddc"><title>2026-10-31, Desktop app: 70</title></path><path d="M696.9 230.9V230.9Q696.9 229.1 698.7 229.1H719.0Q720.9 229.1 720.9 230.9V230.9Z" fill="#e5642e"><title>2026-10-31, CLI: 10</title></path></g>
+<g class="gs-rise" style="animation-delay:469ms"><path d="M741.6 252.0V234.7H765.6V252.0Z" fill="#2a6ddc"><title>2026-11-01, Desktop app: 64</title></path><path d="M741.6 232.7V232.7Q741.6 231.1 743.2 231.1H764.0Q765.6 231.1 765.6 232.7V232.7Z" fill="#e5642e"><title>2026-11-01, CLI: 9</title></path></g>
 </g>
 </svg>
