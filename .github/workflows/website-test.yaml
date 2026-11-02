@@ -8,11 +8,14 @@ on:
       - "website/**"
       # the supported sites list is generated from it
       - "README.md"
+      # the site bundles the demo GIFs from it
+      - "assets/demos/**"
       - ".github/workflows/website-test.yaml"
   pull_request:
     paths:
       - "website/**"
       - "README.md"
+      - "assets/demos/**"
       - ".github/workflows/website-test.yaml"
 
 jobs:
