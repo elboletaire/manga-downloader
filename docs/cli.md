@@ -299,10 +299,20 @@ folder up to date, run it from cron:
 
 ## Environment variables
 
-| Variable                           | Description                                             |
-| ---------------------------------- | ------------------------------------------------------- |
-| `MANGAPLUS_SECRET`                 | Anonymous device secret to use for Manga Plus           |
-| `MANGA_DOWNLOADER_NO_UPDATE_CHECK` | `1` skips the update check of `version` and `--version` |
+| Variable                           | Description                                                   |
+| ---------------------------------- | ------------------------------------------------------------- |
+| `HTTPS_PROXY`, `HTTP_PROXY`        | Proxy for the downloads: `http://`, `https://` or `socks5://` |
+| `NO_PROXY`                         | Hosts that skip the proxy, comma-separated                    |
+| `MANGAPLUS_SECRET`                 | Anonymous device secret to use for Manga Plus                 |
+| `MANGA_DOWNLOADER_NO_UPDATE_CHECK` | `1` skips the update check of `version` and `--version`       |
+
+**A proxy** reaches sites that answer only some countries, like the Japanese
+publishers that block requests from abroad. Sites read through a browser don't
+use it yet.
+
+```bash
+HTTPS_PROXY=socks5://127.0.0.1:1080 manga-downloader <url>
+```
 
 **Manga Plus** answers the complete chapter list only to an app client, which
 authenticates with an anonymous device secret. manga-downloader registers one
