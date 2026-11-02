@@ -600,7 +600,7 @@ environment variables.
 | [mangadass.com](https://mangadass.com) | English, mature | 2026-10-26 |
 | [mangadelsiglotvmanga.com.mx](https://www.mangadelsiglotvmanga.com.mx) | Manga del Siglo TV Manga, Spanish | 2026-10-29 |
 | [mangadenizi.net](https://www.mangadenizi.net) |  | 2026-11-02 |
-| [mangadex.org](https://mangadex.org) | MangaDex | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [mangadex.org](https://mangadex.org) | MangaDex | 2026-11-02 |
 | [mangadistrict.com](https://mangadistrict.com) | English, mostly NSFW | 2026-11-02 |
 | [mangadna.com](https://mangadna.com) | English, mature | 2026-10-29 |
 | [mangaeclipse.com](https://mangaeclipse.com) | Manga Eclipse | 2026-10-29 |
