@@ -636,7 +636,7 @@ environment variables.
 | [mangareader.site](https://mangareader.site) | MangaReader, English | 2026-10-26 |
 | [mangas-origines.fr](https://mangas-origines.fr) | French | 2026-10-18 |
 | [mangaspa.nikkan-spa.jp](https://mangaspa.nikkan-spa.jp) | Japanese (Comici), mostly NSFW | ❌ failing since 2026-10-26 (checked 2026-10-26) |
-| [mangastep.com](https://mangastep.com) | Thai | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [mangastep.com](https://mangastep.com) | Thai | 2026-11-02 |
 | [mangasushi.org](https://mangasushi.org) |  | 2026-10-29 |
 | [mangasusuku.com](https://mangasusuku.com) | Indonesian, mostly NSFW | 2026-10-29 |
 | [mangataro.org](https://mangataro.org) |  | 2026-11-02 |
