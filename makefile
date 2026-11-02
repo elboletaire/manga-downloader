@@ -1028,7 +1028,8 @@ grabber/browser: \
 	grabber/teamshadowi \
 	grabber/toongod \
 	grabber/toonily \
-	grabber/toonz
+	grabber/toonz \
+	grabber/vermanhwa
 
 grabber/toonily:
 	go run . --browser-visible https://toonily.com/serie/the-beginning-after-the-end-ea2130e6/ 244
@@ -1036,6 +1037,10 @@ grabber/toonily:
 # and the reader mounts its pages on scroll, so the pages come from the payload
 grabber/toonz:
 	go run . https://toonz.to/manhwa/just-because-youre-hungry-doesnt-mean-you-can-eat-anything 2
+
+# uses a real (visible) browser: the Cloudflare challenge never passes headless
+grabber/vermanhwa:
+	go run . --browser-visible https://vermanhwa.com/manga/tocame-abajo-sin-censura/ 8
 
 grabber/toongod:
 	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
@@ -1419,7 +1424,6 @@ grabber/html: \
 	grabber/undertranslations \
 	grabber/utsukushiibg \
 	grabber/uzaymanga \
-	grabber/vermanhwa \
 	grabber/violetmanga \
 	grabber/visorotaku \
 	grabber/writerscans \
@@ -1895,8 +1899,6 @@ grabber/uchuujinmangas:
 	go run . https://uchuujinmangas.com/manga/como-criar-villanos-correctamente/ 29
 grabber/undertranslations:
 	go run . https://undertranslations.com/manga/las-heroinas-de-un-galgame-que-evitaron-un-final-mortal-leyeron-mi-diario-y-descubrieron-mi-secreto/ 1
-grabber/vermanhwa:
-	go run . https://vermanhwa.com/manga/tocame-abajo-sin-censura/ 8
 grabber/sodsaime:
 	go run . https://www.xn--l3c0azab5a2gta.com/manga/magic-emperor/ 462
 grabber/yakshacomics:

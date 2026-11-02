@@ -833,7 +833,7 @@ environment variables.
 | [uzaymanga.com](https://uzaymanga.com) |  | 2026-10-18 |
 | [v7.kiryuu.to](https://v7.kiryuu.to) | Indonesian | 2026-11-02 |
 | [valirscans.org](https://valirscans.org) | English, locked chapters skipped | 2026-10-29 |
-| [vermanhwa.com](https://vermanhwa.com) | Spanish | ❌ failing since 2026-10-29 (checked 2026-10-29) |
+| [vermanhwa.com](https://vermanhwa.com) \* | Spanish | 2026-11-02 |
 | [vinlandsaga.website](https://vinlandsaga.website) | English, single series | 2026-10-29 |
 | [violetmanga.com](https://violetmanga.com) | Violet Scans, former violetscans.org | 2026-10-26 |
 | [visorotaku.com](https://visorotaku.com) | Spanish | 2026-10-29 |

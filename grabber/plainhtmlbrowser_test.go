@@ -30,6 +30,8 @@ func TestMatchBrowserSelector(t *testing.T) {
 		{"www.toonily.com", true}, // www. prefix is stripped
 		{"manhuatop.org", true},
 		{"www.manhuatop.org", true}, // www. prefix is stripped
+		{"vermanhwa.com", true},
+		{"www.vermanhwa.com", true}, // www. prefix is stripped
 		{"setsuscans.com", true},
 		{"www.setsuscans.com", true}, // www. prefix is stripped
 		{"ravenscans.org", true},

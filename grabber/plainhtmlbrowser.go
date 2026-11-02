@@ -20,6 +20,7 @@ func init() {
 	browser.RequireVisible("setsuscans.com")
 	browser.RequireVisible("asmotoon.com")
 	browser.RequireVisible("ravenscans.org")
+	browser.RequireVisible("vermanhwa.com")
 }
 
 // BrowserSiteSelector is a SiteSelector for sites that need a real browser
@@ -137,15 +138,8 @@ var browserSelectors = []BrowserSiteSelector{
 		ImageWait:       "#readerarea img",
 		SeriesPathDepth: 2,
 	},
-	// manhuatop.org: Madara wordpress theme behind a cloudflare challenge,
-	// usually needs --browser-visible. Its reader wraps real pages in
-	// div.reading-content img#image-N, but also throws in a decorative
-	// "about_manhuatop" banner and a "To_be_continued" footer image sharing
-	// the same wp-manga-chapter-img class as real pages, so the plain
-	// "div.reading-content img" selector (used by the toongod/manhuaus entry
-	// above) would pull them in as junk pages — the id^="image-" filter
-	// keeps only the real, ordered page images. Images download via plain
-	// HTTP with no cookies needed once harvested.
+	// manhuatop.org and vermanhwa.com: Madara behind cloudflare, usually visible-only. The reader
+	// mixes banner images in with the pages' class, so id^="image-" keeps only the real pages.
 	{
 		SiteSelector: SiteSelector{
 			Title:        "div.post-title h1",
@@ -155,7 +149,7 @@ var browserSelectors = []BrowserSiteSelector{
 			Link:         "a",
 			Image:        `div.reading-content img[id^="image-"]`,
 		},
-		Domains:         []string{"manhuatop.org"},
+		Domains:         []string{"manhuatop.org", "vermanhwa.com"},
 		ChaptersWait:    "li.wp-manga-chapter",
 		ImageWait:       `div.reading-content img[id^="image-"]`,
 		SeriesPathDepth: 2,
