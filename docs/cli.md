@@ -60,9 +60,11 @@ A chapter's `id` is the release's ID on the site, left out on sites whose
 grabber has none; `language`, `group`, `volume`, `locked` and `unnumbered` are
 left out when empty. `group` names the release's groups for display, and
 `groups` lists them apart, each one a value `--scanlator` takes (a group's name
-can hold a comma, so splitting `group` isn't safe). `languages` and `scanlators` are `null` when the site
-doesn't list that filter, else `{"values": [...], "all": true}`. The desktop
-app has no `list`: its chapter panel shows the same listing.
+can hold a comma, so splitting `group` isn't safe). `languages` and
+`scanlators` are `null` when the site doesn't list that filter, else
+`{"values": [...], "all": true}`, plus `current`, the value listed when no
+filter is set, on sites that list one edition at a time. The desktop app has
+no `list`: its chapter panel shows the same listing.
 
 ## Language and scanlation group
 
@@ -356,6 +358,7 @@ the check.
 | `--concurrency-pages` | `-C`  | Number of pages downloaded at once per chapter (max 10)        | 10             |
 | `--retry`             | `-r`  | Retries per failed page (max 3, `0` disables retrying)         | 1              |
 | `--browser-visible`   |       | Always show the browser window (rarely needed)                 | off            |
+| `--json`              |       | `list` only: print the listing as JSON on stdout               | off            |
 | `--version`           | `-v`  | Show version information                                       |                |
 
 Run `manga-downloader help` to list them in your terminal.
