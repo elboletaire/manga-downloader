@@ -160,6 +160,7 @@ var transport = newTransport()
 // HTTP/2 connection that died while idle, rather than failing every retry on it.
 func newTransport() *http.Transport {
 	return &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
 		DisableCompression:    true,
 		ForceAttemptHTTP2:     true,
 		DialContext:           (&net.Dialer{Timeout: dialTimeout}).DialContext,

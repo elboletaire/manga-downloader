@@ -123,6 +123,9 @@ The app downloads up to five chapters at once, ten pages each, and retries a
 failed page once, the command line's defaults; there's no setting for them.
 Sites whose image servers limit the request rate get lower limits on their own.
 
+Downloads go through the proxy in `HTTPS_PROXY` or `HTTP_PROXY` when the app is
+started with one set, as on the [command line](cli.md#environment-variables).
+
 ## Settings and the update check
 
 The gear icon (below the URL box on the start screen, in the header of the full
