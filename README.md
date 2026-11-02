@@ -364,7 +364,7 @@ environment variables.
 | [arlas.online](https://www.arlas.online) | Indonesian | 2026-11-02 |
 | [arthurscan.xyz](https://arthurscan.xyz) | Portuguese | 2026-10-22 |
 | [artlapsa.com](https://artlapsa.com) | English, locked chapters skipped | 2026-10-22 |
-| [asacomi.jp](https://asacomi.jp) | Japanese (Comici), locked chapters skipped | ❌ failing since 2026-10-22 (checked 2026-10-22) |
+| [asacomi.jp](https://asacomi.jp) | Japanese (Comici), locked chapters skipped | 2026-11-02 |
 | [asialotuss.com](https://asialotuss.com) | Spanish | 2026-10-19 |
 | [asmotoon.com](https://asmotoon.com) \* | Asmodeus Scans | 2026-10-15 |
 | [asterscans.com](https://asterscans.com) | English | 2026-10-22 |
@@ -378,7 +378,7 @@ environment variables.
 | [bananascans.com](https://bananascans.com) | English | 2026-10-22 |
 | [berserkkmanga.com](https://berserkkmanga.com) | English, single series, use a chapter URL | 2026-10-22 |
 | [beyondtheataraxia.com](https://www.beyondtheataraxia.com) | Italian | 2026-10-22 |
-| [bibibi-comic.com](https://bibibi-comic.com) | Japanese (Comici) | ❌ failing since 2026-10-22 (checked 2026-10-22) |
+| [bibibi-comic.com](https://bibibi-comic.com) | Japanese (Comici) | 2026-11-02 |
 | [bigcomics.jp](https://bigcomics.jp) | Japanese, Big Comics (Comici) | 2026-10-22 |
 | [bigsolo.org](https://bigsolo.org) |  | 2026-10-15 |
 | [blackcloveronline.com](https://blackcloveronline.com) | Black Clover | 2026-10-29 |
@@ -392,29 +392,29 @@ environment variables.
 | [celestialmoonscan.es](https://celestialmoonscan.es) | Spanish | 2026-10-26 |
 | [chainsawman-chapter.online](https://chainsawman-chapter.online) | Chainsaw Man | 2026-11-02 |
 | [chainsawmannmanga.com](https://chainsawmannmanga.com) | Chainsaw Man | 2026-10-29 |
-| [championcross.jp](https://championcross.jp) | Japanese, Champion Cross (Comici) | ❌ failing since 2026-10-22 (checked 2026-11-02) |
+| [championcross.jp](https://championcross.jp) | Japanese, Champion Cross (Comici) | 2026-11-02 |
 | [cocomic.co](https://cocomic.co) | English, mostly NSFW | 2026-11-02 |
 | [coffeemanga.net](https://coffeemanga.net) \* | English | 2026-11-02 |
 | [comic-action.com](https://comic-action.com) | Japanese, Web Action (GigaViewer) | 2026-10-29 |
 | [comic-days.com](https://comic-days.com) | Japanese, Comic DAYS (GigaViewer) | 2026-10-29 |
 | [comic-earthstar.com](https://comic-earthstar.com) | Japanese, Comic Earth Star (GigaViewer) | 2026-11-02 |
 | [comic-gardo.com](https://comic-gardo.com) | Japanese, Comic Gardo (GigaViewer) | 2026-10-29 |
-| [comic-growl.com](https://comic-growl.com) | Japanese, Comic Growl (Comici) | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [comic-growl.com](https://comic-growl.com) | Japanese, Comic Growl (Comici) | 2026-11-02 |
 | [comic-ogyaaa.com](https://comic-ogyaaa.com) | Japanese, Comic Ogyaaa (GigaViewer) | 2026-11-02 |
-| [comic-room-base.com](https://comic-room-base.com) | Japanese (Comici) | ❌ failing since 2026-11-02 (checked 2026-11-02) |
-| [comic-ryu.jp](https://comic-ryu.jp) | Japanese, Comic Ryu (Comici) | ❌ failing since 2026-10-22 (checked 2026-11-02) |
+| [comic-room-base.com](https://comic-room-base.com) | Japanese (Comici) | 2026-11-02 |
+| [comic-ryu.jp](https://comic-ryu.jp) | Japanese, Comic Ryu (Comici) | 2026-11-02 |
 | [comic-seasons.com](https://comic-seasons.com) | Japanese, Seasons (GigaViewer) | 2026-11-02 |
 | [comic-trail.com](https://comic-trail.com) | Japanese, Comic Trail (GigaViewer) | 2026-11-02 |
 | [comic-walker.com](https://comic-walker.com) | Japanese, KadoComi (KADOKAWA) | 2026-11-02 |
 | [comic-y-ours.com](https://comic-y-ours.com) | Japanese, Comic Y-Ours (GigaViewer) | 2026-11-02 |
 | [comic-zenon.com](https://comic-zenon.com) | Japanese, Comic Zenon (GigaViewer) | 2026-11-02 |
-| [comic.j-nbooks.jp](https://comic.j-nbooks.jp) | Japanese (Comici) | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [comic.j-nbooks.jp](https://comic.j-nbooks.jp) | Japanese (Comici) | 2026-11-02 |
 | [comic.naver.com](https://comic.naver.com) | Naver Webtoon, Korean, free episodes only | 2026-10-26 |
 | [comicborder.com](https://comicborder.com) | Japanese, Comic Border (GigaViewer) | 2026-10-29 |
-| [comicride.jp](https://comicride.jp) | Japanese, Comic Ride (Comici) | ❌ failing since 2026-11-02 (checked 2026-11-02) |
-| [comics.comici.jp](https://comics.comici.jp) | Japanese (Comici), portal | ❌ failing since 2026-10-22 (checked 2026-11-02) |
-| [comics.manga-bang.com](https://comics.manga-bang.com) | Japanese (Comici), locked chapters skipped | ❌ failing since 2026-11-02 (checked 2026-11-02) |
-| [comirela.com](https://comirela.com) | Japanese (Comici) | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [comicride.jp](https://comicride.jp) | Japanese, Comic Ride (Comici) | 2026-11-02 |
+| [comics.comici.jp](https://comics.comici.jp) | Japanese (Comici), portal | 2026-11-02 |
+| [comics.manga-bang.com](https://comics.manga-bang.com) | Japanese (Comici), locked chapters skipped | 2026-11-02 |
+| [comirela.com](https://comirela.com) | Japanese (Comici) | 2026-11-02 |
 | [comix.to](https://comix.to) \* |  | 2026-10-15 |
 | [covendasbruxonas.com](https://covendasbruxonas.com) | Coven Scan, Portuguese, mostly NSFW | 2026-10-29 |
 | [csmmangafree.com](https://www.csmmangafree.com) | English, single series | 2026-10-22 |
@@ -462,7 +462,7 @@ environment variables.
 | [fmteam.fr](https://fmteam.fr) |  | 2026-10-26 |
 | [frieren.online](https://ww5.frieren.online) | English | 2026-10-29 |
 | [furyosociety.com](https://furyosociety.com) |  | 2026-10-22 |
-| [g-comi.jp](https://g-comi.jp) | Japanese (Comici), comic-medu.com redirects here | ❌ failing since 2026-10-22 (checked 2026-10-22) |
+| [g-comi.jp](https://g-comi.jp) | Japanese (Comici), comic-medu.com redirects here | 2026-11-02 |
 | [gaiatoon.com](https://gaiatoon.com) | Turkish | 2026-10-22 |
 | [gakamangas.com](https://gakamangas.com) | English | 2026-10-22 |
 | [galaxscanlator.blogspot.com](https://galaxscanlator.blogspot.com) | Portuguese | 2026-11-02 |
@@ -484,7 +484,7 @@ environment variables.
 | [hanayume.com](https://hanayume.com) | Japanese (Comici), free episodes only | 2026-10-22 |
 | [hanmokkuscan.blogspot.com](https://hanmokkuscan.blogspot.com) | Portuguese | 2026-11-02 |
 | [harmony-scan.fr](https://harmony-scan.fr) | French | 2026-10-30 |
-| [hayacomic.jp](https://hayacomic.jp) | Japanese (Comici) | ❌ failing since 2026-10-29 (checked 2026-10-29) |
+| [hayacomic.jp](https://hayacomic.jp) | Japanese (Comici) | 2026-11-02 |
 | [heavenly-delusion.com](https://heavenly-delusion.com) | Heavenly Delusion | 2026-10-29 |
 | [heavenmanga.com](https://heavenmanga.com) | Spanish | 2026-10-29 |
 | [heckscans.blogspot.com](https://heckscans.blogspot.com) | Portuguese | 2026-11-02 |
@@ -500,7 +500,7 @@ environment variables.
 | [hentaixcomic.com](https://hentaixcomic.com) | English, mostly NSFW | 2026-10-29 |
 | [hentaixdickgirl.com](https://hentaixdickgirl.com) | English, mostly NSFW | 2026-10-29 |
 | [hentaixyuri.com](https://hentaixyuri.com) | English, mostly NSFW | 2026-10-29 |
-| [heros-web.com](https://heros-web.com) | Japanese, Hero's Web (Comici) | ❌ failing since 2026-10-22 (checked 2026-11-02) |
+| [heros-web.com](https://heros-web.com) | Japanese, Hero's Web (Comici) | 2026-11-02 |
 | [hhentai.fr](https://hhentai.fr) | French, mostly NSFW | 2026-10-29 |
 | [hivetoons.org](https://hivetoons.org) | HiveToons, VoidScans | 2026-10-15 |
 | [hni-scantrad.net](https://hni-scantrad.net) | HNI-scantrad, French and English | 2026-10-26 |
@@ -523,7 +523,7 @@ environment variables.
 | [kaijuno8chapters.com](https://kaijuno8chapters.com) | English, single series | ❌ failing since 2026-11-02 (checked 2026-11-02) |
 | [kaijunochapter.com](https://kaijunochapter.com) | English, single series | 2026-11-02 |
 | [kaliscan.org](https://kaliscan.org) | English, mostly NSFW | 2026-11-02 |
-| [kansai.mag-garden.co.jp](https://kansai.mag-garden.co.jp) | Japanese, Mag Garden Kansai (Comici) | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [kansai.mag-garden.co.jp](https://kansai.mag-garden.co.jp) | Japanese, Mag Garden Kansai (Comici) | 2026-11-02 |
 | [kanzenin.info](https://kanzenin.info) | Indonesian, mostly NSFW | 2026-11-02 |
 | [kappabeast.com](https://kappabeast.com) \* |  | 2026-10-15 |
 | [kaynscans.com](https://kaynscans.com) | Kayn Scans, former kaynscan.org | 2026-11-02 |
@@ -531,7 +531,7 @@ environment variables.
 | [kencomics.com](https://kencomics.com) | Ken Scans, English, locked chapters skipped | 2026-10-26 |
 | [keroscans.net](https://keroscans.net) | English, locked chapters skipped | 2026-10-26 |
 | [kewnscans.org](https://kewnscans.org) | English | 2026-11-02 |
-| [kimicomi.com](https://kimicomi.com) | Japanese (Comici) | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [kimicomi.com](https://kimicomi.com) | Japanese (Comici) | 2026-11-02 |
 | [kingofshojo.com](https://kingofshojo.com) |  | 2026-11-02 |
 | [kitsunedawn.com](https://kitsunedawn.com) | English | 2026-10-29 |
 | [klikmanga.org](https://klikmanga.org) | Indonesian | 2026-10-29 |
@@ -586,7 +586,7 @@ environment variables.
 | [manga-corporation.com](https://manga-corporation.com) | Manga-Corporation, French | 2026-10-26 |
 | [manga-lc.net](https://manga-lc.net) | Thai | 2026-11-02 |
 | [manga-neko.com](https://manga-neko.com) | Thai, some adult titles | 2026-10-26 |
-| [manga-zegra.com](https://manga-zegra.com) | Japanese (Comici) | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [manga-zegra.com](https://manga-zegra.com) | Japanese (Comici) | 2026-11-02 |
 | [manga.adonisfansub.com](https://manga.adonisfansub.com) | Adonis Fansub, Turkish | 2026-10-29 |
 | [manga.fansubs.cat](https://manga.fansubs.cat) | Catalan | 2026-11-02 |
 | [manga.smuglo.li](https://manga.smuglo.li) | Lilyreader, yuri | 2026-10-29 |
@@ -596,7 +596,7 @@ environment variables.
 | [mangaball.com](https://mangaball.com) | former mangaball.net | 2026-10-18 |
 | [mangabats.com](https://www.mangabats.com) | former mangabat.com | 2026-10-19 |
 | [mangaberri.com](https://mangaberri.com) |  | 2026-11-02 |
-| [mangabu.jp](https://mangabu.jp) | Japanese (Comici) | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [mangabu.jp](https://mangabu.jp) | Japanese (Comici) | 2026-11-02 |
 | [mangacrazy.net](https://mangacrazy.net) | English, mostly NSFW | 2026-11-02 |
 | [mangadass.com](https://mangadass.com) | English, mature | 2026-10-26 |
 | [mangadelsiglotvmanga.com.mx](https://www.mangadelsiglotvmanga.com.mx) | Manga del Siglo TV Manga, Spanish | 2026-10-29 |
@@ -622,7 +622,7 @@ environment variables.
 | [mangalami.com](https://mangalami.com) | LamiManga, Thai | 2026-11-02 |
 | [mangalib.me](https://mangalib.me) | MangaLib | 2026-10-15 |
 | [mangalivre.to](https://mangalivre.to) | Manga Livre, former mangalivre.tv/mangalivre.net | 2026-10-29 |
-| [mangalt.jp](https://mangalt.jp) | Japanese (Comici) | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [mangalt.jp](https://mangalt.jp) | Japanese (Comici) | 2026-11-02 |
 | [mangamaniacs.org](https://mangamaniacs.org) | English, mostly NSFW, yaoi | 2026-11-02 |
 | [manganato.gg](https://www.manganato.gg) \* | MangaNato | 2026-11-02 |
 | [manganel.me](https://manganel.me) | MangaNel, English | 2026-10-26 |
@@ -636,7 +636,7 @@ environment variables.
 | [mangaread.org](https://www.mangaread.org) |  | 2026-11-02 |
 | [mangareader.site](https://mangareader.site) | MangaReader, English | 2026-10-26 |
 | [mangas-origines.fr](https://mangas-origines.fr) | French | 2026-10-18 |
-| [mangaspa.nikkan-spa.jp](https://mangaspa.nikkan-spa.jp) | Japanese (Comici), mostly NSFW | ❌ failing since 2026-10-26 (checked 2026-10-26) |
+| [mangaspa.nikkan-spa.jp](https://mangaspa.nikkan-spa.jp) | Japanese (Comici), mostly NSFW | 2026-11-02 |
 | [mangastep.com](https://mangastep.com) | Thai | 2026-11-02 |
 | [mangasushi.org](https://mangasushi.org) |  | 2026-10-29 |
 | [mangasusuku.com](https://mangasusuku.com) | Indonesian, mostly NSFW | 2026-10-29 |
@@ -691,7 +691,7 @@ environment variables.
 | [mundomanhwa.com](https://mundomanhwa.com) | Spanish | 2026-10-29 |
 | [myreadingcomic.com](https://myreadingcomic.com) | English, mostly NSFW | 2026-10-26 |
 | [nabicix.com](https://www.nabicix.com) | Turkish, former nabimanga.com | ❌ failing since 2026-10-26 (checked 2026-10-30) |
-| [namicomic.jp](https://namicomic.jp) | Japanese (Comici) | ❌ failing since 2026-10-26 (checked 2026-10-26) |
+| [namicomic.jp](https://namicomic.jp) | Japanese (Comici) | 2026-11-02 |
 | [narasininja.net](https://narasininja.net) | Indonesian | ❌ failing since 2026-10-26 (checked 2026-10-30) |
 | [natomanga.com](https://www.natomanga.com) \* | MangaNato, former manganato.com/manganelo.com | 2026-10-15 |
 | [natsu.one](https://natsu.one) | NatsuID, Indonesian, some adult titles, former natsu.id | 2026-10-29 |
@@ -728,7 +728,7 @@ environment variables.
 | [paritehaber.com](https://www.paritehaber.com) | English, mostly NSFW | 2026-10-29 |
 | [petrotechsociety.org](https://www.petrotechsociety.org) | English, mostly NSFW | 2026-10-29 |
 | [phoenixscans.com](https://www.phoenixscans.com) | Phoenix Scans, Italian | 2026-10-26 |
-| [piacomic.jp](https://piacomic.jp) | Japanese (Comici) | ❌ failing since 2026-10-26 (checked 2026-10-26) |
+| [piacomic.jp](https://piacomic.jp) | Japanese (Comici) | 2026-11-02 |
 | [plumacomics.com](https://plumacomics.com) | Portuguese | ❌ failing since 2026-10-26 (checked 2026-10-30) |
 | [pornhwaz.com](https://www.pornhwaz.com) | English, mostly NSFW | 2026-10-26 |
 | [projectsuki.com](https://projectsuki.com) |  | 2026-10-26 |
@@ -751,7 +751,7 @@ environment variables.
 | [readkagura.com](https://readkagura.com) | English, single series | 2026-10-26 |
 | [readspyxfamilymanga.com](https://readspyxfamilymanga.com) | English, single series, use a chapter URL | 2026-10-26 |
 | [reapertrans.com](https://reapertrans.com) | Thai | 2026-10-26 |
-| [rimacomiplus.jp](https://rimacomiplus.jp) | Japanese (Comici) | ❌ failing since 2026-10-26 (checked 2026-10-26) |
+| [rimacomiplus.jp](https://rimacomiplus.jp) | Japanese (Comici) | 2026-11-02 |
 | [ritharscans.com](https://ritharscans.com) |  | 2026-10-26 |
 | [rizzfables.com](https://rizzfables.com) |  | 2026-10-26 |
 | [rokaricomics.com](https://rokaricomics.com) |  | 2026-10-26 |
@@ -788,12 +788,12 @@ environment variables.
 | [springtoons.com](https://springtoons.com) | English, mostly NSFW, BL | 2026-10-26 |
 | [spyxfamilymanga.com](https://spyxfamilymanga.com) | English, single series, use a chapter URL | 2026-10-26 |
 | [stonescape.xyz](https://stonescape.xyz) |  | 2026-10-26 |
-| [studio.booklista.co.jp](https://studio.booklista.co.jp) | Japanese (Comici), mostly NSFW | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [studio.booklista.co.jp](https://studio.booklista.co.jp) | Japanese (Comici), mostly NSFW | 2026-11-02 |
 | [sunday-webry.com](https://www.sunday-webry.com) | Japanese, Sunday Webry (GigaViewer) | 2026-10-26 |
 | [sushiscan.net](https://sushiscan.net) \* |  | 2026-10-15 |
 | [sxfmanga.net](https://www.sxfmanga.net) | English, single series | 2026-10-30 |
 | [taiyo.moe](https://taiyo.moe) |  | 2026-10-26 |
-| [takecomic.jp](https://takecomic.jp) | Japanese, Take Comic (Comici) | ❌ failing since 2026-10-26 (checked 2026-10-26) |
+| [takecomic.jp](https://takecomic.jp) | Japanese, Take Comic (Comici) | 2026-11-02 |
 | [tankouhentai.com](https://tankouhentai.com) | Portuguese, mostly NSFW | 2026-10-26 |
 | [tanuki-manga.net](https://www.tanuki-manga.net) | Thai | 2026-10-26 |
 | [tarotscans.com](https://www.tarotscans.com) | Turkish | 2026-10-26 |
@@ -880,8 +880,8 @@ environment variables.
 | [yaoiscan.me](https://yaoiscan.me) | English, mature | 2026-10-26 |
 | [yaoiscan.org](https://yaoiscan.org) | English, mostly NSFW, BL | 2026-10-29 |
 | [yokai-team.blogspot.com](https://yokai-team.blogspot.com) | Arabic | 2026-11-02 |
-| [younganimal.com](https://younganimal.com) | Japanese, Young Animal (Comici) | ❌ failing since 2026-10-29 (checked 2026-10-29) |
-| [youngchampion.jp](https://youngchampion.jp) | Japanese (Comici) | ❌ failing since 2026-10-29 (checked 2026-10-29) |
+| [younganimal.com](https://younganimal.com) | Japanese, Young Animal (Comici) | 2026-11-02 |
+| [youngchampion.jp](https://youngchampion.jp) | Japanese (Comici) | 2026-11-02 |
 | [yuri-online.com](https://yuri-online.com) | Spanish, mostly NSFW | 2026-10-30 |
 | [yurilab.top](https://yurilab.top) | Indonesian, yuri, some adult titles | 2026-10-29 |
 | [yurimoonsub.blogspot.com](https://yurimoonsub.blogspot.com) | Arabic, mostly NSFW | 2026-11-02 |
