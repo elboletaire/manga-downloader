@@ -65,10 +65,12 @@ type listedChapter struct {
 	Unnumbered bool   `json:"unnumbered,omitempty"`
 	Title      string `json:"title"`
 	Language   string `json:"language,omitempty"`
-	// Group is the display string of the release's groups
-	Group  string `json:"group,omitempty"`
-	Volume int    `json:"volume,omitempty"`
-	Locked bool   `json:"locked,omitempty"`
+	// Group is the display string of the release's groups, and Groups the names
+	// apart, each one a value --scanlator takes (a name can hold ", ")
+	Group  string   `json:"group,omitempty"`
+	Groups []string `json:"groups,omitempty"`
+	Volume int      `json:"volume,omitempty"`
+	Locked bool     `json:"locked,omitempty"`
 }
 
 // listedFilter is what a filter takes: the values, and whether the site also
@@ -130,6 +132,9 @@ func listingOf(s *core.Series) listing {
 		}
 		if c, ok := ch.(interface{ GetGroup() string }); ok {
 			row.Group = c.GetGroup()
+		}
+		if c, ok := ch.(interface{ GetGroups() []string }); ok && row.Group != "" {
+			row.Groups = c.GetGroups()
 		}
 		l.Chapters = append(l.Chapters, row)
 	}

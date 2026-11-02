@@ -5,6 +5,8 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
+	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -14,10 +16,11 @@ import (
 )
 
 // listedSeries is a series with two releases of chapter 1 (one per language,
-// the English one with an ID and a group) and a locked chapter 2
+// the English one with an ID and two groups, one of them named with a comma)
+// and a locked chapter 2
 func listedSeries() *core.Series {
 	en := &grabber.Chapter{Number: 1, Title: "Start", Language: "en", ID: "a1", Volume: 1}
-	en.SetGroups("Alpha")
+	en.SetGroups("Alpha, Beta Scans", "Gamma")
 	return &core.Series{
 		Site:  &grabber.Mangadex{},
 		Title: "Some Series",
@@ -41,11 +44,12 @@ func TestListingOf(t *testing.T) {
 	if len(l.Chapters) != 3 {
 		t.Fatalf("chapters = %d, want 3", len(l.Chapters))
 	}
-	want := listedChapter{ID: "a1", Number: 1, Title: grabber.ChapterLabel(s.Chapters[0]), Language: "en", Group: "Alpha", Volume: 1}
-	if l.Chapters[0] != want {
+	want := listedChapter{ID: "a1", Number: 1, Title: grabber.ChapterLabel(s.Chapters[0]), Language: "en",
+		Group: "Alpha, Beta Scans, Gamma", Groups: []string{"Alpha, Beta Scans", "Gamma"}, Volume: 1}
+	if !reflect.DeepEqual(l.Chapters[0], want) {
 		t.Errorf("chapters[0] = %+v, want %+v", l.Chapters[0], want)
 	}
-	if c := l.Chapters[1]; c.ID != "" || c.Group != "" || c.Language != "es" {
+	if c := l.Chapters[1]; c.ID != "" || c.Group != "" || c.Groups != nil || c.Language != "es" {
 		t.Errorf("chapters[1] = %+v, want no ID nor group, in es", c)
 	}
 	if !l.Chapters[2].Locked {
@@ -104,8 +108,6 @@ func TestWriteListingTable(t *testing.T) {
 	text := out.String()
 	for _, want := range []string{
 		"Some Series (Mangadex, 3 chapters)",
-		"NUMBER  TITLE",
-		"LANGUAGE  GROUP  VOLUME  LOCKED",
 		"Alpha",
 		"yes",
 		"Languages (--language): en, es, all",
@@ -113,6 +115,9 @@ func TestWriteListingTable(t *testing.T) {
 		if !strings.Contains(text, want) {
 			t.Errorf("table lacks %q:\n%s", want, text)
 		}
+	}
+	if !regexp.MustCompile(`NUMBER +TITLE +LANGUAGE +GROUP +VOLUME +LOCKED`).MatchString(text) {
+		t.Errorf("table lacks the header with every column:\n%s", text)
 	}
 	if strings.Contains(text, "Groups (--scanlator)") {
 		t.Errorf("table lists groups for a series without a group filter:\n%s", text)

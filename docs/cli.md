@@ -58,7 +58,9 @@ stdout, for scripts, with messages and errors on stderr:
 
 A chapter's `id` is the release's ID on the site, left out on sites whose
 grabber has none; `language`, `group`, `volume`, `locked` and `unnumbered` are
-left out when empty. `languages` and `scanlators` are `null` when the site
+left out when empty. `group` names the release's groups for display, and
+`groups` lists them apart, each one a value `--scanlator` takes (a group's name
+can hold a comma, so splitting `group` isn't safe). `languages` and `scanlators` are `null` when the site
 doesn't list that filter, else `{"values": [...], "all": true}`. The desktop
 app has no `list`: its chapter panel shows the same listing.
 
