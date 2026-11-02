@@ -1022,6 +1022,7 @@ grabber/browser: \
 	grabber/manhuatop \
 	grabber/manhuaus \
 	grabber/natomanga \
+	grabber/ravenscans \
 	grabber/setsuscans \
 	grabber/sushiscan \
 	grabber/teamshadowi \
@@ -1361,7 +1362,6 @@ grabber/html: \
 	grabber/pzykosis \
 	grabber/rackusreads \
 	grabber/rakuentranslations \
-	grabber/ravenscans \
 	grabber/rawkuma \
 	grabber/read7deadlysins \
 	grabber/readberserk \
@@ -1476,8 +1476,9 @@ grabber/demonicscans:
 
 grabber/mangakatana:
 	go run . https://mangakatana.com/manga/dandadan.25818 241
+# uses a real (visible) browser: the Cloudflare challenge never passes headless
 grabber/ravenscans:
-	go run . https://ravenscans.org/manga/academys-genius-swordmaster/ 79
+	go run . --browser-visible https://ravenscans.org/manga/click-me-all-over/ 75
 grabber/rawkuma:
 	go run . https://rawkuma.net/manga/jujutsu-kaisen/ 271
 grabber/dynastyscans:

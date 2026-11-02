@@ -3,9 +3,13 @@
 package grabber
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 func TestMatchBrowserSelector(t *testing.T) {
@@ -28,6 +32,8 @@ func TestMatchBrowserSelector(t *testing.T) {
 		{"www.manhuatop.org", true}, // www. prefix is stripped
 		{"setsuscans.com", true},
 		{"www.setsuscans.com", true}, // www. prefix is stripped
+		{"ravenscans.org", true},
+		{"www.ravenscans.org", true}, // www. prefix is stripped
 		{"example.com", false},
 		{"notatoongod.org", false}, // must be an exact host match
 	}
@@ -158,5 +164,57 @@ func TestAsmotoonReaderImages(t *testing.T) {
 	}
 	if doc.Find(sel.SeriesLink).AttrOr("href", "") != "/my-son" {
 		t.Error("SeriesLink does not find the back link")
+	}
+}
+
+func ravenscansFixture(t *testing.T, name string) *goquery.Document {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("testdata", "ravenscans", name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return docFromHTML(t, string(data))
+}
+
+func TestRavenscansChapters(t *testing.T) {
+	sel, ok := matchBrowserSelector("ravenscans.org")
+	if !ok {
+		t.Fatal("no ravenscans.org entry")
+	}
+	m := PlainHTML{Grabber: &Grabber{URL: "https://ravenscans.org/manga/click-me-all-over/"}, site: sel.SiteSelector}
+	m.doc = ravenscansFixture(t, "series.html")
+	m.rows = m.doc.Find(m.site.Rows)
+
+	if got := m.doc.Find(m.site.Title).Text(); got != "Click Me All Over" {
+		t.Errorf("title = %q", got)
+	}
+	chapters, errs := m.FetchChapters()
+	if len(errs) != 0 || len(chapters) != 2 {
+		t.Fatalf("chapters = %d, errs = %v", len(chapters), errs)
+	}
+	if chapters[0].GetNumber() != 84 || chapters[1].GetNumber() != 75 {
+		t.Errorf("numbers = %v, %v", chapters[0].GetNumber(), chapters[1].GetNumber())
+	}
+	if got := chapters[1].(*PlainHTMLChapter).URL; got != "https://ravenscans.org/click-me-all-over-chapter-75/" {
+		t.Errorf("url = %q", got)
+	}
+}
+
+func TestRavenscansReaderImagesAndSeriesLink(t *testing.T) {
+	sel, ok := matchBrowserSelector("ravenscans.org")
+	if !ok {
+		t.Fatal("no ravenscans.org entry")
+	}
+	doc := ravenscansFixture(t, "chapter.html")
+	want := []string{
+		"https://cdn5.ravenscans.org/click-me-all-over/chapter-75/0.webp",
+		"https://cdn5.ravenscans.org/click-me-all-over/chapter-75/1.webp",
+		"https://cdn5.ravenscans.org/click-me-all-over/chapter-75/2.webp",
+	}
+	if got := getPlainHTMLImageURL(sel.Image, doc); !reflect.DeepEqual(got, want) {
+		t.Errorf("images = %v, want %v", got, want)
+	}
+	if got := doc.Find(sel.SeriesLink).AttrOr("href", ""); got != "https://ravenscans.org/manga/click-me-all-over/" {
+		t.Errorf("SeriesLink href = %q", got)
 	}
 }

@@ -736,7 +736,7 @@ environment variables.
 | [rackusreads.com](https://rackusreads.com) | Rackus | 2026-10-29 |
 | [ragnarokscanlation.org](https://ragnarokscanlation.org) | Spanish | 2026-10-26 |
 | [rakuentranslations.com](https://rakuentranslations.com) | Spanish | 2026-10-26 |
-| [ravenscans.org](https://ravenscans.org) |  | ❌ failing since 2026-10-26 (checked 2026-10-30) |
+| [ravenscans.org](https://ravenscans.org) \* |  | 2026-11-02 |
 | [rawdex.net](https://rawdex.net) | mostly NSFW | 2026-10-26 |
 | [rawkuma.net](https://rawkuma.net) |  | 2026-10-26 |
 | [re-yume.my.id](https://www.re-yume.my.id) | Re-Yume, Indonesian | 2026-10-29 |

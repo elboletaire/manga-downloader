@@ -19,6 +19,7 @@ func init() {
 	browser.RequireVisible("manhuaus.com")
 	browser.RequireVisible("setsuscans.com")
 	browser.RequireVisible("asmotoon.com")
+	browser.RequireVisible("ravenscans.org")
 }
 
 // BrowserSiteSelector is a SiteSelector for sites that need a real browser
@@ -195,6 +196,22 @@ var browserSelectors = []BrowserSiteSelector{
 		ChaptersWait:    `a[id^="chapter-link-"]`,
 		ImageWait:       "img",
 		SeriesPathDepth: 2,
+	},
+	// ravenscans.org: Themesia behind a cloudflare challenge only a visible window
+	// clears; chapters sit at one path segment, so they find their series through .allc.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1.entry-title",
+			Rows:         "#chapterlist li[data-num]",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a",
+			Image:        "#readerarea img",
+			SeriesLink:   ".allc a",
+		},
+		Domains:      []string{"ravenscans.org"},
+		ChaptersWait: "#chapterlist li[data-num]",
+		ImageWait:    "#readerarea img",
 	},
 }
 
