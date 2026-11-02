@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[555 supported sites](#supported-sites)**, from big aggregators to small
+- **[556 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 555 supported sites</b></summary>
+<summary><b>Show all 556 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -588,6 +588,7 @@ environment variables.
 | [manga-neko.com](https://manga-neko.com) | Thai, some adult titles | 2026-10-26 |
 | [manga-zegra.com](https://manga-zegra.com) | Japanese (Comici) | ❌ failing since 2026-11-02 (checked 2026-11-02) |
 | [manga.adonisfansub.com](https://manga.adonisfansub.com) | Adonis Fansub, Turkish | 2026-10-29 |
+| [manga.fansubs.cat](https://manga.fansubs.cat) | Catalan | 2026-11-02 |
 | [manga.smuglo.li](https://manga.smuglo.li) | Lilyreader, yuri | 2026-10-29 |
 | [manga18.me](https://manga18.me) | English, mature | 2026-10-26 |
 | [manga18free.com](https://manga18free.com) | English, mostly NSFW | 2026-10-29 |

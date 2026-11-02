@@ -233,6 +233,15 @@ func TestIdentifySiteOrder(t *testing.T) {
 			want: (*Coffeemanga)(nil),
 		},
 		{
+			name:   "fansubs.cat series page",
+			origin: "https://manga.fansubs.cat",
+			path:   "/jojo-s-bizarre-adventure-part-1-phantom-blood/jojo-s-en-catala",
+			routes: map[string]string{
+				"/jojo-s-bizarre-adventure-part-1-phantom-blood/jojo-s-en-catala": "fansubscat_series.html",
+			},
+			want: (*FansubsCat)(nil),
+		},
+		{
 			name:   "coffeemanga reader page",
 			origin: "https://coffeemanga.net",
 			path:   "/manga/under-the-oak-tree/chapter-74/",

@@ -244,6 +244,7 @@ grabber: \
 	grabber/elftoon \
 	grabber/euphoriascan \
 	grabber/fanfox \
+	grabber/fansubscat \
 	grabber/feelweb \
 	grabber/flamecomics \
 	grabber/fmteam \
@@ -535,6 +536,9 @@ grabber/mangafire:
 
 grabber/fanfox:
 	go run . https://fanfox.net/manga/chainsaw_man/ 232
+
+grabber/fansubscat:
+	go run . https://manga.fansubs.cat/jojo-s-bizarre-adventure-part-1-phantom-blood/jojo-s-en-catala 2
 
 # an old chapter of a long series on purpose: the series page only embeds the
 # 50 newest chapters, so this exercises the full-list API fetch
