@@ -1,5 +1,5 @@
 /// <reference types="vitest/config" />
-import { existsSync, readFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import i18next from 'i18next'
@@ -19,6 +19,9 @@ const root = fileURLToPath(new URL('.', import.meta.url))
 const readmePath = fileURLToPath(new URL('../README.md', import.meta.url))
 const templatePath = path.join(root, 'index.html')
 const localesDir = path.join(root, 'locales')
+// The terminal demos live in the repo's assets/demos (the README uses them); the site copies them, see siteDemos.
+const demosSource = fileURLToPath(new URL('../assets/demos', import.meta.url))
+const demosDir = path.join(root, 'src/assets/demos')
 
 // Values every translation can interpolate besides the counts.
 const GLOBALS = {
@@ -264,9 +267,27 @@ function siteData(): Plugin[] {
   ]
 }
 
+/**
+ * Copies the terminal demo GIFs from assets/demos into src/assets/demos, so the
+ * pages reference them like the screenshots and Vite fingerprints them. The copy is gitignored.
+ */
+function siteDemos(): Plugin {
+  return {
+    name: 'site-demos',
+    configResolved() {
+      // cleared first, so a GIF removed from assets/demos breaks locally as it does in CI
+      rmSync(demosDir, { recursive: true, force: true })
+      mkdirSync(demosDir, { recursive: true })
+      for (const file of readdirSync(demosSource)) {
+        if (file.endsWith('.gif')) copyFileSync(path.join(demosSource, file), path.join(demosDir, file))
+      }
+    },
+  }
+}
+
 export default defineConfig({
   base,
-  plugins: [siteData()],
+  plugins: [siteData(), siteDemos()],
   build: {
     // Never inline assets as data: URIs. Firefox doesn't render the SVG data:
     // URI in the dark <picture> source, so the hero mascot disappeared there.

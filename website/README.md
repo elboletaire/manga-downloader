@@ -58,9 +58,12 @@ pnpm preview   # serve dist/
   the English card through the same template). It needs Chromium (`CHROME` env var,
   default `chromium`), and ImageMagick for the 256-colour PNG. Each card's `imageAlt`
   quotes its tagline, so update that with the locale.
-- **Terminal GIFs**: referenced from `assets/demos/` on `master` via raw GitHub URLs,
-  lazy-loaded. Each GIF has a `-light` twin (`download-light.gif`), shown in light
-  mode; the plain GIF is the dark one, shown when the theme is dark.
+- **Terminal GIFs**: copied from the repo's `assets/demos/` into the gitignored
+  `src/assets/demos/` by the `site-demos` plugin in `vite.config.ts`, so Vite
+  fingerprints them like the screenshots. The Pages build checks out the latest
+  release, so a re-recorded GIF goes live with the next release (or a manual run),
+  not when it lands on `master`. Each GIF has a `-light` twin (`download-light.gif`),
+  shown in light mode; the plain GIF is the dark one, shown when the theme is dark.
 
 ## Theme
 
