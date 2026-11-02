@@ -681,7 +681,7 @@ environment variables.
 | [mhscans.com](https://mhscans.com) | Spanish | 2026-10-29 |
 | [mihentai.net](https://mihentai.net) | Indonesian, mostly NSFW | 2026-10-29 |
 | [mikrokosmosfb.blogspot.com](https://mikrokosmosfb.blogspot.com) | Turkish, mostly NSFW | 2026-11-02 |
-| [mindafansub.dev](https://mindafansub.dev) | Turkish, mostly NSFW | ❌ failing since 2026-10-29 (checked 2026-10-29) |
+| [mindafansub.nl](https://mindafansub.nl) | Turkish, mostly NSFW, former mindafansub.dev | 2026-11-02 |
 | [mistscans.com](https://mistscans.com) |  | 2026-10-29 |
 | [mkissa.to](https://mkissa.to) \* |  | 2026-10-15 |
 | [monopolymanhua.com](https://monopolymanhua.com) | Spanish | 2026-10-29 |

@@ -1839,7 +1839,7 @@ grabber/manhwalist:
 grabber/mihentai:
 	go run . https://mihentai.net/manga/wear-student-underwear-and-apologize/ 1
 grabber/mindafansub:
-	go run . https://mindafansub.dev/manga/waterside-night-45/ 59
+	go run . https://mindafansub.nl/manga/waterside-night/ 59
 grabber/nekoproject:
 	go run . https://nekoproject.org/manga/daija-ni-totsuida-musume/ 21
 grabber/ngomik:
