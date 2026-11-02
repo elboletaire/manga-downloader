@@ -28,6 +28,40 @@ Without a range, the question looks like this:
   <img alt="The command line asking whether to download every chapter of a series, then downloading them" src="../assets/demos/prompt-light.gif">
 </picture>
 
+## Listing a series
+
+`list` prints what a series offers without downloading anything: each
+chapter's number, title, language, group, volume and whether it's locked, the
+languages and groups `--language` and `--scanlator` take, and the site's
+volumes as a `--volumes` value.
+
+~~~bash
+manga-downloader list https://mangadex.org/title/a1c7c817-4e59-43b7-9365-09675a149a6f
+~~~
+
+`--language` and `--scanlator` filter the listing as they filter a download,
+so it shows what the download would take. `--json` prints it as JSON on
+stdout, for scripts, with messages and errors on stderr:
+
+~~~json
+{
+  "title": "Fire Punch",
+  "grabber": "Inmanga",
+  "chapters": [
+    { "id": "87A4882C-1FA2-4162-B335-C1EA75EB477A", "number": 1, "title": "Capítulo 1" }
+  ],
+  "languages": null,
+  "scanlators": null,
+  "volumes": ""
+}
+~~~
+
+A chapter's `id` is the release's ID on the site, left out on sites whose
+grabber has none; `language`, `group`, `volume`, `locked` and `unnumbered` are
+left out when empty. `languages` and `scanlators` are `null` when the site
+doesn't list that filter, else `{"values": [...], "all": true}`. The desktop
+app has no `list`: its chapter panel shows the same listing.
+
 ## Language and scanlation group
 
 Some sites, such as MangaDex, list each chapter once per language. Use

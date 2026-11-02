@@ -126,6 +126,11 @@ func (c Chapter) GetLocked() bool {
 	return c.Locked
 }
 
+// GetID returns the release's ID on the site, "" when the grabber sets none
+func (c Chapter) GetID() string {
+	return c.ID
+}
+
 // GetLanguage returns the chapter language
 func (c Chapter) GetLanguage() string {
 	return c.Language

@@ -102,26 +102,7 @@ func Run(cmd *cobra.Command, args []string) {
 		exitSettingError(err)
 	}
 
-	// load the series (identify and open), then close the browser after
-	releaseLd := browser.Hold()
-	s, errs := core.Identify(getUrlArg(args), &settings)
-	if len(errs) > 0 {
-		red("Errors testing site (a site may be down):")
-		for _, err := range errs {
-			red(err.Error())
-		}
-	}
-	if s == nil {
-		releaseLd()
-		yellow("Site not recognised")
-		exit(1)
-	}
-
-	series, err := core.Open(s, &settings)
-	releaseLd()
-	if err != nil {
-		exitOpenError(err)
-	}
+	series := openSeries(getUrlArg(args))
 	chapters := series.Chapters
 
 	var rngs []ranges.Range
@@ -316,6 +297,32 @@ func exitSettingError(err error) {
 	exit(1)
 }
 
+// openSeries identifies the site of url and opens its series, holding the
+// browser only while loading. It exits when no site matches or the series
+// can't be opened.
+func openSeries(url string) *core.Series {
+	releaseLd := browser.Hold()
+	s, errs := core.Identify(url, &settings)
+	if len(errs) > 0 {
+		red("Errors testing site (a site may be down):")
+		for _, err := range errs {
+			red(err.Error())
+		}
+	}
+	if s == nil {
+		releaseLd()
+		yellow("Site not recognised")
+		exit(1)
+	}
+
+	series, err := core.Open(s, &settings)
+	releaseLd()
+	if err != nil {
+		exitOpenError(err)
+	}
+	return series
+}
+
 // exitOpenError prints why the series couldn't be opened, then exits
 func exitOpenError(err error) {
 	var terr *core.TitleError
@@ -362,7 +369,8 @@ func Execute() {
 	}
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		// on stderr, so `list --json` leaves stdout empty on a usage error
+		fmt.Fprintln(os.Stderr, err)
 		exit(1)
 	}
 }

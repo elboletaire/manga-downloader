@@ -296,6 +296,9 @@ manga-downloader [flags] [url] [chapters]
   Leave it out and the tool asks before downloading the whole series.
 
 Arguments aren't positional, so `manga-downloader 1-50 [url]` works too.
+`manga-downloader list [url]` prints the chapters, languages, groups and
+volumes without downloading, as JSON with `--json`; the app has no
+counterpart, as its chapter panel shows the same ([guide](docs/cli.md#listing-a-series)).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/demos/download.gif">
