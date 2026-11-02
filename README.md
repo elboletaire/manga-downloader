@@ -394,7 +394,7 @@ environment variables.
 | [chainsawmannmanga.com](https://chainsawmannmanga.com) | Chainsaw Man | 2026-10-29 |
 | [championcross.jp](https://championcross.jp) | Japanese, Champion Cross (Comici) | ❌ failing since 2026-10-22 (checked 2026-11-02) |
 | [cocomic.co](https://cocomic.co) | English, mostly NSFW | 2026-11-02 |
-| [coffeemanga.net](https://coffeemanga.net) | English | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [coffeemanga.net](https://coffeemanga.net) \* | English | 2026-11-02 |
 | [comic-action.com](https://comic-action.com) | Japanese, Web Action (GigaViewer) | 2026-10-29 |
 | [comic-days.com](https://comic-days.com) | Japanese, Comic DAYS (GigaViewer) | 2026-10-29 |
 | [comic-earthstar.com](https://comic-earthstar.com) | Japanese, Comic Earth Star (GigaViewer) | 2026-11-02 |

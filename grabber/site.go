@@ -237,6 +237,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		// declined, so only the URLs they left are fetched
 		NewGigaviewerByMarkup(g),
 		NewComiciByMarkup(g),
+		NewCoffeemanga(g),
 	}
 	var early []Site
 	for _, newSite := range earlySites {

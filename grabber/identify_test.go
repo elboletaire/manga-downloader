@@ -224,6 +224,24 @@ func TestIdentifySiteOrder(t *testing.T) {
 			want: (*PlainHTML)(nil),
 		},
 		{
+			name:   "coffeemanga series page",
+			origin: "https://coffeemanga.net",
+			path:   "/manga/under-the-oak-tree/",
+			routes: map[string]string{
+				"/manga/under-the-oak-tree/": "coffeemanga_series.html",
+			},
+			want: (*Coffeemanga)(nil),
+		},
+		{
+			name:   "coffeemanga reader page",
+			origin: "https://coffeemanga.net",
+			path:   "/manga/under-the-oak-tree/chapter-74/",
+			routes: map[string]string{
+				"/manga/under-the-oak-tree/chapter-74/": "coffeemanga_reader.html",
+			},
+			want: (*Coffeemanga)(nil),
+		},
+		{
 			name:   "pizzareader series page",
 			origin: "https://lupiteam.net",
 			path:   "/comics/area-no-kishi",

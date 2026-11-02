@@ -2286,8 +2286,8 @@ SMOKE_EXCLUDE += mangaball mangalib silentquill bigsolo luascans hivetoons elder
 SMOKE_EXCLUDE += mangitto lilymanga mangaplus
 # 429, reset, 530 or a non-blog page from GitHub's runners, while they pass locally
 SMOKE_EXCLUDE += ler999 lonertl mangaailand mangadelsiglotvmanga mangabats legionscans asialotuss
-# headless-browser grabbers: a runner can't get past their challenges
-SMOKE_EXCLUDE += comix mkissa templetoons mangafire toonz
+# headless-browser grabbers, kept off the runners (most for challenges they can't get past)
+SMOKE_EXCLUDE += comix mkissa templetoons mangafire toonz coffeemanga
 
 # every target of the grabber and grabber/html aggregates, read from this file
 # so a new site is one line there, minus SMOKE_EXCLUDE
