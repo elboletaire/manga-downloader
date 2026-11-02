@@ -1,11 +1,11 @@
 name: Site smoke tests
 
-# Twice-weekly live-site smoke run: `make smoke` checks this run's targets, split
+# Weekly live-site smoke run: `make smoke` checks this run's targets, split
 # over eight shards (the makefile's smoke section says which and how).
 # A final job writes the results into the README's "Last verified" column.
 on:
   schedule:
-    - cron: "17 6 * * 1,4"
+    - cron: "17 6 * * 1"
   workflow_dispatch:
     inputs:
       targets:
@@ -25,7 +25,7 @@ concurrency:
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    # about 14 targets per shard at up to 5 minutes each; `all` runs far more
+    # about 28 targets per shard at up to 5 minutes each; `all` runs far more
     timeout-minutes: ${{ inputs.all && 360 || 180 }}
     strategy:
       fail-fast: false

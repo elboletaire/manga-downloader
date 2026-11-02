@@ -2267,10 +2267,10 @@ site-status:
 	go run ./tools/site-status -results $$results -date $$(date -u +%F); \
 	rm -f $$results $$stamp
 
-# the rotation smoke.yaml runs twice a week: the SMOKE_COUNT targets verified
+# the rotation smoke.yaml runs once a week: the SMOKE_COUNT targets verified
 # longest ago, split round-robin over SHARDS (TARGETS="a b" overrides it).
-# About a quarter of the list: every site comes round about every two weeks.
-SMOKE_COUNT ?= 110
+# About half of the list: every site comes round about every two weeks.
+SMOKE_COUNT ?= 220
 # runs on one day share a date, so each run skips the previous batch by SMOKE_COUNT
 # (GITHUB_RUN_NUMBER on Actions: the shards of one run agree, the next run moves on)
 SMOKE_OFFSET ?= $(GITHUB_RUN_NUMBER)
