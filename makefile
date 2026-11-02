@@ -1022,12 +1022,14 @@ grabber/browser: \
 	grabber/manhuatop \
 	grabber/manhuaus \
 	grabber/natomanga \
+	grabber/ravenscans \
 	grabber/setsuscans \
 	grabber/sushiscan \
 	grabber/teamshadowi \
 	grabber/toongod \
 	grabber/toonily \
-	grabber/toonz
+	grabber/toonz \
+	grabber/vermanhwa
 
 grabber/toonily:
 	go run . --browser-visible https://toonily.com/serie/the-beginning-after-the-end-ea2130e6/ 244
@@ -1035,6 +1037,10 @@ grabber/toonily:
 # and the reader mounts its pages on scroll, so the pages come from the payload
 grabber/toonz:
 	go run . https://toonz.to/manhwa/just-because-youre-hungry-doesnt-mean-you-can-eat-anything 2
+
+# uses a real (visible) browser: the Cloudflare challenge never passes headless
+grabber/vermanhwa:
+	go run . --browser-visible https://vermanhwa.com/manga/tocame-abajo-sin-censura/ 8
 
 grabber/toongod:
 	go run . --browser-visible https://www.toongod.org/webtoon/solo-leveling/ 200
@@ -1361,7 +1367,6 @@ grabber/html: \
 	grabber/pzykosis \
 	grabber/rackusreads \
 	grabber/rakuentranslations \
-	grabber/ravenscans \
 	grabber/rawkuma \
 	grabber/read7deadlysins \
 	grabber/readberserk \
@@ -1419,7 +1424,6 @@ grabber/html: \
 	grabber/undertranslations \
 	grabber/utsukushiibg \
 	grabber/uzaymanga \
-	grabber/vermanhwa \
 	grabber/violetmanga \
 	grabber/visorotaku \
 	grabber/writerscans \
@@ -1476,8 +1480,9 @@ grabber/demonicscans:
 
 grabber/mangakatana:
 	go run . https://mangakatana.com/manga/dandadan.25818 241
+# uses a real (visible) browser: the Cloudflare challenge never passes headless
 grabber/ravenscans:
-	go run . https://ravenscans.org/manga/academys-genius-swordmaster/ 79
+	go run . --browser-visible https://ravenscans.org/manga/click-me-all-over/ 75
 grabber/rawkuma:
 	go run . https://rawkuma.net/manga/jujutsu-kaisen/ 271
 grabber/dynastyscans:
@@ -1839,7 +1844,7 @@ grabber/manhwalist:
 grabber/mihentai:
 	go run . https://mihentai.net/manga/wear-student-underwear-and-apologize/ 1
 grabber/mindafansub:
-	go run . https://mindafansub.dev/manga/waterside-night-45/ 59
+	go run . https://mindafansub.nl/manga/waterside-night/ 59
 grabber/nekoproject:
 	go run . https://nekoproject.org/manga/daija-ni-totsuida-musume/ 21
 grabber/ngomik:
@@ -1894,8 +1899,6 @@ grabber/uchuujinmangas:
 	go run . https://uchuujinmangas.com/manga/como-criar-villanos-correctamente/ 29
 grabber/undertranslations:
 	go run . https://undertranslations.com/manga/las-heroinas-de-un-galgame-que-evitaron-un-final-mortal-leyeron-mi-diario-y-descubrieron-mi-secreto/ 1
-grabber/vermanhwa:
-	go run . https://vermanhwa.com/manga/tocame-abajo-sin-censura/ 8
 grabber/sodsaime:
 	go run . https://www.xn--l3c0azab5a2gta.com/manga/magic-emperor/ 462
 grabber/yakshacomics:
@@ -2284,8 +2287,8 @@ SMOKE_EXCLUDE =
 SMOKE_EXCLUDE += mangaball mangalib silentquill bigsolo luascans hivetoons eldermanga eskimangalar limonmanga uzaymanga afroditscans mangasorigines dandadanmanga gutsberserk hanamiheaven
 # Cloudflare-blocked, or rate-limited hard (429, or the app API)
 SMOKE_EXCLUDE += mangitto lilymanga mangaplus
-# 429, reset, 530 or a non-blog page from GitHub's runners, while they pass locally
-SMOKE_EXCLUDE += ler999 lonertl mangaailand mangadelsiglotvmanga mangabats legionscans asialotuss
+# 429, reset, 530, a non-blog page or a stalled origin from GitHub's runners, while they pass locally
+SMOKE_EXCLUDE += ler999 lonertl mangaailand mangadelsiglotvmanga mangabats legionscans asialotuss mangastep
 # headless-browser grabbers, kept off the runners (most for challenges they can't get past)
 SMOKE_EXCLUDE += comix mkissa templetoons mangafire toonz coffeemanga
 

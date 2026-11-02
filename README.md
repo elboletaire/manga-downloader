@@ -636,7 +636,7 @@ environment variables.
 | [mangareader.site](https://mangareader.site) | MangaReader, English | 2026-10-26 |
 | [mangas-origines.fr](https://mangas-origines.fr) | French | 2026-10-18 |
 | [mangaspa.nikkan-spa.jp](https://mangaspa.nikkan-spa.jp) | Japanese (Comici), mostly NSFW | ❌ failing since 2026-10-26 (checked 2026-10-26) |
-| [mangastep.com](https://mangastep.com) | Thai | ❌ failing since 2026-11-02 (checked 2026-11-02) |
+| [mangastep.com](https://mangastep.com) | Thai | 2026-11-02 |
 | [mangasushi.org](https://mangasushi.org) |  | 2026-10-29 |
 | [mangasusuku.com](https://mangasusuku.com) | Indonesian, mostly NSFW | 2026-10-29 |
 | [mangataro.org](https://mangataro.org) |  | 2026-11-02 |
@@ -681,7 +681,7 @@ environment variables.
 | [mhscans.com](https://mhscans.com) | Spanish | 2026-10-29 |
 | [mihentai.net](https://mihentai.net) | Indonesian, mostly NSFW | 2026-10-29 |
 | [mikrokosmosfb.blogspot.com](https://mikrokosmosfb.blogspot.com) | Turkish, mostly NSFW | 2026-11-02 |
-| [mindafansub.dev](https://mindafansub.dev) | Turkish, mostly NSFW | ❌ failing since 2026-10-29 (checked 2026-10-29) |
+| [mindafansub.nl](https://mindafansub.nl) | Turkish, mostly NSFW, former mindafansub.dev | 2026-11-02 |
 | [mistscans.com](https://mistscans.com) |  | 2026-10-29 |
 | [mkissa.to](https://mkissa.to) \* |  | 2026-10-15 |
 | [monopolymanhua.com](https://monopolymanhua.com) | Spanish | 2026-10-29 |
@@ -736,7 +736,7 @@ environment variables.
 | [rackusreads.com](https://rackusreads.com) | Rackus | 2026-10-29 |
 | [ragnarokscanlation.org](https://ragnarokscanlation.org) | Spanish | 2026-10-26 |
 | [rakuentranslations.com](https://rakuentranslations.com) | Spanish | 2026-10-26 |
-| [ravenscans.org](https://ravenscans.org) |  | ❌ failing since 2026-10-26 (checked 2026-10-30) |
+| [ravenscans.org](https://ravenscans.org) \* |  | 2026-11-02 |
 | [rawdex.net](https://rawdex.net) | mostly NSFW | 2026-10-26 |
 | [rawkuma.net](https://rawkuma.net) |  | 2026-10-26 |
 | [re-yume.my.id](https://www.re-yume.my.id) | Re-Yume, Indonesian | 2026-10-29 |
@@ -833,7 +833,7 @@ environment variables.
 | [uzaymanga.com](https://uzaymanga.com) |  | 2026-10-18 |
 | [v7.kiryuu.to](https://v7.kiryuu.to) | Indonesian | 2026-11-02 |
 | [valirscans.org](https://valirscans.org) | English, locked chapters skipped | 2026-10-29 |
-| [vermanhwa.com](https://vermanhwa.com) | Spanish | ❌ failing since 2026-10-29 (checked 2026-10-29) |
+| [vermanhwa.com](https://vermanhwa.com) \* | Spanish | 2026-11-02 |
 | [vinlandsaga.website](https://vinlandsaga.website) | English, single series | 2026-10-29 |
 | [violetmanga.com](https://violetmanga.com) | Violet Scans, former violetscans.org | 2026-10-26 |
 | [visorotaku.com](https://visorotaku.com) | Spanish | 2026-10-29 |
