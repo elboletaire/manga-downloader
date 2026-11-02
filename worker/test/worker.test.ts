@@ -1,5 +1,5 @@
 import { env, runDurableObjectAlarm, runInDurableObject } from "cloudflare:test";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import worker from "../src/index";
 import { CACHE_TTL_MS } from "../src/state";
 
@@ -227,10 +227,18 @@ describe("recording failures", () => {
   });
 });
 
-describe("daily salt", () => {
+describe("monthly salt", () => {
   beforeEach(() => primeCache(RELEASE));
+  afterEach(() => vi.useRealTimers());
 
-  it("gives the same IP the same hash on the same day, and different IPs different hashes", async () => {
+  // Moves the Worker's clock; only Date is faked, so the Durable Object's timers keep running.
+  const at = (iso: string) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(iso));
+  };
+  const storedSalt = () => runInDurableObject(stub(), (_, state) => state.storage.get<{ month: string; value: string }>("salt"));
+
+  it("gives the same IP the same hash in one month, and different IPs different hashes", async () => {
     await latest();
     await latest();
     await latest("client=cli", "198.51.100.1");
@@ -239,42 +247,80 @@ describe("daily salt", () => {
     expect(points[0].indexes?.[0]).toMatch(/^[0-9a-f]{64}$/);
   });
 
-  it("rotates the salt on a new day and deletes the old one", async () => {
+  it("keeps the same salt across two days in one month, so a user links within the month", async () => {
+    at("2026-03-05T12:00:00Z");
+    await latest();
+    const salt = await storedSalt();
+
+    at("2026-03-20T08:00:00Z");
+    await latest();
+    expect(points[1].blobs?.[4]).toBe("2026-03-20");
+    expect(points[1].indexes).toEqual(points[0].indexes);
+    expect(await storedSalt()).toEqual(salt);
+  });
+
+  it("rotates the salt on a new month and deletes the old one", async () => {
+    at("2026-03-31T23:00:00Z");
     await latest();
     const oldHash = points[0].indexes?.[0];
-    const oldSalt = await runInDurableObject(stub(), async (_, state) => {
-      const salt = await state.storage.get<{ day: string; value: string }>("salt");
-      // Pretend the stored salt belongs to yesterday, so the next request starts a new day.
-      await state.storage.put("salt", { ...salt, day: "1999-01-01" });
-      return salt?.value;
-    });
+    const oldSalt = (await storedSalt())?.value;
 
+    at("2026-04-01T00:00:05Z");
     await latest();
-    expect(points[1].blobs?.[4]).toBe(today());
+    expect(points[1].blobs?.[4]).toBe("2026-04-01");
     expect(points[1].indexes?.[0]).not.toEqual(oldHash);
 
+    const salt = await storedSalt();
+    expect(salt?.month).toBe("2026-04");
+    expect(salt?.value).not.toBe(oldSalt);
     const stored = await runInDurableObject(stub(), (_, state) => state.storage.list());
     expect(JSON.stringify([...stored.entries()])).not.toContain(oldSalt);
   });
 
-  it("drops the salt at the next UTC midnight, even without traffic", async () => {
+  it("sets the alarm for the next UTC month start", async () => {
+    // A far-future December: workerd drops an alarm set in the past, and it pins the year rollover.
+    at("2099-12-15T10:00:00Z");
     await latest();
-    const now = new Date();
-    const nextMidnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
-    expect(await runInDurableObject(stub(), (_, state) => state.storage.getAlarm())).toBe(nextMidnight);
-
-    // The alarm runs after midnight, so the stored salt is yesterday's by then.
-    await runInDurableObject(stub(), (_, state) => state.storage.put("salt", { day: "1999-01-01", value: "old" }));
-    expect(await runDurableObjectAlarm(stub())).toBe(true);
-    expect(await runInDurableObject(stub(), (_, state) => state.storage.get("salt"))).toBeUndefined();
+    expect(await runInDurableObject(stub(), (_, state) => state.storage.getAlarm())).toBe(Date.UTC(2100, 0, 1));
   });
 
-  it("keeps today's salt when the midnight alarm lands after a request already started the day", async () => {
+  it("drops the salt at the next month start, even without traffic", async () => {
     await latest();
-    const salt = await runInDurableObject(stub(), (_, state) => state.storage.get("salt"));
+    const now = new Date();
+    const nextMonth = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1);
+    expect(await runInDurableObject(stub(), (_, state) => state.storage.getAlarm())).toBe(nextMonth);
+
+    // The alarm runs after the month starts, so the stored salt is last month's by then.
+    await runInDurableObject(stub(), (_, state) => state.storage.put("salt", { month: "1999-01", value: "old" }));
+    expect(await runDurableObjectAlarm(stub())).toBe(true);
+    expect(await storedSalt()).toBeUndefined();
+  });
+
+  it("keeps this month's salt when the alarm lands after a request already started the month", async () => {
+    await latest();
+    const salt = await storedSalt();
 
     expect(await runDurableObjectAlarm(stub())).toBe(true);
-    expect(await runInDurableObject(stub(), (_, state) => state.storage.get("salt"))).toEqual(salt);
+    expect(await storedSalt()).toEqual(salt);
+  });
+
+  it("replaces an old per-day salt on the first request, without failing", async () => {
+    await runInDurableObject(stub(), (_, state) => state.storage.put("salt", { day: today(), value: "old-daily" }));
+    const res = await latest();
+    expect(res.status).toBe(200);
+    expect(points[0].indexes?.[0]).toMatch(/^[0-9a-f]{64}$/);
+
+    const salt = await storedSalt();
+    expect(salt?.month).toBe(today().slice(0, 7));
+    expect(salt?.value).not.toBe("old-daily");
+    expect(salt).not.toHaveProperty("day");
+  });
+
+  it("deletes an old per-day salt at the alarm", async () => {
+    await latest();
+    await runInDurableObject(stub(), (_, state) => state.storage.put("salt", { day: "1999-01-01", value: "old" }));
+    expect(await runDurableObjectAlarm(stub())).toBe(true);
+    expect(await storedSalt()).toBeUndefined();
   });
 
   it("never stores or records the raw IP", async () => {

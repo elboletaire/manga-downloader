@@ -151,5 +151,5 @@ The check asks our update server for the latest release, telling it the
 program, its version, your OS and architecture, and the app's language (plus
 your system's language when the app follows it). If our server doesn't answer,
 the app asks GitHub directly. The server runs on Cloudflare, which sees your IP
-address like any web host; only a hash of it, salted with a key deleted daily,
-is kept, to count daily users.
+address like any web host; only a hash of it, salted with a key deleted monthly,
+is kept, to count monthly users.

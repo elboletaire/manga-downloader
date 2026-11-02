@@ -20,16 +20,16 @@ One Analytics Engine data point per `GET` (dataset `manga_downloader_checks`):
 
 | Field | Value |
 | --- | --- |
-| `index1` | hex SHA-256 of (the day's salt + the client IP) |
+| `index1` | hex SHA-256 of (the month's salt + the client IP) |
 | `blob1`–`blob4` | `client`, `version`, `os`, `arch` (clamped as above) |
 | `blob5` | UTC date, `YYYY-MM-DD` |
 | `blob6` | the app's UI language setting (`lang`: `en`, `es`, `ca`, `ja` or `system`), clamped as above, `""` when not sent |
 | `blob7` | the system's locale (`syslang`, e.g. `fr-FR`), sent by the CLI when it knows the locale and by the app only with `X-MD-Lang: system`, clamped as above, `""` when not sent |
 | `double1` | `1` |
 
-The salt is 32 random bytes, created on the first request of each UTC day and held in the Durable Object.
-The first request of a new day overwrites yesterday's salt, and an alarm set for the next UTC midnight deletes it even without traffic.
-So the code never keeps a salt past its day, and hashes from different days can't be linked.
+The salt is 32 random bytes, created on the first request of each UTC month and held in the Durable Object.
+The first request of a new month overwrites last month's salt, and an alarm set for the next UTC month start (00:00 UTC on the 1st) deletes it even without traffic.
+So the code never keeps a salt past its month, and hashes from different months can't be linked.
 
 Honest limit: SQLite-backed Durable Objects keep about 30 days of point-in-time recovery, so the account owner could restore a deleted salt from there.
 The deletion is what the code does, not an unrecoverable erase.
@@ -40,7 +40,7 @@ Observability is disabled in `wrangler.jsonc`, and the code never logs requests,
 ## Layout
 
 - `src/index.ts`: routing, parameter clamping, the data point.
-- `src/state.ts`: the `UpdateState` Durable Object (SQLite): the daily salt and the cached release.
+- `src/state.ts`: the `UpdateState` Durable Object (SQLite): the monthly salt and the cached release.
 - `wrangler.jsonc`: bindings (`UPDATE_STATE`, `UPDATE_CHECKS`), the SQLite migration, observability off.
 - `test/worker.test.ts`: the tests, run inside workerd with `@cloudflare/vitest-plugin`.
 
@@ -83,4 +83,4 @@ curl -s "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/an
   --data "SELECT blob5 AS day, count(DISTINCT index1) AS uniques, sum(_sample_interval) AS checks FROM manga_downloader_checks GROUP BY day ORDER BY day DESC LIMIT 30"
 ```
 
-`uniques` is distinct salted hashes per day. A hash changes at midnight UTC, so a user counts once per day, not once overall.
+`uniques` is distinct salted hashes per day. The hash stays the same all month, so a user counts once per day in this query, and once per month when grouped by month (`substring(blob5, 1, 7)`).

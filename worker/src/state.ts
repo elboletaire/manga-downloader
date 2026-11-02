@@ -8,7 +8,7 @@ const UPSTREAM_TIMEOUT_MS = 2500;
 const RETRY_AFTER_FAILURE_MS = 60 * 1000;
 
 interface Salt {
-  day: string;
+  month: string;
   value: string;
 }
 
@@ -19,33 +19,35 @@ interface CachedRelease {
 
 const hex = (bytes: Uint8Array) => Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 
-const nextUtcMidnight = (now: number) => {
+const nextUtcMonth = (now: number) => {
   const date = new Date(now);
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1);
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1);
 };
 
-// One instance for the whole app: it holds the day's salt and the cached release.
+// One instance for the whole app: it holds the month's salt and the cached release.
 export class UpdateState extends DurableObject {
   private inFlight: Promise<string | null> | null = null;
 
-  // Keeps a single salt key, so a new UTC day replaces yesterday's salt; an alarm drops it at midnight even without traffic.
+  // Keeps a single salt key, so a new UTC month replaces last month's salt; an alarm drops it at the month's start even without traffic.
+  // A salt in the old per-day shape has no month, so it's replaced here too.
   async identify(ip: string): Promise<{ day: string; hash: string }> {
     const now = Date.now();
     const day = new Date(now).toISOString().slice(0, 10);
+    const month = day.slice(0, 7);
     let salt = await this.ctx.storage.get<Salt>("salt");
-    if (!salt || salt.day !== day) {
-      salt = { day, value: hex(crypto.getRandomValues(new Uint8Array(32))) };
+    if (!salt || salt.month !== month) {
+      salt = { month, value: hex(crypto.getRandomValues(new Uint8Array(32))) };
       await this.ctx.storage.put("salt", salt);
-      await this.ctx.storage.setAlarm(nextUtcMidnight(now));
+      await this.ctx.storage.setAlarm(nextUtcMonth(now));
     }
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt.value + ip));
     return { day, hash: hex(new Uint8Array(digest)) };
   }
 
-  // Runs at midnight UTC. A request that already started today's salt keeps it.
+  // Runs at the start of a UTC month. A request that already started this month's salt keeps it.
   async alarm(): Promise<void> {
     const salt = await this.ctx.storage.get<Salt>("salt");
-    if (salt && salt.day !== new Date().toISOString().slice(0, 10)) await this.ctx.storage.delete("salt");
+    if (salt && salt.month !== new Date().toISOString().slice(0, 7)) await this.ctx.storage.delete("salt");
   }
 
   // Serves the cached GitHub release, and the last good copy when GitHub fails; null if there is none.

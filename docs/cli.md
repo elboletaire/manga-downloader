@@ -331,8 +331,8 @@ docker run --rm -it -v "$PWD:/downloads" \
 a newer release, asking our update server with the program, its version, your
 OS and architecture, and your system's language. If the server doesn't answer,
 it asks GitHub directly. The server runs on Cloudflare, which sees your IP
-address like any web host; only a hash of it, salted with a key deleted daily,
-is kept, to count daily users. Set `MANGA_DOWNLOADER_NO_UPDATE_CHECK=1` to skip
+address like any web host; only a hash of it, salted with a key deleted monthly,
+is kept, to count monthly users. Set `MANGA_DOWNLOADER_NO_UPDATE_CHECK=1` to skip
 the check.
 
 ## Options

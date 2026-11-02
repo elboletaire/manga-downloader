@@ -14,7 +14,7 @@
   "updates": {
     "heading": "Actualizaciones",
     "check": "Buscar actualizaciones al abrir la app",
-    "hint": "Busca la última versión cada vez que se abre la app y cuenta los usuarios diarios sin guardar tu IP.",
+    "hint": "Busca la última versión cada vez que se abre la app y cuenta los usuarios mensuales sin guardar tu IP.",
     "devHint": "Las versiones de desarrollo no buscan actualizaciones."
   },
   "about": {
