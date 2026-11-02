@@ -20,6 +20,15 @@ import (
 // server)
 var mangadexAPI = "https://api.mangadex.org"
 
+// mangadexUserAgent is what MangaDex asks API clients to send. A browser UA
+// gets redirected to a proof-of-work challenge page instead of JSON.
+const mangadexUserAgent = "manga-downloader (+https://github.com/elboletaire/manga-downloader)"
+
+// mangadexAPIHeaders are sent with every api.mangadex.org request
+func mangadexAPIHeaders() map[string]string {
+	return map[string]string{"User-Agent": mangadexUserAgent}
+}
+
 var (
 	// mangadexChapterURLRe matches chapter URLs like
 	// https://mangadex.org/chapter/c780a907-8cf7-4d64-97fd-750519f8ff79
@@ -109,7 +118,8 @@ func mangadexChapterURL(url string) bool {
 // the chapter endpoint and extracting the manga ID from relationships.
 func mangadexSeriesURL(chapterUUID, chapterURL string) (string, error) {
 	rbody, err := http.Get(http.RequestParams{
-		URL: mangadexAPI + "/chapter/" + chapterUUID,
+		URL:     mangadexAPI + "/chapter/" + chapterUUID,
+		Headers: mangadexAPIHeaders(),
 	})
 	if err != nil {
 		return "", err
@@ -215,6 +225,7 @@ func (m *Mangadex) fetchManga() (*mangadexManga, error) {
 	rbody, err := http.Get(http.RequestParams{
 		URL:     mangadexAPI + "/manga/" + id,
 		Referer: m.BaseUrl(),
+		Headers: mangadexAPIHeaders(),
 	})
 	if err != nil {
 		return nil, err
@@ -309,7 +320,7 @@ func (m *Mangadex) FetchChapters() (chapters Filterables, errs []error) {
 		}
 		uri = fmt.Sprintf("%s?%s", uri, params.Encode())
 
-		rbody, err := http.Get(http.RequestParams{URL: uri})
+		rbody, err := http.Get(http.RequestParams{URL: uri, Headers: mangadexAPIHeaders()})
 		if err != nil {
 			errs = append(errs, err)
 			return
@@ -388,7 +399,8 @@ func (m *Mangadex) FetchChapter(f Filterable) (*Chapter, error) {
 	chap := f.(*MangadexChapter)
 	// download json
 	rbody, err := http.Get(http.RequestParams{
-		URL: mangadexAPI + "/at-home/server/" + chap.Id,
+		URL:     mangadexAPI + "/at-home/server/" + chap.Id,
+		Headers: mangadexAPIHeaders(),
 	})
 	if err != nil {
 		return nil, err

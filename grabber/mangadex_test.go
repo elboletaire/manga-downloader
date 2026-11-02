@@ -402,3 +402,57 @@ func TestMangadexPartialListingKeepsLanguages(t *testing.T) {
 		t.Errorf("LanguageOptions = %v, want [en fr]", got)
 	}
 }
+
+// Every API request names the tool in its User-Agent: a browser UA gets a
+// challenge page instead of JSON. Covers the chapter, manga, feed and at-home
+// requests.
+func TestMangadexAPISendsUserAgent(t *testing.T) {
+	var mu sync.Mutex
+	var seen []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		seen = append(seen, r.URL.Path+" "+r.UserAgent())
+		mu.Unlock()
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/chapter/"):
+			_, _ = w.Write([]byte(`{"data":{"relationships":[{"id":"a1c7c817-4e59-43b7-9365-09675a149a6f","type":"manga"}]}}`))
+		case strings.HasSuffix(r.URL.Path, "/feed"):
+			if r.URL.Query().Get("offset") != "0" {
+				_, _ = w.Write([]byte(`{"data":[]}`))
+				return
+			}
+			_, _ = w.Write([]byte(`{"data":[{"id":"rel-a","attributes":{"chapter":"1","title":"T","translatedLanguage":"en","pages":2}}]}`))
+		case strings.HasPrefix(r.URL.Path, "/at-home/server/"):
+			_, _ = w.Write([]byte(`{"baseUrl":"https://cdn.test","chapter":{"hash":"h","data":["1.png","2.png"]}}`))
+		case strings.HasPrefix(r.URL.Path, "/manga/"):
+			_, _ = w.Write([]byte(`{"data":{"attributes":{"title":{"en":"T"},"availableTranslatedLanguages":["en"]}}}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+	old := mangadexAPI
+	mangadexAPI = srv.URL
+	defer func() { mangadexAPI = old }()
+
+	m := NewMangadex(&Grabber{URL: "https://mangadex.org/chapter/c780a907-8cf7-4d64-97fd-750519f8ff79", Settings: &Settings{Language: "en"}})
+	if _, err := m.FetchTitle(); err != nil {
+		t.Fatal(err)
+	}
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 || len(chapters) != 1 {
+		t.Fatalf("FetchChapters = %d chapters, errs %v", len(chapters), errs)
+	}
+	if _, err := m.FetchChapter(chapters[0]); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(seen) < 4 {
+		t.Fatalf("API requests = %v, want chapter, manga, feed and at-home", seen)
+	}
+	for _, req := range seen {
+		if !strings.HasSuffix(req, " "+mangadexUserAgent) {
+			t.Errorf("request %q does not send the MangaDex User-Agent", req)
+		}
+	}
+}
