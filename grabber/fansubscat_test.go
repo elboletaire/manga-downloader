@@ -207,7 +207,7 @@ func TestFansubsCatFetchChaptersRows(t *testing.T) {
 <div id="version-content-1"><div class="division"><div class="division-title">Volum 1</div>
 <div class="file-launcher episode" data-file-id="101"><div class="episode-title"><b>Capítol 1</b><br>Enamorar-se de l'amor</div></div>
 <div class="file-launcher episode" data-file-id="102"><div class="episode-title"><b>Capítol 0,5</b><br>#0,5 - Prefaci</div></div>
-<div class="file-launcher episode" data-file-id="103"><div class="episode-title"><b>Capítol 3</b><br>Ombres<b>Variant B</b></div></div>
+<div class="file-launcher episode" data-file-id="103"><div class="episode-title"><b>Capítol 3</b><br>Ombres<br><b>Variant B</b></div></div>
 </div></div>
 <div id="version-content-2"><div class="division"><div class="division-title">Volum 1</div>
 <div class="file-launcher episode" data-file-id="201"><div class="episode-title"><b>Capítol 1</b><br>#001 - Enamorar-se de l'amor</div></div>
