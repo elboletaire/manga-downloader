@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300" role="img" aria-labelledby="title desc">
 <title id="title">Daily users</title>
-<desc id="desc">Daily users: about 75 daily users in total on 2026-11-02, approximate.</desc>
+<desc id="desc">Daily users: about 60 daily users in total on 2026-11-03, approximate.</desc>
 <style>.gs-draw{animation:gs-draw 1.6s linear backwards}@keyframes gs-draw{from{stroke-dasharray:1;stroke-dashoffset:1}to{stroke-dasharray:1;stroke-dashoffset:0}}.gs-fade{animation:gs-fade .5s ease-out backwards}@keyframes gs-fade{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion: reduce){.gs-draw,.gs-fade{animation:none!important}}</style>
 <rect x="0.5" y="0.5" width="799" height="299" rx="12" fill="#1a1a19" stroke="#33343a"/>
 <g font-family='"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif' font-size="11" fill="#c3c2b7" style="font-variant-numeric:tabular-nums">
 <defs><linearGradient id="users-fade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#4189ea" stop-opacity="0.22"/><stop offset="1" stop-color="#4189ea" stop-opacity="0.02"/></linearGradient></defs>
 <text x="24" y="32" fill="#f0efec" font-size="16" font-weight="600">Daily users</text>
-<text x="24.0" y="50.0" fill="#a09f98" font-size="12">Approximate users per day, 9 days to 2026-11-02</text>
+<text x="24.0" y="50.0" fill="#a09f98" font-size="12">Approximate users per day, 10 days to 2026-11-03</text>
 <circle cx="550.8" cy="28.0" r="4" fill="#4189ea"/>
 <text x="560.8" y="32.0" fill="#c3c2b7" font-size="12">Total (approx.)</text>
 <circle cx="690.8" cy="28.0" r="4" fill="#dd5f2f"/>
@@ -24,14 +24,14 @@
 <line x1="60.0" x2="776.0" y1="80.0" y2="80.0" stroke="#2a2b2e"/>
 <text x="50.0" y="84.0" fill="#a09f98" text-anchor="end">80</text>
 <text x="60.0" y="272.0" fill="#a09f98">Oct 25</text>
-<text x="239.0" y="272.0" fill="#a09f98" text-anchor="middle">Oct 27</text>
-<text x="418.0" y="272.0" fill="#a09f98" text-anchor="middle">Oct 29</text>
-<text x="597.0" y="272.0" fill="#a09f98" text-anchor="middle">Oct 31</text>
-<text x="776.0" y="272.0" fill="#a09f98" text-anchor="end">Nov 2</text>
-<g class="gs-fade"><path d="M60.0 243.4L149.5 148.8L239.0 127.3L328.5 107.9L418.0 159.6L507.5 138.1L597.0 127.3L686.5 92.9L776.0 90.8L776.0 252.0L60.0 252.0Z" fill="url(#users-fade)"/></g>
-<g class="gs-draw"><path d="M60.0 243.4L149.5 153.1L239.0 129.4L328.5 112.3L418.0 161.7L507.5 144.5L597.0 129.4L686.5 97.2L776.0 92.9" fill="none" stroke="#dd5f2f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
-<g class="gs-draw"><path d="M60.0 252.0L149.5 247.7L239.0 249.8L328.5 247.7L418.0 249.8L507.5 245.6L597.0 249.8L686.5 247.7L776.0 245.6" fill="none" stroke="#1c9f74" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
-<g class="gs-draw"><path d="M60.0 243.4L149.5 148.8L239.0 127.3L328.5 107.9L418.0 159.6L507.5 138.1L597.0 127.3L686.5 92.9L776.0 90.8" fill="none" stroke="#4189ea" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
-<g class="gs-fade" style="animation-delay:1600ms"><circle cx="776.0" cy="90.8" r="4" fill="#4189ea" stroke="#1a1a19" stroke-width="2"><title>2026-11-02: 75 users, approximate</title></circle><text x="768.0" y="90.0" fill="#f0efec" text-anchor="end" font-weight="600">75</text></g>
+<text x="219.1" y="272.0" fill="#a09f98" text-anchor="middle">Oct 27</text>
+<text x="457.8" y="272.0" fill="#a09f98" text-anchor="middle">Oct 30</text>
+<text x="616.9" y="272.0" fill="#a09f98" text-anchor="middle">Nov 1</text>
+<text x="776.0" y="272.0" fill="#a09f98" text-anchor="end">Nov 3</text>
+<g class="gs-fade"><path d="M60.0 243.4L139.6 148.8L219.1 127.3L298.7 107.9L378.2 159.6L457.8 138.1L537.3 127.3L616.9 92.9L696.4 90.8L776.0 123.0L776.0 252.0L60.0 252.0Z" fill="url(#users-fade)"/></g>
+<g class="gs-draw"><path d="M60.0 243.4L139.6 153.1L219.1 129.4L298.7 112.3L378.2 161.7L457.8 144.5L537.3 129.4L616.9 97.2L696.4 92.9L776.0 123.0" fill="none" stroke="#dd5f2f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-draw"><path d="M60.0 252.0L139.6 247.7L219.1 249.8L298.7 247.7L378.2 249.8L457.8 245.6L537.3 249.8L616.9 247.7L696.4 245.6L776.0 247.7" fill="none" stroke="#1c9f74" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-draw"><path d="M60.0 243.4L139.6 148.8L219.1 127.3L298.7 107.9L378.2 159.6L457.8 138.1L537.3 127.3L616.9 92.9L696.4 90.8L776.0 123.0" fill="none" stroke="#4189ea" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-fade" style="animation-delay:1600ms"><circle cx="776.0" cy="123.0" r="4" fill="#4189ea" stroke="#1a1a19" stroke-width="2"><title>2026-11-03: 60 users, approximate</title></circle><text x="768.0" y="113.0" fill="#f0efec" text-anchor="end" font-weight="600">60</text></g>
 </g>
 </svg>
