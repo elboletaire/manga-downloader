@@ -5,7 +5,9 @@ name: Stats
 on:
   schedule:
     # late in the day, so the partial current day is nearly whole; GitHub delays
-    # scheduled runs by hours, and this still lands before midnight UTC
+    # scheduled runs by hours, and it slipped past midnight UTC on 2026-11-02,
+    # so the earlier run is a backup that lands the day (the late one replaces it)
+    - cron: "41 13 * * *"
     - cron: "41 17 * * *"
   workflow_dispatch:
 
