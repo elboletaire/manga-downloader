@@ -28,10 +28,10 @@
 <text x="457.8" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 30</text>
 <text x="616.9" y="272.0" fill="#6f6e69" text-anchor="middle">Nov 1</text>
 <text x="776.0" y="272.0" fill="#6f6e69" text-anchor="end">Nov 3</text>
-<g class="gs-fade"><path d="M60.0 243.4L139.6 148.8L219.1 127.3L298.7 107.9L378.2 159.6L457.8 138.1L537.3 127.3L616.9 92.9L696.4 90.8L776.0 123.0L776.0 252.0L60.0 252.0Z" fill="url(#users-fade)"/></g>
-<g class="gs-draw"><path d="M60.0 243.4L139.6 153.1L219.1 129.4L298.7 112.3L378.2 161.7L457.8 144.5L537.3 129.4L616.9 97.2L696.4 92.9L776.0 123.0" fill="none" stroke="#e5642e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-fade"><path d="M60.0 243.4L139.6 148.8L219.1 127.3L298.7 107.9L378.2 159.6L457.8 138.1L537.3 127.3L616.9 92.9L696.4 92.9L776.0 123.0L776.0 252.0L60.0 252.0Z" fill="url(#users-fade)"/></g>
+<g class="gs-draw"><path d="M60.0 243.4L139.6 153.1L219.1 129.4L298.7 112.3L378.2 161.7L457.8 144.5L537.3 129.4L616.9 97.2L696.4 95.1L776.0 123.0" fill="none" stroke="#e5642e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
 <g class="gs-draw"><path d="M60.0 252.0L139.6 247.7L219.1 249.8L298.7 247.7L378.2 249.8L457.8 245.6L537.3 249.8L616.9 247.7L696.4 245.6L776.0 247.7" fill="none" stroke="#0d9683" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
-<g class="gs-draw"><path d="M60.0 243.4L139.6 148.8L219.1 127.3L298.7 107.9L378.2 159.6L457.8 138.1L537.3 127.3L616.9 92.9L696.4 90.8L776.0 123.0" fill="none" stroke="#2a6ddc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-draw"><path d="M60.0 243.4L139.6 148.8L219.1 127.3L298.7 107.9L378.2 159.6L457.8 138.1L537.3 127.3L616.9 92.9L696.4 92.9L776.0 123.0" fill="none" stroke="#2a6ddc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
 <g class="gs-fade" style="animation-delay:1600ms"><circle cx="776.0" cy="123.0" r="4" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-11-03: 60 users, approximate</title></circle><text x="768.0" y="113.0" fill="#0b0b0b" text-anchor="end" font-weight="600">60</text></g>
 </g>
 </svg>
