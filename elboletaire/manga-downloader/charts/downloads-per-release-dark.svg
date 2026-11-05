@@ -45,8 +45,8 @@
 <g class="gs-rise" style="animation-delay:420ms"><path d="M663.8 252.0V197.7H687.8V252.0Z" fill="#4189ea"><title>v24.0.0, Desktop app: 158</title></path><path d="M663.8 195.7V180.8Q663.8 176.8 667.8 176.8H683.8Q687.8 176.8 687.8 180.8V195.7Z" fill="#dd5f2f"><title>v24.0.0, CLI: 57</title></path></g>
 <g class="gs-rise" style="animation-delay:440ms"><path d="M692.4 252.0V174.9H716.4V252.0Z" fill="#4189ea"><title>v24.1.0, Desktop app: 223</title></path><path d="M692.4 172.9V158.3Q692.4 154.3 696.4 154.3H712.4Q716.4 154.3 716.4 158.3V172.9Z" fill="#dd5f2f"><title>v24.1.0, CLI: 56</title></path></g>
 <g class="gs-rise" style="animation-delay:460ms"><path d="M721.0 252.0V240.1H745.0V252.0Z" fill="#4189ea"><title>v25.0.0, Desktop app: 37</title></path><path d="M721.0 238.1V237.8Q721.0 233.8 725.0 233.8H741.0Q745.0 233.8 745.0 237.8V238.1Z" fill="#dd5f2f"><title>v25.0.0, CLI: 15</title></path></g>
-<g class="gs-rise" style="animation-delay:480ms"><path d="M749.7 252.0V219.4H773.7V252.0Z" fill="#4189ea"><title>v25.1.0, Desktop app: 96</title></path><path d="M749.7 217.4V211.9Q749.7 207.9 753.7 207.9H769.7Q773.7 207.9 773.7 211.9V217.4Z" fill="#dd5f2f"><title>v25.1.0, CLI: 30</title></path></g>
-<g class="gs-fade" style="animation-delay:1600ms"><text x="761.7" y="199.9" fill="#f0efec" text-anchor="middle" font-size="12" font-weight="600">126</text></g>
+<g class="gs-rise" style="animation-delay:480ms"><path d="M749.7 252.0V202.9H773.7V252.0Z" fill="#4189ea"><title>v25.1.0, Desktop app: 143</title></path><path d="M749.7 200.9V189.5Q749.7 185.5 753.7 185.5H769.7Q773.7 185.5 773.7 189.5V200.9Z" fill="#dd5f2f"><title>v25.1.0, CLI: 47</title></path></g>
+<g class="gs-fade" style="animation-delay:1600ms"><text x="761.7" y="177.5" fill="#f0efec" text-anchor="middle" font-size="12" font-weight="600">190</text></g>
 <text x="74.3" y="272.0" fill="#a09f98" text-anchor="middle">v1.11.0</text>
 <text x="131.6" y="272.0" fill="#a09f98" text-anchor="middle">v1.12.0</text>
 <text x="188.9" y="272.0" fill="#a09f98" text-anchor="middle">v1.14.0</text>
