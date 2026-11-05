@@ -28,10 +28,10 @@
 <text x="418.0" y="272.0" fill="#a09f98" text-anchor="middle">Oct 30</text>
 <text x="632.8" y="272.0" fill="#a09f98" text-anchor="middle">Nov 2</text>
 <text x="776.0" y="272.0" fill="#a09f98" text-anchor="end">Nov 4</text>
-<g class="gs-fade"><path d="M60.0 243.4L131.6 148.8L203.2 127.3L274.8 107.9L346.4 159.6L418.0 138.1L489.6 127.3L561.2 92.9L632.8 92.9L704.4 123.0L776.0 112.3L776.0 252.0L60.0 252.0Z" fill="url(#users-fade)"/></g>
-<g class="gs-draw"><path d="M60.0 243.4L131.6 153.1L203.2 129.4L274.8 112.3L346.4 161.7L418.0 144.5L489.6 129.4L561.2 97.2L632.8 95.1L704.4 123.0L776.0 114.4" fill="none" stroke="#dd5f2f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-fade"><path d="M60.0 243.4L131.6 148.8L203.2 127.3L274.8 107.9L346.4 159.6L418.0 138.1L489.6 127.3L561.2 92.9L632.8 90.8L704.4 123.0L776.0 112.3L776.0 252.0L60.0 252.0Z" fill="url(#users-fade)"/></g>
+<g class="gs-draw"><path d="M60.0 243.4L131.6 153.1L203.2 129.4L274.8 112.3L346.4 161.7L418.0 144.5L489.6 129.4L561.2 97.2L632.8 92.9L704.4 123.0L776.0 114.4" fill="none" stroke="#dd5f2f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
 <g class="gs-draw"><path d="M60.0 252.0L131.6 247.7L203.2 249.8L274.8 247.7L346.4 249.8L418.0 245.6L489.6 249.8L561.2 247.7L632.8 245.6L704.4 247.7L776.0 247.7" fill="none" stroke="#1c9f74" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
-<g class="gs-draw"><path d="M60.0 243.4L131.6 148.8L203.2 127.3L274.8 107.9L346.4 159.6L418.0 138.1L489.6 127.3L561.2 92.9L632.8 92.9L704.4 123.0L776.0 112.3" fill="none" stroke="#4189ea" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-draw"><path d="M60.0 243.4L131.6 148.8L203.2 127.3L274.8 107.9L346.4 159.6L418.0 138.1L489.6 127.3L561.2 92.9L632.8 90.8L704.4 123.0L776.0 112.3" fill="none" stroke="#4189ea" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
 <g class="gs-fade" style="animation-delay:1600ms"><circle cx="776.0" cy="112.3" r="4" fill="#4189ea" stroke="#1a1a19" stroke-width="2"><title>2026-11-04: 65 users, approximate</title></circle><text x="768.0" y="102.3" fill="#f0efec" text-anchor="end" font-weight="600">65</text></g>
 </g>
 </svg>
