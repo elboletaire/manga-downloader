@@ -1493,16 +1493,19 @@ grabber/lgbtics:
 
 grabber/mangabolt:
 	go run . https://mangabolt.com/manga/aoku-somero/ 28
+
 grabber/mangakulesi:
 	go run . https://mangakulesi.com/manga/olumcul-ask-deneyimi 29
 
 grabber/mangareadz:
 	go run . https://www.mangareadz.com/webtoon/afterlife-diner/ 141
+
 grabber/manhwaus:
 	go run . https://manhwaus.net/webtoon/im-the-only-man-in-this-clan/ 26
 
 grabber/nonafansub:
 	go run . https://nonafansub.com/manga/gizli-xx/ 1
+
 grabber/readmanga18:
 	go run . https://readmanga18.com/manga/magical-girl-wife-raw/ 31
 
