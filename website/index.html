@@ -2,6 +2,7 @@
 <html lang="%PAGE_LANG%">
   <head>
     <meta charset="utf-8" />
+    <meta http-equiv="content-language" content="%PAGE_LANG%" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{a:meta.title}}</title>
     <meta name="description" content="{{a:meta.description:others}}" />
@@ -52,6 +53,7 @@
           "{{j:meta.features.packs}}",
           "{{j:meta.features.apps}}"
         ],
+        %SOFTWARE_VERSION%
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Windows, macOS, Linux",
         "downloadUrl": "https://github.com/elboletaire/manga-downloader/releases/latest",
@@ -101,6 +103,7 @@
     <a class="skip-link" href="#main">{{t:nav.skip}}</a>
     <!-- i18n:banners -->
 
+    <!-- The manual pages' header, footer and head tags are rendered by buildManual (build/docs.ts): keep them in step. -->
     <header class="site-header">
       <div class="container header-inner">
         <a class="brand" href="#top" aria-label="{{a:nav.brand}}">
@@ -187,8 +190,11 @@
       <section class="section" id="desktop" aria-labelledby="desktop-title">
         <div class="container">
           <header class="section-head">
-            <p class="kicker">{{t:common.desktopApp}} <span class="tag">{{t:desktop.newTag}}</span></p>
-            <h2 id="desktop-title">{{t:desktop.title}}</h2>
+            <div class="kicker-row">
+              <h2 class="kicker" id="desktop-title">{{t:common.desktopApp}}</h2>
+              <span class="tag">{{t:desktop.newTag}}</span>
+            </div>
+            <p class="section-title">{{t:desktop.title}}</p>
             <p class="section-lede">{{t:desktop.lede}}</p>
           </header>
 
@@ -383,8 +389,8 @@
       <section class="section section-tint" id="cli" aria-labelledby="cli-title">
         <div class="container">
           <header class="section-head">
-            <p class="kicker">{{t:common.commandLine}}</p>
-            <h2 id="cli-title">{{t:cli.title}}</h2>
+            <h2 class="kicker" id="cli-title">{{t:common.commandLine}}</h2>
+            <p class="section-title">{{t:cli.title}}</p>
             <p class="section-lede">{{t:cli.lede}}</p>
           </header>
 
@@ -491,8 +497,8 @@
       <section class="section" id="features" aria-labelledby="features-title">
         <div class="container">
           <header class="section-head">
-            <p class="kicker">{{t:features.kicker}}</p>
-            <h2 id="features-title">{{t:features.title}}</h2>
+            <h2 class="kicker" id="features-title">{{t:features.kicker}}</h2>
+            <p class="section-title">{{t:features.title}}</p>
           </header>
           <ul class="features">
             <li class="feature">
@@ -543,8 +549,8 @@
       <section class="section section-tint" id="sites" aria-labelledby="sites-title">
         <div class="container">
           <header class="section-head">
-            <p class="kicker">{{t:sites.kicker}}</p>
-            <h2 id="sites-title">{{t:sites.title:sites}}</h2>
+            <h2 class="kicker" id="sites-title">{{t:sites.kicker}}</h2>
+            <p class="section-title">{{t:sites.title:sites}}</p>
             <p class="section-lede">{{t:sites.lede}}</p>
           </header>
 
@@ -580,8 +586,8 @@
       <section class="section" id="faq" aria-labelledby="faq-title">
         <div class="container container-narrow">
           <header class="section-head">
-            <p class="kicker">{{t:faq.kicker}}</p>
-            <h2 id="faq-title">{{t:faq.title}}</h2>
+            <h2 class="kicker" id="faq-title">{{t:faq.kicker}}</h2>
+            <p class="section-title">{{t:faq.title}}</p>
           </header>
           <div class="faq">
             <details id="faq-smartscreen">
@@ -650,6 +656,8 @@
             <li><a href="https://github.com/elboletaire/manga-downloader">GitHub</a></li>
             <li><a href="https://ko-fi.com/elboletaire">Ko-fi</a></li>
             <li><a href="https://github.com/sponsors/elboletaire">GitHub Sponsors</a></li>
+            <li><a href="%BASE%docs/cli/" hreflang="en">{{t:footer.cliManual}}</a></li>
+            <li><a href="%BASE%docs/app/" hreflang="en">{{t:footer.appManual}}</a></li>
             <li><a href="https://github.com/elboletaire/manga-downloader/releases">{{t:footer.releases}}</a></li>
             <li><a href="https://github.com/elboletaire/manga-downloader/issues">{{t:footer.issue}}</a></li>
             <li><a href="https://hub.docker.com/r/elboletaire/manga-downloader">Docker Hub</a></li>

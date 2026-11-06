@@ -1,8 +1,8 @@
 {
   "meta": {
-    "title": "manga downloader: descarrega manga en CBZ o EPUB per al teu lector electrònic",
-    "description_one": "Aplicació d'escriptori i CLI gratuïtes que descarreguen manga de MangaDex i {{count}} lloc més en fitxers CBZ, CBR o EPUB per a Kobo, KOReader i aplicacions de còmics. Windows, macOS i Linux.",
-    "description_other": "Aplicació d'escriptori i CLI gratuïtes que descarreguen manga de MangaDex i {{count}} llocs més en fitxers CBZ, CBR o EPUB per a Kobo, KOReader i aplicacions de còmics. Windows, macOS i Linux.",
+    "title": "manga downloader: descarregar manga en CBZ o EPUB",
+    "description_one": "App d'escriptori i CLI gratuïta per descarregar manga de MangaDex i {{count}} lloc més en CBZ, CBR o EPUB per a lectors electrònics. Windows, macOS i Linux.",
+    "description_other": "App d'escriptori i CLI gratuïta per descarregar manga de MangaDex i {{count}} llocs més en CBZ, CBR o EPUB per a lectors electrònics. Windows, macOS i Linux.",
     "socialTitle": "manga downloader: capítols de manga → CBZ i EPUB a punt per llegir",
     "socialDescription_one": "Descarrega manga de MangaDex i {{count}} lloc més en fitxers CBZ, CBR o EPUB per al teu lector electrònic o la teva aplicació de còmics. Aplicació d'escriptori i CLI, gratuïtes i de codi obert.",
     "socialDescription_other": "Descarrega manga de MangaDex i {{count}} llocs més en fitxers CBZ, CBR o EPUB per al teu lector electrònic o la teva aplicació de còmics. Aplicació d'escriptori i CLI, gratuïtes i de codi obert.",
@@ -31,8 +31,8 @@
   },
   "hero": {
     "title": "Descarrega manga <span class=\"arrow\">→</span> <span class=\"accent\">CBZ i EPUB a&nbsp;punt per llegir</span>",
-    "lede_one": "Enganxa un enllaç de MangaDex o de {{count}} lloc compatible més, tria els capítols i aconsegueix fitxers CBZ, CBR o EPUB nets per llegir sense connexió al teu lector electrònic o a la teva aplicació de còmics preferida.",
-    "lede_other": "Enganxa un enllaç de MangaDex o de qualsevol dels altres {{count}} llocs compatibles, tria els capítols i aconsegueix fitxers CBZ, CBR o EPUB nets per llegir sense connexió al teu lector electrònic o a la teva aplicació de còmics preferida.",
+    "lede_one": "manga downloader és una aplicació gratuïta i de codi obert que descarrega manga de MangaDex i de {{count}} lloc compatible més. Enganxa un enllaç, tria els capítols i aconsegueix fitxers CBZ, CBR o EPUB nets per llegir sense connexió al teu lector electrònic o a la teva aplicació de còmics preferida.",
+    "lede_other": "manga downloader és una aplicació gratuïta i de codi obert que descarrega manga de MangaDex i de {{count}} llocs compatibles més. Enganxa un enllaç, tria els capítols i aconsegueix fitxers CBZ, CBR o EPUB nets per llegir sense connexió al teu lector electrònic o a la teva aplicació de còmics preferida.",
     "downloadLabel": "Descarrega l'aplicació d'escriptori",
     "downloadDetail": "Per a Windows, macOS i Linux",
     "otherPlatforms": "Altres plataformes",
@@ -110,7 +110,7 @@
     "volumesGifCaption": "O <code>--volumes auto</code> per a un fitxer per volum.",
     "skipExistingGifAlt": "Enregistrament del terminal: manga-downloader descarrega cinc capítols de Horimiya i després s'executa de nou amb --skip-existing: els cinc apareixen com a omesos i se'n descarreguen tres de nous.",
     "skipExistingGifCaption": "Torna a executar-ho amb <code>--skip-existing</code> i només es descarreguen els capítols nous.",
-    "more": "Tens totes les opcions a la <a href=\"{{repo}}/blob/master/docs/cli.md\">guia d'ús</a> (en anglès), o executa <code>manga-downloader help</code>."
+    "more": "Tens totes les opcions a la <a href=\"%BASE%docs/cli/\" hreflang=\"en\">guia d'ús</a> (en anglès), o executa <code>manga-downloader help</code>."
   },
   "features": {
     "kicker": "Característiques",
@@ -152,6 +152,52 @@
       "on": "Verificat el {{date}}",
       "failing": "Falla des del {{date}}",
       "unknown": "Sense comprovar"
+    },
+    "notes": {
+      "English": "anglès",
+      "Spanish": "espanyol",
+      "Thai": "tailandès",
+      "Indonesian": "indonesi",
+      "Portuguese": "portuguès",
+      "Japanese": "japonès",
+      "Turkish": "turc",
+      "Arabic": "àrab",
+      "Italian": "italià",
+      "French": "francès",
+      "Vietnamese": "vietnamita",
+      "Catalan": "català",
+      "Russian": "rus",
+      "Korean": "coreà",
+      "Bulgarian": "búlgar",
+      "Greek": "grec",
+      "French and English": "francès i anglès",
+      "Indonesian UI": "interfície en indonesi",
+      "NSFW": "NSFW",
+      "mostly NSFW": "majoritàriament NSFW",
+      "some NSFW": "algun contingut NSFW",
+      "has an NSFW section": "té una secció NSFW",
+      "single series": "una sola sèrie",
+      "locked chapters skipped": "capítols bloquejats omesos",
+      "use a chapter URL": "usa una URL de capítol",
+      "use a series URL": "usa una URL de sèrie",
+      "free episodes only": "només episodis gratuïts",
+      "free chapters only": "només capítols gratuïts",
+      "free issues only": "només números gratuïts",
+      "some chapters paid": "alguns capítols de pagament",
+      "multilingual": "multilingüe",
+      "Western comics": "còmics occidentals",
+      "yuri": "yuri",
+      "yaoi": "yaoi",
+      "BL": "BL",
+      "doujinshi": "doujinshi",
+      "also novels": "també novel·les",
+      "raw": "sense traduir",
+      "raws": "sense traduir",
+      "portal": "portal",
+      "slow image host": "servidor d'imatges lent",
+      "French scantrad": "scantrad francès",
+      "Guya instance": "instància de Guya",
+      "rotating wNN subdomain": "subdomini wNN rotatiu"
     }
   },
   "faq": {
@@ -189,6 +235,8 @@
     "madeBy": "Fet per <a href=\"{{author}}\">elboletaire</a>.",
     "nav": "Projecte",
     "releases": "Versions",
+    "cliManual": "Manual de la CLI",
+    "appManual": "Manual de l'aplicació",
     "issue": "Informa d'un problema"
   },
   "languageBanner": {

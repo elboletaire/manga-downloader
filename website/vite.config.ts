@@ -8,7 +8,8 @@ import { localizeScreenshots } from './build/screenshots.ts'
 import { parseSites, renderSites } from './build/sites.ts'
 import { themeScript } from './src/theme.ts'
 import { LANG_INFO, LANGS, type Lang } from './src/lang.ts'
-import { fetchStats, renderStats, type Stats } from './build/stats.ts'
+import { fetchStats, renderStats, softwareVersion, type Stats } from './build/stats.ts'
+import { buildManual, MANUALS, MEDIA, mediaFile } from './build/docs.ts'
 
 // Where the site is served from: the custom domain at its root. Without one,
 // GitHub Pages serves a project site under /<repo>/ (BASE_PATH=/manga-downloader/).
@@ -16,7 +17,8 @@ const base = process.env.BASE_PATH ?? '/'
 const siteURL = process.env.SITE_URL ?? `https://mangadownloader.cat${base}`
 
 const root = fileURLToPath(new URL('.', import.meta.url))
-const readmePath = fileURLToPath(new URL('../README.md', import.meta.url))
+const repoRoot = path.join(root, '..')
+const readmePath = path.join(repoRoot, 'README.md')
 const templatePath = path.join(root, 'index.html')
 const localesDir = path.join(root, 'locales')
 // The terminal demos live in the repo's assets/demos (the README uses them); the site copies them, see siteDemos.
@@ -92,10 +94,12 @@ function sitemap(): string {
     .map(([l, href]) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${href}" />`)
     .join('\n')
   const urls = LANGS.map((l) => `  <url>\n    <loc>${pageURL(l)}</loc>\n    <lastmod>${lastmod}</lastmod>\n${alts}\n  </url>`).join('\n')
+  // English only, so no hreflang alternates.
+  const manuals = MANUALS.map((m) => `  <url>\n    <loc>${siteURL}${m.path}</loc>\n    <lastmod>${lastmod}</lastmod>\n  </url>`).join('\n')
   return (
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n' +
-    `${urls}\n</urlset>\n`
+    `${urls}\n${manuals}\n</urlset>\n`
   )
 }
 
@@ -126,6 +130,7 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
 
   const badge = { label: t('sites.badge.label'), srPrefix: t('sites.badge.srPrefix'), title: t('sites.badge.title') }
   const verified = { on: t('sites.verified.on', undefined, true), failing: t('sites.verified.failing', undefined, true), unknown: t('sites.verified.unknown') }
+  const notes = (readLocale(lang) as { sites: { notes?: Record<string, string> } }).sites.notes ?? {}
   const runtime = JSON.stringify(readLocale(lang).runtime).replace(/</g, '\\u003c')
   statsPromise ??= fetchStats()
   const statsObj = await statsPromise
@@ -135,6 +140,10 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
   const releaseData = statsObj?.latest
     ? JSON.stringify(statsObj.latest).replace(/</g, '\\u003c')
     : ''
+
+  // Omitted when no release is known, rather than an empty softwareVersion.
+  const version = softwareVersion(statsObj?.latest)
+  const softwareLine = version ? `"softwareVersion": ${JSON.stringify(version)},` : ''
 
   // Function replacers, so a "$" in the inserted text is never a replacement pattern.
   // Translated screenshots where their WebP exists, else the English one.
@@ -147,7 +156,7 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
     .replace('<!-- i18n:banners -->', () => banners(lang, (key) => t(key)))
     .replace('<!-- i18n:runtime -->', () => `<script type="application/json" id="i18n-runtime">${runtime}</script>`)
     .replace('<!-- release:data -->', () => (releaseData ? `<script type="application/json" id="latest-release">${releaseData}</script>` : ''))
-    .replace('<!-- sites:list -->', () => renderSites(sites, badge, verified, lang))
+    .replace('<!-- sites:list -->', () => renderSites(sites, badge, verified, lang, notes))
     .replace(/<!-- (stats:\w+) -->/g, (_m, key: string) => stats[key] ?? '')
     .replace(/\{\{(t|a|j):([\w.]+)(?::(\w+))?\}\}/g, (_m, kind: string, key: string, countName?: string) => {
       const text = t(key, countName)
@@ -159,7 +168,9 @@ async function renderPage(html: string, lang: Lang): Promise<string> {
     .replaceAll('%PAGE_URL%', pageURL(lang))
     .replaceAll('%OG_LOCALE%', LANG_INFO[lang].ogLocale)
     .replaceAll('%OG_IMAGE%', siteURL + LANG_INFO[lang].ogImage)
+    .replace('%SOFTWARE_VERSION%', () => softwareLine)
     .replaceAll('%SITE_URL%', siteURL)
+    .replaceAll('%BASE%', base)
 }
 
 /** Served by GitHub Pages for any missing path: kept out of search, with the site's styles and theme, no page script. */
@@ -168,6 +179,7 @@ function notFoundPage(stylesheet: string): string {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta http-equiv="content-language" content="en" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
     <title>Page not found · manga downloader</title>
@@ -198,7 +210,9 @@ function notFoundPage(stylesheet: string): string {
 `
 }
 
-/** Renders every language's page from index.html, plus robots.txt, sitemap.xml and 404.html. */
+const MIME: Record<string, string> = { '.webp': 'image/webp', '.gif': 'image/gif', '.png': 'image/png' }
+
+/** Renders every language's page from index.html, plus robots.txt, sitemap.xml, 404.html and the manuals. */
 function siteData(): Plugin[] {
   return [
     {
@@ -207,6 +221,27 @@ function siteData(): Plugin[] {
         server.watcher.add([readmePath, localesDir])
         server.watcher.on('change', (file) => {
           if (file === readmePath || file.startsWith(localesDir)) server.ws.send({ type: 'full-reload' })
+        })
+        // The manuals are rendered per request here, and their media served from the repo's assets/.
+        const assets = path.join(repoRoot, 'assets')
+        server.middlewares.use((req, res, next) => {
+          const url = (req.url ?? '').split('?')[0]
+          const manual = MANUALS.find((m) => url === `${base}${m.path}`)
+          if (manual) {
+            const markdown = readFileSync(path.join(repoRoot, manual.source), 'utf8')
+            const brand = (name: string) => `${base}src/assets/brand/${name}`
+            const page = buildManual(manual, markdown, { base, siteURL, stylesheet: `${base}src/styles.css`, brand: { light: brand('lockup-line.svg'), dark: brand('lockup-line-dark.svg') } })
+            res.setHeader('Content-Type', 'text/html; charset=utf-8')
+            res.end(page.html)
+            return
+          }
+          const file = path.resolve(assets, url.slice(`${base}${MEDIA}`.length))
+          if (url.startsWith(`${base}${MEDIA}`) && file.startsWith(assets + path.sep) && existsSync(file) && MIME[path.extname(file)]) {
+            res.setHeader('Content-Type', MIME[path.extname(file)])
+            res.end(readFileSync(file))
+            return
+          }
+          next()
         })
       },
       generateBundle(_options, bundle) {
@@ -217,6 +252,24 @@ function siteData(): Plugin[] {
         const stylesheet = Object.entries(bundle).find(([, chunk]) => (chunk as { names?: string[] }).names?.includes('main.css'))?.[0]
         if (!stylesheet) throw new Error('site-data: no stylesheet for 404.html')
         this.emitFile({ type: 'asset', fileName: '404.html', source: notFoundPage(stylesheet) })
+        // The brand lockups in the manuals' header and footer, by their hashed names.
+        const brand = (name: string) => {
+          const file = Object.entries(bundle).find(([, f]) => 'originalFileNames' in f && f.originalFileNames.includes(`src/assets/brand/${name}`))?.[0]
+          if (!file) throw new Error(`site-data: no ${name} for the manuals`)
+          return base + file
+        }
+        // A screenshot or GIF the home page already emits is reused under its hashed name; the rest are copied to docs/media/.
+        const hashed = (repoPath: string) =>
+          Object.entries(bundle).find(([, f]) => 'originalFileNames' in f && f.originalFileNames.includes(`src/${repoPath}`))?.[0]
+        const media = (repoPath: string) => (hashed(repoPath) ? base + hashed(repoPath) : base + mediaFile(repoPath))
+        const copied = new Set<string>()
+        for (const manual of MANUALS) {
+          const markdown = readFileSync(path.join(repoRoot, manual.source), 'utf8')
+          const page = buildManual(manual, markdown, { base, siteURL, stylesheet: base + stylesheet, brand: { light: brand('lockup-line.svg'), dark: brand('lockup-line-dark.svg') }, media })
+          this.emitFile({ type: 'asset', fileName: `${manual.path}index.html`, source: page.html })
+          page.assets.filter((asset) => !hashed(asset)).forEach((asset) => copied.add(asset))
+        }
+        for (const asset of copied) this.emitFile({ type: 'asset', fileName: mediaFile(asset), source: readFileSync(path.join(repoRoot, asset)) })
       },
       // "pre": runs before Vite parses the page for scripts and assets, in dev and build.
       transformIndexHtml: {
@@ -261,6 +314,24 @@ function siteData(): Plugin[] {
           if (!links) return html
           const rest = links.reduce((out, link) => out.replace(link, () => ''), html)
           return rest.replace(/(<meta name="viewport"[^>]*\/>)/, (viewport) => `${viewport}\n    ${links.join('\n    ')}`)
+        },
+      },
+    },
+    {
+      // The Japanese faces are a large CSS file that would block the first paint.
+      // Load them async; until then the ja font stack shows system Japanese fonts.
+      name: 'site-data:ja-fonts',
+      transformIndexHtml: {
+        order: 'post',
+        handler(html, ctx) {
+          if (pageLang(ctx.filename) !== 'ja') return html
+          // The Japanese entry's stylesheet is attributed to its page, not to the CSS source.
+          const file = Object.entries(ctx.bundle ?? {}).find(([, f]) => 'originalFileNames' in f && f.originalFileNames.includes('ja/index.html'))?.[0]
+          if (!file) return html
+          const link = html.match(/<link rel="stylesheet"[^>]*>/g)?.find((l) => l.includes(`href="${base}${file}"`))
+          if (!link) return html
+          const async = link.replace('rel="stylesheet"', 'rel="preload" as="style" onload="this.rel=\'stylesheet\'"')
+          return html.replace(link, () => `${async}\n    <noscript>${link}</noscript>`)
         },
       },
     },

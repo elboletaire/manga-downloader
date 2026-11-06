@@ -1,8 +1,8 @@
 {
   "meta": {
-    "title": "manga downloader：漫画を電子書籍リーダー向けのCBZ・EPUBでダウンロード",
-    "description_one": "無料のデスクトップアプリとCLI。MangaDexほか{{count}}サイトの漫画を、Kobo・KOReader・漫画アプリで読めるCBZ、CBR、EPUBファイルにダウンロードできます。Windows、macOS、Linux対応。",
-    "description_other": "無料のデスクトップアプリとCLI。MangaDexほか{{count}}サイトの漫画を、Kobo・KOReader・漫画アプリで読めるCBZ、CBR、EPUBファイルにダウンロードできます。Windows、macOS、Linux対応。",
+    "title": "manga downloader：漫画をCBZ・EPUBでダウンロード",
+    "description_one": "無料のデスクトップアプリとCLI。MangaDexほか{{count}}サイトの漫画をCBZ、CBR、EPUBでダウンロード。Windows、macOS、Linux対応。",
+    "description_other": "無料のデスクトップアプリとCLI。MangaDexほか{{count}}サイトの漫画をCBZ、CBR、EPUBでダウンロード。Windows、macOS、Linux対応。",
     "socialTitle": "manga downloader：漫画のチャプター → 電子書籍リーダー対応のCBZ・EPUB",
     "socialDescription_one": "MangaDexほか{{count}}サイトの漫画を、電子書籍リーダーや漫画アプリで読めるCBZ、CBR、EPUBファイルにダウンロード。デスクトップアプリとCLI。無料でオープンソースです。",
     "socialDescription_other": "MangaDexほか{{count}}サイトの漫画を、電子書籍リーダーや漫画アプリで読めるCBZ、CBR、EPUBファイルにダウンロード。デスクトップアプリとCLI。無料でオープンソースです。",
@@ -31,8 +31,8 @@
   },
   "hero": {
     "title": "漫画をダウンロード <span class=\"arrow\">→</span> <span class=\"accent\">電子書籍リーダー対応のCBZ・EPUB</span>",
-    "lede_one": "MangaDexやほか{{count}}の対応サイトのリンクを貼り付けて、話を選ぶだけ。電子書籍リーダーや漫画アプリでオフライン閲覧できる、そのまま読めるCBZ、CBR、EPUBファイルが手に入ります。",
-    "lede_other": "MangaDexやほか{{count}}の対応サイトのリンクを貼り付けて、話を選ぶだけ。電子書籍リーダーや漫画アプリでオフライン閲覧できる、そのまま読めるCBZ、CBR、EPUBファイルが手に入ります。",
+    "lede_one": "manga downloaderは、MangaDexほか{{count}}サイトの漫画をダウンロードできる無料のオープンソースアプリです。リンクを貼り付けて話を選ぶだけで、電子書籍リーダーや漫画アプリでオフライン閲覧できるCBZ、CBR、EPUBファイルが手に入ります。",
+    "lede_other": "manga downloaderは、MangaDexほか{{count}}サイトの漫画をダウンロードできる無料のオープンソースアプリです。リンクを貼り付けて話を選ぶだけで、電子書籍リーダーや漫画アプリでオフライン閲覧できるCBZ、CBR、EPUBファイルが手に入ります。",
     "downloadLabel": "デスクトップアプリをダウンロード",
     "downloadDetail": "Windows、macOS、Linux向け",
     "otherPlatforms": "他のプラットフォーム",
@@ -110,7 +110,7 @@
     "volumesGifCaption": "または <code>--volumes auto</code> で、巻ごとに1ファイル。",
     "skipExistingGifAlt": "ターミナルの録画：manga-downloaderが『ホリミヤ』の5話をダウンロードし、続けて--skip-existingを付けて再実行している。5話はスキップと表示され、新たに3話がダウンロードされる。",
     "skipExistingGifCaption": "<code>--skip-existing</code> を付けて再実行すると、新しい話だけを取得します。",
-    "more": "すべてのフラグは<a href=\"{{repo}}/blob/master/docs/cli.md\">使い方ガイド</a>にあります（英語）。または <code>manga-downloader help</code> を実行してください。"
+    "more": "すべてのフラグは<a href=\"%BASE%docs/cli/\" hreflang=\"en\">使い方ガイド</a>にあります（英語）。または <code>manga-downloader help</code> を実行してください。"
   },
   "features": {
     "kicker": "機能",
@@ -152,6 +152,52 @@
       "on": "{{date}}に確認済み",
       "failing": "{{date}}から失敗中",
       "unknown": "未確認"
+    },
+    "notes": {
+      "English": "英語",
+      "Spanish": "スペイン語",
+      "Thai": "タイ語",
+      "Indonesian": "インドネシア語",
+      "Portuguese": "ポルトガル語",
+      "Japanese": "日本語",
+      "Turkish": "トルコ語",
+      "Arabic": "アラビア語",
+      "Italian": "イタリア語",
+      "French": "フランス語",
+      "Vietnamese": "ベトナム語",
+      "Catalan": "カタルーニャ語",
+      "Russian": "ロシア語",
+      "Korean": "韓国語",
+      "Bulgarian": "ブルガリア語",
+      "Greek": "ギリシャ語",
+      "French and English": "フランス語・英語",
+      "Indonesian UI": "インドネシア語UI",
+      "NSFW": "NSFW",
+      "mostly NSFW": "主にNSFW",
+      "some NSFW": "一部NSFW",
+      "has an NSFW section": "NSFWセクションあり",
+      "single series": "単一作品",
+      "locked chapters skipped": "ロックされた話は除外",
+      "use a chapter URL": "話のURLを使用",
+      "use a series URL": "作品のURLを使用",
+      "free episodes only": "無料話のみ",
+      "free chapters only": "無料話のみ",
+      "free issues only": "無料号のみ",
+      "some chapters paid": "一部の話は有料",
+      "multilingual": "多言語",
+      "Western comics": "欧米のコミック",
+      "yuri": "百合",
+      "yaoi": "やおい",
+      "BL": "BL",
+      "doujinshi": "同人誌",
+      "also novels": "小説も",
+      "raw": "未翻訳",
+      "raws": "未翻訳",
+      "portal": "ポータル",
+      "slow image host": "画像サーバーが遅い",
+      "French scantrad": "フランス語の翻訳グループ",
+      "Guya instance": "Guyaのインスタンス",
+      "rotating wNN subdomain": "wNNのサブドメインが切り替わる"
     }
   },
   "faq": {
@@ -189,6 +235,8 @@
     "madeBy": "制作：<a href=\"{{author}}\">elboletaire</a>。",
     "nav": "プロジェクト",
     "releases": "リリース",
+    "cliManual": "CLIマニュアル",
+    "appManual": "アプリマニュアル",
     "issue": "問題を報告"
   },
   "languageBanner": {

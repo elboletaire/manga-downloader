@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { type Site, parseSites, parseVerified, renderSites, EN_BADGE, EN_VERIFIED } from './sites'
+import { type Site, parseSites, parseVerified, renderSites, translateNote, EN_BADGE, EN_VERIFIED } from './sites'
 
 const sample = `
 ## Features
@@ -63,6 +63,46 @@ describe('renderSites', () => {
     expect(html).toContain('href="https://a.com/?q=&quot;1&quot;"')
     expect(html).toContain('data-browser')
     expect(html).toContain('<span class="visually-hidden">needs a </span>browser</span>')
+  })
+})
+
+describe('translateNote', () => {
+  const es = { English: 'inglés', Japanese: 'japonés', 'mostly NSFW': 'mayormente NSFW', 'single series': 'una sola serie' }
+
+  it('translates the parts the dictionary knows', () => {
+    expect(translateNote('English, mostly NSFW', es)).toBe('inglés, mayormente NSFW')
+  })
+
+  it('keeps unknown parts such as names and "former" sites', () => {
+    expect(translateNote('Asura Scans, former asuratoon.com', es)).toBe('Asura Scans, former asuratoon.com')
+  })
+
+  it('translates the language of a "Language (Platform)" part and keeps the platform', () => {
+    expect(translateNote('Japanese (Comici), mostly NSFW', es)).toBe('japonés (Comici), mayormente NSFW')
+    expect(translateNote('Japanese, Big Comics (Comici)', es)).toBe('japonés, Big Comics (Comici)')
+  })
+
+  it('mixes known and unknown parts in one note', () => {
+    expect(translateNote('Spanish, single series, use a chapter URL', es)).toBe('Spanish, una sola serie, use a chapter URL')
+  })
+
+  it('returns the note as written without a dictionary', () => {
+    expect(translateNote('English, mostly NSFW')).toBe('English, mostly NSFW')
+  })
+})
+
+describe('renderSites notes', () => {
+  const es = { English: 'inglés', 'mostly NSFW': 'mayormente NSFW' }
+  const site: Site = { domain: 'a.com', note: 'English, mostly NSFW', url: 'https://a.com', browser: false, verified: { status: 'unknown' } }
+
+  it('shows the translated note and keeps the English one searchable', () => {
+    const html = renderSites([site], undefined, undefined, 'es', es)
+    expect(html).toContain('<span class="site-note">inglés, mayormente NSFW</span>')
+    expect(html).toContain('data-search="a.com english, mostly nsfw inglés, mayormente nsfw"')
+  })
+
+  it('leaves the note and the search text alone when nothing translates', () => {
+    expect(renderSites([site], undefined, undefined, 'en')).toContain('data-search="a.com english, mostly nsfw"')
   })
 })
 

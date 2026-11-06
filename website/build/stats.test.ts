@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { assetOS, sumDownloads, compact, fetchStats, renderStats, latestRelease, EN_LABELS } from './stats'
+import { assetOS, sumDownloads, compact, fetchStats, renderStats, latestRelease, softwareVersion, EN_LABELS } from './stats'
 
 describe('assetOS', () => {
   it('returns null for .md5 files', () => {
@@ -467,5 +467,16 @@ describe('EN_LABELS', () => {
     const enJson = JSON.parse(readFileSync(fileURLToPath(new URL('../locales/en.json', import.meta.url)), 'utf8'))
     expect(EN_LABELS.downloads).toBe(enJson.stats.downloads)
     expect(EN_LABELS.dockerPulls).toBe(enJson.stats.dockerPulls)
+  })
+})
+
+describe('softwareVersion', () => {
+  it('strips the leading v from the latest tag', () => {
+    expect(softwareVersion({ tag_name: 'v1.20.1' } as Parameters<typeof softwareVersion>[0])).toBe('1.20.1')
+  })
+
+  it('is undefined without a release', () => {
+    expect(softwareVersion(null)).toBeUndefined()
+    expect(softwareVersion(undefined)).toBeUndefined()
   })
 })
