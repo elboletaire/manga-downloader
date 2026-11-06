@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[576 supported sites](#supported-sites)**, from big aggregators to small
+- **[577 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 576 supported sites</b></summary>
+<summary><b>Show all 577 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -871,6 +871,7 @@ environment variables.
 | [w28.read-tokyorevengers.com](https://w28.read-tokyorevengers.com) | English, single series | 2026-11-09 |
 | [w50.blue-lock-manga.com](https://w50.blue-lock-manga.com) | English, single series | 2026-11-02 |
 | [w53.omniscientreaderviewpoint.com](https://w53.omniscientreaderviewpoint.com) | English, single series | 2026-11-09 |
+| [w6.dandadan.net](https://w6.dandadan.net) | English, single series | 2026-11-06 |
 | [w82.thetowerofgod.com](https://w82.thetowerofgod.com) | English, single series | 2026-11-09 |
 | [w9.kaijimanga.com](https://w9.kaijimanga.com) | English, single series | 2026-11-02 |
 | [webtoonia.fun](https://webtoonia.fun) | Turkish, former diamondfansub.com, some NSFW | 2026-11-09 |
