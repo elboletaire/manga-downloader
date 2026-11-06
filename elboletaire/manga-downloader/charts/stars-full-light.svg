@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="400" viewBox="0 0 800 400" role="img" aria-labelledby="title desc">
 <title id="title">Stars over time</title>
-<desc id="desc">Stars over time: 295 stargazers on 2026-11-05.</desc>
+<desc id="desc">Stars over time: 295 stargazers on 2026-11-06.</desc>
 <style>.gs-draw{animation:gs-draw 1.6s linear backwards}@keyframes gs-draw{from{stroke-dasharray:1;stroke-dashoffset:1}to{stroke-dasharray:1;stroke-dashoffset:0}}.gs-fade{animation:gs-fade .5s ease-out backwards}@keyframes gs-fade{from{opacity:0}to{opacity:1}}.gs-pop{animation:gs-pop .25s ease-out backwards;transform-box:fill-box;transform-origin:center}@keyframes gs-pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}@media (prefers-reduced-motion: reduce){.gs-draw,.gs-fade,.gs-pop{animation:none!important}}</style>
 <rect x="0.5" y="0.5" width="799" height="399" rx="12" fill="#fcfcfb" stroke="#dcdedf"/>
 <g font-family='"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif' font-size="11" fill="#52514e" style="font-variant-numeric:tabular-nums">
@@ -14,71 +14,71 @@
 <line x1="60.0" x2="776.0" y1="40.0" y2="40.0" stroke="#e8eaeb"/>
 <text x="50.0" y="44.0" fill="#6f6e69" text-anchor="end">300</text>
 <text x="60.0" y="372.0" fill="#6f6e69">Jan 2023</text>
-<text x="242.7" y="372.0" fill="#6f6e69" text-anchor="middle">2024</text>
-<text x="430.6" y="372.0" fill="#6f6e69" text-anchor="middle">2025</text>
-<text x="617.9" y="372.0" fill="#6f6e69" text-anchor="middle">2026</text>
+<text x="242.6" y="372.0" fill="#6f6e69" text-anchor="middle">2024</text>
+<text x="430.3" y="372.0" fill="#6f6e69" text-anchor="middle">2025</text>
+<text x="617.5" y="372.0" fill="#6f6e69" text-anchor="middle">2026</text>
 <text x="776.0" y="372.0" fill="#6f6e69" text-anchor="end">Nov 2026</text>
-<g class="gs-fade"><path d="M60.0 351.0C68.2 349.6 76.4 346.8 84.6 346.8C92.8 346.8 101.1 346.8 109.3 346.8C117.5 346.8 125.7 346.8 133.9 346.8C142.1 346.8 150.3 345.6 158.5 344.7C166.9 343.8 175.3 342.3 183.7 341.6C191.9 340.9 200.1 340.6 208.3 340.6C216.5 340.6 224.8 340.6 233.0 340.6C241.2 340.6 249.4 339.7 257.6 337.4C265.8 335.2 274.0 330.7 282.2 327.0C290.5 323.4 298.7 319.4 306.9 315.6C315.1 311.8 323.3 308.1 331.5 304.2C339.7 300.2 347.9 295.0 356.2 291.7C364.4 288.4 372.6 287.2 380.8 284.4C389.0 281.6 397.2 279.0 405.4 275.0C413.8 271.0 422.2 266.6 430.6 260.5C438.8 254.5 447.0 244.7 455.2 238.6C463.4 232.6 471.6 228.6 479.8 224.1C488.1 219.6 496.3 215.8 504.5 211.6C512.7 207.4 520.9 202.9 529.1 199.1C537.3 195.3 545.5 191.3 553.8 188.7C562.0 186.1 570.2 185.6 578.4 183.5C586.6 181.4 594.8 179.0 603.0 176.2C611.2 173.5 619.5 170.5 627.7 166.9C635.9 163.2 644.1 157.3 652.3 154.4C660.7 151.4 669.1 151.8 677.5 149.2C685.7 146.6 693.9 141.9 702.1 138.8C710.3 135.7 718.5 136.9 726.7 130.5C734.9 124.1 743.2 114.5 751.4 100.3C759.6 86.1 767.8 63.6 776.0 45.2L776.0 352.0L60.0 352.0Z" fill="url(#stars-fade)"/></g>
-<g class="gs-draw"><path d="M60.0 351.0C68.2 349.6 76.4 346.8 84.6 346.8C92.8 346.8 101.1 346.8 109.3 346.8C117.5 346.8 125.7 346.8 133.9 346.8C142.1 346.8 150.3 345.6 158.5 344.7C166.9 343.8 175.3 342.3 183.7 341.6C191.9 340.9 200.1 340.6 208.3 340.6C216.5 340.6 224.8 340.6 233.0 340.6C241.2 340.6 249.4 339.7 257.6 337.4C265.8 335.2 274.0 330.7 282.2 327.0C290.5 323.4 298.7 319.4 306.9 315.6C315.1 311.8 323.3 308.1 331.5 304.2C339.7 300.2 347.9 295.0 356.2 291.7C364.4 288.4 372.6 287.2 380.8 284.4C389.0 281.6 397.2 279.0 405.4 275.0C413.8 271.0 422.2 266.6 430.6 260.5C438.8 254.5 447.0 244.7 455.2 238.6C463.4 232.6 471.6 228.6 479.8 224.1C488.1 219.6 496.3 215.8 504.5 211.6C512.7 207.4 520.9 202.9 529.1 199.1C537.3 195.3 545.5 191.3 553.8 188.7C562.0 186.1 570.2 185.6 578.4 183.5C586.6 181.4 594.8 179.0 603.0 176.2C611.2 173.5 619.5 170.5 627.7 166.9C635.9 163.2 644.1 157.3 652.3 154.4C660.7 151.4 669.1 151.8 677.5 149.2C685.7 146.6 693.9 141.9 702.1 138.8C710.3 135.7 718.5 136.9 726.7 130.5C734.9 124.1 743.2 114.5 751.4 100.3C759.6 86.1 767.8 63.6 776.0 45.2" fill="none" stroke="#2a6ddc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-fade"><path d="M60.0 351.0C68.2 349.6 76.4 346.8 84.6 346.8C92.8 346.8 101.0 346.8 109.2 346.8C117.4 346.8 125.7 346.8 133.9 346.8C142.2 346.8 150.6 345.6 159.0 344.7C167.2 343.9 175.4 342.3 183.6 341.6C191.8 340.9 200.0 340.6 208.2 340.6C216.4 340.6 224.6 340.6 232.8 340.6C241.1 340.6 249.3 339.7 257.5 337.4C265.7 335.2 273.9 330.7 282.1 327.0C290.3 323.4 298.5 319.4 306.7 315.6C315.1 311.7 323.5 308.2 331.8 304.2C340.0 300.2 348.2 295.0 356.5 291.7C364.7 288.4 372.9 287.2 381.1 284.4C389.3 281.6 397.5 279.0 405.7 275.0C413.9 271.1 422.1 266.5 430.3 260.5C438.5 254.4 446.7 244.7 454.9 238.6C463.1 232.6 471.3 228.6 479.5 224.1C487.8 219.6 496.0 215.7 504.2 211.6C512.5 207.4 520.9 203.0 529.3 199.1C537.5 195.3 545.7 191.3 553.9 188.7C562.1 186.1 570.3 185.6 578.5 183.5C586.7 181.4 594.9 179.0 603.2 176.2C611.4 173.5 619.6 170.5 627.8 166.9C636.0 163.2 644.2 157.3 652.4 154.4C660.6 151.5 668.8 151.8 677.0 149.2C685.4 146.6 693.8 142.1 702.1 138.8C710.3 135.5 718.6 135.9 726.8 129.4C735.0 123.0 743.2 114.4 751.4 100.3C759.6 86.3 767.8 63.6 776.0 45.2L776.0 352.0L60.0 352.0Z" fill="url(#stars-fade)"/></g>
+<g class="gs-draw"><path d="M60.0 351.0C68.2 349.6 76.4 346.8 84.6 346.8C92.8 346.8 101.0 346.8 109.2 346.8C117.4 346.8 125.7 346.8 133.9 346.8C142.2 346.8 150.6 345.6 159.0 344.7C167.2 343.9 175.4 342.3 183.6 341.6C191.8 340.9 200.0 340.6 208.2 340.6C216.4 340.6 224.6 340.6 232.8 340.6C241.1 340.6 249.3 339.7 257.5 337.4C265.7 335.2 273.9 330.7 282.1 327.0C290.3 323.4 298.5 319.4 306.7 315.6C315.1 311.7 323.5 308.2 331.8 304.2C340.0 300.2 348.2 295.0 356.5 291.7C364.7 288.4 372.9 287.2 381.1 284.4C389.3 281.6 397.5 279.0 405.7 275.0C413.9 271.1 422.1 266.5 430.3 260.5C438.5 254.4 446.7 244.7 454.9 238.6C463.1 232.6 471.3 228.6 479.5 224.1C487.8 219.6 496.0 215.7 504.2 211.6C512.5 207.4 520.9 203.0 529.3 199.1C537.5 195.3 545.7 191.3 553.9 188.7C562.1 186.1 570.3 185.6 578.5 183.5C586.7 181.4 594.9 179.0 603.2 176.2C611.4 173.5 619.6 170.5 627.8 166.9C636.0 163.2 644.2 157.3 652.4 154.4C660.6 151.5 668.8 151.8 677.0 149.2C685.4 146.6 693.8 142.1 702.1 138.8C710.3 135.5 718.6 135.9 726.8 129.4C735.0 123.0 743.2 114.4 751.4 100.3C759.6 86.3 767.8 63.6 776.0 45.2" fill="none" stroke="#2a6ddc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
 <g class="gs-pop"><circle cx="60.0" cy="351.0" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-01-10: 1 star</title></circle></g>
 <g class="gs-pop" style="animation-delay:49ms"><circle cx="84.6" cy="346.8" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-02-27: 5 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:97ms"><circle cx="109.3" cy="346.8" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-04-16: 5 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:97ms"><circle cx="109.2" cy="346.8" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-04-16: 5 stars</title></circle></g>
 <g class="gs-pop" style="animation-delay:146ms"><circle cx="133.9" cy="346.8" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-06-03: 5 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:194ms"><circle cx="158.5" cy="344.7" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-07-21: 7 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:244ms"><circle cx="183.7" cy="341.6" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-09-08: 10 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:293ms"><circle cx="208.3" cy="340.6" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-10-26: 11 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:341ms"><circle cx="233.0" cy="340.6" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-12-13: 11 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:390ms"><circle cx="257.6" cy="337.4" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-01-30: 14 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:442ms"><circle cx="282.2" cy="327.0" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-03-18: 24 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:496ms"><circle cx="306.9" cy="315.6" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-05-05: 35 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:549ms"><circle cx="331.5" cy="304.2" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-06-22: 46 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:603ms"><circle cx="356.2" cy="291.7" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-08-09: 58 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:654ms"><circle cx="380.8" cy="284.4" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-09-26: 65 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:706ms"><circle cx="405.4" cy="275.0" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-11-13: 74 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:763ms"><circle cx="430.6" cy="260.5" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-01-01: 88 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:827ms"><circle cx="455.2" cy="238.6" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-02-18: 109 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:884ms"><circle cx="479.8" cy="224.1" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-04-07: 123 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:938ms"><circle cx="504.5" cy="211.6" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-05-25: 135 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:992ms"><circle cx="529.1" cy="199.1" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-07-12: 147 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:1045ms"><circle cx="553.8" cy="188.7" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-08-29: 157 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:1094ms"><circle cx="578.4" cy="183.5" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-10-16: 162 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:1145ms"><circle cx="603.0" cy="176.2" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-12-03: 169 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:1197ms"><circle cx="627.7" cy="166.9" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-01-20: 178 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:1251ms"><circle cx="652.3" cy="154.4" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-03-09: 190 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:1301ms"><circle cx="677.5" cy="149.2" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-04-27: 195 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:1354ms"><circle cx="702.1" cy="138.8" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-06-14: 205 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:1405ms"><circle cx="726.7" cy="130.5" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-08-01: 213 stars</title></circle></g>
-<g class="gs-pop" style="animation-delay:1481ms"><circle cx="751.4" cy="100.3" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-09-18: 242 stars</title></circle></g>
-<g class="gs-fade" style="animation-delay:1600ms"><circle cx="776.0" cy="45.2" r="4" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-11-05: 295 stars</title></circle><text x="768.0" y="50.0" fill="#0b0b0b" text-anchor="end" font-size="13" font-weight="600">295</text></g>
+<g class="gs-pop" style="animation-delay:195ms"><circle cx="159.0" cy="344.7" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-07-22: 7 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:244ms"><circle cx="183.6" cy="341.6" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-09-08: 10 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:293ms"><circle cx="208.2" cy="340.6" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-10-26: 11 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:341ms"><circle cx="232.8" cy="340.6" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2023-12-13: 11 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:390ms"><circle cx="257.5" cy="337.4" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-01-30: 14 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:442ms"><circle cx="282.1" cy="327.0" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-03-18: 24 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:496ms"><circle cx="306.7" cy="315.6" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-05-05: 35 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:550ms"><circle cx="331.8" cy="304.2" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-06-23: 46 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:604ms"><circle cx="356.5" cy="291.7" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-08-10: 58 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:655ms"><circle cx="381.1" cy="284.4" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-09-27: 65 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:707ms"><circle cx="405.7" cy="275.0" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2024-11-14: 74 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:763ms"><circle cx="430.3" cy="260.5" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-01-01: 88 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:827ms"><circle cx="454.9" cy="238.6" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-02-18: 109 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:884ms"><circle cx="479.5" cy="224.1" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-04-07: 123 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:938ms"><circle cx="504.2" cy="211.6" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-05-25: 135 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:993ms"><circle cx="529.3" cy="199.1" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-07-13: 147 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:1046ms"><circle cx="553.9" cy="188.7" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-08-30: 157 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:1095ms"><circle cx="578.5" cy="183.5" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-10-17: 162 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:1146ms"><circle cx="603.2" cy="176.2" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2025-12-04: 169 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:1197ms"><circle cx="627.8" cy="166.9" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-01-21: 178 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:1252ms"><circle cx="652.4" cy="154.4" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-03-10: 190 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:1301ms"><circle cx="677.0" cy="149.2" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-04-27: 195 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:1355ms"><circle cx="702.1" cy="138.8" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-06-15: 205 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:1406ms"><circle cx="726.8" cy="129.4" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-08-02: 214 stars</title></circle></g>
+<g class="gs-pop" style="animation-delay:1481ms"><circle cx="751.4" cy="100.3" r="3" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-09-19: 242 stars</title></circle></g>
+<g class="gs-fade" style="animation-delay:1600ms"><circle cx="776.0" cy="45.2" r="4" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-11-06: 295 stars</title></circle><text x="768.0" y="50.0" fill="#0b0b0b" text-anchor="end" font-size="13" font-weight="600">295</text></g>
 <rect x="60.0" y="40" width="12.3" height="312" fill-opacity="0"><title>2023-01-10: 1 star</title></rect>
 <rect x="72.3" y="40" width="24.6" height="312" fill-opacity="0"><title>2023-02-27: 5 stars</title></rect>
-<rect x="97.0" y="40" width="24.6" height="312" fill-opacity="0"><title>2023-04-16: 5 stars</title></rect>
-<rect x="121.6" y="40" width="24.6" height="312" fill-opacity="0"><title>2023-06-03: 5 stars</title></rect>
-<rect x="146.2" y="40" width="24.9" height="312" fill-opacity="0"><title>2023-07-21: 7 stars</title></rect>
-<rect x="171.1" y="40" width="24.9" height="312" fill-opacity="0"><title>2023-09-08: 10 stars</title></rect>
-<rect x="196.0" y="40" width="24.6" height="312" fill-opacity="0"><title>2023-10-26: 11 stars</title></rect>
-<rect x="220.7" y="40" width="24.6" height="312" fill-opacity="0"><title>2023-12-13: 11 stars</title></rect>
-<rect x="245.3" y="40" width="24.6" height="312" fill-opacity="0"><title>2024-01-30: 14 stars</title></rect>
-<rect x="269.9" y="40" width="24.6" height="312" fill-opacity="0"><title>2024-03-18: 24 stars</title></rect>
-<rect x="294.6" y="40" width="24.6" height="312" fill-opacity="0"><title>2024-05-05: 35 stars</title></rect>
-<rect x="319.2" y="40" width="24.6" height="312" fill-opacity="0"><title>2024-06-22: 46 stars</title></rect>
-<rect x="343.8" y="40" width="24.6" height="312" fill-opacity="0"><title>2024-08-09: 58 stars</title></rect>
-<rect x="368.5" y="40" width="24.6" height="312" fill-opacity="0"><title>2024-09-26: 65 stars</title></rect>
-<rect x="393.1" y="40" width="24.9" height="312" fill-opacity="0"><title>2024-11-13: 74 stars</title></rect>
-<rect x="418.0" y="40" width="24.9" height="312" fill-opacity="0"><title>2025-01-01: 88 stars</title></rect>
-<rect x="442.9" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-02-18: 109 stars</title></rect>
-<rect x="467.5" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-04-07: 123 stars</title></rect>
-<rect x="492.2" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-05-25: 135 stars</title></rect>
-<rect x="516.8" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-07-12: 147 stars</title></rect>
-<rect x="541.4" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-08-29: 157 stars</title></rect>
-<rect x="566.1" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-10-16: 162 stars</title></rect>
-<rect x="590.7" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-12-03: 169 stars</title></rect>
-<rect x="615.3" y="40" width="24.6" height="312" fill-opacity="0"><title>2026-01-20: 178 stars</title></rect>
-<rect x="640.0" y="40" width="24.9" height="312" fill-opacity="0"><title>2026-03-09: 190 stars</title></rect>
-<rect x="664.9" y="40" width="24.9" height="312" fill-opacity="0"><title>2026-04-27: 195 stars</title></rect>
-<rect x="689.8" y="40" width="24.6" height="312" fill-opacity="0"><title>2026-06-14: 205 stars</title></rect>
-<rect x="714.4" y="40" width="24.6" height="312" fill-opacity="0"><title>2026-08-01: 213 stars</title></rect>
-<rect x="739.0" y="40" width="24.6" height="312" fill-opacity="0"><title>2026-09-18: 242 stars</title></rect>
-<rect x="763.7" y="40" width="12.3" height="312" fill-opacity="0"><title>2026-11-05: 295 stars</title></rect>
+<rect x="96.9" y="40" width="24.6" height="312" fill-opacity="0"><title>2023-04-16: 5 stars</title></rect>
+<rect x="121.5" y="40" width="24.9" height="312" fill-opacity="0"><title>2023-06-03: 5 stars</title></rect>
+<rect x="146.4" y="40" width="24.9" height="312" fill-opacity="0"><title>2023-07-22: 7 stars</title></rect>
+<rect x="171.3" y="40" width="24.6" height="312" fill-opacity="0"><title>2023-09-08: 10 stars</title></rect>
+<rect x="195.9" y="40" width="24.6" height="312" fill-opacity="0"><title>2023-10-26: 11 stars</title></rect>
+<rect x="220.5" y="40" width="24.6" height="312" fill-opacity="0"><title>2023-12-13: 11 stars</title></rect>
+<rect x="245.2" y="40" width="24.6" height="312" fill-opacity="0"><title>2024-01-30: 14 stars</title></rect>
+<rect x="269.8" y="40" width="24.6" height="312" fill-opacity="0"><title>2024-03-18: 24 stars</title></rect>
+<rect x="294.4" y="40" width="24.9" height="312" fill-opacity="0"><title>2024-05-05: 35 stars</title></rect>
+<rect x="319.3" y="40" width="24.9" height="312" fill-opacity="0"><title>2024-06-23: 46 stars</title></rect>
+<rect x="344.1" y="40" width="24.6" height="312" fill-opacity="0"><title>2024-08-10: 58 stars</title></rect>
+<rect x="368.8" y="40" width="24.6" height="312" fill-opacity="0"><title>2024-09-27: 65 stars</title></rect>
+<rect x="393.4" y="40" width="24.6" height="312" fill-opacity="0"><title>2024-11-14: 74 stars</title></rect>
+<rect x="418.0" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-01-01: 88 stars</title></rect>
+<rect x="442.6" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-02-18: 109 stars</title></rect>
+<rect x="467.2" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-04-07: 123 stars</title></rect>
+<rect x="491.9" y="40" width="24.9" height="312" fill-opacity="0"><title>2025-05-25: 135 stars</title></rect>
+<rect x="516.7" y="40" width="24.9" height="312" fill-opacity="0"><title>2025-07-13: 147 stars</title></rect>
+<rect x="541.6" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-08-30: 157 stars</title></rect>
+<rect x="566.2" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-10-17: 162 stars</title></rect>
+<rect x="590.8" y="40" width="24.6" height="312" fill-opacity="0"><title>2025-12-04: 169 stars</title></rect>
+<rect x="615.5" y="40" width="24.6" height="312" fill-opacity="0"><title>2026-01-21: 178 stars</title></rect>
+<rect x="640.1" y="40" width="24.6" height="312" fill-opacity="0"><title>2026-03-10: 190 stars</title></rect>
+<rect x="664.7" y="40" width="24.9" height="312" fill-opacity="0"><title>2026-04-27: 195 stars</title></rect>
+<rect x="689.6" y="40" width="24.9" height="312" fill-opacity="0"><title>2026-06-15: 205 stars</title></rect>
+<rect x="714.5" y="40" width="24.6" height="312" fill-opacity="0"><title>2026-08-02: 214 stars</title></rect>
+<rect x="739.1" y="40" width="24.6" height="312" fill-opacity="0"><title>2026-09-19: 242 stars</title></rect>
+<rect x="763.7" y="40" width="12.3" height="312" fill-opacity="0"><title>2026-11-06: 295 stars</title></rect>
 </g>
 </svg>
