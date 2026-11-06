@@ -332,8 +332,10 @@ grabber: \
 	grabber/mangafoxfun \
 	grabber/mangaheronl \
 	grabber/mangahub \
+	grabber/mangahubus \
 	grabber/mangaisekaithai \
 	grabber/mangakakalotfun \
+	grabber/mangakakalove \
 	grabber/manganelme \
 	grabber/mangaonlinefun \
 	grabber/mangapandaonl \
@@ -437,6 +439,7 @@ grabber: \
 	grabber/shonenjumpplus \
 	grabber/snscoeurturkey \
 	grabber/solooscan \
+	grabber/spanishseraphicdeviltry \
 	grabber/spyxfamilymanga \
 	grabber/stonescape \
 	grabber/sundaywebry \
@@ -658,6 +661,8 @@ grabber/mangaisekaithai:
 	go run . https://www.mangaisekaithai.net/manga/isekai-koushoku-musou-roku-isekai-tensei-no-chie-to-chikara-wo-tada-hitasura-xxxx-suru-tame-ni-tsukau/ 58.1
 grabber/garciamanga:
 	go run . https://garciamanga.com/manga/boruto-english/ 16
+grabber/spanishseraphicdeviltry:
+	go run . https://spanish.seraphic-deviltry.com/manga/by-my-side/ 1
 grabber/manhwaden:
 	go run . https://www.manhwaden.com/manga/hwanhyeol/ 6
 grabber/readhunters:
@@ -787,11 +792,17 @@ grabber/tuttoanimemanga:
 grabber/mangahub:
 	go run . https://mangahub.io/manga/one-piece_142 1188
 
+grabber/mangahubus:
+	go run . https://mangahub.us/manga/one-piece 1100
+
 grabber/1manga:
 	go run . https://1manga.co/manga/red-storm_111 470
 
 grabber/mangakakalotfun:
 	go run . https://mangakakalot.fun/manga/red-storm_111 470
+
+grabber/mangakakalove:
+	go run . https://www.mangakakalove.com/manga/5-kaime-no-jinsei-tensei-shitara-shinisou-na-koji-deshita 3
 
 grabber/manganelme:
 	go run . https://manganel.me/manga/academy-genius-swordsman 150
@@ -1217,6 +1228,7 @@ grabber/html: \
 	grabber/adonisfansub \
 	grabber/afroditscans \
 	grabber/akazascans \
+	grabber/allporncomiccom \
 	grabber/amangaplanet \
 	grabber/anzmanga25 \
 	grabber/apollcomics \
@@ -1308,6 +1320,7 @@ grabber/html: \
 	grabber/maid \
 	grabber/manga18fx \
 	grabber/manga18me \
+	grabber/mangabolt \
 	grabber/mangadass \
 	grabber/mangadna \
 	grabber/mangalc \
@@ -1321,6 +1334,7 @@ grabber/html: \
 	grabber/manganeko \
 	grabber/mangapill \
 	grabber/mangaread \
+	grabber/mangareadz \
 	grabber/mangasorigines \
 	grabber/mangastep \
 	grabber/mangasusuku \
@@ -1357,6 +1371,7 @@ grabber/html: \
 	grabber/nifteam \
 	grabber/nirvanamanga \
 	grabber/nocfsb \
+	grabber/nonafansub \
 	grabber/noranofansub \
 	grabber/noromax02 \
 	grabber/novelcrow \
@@ -1426,6 +1441,7 @@ grabber/html: \
 	grabber/tumanga \
 	grabber/uchuujinmangas \
 	grabber/undertranslations \
+	grabber/upmanga \
 	grabber/utsukushiibg \
 	grabber/uzaymanga \
 	grabber/violetmanga \
@@ -1438,6 +1454,14 @@ grabber/html: \
 	grabber/zenithscans \
 	grabber/zonatmo
 
+grabber/allporncomiccom:
+	go run . https://allporncomic.com/porncomic/10-am-losekorntrol-hijab-3dx/ 1
+grabber/mangabolt:
+	go run . https://mangabolt.com/manga/aoku-somero/ 28
+grabber/mangareadz:
+	go run . https://www.mangareadz.com/webtoon/afterlife-diner/ 141
+grabber/nonafansub:
+	go run . https://nonafansub.com/manga/gizli-xx/ 1
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
 
@@ -2077,6 +2101,9 @@ grabber/thaimanga:
 
 grabber/tmomanhwa:
 	go run . https://tmomanhwa.com/manhwa/la-espada-del-chaman/ 42
+
+grabber/upmanga:
+	go run . https://www.up-manga.com/apocalyptic-chef-awakening/ 130
 
 grabber/utsukushiibg:
 	go run . https://utsukushii-bg.com/manga/fairy-tail 138

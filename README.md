@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[556 supported sites](#supported-sites)**, from big aggregators to small
+- **[564 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 556 supported sites</b></summary>
+<summary><b>Show all 564 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -344,6 +344,7 @@ environment variables.
 | [afroditscans.com](https://afroditscans.com) | Turkish | 2026-10-18 |
 | [akanebanashimanga.website](https://akanebanashimanga.website) | English, single series | 2026-10-29 |
 | [akazascans.org](https://akazascans.org) | English | 2026-10-30 |
+| [allporncomic.com](https://allporncomic.com) | English, mostly NSFW | 2026-11-06 |
 | [allporncomic.io](https://allporncomic.io) | English, mostly NSFW | 2026-10-29 |
 | [amangaplanet.com.tr](https://www.amangaplanet.com.tr) | Turkish | 2026-10-29 |
 | [anikiga.com](https://anikiga.com) | Turkish | 2026-10-29 |
@@ -596,6 +597,7 @@ environment variables.
 | [mangaball.com](https://mangaball.com) | former mangaball.net | 2026-10-18 |
 | [mangabats.com](https://www.mangabats.com) | former mangabat.com | 2026-10-19 |
 | [mangaberri.com](https://mangaberri.com) |  | 2026-11-02 |
+| [mangabolt.com](https://mangabolt.com) | English, use a series URL | 2026-11-06 |
 | [mangabu.jp](https://mangabu.jp) | Japanese (Comici) | 2026-11-02 |
 | [mangacrazy.net](https://mangacrazy.net) | English, mostly NSFW | 2026-11-02 |
 | [mangadass.com](https://mangadass.com) | English, NSFW | 2026-11-09 |
@@ -613,10 +615,12 @@ environment variables.
 | [mangahere.cc](https://www.mangahere.cc) | MangaHere | 2026-11-02 |
 | [mangahere.onl](https://mangahere.onl) | MangaHere, English | ❌ failing since 2026-11-09 (checked 2026-11-09) |
 | [mangahub.io](https://mangahub.io) |  | ❌ failing since 2026-11-09 (checked 2026-11-09) |
+| [mangahub.us](https://mangahub.us) | English | 2026-11-06 |
 | [mangaisekaithai.net](https://www.mangaisekaithai.net) | Thai | 2026-10-29 |
 | [mangak.io](https://mangak.io) | MangaK, former mangabuddy.com | 2026-11-02 |
 | [mangakakalot.fun](https://mangakakalot.fun) | MangaKakalot, English | ❌ failing since 2026-11-09 (checked 2026-11-09) |
 | [mangakakalot.gg](https://www.mangakakalot.gg) \* | MangaKakalot | 2026-10-15 |
+| [mangakakalove.com](https://www.mangakakalove.com) | MangaKakalot, English | 2026-11-06 |
 | [mangakatana.com](https://mangakatana.com) |  | 2026-11-02 |
 | [mangakimi.com](https://www.mangakimi.com) | Thai | 2026-11-02 |
 | [mangalami.com](https://mangalami.com) | LamiManga, Thai | 2026-11-02 |
@@ -635,6 +639,7 @@ environment variables.
 | [mangaplus.shueisha.co.jp](https://mangaplus.shueisha.co.jp) | Manga Plus, Shueisha's official reader | 2026-10-15 |
 | [mangaread.org](https://www.mangaread.org) |  | 2026-11-02 |
 | [mangareader.site](https://mangareader.site) | MangaReader, English | ❌ failing since 2026-11-09 (checked 2026-11-09) |
+| [mangareadz.com](https://www.mangareadz.com) | English | 2026-11-06 |
 | [mangas-origines.fr](https://mangas-origines.fr) | French | 2026-10-18 |
 | [mangaspa.nikkan-spa.jp](https://mangaspa.nikkan-spa.jp) | Japanese (Comici), mostly NSFW | 2026-11-02 |
 | [mangastep.com](https://mangastep.com) | Thai | 2026-11-02 |
@@ -703,6 +708,7 @@ environment variables.
 | [ninjacomics.xyz](https://ninjacomics.xyz) | Portuguese | ❌ failing since 2026-10-26 (checked 2026-10-30) |
 | [nirvanamanga.com](https://nirvanamanga.com) | Turkish | ❌ failing since 2026-11-09 (checked 2026-11-09) |
 | [nocfsb.com](https://nocfsb.com) | Portuguese, mostly NSFW | 2026-11-09 |
+| [nonafansub.com](https://nonafansub.com) | Turkish, NSFW | 2026-11-06 |
 | [noranofansub.com](https://www.noranofansub.com) | NoraNoFansub, Spanish | 2026-10-29 |
 | [noromax02.my.id](https://noromax02.my.id) | Indonesian | 2026-11-09 |
 | [novelcrow.com](https://novelcrow.com) | English, mostly NSFW, Western comics | 2026-10-30 |
@@ -784,6 +790,7 @@ environment variables.
 | [slow-manga.net](https://www.slow-manga.net) | Thai | 2026-11-09 |
 | [snscoeurturkey.blogspot.com](https://snscoeurturkey.blogspot.com) | Turkish, mostly NSFW | 2026-11-02 |
 | [solooscan.blogspot.com](https://solooscan.blogspot.com) | Portuguese | 2026-11-02 |
+| [spanish.seraphic-deviltry.com](https://spanish.seraphic-deviltry.com) | Spanish, NSFW | 2026-11-06 |
 | [speed-manga.net](https://speed-manga.net) | Thai | ❌ failing since 2026-11-09 (checked 2026-11-09) |
 | [springtoons.com](https://springtoons.com) | English, mostly NSFW, BL | 2026-11-09 |
 | [spyxfamilymanga.com](https://spyxfamilymanga.com) | English, single series, use a chapter URL | 2026-11-09 |
@@ -829,6 +836,7 @@ environment variables.
 | [twmanga.com](https://www.twmanga.com) | 包子漫画, baozimh.com mirror | ❌ failing since 2026-11-09 (checked 2026-11-09) |
 | [uchuujinmangas.com](https://uchuujinmangas.com) | Spanish | 2026-11-09 |
 | [undertranslations.com](https://undertranslations.com) | Spanish | 2026-10-30 |
+| [up-manga.com](https://www.up-manga.com) | Thai | 2026-11-06 |
 | [utoon.us](https://www.utoon.us) | UToon, home of reset-scans' content | 2026-11-09 |
 | [utsukushii-bg.com](https://utsukushii-bg.com) | Bulgarian | 2026-11-09 |
 | [uzaymanga.com](https://uzaymanga.com) |  | 2026-10-18 |
