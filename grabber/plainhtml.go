@@ -553,6 +553,15 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:   "img.ts-image-minimal",
 		Locked:  "i.fa-lock",
 	},
+	// w6.dandadan.net (English, single series): every chapter sits in a Shortcodes
+	// Ultimate expander (a second list repeats chapter 1). Last, as the list is
+	// generic WordPress markup.
+	{
+		Title:             "h1.entry-title",
+		Rows:              ".su-expand-content li.su-post a",
+		ChapterTitleStrip: `(?i)^Dandadan chapter \d+(\.\d+)?$`,
+		Image:             `img[alt^="Dandadan"]`,
+	},
 }
 
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)

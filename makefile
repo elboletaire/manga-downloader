@@ -1237,6 +1237,7 @@ grabber/html: \
 	grabber/cat300 \
 	grabber/celestialmoonscan \
 	grabber/csmmangafree \
+	grabber/dandadan \
 	grabber/dandadanmanga \
 	grabber/dandadanmangas \
 	grabber/decadencescans \
@@ -2226,6 +2227,9 @@ grabber/blmangafree:
 
 grabber/csmmangafree:
 	go run . https://www.csmmangafree.com/ 60
+
+grabber/dandadan:
+	go run . https://w6.dandadan.net/ 249
 
 grabber/dandadanmanga:
 	go run . https://w2.dandadanmanga.net/ 246
