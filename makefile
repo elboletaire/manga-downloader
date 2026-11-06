@@ -233,6 +233,7 @@ grabber: \
 	grabber/datgarscanlation \
 	grabber/deatte5 \
 	grabber/demonslayermanga \
+	grabber/desirescans \
 	grabber/diamondfansub \
 	grabber/divascans \
 	grabber/doujinxh \
@@ -282,6 +283,7 @@ grabber: \
 	grabber/hunlightcomics \
 	grabber/ichicomi \
 	grabber/ichithewitch \
+	grabber/ikuhentai \
 	grabber/imanevilgod \
 	grabber/infrafandub \
 	grabber/inkapk \
@@ -330,15 +332,19 @@ grabber: \
 	grabber/mangacorporation \
 	grabber/mangacrazy \
 	grabber/mangafoxfun \
+	grabber/mangagg \
 	grabber/mangaheronl \
 	grabber/mangahub \
+	grabber/mangahubus \
 	grabber/mangaisekaithai \
 	grabber/mangakakalotfun \
+	grabber/mangakakalove \
 	grabber/manganelme \
 	grabber/mangaonlinefun \
 	grabber/mangapandaonl \
 	grabber/mangaparktv \
 	grabber/mangareadersite \
+	grabber/mangashelf \
 	grabber/mangatodayfun \
 	grabber/mangatop \
 	grabber/mangazegra \
@@ -429,6 +435,7 @@ grabber: \
 	grabber/ruridragon \
 	grabber/sacachispa \
 	grabber/samuraij5z \
+	grabber/scaninmortal \
 	grabber/scanpinkrosa \
 	grabber/seraphicdeviltry \
 	grabber/shadowceviri \
@@ -437,6 +444,7 @@ grabber: \
 	grabber/shonenjumpplus \
 	grabber/snscoeurturkey \
 	grabber/solooscan \
+	grabber/spanishseraphicdeviltry \
 	grabber/spyxfamilymanga \
 	grabber/stonescape \
 	grabber/sundaywebry \
@@ -484,8 +492,14 @@ grabber: \
 	grabber/zinmanga \
 	grabber/html
 
+grabber/desirescans:
+	go run . https://desirescans.com/series/comic/nice-to-see-you 21
+
 grabber/fenixproject:
 	go run . https://fenixproject.website/manga/em-louvor-a-sua-sobrevivencia/ 1
+
+grabber/ikuhentai:
+	go run . https://ikuhentai.net/mangas-hentai/otonari-no-darashina-onee-san-ni-nagusamerareru-hanashi/ 0
 
 grabber/inmanga:
 	go run . https://inmanga.com/ver/manga/One-Piece/dfc7ecb5-e9b3-4aa5-a61b-a498993cd935 1187
@@ -516,6 +530,9 @@ grabber/mangabats:
 grabber/mangadna:
 	go run . https://mangadna.com/manga/omniscient-readers-viewpoint 300
 
+grabber/mangagg:
+	go run . https://mangagg.com/comic/i-m-trapped-in-a-game-with-the-male-leads-who-hate-me/ 49
+
 grabber/manganato:
 	go run . https://www.manganato.gg/manga/apotheosis 2
 
@@ -544,6 +561,9 @@ grabber/fansubscat:
 # 50 newest chapters, so this exercises the full-list API fetch
 grabber/mangak:
 	go run . https://mangak.io/nano-machine 150
+
+grabber/mangashelf:
+	go run . https://mangashelf.co.il/manga/%d7%a0%d7%90%d7%a8%d7%95%d7%98%d7%95/ 600
 
 grabber/manhwa18cc:
 	go run . https://manhwa18.cc/webtoon/the-meek-cat 20
@@ -640,6 +660,9 @@ grabber/readsnk:
 grabber/readsololeveling:
 	go run . https://ww4.readsololeveling.org/manga/solo-leveling-ragnarok/ 40
 
+grabber/scaninmortal:
+	go run . https://scan-inmortal.com/mg/en-kunlun-vive-un-dragon/ 18
+
 grabber/seinagiadulto:
 	go run . https://adulto.seinagi.org.es/series/petitx/ 4
 
@@ -658,6 +681,8 @@ grabber/mangaisekaithai:
 	go run . https://www.mangaisekaithai.net/manga/isekai-koushoku-musou-roku-isekai-tensei-no-chie-to-chikara-wo-tada-hitasura-xxxx-suru-tame-ni-tsukau/ 58.1
 grabber/garciamanga:
 	go run . https://garciamanga.com/manga/boruto-english/ 16
+grabber/spanishseraphicdeviltry:
+	go run . https://spanish.seraphic-deviltry.com/manga/by-my-side/ 1
 grabber/manhwaden:
 	go run . https://www.manhwaden.com/manga/hwanhyeol/ 6
 grabber/readhunters:
@@ -787,11 +812,17 @@ grabber/tuttoanimemanga:
 grabber/mangahub:
 	go run . https://mangahub.io/manga/one-piece_142 1188
 
+grabber/mangahubus:
+	go run . https://mangahub.us/manga/one-piece 1100
+
 grabber/1manga:
 	go run . https://1manga.co/manga/red-storm_111 470
 
 grabber/mangakakalotfun:
 	go run . https://mangakakalot.fun/manga/red-storm_111 470
+
+grabber/mangakakalove:
+	go run . https://www.mangakakalove.com/manga/5-kaime-no-jinsei-tensei-shitara-shinisou-na-koji-deshita 3
 
 grabber/manganelme:
 	go run . https://manganel.me/manga/academy-genius-swordsman 150
@@ -1217,6 +1248,7 @@ grabber/html: \
 	grabber/adonisfansub \
 	grabber/afroditscans \
 	grabber/akazascans \
+	grabber/allporncomiccom \
 	grabber/amangaplanet \
 	grabber/anzmanga25 \
 	grabber/apollcomics \
@@ -1273,10 +1305,12 @@ grabber/html: \
 	grabber/hentaimanga \
 	grabber/hentaiorigines \
 	grabber/hentaivn \
+	grabber/hirayareads \
 	grabber/hotcabaretscan \
 	grabber/inumanga \
 	grabber/izanamiscans \
 	grabber/kanzenin \
+	grabber/kensscan \
 	grabber/kewnscans \
 	grabber/kingofshojo \
 	grabber/kiryuu \
@@ -1299,6 +1333,7 @@ grabber/html: \
 	grabber/legionscans \
 	grabber/lelmanga \
 	grabber/lelscanfr \
+	grabber/lgbtics \
 	grabber/lianscans \
 	grabber/limonmanga \
 	grabber/linkmanga \
@@ -1308,8 +1343,10 @@ grabber/html: \
 	grabber/maid \
 	grabber/manga18fx \
 	grabber/manga18me \
+	grabber/mangabolt \
 	grabber/mangadass \
 	grabber/mangadna \
+	grabber/mangakulesi \
 	grabber/mangalc \
 	grabber/mangaberri \
 	grabber/mangadistrict \
@@ -1321,6 +1358,7 @@ grabber/html: \
 	grabber/manganeko \
 	grabber/mangapill \
 	grabber/mangaread \
+	grabber/mangareadz \
 	grabber/mangasorigines \
 	grabber/mangastep \
 	grabber/mangasusuku \
@@ -1343,6 +1381,7 @@ grabber/html: \
 	grabber/manhwahub \
 	grabber/manhwalist \
 	grabber/manhwaonline \
+	grabber/manhwaus \
 	grabber/mhscans \
 	grabber/mihentai \
 	grabber/mindafansub \
@@ -1357,6 +1396,7 @@ grabber/html: \
 	grabber/nifteam \
 	grabber/nirvanamanga \
 	grabber/nocfsb \
+	grabber/nonafansub \
 	grabber/noranofansub \
 	grabber/noromax02 \
 	grabber/novelcrow \
@@ -1378,6 +1418,7 @@ grabber/html: \
 	grabber/readfairytail \
 	grabber/readjujutsukaisen \
 	grabber/readkingdom \
+	grabber/readmanga18 \
 	grabber/readonepiece \
 	grabber/readopm \
 	grabber/readsnk \
@@ -1426,6 +1467,7 @@ grabber/html: \
 	grabber/tumanga \
 	grabber/uchuujinmangas \
 	grabber/undertranslations \
+	grabber/upmanga \
 	grabber/utsukushiibg \
 	grabber/uzaymanga \
 	grabber/violetmanga \
@@ -1437,6 +1479,35 @@ grabber/html: \
 	grabber/yaoiscanme \
 	grabber/zenithscans \
 	grabber/zonatmo
+
+grabber/allporncomiccom:
+	go run . https://allporncomic.com/porncomic/10-am-losekorntrol-hijab-3dx/ 1
+grabber/hirayareads:
+	go run . https://hirayareads.com/series/the-villainess-who-looks-like-a-little-girl-is-in-the-arms-of-the-ice-crown-prince-whos-occasionally-adorable/ 1
+
+grabber/kensscan:
+	go run . https://kensscan.com/manga/maou-no-musume-wa-ikigitanai/ 5
+
+grabber/lgbtics:
+	go run . https://lgbtics.com/comic/the-harem-is-a-team-of-teenage-ninjas-anintofu/ 1
+
+grabber/mangabolt:
+	go run . https://mangabolt.com/manga/aoku-somero/ 28
+
+grabber/mangakulesi:
+	go run . https://mangakulesi.com/manga/olumcul-ask-deneyimi 29
+
+grabber/mangareadz:
+	go run . https://www.mangareadz.com/webtoon/afterlife-diner/ 141
+
+grabber/manhwaus:
+	go run . https://manhwaus.net/webtoon/im-the-only-man-in-this-clan/ 26
+
+grabber/nonafansub:
+	go run . https://nonafansub.com/manga/gizli-xx/ 1
+
+grabber/readmanga18:
+	go run . https://readmanga18.com/manga/magical-girl-wife-raw/ 31
 
 grabber/tcbscans:
 	go run . https://tcbonepiecechapters.com/mangas/5/one-piece 1100
@@ -2077,6 +2148,9 @@ grabber/thaimanga:
 
 grabber/tmomanhwa:
 	go run . https://tmomanhwa.com/manhwa/la-espada-del-chaman/ 42
+
+grabber/upmanga:
+	go run . https://www.up-manga.com/apocalyptic-chef-awakening/ 130
 
 grabber/utsukushiibg:
 	go run . https://utsukushii-bg.com/manga/fairy-tail 138
