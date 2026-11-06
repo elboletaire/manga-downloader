@@ -1595,11 +1595,17 @@ func lazyImageURL(s *goquery.Selection) string {
 }
 
 // decodedDataScripts returns the source of the page's base64 data: scripts,
-// where some themes ship their inline JS (themesia puts ts_reader there).
+// where some themes ship their inline JS (themesia puts ts_reader there). A
+// LiteSpeed-deferred script (type="litespeed/javascript") keeps its payload in
+// data-src instead of src.
 func decodedDataScripts(doc *goquery.Document) string {
 	var js strings.Builder
-	doc.Find(`script[src^="data:text/javascript"], script[src^="data:application/javascript"]`).Each(func(_ int, s *goquery.Selection) {
-		_, payload, ok := strings.Cut(s.AttrOr("src", ""), ";base64,")
+	doc.Find(`script[src^="data:text/javascript"], script[src^="data:application/javascript"], script[data-src^="data:text/javascript"], script[data-src^="data:application/javascript"]`).Each(func(_ int, s *goquery.Selection) {
+		src := s.AttrOr("src", "")
+		if !strings.HasPrefix(src, "data:") {
+			src = s.AttrOr("data-src", "")
+		}
+		_, payload, ok := strings.Cut(src, ";base64,")
 		if !ok {
 			return
 		}

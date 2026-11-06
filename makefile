@@ -1325,6 +1325,7 @@ grabber/html: \
 	grabber/komikstation \
 	grabber/komiktap \
 	grabber/komiku \
+	grabber/komikzona \
 	grabber/gourmetsupremacy \
 	grabber/kumapoi \
 	grabber/lagoonscans \
@@ -1896,6 +1897,9 @@ grabber/komikmu:
 	go run . https://komikmu.top/komik/komikus-fasik/ 6
 grabber/komiku:
 	go run . https://komiku.org/manga/albus-changes-the-world/ 103
+grabber/komikzona:
+	go run . https://komikzona.my.id/manga/absolute-duo/ 21
+
 grabber/lectortaurus:
 	go run . https://lectortaurus.com/manga/regresion-del-tanque-clase-sss/ 4
 grabber/linkmanga:

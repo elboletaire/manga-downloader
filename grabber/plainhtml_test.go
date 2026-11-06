@@ -209,6 +209,14 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want: []string{"https://a.co/1.jpg", "https://a.co/2.jpg"},
 		},
 		{
+			name:     "ts_reader inside a LiteSpeed-deferred base64 script (komikzona)",
+			selector: "div.reading-content img",
+			html: `<html><body><script type="litespeed/javascript" data-src="data:text/javascript;base64,` +
+				`dHNfcmVhZGVyLnJ1bih7InNvdXJjZXMiOlt7InNvdXJjZSI6IlNlcnZlciAxIiwiaW1hZ2VzIjpbImh0dHBzOlwvXC9hLmNvXC8xLmpwZyIsImh0dHBzOlwvXC9hLmNvXC8yLmpwZyJdfV19KTs=` +
+				`"></script></body></html>`,
+			want: []string{"https://a.co/1.jpg", "https://a.co/2.jpg"},
+		},
+		{
 			name:     "lazy-load attribute when src is a gif placeholder",
 			selector: "div.reading-content img",
 			html:     `<html><body><div class="reading-content"><img src="https://a.co/img/placeholder.gif" data-original="https://a.co/1.jpg"/><img src="data:image/gif;base64,abc" data-lazy-src="https://a.co/2.jpg"/></div></body></html>`,
