@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[558 supported sites](#supported-sites)**, from big aggregators to small
+- **[559 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 558 supported sites</b></summary>
+<summary><b>Show all 559 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -546,6 +546,7 @@ environment variables.
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-29 |
 | [komiktap.info](https://komiktap.info) | Indonesian, mostly NSFW | 2026-10-26 |
 | [komiku.org](https://komiku.org) | Indonesian | 2026-10-22 |
+| [komikzona.my.id](https://komikzona.my.id) | Indonesian | 2026-11-06 |
 | [ksgroupscans.com](https://ksgroupscans.com) | KSGroupScans | 2026-10-29 |
 | [kumapoi.info](https://kumapoi.info) | Indonesian, mostly NSFW, doujinshi | 2026-10-30 |
 | [kuragebunch.com](https://kuragebunch.com) | Japanese, Kurage Bunch (GigaViewer) | 2026-10-29 |
