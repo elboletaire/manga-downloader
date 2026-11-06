@@ -47,6 +47,16 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitle: ".chapternum",
 		Image:        "#readerarea > img",
 	},
+	// merlinshoujo.com (Turkish) and other SniperReader WordPress sites: rows are
+	// nk-chapter-row links with the number in <strong>, and reader images carry
+	// their full URL in data-sr-image-original.
+	{
+		Title:             "h1",
+		Rows:              "a.nk-chapter-row",
+		Chapter:           "strong",
+		ChapterTitleStrip: `^Bölüm\s*\d+(\.\d+)?$`,
+		Image:             "img.nk-reader-page-image[data-sr-image-original]",
+	},
 	// tcbonepiecechapters.com (former tcbscans.com)
 	{
 		Title:        "h1",

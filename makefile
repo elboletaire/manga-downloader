@@ -1382,6 +1382,7 @@ grabber/html: \
 	grabber/manhwalist \
 	grabber/manhwaonline \
 	grabber/manhwaus \
+	grabber/merlinshoujo \
 	grabber/mhscans \
 	grabber/mihentai \
 	grabber/mindafansub \
@@ -2121,6 +2122,9 @@ grabber/mangatellers:
 
 grabber/manhuathai:
 	go run . https://www.manhuathai.com/manga/master-cultivation-return/ 100
+
+grabber/merlinshoujo:
+	go run . https://merlinshoujo.com/manga/akademinin-onur-ogrencisi/ 63
 
 grabber/mhscans:
 	go run . https://mhscans.com/series/emperador-del-apocalipsis-con-mi-estandarte-convocare-a-todas-mis-discipulas/ 19

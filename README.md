@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[575 supported sites](#supported-sites)**, from big aggregators to small
+- **[576 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 575 supported sites</b></summary>
+<summary><b>Show all 576 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -692,6 +692,7 @@ environment variables.
 | [manhwaus.net](https://manhwaus.net) | English | 2026-11-06 |
 | [marmota.me](https://marmota.me) | Spanish | 2026-10-29 |
 | [mehentai.live](https://mehentai.live) | Vietnamese, mostly NSFW | 2026-10-29 |
+| [merlinshoujo.com](https://merlinshoujo.com) | Turkish | 2026-11-06 |
 | [mgeko.cc](https://www.mgeko.cc) |  | 2026-10-29 |
 | [mhscans.com](https://mhscans.com) | Spanish | 2026-10-29 |
 | [mihentai.net](https://mihentai.net) | Indonesian, mostly NSFW | 2026-10-29 |
