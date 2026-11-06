@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[564 supported sites](#supported-sites)**, from big aggregators to small
+- **[575 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 564 supported sites</b></summary>
+<summary><b>Show all 575 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -428,6 +428,7 @@ environment variables.
 | [deathtollscans.net](https://reader.deathtollscans.net) |  | 2026-10-22 |
 | [demonicscans.org](https://demonicscans.org) | MangaDemon / Demonic Scans | 2026-10-29 |
 | [demonslayermanga.us.com](https://demonslayermanga.us.com) | English, single series, use a chapter URL | 2026-10-22 |
+| [desirescans.com](https://desirescans.com) | English | 2026-11-06 |
 | [diamondfansub.com](https://diamondfansub.com) | Turkish | 2026-10-29 |
 | [divascans.org](https://divascans.org) | English, locked chapters skipped | 2026-10-22 |
 | [dojing.net](https://dojing.net) | Indonesian, mostly NSFW | 2026-10-29 |
@@ -503,6 +504,7 @@ environment variables.
 | [hentaixyuri.com](https://hentaixyuri.com) | English, mostly NSFW | 2026-10-29 |
 | [heros-web.com](https://heros-web.com) | Japanese, Hero's Web (Comici) | 2026-11-02 |
 | [hhentai.fr](https://hhentai.fr) | French, mostly NSFW | 2026-10-29 |
+| [hirayareads.com](https://hirayareads.com) | English | 2026-11-06 |
 | [hivetoons.org](https://hivetoons.org) | HiveToons, VoidScans | 2026-10-15 |
 | [hni-scantrad.net](https://hni-scantrad.net) | HNI-scantrad, French and English | 2026-10-26 |
 | [hotcabaretscan.com](https://hotcabaretscan.com) | Portuguese | 2026-10-29 |
@@ -510,6 +512,7 @@ environment variables.
 | [hunlightcomics.com](https://hunlightcomics.com) | English | 2026-11-02 |
 | [ichi-the-witch.com](https://ichi-the-witch.com) | English, single series | 2026-11-02 |
 | [ichicomi.com](https://ichicomi.com) | Japanese, Ichi Comic (GigaViewer) | 2026-11-02 |
+| [ikuhentai.net](https://ikuhentai.net) | Spanish, NSFW | 2026-11-06 |
 | [imanevilgod.com](https://imanevilgod.com) | English, single series | 2026-10-26 |
 | [infrafandub.com](https://infrafandub.com) | Spanish | 2026-11-02 |
 | [inkapk.net](https://inkapk.net) | Portuguese | 2026-11-02 |
@@ -530,6 +533,7 @@ environment variables.
 | [kaynscans.com](https://kaynscans.com) | Kayn Scans, former kaynscan.org | 2026-11-02 |
 | [kazokuden.com](https://www.kazokuden.com) | Spanish | 2026-11-02 |
 | [kencomics.com](https://kencomics.com) | Ken Scans, English, locked chapters skipped | 2026-10-26 |
+| [kensscan.com](https://kensscan.com) | English | 2026-11-06 |
 | [keroscans.net](https://keroscans.net) | English, locked chapters skipped | 2026-10-26 |
 | [kewnscans.org](https://kewnscans.org) | English | 2026-11-02 |
 | [kimicomi.com](https://kimicomi.com) | Japanese (Comici) | 2026-11-02 |
@@ -567,6 +571,7 @@ environment variables.
 | [lelscanfr.com](https://www.lelscanfr.com) | French | 2026-10-29 |
 | [lepoytl.my.id](https://www.lepoytl.my.id) | Indonesian | 2026-10-29 |
 | [ler999.blogspot.com](https://ler999.blogspot.com) | Portuguese | 2026-10-19 |
+| [lgbtics.com](https://lgbtics.com) | English, NSFW | 2026-11-06 |
 | [lhtranslation.net](https://lhtranslation.net) | LHTranslation | 2026-10-26 |
 | [lianscans.com](https://www.lianscans.com) | Indonesian, mostly NSFW | 2026-10-26 |
 | [lilymanga.net](https://lilymanga.net) | yuri, some NSFW | 2026-10-29 |
@@ -612,6 +617,7 @@ environment variables.
 | [mangaforfree.net](https://mangaforfree.net) | multilingual, mostly NSFW | 2026-11-02 |
 | [mangafox.fun](https://mangafox.fun) | MangaFox, English | 2026-10-26 |
 | [mangafree.info](https://mangafree.info) | English | 2026-11-02 |
+| [mangagg.com](https://mangagg.com) | English | 2026-11-06 |
 | [mangahere.cc](https://www.mangahere.cc) | MangaHere | 2026-11-02 |
 | [mangahere.onl](https://mangahere.onl) | MangaHere, English | 2026-10-26 |
 | [mangahub.io](https://mangahub.io) |  | 2026-10-26 |
@@ -623,6 +629,7 @@ environment variables.
 | [mangakakalove.com](https://www.mangakakalove.com) | MangaKakalot, English | 2026-11-06 |
 | [mangakatana.com](https://mangakatana.com) |  | 2026-11-02 |
 | [mangakimi.com](https://www.mangakimi.com) | Thai | 2026-11-02 |
+| [mangakulesi.com](https://mangakulesi.com) | Turkish | 2026-11-06 |
 | [mangalami.com](https://mangalami.com) | LamiManga, Thai | 2026-11-02 |
 | [mangalib.me](https://mangalib.me) | MangaLib | 2026-10-15 |
 | [mangalivre.to](https://mangalivre.to) | Manga Livre, former mangalivre.tv/mangalivre.net | 2026-10-29 |
@@ -641,6 +648,7 @@ environment variables.
 | [mangareader.site](https://mangareader.site) | MangaReader, English | 2026-10-26 |
 | [mangareadz.com](https://www.mangareadz.com) | English | 2026-11-06 |
 | [mangas-origines.fr](https://mangas-origines.fr) | French | 2026-10-18 |
+| [mangashelf.co.il](https://mangashelf.co.il) | Hebrew | 2026-11-06 |
 | [mangaspa.nikkan-spa.jp](https://mangaspa.nikkan-spa.jp) | Japanese (Comici), mostly NSFW | 2026-11-02 |
 | [mangastep.com](https://mangastep.com) | Thai | 2026-11-02 |
 | [mangasushi.org](https://mangasushi.org) |  | 2026-10-29 |
@@ -681,6 +689,7 @@ environment variables.
 | [manhwaonline.org](https://manhwaonline.org) |  | 2026-10-29 |
 | [manhwareads.com](https://manhwareads.com) | English | 2026-10-29 |
 | [manhwatop.com](https://manhwatop.com) | MANHWATOP | 2026-10-29 |
+| [manhwaus.net](https://manhwaus.net) | English | 2026-11-06 |
 | [marmota.me](https://marmota.me) | Spanish | 2026-10-29 |
 | [mehentai.live](https://mehentai.live) | Vietnamese, mostly NSFW | 2026-10-29 |
 | [mgeko.cc](https://www.mgeko.cc) |  | 2026-10-29 |
@@ -755,6 +764,7 @@ environment variables.
 | [reader.seinagi.org.es](https://reader.seinagi.org.es) | English | 2026-10-26 |
 | [readhunters.xyz](https://readhunters.xyz) | Portuguese | 2026-10-29 |
 | [readkagura.com](https://readkagura.com) | English, single series | 2026-10-26 |
+| [readmanga18.com](https://readmanga18.com) | English, NSFW | 2026-11-06 |
 | [readspyxfamilymanga.com](https://readspyxfamilymanga.com) | English, single series, use a chapter URL | 2026-10-26 |
 | [reapertrans.com](https://reapertrans.com) | Thai | 2026-10-26 |
 | [rimacomiplus.jp](https://rimacomiplus.jp) | Japanese (Comici) | 2026-11-02 |
@@ -772,6 +782,7 @@ environment variables.
 | [samurai.j5z.xyz](https://samurai.j5z.xyz) | Spanish | 2026-10-26 |
 | [sanascans.com](https://sanascans.com) | Sana Scans | 2026-10-29 |
 | [sasangeyou.net](https://sasangeyou.net) | Indonesian | 2026-10-26 |
+| [scan-inmortal.com](https://scan-inmortal.com) | Spanish | 2026-11-06 |
 | [scan-vf.net](https://www.scan-vf.net) | ScanVF | 2026-10-26 |
 | [scanpinkrosa.blogspot.com](https://scanpinkrosa.blogspot.com) | Portuguese | 2026-10-26 |
 | [scythescans.com](https://scythescans.com) | English | 2026-10-26 |
