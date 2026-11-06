@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[556 supported sites](#supported-sites)**, from big aggregators to small
+- **[559 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 556 supported sites</b></summary>
+<summary><b>Show all 559 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -546,6 +546,7 @@ environment variables.
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-10-29 |
 | [komiktap.info](https://komiktap.info) | Indonesian, mostly NSFW | 2026-10-26 |
 | [komiku.org](https://komiku.org) | Indonesian | 2026-10-22 |
+| [komikzona.my.id](https://komikzona.my.id) | Indonesian | 2026-11-06 |
 | [ksgroupscans.com](https://ksgroupscans.com) | KSGroupScans | 2026-10-29 |
 | [kumapoi.info](https://kumapoi.info) | Indonesian, mostly NSFW, doujinshi | 2026-10-30 |
 | [kuragebunch.com](https://kuragebunch.com) | Japanese, Kurage Bunch (GigaViewer) | 2026-10-29 |
@@ -678,6 +679,7 @@ environment variables.
 | [manhwatop.com](https://manhwatop.com) | MANHWATOP | 2026-10-29 |
 | [marmota.me](https://marmota.me) | Spanish | 2026-10-29 |
 | [mehentai.live](https://mehentai.live) | Vietnamese, mostly NSFW | 2026-10-29 |
+| [merlinshoujo.com](https://merlinshoujo.com) | Turkish | 2026-11-06 |
 | [mgeko.cc](https://www.mgeko.cc) |  | 2026-10-29 |
 | [mhscans.com](https://mhscans.com) | Spanish | 2026-10-29 |
 | [mihentai.net](https://mihentai.net) | Indonesian, mostly NSFW | 2026-10-29 |
@@ -851,6 +853,7 @@ environment variables.
 | [w28.read-tokyorevengers.com](https://w28.read-tokyorevengers.com) | English, single series | 2026-10-26 |
 | [w50.blue-lock-manga.com](https://w50.blue-lock-manga.com) | English, single series | 2026-11-02 |
 | [w53.omniscientreaderviewpoint.com](https://w53.omniscientreaderviewpoint.com) | English, single series | 2026-10-26 |
+| [w6.dandadan.net](https://w6.dandadan.net) | English, single series | 2026-11-06 |
 | [w82.thetowerofgod.com](https://w82.thetowerofgod.com) | English, single series | 2026-10-26 |
 | [w9.kaijimanga.com](https://w9.kaijimanga.com) | English, single series | 2026-11-02 |
 | [webtoonia.fun](https://webtoonia.fun) | Turkish, former diamondfansub.com, some NSFW | 2026-10-29 |
