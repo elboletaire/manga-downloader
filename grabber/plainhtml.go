@@ -560,7 +560,7 @@ var plainHTMLSelectors = []SiteSelector{
 		Title:             "h1.entry-title",
 		Rows:              ".su-expand-content li.su-post a",
 		ChapterTitleStrip: `(?i)^Dandadan chapter \d+(\.\d+)?$`,
-		Image:             `img[alt^="Dandadan"]`,
+		Image:             ".entry-content img",
 	},
 }
 
@@ -1594,10 +1594,8 @@ func lazyImageURL(s *goquery.Selection) string {
 	return src
 }
 
-// decodedDataScripts returns the source of the page's base64 data: scripts,
-// where some themes ship their inline JS (themesia puts ts_reader there). A
-// LiteSpeed-deferred script (type="litespeed/javascript") keeps its payload in
-// data-src instead of src.
+// decodedDataScripts returns the source of the page's base64 data: scripts (themesia
+// ships ts_reader there), read from data-src when LiteSpeed defers them.
 func decodedDataScripts(doc *goquery.Document) string {
 	var js strings.Builder
 	doc.Find(`script[src^="data:text/javascript"], script[src^="data:application/javascript"], script[data-src^="data:text/javascript"], script[data-src^="data:application/javascript"]`).Each(func(_ int, s *goquery.Selection) {
