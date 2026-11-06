@@ -91,6 +91,11 @@ export function sumDownloads(releases: Release[]): { total: number; byOS: Record
   return { total, byOS }
 }
 
+/** The JSON-LD softwareVersion: the latest release's tag without its "v", or undefined when unknown. */
+export function softwareVersion(latest: PageRelease | null | undefined): string | undefined {
+  return latest?.tag_name.replace(/^v/, '') || undefined
+}
+
 /**
  * Round down to two significant digits and format with compact notation.
  * Add `+` when rounding off anything.

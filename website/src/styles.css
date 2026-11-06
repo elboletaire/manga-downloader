@@ -54,7 +54,7 @@
 /* Japanese pages only: the Japanese faces come after the Latin ones here. On the
    other pages they'd be pulled in by the arrow glyph, so they stay out of the stack. */
 :root:lang(ja) {
-  --font-ui: 'Inter Variable', 'Murecho Variable', 'Hiragino Sans', 'Yu Gothic UI', Meiryo, 'Noto Sans CJK JP', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-ui: 'Inter Variable', 'Murecho Variable', 'Hiragino Sans', 'Yu Gothic UI', Meiryo, 'Noto Sans CJK JP', 'Noto Sans JP', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Fredoka Variable', 'M PLUS Rounded 1c', var(--font-ui);
   word-break: auto-phrase;
 }
@@ -486,6 +486,7 @@ body:has(.lang-banner:not([hidden])) {
 
 :lang(ja) h1,
 :lang(ja) h2,
+:lang(ja) .section-title,
 :lang(ja) .kicker,
 :lang(ja) .platform-kind,
 :lang(ja) .site-badge,
@@ -804,16 +805,31 @@ body:has(.lang-banner:not([hidden])) {
   margin-bottom: clamp(32px, 5vw, 52px);
 }
 
+/* The kicker is the section's h2 now: keep it in the UI font and body leading, not the display heading's. */
 .kicker {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
+  font-family: inherit;
+  line-height: inherit;
   color: var(--accent-text);
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+/* Wraps a kicker with a tag beside it, so the tag stays out of the heading's name. */
+.kicker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.kicker-row .kicker {
+  margin-bottom: 0;
 }
 
 .tag {
@@ -826,8 +842,14 @@ body:has(.lang-banner:not([hidden])) {
   font-weight: 600;
 }
 
-.section h2 {
+/* The slogan under each section's kicker: the display type that h2 used to carry. */
+.section-title {
+  font-family: var(--font-display);
   font-size: clamp(2rem, 4.4vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-wrap: balance;
 }
 
 .section-lede {
@@ -1726,6 +1748,122 @@ body:has(.lang-banner:not([hidden])) {
   color: var(--accent-text);
   font-weight: 600;
   text-decoration: none;
+}
+
+/* manuals (docs/cli.md, docs/app.md) ------------------------------------- */
+
+.doc {
+  max-width: 760px;
+  margin-inline: auto;
+  padding-block: clamp(32px, 6vw, 64px);
+}
+
+.doc h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  margin-bottom: 24px;
+}
+
+.doc h2,
+.doc h3 {
+  scroll-margin-top: 84px;
+}
+
+.doc h2 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  margin: 56px 0 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.doc h3 {
+  font-size: 1.2rem;
+  margin: 32px 0 12px;
+}
+
+.doc p,
+.doc ul,
+.doc ol,
+.doc pre,
+.doc table,
+.doc blockquote,
+.doc picture,
+.doc img {
+  margin: 0 0 16px;
+}
+
+.doc ul,
+.doc ol {
+  padding-left: 1.4em;
+}
+
+.doc li + li {
+  margin-top: 6px;
+}
+
+.doc code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.doc pre {
+  overflow-x: auto;
+  padding: 16px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--code-bg);
+  color: var(--code-text);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.doc pre code {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+  white-space: pre;
+  border-radius: 0;
+}
+
+.doc table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.94rem;
+}
+
+.doc th,
+.doc td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.doc th {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.doc blockquote {
+  padding: 12px 18px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--accent-soft);
+}
+
+.doc blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.doc img {
+  border-radius: var(--radius-sm);
+}
+
+/* keeps "CLI manual" and "App manual" on one line each on narrow screens */
+.doc-nav a {
+  white-space: nowrap;
 }
 
 /* motion ------------------------------------------------------------------ */

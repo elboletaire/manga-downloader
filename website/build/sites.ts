@@ -63,15 +63,29 @@ export function formatDate(iso: string, locale = 'en'): string {
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(`${iso}T00:00:00Z`))
 }
 
-/** Renders the sites as `<li>`s; `data-search` is what the filter matches. */
-export function renderSites(sites: Site[], badge: BadgeLabels = EN_BADGE, verified: VerifiedLabels = EN_VERIFIED, locale = 'en'): string {
+/** Translates each comma-separated part of a note that `notes` knows; names and "former …" parts stay as written. */
+export function translateNote(note: string, notes: Record<string, string> = {}): string {
+  return note
+    .split(', ')
+    .map((part) => {
+      // "Japanese (Comici)": translate the language, keep the platform as written.
+      const paren = /^(.+?) \((.+)\)$/.exec(part)
+      if (paren && notes[paren[1]]) return `${notes[paren[1]]} (${paren[2]})`
+      return notes[part] ?? part
+    })
+    .join(', ')
+}
+
+/** Renders the sites as `<li>`s; `data-search` is what the filter matches, in both the English and the translated note. */
+export function renderSites(sites: Site[], badge: BadgeLabels = EN_BADGE, verified: VerifiedLabels = EN_VERIFIED, locale = 'en', notes: Record<string, string> = {}): string {
   return sites
     .map((s) => {
-      const search = `${s.domain} ${s.note}`.toLowerCase()
+      const note = translateNote(s.note, notes)
+      const search = `${s.domain} ${s.note}${note !== s.note ? ` ${note}` : ''}`.toLowerCase()
       const badgeHtml = s.browser
         ? `<span class="site-badge" title="${escapeHTML(badge.title)}"><span class="visually-hidden">${escapeHTML(badge.srPrefix)} </span>${escapeHTML(badge.label)}</span>`
         : ''
-      const note = s.note ? `<span class="site-note">${escapeHTML(s.note)}</span>` : ''
+      const noteHtml = note ? `<span class="site-note">${escapeHTML(note)}</span>` : ''
       const v = s.verified
       // The visible line is the accessible name too; the mark is decorative.
       const date = v.status === 'unknown' ? '' : `<time datetime="${v.date}">${escapeHTML(formatDate(v.date, locale))}</time>`
@@ -85,7 +99,7 @@ export function renderSites(sites: Site[], badge: BadgeLabels = EN_BADGE, verifi
       return (
         `<li class="site" data-search="${escapeHTML(search)}"${s.browser ? ' data-browser' : ''}>` +
         `<a href="${escapeHTML(s.url)}" rel="nofollow noopener" target="_blank">` +
-        `<span class="site-domain">${escapeHTML(s.domain)}</span>${badgeHtml}</a>${note}${verifiedHtml}</li>`
+        `<span class="site-domain">${escapeHTML(s.domain)}</span>${badgeHtml}</a>${noteHtml}${verifiedHtml}</li>`
       )
     })
     .join('\n')

@@ -48,6 +48,11 @@ pnpm preview   # serve dist/
   release if one was published since the build.
 - **Brand assets**: copied from the approved brand kit into `src/assets/brand/`
   and `public/` (favicons, `opengraph.png`). Don't redraw them.
+- **Manuals**: `docs/cli.md` and `docs/app.md` render to English pages at `/docs/cli/`
+  and `/docs/app/` (`build/docs.ts`, wired in by the `site-data` plugin). Links between
+  them point to the pages, other repo files to GitHub, and the screenshots and demo GIFs
+  are copied to `docs/media/` from the checkout, so they match the release built. Their
+  titles and descriptions live in `MANUALS`; they're not translated and not in `hreflang`.
 - **Social cards**: each language's `og:image`, `twitter:image` and JSON-LD image
   point to its own card (`%OG_IMAGE%`, from `ogImage` in `LANG_INFO`). English keeps
   the brand's `public/opengraph.png`; es, ca and ja are `public/opengraph-<lang>.png`,
@@ -182,7 +187,7 @@ the ja page only, through the `<!-- fonts:ja -->` placeholder in `index.html`, s
 other pages never load those font files. Their stacks are set under `:root:lang(ja)` in
 `styles.css`. Only the weight 700 of M PLUS Rounded 1c is shipped: headings asking for 600 get it.
 
-The supported-sites notes stay in English.
+The supported-sites notes are translated part by part: each comma-separated part found in `sites.notes` is replaced, and names like "former asuratoon.com" pass through. The site filter matches both the English and the translated note.
 
 The download statistics in the hero section (numbers and labels like "downloads", "Docker pulls") live under `stats.*` in each locale file. The compact numbers (`11K+`) stay in that notation across all languages, even though `Intl.NumberFormat('compact')` would produce language-specific text like "11 mil"; see `build/stats.ts`.
 
