@@ -769,6 +769,7 @@ environment variables.
 | [readmanga18.com](https://readmanga18.com) | English, NSFW | 2026-11-06 |
 | [readspyxfamilymanga.com](https://readspyxfamilymanga.com) | English, single series, use a chapter URL | 2026-11-09 |
 | [reapertrans.com](https://reapertrans.com) | Thai | 2026-11-09 |
+| [resetscans.net](https://www.resetscans.net) | English, Reset Scans | 2026-11-10 |
 | [rimacomiplus.jp](https://rimacomiplus.jp) | Japanese (Comici) | 2026-11-02 |
 | [ritharscans.com](https://ritharscans.com) |  | 2026-11-09 |
 | [rizzfables.com](https://rizzfables.com) |  | 2026-11-09 |
@@ -850,7 +851,7 @@ environment variables.
 | [uchuujinmangas.com](https://uchuujinmangas.com) | Spanish | 2026-11-09 |
 | [undertranslations.com](https://undertranslations.com) | Spanish | 2026-10-30 |
 | [up-manga.com](https://www.up-manga.com) | Thai | 2026-11-06 |
-| [utoon.us](https://www.utoon.us) | UToon, home of reset-scans' content | 2026-11-09 |
+| [utoon.us](https://www.utoon.us) | English, UToon | 2026-11-09 |
 | [utsukushii-bg.com](https://utsukushii-bg.com) | Bulgarian | 2026-11-09 |
 | [uzaymanga.com](https://uzaymanga.com) |  | 2026-10-18 |
 | [v7.kiryuu.to](https://v7.kiryuu.to) | Indonesian | 2026-11-02 |
