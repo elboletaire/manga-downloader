@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[578 supported sites](#supported-sites)**, from big aggregators to small
+- **[580 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 578 supported sites</b></summary>
+<summary><b>Show all 580 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
