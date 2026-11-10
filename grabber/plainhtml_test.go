@@ -483,6 +483,7 @@ func TestStripSeriesTitle(t *testing.T) {
 	}{
 		{"One Piece Chapter 5", "One Piece", "Chapter 5"},
 		{"one piece - Chapter 5", "One Piece", "Chapter 5"},
+		{"One Piece, Chapter 5", "One Piece", "Chapter 5"},
 		{"One Piece", "One Piece", ""},
 		{"Dan Chapter 1", "Dan", "Chapter 1"},           // whole word only
 		{"Danger Chapter 1", "Dan", "Danger Chapter 1"}, // not a prefix of a word

@@ -13,12 +13,9 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Utoon is a grabber for utoon.us and resetscans.net: the same WordPress
-// "mangaverse" theme (utoon.us is the successor of the now offline utoon.net,
-// and it hosts reset-scans' content). The series page
-// only renders the ~10 most-recent chapters; the rest is loaded via a
-// paginated wp-admin/admin-ajax.php "mangaverse_load_more" action, using a
-// category id and a per-page nonce scraped from the series page itself.
+// Utoon is a grabber for the WordPress "mangaverse" theme (utoon.us,
+// resetscans.net). The series page lists only ~10 chapters; the rest come from
+// admin-ajax.php's "mangaverse_load_more", with a category id and nonce scraped from it.
 type Utoon struct {
 	*Grabber
 }
@@ -143,6 +140,7 @@ func (u *Utoon) FetchChapters() (chapters Filterables, errs []error) {
 		return
 	}
 
+	seriesTitle := sanitizeTitle(doc.Find("h1.series-title").First().Text())
 	seen := map[string]bool{}
 	collect := func(sel *goquery.Selection) {
 		sel.Find(".chapter-item").Each(func(i int, s *goquery.Selection) {
@@ -151,7 +149,12 @@ func (u *Utoon) FetchChapters() (chapters Filterables, errs []error) {
 			if href == "" || seen[href] {
 				return
 			}
+			// the titles repeat the series name ("Series, Chapter 5"), which
+			// the filename already carries; a title that is only the name stays
 			title := sanitizeTitle(link.Find(".chapter-title").Text())
+			if stripped := stripSeriesTitle(title, seriesTitle); stripped != "" {
+				title = stripped
+			}
 			number, ok := parseChapterNumber(title)
 			if !ok {
 				return

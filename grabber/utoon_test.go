@@ -3,6 +3,7 @@
 package grabber
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 )
@@ -48,6 +49,37 @@ func TestUtoonResolveSeriesURL(t *testing.T) {
 	}
 	if want := "https://www.utoon.us/en/manga/gachiakuta.html"; seriesURL != want {
 		t.Errorf("utoonResolveSeriesURL() = %q, want %q", seriesURL, want)
+	}
+}
+
+func TestUtoonFetchChaptersTitles(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/en/manga/the-ultimate-of-all-ages.html", func(w http.ResponseWriter, r *http.Request) {
+		base := "http://" + r.Host
+		fmt.Fprintf(w, `<html><body>
+<h1 class="series-title">The Ultimate of All Ages</h1>
+<script>var mangaverse_ajax = {"ajax_url":"%[1]s/wp-admin/admin-ajax.php","nonce":"abc","current_lang":"en"};</script>
+<div class="chapters-list" data-category="386">
+<article class="chapter-item"><a class="chapter-link" href="%[1]s/en/the-ultimate-of-all-ages/the-ultimate-of-all-ages-chapter-267.html"><h3 class="chapter-title">The Ultimate of All Ages, Chapter 267</h3></a></article>
+<article class="chapter-item"><a class="chapter-link" href="%[1]s/en/the-ultimate-of-all-ages/the-ultimate-of-all-ages-chapter-266.html"><h3 class="chapter-title">the ultimate of all ages - Chapter 266</h3></a></article>
+</div></body></html>`, base)
+	})
+	respond(mux, "/wp-admin/admin-ajax.php", `{"success":true,"data":{"html":"","has_more":false}}`)
+	srv := serve(t, mux)
+
+	u := Utoon{Grabber: &Grabber{URL: srv.URL + "/en/manga/the-ultimate-of-all-ages.html"}}
+	chapters, errs := u.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("FetchChapters() errors = %v", errs)
+	}
+	want := []string{"Chapter 267", "Chapter 266"}
+	if len(chapters) != len(want) {
+		t.Fatalf("FetchChapters() returned %d chapters, want %d", len(chapters), len(want))
+	}
+	for i, c := range chapters {
+		if got := c.(*UtoonChapter).Title; got != want[i] {
+			t.Errorf("chapter %d title = %q, want %q", i, got, want[i])
+		}
 	}
 }
 

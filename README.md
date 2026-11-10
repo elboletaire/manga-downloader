@@ -830,7 +830,7 @@ environment variables.
 | [twmanga.com](https://www.twmanga.com) | 包子漫画, baozimh.com mirror | ❌ failing since 2026-11-09 (checked 2026-11-09) |
 | [uchuujinmangas.com](https://uchuujinmangas.com) | Spanish | 2026-11-09 |
 | [undertranslations.com](https://undertranslations.com) | Spanish | 2026-10-30 |
-| [utoon.us](https://www.utoon.us) | UToon, home of reset-scans' content | 2026-11-09 |
+| [utoon.us](https://www.utoon.us) | English, UToon | 2026-11-09 |
 | [utsukushii-bg.com](https://utsukushii-bg.com) | Bulgarian | 2026-11-09 |
 | [uzaymanga.com](https://uzaymanga.com) |  | 2026-10-18 |
 | [v7.kiryuu.to](https://v7.kiryuu.to) | Indonesian | 2026-11-02 |

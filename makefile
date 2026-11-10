@@ -422,6 +422,7 @@ grabber: \
 	grabber/readhunters \
 	grabber/readkagura \
 	grabber/readspyxfamilymanga \
+	grabber/resetscans \
 	grabber/rimacomiplus \
 	grabber/roliascan \
 	grabber/ruahapchanhday2 \
@@ -994,6 +995,8 @@ grabber/stonescape:
 	go run . https://stonescape.xyz/series/only-see-you 21
 grabber/utoon:
 	go run . https://www.utoon.us/en/manga/gachiakuta.html 171
+grabber/resetscans:
+	go run . https://www.resetscans.net/en/manga/the-ultimate-of-all-ages.html 266-267
 # uses a real (headless) browser: the chapter list/reader JSON API responses
 # are AES-encrypted client-side and the reader lazily mounts pages on scroll;
 # no cloudflare here, no --browser-visible needed
@@ -1384,7 +1387,6 @@ grabber/html: \
 	grabber/readsololeveling \
 	grabber/readyagami \
 	grabber/reapertrans \
-	grabber/resetscans \
 	grabber/richtoon \
 	grabber/ritharscans \
 	grabber/rizzfables \
@@ -1870,8 +1872,6 @@ grabber/pornhwaz:
 	go run . https://www.pornhwaz.com/webtoon/secret-class/ 160
 grabber/reapertrans:
 	go run . https://reapertrans.com/manga/revenge-of-the-iron-blooded-sword-hound/ 79
-grabber/resetscans:
-	go run . https://www.resetscans.net/en/manga/the-ultimate-of-all-ages.html 266-267
 grabber/richtoon:
 	go run . https://r1.richtoon.top/manga/renacer-hacia-la-venganza/ 22
 grabber/rosyscans:

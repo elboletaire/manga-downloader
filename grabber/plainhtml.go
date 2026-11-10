@@ -1456,7 +1456,7 @@ func stripSeriesTitle(title, series string) string {
 	if len(t) > len(s) && unicode.IsLetter(t[len(s)]) {
 		return title
 	}
-	return sanitizeTitle(strings.TrimLeft(string(t[len(s):]), " \t-–—:|·"))
+	return sanitizeTitle(strings.TrimLeft(string(t[len(s):]), " \t-–—:|·,"))
 }
 
 // resolveURL turns a possibly-relative href into an absolute URL, resolved
