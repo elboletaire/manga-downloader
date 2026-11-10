@@ -419,6 +419,7 @@ grabber: \
 	grabber/phoenixscans \
 	grabber/piacomic \
 	grabber/plumacomics \
+	grabber/pornhwareader \
 	grabber/projectsuki \
 	grabber/punchonemanga \
 	grabber/qimanga \
@@ -1945,6 +1946,8 @@ grabber/nyanukafe:
 	go run . https://nyanukafe.com/series/63f559b92c0/ 10
 grabber/orionscans:
 	go run . https://orion-scans.com/series/an-adventurer-skilled-at-nurturing-finds-a-little-girl-and-devotes-his-second-life-to-raising-her 9
+grabber/pornhwareader:
+	go run . https://pornhwareader.com/series/345/perfect-half 100
 grabber/pornhwaz:
 	go run . https://www.pornhwaz.com/webtoon/secret-class/ 160
 grabber/reapertrans:

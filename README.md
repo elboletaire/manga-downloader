@@ -747,6 +747,7 @@ environment variables.
 | [phoenixscans.com](https://www.phoenixscans.com) | Phoenix Scans, Italian | 2026-11-09 |
 | [piacomic.jp](https://piacomic.jp) | Japanese (Comici) | 2026-11-02 |
 | [plumacomics.com](https://plumacomics.com) | Portuguese | ❌ failing since 2026-10-26 (checked 2026-10-30) |
+| [pornhwareader.com](https://pornhwareader.com) | English, NSFW | 2026-11-10 |
 | [pornhwaz.com](https://www.pornhwaz.com) | English, mostly NSFW | 2026-11-09 |
 | [projectsuki.com](https://projectsuki.com) |  | 2026-11-09 |
 | [qimanga.com](https://qimanga.com) |  | 2026-11-09 |
