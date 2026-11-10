@@ -70,8 +70,8 @@ func TestPlainHTMLPaginated(t *testing.T) {
 	}
 }
 
-// TestPlainHTMLPaginatedQuery checks that PageParam and PageQuery shape the
-// listing's page URLs, for a list behind a tab (?tab=chapters&chapter_page=N)
+// TestPlainHTMLPaginatedQuery checks that PageParam numbers the pages on top
+// of the series URL's own query, for a list behind a tab (?tab=chapters)
 func TestPlainHTMLPaginatedQuery(t *testing.T) {
 	pages := map[string]string{
 		"":  paginatedListing(3, 2),
@@ -98,9 +98,8 @@ func TestPlainHTMLPaginatedQuery(t *testing.T) {
 		Chapter:   "div.flex.gap-2 span",
 		Paginated: true,
 		PageParam: "chapter_page",
-		PageQuery: "tab=chapters",
 	}
-	m := &PlainHTML{Grabber: &Grabber{URL: srv.URL + "/manga/one-piece"}, site: site}
+	m := &PlainHTML{Grabber: &Grabber{URL: srv.URL + "/manga/one-piece?tab=chapters"}, site: site}
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(pages[""]))
 	if err != nil {
 		t.Fatal(err)

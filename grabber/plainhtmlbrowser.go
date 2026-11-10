@@ -47,6 +47,9 @@ type BrowserSiteSelector struct {
 	// /serie/{slug}/chapter-N are resolved without a wasted browser render.
 	// 0 disables reconstruction.
 	SeriesPathDepth int
+	// SeriesQuery is a query string added to the series URL Test renders and
+	// lists from, for sites whose chapter list sits behind a tab (e.g. "tab=chapters")
+	SeriesQuery string
 	// Novel is a CSS selector for a marker that the series page is a novel,
 	// which has no images to download; Test refuses such a series.
 	Novel string
@@ -154,13 +157,8 @@ var browserSelectors = []BrowserSiteSelector{
 		ImageWait:       `div.reading-content img[id^="image-"]`,
 		SeriesPathDepth: 2,
 	},
-	// manhuatop.org (Manhua Top, #459): redesigned on Next.js, so the Madara
-	// selectors above no longer match. The chapter list shows 50 rows at a time
-	// behind a tab, and its later pages are ?tab=chapters&chapter_page=N, which
-	// plain HTTP reads with the browser's session. The reader's pages carry a
-	// "Chapter image" alt, and the banners don't. The rows load from an API call
-	// into a panel hidden until its tab opens, so the wait is the visible tab
-	// button, and Settle covers that call.
+	// manhuatop.org: Next.js. The chapter list is a tab, so the series page
+	// renders with ?tab=chapters, and the rest of the list is ?chapter_page=N.
 	{
 		SiteSelector: SiteSelector{
 			Title:        "h1",
@@ -168,16 +166,15 @@ var browserSelectors = []BrowserSiteSelector{
 			Chapter:      "strong",
 			ChapterTitle: "strong",
 			Link:         "a",
-			Image:        `img[alt^="Chapter image"]`,
+			Image:        "figure.reader-image img",
 			Paginated:    true,
 			PageParam:    "chapter_page",
-			PageQuery:    "tab=chapters",
 		},
 		Domains:         []string{"manhuatop.org"},
-		ChaptersWait:    "#detail-tab-chapters",
-		ImageWait:       `img[alt^="Chapter image"]`,
-		Settle:          3 * time.Second,
+		ChaptersWait:    "article.chapter-item",
+		ImageWait:       "figure.reader-image img",
 		SeriesPathDepth: 2,
+		SeriesQuery:     "tab=chapters",
 	},
 	// asmotoon.com (Asmodeus Scans): Cloudflare needs a visible window. Series
 	// and chapters are both one path segment, so a chapter URL finds its series
@@ -313,6 +310,13 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 	renderURL := m.URL
 	if reconstructed := m.pathSeriesURL(); reconstructed != "" {
 		renderURL = reconstructed
+	}
+	if m.selector.SeriesQuery != "" && m.selector.SeriesPathDepth > 0 {
+		// with a depth set, renderURL is always at series depth by now
+		if u, err := url.Parse(renderURL); err == nil {
+			u.RawQuery = m.selector.SeriesQuery
+			renderURL = u.String()
+		}
 	}
 
 	// When we know the render target is a series URL (reconstruction worked),

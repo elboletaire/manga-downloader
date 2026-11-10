@@ -221,8 +221,7 @@ var chapterWordRe = regexp.MustCompile(`\b(Chapter|Chapitre|Capítulo|Bölüm|Ep
 // be a pattern or a message, listed here with its reason
 func TestNoChapterWordOutsideLabels(t *testing.T) {
 	allowed := map[string]string{
-		`", Chapter "`:                  "chainsawmanonline parses the site's aria-label with it",
-		"`img[alt^=\"Chapter image\"]`": "manhuatop's reader marks its pages with that alt, a selector rather than a title",
+		`", Chapter "`: "chainsawmanonline parses the site's aria-label with it",
 	}
 	files, err := filepath.Glob("*.go")
 	if err != nil {
