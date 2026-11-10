@@ -1384,6 +1384,7 @@ grabber/html: \
 	grabber/readsololeveling \
 	grabber/readyagami \
 	grabber/reapertrans \
+	grabber/resetscans \
 	grabber/richtoon \
 	grabber/ritharscans \
 	grabber/rizzfables \
@@ -1869,6 +1870,8 @@ grabber/pornhwaz:
 	go run . https://www.pornhwaz.com/webtoon/secret-class/ 160
 grabber/reapertrans:
 	go run . https://reapertrans.com/manga/revenge-of-the-iron-blooded-sword-hound/ 79
+grabber/resetscans:
+	go run . https://www.resetscans.net/en/manga/the-ultimate-of-all-ages.html 266-267
 grabber/richtoon:
 	go run . https://r1.richtoon.top/manga/renacer-hacia-la-venganza/ 22
 grabber/rosyscans:

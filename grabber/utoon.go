@@ -13,8 +13,9 @@ import (
 	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Utoon is a grabber for utoon.us: a WordPress "mangaverse" theme site (the
-// successor of the now offline reset-scans / utoon.net). The series page
+// Utoon is a grabber for utoon.us and resetscans.net: the same WordPress
+// "mangaverse" theme (utoon.us is the successor of the now offline utoon.net,
+// and it hosts reset-scans' content). The series page
 // only renders the ~10 most-recent chapters; the rest is loaded via a
 // paginated wp-admin/admin-ajax.php "mangaverse_load_more" action, using a
 // category id and a per-page nonce scraped from the series page itself.
@@ -39,9 +40,9 @@ type UtoonChapter struct {
 	URL string
 }
 
-// Test returns true if the URL is a utoon.us URL
+// Test returns true if the URL is a utoon.us or resetscans.net URL
 func (u *Utoon) Test() (bool, error) {
-	re := regexp.MustCompile(`utoon\.us`)
+	re := regexp.MustCompile(`utoon\.us|resetscans\.net`)
 	return re.MatchString(u.URL), nil
 }
 

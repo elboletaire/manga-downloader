@@ -15,6 +15,8 @@ func TestUtoonTest(t *testing.T) {
 		{"https://www.utoon.us/en/manga/gachiakuta.html", true},
 		{"https://utoon.us/en/manga/gachiakuta.html", true},
 		{"https://www.utoon.net/manga/gachiakuta", false}, // hijacked/offline domain, not supported
+		{"https://www.resetscans.net/en/manga/the-ultimate-of-all-ages.html", true},
+		{"https://www.resetscans.net/en/the-ultimate-of-all-ages/the-ultimate-of-all-ages-chapter-267.html", true},
 		{"https://mangak.io/some-manga", false},
 	}
 
