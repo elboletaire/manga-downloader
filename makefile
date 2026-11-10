@@ -1029,6 +1029,8 @@ grabber/utoon:
 	go run . https://www.utoon.us/en/manga/gachiakuta.html 171
 grabber/resetscans:
 	go run . https://www.resetscans.net/en/manga/the-ultimate-of-all-ages.html 266-267
+grabber/pornhwareader:
+	go run . https://pornhwareader.com/series/345/perfect-half 100
 # uses a real (headless) browser: the chapter list/reader JSON API responses
 # are AES-encrypted client-side and the reader lazily mounts pages on scroll;
 # no cloudflare here, no --browser-visible needed
@@ -1946,8 +1948,6 @@ grabber/nyanukafe:
 	go run . https://nyanukafe.com/series/63f559b92c0/ 10
 grabber/orionscans:
 	go run . https://orion-scans.com/series/an-adventurer-skilled-at-nurturing-finds-a-little-girl-and-devotes-his-second-life-to-raising-her 9
-grabber/pornhwareader:
-	go run . https://pornhwareader.com/series/345/perfect-half 100
 grabber/pornhwaz:
 	go run . https://www.pornhwaz.com/webtoon/secret-class/ 160
 grabber/reapertrans:

@@ -72,7 +72,7 @@ func (p *Pornhwareader) FetchTitle() (string, error) {
 func (p *Pornhwareader) FetchChapters() (chapters Filterables, errs []error) {
 	p.resolveSeriesURL()
 	seen := map[string]bool{}
-	for page := 1; ; page++ {
+	for page := 1; page <= maxListingPages; page++ {
 		doc, err := p.fetchDocument(p.seriesURL(page))
 		if err != nil {
 			return nil, []error{err}
