@@ -609,6 +609,12 @@ type SiteSelector struct {
 	// Paginated, when set, reads the chapter list's pages after the first
 	// (?page=N) until one has no rows, for series listings split over pages.
 	Paginated bool
+	// PageParam is the query parameter that numbers a Paginated listing's
+	// pages; empty means "page"
+	PageParam string
+	// PageQuery is a query string each Paginated page after the first carries
+	// besides PageParam (e.g. "tab=chapters" for a listing behind a tab)
+	PageQuery string
 	// LockedIsland is for Astro sites that state the lock only in the series
 	// page's island props: it reports whether a chapter object there (one with
 	// a "number" and a "slug") is paid; rows with that number become Locked.
@@ -1289,10 +1295,18 @@ func (m PlainHTML) listingPages() (pages []*goquery.Selection, errs []error) {
 	if err != nil {
 		return nil, []error{err}
 	}
+	param := m.site.PageParam
+	if param == "" {
+		param = "page"
+	}
+	extra, _ := url.ParseQuery(m.site.PageQuery)
 	for page := 2; page <= maxListingPages; page++ {
 		u := *base
 		query := u.Query()
-		query.Set("page", strconv.Itoa(page))
+		for k, v := range extra {
+			query[k] = v
+		}
+		query.Set(param, strconv.Itoa(page))
 		u.RawQuery = query.Encode()
 
 		body, err := http.Get(http.RequestParams{URL: u.String()})

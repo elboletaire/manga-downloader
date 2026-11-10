@@ -138,7 +138,7 @@ var browserSelectors = []BrowserSiteSelector{
 		ImageWait:       "#readerarea img",
 		SeriesPathDepth: 2,
 	},
-	// manhuatop.org and vermanhwa.com: Madara behind cloudflare, usually visible-only. The reader
+	// vermanhwa.com: Madara behind cloudflare, usually visible-only. The reader
 	// mixes banner images in with the pages' class, so id^="image-" keeps only the real pages.
 	{
 		SiteSelector: SiteSelector{
@@ -149,9 +149,34 @@ var browserSelectors = []BrowserSiteSelector{
 			Link:         "a",
 			Image:        `div.reading-content img[id^="image-"]`,
 		},
-		Domains:         []string{"manhuatop.org", "vermanhwa.com"},
+		Domains:         []string{"vermanhwa.com"},
 		ChaptersWait:    "li.wp-manga-chapter",
 		ImageWait:       `div.reading-content img[id^="image-"]`,
+		SeriesPathDepth: 2,
+	},
+	// manhuatop.org (Manhua Top, #459): redesigned on Next.js, so the Madara
+	// selectors above no longer match. The chapter list shows 50 rows at a time
+	// behind a tab, and its later pages are ?tab=chapters&chapter_page=N, which
+	// plain HTTP reads with the browser's session. The reader's pages carry a
+	// "Chapter image" alt, and the banners don't. The rows load from an API call
+	// into a panel hidden until its tab opens, so the wait is the visible tab
+	// button, and Settle covers that call.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1",
+			Rows:         "article.chapter-item",
+			Chapter:      "strong",
+			ChapterTitle: "strong",
+			Link:         "a",
+			Image:        `img[alt^="Chapter image"]`,
+			Paginated:    true,
+			PageParam:    "chapter_page",
+			PageQuery:    "tab=chapters",
+		},
+		Domains:         []string{"manhuatop.org"},
+		ChaptersWait:    "#detail-tab-chapters",
+		ImageWait:       `img[alt^="Chapter image"]`,
+		Settle:          3 * time.Second,
 		SeriesPathDepth: 2,
 	},
 	// asmotoon.com (Asmodeus Scans): Cloudflare needs a visible window. Series

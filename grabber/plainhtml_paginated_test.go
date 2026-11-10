@@ -70,6 +70,53 @@ func TestPlainHTMLPaginated(t *testing.T) {
 	}
 }
 
+// TestPlainHTMLPaginatedQuery checks that PageParam and PageQuery shape the
+// listing's page URLs, for a list behind a tab (?tab=chapters&chapter_page=N)
+func TestPlainHTMLPaginatedQuery(t *testing.T) {
+	pages := map[string]string{
+		"":  paginatedListing(3, 2),
+		"2": paginatedListing(1),
+		"3": paginatedListing(),
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("tab") != "chapters" {
+			http.NotFound(w, r)
+			return
+		}
+		page, ok := pages[r.URL.Query().Get("chapter_page")]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write([]byte(page))
+	}))
+	t.Cleanup(srv.Close)
+
+	site := SiteSelector{
+		Title:     "h2.text-2xl",
+		Rows:      "#chapters-list a",
+		Chapter:   "div.flex.gap-2 span",
+		Paginated: true,
+		PageParam: "chapter_page",
+		PageQuery: "tab=chapters",
+	}
+	m := &PlainHTML{Grabber: &Grabber{URL: srv.URL + "/manga/one-piece"}, site: site}
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(pages[""]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.doc = doc
+	m.rows = doc.Find(site.Rows)
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("FetchChapters() errors = %v", errs)
+	}
+	if len(chapters) != 3 {
+		t.Fatalf("FetchChapters() = %d chapters, want 3", len(chapters))
+	}
+}
+
 // TestPlainHTMLTitleNoise checks that TitleNoise leaves a badge nested in the
 // title out, as lelscanfr's "[Manga]"
 func TestPlainHTMLTitleNoise(t *testing.T) {

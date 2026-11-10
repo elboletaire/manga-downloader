@@ -657,7 +657,7 @@ environment variables.
 | [manhuanext.com](https://manhuanext.com) | English | 2026-11-02 |
 | [manhuaplus.com](https://manhuaplus.com) |  | 2026-11-02 |
 | [manhuathai.com](https://www.manhuathai.com) | Thai | 2026-11-02 |
-| [manhuatop.org](https://manhuatop.org) \* |  | 2026-10-15 |
+| [manhuatop.org](https://manhuatop.org) \* |  | 2026-11-10 |
 | [manhuaus.com](https://manhuaus.com) \* |  | 2026-10-15 |
 | [manhwa-online.com](https://manhwa-online.com) | Spanish | 2026-10-29 |
 | [manhwa18.cc](https://manhwa18.cc) | English, NSFW | 2026-11-09 |
