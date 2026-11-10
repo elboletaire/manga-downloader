@@ -47,6 +47,16 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitle: ".chapternum",
 		Image:        "#readerarea > img",
 	},
+	// merlinshoujo.com (Turkish) and other SniperReader WordPress sites: rows are
+	// nk-chapter-row links with the number in <strong>, and reader images carry
+	// their full URL in data-sr-image-original.
+	{
+		Title:             "h1",
+		Rows:              "a.nk-chapter-row",
+		Chapter:           "strong",
+		ChapterTitleStrip: `^Bölüm\s*\d+(\.\d+)?$`,
+		Image:             "img.nk-reader-page-image[data-sr-image-original]",
+	},
 	// tcbonepiecechapters.com (former tcbscans.com)
 	{
 		Title:        "h1",
@@ -542,6 +552,15 @@ var plainHTMLSelectors = []SiteSelector{
 		Chapter: "span.ch-num",
 		Image:   "img.ts-image-minimal",
 		Locked:  "i.fa-lock",
+	},
+	// w6.dandadan.net (English, single series): every chapter sits in a Shortcodes
+	// Ultimate expander (a second list repeats chapter 1). Last, as the list is
+	// generic WordPress markup.
+	{
+		Title:             "h1.entry-title",
+		Rows:              ".su-expand-content li.su-post a",
+		ChapterTitleStrip: `(?i)^Dandadan chapter \d+(\.\d+)?$`,
+		Image:             ".entry-content img",
 	},
 }
 
@@ -1575,12 +1594,16 @@ func lazyImageURL(s *goquery.Selection) string {
 	return src
 }
 
-// decodedDataScripts returns the source of the page's base64 data: scripts,
-// where some themes ship their inline JS (themesia puts ts_reader there).
+// decodedDataScripts returns the source of the page's base64 data: scripts (themesia
+// ships ts_reader there), read from data-src when LiteSpeed defers them.
 func decodedDataScripts(doc *goquery.Document) string {
 	var js strings.Builder
-	doc.Find(`script[src^="data:text/javascript"], script[src^="data:application/javascript"]`).Each(func(_ int, s *goquery.Selection) {
-		_, payload, ok := strings.Cut(s.AttrOr("src", ""), ";base64,")
+	doc.Find(`script[src^="data:text/javascript"], script[src^="data:application/javascript"], script[data-src^="data:text/javascript"], script[data-src^="data:application/javascript"]`).Each(func(_ int, s *goquery.Selection) {
+		src := s.AttrOr("src", "")
+		if !strings.HasPrefix(src, "data:") {
+			src = s.AttrOr("data-src", "")
+		}
+		_, payload, ok := strings.Cut(src, ";base64,")
 		if !ok {
 			return
 		}

@@ -1269,6 +1269,7 @@ grabber/html: \
 	grabber/cat300 \
 	grabber/celestialmoonscan \
 	grabber/csmmangafree \
+	grabber/dandadan \
 	grabber/dandadanmanga \
 	grabber/dandadanmangas \
 	grabber/decadencescans \
@@ -1324,6 +1325,7 @@ grabber/html: \
 	grabber/komikstation \
 	grabber/komiktap \
 	grabber/komiku \
+	grabber/komikzona \
 	grabber/gourmetsupremacy \
 	grabber/kumapoi \
 	grabber/lagoonscans \
@@ -1382,6 +1384,7 @@ grabber/html: \
 	grabber/manhwalist \
 	grabber/manhwaonline \
 	grabber/manhwaus \
+	grabber/merlinshoujo \
 	grabber/mhscans \
 	grabber/mihentai \
 	grabber/mindafansub \
@@ -1894,6 +1897,9 @@ grabber/komikmu:
 	go run . https://komikmu.top/komik/komikus-fasik/ 6
 grabber/komiku:
 	go run . https://komiku.org/manga/albus-changes-the-world/ 103
+grabber/komikzona:
+	go run . https://komikzona.my.id/manga/absolute-duo/ 21
+
 grabber/lectortaurus:
 	go run . https://lectortaurus.com/manga/regresion-del-tanque-clase-sss/ 4
 grabber/linkmanga:
@@ -2122,6 +2128,9 @@ grabber/mangatellers:
 grabber/manhuathai:
 	go run . https://www.manhuathai.com/manga/master-cultivation-return/ 100
 
+grabber/merlinshoujo:
+	go run . https://merlinshoujo.com/manga/akademinin-onur-ogrencisi/ 63
+
 grabber/mhscans:
 	go run . https://mhscans.com/series/emperador-del-apocalipsis-con-mi-estandarte-convocare-a-todas-mis-discipulas/ 19
 
@@ -2296,6 +2305,9 @@ grabber/blmangafree:
 
 grabber/csmmangafree:
 	go run . https://www.csmmangafree.com/ 60
+
+grabber/dandadan:
+	go run . https://w6.dandadan.net/ 249
 
 grabber/dandadanmanga:
 	go run . https://w2.dandadanmanga.net/ 246
