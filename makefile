@@ -1112,7 +1112,7 @@ grabber/manhuaus:
 	go run . --browser-visible https://manhuaus.com/manga/solo-leveling-ragnarok/ 68
 
 grabber/manhuatop:
-	go run . --browser-visible https://manhuatop.org/manhua/chronicles-of-the-martial-gods-return/ 168
+	go run . --browser-visible https://manhuatop.org/manhua/infinite-evolution-starting-from-zero/ 1-2
 grabber/setsuscans:
 	go run . --browser-visible https://setsuscans.com/manga/a-story-about-accidentally-finding-out-a-girls-secret-at-school/ 13
 

@@ -3,6 +3,7 @@
 package grabber
 
 import (
+	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -60,6 +61,9 @@ func TestBrowserSelectorsAreComplete(t *testing.T) {
 		}
 		if s.ChaptersWait == "" || s.ImageWait == "" {
 			t.Errorf("browser selector for %v is missing a wait selector", s.Domains)
+		}
+		if _, err := url.ParseQuery(s.SeriesQuery); err != nil {
+			t.Errorf("browser selector for %v has a bad SeriesQuery: %v", s.Domains, err)
 		}
 	}
 }
