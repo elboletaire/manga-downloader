@@ -221,6 +221,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewProjectsuki(g),
 		NewHeavenManga(g),
 		NewLelScans(g),
+		NewPornhwareader(g),
 		// Platforms recognised by their markup, ahead of PlainHTML so its loose
 		// selectors can't claim a clone. They share one fetch of the page
 		NewTanstackComicByMarkup(g),
