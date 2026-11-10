@@ -413,6 +413,7 @@ grabber: \
 	grabber/phoenixscans \
 	grabber/piacomic \
 	grabber/plumacomics \
+	grabber/pornhwareader \
 	grabber/projectsuki \
 	grabber/punchonemanga \
 	grabber/qimanga \
@@ -1367,7 +1368,6 @@ grabber/html: \
 	grabber/onma \
 	grabber/oremanga \
 	grabber/orionscans \
-	grabber/pornhwareader \
 	grabber/pornhwaz \
 	grabber/pzykosis \
 	grabber/rackusreads \

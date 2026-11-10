@@ -19,7 +19,8 @@ import (
 // PornhwaDB. The series page is server rendered: its chapter list is a
 // paginated set of links (?page=N, 100 chapters a page) that plain HTTP gets
 // in full. The images aren't in the DOM, though: each chapter page carries its
-// ordered "pages" array in the Next.js RSC flight payload.
+// ordered "pages" array in the Next.js RSC flight payload. A chapter has a
+// standard and an uncensored edition; the grabber downloads the standard one.
 type Pornhwareader struct {
 	*Grabber
 }
@@ -32,9 +33,17 @@ func NewPornhwareader(g *Grabber) *Pornhwareader {
 // pornhwareaderDomain is the site's host, matched without a fetch
 const pornhwareaderDomain = "pornhwareader.com"
 
-// pornhwareaderChapterRe matches a series' chapter link path and captures the
-// series path (/series/{id}/{slug}) and the chapter number
+// pornhwareaderSeriesRe matches a series' path (/series/{id}/{slug}) and
+// captures it, for a URL with any further segment (a chapter, of either id kind)
+var pornhwareaderSeriesRe = regexp.MustCompile(`^(/series/\d+/[^/]+)/.+$`)
+
+// pornhwareaderChapterRe matches a numbered chapter's link path and captures
+// the series path and the chapter number
 var pornhwareaderChapterRe = regexp.MustCompile(`^(/series/\d+/[^/]+)/chapter-(\d+(?:\.\d+)?)$`)
+
+// pornhwareaderUUIDRe matches a chapter link whose id is a UUID instead of a
+// number, which the site lists without a number
+var pornhwareaderUUIDRe = regexp.MustCompile(`^(/series/\d+/[^/]+)/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$`)
 
 // PornhwareaderChapter represents a Pornhwareader chapter
 type PornhwareaderChapter struct {
@@ -62,48 +71,83 @@ func (p *Pornhwareader) FetchTitle() (string, error) {
 // pages until one adds no chapter
 func (p *Pornhwareader) FetchChapters() (chapters Filterables, errs []error) {
 	p.resolveSeriesURL()
-	seen := map[float64]bool{}
+	seen := map[string]bool{}
 	for page := 1; ; page++ {
 		doc, err := p.fetchDocument(p.seriesURL(page))
 		if err != nil {
 			return nil, []error{err}
 		}
 
-		added := 0
-		doc.Find("a[href]").Each(func(_ int, a *goquery.Selection) {
-			href, _ := a.Attr("href")
-			uri, err := url.Parse(href)
-			if err != nil {
-				return
-			}
-			matches := pornhwareaderChapterRe.FindStringSubmatch(uri.Path)
-			if matches == nil || matches[1] != p.seriesPath() {
-				return
-			}
-			number, err := strconv.ParseFloat(matches[2], 64)
-			if err != nil || seen[number] {
-				return
-			}
-			seen[number] = true
-			added++
-
-			chapterURL := p.BaseUrl() + matches[0]
-			chapters = append(chapters, &PornhwareaderChapter{
-				Chapter{
-					Number: number,
-					ID:     chapterURLID(chapterURL),
-					Label:  Label{Style: LabelNumbered},
-				},
-				chapterURL,
-			})
-		})
-
-		if added == 0 {
+		listed := p.listedChapters(doc, seen)
+		if len(listed) == 0 {
 			break
 		}
+		chapters = append(chapters, listed...)
 	}
 
 	return
+}
+
+// listedChapters returns the chapters of one page of the chapter list, skipping
+// the URLs already in seen (which it updates). Only the chapter rows count, so
+// the "Start reading" button, which can link a chapter too, is left out.
+func (p *Pornhwareader) listedChapters(doc *goquery.Document, seen map[string]bool) Filterables {
+	var chapters Filterables
+	doc.Find("div.chapter-row > a[href]").Each(func(_ int, a *goquery.Selection) {
+		chapter := p.listedChapter(a)
+		if chapter == nil || seen[chapter.URL] {
+			return
+		}
+		seen[chapter.URL] = true
+		chapters = append(chapters, chapter)
+	})
+
+	return chapters
+}
+
+// listedChapter returns the chapter a row's link points to, or nil when the
+// link isn't one of the series' chapters
+func (p *Pornhwareader) listedChapter(a *goquery.Selection) *PornhwareaderChapter {
+	href, _ := a.Attr("href")
+	uri, err := url.Parse(href)
+	if err != nil {
+		return nil
+	}
+	chapterURL := p.BaseUrl() + uri.Path
+
+	if matches := pornhwareaderChapterRe.FindStringSubmatch(uri.Path); matches != nil && matches[1] == p.seriesPath() {
+		number, err := strconv.ParseFloat(matches[2], 64)
+		if err != nil {
+			return nil
+		}
+		return &PornhwareaderChapter{
+			Chapter{
+				Number: number,
+				ID:     chapterURLID(chapterURL),
+				Label:  Label{Style: LabelNumbered, Number: matches[2]},
+			},
+			chapterURL,
+		}
+	}
+
+	if matches := pornhwareaderUUIDRe.FindStringSubmatch(uri.Path); matches != nil && matches[1] == p.seriesPath() {
+		// the title is the link's first line, past the date a row's meta adds
+		text := a.Find(".chapter-title").Text()
+		if text == "" {
+			text = a.Text()
+		}
+		title := strings.TrimSpace(strings.SplitN(strings.TrimSpace(text), "\n", 2)[0])
+		return &PornhwareaderChapter{
+			Chapter{
+				Title: sanitizeTitle(title),
+				ID:    chapterURLID(chapterURL),
+				Label: Label{Style: LabelUnnumbered},
+			},
+			chapterURL,
+		}
+	}
+
+	return nil
 }
 
 // FetchChapter fetches a chapter and its pages
@@ -141,14 +185,14 @@ func (p *Pornhwareader) FetchChapter(f Filterable) (*Chapter, error) {
 	return chapter, nil
 }
 
-// resolveSeriesURL turns a chapter link into its series' URL, so a pasted
-// chapter loads the whole list
+// resolveSeriesURL turns a chapter link (numbered or UUID) into its series' URL,
+// so a pasted chapter loads the whole list
 func (p *Pornhwareader) resolveSeriesURL() {
 	uri, err := url.Parse(p.URL)
 	if err != nil {
 		return
 	}
-	if matches := pornhwareaderChapterRe.FindStringSubmatch(uri.Path); matches != nil {
+	if matches := pornhwareaderSeriesRe.FindStringSubmatch(uri.Path); matches != nil {
 		p.URL = p.BaseUrl() + matches[1]
 	}
 }
@@ -158,6 +202,9 @@ func (p *Pornhwareader) seriesPath() string {
 	uri, err := url.Parse(p.URL)
 	if err != nil {
 		return ""
+	}
+	if matches := pornhwareaderSeriesRe.FindStringSubmatch(uri.Path); matches != nil {
+		return matches[1]
 	}
 
 	return strings.TrimSuffix(uri.Path, "/")
