@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[580 supported sites](#supported-sites)**, from big aggregators to small
+- **[581 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 580 supported sites</b></summary>
+<summary><b>Show all 581 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -770,6 +770,7 @@ environment variables.
 | [readmanga18.com](https://readmanga18.com) | English, NSFW | 2026-11-06 |
 | [readspyxfamilymanga.com](https://readspyxfamilymanga.com) | English, single series, use a chapter URL | 2026-11-09 |
 | [reapertrans.com](https://reapertrans.com) | Thai | 2026-11-09 |
+| [revivalscans.com](https://www.revivalscans.com) | English | — |
 | [resetscans.net](https://www.resetscans.net) | English, Reset Scans | 2026-11-10 |
 | [rimacomiplus.jp](https://rimacomiplus.jp) | Japanese (Comici) | 2026-11-02 |
 | [ritharscans.com](https://ritharscans.com) |  | 2026-11-09 |

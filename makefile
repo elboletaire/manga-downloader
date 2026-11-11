@@ -1434,6 +1434,7 @@ grabber/html: \
 	grabber/readsololeveling \
 	grabber/readyagami \
 	grabber/reapertrans \
+	grabber/revivalscans \
 	grabber/richtoon \
 	grabber/ritharscans \
 	grabber/rizzfables \
@@ -1952,6 +1953,8 @@ grabber/pornhwaz:
 	go run . https://www.pornhwaz.com/webtoon/secret-class/ 160
 grabber/reapertrans:
 	go run . https://reapertrans.com/manga/revenge-of-the-iron-blooded-sword-hound/ 79
+grabber/revivalscans:
+	go run . https://www.revivalscans.com/series/beautiful-days 29-30
 grabber/richtoon:
 	go run . https://r1.richtoon.top/manga/renacer-hacia-la-venganza/ 22
 grabber/rosyscans:

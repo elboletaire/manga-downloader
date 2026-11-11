@@ -377,6 +377,21 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitle: "span.text-base",
 		SeriesLink:   `a[href^="/series/"]:not([href="/series/"])`,
 	},
+	// revivalscans.com (Next.js App Router, server-rendered): chapter rows are
+	// <a class="chapter-item"> links to /read/{slug}/{number}, the paid ones
+	// marked by a crown icon. The "New" badge sits inside the number's span,
+	// so the number comes from the link. The reader's page list is in the RSC
+	// payload, see the "pages" branch of getPlainHTMLImageURL.
+	{
+		Title:             "h1.series-title",
+		Rows:              `a.chapter-item[href^="/read/"]`,
+		Chapter:           ".chapter-item-number",
+		ChapterTitle:      ".chapter-item-number",
+		ChapterTitleStrip: `\s*New$`,
+		NumberRe:          `/read/[^/]+/(\d+(?:\.\d+)?)$`,
+		Locked:            ".chapter-item-crown",
+		SeriesLink:        `a.reader-back[href^="/series/"]`,
+	},
 	// mangaberri.com: the chapter section has Chapters, Volumes and RAW
 	// tabs, each in its own panel. Only #chapters-panel is taken (the
 	// Volumes and RAW panels would double count or mix in untranslated
@@ -1758,7 +1773,8 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 	// `\"pages\":[{\"url\":\"/img/p/1-x\",\"width\":null,...}]`. The caller
 	// prefixes the base URL on relative paths. Matched before the flat array
 	// below, which would otherwise pick up every key of these objects.
-	re = regexp.MustCompile(`\\"pages\\":\[(\{\\"url\\":.*?)\]`)
+	// the url need not come first (revivalscans.com leads with an "id")
+	re = regexp.MustCompile(`\\"pages\\":\[(\{.*?)\]`)
 	matches = re.FindStringSubmatch(html)
 	if len(matches) > 1 {
 		urls := regexp.MustCompile(`\\"url\\":\\"([^\\"]+)\\"`).FindAllStringSubmatch(matches[1], -1)
@@ -1766,7 +1782,9 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		for _, u := range urls {
 			imgs = append(imgs, u[1])
 		}
-		return imgs
+		if len(imgs) > 0 {
+			return imgs
+		}
 	}
 
 	// templetoons.com's reader embeds the page list as a double-escaped RSC

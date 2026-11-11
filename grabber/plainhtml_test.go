@@ -150,6 +150,12 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want:     []string{"/img/p/1-a", "/img/p/2-b"},
 		},
 		{
+			name:     "revivalscans.com double-escaped RSC pages objects with an id before the url",
+			selector: "img",
+			html:     `<html><body><script>self.__next_f.push([1,"...{\"pages\":[{\"id\":\"a1\",\"url\":\"/api/images/chapters/x/29/1.jpg\",\"pageNumber\":1},{\"id\":\"a2\",\"url\":\"/api/images/chapters/x/29/2.jpg\",\"pageNumber\":2}],\"x\":1}..."])</script></body></html>`,
+			want:     []string{"/api/images/chapters/x/29/1.jpg", "/api/images/chapters/x/29/2.jpg"},
+		},
+		{
 			name:     "templetoons.com double-escaped RSC array under an obfuscated key",
 			selector: "img",
 			html:     `<html><head><link rel="canonical" href="https://templetoons.com/comic/bl-antidote/chapter-88"></head><body><script>self.__next_f.push([1,"...{\"gzap5a2\":[\"https://media.templetoons.com/1.jpg\",\"https://media.templetoons.com/2.jpg\"]}..."])</script></body></html>`,
