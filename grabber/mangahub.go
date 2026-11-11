@@ -38,9 +38,10 @@ func NewMangaHub(g *Grabber) *MangaHub {
 // mangahubCDN serves the page images, relative to it
 const mangahubCDN = "https://imgx.mghcdn.com/"
 
-// mangahubMarker is the API config every page of the platform carries; its apiUrl is empty now,
-// so the API is the page's own origin (the old fixed host answers 403)
+// mangahubMarker and mangahubCryptoMarker are the config every page carries. The
+// apiUrl is empty, so the API is the page's own origin
 const mangahubMarker = `window.App={"apiUrl":"`
+const mangahubCryptoMarker = `"chapterCryptoEnabled":`
 
 // mangahubPathRe is the path shape of a series or reader page, the only shape the markup check fetches
 var mangahubPathRe = regexp.MustCompile(`(?i)^/(manga/[^/]+|chapter/[^/]+/chapter-[^/]+)/?$`)
@@ -86,7 +87,7 @@ func (m *MangaHub) Test() (bool, error) {
 		return false, nil
 	}
 
-	return pageHasMarkup(m.Grabber, m.URL, mangahubMarker), nil
+	return pageHasMarkup(m.Grabber, m.URL, mangahubMarker, mangahubCryptoMarker), nil
 }
 
 // resolveSeriesURL rewrites a reader URL to its series URL. Series URLs are unchanged.
@@ -306,6 +307,9 @@ func (m *MangaHub) issueKey(access, warm string) error {
 			return err
 		}
 		id, key, err = m.fetchKey(access)
+		if err != nil {
+			return fmt.Errorf("the site refused the page key: %w", err)
+		}
 	}
 	if err != nil {
 		return err

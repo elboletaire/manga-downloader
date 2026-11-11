@@ -24,10 +24,9 @@ const mangahubTestKeyID = "k1"
 
 var mangahubTestPageKey = []byte("0123456789abcdef0123456789abcdef")
 
-// mangahubSite serves a fake MangaHub mirror: its series and reader pages, the
-// client bundle they load and the GraphQL API. The API answers the query shapes
-// the grabber sends, for one series of three chapters, and only to the key the
-// pages issue. The page key is issued only after a GraphQL call on the session.
+// mangahubSite serves a fake MangaHub mirror: its pages, client bundle and GraphQL
+// API, for one series of three chapters, answering only the key the pages issue.
+// The page key is issued only after a GraphQL call on the session.
 func mangahubSite(t *testing.T) *httptest.Server {
 	t.Helper()
 
