@@ -1675,17 +1675,6 @@ func isThemeImage(u string) bool {
 	return strings.Contains(u, "/wp-content/themes/")
 }
 
-// canonicalHost returns the host of the page's canonical link, without the
-// www. prefix, or "" when the page has none
-func canonicalHost(doc *goquery.Document) string {
-	href := doc.Find(`link[rel="canonical"]`).AttrOr("href", "")
-	u, err := url.Parse(href)
-	if err != nil {
-		return ""
-	}
-	return strings.TrimPrefix(u.Hostname(), "www.")
-}
-
 func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 	// Madara sites using the chapter images protection plugin ship no <img>
 	if urls, ok, err := wpMangaProtectorImages(doc); ok {
@@ -1814,8 +1803,8 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		}
 	}
 
-	// templetoons.com's reader embeds the page list as a double-escaped RSC
-	// array of URLs (`\"pages\":[\"https://...\"]`). Only URL arrays match: a
+	// Next.js readers embed the page list as a double-escaped RSC array of
+	// URLs (`\"pages\":[\"https://...\"]`). Only URL arrays match: a
 	// page-object array (visorotaku) would otherwise yield its keys as pages.
 	re = regexp.MustCompile(`\\"pages\\":\[(\\"https?://[^\]]+)\]`)
 	matches = re.FindStringSubmatch(html)
@@ -1826,23 +1815,6 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 			imgs = append(imgs, u[1])
 		}
 		return imgs
-	}
-
-	// the same reader's key is obfuscated and changes between builds (it was
-	// "pages", now "gzap5a2"), so on templetoons.com alone any key whose array
-	// starts with a URL is the page list. Other Next.js sites carry URL arrays
-	// too, hence the gate on the canonical host.
-	if canonicalHost(doc) == "templetoons.com" {
-		re = regexp.MustCompile(`\\"[\w-]+\\":\[(\\"https?://[^\]]+)\]`)
-		matches = re.FindStringSubmatch(html)
-		if len(matches) > 1 {
-			urls := regexp.MustCompile(`"([^"\\]+)\\?"`).FindAllStringSubmatch(matches[1], -1)
-			imgs := []string{}
-			for _, u := range urls {
-				imgs = append(imgs, u[1])
-			}
-			return imgs
-		}
 	}
 
 	// ritharscans.com's Alpine.js reader stores every page's path inline in an

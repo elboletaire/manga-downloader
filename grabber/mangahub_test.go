@@ -3,6 +3,10 @@
 package grabber
 
 import (
+	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -14,15 +18,22 @@ import (
 // mangahubTestKey is the access key the fake site issues in its mhub_access cookie
 const mangahubTestKey = "issued-by-the-page"
 
-// mangahubSite serves a fake MangaHub mirror: its series and reader pages, the
-// client bundle they load and the GraphQL API. The API answers the query shapes
-// the grabber sends, for one series of three chapters, and only to the key the
-// pages issue.
+// mangahubTestKeyID and mangahubTestPageKey are the page key the fake site issues
+// and seals its encrypted page lists with
+const mangahubTestKeyID = "k1"
+
+var mangahubTestPageKey = []byte("0123456789abcdef0123456789abcdef")
+
+// mangahubSite serves a fake MangaHub mirror: its pages, client bundle and GraphQL
+// API, for one series of three chapters, answering only the key the pages issue.
+// The page key is issued only after a GraphQL call on the session.
 func mangahubSite(t *testing.T) *httptest.Server {
 	t.Helper()
 
 	var srv *httptest.Server
+	warmed := false
 	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// the API sits on the pages' origin, as the client has it when apiUrl is empty
 		u, _ := url.Parse(srv.URL)
 		host := u.Hostname()
 		switch {
@@ -45,23 +56,31 @@ func mangahubSite(t *testing.T) *httptest.Server {
 				http.Error(w, "missing or wrong key", http.StatusForbidden)
 				return
 			}
+			warmed = true
 			fmt.Fprint(w, mangahubAPIResponse(r.URL.Query().Get("query")))
+		case r.URL.Path == "/api/chapter-crypto":
+			if r.Header.Get("x-mhub-access") != mangahubTestKey {
+				http.Error(w, "missing or wrong key", http.StatusForbidden)
+				return
+			}
+			if !warmed {
+				http.Error(w, `{"success":false,"error":"session_changed"}`, http.StatusConflict)
+				return
+			}
+			fmt.Fprintf(w, `{"keyId":%q,"key":%q,"expiresAt":0}`,
+				mangahubTestKeyID, base64.RawURLEncoding.EncodeToString(mangahubTestPageKey))
 		default:
 			http.NotFound(w, r)
 		}
 	}))
 	t.Cleanup(srv.Close)
 
-	prev := mangahubAPI
-	mangahubAPI = srv.URL + "/graphql"
-	t.Cleanup(func() { mangahubAPI = prev })
-
 	return srv
 }
 
 // mangahubPage is a series page carrying the API config and the client bundle at src
 func mangahubPage(src string) string {
-	return `<html><script>window.App={"apiUrl":"https:\u002F\u002Fapi.mghcdn.com","chapterCryptoEnabled":false}</script>` +
+	return `<html><script>window.App={"apiUrl":"","chapterCryptoEnabled":true}</script>` +
 		`<script src="` + src + `"></script><h1>Red Storm</h1></html>`
 }
 
@@ -78,8 +97,65 @@ func mangahubAPIResponse(query string) string {
 		return `{"data":{"chapter":{"pages":"{\"p\":\"red-storm/388.5/\",\"i\":[\"1.jpg\",\"2.jpg\"]}"}}}`
 	case strings.Contains(query, "chapter(x: mn03, slug: \"red-storm_111\", number: 482)"):
 		return `{"data":{"chapter":{"pages":"{\"p\":\"/red-storm/482/\",\"i\":[\"1.jpg\"]}"}}}`
+	case strings.Contains(query, "chapter(x: mn03, slug: \"red-storm_111\", number: 0)"):
+		return `{"data":{"chapter":{"pages":"` + mangahubSeal(`{"p":"red-storm/0/","i":["1.jpg"]}`) + `"}}}`
 	default:
 		return `{"data":null,"errors":[{"message":"Cannot read properties of undefined"}]}`
+	}
+}
+
+// mangahubSeal encrypts a page list the way the site does, in its enc:v1 envelope.
+// The key is 32 bytes and the IV 12, so the cipher can't fail
+func mangahubSeal(plain string) string {
+	block, _ := aes.NewCipher(mangahubTestPageKey)
+	gcm, _ := cipher.NewGCM(block)
+	iv := []byte("123456789012")
+	sealed := gcm.Seal(nil, iv, []byte(plain), nil)
+	data, tag := sealed[:len(sealed)-gcm.Overhead()], sealed[len(sealed)-gcm.Overhead():]
+
+	enc := base64.RawURLEncoding.EncodeToString
+	return strings.Join([]string{"enc", "v1", mangahubTestKeyID, enc(iv), enc(tag), enc(data)}, ":")
+}
+
+// TestMangaHubFetchEncryptedChapter decrypts an enc:v1 page list, which the
+// session's key is issued for only after a GraphQL call, and fetches it again
+// from the cached key
+func TestMangaHubFetchEncryptedChapter(t *testing.T) {
+	srv := mangahubSite(t)
+	m := NewMangaHub(&Grabber{URL: srv.URL + "/manga/red-storm_111"})
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatal(errs)
+	}
+	for range 2 {
+		chapter, err := m.FetchChapter(chapters[2])
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(chapter.Pages) != 1 || chapter.Pages[0].URL != mangahubCDN+"red-storm/0/1.jpg" {
+			t.Fatalf("pages = %+v, want red-storm/0/1.jpg", chapter.Pages)
+		}
+	}
+}
+
+// TestMangaHubOpen checks the envelope round trip, and that a wrong key or a
+// damaged envelope fails instead of returning garbage
+func TestMangaHubOpen(t *testing.T) {
+	envelope := mangahubSeal(`{"p":"s/1/","i":["1.jpg"]}`)
+	parts := strings.Split(envelope, ":")
+
+	plain, err := mangahubOpen(parts, mangahubTestPageKey)
+	if err != nil || plain != `{"p":"s/1/","i":["1.jpg"]}` {
+		t.Fatalf("mangahubOpen() = %q, %v", plain, err)
+	}
+	if _, err := mangahubOpen(parts, bytes.Repeat([]byte{'x'}, 32)); err == nil {
+		t.Error("expected a wrong key to fail")
+	}
+	damaged := append([]string(nil), parts...)
+	damaged[4] = "AAAA"
+	if _, err := mangahubOpen(damaged, mangahubTestPageKey); err == nil {
+		t.Error("expected a short auth tag to fail")
 	}
 }
 

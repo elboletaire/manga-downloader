@@ -26,6 +26,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/chromedp/cdproto"
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/cdproto/input"
@@ -415,8 +416,12 @@ func readerHTML(ctx context.Context, h hooks, seriesURL, tabSelector, pagination
 		}
 	}
 
-	html, err := chromedp.Run(ctx, documentHTML)
-	if err != nil {
+	var html string
+	if err := chromedp.Do(ctx, chromedp.Func(func(ctx context.Context, t *chromedp.Target) error {
+		var err error
+		html, err = settledHTML(ctx, t, imgSelector)
+		return err
+	})); err != nil {
 		return "", err
 	}
 	if err := chromedp.Do(ctx, chromedp.Func(harvestSession)); err != nil {
@@ -689,7 +694,7 @@ func render(ctx context.Context, h hooks, url, waitSelector, init string, afterW
 	actions = append(actions,
 		chromedp.Func(func(ctx context.Context, t *chromedp.Target) error {
 			var err error
-			html, err = documentHTML(ctx, t)
+			html, err = settledHTML(ctx, t, waitSelector)
 			return err
 		}),
 		chromedp.Func(harvestSession),
@@ -816,6 +821,40 @@ func documentHTML(ctx context.Context, t *chromedp.Target) (string, error) {
 	}
 	res, err := cdp.Call(ctx, t, dom.GetOuterHTML, dom.GetOuterHTMLParams{NodeID: doc.Root.NodeID})
 	return res.OuterHTML, err
+}
+
+// settledHTML is documentHTML once waitSelector matched; a challenge handover can
+// replace the document in between (a stale node), so only that error retries,
+// after the selector matches again.
+func settledHTML(ctx context.Context, t *chromedp.Target, waitSelector string) (string, error) {
+	var err error
+	for attempt := range 3 {
+		if attempt > 0 {
+			select {
+			case <-ctx.Done():
+				return "", ctx.Err()
+			case <-time.After(250 * time.Millisecond):
+			}
+			if waitSelector != "" {
+				if err := chromedp.Do(ctx, chromedp.WaitVisible(chromedp.CSS(waitSelector))); err != nil {
+					return "", err
+				}
+			}
+		}
+		var html string
+		html, err = documentHTML(ctx, t)
+		if err == nil || !staleNode(err) {
+			return html, err
+		}
+	}
+	return "", err
+}
+
+// staleNode reports whether err is the browser saying a node id is gone,
+// which happens when the document was replaced under it
+func staleNode(err error) bool {
+	var e *cdproto.Error
+	return errors.As(err, &e) && strings.Contains(e.Message, "Could not find node")
 }
 
 // harvestSession copies the browser cookies and user agent into the http

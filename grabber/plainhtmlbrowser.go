@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -21,6 +22,9 @@ func init() {
 	browser.RequireVisible("asmotoon.com")
 	browser.RequireVisible("ravenscans.org")
 	browser.RequireVisible("vermanhwa.com")
+	browser.RequireVisible("gaiatoon.com")
+	browser.RequireVisible("arcurafansub.com")
+	browser.RequireVisible("paradise-bl.com")
 }
 
 // BrowserSiteSelector is a SiteSelector for sites that need a real browser
@@ -53,7 +57,24 @@ type BrowserSiteSelector struct {
 	// Novel is a CSS selector for a marker that the series page is a novel,
 	// which has no images to download; Test refuses such a series.
 	Novel string
+	// ReaderScroll scrolls the reader page before its HTML is taken, for
+	// readers that mount their page images only as they scroll into view.
+	ReaderScroll *browser.Scroll
+	// PageSlots is a selector matching one element per page of the reader. A
+	// chapter with fewer pages than slots fails rather than packing a short set.
+	PageSlots string
+	// PageAccept overrides the Accept header the pages download with, for an
+	// image host that refuses the browser's image Accept (it lists image/webp).
+	PageAccept string
 }
+
+// templetoonsPagesMountedJS counts the reader's page slots that have their image
+const templetoonsPagesMountedJS = `(function(){var s=document.querySelectorAll("[data-index]"),n=0;` +
+	`for(var i=0;i<s.length;i++)if(s[i].querySelector('img[src*="/uploads/"]'))n++;return n})()`
+
+// templetoonsReaderReadyJS is true once every page slot of the reader has its image
+const templetoonsReaderReadyJS = `(function(){var s=document.querySelectorAll("[data-index]");` +
+	`return s.length > 0 && ` + templetoonsPagesMountedJS + ` === s.length})()`
 
 // errNovel refuses a series whose Novel selector matches: its chapters are text
 var errNovel = errors.New("this is a novel, which manga-downloader can't download")
@@ -194,24 +215,28 @@ var browserSelectors = []BrowserSiteSelector{
 		ImageWait:    "#strip-reader",
 		Novel:        `span.text-violet-400:contains("NOVEL")`,
 	},
-	// templetoons.com (Temple Scan): Next.js RSC site behind a cloudflare
-	// Turnstile challenge (plain HTTP is redirected to /challenge), which a
-	// headless browser clears in a few seconds. Each row is itself the <a>
-	// (Link empty), with the chapter number in its label. Reader pages embed
-	// the page list in the RSC payload under an obfuscated key, handled by
-	// getPlainHTMLImageURL, so Image is unused but kept as a fallback.
+	// templetoons.com (Temple Scan): Next.js behind a Cloudflare challenge that
+	// headless clears. Its reader mounts pages on scroll, so it's scrolled until
+	// every page slot has its image.
 	{
 		SiteSelector: SiteSelector{
 			Title:        "h1#series-title",
 			Rows:         `a[id^="chapter-link-"]`,
 			Chapter:      "span.font-semibold",
 			ChapterTitle: "span.font-semibold",
-			Image:        "img",
+			Image:        `img[src*="/uploads/"]`,
 		},
 		Domains:         []string{"templetoons.com"},
 		ChaptersWait:    `a[id^="chapter-link-"]`,
 		ImageWait:       "img",
 		SeriesPathDepth: 2,
+		ReaderScroll: &browser.Scroll{
+			Done:     templetoonsReaderReadyJS,
+			Progress: templetoonsPagesMountedJS,
+			Pause:    500 * time.Millisecond,
+		},
+		PageSlots:  "[data-index]",
+		PageAccept: "image/*,*/*;q=0.8",
 	},
 	// ravenscans.org: Themesia behind a cloudflare challenge only a visible window
 	// clears; chapters sit at one path segment, so they find their series through .allc.
@@ -228,6 +253,41 @@ var browserSelectors = []BrowserSiteSelector{
 		Domains:      []string{"ravenscans.org"},
 		ChaptersWait: "#chapterlist li[data-num]",
 		ImageWait:    "#readerarea img",
+	},
+	// gaiatoon.com and arcurafansub.com: the same Themesia theme behind a
+	// cloudflare challenge, with chapters one segment deep, so they find
+	// their series through .allc like ravenscans.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1.entry-title",
+			Rows:         "#chapterlist li",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a",
+			Image:        "#readerarea img",
+			SeriesLink:   ".allc a",
+		},
+		Domains:      []string{"gaiatoon.com", "arcurafansub.com"},
+		ChaptersWait: "#chapterlist li",
+		ImageWait:    "#readerarea img",
+	},
+	// paradise-bl.com: Madara with its own theme (mn-* markup) behind a
+	// cloudflare challenge; chapter links sit one segment below the series.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1.mn-hero__title",
+			Rows:         "li.wp-manga-chapter",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        "div.reading-content img",
+			// the row text is Arabic ("الفصل 78"), so the number comes from the URL (/78--/)
+			NumberRe: `/(\d+(?:\.\d+)?)-+/?$`,
+		},
+		Domains:         []string{"paradise-bl.com"},
+		ChaptersWait:    "li.wp-manga-chapter",
+		ImageWait:       "div.reading-content",
+		SeriesPathDepth: 2,
 	},
 }
 
@@ -388,7 +448,13 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 func (m *PlainHTMLBrowser) FetchChapter(f Filterable) (*Chapter, error) {
 	chap := f.(*PlainHTMLChapter)
 
-	html, err := browser.GetHTML(chap.URL, m.selector.ImageWait, 0)
+	var html string
+	var err error
+	if m.selector.ReaderScroll != nil {
+		html, err = browser.GetHTMLWithScroll(chap.URL, m.selector.ImageWait, *m.selector.ReaderScroll, 0)
+	} else {
+		html, err = browser.GetHTML(chap.URL, m.selector.ImageWait, 0)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -397,5 +463,31 @@ func (m *PlainHTMLBrowser) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
-	return m.chapterFromDoc(f, doc), nil
+	return m.readerChapter(f, doc)
+}
+
+// readerChapter builds the chapter from a rendered reader. It fails when fewer
+// pages than PageSlots are there, so a scroll that stalled can't pack a short chapter.
+func (m *PlainHTMLBrowser) readerChapter(f Filterable, doc *goquery.Document) (*Chapter, error) {
+	chapter := m.chapterFromDoc(f, doc)
+	if m.selector.PageSlots != "" {
+		if slots := doc.Find(m.selector.PageSlots).Length(); len(chapter.Pages) < slots {
+			return nil, fmt.Errorf("only %d of %d pages loaded in the reader", len(chapter.Pages), slots)
+		}
+	}
+	applyPageAccept(chapter, m.selector.PageAccept)
+	return chapter, nil
+}
+
+// applyPageAccept sends the chapter's pages with the given Accept, when one is set
+func applyPageAccept(chapter *Chapter, accept string) {
+	if accept == "" {
+		return
+	}
+	for i := range chapter.Pages {
+		if chapter.Pages[i].Headers == nil {
+			chapter.Pages[i].Headers = map[string]string{}
+		}
+		chapter.Pages[i].Headers["Accept"] = accept
+	}
 }

@@ -3,6 +3,9 @@
 package grabber
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/elboletaire/manga-downloader/http"
 )
@@ -20,6 +24,10 @@ type MangaHub struct {
 	*Grabber
 	// manga is the series from the API, fetched once for FetchTitle and FetchChapters
 	manga *mangahubManga
+	// keys are the page keys the session issued, by key id; the chapters of a run
+	// are fetched concurrently, so mu guards them
+	mu   sync.Mutex
+	keys map[string][]byte
 }
 
 // NewMangaHub returns a MangaHub grabber, matched by the markup of its pages
@@ -27,14 +35,13 @@ func NewMangaHub(g *Grabber) *MangaHub {
 	return &MangaHub{Grabber: g}
 }
 
-// mangahubAPI is the GraphQL endpoint, a variable so the tests can serve a fake
-var mangahubAPI = "https://api.mghcdn.com/graphql"
-
 // mangahubCDN serves the page images, relative to it
 const mangahubCDN = "https://imgx.mghcdn.com/"
 
-// mangahubMarker is the API config every page of the platform carries
-const mangahubMarker = `"apiUrl":"https:\u002F\u002Fapi.mghcdn.com"`
+// mangahubMarker and mangahubCryptoMarker are the config every page carries. The
+// apiUrl is empty, so the API is the page's own origin
+const mangahubMarker = `window.App={"apiUrl":"`
+const mangahubCryptoMarker = `"chapterCryptoEnabled":`
 
 // mangahubPathRe is the path shape of a series or reader page, the only shape the markup check fetches
 var mangahubPathRe = regexp.MustCompile(`(?i)^/(manga/[^/]+|chapter/[^/]+/chapter-[^/]+)/?$`)
@@ -80,7 +87,7 @@ func (m *MangaHub) Test() (bool, error) {
 		return false, nil
 	}
 
-	return pageHasMarkup(m.Grabber, m.URL, mangahubMarker), nil
+	return pageHasMarkup(m.Grabber, m.URL, mangahubMarker, mangahubCryptoMarker), nil
 }
 
 // resolveSeriesURL rewrites a reader URL to its series URL. Series URLs are unchanged.
@@ -131,6 +138,12 @@ func (m *MangaHub) FetchChapters() (Filterables, []error) {
 // FetchChapter fetches the pages of a chapter from the API
 func (m *MangaHub) FetchChapter(f Filterable) (*Chapter, error) {
 	mchap := f.(*MangaHubChapter)
+	warm := fmt.Sprintf("{ manga(x: %s, slug: %s) { title } }", mchap.source, strconv.Quote(mchap.slug))
+
+	// the chapter only answers once the session holds a page key
+	if err := m.ensureKeys(mchap.key, warm); err != nil {
+		return nil, err
+	}
 
 	var data struct {
 		Chapter *struct {
@@ -148,7 +161,11 @@ func (m *MangaHub) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, errors.New("the API has no such chapter")
 	}
 
-	images, err := mangahubPages(data.Chapter.Pages)
+	pages, err := m.decryptPages(data.Chapter.Pages, mchap.key, warm)
+	if err != nil {
+		return nil, err
+	}
+	images, err := mangahubPages(pages)
 	if err != nil {
 		return nil, err
 	}
@@ -239,10 +256,156 @@ func (m *MangaHub) siteCode() (code, key string, err error) {
 	return site[1], key, nil
 }
 
-// query runs one GraphQL query with the access key and decodes its data into out
-func (m *MangaHub) query(key, q string, out any) error {
+// endpoint returns the site's own URL at path, the origin its client calls
+func (m *MangaHub) endpoint(path, rawQuery string) (string, error) {
+	base, err := url.Parse(m.URL)
+	if err != nil {
+		return "", err
+	}
+
+	return (&url.URL{Scheme: base.Scheme, Host: base.Host, Path: path, RawQuery: rawQuery}).String(), nil
+}
+
+// ensureKeys issues the session's page key on the run's first chapter
+func (m *MangaHub) ensureKeys(access, warm string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if len(m.keys) > 0 {
+		return nil
+	}
+
+	return m.issueKey(access, warm)
+}
+
+// pageKey returns the key of an envelope's key id, issuing the session's key
+// again when the run doesn't hold it yet
+func (m *MangaHub) pageKey(keyID, access, warm string) ([]byte, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if key, ok := m.keys[keyID]; ok {
+		return key, nil
+	}
+	if err := m.issueKey(access, warm); err != nil {
+		return nil, err
+	}
+	if key, ok := m.keys[keyID]; ok {
+		return key, nil
+	}
+
+	return nil, fmt.Errorf("the site issued no key for %s", keyID)
+}
+
+// issueKey fetches the session's page key into m.keys. The endpoint answers 409
+// until a GraphQL call has run on the session, so warm runs one and the key is
+// asked for once more. The caller holds m.mu.
+func (m *MangaHub) issueKey(access, warm string) error {
+	id, key, err := m.fetchKey(access)
+	var status *http.StatusError
+	if errors.As(err, &status) && status.Code == 409 {
+		var discard json.RawMessage
+		if err := m.query(access, warm, &discard); err != nil {
+			return err
+		}
+		id, key, err = m.fetchKey(access)
+		if err != nil {
+			return fmt.Errorf("the site refused the page key: %w", err)
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	if m.keys == nil {
+		m.keys = map[string][]byte{}
+	}
+	m.keys[id] = key
+
+	return nil
+}
+
+// fetchKey asks the site for its page key, the 32-byte AES-256 key base64url encoded
+func (m *MangaHub) fetchKey(access string) (string, []byte, error) {
+	endpoint, err := m.endpoint("/api/chapter-crypto", "")
+	if err != nil {
+		return "", nil, err
+	}
 	body, err := http.GetText(http.RequestParams{
-		URL:     mangahubAPI + "?" + url.Values{"query": {q}}.Encode(),
+		URL:     endpoint,
+		Accept:  "application/json",
+		Referer: m.URL,
+		Headers: map[string]string{"x-mhub-access": access},
+	})
+	if err != nil {
+		return "", nil, err
+	}
+
+	var resp struct {
+		KeyID string `json:"keyId"`
+		Key   string `json:"key"`
+	}
+	if err := json.Unmarshal([]byte(body), &resp); err != nil {
+		return "", nil, err
+	}
+	key, err := base64.RawURLEncoding.DecodeString(resp.Key)
+	if err != nil || resp.KeyID == "" || len(key) != 32 {
+		return "", nil, errors.New("the site issued no usable page key")
+	}
+
+	return resp.KeyID, key, nil
+}
+
+// decryptPages returns the page list, decrypted when the site encrypted it
+func (m *MangaHub) decryptPages(raw, access, warm string) (string, error) {
+	if !strings.HasPrefix(raw, "enc:v1:") {
+		return raw, nil
+	}
+	parts := strings.Split(raw, ":")
+	if len(parts) != 6 {
+		return "", errors.New("the page list envelope is malformed")
+	}
+	key, err := m.pageKey(parts[2], access, warm)
+	if err != nil {
+		return "", err
+	}
+
+	return mangahubOpen(parts, key)
+}
+
+// mangahubOpen decrypts an envelope's parts (key id, IV, auth tag, ciphertext, each
+// base64url) with AES-256-GCM. The tag is appended to the ciphertext, as GCM expects
+func mangahubOpen(parts []string, key []byte) (string, error) {
+	iv, errIV := base64.RawURLEncoding.DecodeString(parts[3])
+	tag, errTag := base64.RawURLEncoding.DecodeString(parts[4])
+	data, errData := base64.RawURLEncoding.DecodeString(parts[5])
+	if errIV != nil || errTag != nil || errData != nil || len(iv) != 12 || len(tag) != 16 {
+		return "", errors.New("the page list envelope is malformed")
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	plain, err := gcm.Open(nil, iv, append(data, tag...), nil)
+	if err != nil {
+		return "", errors.New("could not decrypt the page list")
+	}
+
+	return string(plain), nil
+}
+
+// query runs one GraphQL query on the site's API with the access key and decodes its data into out
+func (m *MangaHub) query(key, q string, out any) error {
+	endpoint, err := m.endpoint("/graphql", url.Values{"query": {q}}.Encode())
+	if err != nil {
+		return err
+	}
+
+	body, err := http.GetText(http.RequestParams{
+		URL:     endpoint,
 		Accept:  "application/json",
 		Headers: map[string]string{"x-mhub-access": key},
 	})
@@ -280,7 +443,7 @@ func (m *MangaHub) slug() (string, error) {
 // object holding a path prefix ("p") and the file names under it ("i")
 func mangahubPages(raw string) ([]string, error) {
 	if strings.HasPrefix(raw, "enc:") {
-		return nil, errors.New("the site encrypts its pages, which isn't supported yet")
+		return nil, errors.New("the site encrypts its pages in a format that isn't supported")
 	}
 
 	var list struct {

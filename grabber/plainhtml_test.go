@@ -156,12 +156,6 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want:     []string{"/api/images/chapters/x/29/1.jpg", "/api/images/chapters/x/29/2.jpg"},
 		},
 		{
-			name:     "templetoons.com double-escaped RSC array under an obfuscated key",
-			selector: "img",
-			html:     `<html><head><link rel="canonical" href="https://templetoons.com/comic/bl-antidote/chapter-88"></head><body><script>self.__next_f.push([1,"...{\"gzap5a2\":[\"https://media.templetoons.com/1.jpg\",\"https://media.templetoons.com/2.jpg\"]}..."])</script></body></html>`,
-			want:     []string{"https://media.templetoons.com/1.jpg", "https://media.templetoons.com/2.jpg"},
-		},
-		{
 			name:     "arbitrary-key URL array on another Next.js site is not a page list",
 			selector: "img",
 			html:     `<html><head><link rel="canonical" href="https://a.co/comic/x/chapter-1"></head><body><script>self.__next_f.push([1,"...{\"gzap5a2\":[\"https://media.a.co/1.jpg\",\"https://media.a.co/2.jpg\"]}..."])</script><img src="https://a.co/fallback.jpg"/></body></html>`,
@@ -279,6 +273,13 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 				`<img src="/placeholder.svg" uid="2.avif" class="lazy"/>` +
 				`</div><script>let realUrl = ` + "`https://cdn.example.org/uploads/${uid}`" + `;</script></body></html>`,
 			want: []string{"https://cdn.example.org/uploads/1.avif", "https://cdn.example.org/uploads/2.avif"},
+		},
+		{
+			name:     "only the uploaded pages, not the reader's icon and ads (templetoons.com)",
+			selector: `img[src*="/uploads/"]`,
+			html: `<html><body><img src="/icon.webp"/><div data-index="0"><img src="https://media.templetoons.com/file/t/uploads/series/s/1/01.jpg"/></div>` +
+				`<img src="https://templetoons.com/promo/reader-ad-pc.webp"/></body></html>`,
+			want: []string{"https://media.templetoons.com/file/t/uploads/series/s/1/01.jpg"},
 		},
 	}
 
