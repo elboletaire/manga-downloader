@@ -416,8 +416,12 @@ func readerHTML(ctx context.Context, h hooks, seriesURL, tabSelector, pagination
 		}
 	}
 
-	html, err := chromedp.Run(ctx, documentHTML)
-	if err != nil {
+	var html string
+	if err := chromedp.Do(ctx, chromedp.Func(func(ctx context.Context, t *chromedp.Target) error {
+		var err error
+		html, err = settledHTML(ctx, t, imgSelector)
+		return err
+	})); err != nil {
 		return "", err
 	}
 	if err := chromedp.Do(ctx, chromedp.Func(harvestSession)); err != nil {
@@ -690,7 +694,7 @@ func render(ctx context.Context, h hooks, url, waitSelector, init string, afterW
 	actions = append(actions,
 		chromedp.Func(func(ctx context.Context, t *chromedp.Target) error {
 			var err error
-			html, err = documentHTML(ctx, t)
+			html, err = settledHTML(ctx, t, waitSelector)
 			return err
 		}),
 		chromedp.Func(harvestSession),
@@ -809,10 +813,21 @@ func addScript(source string) chromedp.Action[page.ScriptIdentifier] {
 	}
 }
 
-// documentHTML returns the HTML of the whole document of the tab. A challenge
-// that hands over to the page can navigate between the two calls, staling the
-// root node, so a failed read is retried on the new document.
+// documentHTML returns the HTML of the whole document of the tab
 func documentHTML(ctx context.Context, t *chromedp.Target) (string, error) {
+	doc, err := cdp.Call(ctx, t, dom.GetDocument, dom.GetDocumentParams{})
+	if err != nil {
+		return "", err
+	}
+	res, err := cdp.Call(ctx, t, dom.GetOuterHTML, dom.GetOuterHTMLParams{NodeID: doc.Root.NodeID})
+	return res.OuterHTML, err
+}
+
+// settledHTML is documentHTML for a page whose waitSelector has matched. A
+// challenge handing over to the page can replace the document between the two
+// calls (a stale node), so only that error retries, after waiting for the
+// selector on the new document.
+func settledHTML(ctx context.Context, t *chromedp.Target, waitSelector string) (string, error) {
 	var err error
 	for attempt := range 3 {
 		if attempt > 0 {
@@ -821,24 +836,19 @@ func documentHTML(ctx context.Context, t *chromedp.Target) (string, error) {
 				return "", ctx.Err()
 			case <-time.After(250 * time.Millisecond):
 			}
+			if waitSelector != "" {
+				if err := chromedp.Do(ctx, chromedp.WaitVisible(chromedp.CSS(waitSelector))); err != nil {
+					return "", err
+				}
+			}
 		}
 		var html string
-		html, err = readDocumentHTML(ctx, t)
+		html, err = documentHTML(ctx, t)
 		if err == nil || !staleNode(err) {
 			return html, err
 		}
 	}
 	return "", err
-}
-
-// readDocumentHTML is one read of the tab's document, see documentHTML
-func readDocumentHTML(ctx context.Context, t *chromedp.Target) (string, error) {
-	doc, err := cdp.Call(ctx, t, dom.GetDocument, dom.GetDocumentParams{})
-	if err != nil {
-		return "", err
-	}
-	res, err := cdp.Call(ctx, t, dom.GetOuterHTML, dom.GetOuterHTMLParams{NodeID: doc.Root.NodeID})
-	return res.OuterHTML, err
 }
 
 // staleNode reports whether err is the browser saying a node id is gone,
