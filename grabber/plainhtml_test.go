@@ -670,6 +670,39 @@ func TestSeriesURLCandidates(t *testing.T) {
 				return true
 			},
 		},
+		{
+			name:    "chapter path rewritten to the series with no link on the page (revivalscans free chapter)",
+			pageURL: "https://www.revivalscans.com/read/beautiful-days/31",
+			html:    `<html><body><h1>Chapter 31</h1><img src="/api/images/x.jpg"/></body></html>`,
+			selectors: []SiteSelector{
+				{ChapterPath: `^/read/([^/]+)/[^/]+/?$`, SeriesPath: "/series/$1"},
+			},
+			check: func(candidates []string) bool {
+				return len(candidates) > 0 && candidates[0] == "https://www.revivalscans.com/series/beautiful-days"
+			},
+		},
+		{
+			name:    "chapter path rewrite deduplicates with the back link (revivalscans paid chapter)",
+			pageURL: "https://www.revivalscans.com/read/beautiful-days/92",
+			html:    `<html><body><a class="reader-back" href="/series/beautiful-days">Back</a></body></html>`,
+			selectors: []SiteSelector{
+				{ChapterPath: `^/read/([^/]+)/[^/]+/?$`, SeriesPath: "/series/$1", SeriesLink: `a.reader-back`},
+			},
+			check: func(candidates []string) bool {
+				return len(candidates) == 1 && candidates[0] == "https://www.revivalscans.com/series/beautiful-days"
+			},
+		},
+		{
+			name:    "chapter path rewrite ignores other paths",
+			pageURL: "https://www.revivalscans.com/series/beautiful-days",
+			html:    `<html><body></body></html>`,
+			selectors: []SiteSelector{
+				{ChapterPath: `^/read/([^/]+)/[^/]+/?$`, SeriesPath: "/series/$1"},
+			},
+			check: func(candidates []string) bool {
+				return len(candidates) == 0
+			},
+		},
 	}
 
 	for _, tt := range tests {

@@ -381,7 +381,8 @@ var plainHTMLSelectors = []SiteSelector{
 	// <a class="chapter-item"> links to /read/{slug}/{number}, the paid ones
 	// marked by a crown icon. The "New" badge sits inside the number's span,
 	// so the number comes from the link. The reader's page list is in the RSC
-	// payload, see the "pages" branch of getPlainHTMLImageURL.
+	// payload, see the "pages" branch of getPlainHTMLImageURL. Free chapters'
+	// readers have no link back to the series, so the path is rewritten.
 	{
 		Title:             "h1.series-title",
 		Rows:              `a.chapter-item[href^="/read/"]`,
@@ -391,6 +392,8 @@ var plainHTMLSelectors = []SiteSelector{
 		NumberRe:          `/read/[^/]+/(\d+(?:\.\d+)?)$`,
 		Locked:            ".chapter-item-crown",
 		SeriesLink:        `a.reader-back[href^="/series/"]`,
+		ChapterPath:       `^/read/([^/]+)/[^/]+/?$`,
+		SeriesPath:        "/series/$1",
 	},
 	// mangaberri.com: the chapter section has Chapters, Volumes and RAW
 	// tabs, each in its own panel. Only #chapters-panel is taken (the
@@ -637,6 +640,11 @@ type SiteSelector struct {
 	// NumberRe is a regexp whose first group captures the chapter number from
 	// a row's link, tried before the row's text, for URLs that carry it.
 	NumberRe string
+	// ChapterPath, with SeriesPath, rewrites a chapter URL to its series URL when
+	// the reader carries no link back: ChapterPath's first group is the series'
+	// slug, and SeriesPath's $1 is replaced by it (e.g. /read/{slug}/{n} to /series/{slug}).
+	ChapterPath string
+	SeriesPath  string
 	// Locked is a CSS selector searched inside each row: a match means the
 	// listing marks the chapter as paid (Chapter.Locked)
 	Locked string
@@ -989,6 +997,24 @@ func seriesURLCandidates(doc *goquery.Document, pageURL string, selectors []Site
 	parsedURL, _ := url.Parse(pageURL)
 	if parsedURL == nil {
 		return candidates
+	}
+
+	// URL rewrites first: they need no link on the page, which free chapters
+	// of some readers don't carry
+	for _, selector := range selectors {
+		if selector.ChapterPath == "" {
+			continue
+		}
+		re, err := regexp.Compile(selector.ChapterPath)
+		if err != nil {
+			continue
+		}
+		if m := re.FindStringSubmatchIndex(parsedURL.Path); m != nil {
+			seriesPath := string(re.ExpandString(nil, selector.SeriesPath, parsedURL.Path, m))
+			if resolvedURL := resolveURLRelative(seriesPath, parsedURL); resolvedURL != "" && resolvedURL != pageURL {
+				candidates = append(candidates, resolvedURL)
+			}
+		}
 	}
 
 	// SeriesLink selectors: when a selector has an Image field, only apply
