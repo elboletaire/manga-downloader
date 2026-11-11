@@ -377,12 +377,9 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitle: "span.text-base",
 		SeriesLink:   `a[href^="/series/"]:not([href="/series/"])`,
 	},
-	// revivalscans.com (Next.js App Router, server-rendered): chapter rows are
-	// <a class="chapter-item"> links to /read/{slug}/{number}, the paid ones
-	// marked by a crown icon. The "New" badge sits inside the number's span,
-	// so the number comes from the link. The reader's page list is in the RSC
-	// payload, see the "pages" branch of getPlainHTMLImageURL. Free chapters'
-	// readers have no link back to the series, so the path is rewritten.
+	// revivalscans.com (Next.js RSC): chapter rows link to /read/{slug}/{n}, paid
+	// ones marked by a crown. The "New" badge sits in the number's span, so the
+	// number comes from the link. Free readers have no link back, hence ChapterPath.
 	{
 		Title:             "h1.series-title",
 		Rows:              `a.chapter-item[href^="/read/"]`,
@@ -394,6 +391,7 @@ var plainHTMLSelectors = []SiteSelector{
 		SeriesLink:        `a.reader-back[href^="/series/"]`,
 		ChapterPath:       `^/read/([^/]+)/[^/]+/?$`,
 		SeriesPath:        "/series/$1",
+		RewriteGuard:      `img.logo-image[alt="RevivalScans"]`,
 	},
 	// mangaberri.com: the chapter section has Chapters, Volumes and RAW
 	// tabs, each in its own panel. Only #chapters-panel is taken (the
@@ -645,6 +643,10 @@ type SiteSelector struct {
 	// slug, and SeriesPath's $1 is replaced by it (e.g. /read/{slug}/{n} to /series/{slug}).
 	ChapterPath string
 	SeriesPath  string
+	// RewriteGuard is a CSS selector that must match the page for its ChapterPath
+	// rewrite to apply, as Image guards SeriesLink. It isn't Image itself: that
+	// also selects the page images, so a paid chapter's logo would be packed.
+	RewriteGuard string
 	// Locked is a CSS selector searched inside each row: a match means the
 	// listing marks the chapter as paid (Chapter.Locked)
 	Locked string
@@ -989,9 +991,9 @@ func textWithoutNoise(s *goquery.Selection) string {
 }
 
 // seriesURLCandidates extracts potential series URLs from a reader/chapter page.
-// It tries: SeriesLink selector (if any), breadcrumb links, reader back-links,
-// and same-host parent paths. Returns the ordered list of candidates for
-// testCandidateSeriesURL to verify.
+// It tries: guarded ChapterPath rewrites, SeriesLink selector (if any), breadcrumb
+// links, reader back-links, and same-host parent paths. Returns the ordered list
+// of candidates for testCandidateSeriesURL to verify.
 func seriesURLCandidates(doc *goquery.Document, pageURL string, selectors []SiteSelector) []string {
 	var candidates []string
 	parsedURL, _ := url.Parse(pageURL)
@@ -1003,6 +1005,9 @@ func seriesURLCandidates(doc *goquery.Document, pageURL string, selectors []Site
 	// of some readers don't carry
 	for _, selector := range selectors {
 		if selector.ChapterPath == "" {
+			continue
+		}
+		if selector.RewriteGuard != "" && doc.Find(selector.RewriteGuard).Length() == 0 {
 			continue
 		}
 		re, err := regexp.Compile(selector.ChapterPath)
@@ -1793,13 +1798,9 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		}
 	}
 
-	// silentquill.net (Next.js RSC too) embeds a double-escaped list of
-	// objects with a "url" each, relative to the site root (templetoons.com
-	// is handled further down, with its own key-agnostic match):
-	// `\"pages\":[{\"url\":\"/img/p/1-x\",\"width\":null,...}]`. The caller
-	// prefixes the base URL on relative paths. Matched before the flat array
-	// below, which would otherwise pick up every key of these objects.
-	// the url need not come first (revivalscans.com leads with an "id")
+	// Next.js RSC pages objects with a "url" each (silentquill.net, relative to
+	// the root; revivalscans.com leads with an "id"), matched before the flat
+	// array below, which would pick up every key of these objects.
 	re = regexp.MustCompile(`\\"pages\\":\[(\{.*?)\]`)
 	matches = re.FindStringSubmatch(html)
 	if len(matches) > 1 {

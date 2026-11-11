@@ -770,8 +770,8 @@ environment variables.
 | [readmanga18.com](https://readmanga18.com) | English, NSFW | 2026-11-06 |
 | [readspyxfamilymanga.com](https://readspyxfamilymanga.com) | English, single series, use a chapter URL | 2026-11-09 |
 | [reapertrans.com](https://reapertrans.com) | Thai | 2026-11-09 |
-| [revivalscans.com](https://www.revivalscans.com) | English | 2026-11-11 |
 | [resetscans.net](https://www.resetscans.net) | English, Reset Scans | 2026-11-10 |
+| [revivalscans.com](https://www.revivalscans.com) | English | 2026-11-11 |
 | [rimacomiplus.jp](https://rimacomiplus.jp) | Japanese (Comici) | 2026-11-02 |
 | [ritharscans.com](https://ritharscans.com) |  | 2026-11-09 |
 | [rizzfables.com](https://rizzfables.com) |  | 2026-11-09 |
