@@ -1,16 +1,16 @@
 {
   "schema": 1,
   "date": "2026-11-11",
-  "takenAt": "2026-11-11T22:13:26.645Z",
+  "takenAt": "2026-11-11T23:42:31.469Z",
   "repo": {
-    "stars": 298,
+    "stars": 297,
     "forks": 34,
     "watchers": 3,
     "openIssues": 0
   },
   "docker": {
     "image": "elboletaire/manga-downloader",
-    "pulls": 50958
+    "pulls": 51195
   },
   "releases": [
     {
@@ -32,11 +32,11 @@
         },
         {
           "name": "manga-downloader-gui-v25.2.0-SHA256SUMS.txt",
-          "downloads": 1
+          "downloads": 2
         },
         {
           "name": "manga-downloader-gui-v25.2.0-windows-amd64-installer.exe",
-          "downloads": 4
+          "downloads": 6
         },
         {
           "name": "manga-downloader-gui-v25.2.0-windows-amd64.zip",
@@ -191,7 +191,7 @@
         },
         {
           "name": "manga-downloader-v25.1.0-linux-arm64.tar.gz",
-          "downloads": 8
+          "downloads": 9
         },
         {
           "name": "manga-downloader-v25.1.0-linux-arm64.tar.gz.md5",
