@@ -361,7 +361,7 @@ environment variables.
 | [archiviumbar.com](https://archiviumbar.com) | Spanish | 2026-11-09 |
 | [arcurafansub.com](https://arcurafansub.com) | Turkish | ❌ failing since 2026-11-09 (checked 2026-11-09) |
 | [arenascan.com](https://arenascan.com) |  | 2026-11-09 |
-| [arhentai.net](https://arhentai.net) | Arabic, mostly NSFW | ❌ failing since 2026-11-09 (checked 2026-11-09) |
+| [arhentai.net](https://arhentai.net) | Arabic, mostly NSFW | 2026-11-11 |
 | [arlas.online](https://www.arlas.online) | Indonesian | 2026-11-02 |
 | [arthurscan.xyz](https://arthurscan.xyz) | Portuguese | 2026-11-09 |
 | [artlapsa.com](https://artlapsa.com) | English, locked chapters skipped | 2026-11-09 |
