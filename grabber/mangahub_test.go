@@ -23,6 +23,7 @@ func mangahubSite(t *testing.T) *httptest.Server {
 
 	var srv *httptest.Server
 	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// the API sits on the pages' origin, as the client has it when apiUrl is empty
 		u, _ := url.Parse(srv.URL)
 		host := u.Hostname()
 		switch {
@@ -52,16 +53,12 @@ func mangahubSite(t *testing.T) *httptest.Server {
 	}))
 	t.Cleanup(srv.Close)
 
-	prev := mangahubAPI
-	mangahubAPI = srv.URL + "/graphql"
-	t.Cleanup(func() { mangahubAPI = prev })
-
 	return srv
 }
 
 // mangahubPage is a series page carrying the API config and the client bundle at src
 func mangahubPage(src string) string {
-	return `<html><script>window.App={"apiUrl":"https:\u002F\u002Fapi.mghcdn.com","chapterCryptoEnabled":false}</script>` +
+	return `<html><script>window.App={"apiUrl":"","chapterCryptoEnabled":true}</script>` +
 		`<script src="` + src + `"></script><h1>Red Storm</h1></html>`
 }
 

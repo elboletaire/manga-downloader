@@ -27,14 +27,12 @@ func NewMangaHub(g *Grabber) *MangaHub {
 	return &MangaHub{Grabber: g}
 }
 
-// mangahubAPI is the GraphQL endpoint, a variable so the tests can serve a fake
-var mangahubAPI = "https://api.mghcdn.com/graphql"
-
 // mangahubCDN serves the page images, relative to it
 const mangahubCDN = "https://imgx.mghcdn.com/"
 
-// mangahubMarker is the API config every page of the platform carries
-const mangahubMarker = `"apiUrl":"https:\u002F\u002Fapi.mghcdn.com"`
+// mangahubMarker is the API config every page of the platform carries; its apiUrl is empty now,
+// so the API is the page's own origin (the old fixed host answers 403)
+const mangahubMarker = `window.App={"apiUrl":"`
 
 // mangahubPathRe is the path shape of a series or reader page, the only shape the markup check fetches
 var mangahubPathRe = regexp.MustCompile(`(?i)^/(manga/[^/]+|chapter/[^/]+/chapter-[^/]+)/?$`)
@@ -239,10 +237,16 @@ func (m *MangaHub) siteCode() (code, key string, err error) {
 	return site[1], key, nil
 }
 
-// query runs one GraphQL query with the access key and decodes its data into out
+// query runs one GraphQL query on the site's API with the access key and decodes its data into out
 func (m *MangaHub) query(key, q string, out any) error {
+	base, err := url.Parse(m.URL)
+	if err != nil {
+		return err
+	}
+	endpoint := url.URL{Scheme: base.Scheme, Host: base.Host, Path: "/graphql", RawQuery: url.Values{"query": {q}}.Encode()}
+
 	body, err := http.GetText(http.RequestParams{
-		URL:     mangahubAPI + "?" + url.Values{"query": {q}}.Encode(),
+		URL:     endpoint.String(),
 		Accept:  "application/json",
 		Headers: map[string]string{"x-mhub-access": key},
 	})
