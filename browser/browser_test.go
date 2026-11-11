@@ -5,9 +5,11 @@ package browser
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/chromedp/cdproto"
 	"github.com/chromedp/cdproto/network"
 )
 
@@ -43,6 +45,16 @@ func TestRenderError(t *testing.T) {
 	other := errors.New("boom")
 	if err := renderError(context.Background(), other, "https://example.com/a", "#list", false); err != other {
 		t.Errorf("a failure without a timeout = %v, want it as is", err)
+	}
+}
+
+func TestStaleNode(t *testing.T) {
+	stale := &cdproto.Error{Code: -32000, Message: "Could not find node with given id"}
+	if !staleNode(stale) || !staleNode(fmt.Errorf("read: %w", stale)) {
+		t.Error("a missing node id should be stale")
+	}
+	if staleNode(&cdproto.Error{Code: -32000, Message: "Could not compute box model."}) || staleNode(errors.New("boom")) {
+		t.Error("other errors should not be stale")
 	}
 }
 

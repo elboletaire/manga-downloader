@@ -26,6 +26,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/chromedp/cdproto"
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/dom"
 	"github.com/chromedp/cdproto/input"
@@ -808,14 +809,43 @@ func addScript(source string) chromedp.Action[page.ScriptIdentifier] {
 	}
 }
 
-// documentHTML returns the HTML of the whole document of the tab
+// documentHTML returns the HTML of the whole document of the tab. A challenge
+// that hands over to the page can navigate between the two calls, staling the
+// root node, so a failed read is retried on the new document.
 func documentHTML(ctx context.Context, t *chromedp.Target) (string, error) {
+	var err error
+	for attempt := range 3 {
+		if attempt > 0 {
+			select {
+			case <-ctx.Done():
+				return "", ctx.Err()
+			case <-time.After(250 * time.Millisecond):
+			}
+		}
+		var html string
+		html, err = readDocumentHTML(ctx, t)
+		if err == nil || !staleNode(err) {
+			return html, err
+		}
+	}
+	return "", err
+}
+
+// readDocumentHTML is one read of the tab's document, see documentHTML
+func readDocumentHTML(ctx context.Context, t *chromedp.Target) (string, error) {
 	doc, err := cdp.Call(ctx, t, dom.GetDocument, dom.GetDocumentParams{})
 	if err != nil {
 		return "", err
 	}
 	res, err := cdp.Call(ctx, t, dom.GetOuterHTML, dom.GetOuterHTMLParams{NodeID: doc.Root.NodeID})
 	return res.OuterHTML, err
+}
+
+// staleNode reports whether err is the browser saying a node id is gone,
+// which happens when the document was replaced under it
+func staleNode(err error) bool {
+	var e *cdproto.Error
+	return errors.As(err, &e) && strings.Contains(e.Message, "Could not find node")
 }
 
 // harvestSession copies the browser cookies and user agent into the http
