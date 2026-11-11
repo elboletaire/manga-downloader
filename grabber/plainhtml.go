@@ -377,6 +377,22 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitle: "span.text-base",
 		SeriesLink:   `a[href^="/series/"]:not([href="/series/"])`,
 	},
+	// revivalscans.com (Next.js RSC): chapter rows link to /read/{slug}/{n}, paid
+	// ones marked by a crown. The "New" badge sits in the number's span, so the
+	// number comes from the link. Free readers have no link back, hence ChapterPath.
+	{
+		Title:             "h1.series-title",
+		Rows:              `a.chapter-item[href^="/read/"]`,
+		Chapter:           ".chapter-item-number",
+		ChapterTitle:      ".chapter-item-number",
+		ChapterTitleStrip: `\s*New$`,
+		NumberRe:          `/read/[^/]+/(\d+(?:\.\d+)?)$`,
+		Locked:            ".chapter-item-crown",
+		SeriesLink:        `a.reader-back[href^="/series/"]`,
+		ChapterPath:       `^/read/([^/]+)/[^/]+/?$`,
+		SeriesPath:        "/series/$1",
+		RewriteGuard:      `img.logo-image[alt="RevivalScans"]`,
+	},
 	// mangaberri.com: the chapter section has Chapters, Volumes and RAW
 	// tabs, each in its own panel. Only #chapters-panel is taken (the
 	// Volumes and RAW panels would double count or mix in untranslated
@@ -622,6 +638,15 @@ type SiteSelector struct {
 	// NumberRe is a regexp whose first group captures the chapter number from
 	// a row's link, tried before the row's text, for URLs that carry it.
 	NumberRe string
+	// ChapterPath, with SeriesPath, rewrites a chapter URL to its series URL when
+	// the reader carries no link back: ChapterPath's first group is the series'
+	// slug, and SeriesPath's $1 is replaced by it (e.g. /read/{slug}/{n} to /series/{slug}).
+	ChapterPath string
+	SeriesPath  string
+	// RewriteGuard is a CSS selector that must match the page for its ChapterPath
+	// rewrite to apply, as Image guards SeriesLink. It isn't Image itself: that
+	// also selects the page images, so a paid chapter's logo would be packed.
+	RewriteGuard string
 	// Locked is a CSS selector searched inside each row: a match means the
 	// listing marks the chapter as paid (Chapter.Locked)
 	Locked string
@@ -966,14 +991,35 @@ func textWithoutNoise(s *goquery.Selection) string {
 }
 
 // seriesURLCandidates extracts potential series URLs from a reader/chapter page.
-// It tries: SeriesLink selector (if any), breadcrumb links, reader back-links,
-// and same-host parent paths. Returns the ordered list of candidates for
-// testCandidateSeriesURL to verify.
+// It tries: guarded ChapterPath rewrites, SeriesLink selector (if any), breadcrumb
+// links, reader back-links, and same-host parent paths. Returns the ordered list
+// of candidates for testCandidateSeriesURL to verify.
 func seriesURLCandidates(doc *goquery.Document, pageURL string, selectors []SiteSelector) []string {
 	var candidates []string
 	parsedURL, _ := url.Parse(pageURL)
 	if parsedURL == nil {
 		return candidates
+	}
+
+	// URL rewrites first: they need no link on the page, which free chapters
+	// of some readers don't carry
+	for _, selector := range selectors {
+		if selector.ChapterPath == "" {
+			continue
+		}
+		if selector.RewriteGuard != "" && doc.Find(selector.RewriteGuard).Length() == 0 {
+			continue
+		}
+		re, err := regexp.Compile(selector.ChapterPath)
+		if err != nil {
+			continue
+		}
+		if m := re.FindStringSubmatchIndex(parsedURL.Path); m != nil {
+			seriesPath := string(re.ExpandString(nil, selector.SeriesPath, parsedURL.Path, m))
+			if resolvedURL := resolveURLRelative(seriesPath, parsedURL); resolvedURL != "" && resolvedURL != pageURL {
+				candidates = append(candidates, resolvedURL)
+			}
+		}
 	}
 
 	// SeriesLink selectors: when a selector has an Image field, only apply
@@ -1752,13 +1798,10 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		}
 	}
 
-	// silentquill.net (Next.js RSC too) embeds a double-escaped list of
-	// objects with a "url" each, relative to the site root (templetoons.com
-	// is handled further down, with its own key-agnostic match):
-	// `\"pages\":[{\"url\":\"/img/p/1-x\",\"width\":null,...}]`. The caller
-	// prefixes the base URL on relative paths. Matched before the flat array
-	// below, which would otherwise pick up every key of these objects.
-	re = regexp.MustCompile(`\\"pages\\":\[(\{\\"url\\":.*?)\]`)
+	// Next.js RSC pages objects with a "url" each (silentquill.net, relative to
+	// the root; revivalscans.com leads with an "id"), matched before the flat
+	// array below, which would pick up every key of these objects.
+	re = regexp.MustCompile(`\\"pages\\":\[(\{.*?)\]`)
 	matches = re.FindStringSubmatch(html)
 	if len(matches) > 1 {
 		urls := regexp.MustCompile(`\\"url\\":\\"([^\\"]+)\\"`).FindAllStringSubmatch(matches[1], -1)
@@ -1766,7 +1809,9 @@ func getPlainHTMLImageURL(selector string, doc *goquery.Document) []string {
 		for _, u := range urls {
 			imgs = append(imgs, u[1])
 		}
-		return imgs
+		if len(imgs) > 0 {
+			return imgs
+		}
 	}
 
 	// templetoons.com's reader embeds the page list as a double-escaped RSC
