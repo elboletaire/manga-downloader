@@ -224,3 +224,74 @@ func TestRavenscansReaderImagesAndSeriesLink(t *testing.T) {
 		t.Errorf("SeriesLink href = %q", got)
 	}
 }
+
+// templetoonsReader returns a PlainHTMLBrowser for the templetoons.com entry
+// and a chapter, with no browser: readerChapter only reads the parsed reader
+func templetoonsReader(t *testing.T) (*PlainHTMLBrowser, *PlainHTMLChapter) {
+	t.Helper()
+	sel, ok := matchBrowserSelector("templetoons.com")
+	if !ok {
+		t.Fatal("no templetoons.com entry")
+	}
+	m := &PlainHTMLBrowser{
+		PlainHTML: &PlainHTML{Grabber: &Grabber{URL: "https://templetoons.com/comic/bl-antidote"}, site: sel.SiteSelector},
+		selector:  sel,
+	}
+	f := &PlainHTMLChapter{Chapter: Chapter{Title: "Chapter 88", Number: 88}, URL: "https://templetoons.com/comic/bl-antidote/chapter-88"}
+	return m, f
+}
+
+func TestReaderChapterPageSlots(t *testing.T) {
+	m, f := templetoonsReader(t)
+	page := func(n string) string {
+		return `<div data-index="` + n + `"><img src="https://media.templetoons.com/file/t/uploads/series/s/1/0` + n + `.jpg"/></div>`
+	}
+
+	t.Run("every slot mounted", func(t *testing.T) {
+		chapter, err := m.readerChapter(f, docFromHTML(t, page("0")+page("1")))
+		if err != nil {
+			t.Fatalf("readerChapter() error = %v", err)
+		}
+		if len(chapter.Pages) != 2 {
+			t.Fatalf("pages = %d, want 2", len(chapter.Pages))
+		}
+		for _, p := range chapter.Pages {
+			if got := p.Headers["Accept"]; got != m.selector.PageAccept {
+				t.Errorf("page %s Accept = %q, want %q", p.URL, got, m.selector.PageAccept)
+			}
+		}
+	})
+
+	t.Run("a stalled scroll fails instead of packing a short chapter", func(t *testing.T) {
+		html := page("0") + page("1") + `<div data-index="2"></div>`
+		_, err := m.readerChapter(f, docFromHTML(t, html))
+		if err == nil || !strings.Contains(err.Error(), "only 2 of 3 pages loaded in the reader") {
+			t.Errorf("readerChapter() error = %v, want only 2 of 3 pages", err)
+		}
+	})
+}
+
+func TestApplyPageAccept(t *testing.T) {
+	pages := func(headers map[string]string) *Chapter {
+		return &Chapter{Pages: []Page{{URL: "https://media.example.com/1.jpg", Headers: headers}}}
+	}
+
+	unset := pages(nil)
+	applyPageAccept(unset, "")
+	if unset.Pages[0].Headers != nil {
+		t.Errorf("empty accept set Headers = %v, want nil", unset.Pages[0].Headers)
+	}
+
+	kept := pages(map[string]string{"X-Token": "1"})
+	applyPageAccept(kept, "")
+	if !reflect.DeepEqual(kept.Pages[0].Headers, map[string]string{"X-Token": "1"}) {
+		t.Errorf("empty accept changed Headers to %v", kept.Pages[0].Headers)
+	}
+
+	set := pages(map[string]string{"X-Token": "1"})
+	applyPageAccept(set, "image/*,*/*;q=0.8")
+	want := map[string]string{"X-Token": "1", "Accept": "image/*,*/*;q=0.8"}
+	if !reflect.DeepEqual(set.Pages[0].Headers, want) {
+		t.Errorf("Headers = %v, want %v", set.Pages[0].Headers, want)
+	}
+}

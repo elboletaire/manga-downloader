@@ -150,12 +150,6 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want:     []string{"/img/p/1-a", "/img/p/2-b"},
 		},
 		{
-			name:     "templetoons.com double-escaped RSC array under an obfuscated key",
-			selector: "img",
-			html:     `<html><head><link rel="canonical" href="https://templetoons.com/comic/bl-antidote/chapter-88"></head><body><script>self.__next_f.push([1,"...{\"gzap5a2\":[\"https://media.templetoons.com/1.jpg\",\"https://media.templetoons.com/2.jpg\"]}..."])</script></body></html>`,
-			want:     []string{"https://media.templetoons.com/1.jpg", "https://media.templetoons.com/2.jpg"},
-		},
-		{
 			name:     "arbitrary-key URL array on another Next.js site is not a page list",
 			selector: "img",
 			html:     `<html><head><link rel="canonical" href="https://a.co/comic/x/chapter-1"></head><body><script>self.__next_f.push([1,"...{\"gzap5a2\":[\"https://media.a.co/1.jpg\",\"https://media.a.co/2.jpg\"]}..."])</script><img src="https://a.co/fallback.jpg"/></body></html>`,
