@@ -150,10 +150,22 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 			want:     []string{"/img/p/1-a", "/img/p/2-b"},
 		},
 		{
+			name:     "revivalscans.com double-escaped RSC pages objects with an id before the url",
+			selector: "img",
+			html:     `<html><body><script>self.__next_f.push([1,"...{\"pages\":[{\"id\":\"a1\",\"url\":\"/api/images/chapters/x/29/1.jpg\",\"pageNumber\":1},{\"id\":\"a2\",\"url\":\"/api/images/chapters/x/29/2.jpg\",\"pageNumber\":2}],\"x\":1}..."])</script></body></html>`,
+			want:     []string{"/api/images/chapters/x/29/1.jpg", "/api/images/chapters/x/29/2.jpg"},
+		},
+		{
 			name:     "arbitrary-key URL array on another Next.js site is not a page list",
 			selector: "img",
 			html:     `<html><head><link rel="canonical" href="https://a.co/comic/x/chapter-1"></head><body><script>self.__next_f.push([1,"...{\"gzap5a2\":[\"https://media.a.co/1.jpg\",\"https://media.a.co/2.jpg\"]}..."])</script><img src="https://a.co/fallback.jpg"/></body></html>`,
 			want:     []string{"https://a.co/fallback.jpg"},
+		},
+		{
+			name:     "RSC pages objects without a url fall through to the <img> tags",
+			selector: "img.page",
+			html:     `<html><body><script>self.__next_f.push([1,"...{\\"pages\\":[{\\"id\\":\\"a1\\",\\"pageNumber\\":1}],\\"x\\":1}..."])</script><img class="page" src="https://a.co/1.jpg"/></body></html>`,
+			want:     []string{"https://a.co/1.jpg"},
 		},
 		{
 			name:     "FoOlSlide var pages JSON array (deathtollscans)",
@@ -663,6 +675,50 @@ func TestSeriesURLCandidates(t *testing.T) {
 					}
 				}
 				return true
+			},
+		},
+		{
+			name:    "chapter path rewritten to the series with no link on the page (revivalscans free chapter)",
+			pageURL: "https://www.revivalscans.com/read/beautiful-days/31",
+			html:    `<html><body><img class="logo-image" alt="RevivalScans" src="/logo.png"/><img src="/api/images/x.jpg"/></body></html>`,
+			selectors: []SiteSelector{
+				{ChapterPath: `^/read/([^/]+)/[^/]+/?$`, SeriesPath: "/series/$1", RewriteGuard: `img.logo-image[alt="RevivalScans"]`},
+			},
+			check: func(candidates []string) bool {
+				return len(candidates) > 0 && candidates[0] == "https://www.revivalscans.com/series/beautiful-days"
+			},
+		},
+		{
+			name:    "chapter path rewrite deduplicates with the back link (revivalscans paid chapter)",
+			pageURL: "https://www.revivalscans.com/read/beautiful-days/92",
+			html:    `<html><body><img class="logo-image" alt="RevivalScans" src="/logo.png"/><a class="reader-back" href="/series/beautiful-days">Back</a></body></html>`,
+			selectors: []SiteSelector{
+				{ChapterPath: `^/read/([^/]+)/[^/]+/?$`, SeriesPath: "/series/$1", RewriteGuard: `img.logo-image[alt="RevivalScans"]`, SeriesLink: `a.reader-back`},
+			},
+			check: func(candidates []string) bool {
+				return len(candidates) == 1 && candidates[0] == "https://www.revivalscans.com/series/beautiful-days"
+			},
+		},
+		{
+			name:    "chapter path rewrite ignores other paths",
+			pageURL: "https://www.revivalscans.com/series/beautiful-days",
+			html:    `<html><body><img class="logo-image" alt="RevivalScans" src="/logo.png"/></body></html>`,
+			selectors: []SiteSelector{
+				{ChapterPath: `^/read/([^/]+)/[^/]+/?$`, SeriesPath: "/series/$1", RewriteGuard: `img.logo-image[alt="RevivalScans"]`},
+			},
+			check: func(candidates []string) bool {
+				return len(candidates) == 0
+			},
+		},
+		{
+			name:    "chapter path rewrite is not applied to another host's /read/ page without the guard",
+			pageURL: "https://other.example/read/a/b",
+			html:    `<html><body><img class="logo-image" alt="Other" src="/logo.png"/></body></html>`,
+			selectors: []SiteSelector{
+				{ChapterPath: `^/read/([^/]+)/[^/]+/?$`, SeriesPath: "/series/$1", RewriteGuard: `img.logo-image[alt="RevivalScans"]`},
+			},
+			check: func(candidates []string) bool {
+				return len(candidates) == 0
 			},
 		},
 	}

@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[580 supported sites](#supported-sites)**, from big aggregators to small
+- **[581 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 580 supported sites</b></summary>
+<summary><b>Show all 581 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -418,7 +418,7 @@ environment variables.
 | [comirela.com](https://comirela.com) | Japanese (Comici) | 2026-11-02 |
 | [comix.to](https://comix.to) \* |  | 2026-10-15 |
 | [covendasbruxonas.com](https://covendasbruxonas.com) | Coven Scan, Portuguese, mostly NSFW | 2026-10-29 |
-| [csmmangafree.com](https://www.csmmangafree.com) | English, single series | 2026-11-09 |
+| [csmmangafree.com](https://www.csmmangafree.com) | English, single series | 2026-11-11 |
 | [cucumbermanga.com](https://cucumbermanga.com) | English | 2026-11-09 |
 | [dandadanmangas.online](https://dandadanmangas.online) | English, single series | 2026-11-09 |
 | [danke.moe](https://danke.moe) | Danke fürs Lesen | 2026-11-09 |
@@ -771,6 +771,7 @@ environment variables.
 | [readspyxfamilymanga.com](https://readspyxfamilymanga.com) | English, single series, use a chapter URL | 2026-11-09 |
 | [reapertrans.com](https://reapertrans.com) | Thai | 2026-11-09 |
 | [resetscans.net](https://www.resetscans.net) | English, Reset Scans | 2026-11-10 |
+| [revivalscans.com](https://www.revivalscans.com) | English | 2026-11-11 |
 | [rimacomiplus.jp](https://rimacomiplus.jp) | Japanese (Comici) | 2026-11-02 |
 | [ritharscans.com](https://ritharscans.com) |  | 2026-11-09 |
 | [rizzfables.com](https://rizzfables.com) |  | 2026-11-09 |
@@ -888,14 +889,14 @@ environment variables.
 | [ww12.tokyoghoulre.com](https://ww12.tokyoghoulre.com) | English | 2026-10-29 |
 | [ww13.readonepiece.com](https://ww13.readonepiece.com) | English | 2026-10-29 |
 | [ww4.readsololeveling.org](https://ww4.readsololeveling.org/manga/solo-leveling-ragnarok/) | English | 2026-11-11 |
-| [ww5.blmangafree.com](https://ww5.blmangafree.com) | English, single series | 2026-11-02 |
+| [ww5.blmangafree.com](https://ww5.blmangafree.com) | English, single series | 2026-11-11 |
 | [ww6.readchainsawman.com](https://ww6.readchainsawman.com) | English | 2026-11-09 |
 | [ww6.readjujutsukaisen.com](https://ww6.readjujutsukaisen.com/manga/jujutsu-kaisen/) | English | 2026-11-09 |
 | [ww6.readkingdom.com](https://ww6.readkingdom.com) | English | 2026-11-09 |
 | [ww7.readopm.com](https://ww7.readopm.com/manga/one-punch-man/) | English | 2026-11-11 |
 | [ww8.read7deadlysins.com](https://ww8.read7deadlysins.com) | English | 2026-11-09 |
 | [ww9.readfairytail.com](https://ww9.readfairytail.com) | English | 2026-11-09 |
-| [www2.gachiakutas.com](https://www2.gachiakutas.com) | English, single series | 2026-11-09 |
+| [www2.gachiakutas.com](https://www2.gachiakutas.com) | English, single series | 2026-11-11 |
 | [xn--l3c0azab5a2gta.com](https://www.xn--l3c0azab5a2gta.com) | Thai | 2026-10-29 |
 | [xsano-manga.com](https://www.xsano-manga.com) | Arabic | 2026-11-02 |
 | [yakshacomics.com](https://yakshacomics.com) | English | 2026-10-29 |
