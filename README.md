@@ -359,7 +359,7 @@ environment variables.
 | [aquareader.org](https://aquareader.org) | English | 2026-10-29 |
 | [arbxcomix.com](https://arbxcomix.com) | Arabic, mostly NSFW | 2026-11-09 |
 | [archiviumbar.com](https://archiviumbar.com) | Spanish | 2026-11-09 |
-| [arcurafansub.com](https://arcurafansub.com) | Turkish | ❌ failing since 2026-11-09 (checked 2026-11-09) |
+| [arcurafansub.com](https://arcurafansub.com) \* | Turkish | 2026-11-11 |
 | [arenascan.com](https://arenascan.com) |  | 2026-11-09 |
 | [arhentai.net](https://arhentai.net) | Arabic, mostly NSFW | ❌ failing since 2026-11-09 (checked 2026-11-09) |
 | [arlas.online](https://www.arlas.online) | Indonesian | 2026-11-02 |
@@ -465,7 +465,7 @@ environment variables.
 | [frieren.online](https://ww5.frieren.online) | English | 2026-10-29 |
 | [furyosociety.com](https://furyosociety.com) |  | 2026-11-09 |
 | [g-comi.jp](https://g-comi.jp) | Japanese (Comici), comic-medu.com redirects here | 2026-11-02 |
-| [gaiatoon.com](https://gaiatoon.com) | Turkish | ❌ failing since 2026-11-09 (checked 2026-11-09) |
+| [gaiatoon.com](https://gaiatoon.com) \* | Turkish | 2026-11-11 |
 | [gakamangas.com](https://gakamangas.com) | English | 2026-11-09 |
 | [galaxscanlator.blogspot.com](https://galaxscanlator.blogspot.com) | Portuguese | 2026-11-02 |
 | [garciamanga.com](https://garciamanga.com) | Turkish | 2026-10-29 |
@@ -741,7 +741,7 @@ environment variables.
 | [orion-scans.com](https://orion-scans.com) | English, locked chapters skipped | 2026-11-09 |
 | [orvmanhwa.online](https://orvmanhwa.online) | English, single series, use a chapter URL | 2026-11-09 |
 | [ourfeel.jp](https://ourfeel.jp) | Japanese, Our Feel (GigaViewer) | 2026-11-09 |
-| [paradise-bl.com](https://paradise-bl.com) | Arabic | ❌ failing since 2026-11-09 (checked 2026-11-09) |
+| [paradise-bl.com](https://paradise-bl.com) \* | Arabic | 2026-11-11 |
 | [paritehaber.com](https://www.paritehaber.com) | English, mostly NSFW | 2026-10-29 |
 | [petrotechsociety.org](https://www.petrotechsociety.org) | English, mostly NSFW | 2026-10-29 |
 | [phoenixscans.com](https://www.phoenixscans.com) | Phoenix Scans, Italian | 2026-11-09 |

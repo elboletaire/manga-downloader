@@ -21,6 +21,9 @@ func init() {
 	browser.RequireVisible("asmotoon.com")
 	browser.RequireVisible("ravenscans.org")
 	browser.RequireVisible("vermanhwa.com")
+	browser.RequireVisible("gaiatoon.com")
+	browser.RequireVisible("arcurafansub.com")
+	browser.RequireVisible("paradise-bl.com")
 }
 
 // BrowserSiteSelector is a SiteSelector for sites that need a real browser
@@ -228,6 +231,41 @@ var browserSelectors = []BrowserSiteSelector{
 		Domains:      []string{"ravenscans.org"},
 		ChaptersWait: "#chapterlist li[data-num]",
 		ImageWait:    "#readerarea img",
+	},
+	// gaiatoon.com and arcurafansub.com: the same Themesia theme behind a
+	// cloudflare challenge, with chapters one segment deep, so they find
+	// their series through .allc like ravenscans.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1.entry-title",
+			Rows:         "#chapterlist li",
+			Chapter:      ".chapternum",
+			ChapterTitle: ".chapternum",
+			Link:         "a",
+			Image:        "#readerarea img",
+			SeriesLink:   ".allc a",
+		},
+		Domains:      []string{"gaiatoon.com", "arcurafansub.com"},
+		ChaptersWait: "#chapterlist li",
+		ImageWait:    "#readerarea img",
+	},
+	// paradise-bl.com: Madara with its own theme (mn-* markup) behind a
+	// cloudflare challenge; chapter links sit one segment below the series.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "h1.mn-hero__title",
+			Rows:         "li.wp-manga-chapter",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        "div.reading-content img",
+			// the row text is Arabic ("الفصل 78"), so the number comes from the URL (/78--/)
+			NumberRe: `/(\d+(?:\.\d+)?)-+/?$`,
+		},
+		Domains:         []string{"paradise-bl.com"},
+		ChaptersWait:    "li.wp-manga-chapter",
+		ImageWait:       "div.reading-content",
+		SeriesPathDepth: 2,
 	},
 }
 

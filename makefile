@@ -413,7 +413,6 @@ grabber: \
 	grabber/orchisasia \
 	grabber/orvmanhwa \
 	grabber/ourfeel \
-	grabber/paradisebl \
 	grabber/paritehaber \
 	grabber/petrotechsociety \
 	grabber/phoenixscans \
@@ -1056,13 +1055,16 @@ grabber/naver:
 # open a Chrome window and may require solving an interactive challenge
 # (cloudflare). Run them one by one and solve the challenge if prompted.
 grabber/browser: \
+	grabber/arcurafansub \
 	grabber/asmotoon \
 	grabber/dragontea \
+	grabber/gaiatoon \
 	grabber/kappabeast \
 	grabber/mangakakalot \
 	grabber/manhuatop \
 	grabber/manhuaus \
 	grabber/natomanga \
+	grabber/paradisebl \
 	grabber/ravenscans \
 	grabber/setsuscans \
 	grabber/sushiscan \
@@ -1259,7 +1261,6 @@ grabber/html: \
 	grabber/anzmanga25 \
 	grabber/apollcomics \
 	grabber/archiviumbar \
-	grabber/arcurafansub \
 	grabber/arenascan \
 	grabber/artlapsa \
 	grabber/asialotuss \
@@ -1299,7 +1300,6 @@ grabber/html: \
 	grabber/flashmanga \
 	grabber/furyosociety \
 	grabber/gachiakutas \
-	grabber/gaiatoon \
 	grabber/ghostoon \
 	grabber/goddoujin \
 	grabber/godhman \
@@ -1809,8 +1809,10 @@ grabber/nyxscans:
 	go run . https://nyxscans.com/series/the-princess-kidnapped-to-a-land-without-women 11
 grabber/octopusmanga:
 	go run . https://octopusmanga.com/manga/jinx-uncensor-38d2ed-octou/ 61.5
+# uses a real (visible) browser: the cloudflare challenge never passes headless;
+# the reader's images download over plain HTTP afterwards
 grabber/paradisebl:
-	go run . https://paradise-bl.com/manga/under-the-green-light/ 39
+	go run . --browser-visible https://paradise-bl.com/manga/under-the-green-light/ 39
 grabber/piacomic:
 	go run . https://piacomic.jp/series/029fcd22bc9fd 1
 grabber/rawdex:
@@ -1873,8 +1875,9 @@ grabber/erisscans:
 	go run . https://erisscans.com/series/65e09cfaf12/ 2
 grabber/flashmanga:
 	go run . https://www.flash-manga.net/manga/all-football-talents-are-mine/ 53
+# uses a real (visible) browser: the cloudflare challenge never passes headless
 grabber/gaiatoon:
-	go run . https://gaiatoon.com/manga/i-will-become-the-villains-poison-taster/ 40
+	go run . --browser-visible https://gaiatoon.com/manga/i-will-become-the-villains-poison-taster/ 40
 grabber/ghostoon:
 	go run . https://ghostoon.com/manga/under-the-oak-tree/ 39
 grabber/goddoujin:
@@ -2086,8 +2089,9 @@ grabber/yaoiscan:
 grabber/4porncomic:
 	go run . https://4porncomic.com/comic/wireless-onahole/ 63
 
+# uses a real (visible) browser: the cloudflare challenge never passes headless
 grabber/arcurafansub:
-	go run . https://arcurafansub.com/manga/a-ghostly-song/ 24
+	go run . --browser-visible https://arcurafansub.com/manga/a-ghostly-song/ 24
 
 grabber/auntmanhwa:
 	go run . https://auntmanhwa.com/manhwa/milk-my-strawberries-uncensored/ 30
@@ -2386,7 +2390,7 @@ SMOKE_EXCLUDE += mangitto lilymanga mangaplus
 # 429, reset, 530, a non-blog page or a stalled origin from GitHub's runners, while they pass locally
 SMOKE_EXCLUDE += ler999 lonertl mangaailand mangadelsiglotvmanga mangabats legionscans asialotuss mangastep
 # headless-browser grabbers, kept off the runners (most for challenges they can't get past)
-SMOKE_EXCLUDE += comix mkissa templetoons mangafire toonz coffeemanga
+SMOKE_EXCLUDE += comix mkissa templetoons mangafire toonz coffeemanga paradisebl gaiatoon arcurafansub
 
 # every target of the grabber and grabber/html aggregates, read from this file
 # so a new site is one line there, minus SMOKE_EXCLUDE
