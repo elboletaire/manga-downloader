@@ -419,6 +419,7 @@ grabber: \
 	grabber/phoenixscans \
 	grabber/piacomic \
 	grabber/plumacomics \
+	grabber/pornhwareader \
 	grabber/projectsuki \
 	grabber/punchonemanga \
 	grabber/qimanga \
@@ -428,6 +429,7 @@ grabber: \
 	grabber/readhunters \
 	grabber/readkagura \
 	grabber/readspyxfamilymanga \
+	grabber/resetscans \
 	grabber/rimacomiplus \
 	grabber/roliascan \
 	grabber/ruahapchanhday2 \
@@ -1025,6 +1027,10 @@ grabber/stonescape:
 	go run . https://stonescape.xyz/series/only-see-you 21
 grabber/utoon:
 	go run . https://www.utoon.us/en/manga/gachiakuta.html 171
+grabber/resetscans:
+	go run . https://www.resetscans.net/en/manga/the-ultimate-of-all-ages.html 266-267
+grabber/pornhwareader:
+	go run . https://pornhwareader.com/series/345/perfect-half 100
 # uses a real (headless) browser: the chapter list/reader JSON API responses
 # are AES-encrypted client-side and the reader lazily mounts pages on scroll;
 # no cloudflare here, no --browser-visible needed
@@ -1108,7 +1114,7 @@ grabber/manhuaus:
 	go run . --browser-visible https://manhuaus.com/manga/solo-leveling-ragnarok/ 68
 
 grabber/manhuatop:
-	go run . --browser-visible https://manhuatop.org/manhua/chronicles-of-the-martial-gods-return/ 168
+	go run . --browser-visible https://manhuatop.org/manhua/infinite-evolution-starting-from-zero/ 1-2
 grabber/setsuscans:
 	go run . --browser-visible https://setsuscans.com/manga/a-story-about-accidentally-finding-out-a-girls-secret-at-school/ 13
 

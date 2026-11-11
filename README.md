@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[578 supported sites](#supported-sites)**, from big aggregators to small
+- **[580 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 578 supported sites</b></summary>
+<summary><b>Show all 580 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -671,7 +671,7 @@ environment variables.
 | [manhuanext.com](https://manhuanext.com) | English | 2026-11-02 |
 | [manhuaplus.com](https://manhuaplus.com) |  | 2026-11-02 |
 | [manhuathai.com](https://www.manhuathai.com) | Thai | 2026-11-02 |
-| [manhuatop.org](https://manhuatop.org) \* |  | 2026-10-15 |
+| [manhuatop.org](https://manhuatop.org) \* |  | 2026-11-10 |
 | [manhuaus.com](https://manhuaus.com) \* |  | 2026-10-15 |
 | [manhwa-online.com](https://manhwa-online.com) | Spanish | 2026-10-29 |
 | [manhwa18.cc](https://manhwa18.cc) | English, NSFW | 2026-11-09 |
@@ -747,6 +747,7 @@ environment variables.
 | [phoenixscans.com](https://www.phoenixscans.com) | Phoenix Scans, Italian | 2026-11-09 |
 | [piacomic.jp](https://piacomic.jp) | Japanese (Comici) | 2026-11-02 |
 | [plumacomics.com](https://plumacomics.com) | Portuguese | ❌ failing since 2026-10-26 (checked 2026-10-30) |
+| [pornhwareader.com](https://pornhwareader.com) | English, NSFW | 2026-11-10 |
 | [pornhwaz.com](https://www.pornhwaz.com) | English, mostly NSFW | 2026-11-09 |
 | [projectsuki.com](https://projectsuki.com) |  | 2026-11-09 |
 | [qimanga.com](https://qimanga.com) |  | 2026-11-09 |
@@ -769,6 +770,7 @@ environment variables.
 | [readmanga18.com](https://readmanga18.com) | English, NSFW | 2026-11-06 |
 | [readspyxfamilymanga.com](https://readspyxfamilymanga.com) | English, single series, use a chapter URL | 2026-11-09 |
 | [reapertrans.com](https://reapertrans.com) | Thai | 2026-11-09 |
+| [resetscans.net](https://www.resetscans.net) | English, Reset Scans | 2026-11-10 |
 | [rimacomiplus.jp](https://rimacomiplus.jp) | Japanese (Comici) | 2026-11-02 |
 | [ritharscans.com](https://ritharscans.com) |  | 2026-11-09 |
 | [rizzfables.com](https://rizzfables.com) |  | 2026-11-09 |
@@ -850,7 +852,7 @@ environment variables.
 | [uchuujinmangas.com](https://uchuujinmangas.com) | Spanish | 2026-11-09 |
 | [undertranslations.com](https://undertranslations.com) | Spanish | 2026-10-30 |
 | [up-manga.com](https://www.up-manga.com) | Thai | 2026-11-06 |
-| [utoon.us](https://www.utoon.us) | UToon, home of reset-scans' content | 2026-11-09 |
+| [utoon.us](https://www.utoon.us) | English, UToon | 2026-11-09 |
 | [utsukushii-bg.com](https://utsukushii-bg.com) | Bulgarian | 2026-11-09 |
 | [uzaymanga.com](https://uzaymanga.com) |  | 2026-10-18 |
 | [v7.kiryuu.to](https://v7.kiryuu.to) | Indonesian | 2026-11-02 |
