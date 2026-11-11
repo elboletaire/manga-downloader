@@ -823,10 +823,9 @@ func documentHTML(ctx context.Context, t *chromedp.Target) (string, error) {
 	return res.OuterHTML, err
 }
 
-// settledHTML is documentHTML for a page whose waitSelector has matched. A
-// challenge handing over to the page can replace the document between the two
-// calls (a stale node), so only that error retries, after waiting for the
-// selector on the new document.
+// settledHTML is documentHTML once waitSelector matched; a challenge handover can
+// replace the document in between (a stale node), so only that error retries,
+// after the selector matches again.
 func settledHTML(ctx context.Context, t *chromedp.Target, waitSelector string) (string, error) {
 	var err error
 	for attempt := range 3 {
