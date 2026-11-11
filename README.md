@@ -380,7 +380,7 @@ environment variables.
 | [berserkkmanga.com](https://berserkkmanga.com) | English, single series, use a chapter URL | 2026-11-09 |
 | [beyondtheataraxia.com](https://www.beyondtheataraxia.com) | Italian | 2026-11-09 |
 | [bibibi-comic.com](https://bibibi-comic.com) | Japanese (Comici) | 2026-11-02 |
-| [bigcomics.jp](https://bigcomics.jp) | Japanese, Big Comics (Comici) | ❌ failing since 2026-11-09 (checked 2026-11-09) |
+| [bigcomics.jp](https://bigcomics.jp) | Japanese, Big Comics (Comici) | 2026-11-11 |
 | [bigsolo.org](https://bigsolo.org) |  | 2026-10-15 |
 | [blackcloveronline.com](https://blackcloveronline.com) | Black Clover | 2026-10-29 |
 | [bluesolo.org](https://bluesolo.org) | Blue Solo, French scantrad | 2026-11-09 |
@@ -483,7 +483,7 @@ environment variables.
 | [guya.moe](https://guya.moe) | Guya, Kaguya-sama | 2026-11-11 |
 | [hachirumi.com](https://hachirumi.com) | Hachirumi, Guya instance, has an NSFW section | 2026-11-09 |
 | [hanamiheaven.org](https://hanamiheaven.org) | Portuguese, mostly NSFW | 2026-10-22 |
-| [hanayume.com](https://hanayume.com) | Japanese (Comici), free episodes only | ❌ failing since 2026-11-09 (checked 2026-11-09) |
+| [hanayume.com](https://hanayume.com) | Japanese (Comici), free episodes only | 2026-11-11 |
 | [hanmokkuscan.blogspot.com](https://hanmokkuscan.blogspot.com) | Portuguese | 2026-11-02 |
 | [harmony-scan.fr](https://harmony-scan.fr) | French | 2026-10-30 |
 | [hayacomic.jp](https://hayacomic.jp) | Japanese (Comici) | 2026-11-02 |
