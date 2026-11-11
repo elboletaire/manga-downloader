@@ -2179,7 +2179,7 @@ grabber/apenasumafa:
 	go run . https://apenasuma-fa.blogspot.com/2024/06/eu-quero-ser-um-ator_15.html 140
 
 grabber/arhentai:
-	go run . https://arhentai.net/title/a-spell-that-makes-your-dick-bigger/ 1
+	go run . https://arhentai.net/title/cucumber-market/ 1
 
 grabber/arlas:
 	go run . https://www.arlas.online/2025/05/sotsugyou-album-no-kanojotachi.html 12
