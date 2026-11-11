@@ -268,6 +268,13 @@ func TestGetPlainHTMLImageURL(t *testing.T) {
 				`</div><script>let realUrl = ` + "`https://cdn.example.org/uploads/${uid}`" + `;</script></body></html>`,
 			want: []string{"https://cdn.example.org/uploads/1.avif", "https://cdn.example.org/uploads/2.avif"},
 		},
+		{
+			name:     "only the uploaded pages, not the reader's icon and ads (templetoons.com)",
+			selector: `img[src*="/uploads/"]`,
+			html: `<html><body><img src="/icon.webp"/><div data-index="0"><img src="https://media.templetoons.com/file/t/uploads/series/s/1/01.jpg"/></div>` +
+				`<img src="https://templetoons.com/promo/reader-ad-pc.webp"/></body></html>`,
+			want: []string{"https://media.templetoons.com/file/t/uploads/series/s/1/01.jpg"},
+		},
 	}
 
 	for _, c := range cases {

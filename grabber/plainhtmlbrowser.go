@@ -56,7 +56,17 @@ type BrowserSiteSelector struct {
 	// Novel is a CSS selector for a marker that the series page is a novel,
 	// which has no images to download; Test refuses such a series.
 	Novel string
+	// ReaderScroll scrolls the reader page before its HTML is taken, for
+	// readers that mount their page images only as they scroll into view
+	ReaderScroll *browser.Scroll
+	// PageAccept overrides the Accept header the pages download with, for an
+	// image host that refuses the browser's image Accept (it lists image/webp)
+	PageAccept string
 }
+
+// templetoonsReaderReadyJS is true once every page slot of the reader has its image
+const templetoonsReaderReadyJS = `(function(){var s=document.querySelectorAll("[data-index]");if(!s.length)return false;` +
+	`for(var i=0;i<s.length;i++)if(!s[i].querySelector('img[src*="/uploads/"]'))return false;return true})()`
 
 // errNovel refuses a series whose Novel selector matches: its chapters are text
 var errNovel = errors.New("this is a novel, which manga-downloader can't download")
@@ -200,21 +210,24 @@ var browserSelectors = []BrowserSiteSelector{
 	// templetoons.com (Temple Scan): Next.js RSC site behind a cloudflare
 	// Turnstile challenge (plain HTTP is redirected to /challenge), which a
 	// headless browser clears in a few seconds. Each row is itself the <a>
-	// (Link empty), with the chapter number in its label. Reader pages embed
-	// the page list in the RSC payload under an obfuscated key, handled by
-	// getPlainHTMLImageURL, so Image is unused but kept as a fallback.
+	// (Link empty), with the chapter number in its label. The reader mounts
+	// each page image only once it scrolls into view, so it's scrolled until
+	// every page slot has its image. The pages are on media.templetoons.com's
+	// /uploads/, which answers 403 (Cloudflare) to an Accept listing image/webp.
 	{
 		SiteSelector: SiteSelector{
 			Title:        "h1#series-title",
 			Rows:         `a[id^="chapter-link-"]`,
 			Chapter:      "span.font-semibold",
 			ChapterTitle: "span.font-semibold",
-			Image:        "img",
+			Image:        `img[src*="/uploads/"]`,
 		},
 		Domains:         []string{"templetoons.com"},
 		ChaptersWait:    `a[id^="chapter-link-"]`,
 		ImageWait:       "img",
 		SeriesPathDepth: 2,
+		ReaderScroll:    &browser.Scroll{Done: templetoonsReaderReadyJS, Pause: 500 * time.Millisecond},
+		PageAccept:      "image/*,*/*;q=0.8",
 	},
 	// ravenscans.org: Themesia behind a cloudflare challenge only a visible window
 	// clears; chapters sit at one path segment, so they find their series through .allc.
@@ -426,7 +439,13 @@ func (m *PlainHTMLBrowser) Test() (bool, error) {
 func (m *PlainHTMLBrowser) FetchChapter(f Filterable) (*Chapter, error) {
 	chap := f.(*PlainHTMLChapter)
 
-	html, err := browser.GetHTML(chap.URL, m.selector.ImageWait, 0)
+	var html string
+	var err error
+	if m.selector.ReaderScroll != nil {
+		html, err = browser.GetHTMLWithScroll(chap.URL, m.selector.ImageWait, *m.selector.ReaderScroll, 0)
+	} else {
+		html, err = browser.GetHTML(chap.URL, m.selector.ImageWait, 0)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -435,5 +454,11 @@ func (m *PlainHTMLBrowser) FetchChapter(f Filterable) (*Chapter, error) {
 		return nil, err
 	}
 
-	return m.chapterFromDoc(f, doc), nil
+	chapter := m.chapterFromDoc(f, doc)
+	if m.selector.PageAccept != "" {
+		for i := range chapter.Pages {
+			chapter.Pages[i].Headers = map[string]string{"Accept": m.selector.PageAccept}
+		}
+	}
+	return chapter, nil
 }
