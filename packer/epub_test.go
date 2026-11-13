@@ -709,6 +709,14 @@ func TestChapterLabel(t *testing.T) {
 			t.Errorf("chapterLabel(%v, %q) = %q, want %q", tt.number, tt.title, got, tt.want)
 		}
 	}
+
+	// a whole volume served as one release keeps its own label
+	for title, want := range map[string]string{"Naruto Uzumaki": "Volume 1 - Naruto Uzumaki", "": "Volume 1"} {
+		volume := &grabber.Chapter{Number: 1, Title: title, Label: grabber.Label{Style: grabber.LabelVolume}}
+		if got := chapterLabel(volume); got != want {
+			t.Errorf("chapterLabel(volume %q) = %q, want %q", title, got, want)
+		}
+	}
 }
 
 func TestPackBundleEPUBLabelsChapters(t *testing.T) {
