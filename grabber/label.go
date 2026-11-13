@@ -14,6 +14,9 @@ var chapterWords = map[string]string{"": "Chapter", "es": "Capítulo", "fr": "Ch
 // partWord names the part of a chapter split over several posts
 const partWord = "Part"
 
+// volumeWord names a whole volume a site serves as one release
+const volumeWord = "Volume"
+
 // NumberLabel names a chapter by its number alone: "Chapter 12", "Chapter 10.5"
 func NumberLabel(number float64) string {
 	return NumberTextLabel(strconv.FormatFloat(number, 'f', -1, 64))
@@ -42,6 +45,11 @@ const (
 	// LabelUnnumbered is the title, or the chapter word alone (a one-shot
 	// numbered by its position in the list)
 	LabelUnnumbered
+	// LabelVolume is a whole volume the site serves as one release, numbered as
+	// volumes are: the volume word and number, then " - " and the title
+	// ("Volume 3 - Title"). It says "Volume" so it's never taken, or named, as
+	// the chapter of that number
+	LabelVolume
 )
 
 // Label is what ChapterLabel composes a chapter's label from, besides its
@@ -100,6 +108,11 @@ func (c Chapter) GetLabel() string {
 		if title == "" {
 			return word
 		}
+	case LabelVolume:
+		if title == "" {
+			return volumeWord + " " + number
+		}
+		return volumeWord + " " + number + " - " + title
 	}
 	return title
 }
@@ -207,6 +220,12 @@ func ChapterOf(f Filterable) *Chapter {
 		Locked: LockedOf(f),
 		Label:  labelOf(f),
 	}
+}
+
+// IsVolume reports whether a listed chapter is a whole volume the site serves
+// as one release (LabelVolume), which its label names in full
+func IsVolume(f Filterable) bool {
+	return labelOf(f).Style == LabelVolume
 }
 
 // Unnumbered reports whether a listed chapter has no number the site gives it

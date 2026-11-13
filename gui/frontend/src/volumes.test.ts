@@ -6,10 +6,12 @@ import {
   groupParts,
   isSiteVolumes,
   LOOSE,
+  linkedRow,
   listedVolumes,
   parseVolumes,
   partRows,
   partsTitle,
+  plainRows,
   selectedIn,
   siteVolumes,
   volumesSummary,
@@ -428,5 +430,25 @@ describe('volumesSummary', () => {
       text: "Volums del lloc: 55, 15 capítols fora de cap volum",
       ranges: '61:598-603',
     });
+  });
+});
+
+// #465: a list loaded from a chapter or volume link opens on the release it names
+describe('linkedRow', () => {
+  const linked = list.map((c) => (c.number === 4 ? { ...c, linked: true } : c));
+
+  it('finds the linked chapter in a plain list', () => {
+    expect(linkedRow(plainRows(linked))).toBe(4);
+  });
+
+  it('finds it under its volume in a grouped list', () => {
+    const rows = groupedRows(groupChapters(linked, parseVolumes('')), new Set(), en);
+    const pos = linkedRow(rows);
+    expect(rows[pos]).toMatchObject({ kind: 'chapter', chapter: { number: 4, linked: true } });
+  });
+
+  it("is -1 while the linked chapter's group is folded, and without one", () => {
+    expect(linkedRow(groupedRows(groupChapters(linked, parseVolumes('')), new Set(['volume-2']), en))).toBe(-1);
+    expect(linkedRow(plainRows(list))).toBe(-1);
   });
 });

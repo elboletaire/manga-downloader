@@ -243,6 +243,14 @@ export type GroupedRow =
 /** The key of the "Not in a volume" group; volumes key by "volume-N" */
 export const LOOSE = 'loose';
 
+/**
+ * The row of the release the loaded link names (Chapter.linked), -1 when no
+ * row shows it: there's none, or its group is folded
+ */
+export function linkedRow(rows: GroupedRow[]): number {
+  return rows.findIndex((row) => row.kind === 'chapter' && row.chapter.linked === true);
+}
+
 /** The rows of a list shown ungrouped */
 export function plainRows(chapters: Chapter[]): GroupedRow[] {
   return chapters.map((chapter) => ({ kind: 'chapter', chapter, inGroup: false }));

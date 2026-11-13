@@ -144,6 +144,45 @@ func TestChapterLabelHelpers(t *testing.T) {
 	}
 }
 
+// TestChapterLabelVolume names a whole volume served as one release by the
+// volume word, in its label and in messages, so it never reads (or is filed)
+// as the chapter of the same number
+func TestChapterLabelVolume(t *testing.T) {
+	for _, tt := range []struct {
+		title  string
+		number float64
+		want   string
+	}{
+		{"Naruto Uzumaki", 1, "Volume 1 - Naruto Uzumaki"},
+		{"", 12, "Volume 12"},
+		{" Two\nLines ", 3, "Volume 3 - Two Lines"},
+		{"", 10.5, "Volume 10.5"},
+	} {
+		volume := &Chapter{Title: tt.title, Number: tt.number, Label: Label{Style: LabelVolume}}
+		if got := ChapterLabel(volume); got != tt.want {
+			t.Errorf("ChapterLabel(%q, %v) = %q, want %q", tt.title, tt.number, got, tt.want)
+		}
+		if got := ChapterName(volume); got != tt.want {
+			t.Errorf("ChapterName(%q, %v) = %q, want %q", tt.title, tt.number, got, tt.want)
+		}
+		if !IsVolume(volume) {
+			t.Errorf("IsVolume(%q) = false", tt.title)
+		}
+	}
+
+	// a listing entry passes it on to the chapter fetched from it
+	listed := &MangafireChapter{Chapter: Chapter{Title: "Naruto Uzumaki", Number: 1, Label: Label{Style: LabelVolume}}}
+	fetched := &Chapter{Title: listed.GetTitle(), Number: listed.GetNumber(), Label: labelOf(listed)}
+	if !IsVolume(listed) || ChapterLabel(fetched) != ChapterLabel(listed) {
+		t.Errorf("fetched label = %q, listed %q", ChapterLabel(fetched), ChapterLabel(listed))
+	}
+	// the same title as a chapter isn't one, and is named by its number
+	chapter := &Chapter{Title: "Naruto Uzumaki", Number: 1, Label: Label{Style: LabelNumbered}}
+	if IsVolume(chapter) || ChapterName(chapter) != "Chapter 1 (Naruto Uzumaki)" {
+		t.Errorf("chapter: IsVolume = %v, ChapterName = %q", IsVolume(chapter), ChapterName(chapter))
+	}
+}
+
 // TestChapterLabelPart tells the halves of one episode apart: a numeric part
 // reads "Part 2", a word part ("前編") reads as is, and either goes with the title
 func TestChapterLabelPart(t *testing.T) {

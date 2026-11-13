@@ -815,6 +815,14 @@ func TestAllChaptersLabel(t *testing.T) {
 	}
 }
 
+// a link's release is downloaded alone, its range naming a bundle of it as a typed one would
+func TestLinkedRanges(t *testing.T) {
+	rngs, text := linkedRanges(&grabber.Chapter{Number: 10.5})
+	if len(rngs) != 1 || rngs[0].Begin != 10.5 || rngs[0].End != 10.5 || text != "10.5" {
+		t.Errorf("linkedRanges = %v, %q; want [10.5-10.5], \"10.5\"", rngs, text)
+	}
+}
+
 // only a "y" answer confirms; the answered line is drawn once, not repeated
 func TestReadConfirm(t *testing.T) {
 	const label = "Do you want to download all 5 chapters"

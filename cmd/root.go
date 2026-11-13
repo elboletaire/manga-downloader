@@ -111,8 +111,23 @@ func Run(cmd *cobra.Command, args []string) {
 	// true only if the user typed a range; distinguishes it from the
 	// synthesised "everything" range below
 	rangeRequested := len(args) > 1 && !allRequested
-	// ranges argument is not provided, or is "all"
-	if len(args) == 1 || allRequested {
+	// a chapter or volume link with no range downloads what it names
+	linked := -1
+	if len(args) == 1 {
+		var named bool
+		linked, named = grabber.LinkedIndex(series.Site, chapters)
+		if named && linked < 0 {
+			yellow("The link's chapter isn't in this listing (another language?), so the whole series is offered instead")
+		}
+	}
+	switch {
+	case linked >= 0:
+		chosen := chapters[linked]
+		color.Blue("Downloading %s, the one the link names (give a range, or \"all\", for others)", core.ReleaseLabel(chosen, false, false))
+		rngs, settings.Range = linkedRanges(chosen)
+		chapters = grabber.Filterables{chosen}
+	case len(args) == 1 || allRequested:
+		// ranges argument is not provided, or is "all"
 		if len(args) == 1 {
 			if err := confirmAll(allChaptersLabel(chapters)); err != nil {
 				yellow("Canceled by user")
@@ -121,7 +136,7 @@ func Run(cmd *cobra.Command, args []string) {
 		}
 
 		rngs, settings.Range = allChaptersRanges(chapters)
-	} else {
+	default:
 		// ranges parsing
 		settings.Range = getRangesArg(args)
 		rngs, err = ranges.Parse(settings.Range)
@@ -138,8 +153,11 @@ func Run(cmd *cobra.Command, args []string) {
 		)
 	}
 
-	// sort and filter specified ranges
-	chapters = chapters.FilterRanges(rngs)
+	// sort and filter specified ranges; the linked release is already the one
+	// chapter, and filtering by its number would add its other releases back
+	if linked < 0 {
+		chapters = chapters.FilterRanges(rngs)
+	}
 
 	if len(chapters) == 0 {
 		yellow("No chapters found for the specified ranges")
@@ -499,6 +517,13 @@ func toMetaFunc(c *color.Color) func(string) string {
 
 // allChaptersLabel is the prompt for downloading every listed chapter, which
 // says how many of them the listing marks as locked
+// linkedRanges returns the range of the release a link names and its text,
+// which names a bundle of it as a typed range would
+func linkedRanges(chosen grabber.Filterable) ([]ranges.Range, string) {
+	rngs := []ranges.Range{{Begin: chosen.GetNumber(), End: chosen.GetNumber()}}
+	return rngs, rngs[0].String()
+}
+
 // allChaptersRanges returns the range of every listed chapter and its text, which
 // names a bundle of them as a typed range would
 func allChaptersRanges(chapters grabber.Filterables) ([]ranges.Range, string) {

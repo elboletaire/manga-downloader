@@ -548,9 +548,13 @@ grabber/manganato:
 # windowed pager with "Next page" arrows; the second series is short enough
 # (3 pages) that the site renders numbered buttons only, and its chapter 1
 # lives on the last page — the run exits 1 unless every page was harvested.
+# The third run is a volume link (#465), which lists the title's volumes and
+# downloads one whole from the volume reader; --skip-pages keeps it to 20 of
+# its ~180 pages.
 grabber/mangafire:
 	go run . https://mangafire.to/title/dkw-one-piece 1050
 	go run . https://mangafire.to/title/9062q-itoko-no-onee-chan-ni-amaechau 1
+	go run . --skip-pages 21--1 https://mangafire.to/title/92kk8-naruto/volume/127605 1
 
 grabber/fanfox:
 	go run . https://fanfox.net/manga/chainsaw_man/ 232

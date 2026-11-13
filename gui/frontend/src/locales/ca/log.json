@@ -11,6 +11,8 @@
   "supportKofi": "Convida'm a un cafè a Ko-fi",
   "loaded_one": "S'ha carregat {{title}}: {{count}} capítol",
   "loaded_other": "S'ha carregat {{title}}: {{count}} capítols",
+  "linked": "Seleccionat {{label}}, el que indica l'enllaç",
+  "linkedMissing": "El capítol de l'enllaç no és en aquesta llista (un altre idioma?), així que no s'ha seleccionat res",
   "downloading_one": "Descarregant {{count}} capítol de {{title}}",
   "downloading_other": "Descarregant {{count}} capítols de {{title}}",
   "downloadingUpdate": "Descarregant l'actualització {{version}}…",

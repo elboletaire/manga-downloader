@@ -48,6 +48,12 @@ type Mangafire struct {
 	readerBase string // canonical reader-URL base, e.g. https://mangafire.to/title/dkw-one-piece
 	chapters   Filterables
 	languages  FilterOptions // the title's languages, read from the dropdown by load
+	// volumeID is the volume a volume link names (0 for any other URL): the
+	// title's volumes are listed then, instead of its chapters
+	volumeID int64
+	// linkedID is the Chapter.ID of the release a chapter or volume link
+	// names, "" for a series URL (see LinkedID)
+	linkedID string
 }
 
 func NewMangafire(g *Grabber) *Mangafire {
@@ -57,24 +63,73 @@ func NewMangafire(g *Grabber) *Mangafire {
 // MangafireChapter represents a Mangafire chapter
 type MangafireChapter struct {
 	Chapter
-	// URL is the chapter reader page URL, rendered in a browser to capture the
-	// signed pages-API response
+	// URL is the reader page URL, rendered in a browser to capture the signed
+	// pages-API response
 	URL string
-	// Id is the numeric chapter id
+	// Id is the numeric id of the chapter, or of the volume
 	Id int64
+	// reader is the reader the release opens in, mangafireChapter when empty
+	reader string
 }
 
-// mangafireChapterRe matches chapter reader URLs (/title/{slug}/chapter/{id}
-// and the legacy /manga/{slug}/chapter/{id}). The capturing group is the
-// series URL prefix.
-var mangafireChapterRe = regexp.MustCompile(`(?i)^(https?://(?:www\.)?mangafire\.to/(?:title|manga)/[^/?#]+)/chapter/`)
+// The site serves a title chapter by chapter and, for some titles, as whole
+// volumes too. A volume is a release of its own, not a group of the chapters:
+// it has its own id, reader (/title/{slug}/volume/{id}) and pages call.
+const (
+	mangafireChapter = "chapter"
+	mangafireVolume  = "volume"
+)
 
-// resolveSeriesURL rewrites m.URL to the series URL when it is a chapter
-// reader URL. Series URLs are unchanged.
-func (m *Mangafire) resolveSeriesURL() {
-	if match := mangafireChapterRe.FindStringSubmatch(m.URL); match != nil {
-		m.URL = match[1]
+// pagesAPI returns the path of the call the reader gets its pages from:
+// /api/chapters/{id}, or /api/volumes/{id}
+func (c *MangafireChapter) pagesAPI() string {
+	reader := c.reader
+	if reader == "" {
+		reader = mangafireChapter
 	}
+	return fmt.Sprintf("/api/%ss/%d", reader, c.Id)
+}
+
+// mangafireReaderRe matches reader URLs: /title/{slug}/chapter/{id}, the legacy
+// /manga/{slug}/chapter/{id}, and a volume's /title/{slug}/volume/{id}. The
+// capturing groups are the series URL prefix, the reader and the id.
+var mangafireReaderRe = regexp.MustCompile(`(?i)^(https?://(?:www\.)?mangafire\.to/(?:title|manga)/[^/?#]+)/(chapter|volume)/(\d*)`)
+
+// resolveSeriesURL rewrites m.URL to the series URL when it is a reader URL,
+// keeping the release it names (see volumeID and linkedID). Series URLs are
+// unchanged, and so is what an earlier call kept.
+func (m *Mangafire) resolveSeriesURL() {
+	match := mangafireReaderRe.FindStringSubmatch(m.URL)
+	if match == nil {
+		return
+	}
+	m.URL = match[1]
+	id, err := strconv.ParseInt(match[3], 10, 64)
+	if err != nil {
+		// a reader link without an id names nothing: it lists the chapters,
+		// like the series link
+		return
+	}
+	if strings.EqualFold(match[2], mangafireVolume) {
+		m.volumeID = id
+		m.linkedID = mangafireVolumeID(id)
+		return
+	}
+	m.linkedID = strconv.FormatInt(id, 10)
+}
+
+// LinkedID returns the Chapter.ID of the chapter or volume the URL names, ""
+// for a series URL. It reads the URL itself, so it's right before the title
+// and chapters are fetched too.
+func (m *Mangafire) LinkedID() string {
+	m.resolveSeriesURL()
+	return m.linkedID
+}
+
+// mangafireVolumeID is a volume's Chapter.ID: chapters have ids of their own,
+// so it says what it is
+func mangafireVolumeID(id int64) string {
+	return mangafireVolume + "-" + strconv.FormatInt(id, 10)
 }
 
 // Test returns true if the URL is a mangafire.to series URL
@@ -109,13 +164,14 @@ func (m *Mangafire) FetchChapters() (Filterables, []error) {
 func (m *Mangafire) FetchChapter(f Filterable) (*Chapter, error) {
 	mchap := f.(*MangafireChapter)
 
-	// rendering the reader page makes the SPA call /api/chapters/{id} with a
-	// valid vrf; we intercept that single response (which carries the full
-	// pages list) instead of trying to sign the call ourselves
+	// rendering the reader page makes the SPA call /api/chapters/{id} (or
+	// /api/volumes/{id}) with a valid vrf; we intercept that single response
+	// (which carries the full pages list) instead of trying to sign the call
+	// ourselves
 	responses, _, err := browser.GetAPIResponses(
 		mchap.URL,
 		".reader-img",
-		fmt.Sprintf("/api/chapters/%d", mchap.Id),
+		mchap.pagesAPI(),
 		"",
 		0,
 		0,
@@ -180,6 +236,11 @@ func (m *Mangafire) load() error {
 		return err
 	}
 
+	if m.volumeID != 0 {
+		m.loadErr = m.loadVolumes(hid)
+		return m.loadErr
+	}
+
 	// the language dropdown is only in the DOM once it's opened, so it's read
 	// in this same render, which also picks the requested language. An unknown
 	// language is only an error once the title's own list is known.
@@ -213,38 +274,14 @@ func (m *Mangafire) load() error {
 		return m.loadErr
 	}
 
-	m.readerBase = mangafireBase + "/title/" + hid // fallback if the title call is missed
-	titlePrefix := "/api/titles/" + hid + "?"
-	chaptersPrefix := "/api/titles/" + hid + "/chapters"
-
 	// first pass: the title-info response gives the clean title and the
 	// canonical reader-URL base
-	for _, r := range responses {
-		if !strings.Contains(r.URL, titlePrefix) {
-			continue
-		}
-		info := struct {
-			Data struct {
-				Title string `json:"title"`
-				URL   string `json:"url"`
-			} `json:"data"`
-		}{}
-		if err := json.Unmarshal([]byte(r.Body), &info); err != nil {
-			continue
-		}
-		if info.Data.Title != "" {
-			m.title = info.Data.Title
-		}
-		if info.Data.URL != "" {
-			m.readerBase = mangafireBase + info.Data.URL
-		}
-		break
-	}
+	m.readTitle(responses, hid)
 
 	// second pass: collect chapters from every captured feed page
 	// the site's default language list is also captured before switching, so
 	// only the requested one is kept
-	feedPrefix := chaptersPrefix
+	feedPrefix := "/api/titles/" + hid + "/chapters"
 	if lang.code != "" {
 		feedPrefix += "?language=" + lang.code + "&"
 	}
@@ -275,6 +312,147 @@ func (m *Mangafire) load() error {
 	return m.loadErr
 }
 
+// readTitle reads the clean title and the canonical reader-URL base out of the
+// title-info response (/api/titles/{hid}?...), which every series render captures
+func (m *Mangafire) readTitle(responses []browser.APIResponse, hid string) {
+	m.readerBase = mangafireBase + "/title/" + hid // fallback if the title call is missed
+	titlePrefix := "/api/titles/" + hid + "?"
+	for _, r := range responses {
+		if !strings.Contains(r.URL, titlePrefix) {
+			continue
+		}
+		info := struct {
+			Data struct {
+				Title string `json:"title"`
+				URL   string `json:"url"`
+			} `json:"data"`
+		}{}
+		if err := json.Unmarshal([]byte(r.Body), &info); err != nil {
+			continue
+		}
+		if info.Data.Title != "" {
+			m.title = info.Data.Title
+		}
+		if info.Data.URL != "" {
+			m.readerBase = mangafireBase + info.Data.URL
+		}
+		break
+	}
+}
+
+// loadVolumes is load for a volume link: it lists the title's volumes, each a
+// release downloaded whole from its own reader, instead of its chapters. The
+// series page asks for every volume of every language in one call, so the list
+// costs a single render with no pager to click through, however long the
+// series is.
+func (m *Mangafire) loadVolumes(hid string) error {
+	volumesPath := "/api/titles/" + hid + "/volumes"
+	// the page is rendered once its chapter rows show, which the volumes call
+	// may not have answered by then, so the setup script waits for it
+	responses, _, err := browser.GetAPIResponses(
+		m.URL,
+		".title-detail__row-link",
+		"/api/titles/"+hid,
+		"",
+		0,
+		0,
+		mangafireAwaitJS(volumesPath),
+	)
+	if err != nil {
+		return fmt.Errorf("error fetching volumes: %w", err)
+	}
+	m.readTitle(responses, hid)
+
+	volumes, languages, err := mangafireVolumes(parseMangafireChapters(responses, volumesPath), m.volumeID, m.Settings.Language)
+	m.languages = languages
+	if err != nil {
+		var unavailable *UnavailableFilterError
+		if errors.As(err, &unavailable) {
+			return err
+		}
+		return fmt.Errorf("%w in %s", err, m.URL)
+	}
+
+	for _, v := range volumes {
+		m.chapters = append(m.chapters, &MangafireChapter{
+			Chapter: Chapter{
+				Number:   v.Number,
+				Title:    v.Name,
+				Language: v.Language,
+				ID:       mangafireVolumeID(v.Id),
+				Volume:   mangafireVolumeNumber(v.Number),
+				Label:    Label{Style: LabelVolume},
+			},
+			URL:    fmt.Sprintf("%s/%s/%d", m.readerBase, mangafireVolume, v.Id),
+			Id:     v.Id,
+			reader: mangafireVolume,
+		})
+	}
+
+	return nil
+}
+
+// mangafireVolumes picks the volumes a volume link lists out of the title's
+// volumes of every language: those in the --language given or, without one
+// (or with "all"), in the language of the linked volume. languages are the
+// ones the title has volumes in, with the linked volume's as Current.
+func mangafireVolumes(items []mangafireChapterItem, linked int64, language string) (volumes []mangafireChapterItem, languages FilterOptions, err error) {
+	seen := map[string]bool{}
+	for _, v := range items {
+		if v.Id == linked {
+			languages.Current = v.Language
+		}
+		// like the chapters' dropdown, a language with no code to type is left out
+		if !seen[v.Language] && mangafireLabelOf(v.Language) != "" {
+			languages.Values = append(languages.Values, v.Language)
+		}
+		seen[v.Language] = true
+	}
+	if len(items) == 0 {
+		return nil, languages, errors.New("no volumes found")
+	}
+
+	lang, langErr := mangafireLanguage(language)
+	code := lang.code
+	switch {
+	case langErr != nil || (code != "" && !seen[code]):
+		return nil, languages, &UnavailableFilterError{Filter: "language", Value: language, Available: languages.Values}
+	case code == "" && languages.Current == "":
+		return nil, languages, fmt.Errorf("volume %d not found", linked)
+	case code == "":
+		code = languages.Current
+	}
+
+	for _, v := range items {
+		if v.Language == code {
+			volumes = append(volumes, v)
+		}
+	}
+	return volumes, languages, nil
+}
+
+// mangafireVolumeNumber returns a volume's number as Chapter.Volume takes it:
+// whole, 0 (unknown) for anything else
+func mangafireVolumeNumber(number float64) int {
+	if number < 1 || number != float64(int(number)) {
+		return 0
+	}
+	return int(number)
+}
+
+// mangafireAwaitJS returns an async script that waits, for 5 seconds at most,
+// until the page's own call to path has finished (the browser lists it as a
+// loaded resource then). It makes no request, so it resolves to wait: false.
+func mangafireAwaitJS(path string) string {
+	quoted, _ := json.Marshal(path)
+	return `(async function(){
+var path=` + string(quoted) + `;
+var done=function(){return performance.getEntriesByType("resource").some(function(e){return e.name.indexOf(path)!==-1})};
+for(var i=0;i<25&&!done();i++)await new Promise(function(r){setTimeout(r,200)});
+return JSON.stringify({wait:false,result:null});
+})()`
+}
+
 // hid returns the title id from the URL, e.g. "dkw" for both the current
 // https://mangafire.to/title/dkw-one-piece format and the legacy
 // https://mangafire.to/manga/one-piecee.dkw one
@@ -292,7 +470,8 @@ func (m *Mangafire) hid() (string, error) {
 
 // parseMangafireChapters collects the chapter items out of the captured API
 // responses whose URL matches chaptersPrefix (one response per chapter-list
-// page). The api returns official and unofficial uploads of the same number as
+// page). The volumes list has the same shape, so it's read with it too, from
+// its single response. The api returns official and unofficial uploads of the same number as
 // separate items, and every one is kept: each is a release of its own. Items
 // keep their first-seen order, which is the site's own list order.
 func parseMangafireChapters(responses []browser.APIResponse, chaptersPrefix string) []mangafireChapterItem {
@@ -331,7 +510,7 @@ type mangafireChapterItem struct {
 	Number   float64 `json:"number"`
 	Name     string  `json:"name"`
 	Language string  `json:"language"`
-	Type     string  `json:"type"` // "official" or "unofficial"
+	Type     string  `json:"type"` // "official" or "unofficial"; a volume has none
 }
 
 // mangafirePage is one entry of the reader's pages list
@@ -453,6 +632,16 @@ func mangafireOptions(d mangafireDropdown) FilterOptions {
 	options.Current = mangafireCodeOf(d.Selected)
 
 	return options
+}
+
+// mangafireLabelOf returns the dropdown label of a code, "" when unknown
+func mangafireLabelOf(code string) string {
+	for _, l := range mangafireLangs {
+		if l.code == code {
+			return l.label
+		}
+	}
+	return ""
 }
 
 // mangafireCodeOf returns the code of a dropdown label, "" when unknown
