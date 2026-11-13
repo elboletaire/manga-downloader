@@ -269,11 +269,13 @@ Volume files (`--volumes`) get their own default name while the template is
 left as is:
 
 ~~~
-{{.Series}} Vol. {{printf "%02d" .Volume}} ({{.Number}}){{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
+{{.Series}} Vol. {{printf "%02d" .Volume}}{{if .Number}} ({{.Number}}){{end}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
 ~~~
 
 A custom template names them too, with `{{.Number}}` being the runs the volume
 holds (`1-7`, or `1-10,13-28` when it has a gap) and `{{.Title}}` `Vol. 01`.
+`{{.Number}}` is empty for a volume a site serves whole (a mangafire.to volume
+link), which holds no chapter numbers.
 
 `pad` zero-pads a number's whole part and keeps its decimals: `{{pad .Number 4}}`
 is `0005` for chapter 5 and `0010.5` for 10.5. This template, for instance,
