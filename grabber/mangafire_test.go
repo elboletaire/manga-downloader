@@ -313,11 +313,14 @@ func TestMangafireResolveSeriesURL(t *testing.T) {
 		wanted string
 		// volume is the id a volume link names, 0 for every other URL
 		volume int64
+		// linked is the Chapter.ID of the release the link names, "" for none
+		linked string
 	}{
 		{
 			name:   "chapter URL resolves to series URL",
 			input:  "https://mangafire.to/title/dkw-one-piece/chapter/9485827",
 			wanted: "https://mangafire.to/title/dkw-one-piece",
+			linked: "9485827",
 		},
 		{
 			// #465: a volume link used to be rendered as a series page, which
@@ -326,12 +329,14 @@ func TestMangafireResolveSeriesURL(t *testing.T) {
 			input:  "https://mangafire.to/title/92kk8-naruto/volume/127605",
 			wanted: "https://mangafire.to/title/92kk8-naruto",
 			volume: 127605,
+			linked: "volume-127605",
 		},
 		{
 			name:   "volume URL with www, case, query and fragment",
 			input:  "https://WWW.MangaFire.to/title/92kk8-naruto/Volume/127605?page=3#top",
 			wanted: "https://WWW.MangaFire.to/title/92kk8-naruto",
 			volume: 127605,
+			linked: "volume-127605",
 		},
 		{
 			// nothing says which volume, so it lists the chapters
@@ -343,11 +348,13 @@ func TestMangafireResolveSeriesURL(t *testing.T) {
 			name:   "www. prefix preserved",
 			input:  "https://www.mangafire.to/title/dkw-one-piece/chapter/9485827",
 			wanted: "https://www.mangafire.to/title/dkw-one-piece",
+			linked: "9485827",
 		},
 		{
 			name:   "legacy /manga/ format",
 			input:  "https://mangafire.to/manga/one-piecee.dkw/chapter/9485827",
 			wanted: "https://mangafire.to/manga/one-piecee.dkw",
+			linked: "9485827",
 		},
 		{
 			name:   "series URL unchanged",
@@ -381,11 +388,28 @@ func TestMangafireResolveSeriesURL(t *testing.T) {
 			if m.volumeID != c.volume {
 				t.Errorf("volumeID = %d, want %d", m.volumeID, c.volume)
 			}
+			// a second resolve, as load makes after LinkedID, keeps what the
+			// link named although the URL is the series' now
+			if got := m.LinkedID(); got != c.linked {
+				t.Errorf("LinkedID() = %q, want %q", got, c.linked)
+			}
 			// what load asks the title's API with
 			if hid, err := m.hid(); c.wanted != "https://mangafire.to/" && (err != nil || hid == "") {
 				t.Errorf("hid() = %q, %v after resolving", hid, err)
 			}
 		})
+	}
+}
+
+// LinkedID is read before the title and chapters are fetched (the CLI and the
+// app ask once the series is listed, but nothing stops an earlier call)
+func TestMangafireLinkedIDBeforeLoad(t *testing.T) {
+	m := &Mangafire{Grabber: &Grabber{URL: "https://mangafire.to/title/92kk8-naruto/chapter/1286995"}}
+	if got := m.LinkedID(); got != "1286995" {
+		t.Errorf("LinkedID() = %q, want 1286995", got)
+	}
+	if m.URL != "https://mangafire.to/title/92kk8-naruto" {
+		t.Errorf("URL = %q, want the series URL", m.URL)
 	}
 }
 

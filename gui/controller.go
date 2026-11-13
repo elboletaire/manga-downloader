@@ -213,6 +213,9 @@ type Controller struct {
 	// cancels log once
 	cancelling bool
 	selected   []bool
+	// linked is the position of the release the loaded URL names (a chapter or
+	// volume link), -1 when it names none or the list doesn't hold it
+	linked int
 	// hasDuplicates is core.HasDuplicateChapterNumbers for the loaded list, and
 	// hasGroupDuplicates is core.HasGroupDuplicates
 	hasDuplicates      bool
@@ -289,6 +292,7 @@ func NewController(settings *grabber.Settings, notifyFn func()) *Controller {
 		bringToFront: browser.BringToFront,
 		settings:     settings,
 		prefs:        defaultPrefs(),
+		linked:       -1,
 	}
 	notice.SetHandler(func(level notice.Level, msg string) {
 		lvl := LogInfo
@@ -497,6 +501,7 @@ func (c *Controller) abortLoad(err error) {
 	c.loading = false
 	c.loadErr = err
 	c.series = nil
+	c.linked = -1
 	c.selected = nil
 	c.selGen++
 	c.mu.Unlock()
@@ -524,6 +529,7 @@ func (c *Controller) FinishLoad(url string) error {
 	c.loadErr = err
 	if err != nil {
 		c.series = nil
+		c.linked = -1
 		c.selected = nil
 		c.selGen++
 	}
@@ -619,6 +625,12 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	c.series = series
 	c.selGen++
 	c.selected = make([]bool, len(series.Chapters))
+	// a chapter or volume link lands on what it names: it starts selected
+	linked, named := grabber.LinkedIndex(series.Site, series.Chapters)
+	if linked >= 0 && !c.selectable(linked) {
+		linked = -1
+	}
+	c.linked = linked
 	c.hasDuplicates = core.HasDuplicateChapterNumbers(series.Chapters)
 	c.hasGroupDuplicates = core.HasGroupDuplicates(series.Chapters)
 	c.siteVolumes = core.SiteVolumes(series.Chapters)
@@ -626,6 +638,13 @@ func (c *Controller) load(url string, s *grabber.Settings) error {
 	c.volumesText = ""
 	c.resetResultsLocked()
 	c.appendMsgLocked(LogInfo, msg("log.loaded", map[string]any{"title": series.Title, "count": len(series.Chapters)}))
+	switch {
+	case linked >= 0:
+		c.selected[linked] = true
+		c.appendMsgLocked(LogInfo, msg("log.linked", map[string]any{"label": c.releaseLabel(series.Chapters[linked])}))
+	case named:
+		c.appendMsgLocked(LogWarn, msg("log.linkedMissing", nil))
+	}
 	return nil
 }
 
@@ -915,6 +934,7 @@ func (c *Controller) Clear() error {
 	}
 	c.url = ""
 	c.series = nil
+	c.linked = -1
 	c.selected = nil
 	c.selGen++
 	c.hasDuplicates = false
@@ -1056,6 +1076,14 @@ func (c *Controller) HasDuplicates() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.hasDuplicates
+}
+
+// Linked returns the position in Chapters of the release the loaded URL names
+// (a chapter or volume link), selected when the series loaded; -1 when none
+func (c *Controller) Linked() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.linked
 }
 
 // HasGroupDuplicates reports whether the list repeats a chapter number in one

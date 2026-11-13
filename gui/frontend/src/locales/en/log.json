@@ -11,6 +11,8 @@
   "supportKofi": "Buy me a coffee on Ko-fi",
   "loaded_one": "Loaded {{title}}: {{count}} chapter",
   "loaded_other": "Loaded {{title}}: {{count}} chapters",
+  "linked": "Selected {{label}}, the one the link names",
+  "linkedMissing": "The link's chapter isn't in this list (another language?), so nothing is selected",
   "downloading_one": "Downloading {{count}} chapter of {{title}}",
   "downloading_other": "Downloading {{count}} chapters of {{title}}",
   "downloadingUpdate": "Downloading the update {{version}}…",

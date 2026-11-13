@@ -51,6 +51,9 @@ type Mangafire struct {
 	// volumeID is the volume a volume link names (0 for any other URL): the
 	// title's volumes are listed then, instead of its chapters
 	volumeID int64
+	// linkedID is the Chapter.ID of the release a chapter or volume link
+	// names, "" for a series URL (see LinkedID)
+	linkedID string
 }
 
 func NewMangafire(g *Grabber) *Mangafire {
@@ -93,17 +96,34 @@ func (c *MangafireChapter) pagesAPI() string {
 var mangafireReaderRe = regexp.MustCompile(`(?i)^(https?://(?:www\.)?mangafire\.to/(?:title|manga)/[^/?#]+)/(chapter|volume)/(\d*)`)
 
 // resolveSeriesURL rewrites m.URL to the series URL when it is a reader URL,
-// keeping the id of a volume's (see volumeID). Series URLs are unchanged.
+// keeping the release it names (see volumeID and linkedID). Series URLs are
+// unchanged, and so is what an earlier call kept.
 func (m *Mangafire) resolveSeriesURL() {
 	match := mangafireReaderRe.FindStringSubmatch(m.URL)
 	if match == nil {
 		return
 	}
 	m.URL = match[1]
-	if strings.EqualFold(match[2], mangafireVolume) {
-		// a volume link without an id lists the chapters, like the series link
-		m.volumeID, _ = strconv.ParseInt(match[3], 10, 64)
+	id, err := strconv.ParseInt(match[3], 10, 64)
+	if err != nil {
+		// a reader link without an id names nothing: it lists the chapters,
+		// like the series link
+		return
 	}
+	if strings.EqualFold(match[2], mangafireVolume) {
+		m.volumeID = id
+		m.linkedID = mangafireVolumeID(id)
+		return
+	}
+	m.linkedID = strconv.FormatInt(id, 10)
+}
+
+// LinkedID returns the Chapter.ID of the chapter or volume the URL names, ""
+// for a series URL. It reads the URL itself, so it's right before the title
+// and chapters are fetched too.
+func (m *Mangafire) LinkedID() string {
+	m.resolveSeriesURL()
+	return m.linkedID
 }
 
 // mangafireVolumeID is a volume's Chapter.ID: chapters have ids of their own,

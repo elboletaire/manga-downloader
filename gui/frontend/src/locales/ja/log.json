@@ -11,6 +11,8 @@
   "supportKofi": "Ko-fiでコーヒーをおごる",
   "loaded_one": "{{title}}を読み込みました: {{count}}話",
   "loaded_other": "{{title}}を読み込みました: {{count}}話",
+  "linked": "リンク先の{{label}}を選択しました",
+  "linkedMissing": "リンク先の話はこの一覧にありません（別の言語？）。何も選択していません",
   "downloading_one": "{{title}}の{{count}}話をダウンロード中",
   "downloading_other": "{{title}}の{{count}}話をダウンロード中",
   "downloadingUpdate": "アップデート{{version}}をダウンロード中…",
