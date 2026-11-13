@@ -106,6 +106,16 @@ func (m *Mangafire) resolveSeriesURL() {
 	}
 }
 
+// LinkedID returns the Chapter.ID of the volume a volume link names, "" for any
+// other URL: a chapter link is treated as its series, as on every grabber
+func (m *Mangafire) LinkedID() string {
+	m.resolveSeriesURL()
+	if m.volumeID == 0 {
+		return ""
+	}
+	return mangafireVolumeID(m.volumeID)
+}
+
 // mangafireVolumeID is a volume's Chapter.ID: chapters have ids of their own,
 // so it says what it is
 func mangafireVolumeID(id int64) string {

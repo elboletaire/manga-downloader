@@ -11,6 +11,7 @@ export namespace main {
 	    part?: string;
 	    wholeTitle?: string;
 	    unnumbered?: boolean;
+	    linked?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new ChapterDTO(source);
@@ -28,6 +29,7 @@ export namespace main {
 	        this.part = source["part"];
 	        this.wholeTitle = source["wholeTitle"];
 	        this.unnumbered = source["unnumbered"];
+	        this.linked = source["linked"];
 	    }
 	}
 	export class Message {

@@ -16,6 +16,10 @@ manga-downloader [flags] [url] [chapters]
   `1,3,5-10`, or `all` for every chapter. Leave it out and the tool asks
   whether to download the whole series, defaulting to "no"; `all` skips the
   question, as cron jobs and Docker runs without a terminal need.
+  On mangafire.to, a volume link with no range downloads that volume, without
+  the question; give a range, or `all`, for others. A volume link lists one
+  language's volumes, so `--language all` there means the linked volume's
+  language rather than every language.
 
 Arguments aren't positional, so `manga-downloader 1-50 [url]` works too.
 Chapters the site marks as locked (coins, early access or members-only) are

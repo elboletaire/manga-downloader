@@ -313,6 +313,8 @@ func TestMangafireResolveSeriesURL(t *testing.T) {
 		wanted string
 		// volume is the id a volume link names, 0 for every other URL
 		volume int64
+		// linked is the Chapter.ID of the release the link names, "" for none
+		linked string
 	}{
 		{
 			name:   "chapter URL resolves to series URL",
@@ -325,12 +327,14 @@ func TestMangafireResolveSeriesURL(t *testing.T) {
 			input:  "https://mangafire.to/title/92kk8-naruto/volume/127605",
 			wanted: "https://mangafire.to/title/92kk8-naruto",
 			volume: 127605,
+			linked: "volume-127605",
 		},
 		{
 			name:   "volume URL with www, case, query and fragment",
 			input:  "https://WWW.MangaFire.to/title/92kk8-naruto/Volume/127605?page=3#top",
 			wanted: "https://WWW.MangaFire.to/title/92kk8-naruto",
 			volume: 127605,
+			linked: "volume-127605",
 		},
 		{
 			// nothing says which volume, so it lists the chapters
@@ -380,11 +384,34 @@ func TestMangafireResolveSeriesURL(t *testing.T) {
 			if m.volumeID != c.volume {
 				t.Errorf("volumeID = %d, want %d", m.volumeID, c.volume)
 			}
+			// a second resolve, as load makes after LinkedID, keeps what the
+			// link named although the URL is the series' now
+			if got := m.LinkedID(); got != c.linked {
+				t.Errorf("LinkedID() = %q, want %q", got, c.linked)
+			}
 			// what load asks the title's API with
 			if hid, err := m.hid(); c.wanted != "https://mangafire.to/" && (err != nil || hid == "") {
 				t.Errorf("hid() = %q, %v after resolving", hid, err)
 			}
 		})
+	}
+}
+
+// LinkedID can be read before the title and chapters are fetched; a chapter
+// link names nothing, as it's treated as its series on every grabber
+func TestMangafireLinkedIDBeforeLoad(t *testing.T) {
+	cases := map[string]string{
+		"https://mangafire.to/title/92kk8-naruto/volume/127605":   "volume-127605",
+		"https://mangafire.to/title/92kk8-naruto/chapter/1286995": "",
+	}
+	for url, want := range cases {
+		m := &Mangafire{Grabber: &Grabber{URL: url}}
+		if got := m.LinkedID(); got != want {
+			t.Errorf("LinkedID(%s) = %q, want %q", url, got, want)
+		}
+		if m.URL != "https://mangafire.to/title/92kk8-naruto" {
+			t.Errorf("URL = %q, want the series URL", m.URL)
+		}
 	}
 }
 
