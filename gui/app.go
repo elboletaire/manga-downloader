@@ -354,6 +354,9 @@ type ChapterDTO struct {
 	// Unnumbered is set for a chapter the site lists without a number: it
 	// is grouped with no other chapter in a parts run
 	Unnumbered bool `json:"unnumbered,omitempty"`
+	// Linked is set for the release the loaded URL names (a chapter or volume
+	// link): it starts selected, and the list opens on it
+	Linked bool `json:"linked,omitempty"`
 }
 
 // LogDTO is one line of the log. Msg is set when the window translates the
@@ -433,10 +436,12 @@ func (a *App) Chapters() []ChapterDTO {
 	out := make([]ChapterDTO, 0, len(list))
 	dupes := a.ctrl.HasDuplicates()
 	groupDupes := a.ctrl.HasGroupDuplicates()
+	linked := a.ctrl.Linked()
 	for i, ch := range list {
 		row := ChapterDTO{Index: i, Number: ch.GetNumber(), Title: grabber.ChapterLabel(ch), Volume: grabber.VolumeOf(ch), Locked: grabber.LockedOf(ch)}
 		row.Part, row.WholeTitle = grabber.PartOf(ch)
 		row.Unnumbered = grabber.Unnumbered(ch)
+		row.Linked = i == linked
 		// the language only tells copies of the same number apart, so it's
 		// only sent when the list has such copies (as the CLI shows it)
 		if l, ok := ch.(interface{ GetLanguage() string }); ok && dupes {

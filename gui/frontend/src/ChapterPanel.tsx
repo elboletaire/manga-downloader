@@ -19,6 +19,7 @@ import {
   groupedRows,
   groupParts,
   isSiteVolumes,
+  linkedRow,
   parseVolumes,
   partRows,
   plainRows,
@@ -181,6 +182,30 @@ function ChapterList({
     setCollapsed(new Set());
     anchor.current = -1;
   }, [chapters, list.reset]);
+
+  // a list loaded from a chapter or volume link opens on the release it names,
+  // which the backend selected: its row is centred and made active. Once per
+  // list, so folding a group or changing the grouping doesn't jump back.
+  const landed = useRef<Chapter[] | null>(null);
+  useEffect(() => {
+    if (landed.current === chapters) {
+      return;
+    }
+    if (!chapters.some((c) => c.linked)) {
+      landed.current = chapters;
+      return;
+    }
+    // the folds the last list left are only cleared on the next render, which
+    // shows the row
+    const pos = linkedRow(rows);
+    if (pos < 0) {
+      return;
+    }
+    landed.current = chapters;
+    setActive(pos);
+    anchor.current = pos;
+    list.center(pos);
+  }, [chapters, rows, list.center]);
 
   // rows come and go as groups fold: keep the active row in the list
   useEffect(() => {
