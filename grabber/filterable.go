@@ -51,10 +51,11 @@ var bareNumber = regexp.MustCompile(`^0*(\d+(?:\.\d+)?)\b`)
 
 // ChapterName names a chapter in messages: its label, or "Chapter N (label)"
 // when the label doesn't open with its number, as sites often number their
-// own seasons in titles. Chapter 0 is left to the label (it may be unread).
+// own seasons in titles. Chapter 0 is left to the label (it may be unread),
+// and so is a whole volume, which its label already numbers ("Volume 3").
 func ChapterName(f Filterable) string {
 	title, number := ChapterLabel(f), f.GetNumber()
-	if number <= 0 {
+	if number <= 0 || IsVolume(f) {
 		return title
 	}
 	for _, re := range []*regexp.Regexp{ChapterTitlePrefix, bareNumber} {

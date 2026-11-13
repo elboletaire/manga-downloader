@@ -4,6 +4,7 @@ package grabber
 
 import (
 	"encoding/json"
+	"errors"
 	"reflect"
 	"strconv"
 	"strings"
@@ -310,11 +311,33 @@ func TestMangafireResolveSeriesURL(t *testing.T) {
 		name   string
 		input  string
 		wanted string
+		// volume is the id a volume link names, 0 for every other URL
+		volume int64
 	}{
 		{
 			name:   "chapter URL resolves to series URL",
 			input:  "https://mangafire.to/title/dkw-one-piece/chapter/9485827",
 			wanted: "https://mangafire.to/title/dkw-one-piece",
+		},
+		{
+			// #465: a volume link used to be rendered as a series page, which
+			// never showed a chapter row and timed out as a challenge
+			name:   "volume URL resolves to series URL and keeps its id",
+			input:  "https://mangafire.to/title/92kk8-naruto/volume/127605",
+			wanted: "https://mangafire.to/title/92kk8-naruto",
+			volume: 127605,
+		},
+		{
+			name:   "volume URL with www, case, query and fragment",
+			input:  "https://WWW.MangaFire.to/title/92kk8-naruto/Volume/127605?page=3#top",
+			wanted: "https://WWW.MangaFire.to/title/92kk8-naruto",
+			volume: 127605,
+		},
+		{
+			// nothing says which volume, so it lists the chapters
+			name:   "volume URL without an id",
+			input:  "https://mangafire.to/title/92kk8-naruto/volume/",
+			wanted: "https://mangafire.to/title/92kk8-naruto",
 		},
 		{
 			name:   "www. prefix preserved",
@@ -355,6 +378,129 @@ func TestMangafireResolveSeriesURL(t *testing.T) {
 			if m.URL != c.wanted {
 				t.Errorf("got %q, want %q", m.URL, c.wanted)
 			}
+			if m.volumeID != c.volume {
+				t.Errorf("volumeID = %d, want %d", m.volumeID, c.volume)
+			}
+			// what load asks the title's API with
+			if hid, err := m.hid(); c.wanted != "https://mangafire.to/" && (err != nil || hid == "") {
+				t.Errorf("hid() = %q, %v after resolving", hid, err)
+			}
 		})
+	}
+}
+
+func TestMangafirePagesAPI(t *testing.T) {
+	cases := []struct {
+		chapter MangafireChapter
+		want    string
+	}{
+		{MangafireChapter{Id: 9054304}, "/api/chapters/9054304"},
+		{MangafireChapter{Id: 9054304, reader: mangafireChapter}, "/api/chapters/9054304"},
+		{MangafireChapter{Id: 127605, reader: mangafireVolume}, "/api/volumes/127605"},
+	}
+	for _, c := range cases {
+		if got := c.chapter.pagesAPI(); got != c.want {
+			t.Errorf("pagesAPI() = %q, want %q", got, c.want)
+		}
+	}
+}
+
+// mangafireVolumeItems reads the volumes list as load does, from a response of
+// the shape the series page gets: every language's volumes in one list
+func mangafireVolumeItems(t *testing.T) []mangafireChapterItem {
+	t.Helper()
+	const path = "/api/titles/92kk8/volumes"
+	responses := []browser.APIResponse{
+		{URL: "https://mangafire.to/api/titles/92kk8?vrf=a", Body: `{"data":{"title":"Naruto","url":"/title/92kk8-naruto"}}`},
+		{URL: "https://mangafire.to" + path + "?vrf=b", Body: `{"items":[` +
+			`{"id":129287,"number":72,"name":"Uzumaki Naruto!!","language":"en","chapterCount":10},` +
+			`{"id":127608,"number":2,"name":"The Worst Client","language":"en","chapterCount":10},` +
+			`{"id":127605,"number":1,"name":"Naruto Uzumaki","language":"en","chapterCount":7},` +
+			`{"id":140001,"number":10,"name":"","language":"es-la","chapterCount":9},` +
+			`{"id":150002,"number":2,"name":"","language":"fr","chapterCount":10},` +
+			`{"id":150001,"number":1,"name":"","language":"fr","chapterCount":7},` +
+			`{"id":160001,"number":1,"name":"","language":"tlh","chapterCount":7}]}`},
+		// the chapter list the page also loads isn't a volume
+		{URL: "https://mangafire.to/api/titles/92kk8/chapters?language=en&page=1&vrf=c", Body: `{"items":[{"id":1326884,"number":700,"language":"en","type":"unofficial"}]}`},
+	}
+	return parseMangafireChapters(responses, path)
+}
+
+func TestMangafireVolumes(t *testing.T) {
+	items := mangafireVolumeItems(t)
+	if len(items) != 7 {
+		t.Fatalf("read %d volumes, want 7 (%+v)", len(items), items)
+	}
+	// Klingon has no code to type, so it's left out; the order is the site's
+	wantLanguages := []string{"en", "es-la", "fr"}
+
+	cases := []struct {
+		name     string
+		linked   int64
+		language string
+		wantIDs  []int64
+		current  string
+	}{
+		{"the linked volume's language by default", 127605, "", []int64{129287, 127608, 127605}, "en"},
+		{"a French link lists the French volumes", 150001, "", []int64{150002, 150001}, "fr"},
+		{"all is the default too", 127605, "all", []int64{129287, 127608, 127605}, "en"},
+		{"--language picks another language's volumes", 127605, "fr", []int64{150002, 150001}, "en"},
+		{"--language aliases resolve", 127605, " MX ", []int64{140001}, "en"},
+		{"--language makes up for an unknown volume", 1, "es-la", []int64{140001}, ""},
+		{"a language without a code is still the link's default", 160001, "", []int64{160001}, "tlh"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			volumes, languages, err := mangafireVolumes(items, c.linked, c.language)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			var ids []int64
+			for _, v := range volumes {
+				ids = append(ids, v.Id)
+			}
+			if !reflect.DeepEqual(ids, c.wantIDs) {
+				t.Errorf("volumes = %v, want %v", ids, c.wantIDs)
+			}
+			if !reflect.DeepEqual(languages.Values, wantLanguages) || languages.Current != c.current || languages.All {
+				t.Errorf("languages = %+v, want %v with %q current", languages, wantLanguages, c.current)
+			}
+		})
+	}
+}
+
+func TestMangafireVolumesErrors(t *testing.T) {
+	items := mangafireVolumeItems(t)
+
+	for _, language := range []string{"ja", "es", "xx"} {
+		_, languages, err := mangafireVolumes(items, 127605, language)
+		var unavailable *UnavailableFilterError
+		if !errors.As(err, &unavailable) {
+			t.Fatalf("language %q: got %v, want an UnavailableFilterError", language, err)
+		}
+		if unavailable.Value != language || !reflect.DeepEqual(unavailable.Available, []string{"en", "es-la", "fr"}) {
+			t.Errorf("language %q: got %+v", language, unavailable)
+		}
+		// the options stay offered, so a front end can still list them
+		if len(languages.Values) != 3 || languages.Current != "en" {
+			t.Errorf("language %q: languages = %+v", language, languages)
+		}
+	}
+
+	// a volume the title doesn't list has no language to default to
+	if _, _, err := mangafireVolumes(items, 1, ""); err == nil || !strings.Contains(err.Error(), "volume 1 not found") {
+		t.Errorf("unknown volume: got %v", err)
+	}
+	if _, _, err := mangafireVolumes(nil, 127605, ""); err == nil || !strings.Contains(err.Error(), "no volumes found") {
+		t.Errorf("no volumes: got %v", err)
+	}
+}
+
+func TestMangafireVolumeNumber(t *testing.T) {
+	cases := map[float64]int{1: 1, 72: 72, 0: 0, -1: 0, 10.5: 0}
+	for in, want := range cases {
+		if got := mangafireVolumeNumber(in); got != want {
+			t.Errorf("mangafireVolumeNumber(%v) = %d, want %d", in, got, want)
+		}
 	}
 }
