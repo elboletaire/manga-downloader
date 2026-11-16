@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/elboletaire/manga-downloader/http"
 )
@@ -96,6 +97,7 @@ func (g Guya) FetchChapters() (Filterables, []error) {
 				Chapter{
 					Number: number,
 					Title:  c.Title,
+					Volume: parseVolume(strings.Trim(string(c.Volume), `"`)),
 					ID:     c.Folder + "/" + groupId,
 					Label:  Label{Style: LabelNumbered},
 				},
@@ -123,6 +125,7 @@ func (g Guya) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      f.GetTitle(),
 		Label:      labelOf(f),
 		Number:     f.GetNumber(),
+		Volume:     gchap.Volume,
 		PagesCount: int64(len(gchap.Files)),
 		Language:   "en",
 		ID:         gchap.ID,
@@ -220,7 +223,9 @@ type guyaSeriesFeed struct {
 	Groups        map[string]string `json:"groups"`
 	PreferredSort []string          `json:"preferred_sort"`
 	Chapters      map[string]struct {
-		Title  string              `json:"title"`
+		Title string `json:"title"`
+		// Volume is a string or a number, "0" or null when unknown
+		Volume json.RawMessage     `json:"volume"`
 		Folder string              `json:"folder"`
 		Groups map[string][]string `json:"groups"`
 	} `json:"chapters"`

@@ -110,8 +110,10 @@ func guyaServer(t *testing.T) *httptest.Server {
 			`"groups":{"1":"Alpha Scans","2":"Beta | Gamma"},`+
 			`"preferred_sort":[],`+
 			`"chapters":{`+
-			`"1":{"title":"First","folder":"0001_abc","groups":{"2":["01.png"],"1":["01.png","02.png"]}},`+
-			`"2":{"title":"","folder":"0002_def","groups":{"1":["01.png"]}}`+
+			`"1":{"title":"First","volume":"3","folder":"0001_abc","groups":{"2":["01.png"],"1":["01.png","02.png"]}},`+
+			`"2":{"title":"","volume":4,"folder":"0002_def","groups":{"1":["01.png"]}},`+
+			`"3":{"title":"","volume":null,"folder":"0003_ghi","groups":{"1":["01.png"]}},`+
+			`"4":{"title":"","folder":"0004_jkl","groups":{"1":["01.png"]}}`+
 			`}}`)
 	})
 
@@ -138,6 +140,12 @@ func TestGuyaFetchChaptersPerGroup(t *testing.T) {
 		},
 		2: {
 			{"0002_def/1", "Alpha Scans", "Chapter 2"},
+		},
+		3: {
+			{"0003_ghi/1", "Alpha Scans", "Chapter 3"},
+		},
+		4: {
+			{"0004_jkl/1", "Alpha Scans", "Chapter 4"},
 		},
 	}
 	got := map[float64][]release{}
@@ -185,6 +193,33 @@ func TestGuyaTestByAPI(t *testing.T) {
 		got, err := g.Test()
 		if err != nil || got != c.want {
 			t.Errorf("Test(%q) = %v, %v, want %v", c.path, got, err, c.want)
+		}
+	}
+}
+
+// TestGuyaVolume checks the volume the API gives a chapter, as a string or a
+// number, is set on the listed chapter and on the one it fetches
+func TestGuyaVolume(t *testing.T) {
+	server := guyaServer(t)
+	g := Guya{Grabber: &Grabber{URL: server.URL + "/read/manga/Series/", Settings: &Settings{}}}
+
+	chapters, errs := g.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("FetchChapters() errors = %v", errs)
+	}
+	for _, c := range chapters {
+		gc := c.(*GuyaChapter)
+		want := map[float64]int{1: 3, 2: 4, 3: 0, 4: 0}[gc.Number]
+		if gc.Volume != want {
+			t.Errorf("chapter %v listed volume = %d, want %d", gc.Number, gc.Volume, want)
+		}
+
+		chapter, err := g.FetchChapter(gc)
+		if err != nil {
+			t.Fatalf("FetchChapter() error = %v", err)
+		}
+		if chapter.Volume != want {
+			t.Errorf("chapter %v fetched volume = %d, want %d", gc.Number, chapter.Volume, want)
 		}
 	}
 }
