@@ -1229,10 +1229,9 @@ var turkishSuffixChapterNumberRe = regexp.MustCompile(`(?i)#?(\d+\.?\d*)\s*\.?\s
 // thaiChapterNumberRe matches the Thai "ตอนที่ 12" ("ตอน 12" too).
 var thaiChapterNumberRe = regexp.MustCompile(`ตอน(?:ที่)?\s*(\d+\.?\d*)`)
 
-// parseChapterNumber extracts the chapter number from a chapter title, falling
-// back to a volume number. Returns false if no number could be found (these
-// are usually site announcements rather than actual chapters).
-func parseChapterNumber(text string) (float64, bool) {
+// chapterMatch returns the match of a chapter number in a title, nil when the
+// title names no chapter
+func chapterMatch(text string) []string {
 	match := chapterNumberRe.FindStringSubmatch(text)
 	if len(match) == 0 {
 		match = cyrillicChapterNumberRe.FindStringSubmatch(text)
@@ -1246,12 +1245,27 @@ func parseChapterNumber(text string) (float64, bool) {
 	if len(match) == 0 {
 		match = thaiChapterNumberRe.FindStringSubmatch(text)
 	}
-	if len(match) == 0 {
-		// only checked as fallback so "Vol.2 Chapter 15" still prefers the chapter
-		match = volumeNumberRe.FindStringSubmatch(text)
-	}
+	return match
+}
+
+// volumeMatch returns the match of a volume number in a title, nil when the
+// title names no volume
+func volumeMatch(text string) []string {
+	match := volumeNumberRe.FindStringSubmatch(text)
 	if len(match) == 0 {
 		match = cyrillicVolumeNumberRe.FindStringSubmatch(text)
+	}
+	return match
+}
+
+// parseChapterNumber extracts the chapter number from a chapter title, falling
+// back to a volume number. Returns false if no number could be found (these
+// are usually site announcements rather than actual chapters).
+func parseChapterNumber(text string) (float64, bool) {
+	match := chapterMatch(text)
+	if len(match) == 0 {
+		// only checked as fallback so "Vol.2 Chapter 15" still prefers the chapter
+		match = volumeMatch(text)
 	}
 	if len(match) == 0 {
 		return 0, false
@@ -1261,6 +1275,22 @@ func parseChapterNumber(text string) (float64, bool) {
 		return 0, false
 	}
 	return number, true
+}
+
+// rowVolume returns the volume a row states beside its chapter number ("Vol.2
+// Chapter 15"). A row that names only a volume ("Volume 18", as sushiscan lists
+// whole volumes) is that volume, so number is its volume. 0 when unsure: a
+// volume that isn't whole, or one that disagrees with the number.
+func rowVolume(text string, number float64) int {
+	match := volumeMatch(text)
+	if len(match) == 0 {
+		return 0
+	}
+	volume := parseVolume(match[1])
+	if chapterMatch(text) != nil || float64(volume) == number {
+		return volume
+	}
+	return 0
 }
 
 // FetchChapters returns a slice of chapters, one per release: a row whose
@@ -1312,6 +1342,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 			}
 
 			locked := lockedNumbers[number] || (m.site.Locked != "" && s.Find(m.site.Locked).Length() > 0)
+			volume := rowVolume(chapterText, number)
 			for _, upload := range m.rowUploads(s) {
 				u := m.resolveURL(upload.href)
 				if !strings.HasPrefix(u, "http") {
@@ -1333,6 +1364,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 						Title:  title,
 						ID:     id,
 						Locked: locked,
+						Volume: volume,
 						Label:  Label{Style: LabelNumbered},
 					},
 					u,
@@ -1571,6 +1603,7 @@ func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter 
 		Title:      f.GetTitle(),
 		Label:      labelOf(f),
 		Number:     f.GetNumber(),
+		Volume:     VolumeOf(f),
 		PagesCount: int64(pcount),
 		Language:   "en",
 	}
