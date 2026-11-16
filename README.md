@@ -408,7 +408,7 @@ environment variables.
 | [comic-trail.com](https://comic-trail.com) | Japanese, Comic Trail (GigaViewer) | 2026-11-16 |
 | [comic-walker.com](https://comic-walker.com) | Japanese, KadoComi (KADOKAWA) | 2026-11-16 |
 | [comic-y-ours.com](https://comic-y-ours.com) | Japanese, Comic Y-Ours (GigaViewer) | 2026-11-16 |
-| [comic-zenon.com](https://comic-zenon.com) | Japanese, Comic Zenon (GigaViewer) | ❌ failing since 2026-11-16 (checked 2026-11-16) |
+| [comic-zenon.com](https://comic-zenon.com) | Japanese, Comic Zenon (GigaViewer) | 2026-11-16 |
 | [comic.j-nbooks.jp](https://comic.j-nbooks.jp) | Japanese (Comici) | ❌ failing since 2026-11-16 (checked 2026-11-16) |
 | [comic.naver.com](https://comic.naver.com) | Naver Webtoon, Korean, free episodes only | 2026-11-11 |
 | [comicborder.com](https://comicborder.com) | Japanese, Comic Border (GigaViewer) | 2026-11-16 |
@@ -582,7 +582,7 @@ environment variables.
 | [lovesjane.site](https://lovesjane.site) | English | 2026-11-16 |
 | [luacomic.org](https://luacomic.org) | LuaScans | 2026-10-29 |
 | [lupiteam.net](https://lupiteam.net) | LupiTeam, Italian | 2026-11-09 |
-| [m1.manhwalist.my.id](https://m1.manhwalist.my.id) | Indonesian | ❌ failing since 2026-11-16 (checked 2026-11-16) |
+| [m1.manhwalist.my.id](https://m1.manhwalist.my.id) | Indonesian | 2026-11-16 |
 | [madaradex.org](https://madaradex.org) | some NSFW | 2026-11-16 |
 | [madarascans.net](https://madarascans.net) | former madarascans.org/.com | 2026-11-16 |
 | [magcomi.com](https://magcomi.com) | Japanese, Mag Garden (GigaViewer) | 2026-11-16 |
@@ -688,7 +688,7 @@ environment variables.
 | [manhwahub.to](https://manhwahub.to) | English, mostly NSFW | 2026-11-16 |
 | [manhwanex.com](https://manhwanex.com) | English | 2026-11-16 |
 | [manhwaonline.org](https://manhwaonline.org) |  | 2026-11-16 |
-| [manhwareads.com](https://manhwareads.com) | English | ❌ failing since 2026-11-16 (checked 2026-11-16) |
+| [manhwareads.com](https://manhwareads.com) | English | 2026-11-16 |
 | [manhwatop.com](https://manhwatop.com) | MANHWATOP | 2026-11-16 |
 | [manhwaus.net](https://manhwaus.net) | English | 2026-11-06 |
 | [marmota.me](https://marmota.me) | Spanish | 2026-11-16 |
@@ -900,8 +900,8 @@ environment variables.
 | [xn--l3c0azab5a2gta.com](https://www.xn--l3c0azab5a2gta.com) | Thai | 2026-11-16 |
 | [xsano-manga.com](https://www.xsano-manga.com) | Arabic | 2026-11-02 |
 | [yakshacomics.com](https://yakshacomics.com) | English | 2026-11-16 |
-| [yaoiflix.fit](https://yaoiflix.fit) | Turkish, mostly NSFW | ❌ failing since 2026-10-29 (checked 2026-11-16) |
-| [yaoihub.org](https://yaoihub.org) | English, mostly NSFW | ❌ failing since 2026-10-29 (checked 2026-11-16) |
+| [yaoiflix.fit](https://yaoiflix.fit) | Turkish, mostly NSFW | 2026-11-16 |
+| [yaoihub.org](https://yaoihub.org) | English, mostly NSFW | 2026-11-16 |
 | [yaoiscan.me](https://yaoiscan.me) | English, NSFW | 2026-11-09 |
 | [yaoiscan.org](https://yaoiscan.org) | English, mostly NSFW, BL | 2026-11-16 |
 | [yokai-team.blogspot.com](https://yokai-team.blogspot.com) | Arabic | 2026-11-02 |

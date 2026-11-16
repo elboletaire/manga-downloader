@@ -966,7 +966,7 @@ grabber/magcomi:
 grabber/comicgardo:
 	go run . https://comic-gardo.com/episode/10044607041200756622 1
 grabber/comiczenon:
-	go run . https://comic-zenon.com/episode/12207421984318179863 695
+	go run . https://comic-zenon.com/episode/12207421984318179863 698
 grabber/comicaction:
 	go run . https://comic-action.com/episode/10044607041217599247 3
 grabber/comicborder:
@@ -1791,7 +1791,7 @@ grabber/manhwaclub:
 grabber/manhwanex:
 	go run . https://manhwanex.com/manga/top-tier-providence-secretly-cultivate-for-a-thousand-years/ 278
 grabber/manhwareads:
-	go run . https://manhwareads.com/manga/the-young-wife/ 15
+	go run . https://manhwareads.com/manga/dandadan/ 37
 grabber/monopolymanhua:
 	go run . https://monopolymanhua.com/manga/yo-solo-derribare-este-mundo-en-caos/ 3
 grabber/montetaiscanlator:
@@ -1837,7 +1837,7 @@ grabber/truyentranhdammyy:
 grabber/valirscans:
 	go run . https://valirscans.org/series/comic/i-saved-my-favorite-from-exile-but-now-i-cant-escape-his-love 8
 grabber/yaoihub:
-	go run . https://yaoihub.org/manga/waterside-night/ 58
+	go run . https://yaoihub.org/manga/my-sadistic-master/ 48
 grabber/youngchampion:
 	go run . https://youngchampion.jp/series/0cdd7013b23d7 1
 grabber/yurionline:
@@ -1931,7 +1931,7 @@ grabber/manhwadesu:
 grabber/manhwahub:
 	go run . https://manhwahub.to/manhwa/someone-stop-her/ 110
 grabber/manhwalist:
-	go run . https://m1.manhwalist.my.id/manga/lookism/ 623
+	go run . https://m1.manhwalist.my.id/manga/lookism/ 634
 grabber/mihentai:
 	go run . https://mihentai.net/manga/wear-student-underwear-and-apologize/ 1
 grabber/mindafansub:
@@ -1997,7 +1997,7 @@ grabber/sodsaime:
 grabber/yakshacomics:
 	go run . https://yakshacomics.com/manga/the-ultimate-wantless-godly-rich-system/ 73
 grabber/yaoiflix:
-	go run . https://yaoiflix.fit/manga/shut-line-19/ 58
+	go run . https://yaoiflix.fit/manga/a-guide-thicker-than-blood/ 65
 
 # no code: recognised by their markup (tcb, Toivo Lite, WordPressCategory, Blogger)
 grabber/akanebanashimanga:
