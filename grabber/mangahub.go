@@ -58,6 +58,10 @@ var mangahubClientRe = regexp.MustCompile(`src="(/assets/client[^"]*)"`)
 // mangahubNumberTitleRe matches a title that only names the chapter's number, which ChapterLabel names instead
 var mangahubNumberTitleRe = regexp.MustCompile(`(?i)^chapter\s*[\d.]+$`)
 
+// mangahubVolumeRe matches the "Vol.N Chapter M" prefix older series put in front of
+// their titles ("Vol. 15 Ch. 288", "Vol.13 Ch.104.5 - Mizaki"), with the separator after it
+var mangahubVolumeRe = regexp.MustCompile(`(?i)^vol(?:ume)?\.?\s*(\d+(?:\.\d+)?)(?:\s+ch(?:apter)?\.?\s*\d+(?:\.\d+)?)?\s*(?:[-:]\s*)?`)
+
 // mangahubManga is the series as the API returns it. source and slug are the
 // keys its chapters' pages are fetched by
 type mangahubManga struct {
@@ -116,14 +120,12 @@ func (m *MangaHub) FetchChapters() (Filterables, []error) {
 
 	chapters := make(Filterables, 0, len(manga.Chapters))
 	for _, c := range manga.Chapters {
-		title := sanitizeTitle(c.Title)
-		if mangahubNumberTitleRe.MatchString(title) {
-			title = ""
-		}
+		title, volume := mangahubTitle(c.Title)
 		chapters = append(chapters, &MangaHubChapter{
 			Chapter: Chapter{
 				Title:  title,
 				Number: c.Number,
+				Volume: volume,
 				Label:  Label{Style: LabelNumbered},
 			},
 			source: manga.source,
@@ -174,6 +176,7 @@ func (m *MangaHub) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      mchap.Title,
 		Label:      mchap.Label,
 		Number:     mchap.Number,
+		Volume:     mchap.Volume,
 		PagesCount: int64(len(images)),
 		Language:   "en",
 	}
@@ -182,6 +185,24 @@ func (m *MangaHub) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	return chapter, nil
+}
+
+// mangahubTitle returns the title a chapter is listed under and the volume its
+// title names. The "Vol.N Chapter M" prefix goes, as the volume is kept apart,
+// and a title left as just the chapter's number is cleared, as ChapterLabel
+// names it. A volume that isn't a whole number leaves the title as it is.
+func mangahubTitle(raw string) (string, int) {
+	title := sanitizeTitle(raw)
+	volume := 0
+	if match := mangahubVolumeRe.FindStringSubmatch(title); match != nil && parseVolume(match[1]) > 0 {
+		volume = parseVolume(match[1])
+		title = strings.TrimSpace(title[len(match[0]):])
+	}
+	if mangahubNumberTitleRe.MatchString(title) {
+		title = ""
+	}
+
+	return title, volume
 }
 
 // fetchManga returns the series from the API, once per grabber

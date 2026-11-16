@@ -92,11 +92,14 @@ func mangahubAPIResponse(query string) string {
 		return `{"data":{"manga":{"title":"Red Storm","slug":"red-storm_111","chapters":[` +
 			`{"number":482,"title":"Chapter 482"},` +
 			`{"number":388.5,"title":"  Epilogue\n"},` +
-			`{"number":0,"title":"Chapter 0"}]}}}`
+			`{"number":0,"title":"Chapter 0"},` +
+			`{"number":341,"title":"Vol.16 Chapter 341"}]}}}`
 	case strings.Contains(query, "chapter(x: mn03, slug: \"red-storm_111\", number: 388.5)"):
 		return `{"data":{"chapter":{"pages":"{\"p\":\"red-storm/388.5/\",\"i\":[\"1.jpg\",\"2.jpg\"]}"}}}`
 	case strings.Contains(query, "chapter(x: mn03, slug: \"red-storm_111\", number: 482)"):
 		return `{"data":{"chapter":{"pages":"{\"p\":\"/red-storm/482/\",\"i\":[\"1.jpg\"]}"}}}`
+	case strings.Contains(query, "chapter(x: mn03, slug: \"red-storm_111\", number: 341)"):
+		return `{"data":{"chapter":{"pages":"{\"p\":\"red-storm/341/\",\"i\":[\"1.jpg\"]}"}}}`
 	case strings.Contains(query, "chapter(x: mn03, slug: \"red-storm_111\", number: 0)"):
 		return `{"data":{"chapter":{"pages":"` + mangahubSeal(`{"p":"red-storm/0/","i":["1.jpg"]}`) + `"}}}`
 	default:
@@ -214,8 +217,8 @@ func TestMangaHubFetchChapters(t *testing.T) {
 	if len(errs) > 0 {
 		t.Fatal(errs)
 	}
-	if len(chapters) != 3 {
-		t.Fatalf("got %d chapters, want 3", len(chapters))
+	if len(chapters) != 4 {
+		t.Fatalf("got %d chapters, want 4", len(chapters))
 	}
 
 	want := []struct {
@@ -335,6 +338,60 @@ func TestMangaHubTitleNumberRe(t *testing.T) {
 	} {
 		if got := mangahubNumberTitleRe.MatchString(title); got != want {
 			t.Errorf("%q matched %v, want %v", title, got, want)
+		}
+	}
+}
+
+// TestMangaHubVolumeInListing checks the volume a title names is kept as the
+// chapter's volume, listed and fetched alike, and leaves its title as the
+// chapter's own
+func TestMangaHubVolumeInListing(t *testing.T) {
+	srv := mangahubSite(t)
+	m := NewMangaHub(&Grabber{URL: srv.URL + "/manga/red-storm_111"})
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatal(errs)
+	}
+	listed := chapters[3].(*MangaHubChapter)
+	if listed.Volume != 16 || listed.Title != "" || ChapterLabel(listed) != "Chapter 341" {
+		t.Fatalf("listed = volume %d, title %q, label %q; want volume 16, no title, Chapter 341",
+			listed.Volume, listed.Title, ChapterLabel(listed))
+	}
+
+	fetched, err := m.FetchChapter(listed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fetched.Volume != 16 || fetched.Title != "" || ChapterLabel(fetched) != "Chapter 341" {
+		t.Fatalf("fetched = volume %d, title %q, label %q; want volume 16, no title, Chapter 341",
+			fetched.Volume, fetched.Title, ChapterLabel(fetched))
+	}
+}
+
+// TestMangaHubTitle covers the titles older series put the volume in, and the
+// ones that don't name one, which must come out as they did before
+func TestMangaHubTitle(t *testing.T) {
+	cases := []struct {
+		raw       string
+		wantTitle string
+		wantVol   int
+	}{
+		{"Vol.16 Chapter 341", "", 16},
+		{"Vol.69 Ch.983", "", 69},
+		{"Vol. 15 Ch. 288", "", 15},
+		{"Vol.13 Ch.104.5 - Mizaki, the city of promise", "Mizaki, the city of promise", 13},
+		{"Vol.2 Chapter 15: The Hunt", "The Hunt", 2},
+		{"Vol.10.5 Chapter 77", "Vol.10.5 Chapter 77", 0},
+		{"Chapter 482", "", 0},
+		{"Epilogue", "Epilogue", 0},
+		{"Volcano Chapter", "Volcano Chapter", 0},
+		{"", "", 0},
+	}
+	for _, c := range cases {
+		gotTitle, gotVol := mangahubTitle(c.raw)
+		if gotTitle != c.wantTitle || gotVol != c.wantVol {
+			t.Errorf("mangahubTitle(%q) = %q, %d; want %q, %d", c.raw, gotTitle, gotVol, c.wantTitle, c.wantVol)
 		}
 	}
 }
