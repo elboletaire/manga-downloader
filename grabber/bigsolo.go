@@ -5,9 +5,11 @@ package grabber
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
@@ -69,12 +71,12 @@ func (b *Bigsolo) FetchChapters() (chapters Filterables, errs []error) {
 			errs = append(errs, fmt.Errorf("chapter %q has no supported source", key))
 			continue
 		}
-
 		chapters = append(chapters, &BigsoloChapter{
 			Chapter{
 				Number: number,
 				Title:  c.Title,
 				ID:     c.Source.Id,
+				Volume: int(c.Volume),
 				Label:  Label{Style: LabelNumbered, Number: key, Lang: "fr"},
 			},
 			c.Source.Id,
@@ -122,6 +124,7 @@ func (b Bigsolo) FetchChapter(f Filterable) (*Chapter, error) {
 		PagesCount: int64(len(files)),
 		Language:   "fr",
 		ID:         bchap.ImgchestID,
+		Volume:     bchap.Volume,
 	}
 	for i, file := range files {
 		chapter.Pages = append(chapter.Pages, Page{
@@ -139,7 +142,8 @@ func (b *Bigsolo) fetchSeries() (*bigsoloSeries, error) {
 		return b.series, nil
 	}
 
-	body, err := http.Get(http.RequestParams{URL: b.URL})
+	seriesURL := bigsoloSeriesURL(b.URL)
+	body, err := http.Get(http.RequestParams{URL: seriesURL})
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +156,7 @@ func (b *Bigsolo) fetchSeries() (*bigsoloSeries, error) {
 
 	raw := doc.Find("#series-data-placeholder").Text()
 	if raw == "" {
-		return nil, fmt.Errorf("could not find series data in %s (is the URL a series page?)", b.URL)
+		return nil, fmt.Errorf("could not find series data in %s (is the URL a series page?)", seriesURL)
 	}
 
 	series := &bigsoloSeries{}
@@ -165,12 +169,28 @@ func (b *Bigsolo) fetchSeries() (*bigsoloSeries, error) {
 	return series, nil
 }
 
+// bigsoloSeriesURL moves the old single-segment series links (bigsolo.org/{slug},
+// now 404) to their /manga/{slug} page. Anything else is returned as it is.
+func bigsoloSeriesURL(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil || strings.TrimPrefix(u.Hostname(), "www.") != "bigsolo.org" {
+		return raw
+	}
+	slug := strings.Trim(u.Path, "/")
+	if slug == "" || slug == "manga" || strings.Contains(slug, "/") {
+		return raw
+	}
+	u.Path = "/manga/" + slug
+	return u.String()
+}
+
 // bigsoloSeries is the series info embedded in the series page's
 // `#series-data-placeholder` script tag
 type bigsoloSeries struct {
 	Title    string `json:"title"`
 	Chapters map[string]struct {
-		Title  string `json:"title"`
+		Title  string     `json:"title"`
+		Volume jsonVolume `json:"volume"`
 		Source struct {
 			Service string `json:"service"`
 			Id      string `json:"id"`

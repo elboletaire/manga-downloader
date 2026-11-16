@@ -907,7 +907,7 @@ grabber/hachirumi:
 	go run . https://hachirumi.com/read/manga/a-boy-and-his-crossdressing-older-brother/ 1
 # chapter pages are hosted on imgchest.com, not bigsolo.org itself
 grabber/bigsolo:
-	go run . https://bigsolo.org/wind-breaker 222
+	go run . https://bigsolo.org/manga/wind-breaker 222
 grabber/fmteam:
 	go run . https://fmteam.fr/comics/batuque 157
 # note: the newest 1-2 chapters can be "early access" (locked behind coins),

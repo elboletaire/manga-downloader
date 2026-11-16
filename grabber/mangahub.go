@@ -58,6 +58,10 @@ var mangahubClientRe = regexp.MustCompile(`src="(/assets/client[^"]*)"`)
 // mangahubNumberTitleRe matches a title that only names the chapter's number, which ChapterLabel names instead
 var mangahubNumberTitleRe = regexp.MustCompile(`(?i)^chapter\s*[\d.]+$`)
 
+// mangahubVolumeRe captures the volume older series lead their titles with ("Vol.16 Chapter 341"),
+// a whole number only: "Vol.10.5" doesn't match
+var mangahubVolumeRe = regexp.MustCompile(`(?i)^vol(?:ume)?\.?\s*(\d+)(?:\s|$)`)
+
 // mangahubManga is the series as the API returns it. source and slug are the
 // keys its chapters' pages are fetched by
 type mangahubManga struct {
@@ -117,6 +121,7 @@ func (m *MangaHub) FetchChapters() (Filterables, []error) {
 	chapters := make(Filterables, 0, len(manga.Chapters))
 	for _, c := range manga.Chapters {
 		title := sanitizeTitle(c.Title)
+		volume := mangahubVolume(title)
 		if mangahubNumberTitleRe.MatchString(title) {
 			title = ""
 		}
@@ -124,6 +129,7 @@ func (m *MangaHub) FetchChapters() (Filterables, []error) {
 			Chapter: Chapter{
 				Title:  title,
 				Number: c.Number,
+				Volume: volume,
 				Label:  Label{Style: LabelNumbered},
 			},
 			source: manga.source,
@@ -174,6 +180,7 @@ func (m *MangaHub) FetchChapter(f Filterable) (*Chapter, error) {
 		Title:      mchap.Title,
 		Label:      mchap.Label,
 		Number:     mchap.Number,
+		Volume:     mchap.Volume,
 		PagesCount: int64(len(images)),
 		Language:   "en",
 	}
@@ -182,6 +189,16 @@ func (m *MangaHub) FetchChapter(f Filterable) (*Chapter, error) {
 	}
 
 	return chapter, nil
+}
+
+// mangahubVolume returns the volume a title leads with, 0 when it names none
+func mangahubVolume(title string) int {
+	match := mangahubVolumeRe.FindStringSubmatch(title)
+	if match == nil {
+		return 0
+	}
+
+	return parseVolume(match[1])
 }
 
 // fetchManga returns the series from the API, once per grabber

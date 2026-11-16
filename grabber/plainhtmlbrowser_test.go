@@ -295,3 +295,48 @@ func TestApplyPageAccept(t *testing.T) {
 		t.Errorf("Headers = %v, want %v", set.Pages[0].Headers, want)
 	}
 }
+
+// TestSushiscanVolumeRows covers sushiscan's listing, which has whole volumes
+// ("Volume 18") where a chapter would be: the row is that volume, its number
+// is the volume, and the reader keeps it. No browser: the fixtures are parsed.
+func TestSushiscanVolumeRows(t *testing.T) {
+	sel, ok := matchBrowserSelector("sushiscan.net")
+	if !ok {
+		t.Fatal("no sushiscan.net entry")
+	}
+	list := `<ul id="chapterlist">
+		<li><div class="chapternum">Volume 18</div><a href="https://sushiscan.net/mushoku-tensei-volume-18/">link</a></li>
+		<li><div class="chapternum">Volume 2</div><a href="https://sushiscan.net/mushoku-tensei-volume-2/">link</a></li>
+	</ul>`
+	doc := docFromHTML(t, list)
+	m := &PlainHTMLBrowser{
+		PlainHTML: &PlainHTML{Grabber: &Grabber{URL: "https://sushiscan.net/catalogue/mushoku-tensei/"}, doc: doc, rows: doc.Find("#chapterlist li"), site: sel.SiteSelector},
+		selector:  sel,
+	}
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	want := []struct {
+		number float64
+		volume int
+	}{{18, 18}, {2, 2}}
+	if len(chapters) != len(want) {
+		t.Fatalf("got %d chapters, want %d", len(chapters), len(want))
+	}
+	for i, c := range chapters {
+		if c.GetNumber() != want[i].number || VolumeOf(c) != want[i].volume {
+			t.Errorf("listed %d: number %v volume %d, want %v, %d", i, c.GetNumber(), VolumeOf(c), want[i].number, want[i].volume)
+		}
+	}
+
+	reader := `<div id="readerarea"><img src="https://img.sushiscan.net/p/1.jpg"></div>`
+	chapter, err := m.readerChapter(chapters[0], docFromHTML(t, reader))
+	if err != nil {
+		t.Fatalf("readerChapter() error = %v", err)
+	}
+	if chapter.Volume != 18 || chapter.Number != 18 || chapter.Title != chapters[0].GetTitle() {
+		t.Errorf("fetched = volume %d, number %v, title %q; want 18, 18, %q", chapter.Volume, chapter.Number, chapter.Title, chapters[0].GetTitle())
+	}
+}
