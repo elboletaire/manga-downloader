@@ -243,3 +243,52 @@ func TestMangaballIsPagePacer(t *testing.T) {
 		t.Fatal("*Mangaball doesn't implement PagePacer")
 	}
 }
+
+// the listing's volume reaches the listed chapter and the fetched one, and 0 or a
+// missing field both mean the site doesn't say
+func TestMangaballVolumes(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/chapter/chapter-listing-by-title-id" {
+			w.Write([]byte(`{"status":"success","data":[
+				{"id":"c1","lang":"en","name":"","number":1,"volume":1,"group_name":"A"},
+				{"id":"c2","lang":"en","name":"","number":2,"volume":0,"group_name":"A"},
+				{"id":"c3","lang":"en","name":"","number":3,"group_name":"A"},
+				{"id":"c4","lang":"en","name":"","number":4,"volume":"2","group_name":"A"},
+				{"id":"c5","lang":"en","name":"","number":5,"volume":-1,"group_name":"A"},
+				{"id":"c6","lang":"en","name":"","number":6,"volume":2.5,"group_name":"A"},
+				{"id":"c7","lang":"en","name":"","number":7,"volume":null,"group_name":"A"}
+			]}`))
+			return
+		}
+		w.Write([]byte(`{"status":"success","code":200,"data":{"chapter":{"id":"c1","title_id":"685155e3702284f834178602","pages":["https://cdn.example/a-001.webp"]}}}`))
+	}))
+	defer srv.Close()
+
+	old := mangaballAPI
+	mangaballAPI = srv.URL
+	defer func() { mangaballAPI = old }()
+
+	m := NewMangaball(&Grabber{
+		URL:      "https://mangaball.com/title-detail/baki-685155e3702284f834178602/",
+		Settings: &Settings{Language: "en"},
+	})
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	// a mistyped volume reads as 0 and doesn't fail the listing
+	want := []int{1, 0, 0, 2, 0, 0, 0}
+	for i, c := range chapters {
+		if got := VolumeOf(c); got != want[i] {
+			t.Errorf("listed chapter %d volume = %d, want %d", i, got, want[i])
+		}
+	}
+
+	ch, err := m.FetchChapter(chapters[0])
+	if err != nil {
+		t.Fatalf("FetchChapter() error = %v", err)
+	}
+	if ch.Volume != 1 {
+		t.Errorf("fetched chapter volume = %d, want 1", ch.Volume)
+	}
+}

@@ -3,6 +3,7 @@
 package grabber
 
 import (
+	"encoding/json"
 	"net/http"
 	"reflect"
 	"strings"
@@ -36,6 +37,30 @@ func TestParseVolume(t *testing.T) {
 	for _, tt := range tests {
 		if got := parseVolume(tt.in); got != tt.want {
 			t.Errorf("parseVolume(%q) = %d, want %d", tt.in, got, tt.want)
+		}
+	}
+}
+
+// a site's volume decodes from a number, a string or null, and whatever isn't a
+// whole number is 0 without failing the decode
+func TestJSONVolume(t *testing.T) {
+	tests := []struct {
+		json string
+		want int
+	}{
+		{`null`, 0}, {`""`, 0}, {`0`, 0}, {`-1`, 0}, {`"-1"`, 0}, {`"0"`, 0},
+		{`"x"`, 0}, {`"none"`, 0}, {`[1]`, 0}, {`{"v":1}`, 0},
+		{`1`, 1}, {`"2"`, 2}, {` "3" `, 3}, {`"Volume 4"`, 4},
+		{`12.5`, 0}, {`"12.5"`, 0}, {`1e3`, 1000},
+	}
+	for _, tt := range tests {
+		var v jsonVolume
+		if err := json.Unmarshal([]byte(tt.json), &v); err != nil {
+			t.Errorf("Unmarshal(%s) error = %v", tt.json, err)
+			continue
+		}
+		if int(v) != tt.want {
+			t.Errorf("Unmarshal(%s) = %d, want %d", tt.json, v, tt.want)
 		}
 	}
 }

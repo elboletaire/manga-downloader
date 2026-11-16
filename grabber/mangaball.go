@@ -230,6 +230,7 @@ func (m *Mangaball) FetchChapters() (chapters Filterables, errs []error) {
 				Title:    c.Name,
 				Language: c.Lang,
 				ID:       c.ID,
+				Volume:   int(c.Volume),
 			},
 			mangaballSite + "/chapter-detail/" + c.ID,
 		}
@@ -258,6 +259,7 @@ func (m Mangaball) FetchChapter(f Filterable) (*Chapter, error) {
 		Number:     f.GetNumber(),
 		Language:   mchap.Language,
 		ID:         mchap.ID,
+		Volume:     mchap.Volume,
 		PagesCount: int64(len(images)),
 	}
 	chapter.SetGroups(mchap.GetGroups()...)
@@ -321,10 +323,11 @@ func (m *Mangaball) fetchTitle() error {
 type mangaballChaptersFeed struct {
 	Status string `json:"status"`
 	Data   []struct {
-		ID        string  `json:"id"`
-		Lang      string  `json:"lang"`
-		Name      string  `json:"name"`
-		Number    float64 `json:"number"`
-		GroupName string  `json:"group_name"`
+		ID        string     `json:"id"`
+		Lang      string     `json:"lang"`
+		Name      string     `json:"name"`
+		Number    float64    `json:"number"`
+		Volume    jsonVolume `json:"volume"`
+		GroupName string     `json:"group_name"`
 	} `json:"data"`
 }

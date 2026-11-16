@@ -3,6 +3,7 @@
 package grabber
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -102,6 +103,30 @@ func parseVolume(s string) int {
 		return 0
 	}
 	return n
+}
+
+// jsonVolume is a volume as a site's JSON sends it: a number, a string or null.
+// Whatever isn't a whole number reads as 0, unknown, and it never fails the
+// decode: one mistyped volume must not fail a whole listing.
+type jsonVolume int
+
+func (v *jsonVolume) UnmarshalJSON(b []byte) error {
+	*v = 0
+
+	var raw any
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return nil
+	}
+	text := ""
+	switch x := raw.(type) {
+	case string:
+		text = x
+	case float64:
+		text = strconv.FormatFloat(x, 'f', -1, 64)
+	}
+	*v = jsonVolume(parseVolume(text))
+
+	return nil
 }
 
 // Filterables represents a slice of Filterable

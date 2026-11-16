@@ -93,10 +93,11 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 	for page, pages := 1, 1; page <= pages; page++ {
 		var res struct {
 			Data []struct {
-				ID          string `json:"id"`
-				Chapter     string `json:"chapter"`
-				Title       string `json:"title"`
-				PatreonOnly bool   `json:"patreonOnly"`
+				ID          string     `json:"id"`
+				Chapter     string     `json:"chapter"`
+				Title       string     `json:"title"`
+				Volume      jsonVolume `json:"volume"`
+				PatreonOnly bool       `json:"patreonOnly"`
 			} `json:"data"`
 			Pagination struct {
 				Pages int `json:"pages"`
@@ -123,6 +124,7 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 						Number:   number,
 						Title:    title,
 						Language: "en",
+						Volume:   int(c.Volume),
 						Label:    Label{Style: LabelNumbered},
 					},
 					PatreonOnly: c.PatreonOnly,
@@ -136,6 +138,7 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 						Title:    title,
 						Language: r.Language,
 						ID:       r.ID,
+						Volume:   int(c.Volume),
 						Label:    Label{Style: LabelNumbered},
 					},
 					PatreonOnly: c.PatreonOnly,
