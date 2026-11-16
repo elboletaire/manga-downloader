@@ -337,7 +337,6 @@ environment variables.
 | [108read.com](https://www.108read.com) | Thai | 2026-11-16 |
 | [1manga.co](https://1manga.co) | 1Manga, English | 2026-11-11 |
 | [1punchman.com](https://1punchman.com) | English, single series | 2026-11-16 |
-| [komikindo.click](https://komikindo.click) | Indonesian, mostly NSFW, unrelated to komikindo.ch | 2026-11-16 |
 | [3asq.online](https://3asq.online) | Arabic, former 3asq.org | 2026-11-11 |
 | [4porncomic.com](https://4porncomic.com) | English, mostly NSFW | 2026-11-16 |
 | [adulto.seinagi.org.es](https://adulto.seinagi.org.es) | Spanish, NSFW | 2026-11-09 |
@@ -546,6 +545,7 @@ environment variables.
 | [komikdewasa.art](https://komikdewasa.art) | Indonesian, mostly NSFW | 2026-11-16 |
 | [komikdewasa.mom](https://komikdewasa.mom) | Indonesian, mostly NSFW | 2026-11-11 |
 | [komikindo.ch](https://komikindo.ch) |  | 2026-11-16 |
+| [komikindo.click](https://komikindo.click) | Indonesian, mostly NSFW, unrelated to komikindo.ch | 2026-11-16 |
 | [komikmanga.com](https://komikmanga.com) | English, Indonesian UI | 2026-11-16 |
 | [komikmu.top](https://komikmu.top) | Indonesian | 2026-11-16 |
 | [komikstation.org](https://komikstation.org) | Indonesian | 2026-11-16 |

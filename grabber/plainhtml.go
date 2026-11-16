@@ -491,7 +491,7 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitle: ".chapter-name",
 		Image:        ".reading-content img",
 	},
-	// manhwa-online.com (Spanish): an Astro site, not the WordPress one above.
+	// manhwa-online.com (Spanish): an Astro site, not manhwaonline.org above.
 	// Each chapter is a div.chapter-row-full whose link holds the number, and
 	// the reader's pages are img.reader-page in .reader-pages.
 	{
@@ -691,7 +691,7 @@ type SiteSelector struct {
 	LockedIsland func(chapter map[string]any) bool
 	// PageListPath, when set, POSTs to this path ({id} from PageListIDRe's first
 	// capture on the reader) and reads the pages from its JSON html's a.readImg
-	// links, in data-index order.
+	// links, in data-index order (PlainHTML only, not PlainHTMLBrowser).
 	PageListPath string
 	PageListIDRe string
 }
