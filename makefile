@@ -2121,7 +2121,7 @@ grabber/kiryuu:
 	go run . https://v7.kiryuu.to/manga/martial-peak/ 1935
 
 grabber/komikindoshop:
-	go run . https://2.komikindo.shop/manga/mr-kims-general-shop/ 5
+	go run . https://komikindo.click/manga/mr-kims-general-shop/ 5
 
 grabber/kumapoi:
 	go run . https://kumapoi.info/manga/mom-eat-first/ 71
