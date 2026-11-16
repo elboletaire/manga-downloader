@@ -182,10 +182,8 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:      "#reader img",
 		SeriesLink: `h3#chapter-title a[href^="/series/"]`,
 	},
-	// manhuaplus.top: NetTruyen theme, not Madara (unlike manhuaplus.com
-	// below). The series page lists every chapter in #nt_listchapter, with
-	// "Chapter N" as the link's text, and reader pages carry their images
-	// in the HTML.
+	// manhuaplus.top: NetTruyen theme, not Madara like manhuaplus.com below;
+	// the series page lists every chapter and readers ship their images in HTML.
 	{
 		Title:      "h1.title-detail",
 		Rows:       "#nt_listchapter .chapter a",
