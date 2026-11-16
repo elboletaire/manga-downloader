@@ -26,11 +26,13 @@ func newTestChikari(t *testing.T, handle func(w http.ResponseWriter, r *http.Req
 	}))
 	t.Cleanup(srv.Close)
 
-	prevBase, prevPacer := chikariAPIBase, chikariAPIPacer
+	prevBase, prevPacer, prevBlock := chikariAPIBase, chikariAPIPacer, chikariBlockedUntil.Load()
 	chikariAPIBase = srv.URL + "/api"
 	chikariAPIPacer = &pacer{interval: time.Millisecond}
+	chikariBlockedUntil.Store(0)
 	t.Cleanup(func() {
 		chikariAPIBase, chikariAPIPacer = prevBase, prevPacer
+		chikariBlockedUntil.Store(prevBlock)
 	})
 
 	return NewChikari(&Grabber{URL: "https://chikari.moe/series/absolute-regression", Settings: &Settings{}}), arrivals
@@ -295,5 +297,106 @@ func TestChikariPacesAPICalls(t *testing.T) {
 	// time the server takes to read a request; half the interval is the floor
 	if gap := arrivals.minGap(); gap < interval/2 {
 		t.Errorf("smallest gap between api calls = %v, want at least %v", gap, interval/2)
+	}
+}
+
+// calls already waiting in the pacer when a 429 lands stop too, so N chapters
+// running at once send one request between them, not N
+func TestChikariChallengeStopsConcurrentCalls(t *testing.T) {
+	c, arrivals := newTestChikari(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+		w.Write([]byte(`{"code":"challenge_required"}`))
+	})
+	chikariAPIPacer = &pacer{interval: 50 * time.Millisecond}
+	c.resolveSeriesURL()
+
+	const chapters = 5
+	var wg sync.WaitGroup
+	errs := make([]error, chapters)
+	for i := range chapters {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_, errs[i] = c.FetchChapter(&ChikariChapter{Chapter{Number: float64(i + 1)}})
+		}()
+	}
+	wg.Wait()
+
+	for i, err := range errs {
+		if err == nil || !strings.Contains(err.Error(), "verification") {
+			t.Errorf("chapter %d error = %v, want the verification error", i+1, err)
+		}
+	}
+	if n := arrivals.count(); n != 1 {
+		t.Errorf("api requests with %d chapters in flight = %d, want 1", chapters, n)
+	}
+}
+
+// the block is package-wide: a new Chikari (a new app load) is refused too
+func TestChikariBlockOutlivesInstance(t *testing.T) {
+	c, arrivals := newTestChikari(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+	})
+	c.resolveSeriesURL()
+	c.FetchChapter(&ChikariChapter{Chapter{Number: 1}})
+
+	other := NewChikari(&Grabber{URL: c.URL, Settings: &Settings{}})
+	if _, err := other.FetchChapter(&ChikariChapter{Chapter{Number: 1}}); err == nil || !strings.Contains(err.Error(), "verification") {
+		t.Errorf("second instance error = %v, want the verification error", err)
+	}
+	if n := arrivals.count(); n != 1 {
+		t.Errorf("api requests = %d, want 1", n)
+	}
+}
+
+// a 5xx is retried through the pacer and the call succeeds once the site recovers
+func TestChikariRetriesServerErrors(t *testing.T) {
+	const interval = 40 * time.Millisecond
+	var hits int
+	var mu sync.Mutex
+	c, arrivals := newTestChikari(t, func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		hits++
+		n := hits
+		mu.Unlock()
+		if n < 3 {
+			w.WriteHeader(http.StatusBadGateway)
+			return
+		}
+		w.Write(chikariFixture(t, "chikari-pages.json"))
+	})
+	chikariAPIPacer = &pacer{interval: interval}
+	c.resolveSeriesURL()
+
+	chapter, err := c.FetchChapter(&ChikariChapter{Chapter{Number: 52.5}})
+	if err != nil {
+		t.Fatalf("FetchChapter() error = %v, want success after retries", err)
+	}
+	if len(chapter.Pages) != 3 {
+		t.Errorf("pages = %d, want 3", len(chapter.Pages))
+	}
+	if n := arrivals.count(); n != 3 {
+		t.Fatalf("api requests = %d, want 3", n)
+	}
+	if gap := arrivals.minGap(); gap < interval/2 {
+		t.Errorf("gap between retries = %v, want at least %v", gap, interval/2)
+	}
+}
+
+// a 5xx that keeps coming gives up after the retries, without a 429 block
+func TestChikariGivesUpOnServerErrors(t *testing.T) {
+	c, arrivals := newTestChikari(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	})
+	c.resolveSeriesURL()
+
+	if _, err := c.FetchChapter(&ChikariChapter{Chapter{Number: 1}}); err == nil {
+		t.Fatal("FetchChapter() error = nil, want an error")
+	}
+	if n := arrivals.count(); n != chikariAPIRetries+1 {
+		t.Errorf("api requests = %d, want %d", n, chikariAPIRetries+1)
+	}
+	if chikariBlocked() {
+		t.Error("a 5xx started the 429 block")
 	}
 }

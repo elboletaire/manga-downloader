@@ -19,10 +19,8 @@ import (
 // whose api is open to plain HTTP. A var so the tests can point it at a server.
 var chikariAPIBase = "https://chikari.moe/api"
 
-// chikariAPIInterval spaces every api call. The site answers 429 with a
-// verification challenge (Cloudflare Turnstile) after about thirty calls in a
-// minute, and blocks for ten minutes or more after that; one call every three
-// seconds never triggered it.
+// chikariAPIInterval spaces every api call: past ~30 calls a minute the site
+// answers 429 with a Turnstile challenge and blocks for ten minutes or more.
 const chikariAPIInterval = 3 * time.Second
 
 // chikariAPIPacer spaces the api calls of every Chikari instance, since the
@@ -32,8 +30,19 @@ var chikariAPIPacer = &pacer{interval: chikariAPIInterval}
 // chikariPageSize is the chapter listing's limit per request
 const chikariPageSize = 500
 
-// errChikariChallenge is returned once the api asks for a verification. The
-// block outlasts any retry loop, so calls stop going out for the rest of the run.
+// chikariBlockFor is how long the site refuses calls after a 429
+const chikariBlockFor = 10 * time.Minute
+
+// chikariBlockedUntil is when the block lifts, in unix nanoseconds (0 when
+// there is none). The limit is per IP, not per Chikari, so it's package-wide:
+// a new app load must not go out into the block
+var chikariBlockedUntil atomic.Int64
+
+// chikariAPIRetries is how many times a 5xx or a network error is tried again
+// (each through the pacer). A 429 is never retried
+const chikariAPIRetries = 2
+
+// errChikariChallenge is returned once the api asks for a verification
 var errChikariChallenge = errors.New("chikari.moe asked for a verification (429 challenge_required): wait about ten minutes before retrying, calling the site again only extends the block")
 
 // Chikari is a grabber for chikari.moe, a SvelteKit reader whose JSON api
@@ -41,8 +50,6 @@ var errChikariChallenge = errors.New("chikari.moe asked for a verification (429 
 // scanlation group's release of a chapter is listed on its own.
 type Chikari struct {
 	*Grabber
-	// challenged is set once the api answers 429, so later calls fail at once
-	challenged atomic.Bool
 }
 
 func NewChikari(g *Grabber) *Chikari {
@@ -268,27 +275,51 @@ func (c *Chikari) FetchChapter(f Filterable) (*Chapter, error) {
 	return chapter, nil
 }
 
-// apiGet is the one way the api is called: paced to chikariAPIInterval and
-// tried once. A 429 is the verification gate, which a retry only extends, so
-// it's reported and every later call is refused without going out
+// apiGet is the one way the api is called: paced to chikariAPIInterval. A 429
+// is the verification gate, which a retry only extends, so it starts the
+// block and is returned at once. A 5xx or a network error is retried, each
+// try through the pacer again. Calls already waiting in the pacer re-check
+// the block once their slot comes up, so a 429 stops them too
 func (c *Chikari) apiGet(uri, referer string) (string, error) {
-	if c.challenged.Load() {
-		return "", errChikariChallenge
-	}
+	var body string
+	var err error
+	for attempt := 0; attempt <= chikariAPIRetries; attempt++ {
+		if chikariBlocked() {
+			return "", errChikariChallenge
+		}
 
-	chikariAPIPacer.wait()
-	body, err := http.GetText(http.RequestParams{
-		URL:          uri,
-		Referer:      referer,
-		Accept:       "application/json",
-		DisableRetry: true,
-	})
+		chikariAPIPacer.wait()
+		if chikariBlocked() {
+			return "", errChikariChallenge
+		}
 
-	var statusErr *http.StatusError
-	if errors.As(err, &statusErr) && statusErr.Code == 429 {
-		c.challenged.Store(true)
-		return "", errChikariChallenge
+		body, err = http.GetText(http.RequestParams{
+			URL:          uri,
+			Referer:      referer,
+			Accept:       "application/json",
+			DisableRetry: true,
+		})
+
+		var statusErr *http.StatusError
+		if errors.As(err, &statusErr) {
+			if statusErr.Code == 429 {
+				chikariBlockedUntil.Store(time.Now().Add(chikariBlockFor).UnixNano())
+				return "", errChikariChallenge
+			}
+			if statusErr.Code < 500 {
+				return body, err
+			}
+		}
+		if err == nil {
+			return body, nil
+		}
 	}
 
 	return body, err
+}
+
+// chikariBlocked reports whether the site is still refusing calls after a 429
+func chikariBlocked() bool {
+	until := chikariBlockedUntil.Load()
+	return until != 0 && time.Now().UnixNano() < until
 }
