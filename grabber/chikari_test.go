@@ -307,7 +307,7 @@ func TestChikariChallengeStopsConcurrentCalls(t *testing.T) {
 		w.WriteHeader(http.StatusTooManyRequests)
 		w.Write([]byte(`{"code":"challenge_required"}`))
 	})
-	chikariAPIPacer = &pacer{interval: 50 * time.Millisecond}
+	chikariAPIPacer = &pacer{interval: 250 * time.Millisecond}
 	c.resolveSeriesURL()
 
 	const chapters = 5

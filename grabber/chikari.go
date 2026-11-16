@@ -275,11 +275,9 @@ func (c *Chikari) FetchChapter(f Filterable) (*Chapter, error) {
 	return chapter, nil
 }
 
-// apiGet is the one way the api is called: paced to chikariAPIInterval. A 429
-// is the verification gate, which a retry only extends, so it starts the
-// block and is returned at once. A 5xx or a network error is retried, each
-// try through the pacer again. Calls already waiting in the pacer re-check
-// the block once their slot comes up, so a 429 stops them too
+// apiGet is the one way the api is called, paced to chikariAPIInterval. A 429
+// starts the block and is never retried (a retry only extends it); a 5xx or
+// network error is retried through the pacer, and queued calls re-check the block.
 func (c *Chikari) apiGet(uri, referer string) (string, error) {
 	var body string
 	var err error
