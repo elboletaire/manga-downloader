@@ -1000,7 +1000,7 @@ func (c *Controller) SelectionGen() uint64 {
 	return c.selGen
 }
 
-// LogGen changes whenever a line is added to the log (see logGen)
+// LogGen changes whenever the log does: a line added, or ClearLog (see logGen)
 func (c *Controller) LogGen() uint64 {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -1292,6 +1292,16 @@ func (c *Controller) Log() []LogLine {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return append([]LogLine(nil), c.log...)
+}
+
+// ClearLog empties the log. A running download keeps going: its later lines
+// just start the log again.
+func (c *Controller) ClearLog() {
+	c.mu.Lock()
+	c.logGen++
+	c.log = nil
+	c.mu.Unlock()
+	c.emit()
 }
 
 // Start validates the settings and starts downloading the selected chapters
