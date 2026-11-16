@@ -182,6 +182,16 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:      "#reader img",
 		SeriesLink: `h3#chapter-title a[href^="/series/"]`,
 	},
+	// manhuaplus.top: NetTruyen theme, not Madara (unlike manhuaplus.com
+	// below). The series page lists every chapter in #nt_listchapter, with
+	// "Chapter N" as the link's text, and reader pages carry their images
+	// in the HTML.
+	{
+		Title:      "h1.title-detail",
+		Rows:       "#nt_listchapter .chapter a",
+		Image:      "#image_container .page-chapter img",
+		SeriesLink: `a.home.backward[href*="/manga/"]`,
+	},
 	// mangaread.org & manhuaplus.com: plain-HTTP Madara wordpress themes
 	// (not cloudflare-walled, unlike the toongod/dragontea/manhuaus group
 	// in plainhtmlbrowser.go). The full chapter list ships in the series

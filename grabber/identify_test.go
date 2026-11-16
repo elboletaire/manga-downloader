@@ -186,6 +186,27 @@ func TestIdentifySiteOrder(t *testing.T) {
 			want: (*PlainHTML)(nil),
 		},
 		{
+			name:   "manhuaplus.top series page",
+			origin: "https://manhuaplus.top",
+			path:   "/manga/a-flame-reborn",
+			routes: map[string]string{
+				"/manga/a-flame-reborn": "manhuaplus_top_series.html",
+			},
+			want: (*PlainHTML)(nil),
+			rows: "#nt_listchapter .chapter a",
+		},
+		{
+			name:   "manhuaplus.top chapter page",
+			origin: "https://manhuaplus.top",
+			path:   "/manga/a-flame-reborn/chapter-159",
+			routes: map[string]string{
+				"/manga/a-flame-reborn/chapter-159": "manhuaplus_top_chapter.html",
+				"/manga/a-flame-reborn":             "manhuaplus_top_series.html",
+			},
+			want: (*PlainHTML)(nil),
+			rows: "#nt_listchapter .chapter a",
+		},
+		{
 			name:   "rawkuma series page",
 			origin: "https://rawkuma.net",
 			path:   "/manga/5-ji-kara-heroine/",
