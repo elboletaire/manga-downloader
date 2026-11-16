@@ -1266,7 +1266,7 @@ func headerVolume(text string) int {
 	if m == nil {
 		return 0
 	}
-	return parseVolume(m[1])
+	return parseVolume(strings.TrimSuffix(m[1], "."))
 }
 
 // urlChapterNumberRe is a last-resort fallback for rows whose visible text

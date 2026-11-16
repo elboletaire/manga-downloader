@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/elboletaire/manga-downloader/http"
 )
@@ -97,7 +96,7 @@ func (g Guya) FetchChapters() (Filterables, []error) {
 				Chapter{
 					Number: number,
 					Title:  c.Title,
-					Volume: parseVolume(strings.Trim(string(c.Volume), `"`)),
+					Volume: int(c.Volume),
 					ID:     c.Folder + "/" + groupId,
 					Label:  Label{Style: LabelNumbered},
 				},
@@ -225,7 +224,7 @@ type guyaSeriesFeed struct {
 	Chapters      map[string]struct {
 		Title string `json:"title"`
 		// Volume is a string or a number, "0" or null when unknown
-		Volume json.RawMessage     `json:"volume"`
+		Volume jsonVolume          `json:"volume"`
 		Folder string              `json:"folder"`
 		Groups map[string][]string `json:"groups"`
 	} `json:"chapters"`
