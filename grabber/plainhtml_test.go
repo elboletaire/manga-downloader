@@ -111,15 +111,21 @@ func TestRowVolume(t *testing.T) {
 	}{
 		{"Vol.2 Chapter 15", 15, 2},
 		{"Vol. 1 · Ch. 1", 1, 1},
-		{"Vol. 01 – Pról.", 1, 1},            // prologue numbered 1, volume 1
-		{"Том 2 Глава 15", 15, 2},            // russian, volume before chapter
-		{"Volume 18", 18, 18},                // volume-only row is its own volume
-		{"Том 2", 2, 2},                      // russian volume-only row
-		{"Vol. 2 Chapter 15.5", 15.5, 2},     // decimal chapter keeps the whole volume
-		{"Vol. 2.5 Chapter 15", 15, 0},       // decimal volume is unsure
-		{"Vol. 2 Chapter 15 extra 3", 15, 2}, // chapter wins over the volume
-		{"Vol. 3", 15, 0},                    // volume disagrees with the number
-		{"Chapter 15", 15, 0},                // no volume
+		{"Vol. 01 – Pról.", 1, 1},               // prologue numbered 1, volume 1
+		{"Том 2 Глава 15", 15, 2},               // russian, volume before chapter
+		{"Volume 18", 18, 18},                   // volume-only row is its own volume
+		{"Том 2", 2, 2},                         // russian volume-only row
+		{"Vol. 2 Chapter 15.5", 15.5, 2},        // decimal chapter keeps the whole volume
+		{"Vol. 2.5 Chapter 15", 15, 0},          // decimal volume is unsure
+		{"Vol. 2 Chapter 15 extra 3", 15, 2},    // chapter wins over the volume
+		{"Vol. 3", 15, 0},                       // volume disagrees with the number
+		{"Chapter 15", 15, 0},                   // no volume
+		{"Vol. 2. Chapter 15", 15, 2},           // the dot ends the volume, not a decimal
+		{"Vol.2.Ch.15", 15, 2},                  // dot before the chapter
+		{"Volume 2.", 2, 2},                     // volume-only row with a trailing dot
+		{"Chapter 120 - Vol. 13 Cover", 120, 0}, // a volume after the chapter is title text
+		{"Ch. 50: Volume 5 Bonus", 50, 0},
+		{"Chapter 10 vol 2024", 10, 0},
 		{"Notice", 0, 0},
 	}
 	for _, c := range cases {

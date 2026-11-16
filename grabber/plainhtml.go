@@ -1229,31 +1229,31 @@ var turkishSuffixChapterNumberRe = regexp.MustCompile(`(?i)#?(\d+\.?\d*)\s*\.?\s
 // thaiChapterNumberRe matches the Thai "ตอนที่ 12" ("ตอน 12" too).
 var thaiChapterNumberRe = regexp.MustCompile(`ตอน(?:ที่)?\s*(\d+\.?\d*)`)
 
-// chapterMatch returns the match of a chapter number in a title, nil when the
-// title names no chapter
-func chapterMatch(text string) []string {
-	match := chapterNumberRe.FindStringSubmatch(text)
-	if len(match) == 0 {
-		match = cyrillicChapterNumberRe.FindStringSubmatch(text)
+// chapterMatch returns the submatch indices of a chapter number in a title,
+// nil when the title names no chapter
+func chapterMatch(text string) []int {
+	match := chapterNumberRe.FindStringSubmatchIndex(text)
+	if match == nil {
+		match = cyrillicChapterNumberRe.FindStringSubmatchIndex(text)
 	}
-	if len(match) == 0 {
-		match = turkishChapterNumberRe.FindStringSubmatch(text)
+	if match == nil {
+		match = turkishChapterNumberRe.FindStringSubmatchIndex(text)
 	}
-	if len(match) == 0 {
-		match = turkishSuffixChapterNumberRe.FindStringSubmatch(text)
+	if match == nil {
+		match = turkishSuffixChapterNumberRe.FindStringSubmatchIndex(text)
 	}
-	if len(match) == 0 {
-		match = thaiChapterNumberRe.FindStringSubmatch(text)
+	if match == nil {
+		match = thaiChapterNumberRe.FindStringSubmatchIndex(text)
 	}
 	return match
 }
 
-// volumeMatch returns the match of a volume number in a title, nil when the
-// title names no volume
-func volumeMatch(text string) []string {
-	match := volumeNumberRe.FindStringSubmatch(text)
-	if len(match) == 0 {
-		match = cyrillicVolumeNumberRe.FindStringSubmatch(text)
+// volumeMatch returns the submatch indices of a volume number in a title, nil
+// when the title names no volume
+func volumeMatch(text string) []int {
+	match := volumeNumberRe.FindStringSubmatchIndex(text)
+	if match == nil {
+		match = cyrillicVolumeNumberRe.FindStringSubmatchIndex(text)
 	}
 	return match
 }
@@ -1263,31 +1263,39 @@ func volumeMatch(text string) []string {
 // are usually site announcements rather than actual chapters).
 func parseChapterNumber(text string) (float64, bool) {
 	match := chapterMatch(text)
-	if len(match) == 0 {
+	if match == nil {
 		// only checked as fallback so "Vol.2 Chapter 15" still prefers the chapter
 		match = volumeMatch(text)
 	}
-	if len(match) == 0 {
+	if match == nil {
 		return 0, false
 	}
-	number, err := strconv.ParseFloat(match[1], 64)
+	number, err := strconv.ParseFloat(text[match[2]:match[3]], 64)
 	if err != nil {
 		return 0, false
 	}
 	return number, true
 }
 
-// rowVolume returns the volume a row states beside its chapter number ("Vol.2
-// Chapter 15"). A row that names only a volume ("Volume 18", as sushiscan lists
-// whole volumes) is that volume, so number is its volume. 0 when unsure: a
-// volume that isn't whole, or one that disagrees with the number.
+// rowVolume returns the volume a row states before its chapter ("Vol.2
+// Chapter 15"), or a volume-only row's own number (sushiscan's "Volume 18").
+// 0 when it isn't whole or disagrees with the number.
 func rowVolume(text string, number float64) int {
 	match := volumeMatch(text)
-	if len(match) == 0 {
+	if match == nil {
 		return 0
 	}
-	volume := parseVolume(match[1])
-	if chapterMatch(text) != nil || float64(volume) == number {
+	// "Vol. 2." takes the dot as a sentence end, not a decimal
+	volume := parseVolume(strings.TrimSuffix(text[match[2]:match[3]], "."))
+	chapter := chapterMatch(text)
+	if chapter == nil {
+		if float64(volume) == number {
+			return volume
+		}
+		return 0
+	}
+	// a volume after the chapter is title text ("Chapter 120 - Vol. 13 Cover")
+	if match[1] <= chapter[0] {
 		return volume
 	}
 	return 0
