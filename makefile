@@ -966,7 +966,7 @@ grabber/magcomi:
 grabber/comicgardo:
 	go run . https://comic-gardo.com/episode/10044607041200756622 1
 grabber/comiczenon:
-	go run . https://comic-zenon.com/episode/12207421984318179863 695
+	go run . https://comic-zenon.com/episode/12207421984318179863 698
 grabber/comicaction:
 	go run . https://comic-action.com/episode/10044607041217599247 3
 grabber/comicborder:
@@ -1378,6 +1378,8 @@ grabber/html: \
 	grabber/mangazin \
 	grabber/manhuabug \
 	grabber/manhuaplus \
+	grabber/manhuaplusorg \
+	grabber/manhuaplustop \
 	grabber/manhuathai \
 	grabber/manhwa18cc \
 	grabber/manhwa18tx \
@@ -1581,6 +1583,10 @@ grabber/mangazin:
 	go run . https://mangazin.org/manga/the-cold-blooded-warrior/ 75-76
 grabber/manhuaplus:
 	go run . https://manhuaplus.com/manga/tales-of-demons-and-gods01/ 522.6
+grabber/manhuaplusorg:
+	go run . https://manhuaplus.org/manga/demon-magic-emperor/ 1-2
+grabber/manhuaplustop:
+	go run . https://manhuaplus.top/manga/a-flame-reborn/ 140
 grabber/silentquill:
 	go run . https://silentquill.net/series/i-was-invited-to-join-the-country-as-an-otherworldly-warrior-but-i-refused-and-decided-to-start-as-a-soldier/ 59
 grabber/decadencescans:
@@ -1791,7 +1797,7 @@ grabber/manhwaclub:
 grabber/manhwanex:
 	go run . https://manhwanex.com/manga/top-tier-providence-secretly-cultivate-for-a-thousand-years/ 278
 grabber/manhwareads:
-	go run . https://manhwareads.com/manga/the-young-wife/ 15
+	go run . https://manhwareads.com/manga/dandadan/ 37
 grabber/monopolymanhua:
 	go run . https://monopolymanhua.com/manga/yo-solo-derribare-este-mundo-en-caos/ 3
 grabber/montetaiscanlator:
@@ -1837,7 +1843,7 @@ grabber/truyentranhdammyy:
 grabber/valirscans:
 	go run . https://valirscans.org/series/comic/i-saved-my-favorite-from-exile-but-now-i-cant-escape-his-love 8
 grabber/yaoihub:
-	go run . https://yaoihub.org/manga/waterside-night/ 58
+	go run . https://yaoihub.org/manga/my-sadistic-master/ 48
 grabber/youngchampion:
 	go run . https://youngchampion.jp/series/0cdd7013b23d7 1
 grabber/yurionline:
@@ -1931,7 +1937,7 @@ grabber/manhwadesu:
 grabber/manhwahub:
 	go run . https://manhwahub.to/manhwa/someone-stop-her/ 110
 grabber/manhwalist:
-	go run . https://m1.manhwalist.my.id/manga/lookism/ 623
+	go run . https://m1.manhwalist.my.id/manga/lookism/ 634
 grabber/mihentai:
 	go run . https://mihentai.net/manga/wear-student-underwear-and-apologize/ 1
 grabber/mindafansub:
@@ -1979,7 +1985,7 @@ grabber/speedmanga:
 grabber/tanukimanga:
 	go run . https://www.tanuki-manga.net/manga/magic-emperor/ 459
 grabber/tilkiscans:
-	go run . https://www.tilkiscans.com/seri/unlu-bir-ailenin-kilic-dahisi-oldum/ 70
+	go run . https://www.tilkiscans.com/seri/murim-dunyasina-giris/ 251
 grabber/timelesstoons:
 	go run . https://timelesstoons.org/series/i-got-married-and-gained-cute-stepsons-but-ive-been-ordered-to-kill-my-husband/ 1
 grabber/toomtammanga:
@@ -1997,7 +2003,7 @@ grabber/sodsaime:
 grabber/yakshacomics:
 	go run . https://yakshacomics.com/manga/the-ultimate-wantless-godly-rich-system/ 73
 grabber/yaoiflix:
-	go run . https://yaoiflix.fit/manga/shut-line-19/ 58
+	go run . https://yaoiflix.fit/manga/a-guide-thicker-than-blood/ 65
 
 # no code: recognised by their markup (tcb, Toivo Lite, WordPressCategory, Blogger)
 grabber/akanebanashimanga:
@@ -2121,7 +2127,7 @@ grabber/kiryuu:
 	go run . https://v7.kiryuu.to/manga/martial-peak/ 1935
 
 grabber/komikindoshop:
-	go run . https://2.komikindo.shop/manga/mr-kims-general-shop/ 5
+	go run . https://komikindo.click/manga/mr-kims-general-shop/ 5
 
 grabber/kumapoi:
 	go run . https://kumapoi.info/manga/mom-eat-first/ 71
@@ -2145,7 +2151,7 @@ grabber/merlinshoujo:
 	go run . https://merlinshoujo.com/manga/akademinin-onur-ogrencisi/ 63
 
 grabber/mhscans:
-	go run . https://mhscans.com/series/emperador-del-apocalipsis-con-mi-estandarte-convocare-a-todas-mis-discipulas/ 19
+	go run . https://mhscans.com/comics/mhscans-el-maestro-de-la-mazmorra/ 88
 
 grabber/myreadingcomic:
 	go run . https://myreadingcomic.com/comic/wireless-onahole/ 63

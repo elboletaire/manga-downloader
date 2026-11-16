@@ -177,7 +177,7 @@ function components({ state, chapters, selected, log }: Snapshot): Screen[] {
         onUpdate: later,
       }),
     },
-    { file: 'LogPanel.tsx', name: 'LogDrawer', element: createElement(LogDrawer, { log, onClose: noop }) },
+    { file: 'LogPanel.tsx', name: 'LogDrawer', element: createElement(LogDrawer, { log, onClose: noop, onClear: noop }) },
     {
       file: 'SettingsDialog.tsx',
       name: 'SettingsDialog',

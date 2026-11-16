@@ -1,0 +1,48 @@
+name: Feature request
+description: Suggest a new feature or an improvement for the app or the command line
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea! For a new manga site, please use the
+        [Site request](https://github.com/elboletaire/manga-downloader/issues/new?template=site-request.yml)
+        form instead.
+  - type: dropdown
+    id: program
+    attributes:
+      label: Which program is this for?
+      options:
+        - Desktop app
+        - Command line
+        - Both
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does it solve?
+      description: >-
+        What are you trying to do, and what gets in the way today? A concrete
+        example helps more than a general wish.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: >-
+        How should it work? Describe what you would see or type, and any
+        option it needs (its name and default, if you have an idea).
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else? (optional)
+      description: >-
+        Alternatives you considered, similar features in other tools, or
+        screenshots.
+    validations:
+      required: false

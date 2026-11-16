@@ -9,7 +9,8 @@ import (
 
 // Post sends a POST request to the given URL
 func Post(params Params) (body io.ReadCloser, err error) {
-	return request("POST", params)
+	body, _, err = request("POST", params)
+	return
 }
 
 // PostText sends a POST request and returns the response body as a string

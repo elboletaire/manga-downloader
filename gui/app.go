@@ -456,6 +456,11 @@ func (a *App) Selection() []int {
 	return a.ctrl.SelectedIndices()
 }
 
+// ClearLog empties the log; the window gets the empty log in the next push
+func (a *App) ClearLog() {
+	a.ctrl.ClearLog()
+}
+
 // Log returns the most recent log lines
 func (a *App) Log() []LogDTO {
 	lines := a.ctrl.Log()

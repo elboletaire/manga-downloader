@@ -10,6 +10,8 @@ export function ChooseFolder(arg1:string):Promise<string>;
 
 export function Clear():Promise<void>;
 
+export function ClearLog():Promise<void>;
+
 export function DismissBrowserAlert():Promise<void>;
 
 export function Load(arg1:string):Promise<void>;
