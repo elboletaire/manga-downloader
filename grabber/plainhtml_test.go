@@ -105,6 +105,74 @@ func TestFetchChaptersURLFallback(t *testing.T) {
 	}
 }
 
+func TestRowVolume(t *testing.T) {
+	cases := []struct {
+		in     string
+		number float64
+		want   int
+	}{
+		{"Vol.2 Chapter 15", 15, 2},
+		{"Vol. 1 · Ch. 1", 1, 1},
+		{"Vol. 01 – Pról.", 1, 1},               // prologue numbered 1, volume 1
+		{"Том 2 Глава 15", 15, 2},               // russian, volume before chapter
+		{"Volume 18", 18, 18},                   // volume-only row is its own volume
+		{"Том 2", 2, 2},                         // russian volume-only row
+		{"Vol. 2 Chapter 15.5", 15.5, 2},        // decimal chapter keeps the whole volume
+		{"Vol. 2.5 Chapter 15", 15, 0},          // decimal volume is unsure
+		{"Vol. 2 Chapter 15 extra 3", 15, 2},    // chapter wins over the volume
+		{"Vol. 3", 15, 0},                       // volume disagrees with the number
+		{"Chapter 15", 15, 0},                   // no volume
+		{"Vol. 2. Chapter 15", 15, 2},           // the dot ends the volume, not a decimal
+		{"Vol.2.Ch.15", 15, 2},                  // dot before the chapter
+		{"Volume 2.", 2, 2},                     // volume-only row with a trailing dot
+		{"Chapter 120 - Vol. 13 Cover", 120, 0}, // a volume after the chapter is title text
+		{"Ch. 50: Volume 5 Bonus", 50, 0},
+		{"Chapter 10 vol 2024", 10, 0},
+		{"Notice", 0, 0},
+	}
+	for _, c := range cases {
+		if got := rowVolume(c.in, c.number); got != c.want {
+			t.Errorf("rowVolume(%q, %v) = %d, want %d", c.in, c.number, got, c.want)
+		}
+	}
+}
+
+func TestFetchChaptersReadsVolumes(t *testing.T) {
+	html := `<html><body><ul>
+		<li class="chapter"><a href="https://example.com/read/a-15">Vol.2 Chapter 15</a></li>
+		<li class="chapter"><a href="https://example.com/read/a-1">Vol. 01 – Pról.</a></li>
+		<li class="chapter"><a href="https://example.com/read/a-3">Volume 3</a></li>
+		<li class="chapter"><a href="https://example.com/read/a-4">Chapter 4</a></li>
+	</ul></body></html>`
+
+	doc := docFromHTML(t, html)
+	m := PlainHTML{
+		Grabber: &Grabber{URL: "https://example.com/series/a"},
+		doc:     doc,
+		rows:    doc.Find("li.chapter"),
+		site: SiteSelector{
+			Link: "a",
+		},
+	}
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	want := []struct {
+		number float64
+		volume int
+	}{{15, 2}, {1, 1}, {3, 3}, {4, 0}}
+	if len(chapters) != len(want) {
+		t.Fatalf("got %d chapters, want %d", len(chapters), len(want))
+	}
+	for i, c := range chapters {
+		if c.GetNumber() != want[i].number || VolumeOf(c) != want[i].volume {
+			t.Errorf("chapter %d: number %v volume %d, want %v, %d", i, c.GetNumber(), VolumeOf(c), want[i].number, want[i].volume)
+		}
+	}
+}
+
 func docFromHTML(t *testing.T, html string) *goquery.Document {
 	t.Helper()
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
