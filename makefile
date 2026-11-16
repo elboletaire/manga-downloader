@@ -2151,7 +2151,7 @@ grabber/merlinshoujo:
 	go run . https://merlinshoujo.com/manga/akademinin-onur-ogrencisi/ 63
 
 grabber/mhscans:
-	go run . https://mhscans.com/series/emperador-del-apocalipsis-con-mi-estandarte-convocare-a-todas-mis-discipulas/ 19
+	go run . https://mhscans.com/comics/mhscans-el-maestro-de-la-mazmorra/ 88
 
 grabber/myreadingcomic:
 	go run . https://myreadingcomic.com/comic/wireless-onahole/ 63
