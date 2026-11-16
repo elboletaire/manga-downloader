@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -1651,5 +1653,119 @@ func TestPlainHTMLHentaimangaWinsSharedRows(t *testing.T) {
 	}
 	if m.site.Rows != "li[data-chapter-item]" {
 		t.Errorf("Test() matched with selector %q, want li[data-chapter-item]", m.site.Rows)
+	}
+}
+
+// volumesFixture returns a PlainHTML over testdata/volumes/name, with the
+// selector whose Rows is rows
+func volumesFixture(t *testing.T, name, rows string) PlainHTML {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("testdata", "volumes", name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc := docFromHTML(t, string(data))
+	for _, site := range plainHTMLSelectors {
+		if site.Rows == rows {
+			return PlainHTML{
+				Grabber: &Grabber{URL: "https://example.test/manga/x"},
+				doc:     doc,
+				rows:    doc.Find(rows),
+				site:    site,
+			}
+		}
+	}
+	t.Fatalf("no PlainHTML selector with rows %q", rows)
+	return PlainHTML{}
+}
+
+// TestFetchChaptersVolumesFromHeaders reads the volume each row sits under
+// from the headers of the live sites (trimmed copies in testdata/volumes):
+// utsukushii-bg's "Том 33" <li>, mangaworld.mx's .volume, dynasty-scans' <dt>,
+// read-nifteam's button, noranofansub's "Volúmen 01" and silentquill's section.
+func TestFetchChaptersVolumesFromHeaders(t *testing.T) {
+	cases := []struct {
+		file, rows string
+		want       map[float64]int
+	}{
+		{"utsukushii_series.html", "h5.chapter-title-rtl", map[float64]int{275: 33, 274: 32, 273: 32}},
+		{"mangaworld_series.html", "div.chapter a.chap", map[float64]int{836: 77, 835: 77, 834: 76, 824: 76}},
+		{"dynasty_series.html", "dl.chapter-list dd a.name", map[float64]int{1: 1, 24: 1, 25: 2}},
+		{"nifteam_series.html", ".list .element", map[float64]int{1198: 118, 1197: 118, 1196: 117}},
+		{"noranofansub_series.html", ".list .element", map[float64]int{41: 1, 40: 1}},
+		{"silentquill_series.html", `a.grid[href*="-chapter-"]:not([href^="/series/"])`, map[float64]int{59: 13, 55: 13, 54: 12, 50: 12}},
+	}
+	for _, c := range cases {
+		m := volumesFixture(t, c.file, c.rows)
+		chapters, errs := m.FetchChapters()
+		if len(errs) > 0 {
+			t.Fatalf("%s: unexpected errors: %v", c.file, errs)
+		}
+		got := map[float64]int{}
+		for _, ch := range chapters {
+			got[ch.GetNumber()] = VolumeOf(ch)
+		}
+		for number, volume := range c.want {
+			if got[number] != volume {
+				t.Errorf("%s: chapter %v volume = %d, want %d", c.file, number, got[number], volume)
+			}
+		}
+	}
+}
+
+// TestRowVolumeNeedsWholeVolumeAndHeader checks the nearest header before a row
+// counts, whether it sits beside the row or beside an ancestor of it, and that
+// rows under no header, or under a fractional one, keep volume 0
+func TestRowVolumeNeedsWholeVolumeAndHeader(t *testing.T) {
+	before := docFromHTML(t, `<dl>
+		<dd><a class="name">Chapter 0</a></dd>
+		<dt>Volume 1</dt>
+		<dd><a class="name">Chapter 1</a></dd>
+		<dt>Volume 2.5</dt>
+		<dd><a class="name">Chapter 2</a></dd>
+	</dl>`)
+	ancestor := docFromHTML(t, `<div class="vn">Volume 3</div>
+		<div class="vol"><div class="c"><a class="chap">Chapter 7</a></div></div>
+		<div class="c"><a class="chap">Chapter 8</a></div>`)
+	cases := []struct {
+		doc  *goquery.Document
+		rows string
+		site SiteSelector
+		want map[float64]int
+	}{
+		{before, "dd a.name", SiteSelector{VolumeHeader: "dt", VolumeScope: "dd"},
+			map[float64]int{0: 0, 1: 1, 2: 0}},
+		{ancestor, "a.chap", SiteSelector{VolumeHeader: ".vn", VolumeScope: ".vol"},
+			map[float64]int{7: 3, 8: 0}},
+	}
+	for _, c := range cases {
+		m := PlainHTML{Grabber: &Grabber{URL: "https://example.test/x"}, doc: c.doc, site: c.site}
+		c.doc.Find(c.rows).Each(func(_ int, s *goquery.Selection) {
+			number, ok := parseChapterNumber(s.Text())
+			if !ok {
+				return
+			}
+			if got, want := m.rowVolume(s), c.want[number]; got != want {
+				t.Errorf("chapter %v volume = %d, want %d", number, got, want)
+			}
+		})
+	}
+}
+
+// TestChapterFromDocKeepsListedVolume checks a fetched chapter carries the
+// volume, title and label its listed row gave it (see AGENTS.md, name drift)
+func TestChapterFromDocKeepsListedVolume(t *testing.T) {
+	m := volumesFixture(t, "utsukushii_series.html", "h5.chapter-title-rtl")
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	listed := chapters[0]
+	fetched := m.chapterFromDoc(listed, docFromHTML(t, "<html></html>"))
+	if fetched.Volume != VolumeOf(listed) || fetched.Volume != 33 {
+		t.Errorf("fetched volume = %d, listed %d, want 33", fetched.Volume, VolumeOf(listed))
+	}
+	if fetched.Title != listed.GetTitle() || fetched.Label != labelOf(listed) {
+		t.Errorf("fetched title/label = %q/%v, listed %q/%v", fetched.Title, fetched.Label, listed.GetTitle(), labelOf(listed))
 	}
 }
