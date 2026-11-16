@@ -3,7 +3,6 @@
 package grabber
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -209,27 +208,6 @@ func TestSacachispaTest(t *testing.T) {
 	}
 }
 
-// the API sends a chapter's volume as null, a string or a number, and only a positive
-// whole number is a volume
-func TestSacachispaVolumeDecode(t *testing.T) {
-	for _, c := range []struct {
-		json string
-		want int
-	}{
-		{`null`, 0}, {`""`, 0}, {`0`, 0}, {`-1`, 0}, {`"0"`, 0}, {`"x"`, 0},
-		{`1`, 1}, {`"2"`, 2}, {` "3" `, 3}, {`12.5`, 0}, {`"12.5"`, 0},
-	} {
-		var v sacachispaVolume
-		if err := json.Unmarshal([]byte(c.json), &v); err != nil {
-			t.Errorf("Unmarshal(%s) error = %v", c.json, err)
-			continue
-		}
-		if int(v) != c.want {
-			t.Errorf("Unmarshal(%s) = %d, want %d", c.json, v, c.want)
-		}
-	}
-}
-
 func TestSacachispaVolumes(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/chapters", func(w http.ResponseWriter, r *http.Request) {
@@ -237,7 +215,9 @@ func TestSacachispaVolumes(t *testing.T) {
 			`{"id":"c1","chapter":"1","volume":1,"title":null,"patreonOnly":false},` +
 			`{"id":"c2","chapter":"2","volume":"2","title":null,"patreonOnly":false},` +
 			`{"id":"c3","chapter":"3","volume":null,"title":null,"patreonOnly":false},` +
-			`{"id":"c4","chapter":"4","volume":0,"title":null,"patreonOnly":false}` +
+			`{"id":"c4","chapter":"4","volume":0,"title":null,"patreonOnly":false},` +
+			`{"id":"c5","chapter":"5","volume":2.5,"title":null,"patreonOnly":false},` +
+			`{"id":"c6","chapter":"6","volume":-1,"title":null,"patreonOnly":false}` +
 			`],"pagination":{"pages":1}}`))
 	})
 	mux.HandleFunc("/releases/r1/pages", func(w http.ResponseWriter, r *http.Request) {
@@ -261,8 +241,9 @@ func TestSacachispaVolumes(t *testing.T) {
 	if len(errs) > 0 {
 		t.Fatalf("FetchChapters() errors = %v", errs)
 	}
-	// c1 and c2 have a release, c3 and c4 none: each still lists once
-	want := []int{1, 2, 0, 0}
+	// c1 and c2 have a release, the rest none: each still lists once, and a
+	// decimal or negative volume reads as 0 without failing the listing
+	want := []int{1, 2, 0, 0, 0, 0}
 	if len(chapters) != len(want) {
 		t.Fatalf("FetchChapters() got %d chapters, want %d", len(chapters), len(want))
 	}

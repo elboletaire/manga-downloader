@@ -5,6 +5,7 @@ package grabber
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
@@ -70,15 +71,12 @@ func (b *Bigsolo) FetchChapters() (chapters Filterables, errs []error) {
 			errs = append(errs, fmt.Errorf("chapter %q has no supported source", key))
 			continue
 		}
-		// the volume is a string, "" when the site doesn't say
-		volume, _ := strconv.Atoi(strings.TrimSpace(c.Volume))
-
 		chapters = append(chapters, &BigsoloChapter{
 			Chapter{
 				Number: number,
 				Title:  c.Title,
 				ID:     c.Source.Id,
-				Volume: max(volume, 0),
+				Volume: int(c.Volume),
 				Label:  Label{Style: LabelNumbered, Number: key, Lang: "fr"},
 			},
 			c.Source.Id,
@@ -144,7 +142,7 @@ func (b *Bigsolo) fetchSeries() (*bigsoloSeries, error) {
 		return b.series, nil
 	}
 
-	body, err := http.Get(http.RequestParams{URL: b.URL})
+	body, err := http.Get(http.RequestParams{URL: bigsoloSeriesURL(b.URL)})
 	if err != nil {
 		return nil, err
 	}
@@ -170,13 +168,28 @@ func (b *Bigsolo) fetchSeries() (*bigsoloSeries, error) {
 	return series, nil
 }
 
+// bigsoloSeriesURL moves the old single-segment series links (bigsolo.org/{slug},
+// now 404) to their /manga/{slug} page. Anything else is returned as it is.
+func bigsoloSeriesURL(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil || strings.TrimPrefix(u.Hostname(), "www.") != "bigsolo.org" {
+		return raw
+	}
+	slug := strings.Trim(u.Path, "/")
+	if slug == "" || slug == "manga" || strings.Contains(slug, "/") {
+		return raw
+	}
+	u.Path = "/manga/" + slug
+	return u.String()
+}
+
 // bigsoloSeries is the series info embedded in the series page's
 // `#series-data-placeholder` script tag
 type bigsoloSeries struct {
 	Title    string `json:"title"`
 	Chapters map[string]struct {
-		Title  string `json:"title"`
-		Volume string `json:"volume"`
+		Title  string     `json:"title"`
+		Volume jsonVolume `json:"volume"`
 		Source struct {
 			Service string `json:"service"`
 			Id      string `json:"id"`

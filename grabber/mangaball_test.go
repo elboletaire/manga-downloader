@@ -252,7 +252,11 @@ func TestMangaballVolumes(t *testing.T) {
 			w.Write([]byte(`{"status":"success","data":[
 				{"id":"c1","lang":"en","name":"","number":1,"volume":1,"group_name":"A"},
 				{"id":"c2","lang":"en","name":"","number":2,"volume":0,"group_name":"A"},
-				{"id":"c3","lang":"en","name":"","number":3,"group_name":"A"}
+				{"id":"c3","lang":"en","name":"","number":3,"group_name":"A"},
+				{"id":"c4","lang":"en","name":"","number":4,"volume":"2","group_name":"A"},
+				{"id":"c5","lang":"en","name":"","number":5,"volume":-1,"group_name":"A"},
+				{"id":"c6","lang":"en","name":"","number":6,"volume":2.5,"group_name":"A"},
+				{"id":"c7","lang":"en","name":"","number":7,"volume":null,"group_name":"A"}
 			]}`))
 			return
 		}
@@ -272,7 +276,8 @@ func TestMangaballVolumes(t *testing.T) {
 	if len(errs) > 0 {
 		t.Fatalf("unexpected errors: %v", errs)
 	}
-	want := []int{1, 0, 0}
+	// a mistyped volume reads as 0 and doesn't fail the listing
+	want := []int{1, 0, 0, 2, 0, 0, 0}
 	for i, c := range chapters {
 		if got := VolumeOf(c); got != want[i] {
 			t.Errorf("listed chapter %d volume = %d, want %d", i, got, want[i])

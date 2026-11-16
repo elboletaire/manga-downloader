@@ -93,11 +93,11 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 	for page, pages := 1, 1; page <= pages; page++ {
 		var res struct {
 			Data []struct {
-				ID          string           `json:"id"`
-				Chapter     string           `json:"chapter"`
-				Title       string           `json:"title"`
-				Volume      sacachispaVolume `json:"volume"`
-				PatreonOnly bool             `json:"patreonOnly"`
+				ID          string     `json:"id"`
+				Chapter     string     `json:"chapter"`
+				Title       string     `json:"title"`
+				Volume      jsonVolume `json:"volume"`
+				PatreonOnly bool       `json:"patreonOnly"`
 			} `json:"data"`
 			Pagination struct {
 				Pages int `json:"pages"`
@@ -150,31 +150,6 @@ func (s *Sacachispa) FetchChapters() (Filterables, []error) {
 	}
 
 	return chapters, nil
-}
-
-// sacachispaVolume is a chapter's volume as the API sends it: null, a string or a
-// number. Anything that isn't a positive whole number reads as 0, unknown.
-type sacachispaVolume int
-
-func (v *sacachispaVolume) UnmarshalJSON(b []byte) error {
-	*v = 0
-
-	var raw any
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	text := ""
-	switch x := raw.(type) {
-	case float64:
-		text = strconv.FormatFloat(x, 'f', -1, 64)
-	case string:
-		text = strings.TrimSpace(x)
-	}
-	if n, err := strconv.Atoi(text); err == nil && n >= 1 {
-		*v = sacachispaVolume(n)
-	}
-
-	return nil
 }
 
 // sacachispaRelease is one group's release of a chapter, the one that holds
