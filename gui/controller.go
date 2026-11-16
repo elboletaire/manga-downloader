@@ -1000,7 +1000,7 @@ func (c *Controller) SelectionGen() uint64 {
 	return c.selGen
 }
 
-// LogGen changes whenever a line is added to the log (see logGen)
+// LogGen changes whenever the log does: a line added, or ClearLog (see logGen)
 func (c *Controller) LogGen() uint64 {
 	c.mu.Lock()
 	defer c.mu.Unlock()
