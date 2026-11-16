@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/http"
@@ -69,12 +70,15 @@ func (b *Bigsolo) FetchChapters() (chapters Filterables, errs []error) {
 			errs = append(errs, fmt.Errorf("chapter %q has no supported source", key))
 			continue
 		}
+		// the volume is a string, "" when the site doesn't say
+		volume, _ := strconv.Atoi(strings.TrimSpace(c.Volume))
 
 		chapters = append(chapters, &BigsoloChapter{
 			Chapter{
 				Number: number,
 				Title:  c.Title,
 				ID:     c.Source.Id,
+				Volume: max(volume, 0),
 				Label:  Label{Style: LabelNumbered, Number: key, Lang: "fr"},
 			},
 			c.Source.Id,
@@ -122,6 +126,7 @@ func (b Bigsolo) FetchChapter(f Filterable) (*Chapter, error) {
 		PagesCount: int64(len(files)),
 		Language:   "fr",
 		ID:         bchap.ImgchestID,
+		Volume:     bchap.Volume,
 	}
 	for i, file := range files {
 		chapter.Pages = append(chapter.Pages, Page{
@@ -171,6 +176,7 @@ type bigsoloSeries struct {
 	Title    string `json:"title"`
 	Chapters map[string]struct {
 		Title  string `json:"title"`
+		Volume string `json:"volume"`
 		Source struct {
 			Service string `json:"service"`
 			Id      string `json:"id"`

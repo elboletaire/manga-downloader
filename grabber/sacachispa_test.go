@@ -3,6 +3,7 @@
 package grabber
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -205,5 +206,78 @@ func TestSacachispaTest(t *testing.T) {
 		if err != nil || got != c.want {
 			t.Errorf("Test(%q) = %v, %v; want %v", c.url, got, err, c.want)
 		}
+	}
+}
+
+// the API sends a chapter's volume as null, a string or a number, and only a positive
+// whole number is a volume
+func TestSacachispaVolumeDecode(t *testing.T) {
+	for _, c := range []struct {
+		json string
+		want int
+	}{
+		{`null`, 0}, {`""`, 0}, {`0`, 0}, {`-1`, 0}, {`"0"`, 0}, {`"x"`, 0},
+		{`1`, 1}, {`"2"`, 2}, {` "3" `, 3}, {`12.5`, 0}, {`"12.5"`, 0},
+	} {
+		var v sacachispaVolume
+		if err := json.Unmarshal([]byte(c.json), &v); err != nil {
+			t.Errorf("Unmarshal(%s) error = %v", c.json, err)
+			continue
+		}
+		if int(v) != c.want {
+			t.Errorf("Unmarshal(%s) = %d, want %d", c.json, v, c.want)
+		}
+	}
+}
+
+func TestSacachispaVolumes(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/chapters", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"data":[` +
+			`{"id":"c1","chapter":"1","volume":1,"title":null,"patreonOnly":false},` +
+			`{"id":"c2","chapter":"2","volume":"2","title":null,"patreonOnly":false},` +
+			`{"id":"c3","chapter":"3","volume":null,"title":null,"patreonOnly":false},` +
+			`{"id":"c4","chapter":"4","volume":0,"title":null,"patreonOnly":false}` +
+			`],"pagination":{"pages":1}}`))
+	})
+	mux.HandleFunc("/releases/r1/pages", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"data":{"items":[{"page":1,"url":"https://cdn.example/a.jpg"}]}}`))
+	})
+	mux.HandleFunc("/releases", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"data":[` +
+			`{"id":"r1","chapterId":"c1","language":"en","group":{"name":"Alpha"}},` +
+			`{"id":"r2","chapterId":"c2","language":"en","group":{"name":"Alpha"}}` +
+			`],"pagination":{"pages":1}}`))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	old := sacachispaAPI
+	sacachispaAPI = srv.URL
+	defer func() { sacachispaAPI = old }()
+
+	s := newTestSacachispa("https://sacachispa.site/manga/" + sacachispaTestManga + "/some-series")
+	chapters, errs := s.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("FetchChapters() errors = %v", errs)
+	}
+	// c1 and c2 have a release, c3 and c4 none: each still lists once
+	want := []int{1, 2, 0, 0}
+	if len(chapters) != len(want) {
+		t.Fatalf("FetchChapters() got %d chapters, want %d", len(chapters), len(want))
+	}
+	for i, c := range chapters {
+		if got := VolumeOf(c); got != want[i] {
+			t.Errorf("chapter %d volume = %d, want %d", i, got, want[i])
+		}
+	}
+
+	// the fetched chapter keeps the volume of the listed one
+	fetched, err := s.FetchChapter(chapters[0])
+	if err != nil {
+		t.Fatalf("FetchChapter() error = %v", err)
+	}
+	if fetched.Volume != 1 {
+		t.Errorf("fetched chapter volume = %d, want 1", fetched.Volume)
 	}
 }
