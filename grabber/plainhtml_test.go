@@ -1745,7 +1745,7 @@ func TestRowVolumeNeedsWholeVolumeAndHeader(t *testing.T) {
 			if !ok {
 				return
 			}
-			if got, want := m.rowVolume(s), c.want[number]; got != want {
+			if got, want := m.headerRowVolume(s), c.want[number]; got != want {
 				t.Errorf("chapter %v volume = %d, want %d", number, got, want)
 			}
 		})

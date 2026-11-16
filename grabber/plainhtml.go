@@ -277,9 +277,8 @@ var plainHTMLSelectors = []SiteSelector{
 	// fallback/documentation of what a single rendered page looks like
 	// (noranofansub.com renders empty img.page-N placeholders instead).
 	// read.yagami.me also puts a view counter (.visits) inside its h1.title.
-	// noranofansub.com ("Volúmen 01" in a .title before each .group's rows) and
-	// read-nifteam.info ("Volume 118" button before each .nifpanel) share the
-	// markup, so the volume headers are read for all three.
+	// noranofansub ("Volúmen 01" .title per .group) and read-nifteam ("Volume 118"
+	// button per .nifpanel) head each volume's rows.
 	{
 		Title:        "h1.title",
 		TitleNoise:   ".visits",
@@ -678,10 +677,9 @@ type SiteSelector struct {
 	// page's island props: it reports whether a chapter object there (one with
 	// a "number" and a "slug") is paid; rows with that number become Locked.
 	LockedIsland func(chapter map[string]any) bool
-	// VolumeHeader matches a header naming the volume a row sits under
-	// ("Volume 33"): the nearest one before the row, among the siblings of the
-	// row and of its ancestors up to VolumeScope (the row's closest enclosing
-	// element holding one volume's rows).
+	// VolumeHeader matches the header naming a row's volume ("Volume 33"): the
+	// nearest one before the row, among the siblings of the row and its
+	// ancestors up to VolumeScope, the row's closest enclosing element.
 	VolumeHeader string
 	VolumeScope  string
 }
@@ -888,10 +886,9 @@ func (m PlainHTML) rowChapterNumber(s *goquery.Selection) (float64, bool) {
 	return checkRowChapterNumber(s, m.site)
 }
 
-// rowVolume returns the volume a row sits under: the nearest VolumeHeader
-// before it, among the siblings of the row and of its ancestors up to
-// VolumeScope. 0 when the site names none or no header comes before the row.
-func (m PlainHTML) rowVolume(s *goquery.Selection) int {
+// headerRowVolume returns the volume of the nearest VolumeHeader before the
+// row; 0 when no VolumeScope encloses it or no header comes before it.
+func (m PlainHTML) headerRowVolume(s *goquery.Selection) int {
 	if m.site.VolumeHeader == "" {
 		return 0
 	}
@@ -1371,7 +1368,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 			}
 
 			locked := lockedNumbers[number] || (m.site.Locked != "" && s.Find(m.site.Locked).Length() > 0)
-			volume := m.rowVolume(s)
+			volume := m.headerRowVolume(s)
 			for _, upload := range m.rowUploads(s) {
 				u := m.resolveURL(upload.href)
 				if !strings.HasPrefix(u, "http") {
