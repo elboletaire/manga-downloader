@@ -1378,6 +1378,7 @@ grabber/html: \
 	grabber/mangazin \
 	grabber/manhuabug \
 	grabber/manhuaplus \
+	grabber/manhuaplusorg \
 	grabber/manhuaplustop \
 	grabber/manhuathai \
 	grabber/manhwa18cc \
@@ -1582,6 +1583,8 @@ grabber/mangazin:
 	go run . https://mangazin.org/manga/the-cold-blooded-warrior/ 75-76
 grabber/manhuaplus:
 	go run . https://manhuaplus.com/manga/tales-of-demons-and-gods01/ 522.6
+grabber/manhuaplusorg:
+	go run . https://manhuaplus.org/manga/demon-magic-emperor/ 1-2
 grabber/manhuaplustop:
 	go run . https://manhuaplus.top/manga/a-flame-reborn/ 140
 grabber/silentquill:
