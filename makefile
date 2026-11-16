@@ -1979,7 +1979,7 @@ grabber/speedmanga:
 grabber/tanukimanga:
 	go run . https://www.tanuki-manga.net/manga/magic-emperor/ 459
 grabber/tilkiscans:
-	go run . https://www.tilkiscans.com/seri/unlu-bir-ailenin-kilic-dahisi-oldum/ 70
+	go run . https://www.tilkiscans.com/seri/murim-dunyasina-giris/ 251
 grabber/timelesstoons:
 	go run . https://timelesstoons.org/series/i-got-married-and-gained-cute-stepsons-but-ive-been-ordered-to-kill-my-husband/ 1
 grabber/toomtammanga:
