@@ -1,0 +1,15 @@
+{
+  "series_slug": "absolute-regression",
+  "number": 52.5,
+  "title": "Side Story",
+  "pages": [
+    "https://cdn.chikari.moe/series/53/ch/52.5/000.webp",
+    "https://cdn.chikari.moe/series/53/ch/52.5/001.webp",
+    "https://cdn.chikari.moe/series/53/ch/52.5/002.webp"
+  ],
+  "page_dims": [[800, 1200], [800, 15000], [800, 1200]],
+  "scan": "lagoonscans",
+  "scan_name": "Lagoon Scans",
+  "scan_fallback": false,
+  "club_block": null
+}

@@ -206,6 +206,7 @@ grabber: \
 	grabber/chainsawman \
 	grabber/chainsawmannmanga \
 	grabber/championcross \
+	grabber/chikari \
 	grabber/cocomic \
 	grabber/coffeemanga \
 	grabber/comici \
@@ -908,6 +909,9 @@ grabber/hachirumi:
 # chapter pages are hosted on imgchest.com, not bigsolo.org itself
 grabber/bigsolo:
 	go run . https://bigsolo.org/manga/wind-breaker 222
+# every release (scanlation group) of chapter 1 is downloaded, one file each
+grabber/chikari:
+	go run . https://chikari.moe/series/absolute-regression 1
 grabber/fmteam:
 	go run . https://fmteam.fr/comics/batuque 157
 # note: the newest 1-2 chapters can be "early access" (locked behind coins),

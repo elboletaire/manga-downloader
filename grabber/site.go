@@ -180,6 +180,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewGlobalcomix(g),
 		NewTanstackComic(g),
 		NewBigsolo(g),
+		NewChikari(g),
 		NewRSCComic(g),
 		NewFmteam(g),
 		NewGenzToon(g),
