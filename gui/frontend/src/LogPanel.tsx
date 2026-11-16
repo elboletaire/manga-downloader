@@ -10,6 +10,7 @@ import {
   ErrorIcon,
   KofiIcon,
   LogIcon,
+  TrashIcon,
   XIcon,
 } from "./icons";
 import { KOFI_URL, linkClick } from "./links";
@@ -205,9 +206,11 @@ export function StatusBar({
 interface DrawerProps {
   log: LogLine[];
   onClose: () => void;
+  /** Empties the log (api.clearLog) */
+  onClear: () => void;
 }
 
-export function LogDrawer({ log, onClose }: DrawerProps) {
+export function LogDrawer({ log, onClose, onClear }: DrawerProps) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
@@ -268,6 +271,15 @@ export function LogDrawer({ log, onClose }: DrawerProps) {
         >
           <CopyIcon size={14} />{" "}
           {copied ? t("common.copied") : t("common.copy")}
+        </button>
+        <button
+          type="button"
+          className="btn ghost small"
+          onClick={onClear}
+          disabled={log.length === 0}
+          title={t("log.clearTitle")}
+        >
+          <TrashIcon size={14} /> {t("log.clear")}
         </button>
         <button
           type="button"

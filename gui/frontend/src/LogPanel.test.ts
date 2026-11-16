@@ -179,7 +179,7 @@ describe('LogDrawer messages', () => {
       createElement(
         I18nProvider,
         { pref: 'es', persist: async () => undefined, systemLanguages: ['en'] },
-        createElement(LogDrawer, { log, onClose: () => undefined }),
+        createElement(LogDrawer, { log, onClose: () => undefined, onClear: () => undefined }),
       ),
     );
 
@@ -195,5 +195,27 @@ describe('LogDrawer messages', () => {
     expect(html).toContain('Se ha cargado Naruto: 2 capítulos');
     expect(html).toContain('site check: timed out');
     expect(html).not.toContain('Loaded Naruto');
+  });
+});
+
+describe('LogDrawer clear button', () => {
+  const drawer = (log: LogLine[]) =>
+    renderToStaticMarkup(
+      createElement(
+        I18nProvider,
+        { pref: 'en', persist: async () => undefined, systemLanguages: ['en'] },
+        createElement(LogDrawer, { log, onClose: () => undefined, onClear: () => undefined }),
+      ),
+    );
+
+  it('offers Clear, enabled, once the log has lines', () => {
+    const html = drawer([{ level: 'info', text: 'Loaded Naruto' }]);
+    expect(html).toContain('title="Clear the log"');
+    expect(html).not.toContain('disabled');
+  });
+
+  it('disables Clear when the log is empty', () => {
+    const html = drawer([]);
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*title="Clear the log"/);
   });
 });

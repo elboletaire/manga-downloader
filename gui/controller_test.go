@@ -1052,6 +1052,28 @@ func TestCancelWhileFetchingEndsTheRow(t *testing.T) {
 	}
 }
 
+// ClearLog empties the log and bumps its generation, so the window's next push
+// carries the empty log; lines logged after it (a running download's) still land
+func TestClearLogKeepsLaterLines(t *testing.T) {
+	c := NewController(&grabber.Settings{}, nil)
+	c.addLog(LogInfo, "first")
+	gen := c.LogGen()
+
+	c.ClearLog()
+	if got := c.Log(); len(got) != 0 {
+		t.Fatalf("Log() after ClearLog = %+v, want empty", got)
+	}
+	if c.LogGen() == gen {
+		t.Errorf("LogGen did not change on ClearLog")
+	}
+
+	c.addLog(LogWarn, "later")
+	got := c.Log()
+	if len(got) != 1 || got[0].Text != "later" || got[0].Level != LogWarn {
+		t.Errorf("Log() after a new line = %+v, want only the new line", got)
+	}
+}
+
 // a line the window translates carries its message; Text is the English it
 // would have had before
 func TestLogLinesCarryTheirMessage(t *testing.T) {

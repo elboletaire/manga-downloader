@@ -81,7 +81,8 @@ button, *Load* and *Settings*. (To open on the full window instead, turn off
 
 5. **Press Download.** The *Activity* tab shows each chapter as it's fetched and
    packed. *Cancel* lets the chapters already downloading finish, and starts no
-   new ones. A log is one click away in the status bar.
+   new ones. A log is one click away in the status bar, and its *Clear* button
+   empties it without touching a download that's running.
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/04-downloading-dark.webp">

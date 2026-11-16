@@ -3,6 +3,8 @@
   "show": "Mostrar el registro",
   "hide": "Ocultar el registro",
   "closeLog": "Cerrar el registro",
+  "clear": "Borrar",
+  "clearTitle": "Borrar el registro",
   "empty": "Todavía no hay nada en el registro.",
   "ready": "Listo",
   "updateAvailable": "Actualización disponible: {{latest}}",

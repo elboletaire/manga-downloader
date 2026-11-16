@@ -189,7 +189,7 @@ func SetRoundTripper(rt http.RoundTripper) {
 // exponential backoff. Both GET and POST are retried safely: POST bodies are
 // rebuilt from params on each attempt so the body reader is never exhausted.
 // Retrying is skipped when RequestParams.DisableRetry is true.
-func request(t string, params Params) (io.ReadCloser, error) {
+func request(t string, params Params) (io.ReadCloser, http.Header, error) {
 	rp, _ := params.(RequestParams)
 	attempts := maxAttempts
 	if rp.DisableRetry {
@@ -209,13 +209,13 @@ func request(t string, params Params) (io.ReadCloser, error) {
 			}
 		}
 
-		body, retryAfterDelay, retryable, err := doRequest(t, params)
+		body, header, retryAfterDelay, retryable, err := doRequest(t, params)
 		if err == nil {
-			return body, nil
+			return body, header, nil
 		}
 		lastErr = err
 		if !retryable {
-			return nil, err
+			return nil, nil, err
 		}
 		// honour a Retry-After delay if the server sent one; it replaces
 		// the exponential delay for the next attempt. This loop can't be
@@ -227,15 +227,15 @@ func request(t string, params Params) (io.ReadCloser, error) {
 
 	// with a single attempt nothing was retried, so don't claim otherwise
 	if attempts == 1 {
-		return nil, lastErr
+		return nil, nil, lastErr
 	}
-	return nil, fmt.Errorf("giving up after %d attempts: %w", attempts, lastErr)
+	return nil, nil, fmt.Errorf("giving up after %d attempts: %w", attempts, lastErr)
 }
 
 // doRequest performs a single attempt and reports whether to retry, plus any
 // server-requested delay (Retry-After). The request is built fresh on every
 // call so the body reader is never exhausted across retries.
-func doRequest(t string, params Params) (body io.ReadCloser, retryAfter time.Duration, retryable bool, err error) {
+func doRequest(t string, params Params) (body io.ReadCloser, header http.Header, retryAfter time.Duration, retryable bool, err error) {
 	tr := roundTripper
 	if tr == nil {
 		tr = transport
@@ -254,7 +254,7 @@ func doRequest(t string, params Params) (body io.ReadCloser, retryAfter time.Dur
 	req, err := http.NewRequest(t, params.GetURL(), reqBody)
 	if err != nil {
 		// malformed URL: never going to succeed
-		return nil, 0, false, err
+		return nil, nil, 0, false, err
 	}
 	req.Header.Set("User-Agent", sessionUserAgent(userAgent))
 	if cookies := sessionCookies(req.URL.Hostname()); cookies != "" {
@@ -294,7 +294,7 @@ func doRequest(t string, params Params) (body io.ReadCloser, retryAfter time.Dur
 			// url.Error names the URL, so this only adds that it timed out
 			err = fmt.Errorf("timed out: %w", uerr)
 		}
-		return nil, 0, true, err
+		return nil, nil, 0, true, err
 	}
 
 	// harvest any session cookies the server sets (e.g. a PHPSESSID tied to
@@ -315,8 +315,8 @@ func doRequest(t string, params Params) (body io.ReadCloser, retryAfter time.Dur
 		resp.Body.Close()
 
 		ra := ParseRetryAfter(resp.Header.Get("Retry-After"))
-		return nil, ra, isRetryableStatus(resp.StatusCode), &StatusError{Code: resp.StatusCode, RetryAfter: ra}
+		return nil, nil, ra, isRetryableStatus(resp.StatusCode), &StatusError{Code: resp.StatusCode, RetryAfter: ra}
 	}
 
-	return resp.Body, 0, false, nil
+	return resp.Body, resp.Header, 0, false, nil
 }

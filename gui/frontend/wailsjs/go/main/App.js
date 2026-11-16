@@ -18,6 +18,10 @@ export function Clear() {
   return window['go']['main']['App']['Clear']();
 }
 
+export function ClearLog() {
+  return window['go']['main']['App']['ClearLog']();
+}
+
 export function DismissBrowserAlert() {
   return window['go']['main']['App']['DismissBrowserAlert']();
 }
