@@ -311,7 +311,15 @@ export function App({ api, initial }: { api: Api; initial?: State }) {
           onError={setOptionError}
         />
       )}
-      {logOpen && <LogDrawer log={log} onClose={() => setLogOpen(false)} />}
+      {logOpen && (
+        <LogDrawer
+          log={log}
+          onClose={() => setLogOpen(false)}
+          onClear={() => {
+            api.clearLog().catch(() => undefined);
+          }}
+        />
+      )}
       {state.browserAlert !== '' && (
         <BrowserAlert
           message={say(t, state.browserAlertMsg, state.browserAlert)}

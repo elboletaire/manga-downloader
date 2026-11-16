@@ -3,6 +3,8 @@
   "show": "Mostra el registre",
   "hide": "Amaga el registre",
   "closeLog": "Tanca el registre",
+  "clear": "Esborra",
+  "clearTitle": "Esborra el registre",
   "empty": "Encara no hi ha res al registre.",
   "ready": "Preparat",
   "updateAvailable": "Actualització disponible: {{latest}}",

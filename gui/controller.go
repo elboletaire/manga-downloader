@@ -1294,6 +1294,16 @@ func (c *Controller) Log() []LogLine {
 	return append([]LogLine(nil), c.log...)
 }
 
+// ClearLog empties the log. A running download keeps going: its later lines
+// just start the log again.
+func (c *Controller) ClearLog() {
+	c.mu.Lock()
+	c.logGen++
+	c.log = nil
+	c.mu.Unlock()
+	c.emit()
+}
+
 // Start validates the settings and starts downloading the selected chapters
 // in the background. Validation errors are returned synchronously.
 func (c *Controller) Start() error {
