@@ -1,0 +1,9 @@
+{
+  "number": 54.0,
+  "title": "Episode 54",
+  "pages": [],
+  "scan": "asura",
+  "scan_name": "Asura",
+  "scan_fallback": false,
+  "club_block": {"reason": "club_required", "club": "some-club"}
+}

@@ -1,0 +1,15 @@
+{
+  "items": [
+    {"number": 1.0, "volume": "", "title": "Episode 1", "lang": "en",
+     "scans": [{"slug": "asura", "name": "Asura"}, {"slug": "official", "name": "Official"}]},
+    {"number": 52.5, "volume": "3", "title": "Side Story", "lang": "en",
+     "scans": [{"slug": "lagoonscans", "name": "Lagoon Scans"}]},
+    {"number": 53.0, "volume": 2, "title": "Episode 53", "lang": "en", "scans": []},
+    {"number": 54.0, "volume": null, "title": "Episode 54", "lang": "en",
+     "scans": [{"slug": "asura", "name": "Asura"}]}
+  ],
+  "total": 4,
+  "limit": 500,
+  "offset": 0,
+  "scan_groups": [{"slug": "asura", "name": "Asura"}]
+}

@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[583 supported sites](#supported-sites)**, from big aggregators to small
+- **[584 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 583 supported sites</b></summary>
+<summary><b>Show all 584 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -393,6 +393,7 @@ environment variables.
 | [chainsawman-chapter.online](https://chainsawman-chapter.online) | Chainsaw Man | 2026-11-02 |
 | [chainsawmannmanga.com](https://chainsawmannmanga.com) | Chainsaw Man | 2026-11-16 |
 | [championcross.jp](https://championcross.jp) | Japanese, Champion Cross (Comici) | 2026-11-02 |
+| [chikari.moe](https://chikari.moe) | English | 2026-11-16 |
 | [cocomic.co](https://cocomic.co) | English, mostly NSFW | 2026-11-02 |
 | [coffeemanga.net](https://coffeemanga.net) \* | English | 2026-11-02 |
 | [comic-action.com](https://comic-action.com) | Japanese, Web Action (GigaViewer) | 2026-11-16 |
