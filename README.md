@@ -695,7 +695,7 @@ environment variables.
 | [mehentai.live](https://mehentai.live) | Vietnamese, mostly NSFW | 2026-11-16 |
 | [merlinshoujo.com](https://merlinshoujo.com) | Turkish | 2026-11-06 |
 | [mgeko.cc](https://www.mgeko.cc) |  | 2026-11-16 |
-| [mhscans.com](https://mhscans.com) | Spanish | ❌ failing since 2026-11-16 (checked 2026-11-16) |
+| [mhscans.com](https://mhscans.com) | Spanish | 2026-11-16 |
 | [mihentai.net](https://mihentai.net) | Indonesian, mostly NSFW | 2026-11-16 |
 | [mikrokosmosfb.blogspot.com](https://mikrokosmosfb.blogspot.com) | Turkish, mostly NSFW | 2026-11-02 |
 | [mindafansub.nl](https://mindafansub.nl) | Turkish, mostly NSFW, former mindafansub.dev | 2026-11-02 |

@@ -578,6 +578,23 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitleStrip: `(?i)^Dandadan chapter \d+(\.\d+)?$`,
 		Image:             ".entry-content img",
 	},
+	// mhscans.com (Spanish): the series page renders only its newest 30
+	// chapters, the rest come from /chapters?page=N fragments (ChaptersPath).
+	// A row is its own link, which for a paid chapter goes to the login page
+	// instead of the reader, and that link marks it Locked.
+	{
+		Title:             "h1",
+		Rows:              `a[data-chapter-label][href^="/leer/"], a[data-chapter-label][href^="/auth/login"]`,
+		Chapter:           "span.text-sm.font-semibold",
+		ChapterTitle:      "span.text-sm.font-semibold",
+		ChapterTitleStrip: `^Capítulo\s*\d+(\.\d+)?:?\s*`,
+		Image:             "img.page-img",
+		SeriesLink:        `a.bar-back-link[href^="/comics/"]`,
+		FollowSeriesLink:  true,
+		Locked:            `[href^="/auth/login"]`,
+		Paginated:         true,
+		ChaptersPath:      "/chapters",
+	},
 }
 
 // PlainHTML is a grabber for any plain HTML page (with no ajax pagination whatsoever)
@@ -647,8 +664,8 @@ type SiteSelector struct {
 	// rewrite to apply, as Image guards SeriesLink. It isn't Image itself: that
 	// also selects the page images, so a paid chapter's logo would be packed.
 	RewriteGuard string
-	// Locked is a CSS selector searched inside each row: a match means the
-	// listing marks the chapter as paid (Chapter.Locked)
+	// Locked is a CSS selector matched by each row, or searched inside it: a
+	// match means the listing marks the chapter as paid (Chapter.Locked)
 	Locked string
 	// Paginated, when set, reads the chapter list's pages after the first
 	// (PageParam=N) until one has no rows, for series listings split over pages.
@@ -656,6 +673,10 @@ type SiteSelector struct {
 	// PageParam is the query parameter that numbers a Paginated listing's
 	// pages; empty means "page"
 	PageParam string
+	// ChaptersPath, with Paginated, is appended to the series path to reach the
+	// chapter list's pages, for a series page that renders only its first page
+	// of rows; the X-Pages header counts them
+	ChaptersPath string
 	// LockedIsland is for Astro sites that state the lock only in the series
 	// page's island props: it reports whether a chapter object there (one with
 	// a "number" and a "slug") is paid; rows with that number become Locked.
@@ -1311,7 +1332,7 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 				title = ""
 			}
 
-			locked := lockedNumbers[number] || (m.site.Locked != "" && s.Find(m.site.Locked).Length() > 0)
+			locked := lockedNumbers[number] || (m.site.Locked != "" && (s.Is(m.site.Locked) || s.Find(m.site.Locked).Length() > 0))
 			for _, upload := range m.rowUploads(s) {
 				u := m.resolveURL(upload.href)
 				if !strings.HasPrefix(u, "http") {
@@ -1351,24 +1372,28 @@ func (m PlainHTML) FetchChapters() (chapters Filterables, errs []error) {
 const maxListingPages = 100
 
 // listingPages fetches the chapter list's pages after the first, as
-// PageParam=N on m.URL's query, until one has no rows. It returns each
-// page's rows.
+// PageParam=N on m.URL's query (on the ChaptersPath under it, when set), until
+// one has no rows or the X-Pages count is reached. It returns each page's rows.
 func (m PlainHTML) listingPages() (pages []*goquery.Selection, errs []error) {
 	base, err := url.Parse(m.URL)
 	if err != nil {
 		return nil, []error{err}
 	}
+	if m.site.ChaptersPath != "" {
+		base.Path = strings.TrimSuffix(base.Path, "/") + m.site.ChaptersPath
+	}
 	param := m.site.PageParam
 	if param == "" {
 		param = "page"
 	}
-	for page := 2; page <= maxListingPages; page++ {
+	last := maxListingPages
+	for page := 2; page <= last; page++ {
 		u := *base
 		query := u.Query()
 		query.Set(param, strconv.Itoa(page))
 		u.RawQuery = query.Encode()
 
-		body, err := http.Get(http.RequestParams{URL: u.String()})
+		body, header, err := http.GetWithHeader(http.RequestParams{URL: u.String()})
 		if err != nil {
 			return pages, append(errs, err)
 		}
@@ -1376,6 +1401,14 @@ func (m PlainHTML) listingPages() (pages []*goquery.Selection, errs []error) {
 		body.Close()
 		if err != nil {
 			return pages, append(errs, err)
+		}
+		// past the last page a list repeats it rather than going empty, so
+		// the count is what ends the walk, before this page's rows are read
+		if n, err := strconv.Atoi(header.Get("X-Pages")); err == nil && n > 0 && n < last {
+			last = n
+		}
+		if page > last {
+			break
 		}
 		rows := doc.Find(m.site.Rows)
 		if rows.Length() == 0 {
