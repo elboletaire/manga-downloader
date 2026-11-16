@@ -673,7 +673,7 @@ environment variables.
 | [manhuathai.com](https://www.manhuathai.com) | Thai | 2026-11-02 |
 | [manhuatop.org](https://manhuatop.org) \* |  | 2026-11-10 |
 | [manhuaus.com](https://manhuaus.com) \* |  | 2026-10-15 |
-| [manhwa-online.com](https://manhwa-online.com) | Spanish | ❌ failing since 2026-11-16 (checked 2026-11-16) |
+| [manhwa-online.com](https://manhwa-online.com) | Spanish | 2026-11-16 |
 | [manhwa18.cc](https://manhwa18.cc) | English, NSFW | 2026-11-09 |
 | [manhwa18.net](https://manhwa18.net) | English, NSFW | 2026-11-16 |
 | [manhwa18tx.com](https://manhwa18tx.com) | English, NSFW | 2026-11-09 |

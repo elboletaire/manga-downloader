@@ -481,6 +481,16 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitle: ".chapter-name",
 		Image:        ".reading-content img",
 	},
+	// manhwa-online.com (Spanish): an Astro site, not the WordPress one above.
+	// Each chapter is a div.chapter-row-full whose link holds the number, and
+	// the reader's pages are img.reader-page in .reader-pages.
+	{
+		Title:        "h1.comic-title",
+		Rows:         "div.chapter-row-full a.chapter-link",
+		Chapter:      ".chapter-num",
+		ChapterTitle: ".chapter-num",
+		Image:        "img.reader-page",
+	},
 	// komikindo.ch: custom WordPress theme. The full list is #chapter_list
 	// (the "Chapter Awal" box above it has different markup). Reader pages
 	// sit in #chimg-auh, apart from the blogger and .lol ad banners around it.
