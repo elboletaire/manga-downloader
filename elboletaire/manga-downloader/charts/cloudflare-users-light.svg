@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300" role="img" aria-labelledby="title desc">
 <title id="title">Daily users</title>
-<desc id="desc">Daily users: about 78 daily users in total on 2026-11-14, approximate.</desc>
+<desc id="desc">Daily users: about 102 daily users in total on 2026-11-15, approximate.</desc>
 <style>.gs-draw{animation:gs-draw 1.6s linear backwards}@keyframes gs-draw{from{stroke-dasharray:1;stroke-dashoffset:1}to{stroke-dasharray:1;stroke-dashoffset:0}}.gs-fade{animation:gs-fade .5s ease-out backwards}@keyframes gs-fade{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion: reduce){.gs-draw,.gs-fade{animation:none!important}}</style>
 <rect x="0.5" y="0.5" width="799" height="299" rx="12" fill="#fcfcfb" stroke="#dcdedf"/>
 <g font-family='"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif' font-size="11" fill="#52514e" style="font-variant-numeric:tabular-nums">
 <defs><linearGradient id="users-fade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#2a6ddc" stop-opacity="0.22"/><stop offset="1" stop-color="#2a6ddc" stop-opacity="0.02"/></linearGradient></defs>
 <text x="24" y="32" fill="#0b0b0b" font-size="16" font-weight="600">Daily users</text>
-<text x="24.0" y="50.0" fill="#6f6e69" font-size="12">Approximate users per day, 21 days to 2026-11-14</text>
+<text x="24.0" y="50.0" fill="#6f6e69" font-size="12">Approximate users per day, 22 days to 2026-11-15</text>
 <circle cx="550.8" cy="28.0" r="4" fill="#2a6ddc"/>
 <text x="560.8" y="32.0" fill="#52514e" font-size="12">Total (approx.)</text>
 <circle cx="690.8" cy="28.0" r="4" fill="#e5642e"/>
@@ -22,14 +22,14 @@
 <line x1="60.0" x2="776.0" y1="80.0" y2="80.0" stroke="#e8eaeb"/>
 <text x="50.0" y="84.0" fill="#6f6e69" text-anchor="end">150</text>
 <text x="60.0" y="272.0" fill="#6f6e69">Oct 25</text>
-<text x="239.0" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 30</text>
-<text x="418.0" y="272.0" fill="#6f6e69" text-anchor="middle">Nov 4</text>
-<text x="597.0" y="272.0" fill="#6f6e69" text-anchor="middle">Nov 9</text>
-<text x="776.0" y="272.0" fill="#6f6e69" text-anchor="end">Nov 14</text>
-<g class="gs-fade"><path d="M60.0 247.4L95.8 197.0L131.6 185.5L167.4 175.2L203.2 202.7L239.0 191.2L274.8 185.5L310.6 167.1L346.4 166.0L382.2 183.2L418.0 177.5L453.8 155.7L489.6 175.2L525.4 171.7L561.2 163.7L597.0 174.0L632.8 168.3L668.6 168.3L704.4 131.6L740.2 169.4L776.0 162.6L776.0 252.0L60.0 252.0Z" fill="url(#users-fade)"/></g>
-<g class="gs-draw"><path d="M60.0 247.4L95.8 199.3L131.6 186.6L167.4 177.5L203.2 203.8L239.0 194.7L274.8 186.6L310.6 169.4L346.4 167.1L382.2 183.2L418.0 178.6L453.8 161.4L489.6 175.2L525.4 171.7L561.2 167.1L597.0 177.5L632.8 170.6L668.6 171.7L704.4 135.0L740.2 170.6L776.0 164.9" fill="none" stroke="#e5642e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
-<g class="gs-draw"><path d="M60.0 252.0L95.8 249.7L131.6 250.9L167.4 249.7L203.2 250.9L239.0 248.6L274.8 250.9L310.6 249.7L346.4 248.6L382.2 249.7L418.0 249.7L453.8 245.1L489.6 252.0L525.4 252.0L561.2 248.6L597.0 248.6L632.8 248.6L668.6 246.3L704.4 247.4L740.2 250.9L776.0 249.7" fill="none" stroke="#0d9683" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
-<g class="gs-draw"><path d="M60.0 247.4L95.8 197.0L131.6 185.5L167.4 175.2L203.2 202.7L239.0 191.2L274.8 185.5L310.6 167.1L346.4 166.0L382.2 183.2L418.0 177.5L453.8 155.7L489.6 175.2L525.4 171.7L561.2 163.7L597.0 174.0L632.8 168.3L668.6 168.3L704.4 131.6L740.2 169.4L776.0 162.6" fill="none" stroke="#2a6ddc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
-<g class="gs-fade" style="animation-delay:1600ms"><circle cx="776.0" cy="162.6" r="4" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-11-14: 78 users, approximate</title></circle><text x="768.0" y="152.6" fill="#0b0b0b" text-anchor="end" font-weight="600">78</text></g>
+<text x="230.5" y="272.0" fill="#6f6e69" text-anchor="middle">Oct 30</text>
+<text x="435.0" y="272.0" fill="#6f6e69" text-anchor="middle">Nov 5</text>
+<text x="605.5" y="272.0" fill="#6f6e69" text-anchor="middle">Nov 10</text>
+<text x="776.0" y="272.0" fill="#6f6e69" text-anchor="end">Nov 15</text>
+<g class="gs-fade"><path d="M60.0 247.4L94.1 197.0L128.2 185.5L162.3 175.2L196.4 202.7L230.5 191.2L264.6 185.5L298.7 167.1L332.8 166.0L366.9 183.2L401.0 177.5L435.0 155.7L469.1 175.2L503.2 171.7L537.3 163.7L571.4 174.0L605.5 168.3L639.6 168.3L673.7 131.6L707.8 169.4L741.9 162.6L776.0 135.0L776.0 252.0L60.0 252.0Z" fill="url(#users-fade)"/></g>
+<g class="gs-draw"><path d="M60.0 247.4L94.1 199.3L128.2 186.6L162.3 177.5L196.4 203.8L230.5 194.7L264.6 186.6L298.7 169.4L332.8 167.1L366.9 183.2L401.0 178.6L435.0 161.4L469.1 175.2L503.2 171.7L537.3 167.1L571.4 177.5L605.5 170.6L639.6 171.7L673.7 135.0L707.8 170.6L741.9 164.9L776.0 138.5" fill="none" stroke="#e5642e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-draw"><path d="M60.0 252.0L94.1 249.7L128.2 250.9L162.3 249.7L196.4 250.9L230.5 248.6L264.6 250.9L298.7 249.7L332.8 248.6L366.9 249.7L401.0 249.7L435.0 245.1L469.1 252.0L503.2 252.0L537.3 248.6L571.4 248.6L605.5 248.6L639.6 246.3L673.7 247.4L707.8 250.9L741.9 249.7L776.0 248.6" fill="none" stroke="#0d9683" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-draw"><path d="M60.0 247.4L94.1 197.0L128.2 185.5L162.3 175.2L196.4 202.7L230.5 191.2L264.6 185.5L298.7 167.1L332.8 166.0L366.9 183.2L401.0 177.5L435.0 155.7L469.1 175.2L503.2 171.7L537.3 163.7L571.4 174.0L605.5 168.3L639.6 168.3L673.7 131.6L707.8 169.4L741.9 162.6L776.0 135.0" fill="none" stroke="#2a6ddc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-fade" style="animation-delay:1600ms"><circle cx="776.0" cy="135.0" r="4" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-11-15: 102 users, approximate</title></circle><text x="768.0" y="125.0" fill="#0b0b0b" text-anchor="end" font-weight="600">102</text></g>
 </g>
 </svg>
