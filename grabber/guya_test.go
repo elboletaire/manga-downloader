@@ -111,7 +111,9 @@ func guyaServer(t *testing.T) *httptest.Server {
 			`"preferred_sort":[],`+
 			`"chapters":{`+
 			`"1":{"title":"First","volume":"3","folder":"0001_abc","groups":{"2":["01.png"],"1":["01.png","02.png"]}},`+
-			`"2":{"title":"","volume":4,"folder":"0002_def","groups":{"1":["01.png"]}}`+
+			`"2":{"title":"","volume":4,"folder":"0002_def","groups":{"1":["01.png"]}},`+
+			`"3":{"title":"","volume":null,"folder":"0003_ghi","groups":{"1":["01.png"]}},`+
+			`"4":{"title":"","folder":"0004_jkl","groups":{"1":["01.png"]}}`+
 			`}}`)
 	})
 
@@ -138,6 +140,12 @@ func TestGuyaFetchChaptersPerGroup(t *testing.T) {
 		},
 		2: {
 			{"0002_def/1", "Alpha Scans", "Chapter 2"},
+		},
+		3: {
+			{"0003_ghi/1", "Alpha Scans", "Chapter 3"},
+		},
+		4: {
+			{"0004_jkl/1", "Alpha Scans", "Chapter 4"},
 		},
 	}
 	got := map[float64][]release{}
@@ -201,7 +209,7 @@ func TestGuyaVolume(t *testing.T) {
 	}
 	for _, c := range chapters {
 		gc := c.(*GuyaChapter)
-		want := map[float64]int{1: 3, 2: 4}[gc.Number]
+		want := map[float64]int{1: 3, 2: 4, 3: 0, 4: 0}[gc.Number]
 		if gc.Volume != want {
 			t.Errorf("chapter %v listed volume = %d, want %d", gc.Number, gc.Volume, want)
 		}
