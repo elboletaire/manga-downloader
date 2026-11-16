@@ -392,11 +392,7 @@ func tcbVolume(row *goquery.Selection) int {
 		return 0
 	}
 	// the header may carry a title after the number ("Volume 2: Arc name")
-	m := volumeNumberRe.FindStringSubmatch(header.First().Text())
-	if m == nil {
-		return 0
-	}
-	return parseVolume(m[1])
+	return headerVolume(header.First().Text())
 }
 
 // tcbReaderTypeError rejects Madara chapters that aren't images: the reader

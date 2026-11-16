@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -100,6 +102,74 @@ func TestFetchChaptersURLFallback(t *testing.T) {
 	}
 	if got := chapters[0].GetTitle(); strings.Contains(got, "ago") {
 		t.Errorf("chapter title %q leaked the <small> relative-date noise", got)
+	}
+}
+
+func TestRowVolume(t *testing.T) {
+	cases := []struct {
+		in     string
+		number float64
+		want   int
+	}{
+		{"Vol.2 Chapter 15", 15, 2},
+		{"Vol. 1 · Ch. 1", 1, 1},
+		{"Vol. 01 – Pról.", 1, 1},               // prologue numbered 1, volume 1
+		{"Том 2 Глава 15", 15, 2},               // russian, volume before chapter
+		{"Volume 18", 18, 18},                   // volume-only row is its own volume
+		{"Том 2", 2, 2},                         // russian volume-only row
+		{"Vol. 2 Chapter 15.5", 15.5, 2},        // decimal chapter keeps the whole volume
+		{"Vol. 2.5 Chapter 15", 15, 0},          // decimal volume is unsure
+		{"Vol. 2 Chapter 15 extra 3", 15, 2},    // chapter wins over the volume
+		{"Vol. 3", 15, 0},                       // volume disagrees with the number
+		{"Chapter 15", 15, 0},                   // no volume
+		{"Vol. 2. Chapter 15", 15, 2},           // the dot ends the volume, not a decimal
+		{"Vol.2.Ch.15", 15, 2},                  // dot before the chapter
+		{"Volume 2.", 2, 2},                     // volume-only row with a trailing dot
+		{"Chapter 120 - Vol. 13 Cover", 120, 0}, // a volume after the chapter is title text
+		{"Ch. 50: Volume 5 Bonus", 50, 0},
+		{"Chapter 10 vol 2024", 10, 0},
+		{"Notice", 0, 0},
+	}
+	for _, c := range cases {
+		if got := rowVolume(c.in, c.number); got != c.want {
+			t.Errorf("rowVolume(%q, %v) = %d, want %d", c.in, c.number, got, c.want)
+		}
+	}
+}
+
+func TestFetchChaptersReadsVolumes(t *testing.T) {
+	html := `<html><body><ul>
+		<li class="chapter"><a href="https://example.com/read/a-15">Vol.2 Chapter 15</a></li>
+		<li class="chapter"><a href="https://example.com/read/a-1">Vol. 01 – Pról.</a></li>
+		<li class="chapter"><a href="https://example.com/read/a-3">Volume 3</a></li>
+		<li class="chapter"><a href="https://example.com/read/a-4">Chapter 4</a></li>
+	</ul></body></html>`
+
+	doc := docFromHTML(t, html)
+	m := PlainHTML{
+		Grabber: &Grabber{URL: "https://example.com/series/a"},
+		doc:     doc,
+		rows:    doc.Find("li.chapter"),
+		site: SiteSelector{
+			Link: "a",
+		},
+	}
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	want := []struct {
+		number float64
+		volume int
+	}{{15, 2}, {1, 1}, {3, 3}, {4, 0}}
+	if len(chapters) != len(want) {
+		t.Fatalf("got %d chapters, want %d", len(chapters), len(want))
+	}
+	for i, c := range chapters {
+		if c.GetNumber() != want[i].number || VolumeOf(c) != want[i].volume {
+			t.Errorf("chapter %d: number %v volume %d, want %v, %d", i, c.GetNumber(), VolumeOf(c), want[i].number, want[i].volume)
+		}
 	}
 }
 
@@ -1651,5 +1721,119 @@ func TestPlainHTMLHentaimangaWinsSharedRows(t *testing.T) {
 	}
 	if m.site.Rows != "li[data-chapter-item]" {
 		t.Errorf("Test() matched with selector %q, want li[data-chapter-item]", m.site.Rows)
+	}
+}
+
+// volumesFixture returns a PlainHTML over testdata/volumes/name, with the
+// selector whose Rows is rows
+func volumesFixture(t *testing.T, name, rows string) PlainHTML {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("testdata", "volumes", name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc := docFromHTML(t, string(data))
+	for _, site := range plainHTMLSelectors {
+		if site.Rows == rows {
+			return PlainHTML{
+				Grabber: &Grabber{URL: "https://example.test/manga/x"},
+				doc:     doc,
+				rows:    doc.Find(rows),
+				site:    site,
+			}
+		}
+	}
+	t.Fatalf("no PlainHTML selector with rows %q", rows)
+	return PlainHTML{}
+}
+
+// TestFetchChaptersVolumesFromHeaders reads the volume each row sits under
+// from the headers of the live sites (trimmed copies in testdata/volumes):
+// utsukushii-bg's "Том 33" <li>, mangaworld.mx's .volume, dynasty-scans' <dt>,
+// read-nifteam's button, noranofansub's "Volúmen 01" and silentquill's section.
+func TestFetchChaptersVolumesFromHeaders(t *testing.T) {
+	cases := []struct {
+		file, rows string
+		want       map[float64]int
+	}{
+		{"utsukushii_series.html", "h5.chapter-title-rtl", map[float64]int{275: 33, 274: 32, 273: 32}},
+		{"mangaworld_series.html", "div.chapter a.chap", map[float64]int{836: 77, 835: 77, 834: 76, 824: 76}},
+		{"dynasty_series.html", "dl.chapter-list dd a.name", map[float64]int{1: 1, 24: 1, 25: 2}},
+		{"nifteam_series.html", ".list .element", map[float64]int{1198: 118, 1197: 118, 1196: 117}},
+		{"noranofansub_series.html", ".list .element", map[float64]int{41: 1, 40: 1}},
+		{"silentquill_series.html", `a.grid[href*="-chapter-"]:not([href^="/series/"])`, map[float64]int{59: 13, 55: 13, 54: 12, 50: 12}},
+	}
+	for _, c := range cases {
+		m := volumesFixture(t, c.file, c.rows)
+		chapters, errs := m.FetchChapters()
+		if len(errs) > 0 {
+			t.Fatalf("%s: unexpected errors: %v", c.file, errs)
+		}
+		got := map[float64]int{}
+		for _, ch := range chapters {
+			got[ch.GetNumber()] = VolumeOf(ch)
+		}
+		for number, volume := range c.want {
+			if got[number] != volume {
+				t.Errorf("%s: chapter %v volume = %d, want %d", c.file, number, got[number], volume)
+			}
+		}
+	}
+}
+
+// TestRowVolumeNeedsWholeVolumeAndHeader checks the nearest header before a row
+// counts, whether it sits beside the row or beside an ancestor of it, and that
+// rows under no header, or under a fractional one, keep volume 0
+func TestRowVolumeNeedsWholeVolumeAndHeader(t *testing.T) {
+	before := docFromHTML(t, `<dl>
+		<dd><a class="name">Chapter 0</a></dd>
+		<dt>Volume 1</dt>
+		<dd><a class="name">Chapter 1</a></dd>
+		<dt>Volume 2.5</dt>
+		<dd><a class="name">Chapter 2</a></dd>
+	</dl>`)
+	ancestor := docFromHTML(t, `<div class="vn">Volume 3</div>
+		<div class="vol"><div class="c"><a class="chap">Chapter 7</a></div></div>
+		<div class="c"><a class="chap">Chapter 8</a></div>`)
+	cases := []struct {
+		doc  *goquery.Document
+		rows string
+		site SiteSelector
+		want map[float64]int
+	}{
+		{before, "dd a.name", SiteSelector{VolumeHeader: "dt", VolumeScope: "dd"},
+			map[float64]int{0: 0, 1: 1, 2: 0}},
+		{ancestor, "a.chap", SiteSelector{VolumeHeader: ".vn", VolumeScope: ".vol"},
+			map[float64]int{7: 3, 8: 0}},
+	}
+	for _, c := range cases {
+		m := PlainHTML{Grabber: &Grabber{URL: "https://example.test/x"}, doc: c.doc, site: c.site}
+		c.doc.Find(c.rows).Each(func(_ int, s *goquery.Selection) {
+			number, ok := parseChapterNumber(s.Text())
+			if !ok {
+				return
+			}
+			if got, want := m.headerRowVolume(s), c.want[number]; got != want {
+				t.Errorf("chapter %v volume = %d, want %d", number, got, want)
+			}
+		})
+	}
+}
+
+// TestChapterFromDocKeepsListedVolume checks a fetched chapter carries the
+// volume, title and label its listed row gave it (see AGENTS.md, name drift)
+func TestChapterFromDocKeepsListedVolume(t *testing.T) {
+	m := volumesFixture(t, "utsukushii_series.html", "h5.chapter-title-rtl")
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("unexpected errors: %v", errs)
+	}
+	listed := chapters[0]
+	fetched := m.chapterFromDoc(listed, docFromHTML(t, "<html></html>"))
+	if fetched.Volume != VolumeOf(listed) || fetched.Volume != 33 {
+		t.Errorf("fetched volume = %d, listed %d, want 33", fetched.Volume, VolumeOf(listed))
+	}
+	if fetched.Title != listed.GetTitle() || fetched.Label != labelOf(listed) {
+		t.Errorf("fetched title/label = %q/%v, listed %q/%v", fetched.Title, fetched.Label, listed.GetTitle(), labelOf(listed))
 	}
 }
