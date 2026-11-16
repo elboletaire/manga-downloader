@@ -40,10 +40,35 @@ func TestPageListURLsOrdersByDataIndex(t *testing.T) {
 	}
 }
 
-// TestPageListURLsNoStatus checks that an answer without status fails the chapter
-func TestPageListURLsNoStatus(t *testing.T) {
-	if _, err := pageListURLs(`{"status":false,"html":""}`); err == nil {
-		t.Error("pageListURLs() error = nil, want an error for status false")
+// TestPageListURLsRefused checks that a refused answer fails the chapter with
+// the site's message, and one without a message still fails
+func TestPageListURLsRefused(t *testing.T) {
+	cases := []struct {
+		name, body, want string
+	}{
+		{"missing chapter", `{"msg":"Chap này không tồn tại hoặc đã bị xoá","html":""}`, "page list refused: Chap này không tồn tại hoặc đã bị xoá"},
+		{"no status", `{"status":false,"html":""}`, "the page list answered no status"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, err := pageListURLs(c.body)
+			if err == nil || err.Error() != c.want {
+				t.Errorf("pageListURLs() error = %v, want %q", err, c.want)
+			}
+		})
+	}
+}
+
+// TestPageListIDReCompiles checks that every PageListIDRe compiles, since it
+// is compiled per chapter fetch
+func TestPageListIDReCompiles(t *testing.T) {
+	for _, sel := range plainHTMLSelectors {
+		if sel.PageListIDRe == "" {
+			continue
+		}
+		if _, err := regexp.Compile(sel.PageListIDRe); err != nil {
+			t.Errorf("PageListIDRe %q: %v", sel.PageListIDRe, err)
+		}
 	}
 }
 

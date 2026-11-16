@@ -671,10 +671,9 @@ type SiteSelector struct {
 	// page's island props: it reports whether a chapter object there (one with
 	// a "number" and a "slug") is paid; rows with that number become Locked.
 	LockedIsland func(chapter map[string]any) bool
-	// PageListPath, when set, reads a reader's pages from an AJAX endpoint
-	// instead of its markup: a POST to this path, with {id} replaced by the
-	// first capture of PageListIDRe on the reader, answers JSON whose html
-	// holds the pages as <a class="readImg"> links in data-index order.
+	// PageListPath, when set, POSTs to this path ({id} from PageListIDRe's first
+	// capture on the reader) and reads the pages from its JSON html's a.readImg
+	// links, in data-index order.
 	PageListPath string
 	PageListIDRe string
 }
@@ -823,16 +822,16 @@ func (m *PlainHTML) testCandidateSeriesURL(candidateURL string) bool {
 	return false
 }
 
-// numberRegexps caches the compiled SiteSelector.NumberRe patterns, which are
-// checked once per row.
-var numberRegexps sync.Map
+// selectorRegexps caches the compiled SiteSelector patterns (NumberRe,
+// PageListIDRe), which are checked once per row or chapter.
+var selectorRegexps sync.Map
 
-func numberRe(pattern string) *regexp.Regexp {
-	if re, ok := numberRegexps.Load(pattern); ok {
+func selectorRe(pattern string) *regexp.Regexp {
+	if re, ok := selectorRegexps.Load(pattern); ok {
 		return re.(*regexp.Regexp)
 	}
 	re := regexp.MustCompile(pattern)
-	numberRegexps.Store(pattern, re)
+	selectorRegexps.Store(pattern, re)
 	return re
 }
 
@@ -845,7 +844,7 @@ func checkRowChapterNumber(s *goquery.Selection, selector SiteSelector) (float64
 		if selector.Link != "" {
 			u = s.Find(selector.Link).AttrOr("href", "")
 		}
-		if m := numberRe(selector.NumberRe).FindStringSubmatch(u); m != nil {
+		if m := selectorRe(selector.NumberRe).FindStringSubmatch(u); m != nil {
 			if n, err := strconv.ParseFloat(m[1], 64); err == nil {
 				return n, true
 			}
@@ -1593,7 +1592,7 @@ func (m PlainHTML) readerImages(doc *goquery.Document, pageURL string) ([]string
 	if err != nil {
 		return nil, err
 	}
-	match := regexp.MustCompile(m.site.PageListIDRe).FindStringSubmatch(html)
+	match := selectorRe(m.site.PageListIDRe).FindStringSubmatch(html)
 	if len(match) < 2 {
 		return nil, fmt.Errorf("no page list id on %s", pageURL)
 	}
@@ -1613,12 +1612,16 @@ func (m PlainHTML) readerImages(doc *goquery.Document, pageURL string) ([]string
 func pageListURLs(body string) ([]string, error) {
 	var answer struct {
 		Status bool   `json:"status"`
+		Msg    string `json:"msg"`
 		HTML   string `json:"html"`
 	}
 	if err := json.Unmarshal([]byte(body), &answer); err != nil {
 		return nil, err
 	}
 	if !answer.Status {
+		if answer.Msg != "" {
+			return nil, fmt.Errorf("page list refused: %s", answer.Msg)
+		}
 		return nil, errors.New("the page list answered no status")
 	}
 	frag, err := goquery.NewDocumentFromReader(strings.NewReader(answer.HTML))
