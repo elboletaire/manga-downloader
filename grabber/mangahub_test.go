@@ -342,9 +342,8 @@ func TestMangaHubTitleNumberRe(t *testing.T) {
 	}
 }
 
-// TestMangaHubVolumeInListing checks the volume a title names is kept as the
-// chapter's volume, listed and fetched alike, and leaves its title as the
-// chapter's own
+// TestMangaHubVolumeInListing checks the volume a title leads with is the
+// chapter's volume, listed and fetched alike, and the title stays as the site gives it
 func TestMangaHubVolumeInListing(t *testing.T) {
 	srv := mangahubSite(t)
 	m := NewMangaHub(&Grabber{URL: srv.URL + "/manga/red-storm_111"})
@@ -354,8 +353,8 @@ func TestMangaHubVolumeInListing(t *testing.T) {
 		t.Fatal(errs)
 	}
 	listed := chapters[3].(*MangaHubChapter)
-	if listed.Volume != 16 || listed.Title != "" || ChapterLabel(listed) != "Chapter 341" {
-		t.Fatalf("listed = volume %d, title %q, label %q; want volume 16, no title, Chapter 341",
+	if listed.Volume != 16 || listed.Title != "Vol.16 Chapter 341" || ChapterLabel(listed) != "Vol.16 Chapter 341" {
+		t.Fatalf("listed = volume %d, title %q, label %q; want volume 16, the title as given",
 			listed.Volume, listed.Title, ChapterLabel(listed))
 	}
 
@@ -363,35 +362,30 @@ func TestMangaHubVolumeInListing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if fetched.Volume != 16 || fetched.Title != "" || ChapterLabel(fetched) != "Chapter 341" {
-		t.Fatalf("fetched = volume %d, title %q, label %q; want volume 16, no title, Chapter 341",
+	if fetched.Volume != 16 || fetched.Title != "Vol.16 Chapter 341" || ChapterLabel(fetched) != "Vol.16 Chapter 341" {
+		t.Fatalf("fetched = volume %d, title %q, label %q; want volume 16, the title as given",
 			fetched.Volume, fetched.Title, ChapterLabel(fetched))
 	}
 }
 
-// TestMangaHubTitle covers the titles older series put the volume in, and the
-// ones that don't name one, which must come out as they did before
-func TestMangaHubTitle(t *testing.T) {
-	cases := []struct {
-		raw       string
-		wantTitle string
-		wantVol   int
-	}{
-		{"Vol.16 Chapter 341", "", 16},
-		{"Vol.69 Ch.983", "", 69},
-		{"Vol. 15 Ch. 288", "", 15},
-		{"Vol.13 Ch.104.5 - Mizaki, the city of promise", "Mizaki, the city of promise", 13},
-		{"Vol.2 Chapter 15: The Hunt", "The Hunt", 2},
-		{"Vol.10.5 Chapter 77", "Vol.10.5 Chapter 77", 0},
-		{"Chapter 482", "", 0},
-		{"Epilogue", "Epilogue", 0},
-		{"Volcano Chapter", "Volcano Chapter", 0},
-		{"", "", 0},
+// TestMangaHubVolume covers the titles that lead with a volume, and the ones
+// that don't, which must read as no volume
+func TestMangaHubVolume(t *testing.T) {
+	cases := map[string]int{
+		"Vol.16 Chapter 341": 16,
+		"Vol.69 Ch.983":      69,
+		"Vol. 15 Ch. 288":    15,
+		"Vol.13 Ch.104.5 - Mizaki, the city of promise": 13,
+		"Volume 2":            2,
+		"Vol.10.5 Chapter 77": 0,
+		"Chapter 482":         0,
+		"Epilogue":            0,
+		"Volcano Chapter":     0,
+		"":                    0,
 	}
-	for _, c := range cases {
-		gotTitle, gotVol := mangahubTitle(c.raw)
-		if gotTitle != c.wantTitle || gotVol != c.wantVol {
-			t.Errorf("mangahubTitle(%q) = %q, %d; want %q, %d", c.raw, gotTitle, gotVol, c.wantTitle, c.wantVol)
+	for title, want := range cases {
+		if got := mangahubVolume(title); got != want {
+			t.Errorf("mangahubVolume(%q) = %d, want %d", title, got, want)
 		}
 	}
 }

@@ -111,7 +111,7 @@ func guyaServer(t *testing.T) *httptest.Server {
 			`"preferred_sort":[],`+
 			`"chapters":{`+
 			`"1":{"title":"First","volume":"3","folder":"0001_abc","groups":{"2":["01.png"],"1":["01.png","02.png"]}},`+
-			`"2":{"title":"","volume":"0","folder":"0002_def","groups":{"1":["01.png"]}}`+
+			`"2":{"title":"","volume":4,"folder":"0002_def","groups":{"1":["01.png"]}}`+
 			`}}`)
 	})
 
@@ -189,8 +189,8 @@ func TestGuyaTestByAPI(t *testing.T) {
 	}
 }
 
-// TestGuyaVolume checks the volume the API gives a chapter, "0" meaning none,
-// is set on the listed chapter and on the one it fetches
+// TestGuyaVolume checks the volume the API gives a chapter, as a string or a
+// number, is set on the listed chapter and on the one it fetches
 func TestGuyaVolume(t *testing.T) {
 	server := guyaServer(t)
 	g := Guya{Grabber: &Grabber{URL: server.URL + "/read/manga/Series/", Settings: &Settings{}}}
@@ -201,7 +201,7 @@ func TestGuyaVolume(t *testing.T) {
 	}
 	for _, c := range chapters {
 		gc := c.(*GuyaChapter)
-		want := map[float64]int{1: 3, 2: 0}[gc.Number]
+		want := map[float64]int{1: 3, 2: 4}[gc.Number]
 		if gc.Volume != want {
 			t.Errorf("chapter %v listed volume = %d, want %d", gc.Number, gc.Volume, want)
 		}
