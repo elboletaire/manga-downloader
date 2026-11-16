@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[581 supported sites](#supported-sites)**, from big aggregators to small
+- **[582 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 581 supported sites</b></summary>
+<summary><b>Show all 582 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -670,6 +670,7 @@ environment variables.
 | [manhuahot.com](https://manhuahot.com) | English | 2026-11-02 |
 | [manhuanext.com](https://manhuanext.com) | English | 2026-11-02 |
 | [manhuaplus.com](https://manhuaplus.com) |  | 2026-11-02 |
+| [manhuaplus.org](https://manhuaplus.org) | English | 2026-11-16 |
 | [manhuathai.com](https://www.manhuathai.com) | Thai | 2026-11-02 |
 | [manhuatop.org](https://manhuatop.org) \* |  | 2026-11-10 |
 | [manhuaus.com](https://manhuaus.com) \* |  | 2026-10-15 |

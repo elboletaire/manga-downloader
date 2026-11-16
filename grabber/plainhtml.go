@@ -6,8 +6,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -569,6 +571,15 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:   "img.ts-image-minimal",
 		Locked:  "i.fa-lock",
 	},
+	// manhuaplus.org (English, Liliana theme): the list's #myUL is the theme's own,
+	// and the reader fetches its pages from an AJAX endpoint named by CHAPTER_ID
+	{
+		Title:        "h1",
+		Rows:         "ul#myUL li.chapter[data] a[href*=\"/manga/\"]",
+		Image:        "#chapterContent",
+		PageListPath: "/ajax/image/list/chap/{id}",
+		PageListIDRe: `CHAPTER_ID = (\d+)`,
+	},
 	// w6.dandadan.net (English, single series): every chapter sits in a Shortcodes
 	// Ultimate expander (a second list repeats chapter 1). Last, as the list is
 	// generic WordPress markup.
@@ -660,6 +671,12 @@ type SiteSelector struct {
 	// page's island props: it reports whether a chapter object there (one with
 	// a "number" and a "slug") is paid; rows with that number become Locked.
 	LockedIsland func(chapter map[string]any) bool
+	// PageListPath, when set, reads a reader's pages from an AJAX endpoint
+	// instead of its markup: a POST to this path, with {id} replaced by the
+	// first capture of PageListIDRe on the reader, answers JSON whose html
+	// holds the pages as <a class="readImg"> links in data-index order.
+	PageListPath string
+	PageListIDRe string
 }
 
 // PlainHTMLChapter represents a PlainHTML Chapter
@@ -1559,12 +1576,82 @@ func (m PlainHTML) FetchChapter(f Filterable) (*Chapter, error) {
 
 	authorizeMadaradex(doc)
 
-	return m.chapterFromDoc(f, doc), nil
+	pimages, err := m.readerImages(doc, mchap.URL)
+	if err != nil {
+		return nil, err
+	}
+	return m.chapterFromImages(f, pimages), nil
+}
+
+// readerImages returns a reader page's image URLs: from the selector's AJAX
+// page list when it has one, else from the markup
+func (m PlainHTML) readerImages(doc *goquery.Document, pageURL string) ([]string, error) {
+	if m.site.PageListPath == "" {
+		return getPlainHTMLImageURL(m.site.Image, doc), nil
+	}
+	html, err := doc.Html()
+	if err != nil {
+		return nil, err
+	}
+	match := regexp.MustCompile(m.site.PageListIDRe).FindStringSubmatch(html)
+	if len(match) < 2 {
+		return nil, fmt.Errorf("no page list id on %s", pageURL)
+	}
+	body, err := http.PostText(http.RequestParams{
+		URL:     m.BaseUrl() + strings.Replace(m.site.PageListPath, "{id}", match[1], 1),
+		Referer: pageURL,
+		Headers: map[string]string{"X-Requested-With": "XMLHttpRequest"},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return pageListURLs(body)
+}
+
+// pageListURLs reads the pages out of a PageListPath answer: the readImg
+// links of its html, ordered by their row's data-index
+func pageListURLs(body string) ([]string, error) {
+	var answer struct {
+		Status bool   `json:"status"`
+		HTML   string `json:"html"`
+	}
+	if err := json.Unmarshal([]byte(body), &answer); err != nil {
+		return nil, err
+	}
+	if !answer.Status {
+		return nil, errors.New("the page list answered no status")
+	}
+	frag, err := goquery.NewDocumentFromReader(strings.NewReader(answer.HTML))
+	if err != nil {
+		return nil, err
+	}
+	type pageLink struct {
+		index int
+		url   string
+	}
+	var links []pageLink
+	frag.Find("a.readImg").Each(func(i int, s *goquery.Selection) {
+		index, err := strconv.Atoi(s.Parent().AttrOr("data-index", ""))
+		if err != nil {
+			index = i
+		}
+		links = append(links, pageLink{index, s.AttrOr("href", "")})
+	})
+	sort.SliceStable(links, func(i, j int) bool { return links[i].index < links[j].index })
+	urls := make([]string, 0, len(links))
+	for _, l := range links {
+		urls = append(urls, l.url)
+	}
+	return urls, nil
 }
 
 // chapterFromDoc builds a Chapter from an already parsed reader page
 func (m PlainHTML) chapterFromDoc(f Filterable, doc *goquery.Document) *Chapter {
-	pimages := getPlainHTMLImageURL(m.site.Image, doc)
+	return m.chapterFromImages(f, getPlainHTMLImageURL(m.site.Image, doc))
+}
+
+// chapterFromImages builds a Chapter from its reader's image URLs
+func (m PlainHTML) chapterFromImages(f Filterable, pimages []string) *Chapter {
 	pcount := len(pimages)
 
 	chapter := &Chapter{

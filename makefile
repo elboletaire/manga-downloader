@@ -1378,6 +1378,7 @@ grabber/html: \
 	grabber/mangazin \
 	grabber/manhuabug \
 	grabber/manhuaplus \
+	grabber/manhuaplusorg \
 	grabber/manhuathai \
 	grabber/manhwa18cc \
 	grabber/manhwa18tx \
@@ -1581,6 +1582,8 @@ grabber/mangazin:
 	go run . https://mangazin.org/manga/the-cold-blooded-warrior/ 75-76
 grabber/manhuaplus:
 	go run . https://manhuaplus.com/manga/tales-of-demons-and-gods01/ 522.6
+grabber/manhuaplusorg:
+	go run . https://manhuaplus.org/manga/demon-magic-emperor/ 1-2
 grabber/silentquill:
 	go run . https://silentquill.net/series/i-was-invited-to-join-the-country-as-an-otherworldly-warrior-but-i-refused-and-decided-to-start-as-a-soldier/ 59
 grabber/decadencescans:
