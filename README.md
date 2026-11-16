@@ -827,7 +827,7 @@ environment variables.
 | [thaimanga.net](https://www.thaimanga.net) | Thai | 2026-11-09 |
 | [the-apothecary-diaries.com](https://the-apothecary-diaries.com) | The Apothecary Diaries | 2026-11-09 |
 | [thegirlfromrandomchatting.com](https://thegirlfromrandomchatting.com) | English, single series | 2026-11-09 |
-| [tilkiscans.com](https://www.tilkiscans.com) | Turkish | ❌ failing since 2026-11-09 (checked 2026-11-09) |
+| [tilkiscans.com](https://www.tilkiscans.com) | Turkish | 2026-11-16 |
 | [timelesstoons.org](https://timelesstoons.org) | English | 2026-11-09 |
 | [tmomanhwa.com](https://tmomanhwa.com) | Spanish, mostly NSFW | 2026-11-09 |
 | [tonarinoyj.jp](https://tonarinoyj.jp) | Japanese, Young Jump (GigaViewer) | 2026-11-09 |
