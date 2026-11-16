@@ -142,7 +142,8 @@ func (b *Bigsolo) fetchSeries() (*bigsoloSeries, error) {
 		return b.series, nil
 	}
 
-	body, err := http.Get(http.RequestParams{URL: bigsoloSeriesURL(b.URL)})
+	seriesURL := bigsoloSeriesURL(b.URL)
+	body, err := http.Get(http.RequestParams{URL: seriesURL})
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +156,7 @@ func (b *Bigsolo) fetchSeries() (*bigsoloSeries, error) {
 
 	raw := doc.Find("#series-data-placeholder").Text()
 	if raw == "" {
-		return nil, fmt.Errorf("could not find series data in %s (is the URL a series page?)", b.URL)
+		return nil, fmt.Errorf("could not find series data in %s (is the URL a series page?)", seriesURL)
 	}
 
 	series := &bigsoloSeries{}
