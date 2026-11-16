@@ -983,6 +983,9 @@ Responsible use of AI is welcome. The repository ships an `AGENTS.md` and
 skills for coding agents, so an agent working on it starts from the project's
 conventions.
 
+Everyone taking part in the project is expected to follow its
+[Code of Conduct](./CODE_OF_CONDUCT.md).
+
 ## Star history
 
 <div align="center">
