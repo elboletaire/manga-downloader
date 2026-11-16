@@ -578,10 +578,9 @@ var plainHTMLSelectors = []SiteSelector{
 		ChapterTitleStrip: `(?i)^Dandadan chapter \d+(\.\d+)?$`,
 		Image:             ".entry-content img",
 	},
-	// mhscans.com (Spanish): the series page renders only its newest 30
-	// chapters, the rest come from /chapters?page=N fragments (ChaptersPath).
-	// A row is its own link, which for a paid chapter goes to the login page
-	// instead of the reader, and that link marks it Locked.
+	// mhscans.com (Spanish): the series page renders only the newest 30
+	// chapters (ChaptersPath walks the rest); a paid row links to the login
+	// page, which marks it Locked.
 	{
 		Title:             "h1",
 		Rows:              `a[data-chapter-label][href^="/leer/"], a[data-chapter-label][href^="/auth/login"]`,
@@ -675,7 +674,7 @@ type SiteSelector struct {
 	PageParam string
 	// ChaptersPath, with Paginated, is appended to the series path to reach the
 	// chapter list's pages, for a series page that renders only its first page
-	// of rows; the X-Pages header counts them
+	// of rows. Whenever the X-Pages header is sent, the walk stops at its count.
 	ChaptersPath string
 	// LockedIsland is for Astro sites that state the lock only in the series
 	// page's island props: it reports whether a chapter object there (one with
@@ -1387,6 +1386,7 @@ func (m PlainHTML) listingPages() (pages []*goquery.Selection, errs []error) {
 		param = "page"
 	}
 	last := maxListingPages
+	prevKey := ""
 	for page := 2; page <= last; page++ {
 		u := *base
 		query := u.Query()
@@ -1414,10 +1414,28 @@ func (m PlainHTML) listingPages() (pages []*goquery.Selection, errs []error) {
 		if rows.Length() == 0 {
 			break
 		}
+		// a page repeating the one before it ends the walk too: without a
+		// usable X-Pages, a list past its end can keep answering with its last page
+		key := m.pageKey(rows)
+		if key == prevKey {
+			break
+		}
+		prevKey = key
 		pages = append(pages, rows)
 	}
 
 	return pages, errs
+}
+
+// pageKey identifies a listing page by its first row's link, or by the row's
+// markup when it has none
+func (m PlainHTML) pageKey(rows *goquery.Selection) string {
+	first := rows.First()
+	if href := m.rowUploads(first)[0].href; href != "" {
+		return href
+	}
+	markup, _ := goquery.OuterHtml(first)
+	return markup
 }
 
 // islandLockedNumbers returns the numbers of the chapters LockedIsland marks
