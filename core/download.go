@@ -5,6 +5,7 @@ package core
 import (
 	"context"
 	"errors"
+	"os"
 	"sync"
 
 	"github.com/elboletaire/manga-downloader/downloader"
@@ -352,6 +353,15 @@ func (s *Series) Download(ctx context.Context, chapters grabber.Filterables, ski
 			if len(existing) > 0 {
 				chapters = chapters.Filter(func(c grabber.Filterable) bool { return !existing[c] })
 			}
+		}
+	}
+
+	// the output directory is created before anything is fetched, so a missing
+	// one can't fail every chapter after its pages are downloaded. An empty one
+	// is the working directory, which always exists
+	if outDir != "" {
+		if err := os.MkdirAll(outDir, 0o755); err != nil {
+			return "", &SettingError{Setting: "output-dir", Value: outDir, Err: err}
 		}
 	}
 
