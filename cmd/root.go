@@ -248,7 +248,7 @@ func Run(cmd *cobra.Command, args []string) {
 	res := <-resultCh
 
 	// raised before anything was fetched: --volumes auto on a site without
-	// volumes, or a volume filename template that doesn't work
+	// volumes, a volume filename template that doesn't work, or an output folder that can't be created
 	var serr *core.SettingError
 	if errors.As(res.err, &serr) {
 		exitSettingError(res.err)
