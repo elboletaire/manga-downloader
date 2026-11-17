@@ -19,8 +19,8 @@ import (
 
 // SettingError reports a setting that failed validation. Setting is the flag
 // name ("format", "reading-direction", "convert-images", "jpeg-quality",
-// "volumes", "skip-pages" or, for a volume file's name, "filename-template")
-// and Value the raw input.
+// "volumes", "skip-pages", "output-dir" or, for a volume file's name,
+// "filename-template") and Value the raw input.
 type SettingError struct {
 	Setting string
 	Value   string

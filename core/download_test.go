@@ -1249,22 +1249,37 @@ func TestDownloadCreatesMissingOutputDir(t *testing.T) {
 	}
 }
 
-// a folder that can't be created fails the download before any chapter is fetched
+// a folder that can't be created fails the download before any chapter is fetched,
+// in every mode that writes into it
 func TestDownloadOutputDirUnderAFileFailsBeforeFetching(t *testing.T) {
-	site := newFakeSite(t, fakeChapter{number: 1, pages: 1})
-	series, dir := newSeries(t, site, false)
-	blocker := filepath.Join(dir, "blocker")
-	if err := os.WriteFile(blocker, nil, 0o644); err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name    string
+		bundle  bool
+		volumes string
+	}{
+		{"chapters", false, ""},
+		{"bundle", true, ""},
+		{"volumes", false, "1"},
 	}
-	site.Settings.OutputDir = filepath.Join(blocker, "out")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			site := newFakeSite(t, fakeChapter{number: 1, pages: 1})
+			series, dir := newSeries(t, site, tt.bundle)
+			blocker := filepath.Join(dir, "blocker")
+			if err := os.WriteFile(blocker, nil, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			site.Settings.OutputDir = filepath.Join(blocker, "out")
+			site.Settings.Volumes = tt.volumes
 
-	_, err := series.Download(context.Background(), listed(site), nil, "", &recorder{})
-	var se *SettingError
-	if !errors.As(err, &se) || se.Setting != "output-dir" {
-		t.Fatalf("Download error %v, want an output-dir SettingError", err)
-	}
-	if site.fetches != 0 {
-		t.Errorf("FetchChapter called %d times, want none", site.fetches)
+			_, err := series.Download(context.Background(), listed(site), nil, "", &recorder{})
+			var se *SettingError
+			if !errors.As(err, &se) || se.Setting != "output-dir" {
+				t.Fatalf("Download error %v, want an output-dir SettingError", err)
+			}
+			if site.fetches != 0 {
+				t.Errorf("FetchChapter called %d times, want none", site.fetches)
+			}
+		})
 	}
 }

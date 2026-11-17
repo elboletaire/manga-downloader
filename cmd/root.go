@@ -167,6 +167,11 @@ func Run(cmd *cobra.Command, args []string) {
 		defer releaseDl()
 		ev := plainEvents{showLang: showLanguage, showGroup: showGroup}
 		bundleFile, err := series.Download(context.Background(), chapters, skipPages, settings.Range, ev)
+		// raised before anything was fetched, so it's reported before the run's own exit
+		var serr *core.SettingError
+		if errors.As(err, &serr) {
+			exitSettingError(err)
+		}
 		if !settings.Bundle {
 			exit(0)
 		}
@@ -284,6 +289,8 @@ func exitSettingError(err error) {
 		red("Error: invalid --jpeg-quality value %q: %s", se.Value, se.Err)
 	case "volumes":
 		red("Error: invalid --volumes value: %s", se.Err)
+	case "output-dir":
+		red("Error: can't create --output-dir %q: %s", se.Value, se.Err)
 	case "filename-template":
 		// a parts run names its files by the chapter template
 		what := "the volume filename template"

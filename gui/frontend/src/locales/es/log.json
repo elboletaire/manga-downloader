@@ -25,6 +25,7 @@
   "groupFallbackNone": "el grupo de scanlation \"{{value}}\" no está en esta serie: se carga sin filtro",
   "groupFallbackValue": "el grupo de scanlation \"{{value}}\" no está en esta serie: se carga \"{{fallback}}\"",
   "volumesFailed": "volúmenes: {{reason}}",
+  "outputDirFailed": "no se pudo crear la carpeta de salida {{folder}}: {{error}}",
   "packingBundle": "creando el paquete: {{reason}}",
   "bundleEmpty": "creando el paquete: no se pudo descargar ningún capítulo",
   "cancelling": "Cancelando: los capítulos que ya se descargan terminarán; no empezará ninguno nuevo",

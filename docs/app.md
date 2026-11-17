@@ -35,7 +35,8 @@ button, *Load* and *Settings*. (To open on the full window instead, turn off
      <img alt="The language selector open, with English selected" src="../assets/screenshots/03-language-selector-light.webp">
    </picture>
 
-4. **Set the options** in the *Options* tab: the folder the files go to,
+4. **Set the options** in the *Options* tab: the folder the files go to (the
+   app creates it if it's missing),
    *Skip existing files* (chapters already in the folder aren't downloaded
    again), the format (CBZ, CBR, Folder or EPUB; EPUB adds a *Reading
    direction*) and *Pack as*: *Chapters* (a file each), *Merged* (a chapter's

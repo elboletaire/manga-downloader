@@ -25,6 +25,7 @@
   "groupFallbackNone": "el grup de scanlation \"{{value}}\" no es troba en aquesta sèrie: es carrega sense filtre",
   "groupFallbackValue": "el grup de scanlation \"{{value}}\" no es troba en aquesta sèrie: es carrega \"{{fallback}}\"",
   "volumesFailed": "volums: {{reason}}",
+  "outputDirFailed": "no s'ha pogut crear la carpeta de sortida {{folder}}: {{error}}",
   "packingBundle": "creant el paquet: {{reason}}",
   "bundleEmpty": "creant el paquet: no s'ha pogut descarregar cap capítol",
   "cancelling": "Cancel·lant: els capítols que ja es descarreguen acabaran; no en començarà cap de nou",

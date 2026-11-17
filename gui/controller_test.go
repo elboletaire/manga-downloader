@@ -1262,3 +1262,37 @@ func TestFailureLinesCarryTheirMessages(t *testing.T) {
 		}
 	}
 }
+
+// an output folder that can't be created ends the run before anything is
+// fetched, with the error in the summary and the log
+func TestOutputDirFailureEndsRunBeforeFetching(t *testing.T) {
+	c, _, dir := newTestController(t, false, nil, chapters(2, 1)...)
+	if err := c.Load("https://example.com/manga/test"); err != nil {
+		t.Fatal(err)
+	}
+	blocker := filepath.Join(dir, "blocker")
+	if err := os.WriteFile(blocker, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Configure(func(s *grabber.Settings) { s.OutputDir = filepath.Join(blocker, "out") }); err != nil {
+		t.Fatal(err)
+	}
+	c.SetAll(true)
+	if err := c.Start(); err != nil {
+		t.Fatal(err)
+	}
+	s := waitFinished(t, c)
+
+	var se *core.SettingError
+	if !errors.As(s.Err, &se) || se.Setting != "output-dir" {
+		t.Fatalf("summary error %v, want an output-dir SettingError", s.Err)
+	}
+	// nothing was fetched, so the run has no chapter results, only the failure
+	if s.Saved != 0 || s.Skipped != 0 || len(s.Failures) != 1 {
+		t.Errorf("summary saved %d, skipped %d, %d failures; want only the output folder failure", s.Saved, s.Skipped, len(s.Failures))
+	}
+	log := c.Log()
+	if len(log) == 0 || !strings.Contains(log[len(log)-1].Text, "couldn't create the output folder") {
+		t.Errorf("log %v, want the output folder failure last", log)
+	}
+}

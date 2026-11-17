@@ -1407,6 +1407,7 @@ func (c *Controller) Start() error {
 // run is the download goroutine
 func (c *Controller) run(ctx context.Context, series *core.Series, settings *grabber.Settings, chapters grabber.Filterables, skip []ranges.Range, rng string) {
 	file, err := series.Download(ctx, chapters, skip, rng, events{c})
+	var serr *core.SettingError
 
 	c.mu.Lock()
 	defer func() {
@@ -1425,8 +1426,15 @@ func (c *Controller) run(ctx context.Context, series *core.Series, settings *gra
 		Failures: c.stats.failures,
 	}
 	switch {
+	case errors.As(err, &serr) && serr.Setting == "output-dir":
+		// raised before anything was fetched, so no chapter has a result to show
+		s.Err = err
+		m := msg("log.outputDirFailed", map[string]any{"folder": serr.Value, "error": serr.Err.Error()})
+		s.Failures = append(s.Failures, windowFailure("", m))
+		c.appendMsgLocked(LogError, m)
 	case err != nil && c.runinfo.Volumes && !errors.Is(err, context.Canceled):
-		// only the volumes check Start already ran can fail a volume run
+		// a volume run's Download fails only on its setting checks (--volumes,
+		// the volume filename template), before anything is fetched
 		s.Err = err
 		m := msg("log.volumesFailed", map[string]any{"reason": err.Error()})
 		s.Failures = append(s.Failures, windowFailure("", m))

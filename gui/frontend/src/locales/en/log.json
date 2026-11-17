@@ -25,6 +25,7 @@
   "groupFallbackNone": "scanlation group \"{{value}}\" isn't in this series, loading no filter instead",
   "groupFallbackValue": "scanlation group \"{{value}}\" isn't in this series, loading \"{{fallback}}\" instead",
   "volumesFailed": "volumes: {{reason}}",
+  "outputDirFailed": "couldn't create the output folder {{folder}}: {{error}}",
   "packingBundle": "packing bundle: {{reason}}",
   "bundleEmpty": "packing bundle: no chapter could be downloaded",
   "cancelling": "Cancelling: chapters already downloading will finish, no new ones start",
