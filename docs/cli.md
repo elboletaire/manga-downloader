@@ -351,7 +351,7 @@ the check.
 
 | Flag                  | Short | Description                                                    | Default        |
 | --------------------- | ----- | -------------------------------------------------------------- | -------------- |
-| `--output-dir`        | `-o`  | Folder to write the downloaded files to                        | current folder |
+| `--output-dir`        | `-o`  | Folder to write the downloaded files to (created if missing)   | current folder |
 | `--bundle`            | `-b`  | Bundle all chapters into a single file                         | off            |
 | `--volumes`           |       | One file per volume: `auto`, `parts`, `1-7/8-16`               | off            |
 | `--format`            | `-f`  | Output format: `cbz`, `cbr`, `raw` or `epub`                   | `cbz`          |

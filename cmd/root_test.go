@@ -1115,3 +1115,13 @@ func TestAllChaptersRangeNamesTheBundle(t *testing.T) {
 		t.Errorf("bundle named %q, want %q", name, "Series 1-83 - bundle.cbz")
 	}
 }
+
+// a setting the core refuses before anything is fetched exits 1, whichever
+// path (TTY or plain) reports it
+func TestExitSettingErrorExitsOne(t *testing.T) {
+	calls := stubExit(t)
+	exitSettingError(&core.SettingError{Setting: "output-dir", Value: "/x/out", Err: errors.New("not a directory")})
+	if want := []string{"close", "exit 1"}; fmt.Sprint(*calls) != fmt.Sprint(want) {
+		t.Errorf("calls %q, want %q", *calls, want)
+	}
+}

@@ -1226,3 +1226,60 @@ func TestDownloadSkipExistingVolumeChapterFileDoesNotSkip(t *testing.T) {
 		t.Errorf("volume file missing: %v", err)
 	}
 }
+
+// the output directory is created before the first chapter is fetched, nested
+// folders included, so a missing one doesn't fail every download; --skip-existing
+// finds nothing in it and downloads as usual
+func TestDownloadCreatesMissingOutputDir(t *testing.T) {
+	for _, bundle := range []bool{false, true} {
+		t.Run(fmt.Sprintf("bundle=%t", bundle), func(t *testing.T) {
+			site := newFakeSite(t, fakeChapter{number: 1, pages: 1})
+			series, dir := newSeries(t, site, bundle)
+			site.Settings.SkipExisting = true
+			outDir := filepath.Join(dir, "a", "b")
+			site.Settings.OutputDir = outDir
+
+			if _, err := series.Download(context.Background(), listed(site), nil, "1", &recorder{}); err != nil {
+				t.Fatalf("Download: %v", err)
+			}
+			if got := cbzFiles(t, outDir); len(got) != 1 {
+				t.Errorf("wrote %q into the new folder, want one archive", got)
+			}
+		})
+	}
+}
+
+// a folder that can't be created fails the download before any chapter is fetched,
+// in every mode that writes into it
+func TestDownloadOutputDirUnderAFileFailsBeforeFetching(t *testing.T) {
+	tests := []struct {
+		name    string
+		bundle  bool
+		volumes string
+	}{
+		{"chapters", false, ""},
+		{"bundle", true, ""},
+		{"volumes", false, "1"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			site := newFakeSite(t, fakeChapter{number: 1, pages: 1})
+			series, dir := newSeries(t, site, tt.bundle)
+			blocker := filepath.Join(dir, "blocker")
+			if err := os.WriteFile(blocker, nil, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			site.Settings.OutputDir = filepath.Join(blocker, "out")
+			site.Settings.Volumes = tt.volumes
+
+			_, err := series.Download(context.Background(), listed(site), nil, "", &recorder{})
+			var se *SettingError
+			if !errors.As(err, &se) || se.Setting != "output-dir" {
+				t.Fatalf("Download error %v, want an output-dir SettingError", err)
+			}
+			if site.fetches != 0 {
+				t.Errorf("FetchChapter called %d times, want none", site.fetches)
+			}
+		})
+	}
+}
