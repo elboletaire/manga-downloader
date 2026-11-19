@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "date": "2026-11-19",
-  "takenAt": "2026-11-19T21:47:57.928Z",
+  "takenAt": "2026-11-19T23:47:07.259Z",
   "repo": {
-    "stars": 304,
+    "stars": 303,
     "forks": 35,
     "watchers": 4,
     "openIssues": 4
@@ -20,11 +20,11 @@
       "assets": [
         {
           "name": "manga-downloader-gui-v25.3.0-darwin-universal.zip",
-          "downloads": 22
+          "downloads": 25
         },
         {
           "name": "manga-downloader-gui-v25.3.0-linux-amd64.tar.gz",
-          "downloads": 3
+          "downloads": 4
         },
         {
           "name": "manga-downloader-gui-v25.3.0-linux-arm64.tar.gz",
@@ -32,11 +32,11 @@
         },
         {
           "name": "manga-downloader-gui-v25.3.0-SHA256SUMS.txt",
-          "downloads": 4
+          "downloads": 5
         },
         {
           "name": "manga-downloader-gui-v25.3.0-windows-amd64-installer.exe",
-          "downloads": 37
+          "downloads": 42
         },
         {
           "name": "manga-downloader-gui-v25.3.0-windows-amd64.zip",
@@ -60,7 +60,7 @@
         },
         {
           "name": "manga-downloader-v25.3.0-darwin-arm64.tar.gz",
-          "downloads": 14
+          "downloads": 15
         },
         {
           "name": "manga-downloader-v25.3.0-darwin-arm64.tar.gz.md5",
