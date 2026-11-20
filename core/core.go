@@ -143,6 +143,11 @@ type Series struct {
 	// doesn't list them (see FilterOptionsOf)
 	Languages  *grabber.FilterOptions
 	Scanlators *grabber.FilterOptions
+	// Linked is the position in Chapters of the release a chapter or volume link
+	// names (grabber.Linker), -1 when there's none; LinkMissing is set when the
+	// link names one that Chapters lacks or that is locked
+	Linked      int
+	LinkMissing bool
 
 	settings *grabber.Settings
 }
@@ -226,13 +231,21 @@ func (l *Listing) Series(s *grabber.Settings) (*Series, error) {
 		}
 	}
 
+	linked, named := grabber.LinkedIndex(l.Site, chapters)
+	// a locked release can't be downloaded, so the link can't land on it
+	if linked >= 0 && grabber.LockedOf(chapters[linked]) {
+		linked = -1
+	}
+
 	return &Series{
-		Site:       l.Site,
-		Title:      l.Title,
-		Chapters:   chapters,
-		Languages:  languages,
-		Scanlators: scanlators,
-		settings:   s,
+		Site:        l.Site,
+		Title:       l.Title,
+		Chapters:    chapters,
+		Languages:   languages,
+		Scanlators:  scanlators,
+		Linked:      linked,
+		LinkMissing: named && linked < 0,
+		settings:    s,
 	}, nil
 }
 

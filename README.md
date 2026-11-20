@@ -614,7 +614,7 @@ environment variables.
 | [mangadistrict.com](https://mangadistrict.com) | English, mostly NSFW | 2026-11-16 |
 | [mangadna.com](https://mangadna.com) | English, NSFW | 2026-11-16 |
 | [mangaeclipse.com](https://mangaeclipse.com) | Manga Eclipse | 2026-11-16 |
-| [mangafire.to](https://mangafire.to) \* |  | 2026-10-29 |
+| [mangafire.to](https://mangafire.to) \* |  | 2026-11-13 |
 | [mangaforfree.com](https://mangaforfree.com) | English | 2026-11-16 |
 | [mangaforfree.net](https://mangaforfree.net) | multilingual, mostly NSFW | ❌ failing since 2026-11-16 (checked 2026-11-16) |
 | [mangafox.fun](https://mangafox.fun) | MangaFox, English | 2026-11-11 |

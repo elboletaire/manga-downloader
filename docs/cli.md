@@ -16,6 +16,10 @@ manga-downloader [flags] [url] [chapters]
   `1,3,5-10`, or `all` for every chapter. Leave it out and the tool asks
   whether to download the whole series, defaulting to "no"; `all` skips the
   question, as cron jobs and Docker runs without a terminal need.
+  On mangafire.to, a chapter or volume link with no range downloads that
+  chapter or volume, without the question; give a range, or `all`, for others.
+  A volume link lists one language's volumes, so `--language all` there means
+  the linked volume's language rather than every language.
 
 Arguments aren't positional, so `manga-downloader 1-50 [url]` works too.
 Chapters the site marks as locked (coins, early access or members-only) are
@@ -263,11 +267,13 @@ Volume files (`--volumes`) get their own default name while the template is
 left as is:
 
 ~~~
-{{.Series}} Vol. {{printf "%02d" .Volume}} ({{.Number}}){{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
+{{.Series}} Vol. {{printf "%02d" .Volume}}{{if .Number}} ({{.Number}}){{end}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}
 ~~~
 
 A custom template names them too, with `{{.Number}}` being the runs the volume
 holds (`1-7`, or `1-10,13-28` when it has a gap) and `{{.Title}}` `Vol. 01`.
+`{{.Number}}` is empty for a volume a site serves whole (a mangafire.to volume
+link), which holds no chapter numbers.
 
 `pad` zero-pads a number's whole part and keeps its decimals: `{{pad .Number 4}}`
 is `0005` for chapter 5 and `0010.5` for 10.5. This template, for instance,

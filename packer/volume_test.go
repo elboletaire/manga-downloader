@@ -150,3 +150,25 @@ func TestVolumeRangeName(t *testing.T) {
 		}
 	}
 }
+
+// a volume the site serves whole has no chapter runs to show, so "(1)" can't
+// read as chapter 1 (#465)
+func TestWholeVolumeName(t *testing.T) {
+	whole := []*grabber.Chapter{{Number: 1, Title: "Naruto Uzumaki", Volume: 1, Label: grabber.Label{Style: grabber.LabelVolume}}}
+	for _, rng := range []string{"1", ""} {
+		parts := NewVolumeFileTemplateParts("Naruto", 1, rng, whole)
+		got, err := NewFilenameFromTemplate(FilenameVolumeTemplateDefault, parts)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := "Naruto Vol. 01"; got != want {
+			t.Errorf("range %q: got %q, want %q", rng, got, want)
+		}
+	}
+
+	// grouped chapters keep their runs
+	mixed := append([]*grabber.Chapter{{Number: 2}}, whole...)
+	if parts := NewVolumeFileTemplateParts("Naruto", 1, "1-2", mixed); parts.Number != "1-2" {
+		t.Errorf("mixed chapters: Number = %q, want 1-2", parts.Number)
+	}
+}

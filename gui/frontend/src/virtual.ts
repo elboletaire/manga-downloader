@@ -29,6 +29,17 @@ export function visibleSpan(
 }
 
 /**
+ * The scroll position that puts a row in the middle of the view, as far as the
+ * list's ends allow: for landing on a row, rather than stepping to it
+ */
+export function scrollToCenter(index: number, rowHeight: number, viewHeight: number, count: number): number {
+  const centered = index * rowHeight - (viewHeight - rowHeight) / 2;
+  const max = Math.max(0, count * rowHeight - viewHeight);
+
+  return Math.round(Math.min(max, Math.max(0, centered)));
+}
+
+/**
  * The scroll position that brings a row fully into view, moving as little as
  * possible: unchanged when the row is already visible.
  */
@@ -87,6 +98,20 @@ export function useVirtualList(count: number, rowHeight: number, overscan = 8) {
     [rowHeight],
   );
 
+  // puts a row in the middle of the view (see scrollToCenter)
+  const center = useCallback(
+    (index: number) => {
+      const el = ref.current;
+      if (!el) {
+        return;
+      }
+      const next = scrollToCenter(index, rowHeight, el.clientHeight, count);
+      el.scrollTop = next;
+      setScrollTop(next);
+    },
+    [rowHeight, count],
+  );
+
   const reset = useCallback(() => {
     setScrollTop(0);
     if (ref.current) {
@@ -96,5 +121,5 @@ export function useVirtualList(count: number, rowHeight: number, overscan = 8) {
 
   const span = visibleSpan(scrollTop, viewHeight, rowHeight, count, overscan);
 
-  return { ref, onScroll, span, viewHeight, reveal, reset };
+  return { ref, onScroll, span, viewHeight, reveal, center, reset };
 }

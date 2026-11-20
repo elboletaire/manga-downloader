@@ -15,7 +15,8 @@ button, *Load* and *Settings*. (To open on the full window instead, turn off
 1. **Paste the series' URL** into the box (or use its *Paste* button). The
    series loads on its own once you paste or stop typing; *Load* or Enter
    loads it at once. The window then turns into the full app, with the URL box
-   at the top and the chapter list below it:
+   at the top and the chapter list below it. On mangafire.to, a chapter or
+   volume link opens the list on that chapter or volume, already selected:
 
    <picture>
      <source media="(prefers-color-scheme: dark)" srcset="../assets/screenshots/02-loaded-dark.webp">

@@ -345,8 +345,12 @@ func chapterFolders(chapters []*DownloadedChapter, format string, s grabber.Site
 }
 
 // chapterLabel names a chapter the way the filename template does (no padding,
-// decimals kept), with its title when the title says more than the number
+// decimals kept), with its title when the title says more than the number. A
+// whole volume keeps its own label ("Volume 3 - Title").
 func chapterLabel(chapter *grabber.Chapter) string {
+	if grabber.IsVolume(chapter) {
+		return grabber.ChapterLabel(chapter)
+	}
 	number := chapter.GetNumber()
 	label := grabber.NumberLabel(number)
 	if title := titleBeyondNumber(grabber.ChapterLabel(chapter), number); title != "" {

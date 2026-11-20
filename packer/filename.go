@@ -47,7 +47,7 @@ const filenameTemplateLegacyDefault = "{{.Series}} {{.Number}} - {{.Title}}{{if 
 // FilenameVolumeTemplateDefault names volume files (--volumes) while
 // --filename-template is the chapter default, which would read oddly on a
 // volume; the chapter range tells two groupings of one volume number apart
-const FilenameVolumeTemplateDefault = `{{.Series}} Vol. {{printf "%02d" .Volume}} ({{.Number}}){{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}`
+const FilenameVolumeTemplateDefault = `{{.Series}} Vol. {{printf "%02d" .Volume}}{{if .Number}} ({{.Number}}){{end}}{{if .Group}} [{{.Group}}]{{end}}{{if gt .Version 1}} v{{.Version}}{{end}}`
 
 // MigrateFilenameTemplate returns FilenameTemplateDefault in place of the legacy
 // default a saved template may still hold, and templ otherwise
@@ -131,10 +131,13 @@ func NewChapterFileTemplateParts(title string, chapter *grabber.Chapter) Filenam
 
 // NewVolumeFileTemplateParts returns the FilenameTemplateParts of a volume file:
 // Number is rng ("1-10,13-28") or, when empty, the first and last chapter ("1-7"),
-// and Title "Vol. 01" for templates written with chapters in mind.
+// and Title "Vol. 01" for templates written with chapters in mind. A site's whole
+// volumes (grabber.IsVolume) hold no chapter runs, so their Number is empty.
 func NewVolumeFileTemplateParts(title string, volume int, rng string, chapters []*grabber.Chapter) FilenameTemplateParts {
 	number := rng
-	if number == "" && len(chapters) > 0 {
+	if wholeVolumes(chapters) {
+		number = ""
+	} else if number == "" && len(chapters) > 0 {
 		first, last := chapters[0].GetNumber(), chapters[len(chapters)-1].GetNumber()
 		number = formatChapterNumber(first)
 		if last != first {
@@ -148,6 +151,17 @@ func NewVolumeFileTemplateParts(title string, volume int, rng string, chapters [
 		Group:  sharedGroup(chapters),
 		Volume: volume,
 	}
+}
+
+// wholeVolumes reports whether chapters are all whole volumes the site serves as
+// one release, whose numbers are volume numbers rather than chapter runs
+func wholeVolumes(chapters []*grabber.Chapter) bool {
+	for _, c := range chapters {
+		if !grabber.IsVolume(c) {
+			return false
+		}
+	}
+	return len(chapters) > 0
 }
 
 // sharedGroup returns the scanlation group every chapter was made by, sanitized
