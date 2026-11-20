@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "date": "2026-11-20",
-  "takenAt": "2026-11-20T21:31:47.393Z",
+  "takenAt": "2026-11-20T23:19:59.351Z",
   "repo": {
     "stars": 303,
     "forks": 36,
@@ -32,11 +32,11 @@
         },
         {
           "name": "manga-downloader-gui-v25.3.0-SHA256SUMS.txt",
-          "downloads": 11
+          "downloads": 12
         },
         {
           "name": "manga-downloader-gui-v25.3.0-windows-amd64-installer.exe",
-          "downloads": 67
+          "downloads": 69
         },
         {
           "name": "manga-downloader-gui-v25.3.0-windows-amd64.zip",
