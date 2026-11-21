@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "date": "2026-11-21",
-  "takenAt": "2026-11-21T20:14:49.307Z",
+  "takenAt": "2026-11-21T22:21:41.680Z",
   "repo": {
     "stars": 305,
     "forks": 36,
@@ -10,7 +10,7 @@
   },
   "docker": {
     "image": "elboletaire/manga-downloader",
-    "pulls": 52235
+    "pulls": 52240
   },
   "releases": [
     {
@@ -20,11 +20,11 @@
       "assets": [
         {
           "name": "manga-downloader-gui-v25.3.0-darwin-universal.zip",
-          "downloads": 47
+          "downloads": 49
         },
         {
           "name": "manga-downloader-gui-v25.3.0-linux-amd64.tar.gz",
-          "downloads": 15
+          "downloads": 16
         },
         {
           "name": "manga-downloader-gui-v25.3.0-linux-arm64.tar.gz",
@@ -36,11 +36,11 @@
         },
         {
           "name": "manga-downloader-gui-v25.3.0-windows-amd64-installer.exe",
-          "downloads": 94
+          "downloads": 95
         },
         {
           "name": "manga-downloader-gui-v25.3.0-windows-amd64.zip",
-          "downloads": 16
+          "downloads": 17
         },
         {
           "name": "manga-downloader-gui-v25.3.0-windows-arm64-installer.exe",
@@ -48,7 +48,7 @@
         },
         {
           "name": "manga-downloader-gui-v25.3.0-windows-arm64.zip",
-          "downloads": 3
+          "downloads": 4
         },
         {
           "name": "manga-downloader-v25.3.0-darwin-amd64.tar.gz",
@@ -96,7 +96,7 @@
         },
         {
           "name": "manga-downloader-v25.3.0-windows-32bit-legacy.zip",
-          "downloads": 7
+          "downloads": 8
         },
         {
           "name": "manga-downloader-v25.3.0-windows-32bit-legacy.zip.md5",
@@ -104,7 +104,7 @@
         },
         {
           "name": "manga-downloader-v25.3.0-windows-amd64.zip",
-          "downloads": 18
+          "downloads": 19
         },
         {
           "name": "manga-downloader-v25.3.0-windows-amd64.zip.md5",
@@ -112,7 +112,7 @@
         },
         {
           "name": "manga-downloader-v25.3.0-windows-arm64.zip",
-          "downloads": 3
+          "downloads": 4
         },
         {
           "name": "manga-downloader-v25.3.0-windows-arm64.zip.md5",
