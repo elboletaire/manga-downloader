@@ -994,7 +994,7 @@ grabber/comicyours:
 grabber/championcross:
 	go run . https://championcross.jp/episodes/02c083f070a2e 1
 grabber/comicgrowl:
-	go run . https://comic-growl.com/episodes/134898aec09ea 19
+	go run . https://comic-growl.com/episodes/134898aec09ea 1
 grabber/comicheros:
 	go run . https://heros-web.com/episodes/c1ffef58c01d8 1
 grabber/comicride:
@@ -2280,7 +2280,7 @@ grabber/ragnarokscanlation:
 	go run . https://ragnarokscanlation.org/series/mokushiroku-no-yonkishi/ 255
 
 grabber/rimacomiplus:
-	go run . https://rimacomiplus.jp/digitalmargaret/series/d83eefaea85ab 1
+	go run . https://rimacomiplus.jp/margaret/series/33f708485d4c5 1
 
 grabber/ruahapchanhday2:
 	go run . https://ruahapchanhday2.com/truyen/nhat-ky-suy-nghi-tieu-cuc/ 30
