@@ -222,19 +222,20 @@ func (w *WeebCentral) FetchChapters() (chapters Filterables, errs []error) {
 func weebCentralRowNumber(row *goquery.Selection) (float64, bool) {
 	label := row.Find("span.grow > span").First().Text()
 	if label == "" {
-		label = row.Text()
+		// the anchor's own text ends with the <time> datetime, whose digits must not count
+		label = row.Clone().Find("time").Remove().End().Text()
 	}
 
-	return labelNumber(strings.TrimSpace(label))
+	return weebCentralLabelNumber(strings.TrimSpace(label))
 }
 
 // weebCentralNumberRe matches the last number in a label, for words
 // parseChapterNumber doesn't know
 var weebCentralNumberRe = regexp.MustCompile(`\d+(?:\.\d+)?`)
 
-// labelNumber returns the chapter number of a label, trying the usual chapter
+// weebCentralLabelNumber returns the chapter number of a label, trying the usual chapter
 // words first and then the last number in it
-func labelNumber(label string) (float64, bool) {
+func weebCentralLabelNumber(label string) (float64, bool) {
 	if number, ok := parseChapterNumber(label); ok {
 		return number, true
 	}

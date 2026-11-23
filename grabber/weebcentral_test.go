@@ -94,6 +94,7 @@ func TestWeebCentralRowNumber(t *testing.T) {
 		{"night label with decimal", "Night 200.8", 200.8, true},
 		{"chapter word", "Chapter 274", 274, true},
 		{"chapter decimal", "Chapter 12.5", 12.5, true},
+		{"season and episode", "Season 2 Episode 3", 3, true},
 		{"no number", "Special", 0, false},
 	}
 
@@ -112,8 +113,10 @@ func TestWeebCentralRowNumber(t *testing.T) {
 }
 
 func TestWeebCentralRowNumberWithoutLabelSpan(t *testing.T) {
-	// no label span: the whole anchor text is read, datetime included
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(`<a href="/chapters/x">Night 200.8</a>`))
+	// no label span: the anchor's text is read, but not its <time> datetime
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(
+		`<a href="/chapters/01J76XZ0KMM9VF7W2V2AX5HQ9Q">Night 200.8` +
+			`<time datetime="2025-08-26T22:28:53.646Z">2025-08-26T22:28:53.646067Z</time></a>`))
 	if err != nil {
 		t.Fatal(err)
 	}
