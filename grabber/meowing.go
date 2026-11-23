@@ -149,10 +149,15 @@ func (m *Meowing) fetchSeries() error {
 		return fmt.Errorf("meowing series %s: no chapter list on the page", m.URL)
 	}
 
+	slug := data.SeriesSlug
+	if slug == "" {
+		slug = doc.Find("#chapters-list").AttrOr("data-series-slug", "")
+	}
+
 	m.series = &meowingSeries{
 		title: sanitizeTitle(title),
 		uid:   uid,
-		slug:  data.SeriesSlug,
+		slug:  slug,
 	}
 	return nil
 }
@@ -199,6 +204,11 @@ func (m *Meowing) FetchChapters() (Filterables, []error) {
 		return nil, []error{err}
 	}
 
+	base, err := url.Parse(m.BaseUrl())
+	if err != nil {
+		return nil, []error{err}
+	}
+
 	var chapters Filterables
 	var errs []error
 	doc.Find("a.chapter-row").Each(func(_ int, row *goquery.Selection) {
@@ -206,6 +216,16 @@ func (m *Meowing) FetchChapters() (Filterables, []error) {
 		number, ok := parseChapterNumber(label)
 		if !ok {
 			errs = append(errs, fmt.Errorf("meowing chapters %s: no chapter number in %q", m.URL, label))
+			return
+		}
+
+		href := row.AttrOr("href", "")
+		if href == "" {
+			href = row.AttrOr("data-ch-url", "")
+		}
+		ref, err := url.Parse(href)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("meowing chapters %s: bad link %q: %w", m.URL, href, err))
 			return
 		}
 
@@ -217,7 +237,7 @@ func (m *Meowing) FetchChapters() (Filterables, []error) {
 				Label:    Label{Style: LabelNumbered},
 				Locked:   row.AttrOr("data-ch-locked", "") == "1",
 			},
-			URL: m.BaseUrl() + row.AttrOr("href", ""),
+			URL: base.ResolveReference(ref).String(),
 		})
 	})
 

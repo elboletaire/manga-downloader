@@ -582,7 +582,7 @@ environment variables.
 | [loner-tl.blogspot.com](https://loner-tl.blogspot.com) | Arabic | 2026-10-19 |
 | [lovesjane.site](https://lovesjane.site) | English | 2026-11-16 |
 | [luacomic.org](https://luacomic.org) | LuaScans | 2026-10-29 |
-| [lunatoons.net](https://lunatoons.net) | English, many NSFW titles | 2026-11-23 |
+| [lunatoons.net](https://lunatoons.net) | English, some NSFW | 2026-11-23 |
 | [lupiteam.net](https://lupiteam.net) | LupiTeam, Italian | 2026-11-23 |
 | [m1.manhwalist.my.id](https://m1.manhwalist.my.id) | Indonesian | 2026-11-16 |
 | [madaradex.org](https://madaradex.org) | some NSFW | 2026-11-16 |
