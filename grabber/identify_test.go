@@ -136,6 +136,15 @@ func TestIdentifySiteOrder(t *testing.T) {
 		rows string
 	}{
 		{
+			name:   "lunatoons reader page",
+			origin: "https://lunatoons.net",
+			path:   "/rita-the-oracles-chosen-chapter-1",
+			routes: map[string]string{
+				"/rita-the-oracles-chosen-chapter-1": "lunatoons_reader.html",
+			},
+			want: (*Meowing)(nil),
+		},
+		{
 			name:   "themesia series page",
 			origin: "https://kingofshojo.com",
 			path:   "/manga/although-i-was-a-condemned-witch-everyone-dotes-on-me-after-regressing/",

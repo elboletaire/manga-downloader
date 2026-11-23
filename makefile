@@ -323,6 +323,7 @@ grabber: \
 	grabber/lonertl \
 	grabber/lovesjane \
 	grabber/luascans \
+	grabber/lunatoons \
 	grabber/lupiteam \
 	grabber/magcomi \
 	grabber/magustoon \
@@ -798,6 +799,9 @@ grabber/gtothegreatsite:
 
 grabber/hniscantrad:
 	go run . https://hni-scantrad.net/comics/buyuden 120
+
+grabber/lunatoons:
+	go run . https://lunatoons.net/rita-the-oracles-chosen 1
 
 grabber/lupiteam:
 	go run . https://lupiteam.net/comics/one-piece 1150
