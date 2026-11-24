@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[584 supported sites](#supported-sites)**, from big aggregators to small
+- **[585 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 584 supported sites</b></summary>
+<summary><b>Show all 585 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -582,6 +582,7 @@ environment variables.
 | [loner-tl.blogspot.com](https://loner-tl.blogspot.com) | Arabic | 2026-10-19 |
 | [lovesjane.site](https://lovesjane.site) | English | 2026-11-16 |
 | [luacomic.org](https://luacomic.org) | LuaScans | 2026-10-29 |
+| [lunatoons.net](https://lunatoons.net) | English, some NSFW | 2026-11-23 |
 | [lupiteam.net](https://lupiteam.net) | LupiTeam, Italian | 2026-11-23 |
 | [m1.manhwalist.my.id](https://m1.manhwalist.my.id) | Indonesian | 2026-11-16 |
 | [madaradex.org](https://madaradex.org) | some NSFW | 2026-11-16 |
