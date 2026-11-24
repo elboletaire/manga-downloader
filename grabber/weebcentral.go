@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -197,7 +198,7 @@ func (w *WeebCentral) FetchChapters() (chapters Filterables, errs []error) {
 			href, _ = url.JoinPath(w.BaseUrl(), href)
 		}
 
-		number, ok := parseChapterNumber(s.Text())
+		number, ok := weebCentralRowNumber(s)
 		if !ok {
 			return
 		}
@@ -213,6 +214,42 @@ func (w *WeebCentral) FetchChapters() (chapters Filterables, errs []error) {
 	})
 
 	return chapters, nil
+}
+
+// weebCentralRowNumber returns the chapter number of a list row. Each series
+// names its chapters its own way ("Chapter 274", "# 261", "Night 200.8"), so
+// the label span is read instead of the anchor, whose datetime holds digits too.
+func weebCentralRowNumber(row *goquery.Selection) (float64, bool) {
+	label := row.Find("span.grow > span").First().Text()
+	if label == "" {
+		// the anchor's own text ends with the <time> datetime, whose digits must not count
+		label = row.Clone().Find("time").Remove().End().Text()
+	}
+
+	return weebCentralLabelNumber(strings.TrimSpace(label))
+}
+
+// weebCentralNumberRe matches the last number in a label, for words
+// parseChapterNumber doesn't know
+var weebCentralNumberRe = regexp.MustCompile(`\d+(?:\.\d+)?`)
+
+// weebCentralLabelNumber returns the chapter number of a label, trying the usual chapter
+// words first and then the last number in it
+func weebCentralLabelNumber(label string) (float64, bool) {
+	if number, ok := parseChapterNumber(label); ok {
+		return number, true
+	}
+
+	matches := weebCentralNumberRe.FindAllString(label, -1)
+	if len(matches) == 0 {
+		return 0, false
+	}
+	number, err := strconv.ParseFloat(matches[len(matches)-1], 64)
+	if err != nil {
+		return 0, false
+	}
+
+	return number, true
 }
 
 // FetchChapter fetches a chapter and its pages
