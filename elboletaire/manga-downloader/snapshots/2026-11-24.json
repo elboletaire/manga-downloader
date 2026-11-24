@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "date": "2026-11-24",
-  "takenAt": "2026-11-24T01:11:58.179Z",
+  "takenAt": "2026-11-24T03:27:46.768Z",
   "repo": {
     "stars": 307,
     "forks": 36,
@@ -10,7 +10,7 @@
   },
   "docker": {
     "image": "elboletaire/manga-downloader",
-    "pulls": 52412
+    "pulls": 52422
   },
   "releases": [
     {
@@ -20,11 +20,11 @@
       "assets": [
         {
           "name": "manga-downloader-gui-v25.3.0-darwin-universal.zip",
-          "downloads": 80
+          "downloads": 81
         },
         {
           "name": "manga-downloader-gui-v25.3.0-linux-amd64.tar.gz",
-          "downloads": 27
+          "downloads": 28
         },
         {
           "name": "manga-downloader-gui-v25.3.0-linux-arm64.tar.gz",
@@ -48,7 +48,7 @@
         },
         {
           "name": "manga-downloader-gui-v25.3.0-windows-arm64.zip",
-          "downloads": 8
+          "downloads": 9
         },
         {
           "name": "manga-downloader-v25.3.0-darwin-amd64.tar.gz",
@@ -96,7 +96,7 @@
         },
         {
           "name": "manga-downloader-v25.3.0-windows-32bit-legacy.zip",
-          "downloads": 10
+          "downloads": 11
         },
         {
           "name": "manga-downloader-v25.3.0-windows-32bit-legacy.zip.md5",
@@ -112,7 +112,7 @@
         },
         {
           "name": "manga-downloader-v25.3.0-windows-arm64.zip",
-          "downloads": 6
+          "downloads": 7
         },
         {
           "name": "manga-downloader-v25.3.0-windows-arm64.zip.md5",
