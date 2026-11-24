@@ -1,9 +1,8 @@
 name: Site smoke tests
 
-# Weekly live-site smoke run: `make smoke` checks this run's targets, split
-# over eight shards (the makefile's smoke section says which and how). The
-# sites that 403 outside Japan (SMOKE_JAPAN) run on a self-hosted runner there.
-# A final job writes the results into the README's "Last verified" column.
+# Weekly live-site smoke run: `make smoke` checks this run's targets over eight
+# shards; the sites that 403 outside Japan (SMOKE_JAPAN) run on a self-hosted
+# runner there (smoke-japan). A final job writes the results into the README.
 on:
   schedule:
     - cron: "17 6 * * 1"
@@ -67,10 +66,13 @@ jobs:
           if-no-files-found: ignore
 
   # The SMOKE_JAPAN targets (403 from GitHub's runners) from a runner whose
-  # traffic exits in Japan. Always its whole list, whatever `all` says.
+  # traffic exits in Japan. Always its whole list, whatever `all` says. If the
+  # runner is offline the job sits queued (GitHub fails it after 24h), holding
+  # `status` and the next run until then.
   smoke-japan:
     runs-on: [self-hosted, japan]
-    timeout-minutes: 120
+    # 29 targets at up to 5 minutes each
+    timeout-minutes: 180
     env:
       TARGETS: ${{ inputs.targets }}
     steps:
