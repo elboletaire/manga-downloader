@@ -34,7 +34,7 @@ go test ./ranges -run TestParse   # run a single test
 make clean              # remove built binaries and *.cbz, *.cbr and *.epub files
 ```
 
-Unit test coverage is thin; real verification is the makefile smoke targets, which download from live sites — run them selectively. `make grabber` runs everything, `make grabber/html` all `PlainHTML` sites, `make grabber/<site>` just one; check the archives with `tools/verify-cbz`, since a run can succeed with empty or junk CBZs.
+Unit test coverage is thin; real verification is the makefile smoke targets, which download from live sites — run them selectively. `make grabber` runs everything, `make grabber/html` all `PlainHTML` sites, `make grabber/<site>` just one; check the archives with `tools/verify-cbz`, since a run can succeed with empty or junk CBZs. Sites that 403 outside Japan sit in `SMOKE_JAPAN`, which `smoke.yaml`'s `smoke-japan` job checks on a self-hosted runner in Japan, never on the hosted rotation.
 
 The makefile is tracked lowercase; on macOS `git add` needs the lowercase name. macOS also has no `timeout`.
 

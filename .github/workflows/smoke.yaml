@@ -1,7 +1,8 @@
 name: Site smoke tests
 
 # Weekly live-site smoke run: `make smoke` checks this run's targets, split
-# over eight shards (the makefile's smoke section says which and how).
+# over eight shards (the makefile's smoke section says which and how). The
+# sites that 403 outside Japan (SMOKE_JAPAN) run on a self-hosted runner there.
 # A final job writes the results into the README's "Last verified" column.
 on:
   schedule:
@@ -48,6 +49,11 @@ jobs:
           case "$TARGETS" in
             *[!a-z0-9\ -]*) echo "::error::targets takes lowercase names separated by spaces" >&2; exit 1 ;;
           esac
+          # the Japan targets belong to smoke-japan; a manual list of only those leaves nothing here
+          if [ -n "$TARGETS" ]; then
+            TARGETS="$(make -s smoke/hosted TARGETS="$TARGETS" | paste -sd' ' -)"
+            [ -n "$TARGETS" ] || { echo "::notice::only Japan targets were asked for: smoke-japan checks them"; exit 0; }
+          fi
           make smoke SHARD=${{ matrix.shard }} SHARDS=8 SMOKE_RESULTS=shard-${{ matrix.shard }}.txt TARGETS="$TARGETS" ${{ inputs.all && 'SMOKE_COUNT=all' || '' }}
 
       # One "target pass|fail" line per target, for the status job below. Uploaded
@@ -58,11 +64,46 @@ jobs:
         with:
           name: result-shard-${{ matrix.shard }}
           path: shard-${{ matrix.shard }}.txt
+          if-no-files-found: ignore
+
+  # The SMOKE_JAPAN targets (403 from GitHub's runners) from a runner whose
+  # traffic exits in Japan. Always its whole list, whatever `all` says.
+  smoke-japan:
+    runs-on: [self-hosted, japan]
+    timeout-minutes: 120
+    env:
+      TARGETS: ${{ inputs.targets }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.26"
+          check-latest: true
+
+      - name: Check the Japan targets
+        run: |
+          case "$TARGETS" in
+            *[!a-z0-9\ -]*) echo "::error::targets takes lowercase names separated by spaces" >&2; exit 1 ;;
+          esac
+          list="$(make -s smoke/japan TARGETS="$TARGETS" | paste -sd' ' -)"
+          [ -n "$list" ] || { echo "::notice::no Japan targets in the input"; exit 0; }
+          make smoke TARGETS="$list" SMOKE_RESULTS=japan.txt
+
+      # Uploaded even when cancelled or failed; a run that checked nothing has no file.
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: result-japan
+          path: japan.txt
+          if-no-files-found: ignore
 
   # Writes the results into the README's "Last verified" column. Only the
   # default branch's runs do, so a manual run from a branch leaves it alone.
   status:
-    needs: smoke
+    needs: [smoke, smoke-japan]
     if: ${{ !cancelled() && github.ref_name == github.event.repository.default_branch }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
