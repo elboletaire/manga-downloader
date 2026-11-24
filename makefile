@@ -2408,6 +2408,9 @@ SMOKE_EXCLUDE += mangitto lilymanga mangaplus
 SMOKE_EXCLUDE += ler999 lonertl mangaailand mangadelsiglotvmanga mangabats legionscans asialotuss mangastep
 # headless-browser grabbers, kept off the runners (most for challenges they can't get past)
 SMOKE_EXCLUDE += comix mkissa templetoons mangafire toonz coffeemanga
+# 403 outside Japan: smoke-japan checks them from a runner there (smoke.yaml)
+SMOKE_JAPAN = asacomi bibibicomic bigcomics championcross comicgrowl comicroombase comicryu jnbooks comicride comici mangabang comirela gcomi hanayume hayacomic comicheros kansai kimicomi mangazegra mangabu mangalt nikkanspa namicomic piacomic rimacomiplus booklista takecomic younganimal youngchampion
+SMOKE_EXCLUDE += $(SMOKE_JAPAN)
 
 # every target of the grabber and grabber/html aggregates, read from this file
 # so a new site is one line there, minus SMOKE_EXCLUDE
@@ -2429,6 +2432,14 @@ SMOKE_SHARD = awk -v n=$(SHARDS) -v s=$(SHARD) 'NF && (NR - 1) % n == s - 1'
 smoke/list:
 	@list=$$($(SMOKE_PICK)) || exit 1; \
 	echo "$$list" | $(SMOKE_SHARD)
+
+# the SMOKE_JAPAN targets to check, one per line (TARGETS narrows them): smoke-japan's list
+smoke/japan:
+	@for t in $(if $(TARGETS),$(filter $(SMOKE_JAPAN),$(TARGETS)),$(SMOKE_JAPAN)); do echo $$t; done
+
+# TARGETS without the SMOKE_JAPAN ones, for the hosted job (which can't reach them)
+smoke/hosted:
+	@for t in $(filter-out $(SMOKE_JAPAN),$(TARGETS)); do echo $$t; done
 
 # runs each smoke/list target: grabber/<t> must leave CBZs that tools/verify-cbz accepts.
 # Appends "<t> pass|fail" to SMOKE_RESULTS and exits 1 at the end if any failed.
