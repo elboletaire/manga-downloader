@@ -88,6 +88,9 @@ jobs:
         env:
           HTTPS_PROXY: http://gluetun:8888
           HTTP_PROXY: http://gluetun:8888
+          # curl reads only the lowercase http_proxy
+          https_proxy: http://gluetun:8888
+          http_proxy: http://gluetun:8888
         run: |
           case "$TARGETS" in
             *[!a-z0-9\ -]*) echo "::error::targets takes lowercase names separated by spaces" >&2; exit 1 ;;
@@ -97,7 +100,7 @@ jobs:
           # both answer 403 outside Japan, so a 200 from either proves the exit is Japanese
           ok=0
           for u in https://comic-growl.com/ https://comics.comici.jp/; do
-            code="$(curl -s -o /dev/null -m 20 -w '%{http_code}' "$u" || true)"
+            code="$(curl -sL -o /dev/null -m 20 -w '%{http_code}' "$u" || true)"
             [ "$code" = 200 ] && ok=1
           done
           [ "$ok" = 1 ] || { echo "::error::the Japan proxy isn't reachable or doesn't exit in Japan" >&2; exit 1; }
