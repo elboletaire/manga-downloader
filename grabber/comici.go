@@ -152,6 +152,10 @@ func (c *Comici) seriesIdentifier() (string, error) {
 	}
 	c.seriesID = doc.Find("[data-series-id]").AttrOr("data-series-id", "")
 	if c.seriesID == "" {
+		// comic-growl dropped data-series-id; the others still carry both
+		c.seriesID = doc.Find("[data-series-hash]").AttrOr("data-series-hash", "")
+	}
+	if c.seriesID == "" {
 		return "", fmt.Errorf("comici: no series on episode %s", m[2])
 	}
 	return c.seriesID, nil
