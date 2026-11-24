@@ -65,10 +65,10 @@ jobs:
           path: shard-${{ matrix.shard }}.txt
           if-no-files-found: ignore
 
-  # The SMOKE_JAPAN targets (403 from GitHub's runners) from a runner whose
-  # traffic exits in Japan. Always its whole list, whatever `all` says. If the
-  # runner is offline the job sits queued (GitHub fails it after 24h), holding
-  # `status` and the next run until then.
+  # The SMOKE_JAPAN targets (403 from GitHub's runners), always their whole list.
+  # The runner reaches GitHub directly; the check step goes through its Tokyo
+  # proxy (gluetun) and fails up front when that doesn't exit in Japan. If the
+  # runner is offline the job sits queued (GitHub fails it after 24h).
   smoke-japan:
     runs-on: [self-hosted, japan]
     # 29 targets at up to 5 minutes each
@@ -85,12 +85,22 @@ jobs:
           check-latest: true
 
       - name: Check the Japan targets
+        env:
+          HTTPS_PROXY: http://gluetun:8888
+          HTTP_PROXY: http://gluetun:8888
         run: |
           case "$TARGETS" in
             *[!a-z0-9\ -]*) echo "::error::targets takes lowercase names separated by spaces" >&2; exit 1 ;;
           esac
           list="$(make -s smoke/japan TARGETS="$TARGETS" | paste -sd' ' -)"
           [ -n "$list" ] || { echo "::notice::no Japan targets in the input"; exit 0; }
+          # both answer 403 outside Japan, so a 200 from either proves the exit is Japanese
+          ok=0
+          for u in https://comic-growl.com/ https://comics.comici.jp/; do
+            code="$(curl -s -o /dev/null -m 20 -w '%{http_code}' "$u" || true)"
+            [ "$code" = 200 ] && ok=1
+          done
+          [ "$ok" = 1 ] || { echo "::error::the Japan proxy isn't reachable or doesn't exit in Japan" >&2; exit 1; }
           make smoke TARGETS="$list" SMOKE_RESULTS=japan.txt
 
       # Uploaded even when cancelled or failed; a run that checked nothing has no file.
