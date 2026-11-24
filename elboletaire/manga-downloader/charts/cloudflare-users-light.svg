@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300" role="img" aria-labelledby="title desc">
 <title id="title">Daily users</title>
-<desc id="desc">Daily users: about 90 daily users in total on 2026-11-21, approximate.</desc>
+<desc id="desc">Daily users: about 107 daily users in total on 2026-11-23, approximate.</desc>
 <style>.gs-draw{animation:gs-draw 1.6s linear backwards}@keyframes gs-draw{from{stroke-dasharray:1;stroke-dashoffset:1}to{stroke-dasharray:1;stroke-dashoffset:0}}.gs-fade{animation:gs-fade .5s ease-out backwards}@keyframes gs-fade{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion: reduce){.gs-draw,.gs-fade{animation:none!important}}</style>
 <rect x="0.5" y="0.5" width="799" height="299" rx="12" fill="#fcfcfb" stroke="#dcdedf"/>
 <g font-family='"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif' font-size="11" fill="#52514e" style="font-variant-numeric:tabular-nums">
 <defs><linearGradient id="users-fade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#2a6ddc" stop-opacity="0.22"/><stop offset="1" stop-color="#2a6ddc" stop-opacity="0.02"/></linearGradient></defs>
 <text x="24" y="32" fill="#0b0b0b" font-size="16" font-weight="600">Daily users</text>
-<text x="24.0" y="50.0" fill="#6f6e69" font-size="12">Approximate users per day, 28 days to 2026-11-21</text>
+<text x="24.0" y="50.0" fill="#6f6e69" font-size="12">Approximate users per day, 30 days to 2026-11-23</text>
 <circle cx="550.8" cy="28.0" r="4" fill="#2a6ddc"/>
 <text x="560.8" y="32.0" fill="#52514e" font-size="12">Total (approx.)</text>
 <circle cx="690.8" cy="28.0" r="4" fill="#e5642e"/>
@@ -22,14 +22,14 @@
 <line x1="60.0" x2="776.0" y1="80.0" y2="80.0" stroke="#e8eaeb"/>
 <text x="50.0" y="84.0" fill="#6f6e69" text-anchor="end">150</text>
 <text x="60.0" y="272.0" fill="#6f6e69">Oct 25</text>
-<text x="245.6" y="272.0" fill="#6f6e69" text-anchor="middle">Nov 1</text>
-<text x="431.3" y="272.0" fill="#6f6e69" text-anchor="middle">Nov 8</text>
-<text x="590.4" y="272.0" fill="#6f6e69" text-anchor="middle">Nov 14</text>
-<text x="776.0" y="272.0" fill="#6f6e69" text-anchor="end">Nov 21</text>
-<g class="gs-fade"><path d="M60.0 247.4L86.5 197.0L113.0 185.5L139.6 175.2L166.1 202.7L192.6 191.2L219.1 185.5L245.6 167.1L272.1 166.0L298.7 183.2L325.2 177.5L351.7 155.7L378.2 175.2L404.7 171.7L431.3 163.7L457.8 174.0L484.3 168.3L510.8 168.3L537.3 131.6L563.9 169.4L590.4 162.6L616.9 135.0L643.4 164.9L669.9 156.8L696.4 188.9L723.0 169.4L749.5 172.9L776.0 148.8L776.0 252.0L60.0 252.0Z" fill="url(#users-fade)"/></g>
-<g class="gs-draw"><path d="M60.0 247.4L86.5 199.3L113.0 186.6L139.6 177.5L166.1 203.8L192.6 194.7L219.1 186.6L245.6 169.4L272.1 167.1L298.7 183.2L325.2 178.6L351.7 161.4L378.2 175.2L404.7 171.7L431.3 167.1L457.8 177.5L484.3 170.6L510.8 171.7L537.3 135.0L563.9 170.6L590.4 164.9L616.9 138.5L643.4 166.0L669.9 159.1L696.4 192.4L723.0 170.6L749.5 172.9L776.0 151.1" fill="none" stroke="#e5642e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
-<g class="gs-draw"><path d="M60.0 252.0L86.5 249.7L113.0 250.9L139.6 249.7L166.1 250.9L192.6 248.6L219.1 250.9L245.6 249.7L272.1 248.6L298.7 249.7L325.2 249.7L351.7 245.1L378.2 252.0L404.7 252.0L431.3 248.6L457.8 248.6L484.3 248.6L510.8 246.3L537.3 247.4L563.9 250.9L590.4 249.7L616.9 248.6L643.4 248.6L669.9 249.7L696.4 248.6L723.0 250.9L749.5 252.0L776.0 249.7" fill="none" stroke="#0d9683" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
-<g class="gs-draw"><path d="M60.0 247.4L86.5 197.0L113.0 185.5L139.6 175.2L166.1 202.7L192.6 191.2L219.1 185.5L245.6 167.1L272.1 166.0L298.7 183.2L325.2 177.5L351.7 155.7L378.2 175.2L404.7 171.7L431.3 163.7L457.8 174.0L484.3 168.3L510.8 168.3L537.3 131.6L563.9 169.4L590.4 162.6L616.9 135.0L643.4 164.9L669.9 156.8L696.4 188.9L723.0 169.4L749.5 172.9L776.0 148.8" fill="none" stroke="#2a6ddc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
-<g class="gs-fade" style="animation-delay:1600ms"><circle cx="776.0" cy="148.8" r="4" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-11-21: 90 users, approximate</title></circle><text x="768.0" y="138.8" fill="#0b0b0b" text-anchor="end" font-weight="600">90</text></g>
+<text x="232.8" y="272.0" fill="#6f6e69" text-anchor="middle">Nov 1</text>
+<text x="430.3" y="272.0" fill="#6f6e69" text-anchor="middle">Nov 9</text>
+<text x="603.2" y="272.0" fill="#6f6e69" text-anchor="middle">Nov 16</text>
+<text x="776.0" y="272.0" fill="#6f6e69" text-anchor="end">Nov 23</text>
+<g class="gs-fade"><path d="M60.0 247.4L84.7 197.0L109.4 185.5L134.1 175.2L158.8 202.7L183.4 191.2L208.1 185.5L232.8 167.1L257.5 166.0L282.2 183.2L306.9 177.5L331.6 155.7L356.3 175.2L381.0 171.7L405.7 163.7L430.3 174.0L455.0 168.3L479.7 168.3L504.4 131.6L529.1 169.4L553.8 162.6L578.5 135.0L603.2 164.9L627.9 156.8L652.6 188.9L677.2 169.4L701.9 172.9L726.6 148.8L751.3 141.9L776.0 129.3L776.0 252.0L60.0 252.0Z" fill="url(#users-fade)"/></g>
+<g class="gs-draw"><path d="M60.0 247.4L84.7 199.3L109.4 186.6L134.1 177.5L158.8 203.8L183.4 194.7L208.1 186.6L232.8 169.4L257.5 167.1L282.2 183.2L306.9 178.6L331.6 161.4L356.3 175.2L381.0 171.7L405.7 167.1L430.3 177.5L455.0 170.6L479.7 171.7L504.4 135.0L529.1 170.6L553.8 164.9L578.5 138.5L603.2 166.0L627.9 159.1L652.6 192.4L677.2 170.6L701.9 172.9L726.6 151.1L751.3 141.9L776.0 132.7" fill="none" stroke="#e5642e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-draw"><path d="M60.0 252.0L84.7 249.7L109.4 250.9L134.1 249.7L158.8 250.9L183.4 248.6L208.1 250.9L232.8 249.7L257.5 248.6L282.2 249.7L306.9 249.7L331.6 245.1L356.3 252.0L381.0 252.0L405.7 248.6L430.3 248.6L455.0 248.6L479.7 246.3L504.4 247.4L529.1 250.9L553.8 249.7L578.5 248.6L603.2 248.6L627.9 249.7L652.6 248.6L677.2 250.9L701.9 252.0L726.6 249.7L751.3 252.0L776.0 248.6" fill="none" stroke="#0d9683" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-draw"><path d="M60.0 247.4L84.7 197.0L109.4 185.5L134.1 175.2L158.8 202.7L183.4 191.2L208.1 185.5L232.8 167.1L257.5 166.0L282.2 183.2L306.9 177.5L331.6 155.7L356.3 175.2L381.0 171.7L405.7 163.7L430.3 174.0L455.0 168.3L479.7 168.3L504.4 131.6L529.1 169.4L553.8 162.6L578.5 135.0L603.2 164.9L627.9 156.8L652.6 188.9L677.2 169.4L701.9 172.9L726.6 148.8L751.3 141.9L776.0 129.3" fill="none" stroke="#2a6ddc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" pathLength="1"/></g>
+<g class="gs-fade" style="animation-delay:1600ms"><circle cx="776.0" cy="129.3" r="4" fill="#2a6ddc" stroke="#fcfcfb" stroke-width="2"><title>2026-11-23: 107 users, approximate</title></circle><text x="768.0" y="119.3" fill="#0b0b0b" text-anchor="end" font-weight="600">107</text></g>
 </g>
 </svg>
