@@ -1501,7 +1501,7 @@ grabber/html: \
 	grabber/zonatmo
 
 grabber/allporncomiccom:
-	go run . https://allporncomic.com/porncomic/10-am-losekorntrol-hijab-3dx/ 1
+	go run . https://allporncomic.com/porncomic/a-day-in-the-life-of-marge-the-simpsons-blargsnarf/ 1
 grabber/hirayareads:
 	go run . https://hirayareads.com/series/the-villainess-who-looks-like-a-little-girl-is-in-the-arms-of-the-ice-crown-prince-whos-occasionally-adorable/ 1
 
