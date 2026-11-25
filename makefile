@@ -555,7 +555,7 @@ grabber/mangafire:
 	go run . https://mangafire.to/title/9062q-itoko-no-onee-chan-ni-amaechau 1
 
 grabber/fanfox:
-	go run . https://fanfox.net/manga/chainsaw_man/ 232
+	go run . https://fanfox.net/manga/battle_through_the_heavens/ 520
 
 grabber/fansubscat:
 	go run . https://manga.fansubs.cat/jojo-s-bizarre-adventure-part-1-phantom-blood/jojo-s-en-catala 2
@@ -902,7 +902,7 @@ grabber/atsumaru/all:
 # behind coins/early access) so the smoke test doesn't flake as new chapters
 # release
 grabber/vortexscans:
-	go run . https://vortexscans.org/series/archmage-curriculum 20
+	go run . https://vortexscans.org/series/archmage-curriculum-1 20
 
 # same guyamoe platform as guya.moe, different instance/domain
 grabber/danke:
@@ -1512,7 +1512,7 @@ grabber/lgbtics:
 	go run . https://lgbtics.com/comic/the-harem-is-a-team-of-teenage-ninjas-anintofu/ 1
 
 grabber/mangabolt:
-	go run . https://mangabolt.com/manga/aoku-somero/ 28
+	go run . https://mangabolt.com/series/tdiuSQNfk5ezFYWjkec4oCzB/wind-breaker-nii-satoru 20
 
 grabber/mangakulesi:
 	go run . https://mangakulesi.com/manga/olumcul-ask-deneyimi 29

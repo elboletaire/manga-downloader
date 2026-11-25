@@ -454,7 +454,7 @@ environment variables.
 | [eskimangalar.com](https://eskimangalar.com) |  | 2026-10-18 |
 | [euphoriascan.com](https://euphoriascan.com) | Portuguese | 2026-11-23 |
 | [evascans.net](https://evascans.net) | former evascans.org | 2026-11-23 |
-| [fanfox.net](https://fanfox.net) | Manga Fox | ❌ failing since 2026-11-23 (checked 2026-11-25) |
+| [fanfox.net](https://fanfox.net) | Manga Fox | 2026-11-25 |
 | [fbsquadx.com](https://fbsquadx.com) | Fleur Blanche Scan, Spanish | ❌ failing since 2026-11-16 (checked 2026-11-25) |
 | [feelweb.jp](https://feelweb.jp) | Japanese, Feel Web (GigaViewer) | 2026-11-23 |
 | [fenixproject.website](https://fenixproject.website) | Portuguese | 2026-11-23 |
@@ -534,7 +534,7 @@ environment variables.
 | [kazokuden.com](https://www.kazokuden.com) | Spanish | 2026-11-16 |
 | [kencomics.com](https://kencomics.com) | Ken Scans, English, locked chapters skipped | 2026-11-23 |
 | [kensscan.com](https://kensscan.com) | English | 2026-11-25 |
-| [keroscans.net](https://keroscans.net) | English, locked chapters skipped | ❌ failing since 2026-11-23 (checked 2026-11-25) |
+| [keroscans.net](https://keroscans.net) | English, locked chapters skipped | 2026-11-25 |
 | [kewnscans.org](https://kewnscans.org) | English | 2026-11-16 |
 | [kimicomi.com](https://kimicomi.com) | Japanese (Comici) | 2026-11-23 |
 | [kingofshojo.com](https://kingofshojo.com) |  | 2026-11-16 |
@@ -605,7 +605,7 @@ environment variables.
 | [mangaball.com](https://mangaball.com) | former mangaball.net | 2026-10-18 |
 | [mangabats.com](https://www.mangabats.com) | former mangabat.com | 2026-10-19 |
 | [mangaberri.com](https://mangaberri.com) |  | 2026-11-16 |
-| [mangabolt.com](https://mangabolt.com) | English, use a series URL | ❌ failing since 2026-11-23 (checked 2026-11-25) |
+| [mangabolt.com](https://mangabolt.com) | English, use a series URL | 2026-11-25 |
 | [mangabu.jp](https://mangabu.jp) | Japanese (Comici) | 2026-11-23 |
 | [mangacrazy.net](https://mangacrazy.net) | English, mostly NSFW | 2026-11-16 |
 | [mangadass.com](https://mangadass.com) | English, NSFW | 2026-11-23 |
@@ -866,7 +866,7 @@ environment variables.
 | [vinlandsaga.website](https://vinlandsaga.website) | English, single series | 2026-11-11 |
 | [violetmanga.com](https://violetmanga.com) | Violet Scans, former violetscans.org | 2026-11-23 |
 | [visorotaku.com](https://visorotaku.com) | Spanish | 2026-11-11 |
-| [vortexscans.org](https://vortexscans.org) |  | ❌ failing since 2026-11-23 (checked 2026-11-25) |
+| [vortexscans.org](https://vortexscans.org) |  | 2026-11-25 |
 | [w14.maid-sama.com](https://w14.maid-sama.com) | English, single series, rotating wNN subdomain | 2026-11-23 |
 | [w14.punchonemanga.com](https://w14.punchonemanga.com) | English, single series | 2026-11-23 |
 | [w2.dandadanmanga.net](https://w2.dandadanmanga.net) | English, single series | 2026-10-18 |

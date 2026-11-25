@@ -125,6 +125,15 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:      "img.js-page",
 		SeriesLink: `a[data-hotkey="m"]`,
 	},
+	// mangabolt.com (2026 redesign): series at /series/{id}/{slug}, each chapter
+	// a <li data-chapter-entry> linking to /chapters/{id}, its number as text.
+	// Reader pages are server-rendered, one <img alt="... Page N"> per page.
+	{
+		Title:   "h1",
+		Rows:    "#chapter-entries li[data-chapter-entry] > a",
+		Chapter: ".chapter-row-copy span",
+		Image:   `img[alt*=" Page "]`,
+	},
 	// demonicscans.org: a list of chapter rows ending in the release date,
 	// read from .reader-page or .imgholder images.
 	{
@@ -155,6 +164,17 @@ var plainHTMLSelectors = []SiteSelector{
 		Link:    "a",
 		Chapter: "a",
 		Image:   ".reader-pages img",
+	},
+	// keroscans.net: each chapter is an <a class="ks-chapter"> in #chapter-list,
+	// and the list is split over ?page=N ("Show more chapters"). A paid row
+	// carries a text-paid coin badge, so it's Locked.
+	{
+		Title:     `h1#series-title`,
+		Rows:      "#chapter-list a.ks-chapter[data-chapter-number]",
+		Chapter:   ".ks-chapter__number",
+		Image:     ".ks-pages img",
+		Paginated: true,
+		Locked:    ".text-paid",
 	},
 	// rawkuma.net: raw (Japanese) manga, Kiru WordPress theme. The reader
 	// page's full page list is server-rendered as plain <img src="..."> tags
@@ -1500,7 +1520,8 @@ const maxListingPages = 100
 
 // listingPages fetches the chapter list's pages after the first, as
 // PageParam=N on m.URL's query (on the ChaptersPath under it, when set), until
-// one has no rows or the X-Pages count is reached. It returns each page's rows.
+// one has no rows, answers 404, or the X-Pages count is reached. It returns
+// each page's rows.
 func (m PlainHTML) listingPages() (pages []*goquery.Selection, errs []error) {
 	base, err := url.Parse(m.URL)
 	if err != nil {
@@ -1523,6 +1544,11 @@ func (m PlainHTML) listingPages() (pages []*goquery.Selection, errs []error) {
 
 		body, header, err := http.GetWithHeader(http.RequestParams{URL: u.String()})
 		if err != nil {
+			// some lists answer 404 past their last page instead of an empty one
+			var statusErr *http.StatusError
+			if errors.As(err, &statusErr) && statusErr.Code == 404 {
+				break
+			}
 			return pages, append(errs, err)
 		}
 		doc, err := goquery.NewDocumentFromReader(body)
