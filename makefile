@@ -1064,9 +1064,11 @@ grabber/naver:
 grabber/browser: \
 	grabber/arcurafansub \
 	grabber/asmotoon \
+	grabber/celestialmoonscan \
 	grabber/dragontea \
 	grabber/gaiatoon \
 	grabber/kappabeast \
+	grabber/linkmanga \
 	grabber/mangakakalot \
 	grabber/manhuatop \
 	grabber/manhuaus \
@@ -1229,7 +1231,7 @@ grabber/maidsama:
 grabber/violetmanga:
 	go run . https://violetmanga.com/the-saintess-is-captive-to-forbidden-love-chapter-1/ 1
 grabber/celestialmoonscan:
-	go run . https://celestialmoonscan.es/sobrevivir-como-la-esposa-de-un-asesino-en-serie-capitulo-17/ 17
+	go run . https://lecturacelestialmoon.site/leer/wp-45861/17 17
 grabber/rakuentranslations:
 	go run . https://rakuentranslations.com/isekai-ntr-sensou-capitulo-2/ 2
 grabber/komikdewasamom:
@@ -1281,7 +1283,6 @@ grabber/html: \
 	grabber/borutoexplorer \
 	grabber/bymichiby \
 	grabber/cat300 \
-	grabber/celestialmoonscan \
 	grabber/csmmangafree \
 	grabber/dandadan \
 	grabber/dandadanmanga \
@@ -1351,7 +1352,6 @@ grabber/html: \
 	grabber/lgbtics \
 	grabber/lianscans \
 	grabber/limonmanga \
-	grabber/linkmanga \
 	grabber/lolivault \
 	grabber/madaradex \
 	grabber/madarascans \
