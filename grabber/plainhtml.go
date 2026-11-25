@@ -125,6 +125,15 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:      "img.js-page",
 		SeriesLink: `a[data-hotkey="m"]`,
 	},
+	// mangabolt.com (2026 redesign): series at /series/{id}/{slug}, each chapter
+	// a <li data-chapter-entry> linking to /chapters/{id}, its number as text.
+	// Reader pages are server-rendered, one <img alt="... Page N"> per page.
+	{
+		Title:   "h1",
+		Rows:    "#chapter-entries li[data-chapter-entry] > a",
+		Chapter: ".chapter-row-copy span",
+		Image:   `img[alt*=" Page "]`,
+	},
 	// demonicscans.org: a list of chapter rows ending in the release date,
 	// read from .reader-page or .imgholder images.
 	{

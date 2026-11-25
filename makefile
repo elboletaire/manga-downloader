@@ -1512,7 +1512,7 @@ grabber/lgbtics:
 	go run . https://lgbtics.com/comic/the-harem-is-a-team-of-teenage-ninjas-anintofu/ 1
 
 grabber/mangabolt:
-	go run . https://mangabolt.com/manga/aoku-somero/ 28
+	go run . https://mangabolt.com/series/tdiuSQNfk5ezFYWjkec4oCzB/wind-breaker-nii-satoru 20
 
 grabber/mangakulesi:
 	go run . https://mangakulesi.com/manga/olumcul-ask-deneyimi 29

@@ -605,7 +605,7 @@ environment variables.
 | [mangaball.com](https://mangaball.com) | former mangaball.net | 2026-10-18 |
 | [mangabats.com](https://www.mangabats.com) | former mangabat.com | 2026-10-19 |
 | [mangaberri.com](https://mangaberri.com) |  | 2026-11-16 |
-| [mangabolt.com](https://mangabolt.com) | English, use a series URL | ❌ failing since 2026-11-23 (checked 2026-11-25) |
+| [mangabolt.com](https://mangabolt.com) | English, use a series URL | 2026-11-25 |
 | [mangabu.jp](https://mangabu.jp) | Japanese (Comici) | 2026-11-23 |
 | [mangacrazy.net](https://mangacrazy.net) | English, mostly NSFW | 2026-11-16 |
 | [mangadass.com](https://mangadass.com) | English, NSFW | 2026-11-23 |
