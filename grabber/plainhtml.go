@@ -1525,7 +1525,8 @@ const maxListingPages = 100
 
 // listingPages fetches the chapter list's pages after the first, as
 // PageParam=N on m.URL's query (on the ChaptersPath under it, when set), until
-// one has no rows or the X-Pages count is reached. It returns each page's rows.
+// one has no rows, answers 404, or the X-Pages count is reached. It returns
+// each page's rows.
 func (m PlainHTML) listingPages() (pages []*goquery.Selection, errs []error) {
 	base, err := url.Parse(m.URL)
 	if err != nil {
