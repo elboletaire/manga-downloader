@@ -578,7 +578,7 @@ environment variables.
 | [lianscans.com](https://www.lianscans.com) | Indonesian, mostly NSFW | 2026-11-23 |
 | [lilymanga.net](https://lilymanga.net) | yuri, some NSFW | 2026-10-29 |
 | [limonmanga.com](https://limonmanga.com) |  | 2026-10-18 |
-| [linkmanga.com](https://linkmanga.com) | English | ❌ failing since 2026-11-16 (checked 2026-11-25) |
+| [linkmanga.com](https://linkmanga.com) \* | English | 2026-11-25 |
 | [loner-tl.blogspot.com](https://loner-tl.blogspot.com) | Arabic | 2026-10-19 |
 | [lovesjane.site](https://lovesjane.site) | English | 2026-11-16 |
 | [luacomic.org](https://luacomic.org) | LuaScans | 2026-10-29 |

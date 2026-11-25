@@ -25,6 +25,7 @@ func init() {
 	browser.RequireVisible("gaiatoon.com")
 	browser.RequireVisible("arcurafansub.com")
 	browser.RequireVisible("paradise-bl.com")
+	browser.RequireVisible("linkmanga.com")
 }
 
 // BrowserSiteSelector is a SiteSelector for sites that need a real browser
@@ -285,6 +286,22 @@ var browserSelectors = []BrowserSiteSelector{
 			NumberRe: `/(\d+(?:\.\d+)?)-+/?$`,
 		},
 		Domains:         []string{"paradise-bl.com"},
+		ChaptersWait:    "li.wp-manga-chapter",
+		ImageWait:       "div.reading-content",
+		SeriesPathDepth: 2,
+	},
+	// linkmanga.com: Madara behind a cloudflare managed challenge that headless
+	// never passes, so it's visible-only. Pages are plain <img> in the reader.
+	{
+		SiteSelector: SiteSelector{
+			Title:        "div.post-title h1",
+			Rows:         "li.wp-manga-chapter",
+			Chapter:      "a",
+			ChapterTitle: "a",
+			Link:         "a",
+			Image:        "div.reading-content img",
+		},
+		Domains:         []string{"linkmanga.com"},
 		ChaptersWait:    "li.wp-manga-chapter",
 		ImageWait:       "div.reading-content",
 		SeriesPathDepth: 2,
