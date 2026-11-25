@@ -458,7 +458,7 @@ func TestIdentifySiteOrder(t *testing.T) {
 		},
 		{
 			name:   "mangareadercms series page",
-			origin: "https://onma.top",
+			origin: "https://onma.me",
 			path:   "/manga/black-clover",
 			routes: map[string]string{
 				"/manga/black-clover": "mangareadercms_series.html",
@@ -467,7 +467,7 @@ func TestIdentifySiteOrder(t *testing.T) {
 		},
 		{
 			name:   "mangareadercms chapter page",
-			origin: "https://onma.top",
+			origin: "https://onma.me",
 			path:   "/manga/black-clover/391",
 			routes: map[string]string{
 				"/manga/black-clover/391": "mangareadercms_chapter.html",

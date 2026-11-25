@@ -481,7 +481,7 @@ var plainHTMLSelectors = []SiteSelector{
 	// so the number comes from the "chapitre-25" URL. The reader keeps the
 	// real page in data-src, padded with spaces, behind a placeholder src
 	// (getPlainHTMLImageURL trims it).
-	// The same CMS runs anzmanga25.com, kangaryu-team.fr and onma.top: their
+	// The same CMS runs anzmanga25.com, kangaryu-team.fr and onma.me: their
 	// URLs are /manga/{slug}/{number} and each theme puts the series title in
 	// its own element. The rows' download links go through an ad shortener.
 	// utsukushii-bg.com groups its rows under a sibling <li class="volume">

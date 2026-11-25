@@ -1654,7 +1654,7 @@ grabber/scanvf:
 grabber/anzmanga25:
 	go run . https://www.anzmanga25.com/manga/1cfg7v-kagurabachi 100
 grabber/onma:
-	go run . https://onma.top/manga/black-clover 300
+	go run . https://onma.me/manga/black-clover 300
 grabber/oremanga:
 	go run . https://www.oremanga.net/series/blue-lock/ 300
 grabber/thunderscans:
