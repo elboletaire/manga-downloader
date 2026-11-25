@@ -555,7 +555,7 @@ grabber/mangafire:
 	go run . https://mangafire.to/title/9062q-itoko-no-onee-chan-ni-amaechau 1
 
 grabber/fanfox:
-	go run . https://fanfox.net/manga/chainsaw_man/ 232
+	go run . https://fanfox.net/manga/battle_through_the_heavens/ 520
 
 grabber/fansubscat:
 	go run . https://manga.fansubs.cat/jojo-s-bizarre-adventure-part-1-phantom-blood/jojo-s-en-catala 2

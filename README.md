@@ -454,7 +454,7 @@ environment variables.
 | [eskimangalar.com](https://eskimangalar.com) |  | 2026-10-18 |
 | [euphoriascan.com](https://euphoriascan.com) | Portuguese | 2026-11-23 |
 | [evascans.net](https://evascans.net) | former evascans.org | 2026-11-23 |
-| [fanfox.net](https://fanfox.net) | Manga Fox | ❌ failing since 2026-11-23 (checked 2026-11-25) |
+| [fanfox.net](https://fanfox.net) | Manga Fox | 2026-11-25 |
 | [fbsquadx.com](https://fbsquadx.com) | Fleur Blanche Scan, Spanish | ❌ failing since 2026-11-16 (checked 2026-11-25) |
 | [feelweb.jp](https://feelweb.jp) | Japanese, Feel Web (GigaViewer) | 2026-11-23 |
 | [fenixproject.website](https://fenixproject.website) | Portuguese | 2026-11-23 |
