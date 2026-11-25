@@ -298,7 +298,7 @@ var browserSelectors = []BrowserSiteSelector{
 			Title:             "h1",
 			Rows:              "a.chapter-row",
 			Chapter:           "span",
-			ChapterTitleStrip: `^Capítulo\s*\d+(\.\d+)?$`,
+			ChapterTitleStrip: `^Capítulo\s*\d+(\.\d+)?(\s*·\s*)?`,
 			Image:             "img.reading-page",
 			SeriesLink:        `a[href^="/obra/"]`,
 		},
