@@ -95,7 +95,7 @@ var browserSelectors = []BrowserSiteSelector{
 			Link:         "a",
 			Image:        "div.reading-content img",
 		},
-		Domains:         []string{"toongod.org", "dragontea.ink", "manhuaus.com", "toonily.com"},
+		Domains:         []string{"toongod.org", "dragontea.ink", "manhuaus.com", "toonily.com", "linkmanga.com"},
 		ChaptersWait:    "li.wp-manga-chapter",
 		ImageWait:       "div.reading-content",
 		SeriesPathDepth: 2,
@@ -290,37 +290,21 @@ var browserSelectors = []BrowserSiteSelector{
 		ImageWait:       "div.reading-content",
 		SeriesPathDepth: 2,
 	},
-	// linkmanga.com: Madara behind a cloudflare managed challenge that headless
-	// never passes, so it's visible-only. Pages are plain <img> in the reader.
-	{
-		SiteSelector: SiteSelector{
-			Title:        "div.post-title h1",
-			Rows:         "li.wp-manga-chapter",
-			Chapter:      "a",
-			ChapterTitle: "a",
-			Link:         "a",
-			Image:        "div.reading-content img",
-		},
-		Domains:         []string{"linkmanga.com"},
-		ChaptersWait:    "li.wp-manga-chapter",
-		ImageWait:       "div.reading-content",
-		SeriesPathDepth: 2,
-	},
 	// lecturacelestialmoon.site (formerly celestialmoonscan.es): a client-rendered
 	// app, so the series and reader are rendered in Chrome. Readers link back to
 	// their series, and their page images are plain HTTP once rendered.
 	{
 		SiteSelector: SiteSelector{
-			Title:      "h1",
-			Rows:       "a.chapter-row",
-			Chapter:    "span",
-			Image:      "img.reading-page",
-			SeriesLink: `a[href^="/obra/"]`,
-			// the row text says "Capítulo N", which the chapter matcher can't read; the reader URL ends in N
-			NumberRe: `/(\d+(?:\.\d+)?)/?$`,
+			Title:             "h1",
+			Rows:              "a.chapter-row",
+			Chapter:           "span",
+			ChapterTitleStrip: `^Capítulo\s*\d+(\.\d+)?$`,
+			Image:             "img.reading-page",
+			SeriesLink:        `a[href^="/obra/"]`,
 		},
-		Domains:      []string{"lecturacelestialmoon.site"},
-		ChaptersWait: "a.chapter-row",
+		Domains: []string{"lecturacelestialmoon.site"},
+		// the rows first paint as bare text, so wait for their label span
+		ChaptersWait: "a.chapter-row span",
 		ImageWait:    "img.reading-page",
 	},
 }

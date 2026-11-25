@@ -1065,9 +1065,11 @@ grabber/naver:
 grabber/browser: \
 	grabber/arcurafansub \
 	grabber/asmotoon \
+	grabber/celestialmoonscan \
 	grabber/dragontea \
 	grabber/gaiatoon \
 	grabber/kappabeast \
+	grabber/linkmanga \
 	grabber/mangakakalot \
 	grabber/manhuatop \
 	grabber/manhuaus \
@@ -1282,7 +1284,6 @@ grabber/html: \
 	grabber/borutoexplorer \
 	grabber/bymichiby \
 	grabber/cat300 \
-	grabber/celestialmoonscan \
 	grabber/csmmangafree \
 	grabber/dandadan \
 	grabber/dandadanmanga \
@@ -1352,7 +1353,6 @@ grabber/html: \
 	grabber/lgbtics \
 	grabber/lianscans \
 	grabber/limonmanga \
-	grabber/linkmanga \
 	grabber/lolivault \
 	grabber/madaradex \
 	grabber/madarascans \
@@ -2407,7 +2407,7 @@ SMOKE_EXCLUDE += mangitto lilymanga mangaplus
 # 429, reset, 530, a non-blog page or a stalled origin from GitHub's runners, while they pass locally
 SMOKE_EXCLUDE += ler999 lonertl mangaailand mangadelsiglotvmanga mangabats legionscans asialotuss mangastep
 # headless-browser grabbers, kept off the runners (most for challenges they can't get past)
-SMOKE_EXCLUDE += comix mkissa templetoons mangafire toonz coffeemanga linkmanga celestialmoonscan
+SMOKE_EXCLUDE += comix mkissa templetoons mangafire toonz coffeemanga
 # 403 outside Japan: smoke-japan checks them from a runner there (smoke.yaml)
 SMOKE_JAPAN = asacomi bibibicomic bigcomics championcross comicgrowl comicroombase comicryu jnbooks comicride comici mangabang comirela gcomi hanayume hayacomic comicheros kansai kimicomi mangazegra mangabu mangalt nikkanspa namicomic piacomic rimacomiplus booklista takecomic younganimal youngchampion
 SMOKE_EXCLUDE += $(SMOKE_JAPAN)
