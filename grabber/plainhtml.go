@@ -425,10 +425,9 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:        ".reader-pages img",
 		SeriesLink:   ".reader-heading a",
 	},
-	// mangaworld.me (Italian, former mangaworld.mx): server-rendered. Rows are
-	// <li class="ch-row"> in one list per volume, the number in a span
-	// ("Capitolo 835"). Each volume's header row (div.volume-row) reads
-	// "Volume 77" and sits just before its list.
+	// mangaworld.me (Italian, former mangaworld.mx): one list of li.ch-row per
+	// volume, after its div.volume-row header ("Volume 77"). The reader lists
+	// every page with no query, so the old style=list is gone.
 	{
 		Title:        "h1",
 		Rows:         "li.ch-row a.ch",
