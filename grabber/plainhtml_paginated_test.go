@@ -70,6 +70,47 @@ func TestPlainHTMLPaginated(t *testing.T) {
 	}
 }
 
+// TestPlainHTMLPaginatedNotFoundEnds checks that a list answering 404 past its
+// last page (keroscans) ends the walk without an error, instead of failing the
+// whole series
+func TestPlainHTMLPaginatedNotFoundEnds(t *testing.T) {
+	pages := map[string]string{
+		"":  paginatedListing(3, 2),
+		"2": paginatedListing(1),
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		page, ok := pages[r.URL.Query().Get("page")]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write([]byte(page))
+	}))
+	t.Cleanup(srv.Close)
+
+	site := SiteSelector{
+		Title:     "h2.text-2xl",
+		Rows:      "#chapters-list a",
+		Chapter:   "div.flex.gap-2 span",
+		Paginated: true,
+	}
+	m := &PlainHTML{Grabber: &Grabber{URL: srv.URL + "/manga/one-piece"}, site: site}
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(pages[""]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.doc = doc
+	m.rows = doc.Find(site.Rows)
+
+	chapters, errs := m.FetchChapters()
+	if len(errs) > 0 {
+		t.Fatalf("FetchChapters() errors = %v, want none", errs)
+	}
+	if len(chapters) != 3 {
+		t.Fatalf("FetchChapters() = %d chapters, want 3", len(chapters))
+	}
+}
+
 // TestPlainHTMLPaginatedQuery checks that PageParam numbers the pages on top
 // of the series URL's own query, for a list behind a tab (?tab=chapters)
 func TestPlainHTMLPaginatedQuery(t *testing.T) {

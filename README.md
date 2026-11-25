@@ -534,7 +534,7 @@ environment variables.
 | [kazokuden.com](https://www.kazokuden.com) | Spanish | 2026-11-16 |
 | [kencomics.com](https://kencomics.com) | Ken Scans, English, locked chapters skipped | 2026-11-23 |
 | [kensscan.com](https://kensscan.com) | English | 2026-11-25 |
-| [keroscans.net](https://keroscans.net) | English, locked chapters skipped | ❌ failing since 2026-11-23 (checked 2026-11-25) |
+| [keroscans.net](https://keroscans.net) | English, locked chapters skipped | 2026-11-25 |
 | [kewnscans.org](https://kewnscans.org) | English | 2026-11-16 |
 | [kimicomi.com](https://kimicomi.com) | Japanese (Comici) | 2026-11-23 |
 | [kingofshojo.com](https://kingofshojo.com) |  | 2026-11-16 |
