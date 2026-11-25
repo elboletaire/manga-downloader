@@ -343,7 +343,7 @@ environment variables.
 | [afroditscans.com](https://afroditscans.com) | Turkish | 2026-10-18 |
 | [akanebanashimanga.website](https://akanebanashimanga.website) | English, single series | 2026-11-16 |
 | [akazascans.org](https://akazascans.org) | English | 2026-11-16 |
-| [allporncomic.com](https://allporncomic.com) | English, mostly NSFW | ❌ failing since 2026-11-23 (checked 2026-11-25) |
+| [allporncomic.com](https://allporncomic.com) | English, mostly NSFW | 2026-11-25 |
 | [allporncomic.io](https://allporncomic.io) | English, mostly NSFW | 2026-11-16 |
 | [amangaplanet.com.tr](https://www.amangaplanet.com.tr) | Turkish | 2026-11-11 |
 | [anikiga.com](https://anikiga.com) | Turkish | 2026-11-16 |
