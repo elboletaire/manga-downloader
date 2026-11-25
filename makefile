@@ -902,7 +902,7 @@ grabber/atsumaru/all:
 # behind coins/early access) so the smoke test doesn't flake as new chapters
 # release
 grabber/vortexscans:
-	go run . https://vortexscans.org/series/archmage-curriculum 20
+	go run . https://vortexscans.org/series/archmage-curriculum-1 20
 
 # same guyamoe platform as guya.moe, different instance/domain
 grabber/danke:

@@ -866,7 +866,7 @@ environment variables.
 | [vinlandsaga.website](https://vinlandsaga.website) | English, single series | 2026-11-11 |
 | [violetmanga.com](https://violetmanga.com) | Violet Scans, former violetscans.org | 2026-11-23 |
 | [visorotaku.com](https://visorotaku.com) | Spanish | 2026-11-11 |
-| [vortexscans.org](https://vortexscans.org) |  | ❌ failing since 2026-11-23 (checked 2026-11-25) |
+| [vortexscans.org](https://vortexscans.org) |  | 2026-11-25 |
 | [w14.maid-sama.com](https://w14.maid-sama.com) | English, single series, rotating wNN subdomain | 2026-11-23 |
 | [w14.punchonemanga.com](https://w14.punchonemanga.com) | English, single series | 2026-11-23 |
 | [w2.dandadanmanga.net](https://w2.dandadanmanga.net) | English, single series | 2026-10-18 |
