@@ -1749,7 +1749,7 @@ func volumesFixture(t *testing.T, name, rows string) PlainHTML {
 
 // TestFetchChaptersVolumesFromHeaders reads the volume each row sits under
 // from the headers of the live sites (trimmed copies in testdata/volumes):
-// utsukushii-bg's "Том 33" <li>, mangaworld.mx's .volume, dynasty-scans' <dt>,
+// utsukushii-bg's "Том 33" <li>, mangaworld.me's volume-row, dynasty-scans' <dt>,
 // read-nifteam's button, noranofansub's "Volúmen 01" and silentquill's section.
 func TestFetchChaptersVolumesFromHeaders(t *testing.T) {
 	cases := []struct {
@@ -1757,7 +1757,7 @@ func TestFetchChaptersVolumesFromHeaders(t *testing.T) {
 		want       map[float64]int
 	}{
 		{"utsukushii_series.html", "h5.chapter-title-rtl", map[float64]int{275: 33, 274: 32, 273: 32}},
-		{"mangaworld_series.html", "div.chapter a.chap", map[float64]int{836: 77, 835: 77, 834: 76, 824: 76}},
+		{"mangaworld_series.html", "li.ch-row a.ch", map[float64]int{836: 77, 835: 77, 834: 76, 824: 76}},
 		{"dynasty_series.html", "dl.chapter-list dd a.name", map[float64]int{1: 1, 24: 1, 25: 2}},
 		{"nifteam_series.html", ".list .element", map[float64]int{1198: 118, 1197: 118, 1196: 117}},
 		{"noranofansub_series.html", ".list .element", map[float64]int{41: 1, 40: 1}},

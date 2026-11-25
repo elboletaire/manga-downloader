@@ -425,22 +425,18 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:        ".reader-pages img",
 		SeriesLink:   ".reader-heading a",
 	},
-	// mangaworld.mx (Italian): server-rendered, unquoted attributes are
-	// fine for goquery. Chapter rows are <a class="chap"> inside one
-	// <div class="chapter"> per chapter, the number in a span ("Capitolo
-	// 835"). The reader renders a single page per chapter unless it gets
-	// ?style=list, which lists every page as img.page-image. Each volume is
-	// a .volume-element accordion whose .volume header ("Volume 77") sits
-	// before its rows.
+	// mangaworld.me (Italian, former mangaworld.mx): server-rendered. Rows are
+	// <li class="ch-row"> in one list per volume, the number in a span
+	// ("Capitolo 835"). Each volume's header row (div.volume-row) reads
+	// "Volume 77" and sits just before its list.
 	{
 		Title:        "h1",
-		Rows:         "div.chapter a.chap",
-		Chapter:      "span",
-		ChapterTitle: "span",
-		Image:        "img.page-image",
-		ChapterQuery: "style=list",
-		VolumeHeader: "div.volume",
-		VolumeScope:  ".volume-element",
+		Rows:         "li.ch-row a.ch",
+		Chapter:      "span.ch-name",
+		ChapterTitle: "span.ch-name",
+		Image:        "img.reader-page",
+		VolumeHeader: "div.volume-row",
+		VolumeScope:  ".volume",
 	},
 	// visorotaku.com (Spanish): mangavault's rows, but "Capítulo N" plus a page
 	// count, and plain <img>s on its CDN. Its ul carries divide-line.

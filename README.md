@@ -663,7 +663,7 @@ environment variables.
 | [mangatown.com](https://www.mangatown.com) |  | 2026-11-23 |
 | [mangatrend.org](https://mangatrend.org) | English | 2026-11-23 |
 | [mangavault.lat](https://mangavault.lat) | MangaVault | 2026-11-11 |
-| [mangaworld.mx](https://www.mangaworld.mx) | MangaWorld, Italian | ❌ failing since 2026-11-23 (checked 2026-11-25) |
+| [mangaworld.me](https://www.mangaworld.me) | MangaWorld, Italian, former mangaworld.mx | 2026-11-25 |
 | [mangawow.org](https://mangawow.org) | MangaWOW, Turkish | 2026-11-23 |
 | [mangaxhentai.com](https://mangaxhentai.com) | Arabic, mostly NSFW | 2026-11-23 |
 | [mangazin.org](https://mangazin.org) | MANGA ZIN | 2026-11-23 |

@@ -1630,7 +1630,7 @@ grabber/komikstation:
 grabber/mangavault:
 	go run . https://mangavault.lat/manga/control-mental-f7d784 20
 grabber/mangaworld:
-	go run . https://www.mangaworld.mx/manga/1683/kingdom 400
+	go run . https://www.mangaworld.me/manga/1683/kingdom 400
 grabber/lagoonscans:
 	go run . https://lagoonscans.com/manga/crimson-reset/ 52
 grabber/lelmanga:
