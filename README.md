@@ -389,7 +389,6 @@ environment variables.
 | [bymichiby.com](https://bymichiby.com) | Spanish | 2026-11-23 |
 | [cafecomyaoi.com.br](https://cafecomyaoi.com.br) | Portuguese, mostly NSFW | 2026-11-23 |
 | [cat-300.com](https://cat-300.com) | Thai | 2026-11-23 |
-| [celestialmoonscan.es](https://celestialmoonscan.es) | Spanish | ❌ failing since 2026-11-09 (checked 2026-11-25) |
 | [chainsawman-chapter.online](https://chainsawman-chapter.online) | Chainsaw Man | 2026-11-23 |
 | [chainsawmannmanga.com](https://chainsawmannmanga.com) | Chainsaw Man | 2026-11-16 |
 | [championcross.jp](https://championcross.jp) | Japanese, Champion Cross (Comici) | 2026-11-23 |
@@ -563,6 +562,7 @@ environment variables.
 | [lector.pzykosis666hfansub.com](https://lector.pzykosis666hfansub.com) | Spanish, NSFW | 2026-11-23 |
 | [lectorhades.latamtoon.com](https://lectorhades.latamtoon.com) | Spanish | 2026-11-16 |
 | [lectortaurus.com](https://lectortaurus.com) | Spanish | 2026-11-16 |
+| [lecturacelestialmoon.site](https://lecturacelestialmoon.site) \* | Spanish, former celestialmoonscan.es | 2026-11-25 |
 | [leercapitulo.co](https://www.leercapitulo.co) |  | 2026-11-16 |
 | [leermanhwas.com](https://leermanhwas.com) | Spanish, mostly NSFW | 2026-11-16 |
 | [legionscans.com](https://legionscans.com) | Spanish | 2026-10-19 |

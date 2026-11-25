@@ -306,6 +306,23 @@ var browserSelectors = []BrowserSiteSelector{
 		ImageWait:       "div.reading-content",
 		SeriesPathDepth: 2,
 	},
+	// lecturacelestialmoon.site (formerly celestialmoonscan.es): a client-rendered
+	// app, so the series and reader are rendered in Chrome. Readers link back to
+	// their series, and their page images are plain HTTP once rendered.
+	{
+		SiteSelector: SiteSelector{
+			Title:      "h1",
+			Rows:       "a.chapter-row",
+			Chapter:    "span",
+			Image:      "img.reading-page",
+			SeriesLink: `a[href^="/obra/"]`,
+			// the row text says "Capítulo N", which the chapter matcher can't read; the reader URL ends in N
+			NumberRe: `/(\d+(?:\.\d+)?)/?$`,
+		},
+		Domains:      []string{"lecturacelestialmoon.site"},
+		ChaptersWait: "a.chapter-row",
+		ImageWait:    "img.reading-page",
+	},
 }
 
 // PlainHTMLBrowser is the browser-rendered variant of PlainHTML: pages are
