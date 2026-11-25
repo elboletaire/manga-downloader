@@ -739,7 +739,7 @@ environment variables.
 | [onepunchmannmanga.com](https://onepunchmannmanga.com) | English, single series, use a chapter URL | 2026-11-23 |
 | [online.seinagi.org.es](https://online.seinagi.org.es) | Spanish | 2026-11-09 |
 | [onlinechainsawmanmanga.us](https://onlinechainsawmanmanga.us) | English, single series, use a chapter URL | 2026-11-23 |
-| [onma.top](https://onma.top) | Arabic | ❌ failing since 2026-11-09 (checked 2026-11-25) |
+| [onma.me](https://onma.me) | Arabic, former onma.top | 2026-11-25 |
 | [orchisasia.org](https://www.orchisasia.org) | English, mostly NSFW | 2026-11-16 |
 | [oremanga.net](https://www.oremanga.net) | Oremanga, Thai | 2026-11-23 |
 | [orion-scans.com](https://orion-scans.com) | English, locked chapters skipped | 2026-11-23 |

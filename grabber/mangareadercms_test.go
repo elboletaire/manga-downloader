@@ -30,7 +30,7 @@ func TestMangaReaderCMS(t *testing.T) {
 		}
 	}
 	series := read("mangareadercms_series.html")
-	m := PlainHTML{Grabber: &Grabber{URL: "https://onma.top/manga/black-clover"}, doc: series, rows: series.Find(site.Rows), site: site}
+	m := PlainHTML{Grabber: &Grabber{URL: "https://onma.me/manga/black-clover"}, doc: series, rows: series.Find(site.Rows), site: site}
 
 	if title, _ := m.FetchTitle(); title != "Black Clover" {
 		t.Errorf("FetchTitle() = %q", title)
@@ -43,12 +43,12 @@ func TestMangaReaderCMS(t *testing.T) {
 	if chapters[0].GetNumber() != 392 || chapters[1].GetNumber() != 391.5 {
 		t.Errorf("numbers = %v, %v; want 392, 391.5", chapters[0].GetNumber(), chapters[1].GetNumber())
 	}
-	if u := chapters[0].(*PlainHTMLChapter).URL; u != "https://onma.top/manga/black-clover/392" {
+	if u := chapters[0].(*PlainHTMLChapter).URL; u != "https://onma.me/manga/black-clover/392" {
 		t.Errorf("chapter URL = %q (the ad-shortened download link must not be taken)", u)
 	}
 
 	chapter := m.chapterFromDoc(&PlainHTMLChapter{Chapter: Chapter{Number: 391}}, read("mangareadercms_chapter.html"))
-	if len(chapter.Pages) != 2 || chapter.Pages[0].URL != "https://www.onma.top/uploads/manga/black-clover/chapters/391/01.jpg" {
+	if len(chapter.Pages) != 2 || chapter.Pages[0].URL != "https://www.onma.me/uploads/manga/black-clover/chapters/391/01.jpg" {
 		t.Errorf("pages = %+v, want the two trimmed data-src URLs", chapter.Pages)
 	}
 }
