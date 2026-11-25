@@ -419,7 +419,6 @@ grabber: \
 	grabber/petrotechsociety \
 	grabber/phoenixscans \
 	grabber/piacomic \
-	grabber/plumacomics \
 	grabber/pornhwareader \
 	grabber/projectsuki \
 	grabber/punchonemanga \
@@ -2076,9 +2075,6 @@ grabber/onlinechainsawmanmanga:
 
 grabber/orvmanhwa:
 	go run . https://orvmanhwa.online/omniscient-readers-viewpoint-manhwa-chapter-157/ 157
-
-grabber/plumacomics:
-	go run . https://plumacomics.com/manga/retorno-do-medico/ 75
 
 grabber/punchonemanga:
 	go run . https://w14.punchonemanga.com/ 121

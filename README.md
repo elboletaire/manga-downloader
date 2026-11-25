@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[585 supported sites](#supported-sites)**, from big aggregators to small
+- **[584 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 585 supported sites</b></summary>
+<summary><b>Show all 584 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -750,7 +750,6 @@ environment variables.
 | [petrotechsociety.org](https://www.petrotechsociety.org) | English, mostly NSFW | 2026-11-16 |
 | [phoenixscans.com](https://www.phoenixscans.com) | Phoenix Scans, Italian | 2026-11-23 |
 | [piacomic.jp](https://piacomic.jp) | Japanese (Comici) | 2026-11-23 |
-| [plumacomics.com](https://plumacomics.com) | Portuguese | ❌ failing since 2026-10-26 (checked 2026-11-25) |
 | [pornhwareader.com](https://pornhwareader.com) | English, NSFW | 2026-11-10 |
 | [pornhwaz.com](https://www.pornhwaz.com) | English, mostly NSFW | 2026-11-23 |
 | [projectsuki.com](https://projectsuki.com) |  | 2026-11-23 |
