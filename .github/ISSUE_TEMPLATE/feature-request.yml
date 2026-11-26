@@ -1,14 +1,24 @@
 name: Feature request
-description: Suggest a new feature or an improvement for the app or the command line
+description: Suggest a new option or an improvement for the app or the command line (not a new site)
 title: "[Feature]: "
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for the idea! For a new manga site, please use the
-        [Site request](https://github.com/elboletaire/manga-downloader/issues/new?template=site-request.yml)
-        form instead.
+        > [!IMPORTANT]
+        > **Want a new site supported?** Please use the
+        > [Site request](https://github.com/elboletaire/manga-downloader/issues/new?template=site-request.yml)
+        > form instead: it asks for the series link we need to add it.
+
+        Thanks for the idea!
+  - type: checkboxes
+    id: not-a-site
+    attributes:
+      label: Not a site request
+      options:
+        - label: This isn't a request to support a new site (that goes in the Site request form).
+          required: true
   - type: dropdown
     id: program
     attributes:
