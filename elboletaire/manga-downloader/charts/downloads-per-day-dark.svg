@@ -50,6 +50,6 @@
 <g class="gs-rise" style="animation-delay:429ms"><path d="M674.7 252.0V234.9H698.3V252.0Z" fill="#4189ea"><title>2026-11-22, Desktop app: 63</title></path><path d="M674.7 232.9V232.9Q674.7 231.1 676.6 231.1H696.4Q698.3 231.1 698.3 232.9V232.9Z" fill="#dd5f2f"><title>2026-11-22, CLI: 10</title></path></g>
 <g class="gs-rise" style="animation-delay:446ms"><path d="M700.3 252.0V210.3H723.9V252.0Z" fill="#4189ea"><title>2026-11-24, Desktop app: 149 (2 days)</title></path><path d="M700.3 208.3V168.0Q700.3 164.0 704.3 164.0H719.9Q723.9 164.0 723.9 168.0V208.3Z" fill="#dd5f2f"><title>2026-11-24, CLI: 158 (2 days)</title></path></g>
 <g class="gs-rise" style="animation-delay:464ms"><path d="M725.9 252.0V233.8H749.4V252.0Z" fill="#4189ea"><title>2026-11-25, Desktop app: 67</title></path><path d="M725.9 231.8V227.3Q725.9 223.3 729.9 223.3H745.4Q749.4 223.3 749.4 227.3V231.8Z" fill="#dd5f2f"><title>2026-11-25, CLI: 33</title></path></g>
-<g class="gs-rise" style="animation-delay:482ms"><path d="M751.4 252.0V252.0Q751.4 251.0 752.4 251.0H774.0Q775.0 251.0 775.0 252.0V252.0Z" fill="#4189ea"><title>2026-11-26, Desktop app: 2</title></path></g>
+<g class="gs-rise" style="animation-delay:482ms"><path d="M751.4 252.0V232.6H775.0V252.0Z" fill="#4189ea"><title>2026-11-26, Desktop app: 71</title></path><path d="M751.4 230.6V230.6Q751.4 228.5 753.6 228.5H772.8Q775.0 228.5 775.0 230.6V230.6Z" fill="#dd5f2f"><title>2026-11-26, CLI: 11</title></path></g>
 </g>
 </svg>
