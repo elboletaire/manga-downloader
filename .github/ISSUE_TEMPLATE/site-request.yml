@@ -1,11 +1,22 @@
-name: Site support request
-description: Request support for a new manga site
+name: Site request
+description: Ask for a new manga or comic site to be supported, or for a supported site that moved to a new domain
 title: "[Site request]: "
 labels: ["site-support", "enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
+        > [!TIP]
+        > This is the right form for **a site that isn't supported yet**, or for a
+        > supported site that moved to a new domain. If a supported site stopped
+        > working, open a bug report for the
+        > [desktop app](https://github.com/elboletaire/manga-downloader/issues/new?template=bug-report-app.yml)
+        > or the
+        > [command line](https://github.com/elboletaire/manga-downloader/issues/new?template=bug-report-cli.yml)
+        > instead; for a new option or behaviour, use the
+        > [Feature request](https://github.com/elboletaire/manga-downloader/issues/new?template=feature-request.yml)
+        > form.
+
         Thanks for taking the time to request a new site! Please fill in the
         fields below — especially the **series link**, which is required to
         investigate and test the site.
