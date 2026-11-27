@@ -8,24 +8,26 @@ import (
 	"testing"
 )
 
-// mangaworldSeriesHTML is a trimmed copy of a series page: unquoted attributes,
-// one chapter row per <div class="chapter">, the Italian "Capitolo" label, a
-// decimal chapter and a volume block that must not be read twice.
+// mangaworldSeriesHTML is a trimmed copy of a series page: one <li class="ch-row">
+// per chapter in its volume's list, the Italian "Capitolo" label, a decimal
+// chapter and the volume header that gives the rows their volume.
 const mangaworldSeriesHTML = `<html><head><title>Kingdom Scan ITA - MangaWorld</title></head><body>
-<h1 class="name bigger">Kingdom</h1>
-<div class="volume-chapters pl-2" data-index=1>
-<div class=chapter><a class=chap href=/manga/1683/kingdom/read/aaa111 title="Kingdom Capitolo 836 Scan ITA"><span class=d-inline-block>Capitolo 836</span><i class="text-right text-muted chap-date">11 Ottobre 2026</i><div class=clearfix></div></a></div>
-<div class=chapter><a class=chap href=/manga/1683/kingdom/read/bbb222 title="Kingdom Capitolo 835.5 Scan ITA"><span class=d-inline-block>Capitolo 835.5</span><i class="text-right text-muted chap-date">10 Ottobre 2026</i><div class=clearfix></div></a></div>
-<div class=chapter><a class=chap href=https://www.mangaworld.mx/manga/1683/kingdom/read/ccc333 title="Kingdom Capitolo 835 Scan ITA"><span class=d-inline-block>Capitolo 835</span><i class="text-right text-muted chap-date">9 Ottobre 2026</i><div class=clearfix></div></a></div>
+<h1 class="manga-title display">Kingdom</h1>
+<div class="volume">
+<div class="volume-row"><button class="volume-head" type="button"><span class="volume-name">Volume 77</span></button></div>
+<ul class="ch-list volume-chapters" id="volume-0">
+<li class="ch-row"><a class="ch" href="/manga/1683/kingdom/read/aaa111" title="Kingdom Capitolo 836 Scan ITA"><span class="ch-label"><span class="ch-name">Capitolo 836</span></span><span class="ch-date">20 Ottobre 2026</span></a></li>
+<li class="ch-row"><a class="ch" href="https://www.mangaworld.me/manga/1683/kingdom/read/bbb222" title="Kingdom Capitolo 835.5 Scan ITA"><span class="ch-label"><span class="ch-name">Capitolo 835.5</span></span><span class="ch-date">15 Ottobre 2026</span></a></li>
+<li class="ch-row"><a class="ch" href="/manga/1683/kingdom/read/ccc333" title="Kingdom Capitolo 835 Scan ITA"><span class="ch-label"><span class="ch-name">Capitolo 835</span></span><span class="ch-date">11 Ottobre 2026</span></a></li>
+</ul>
 </div>
-<a class="btn btn-dark mr-1 mt-1" href=/manga/1683/kingdom/read/aaa111>Leggi</a>
 </body></html>`
 
-// mangaworldReaderHTML is a trimmed copy of a reader page: the pages are only
-// rendered as img.page-image with ?style=list, the default view shows none.
+// mangaworldReaderHTML is a trimmed copy of a reader page: every page is an
+// img.reader-page, with or without a query.
 const mangaworldReaderHTML = `<html><head><title>Kingdom Capitolo 836</title></head><body>
-<div id=pages><img id=page-0 class="page-image img-fluid" src=https://cdn.mangaworld.mx/chapters/kingdom/capitolo-836/1.jpg>
-<img id=page-1 class="page-image img-fluid" src=https://cdn.mangaworld.mx/chapters/kingdom/capitolo-836/2.jpg></div>
+<img class="reader-page" src="https://cdn.mangaworld.me/chapters/kingdom/capitolo-836/1.png" alt="Kingdom Capitolo 836 - Pagina 1" data-reader-image>
+<img class="reader-page" src="https://cdn.mangaworld.me/chapters/kingdom/capitolo-836/2.png" alt="Kingdom Capitolo 836 - Pagina 2" loading="lazy" data-reader-image>
 </body></html>`
 
 func TestMangaworld(t *testing.T) {
@@ -34,10 +36,6 @@ func TestMangaworld(t *testing.T) {
 		_, _ = w.Write([]byte(mangaworldSeriesHTML))
 	})
 	mux.HandleFunc("/manga/1683/kingdom/read/aaa111", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Query().Get("style") != "list" {
-			_, _ = w.Write([]byte("<html><body></body></html>"))
-			return
-		}
 		_, _ = w.Write([]byte(mangaworldReaderHTML))
 	})
 	srv := httptest.NewServer(mux)
@@ -48,7 +46,7 @@ func TestMangaworld(t *testing.T) {
 	if err != nil || !ok {
 		t.Fatalf("Test() = %v, %v; want the series to match", ok, err)
 	}
-	if m.site.Rows != "div.chapter a.chap" {
+	if m.site.Rows != "li.ch-row a.ch" {
 		t.Errorf("Test() matched with selector %q, want the mangaworld one (an earlier entry shadows it)", m.site.Rows)
 	}
 

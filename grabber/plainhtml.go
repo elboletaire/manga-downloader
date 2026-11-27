@@ -125,6 +125,15 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:      "img.js-page",
 		SeriesLink: `a[data-hotkey="m"]`,
 	},
+	// mangabolt.com (2026 redesign): series at /series/{id}/{slug}, each chapter
+	// a <li data-chapter-entry> linking to /chapters/{id}, its number as text.
+	// Reader pages are server-rendered, one <img alt="... Page N"> per page.
+	{
+		Title:   "h1",
+		Rows:    "#chapter-entries li[data-chapter-entry] > a",
+		Chapter: ".chapter-row-copy span",
+		Image:   `img[alt*=" Page "]`,
+	},
 	// demonicscans.org: a list of chapter rows ending in the release date,
 	// read from .reader-page or .imgholder images.
 	{
@@ -155,6 +164,17 @@ var plainHTMLSelectors = []SiteSelector{
 		Link:    "a",
 		Chapter: "a",
 		Image:   ".reader-pages img",
+	},
+	// keroscans.net: each chapter is an <a class="ks-chapter"> in #chapter-list,
+	// and the list is split over ?page=N ("Show more chapters"). A paid row
+	// carries a text-paid coin badge, so it's Locked.
+	{
+		Title:     `h1#series-title`,
+		Rows:      "#chapter-list a.ks-chapter[data-chapter-number]",
+		Chapter:   ".ks-chapter__number",
+		Image:     ".ks-pages img",
+		Paginated: true,
+		Locked:    ".text-paid",
 	},
 	// rawkuma.net: raw (Japanese) manga, Kiru WordPress theme. The reader
 	// page's full page list is server-rendered as plain <img src="..."> tags
@@ -425,22 +445,17 @@ var plainHTMLSelectors = []SiteSelector{
 		Image:        ".reader-pages img",
 		SeriesLink:   ".reader-heading a",
 	},
-	// mangaworld.mx (Italian): server-rendered, unquoted attributes are
-	// fine for goquery. Chapter rows are <a class="chap"> inside one
-	// <div class="chapter"> per chapter, the number in a span ("Capitolo
-	// 835"). The reader renders a single page per chapter unless it gets
-	// ?style=list, which lists every page as img.page-image. Each volume is
-	// a .volume-element accordion whose .volume header ("Volume 77") sits
-	// before its rows.
+	// mangaworld.me (Italian, former mangaworld.mx): one list of li.ch-row per
+	// volume, after its div.volume-row header ("Volume 77"). The reader lists
+	// every page with no query, so the old style=list is gone.
 	{
 		Title:        "h1",
-		Rows:         "div.chapter a.chap",
-		Chapter:      "span",
-		ChapterTitle: "span",
-		Image:        "img.page-image",
-		ChapterQuery: "style=list",
-		VolumeHeader: "div.volume",
-		VolumeScope:  ".volume-element",
+		Rows:         "li.ch-row a.ch",
+		Chapter:      "span.ch-name",
+		ChapterTitle: "span.ch-name",
+		Image:        "img.reader-page",
+		VolumeHeader: "div.volume-row",
+		VolumeScope:  ".volume",
 	},
 	// visorotaku.com (Spanish): mangavault's rows, but "Capítulo N" plus a page
 	// count, and plain <img>s on its CDN. Its ul carries divide-line.
@@ -466,7 +481,7 @@ var plainHTMLSelectors = []SiteSelector{
 	// so the number comes from the "chapitre-25" URL. The reader keeps the
 	// real page in data-src, padded with spaces, behind a placeholder src
 	// (getPlainHTMLImageURL trims it).
-	// The same CMS runs anzmanga25.com, kangaryu-team.fr and onma.top: their
+	// The same CMS runs anzmanga25.com, kangaryu-team.fr and onma.me: their
 	// URLs are /manga/{slug}/{number} and each theme puts the series title in
 	// its own element. The rows' download links go through an ad shortener.
 	// utsukushii-bg.com groups its rows under a sibling <li class="volume">
@@ -1505,7 +1520,8 @@ const maxListingPages = 100
 
 // listingPages fetches the chapter list's pages after the first, as
 // PageParam=N on m.URL's query (on the ChaptersPath under it, when set), until
-// one has no rows or the X-Pages count is reached. It returns each page's rows.
+// one has no rows, answers 404, or the X-Pages count is reached. It returns
+// each page's rows.
 func (m PlainHTML) listingPages() (pages []*goquery.Selection, errs []error) {
 	base, err := url.Parse(m.URL)
 	if err != nil {
@@ -1528,6 +1544,11 @@ func (m PlainHTML) listingPages() (pages []*goquery.Selection, errs []error) {
 
 		body, header, err := http.GetWithHeader(http.RequestParams{URL: u.String()})
 		if err != nil {
+			// some lists answer 404 past their last page instead of an empty one
+			var statusErr *http.StatusError
+			if errors.As(err, &statusErr) && statusErr.Code == 404 {
+				break
+			}
 			return pages, append(errs, err)
 		}
 		doc, err := goquery.NewDocumentFromReader(body)

@@ -419,7 +419,6 @@ grabber: \
 	grabber/petrotechsociety \
 	grabber/phoenixscans \
 	grabber/piacomic \
-	grabber/plumacomics \
 	grabber/pornhwareader \
 	grabber/projectsuki \
 	grabber/punchonemanga \
@@ -555,7 +554,7 @@ grabber/mangafire:
 	go run . https://mangafire.to/title/9062q-itoko-no-onee-chan-ni-amaechau 1
 
 grabber/fanfox:
-	go run . https://fanfox.net/manga/chainsaw_man/ 232
+	go run . https://fanfox.net/manga/battle_through_the_heavens/ 520
 
 grabber/fansubscat:
 	go run . https://manga.fansubs.cat/jojo-s-bizarre-adventure-part-1-phantom-blood/jojo-s-en-catala 2
@@ -902,7 +901,7 @@ grabber/atsumaru/all:
 # behind coins/early access) so the smoke test doesn't flake as new chapters
 # release
 grabber/vortexscans:
-	go run . https://vortexscans.org/series/archmage-curriculum 20
+	go run . https://vortexscans.org/series/archmage-curriculum-1 20
 
 # same guyamoe platform as guya.moe, different instance/domain
 grabber/danke:
@@ -1065,9 +1064,11 @@ grabber/naver:
 grabber/browser: \
 	grabber/arcurafansub \
 	grabber/asmotoon \
+	grabber/celestialmoonscan \
 	grabber/dragontea \
 	grabber/gaiatoon \
 	grabber/kappabeast \
+	grabber/linkmanga \
 	grabber/mangakakalot \
 	grabber/manhuatop \
 	grabber/manhuaus \
@@ -1230,7 +1231,7 @@ grabber/maidsama:
 grabber/violetmanga:
 	go run . https://violetmanga.com/the-saintess-is-captive-to-forbidden-love-chapter-1/ 1
 grabber/celestialmoonscan:
-	go run . https://celestialmoonscan.es/sobrevivir-como-la-esposa-de-un-asesino-en-serie-capitulo-17/ 17
+	go run . https://lecturacelestialmoon.site/leer/wp-45861/17 17
 grabber/rakuentranslations:
 	go run . https://rakuentranslations.com/isekai-ntr-sensou-capitulo-2/ 2
 grabber/komikdewasamom:
@@ -1282,7 +1283,6 @@ grabber/html: \
 	grabber/borutoexplorer \
 	grabber/bymichiby \
 	grabber/cat300 \
-	grabber/celestialmoonscan \
 	grabber/csmmangafree \
 	grabber/dandadan \
 	grabber/dandadanmanga \
@@ -1352,7 +1352,6 @@ grabber/html: \
 	grabber/lgbtics \
 	grabber/lianscans \
 	grabber/limonmanga \
-	grabber/linkmanga \
 	grabber/lolivault \
 	grabber/madaradex \
 	grabber/madarascans \
@@ -1501,7 +1500,7 @@ grabber/html: \
 	grabber/zonatmo
 
 grabber/allporncomiccom:
-	go run . https://allporncomic.com/porncomic/10-am-losekorntrol-hijab-3dx/ 1
+	go run . https://allporncomic.com/porncomic/a-day-in-the-life-of-marge-the-simpsons-blargsnarf/ 1
 grabber/hirayareads:
 	go run . https://hirayareads.com/series/the-villainess-who-looks-like-a-little-girl-is-in-the-arms-of-the-ice-crown-prince-whos-occasionally-adorable/ 1
 
@@ -1512,7 +1511,7 @@ grabber/lgbtics:
 	go run . https://lgbtics.com/comic/the-harem-is-a-team-of-teenage-ninjas-anintofu/ 1
 
 grabber/mangabolt:
-	go run . https://mangabolt.com/manga/aoku-somero/ 28
+	go run . https://mangabolt.com/series/tdiuSQNfk5ezFYWjkec4oCzB/wind-breaker-nii-satoru 20
 
 grabber/mangakulesi:
 	go run . https://mangakulesi.com/manga/olumcul-ask-deneyimi 29
@@ -1630,7 +1629,7 @@ grabber/komikstation:
 grabber/mangavault:
 	go run . https://mangavault.lat/manga/control-mental-f7d784 20
 grabber/mangaworld:
-	go run . https://www.mangaworld.mx/manga/1683/kingdom 400
+	go run . https://www.mangaworld.me/manga/1683/kingdom 400
 grabber/lagoonscans:
 	go run . https://lagoonscans.com/manga/crimson-reset/ 52
 grabber/lelmanga:
@@ -1654,7 +1653,7 @@ grabber/scanvf:
 grabber/anzmanga25:
 	go run . https://www.anzmanga25.com/manga/1cfg7v-kagurabachi 100
 grabber/onma:
-	go run . https://onma.top/manga/black-clover 300
+	go run . https://onma.me/manga/black-clover 300
 grabber/oremanga:
 	go run . https://www.oremanga.net/series/blue-lock/ 300
 grabber/thunderscans:
@@ -2076,9 +2075,6 @@ grabber/onlinechainsawmanmanga:
 
 grabber/orvmanhwa:
 	go run . https://orvmanhwa.online/omniscient-readers-viewpoint-manhwa-chapter-157/ 157
-
-grabber/plumacomics:
-	go run . https://plumacomics.com/manga/retorno-do-medico/ 75
 
 grabber/punchonemanga:
 	go run . https://w14.punchonemanga.com/ 121
