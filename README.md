@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[589 supported sites](#supported-sites)**, from big aggregators to small
+- **[590 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 589 supported sites</b></summary>
+<summary><b>Show all 590 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -520,6 +520,7 @@ environment variables.
 | [inu-manga.net](https://www.inu-manga.net) | Thai | 2026-11-16 |
 | [inventariooculto.com](https://inventariooculto.com) | Spanish | 2026-11-16 |
 | [izanamiscans.my.id](https://izanamiscans.my.id) | Indonesian | 2026-11-16 |
+| [japscan.foo](https://www.japscan.foo) \* | French; solve a puzzle in the browser window about every second chapter | 2026-11-28 |
 | [jellycomics.online](https://jellycomics.online) | Vietnamese, mostly NSFW, use a series URL | 2026-11-16 |
 | [jestful.net](https://jestful.net) |  | 2026-11-16 |
 | [jojolandsmanga.com](https://jojolandsmanga.com) | The JoJoLands | 2026-11-16 |

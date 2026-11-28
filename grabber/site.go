@@ -198,6 +198,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewTeamshadowi(g),
 		NewToonz(g),
 		NewMangamoins(g),
+		NewJapscan(g),
 		NewTaiyo(g),
 		NewStonescape(g),
 		NewUtoon(g),

@@ -865,6 +865,10 @@ grabber/mangahere:
 	go run . https://www.mangahere.cc/manga/kengan_omega/ 363
 grabber/apothecary:
 	go run . https://the-apothecary-diaries.com 85
+# uses a real (visible) browser: its reader asks for a drag-the-strips puzzle about
+# every second chapter, solved by hand in the window
+grabber/japscan:
+	go run . https://www.japscan.foo/manga/blue-lock/ 186-187
 grabber/jestful:
 	go run . https://jestful.net/hwms-jitsu-wa-ore-saikyou-deshita.html 150
 
@@ -1082,6 +1086,7 @@ grabber/browser: \
 	grabber/celestialmoonscan \
 	grabber/dragontea \
 	grabber/gaiatoon \
+	grabber/japscan \
 	grabber/kappabeast \
 	grabber/linkmanga \
 	grabber/mangakakalot \
