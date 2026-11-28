@@ -187,6 +187,7 @@ describe('createMockApi', () => {
       ['cbz', 'One Piece 1-3.cbz'],
       ['cbr', 'One Piece 1-3.cbr'],
       ['epub', 'One Piece 1-3.epub'],
+      ['pdf', 'One Piece 1-3.pdf'],
       ['raw', 'One Piece 1-3'],
     ] as const;
     for (const [format, name] of cases) {

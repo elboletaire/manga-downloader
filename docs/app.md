@@ -38,11 +38,12 @@ button, *Load* and *Settings*. (To open on the full window instead, turn off
 4. **Set the options** in the *Options* tab: the folder the files go to (the
    app creates it if it's missing),
    *Skip existing files* (chapters already in the folder aren't downloaded
-   again), the format (CBZ, CBR, Folder or EPUB; EPUB adds a *Reading
+   again), the format (CBZ, CBR, Folder, EPUB or PDF; EPUB and PDF add a *Reading
    direction*) and *Pack as*: *Chapters* (a file each), *Merged* (a chapter's
    parts in one file), *Volumes* (a file per volume) or *One file* (everything
    together). Under *Pages*, *Convert to JPEG* ticks *AVIF* (on by default,
-   and always on for EPUB, since readers can't show it) and *WebP*, and
+   and always on for EPUB, since readers can't show it) and *WebP* (both *AVIF*
+   and *WebP* are always on for PDF), and
    *Compress pages* saves a page as JPEG when that makes it smaller. *Skip
    pages* drops positions from every chapter (`2`, or `-1` for the last page).
    Under *Advanced* are the *Filename template*, the *JPEG quality* of every

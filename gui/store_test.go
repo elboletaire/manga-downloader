@@ -337,7 +337,7 @@ func TestLoadOptionsRejectsReadingDirectionFallsBackToDefault(t *testing.T) {
 
 func TestLoadOptionsRejectsUnknownFormatFallsBackToCBZ(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "gui.json")
-	if err := os.WriteFile(path, []byte(`{"format":"pdf","readingDirection":"ltr"}`), 0600); err != nil {
+	if err := os.WriteFile(path, []byte(`{"format":"mobi","readingDirection":"ltr"}`), 0600); err != nil {
 		t.Fatal(err)
 	}
 	var warnings []string
@@ -360,6 +360,31 @@ func TestLoadOptionsRejectsUnknownFormatFallsBackToCBZ(t *testing.T) {
 	}
 	if len(warnings) != 1 {
 		t.Errorf("got %d warnings, want 1: %q", len(warnings), warnings)
+	}
+}
+
+func TestLoadOptionsAcceptsPDFFormat(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "gui.json")
+	if err := os.WriteFile(path, []byte(`{"format":" PDF ","readingDirection":"ltr"}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var warnings []string
+	notice.SetHandler(func(level notice.Level, msg string) {
+		if level == notice.LevelWarn {
+			warnings = append(warnings, msg)
+		}
+	})
+	defer notice.SetHandler(nil)
+
+	s := defaultSettings()
+	if err := loadOptions(path, s); err != nil {
+		t.Fatalf("loadOptions(pdf): %v", err)
+	}
+	if s.Format != "pdf" {
+		t.Errorf("format %q, want pdf", s.Format)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("got %d warnings, want 0: %q", len(warnings), warnings)
 	}
 }
 

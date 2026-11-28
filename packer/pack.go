@@ -21,6 +21,7 @@ const (
 	FormatCBR  = "cbr"
 	FormatRaw  = "raw"
 	FormatEPUB = "epub"
+	FormatPDF  = "pdf"
 )
 
 // DownloadedChapter represents a downloaded chapter (a Chapter + Files)
@@ -34,7 +35,7 @@ func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, pr
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()
 	var info EPUBInfo
-	if format == FormatEPUB {
+	if format == FormatEPUB || format == FormatPDF {
 		info = EPUBInfo{
 			Series:           title,
 			Position:         formatChapterNumber(chapter.GetNumber()),
@@ -57,7 +58,7 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 	format := s.GetFormat()
 	files, labels := chapterFolders(chapters, format, s)
 	var info EPUBInfo
-	if format == FormatEPUB {
+	if format == FormatEPUB || format == FormatPDF {
 		info = EPUBInfo{Series: title, Identity: "bundle " + memberKeys(chapters), ReadingDirection: s.GetReadingDirection(), Labels: labels}
 	}
 	f := bundleFile(title, s.GetFilenameTemplate(), rng, chaptersOf(chapters))
@@ -72,7 +73,7 @@ func PackVolume(outputdir string, s grabber.Site, volume int, rng string, chapte
 	format := s.GetFormat()
 	files, labels := chapterFolders(chapters, format, s)
 	var info EPUBInfo
-	if format == FormatEPUB {
+	if format == FormatEPUB || format == FormatPDF {
 		info = EPUBInfo{
 			Series:           title,
 			Position:         strconv.Itoa(volume),
@@ -93,7 +94,7 @@ func PackParts(outputdir string, s grabber.Site, chapters []*DownloadedChapter, 
 	files, labels := chapterFolders(chapters, format, s)
 	number := formatChapterNumber(chapters[0].GetNumber())
 	var info EPUBInfo
-	if format == FormatEPUB {
+	if format == FormatEPUB || format == FormatPDF {
 		info = EPUBInfo{
 			Series:           title,
 			Position:         number,
@@ -209,6 +210,8 @@ func outputName(format, filename string) string {
 		return filename
 	case FormatEPUB:
 		return filename + ".epub"
+	case FormatPDF:
+		return filename + ".pdf"
 	case FormatCBR:
 		return filename + ".cbr"
 	default:
@@ -251,8 +254,11 @@ func pageFormats(format string, formats grabber.ConvertFormats, compress bool) (
 	for f := range formats {
 		always[f] = true
 	}
-	if format == FormatEPUB {
+	if format == FormatEPUB || format == FormatPDF {
 		always[grabber.ConvertAVIF] = true
+	}
+	if format == FormatPDF {
+		always[grabber.ConvertWebP] = true
 	}
 
 	whenSmaller = grabber.ConvertFormats{}
@@ -391,7 +397,7 @@ func namePages(pages []*downloader.File, always, whenSmaller grabber.ConvertForm
 				// bundling) over a single bad page, and naming undecodable
 				// bytes .jpg would only make the failure more confusing
 				_, shown := epubMediaTypes[ext]
-				if format != FormatEPUB || shown {
+				if (format != FormatEPUB || shown) && (format != FormatPDF || pdfSupportedExt[ext]) {
 					notice.Warn("- warning: page %03d: converting %s to jpeg: %s (keeping the original)", i, ext, err)
 				}
 			case !always.Has(ext) && len(converted) >= len(data):
@@ -438,6 +444,9 @@ func pack(outputdir, format, template, label string, parts FilenameTemplateParts
 		} else if format == FormatEPUB {
 			info.Title = filename
 			err = ArchiveEPUB(filepath.Join(outputdir, name), info, files, progress)
+		} else if format == FormatPDF {
+			info.Title = filename
+			err = ArchivePDF(filepath.Join(outputdir, name), info, files, progress)
 		} else if format == FormatCBR {
 			err = ArchiveCBR(filepath.Join(outputdir, name), files, progress)
 		} else {

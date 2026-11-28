@@ -3,7 +3,7 @@
 // controls can't overwrite each other's edits.
 
 import { browserSwitchOf } from './browserVisible';
-import { avifEpubHint, avifSwitchOf, convertFlagsOf, convertValueOf } from './convertImages';
+import { avifEpubHint, avifSwitchOf, convertFlagsOf, convertPdfHint, convertValueOf, webpSwitchOf } from './convertImages';
 import { Check, Segmented, Switch, TextField } from './fields';
 import { errorMessage } from './format';
 import type { T as Translator } from './i18n';
@@ -47,6 +47,7 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
   const locked = state.loading || state.running;
   const flags = convertFlagsOf(o.convertImages);
   const avif = avifSwitchOf(flags, o.format);
+  const webp = webpSwitchOf(flags, o.format);
   const browser = browserSwitchOf(state, t);
   const hints = packHints(t);
   const set = (patch: Partial<Options>) => {
@@ -102,11 +103,12 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
             { value: 'cbr', label: t('options.format.cbr') },
             { value: 'raw', label: t('options.format.raw') },
             { value: 'epub', label: t('options.format.epub') },
+            { value: 'pdf', label: t('options.format.pdf') },
           ]}
           onChange={(format) => set({ format })}
         />
 
-        {o.format === 'epub' && (
+        {(o.format === 'epub' || o.format === 'pdf') && (
           <div className="field-stack">
             <Segmented<Options['readingDirection']>
               label={t('options.readingDirection.label')}
@@ -154,11 +156,14 @@ export function OptionsPanel({ state, onOptions, onChooseFolder, onError }: Prop
             />
             <Check
               label={t('options.pages.webp')}
-              checked={flags.webp}
-              onChange={(webp) => set({ convertImages: convertValueOf({ ...flags, webp }) })}
+              checked={webp.checked}
+              disabled={webp.disabled}
+              onChange={(checked) => set({ convertImages: convertValueOf({ ...flags, webp: checked }) })}
             />
           </div>
-          <p className="hint">{o.format === 'epub' ? avifEpubHint(t) : t('options.pages.convertHint')}</p>
+          <p className="hint">
+            {o.format === 'epub' ? avifEpubHint(t) : o.format === 'pdf' ? convertPdfHint(t) : t('options.pages.convertHint')}
+          </p>
         </fieldset>
 
         <Switch

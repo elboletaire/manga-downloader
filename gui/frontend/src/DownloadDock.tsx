@@ -151,6 +151,7 @@ function destinations(t: Translator): Record<Options['format'], Record<PackAs, s
   const cbz = t('download.dest.cbzFiles');
   const cbr = t('download.dest.cbrFiles');
   const epub = t('download.dest.epubFiles');
+  const pdf = t('download.dest.pdfFiles');
   const raw = t('download.dest.rawFiles');
   return {
     cbz: { chapters: cbz, parts: cbz, volumes: t('download.dest.cbzPerVolume'), bundle: t('download.dest.cbzBundle') },
@@ -160,6 +161,12 @@ function destinations(t: Translator): Record<Options['format'], Record<PackAs, s
       parts: epub,
       volumes: t('download.dest.epubPerVolume'),
       bundle: t('download.dest.epubBundle'),
+    },
+    pdf: {
+      chapters: pdf,
+      parts: pdf,
+      volumes: t('download.dest.pdfPerVolume'),
+      bundle: t('download.dest.pdfBundle'),
     },
     raw: {
       chapters: raw,

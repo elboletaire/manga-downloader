@@ -225,7 +225,7 @@ func loadOptions(path string, s *grabber.Settings) error {
 	// an unknown format would only fail at Start, so fall back to the default now
 	o.Format = strings.ToLower(strings.TrimSpace(o.Format))
 	switch o.Format {
-	case packer.FormatCBZ, packer.FormatCBR, packer.FormatRaw, packer.FormatEPUB:
+	case packer.FormatCBZ, packer.FormatCBR, packer.FormatRaw, packer.FormatEPUB, packer.FormatPDF:
 	default:
 		notice.Warn("ignoring the saved format %q, using %q", o.Format, packer.FormatCBZ)
 		o.Format = packer.FormatCBZ

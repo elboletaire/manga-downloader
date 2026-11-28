@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { avifEpubHint, avifSwitchOf, convertFlagsOf, convertValueOf } from './convertImages';
+import { avifEpubHint, avifSwitchOf, convertFlagsOf, convertPdfHint, convertValueOf, webpSwitchOf } from './convertImages';
 import { createT } from './i18n';
 
 describe('convertFlagsOf and convertValueOf', () => {
@@ -34,15 +34,26 @@ describe('avifSwitchOf', () => {
     expect(avifSwitchOf({ avif: false, webp: true }, 'raw')).toEqual({ checked: false, disabled: false });
   });
 
-  it('shows AVIF checked and locked for EPUB, whatever the saved value', () => {
+  it('shows AVIF checked and locked for EPUB and PDF, whatever the saved value', () => {
     expect(avifSwitchOf({ avif: false, webp: false }, 'epub')).toEqual({ checked: true, disabled: true });
     expect(avifSwitchOf({ avif: false, webp: true }, 'epub')).toEqual({ checked: true, disabled: true });
+    expect(avifSwitchOf({ avif: false, webp: false }, 'pdf')).toEqual({ checked: true, disabled: true });
   });
 });
 
-describe('avifEpubHint', () => {
-  it('translates the EPUB note', () => {
+describe('webpSwitchOf', () => {
+  it('follows the saved value for non-PDF formats and locks on for PDF', () => {
+    expect(webpSwitchOf({ avif: true, webp: false }, 'cbz')).toEqual({ checked: false, disabled: false });
+    expect(webpSwitchOf({ avif: false, webp: true }, 'epub')).toEqual({ checked: true, disabled: false });
+    expect(webpSwitchOf({ avif: false, webp: false }, 'pdf')).toEqual({ checked: true, disabled: true });
+  });
+});
+
+describe('avifEpubHint and convertPdfHint', () => {
+  it('translates the EPUB and PDF notes', () => {
     expect(avifEpubHint(createT('en'))).toBe("Always on for EPUB: readers can't show AVIF.");
     expect(avifEpubHint(createT('ca'))).toBe('Sempre activat per a EPUB: els lectors no mostren AVIF.');
+    expect(convertPdfHint(createT('en'))).toBe('Always on for PDF: PDFs only embed JPEG and PNG.');
+    expect(convertPdfHint(createT('ca'))).toBe('Sempre activat per a PDF: els PDF només incrusten JPEG i PNG.');
   });
 });

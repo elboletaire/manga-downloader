@@ -18,7 +18,8 @@
     "cbz": "CBZ",
     "cbr": "CBR",
     "raw": "Carpeta",
-    "epub": "EPUB"
+    "epub": "EPUB",
+    "pdf": "PDF"
   },
   "readingDirection": {
     "label": "Sentit de lectura",
@@ -47,6 +48,7 @@
     "webp": "WebP",
     "convertHint": "La majoria de lectors electrònics no obren AVIF; WebP no és fiable en tinta electrònica.",
     "avifEpub": "Sempre activat per a EPUB: els lectors no mostren AVIF.",
+    "convertPdf": "Sempre activat per a PDF: els PDF només incrusten JPEG i PNG.",
     "compress": {
       "label": "Comprimeix pàgines",
       "hint": "Desa les pàgines en JPEG si així ocupen menys. Les pàgines JPEG només es redueixen abaixant la qualitat JPEG (a Avançat)."

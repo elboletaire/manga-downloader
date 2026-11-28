@@ -18,7 +18,8 @@
     "cbz": "CBZ",
     "cbr": "CBR",
     "raw": "Folder",
-    "epub": "EPUB"
+    "epub": "EPUB",
+    "pdf": "PDF"
   },
   "readingDirection": {
     "label": "Reading direction",
@@ -47,6 +48,7 @@
     "webp": "WebP",
     "convertHint": "Most e-readers can't open AVIF; WebP is unreliable on e-ink.",
     "avifEpub": "Always on for EPUB: readers can't show AVIF.",
+    "convertPdf": "Always on for PDF: PDFs only embed JPEG and PNG.",
     "compress": {
       "label": "Compress pages",
       "hint": "Saves pages as JPEG when that makes them smaller. JPEG pages only shrink at a lower JPEG quality, set under Advanced."

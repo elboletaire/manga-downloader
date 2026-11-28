@@ -39,19 +39,36 @@ export function avifEpubHint(t: T): string {
   return t('options.pages.avifEpub');
 }
 
+/** Shown under the conversion boxes while the format is PDF, which always converts AVIF and WebP */
+export function convertPdfHint(t: T): string {
+  return t('options.pages.convertPdf');
+}
+
 export interface AvifSwitch {
   checked: boolean;
   disabled: boolean;
 }
 
 /**
- * The AVIF box for a format. EPUB always converts AVIF whatever the saved
- * setting says, so the box shows checked and locked then; the saved value
- * itself is left alone.
+ * The AVIF box for a format. EPUB and PDF always convert AVIF whatever the
+ * saved setting says, so the box shows checked and locked then; the saved
+ * value itself is left alone.
  */
 export function avifSwitchOf(flags: ConvertFlags, format: string): AvifSwitch {
-  if (format === 'epub') {
+  if (format === 'epub' || format === 'pdf') {
     return { checked: true, disabled: true };
   }
   return { checked: flags.avif, disabled: false };
+}
+
+/**
+ * The WebP box for a format. PDF always converts WebP whatever the saved
+ * setting says, so the box shows checked and locked then; the saved value
+ * itself is left alone.
+ */
+export function webpSwitchOf(flags: ConvertFlags, format: string): AvifSwitch {
+  if (format === 'pdf') {
+    return { checked: true, disabled: true };
+  }
+  return { checked: flags.webp, disabled: false };
 }

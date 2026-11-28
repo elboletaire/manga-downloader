@@ -40,7 +40,7 @@ type Settings struct {
 	Scanlator string
 	// FilenameTemplate is the template for the filename
 	FilenameTemplate string
-	// Format is the desired output format ("cbz", "cbr", "raw" or "epub")
+	// Format is the desired output format ("cbz", "cbr", "raw", "epub" or "pdf")
 	Format string
 	// ReadingDirection is the way an EPUB's pages turn: "rtl" (manga) or "ltr".
 	// Only EPUB output reads it
@@ -113,7 +113,7 @@ type Site interface {
 	BaseUrl() string
 	// GetFilenameTemplate returns the filename template
 	GetFilenameTemplate() string
-	// GetFormat returns the desired output format ("cbz", "cbr", "raw" or "epub")
+	// GetFormat returns the desired output format ("cbz", "cbr", "raw", "epub" or "pdf")
 	GetFormat() string
 	// GetReadingDirection returns the way an EPUB's pages turn ("rtl" or "ltr")
 	GetReadingDirection() string
@@ -362,7 +362,7 @@ func (g Grabber) GetRetries() uint8 {
 	return g.Settings.Retry
 }
 
-// GetFormat returns the desired output format ("cbz", "cbr", "raw" or "epub")
+// GetFormat returns the desired output format ("cbz", "cbr", "raw", "epub" or "pdf")
 func (g Grabber) GetFormat() string {
 	return g.Settings.Format
 }

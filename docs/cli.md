@@ -110,7 +110,7 @@ on a French URL downloads the English edition when the site has one.
 
 `--bundle` packs every chapter you asked for into one file, with a folder per
 chapter inside, and `--format` picks what's written: CBZ (the default), CBR,
-EPUB, or `raw` for plain image folders. EPUB pages turn right to left unless
+EPUB, PDF, or `raw` for plain image folders. EPUB and PDF pages turn right to left unless
 `--reading-direction ltr` says otherwise.
 
 ~~~bash
@@ -125,6 +125,9 @@ manga-downloader --format raw [url] 1-8
 
 # EPUB e-books, read left to right (western comics)
 manga-downloader --format epub --reading-direction ltr [url] 1-8
+
+# PDF files
+manga-downloader --format pdf [url] 1-8
 ~~~
 
 <picture>
@@ -143,8 +146,8 @@ manga-downloader --volumes 1-7/8-16 [url] 1-20
 ~~~
 
 That writes `Series Vol. 01 (1-7).cbz` and `Series Vol. 02 (8-16).cbz` (`.cbr`
-with `--format cbr`, `.epub` with `--format epub`), with a folder per chapter
-inside. The parentheses list the chapters in the file as runs of the site's list
+with `--format cbr`, `.epub` with `--format epub`, `.pdf` with `--format pdf`), with a folder per chapter
+inside (multi-chapter PDFs add chapter outline bookmarks). The parentheses list the chapters in the file as runs of the site's list
 (`(1-10,13-28)` when 11 and 12 aren't in the volume, `(1,3)` when 2 failed), so
 two groupings of one volume number don't collide. Chapters 17 to 20, outside
 every volume, get one file each. The chapters argument still picks what's
@@ -200,10 +203,14 @@ JPEG, by `--convert-images` and `--compress` alike. JPEG pages only shrink
 noticeably at a lower quality, so `--compress --jpeg-quality 70` is the setting
 to try on a JPEG-heavy site; at 90 most of them come out bigger and are kept.
 
-EPUB is the exception, since readers can't show AVIF at all: AVIF pages are
+EPUB is an exception, since readers can't show AVIF at all: AVIF pages are
 always converted for it, even with `--convert-images none`. A page an EPUB can't
 show (anything but JPEG, PNG, GIF or WebP, such as an AVIF that failed to convert)
 is left out with a warning instead of being kept.
+
+PDF converts both AVIF and WebP pages to JPEG automatically (even with
+`--convert-images none`), embeds JPEG directly and PNG/GIF losslessly, and
+skips unreadable pages with a warning.
 
 > [!NOTE]
 > The AVIF decoder is embedded as WebAssembly, so you don't need to install any
@@ -360,8 +367,8 @@ the check.
 | `--output-dir`        | `-o`  | Folder to write the downloaded files to (created if missing)   | current folder |
 | `--bundle`            | `-b`  | Bundle all chapters into a single file                         | off            |
 | `--volumes`           |       | One file per volume: `auto`, `parts`, `1-7/8-16`               | off            |
-| `--format`            | `-f`  | Output format: `cbz`, `cbr`, `raw` or `epub`                   | `cbz`          |
-| `--reading-direction` |       | Page turn direction for EPUB: `rtl` (manga) or `ltr`           | `rtl`          |
+| `--format`            | `-f`  | Output format: `cbz`, `cbr`, `raw`, `epub` or `pdf`            | `cbz`          |
+| `--reading-direction` |       | Page turn direction for EPUB and PDF: `rtl` (manga) or `ltr`   | `rtl`          |
 | `--filename-template` | `-t`  | Template for the file names                                    | [see File names](#file-names) |
 | `--language`          | `-l`  | Only download the specified language                           | site default   |
 | `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)        | `all`          |
