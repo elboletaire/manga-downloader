@@ -100,6 +100,12 @@ differ: some list the whole series, others only a handful of chapters. A URL
 points at one edition, and `--language` downloads another one instead
 (`--language en` on a Spanish URL downloads the English edition).
 
+Anime-Sama also lists **one edition per URL**: a series' scans, its specials or
+colour edition (`scan_special`, `scan_noir-et-blanc`...) and each language (`vf`,
+`va`) are separate lists. A series page downloads its first scan edition and
+names the others; paste an edition's URL for it, and `--language va` (or `en`)
+on a French URL downloads the English edition when the site has one.
+
 ## Bundling and output format
 
 `--bundle` packs every chapter you asked for into one file, with a folder per

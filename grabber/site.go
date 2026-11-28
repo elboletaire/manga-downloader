@@ -183,6 +183,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewChikari(g),
 		NewRSCComic(g),
 		NewFmteam(g),
+		NewAnimeSama(g),
 		NewGenzToon(g),
 		NewMangaball(g),
 		NewMangadot(g),

@@ -174,6 +174,7 @@ grabber: \
 	grabber/anikiga \
 	grabber/animeallstar1 \
 	grabber/animeallstar30 \
+	grabber/animesama \
 	grabber/animeshinigami \
 	grabber/animexnovel \
 	grabber/apcomics \
@@ -920,6 +921,11 @@ grabber/chikari:
 	go run . https://chikari.moe/series/absolute-regression 1
 grabber/fmteam:
 	go run . https://fmteam.fr/comics/batuque 157
+# each scan edition (scan, scan_special, ...) and language (vf, va) is its own URL;
+# specials go through the same JSON endpoint, 25.5 is a short 6-page special
+grabber/animesama:
+	go run . https://anime-sama.to/catalogue/chainsaw-man/scan/vf/ 100
+	go run . https://anime-sama.to/catalogue/chainsaw-man/scan_special/vf/ 25.5
 # note: the newest 1-2 chapters can be "early access" (locked behind coins),
 # pick a chapter a bit behind the tip if this starts 404ing on pages
 grabber/genztoon:

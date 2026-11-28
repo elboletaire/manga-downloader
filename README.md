@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[586 supported sites](#supported-sites)**, from big aggregators to small
+- **[587 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 586 supported sites</b></summary>
+<summary><b>Show all 587 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -347,6 +347,7 @@ environment variables.
 | [allporncomic.io](https://allporncomic.io) | English, mostly NSFW | 2026-11-16 |
 | [amangaplanet.com.tr](https://www.amangaplanet.com.tr) | Turkish | 2026-11-11 |
 | [anikiga.com](https://anikiga.com) | Turkish | 2026-11-16 |
+| [anime-sama.to](https://anime-sama.to) | French, also English editions; each scan edition (specials, colour) has its own URL | 2026-11-28 |
 | [animeallstar1.com](https://www.animeallstar1.com) | AnimeAllStar, Spanish | 2026-11-11 |
 | [animeallstar30.com](https://animeallstar30.com) | AnimeAllStar, Spanish | 2026-11-16 |
 | [animeshinigami.com](https://www.animeshinigami.com) | Italian | 2026-11-16 |
