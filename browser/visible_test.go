@@ -382,3 +382,28 @@ func TestOnlyAMinimizedWindowIsRestored(t *testing.T) {
 		t.Error("needsRestore(nil) = true")
 	}
 }
+
+// a puzzle raises the window's alert at once, even in a window reused for
+// a later page, instead of after the first slow-render notice
+func TestPuzzleRaisesAttentionAtOnce(t *testing.T) {
+	_, _ = withFake(t)
+	got := attentions(t)
+	RequireVisible("example.com")
+
+	// the window's first load greets the user
+	if err := run(ok); err != nil {
+		t.Fatal(err)
+	}
+	if err := run(func(_ context.Context, h hooks) error {
+		h.attention()
+		if as := got(); !equalBools(actives(as), []bool{true, false, true}) {
+			t.Errorf("attentions during the puzzle = %+v, want it raised at once", as)
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if as := got(); !equalBools(actives(as), []bool{true, false, true, false}) {
+		t.Errorf("attentions = %+v, want the puzzle raised then ended with its load", as)
+	}
+}

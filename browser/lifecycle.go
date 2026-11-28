@@ -216,6 +216,9 @@ type hooks struct {
 	// rendered says the page is in, which stops the "still waiting" notices:
 	// what follows (scrolling, pagination) is slow by design
 	rendered func()
+	// attention raises the "browser needs you" alert at once, for a page
+	// waiting on the user (a puzzle); a no-op where no window needs the user
+	attention func()
 }
 
 // runPage runs op in the shared browser, starting it if needed. abort is the
@@ -353,8 +356,9 @@ func attempt(host, pageURL string, timeout time.Duration, abort context.Context,
 	go reportWaiting(waiting, host, b.headed, waitNoticeAfter, waitNoticeEvery, raise)
 
 	err := op(ctx, hooks{
-		rearm:    func(d time.Duration) { timer.Reset(d) },
-		rendered: rendered,
+		rearm:     func(d time.Duration) { timer.Reset(d) },
+		rendered:  rendered,
+		attention: raise,
 	})
 	switch {
 	case err == nil:
