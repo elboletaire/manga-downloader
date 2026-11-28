@@ -357,6 +357,7 @@ grabber: \
 	grabber/mangadenizi \
 	grabber/mangadex \
 	grabber/mangadelsiglotvmanga \
+	grabber/mangadot \
 	grabber/mangafire \
 	grabber/mangaforfree \
 	grabber/mangaforfreenet \
@@ -586,6 +587,8 @@ grabber/mgeko:
 	go run . https://www.mgeko.cc/manga/solo-leveling-mg1/ 198
 grabber/mangaball:
 	go run . https://mangaball.com/title-detail/baki-gaiden-shin-chiharu-6a5ffe5d90273b5b995225d2/ 1
+grabber/mangadot:
+	go run . https://mangadot.net/manga/229 112
 grabber/mangalib:
 	go run . https://mangalib.me/ru/manga/206--one-piece 1188
 grabber/mangadenizi:
