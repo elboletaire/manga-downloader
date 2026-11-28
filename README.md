@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[585 supported sites](#supported-sites)**, from big aggregators to small
+- **[586 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 585 supported sites</b></summary>
+<summary><b>Show all 586 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -639,6 +639,7 @@ environment variables.
 | [mangalivre.to](https://mangalivre.to) | Manga Livre, former mangalivre.tv/mangalivre.net | 2026-11-16 |
 | [mangalt.jp](https://mangalt.jp) | Japanese (Comici) | 2026-11-23 |
 | [mangamaniacs.org](https://mangamaniacs.org) | English, mostly NSFW, yaoi | 2026-11-16 |
+| [mangamoins.com](https://mangamoins.com) \* | MangaMoins, French | 2026-11-28 |
 | [manganato.gg](https://www.manganato.gg) \* | MangaNato | 2026-11-16 |
 | [manganel.me](https://manganel.me) | MangaNel, English | 2026-11-11 |
 | [mangaonline.fun](https://mangaonline.fun) | MangaOnline, English | 2026-11-11 |

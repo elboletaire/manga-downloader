@@ -1073,6 +1073,7 @@ grabber/browser: \
 	grabber/kappabeast \
 	grabber/linkmanga \
 	grabber/mangakakalot \
+	grabber/mangamoins \
 	grabber/manhuatop \
 	grabber/manhuaus \
 	grabber/natomanga \
@@ -1092,6 +1093,13 @@ grabber/toonily:
 # and the reader mounts its pages on scroll, so the pages come from the payload
 grabber/toonz:
 	go run . https://toonz.to/manhwa/just-because-youre-hungry-doesnt-mean-you-can-eat-anything 2
+
+# uses a real (visible) browser: headless never passes the Cloudflare check.
+# Pages come from the /api/v1/scan JSON over plain HTTP with the browser's
+# clearance; the second run resolves a chapter link to its series
+grabber/mangamoins:
+	go run . https://mangamoins.com/manga/one_piece 1150
+	go run . https://mangamoins.com/scan/OP01 1
 
 # uses a real (visible) browser: the Cloudflare challenge never passes headless
 grabber/vermanhwa:
