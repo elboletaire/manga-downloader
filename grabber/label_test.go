@@ -220,8 +220,10 @@ var chapterWordRe = regexp.MustCompile(`\b(Chapter|Chapitre|Capítulo|Bölüm|Ep
 // their own into titles: outside label.go, a string literal holding one must
 // be a pattern or a message, listed here with its reason
 func TestNoChapterWordOutsideLabels(t *testing.T) {
+	// keyed by file and literal: these files parse the site's own text
 	allowed := map[string]string{
-		`", Chapter "`: "chainsawmanonline parses the site's aria-label with it",
+		`chainsawmanonline.go: ", Chapter "`: "chainsawmanonline parses the site's aria-label with it",
+		`animesama.go: "Chapitre "`:          "animesama mirrors scans.js's option text",
 	}
 	files, err := filepath.Glob("*.go")
 	if err != nil {
@@ -250,7 +252,7 @@ func TestNoChapterWordOutsideLabels(t *testing.T) {
 			if !ok || lit.Kind != token.STRING || !chapterWordRe.MatchString(lit.Value) {
 				return true
 			}
-			if _, ok := allowed[lit.Value]; !ok {
+			if _, ok := allowed[name+": "+lit.Value]; !ok {
 				t.Errorf("%s: %s holds a chapter word; titles leave it to ChapterLabel", fset.Position(lit.Pos()), lit.Value)
 			}
 			return true

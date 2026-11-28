@@ -174,6 +174,7 @@ grabber: \
 	grabber/anikiga \
 	grabber/animeallstar1 \
 	grabber/animeallstar30 \
+	grabber/animesama \
 	grabber/animeshinigami \
 	grabber/animexnovel \
 	grabber/apcomics \
@@ -357,6 +358,7 @@ grabber: \
 	grabber/mangadenizi \
 	grabber/mangadex \
 	grabber/mangadelsiglotvmanga \
+	grabber/mangadot \
 	grabber/mangafire \
 	grabber/mangaforfree \
 	grabber/mangaforfreenet \
@@ -464,6 +466,7 @@ grabber: \
 	grabber/tonarinoyj \
 	grabber/toongodcc \
 	grabber/toonizy \
+	grabber/toonkotsu \
 	grabber/topcomicporno \
 	grabber/tortugaceviri \
 	grabber/trmangaoku \
@@ -586,6 +589,8 @@ grabber/mgeko:
 	go run . https://www.mgeko.cc/manga/solo-leveling-mg1/ 198
 grabber/mangaball:
 	go run . https://mangaball.com/title-detail/baki-gaiden-shin-chiharu-6a5ffe5d90273b5b995225d2/ 1
+grabber/mangadot:
+	go run . https://mangadot.net/manga/229 112
 grabber/mangalib:
 	go run . https://mangalib.me/ru/manga/206--one-piece 1188
 grabber/mangadenizi:
@@ -875,6 +880,11 @@ grabber/heavenmanga:
 grabber/weebcentral:
 	go run . https://weebcentral.com/series/01J76XYDXH7KT6AABVG3JAT3ZP/Shangri-La-Frontier 274
 
+# plain HTTP JSON API (/cdn/v1/series, /api/manga/chapter); the HTML is behind a
+# Cloudflare challenge, the API and CDN aren't. Pages are AES-CTR, decrypted locally
+grabber/toonkotsu:
+	go run . https://toonkotsu.com/title/vuymw7-momogusa-san-ga-monogusa-sugiru 37
+
 # plain HTTP only, the reader renders every page in the markup (no browser)
 grabber/leercapitulo:
 	go run . https://www.leercapitulo.co/manga/0cj9hhn6di/kingdom/ 883
@@ -917,6 +927,11 @@ grabber/chikari:
 	go run . https://chikari.moe/series/absolute-regression 1
 grabber/fmteam:
 	go run . https://fmteam.fr/comics/batuque 157
+# each scan edition (scan, scan_special, ...) and language (vf, va) is its own URL;
+# specials go through the same JSON endpoint, 25.5 is a short 6-page special
+grabber/animesama:
+	go run . https://anime-sama.to/catalogue/chainsaw-man/scan/vf/ 100
+	go run . https://anime-sama.to/catalogue/chainsaw-man/scan_special/vf/ 25.5
 # note: the newest 1-2 chapters can be "early access" (locked behind coins),
 # pick a chapter a bit behind the tip if this starts 404ing on pages
 grabber/genztoon:
@@ -1070,6 +1085,7 @@ grabber/browser: \
 	grabber/kappabeast \
 	grabber/linkmanga \
 	grabber/mangakakalot \
+	grabber/mangamoins \
 	grabber/manhuatop \
 	grabber/manhuaus \
 	grabber/natomanga \
@@ -1089,6 +1105,13 @@ grabber/toonily:
 # and the reader mounts its pages on scroll, so the pages come from the payload
 grabber/toonz:
 	go run . https://toonz.to/manhwa/just-because-youre-hungry-doesnt-mean-you-can-eat-anything 2
+
+# uses a real (visible) browser: headless never passes the Cloudflare check.
+# Pages come from the /api/v1/scan JSON over plain HTTP with the browser's
+# clearance; the second run resolves a chapter link to its series
+grabber/mangamoins:
+	go run . https://mangamoins.com/manga/one_piece 1150
+	go run . https://mangamoins.com/scan/OP01 1
 
 # uses a real (visible) browser: the Cloudflare challenge never passes headless
 grabber/vermanhwa:

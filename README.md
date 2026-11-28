@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[584 supported sites](#supported-sites)**, from big aggregators to small
+- **[588 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 584 supported sites</b></summary>
+<summary><b>Show all 588 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -347,6 +347,7 @@ environment variables.
 | [allporncomic.io](https://allporncomic.io) | English, mostly NSFW | 2026-11-16 |
 | [amangaplanet.com.tr](https://www.amangaplanet.com.tr) | Turkish | 2026-11-11 |
 | [anikiga.com](https://anikiga.com) | Turkish | 2026-11-16 |
+| [anime-sama.to](https://anime-sama.to) | French, also English editions; each scan edition (specials, colour) has its own URL | 2026-11-28 |
 | [animeallstar1.com](https://www.animeallstar1.com) | AnimeAllStar, Spanish | 2026-11-11 |
 | [animeallstar30.com](https://animeallstar30.com) | AnimeAllStar, Spanish | 2026-11-16 |
 | [animeshinigami.com](https://www.animeshinigami.com) | Italian | 2026-11-16 |
@@ -614,6 +615,7 @@ environment variables.
 | [mangadex.org](https://mangadex.org) | MangaDex | 2026-11-11 |
 | [mangadistrict.com](https://mangadistrict.com) | English, mostly NSFW | 2026-11-16 |
 | [mangadna.com](https://mangadna.com) | English, NSFW | 2026-11-16 |
+| [mangadot.net](https://mangadot.net) | MangaDot, multilingual | 2026-11-28 |
 | [mangaeclipse.com](https://mangaeclipse.com) | Manga Eclipse | 2026-11-16 |
 | [mangafire.to](https://mangafire.to) \* |  | 2026-10-29 |
 | [mangaforfree.com](https://mangaforfree.com) | English | 2026-11-16 |
@@ -638,6 +640,7 @@ environment variables.
 | [mangalivre.to](https://mangalivre.to) | Manga Livre, former mangalivre.tv/mangalivre.net | 2026-11-16 |
 | [mangalt.jp](https://mangalt.jp) | Japanese (Comici) | 2026-11-23 |
 | [mangamaniacs.org](https://mangamaniacs.org) | English, mostly NSFW, yaoi | 2026-11-16 |
+| [mangamoins.com](https://mangamoins.com) \* | MangaMoins, French | 2026-11-28 |
 | [manganato.gg](https://www.manganato.gg) \* | MangaNato | 2026-11-16 |
 | [manganel.me](https://manganel.me) | MangaNel, English | 2026-11-11 |
 | [mangaonline.fun](https://mangaonline.fun) | MangaOnline, English | 2026-11-11 |
@@ -840,6 +843,7 @@ environment variables.
 | [toonhunter.com](https://toonhunter.com) | Thai, mostly NSFW | 2026-11-09 |
 | [toonily.com](https://toonily.com) \* |  | 2026-10-15 |
 | [toonizy.com](https://toonizy.com) | English | 2026-11-16 |
+| [toonkotsu.com](https://toonkotsu.com) | English, several groups per chapter | 2026-11-28 |
 | [toonz.to](https://toonz.to) \* |  | 2026-10-25 |
 | [topcomicporno.com](https://topcomicporno.com) | Spanish, mostly NSFW | 2026-11-16 |
 | [tortugaceviri.com](https://tortugaceviri.com) | Tortuga Çeviri | 2026-11-16 |

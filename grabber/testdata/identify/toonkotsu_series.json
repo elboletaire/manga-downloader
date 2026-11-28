@@ -1,0 +1,123 @@
+{
+  "series": {
+    "id": 27934,
+    "title": "Momogusa-san ga Monogusa Sugiru!!",
+    "code": "vuymw7",
+    "originalLanguage": "ja",
+    "chapters": 41
+  },
+  "chapters": [
+    {
+      "id": 4972384,
+      "n": 37,
+      "label": "Chapter 37",
+      "vol": null,
+      "at": 1794026737503,
+      "pages": 20,
+      "w": 1200,
+      "f": "jpg",
+      "mb": 7.4,
+      "wm": 1200,
+      "bpp": 0.186,
+      "thumb": "/cdn/t/4972384/be5060f7.webp",
+      "src": "s9c35e1d534",
+      "group": {
+        "slug": "kdt-scans",
+        "name": "KDT SCANS"
+      },
+      "alts": [
+        {
+          "id": 4972755,
+          "src": "sb9c7e1dcf0",
+          "label": "Chapter 37",
+          "pages": 20,
+          "w": 1350,
+          "f": "webp",
+          "mb": 9.2,
+          "wm": 1284,
+          "bpp": 0.2,
+          "at": 1794041240000,
+          "group": {
+            "slug": "kdt-scans",
+            "name": "KDT SCANS"
+          }
+        }
+      ]
+    },
+    {
+      "id": 1841597,
+      "n": 1,
+      "label": "Chapter 1",
+      "vol": "1",
+      "at": 1751035570848,
+      "pages": 19,
+      "w": 1200,
+      "f": "jpg",
+      "mb": 7.8,
+      "wm": 1200,
+      "bpp": 0.204,
+      "thumb": "/cdn/t/1841597/a0caf2fe.webp",
+      "src": "s9c35e1d534",
+      "group": {
+        "slug": "vikala-scans",
+        "name": "Vikala Scans",
+        "logo": "/cdn/g/2653/mvw23j4u/64.webp"
+      },
+      "alts": [
+        {
+          "id": 20025,
+          "src": "sb9c7e1dcf0",
+          "label": "Chapter 1",
+          "pages": 19,
+          "w": 1500,
+          "f": "webp",
+          "mb": 6.2,
+          "wm": 1500,
+          "bpp": 0.106,
+          "at": 1773329295000,
+          "group": {
+            "slug": "kdt-scans",
+            "name": "KDT SCANS"
+          }
+        },
+        {
+          "id": 3277279,
+          "src": "sa20bb4ff20",
+          "label": "Chapter 1",
+          "pages": 19,
+          "w": 1500,
+          "f": "jpg",
+          "mb": 24.6,
+          "wm": 1500,
+          "bpp": 0.418,
+          "at": 1739273813000,
+          "group": {
+            "slug": "vikala-scans",
+            "name": "Vikala Scans",
+            "logo": "/cdn/g/2653/mvw23j4u/64.webp"
+          }
+        }
+      ]
+    },
+    {
+      "id": 4578328,
+      "n": 1133,
+      "label": "Chapter 1133: Nice Things",
+      "vol": "111",
+      "group": {
+        "name": "Official"
+      },
+      "alts": []
+    },
+    {
+      "id": 4575274,
+      "n": null,
+      "label": "Side Story 15",
+      "vol": null,
+      "group": {
+        "name": "Official"
+      },
+      "alts": []
+    }
+  ]
+}
