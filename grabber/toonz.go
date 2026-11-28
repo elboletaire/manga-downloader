@@ -6,20 +6,33 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/elboletaire/manga-downloader/browser"
+	"github.com/elboletaire/manga-downloader/http"
 )
 
-// Toonz is a grabber for toonz.to, a Next.js site behind a Turnstile challenge
-// that only a visible browser passes. Its reader mounts <img> tags on scroll,
-// so the page filenames come from the chapter's RSC payload instead.
+// Toonz is a grabber for toonz.to and its sister toonx.to, a Next.js site behind
+// Cloudflare. The full chapter list comes from the API behind the series page's
+// "Show all" button, the pages from the reader's RSC payload.
 type Toonz struct {
 	*Grabber
 	series *toonzSeries
+
+	// sessionMu serialises the session refreshes; generation counts them, so
+	// chapters that fail together render the series page once. A failed refresh
+	// is kept in refreshErr for the rest of the run.
+	sessionMu  sync.Mutex
+	generation int
+	refreshErr error
+	// get and render are the network steps of a reader fetch, replaced in tests
+	get    func(rawURL, referer string) ([]byte, error)
+	render func(seriesURL string) error
 }
 
 // headless never passes its Turnstile challenge, so skip the doomed probe
@@ -29,7 +42,9 @@ func init() {
 
 // NewToonz returns a new Toonz grabber
 func NewToonz(g *Grabber) *Toonz {
-	return &Toonz{Grabber: g}
+	t := &Toonz{Grabber: g, get: toonzGet}
+	t.render = t.renderSeries
+	return t
 }
 
 // ToonzChapter represents a toonz.to chapter
@@ -38,16 +53,23 @@ type ToonzChapter struct {
 	URL string
 }
 
-// toonzChapterRe matches a reader URL (/manhwa/{slug}/chapter/{n}) and captures the series URL
-var toonzChapterRe = regexp.MustCompile(`(?i)^(https?://[^/]+/manhwa/[^/?#]+)/chapter/`)
+// toonzChapterRe matches a reader URL (/{category}/{slug}/chapter/{n}) and captures the series URL
+var toonzChapterRe = regexp.MustCompile(`(?i)^(https?://[^/]+/(?:manga|manhwa|adult)/[^/?#]+)/chapter/`)
 
-// toonzCountRe extracts the site's own chapter count from the series payload
-var toonzCountRe = regexp.MustCompile(`"chapterCount":(\d+)`)
+// toonzSlugRe captures the series slug out of a series URL
+var toonzSlugRe = regexp.MustCompile(`(?i)/(?:manga|manhwa|adult)/([^/?#]+)`)
 
-// Test returns true if the URL is a toonz.to URL. It only checks the hostname
-// (no fetch), since starting a browser is expensive.
+// toonzCountRe extracts the site's own chapter count from the series payload: the
+// one right after the initialChapters array, not a related card's
+var toonzCountRe = regexp.MustCompile(`\],"chapterCount":(\d+)`)
+
+// toonzComicRe captures the ID and slug of every comic card on a series page
+var toonzComicRe = regexp.MustCompile(`"comicId":(\d+),"comicSlug":"([^"]+)"`)
+
+// Test returns true if the URL is a toonz.to or toonx.to URL. It only checks the
+// hostname (no fetch), since starting a browser is expensive.
 func (t *Toonz) Test() (bool, error) {
-	return hostMatchesDomain(t.URL, "toonz.to"), nil
+	return hostMatchesDomain(t.URL, "toonz.to") || hostMatchesDomain(t.URL, "toonx.to"), nil
 }
 
 // resolveSeriesURL rewrites a reader URL to the series URL. No-op for series URLs.
@@ -100,19 +122,22 @@ func (t *Toonz) FetchChapters() (Filterables, []error) {
 	return chapters, nil
 }
 
-// FetchChapter renders the reader page and returns its pages
+// FetchChapter fetches the reader page and returns its pages
 func (t *Toonz) FetchChapter(f Filterable) (*Chapter, error) {
 	tchap, ok := f.(*ToonzChapter)
 	if !ok {
 		return nil, errors.New("invalid chapter type")
 	}
 
-	body, err := browser.GetHTML(tchap.URL, "[data-page-index]", 0)
+	// plain HTTP is enough once the series page has been rendered: the reader
+	// ships its pages in the payload, and the browser wait selector only fit
+	// some readers (/manga/ ones have no [data-page-index])
+	body, err := t.readerPage(tchap.URL)
 	if err != nil {
 		return nil, err
 	}
 
-	filenames, err := toonzChapterImages(body)
+	filenames, err := toonzChapterImages(string(body))
 	if err != nil {
 		return nil, err
 	}
@@ -140,13 +165,13 @@ func (t *Toonz) FetchChapter(f Filterable) (*Chapter, error) {
 	return chapter, nil
 }
 
-// toonzSeries is what the series page's payload gives: the title and the chapter list
+// toonzSeries is what the series page gives: the title and the chapter list
 type toonzSeries struct {
 	title    string
 	chapters []toonzListedChapter
 }
 
-// toonzListedChapter is one entry of the series payload's initialChapters
+// toonzListedChapter is one entry of the chapter API's list
 type toonzListedChapter struct {
 	ID            int64  `json:"id"`
 	ChapterNumber string `json:"chapterNumber"`
@@ -172,17 +197,28 @@ func (t *Toonz) fetchSeries() (*toonzSeries, error) {
 		return nil, err
 	}
 
-	chapters, err := toonzSeriesChapters(body)
+	stream, err := nextFlightStream(body)
 	if err != nil {
 		return nil, err
 	}
 
-	// the list is the site's full one today; a shorter one means it started
-	// paginating, so fail loudly instead of silently missing chapters
-	if m := toonzCountRe.FindStringSubmatch(body); len(m) > 1 {
-		if total, err := strconv.Atoi(m[1]); err == nil && len(chapters) < total {
-			return nil, fmt.Errorf("the chapter list is incomplete (%d of %d chapters)", len(chapters), total)
-		}
+	comicID, err := toonzComicID(stream, t.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	total, err := toonzChapterCount(stream)
+	if err != nil {
+		return nil, err
+	}
+
+	chapters, err := t.fetchChapterList(comicID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := checkToonzCount(len(chapters), total); err != nil {
+		return nil, err
 	}
 
 	t.series = &toonzSeries{
@@ -193,35 +229,133 @@ func (t *Toonz) fetchSeries() (*toonzSeries, error) {
 	return t.series, nil
 }
 
-// toonzSeriesChapters extracts the initialChapters list out of a series page's
-// RSC flight payload. The list's first entry is a reference to another part of
-// the payload rather than a chapter, so the entries that aren't objects are skipped.
-func toonzSeriesChapters(html string) ([]toonzListedChapter, error) {
-	stream, err := nextFlightStream(html)
+// readerPage fetches a reader page over plain HTTP. A 403 or 503 means the
+// Cloudflare clearance expired (a long run, or a series the app loaded earlier),
+// so the series page is rendered again and the GET retried once.
+func (t *Toonz) readerPage(rawURL string) ([]byte, error) {
+	t.sessionMu.Lock()
+	seen := t.generation
+	t.sessionMu.Unlock()
+
+	body, err := t.get(rawURL, t.URL)
+	if !toonzSessionExpired(err) {
+		return body, err
+	}
+
+	if err := t.refreshSession(seen); err != nil {
+		return nil, err
+	}
+
+	return t.get(rawURL, t.URL)
+}
+
+// refreshSession renders the series page unless another chapter already did
+// since seen was read, so concurrent chapters trigger a single render. A failed
+// render is returned to every chapter that asks for the rest of the run.
+func (t *Toonz) refreshSession(seen int) error {
+	t.sessionMu.Lock()
+	defer t.sessionMu.Unlock()
+
+	if t.refreshErr != nil {
+		return t.refreshErr
+	}
+	if t.generation != seen {
+		return nil
+	}
+
+	t.refreshErr = t.render(t.URL)
+	t.generation++
+
+	return t.refreshErr
+}
+
+// renderSeries renders the series page in the browser, which harvests its cookies
+func (t *Toonz) renderSeries(seriesURL string) error {
+	_, err := browser.GetHTML(seriesURL, `a[href*="/chapter/"]`, 0)
+	return err
+}
+
+// toonzSessionExpired reports whether err is a response that a fresh session would fix
+func toonzSessionExpired(err error) bool {
+	var status *http.StatusError
+	return errors.As(err, &status) && (status.Code == 403 || status.Code == 503)
+}
+
+// toonzGet fetches a URL over plain HTTP with the harvested session
+func toonzGet(rawURL, referer string) ([]byte, error) {
+	body, err := http.Get(http.RequestParams{URL: rawURL, Referer: referer})
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+
+	return io.ReadAll(body)
+}
+
+// fetchChapterList reads a series' full chapter list from the JSON API its
+// "Show all" button calls, with the session the series page harvested
+func (t *Toonz) fetchChapterList(comicID string) ([]toonzListedChapter, error) {
+	body, err := http.Get(http.RequestParams{URL: t.BaseUrl() + "/api/comics/" + comicID + "/chapters", Referer: t.URL})
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+
+	data, err := io.ReadAll(body)
 	if err != nil {
 		return nil, err
 	}
 
-	raw, err := extractBalancedJSON(stream, `"initialChapters":`)
-	if err != nil {
+	return parseToonzChapterList(data)
+}
+
+// parseToonzChapterList decodes the chapter API's {"chapters": [...]} response
+func parseToonzChapterList(data []byte) ([]toonzListedChapter, error) {
+	var payload struct {
+		Chapters []toonzListedChapter `json:"chapters"`
+	}
+	if err := json.Unmarshal(data, &payload); err != nil {
 		return nil, err
 	}
 
-	var entries []json.RawMessage
-	if err := json.Unmarshal([]byte(raw), &entries); err != nil {
-		return nil, err
+	return payload.Chapters, nil
+}
+
+// toonzComicID reads the series' comic ID out of the payload. Other comics'
+// cards share the page, so the ID is the one beside this series' slug.
+func toonzComicID(stream, seriesURL string) (string, error) {
+	m := toonzSlugRe.FindStringSubmatch(seriesURL)
+	if m == nil {
+		return "", fmt.Errorf("no series slug in %s", seriesURL)
 	}
 
-	var chapters []toonzListedChapter
-	for _, entry := range entries {
-		var c toonzListedChapter
-		if err := json.Unmarshal(entry, &c); err != nil {
-			continue
+	for _, card := range toonzComicRe.FindAllStringSubmatch(stream, -1) {
+		if strings.EqualFold(card[2], m[1]) {
+			return card[1], nil
 		}
-		chapters = append(chapters, c)
 	}
 
-	return chapters, nil
+	return "", errors.New("could not find the series' comic ID on its page")
+}
+
+// toonzChapterCount reads the site's own chapter count out of the series payload
+func toonzChapterCount(stream string) (int, error) {
+	m := toonzCountRe.FindStringSubmatch(stream)
+	if m == nil {
+		return 0, errors.New("could not find the chapter count on the series page")
+	}
+
+	return strconv.Atoi(m[1])
+}
+
+// checkToonzCount fails a list shorter than the site's own count, so a partial
+// list (a paginated API, a short response) never passes silently
+func checkToonzCount(listed, total int) error {
+	if listed < total {
+		return fmt.Errorf("the chapter list is incomplete (%d of %d chapters)", listed, total)
+	}
+
+	return nil
 }
 
 // toonzChapterImages extracts the filenames (relative to /uploads/) of a

@@ -34,7 +34,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 
 ## Features
 
-- **[588 supported sites](#supported-sites)**, from big aggregators to small
+- **[589 supported sites](#supported-sites)**, from big aggregators to small
   scanlation groups.
 - In the app, **paste a URL and it loads**: the series, its chapters and the
   languages and scanlation groups it offers appear on their own.
@@ -328,7 +328,7 @@ environment variables.
 ## Supported sites
 
 <details>
-<summary><b>Show all 588 supported sites</b></summary>
+<summary><b>Show all 589 supported sites</b></summary>
 <br>
 
 | Site | Notes | Last verified |
@@ -844,7 +844,8 @@ environment variables.
 | [toonily.com](https://toonily.com) \* |  | 2026-10-15 |
 | [toonizy.com](https://toonizy.com) | English | 2026-11-16 |
 | [toonkotsu.com](https://toonkotsu.com) | English, several groups per chapter | 2026-11-28 |
-| [toonz.to](https://toonz.to) \* |  | 2026-10-25 |
+| [toonx.to](https://toonx.to) \* | mostly NSFW | 2026-11-28 |
+| [toonz.to](https://toonz.to) \* |  | 2026-11-28 |
 | [topcomicporno.com](https://topcomicporno.com) | Spanish, mostly NSFW | 2026-11-16 |
 | [tortugaceviri.com](https://tortugaceviri.com) | Tortuga Çeviri | 2026-11-16 |
 | [tritinia.org](https://tritinia.org) | Tritinia Scans | 2026-11-16 |

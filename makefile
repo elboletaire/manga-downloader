@@ -1096,6 +1096,7 @@ grabber/browser: \
 	grabber/teamshadowi \
 	grabber/toongod \
 	grabber/toonily \
+	grabber/toonx \
 	grabber/toonz \
 	grabber/vermanhwa
 
@@ -1105,6 +1106,11 @@ grabber/toonily:
 # and the reader mounts its pages on scroll, so the pages come from the payload
 grabber/toonz:
 	go run . https://toonz.to/manhwa/just-because-youre-hungry-doesnt-mean-you-can-eat-anything 2
+	go run . https://toonz.to/manga/one-piece-9plei 1000
+
+# the sister domain of toonz.to: it loaded headless in the browser, so no visible window
+grabber/toonx:
+	go run . https://toonx.to/adult/big-brother 1
 
 # uses a real (visible) browser: headless never passes the Cloudflare check.
 # Pages come from the /api/v1/scan JSON over plain HTTP with the browser's
@@ -2426,7 +2432,7 @@ SMOKE_EXCLUDE += mangitto lilymanga mangaplus
 # 429, reset, 530, a non-blog page or a stalled origin from GitHub's runners, while they pass locally
 SMOKE_EXCLUDE += ler999 lonertl mangaailand mangadelsiglotvmanga mangabats legionscans asialotuss mangastep
 # headless-browser grabbers, kept off the runners (most for challenges they can't get past)
-SMOKE_EXCLUDE += comix mkissa templetoons mangafire toonz coffeemanga
+SMOKE_EXCLUDE += comix mkissa templetoons mangafire toonz toonx coffeemanga
 # 403 outside Japan: smoke-japan checks them from a runner there (smoke.yaml)
 SMOKE_JAPAN = asacomi bibibicomic bigcomics championcross comicgrowl comicroombase comicryu jnbooks comicride comici mangabang comirela gcomi hanayume hayacomic comicheros kansai kimicomi mangazegra mangabu mangalt nikkanspa namicomic piacomic rimacomiplus booklista takecomic younganimal youngchampion
 SMOKE_EXCLUDE += $(SMOKE_JAPAN)
