@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { scrollToReveal, visibleSpan } from './virtual';
+import { scrollToCenter, scrollToReveal, visibleSpan } from './virtual';
 
 describe('visibleSpan', () => {
   it('renders the rows in view plus the overscan', () => {
@@ -36,5 +36,21 @@ describe('scrollToReveal', () => {
   it('scrolls down just enough for a row below the view', () => {
     // row 12 ends at 390; a 300 view must start at 90
     expect(scrollToReveal(12, 30, 0, 300)).toBe(90);
+  });
+});
+
+describe('scrollToCenter', () => {
+  it('puts the row in the middle of the view', () => {
+    // row 50 spans 1500-1530; a 300px view centred on it starts at 1365
+    expect(scrollToCenter(50, 30, 300, 100)).toBe(1365);
+  });
+
+  it('stops at the top and at the bottom of the list', () => {
+    expect(scrollToCenter(1, 30, 300, 100)).toBe(0);
+    expect(scrollToCenter(99, 30, 300, 100)).toBe(2700);
+  });
+
+  it('stays at the top when the list fits the view', () => {
+    expect(scrollToCenter(3, 30, 300, 5)).toBe(0);
   });
 });

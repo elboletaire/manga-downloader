@@ -208,6 +208,8 @@ export interface Chapter {
   wholeTitle?: string;
   /** The site lists it without a number: a parts run packs it alone */
   unnumbered?: boolean;
+  /** The volume the loaded volume link names: it starts selected, and the list opens on it */
+  linked?: boolean;
 }
 
 export interface LogLine {
