@@ -11,6 +11,7 @@ manga-downloader-gui
 manga-downloader-gui.exe
 .pnpm-store/
 *.epub
+*.pdf
 smoke-results.txt
 
 # copied from assets/demos by website/vite.config.ts (siteDemos)

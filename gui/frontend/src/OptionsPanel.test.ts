@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { createMockApi, templateWarning } from './mock';
-import { avifEpubHint } from './convertImages';
+import { avifEpubHint, convertPdfHint } from './convertImages';
 import { createT } from './i18n';
 import { I18nProvider } from './i18n/react';
 import { OptionsPanel, packHints } from './OptionsPanel';
@@ -69,11 +69,18 @@ describe('Pack as volumes hint', () => {
 });
 
 describe('Format', () => {
-  it('offers CBR next to CBZ, under its own name', async () => {
+  it('offers CBR next to CBZ and PDF after EPUB', async () => {
     const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
     const markup = options(base);
     expect(markup.indexOf('>CBR<')).toBeGreaterThan(markup.indexOf('>CBZ<'));
     expect(markup.indexOf('>CBR<')).toBeLessThan(markup.indexOf('>EPUB<'));
+    expect(markup.indexOf('>EPUB<')).toBeLessThan(markup.indexOf('>PDF<'));
+  });
+
+  it('shows Reading direction for PDF as well as EPUB', async () => {
+    const base = await createMockApi({ scenario: 'empty', freeze: true }).state();
+    expect(options({ ...base, options: { ...base.options, format: 'pdf' } })).toContain('Reading direction');
+    expect(options({ ...base, options: { ...base.options, format: 'cbz' } })).not.toContain('Reading direction');
   });
 });
 
@@ -84,6 +91,11 @@ describe('AVIF under Convert to JPEG', () => {
     return match ? match[0] : '';
   }
 
+  function webpInput(markup: string): string {
+    const match = markup.match(/<input[^>]*type="checkbox"[^>]*\/>\s*<span>WebP<\/span>/);
+    return match ? match[0] : '';
+  }
+
   it('is checked and locked, with the EPUB hint, when the format is EPUB', async () => {
     const base = await createMockApi({ scenario: 'loaded', freeze: true }).state();
     const state: State = { ...base, options: { ...base.options, format: 'epub', convertImages: 'none' } };
@@ -91,6 +103,17 @@ describe('AVIF under Convert to JPEG', () => {
     expect(avifInput(markup)).toMatch(/checked=""/);
     expect(avifInput(markup)).toMatch(/disabled=""/);
     expect(markup).toContain(avifEpubHint(en).replace("'", '&#x27;'));
+  });
+
+  it('locks both AVIF and WebP on with the PDF hint when the format is PDF', async () => {
+    const base = await createMockApi({ scenario: 'loaded', freeze: true }).state();
+    const state: State = { ...base, options: { ...base.options, format: 'pdf', convertImages: 'none' } };
+    const markup = options(state);
+    expect(avifInput(markup)).toMatch(/checked=""/);
+    expect(avifInput(markup)).toMatch(/disabled=""/);
+    expect(webpInput(markup)).toMatch(/checked=""/);
+    expect(webpInput(markup)).toMatch(/disabled=""/);
+    expect(markup).toContain(convertPdfHint(en).replace("'", '&#x27;'));
   });
 
   it('follows the saved value for the other formats', async () => {

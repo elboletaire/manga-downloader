@@ -40,10 +40,10 @@ type Settings struct {
 	Scanlator string
 	// FilenameTemplate is the template for the filename
 	FilenameTemplate string
-	// Format is the desired output format ("cbz", "cbr", "raw" or "epub")
+	// Format is the desired output format ("cbz", "cbr", "raw", "epub" or "pdf")
 	Format string
-	// ReadingDirection is the way an EPUB's pages turn: "rtl" (manga) or "ltr".
-	// Only EPUB output reads it
+	// ReadingDirection is the way pages are ordered in EPUB (page turns) and
+	// PDF (two-page spreads): "rtl" (manga) or "ltr". Only EPUB and PDF outputs read it
 	ReadingDirection string
 	// ConvertImages is the comma separated list of source image formats to
 	// transcode to JPEG when packing ("avif", "avif,webp" or "none"), so pages
@@ -113,9 +113,9 @@ type Site interface {
 	BaseUrl() string
 	// GetFilenameTemplate returns the filename template
 	GetFilenameTemplate() string
-	// GetFormat returns the desired output format ("cbz", "cbr", "raw" or "epub")
+	// GetFormat returns the desired output format ("cbz", "cbr", "raw", "epub" or "pdf")
 	GetFormat() string
-	// GetReadingDirection returns the way an EPUB's pages turn ("rtl" or "ltr")
+	// GetReadingDirection returns the reading direction for EPUB and PDF ("rtl" or "ltr")
 	GetReadingDirection() string
 	// GetConvertImages returns the set of source image formats to transcode to
 	// JPEG when packing
@@ -362,12 +362,12 @@ func (g Grabber) GetRetries() uint8 {
 	return g.Settings.Retry
 }
 
-// GetFormat returns the desired output format ("cbz", "cbr", "raw" or "epub")
+// GetFormat returns the desired output format ("cbz", "cbr", "raw", "epub" or "pdf")
 func (g Grabber) GetFormat() string {
 	return g.Settings.Format
 }
 
-// GetReadingDirection returns the way an EPUB's pages turn ("rtl" or "ltr")
+// GetReadingDirection returns the reading direction for EPUB and PDF ("rtl" or "ltr")
 func (g Grabber) GetReadingDirection() string {
 	return g.Settings.ReadingDirection
 }

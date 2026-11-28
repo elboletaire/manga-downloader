@@ -39,19 +39,19 @@ func (e *SettingError) Unwrap() error { return e.Err }
 // direction in s.
 func Validate(s *grabber.Settings) ([]ranges.Range, error) {
 	s.Format = strings.ToLower(strings.TrimSpace(s.Format))
-	if s.Format != packer.FormatCBZ && s.Format != packer.FormatCBR && s.Format != packer.FormatRaw && s.Format != packer.FormatEPUB {
+	if s.Format != packer.FormatCBZ && s.Format != packer.FormatCBR && s.Format != packer.FormatRaw && s.Format != packer.FormatEPUB && s.Format != packer.FormatPDF {
 		return nil, &SettingError{
 			Setting: "format",
 			Value:   s.Format,
-			Err:     fmt.Errorf("must be %q, %q, %q or %q", packer.FormatCBZ, packer.FormatCBR, packer.FormatRaw, packer.FormatEPUB),
+			Err:     fmt.Errorf("must be %q, %q, %q, %q or %q", packer.FormatCBZ, packer.FormatCBR, packer.FormatRaw, packer.FormatEPUB, packer.FormatPDF),
 		}
 	}
 
 	s.ReadingDirection = packer.NormalizeReadingDirection(s.ReadingDirection)
-	// only EPUB output reads the direction, so only an EPUB is refused over it.
+	// only EPUB and PDF outputs read the direction, so only those are refused over it.
 	// Empty means the default, as the settings of a caller that never set it
 	// (or a saved file from before it existed) mean
-	if d := s.ReadingDirection; s.Format == packer.FormatEPUB && d != "" && d != packer.ReadingDirectionRTL && d != packer.ReadingDirectionLTR {
+	if d := s.ReadingDirection; (s.Format == packer.FormatEPUB || s.Format == packer.FormatPDF) && d != "" && d != packer.ReadingDirectionRTL && d != packer.ReadingDirectionLTR {
 		return nil, &SettingError{
 			Setting: "reading-direction",
 			Value:   d,

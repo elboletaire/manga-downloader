@@ -364,10 +364,10 @@ func TestStartValidatesBeforeDownloading(t *testing.T) {
 	}
 
 	c.SetAll(true)
-	if err := c.Configure(func(s *grabber.Settings) { s.Format = "pdf" }); err != nil {
+	if err := c.Configure(func(s *grabber.Settings) { s.Format = "mobi" }); err != nil {
 		t.Fatal(err)
 	}
-	if err := c.Start(); err == nil || !strings.Contains(err.Error(), "pdf") {
+	if err := c.Start(); err == nil || !strings.Contains(err.Error(), "mobi") {
 		t.Errorf("Start with a bad format = %v, want a format error", err)
 	}
 	if c.Running() {

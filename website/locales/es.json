@@ -1,17 +1,17 @@
 {
   "meta": {
     "title": "manga downloader: descargar manga en CBZ o EPUB",
-    "description_one": "App de escritorio y CLI gratuita para descargar manga de MangaDex y {{count}} sitio más en CBZ, CBR o EPUB para e-readers. Windows, macOS y Linux.",
-    "description_other": "App de escritorio y CLI gratuita para descargar manga de MangaDex y {{count}} sitios más en CBZ, CBR o EPUB para e-readers. Windows, macOS y Linux.",
+    "description_one": "App de escritorio y CLI gratuita para descargar manga de MangaDex y {{count}} sitio más en CBZ, CBR, EPUB o PDF para e-readers. Windows, macOS y Linux.",
+    "description_other": "App de escritorio y CLI gratuita para descargar manga de MangaDex y {{count}} sitios más en CBZ, CBR, EPUB o PDF para e-readers. Windows, macOS y Linux.",
     "socialTitle": "manga downloader: capítulos de manga → CBZ y EPUB listos para leer",
-    "socialDescription_one": "Descarga manga de MangaDex y {{count}} sitio más en archivos CBZ, CBR o EPUB para tu e-reader o tu app de cómics. App de escritorio y CLI, gratis y de código abierto.",
-    "socialDescription_other": "Descarga manga de MangaDex y {{count}} sitios más en archivos CBZ, CBR o EPUB para tu e-reader o tu app de cómics. App de escritorio y CLI, gratis y de código abierto.",
+    "socialDescription_one": "Descarga manga de MangaDex y {{count}} sitio más en archivos CBZ, CBR, EPUB o PDF para tu e-reader o tu app de cómics. App de escritorio y CLI, gratis y de código abierto.",
+    "socialDescription_other": "Descarga manga de MangaDex y {{count}} sitios más en archivos CBZ, CBR, EPUB o PDF para tu e-reader o tu app de cómics. App de escritorio y CLI, gratis y de código abierto.",
     "imageAlt": "La mascota de manga downloader, un libro abierto con forma de gato, junto al lema «Capítulos de manga → CBZ y EPUB listos para leer».",
-    "jsonLdDescription_one": "Aplicación de escritorio y herramienta de línea de comandos que descarga capítulos de manga de MangaDex y {{count}} sitio más y los empaqueta en archivos CBZ, CBR o EPUB para e-readers y apps de cómics.",
-    "jsonLdDescription_other": "Aplicación de escritorio y herramienta de línea de comandos que descarga capítulos de manga de MangaDex y {{count}} sitios más y los empaqueta en archivos CBZ, CBR o EPUB para e-readers y apps de cómics.",
+    "jsonLdDescription_one": "Aplicación de escritorio y herramienta de línea de comandos que descarga capítulos de manga de MangaDex y {{count}} sitio más y los empaqueta en archivos CBZ, CBR, EPUB o PDF para e-readers y apps de cómics.",
+    "jsonLdDescription_other": "Aplicación de escritorio y herramienta de línea de comandos que descarga capítulos de manga de MangaDex y {{count}} sitios más y los empaqueta en archivos CBZ, CBR, EPUB o PDF para e-readers y apps de cómics.",
     "features": {
       "downloads": "Descarga capítulos de manga de MangaDex y de muchos otros sitios compatibles",
-      "packs": "Empaqueta los capítulos en archivos CBZ, CBR o EPUB para e-readers y apps de cómics",
+      "packs": "Empaqueta los capítulos en archivos CBZ, CBR, EPUB o PDF para e-readers y apps de cómics",
       "apps": "Una app de escritorio y una herramienta de línea de comandos"
     }
   },
@@ -31,8 +31,8 @@
   },
   "hero": {
     "title": "Descarga manga <span class=\"arrow\">→</span> <span class=\"accent\">CBZ y EPUB listos para leer</span>",
-    "lede_one": "manga downloader es una app gratuita y de código abierto que descarga manga de MangaDex y de {{count}} sitio compatible más. Pega un enlace, elige los capítulos y consigue archivos CBZ, CBR o EPUB limpios para leer sin conexión en tu e-reader o en tu app de cómics favorita.",
-    "lede_other": "manga downloader es una app gratuita y de código abierto que descarga manga de MangaDex y de otros {{count}} sitios compatibles. Pega un enlace, elige los capítulos y consigue archivos CBZ, CBR o EPUB limpios para leer sin conexión en tu e-reader o en tu app de cómics favorita.",
+    "lede_one": "manga downloader es una app gratuita y de código abierto que descarga manga de MangaDex y de {{count}} sitio compatible más. Pega un enlace, elige los capítulos y consigue archivos CBZ, CBR, EPUB o PDF limpios para leer sin conexión en tu e-reader o en tu app de cómics favorita.",
+    "lede_other": "manga downloader es una app gratuita y de código abierto que descarga manga de MangaDex y de otros {{count}} sitios compatibles. Pega un enlace, elige los capítulos y consigue archivos CBZ, CBR, EPUB o PDF limpios para leer sin conexión en tu e-reader o en tu app de cómics favorita.",
     "downloadLabel": "Descargar la app de escritorio",
     "downloadDetail": "Para Windows, macOS y Linux",
     "otherPlatforms": "Otras plataformas",
@@ -41,7 +41,7 @@
     "chips": {
       "sites_one": "{{count}} sitio",
       "sites_other": "{{count}} sitios",
-      "formats": "CBZ, CBR, EPUB o imágenes",
+      "formats": "CBZ, CBR, EPUB, PDF o imágenes",
       "ereader": "Para tu e-reader",
       "apps": "Escritorio + CLI",
       "free": "Libre y gratuito"
@@ -58,7 +58,7 @@
     "pickText": "Escribe un rango como <code>1-10,12,15-20</code>, o haz clic en un capítulo y Mayús+clic en otro para seleccionar todos los que hay entre ambos.",
     "chapterListAlt": "La lista de capítulos durante una descarga: los capítulos seleccionados, bloqueados mientras se descargan.",
     "volumesTitle": "Un archivo por volumen",
-    "volumesText": "Empaqueta cada volumen en su propio CBZ, CBR o EPUB. Los capítulos se agrupan según los volúmenes que indica el sitio, o puedes definir tú los grupos, como <code>1-7/8-16</code>.",
+    "volumesText": "Empaqueta cada volumen en su propio CBZ, CBR, EPUB o PDF. Los capítulos se agrupan según los volúmenes que indica el sitio, o puedes definir tú los grupos, como <code>1-7/8-16</code>.",
     "volumesAlt": "La lista de capítulos agrupada en volúmenes, con los seleccionados de cada uno.",
     "partsTitle": "Un archivo por capítulo, con las partes unidas",
     "partsText": "Algunos sitios dividen un capítulo en partes. «Unidos» en la app, o <code>--volumes parts</code> en la línea de comandos, las une en un solo archivo con el nombre del capítulo; los capítulos sin partes siguen igual.",
@@ -117,8 +117,8 @@
     "title": "Hecho para leer, no para pelearte con ajustes",
     "ereaderTitle": "Pensado para e-readers",
     "ereaderText": "Las páginas AVIF se convierten a JPEG automáticamente, para que no salgan en blanco en Kobo, KOReader o Calibre. Y las WebP también, si se lo pides.",
-    "cbzTitle": "CBZ, CBR, EPUB o imágenes sueltas",
-    "cbzText": "Un CBZ, CBR o EPUB por capítulo, o carpetas de imágenes con <code>--format raw</code> si prefieres empaquetarlas tú.",
+    "cbzTitle": "CBZ, CBR, EPUB, PDF o imágenes sueltas",
+    "cbzText": "Un CBZ, CBR, EPUB o PDF por capítulo, o carpetas de imágenes con <code>--format raw</code> si prefieres empaquetarlas tú.",
     "bundlesTitle": "Paquetes",
     "bundlesText": "<code>--bundle</code> empaqueta un arco entero en un solo archivo, con una carpeta por capítulo dentro.",
     "rangesTitle": "Rangos de capítulos",

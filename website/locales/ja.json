@@ -1,17 +1,17 @@
 {
   "meta": {
     "title": "manga downloader：漫画をCBZ・EPUBでダウンロード",
-    "description_one": "無料のデスクトップアプリとCLI。MangaDexほか{{count}}サイトの漫画をCBZ、CBR、EPUBでダウンロード。Windows、macOS、Linux対応。",
-    "description_other": "無料のデスクトップアプリとCLI。MangaDexほか{{count}}サイトの漫画をCBZ、CBR、EPUBでダウンロード。Windows、macOS、Linux対応。",
+    "description_one": "無料のデスクトップアプリとCLI。MangaDexほか{{count}}サイトの漫画をCBZ、CBR、EPUB、PDFでダウンロード。Windows、macOS、Linux対応。",
+    "description_other": "無料のデスクトップアプリとCLI。MangaDexほか{{count}}サイトの漫画をCBZ、CBR、EPUB、PDFでダウンロード。Windows、macOS、Linux対応。",
     "socialTitle": "manga downloader：漫画のチャプター → 電子書籍リーダー対応のCBZ・EPUB",
-    "socialDescription_one": "MangaDexほか{{count}}サイトの漫画を、電子書籍リーダーや漫画アプリで読めるCBZ、CBR、EPUBファイルにダウンロード。デスクトップアプリとCLI。無料でオープンソースです。",
-    "socialDescription_other": "MangaDexほか{{count}}サイトの漫画を、電子書籍リーダーや漫画アプリで読めるCBZ、CBR、EPUBファイルにダウンロード。デスクトップアプリとCLI。無料でオープンソースです。",
+    "socialDescription_one": "MangaDexほか{{count}}サイトの漫画を、電子書籍リーダーや漫画アプリで読めるCBZ、CBR、EPUB、PDFファイルにダウンロード。デスクトップアプリとCLI。無料でオープンソースです。",
+    "socialDescription_other": "MangaDexほか{{count}}サイトの漫画を、電子書籍リーダーや漫画アプリで読めるCBZ、CBR、EPUB、PDFファイルにダウンロード。デスクトップアプリとCLI。無料でオープンソースです。",
     "imageAlt": "manga downloaderのマスコット、猫の形をした開いた本。キャッチコピー「漫画のチャプター → 電子書籍リーダー対応のCBZ・EPUB」と並んでいる。",
-    "jsonLdDescription_one": "MangaDexほか{{count}}サイトの漫画の話をダウンロードし、電子書籍リーダーや漫画アプリ向けのCBZ、CBR、EPUBファイルにまとめる、デスクトップアプリとコマンドラインツール。",
-    "jsonLdDescription_other": "MangaDexほか{{count}}サイトの漫画の話をダウンロードし、電子書籍リーダーや漫画アプリ向けのCBZ、CBR、EPUBファイルにまとめる、デスクトップアプリとコマンドラインツール。",
+    "jsonLdDescription_one": "MangaDexほか{{count}}サイトの漫画の話をダウンロードし、電子書籍リーダーや漫画アプリ向けのCBZ、CBR、EPUB、PDFファイルにまとめる、デスクトップアプリとコマンドラインツール。",
+    "jsonLdDescription_other": "MangaDexほか{{count}}サイトの漫画の話をダウンロードし、電子書籍リーダーや漫画アプリ向けのCBZ、CBR、EPUB、PDFファイルにまとめる、デスクトップアプリとコマンドラインツール。",
     "features": {
       "downloads": "MangaDexや他の多くの対応サイトから漫画の話をダウンロード",
-      "packs": "電子書籍リーダーや漫画アプリ向けに、話をCBZ、CBR、EPUBファイルにまとめる",
+      "packs": "電子書籍リーダーや漫画アプリ向けに、話をCBZ、CBR、EPUB、PDFファイルにまとめる",
       "apps": "デスクトップアプリとコマンドラインツール"
     }
   },
@@ -31,8 +31,8 @@
   },
   "hero": {
     "title": "漫画をダウンロード <span class=\"arrow\">→</span> <span class=\"accent\">電子書籍リーダー対応のCBZ・EPUB</span>",
-    "lede_one": "manga downloaderは、MangaDexほか{{count}}サイトの漫画をダウンロードできる無料のオープンソースアプリです。リンクを貼り付けて話を選ぶだけで、電子書籍リーダーや漫画アプリでオフライン閲覧できるCBZ、CBR、EPUBファイルが手に入ります。",
-    "lede_other": "manga downloaderは、MangaDexほか{{count}}サイトの漫画をダウンロードできる無料のオープンソースアプリです。リンクを貼り付けて話を選ぶだけで、電子書籍リーダーや漫画アプリでオフライン閲覧できるCBZ、CBR、EPUBファイルが手に入ります。",
+    "lede_one": "manga downloaderは、MangaDexほか{{count}}サイトの漫画をダウンロードできる無料のオープンソースアプリです。リンクを貼り付けて話を選ぶだけで、電子書籍リーダーや漫画アプリでオフライン閲覧できるCBZ、CBR、EPUB、PDFファイルが手に入ります。",
+    "lede_other": "manga downloaderは、MangaDexほか{{count}}サイトの漫画をダウンロードできる無料のオープンソースアプリです。リンクを貼り付けて話を選ぶだけで、電子書籍リーダーや漫画アプリでオフライン閲覧できるCBZ、CBR、EPUB、PDFファイルが手に入ります。",
     "downloadLabel": "デスクトップアプリをダウンロード",
     "downloadDetail": "Windows、macOS、Linux向け",
     "otherPlatforms": "他のプラットフォーム",
@@ -41,7 +41,7 @@
     "chips": {
       "sites_one": "{{count}}サイト",
       "sites_other": "{{count}}サイト",
-      "formats": "CBZ・CBR・EPUB・画像",
+      "formats": "CBZ・CBR・EPUB・PDF・画像",
       "ereader": "電子書籍リーダー対応",
       "apps": "アプリ+CLI",
       "free": "無料・オープンソース"
@@ -58,7 +58,7 @@
     "pickText": "<code>1-10,12,15-20</code> のような範囲を入力するか、話をクリックしてからShiftキーを押しながら別の話をクリックすると、間のすべての話を選択できます。",
     "chapterListAlt": "ダウンロード中の話の一覧：選択した話が、ダウンロードの間はロックされている。",
     "volumesTitle": "巻ごとに1ファイル",
-    "volumesText": "各巻を、それぞれ1つのCBZ、CBR、EPUBにまとめます。話はサイトが示す巻ごとにまとめられますが、<code>1-7/8-16</code> のように自分でグループを指定することもできます。",
+    "volumesText": "各巻を、それぞれ1つのCBZ、CBR、EPUB、PDFにまとめます。話はサイトが示す巻ごとにまとめられますが、<code>1-7/8-16</code> のように自分でグループを指定することもできます。",
     "volumesAlt": "話の一覧を巻ごとにまとめた表示。各巻で選択された数が表示されている。",
     "partsTitle": "話ごとに1ファイル、パートは結合",
     "partsText": "サイトによっては話がパートに分かれています。アプリで「結合」を選ぶか、コマンドラインで <code>--volumes parts</code> を使うと、パートを、話のタイトルを付けた1つのファイルにまとめます。パートのない話はそのままです。",
@@ -117,8 +117,8 @@
     "title": "読むために。設定いじりは不要",
     "ereaderTitle": "電子書籍リーダーに優しい",
     "ereaderText": "AVIFのページは自動でJPEGに変換されるので、Kobo、KOReader、Calibreで真っ白に表示されることがありません。WebPも、指定すれば変換します。",
-    "cbzTitle": "CBZ、CBR、EPUB、または画像のまま",
-    "cbzText": "話ごとに1つのCBZ、CBR、EPUB。自分でまとめたい場合は <code>--format raw</code> で画像フォルダーのまま出力できます。",
+    "cbzTitle": "CBZ、CBR、EPUB、PDF、または画像のまま",
+    "cbzText": "話ごとに1つのCBZ、CBR、EPUB、PDF。自分でまとめたい場合は <code>--format raw</code> で画像フォルダーのまま出力できます。",
     "bundlesTitle": "まとめファイル",
     "bundlesText": "<code>--bundle</code> は、ひとつの編をまるごと1つのファイルにまとめます。中には話ごとのフォルダーが入ります。",
     "rangesTitle": "話の範囲指定",

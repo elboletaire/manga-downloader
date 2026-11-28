@@ -14,6 +14,7 @@ const ALLOWED: Record<string, string> = {
   'Manga Downloader': 'the app name, a brand',
   CBZ: 'an archive format, named as the CLI and the file names name it',
   EPUB: 'an archive format, named as the CLI and the file names name it',
+  PDF: 'a document format, named as the CLI and the file names name it',
   AVIF: 'an image format, named as the options name it',
   WebP: 'an image format, named as the options name it',
   JPEG: 'an image format, named as the options name it',

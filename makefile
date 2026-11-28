@@ -21,7 +21,7 @@ EXE = $(if $(filter windows,$(GOOS)),.exe)
 RICHGO := $(shell command -v richgo 2> /dev/null)
 
 clean:
-	@rm -fv ./manga-downloader* *.cbz *.cbr *.epub
+	@rm -fv ./manga-downloader* *.cbz *.cbr *.epub *.pdf
 
 install:
 	go mod download

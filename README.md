@@ -19,7 +19,7 @@
 </div>
 
 Manga Downloader downloads manga chapters from MangaDex and more than 500 other sites and
-packs them into CBZ, CBR or EPUB files, ready to read on your e-reader or in
+packs them into CBZ, CBR, EPUB or PDF files, ready to read on your e-reader or in
 your favorite comic app. It comes as a **desktop app** for Windows, macOS and
 Linux, and as a **command line tool** for scripts, servers and Docker.
 
@@ -46,7 +46,7 @@ Linux, and as a **command line tool** for scripts, servers and Docker.
 - **E-reader friendly output**: AVIF pages are converted to JPEG, so they don't
   show up blank on Kobo, KOReader or Calibre (WebP too, if you ask).
 - **Flexible output**: one file per chapter, per volume or for everything, as
-  CBZ, CBR, EPUB or plain image folders, named from a template.
+  CBZ, CBR, EPUB, PDF or plain image folders, named from a template.
 - **Skip pages** such as credits or ads (`--skip-pages`).
 - In the app, **live progress**: every chapter shows up as it's fetched and
   packed, with a summary and an *Open folder* button when it's done.
@@ -316,6 +316,8 @@ manga-downloader --volumes auto [url] 1-20
 manga-downloader --bundle [url] 1-8
 # EPUB instead of CBZ
 manga-downloader --format epub [url] 1-8
+# PDF instead of CBZ
+manga-downloader --format pdf [url] 1-8
 # only the chapters not in the folder yet, no questions asked
 manga-downloader --skip-existing -o ~/Manga/Series [url] all
 ~~~

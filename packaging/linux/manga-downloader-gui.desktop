@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Manga Downloader
-Comment=Download manga chapters to CBZ, CBR or EPUB files
+Comment=Download manga chapters to CBZ, CBR, EPUB or PDF files
 Exec=manga-downloader-gui
 Icon=manga-downloader-gui
 Categories=Network;

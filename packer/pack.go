@@ -21,6 +21,7 @@ const (
 	FormatCBR  = "cbr"
 	FormatRaw  = "raw"
 	FormatEPUB = "epub"
+	FormatPDF  = "pdf"
 )
 
 // DownloadedChapter represents a downloaded chapter (a Chapter + Files)
@@ -33,13 +34,14 @@ type DownloadedChapter struct {
 func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()
-	var info EPUBInfo
-	if format == FormatEPUB {
-		info = EPUBInfo{
+	var info BookInfo
+	if format == FormatEPUB || format == FormatPDF {
+		info = BookInfo{
 			Series:           title,
 			Position:         formatChapterNumber(chapter.GetNumber()),
 			Identity:         "chapter " + chapterKey(chapter.Chapter),
 			ReadingDirection: s.GetReadingDirection(),
+			JPEGQuality:      s.GetJPEGQuality(),
 			Labels:           map[string]string{epubSingleFolder: chapterLabel(chapter.Chapter)},
 		}
 	}
@@ -56,9 +58,15 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()
 	files, labels := chapterFolders(chapters, format, s)
-	var info EPUBInfo
-	if format == FormatEPUB {
-		info = EPUBInfo{Series: title, Identity: "bundle " + memberKeys(chapters), ReadingDirection: s.GetReadingDirection(), Labels: labels}
+	var info BookInfo
+	if format == FormatEPUB || format == FormatPDF {
+		info = BookInfo{
+			Series:           title,
+			Identity:         "bundle " + memberKeys(chapters),
+			ReadingDirection: s.GetReadingDirection(),
+			JPEGQuality:      s.GetJPEGQuality(),
+			Labels:           labels,
+		}
 	}
 	f := bundleFile(title, s.GetFilenameTemplate(), rng, chaptersOf(chapters))
 	return pack(outputdir, format, f.template, "the bundle", f.parts, files, info, progress)
@@ -71,13 +79,14 @@ func PackVolume(outputdir string, s grabber.Site, volume int, rng string, chapte
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()
 	files, labels := chapterFolders(chapters, format, s)
-	var info EPUBInfo
-	if format == FormatEPUB {
-		info = EPUBInfo{
+	var info BookInfo
+	if format == FormatEPUB || format == FormatPDF {
+		info = BookInfo{
 			Series:           title,
 			Position:         strconv.Itoa(volume),
 			Identity:         "volume " + strconv.Itoa(volume) + " " + memberKeys(chapters),
 			ReadingDirection: s.GetReadingDirection(),
+			JPEGQuality:      s.GetJPEGQuality(),
 			Labels:           labels,
 		}
 	}
@@ -92,13 +101,14 @@ func PackParts(outputdir string, s grabber.Site, chapters []*DownloadedChapter, 
 	format := s.GetFormat()
 	files, labels := chapterFolders(chapters, format, s)
 	number := formatChapterNumber(chapters[0].GetNumber())
-	var info EPUBInfo
-	if format == FormatEPUB {
-		info = EPUBInfo{
+	var info BookInfo
+	if format == FormatEPUB || format == FormatPDF {
+		info = BookInfo{
 			Series:           title,
 			Position:         number,
 			Identity:         "parts " + memberKeys(chapters),
 			ReadingDirection: s.GetReadingDirection(),
+			JPEGQuality:      s.GetJPEGQuality(),
 			Labels:           labels,
 		}
 	}
@@ -209,6 +219,8 @@ func outputName(format, filename string) string {
 		return filename
 	case FormatEPUB:
 		return filename + ".epub"
+	case FormatPDF:
+		return filename + ".pdf"
 	case FormatCBR:
 		return filename + ".cbr"
 	default:
@@ -251,8 +263,11 @@ func pageFormats(format string, formats grabber.ConvertFormats, compress bool) (
 	for f := range formats {
 		always[f] = true
 	}
-	if format == FormatEPUB {
+	if format == FormatEPUB || format == FormatPDF {
 		always[grabber.ConvertAVIF] = true
+	}
+	if format == FormatPDF {
+		always[grabber.ConvertWebP] = true
 	}
 
 	whenSmaller = grabber.ConvertFormats{}
@@ -417,7 +432,7 @@ func namePages(pages []*downloader.File, always, whenSmaller grabber.ConvertForm
 // keeps colliding fails instead of looping forever holding a download slot
 const maxPackAttempts = 1000
 
-func pack(outputdir, format, template, label string, parts FilenameTemplateParts, files []File, info EPUBInfo, progress func(page, progress int)) (string, error) {
+func pack(outputdir, format, template, label string, parts FilenameTemplateParts, files []File, info BookInfo, progress func(page, progress int)) (string, error) {
 	// base is the name the template gives the first try. A template that
 	// doesn't use {{.Version}} gives that same name every time, so the later
 	// tries get the " v2"-style suffix here, as the default template would
@@ -442,6 +457,9 @@ func pack(outputdir, format, template, label string, parts FilenameTemplateParts
 		} else if format == FormatEPUB {
 			info.Title = filename
 			err = ArchiveEPUB(filepath.Join(outputdir, name), info, files, progress)
+		} else if format == FormatPDF {
+			info.Title = filename
+			err = ArchivePDF(filepath.Join(outputdir, name), info, files, progress)
 		} else if format == FormatCBR {
 			err = ArchiveCBR(filepath.Join(outputdir, name), files, progress)
 		} else {

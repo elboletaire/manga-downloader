@@ -28,13 +28,14 @@ func TestPackTemplateWithoutVersionAddsTheSuffix(t *testing.T) {
 		{FormatCBZ, []string{"X 1 [Alpha].cbz", "X 1 [Alpha] v2.cbz", "X 1 [Alpha] v3.cbz"}},
 		{FormatCBR, []string{"X 1 [Alpha].cbr", "X 1 [Alpha] v2.cbr", "X 1 [Alpha] v3.cbr"}},
 		{FormatEPUB, []string{"X 1 [Alpha].epub", "X 1 [Alpha] v2.epub", "X 1 [Alpha] v3.epub"}},
+		{FormatPDF, []string{"X 1 [Alpha].pdf", "X 1 [Alpha] v2.pdf", "X 1 [Alpha] v3.pdf"}},
 		{FormatRaw, []string{"X 1 [Alpha]", "X 1 [Alpha] v2", "X 1 [Alpha] v3"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.format, func(t *testing.T) {
 			dir := t.TempDir()
 			for _, want := range tt.names {
-				got, err := pack(dir, tt.format, template, "X", parts, files, EPUBInfo{Series: "X"}, noProgress)
+				got, err := pack(dir, tt.format, template, "X", parts, files, BookInfo{Series: "X"}, noProgress)
 				if err != nil {
 					t.Fatalf("pack() error = %v", err)
 				}
@@ -57,7 +58,7 @@ func TestPackDefaultTemplateNamesDuplicatesByVersion(t *testing.T) {
 	noProgress := func(page, progress int) {}
 
 	for _, want := range []string{"X 1 - Start.cbz", "X 1 - Start v2.cbz"} {
-		got, err := pack(dir, FormatCBZ, FilenameTemplateDefault, "X", parts, files, EPUBInfo{}, noProgress)
+		got, err := pack(dir, FormatCBZ, FilenameTemplateDefault, "X", parts, files, BookInfo{}, noProgress)
 		if err != nil {
 			t.Fatalf("pack() error = %v", err)
 		}
@@ -81,7 +82,7 @@ func TestPackGivesUpOnAName(t *testing.T) {
 		}
 	}
 
-	_, err := pack(dir, FormatCBZ, "{{.Series}}", "X", FilenameTemplateParts{Series: "X"}, epubBundleFiles(t), EPUBInfo{}, func(page, progress int) {})
+	_, err := pack(dir, FormatCBZ, "{{.Series}}", "X", FilenameTemplateParts{Series: "X"}, epubBundleFiles(t), BookInfo{}, func(page, progress int) {})
 	if err == nil {
 		t.Fatal("pack() succeeded with every name taken")
 	}
@@ -154,7 +155,7 @@ func TestNameHelpersMatchPack(t *testing.T) {
 		format string
 		ext    string
 	}{
-		{FormatCBZ, ".cbz"}, {FormatCBR, ".cbr"}, {FormatEPUB, ".epub"}, {FormatRaw, ""},
+		{FormatCBZ, ".cbz"}, {FormatCBR, ".cbr"}, {FormatEPUB, ".epub"}, {FormatPDF, ".pdf"}, {FormatRaw, ""},
 	} {
 		site := &fakeSite{title: "Test Series", template: FilenameTemplateDefault, format: tt.format}
 		cases := []struct {

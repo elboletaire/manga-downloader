@@ -23,14 +23,20 @@ func TestValidateFormatAndReadingDirection(t *testing.T) {
 		{"epub rtl", packer.FormatEPUB, packer.ReadingDirectionRTL, ""},
 		{"epub ltr", packer.FormatEPUB, packer.ReadingDirectionLTR, ""},
 		{"epub without a direction", packer.FormatEPUB, "", ""},
-		{"unknown format", "pdf", packer.ReadingDirectionRTL, "format"},
+		{"pdf rtl", packer.FormatPDF, packer.ReadingDirectionRTL, ""},
+		{"pdf ltr", packer.FormatPDF, packer.ReadingDirectionLTR, ""},
+		{"pdf without a direction", packer.FormatPDF, "", ""},
+		{"unknown format", "mobi", packer.ReadingDirectionRTL, "format"},
 		{"unknown direction", packer.FormatEPUB, "ttb", "reading-direction"},
+		{"pdf unknown direction", packer.FormatPDF, "ttb", "reading-direction"},
 		{"direction case is ignored", packer.FormatEPUB, "RTL", ""},
 		{"direction spaces are ignored", packer.FormatEPUB, " ltr ", ""},
 		{"direction is only read by epub", packer.FormatCBZ, "ttb", ""},
 		{"format case is ignored", "EPUB", packer.ReadingDirectionRTL, ""},
+		{"pdf format case is ignored", "PDF", packer.ReadingDirectionRTL, ""},
 		{"format spaces are ignored", " cbz ", packer.ReadingDirectionRTL, ""},
 		{"an uppercase epub still checks the direction", "EPUB", "ttb", "reading-direction"},
+		{"an uppercase pdf still checks the direction", "PDF", "ttb", "reading-direction"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
