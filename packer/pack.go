@@ -34,13 +34,14 @@ type DownloadedChapter struct {
 func PackSingle(outputdir string, s grabber.Site, chapter *DownloadedChapter, progress func(page, progress int)) (string, error) {
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()
-	var info EPUBInfo
+	var info BookInfo
 	if format == FormatEPUB || format == FormatPDF {
-		info = EPUBInfo{
+		info = BookInfo{
 			Series:           title,
 			Position:         formatChapterNumber(chapter.GetNumber()),
 			Identity:         "chapter " + chapterKey(chapter.Chapter),
 			ReadingDirection: s.GetReadingDirection(),
+			JPEGQuality:      s.GetJPEGQuality(),
 			Labels:           map[string]string{epubSingleFolder: chapterLabel(chapter.Chapter)},
 		}
 	}
@@ -57,9 +58,15 @@ func PackBundle(outputdir string, s grabber.Site, chapters []*DownloadedChapter,
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()
 	files, labels := chapterFolders(chapters, format, s)
-	var info EPUBInfo
+	var info BookInfo
 	if format == FormatEPUB || format == FormatPDF {
-		info = EPUBInfo{Series: title, Identity: "bundle " + memberKeys(chapters), ReadingDirection: s.GetReadingDirection(), Labels: labels}
+		info = BookInfo{
+			Series:           title,
+			Identity:         "bundle " + memberKeys(chapters),
+			ReadingDirection: s.GetReadingDirection(),
+			JPEGQuality:      s.GetJPEGQuality(),
+			Labels:           labels,
+		}
 	}
 	f := bundleFile(title, s.GetFilenameTemplate(), rng, chaptersOf(chapters))
 	return pack(outputdir, format, f.template, "the bundle", f.parts, files, info, progress)
@@ -72,13 +79,14 @@ func PackVolume(outputdir string, s grabber.Site, volume int, rng string, chapte
 	title, _ := s.FetchTitle()
 	format := s.GetFormat()
 	files, labels := chapterFolders(chapters, format, s)
-	var info EPUBInfo
+	var info BookInfo
 	if format == FormatEPUB || format == FormatPDF {
-		info = EPUBInfo{
+		info = BookInfo{
 			Series:           title,
 			Position:         strconv.Itoa(volume),
 			Identity:         "volume " + strconv.Itoa(volume) + " " + memberKeys(chapters),
 			ReadingDirection: s.GetReadingDirection(),
+			JPEGQuality:      s.GetJPEGQuality(),
 			Labels:           labels,
 		}
 	}
@@ -93,13 +101,14 @@ func PackParts(outputdir string, s grabber.Site, chapters []*DownloadedChapter, 
 	format := s.GetFormat()
 	files, labels := chapterFolders(chapters, format, s)
 	number := formatChapterNumber(chapters[0].GetNumber())
-	var info EPUBInfo
+	var info BookInfo
 	if format == FormatEPUB || format == FormatPDF {
-		info = EPUBInfo{
+		info = BookInfo{
 			Series:           title,
 			Position:         number,
 			Identity:         "parts " + memberKeys(chapters),
 			ReadingDirection: s.GetReadingDirection(),
+			JPEGQuality:      s.GetJPEGQuality(),
 			Labels:           labels,
 		}
 	}
@@ -397,7 +406,7 @@ func namePages(pages []*downloader.File, always, whenSmaller grabber.ConvertForm
 				// bundling) over a single bad page, and naming undecodable
 				// bytes .jpg would only make the failure more confusing
 				_, shown := epubMediaTypes[ext]
-				if (format != FormatEPUB || shown) && (format != FormatPDF || pdfSupportedExt[ext]) {
+				if format != FormatEPUB || shown {
 					notice.Warn("- warning: page %03d: converting %s to jpeg: %s (keeping the original)", i, ext, err)
 				}
 			case !always.Has(ext) && len(converted) >= len(data):
@@ -419,7 +428,7 @@ func namePages(pages []*downloader.File, always, whenSmaller grabber.ConvertForm
 // keeps colliding fails instead of looping forever holding a download slot
 const maxPackAttempts = 1000
 
-func pack(outputdir, format, template, label string, parts FilenameTemplateParts, files []File, info EPUBInfo, progress func(page, progress int)) (string, error) {
+func pack(outputdir, format, template, label string, parts FilenameTemplateParts, files []File, info BookInfo, progress func(page, progress int)) (string, error) {
 	// base is the name the template gives the first try. A template that
 	// doesn't use {{.Version}} gives that same name every time, so the later
 	// tries get the " v2"-style suffix here, as the default template would

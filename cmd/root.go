@@ -391,7 +391,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&settings.Scanlator, "scanlator", "s", "", `only download the releases of the specified scanlation group, for sites hosting several groups' versions of the same chapters (the default, and "all", keep every group's)`)
 	rootCmd.Flags().StringVarP(&settings.FilenameTemplate, "filename-template", "t", packer.FilenameTemplateDefault, "template for the resulting filename: {{.Series}}, {{.Number}}, {{.Title}}, {{.SiteTitle}}, {{.Group}}, {{.Volume}} and {{.Version}}; {{pad .Number 4}} zero-pads a number")
 	rootCmd.Flags().StringVarP(&settings.Format, "format", "f", packer.FormatCBZ, "output format: cbz, cbr, raw (a folder with the images), epub or pdf")
-	rootCmd.Flags().StringVar(&settings.ReadingDirection, "reading-direction", packer.ReadingDirectionRTL, `direction pages turn in epub and pdf files: "rtl" for manga, "ltr" for western comics`)
+	rootCmd.Flags().StringVar(&settings.ReadingDirection, "reading-direction", packer.ReadingDirectionRTL, `reading direction for epub (page turns) and pdf (two-page spreads): "rtl" for manga, "ltr" for western comics`)
 	rootCmd.Flags().StringVar(&settings.ConvertImages, "convert-images", grabber.ConvertImagesDefault, `comma-separated source image formats to convert to jpeg for e-reader compatibility: "avif", "webp" or "none"`)
 	rootCmd.Flags().BoolVar(&settings.Compress, "compress", false, "re-encode pages (all but gif) to jpeg when that's smaller, keeping the original otherwise; jpeg pages only shrink at a lower --jpeg-quality")
 	rootCmd.Flags().IntVar(&settings.JPEGQuality, "jpeg-quality", grabber.JPEGQualityDefault, "quality (1-100) of the jpeg pages made by --convert-images and --compress")

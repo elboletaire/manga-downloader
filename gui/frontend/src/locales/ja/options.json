@@ -48,7 +48,7 @@
     "webp": "WebP",
     "convertHint": "多くの電子書籍リーダーはAVIFを開けません。WebPは電子ペーパーでは不安定です。",
     "avifEpub": "EPUBでは常に有効です。リーダーはAVIFを表示できないためです。",
-    "convertPdf": "PDFでは常に有効です。PDFにはJPEGとPNGのみ埋め込めるためです。",
+    "convertPdf": "PDFでは常に有効です。PDFにはAVIFとWebPを埋め込めないためです。",
     "compress": {
       "label": "ページを圧縮",
       "hint": "小さくなる場合はページをJPEGで保存します。JPEGのページは、詳細設定で指定するJPEG品質を下げないと小さくなりません。"

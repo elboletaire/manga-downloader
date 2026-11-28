@@ -52,7 +52,7 @@ type pdfChapter struct {
 // ArchivePDF packs the named image files into a PDF 1.4 document, one page per
 // image. Multi-chapter inputs (bundles, volumes, merged parts) get PDF outline
 // bookmarks for each chapter folder.
-func ArchivePDF(filename string, info EPUBInfo, files []File, progress func(page, progress int)) (err error) {
+func ArchivePDF(filename string, info BookInfo, files []File, progress func(page, progress int)) (err error) {
 	if len(files) == 0 {
 		return errors.New("no files to pack")
 	}
@@ -78,6 +78,11 @@ func ArchivePDF(filename string, info EPUBInfo, files []File, progress func(page
 	catalogID := w.reserve()
 	pagesID := w.reserve()
 
+	quality := info.JPEGQuality
+	if quality <= 0 {
+		quality = grabber.JPEGQualityDefault
+	}
+
 	var (
 		pageIDs    []int
 		chapters   []pdfChapter
@@ -101,7 +106,7 @@ func ArchivePDF(filename string, info EPUBInfo, files []File, progress func(page
 			continue
 		}
 
-		img, encErr := encodePDFImage(file.Data, ext)
+		img, encErr := encodePDFImage(file.Data, ext, quality)
 		if encErr != nil {
 			skipped = append(skipped, skippedPage{file.Name, fmt.Sprintf("reading image: %s", encErr)})
 			progress(1, 0)
@@ -218,7 +223,7 @@ func ArchivePDF(filename string, info EPUBInfo, files []File, progress func(page
 	return w.finish(catalogID, infoID)
 }
 
-func encodePDFImage(data []byte, ext string) (pdfImage, error) {
+func encodePDFImage(data []byte, ext string, quality int) (pdfImage, error) {
 	if ext == "jpg" || ext == "jpeg" {
 		cfg, fmtName, err := image.DecodeConfig(bytes.NewReader(data))
 		if err != nil {
@@ -240,11 +245,11 @@ func encodePDFImage(data []byte, ext string) (pdfImage, error) {
 			if err != nil {
 				return pdfImage{}, err
 			}
-			buf := &bytes.Buffer{}
-			if err := jpeg.Encode(buf, flattenAlpha(img), &jpeg.Options{Quality: grabber.JPEGQualityDefault}); err != nil {
+			encoded, err := reencodeFallbackJPEG(img, quality)
+			if err != nil {
 				return pdfImage{}, err
 			}
-			return pdfImage{width: cfg.Width, height: cfg.Height, colorSpace: "/DeviceRGB", filter: "/DCTDecode", data: buf.Bytes()}, nil
+			return pdfImage{width: cfg.Width, height: cfg.Height, colorSpace: "/DeviceRGB", filter: "/DCTDecode", data: encoded}, nil
 		}
 	}
 
@@ -278,6 +283,17 @@ func encodePDFImage(data []byte, ext string) (pdfImage, error) {
 		filter:     "/FlateDecode",
 		data:       compressed.Bytes(),
 	}, nil
+}
+
+func reencodeFallbackJPEG(img image.Image, quality int) ([]byte, error) {
+	if quality <= 0 {
+		quality = grabber.JPEGQualityDefault
+	}
+	buf := &bytes.Buffer{}
+	if err := jpeg.Encode(buf, flattenAlpha(img), &jpeg.Options{Quality: quality}); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 func extractPDFPixels(img image.Image) (colorSpace string, raw []byte) {

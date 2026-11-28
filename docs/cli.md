@@ -110,8 +110,12 @@ on a French URL downloads the English edition when the site has one.
 
 `--bundle` packs every chapter you asked for into one file, with a folder per
 chapter inside, and `--format` picks what's written: CBZ (the default), CBR,
-EPUB, PDF, or `raw` for plain image folders. EPUB and PDF pages turn right to left unless
-`--reading-direction ltr` says otherwise.
+EPUB, PDF, or `raw` for plain image folders. EPUB pages turn right to left
+unless `--reading-direction ltr` says otherwise; for PDF, `--reading-direction`
+sets the viewer preference (`/Direction`) that orders two-page spreads in
+readers that honour it. PDF pages are sized at 1 pixel = 1 point (roughly
+50×74 cm for a typical scan, scaled down only above the 14,400 pt PDF 1.4
+limit).
 
 ~~~bash
 # all chapters in a single CBZ, one folder per chapter inside it
@@ -209,8 +213,9 @@ show (anything but JPEG, PNG, GIF or WebP, such as an AVIF that failed to conver
 is left out with a warning instead of being kept.
 
 PDF converts both AVIF and WebP pages to JPEG automatically (even with
-`--convert-images none`), embeds JPEG directly and PNG/GIF losslessly, and
-skips unreadable pages with a warning.
+`--convert-images none`), embeds JPEG directly and PNG/GIF losslessly
+(animated GIFs keep only their first frame), and skips unreadable pages with a
+warning.
 
 > [!NOTE]
 > The AVIF decoder is embedded as WebAssembly, so you don't need to install any
@@ -368,7 +373,7 @@ the check.
 | `--bundle`            | `-b`  | Bundle all chapters into a single file                         | off            |
 | `--volumes`           |       | One file per volume: `auto`, `parts`, `1-7/8-16`               | off            |
 | `--format`            | `-f`  | Output format: `cbz`, `cbr`, `raw`, `epub` or `pdf`            | `cbz`          |
-| `--reading-direction` |       | Page turn direction for EPUB and PDF: `rtl` (manga) or `ltr`   | `rtl`          |
+| `--reading-direction` |       | Reading direction for EPUB (page turns) and PDF (two-page spreads): `rtl` or `ltr` | `rtl` |
 | `--filename-template` | `-t`  | Template for the file names                                    | [see File names](#file-names) |
 | `--language`          | `-l`  | Only download the specified language                           | site default   |
 | `--scanlator`         | `-s`  | Only download the specified scanlation group (or `all`)        | `all`          |

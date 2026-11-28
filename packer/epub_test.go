@@ -63,7 +63,7 @@ func readEPUB(t *testing.T, path string) ([]*zip.File, map[string][]byte) {
 
 // packEPUB writes the files as an EPUB in a temporary directory and returns
 // its path
-func packEPUB(t *testing.T, info EPUBInfo, files []File) string {
+func packEPUB(t *testing.T, info BookInfo, files []File) string {
 	t.Helper()
 
 	if info.Title == "" {
@@ -112,7 +112,7 @@ type meta struct {
 }
 
 func TestArchiveEPUBPackage(t *testing.T) {
-	path := packEPUB(t, EPUBInfo{Series: epubTitle, Position: "", ReadingDirection: ReadingDirectionLTR}, epubBundleFiles(t))
+	path := packEPUB(t, BookInfo{Series: epubTitle, Position: "", ReadingDirection: ReadingDirectionLTR}, epubBundleFiles(t))
 	entries, contents := readEPUB(t, path)
 
 	// mimetype first, stored uncompressed, with no data descriptor
@@ -260,7 +260,7 @@ func TestArchiveEPUBPackage(t *testing.T) {
 
 func TestArchiveEPUBSeriesMetadata(t *testing.T) {
 	// a volume is a collection member numbered by its volume
-	path := packEPUB(t, EPUBInfo{Series: epubTitle, Position: "3", ReadingDirection: ReadingDirectionRTL}, epubBundleFiles(t))
+	path := packEPUB(t, BookInfo{Series: epubTitle, Position: "3", ReadingDirection: ReadingDirectionRTL}, epubBundleFiles(t))
 	_, contents := readEPUB(t, path)
 
 	var opf opfPackage
@@ -280,7 +280,7 @@ func TestArchiveEPUBSeriesMetadata(t *testing.T) {
 }
 
 func TestArchiveEPUBBundleHasNoGroupPosition(t *testing.T) {
-	path := packEPUB(t, EPUBInfo{Series: "Series"}, epubBundleFiles(t))
+	path := packEPUB(t, BookInfo{Series: "Series"}, epubBundleFiles(t))
 	_, contents := readEPUB(t, path)
 
 	var opf opfPackage
@@ -296,7 +296,7 @@ func TestArchiveEPUBBundleHasNoGroupPosition(t *testing.T) {
 func TestArchiveEPUBSingleChapter(t *testing.T) {
 	// files without a folder are one chapter, titled as the book is
 	files := []File{{Name: "000.jpg", Data: jpegBytes(t, gradientImage(4, 4))}}
-	path := packEPUB(t, EPUBInfo{Series: "Series", Position: "10.5"}, files)
+	path := packEPUB(t, BookInfo{Series: "Series", Position: "10.5"}, files)
 	_, contents := readEPUB(t, path)
 
 	var nav struct {
@@ -317,7 +317,7 @@ func TestArchiveEPUBSingleChapter(t *testing.T) {
 }
 
 func TestArchiveEPUBEscapesMetadata(t *testing.T) {
-	path := packEPUB(t, EPUBInfo{Series: epubTitle, Position: "1"}, epubBundleFiles(t))
+	path := packEPUB(t, BookInfo{Series: epubTitle, Position: "1"}, epubBundleFiles(t))
 	_, contents := readEPUB(t, path)
 
 	// every document parses, which a raw & or < in a title wouldn't
@@ -341,7 +341,7 @@ func TestArchiveEPUBRefusesUnreadableImages(t *testing.T) {
 	for name, files := range cases {
 		t.Run(name, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "book.epub")
-			err := ArchiveEPUB(path, EPUBInfo{Title: epubTitle}, files, func(page, progress int) {})
+			err := ArchiveEPUB(path, BookInfo{Title: epubTitle}, files, func(page, progress int) {})
 			if err == nil {
 				t.Fatal("expected an error")
 			}
@@ -355,7 +355,7 @@ func TestArchiveEPUBRefusesUnreadableImages(t *testing.T) {
 func TestArchiveEPUBProgressPerPage(t *testing.T) {
 	pages := 0
 	path := filepath.Join(t.TempDir(), "book.epub")
-	if err := ArchiveEPUB(path, EPUBInfo{Title: epubTitle}, epubBundleFiles(t), func(page, _ int) { pages += page }); err != nil {
+	if err := ArchiveEPUB(path, BookInfo{Title: epubTitle}, epubBundleFiles(t), func(page, _ int) { pages += page }); err != nil {
 		t.Fatalf("ArchiveEPUB: %v", err)
 	}
 	if pages != 3 {
@@ -497,7 +497,7 @@ func TestArchiveEPUBSkipsUnshowablePages(t *testing.T) {
 
 	pages := 0
 	path := filepath.Join(t.TempDir(), "book.epub")
-	if err := ArchiveEPUB(path, EPUBInfo{Title: epubTitle}, files, func(page, _ int) { pages += page }); err != nil {
+	if err := ArchiveEPUB(path, BookInfo{Title: epubTitle}, files, func(page, _ int) { pages += page }); err != nil {
 		t.Fatalf("ArchiveEPUB: %v", err)
 	}
 	// the skipped pages still count, so the archive's progress reaches its total
@@ -534,7 +534,7 @@ func TestArchiveEPUBChapterWithoutShowablePagesIsWarned(t *testing.T) {
 		{Name: "Chapter 0002/000.avif", Data: []byte("not really avif")},
 		{Name: "Chapter 0002/001.avif", Data: []byte("not really avif")},
 	}
-	info := EPUBInfo{Title: epubTitle, Labels: map[string]string{"Chapter 0001": "Chapter 1", "Chapter 0002": "Chapter 2"}}
+	info := BookInfo{Title: epubTitle, Labels: map[string]string{"Chapter 0001": "Chapter 1", "Chapter 0002": "Chapter 2"}}
 	path := packEPUB(t, info, files)
 	_, contents := readEPUB(t, path)
 
@@ -567,7 +567,7 @@ func TestArchiveEPUBChapterWithoutShowablePagesIsWarned(t *testing.T) {
 }
 
 func TestArchiveEPUBNCXHead(t *testing.T) {
-	path := packEPUB(t, EPUBInfo{Series: "Series"}, epubBundleFiles(t))
+	path := packEPUB(t, BookInfo{Series: "Series"}, epubBundleFiles(t))
 	_, contents := readEPUB(t, path)
 
 	var ncx struct {
@@ -614,7 +614,7 @@ func TestArchiveEPUBFailsWithoutShowablePages(t *testing.T) {
 	warnings := captureWarnings(t)
 	path := filepath.Join(t.TempDir(), "book.epub")
 	files := []File{{Name: "000.avif", Data: []byte("x")}, {Name: "001.jpg", Data: []byte("y")}}
-	if err := ArchiveEPUB(path, EPUBInfo{Title: epubTitle}, files, func(page, progress int) {}); err == nil {
+	if err := ArchiveEPUB(path, BookInfo{Title: epubTitle}, files, func(page, progress int) {}); err == nil {
 		t.Fatal("expected an error when no page can be shown")
 	}
 	// the two pages, and the one chapter they belong to
@@ -627,7 +627,7 @@ func TestArchiveEPUBFailsWithoutShowablePages(t *testing.T) {
 }
 
 func TestArchiveEPUBLabelsAndPageTitles(t *testing.T) {
-	info := EPUBInfo{
+	info := BookInfo{
 		Title:  epubTitle,
 		Labels: map[string]string{"Chapter 0001": "Chapter 1 - Start", "Chapter 0002": "Chapter 2"},
 	}
@@ -655,7 +655,7 @@ func TestArchiveEPUBLabelsAndPageTitles(t *testing.T) {
 
 func TestArchiveEPUBSingleChapterLabel(t *testing.T) {
 	files := []File{{Name: "000.jpg", Data: jpegBytes(t, gradientImage(4, 4))}}
-	path := packEPUB(t, EPUBInfo{Series: "Series", Labels: map[string]string{epubSingleFolder: "Chapter 266 - Final Choice"}}, files)
+	path := packEPUB(t, BookInfo{Series: "Series", Labels: map[string]string{epubSingleFolder: "Chapter 266 - Final Choice"}}, files)
 	_, contents := readEPUB(t, path)
 
 	var nav struct {
@@ -916,7 +916,7 @@ func TestArchiveEPUBIdentifierFallsBackToTitle(t *testing.T) {
 	first, second, third := t.TempDir(), t.TempDir(), t.TempDir()
 	packEPUB := func(dir string, title string) string {
 		path := filepath.Join(dir, "book.epub")
-		if err := ArchiveEPUB(path, EPUBInfo{Series: "Series", Title: title}, epubBundleFiles(t), func(page, progress int) {}); err != nil {
+		if err := ArchiveEPUB(path, BookInfo{Series: "Series", Title: title}, epubBundleFiles(t), func(page, progress int) {}); err != nil {
 			t.Fatalf("ArchiveEPUB: %v", err)
 		}
 		return bookIdentifier(t, dir, "book.epub")

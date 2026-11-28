@@ -35,7 +35,7 @@ func TestPackTemplateWithoutVersionAddsTheSuffix(t *testing.T) {
 		t.Run(tt.format, func(t *testing.T) {
 			dir := t.TempDir()
 			for _, want := range tt.names {
-				got, err := pack(dir, tt.format, template, "X", parts, files, EPUBInfo{Series: "X"}, noProgress)
+				got, err := pack(dir, tt.format, template, "X", parts, files, BookInfo{Series: "X"}, noProgress)
 				if err != nil {
 					t.Fatalf("pack() error = %v", err)
 				}
@@ -58,7 +58,7 @@ func TestPackDefaultTemplateNamesDuplicatesByVersion(t *testing.T) {
 	noProgress := func(page, progress int) {}
 
 	for _, want := range []string{"X 1 - Start.cbz", "X 1 - Start v2.cbz"} {
-		got, err := pack(dir, FormatCBZ, FilenameTemplateDefault, "X", parts, files, EPUBInfo{}, noProgress)
+		got, err := pack(dir, FormatCBZ, FilenameTemplateDefault, "X", parts, files, BookInfo{}, noProgress)
 		if err != nil {
 			t.Fatalf("pack() error = %v", err)
 		}
@@ -82,7 +82,7 @@ func TestPackGivesUpOnAName(t *testing.T) {
 		}
 	}
 
-	_, err := pack(dir, FormatCBZ, "{{.Series}}", "X", FilenameTemplateParts{Series: "X"}, epubBundleFiles(t), EPUBInfo{}, func(page, progress int) {})
+	_, err := pack(dir, FormatCBZ, "{{.Series}}", "X", FilenameTemplateParts{Series: "X"}, epubBundleFiles(t), BookInfo{}, func(page, progress int) {})
 	if err == nil {
 		t.Fatal("pack() succeeded with every name taken")
 	}

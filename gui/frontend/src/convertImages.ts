@@ -44,7 +44,7 @@ export function convertPdfHint(t: T): string {
   return t('options.pages.convertPdf');
 }
 
-export interface AvifSwitch {
+export interface ConvertSwitch {
   checked: boolean;
   disabled: boolean;
 }
@@ -54,7 +54,7 @@ export interface AvifSwitch {
  * saved setting says, so the box shows checked and locked then; the saved
  * value itself is left alone.
  */
-export function avifSwitchOf(flags: ConvertFlags, format: string): AvifSwitch {
+export function avifSwitchOf(flags: ConvertFlags, format: string): ConvertSwitch {
   if (format === 'epub' || format === 'pdf') {
     return { checked: true, disabled: true };
   }
@@ -66,7 +66,7 @@ export function avifSwitchOf(flags: ConvertFlags, format: string): AvifSwitch {
  * setting says, so the box shows checked and locked then; the saved value
  * itself is left alone.
  */
-export function webpSwitchOf(flags: ConvertFlags, format: string): AvifSwitch {
+export function webpSwitchOf(flags: ConvertFlags, format: string): ConvertSwitch {
   if (format === 'pdf') {
     return { checked: true, disabled: true };
   }

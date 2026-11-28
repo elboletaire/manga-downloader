@@ -53,7 +53,7 @@ describe('avifEpubHint and convertPdfHint', () => {
   it('translates the EPUB and PDF notes', () => {
     expect(avifEpubHint(createT('en'))).toBe("Always on for EPUB: readers can't show AVIF.");
     expect(avifEpubHint(createT('ca'))).toBe('Sempre activat per a EPUB: els lectors no mostren AVIF.');
-    expect(convertPdfHint(createT('en'))).toBe('Always on for PDF: PDFs only embed JPEG and PNG.');
-    expect(convertPdfHint(createT('ca'))).toBe('Sempre activat per a PDF: els PDF només incrusten JPEG i PNG.');
+    expect(convertPdfHint(createT('en'))).toBe("Always on for PDF: PDFs can't embed AVIF or WebP.");
+    expect(convertPdfHint(createT('ca'))).toBe('Sempre activat per a PDF: els PDF no admeten AVIF ni WebP.');
   });
 });

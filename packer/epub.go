@@ -35,8 +35,8 @@ const (
 	ReadingDirectionLTR = "ltr"
 )
 
-// EPUBInfo is what an EPUB carries beyond its pages
-type EPUBInfo struct {
+// BookInfo is what an EPUB or PDF carries beyond its pages
+type BookInfo struct {
 	// Title is the book's title (the file name, without its extension)
 	Title string
 	// Series is the series' title, for belongs-to-collection
@@ -50,6 +50,9 @@ type EPUBInfo struct {
 	// ReadingDirection is ReadingDirectionRTL or ReadingDirectionLTR; empty
 	// means RTL
 	ReadingDirection string
+	// JPEGQuality is the JPEG quality (1-100) used when PDF re-encodes
+	// non-YCbCr/non-Gray JPEGs (e.g. CMYK); 0 defaults to JPEGQualityDefault
+	JPEGQuality int
 	// Labels names the table of contents entries by folder ("Chapter 265 - Title").
 	// A folder without a label is named after the folder, and a single chapter
 	// (no folder) is keyed by epubSingleFolder
@@ -95,7 +98,7 @@ type epubChapter struct {
 
 // epubBook is the data the EPUB templates are executed with
 type epubBook struct {
-	EPUBInfo
+	BookInfo
 	UUID     string
 	Modified string
 	Pages    []epubPage
@@ -212,7 +215,7 @@ const epubContainer = `<?xml version="1.0" encoding="UTF-8"?>
 // ArchiveEPUB archives the named files into a fixed layout EPUB 3, one page per
 // image. Each folder of entry names is a chapter with its own table of contents
 // entry; files without a folder are a single chapter, titled as the book is.
-func ArchiveEPUB(filename string, info EPUBInfo, files []File, progress func(page, progress int)) (err error) {
+func ArchiveEPUB(filename string, info BookInfo, files []File, progress func(page, progress int)) (err error) {
 	if len(files) == 0 {
 		return errors.New("no files to pack")
 	}
@@ -309,7 +312,7 @@ func NormalizeReadingDirection(direction string) string {
 
 // tocLabel is the table of contents label of a folder: its label from info, or
 // the folder's name, or the book's title for a single chapter
-func tocLabel(info EPUBInfo, folder string) string {
+func tocLabel(info BookInfo, folder string) string {
 	if l := info.Labels[folder]; l != "" {
 		return l
 	}
@@ -324,7 +327,7 @@ func tocLabel(info EPUBInfo, folder string) string {
 // the reader can't show are left out with a warning, and counted in skipped.
 // A chapter left with none of its pages gets a warning of its own, as it has
 // no table of contents entry.
-func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped []skippedPage, err error) {
+func epubEntries(info BookInfo, files []File) (entries []epubEntry, skipped []skippedPage, err error) {
 	if info.ReadingDirection == "" {
 		info.ReadingDirection = ReadingDirectionRTL
 	}
@@ -333,7 +336,7 @@ func epubEntries(info EPUBInfo, files []File) (entries []epubEntry, skipped []sk
 		identity = info.Title
 	}
 	book := epubBook{
-		EPUBInfo: info,
+		BookInfo: info,
 		UUID:     bookUUID(info.Series + "\x00" + identity),
 		Modified: time.Now().UTC().Format("2006-01-02T15:04:05Z"),
 	}

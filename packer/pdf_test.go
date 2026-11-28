@@ -105,7 +105,7 @@ func TestArchivePDFImagesAndStructure(t *testing.T) {
 
 	path := filepath.Join(t.TempDir(), "chapter.pdf")
 	pages := 0
-	err := ArchivePDF(path, EPUBInfo{Title: "One Piece 1 - Romance Dawn"}, files, func(page, _ int) {
+	err := ArchivePDF(path, BookInfo{Title: "One Piece 1 - Romance Dawn"}, files, func(page, _ int) {
 		pages += page
 	})
 	if err != nil {
@@ -145,7 +145,7 @@ func TestArchivePDFReadingDirectionAndOutlines(t *testing.T) {
 		{Name: "Chapter 0001/001.jpg", Data: jpegBytes(t, gradientImage(6, 10))},
 		{Name: "Chapter 0002/000.png", Data: pngBytes(t, gradientImage(6, 10))},
 	}
-	info := EPUBInfo{
+	info := BookInfo{
 		Title:            `Tom & Jerry (Vol 1) — 日本語`,
 		ReadingDirection: ReadingDirectionLTR,
 		Labels: map[string]string{
@@ -254,7 +254,7 @@ func TestArchivePDFSkipsUnsupportedAndFailsWhenEmpty(t *testing.T) {
 		{Name: "Chapter 0003/000.png", Data: pngBytes(t, gradientImage(4, 4))},
 	}
 	pages := 0
-	err := ArchivePDF(partialPath, EPUBInfo{Title: "Partial"}, files, func(p, _ int) { pages += p })
+	err := ArchivePDF(partialPath, BookInfo{Title: "Partial"}, files, func(p, _ int) { pages += p })
 	if err != nil {
 		t.Fatalf("ArchivePDF partial: %v", err)
 	}
@@ -267,11 +267,39 @@ func TestArchivePDFSkipsUnsupportedAndFailsWhenEmpty(t *testing.T) {
 	verifyPDF(t, partialPath)
 
 	emptyPath := filepath.Join(dir, "empty.pdf")
-	err = ArchivePDF(emptyPath, EPUBInfo{Title: "Empty"}, []File{{Name: "000.avif", Data: []byte("bad")}}, func(int, int) {})
+	err = ArchivePDF(emptyPath, BookInfo{Title: "Empty"}, []File{{Name: "000.avif", Data: []byte("bad")}}, func(int, int) {})
 	if err == nil {
 		t.Fatal("ArchivePDF succeeded with no valid pages")
 	}
 	if _, statErr := os.Stat(emptyPath); !os.IsNotExist(statErr) {
 		t.Errorf("failed ArchivePDF left file %s behind", emptyPath)
+	}
+}
+
+func TestPDFReencodeFallbackRespectsQuality(t *testing.T) {
+	img := noisyImage(64, 64)
+	low, err := reencodeFallbackJPEG(img, 10)
+	if err != nil {
+		t.Fatalf("reencodeFallbackJPEG(10): %v", err)
+	}
+	high, err := reencodeFallbackJPEG(img, 95)
+	if err != nil {
+		t.Fatalf("reencodeFallbackJPEG(95): %v", err)
+	}
+	if len(low) >= len(high) {
+		t.Errorf("quality 10 produced %d bytes, quality 95 produced %d bytes; want lower quality smaller", len(low), len(high))
+	}
+}
+
+func TestNamePagesPDFWarnsOnFailedConvert(t *testing.T) {
+	warnings := captureWarnings(t)
+	badAVIF := append([]byte{0x00, 0x00, 0x00, 0x1c, 'f', 't', 'y', 'p', 'a', 'v', 'i', 'f'}, []byte("truncated")...)
+	always, whenSmaller := pageFormats(FormatPDF, grabber.ConvertFormats{}, false)
+	named := namePages([]*downloader.File{{Data: badAVIF}}, always, whenSmaller, grabber.JPEGQualityDefault, FormatPDF)
+	if named[0].Name != "000.avif" {
+		t.Fatalf("named = %q, want 000.avif", named[0].Name)
+	}
+	if len(*warnings) != 1 || !strings.Contains((*warnings)[0], "converting avif to jpeg") {
+		t.Errorf("warnings = %q, want conversion warning for PDF", *warnings)
 	}
 }

@@ -48,7 +48,7 @@
     "webp": "WebP",
     "convertHint": "La mayoría de lectores electrónicos no abren AVIF; WebP no es fiable en tinta electrónica.",
     "avifEpub": "Siempre activado para EPUB: los lectores no muestran AVIF.",
-    "convertPdf": "Siempre activado para PDF: los PDF solo incrustan JPEG y PNG.",
+    "convertPdf": "Siempre activado para PDF: los PDF no admiten AVIF ni WebP.",
     "compress": {
       "label": "Comprimir páginas",
       "hint": "Guarda las páginas en JPEG si así ocupan menos. Las páginas JPEG solo se reducen bajando la calidad JPEG (en Avanzado)."

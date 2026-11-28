@@ -4,7 +4,7 @@ Guidance for coding agents working in this repository.
 
 ## Project
 
-Go CLI (cobra) that downloads manga chapters from supported websites and packs them into CBZ, CBR or EPUB files, plus a Wails desktop app in `gui/` (see the `gui` skill). Module: `github.com/elboletaire/manga-downloader`, targeting Go 1.26 (the `go` directive in `go.mod` and `gui/go.mod` is the minimum, 1.26.0; every workflow builds with the newest 1.26 patch through `go-version: "1.26"` and `check-latest`).
+Go CLI (cobra) that downloads manga chapters from supported websites and packs them into CBZ, CBR, EPUB or PDF files, plus a Wails desktop app in `gui/` (see the `gui` skill). Module: `github.com/elboletaire/manga-downloader`, targeting Go 1.26 (the `go` directive in `go.mod` and `gui/go.mod` is the minimum, 1.26.0; every workflow builds with the newest 1.26 patch through `go-version: "1.26"` and `check-latest`).
 
 ## On-demand guides
 
@@ -31,7 +31,7 @@ make smoke              # one rotation of the smoke targets, as smoke.yaml runs 
 GOOS=windows GOARCH=386 make build/release   # one release binary, built as release.yaml does
 make test               # go test -v ./... (uses richgo if installed)
 go test ./ranges -run TestParse   # run a single test
-make clean              # remove built binaries and *.cbz, *.cbr and *.epub files
+make clean              # remove built binaries and *.cbz, *.cbr, *.epub and *.pdf files
 ```
 
 Unit test coverage is thin; real verification is the makefile smoke targets, which download from live sites — run them selectively. `make grabber` runs everything, `make grabber/html` all `PlainHTML` sites, `make grabber/<site>` just one; check the archives with `tools/verify-cbz`, since a run can succeed with empty or junk CBZs. Sites that 403 outside Japan sit in `SMOKE_JAPAN`, which `smoke.yaml`'s `smoke-japan` job checks on a self-hosted runner, through its Tokyo proxy (gluetun), never on the hosted rotation.
@@ -57,7 +57,7 @@ The steps:
 2. The matched `Site` fetches title and chapters; the range argument (`ranges.Parse`, `1-10,12,15-20`) filters them.
 3. Each fetched chapter is passed through `Chapter.SkipPages` (`--skip-pages`, see below) before anything is downloaded, inside `core.Download`.
 4. Each chapter's page list is fetched after `Events.Fetching` (renderers show the row as "fetching pages" until `Started`; `--bundle`'s totals pre-pass doesn't emit it). Chapters download concurrently (`downloader.FetchChapter`), bounded by `--concurrency` (max 5) and `--concurrency-pages` (max 10). Pages are plain GETs with a Referer.
-5. `packer` writes CBZ, CBR, EPUB or raw output (`PackSingle`, or `PackBundle` with `--bundle`), named via a text/template (`--filename-template`, `packer/filename.go`; `{{.Title}}` is `grabber.ChapterLabel`, `{{.SiteTitle}}` the site's title alone); duplicate names get a `v{{.Version}}` suffix. Both paths go through `namePages` (`packer/pack.go`), which sniffs each page's format to name it `000.jpg`, `001.png`, … and transcodes per `--convert-images`.
+5. `packer` writes CBZ, CBR, EPUB, PDF or raw output (`PackSingle`, or `PackBundle` with `--bundle`), named via a text/template (`--filename-template`, `packer/filename.go`; `{{.Title}}` is `grabber.ChapterLabel`, `{{.SiteTitle}}` the site's title alone); duplicate names get a `v{{.Version}}` suffix. Both paths go through `namePages` (`packer/pack.go`), which sniffs each page's format to name it `000.jpg`, `001.png`, … and transcodes per `--convert-images`.
 
 **Chapter URL resolution**: both series and chapter links are accepted; see the grabbers skill for the full pattern.
 
@@ -114,7 +114,7 @@ Scanlation groups reserve pages for credits/ads (tcbscans: always page 2, often 
 
 EPUB is another archive next to CBZ, grouped the same way (per chapter, `--volumes`, `--bundle`). `packer/epub.go` writes it with no new dependency.
 
-- **`ArchiveEPUB` takes an `EPUBInfo`, not just the files.** The series, the volume or chapter number (`group-position`), the reading direction and the table of contents labels can't be recovered from the entry names, so the `Pack*` functions pass them in. Labels are keyed by folder (`chapterLabel`: "Chapter 265 - Title"), and a folder without one is named after the folder.
+- **`ArchiveEPUB` takes a `BookInfo`, not just the files.** The series, the volume or chapter number (`group-position`), the reading direction and the table of contents labels can't be recovered from the entry names, so the `Pack*` functions pass them in. Labels are keyed by folder (`chapterLabel`: "Chapter 265 - Title"), and a folder without one is named after the folder.
 - **AVIF is always converted for EPUB**, whatever `--convert-images` says, since readers can't show it: `pageFormats` adds it for `epub`, and every Pack function goes through it.
 - **A page EPUB can't show is left out with a warning**, rather than failing the book: anything but JPEG, PNG, GIF or WebP, or a page whose size can't be read. It still counts towards progress, since the archive's total is the pages downloaded. The book fails only when no page is left.
 - **Reading direction** is `--reading-direction rtl|ltr` (default `rtl`) and a control in the app, shown only for EPUB. It sets the spine's `page-progression-direction`. Deriving it from the series' language is deferred.
@@ -122,3 +122,11 @@ EPUB is another archive next to CBZ, grouped the same way (per chapter, `--volum
 - **The identifier is a UUID v5 of the series and what the book holds** (`chapter`, `volume N` or `bundle` plus each chapter's number, language and `Chapter.ID`, or its group and title without one), so a repack keeps it and two releases of one chapter don't share it. A grabber that lists several releases per number sets their groups and `Chapter.ID` as described in "Scanlation groups", and `FetchChapter` keeps both on what it returns.
 - **Pages are fixed layout**: one XHTML per image, with a viewport at the image's size, and the first page is the cover. Calibre ignores fixed layout and stretches the image box to the screen, so the `<img>` carries `object-fit: scale-down` (a no-op in readers that honour the viewport).
 - **epubcheck isn't in CI yet**: check a change by running epubcheck on a real download, the way `tools/verify-cbz` checks CBZs.
+
+### PDF output (`--format pdf`)
+
+PDF is a pure-Go PDF 1.4 writer (`packer/pdf.go`) with zero new dependencies, sharing `BookInfo` and the `Pack*` entry points with EPUB.
+
+- **AVIF and WebP are always converted for PDF**, whatever `--convert-images` says: `pageFormats` adds both for `pdf`. `namePages` still keeps conversion failure warnings visible for PDF so a broken decode shows its real cause before `ArchivePDF` skips the unembeddable page.
+- **Image embedding**: YCbCr and grayscale JPEGs are embedded raw with `/DCTDecode`; other JPEG color models (such as CMYK) fall back to `reencodeFallbackJPEG` at `BookInfo.JPEGQuality` (defaulting to `JPEGQualityDefault`); PNG and GIF are decoded, alpha-flattened onto white, and compressed with `/FlateDecode` (animated GIFs keep only their first frame).
+- **Page sizing & viewer preferences**: pages are sized `1 px = 1 pt`, scaled proportionally only when exceeding PDF 1.4's `14400` pt limit. `/ViewerPreferences << /Direction /R2L|/L2R >>` follows `--reading-direction` (ordering two-page spreads), and multi-chapter PDFs (bundles, volumes, merged parts) emit `/Outlines` chapter bookmarks from `BookInfo.Labels`.
