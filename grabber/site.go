@@ -202,6 +202,7 @@ func (g *Grabber) IdentifySite() (Site, []error) {
 		NewStonescape(g),
 		NewUtoon(g),
 		NewComix(g),
+		NewToonkotsu(g),
 		NewMkissa(g),
 		NewWebtoons(g),
 		NewNaver(g),

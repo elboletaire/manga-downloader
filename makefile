@@ -466,6 +466,7 @@ grabber: \
 	grabber/tonarinoyj \
 	grabber/toongodcc \
 	grabber/toonizy \
+	grabber/toonkotsu \
 	grabber/topcomicporno \
 	grabber/tortugaceviri \
 	grabber/trmangaoku \
@@ -878,6 +879,11 @@ grabber/heavenmanga:
 
 grabber/weebcentral:
 	go run . https://weebcentral.com/series/01J76XYDXH7KT6AABVG3JAT3ZP/Shangri-La-Frontier 274
+
+# plain HTTP JSON API (/cdn/v1/series, /api/manga/chapter); the HTML is behind a
+# Cloudflare challenge, the API and CDN aren't. Pages are AES-CTR, decrypted locally
+grabber/toonkotsu:
+	go run . https://toonkotsu.com/title/vuymw7-momogusa-san-ga-monogusa-sugiru 37
 
 # plain HTTP only, the reader renders every page in the markup (no browser)
 grabber/leercapitulo:
